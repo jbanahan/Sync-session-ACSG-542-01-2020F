@@ -22,33 +22,44 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
     # The other is all invoices file in last X days.  The first query is just a file number
     # with blank data in column 2 and the other is the invoice numbers in column 2 blank data in 1
 
-    entries_to_query = []
-    invoices_to_query = []
+    entries_to_query = {}
+    invoices_to_query = {}
 
     results = JSON.parse json_results
     results.each do |row|
       # The to_s is there to force the invoice/file # to be a string, since the rails json transfer has a tendency to 
       # change it to an int
-      entries_to_query << row[0].to_s unless row[0].blank?
-      invoices_to_query << row[1].to_s unless row[1].blank?
+      ref = row[0].to_s
+      if !ref.blank?
+        entries_to_query[ref] = {broker_reference: ref, file_logged_date: format_date_string(row[2].to_s), last_billed_date: format_date_string(row[3].to_s)}
+      end
+
+      inv = row[1].to_s
+      if !inv.blank?
+        invoices_to_query[inv] = {invoice_number: inv, invoice_date: format_date_string(row[4].to_s)}
+      end
     end
 
     # split the entries list into groups of 100, then query them and if less than 100 are returned
     # see which ones are missing.
     missing_entries = []
-    entries_to_query.uniq.each_slice(100) do |list|
+    entries_to_query.keys.each_slice(100) do |list|
       found = Entry.where(source_system: 'Alliance', broker_reference: list).pluck :broker_reference
       if found.size < list.size
-        missing_entries.push *list.select {|e| !found.include? e} 
+        list.each do |e|
+          missing_entries << entries_to_query[e] if !found.include?(e)
+        end
       end
     end
 
     missing_invoices = []
-    invoices_to_query.uniq.each_slice(100) do |list|
+    invoices_to_query.keys.each_slice(100) do |list|
       # Invoice Numbers appear to have a space after them in the DB sometimes, which throws off our include below
       found = BrokerInvoice.joins(:entry).where(entries: {source_system: 'Alliance'}, invoice_number: list).pluck "trim(broker_invoices.invoice_number)"
       if found.size < list.size
-        missing_invoices.push *list.select {|e| !found.include? e} 
+        list.each do |i|
+          missing_invoices << invoices_to_query[i] if !found.include?(i)
+        end
       end
     end
 
@@ -56,11 +67,11 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
       wb = XlsMaker.new_workbook
 
       if missing_entries.length > 0
-        add_results wb, "Missing File #s",  ["File #"], missing_entries.uniq
+        add_results wb, "Missing File #s",  ["File #", "File Logged Date", "Last Billed Date"], [:broker_reference, :file_logged_date, :last_billed_date], missing_entries
       end
 
       if missing_invoices.length > 0
-        add_results wb, "Missing Invoice #s", ["Invoice #"], missing_invoices.uniq
+        add_results wb, "Missing Invoice #s", ["Invoice #", "Invoice Date"], [:invoice_number, :invoice_date], missing_invoices
       end
 
       Tempfile.open(["Missing Entry Files ", ".xls"]) do |t|
@@ -85,14 +96,22 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
 
   private
 
-    def self.add_results wb, sheet_name, headers, results
+    def self.add_results wb, sheet_name, headers, columns, results
       sheet = XlsMaker.create_sheet wb, sheet_name, headers
       column_widths = []
       counter = 0
       results.each do |r|
-        XlsMaker.add_body_row sheet, (counter+=1), [r], column_widths
+        XlsMaker.add_body_row sheet, (counter+=1), columns.map {|c| r[c]}, column_widths
       end
       sheet
     end
     private_class_method :add_results
+
+    def self.format_date_string val
+      out = ""
+      if !val.blank? && val.length >= 8
+        out = val[0, 4] + "-" + val[4, 2] + "-" + val[6, 2]
+      end
+      out
+    end
 end; end; end

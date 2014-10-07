@@ -11,9 +11,9 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
 
     it "parses query results and emails report about missing file numbers" do
       results = [
-        ['file1', ''],
-        [@existing_entry.broker_reference, ''],
-        ['', 'invoice1'],
+        ['file1', '', '20141001', '20141007'],
+        [@existing_entry.broker_reference, '', '', ''],
+        ['file1', 'invoice1', '20141001', '20141007', '20141006'],
         ['', @existing_invoice.invoice_number.to_s]
       ]
 
@@ -34,14 +34,14 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
       sheet = wb.worksheet 0
       expect(sheet.rows.length).to eq 2
       expect(sheet.name).to eq "Missing File #s"
-      expect(sheet.row(0)).to eq ["File #"]
-      expect(sheet.row(1)).to eq ["file1"]
+      expect(sheet.row(0)).to eq ["File #", "File Logged Date", 'Last Billed Date']
+      expect(sheet.row(1)).to eq ["file1", '2014-10-01', '2014-10-07']
 
       sheet = wb.worksheet 1
       expect(sheet.rows.length).to eq 2
       expect(sheet.name).to eq "Missing Invoice #s"
-      expect(sheet.row(0)).to eq ["Invoice #"]
-      expect(sheet.row(1)).to eq ["invoice1"]
+      expect(sheet.row(0)).to eq ["Invoice #", "Invoice Date"]
+      expect(sheet.row(1)).to eq ["invoice1", "2014-10-06"]
     end
 
     it "doesn't send email if no files or invoices are missing" do
