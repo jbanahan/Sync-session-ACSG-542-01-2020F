@@ -183,7 +183,7 @@ describe OpenChain::AllianceParser do
           :mid=>'faljdsiadfl',:charges=>BigDecimal('120301.20'),:related_parties=>true,:volume=>BigDecimal('12391.21',2),:computed_value=>BigDecimal('123.45',2),
           :value=>BigDecimal('3219.23',2),:computed_adjustments=>BigDecimal('3010.32',2),:computed_net_value=>BigDecimal('301.21',2),
           :related_parties => true, :mpf=>BigDecimal('27.01',2), :hmf=>BigDecimal('23.12',2), :prorated_mpf=>BigDecimal('50.26'), :cotton_fee=>BigDecimal('15.22',2),
-          :line_number => '00010', :contract_amount => BigDecimal('99.99', 2),
+          :line_number => '00010', :contract_amount => BigDecimal('99.99', 2), :store_name => "Store1",
           :tariff=>[{
             :duty_total=>BigDecimal("21.10",2),:entered_value=>BigDecimal('19311.12',2),:spi_primary=>'A',:spi_secondary=>'B',:hts_code=>'6504212121',
             :class_q_1=>BigDecimal('10.04',2),:class_uom_1=>'ABC', 
@@ -201,7 +201,7 @@ describe OpenChain::AllianceParser do
           :add=>{:case_number => 'A23456789', :bond=> "Y", :amount=>BigDecimal('12345678.90'), :percent=>BigDecimal('123.45'), :value=>BigDecimal('98765432.10')},
           :cvd=>{:case_number => 'C12345678', :bond=> "N", :amount=>BigDecimal('12345678.90'), :percent=>BigDecimal('123.45'), :value=>BigDecimal('98765432.10')}
           },
-        {:part_number=>'101301',:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301', :product_line=>"PLINE"}
+        {:part_number=>'101301',:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301', :product_line=>"PLINE", :store_name => "Store2"}
       ]},
       {:invoice_number=>'491919fadf',:mfid=>'12345',:invoiced_value=>BigDecimal("1520.25",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
@@ -227,7 +227,7 @@ describe OpenChain::AllianceParser do
         ci[:lines].each do |line|
           [:mid,:po_number,:department].each {|k| line[k]='' unless line[k]}
           # Note: Contract Amount specifically is not using the convert_cur lambda because the test files for this value DID have decimal points in the values.
-          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(6)}#{line[:contract_amount].to_s.ljust(10)}#{"".ljust(2)}#{line[:department].ljust(6)}#{"".ljust(27)}#{line[:po_number].ljust(35)}#{"".ljust(15)}#{line[:product_line].to_s.rjust(30)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{"".ljust(8)}"
+          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(6)}#{line[:contract_amount].to_s.ljust(10)}#{"".ljust(2)}#{line[:department].ljust(6)}#{"".ljust(27)}#{line[:po_number].ljust(35)}#{line[:store_name].to_s.ljust(15)}#{line[:product_line].to_s.rjust(30)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{"".ljust(8)}"
           rows << "CL01#{"".ljust(426)}#{line[:line_number]}"
           if line[:tariff]
             line[:tariff].each do |t|
@@ -482,6 +482,7 @@ describe OpenChain::AllianceParser do
     ent.delivery_order_pickup_date.should == @est.parse(@delivery_order_pickup_str)
     ent.worksheet_date.should == @est.parse(@worksheet_date_str)
     ent.available_date.should == @est.parse(@available_date_str)
+    expect(ent.store_names).to eq "Store1\n Store2"
 
     ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
     expect(ent.location_of_goods).to eq @location_of_goods
@@ -552,6 +553,7 @@ describe OpenChain::AllianceParser do
         end
 
         expect(ci_line.product_line).to eq line[:product_line].to_s
+        expect(ci_line.store_name).to eq line[:store_name].to_s
 
         if line[:tariff]
           line[:tariff].each do |t_line|

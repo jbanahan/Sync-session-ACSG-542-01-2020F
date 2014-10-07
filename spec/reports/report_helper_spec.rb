@@ -126,6 +126,22 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  describe "csv_translation_lambda" do
+    it "csv's a string" do
+      l = @helper.new.csv_translation_lambda
+      expect(l.call(nil, "A\nB\n C")).to eq "A, B, C"
+    end
+    it "uses given parameters to split / joining" do 
+      l = @helper.new.csv_translation_lambda "\n", ","
+      expect(l.call(nil, "A,B,C")).to eq "A\nB\nC"
+    end
+    it "handles nil / blank values" do
+      l = @helper.new.csv_translation_lambda
+      expect(l.call(nil, nil)).to eq nil
+      expect(l.call(nil, "   ")).to eq "   "
+    end
+  end
+
   context :sanitize_date_string do
     it "should return a date string" do
       s = @helper.new.sanitize_date_string "20130101"

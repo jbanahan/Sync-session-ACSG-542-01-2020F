@@ -149,6 +149,7 @@ module OpenChain
           @entry.commercial_invoice_numbers = accumulated_string :commercial_invoice_number
           @entry.broker_invoice_total = @entry.broker_invoices.inject(0) { |sum, bi| sum += (bi.invoice_total || 0) }
           @entry.departments = accumulated_string :departments
+          @entry.store_names = accumulated_string :store_names
           set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
           set_importer_id
           sum_invoice_values @entry
@@ -481,6 +482,7 @@ module OpenChain
       @c_line.unit_price = @c_line.value / @c_line.quantity if @c_line.value > 0 && @c_line.quantity > 0
       @c_line.contract_amount = parse_currency r[135,10]
       @c_line.department = r[147,6].strip
+      @c_line.store_name = r[215, 15].strip
       @c_line.product_line = r[230, 30].strip
       @c_line.computed_value = parse_currency r[260,13]
       @c_line.computed_adjustments = parse_currency r[299,13]
@@ -492,6 +494,7 @@ module OpenChain
       accumulate_string :po_numbers, r[180,35].strip
       accumulate_string :part_numbers, @c_line.part_number
       accumulate_string :departments, @c_line.department
+      accumulate_string :store_names, @c_line.store_name
       @entry.total_units += @c_line.quantity 
     end
 

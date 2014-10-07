@@ -94,6 +94,10 @@
     <tr class='hover'><td><%=link_to "Deferred Revenue", reports_show_deferred_revenue_path%></td>
     <td>Deferred Revenue for Breakbulk Files over a specified time span.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::PvhContainerLogReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "PVH Container Log", reports_show_pvh_container_log_path%></td>
+    <td>List PVH Container information relative to arrival dates.</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

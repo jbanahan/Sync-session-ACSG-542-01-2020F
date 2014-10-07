@@ -313,6 +313,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_deferred_revenue" => "reports#run_deferred_revenue", :via => :post
   match "/reports/show_j_jill_weekly_freight_summary" => "reports#show_j_jill_weekly_freight_summary", :via=>:get
   match "/reports/run_j_jill_weekly_freight_summary" => "reports#run_j_jill_weekly_freight_summary", :via=>:post
+  get "/reports/show_pvh_container_log" => "reports#show_pvh_container_log"
+  post "/reports/run_pvh_container_log" => "reports#run_pvh_container_log"
 
 
   resources :report_results, :only => [:index,:show] do 
