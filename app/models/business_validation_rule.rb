@@ -12,7 +12,9 @@ class BusinessValidationRule < ActiveRecord::Base
                 PoloValidationRuleEntryInvoiceLineMatchesPoLine: "(Polo) Entry Invoice Line Matches PO Line",
                 ValidationRuleEntryInvoiceLineTariffFieldFormat: "Entry Invoice Tariff Field Format",
                 ValidationRuleEntryInvoiceFieldFormat: "Entry Invoice Field Format",
-                ValidationRuleEntryHtsMatchesPo: "Entry Invoice Line HTS Matches PO HTS"
+                ValidationRuleEntryHtsMatchesPo: "Entry Invoice Line HTS Matches PO HTS",
+                ValidationRuleAnyEntryInvoiceLineHasFieldFormat: "At Least One Entry Invoice Line Matches Field Format",
+                ValidationRuleAttachmentTypes: "Has Attachment Types"
               }
 
   def self.subclasses_array
