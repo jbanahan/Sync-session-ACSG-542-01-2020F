@@ -52,7 +52,7 @@ module OpenChain
           classifications = p.classifications.includes(:country, :tariff_records).where("not classifications.country_id IN (?)",dont_send_countries)
           classifications.each do |cl|
             iso = cl.country.iso_code
-            cl.tariff_records.each do |tr|
+            cl.tariff_records.order("line_number ASC").each do |tr|
               file << outbound_file_content(p, cl, tr, iso).to_csv
             end
           end

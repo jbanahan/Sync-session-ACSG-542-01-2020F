@@ -182,6 +182,15 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
 
       expect(r[1][55]).to eq "1 2 3"
     end
+
+    it "orders tariff records by line number" do
+      t2 = Factory(:tariff_record, hts_1: "987654321", classification: @c, line_number: 2)
+      @t.update_attributes! line_number: 3
+      
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+      expect(r[1][3]).to eq t2.hts_1.hts_format
+    end
   end
   describe :send_file do
     it 'should send file' do
