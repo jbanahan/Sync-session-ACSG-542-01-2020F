@@ -522,6 +522,10 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     end
 
     def results_fingerprint results
+      # Some error cases result in missing results, just use a blank hash for these to fingerprint since the
+      # actual fiber 1-15 fields will be blank anyway too.
+      results = {} if results.nil?
+
       values = []
       (1..15).each do |x|
         fiber, type, percent = all_fiber_fields results, x
