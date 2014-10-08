@@ -52,18 +52,6 @@ root.Chain =
     else
       return JSON.parse(localStorage.getItem(name))
 
-  #prep the attachments partial
-  initAttachments: () ->
-    $("#mod_attach").dialog({autoOpen:false,title:"Attach File",width:"auto",buttons:{
-      "Attach":(() ->
-        $("#frm_attach").submit()),
-      "Cancel":(() ->
-        $("#mod_attach").dialog('close'))}
-    })
-    $("#btn_add_attachment").click(() ->
-      $("#mod_attach").dialog('open')
-    )
-
   sendEmailAttachments: (controller_name, id, to_address, email_subject, email_body, ids_to_include) ->
     return $.post ('/attachments/email_attachable/' + controller_name + '/' + id),
       to_address: to_address
