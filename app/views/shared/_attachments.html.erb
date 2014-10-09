@@ -1,18 +1,12 @@
 <% if !local_assigns.has_key?(:view_only) || !view_only%>
   <% content_for :javascript do %>
     $(document).ready(function() {
-      Chain.initAttachments();
       $('.attachment_icon').popover({html: true});
-
-      $('input[id=attachment_attached]').change(function(){
-        $('#attachment_attached_visible').val($(this).val());
-      });
-
     });    
   <% end %>
   <% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
     <% content_for :action_bar do %>
-      <button id='btn_add_attachment'>Add Attachment</button>
+      <button class="btn btn-default" data-toggle="modal" href='#mod_attach_bs'>Add Attachment</button>
     <%end%>
   <% end %>
 <%end-%>
@@ -67,18 +61,36 @@
   </div>
 <%end-%>
 
-<div id='mod_attach' style='display:none;'>
-  <% att = attachable.attachments.build %>
-  <%= form_for att, html: {multipart: true, id: "frm_attach"} do |f| %>
-    <%= f.hidden_field :attachable_id %>
-    <%= f.hidden_field :attachable_type %>
-    <%= f.collection_select :attachment_type, AttachmentType.all, :name, :name, {}, {style: "margin-bottom: 10px;"} %>
-    <input id="attachment_attached" type="file" name="attachment[attached]" style="display: none;">
-    <div class="input-append">
-      <input id="attachment_attached_visible" class="form-control" type="text" style="display: inline; width: 70%;">
-      <a class="btn btn-primary" style="color: white; margin-bottom: 2px;" onclick="$('input[id=attachment_attached]').click();">Browse</a>
-    </div>
-    <%= f.check_box :is_private %>
-    <%= f.label :is_private, "Private attachment" %>
-  <% end %>
-</div>
+<div class="modal fade" id="mod_attach_bs">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Attach File</h4>
+      </div>
+      <div class="modal-body">  
+        <% att = attachable.attachments.build %>
+        <%= form_for att, html: {multipart: true, id: "frm_attach", role: "form"} do |f| %>
+          <%= f.hidden_field :attachable_id %>
+          <%= f.hidden_field :attachable_type %>
+          <div class="form-group">
+            <%= f.label :attachment_type, "Attachment Type" %>
+            <%= f.collection_select :attachment_type, AttachmentType.all, :name, :name, {}, {class: "form-control"} %>
+          </div>
+          <div class="form-group">
+            <input type="file" id="attachment_attached" name="attachment[attached]" style="width: 100%">
+          </div>
+          <div class="checkbox">
+            <label>
+              <%= f.check_box :is_private %> Private Attachment?
+            </label>
+          </div>
+        <% end %>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="$('#frm_attach').submit();">Attach</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
