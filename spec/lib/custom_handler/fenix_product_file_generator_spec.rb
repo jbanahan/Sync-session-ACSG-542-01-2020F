@@ -5,10 +5,10 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
   before :each do
     @canada = Factory(:country,:iso_code=>'CA')
     @code = 'XYZ'
-    @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
   end
   describe "generate" do
     it "should find products, make file, and ftp" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
       @h.should_receive(:find_products).and_return('y')
       @h.should_receive(:make_file).with('y').and_return('z')
       @h.should_receive(:ftp_file).with('z').and_return('a')
@@ -20,6 +20,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     before :each do
       @to_find_1 = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@canada.id)).product
       @to_find_2 = Factory(:tariff_record,:hts_1=>'1234567891',:classification=>Factory(:classification,:country_id=>@canada.id)).product
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
     end
     it "should find products that need sync and have canadian classifications" do
       @h.find_products.to_a.should == [@to_find_1,@to_find_2] 
@@ -55,6 +56,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @t.unlink if @t
     end
     it "should generate output file with given products" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
       coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
 
@@ -80,6 +82,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[31, 40]).to eq "ABC123".ljust(40)
     end
     it "should write sync records with dummy confirmation date" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
       @t = @h.make_file [@p] 
       @p.reload
       @p.should have(1).sync_records
@@ -90,7 +93,11 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
 
     it "skips adding country of origin if instructed" do
       @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'suppress_country'=>true)
+      # Verify custom definition for country of origin wasn't created
       coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
+      expect(coo_def).to be_nil
+      coo_def = CustomDefinition.create!(label: "Country Of Origin", module_type: "Product", data_type: "string")
+
       @p.update_custom_value! coo_def, "CN"
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
@@ -104,6 +111,8 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     it "skips adding description if instructed" do
       @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'suppress_description'=>true)
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
+      expect(desc_def).to be_nil
+      desc_def = CustomDefinition.create!(label: "Customs Description", module_type: "Classification", data_type: "string")
       @p.update_custom_value! desc_def, "Random Product Description"
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
@@ -119,6 +128,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       t.should_receive(:path).and_return('/tmp/a.txt')
       t.should_receive(:unlink)
       FtpSender.should_receive(:send_file,).with('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',t,{:folder=>'to_ecs/fenix_products',:remote_file_name=>'a.txt'})
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
       @h.ftp_file t
     end
   end

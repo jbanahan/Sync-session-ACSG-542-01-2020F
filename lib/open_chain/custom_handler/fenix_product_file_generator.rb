@@ -12,7 +12,12 @@ module OpenChain
         @suppress_country = options['suppress_country']
         @suppress_description = (options['suppress_description'].to_s == "true")
 
-        @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :class_customs_description]
+        custom_defintions = []
+        custom_defintions << :prod_part_number if @use_part_number
+        custom_defintions << :prod_country_of_origin unless @suppress_country
+        custom_defintions << :class_customs_description unless @suppress_description
+        
+        @cdefs = self.class.prep_custom_definitions custom_defintions
       end
 
       #automatcially generate file and ftp for trading partner "fenix-#{fenix_customer_code}"
