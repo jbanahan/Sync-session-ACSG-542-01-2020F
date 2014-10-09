@@ -128,6 +128,13 @@ module OpenChain
         File.delete ack_file 
       end
 
+      def self.send_and_delete_ack_file_from_s3 bucket, path, original_filename
+        OpenChain::S3.download_to_tempfile(bucket, path) do |tmp|
+          h = self.new
+          h.send_and_delete_ack_file h.process(IO.read(tmp.path)), original_filename
+        end
+      end
+
       def send_file local_file, destination_file_name
         FtpSender.send_file("connect.vfitrack.net",'polo','pZZ117',local_file,{:folder=>(@env==:qa ? '/_test_to_msl' : '/_to_msl'),:remote_file_name=>destination_file_name})
       end
