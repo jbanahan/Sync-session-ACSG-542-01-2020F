@@ -76,7 +76,7 @@ module OpenChain
           if !@suppress_description
             # Description starts at zero-indexed position 135..add spacing to accomodate
             line += "".ljust(135 - line.length)
-            line += force_fixed(p.get_custom_value(@cdefs[:class_customs_description]).value.to_s, 50)
+            line += force_fixed(c.get_custom_value(@cdefs[:class_customs_description]).value.to_s, 50)
           end
 
           if !@suppress_country

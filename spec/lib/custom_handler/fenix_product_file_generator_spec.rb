@@ -49,8 +49,8 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
   describe "make_file" do
     before :each do
       @p = Factory(:product,:unique_identifier=>'myuid')
-      c = @p.classifications.create!(:country_id=>@canada.id)
-      t = c.tariff_records.create!(:hts_1=>'1234567890')
+      @c = @p.classifications.create!(:country_id=>@canada.id)
+      t = @c.tariff_records.create!(:hts_1=>'1234567890')
     end
     after :each do 
       @t.unlink if @t
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
 
       @p.update_custom_value! coo_def, "CN"
-      @p.update_custom_value! desc_def, "Random Product Description"
+      @c.update_custom_value! desc_def, "Random Product Description"
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
       expect(read[0, 15]).to eq "N".ljust(15)
@@ -113,7 +113,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
       expect(desc_def).to be_nil
       desc_def = CustomDefinition.create!(label: "Customs Description", module_type: "Classification", data_type: "string")
-      @p.update_custom_value! desc_def, "Random Product Description"
+      @c.update_custom_value! desc_def, "Random Product Description"
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
       expect(read[15, 9]).to eq @code.ljust(9)
