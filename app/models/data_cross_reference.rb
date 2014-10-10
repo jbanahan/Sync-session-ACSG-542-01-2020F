@@ -23,6 +23,7 @@ class DataCrossReference < ActiveRecord::Base
   RL_FABRIC_XREF ||= 'rl_fabric'
   RL_VALIDATED_FABRIC ||= 'rl_valid_fabric'
   RL_FABRIC_FINGERPRINT ||= 'rl_fabric_fingerprint'
+  UA_DUTY_RATE ||= 'ua_duty_rate'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
@@ -198,11 +199,15 @@ class DataCrossReference < ActiveRecord::Base
     # Join the values on a character sequence which should never be found in the actual key values.
     # Ideally, we could use some non-printing char but there seems to be issues with that somewhere between activerecord
     # and mysql.
-    args.join("*~*")
+    args.join(compound_key_token)
   end
 
   def self.decode_compound_key cross_reference
-    cross_reference.key.split("*~*")
+    cross_reference.key.split(compound_key_token)
+  end
+
+  def self.compound_key_token
+    "*~*"
   end
 
 end

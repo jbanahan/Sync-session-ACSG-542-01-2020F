@@ -9,7 +9,8 @@ module OpenChain; module CustomHandler; module UnderArmour; module UnderArmourCu
     colors: {label:'Colors',data_type: :text, module_type: 'Product'},
     plant_codes: {label:'Plant Codes',data_type: :text, module_type: 'Product'},
     import_countries: {label:'Import Countries',data_type: :text, module_type: 'Product'},
-    size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'}
+    size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'},
+    expected_duty_rate: {label: "Expected Duty Rate", data_type: :decimal, module_type: "Classification"}
   } 
   
   def self.included(base)

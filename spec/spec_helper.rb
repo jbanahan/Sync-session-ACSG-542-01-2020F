@@ -29,7 +29,7 @@ Spork.prefork do
     # instead of true.
     config.use_transactional_fixtures = true
     config.before(:all) do
-      DeferredGarbageCollection.start unless ENV['CIRCLECI']
+      #DeferredGarbageCollection.start unless ENV['CIRCLECI']
       WebMock.disable!
     end
     config.before(:each, :type => :controller) do
@@ -52,7 +52,7 @@ Spork.prefork do
     end
 
     config.after(:all) do
-      DeferredGarbageCollection.reconsider unless ENV['CIRCLECI']
+      #DeferredGarbageCollection.reconsider unless ENV['CIRCLECI']
     end
   end
 end
