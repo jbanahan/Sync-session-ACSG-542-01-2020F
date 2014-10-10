@@ -147,13 +147,9 @@ describe AdvancedSearchController do
       JSON.parse(response.body)['id'].should == ss_first.id.to_s
     end
     
-    it "should return last search created if no search_runs" do
-      ss_first = Factory(:search_setup,:user=>@user)
-      ss_second = Factory(:search_setup,:user=>@user)
-
-      ss_first.update_column :updated_at, 1.day.ago
-      ss_second.update_column :updated_at, 1.year.ago
-
+    it "should return last search updated if no search_runs" do
+      ss_first = Factory(:search_setup,:user=>@user,updated_at:1.day.ago)
+      ss_second = Factory(:search_setup,:user=>@user,updated_at:1.year.ago)
       get :last_search_id
       JSON.parse(response.body)['id'].should == ss_first.id.to_s
     end
