@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourSapProductGenerator d
     end
 
     it "skips non-advalorem official tariff rates" do
-      OfficialTariff.create! hts_code: @t.hts_1, country_id: @t.classification.country_id, general_rate: "$1.25/KG + 1.25%"
+      OfficialTariff.create! hts_code: @t.hts_1, country_id: @t.classification.country_id, general_rate: "1.25¢/kg + 1.25%"
       @f = described_class.new.sync_csv
       out = CSV.read @f.path
       expect(out.length).to eq 2

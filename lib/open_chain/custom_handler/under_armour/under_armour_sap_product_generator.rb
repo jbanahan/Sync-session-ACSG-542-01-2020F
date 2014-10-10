@@ -44,6 +44,7 @@ QRY
       qry += custom_where
     end
 
+    qry += " ORDER BY products.unique_identifier ASC, co.iso_code ASC"
     qry
   end
 
@@ -69,7 +70,7 @@ QRY
   end
 
   def ftp_credentials
-    {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/sap_#{@env==:qa ? 'qa' : 'prod'}"}
+    {server: 'transfer.underarmour.com', username: 'ftpvandegrift', password: 'k1mbIXyu', protocol: "sftp"}
   end
 
   private
@@ -77,7 +78,7 @@ QRY
     def parse_official_tariff_common_rate common_rate
       rate = nil
       if !common_rate.blank?
-        if common_rate =~ /^\d+(?:\.\d+)?\s*%?/
+        if common_rate =~ /^\d+(?:\.\d+)?\s*%?(?:\s+\d\/)*\s*$/
           rate = common_rate
         elsif common_rate.try(:upcase) == "FREE"
           rate = "0"

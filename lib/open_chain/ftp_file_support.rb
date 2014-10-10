@@ -15,6 +15,8 @@ module OpenChain
           delete_local = !c[:keep_local]
           opts[:folder] = c[:folder] unless c[:folder].blank?
           opts[:remote_file_name] = c[:remote_file_name] unless c[:remote_file_name].blank?
+          opts[:protocol] = c[:protocol] unless c[:protocol].blank?
+          
           FtpSender.send_file(c[:server],c[:username],c[:password],file,opts)
           send_status = true
         ensure
