@@ -243,12 +243,14 @@ module OpenChain; module Report; class JCrewBillingReport
 
       leftover = charge_amount - total_prorated
       if leftover > 0
-        # The leftover amount (which will be less than the number of buckets) needs to get dropped in order of the buckets with the highest value
+        # The leftover amount needs to get dropped in order of the buckets with the highest value
         # of the truncated amounts (identical amounts are ordered by left to right column ordering in the output)
         sorted_buckets = buckets.collect {|k, v| v unless k == :unknown}.compact.sort {|a, b| s = b[:truncated_amount] <=> a[:truncated_amount]; s == 0 ? a[:rank] <=> b[:rank] : s}
+        mod = sorted_buckets.size
         number_of_cents = (charge_amount - total_prorated) * 100
         (0..(number_of_cents - 1)).each do |x|
-          sorted_buckets[x][:line_amount] += BigDecimal.new("0.01")
+          # Becuase we're not dropping leftover amounts into the unknown bucket, it's possible there's more leftover change than buckets to drop it into, hence the modulo
+          sorted_buckets[x % mod][:line_amount] += BigDecimal.new("0.01")
         end
       end
 
