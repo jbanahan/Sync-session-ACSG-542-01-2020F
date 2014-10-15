@@ -19,7 +19,7 @@ module OpenChain
     class ProductGenerator
       include OpenChain::FtpFileSupport
 
-      attr_reader :row_count
+      attr_reader :row_count, :custom_where
 
       def initialize(opts={})
         @custom_where = opts[:where]
@@ -58,7 +58,7 @@ module OpenChain
           row = {}
           clean_vals.each_with_index {|v,i| row[i-1] = v unless i==0}
 
-          processed_rows = preprocess_row row, last_result: (rt.size == (i + 1))
+          processed_rows = preprocess_row row, last_result: (rt.size == (i + 1)), product_id: vals[0]
           # Allow for preprocess_row to "reject" the row and not process it in this sync pass.
           # Allows for more complicated code based handling of sync data that might not be able to be
           # done via the query.
