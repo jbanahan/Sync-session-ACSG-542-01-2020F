@@ -4,6 +4,8 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerator < ProductGenerator
   include VfitrackCustomDefinitionSupport
 
+  SYNC_CODE ||= 'lenox_hts'
+
   def self.run_schedulable opts={}
     g = self.new(opts)
     g.ftp_file g.sync_fixed_position
@@ -46,9 +48,9 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
     rows
   end
 
-  # def sync_code
-  #   'lenox_hts'
-  # end
+  def sync_code
+    SYNC_CODE
+  end
 
   def fixed_position_map
     [
@@ -76,7 +78,7 @@ QRY
     if custom_where
       qry += custom_where
     else
-      qry += " " + Product.need_sync_join_clause('lenox_hts') + "\nWHERE " + Product.need_sync_where_clause
+      qry += " " + Product.need_sync_join_clause(SYNC_CODE) + "\nWHERE " + Product.need_sync_where_clause
     end
 
     qry += "\nORDER BY v.string_value, cod.iso_code"
