@@ -14,7 +14,8 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryInvoiceFieldFormat: "Entry Invoice Field Format",
                 ValidationRuleEntryHtsMatchesPo: "Entry Invoice Line HTS Matches PO HTS",
                 ValidationRuleAnyEntryInvoiceLineHasFieldFormat: "At Least One Entry Invoice Line Matches Field Format",
-                ValidationRuleAttachmentTypes: "Has Attachment Types"
+                ValidationRuleAttachmentTypes: "Has Attachment Types",
+                ValidationRuleCanadaGpt: "Entry Tariff lines utilize Canadian GPT rates."
               }
 
   def self.subclasses_array
