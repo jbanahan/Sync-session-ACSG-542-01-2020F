@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(ol1.hts).to eq '6109100060'
 
       p1 = ol1.product
-      expect(p1.unique_identifier).to eq 'JJILL-014932'
+      expect(p1.unique_identifier).to eq 'JJILL-04-1024'
       expect(p1.name).to eq 'SPACE-DYED COTTON PULLOVER'
       cdefs = described_class.prep_custom_definitions [:vendor_style]
       expect(p1.get_custom_value(cdefs[:vendor_style]).value).to eq '04-1024'
@@ -89,12 +89,12 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(Order.first.vendor).to eq vn
     end
     it "should use existing product" do
-      p = Factory(:product,importer_id:@c.id,unique_identifier:'JJILL-014932')
+      p = Factory(:product,importer_id:@c.id,unique_identifier:'JJILL-04-1024')
       run_file
       expect(OrderLine.first.product).to eq p
     end
     it "should not use product that isn't for JJILL" do
-      p = Factory(:product,importer_id:Factory(:company).id,unique_identifier:'JJILL-014932')
+      p = Factory(:product,importer_id:Factory(:company).id,unique_identifier:'JJILL-04-1024')
       expect {run_file}.to raise_error /Unique identifier/
     end
     it "should update order" do
