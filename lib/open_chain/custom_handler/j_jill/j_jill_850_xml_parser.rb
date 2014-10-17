@@ -144,7 +144,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   end
   def parse_product group_11
     po1_el = REXML::XPath.first(group_11,'PO1')
-    prod_uid = "#{UID_PREFIX}-#{et po1_el, 'PO107'}"
+    prod_uid = "#{UID_PREFIX}-#{et po1_el, 'PO111'}"
     p = Product.where(importer_id:@jill.id,unique_identifier:prod_uid).first_or_create!(name:REXML::XPath.first(group_11,'LIN/LIN03').text)
     cv = p.get_custom_value(@cdefs[:vendor_style])
     vendor_style = et(po1_el,'PO111')
