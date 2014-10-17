@@ -112,6 +112,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
   end
 
   def parse_fiber_content fiber
+    fiber = preprocess_fiber fiber
+    
     footwear = footwear? fiber
 
     if footwear
@@ -133,6 +135,21 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
   end
 
   private
+
+    def preprocess_fiber fiber
+      # A lot of descriptions have no spaces, add spaces between any numeric percentages and text descriptions
+      add_spaces = fiber.clone
+      loop do 
+        break if (add_spaces.gsub! /(\d+(?:\.\d+)?%)(\S+)/, ' \1 \2 ').nil?
+      end
+      fiber = add_spaces.strip
+
+      # Some regions use a comma instead of a decial place to mark the radix point, just change those to periods
+      fiber = fiber.gsub /(\d+),(\d+)(\s*)%/, '\1.\2\3%'
+
+      fiber
+    end
+
     def init_custom_values
       # Shortcut to avoid typing out 45 custom def fields here
       if @cdefs.nil?
