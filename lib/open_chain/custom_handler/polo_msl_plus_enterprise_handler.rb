@@ -14,22 +14,22 @@ module OpenChain
 
       def self.run_schedulable opts
         g = self.new(opts)
-        prods = g.products_to_send.where("sync_records.sent_at < ? or sync_records.sent_at is null",6.hours.ago).limit(1000)
-        while prods.count > 0
+        g.products_to_send.where("sync_records.sent_at < ? or sync_records.sent_at is null",6.hours.ago).find_in_batches do |prods|
           g.send_and_delete_sync_file g.generate_outbound_sync_file prods
-          prods = g.products_to_send.where("sync_records.sent_at < ? OR sync_records.sent_at is null",6.hours.ago).limit(1000)
         end
       end
 
       # find the products that need to be sent to MSL+ (they have MSL+ Receive Dates and need sync)
       def products_to_send
+        dont_send_countries = dont_send_classification_countries
         init_outbound_custom_definitions
         cd_msl_rec = @out_cdefs[:msl_receive_date]
         cd_csm_num = @out_cdefs[:csm_numbers]
         Product.select("distinct products.*").need_sync("MSLE").
           joins("LEFT OUTER JOIN custom_values rd ON products.id = rd.customizable_id AND rd.customizable_type = 'Product' AND rd.custom_definition_id = #{cd_msl_rec.id}").
           joins("LEFT OUTER JOIN custom_values csm ON products.id = csm.customizable_id AND csm.customizable_type = 'Product' AND csm.custom_definition_id = #{cd_csm_num.id}").
-          where("TRIM(csm.text_value) != '' OR rd.date_value IS NOT NULL")
+          where("TRIM(csm.text_value) != '' OR rd.date_value IS NOT NULL").
+          where("products.id IN (SELECT product_id FROM classifications c INNER JOIN tariff_records t ON t.classification_id = c.id WHERE c.product_id = products.id AND c.country_id NOT IN (?))", dont_send_countries)
       end
 
       # Generate the file with data that needs to be sent back to MSL+
@@ -46,7 +46,7 @@ module OpenChain
           "F&W Source 1", "F&W Source 2", "F&W Source 3", "Origin of Wildlife", "Semi-Precious", "Type of Semi-Precious", "CITES", "Fish & Wildlife"]
 
         file << headers.to_csv
-        dont_send_countries = Country.where("iso_code IN (?)",['US','CA']).collect{|c| c.id}
+        dont_send_countries = dont_send_classification_countries
         init_outbound_custom_definitions
         products.each do |p|
           classifications = p.classifications.includes(:country, :tariff_records).where("not classifications.country_id IN (?)",dont_send_countries)
@@ -140,6 +140,11 @@ module OpenChain
       end
 
       private 
+
+        def dont_send_classification_countries
+          @dont_send_countries ||= Country.where("iso_code IN (?)",['US','CA']).collect{|c| c.id}
+        end
+
         def cust_def label, data_type="string"
           CustomDefinition.find_or_create_by_label_and_module_type label, "Product", :data_type=>data_type
         end

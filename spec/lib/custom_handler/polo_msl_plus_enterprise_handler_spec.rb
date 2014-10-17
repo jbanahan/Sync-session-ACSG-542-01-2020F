@@ -8,9 +8,12 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     before :each do
       @cd_msl_rec = Factory(:custom_definition,:label=>"MSL+ Receive Date",:data_type=>"date",:module_type=>"Product")
       @cd_csm_num = Factory(:custom_definition,:label=>"CSM Number",:data_type=>:text,:module_type=>"Product")
-      @p = Factory(:product)
+      @countries = {}
+      ['US','IT','CA','TW'].each {|iso| @countries[iso] = Factory(:country,:iso_code=>iso)}
+      t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['IT']))
+      @p = t.product
     end
-    it "should find product with MSL+ Receive Date" do
+    it "should find product with MSL+ Receive Date having non-US, CA tariffs" do
       @p.update_custom_value! @cd_msl_rec, 1.day.ago
       described_class.new.products_to_send.to_a.should == [@p]
     end
@@ -25,6 +28,24 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @p.update_custom_value! @cd_msl_rec, 1.day.ago
       @p.update_attributes(:updated_at=>2.days.ago)
       @p.sync_records.create!(:trading_partner=>"MSLE",:sent_at=>1.day.ago,:confirmed_at=>1.hour.ago)
+      described_class.new.products_to_send.to_a.should be_empty
+    end
+    it "should not find a product that only has US and CA tariffs" do
+      @p.classifications.destroy_all
+      t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['CA'], product: @p))
+      t2 = Factory(:tariff_record, classification: Factory(:classification, country: @countries['US'], product: @p))
+
+      described_class.new.products_to_send.to_a.should be_empty
+    end
+    it "should not find a product that only has US and CA tariffs" do
+      @p.classifications.destroy_all
+      t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['CA'], product: @p))
+      t2 = Factory(:tariff_record, classification: Factory(:classification, country: @countries['US'], product: @p))
+
+      described_class.new.products_to_send.to_a.should be_empty
+    end
+    it "should not find a product that does not have a tariff record" do
+      @p.classifications.first.tariff_records.destroy_all
       described_class.new.products_to_send.to_a.should be_empty
     end
   end
