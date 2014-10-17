@@ -222,6 +222,14 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
         DataCrossReference.create! cross_reference_type: DataCrossReference::RL_FABRIC_XREF, key: "wool", value: "XREF"
         expect(@p.parse_fiber_content "100% WOOL").to eq ({fiber_1: "XREF", type_1: "Outer", percent_1: "100"})
       end
+
+      it "handles commas in place of decimal points in content percentages" do
+        expect(@p.parse_fiber_content "78,5% COTTON 21,5% NYLON").to eq ({fiber_1: "COTTON", type_1: "Outer", percent_1: "78.5", fiber_2: "NYLON", type_2: "Outer", percent_2: "21.5"})
+      end
+
+      it "handles descriptions without spaces" do
+        expect(@p.parse_fiber_content "78.5%COTTON21.5%NYLON").to eq ({fiber_1: "COTTON", type_1: "Outer", percent_1: "78.5", fiber_2: "NYLON", type_2: "Outer", percent_2: "21.5"})
+      end
     end
 
     context "with invalid fiber descriptions" do
@@ -234,8 +242,8 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
           @p.parse_fiber_content "ZINC 60%,  STEEL 10%              Cotton 30%"
           fail("Should have raised error.")
         rescue OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError => e
-          expect(e.message).to eq "Fabric percentages must add up to 100%."
-          expect(e.parse_results).to eq ({fiber_1: "Cotton", type_1: "Outer", percent_1: "10"})
+          expect(e.message).to eq "Failed to find fabric content and percentages for all discovered components."
+          expect(e.parse_results).to eq ({fiber_1: "", type_1: "Outer", percent_1: "60", percent_2: "10", fiber_2: "Cotton", type_2: "Outer"})
         end
       end
 
