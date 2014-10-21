@@ -24,25 +24,25 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
     tariffs = TariffRecord.joins(classification: [:country]).where(classifications: {product_id: opts[:product_id]}, countries: {iso_code: row[1]}).order("line_number ASC")
     tariffs.each do |t|
       if !t.hts_1.blank?
-        rows << [row[0], row[1], t.hts_1, counter += 1, row[4]]
+        rows << [row[0], row[1], t.hts_1, (counter += 1).to_s.rjust(3, "0"), row[4]]
       end
 
       if !t.hts_2.blank?
-        rows << [row[0], row[1], t.hts_2, counter += 1, row[4]]
+        rows << [row[0], row[1], t.hts_2, (counter += 1).to_s.rjust(3, "0"), row[4]]
       end
 
       if !t.hts_3.blank?
-        rows << [row[0], row[1], t.hts_3, counter += 1, row[4]]
+        rows << [row[0], row[1], t.hts_3, (counter += 1).to_s.rjust(3, "0"), row[4]]
       end
     end
 
     if rows.length == 1
       # They want the row counter for single tariff lines to be zero, not 1, so just
       # change it "post facto" when there's only a single tariff line
-      rows[0][3] = 0
+      rows[0][3] = "000"
     elsif rows.length > 1
       # Add a "header" row if there's more than one tariff to send
-      rows = rows.insert(0, [row[0], row[1], "MULTI", 0, row[4]])
+      rows = rows.insert(0, [row[0], row[1], "MULTI", "000", row[4]])
     end
 
     rows
