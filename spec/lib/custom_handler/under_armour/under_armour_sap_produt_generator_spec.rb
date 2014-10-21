@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourSapProductGenerator d
       out = CSV.read @f.path
 
       expect(out.length).to eq 2
-      expect(out.first).to eq ["Country of Destination", "Material", "HTS Code", "Duty Rate"]
+      expect(out.first).to eq ["Country of Destination", "Style", "HTS Code", "Duty Rate"]
       expect(out.second).to eq [@t.classification.country.iso_code, @t.product.unique_identifier, @t.hts_1.hts_format, ""]
 
       expect(SyncRecord.where(syncable_id: @t.product.id, trading_partner: g.sync_code).first).not_to be_nil

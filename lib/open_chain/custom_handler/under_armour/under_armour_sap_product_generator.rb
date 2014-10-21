@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourSap
 
   def query 
     qry = <<-QRY
-SELECT products.id, co.iso_code as 'Country of Destination', products.unique_identifier as 'Material', t.hts_1 as 'HTS Code', cv.decimal_value as 'Duty Rate', d.value as 'Tariff Override Ride', ot.common_rate as 'Tariff Duty Rate'
+SELECT products.id, co.iso_code as 'Country of Destination', products.unique_identifier as 'Style', t.hts_1 as 'HTS Code', cv.decimal_value as 'Duty Rate', d.value as 'Tariff Override Ride', ot.common_rate as 'Tariff Duty Rate'
 FROM products products
 INNER JOIN classifications c on products.id = c.product_id
 INNER JOIN countries co on c.country_id = co.id
