@@ -58,7 +58,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
       {len: 2}, # Classification Country ISO
       {len: 10}, # HTS Number
       {len: 3}, # Line Number
-      {len: 17}, # FDA Container Number
+      {len: 10}, # FDA Container Number
     ]
   end
 

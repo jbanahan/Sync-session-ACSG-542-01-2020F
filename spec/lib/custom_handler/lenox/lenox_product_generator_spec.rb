@@ -7,8 +7,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
     expect(line[18, 2]).to eq values[:iso].to_s.ljust(2)
     expect(line[20, 10]).to eq values[:hts].to_s.ljust(10)
     expect(line[30, 3]).to eq values[:line].to_s.rjust(3, "0")
-    expect(line[33, 17]).to eq values[:fda].to_s.ljust(17)
-    expect(line[50, 1]).to eq "\n"
+    expect(line[33, 10]).to eq values[:fda].to_s.ljust(10)
+    expect(line[43, 1]).to eq "\n"
   end
 
   describe "sync_fixed_position" do
