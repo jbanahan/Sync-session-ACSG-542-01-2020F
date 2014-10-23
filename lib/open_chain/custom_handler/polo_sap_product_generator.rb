@@ -63,7 +63,7 @@ module OpenChain
           value = value.encode("US-ASCII", :fallback => allowed_conversions)
 
           # Convert tab chars and "forbidden" characters to spaces
-          value = value.gsub(/[<>^&{}\[\]+|*~;\t]/, " ")
+          value = value.gsub(/[<>^&{}\[\]+|*~;\t?]/, " ")
 
           # Now fail if there are any non-printing chars
           # ie. ASCII chars < 32 or > 126.  (Extended ASCII range is not allowed - it shouldn't even get translated in the encode call anyway.)

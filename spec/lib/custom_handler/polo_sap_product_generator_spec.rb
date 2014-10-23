@@ -185,8 +185,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should convert forbidden characters to spaces" do
-      r = @g.preprocess_row(0 => "This\tis\ta\ttest.<>^&{}[]+|~*;")
-      r.should eq [{0 => "This is a test.             "}]
+      r = @g.preprocess_row(0 => "This\tis\ta\ttest.<>^&{}[]+|~*;?")
+      r.should eq [{0 => "This is a test.              "}]
     end
 
     it "should handle non-string data" do
