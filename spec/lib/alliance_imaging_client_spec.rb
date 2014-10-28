@@ -156,6 +156,31 @@ describe OpenChain::AllianceImagingClient do
         entry.attachments[0].attached_file_name.should == @hash['file_name']
         entry.attachments[0].attachment_type.should == "Customs Release Notice"
       end
+
+      it "should recognize B3 Recap Automated Fenix files and attach the images as recap records" do
+        @hash['file_name'] = "File_recap_123128.pdf"
+        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+        entry.attachments.size.should == 1
+        entry.attachments[0].attached_file_name.should == @hash['file_name']
+        entry.attachments[0].attachment_type.should == "B3 Recap"
+      end
+
+      it "should retain only 1 recap attachment" do
+        existing = @e1.attachments.build
+        existing.attached_file_name = "existing.pdf"
+        existing.attachment_type = "B3 Recap"
+        existing.save
+
+        @hash['file_name'] = "File_recap_123128.pdf"
+        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+        entry.attachments.size.should == 1
+        entry.attachments[0].attached_file_name.should == @hash['file_name']
+        entry.attachments[0].attachment_type.should == "B3 Recap"
+      end
     end
   end
 
