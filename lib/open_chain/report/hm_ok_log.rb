@@ -23,7 +23,7 @@ module OpenChain; module Report; class HmOkLog
     self.new.run run_by, settings
   end
 
-  def run run_by, settings
+  def run run_by, settings={}
     wb = Spreadsheet::Workbook.new
     ['East','West'].each {|coast| run_coast(wb,coast)}
     run_unmatched wb
