@@ -25,7 +25,8 @@ module OpenChain; module Report; class HmOkLog
 
   def run run_by, settings
     wb = Spreadsheet::Workbook.new
-    ['East','West'].each {|coast| run_coast}
+    ['East','West'].each {|coast| run_coast(wb,coast)}
+    run_unmatched wb
     workbook_to_tempfile wb, 'HmOKLog-'
   end
 
@@ -62,7 +63,6 @@ QRY
     table_from_query sheet, qry 
   end
   def run_coast wb, coast
-    coast = settings[:coast]
     raise "Invalid coast." unless ['east','west'].include? coast.downcase
     tz = coast.downcase=='west' ? 'US/Pacific' : 'US/Eastern'
     qry = <<QRY
