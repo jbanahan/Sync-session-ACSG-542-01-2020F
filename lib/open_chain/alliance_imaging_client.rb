@@ -62,6 +62,9 @@ class OpenChain::AllianceImagingClient
               when /_RNS_/i
                 attachment_type = "Customs Release Notice"
                 delete_previous_file_versions = true
+              when /_recap_/i
+                attachment_type = "B3 Recap"
+                delete_previous_file_versions = true
             end
           end
         else
