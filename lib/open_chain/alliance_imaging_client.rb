@@ -82,8 +82,20 @@ class OpenChain::AllianceImagingClient
               att.alliance_revision = hsh["suffix"][0,2]
             end
             att.source_system_timestamp = hsh["doc_date"]
+
+            # If we have an alliance_revision number, we need to make sure there's no other attachments out there that have a higher revision number already.
+            # This can happen in scenarios where we're pulling in images for entries that haven't been updated in a little while where the message queue 
+            # info comes out of order (.ie revision 1 is sent to VFI Track prior to revision 0).  There's no real ordering of the data in Kewill Imaging either
+            # so we don't actually get the document lists from them based on the order they're attached as well, so it's very possible the message queue ordering
+            # is not ordered correctly by revision
+            return if !att.alliance_revision.blank? && !att.alliance_suffix.blank? &&
+                att.attachable.attachments.where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision > ?",att.alliance_revision).size > 0
+
             att.save!
-            att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision <= ?",att.alliance_revision).destroy_all
+            
+            if !att.alliance_revision.blank? && !att.alliance_suffix.blank?
+              att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision <= ?",att.alliance_revision).destroy_all
+            end
 
             if delete_previous_file_versions
               att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all

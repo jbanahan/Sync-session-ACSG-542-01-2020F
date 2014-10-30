@@ -100,6 +100,29 @@ describe OpenChain::AllianceImagingClient do
       entry.attachments[0].source_system_timestamp.should_not be_nil
     end
 
+    it "skips alliance files that already have revisions higher than the one received" do
+      @hash['suffix'] = '00000'
+
+      existing = @e1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: @hash['doc_desc']
+
+      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+      @e1.reload
+      expect(@e1.attachments.size).to eq 1
+      expect(@e1.attachments.first).to eq existing
+    end
+
+    it "deletes previous versions of the same attachment type / alliance suffix type" do
+      existing = @e1.attachments.create! alliance_suffix: '000', alliance_revision: 0, attachment_type: @hash['doc_desc']
+
+      @hash['suffix'] = '01000'
+      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+      @e1.reload
+      expect(@e1.attachments.size).to eq 1
+      expect(@e1.attachments.first.alliance_revision).to eq 1
+    end
+
     context "Fenix B3 Files" do
       before :each do 
         @hash["source_system"] = 'Fenix'
