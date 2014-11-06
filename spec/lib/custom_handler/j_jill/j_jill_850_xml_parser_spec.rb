@@ -23,6 +23,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       run_file
     end
     it "should save order" do
+      cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
       Order.any_instance.should_not_receive(:reopen!).with(instance_of(User))
       expect {run_file}.to change(Order,:count).from(0).to(1)
       o = Order.first
@@ -57,12 +58,15 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(ol1.price_per_unit).to eq 16.4
       expect(ol1.sku).to eq '28332664'
       expect(ol1.hts).to eq '6109100060'
+      expect(ol1.get_custom_value(cdefs[:size]).value).to eq 'XSP'
+      expect(ol1.get_custom_value(cdefs[:color]).value).to eq 'DPBLUEMLT'
 
       p1 = ol1.product
       expect(p1.unique_identifier).to eq 'JJILL-04-1024'
       expect(p1.name).to eq 'SPACE-DYED COTTON PULLOVER'
-      cdefs = described_class.prep_custom_definitions [:vendor_style]
+      expect(p1.unit_of_measure).to eq 'EA'
       expect(p1.get_custom_value(cdefs[:vendor_style]).value).to eq '04-1024'
+      # expect(p1.get_custom_value(cdefs[:fish_wildlife]).value).to be_true
 
       expect(o.entity_snapshots.count).to eq 1
     end

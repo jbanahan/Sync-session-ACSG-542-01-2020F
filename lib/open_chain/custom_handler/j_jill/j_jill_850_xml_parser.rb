@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     @inner_opts = @inner_opts.merge opts
     @jill = Company.find_by_system_code UID_PREFIX
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:vendor_style]
+    @cdefs = self.class.prep_custom_definitions self.class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
     raise "Company with system code #{UID_PREFIX} not found." unless @jill
   end
 
@@ -73,6 +73,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
     if update_header || update_lines
       ord.save! 
+      update_line_custom_values ord
       EntitySnapshot.create_from_entity ord, @user
     end
 
@@ -140,12 +141,45 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       ol.sku = et po1_el, 'PO109'
       ol.hts = et(po1_el,'PO115',true).gsub(/\./,'')
       ol.product = parse_product group_el
+      add_placeholder_fields_to_order_line ol, po1_el
+    end
+  end
+
+  def add_placeholder_fields_to_order_line ol, po1_el
+    #we can't write the custom values to the order lines until they're saved in the database,
+    #so we'll store the values in placeholder fields that we can then loop through in the 
+    #update_line_custom_values field after the save is done
+    def ol.ph_color= x; @ph_color = x; end
+    def ol.ph_color; @ph_color; end
+    def ol.ph_size= x; @ph_size = x; end
+    def ol.ph_size; @ph_size; end
+
+    ol.ph_color = et po1_el, 'PO113'
+    ol.ph_size = et po1_el, 'PO119'
+  end
+
+  def update_line_custom_values ord
+    #since we can't write custom values when we're parsing because the records haven't been saved
+    #we'll loop the objects after save and save the values here based on the placeholders we set
+    #during parsing in the add_placeholder_fields_to_order_line
+    #
+    #the respond_to? checks are there because we may encounter existing order lines that haven't
+    #been touched by this parsing run
+    ord.order_lines.each do |ol|
+      ol.update_custom_value! @cdefs[:color], ol.ph_color if ol.respond_to? :ph_color
+      ol.update_custom_value! @cdefs[:size], ol.ph_size if ol.respond_to? :ph_size
     end
   end
   def parse_product group_11
     po1_el = REXML::XPath.first(group_11,'PO1')
     prod_uid = "#{UID_PREFIX}-#{et po1_el, 'PO111'}"
     p = Product.where(importer_id:@jill.id,unique_identifier:prod_uid).first_or_create!(name:REXML::XPath.first(group_11,'LIN/LIN03').text)
+    uom = et po1_el, 'PO103'
+    if uom != p.unit_of_measure
+      p.unit_of_measure = uom
+      p.save!
+      EntitySnapshot.create_from_entity p, @user
+    end
     cv = p.get_custom_value(@cdefs[:vendor_style])
     vendor_style = et(po1_el,'PO111')
     if cv.value != vendor_style
@@ -184,6 +218,8 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     vendor.linked_companies << f if vendor && !vendor.linked_companies.include?(f)
     f
   end
+
+
   def parse_refs parent
     r = {}
     parent.each_element('REF') do |ref_el|
