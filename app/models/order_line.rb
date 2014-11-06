@@ -10,6 +10,10 @@ class OrderLine < ActiveRecord::Base
 	
   validates_uniqueness_of :line_number, :scope => :order_id	
 
+  def total_cost 
+    return 0 if self.price_per_unit.blank? || self.quantity.blank?
+    self.price_per_unit * self.quantity
+  end
 
 	def related_shipments
 	  rVal = Set.new

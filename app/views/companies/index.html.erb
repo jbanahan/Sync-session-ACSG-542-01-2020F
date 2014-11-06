@@ -17,31 +17,33 @@
 <table class="detail_table">
   <thead>
     <th><%=sortable_search_heading 'c_name'%></th>
-    <th><%=sortable_search_heading 'car_bool'%></th>
-    <th><%=sortable_search_heading 'cus_bool'%></th>
-    <th><%=sortable_search_heading 'v_bool'%></th>
-    <th><%=sortable_search_heading 'imp_bool'%></th>
+    <th><%=sortable_search_heading 'c_sys_code'%></th>
     <% if @include_alliance %>
       <th><%=sortable_search_heading 'a_cust'%></th>
     <% end %>
     <% if @include_fenix%>
       <th><%=sortable_search_heading 'a_cust_f'%></th>
     <%end%>
+    <th><%=sortable_search_heading 'car_bool'%></th>
+    <th><%=sortable_search_heading 'cus_bool'%></th>
+    <th><%=sortable_search_heading 'v_bool'%></th>
+    <th><%=sortable_search_heading 'imp_bool'%></th>
   </thead>
 
 <% @companies.each do |company| %>
   <tr class='hover'>
     <td><%= link_to company.name, company %><%=company.locked? ? raw(" - <span class='exception_value'>[LOCKED]</span>") : ''%></td>
-    <td><%= bool_txt company.carrier? %></td>
-    <td><%= bool_txt company.customer? %></td>
-    <td><%= bool_txt company.vendor?%></td>
-    <td><%= bool_txt company.importer? %></td>
+    <td><%=company.system_code%></td>
     <% if @include_alliance %>
       <td><%=company.alliance_customer_number%></td>
     <% end %>
     <% if @include_fenix%>
       <td><%=company.fenix_customer_number%></td>
     <% end %>
+    <td><%= bool_txt company.carrier? %></td>
+    <td><%= bool_txt company.customer? %></td>
+    <td><%= bool_txt company.vendor?%></td>
+    <td><%= bool_txt company.importer? %></td>
   </tr>
 <% end %>
 </table>

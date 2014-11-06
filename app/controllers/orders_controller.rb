@@ -18,7 +18,13 @@ class OrdersController < ApplicationController
         @order = o
         @products = Product.where(["vendor_id = ?",@order.vendor])
         respond_to do |format|
-            format.html # show.html.erb
+            format.html {
+              if @order.importer.order_view_template.blank?
+                render
+              else
+                render @order.importer.order_view_template
+              end
+            }
             format.xml  { render :xml => @order }
             format.json { render :json => @order.to_json(:only=>[:id,:order_number], :include=>{
               :order_lines => {:only=>[:line_number,:quantity,:id], :include=>{:product=>{:only=>[:id,:name]}}}  

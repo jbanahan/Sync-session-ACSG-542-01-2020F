@@ -1,0 +1,248 @@
+<%cache @order, 'jjillorder' do%>
+<% 
+require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
+my_k = Class.new do
+  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
+end
+cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_style,:ship_type,:fish_wildlife]
+%>
+<style type="text/css">
+  @media print {
+    @page {size: landscape}
+  }
+  .ord-header {
+    width: 100%;
+  }
+  .ord-header td {
+    vertical-align: top;
+  }
+</style>
+<% content_for :javascript do %>
+  $("window").ready(function() {
+    $("[data-toggle='popover']").popover({html:true});
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
+  <% if @order.can_close?(current_user)%>
+    <% if @order.closed? %>
+      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% else %>
+      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% end %>
+  <% end %>
+  <% if @order.can_accept?(current_user)%>
+    <% if @order.approval_status=='Accepted' %>
+      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% else %>
+      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% end %>
+  <% end %>
+  <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
+  <button onclick="window.print();">Print</button>
+<% end %>
+
+<div class="container">
+  <% if @order.closed? %>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+              <h3 class="panel-title">Order Closed</h3>
+            </div>
+            <div class="panel-body">
+              Order closed <%=@order.closed_at%> <%if @order.closed_by%>by <%=@order.closed_by.full_name%><%end%>
+            </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  <div class="row">
+    <div class="col-md-12">
+      <h1 class='text-center'>J. Jill Purchase Order</h1>
+    </div>
+  </div>
+  <div class="row">    
+    <div class="col-md-12">
+      <label>Ship To</label>
+      <div>
+        <%=  render :partial => 'addresses/display', :locals => { :ad => @order.ship_to, :name_override=>'Jill Acquisition LLC' } %>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table-bordered table-condensed ord-header">
+        <tr>
+          <td>
+            <label>PO #</label>
+            <div><%=field_value @order, :ord_cust_ord_no%></div>
+          </td>
+          <td>
+            <label>Issued By</label>
+            <div><%=field_value @order, :ord_imp_name%></div>
+          </td>
+          <td>
+            <label>Agent</label>
+            <div><%=field_value @order, :ord_agent_name%></div>
+          </td>
+          <td>
+            <label>Vendor</label>
+            <div><%=field_value @order, :ord_ven_name%></div>
+          </td>
+          <td>
+            <label>Vendor ID</label>
+            <div><%=@order.vendor ? @order.vendor.system_code.gsub('JJILL-','') : nil%></div>
+          </td>
+        </tr>
+      </table>
+      <table class="table-bordered table-condensed ord-header">
+        <tr>
+          <td>
+            <label>Created</label>
+            <div><%=field_value @order, :ord_ord_date%></div>
+          </td>
+          <td>
+            <label>Open</label>
+            <div><%=field_value @order, :ord_window_start%></div>
+          </td>
+          <td>
+            <label>Close</label>
+            <div><%=field_value @order, :ord_window_end%></div>
+          </td>
+          <td>
+            <label>Requested Delivery</label>
+            <div><%=field_value @order, :ord_first_exp_del%></div>
+          </td>
+          <td>
+            <label>Factory</label>
+            <div><%=field_value @order, :ord_factory_name%></div>
+          </td>
+          <td>
+            <label>Total PO</label>
+            <div>$<%=@order.order_lines.inject(0) { |mem, var| mem+var.total_cost }%></div>
+          </td>
+          <td>
+            <label>Mode</label>
+            <div><%=field_value @order, :ord_mode%></div>
+          </td>
+        </tr>
+      </table>
+      <table class="table-bordered table-condensed ord-header">
+        <tr>
+          <td>
+            <label>Delivery Warehouse</label>
+            <div><%=@order.ship_to ? @order.ship_to.system_code : nil%></div>
+          </td>
+          <td>
+            <label>Terms</label>
+            <div><%=field_value @order, :ord_terms%></div>
+          </td>
+          <td>
+            <label>Origin Port</label>
+            <div><%=field_value @order, :ord_fob_point%></div>
+          </td>
+          <td>
+            <label>Origin Country</label>
+            <div><%=field_value @order, :ord_fob_point%></div>
+          </td>
+          <td>
+            <label>Destination Port</label>
+            <div><%=field_value @order, cdefs[:entry_port_name].model_field_uid.to_sym%></div>
+          </td>
+          <td>
+            <label>Ship Via</label>
+            <div><%=field_value @order, cdefs[:ship_type].model_field_uid.to_sym%></div>
+          </td>
+          <td>
+            <label>Season</label>
+            <div><%=field_value @order, :ord_season%></div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table table-condensed table-striped table-bordered">
+        <thead>
+          <th>Itm #</th>
+          <th>Vend Style</th>
+          <th>J Jill Item</th>
+          <th>Color</th>
+          <th>Size</th>
+          <th>Fish &amp;<br/>Wildlife</th>
+          <th>Qty</th>
+          <th>UOM</th>
+          <th>Unit Price</th>
+          <th>Description</th>
+          <th>HTS</th>
+          <th class='no-print'></th>
+        </thead>
+        
+        <tbody>
+          <% @order.order_lines.each do |line| %>
+            <tr class='hover ord_det_row'>
+              <td><%=line.sku%></td>
+              <td data-container='body' data-toggle="popover" data-trigger="hover" data-placement="auto" data-content="<%=ModelField.find_by_uid(:prod_name).label%>: <%=ModelField.find_by_uid(:prod_name).process_export(line.product,current_user)%>">
+                <%display_uid = line.product.unique_identifier.sub('JJILL-','')%>
+                <%-if line.product.can_view?(current_user)-%>
+                  <%=link_to(display_uid, product_path(line.product)) %>
+                <%-else-%>
+                  <%=display_uid%>
+                <%-end-%>
+              </td>
+              <td><%=line.product.get_custom_value(cdefs[:importer_style]).value%></td>
+              <td><%=line.get_custom_value(cdefs[:color]).value%></td>
+              <td><%=line.get_custom_value(cdefs[:size]).value%></td>
+              <td><%=line.product.get_custom_value(cdefs[:fish_wildlife]).value.blank? ? 'NO' : 'YES'%></td>
+              <td><%=line.quantity %></td>
+              <td><%=line.product.unit_of_measure %></td>
+              <td><%=line.price_per_unit %></td>
+              <td><%=line.product ? line.product.name : nil%></td>
+              <td><%=field_value line, :ordln_hts%></td>
+              <td class='no-print'>
+                <a class='btn btn-xs btn-default' id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
+                <a class='btn btn-xs btn-default' id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
+              </td>
+            </tr>
+            <tr style='display:none;' id='det_<%=line.id%>'>
+              <td></td>
+                <td colspan='8' >
+                  <%=field_bootstrap 'Shipped', line.shipped_qty%>
+                  <%=field_bootstrap 'Received', line.received_qty%>
+                  <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
+                    <div>Shipment: <%=link_to s.reference, s%></div>
+                  <%end%>
+                </td>
+            </tr>
+          <%end %> 
+          <tr>
+            <td colspan='6'>
+              <label>Total Lines:</label> <%=@order.order_lines.size%>
+            </td>
+            <td colspan='5'>
+              <label>Total Quantity:</label> <%=@order.order_lines.inject(0) { |mem, var| mem+var.quantity }%>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
+    </div>
+    <div class="col-md-6">
+      <%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12 text-right">
+      <em>For purchase terms &amp; conditions, please refer to the J. Jill Vendor Manual.</em>
+    </div>
+  </div>
+</div>
+<%=secure_link @order, current_user%>
+<%end%>

@@ -1,6 +1,6 @@
 <div <%=local_assigns.has_key?(:address_id) ? "id='#{address_id}'" : ""%>>
 <% unless ad.nil? %>
-<b><%= ad.name %></b><br />
+<b><%= local_assigns.has_key?(:name_override) ? name_override : ad.name %></b><br />
 <% unless ad.line_1.blank? %><%= ad.line_1 %><br /><% end %>
 <% unless ad.line_2.blank? %><%= ad.line_2 %><br /><% end %>
 <% unless ad.line_3.blank? %><%= ad.line_3 %><br /><% end %>

@@ -69,10 +69,11 @@ $(function() {
 <%=field_row "Factory", bool_txt(@company.factory?)%>
 <%=field_row "Importer", bool_txt(@company.importer?)%>
 <%=field_row "Vendor", bool_txt(@company.vendor?) %>
-<%=field_row("Alliance Customer Number", @company.alliance_customer_number) if @company.alliance_customer_number%>
-<%=field_row("Fenix Customer Number", @company.fenix_customer_number) if @company.fenix_customer_number%>
-<%=field_row("ECellerate Customer Number", @company.ecellerate_customer_number) if @company.ecellerate_customer_number%>
+<%=field_row("Alliance Customer Number", @company.alliance_customer_number) if !@company.alliance_customer_number.blank?%>
+<%=field_row("Fenix Customer Number", @company.fenix_customer_number) if !@company.fenix_customer_number.blank?%>
+<%=field_row("ECellerate Customer Number", @company.ecellerate_customer_number) if !@company.ecellerate_customer_number.blank?%>
 <%=field_row "Internal System ID Number", @company.id %>
+<%=field_row "Importer's Custom Order View Page", @company.order_view_template if !@company.order_view_template.blank?%>
 </table>
 
 <%= render :partial => 'shared/attachments', :locals => { :attachable => @company } %>

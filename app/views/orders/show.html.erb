@@ -156,7 +156,7 @@
           <td><%= line.product.unit_of_measure %></td>
           <td><%= line.price_per_unit %></td>
           <td><%= line.currency%></td>
-          <td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
+          <td><%= line.total_cost %></td>
           <td>
             <% if @order.can_edit?(current_user) && !@order.locked?%>
               <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>

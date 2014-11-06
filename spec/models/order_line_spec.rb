@@ -1,6 +1,17 @@
 require 'spec_helper'
 
 describe OrderLine do
+  describe :total_cost do
+    it "should multiply" do
+      expect(OrderLine.new(price_per_unit:7,quantity:4).total_cost).to eq 28
+    end
+    it "should handle nil price per unit" do
+      expect(OrderLine.new(price_per_unit:nil,quantity:4).total_cost).to eq 0
+    end
+    it "should handle nil quantity" do
+      expect(OrderLine.new(price_per_unit:7,quantity:nil).total_cost).to eq 0
+    end
+  end
   describe :shipped_qty do
     it "should get quantity from piece sets linked to shipment lines" do
       ol = OrderLine.new

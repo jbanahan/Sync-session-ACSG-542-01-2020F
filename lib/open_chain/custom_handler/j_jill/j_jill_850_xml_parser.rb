@@ -11,6 +11,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   extend OpenChain::IntegrationClientParser
 
   SHIP_MODES ||= {'A'=>'Air','B'=>'Ocean'}
+  SHIP_VIA_CODES ||= {'2'=>'Air Collect','3'=>'Boat','4'=>'Air Prepaid','5'=>'Air Sea Diff'}
   def self.integration_folder
     ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_jjill_850"]
   end
@@ -73,6 +74,8 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
     if update_header || update_lines
       ord.save! 
+      ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
+      ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
       update_line_custom_values ord
       EntitySnapshot.create_from_entity ord, @user
     end
@@ -127,7 +130,36 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     ord.order_date = parse_date_string(REXML::XPath.first(order_root,'BEG/BEG05').text)
     ord.mode = ship_mode(REXML::XPath.first(order_root,'TD5/TD504').text)
     ord.fob_point = REXML::XPath.first(order_root,'FOB/FOB07').text
+    ord.season = REXML::XPath.first(order_root,"REF[REF01 = 'ZZ']/REF02").text
+    ord.terms_of_sale = REXML::XPath.first(order_root,'ITD/ITD12').text
     parse_header_dtm(order_root,ord)
+    set_ship_to ord, order_root
+  end
+
+  def set_ship_to ord, order_root
+    st = Address.new(company_id:@jill.id)
+    ship_to_root = REXML::XPath.first(order_root,"GROUP_5[N1/N101='ST']")
+    return unless ship_to_root
+    n1 = REXML::XPath.first(ship_to_root,'N1')
+    n4 = REXML::XPath.first(ship_to_root,'N4')
+    st.name = et n1, 'N102'
+    st.system_code = et n1, 'N104'
+    st.line_1 = 'RECEIVING'
+    st.line_2 = et(REXML::XPath.first(ship_to_root,'N3'),'N301')
+    st.city = et n4, 'N401'
+    st.state = et n4, 'N402'
+    st.postal_code = et n4, 'N403'
+    st.country = (et(n4,'N404')=='USA' ? Country.find_by_iso_code('US') : nil)
+
+    hash_key = Address.make_hash_key st
+    found_address = Address.find_by_address_hash_and_company_id hash_key, @jill.id
+    if found_address
+      ord.ship_to = found_address
+    else
+      st.save!
+      ord.ship_to = st
+    end
+    nil #return
   end
   def parse_lines order, order_root
     line_number = 1
@@ -186,8 +218,15 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       cv.value = vendor_style
       cv.save!
     end
+    imp_cv = p.get_custom_value(@cdefs[:importer_style])
+    importer_style = et(po1_el,'PO107')
+    if imp_cv.value != importer_style
+      imp_cv.value = importer_style
+      imp_cv.save!
+    end
     p
   end
+
   def find_or_create_vendor vendor_ref
     return nil if vendor_ref.nil?
     v = Company.find_by_system_code "#{UID_PREFIX}-#{vendor_ref[0]}"

@@ -7,6 +7,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       Factory(:master_user,username:'integration')
       @path = 'spec/support/bin/jjill850sample.xml'
       @c = Factory(:company,importer:true,system_code:'JJILL')
+      @us = Factory(:country,iso_code:'US')
     end
     def run_file opts = {}
       described_class.parse(IO.read(@path), opts)
@@ -52,6 +53,21 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.last_revised_date).to eq Date.new(2014,7,29)
       expect(o.mode).to eq 'Ocean'
       expect(o.fob_point).to eq 'CN'
+      expect(o.terms_of_sale).to eq 'OA 60 DAYS FROM FCR'
+      expect(o.season).to eq '1501'
+      expect(o.get_custom_value(cdefs[:entry_port_name]).value).to eq 'Boston'
+      expect(o.get_custom_value(cdefs[:ship_type]).value).to eq 'Boat'
+      
+      st  = o.ship_to
+      expect(st.system_code).to eq '0101'
+      expect(st.name).to eq 'J JILL'
+      expect(st.line_1).to eq 'RECEIVING' #hard coded
+      expect(st.line_2).to eq '100 BIRCH POND DRIVE'
+      expect(st.city).to eq 'TILTON'
+      expect(st.state).to eq 'NH'
+      expect(st.postal_code).to eq '03276'
+      expect(st.country).to eq @us
+      expect(st.company).to eq @c
 
       expect(o.order_lines.count).to eq 4
       ol1 = o.order_lines.first
@@ -66,9 +82,17 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(p1.name).to eq 'SPACE-DYED COTTON PULLOVER'
       expect(p1.unit_of_measure).to eq 'EA'
       expect(p1.get_custom_value(cdefs[:vendor_style]).value).to eq '04-1024'
+      expect(p1.get_custom_value(cdefs[:importer_style]).value).to eq '014932'
       # expect(p1.get_custom_value(cdefs[:fish_wildlife]).value).to be_true
 
       expect(o.entity_snapshots.count).to eq 1
+    end
+    it "should reuse same address based on hash" do
+      st  = @c.addresses.create!(system_code:'0101',name:'J JILL',
+        line_1:'RECEIVING',line_2:'100 BIRCH POND DRIVE',
+        city:'TILTON',state:'NH',postal_code:'03276',country_id:@us.id)
+      expect {run_file}.to change(Order,:count).from(0).to(1)
+      expect(Order.first.ship_to).to eq st
     end
     it "should set mode to Air for 'A'" do
       dom = REXML::Document.new(IO.read(@path))

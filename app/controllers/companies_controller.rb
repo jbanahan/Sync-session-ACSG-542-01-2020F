@@ -4,6 +4,7 @@ class CompaniesController < ApplicationController
   # GET /companies.xml
   SEARCH_PARAMS = {
     'c_name' => {:field => 'name', :label=> 'Name'},
+    'c_sys_code' => {:field => 'system_code', :label=>'System Code'},
     'v_bool' => {:field => 'vendor', :label => 'Is A Vendor', :datatype => :boolean},
     'car_bool' => {:field => 'carrier', :label => 'Is A Carrier', :datatype => :boolean},
     'cus_bool' => {:field => 'customer', :label => 'Is A Customer', :datatype => :boolean},
