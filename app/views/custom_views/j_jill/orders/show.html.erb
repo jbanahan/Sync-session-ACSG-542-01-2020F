@@ -1,4 +1,4 @@
-<%cache @order, 'jjillorder' do%>
+<%cache [@order, 'jjillorder'] do%>
 <% 
 require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 my_k = Class.new do
@@ -232,9 +232,11 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
   </div>
   <div class="row">
     <div class="col-md-6">
+      <%# Template Dependency: shared/comments %>
       <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
     </div>
     <div class="col-md-6">
+      <%# Template Dependency: shared/attachments %>
       <%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
     </div>
   </div>
