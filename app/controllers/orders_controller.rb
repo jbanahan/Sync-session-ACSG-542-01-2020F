@@ -22,7 +22,7 @@ class OrdersController < ApplicationController
               if @order.importer.order_view_template.blank?
                 render
               else
-                render @order.importer.order_view_template
+                render template: @order.importer.order_view_template.to_s
               end
             }
             format.xml  { render :xml => @order }
