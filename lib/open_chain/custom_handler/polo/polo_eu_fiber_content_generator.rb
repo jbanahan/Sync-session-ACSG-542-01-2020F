@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloEuFiberContentGen
   
   def initialize opts={}
     super(opts)
-    @cdefs = self.class.prep_custom_definitions [:merch_division,:fiber_content,:csm_numbers]
+    @cdefs = self.class.prep_custom_definitions [:merch_division,:fiber_content,:csm_numbers,:season]
   end
 
   def generate
@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloEuFiberContentGen
     u = c.users.where(username:'EU Fiber Content').first
     if u.nil?
      u = c.users.build(username:'EU Fiber Content',first_name:'EU',last_name:'Fiber Content',product_view:true,email:'bug@vandegriftinc.com')
-     u.password = '128ufj8sdf812i'
+     u.password = Random.rand(999999999).to_s
      u.save!
     end
     f = sync_xls
@@ -49,7 +49,8 @@ products.name as 'Name',
 (SELECT string_value FROM custom_values WHERE custom_values.custom_definition_id = #{@cdefs[:fiber_content].id} AND custom_values.customizable_id = products.id) as 'Fiber Content',
 (SELECT hts_1 FROM tariff_records INNER JOIN classifications ON classifications.id = tariff_records.classification_id AND classifications.country_id = (SELECT id from countries WHERE countries.iso_code = 'IT') WHERE classifications.product_id = products.id ORDER BY tariff_records.line_number LIMIT 1) as 'IT HTS',
 (SELECT text_value FROM custom_values WHERE custom_values.custom_definition_id = #{@cdefs[:csm_numbers].id} AND custom_values.customizable_id = products.id) as 'CSM',
-(SELECT string_value FROM custom_values WHERE custom_values.custom_definition_id = #{@cdefs[:merch_division].id} AND custom_values.customizable_id = products.id) as 'Merch Division'
+(SELECT string_value FROM custom_values WHERE custom_values.custom_definition_id = #{@cdefs[:merch_division].id} AND custom_values.customizable_id = products.id) as 'Merch Division',
+(SELECT string_value FROM custom_values WHERE custom_values.custom_definition_id = #{@cdefs[:season].id} AND custom_values.customizable_id = products.id) as 'Season'
 FROM products
 #{Product.need_sync_join_clause(SYNC_CODE)}
 QRY

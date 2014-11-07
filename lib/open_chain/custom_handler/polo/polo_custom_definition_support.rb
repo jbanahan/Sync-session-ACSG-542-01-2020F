@@ -7,6 +7,7 @@ module OpenChain
 
         CUSTOM_DEFINITION_INSTRUCTIONS = {
           :bartho_customer_id=>{:label=>"Barthco Customer ID", :data_type=>:string, :module_type=>'Product'},
+          :season=>{:label=>"Season", :data_type => :string, :module_type=>'Product'},
           :test_style=>{:label=>"Test Style", :data_type=>:string, :module_type=>'Product'},
           :set_type=>{:label=>"Set Type", :data_type=>:string, :module_type=>'Classification'},
           :merch_division=>{:label=>'Merch Div Desc', :data_type=>:string, :module_type=>'Product'},
