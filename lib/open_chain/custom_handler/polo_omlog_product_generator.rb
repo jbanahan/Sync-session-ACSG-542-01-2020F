@@ -63,7 +63,7 @@ tariff_records.hts_2 as 'Tariff - HTS Code 2',
 tariff_records.hts_3 as 'Tariff - HTS Code 3',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_3 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 3 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_3 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 3 - General Rate',"
-        ((9..79).to_a + [132, 137, 142, 147, 102] + (85..94).to_a).each do |i|
+        ((9..79).to_a + [132, 137, 142, 147, 84, 102] + (85..94).to_a).each do |i|
           q << cd_s(i)+","
         end
         q << cd_s(95) 
