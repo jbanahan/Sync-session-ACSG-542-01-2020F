@@ -63,24 +63,23 @@ tariff_records.hts_2 as 'Tariff - HTS Code 2',
 tariff_records.hts_3 as 'Tariff - HTS Code 3',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_3 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 3 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_3 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 3 - General Rate',"
-        (9..84).each do |i|
-          q << cd_s(i)+","
-        end
-        q << cd_s(102)+","
-        (85..94).each do |i|
+        ((9..79).to_a + [132, 137, 142, 147, 102] + (85..94).to_a).each do |i|
           q << cd_s(i)+","
         end
         q << cd_s(95) 
         q << "
 FROM products
-LEFT OUTER JOIN classifications ON classifications.product_id = products.id
-LEFT OUTER JOIN tariff_records ON tariff_records.classification_id = classifications.id 
-LEFT OUTER JOIN custom_values csm_v on csm_v.custom_definition_id = (SELECT id from custom_definitions where label = 'CSM Number') and customizable_id = products.id 
-#{Product.need_sync_join_clause(sync_code)} " 
-        w = "WHERE classifications.country_id = (SELECT id FROM countries WHERE iso_code = 'IT')
-AND length(tariff_records.hts_1) > 0 and length(csm_v.text_value) > 0 
-AND #{Product.need_sync_where_clause()}"
-        q << (@custom_where ? @custom_where : w)
+INNER JOIN classifications ON classifications.product_id = products.id
+INNER JOIN countries on classifications.country_id = countries.id AND countries.iso_code = 'IT'
+INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id AND length(tariff_records.hts_1) > 0
+INNER JOIN custom_values csm_v on csm_v.custom_definition_id = (SELECT id from custom_definitions where label = 'CSM Number') and customizable_id = products.id AND length(csm_v.text_value) > 0 "
+        # If we have a custom where, then don't add the need_sync join clauses.
+        if @custom_where.blank?
+          q << "\n#{Product.need_sync_join_clause(sync_code)} "
+          q << "\nWHERE #{Product.need_sync_where_clause()}"
+        else
+          q << "\n#{@custom_where}"
+        end
         q
       end
     end
