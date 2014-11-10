@@ -29,7 +29,6 @@ Spork.prefork do
     # instead of true.
     config.use_transactional_fixtures = true
     config.before(:all) do
-      DeferredGarbageCollection.start unless ENV['CIRCLECI']
       WebMock.disable!
     end
     config.before(:each, :type => :controller) do
@@ -49,10 +48,6 @@ Spork.prefork do
       # Counteract the application controller setting MasterSetup.current, which bleeds across multiple tests
       # since it's not unset by the controller.
       MasterSetup.current = nil
-    end
-
-    config.after(:all) do
-      DeferredGarbageCollection.reconsider unless ENV['CIRCLECI']
     end
   end
 end

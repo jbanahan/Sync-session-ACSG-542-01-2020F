@@ -41,9 +41,10 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       @cdefs = described_class.prep_custom_definitions([
         :merch_division,
         :fiber_content,
-        :csm_numbers
+        :csm_numbers, 
+        :season
       ])
-      @headers = ['US Style','Name','Fiber Content','IT HTS','CSM', 'Merch Division']
+      @headers = ['US Style','Name','Fiber Content','IT HTS','CSM', 'Merch Division', "Season"]
     end
     def do_sync 
       r = []
@@ -55,10 +56,11 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       p.update_custom_value!(@cdefs[:merch_division],'MD')
       p.update_custom_value!(@cdefs[:fiber_content],'FC')
       p.update_custom_value!(@cdefs[:csm_numbers],'CSM')
+      p.update_custom_value!(@cdefs[:season],'SEA')
       c = Factory(:classification,country:@italy,product:p)
       t = Factory(:tariff_record,hts_1:'1234567890',classification:c)
       expect(do_sync).to eq [@headers,[
-        'UID','NM','FC','1234567890','CSM','MD'
+        'UID','NM','FC','1234567890','CSM','MD', 'SEA'
         ]]
       expect(p.sync_records.find_by_trading_partner("eu_fiber_content").fingerprint).to eq 'FC'
     end
@@ -67,11 +69,12 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       p.update_custom_value!(@cdefs[:merch_division],'MD')
       p.update_custom_value!(@cdefs[:fiber_content],'FC')
       p.update_custom_value!(@cdefs[:csm_numbers],'CSM')
+      p.update_custom_value!(@cdefs[:season],'SEA')
       c = Factory(:classification,country:@italy,product:p)
       t = Factory(:tariff_record,hts_1:'1234567890',classification:c)
       p.sync_records.create!(trading_partner:'eu_fiber_content',fingerprint:'OTHER',sent_at:1.day.ago,confirmed_at:1.hour.ago)
       expect(do_sync).to eq [@headers,[
-        'UID','NM','FC','1234567890','CSM','MD'
+        'UID','NM','FC','1234567890','CSM','MD', 'SEA'
         ]]
       expect(p.sync_records.find_by_trading_partner("eu_fiber_content").fingerprint).to eq 'FC'
     end
