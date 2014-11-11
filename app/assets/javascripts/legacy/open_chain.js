@@ -404,7 +404,8 @@ var OCSurvey = (function() {
       if(id && id < 10000000) {
         h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][id]' value='"+mid+"' />";
       }
-      h += "<div id='qb-"+mid+"'><img src='/assets/drag_handle.gif' alt='move' class='question_handle'/>Question Body:</div><textarea id='q_"+mid+"' class='q_area' name='survey[questions_attributes]["+mid+"][content]' rows='8'>"+content+"</textarea><br/>";
+      h += "<div id='qb-"+mid+"'><img src='/assets/drag_handle.gif' alt='move' class='question_handle'/>Question Body:</div><textarea id='q_"+mid+"' class='q_area' q-id='"+mid+"' name='survey[questions_attributes]["+mid+"][content]' rows='8'>"+content+"</textarea><br/>";
+      h += "<div style='display:none;' id='q_error_"+mid+"' class='text-danger'></div>";
       h += "<a href='#' class='q_preview' qid='"+mid+"'>Preview</a><br />";
       h += "Possible Answers: (put one answer on each line)<br/><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
       h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"

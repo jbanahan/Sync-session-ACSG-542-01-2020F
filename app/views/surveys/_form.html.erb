@@ -45,6 +45,18 @@
       OCSurvey.copyQuestion($(this).attr('qid'));
     });
     $("#questions").sortable({handle:'.question_handle',axis:'y'});
+    $("#questions").on('change','textarea.q_area',function(event) {
+      var t, val, mid, errorBox;
+      t = event.target;
+      val = $(t).val();
+      mid = $(t).attr('q-id');
+      errorBox = $('#q_error_'+mid)
+      if(val.length < 10) {
+        errorBox.html('Question must be at least 10 characters.').show();
+      } else {
+        errorBox.html('').hide();
+      }
+    });
     $("#frm_svy").submit(function() {
       ChainSurveys.applyRankToQuestions();
     });
