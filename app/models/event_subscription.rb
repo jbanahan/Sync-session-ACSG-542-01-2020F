@@ -24,7 +24,7 @@ class EventSubscription < ActiveRecord::Base
     case event_type
     when /COMMENT_CREATE$/
       return Comment.find(object_id).commentable
-    when 'ORDER_CLOSE' || 'ORDER_REOPEN'
+    when 'ORDER_CLOSE', 'ORDER_REOPEN', 'ORDER_UPDATE', 'ORDER_CREATE', 'ORDER_ACCEPT', 'ORDER_UNACCEPT'
       return Order.find(object_id)
     end
   end

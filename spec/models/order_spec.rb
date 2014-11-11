@@ -1,6 +1,46 @@
 require 'spec_helper'
 
 describe Order do
+  describe 'post_create_logic' do
+    before :each do
+      @u = Factory(:master_user)
+      @o = Factory(:order)
+      OpenChain::EventPublisher.should_receive(:publish).with(:order_create,@o)
+    end
+
+    it 'should run' do
+      @o.should_receive(:create_snapshot_with_async_option).with(false,@u)
+      @o.post_create_logic!(@u)
+    end
+    it 'should run async' do
+      @o.should_receive(:create_snapshot_with_async_option).with(true,@u)
+      @o.post_create_logic!(@u,true)
+    end
+    it 'should run async method' do
+      @o.should_receive(:create_snapshot_with_async_option).with(true,@u)
+      @o.async_post_create_logic!(@u)
+    end
+  end
+  describe 'post_update_logic' do
+    before :each do
+      @u = Factory(:master_user)
+      @o = Factory(:order)
+      OpenChain::EventPublisher.should_receive(:publish).with(:order_update,@o)
+    end
+
+    it 'should run' do
+      @o.should_receive(:create_snapshot_with_async_option).with(false,@u)
+      @o.post_update_logic!(@u)
+    end
+    it 'should run async' do
+      @o.should_receive(:create_snapshot_with_async_option).with(true,@u)
+      @o.post_update_logic!(@u,true)
+    end
+    it 'should run async method' do
+      @o.should_receive(:create_snapshot_with_async_option).with(true,@u)
+      @o.async_post_update_logic!(@u)
+    end
+  end
   describe 'accept' do
     before :each do
       @o = Factory(:order)
@@ -12,14 +52,14 @@ describe Order do
     end
 
     it 'should accept' do
-      @o.should_receive(:create_snapshot).with @u
+      @o.should_receive(:create_snapshot_with_async_option).with false, @u
       @o.accept! @u
       @o.reload
       expect(@o.approval_status).to eq 'Accepted'
     end
 
     it 'should accept async' do
-      @o.should_receive(:create_async_snapshot).with @u
+      @o.should_receive(:create_snapshot_with_async_option).with true, @u
       @o.async_accept! @u
       @o.reload
       expect(@o.approval_status).to eq 'Accepted'
@@ -36,14 +76,14 @@ describe Order do
     end
 
     it 'should unaccept' do
-      @o.should_receive(:create_snapshot).with @u
+      @o.should_receive(:create_snapshot_with_async_option).with false, @u
       @o.unaccept! @u
       @o.reload
       expect(@o.approval_status).to eq nil
     end
 
     it 'should unaccept async' do
-      @o.should_receive(:create_async_snapshot).with @u
+      @o.should_receive(:create_snapshot_with_async_option).with true, @u
       @o.async_unaccept! @u
       @o.reload
       expect(@o.approval_status).to eq nil

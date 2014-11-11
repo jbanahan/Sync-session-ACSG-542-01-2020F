@@ -17,6 +17,32 @@ class Order < ActiveRecord::Base
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number', :autosave => true
 	has_many   :piece_sets, :through => :order_lines
 
+
+  ########
+  # Post Create Logic (must be called manually after an order is created in the system to trigger events & snapshots)
+  ########
+  def post_create_logic! user, async_snapshot = false
+    OpenChain::EventPublisher.publish :order_create, self
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+
+  def async_post_create_logic! user
+    self.post_create_logic! user, true
+  end
+
+  ########
+  # Post Update Logic (must be called manually after an order is update in the system to trigger events & snapshots).  This doesn't need to be called every time an order is updated, only when the update is relevant to the user community.
+  ########
+  def post_update_logic! user, async_snapshot = false
+    OpenChain::EventPublisher.publish :order_update, self
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+
+  def async_post_update_logic! user
+    self.post_update_logic! user, true
+  end
+
+
   ########
   # Order Acceptance Logic
   ########
@@ -25,11 +51,7 @@ class Order < ActiveRecord::Base
     self.approval_status = 'Accepted'
     self.save!
     OpenChain::EventPublisher.publish :order_accept, self
-    if async_snapshot
-      self.create_async_snapshot user
-    else
-      self.create_snapshot user
-    end  
+    self.create_snapshot_with_async_option async_snapshot, user
   end
   def async_accept! user
     self.accept! user, true
@@ -38,11 +60,7 @@ class Order < ActiveRecord::Base
     self.approval_status = nil
     self.save!
     OpenChain::EventPublisher.publish :order_unaccept, self
-    if async_snapshot
-      self.create_async_snapshot user
-    else
-      self.create_snapshot user
-    end  
+    self.create_snapshot_with_async_option async_snapshot, user
   end
   def async_unaccept! user
     self.unaccept! user, true
@@ -63,11 +81,7 @@ class Order < ActiveRecord::Base
     self.closed_at = Time.now
     self.save!
     OpenChain::EventPublisher.publish :order_close, self
-    if async_snapshot
-      self.create_async_snapshot user
-    else
-      self.create_snapshot user
-    end
+    self.create_snapshot_with_async_option async_snapshot, user
   end
   #set the order as closed, save!, and take an snapshot in another thread
   def async_close! user
@@ -77,11 +91,7 @@ class Order < ActiveRecord::Base
     self.closed_by = self.closed_at = nil
     self.save!
     OpenChain::EventPublisher.publish :order_reopen, self
-    if async_snapshot
-      self.create_async_snapshot user
-    else
-      self.create_snapshot user
-    end
+    self.create_snapshot_with_async_option async_snapshot, user
   end
   def async_reopen! user
     self.reopen! user, true

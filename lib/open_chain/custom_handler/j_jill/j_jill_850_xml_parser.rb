@@ -91,7 +91,10 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
     fingerprint = generate_fingerprint ord
     fp = DataCrossReference.find_jjill_order_fingerprint(ord)
-    if fingerprint!=fp
+    if fp.blank?
+      ord.post_create_logic! @user
+    elsif fingerprint!=fp
+      ord.post_update_logic! @user
       if !po_assigned_to_shipment && ord.approval_status == 'Accepted'
         ord.unaccept! @user
       end

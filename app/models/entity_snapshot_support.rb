@@ -10,6 +10,14 @@ module EntitySnapshotSupport
     self.entity_snapshots.order("entity_snapshots.id DESC").first
   end
 
+  def create_snapshot_with_async_option async, user=User.current, imported_file=nil
+    if async
+      self.create_async_snapshot user, imported_file
+    else
+      self.create_snapshot user, imported_file
+    end
+  end
+
   def create_snapshot user=User.current, imported_file=nil
     self.update_attributes(:last_updated_by_id=>user.id) if self.respond_to?(:last_updated_by_id)
     EntitySnapshot.create_from_entity self, user, imported_file

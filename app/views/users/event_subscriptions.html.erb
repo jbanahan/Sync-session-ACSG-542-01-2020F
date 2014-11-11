@@ -42,6 +42,14 @@
               <td colspan="2"><strong>Orders</strong></td>
             </tr>
             <tr>
+              <td>Create</td>
+              <td><input type='checkbox' event_type='ORDER_CREATE' sub_type='email' <%=email_subs.include?('ORDER_CREATE') ? 'checked="checked"' : ""%> /></td>
+            </tr>
+            <tr>
+              <td>Update</td>
+              <td><input type='checkbox' event_type='ORDER_UPDATE' sub_type='email' <%=email_subs.include?('ORDER_UPDATE') ? 'checked="checked"' : ""%> /></td>
+            </tr>
+            <tr>
               <td>Close</td>
               <td><input type='checkbox' event_type='ORDER_CLOSE' sub_type='email' <%=email_subs.include?('ORDER_CLOSE') ? 'checked="checked"' : ""%> /></td>
             </tr>

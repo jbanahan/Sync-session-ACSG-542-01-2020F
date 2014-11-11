@@ -20,12 +20,14 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     end
     it "should reopen order where BEG01 not eq to '03'" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',closed_by_id:7,closed_at:Time.now)
+      DataCrossReference.create_jjill_order_fingerprint!(o,'badfingerprint')
       Order.any_instance.should_receive(:reopen!).with(instance_of(User))
+      Order.any_instance.should_receive(:post_update_logic!).with(instance_of(User))
       run_file
     end
     it "should save order" do
       cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
-      Order.any_instance.should_not_receive(:reopen!).with(instance_of(User))
+      Order.any_instance.should_receive(:post_create_logic!).with(instance_of(User))
       expect {run_file}.to change(Order,:count).from(0).to(1)
       o = Order.first
       
@@ -127,6 +129,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     end
     it "should update order" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',approval_status:'Accepted')
+      DataCrossReference.create_jjill_order_fingerprint!(o,'badfingerprint')
       run_file
       o.reload
       expect(o.order_lines.count).to eq 4
