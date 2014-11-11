@@ -126,11 +126,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     result_set.each do |l|
       broker_invoice = !lmd_division?(s(export.division))
 
+      vendor = find_vendor_number s(l["vendor"]), s(l["pay type"])
       # A brokerage payable is any brokerage invoice line that has a vendor
       if broker_invoice 
         # Any line marked a payable is actually a payable
         if l["payable"] == "Y"
-          brokerage_payables[s(l["vendor"])] << l
+          brokerage_payables[vendor] << l
         elsif lmd_division?(s(l["line division"])) && !s(l["freight file number"]).blank?
           # If the division on the line is 11 or 12, then the line becomes a payable to the LMD division from 
           # the brokerage division (essentially the inverse of the LMD receivable lines)
@@ -138,7 +139,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         end
       else
         # If this is an lmd invoice, then every line that's flagged a payable is truly a payable
-        lmd_payables[s(l["vendor"])] << l if s(l["payable"]) == "Y"
+        lmd_payables[vendor] << l if s(l["payable"]) == "Y"
       end
     end
 
@@ -214,7 +215,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         rl.broker_file = (lmd_receivable && !lmd_receivable_from_brokerage) ? nil : s(line["broker file number"])
         rl.freight_file = s line["freight file number"]
         rl.line_of_business = (lmd_receivable ? "Freight" : "Brokerage")
-        rl.vendor_number = find_vendor_number(s(line["vendor"]))
+        rl.vendor_number = find_vendor_number(s(line["vendor"]), s(line["pay type"]))
         rl.vendor_reference = s(line["vendor reference"])
       end
 
@@ -237,7 +238,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
   end
 
   def create_payable export, vendor, payable_lines
-    vendor = find_vendor_number(vendor)
     first_line = payable_lines.first
 
     header_division = export.division
@@ -336,7 +336,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
           # Really all we need here is to set the company, the division and the Line of Business
           # and then adjust the customer and vendor numbers to use the xref'ed values.
           check.customer_number = find_customer_number(check.customer_number)
-          check.vendor_number = find_vendor_number(check.vendor_number)
+          check.vendor_number = find_vendor_number(check.vendor_number, s(first_line["pay type"]))
 
           check.location = first_line["division"]
           lmd_company = lmd_division?(check.location)
@@ -510,7 +510,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       @cust_xref[alliance_customer]
     end
 
-    def find_vendor_number alliance_vendor
+    def find_vendor_number alliance_vendor, pay_type
       # The vast majority of the lookups we do here are going to be for the same value..so just cache it
       @vend_xref ||= {}
 
@@ -520,7 +520,20 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         @vend_xref[alliance_vendor] = (xref.blank? ? alliance_vendor : xref)
       end
 
-      @vend_xref[alliance_vendor]
+      vendor = @vend_xref[alliance_vendor]
+
+      # We're splitting Customs duty vendor into two different buckets.  One for daily
+      # vendor payments and another for the periodic payments.
+      # VU161 = Daily Statements
+      # VU160 = Periodic
+
+      # If pay type is not present, don't translate...we may have non-import data here and pay type
+      # comes from the import entry data
+      if vendor.upcase == "VU160" && !pay_type.blank? && pay_type != "6"
+        vendor = "VU161"
+      end
+
+      vendor
     end
 
     def lmd_identifier line

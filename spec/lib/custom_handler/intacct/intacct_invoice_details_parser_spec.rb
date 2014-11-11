@@ -189,6 +189,22 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(r.customer_number).to eq @customer.value
       expect(r.intacct_receivable_lines.first.vendor_number).to eq @vendor.value
     end
+
+    it "translates VU160 to VU161 when pay type is not 6" do
+      @line['pay type'] = "1"
+      @line['vendor'] = 'VU160'
+
+      r = @p.create_receivable @export, [@line]
+      expect(r.intacct_receivable_lines.first.vendor_number).to eq "VU161"
+    end
+
+    it "does not translate VU160 to VU161 when pay type is 6" do
+      @line['pay type'] = "6"
+      @line['vendor'] = 'VU160'
+
+      r = @p.create_receivable @export, [@line]
+      expect(r.intacct_receivable_lines.first.vendor_number).to eq "VU160"
+    end
   end
 
   describe "create_payable" do
@@ -302,13 +318,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(p).to be_persisted
     end
 
-    it "uses customer and vendor xrefs when available" do
-      @customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @export.customer_number), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
-      @vendor = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['vendor']), value: "VENDOR", cross_reference_type: DataCrossReference::INTACCT_VENDOR_XREF
-
+    it "uses customer xrefs when available" do
+      customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @export.customer_number), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
       p = @p.create_payable @export, @line['vendor'], [@line]
-      expect(p.vendor_number).to eq @vendor.value
-      expect(p.intacct_payable_lines.first.customer_number).to eq @customer.value
+      expect(p.intacct_payable_lines.first.customer_number).to eq customer.value
     end
   end
 
@@ -404,6 +417,30 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(lmd_payable.keys).to have(1).items
 
       expect(lmd_payable[@line["vendor"]]).to have(1).item
+    end
+
+    it "uses vendor xrefs when extracting payables lines" do
+      @line['payable'] = "Y"
+      vendor = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['vendor']), value: "VENDOR", cross_reference_type: DataCrossReference::INTACCT_VENDOR_XREF
+      broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line]
+      expect(broker_payable["VENDOR"]).to_not be_nil
+      expect(broker_payable["VENDOR"].size).to eq 1
+    end
+
+    it "translates VU160 vendor to VU161 when paytype is not 6" do
+      @line['pay type'] = '1'
+      @line['vendor'] = 'VU160'
+
+      broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line]
+      expect(broker_payable["VU161"]).to_not be_nil
+    end
+
+    it "does not translate VU160 vendor to VU161 when paytype is 6" do
+      @line['pay type'] = '6'
+      @line['vendor'] = 'VU160'
+
+      broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line]
+      expect(broker_payable["VU160"]).to_not be_nil
     end
   end
 
