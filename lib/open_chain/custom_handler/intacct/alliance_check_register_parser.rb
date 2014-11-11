@@ -127,7 +127,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
           end
         end
 
-        sql_proxy_client.delay.request_check_details check.file_number, check.suffix, check.check_number, check.check_date, check.bank_number
+        sql_proxy_client.delay.request_check_details check.file_number, check.check_number, check.check_date, check.bank_number
       else
         errors << "Check # #{check_info[:check_number]} has already been sent to Intacct."
       end

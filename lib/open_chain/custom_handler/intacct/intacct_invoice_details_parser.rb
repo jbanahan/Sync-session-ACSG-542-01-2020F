@@ -319,7 +319,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
 
     export = nil
     Lock.acquire(Lock::INTACCT_DETAILS_PARSER, times: 3) do
-      export = IntacctAllianceExport.where(file_number: s(first_line['file number']), suffix: suffix(first_line), check_number: s(first_line['check number']), export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK).first
+      # The result data doesn't include the file suffix, since that's not associated w/ the check in the AP File table (for some reason)
+      export = IntacctAllianceExport.where(file_number: s(first_line['file number']), check_number: s(first_line['check number']), export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK).first
     end
 
     if export

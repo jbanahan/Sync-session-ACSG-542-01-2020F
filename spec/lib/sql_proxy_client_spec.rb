@@ -30,6 +30,11 @@ describe OpenChain::SqlProxyClient do
 
       @c.request_alliance_invoice_details "123", "A"
     end
+
+    it "raises error on errored post" do
+      @http_client.should_receive(:post).and_raise "Error"
+      expect{@c.request_alliance_invoice_details "123", "A"}.to raise_error "Error"
+    end
   end
 
   describe "request_alliance_invoice_numbers_since" do
@@ -73,14 +78,17 @@ describe OpenChain::SqlProxyClient do
     end
   end
 
-  describe "request_advance_checks" do
-    it "requests checks since given date" do
-      now = Time.new 2014, 1, 1, 12, 30
-      request_body = {'sql_params' => {:check_date=>20140101}}
+  describe "request_check_details" do
+    it "requests check details" do
+      request_body = {'sql_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10}}
 
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/open_check_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/check_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @c.request_check_details "123", "456", Date.new(2014, 11, 1), "10"
+    end
 
-      @c.request_advance_checks now
+    it "raises error on failed json post" do
+      @http_client.should_receive(:post).and_raise "Error"
+      expect{@c.request_check_details "123", "456", Date.new(2014, 11, 1), "10"}.to raise_error "Error"
     end
   end
 end

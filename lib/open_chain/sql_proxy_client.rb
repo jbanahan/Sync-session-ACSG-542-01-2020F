@@ -28,18 +28,19 @@ module OpenChain; class SqlProxyClient
     suffix = suffix.blank? ? nil : suffix.strip
     # Alliance/Oracle won't return results if you send a blank string for suffix (since the data is stored like '        '), but will
     # return results if you send a single space instead.
-    request 'invoice_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix)}, request_context
+    request 'invoice_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix)}, request_context, false
   end
 
-  def self.request_check_details file_number, suffix, check_number, check_date, bank_number, request_context = {}
-    self.new.request_check_details file_number, suffix, check_number, check_date, bank_number, request_context
+  def self.request_check_details file_number, check_number, check_date, bank_number, request_context = {}
+    self.new.request_check_details file_number, check_number, check_date, bank_number, request_context
   end
 
-  def request_check_details file_number, suffix, check_number, check_date, bank_number, request_context = {}
-    # Alliance stores the suffix as blank strings...we want that locally as nil in our DB
-    suffix = suffix.blank? ? nil : suffix.strip
-    request 'check_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix), check_number: check_number.to_i, 
-                                check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i}, request_context
+  def request_check_details file_number, check_number, check_date, bank_number, request_context = {}
+    # We're intentionally NOT including the suffix here, because for some reason, Alliance does NOT associate the check data
+    # in the AP File table w/ any file suffix (it's always blank).  The File #, Check #, Check Date, etc are enough to ensure
+    # a unique request, so that's fine.
+    request 'check_details', {:file_number => file_number.to_i, check_number: check_number.to_i, 
+                                check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i}, request_context, false
   end
 
   def self.request_alliance_entry_details file_number, last_exported_from_source
@@ -53,14 +54,6 @@ module OpenChain; class SqlProxyClient
     # Make sure we're keeping the timezone we're sending in eastern time (the alliance parser expects it that way)
     request_context = {"broker_reference" => file_number, "last_exported_from_source" => last_exported_from_source.in_time_zone("Eastern Time (US & Canada)")}
     request 'entry_details', {:file_number => file_number.to_i}, request_context
-  end
-
-  def self.request_advance_checks oldest_check_date
-    self.new.request_advance_checks oldest_check_date
-  end
-
-  def request_advance_checks oldest_check_date
-    request 'open_check_details', {:check_date => oldest_check_date.strftime("%Y%m%d").to_i}, {}
   end
 
   def report_query query_name, query_params = {}, context = {}
