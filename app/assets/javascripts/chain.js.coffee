@@ -304,7 +304,7 @@ root.Chain =
           $('.message_envelope').each () ->
             $(this).html(''+data).css('color','green')
         else
-          $('.message_envelope').each() ->
+          $('.message_envelope').each () ->
             $(this).html('').css('color','#ccc')
     
     
