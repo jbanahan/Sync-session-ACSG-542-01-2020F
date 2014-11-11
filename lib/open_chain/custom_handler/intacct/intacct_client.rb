@@ -29,6 +29,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   end
 
   def self.async_send_dimension type, id, value, company = nil
+    return unless Rails.env.production?
+    
     self.new.send_dimension type, id, value, company
   end
 
@@ -91,40 +93,61 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     receivable.save!
   end
 
-  def send_payable payable
+  def send_payable payable, linked_checks
     begin
-      response = nil
-      function_control_id = nil
-      # Check if we have a check number, if so, that means we're sending a check and not a standard bill
-      if [IntacctPayable::PAYABLE_TYPE_ADVANCED, IntacctPayable::PAYABLE_TYPE_CHECK].include?(payable.payable_type)
-        function_control_id, response = send_check payable
-      else
-        function_control_id, response = send_bill payable
+      # We need to find the vendor terms, there's no straight forward way to accomplish this without first doing
+      # a get request against the API.
+      fields = get_object_fields payable.company, "vendor", payable.vendor_number, "termname"
+      vendor_terms = fields['termname']
+      raise "Failed to retrieve Terms for Vendor #{payable.vendor_number}.  Terms must be set up for all vendors." if vendor_terms.blank?
+
+      payable_control_id, payable_xml = @generator.generate_payable_xml payable, vendor_terms
+
+      all_control_ids = [payable_control_id]
+      check_control_ids = {}
+
+
+      linked_checks.each do |check|
+        control_id, check_xml = @generator.generate_ap_adjustment check, payable
+        payable_xml += check_xml
+        check_control_ids[control_id] = check
+        all_control_ids << control_id
       end
 
-      payable.intacct_key = extract_result_key response, function_control_id
+      # This call will fail if the payable create fails or if any of adjustment calls fail.
+      # The error will then be recorded against the payable (which is good).  Because this is in
+      # a transaction in Intacct too, we're getting the same all or nothing semantics that we expect
+      # from a standard DB transaction.  So, payable + checks are all created or none created - that's good.
+      response = post_xml(payable.company, true, true, payable_xml, all_control_ids)
+
+      check_control_ids.each_pair do |control_id, check|
+        check.intacct_adjustment_key = extract_result_key response, control_id
+        check.save!
+      end
+
+      payable.intacct_key = extract_result_key response, payable_control_id
       payable.intacct_upload_date = Time.zone.now
       payable.intacct_errors = nil
     rescue => e
       payable.intacct_errors = e.message
     end
+
     payable.save!
   end
 
-  def send_bill payable
-    # We need to find the vendor terms, there's no straight forward way to accomplish this without first doing
-    # a get request against the API.
-    fields = get_object_fields payable.company, "vendor", payable.vendor_number, "termname"
-    vendor_terms = fields['termname']
-    raise "Failed to retrieve Terms for Vendor #{payable.vendor_number}.  Terms must be set up for all vendors." if vendor_terms.blank?
+  def send_check check
+    begin
+      function_control_id = nil
+      function_control_id, xml = @generator.generate_check_gl_entry_xml check
+      response = post_xml(check.company, true, true, xml, function_control_id)
 
-    function_control_id, xml = @generator.generate_payable_xml payable, vendor_terms
-    [function_control_id, post_xml(payable.company, true, true, xml, function_control_id)]
-  end
-
-  def send_check payable
-    function_control_id, xml = @generator.generate_check_gl_entry_xml payable
-    [function_control_id, post_xml(payable.company, true, true, xml, function_control_id)]
+      check.intacct_key = extract_result_key response, function_control_id
+      check.intacct_upload_date = Time.zone.now
+      check.intacct_errors = nil
+    rescue => e
+      check.intacct_errors = e.message
+    end
+    check.save!
   end
 
   def get_object_fields location_id, object_name, key, *fields
@@ -144,6 +167,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   # DON'T use this method directly, use the other public feeder methods in this class.  The method
   # is primarily exposed as non-private for simplified testing.
   def post_xml location_id, transaction, unique_request, intacct_content_xml, function_control_id, request_options = {}
+    raise "Cannot post to Intacct in development mode" if Rails.env.development?
+
     connection_options = INTACCT_CONNECTION_INFO.merge(request_options)
 
     uri = URI.parse connection_options[:url]
@@ -154,7 +179,13 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 
     xml = http_request(uri, post)
 
-    handle_error xml, function_control_id
+    # Verify all the control ids passed in resulted in a valid response.
+    # There's no need for this now, but we may need to not fail if transaction == false and multiple control ids
+    # are present.  Since in that scenario, any results w/ non-failed statuses would have taken effect in Intacct.
+    control_ids = function_control_id.respond_to?(:each) ? function_control_id : [function_control_id]
+    control_ids.each {|id| handle_error xml, function_control_id}
+
+    xml
   end
 
   private

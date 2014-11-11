@@ -12,19 +12,19 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     }
     @p = described_class.new
 
-    @export = IntacctAllianceExport.create! file_number: @line['file number'], suffix: @line['suffix']
+    @export = IntacctAllianceExport.create! file_number: @line['file number'], suffix: @line['suffix'], division: "1", ar_total: "12.50", ap_total: "12.50", customer_number: "C", invoice_date: Date.new(2014,1,1), export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE
   end
 
   describe "create_receivable" do
     it "creates a vfi receivable object" do
-      r = @p.create_receivable [@line, @line], true
+      r = @p.create_receivable @export, [@line, @line], true
 
       expect(r.persisted?).to be_true
       expect(r.receivable_type).to eq "VFI Sales Invoice"
       expect(r.company).to eq "vfc"
       expect(r.invoice_number).to eq @line['invoice number']
-      expect(r.invoice_date).to eq Date.strptime @line['invoice date'], "%Y%m%d"
-      expect(r.customer_number).to eq @line['customer']
+      expect(r.invoice_date).to eq @export.invoice_date
+      expect(r.customer_number).to eq @export.customer_number
       expect(r.currency).to eq @line['currency']
       
       expect(r.intacct_receivable_lines).to have(2).items
@@ -42,25 +42,23 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(l.vendor_reference).to eq @line['vendor reference']
       expect(l.location).to eq @line["line division"]
 
-      @export.reload
-      expect(@export.data_received_date.to_date).to eq Time.zone.now.to_date
     end
 
     it "creates a vfi receivable object with LMD lines" do
       @line["line division"] = "11"
 
-      r = @p.create_receivable [@line], true
+      r = @p.create_receivable @export, [@line], true
       expect(r.intacct_receivable_lines).to have(1).item
 
       l = r.intacct_receivable_lines.first
-      expect(l.location).to eq @line['header division']
+      expect(l.location).to eq @export.division
     end
 
     it "creates a credit note object" do
       l2 = @line.dup
       l2['charge amount'] = "-25"
 
-      r = @p.create_receivable [@line, l2], true
+      r = @p.create_receivable @export, [@line, l2], true
       expect(r.persisted?).to be_true
       expect(r.receivable_type).to eq "VFI Credit Note"
 
@@ -71,7 +69,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
 
     it "creates an lmd receivable from brokerage file data" do
       @line['line division'] = "11"
-      r = @p.create_receivable [@line, @line]
+      r = @p.create_receivable @export, [@line, @line]
 
       # Just check the differences in fields between lmd and vfc receivables
       expect(r.customer_number).to eq "VANDE"
@@ -88,7 +86,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       different_receivable = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", lmd_identifier: "DIFFERENT_FILE~#{@line['freight file number']}", invoice_number: @line['freight file number']
 
       @line['line division'] = "11"
-      r = @p.create_receivable [@line, @line]
+      r = @p.create_receivable @export, [@line, @line]
 
       # Verify the invoice number has a suffix
       expect(r.invoice_number).to eq (@line['freight file number']+"A")
@@ -104,7 +102,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       existing_receivable = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", lmd_identifier: "#{@line['broker file number']}~#{@line['freight file number']}", invoice_number: "DEF"
 
       @line['line division'] = "11"
-      r = @p.create_receivable [@line, @line]
+      r = @p.create_receivable @export, [@line, @line]
 
       # Verify the invoice number was not changed
       expect(existing_receivable.id).to eq r.id
@@ -112,12 +110,12 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "creates an lmd receivable from an LMD file" do
-      @line['header division'] = "11"
+      @export.division = "11"
       @line['line division'] = "11"
-      r = @p.create_receivable [@line, @line]
+      r = @p.create_receivable @export, [@line, @line]
 
       # Just check the differences in fields between lmd and vfc receivables
-      expect(r.customer_number).to eq @line["customer"]
+      expect(r.customer_number).to eq @export.customer_number
       expect(r.company).to eq "lmd"
       expect(r.receivable_type).to eq "LMD Sales Invoice"
       expect(r.invoice_number).to eq @line['invoice number']
@@ -125,12 +123,12 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "creates an LMD credit note object" do
-      @line['header division'] = "11"
+      @export.division = "11"
       @line['line division'] = "11"
       l2 = @line.dup
       l2['charge amount'] = "-25"
 
-      r = @p.create_receivable [@line, l2], true
+      r = @p.create_receivable @export, [@line, l2], true
       expect(r.persisted?).to be_true
       expect(r.receivable_type).to eq "LMD Credit Note"
 
@@ -140,8 +138,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "updates vfc receivables that have not been sent" do
-      exists = IntacctReceivable.create! company: 'vfc', invoice_number: @line['invoice number'], customer_number: @line['customer'], intacct_errors: "errors"
-      r = @p.create_receivable [@line, @line], true
+      exists = IntacctReceivable.create! company: 'vfc', invoice_number: @line['invoice number'], customer_number: @export.customer_number, intacct_errors: "errors"
+      r = @p.create_receivable @export, [@line, @line], true
       expect(r.id).to eq exists.id
       expect(r.intacct_errors).to be_nil
       # Make sure lines are deleted and recreated
@@ -151,50 +149,43 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     it "updates lmd receivables from brokerage files that have not been sent" do
       @line['line division'] = "11"
       exists = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", intacct_errors: "errors",lmd_identifier: "#{@line['broker file number']}~#{@line['freight file number']}"
-      r = @p.create_receivable [@line, @line]
+      r = @p.create_receivable @export, [@line, @line]
       expect(r.id).to eq exists.id
       expect(r.intacct_errors).to be_nil
     end
 
     it "updates lmd receivables from LMD files that have not been sent" do
-      @line['header division'] = "11"
+      @export.division = "11"
       @line['line division'] = "11"
-      exists = IntacctReceivable.create! company: 'lmd', invoice_number: @line['invoice number'], customer_number: @line['customer'], intacct_errors: "errors"
-      r = @p.create_receivable [@line, @line]
+      exists = IntacctReceivable.create! company: 'lmd', invoice_number: @line['invoice number'], customer_number: @export.customer_number, intacct_errors: "errors"
+      r = @p.create_receivable @export, [@line, @line]
       expect(r.id).to eq exists.id
       expect(r.intacct_errors).to be_nil
     end
 
     it "does not create a receivable if a vfc file already exists with an upload date and key" do
-      IntacctReceivable.create! company: 'vfc', invoice_number: @line['invoice number'], customer_number: @line['customer'], intacct_upload_date: Time.zone.now, intacct_key: "Key"
-      expect(@p.create_receivable [@line, @line], true).to be_nil
+      IntacctReceivable.create! company: 'vfc', invoice_number: @line['invoice number'], customer_number: @export.customer_number, intacct_upload_date: Time.zone.now, intacct_key: "Key"
+      expect(@p.create_receivable @export, [@line, @line], true).to be_nil
     end
 
     it "does not create an lmd receivable from a brokerage file if a file already exists with an upload date and key" do
       @line['line division'] = "11"
       IntacctReceivable.create! company: 'lmd', invoice_number: @line['freight file number'], customer_number: "VANDE", intacct_upload_date: Time.zone.now, intacct_key: "Key", lmd_identifier: "#{@line['broker file number']}~#{@line['freight file number']}"
-      expect(@p.create_receivable [@line, @line]).to be_nil
+      expect(@p.create_receivable @export, [@line, @line]).to be_nil
     end
 
     it "does not create an lmd receivable from an LMD file if a file already exists with an upload date and key" do
       @line['line division'] = "11"
-      @line['header division'] = "11"
-      IntacctReceivable.create! company: 'lmd', invoice_number: @line['invoice number'], customer_number: @line['customer'], intacct_upload_date: Time.zone.now, intacct_key: "Key"
-      expect(@p.create_receivable [@line, @line]).to be_nil
-    end
-
-    it "finds alliance exports and creates receivables when alliance returns blank string for suffix" do
-      @export.update_attributes! suffix: nil
-      @line['suffix'] = "         "
-      r = @p.create_receivable [@line], true
-      expect(r).to be_persisted
+      @export.division = "11"
+      IntacctReceivable.create! company: 'lmd', invoice_number: @line['invoice number'], customer_number: @export.customer_number, intacct_upload_date: Time.zone.now, intacct_key: "Key"
+      expect(@p.create_receivable @export, [@line, @line]).to be_nil
     end
 
     it "uses customer and vendor xrefs when available" do
-      @customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['customer']), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
+      @customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @export.customer_number), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
       @vendor = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['vendor']), value: "VENDOR", cross_reference_type: DataCrossReference::INTACCT_VENDOR_XREF
 
-      r = @p.create_receivable [@line]
+      r = @p.create_receivable @export, [@line]
       expect(r.customer_number).to eq @customer.value
       expect(r.intacct_receivable_lines.first.vendor_number).to eq @vendor.value
     end
@@ -207,8 +198,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       @bank_cash_account = DataCrossReference.create! key: @bank.value, value: "BANK CASH", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
     end
 
-    it "creates a vfc check payable" do
-      p = @p.create_payable "VENDOR", [@line, @line]
+    it "creates a vfc payable" do
+      p = @p.create_payable @export, "VENDOR", [@line, @line]
 
       expect(p.persisted?).to be_true
       expect(p.company).to eq "vfc"
@@ -216,9 +207,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(p.vendor_reference).to be_nil
       expect(p.currency).to eq @line["currency"]
       expect(p.bill_number).to eq @line["invoice number"]
-      expect(p.bill_date).to eq Date.strptime @line["invoice date"], "%Y%m%d"
-      expect(p.check_number).to eq @line["check number"]
-      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_CHECK
+      expect(p.bill_date).to eq @export.invoice_date
+      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_BILL
 
       expect(p.intacct_payable_lines).to have(2).items
       # Only bother inspecting one line since we used same
@@ -232,27 +222,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(l.location).to eq @line["line division"]
       expect(l.line_of_business).to eq "Brokerage"
       expect(l.freight_file).to eq @line["freight file number"]
-      expect(l.customer_number).to eq @line['customer']
+      expect(l.customer_number).to eq @export.customer_number
       expect(l.broker_file).to eq @line['broker file number']
       expect(l.check_number).to eq @line["check number"]
       expect(l.bank_number).to eq @bank.value
       expect(l.check_date).to eq Date.strptime @line["check date"], "%Y%m%d"
-      expect(l.bank_cash_gl_account).to eq @bank_cash_account.value
-
-      @export.reload
-      expect(@export.data_received_date.to_date).to eq Time.zone.now.to_date
-    end
-
-    it "creates vfc bill payable" do
-      @line["check number"] = '0'
-      p = @p.create_payable "VENDOR", [@line]
-
-      expect(p.check_number).to be_nil
-      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_BILL
     end
 
     it "creates a vfc payable to lmd division" do
-      p = @p.create_payable "LMD", [@line]
+      p = @p.create_payable @export, "LMD", [@line]
 
       expect(p.persisted?).to be_true
       expect(p.company).to eq "vfc"
@@ -260,27 +238,27 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(p.vendor_reference).to eq @line["freight file number"]
       expect(p.currency).to eq @line["currency"]
       expect(p.bill_number).to eq @line["invoice number"]
-      expect(p.bill_date).to eq Date.strptime @line["invoice date"], "%Y%m%d"
+      expect(p.bill_date).to eq @export.invoice_date
 
       
       l = p.intacct_payable_lines.first
       expect(l.gl_account).to eq "6085"
 
       # Make sure the location is set to the header division for payables to lmd
-      expect(l.location).to eq @line["header division"]
+      expect(l.location).to eq @export.division
     end
 
     it "creates an LMD payable for division 11" do
-      @line["header division"] = "11"
+      @export.division = "11"
 
-      p = @p.create_payable "LMD VENDOR", [@line]
+      p = @p.create_payable @export, "LMD VENDOR", [@line]
       expect(p.persisted?).to be_true
       expect(p.company).to eq "lmd"
       expect(p.vendor_number).to eq "LMD VENDOR"
       expect(p.vendor_reference).to be_nil
       expect(p.currency).to eq @line["currency"]
       expect(p.bill_number).to eq @line["invoice number"]
-      expect(p.bill_date).to eq Date.strptime @line["invoice date"], "%Y%m%d"
+      expect(p.bill_date).to eq @export.invoice_date
 
       l = p.intacct_payable_lines.first
       expect(l.charge_code).to eq @line["charge code"]
@@ -290,25 +268,22 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(l.location).to eq @line["line division"]
       expect(l.line_of_business).to eq "Freight"
       expect(l.freight_file).to eq @line["freight file number"]
-      expect(l.customer_number).to eq @line['customer']
+      expect(l.customer_number).to eq @export.customer_number
       expect(l.broker_file).to be_nil
-
-      @export.reload
-      expect(@export.data_received_date.to_date).to eq Time.zone.now.to_date
     end
 
     it "creates an LMD payable for division 12" do
-      @line["header division"] = "12"
+      @export.division = "12"
 
-      p = @p.create_payable "LMD VENDOR", [@line]
+      p = @p.create_payable @export, "LMD VENDOR", [@line]
       expect(p.persisted?).to be_true
       expect(p.company).to eq "lmd"
     end
 
     it "updates an existing payable that has not been sent" do
-      exists = IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK, check_number: @line["check number"], intacct_errors: "Error"
+      exists = IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_BILL, intacct_errors: "Error"
 
-      p = @p.create_payable "VENDOR", [@line]
+      p = @p.create_payable @export, "VENDOR", [@line]
       expect(exists.id).to eq p.id
       expect(p.intacct_errors).to be_nil
       # Make sure lines are deleted and recreated
@@ -316,31 +291,24 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "skips payables that have already been sent" do
-      IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK, check_number: @line["check number"], intacct_upload_date: Time.zone.now, intacct_key: "KEY"
-      expect(@p.create_payable "VENDOR", [@line]).to be_nil
+      IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_BILL, intacct_upload_date: Time.zone.now, intacct_key: "KEY"
+      expect(@p.create_payable @export, "VENDOR", [@line]).to be_nil
     end
 
     it "finds alliance exports and creates payables when alliance returns blank string for suffix" do
       @export.update_attributes! suffix: nil
       @line['suffix'] = "         "
-      p = @p.create_payable "VENDOR", [@line]
+      p = @p.create_payable @export, "VENDOR", [@line]
       expect(p).to be_persisted
     end
 
     it "uses customer and vendor xrefs when available" do
-      @customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['customer']), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
+      @customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @export.customer_number), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
       @vendor = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['vendor']), value: "VENDOR", cross_reference_type: DataCrossReference::INTACCT_VENDOR_XREF
 
-      p = @p.create_payable @line['vendor'], [@line]
+      p = @p.create_payable @export, @line['vendor'], [@line]
       expect(p.vendor_number).to eq @vendor.value
       expect(p.intacct_payable_lines.first.customer_number).to eq @customer.value
-    end
-
-    it "uses Advanced Payment GL account if check has been logged already" do
-     IntacctPayable.create! company: 'vfc', vendor_number: @line['vendor'], bill_number: @line["invoice number"], check_number: @line['check number'], payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED
-
-     p = @p.create_payable @line['vendor'], [@line]
-     expect(p.intacct_payable_lines.first.bank_cash_gl_account).to eq "2021"
     end
   end
 
@@ -356,7 +324,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       lmd_line2['line division'] = "12"
 
 
-      broker_receivables, lmd_receivables = @p.extract_receivable_lines [@line, non_print, lmd_line1, lmd_line2]
+      broker_receivables, lmd_receivables = @p.extract_receivable_lines @export, [@line, non_print, lmd_line1, lmd_line2]
       expect(broker_receivables).to have(3).items
       expect(broker_receivables.first).to eq @line
       expect(broker_receivables.second).to eq lmd_line1
@@ -367,15 +335,20 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(lmd_receivables.second).to eq lmd_line2
     end
 
-    it "extracts receivables and payables from an lmd invoice file" do
-      @line['header division'] = "11"
+    it "extracts receivables and payables from an lmd invoice file for Ocean Freight Division" do
+      @export.division = "11"
 
-      line2 = @line.dup
-      line2['header division'] = "12"
-
-      broker_receivables, lmd_receivables = @p.extract_receivable_lines [@line, line2]
+      broker_receivables, lmd_receivables = @p.extract_receivable_lines @export, [@line]
       expect(broker_receivables).to have(0).items
-      expect(lmd_receivables).to have(2).items
+      expect(lmd_receivables).to have(1).items
+    end
+
+    it "extracts receivables and payables from an lmd invoice file for Air Freight Division" do
+      @export.division = "12"
+
+      broker_receivables, lmd_receivables = @p.extract_receivable_lines @export, [@line]
+      expect(broker_receivables).to have(0).items
+      expect(lmd_receivables).to have(1).items
     end
   end
 
@@ -395,30 +368,42 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       lmd_line2 = lmd_line.dup
       lmd_line2['line division'] = "12"
 
-      broker_payable, lmd_payable = @p.extract_payable_lines [@line, line2, non_payable, lmd_line, lmd_line2]
+      broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line, line2, non_payable, lmd_line, lmd_line2]
       expect(broker_payable.keys).to have(3).items
-      expect(broker_payable["#{@line["vendor"]}~#{@line["check number"]}~#{@line["bank number"]}~#{@line["check date"]}"]).to have(1).item
-      expect(broker_payable["#{line2["vendor"]}~#{line2["check number"]}~#{line2["bank number"]}~#{line2["check date"]}"]).to have(1).item
+      expect(broker_payable[@line["vendor"]]).to have(1).item
+      expect(broker_payable[line2["vendor"]]).to have(1).item
       expect(broker_payable["LMD"]).to have(2).items
 
       expect(lmd_payable.keys).to have(0).items
     end
 
-    it "pulls out all lmd payable lines from a result set for lmd invoices" do
+    it "pulls out all lmd payable lines from a result set for Ocean Freight Invoices" do
+      @export.division = "11"
       @line['payable'] = "Y"
-      @line['header division'] = "11"
       line2 = @line.dup
       line2['vendor'] = "VENDOR2"
-      line2['header division'] = "12"
       non_payable = line2.dup
       non_payable['payable'] = "N"
 
-      broker_payable, lmd_payable = @p.extract_payable_lines [@line, line2, non_payable]
+      broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line, line2, non_payable]
       expect(broker_payable.keys).to have(0).items
       expect(lmd_payable.keys).to have(2).items
 
-      expect(lmd_payable["#{@line["vendor"]}~#{@line["check number"]}~#{@line["bank number"]}~#{@line["check date"]}"]).to have(1).item
-      expect(lmd_payable["#{line2["vendor"]}~#{line2["check number"]}~#{line2["bank number"]}~#{line2["check date"]}"]).to have(1).item
+      expect(lmd_payable[@line["vendor"]]).to have(1).item
+      expect(lmd_payable[line2["vendor"]]).to have(1).item
+    end
+
+    it "pulls out all lmd payable lines from a result set for Air Freight Invoices" do
+      @export.division = "12"
+      @line['payable'] = "Y"
+      non_payable = @line.dup
+      non_payable['payable'] = "N"
+
+      broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line, non_payable]
+      expect(broker_payable.keys).to have(0).items
+      expect(lmd_payable.keys).to have(1).items
+
+      expect(lmd_payable[@line["vendor"]]).to have(1).item
     end
   end
 
@@ -450,17 +435,22 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       # This line is basically just a check that the right flag is used by the parse method when creating
       # lmd recievables
       expect(receivables.find {|r| r.company == "lmd"}.invoice_number).to eq @line["freight file number"]
-      expect(receivables.find_all {|r| r.company == "vfc"}).to have(1).item
+      found = receivables.find_all {|r| r.company == "vfc"}
+      expect(found.size).to eq 1
+      expect(found[0].intacct_errors).to be_nil
 
       payables = @export.intacct_payables
       expect(payables).to have(2).items
 
       expect(payables.find_all {|p| p.vendor_number == "LMD"}).to have(1).item
-      expect(payables.find_all {|p| p.vendor_number == line2['vendor']}).to have(1).item
+      found = payables.find_all {|p| p.vendor_number == line2['vendor']}
+      expect(found.size).to eq 1
+      expect(found[0].intacct_errors).to be_nil
     end
 
     it "parses an lmd file result set into receivables and payables and saves them all" do
-      @line["header division"] = "11"
+      @export.division = "11"
+      @export.save!
       @line["line division"] = "11"
 
       line2 = @line.dup
@@ -483,25 +473,6 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       payables = @export.intacct_payables
       expect(payables).to have(1).item
       expect(payables.first.vendor_number).to eq line2["vendor"]
-    end
-
-    it "creates multiple check payables for different checks to the same vendor on the same invoice" do
-      @line["payable"] = "Y"
-      @line["freight file number"] = ""
-      line2 = @line.dup
-      line2["check number"] = (@line["check number"].to_i + 1).to_s
-
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
-
-      @p.parse [@line, line2]
-
-      @export.reload
-
-      payables = @export.intacct_payables
-      expect(payables).to have(2).items
-      expect(payables.find {|p| p.check_number == @line["check number"]}).not_to be_nil
-      expect(payables.find {|p| p.check_number == line2["check number"]}).not_to be_nil
     end
 
     it "handles payable lines with incomplete check information" do
@@ -528,98 +499,142 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(payables.first.intacct_payable_lines.size).to eq 2
     end
 
+    it "finds alliance exports and creates receivables when alliance returns blank string for suffix" do
+      @export.update_attributes! suffix: nil
+      @line['suffix'] = "         "
+      @p.parse [@line]
+
+      @export.reload
+      expect(@export.intacct_receivables.size).to eq 1
+    end
+
+    it "it detects invalid AR amounts and marks valid payables with errors if receivables have errors" do
+      @line["payable"] = "Y"
+      @export.update_attributes! ar_total: '0'
+
+      @p.parse [@line]
+
+      @export.reload
+
+      expect(@export.intacct_receivables.size).to eq 1
+      expect(@export.intacct_receivables[0].intacct_errors).to eq "Expected an AR Total of $0.00.  Received from Alliance: $12.50."
+
+      expect(@export.intacct_payables.size).to eq 1
+      expect(@export.intacct_payables[0].intacct_errors).to eq "Errors were found in corresponding receivables for this file.  Please address those errors before clearing this payable."
+    end
+
+    it "it detects invalid AR amounts on credits and marks valid payables with errors if receivables have errors" do
+      @line["payable"] = "Y"
+      @export.update_attributes! ar_total: '-6.00', ap_total: '-10.00'
+      @line["charge amount"] = "-10.00"
+
+      @p.parse [@line]
+
+      @export.reload
+
+      expect(@export.intacct_receivables.size).to eq 1
+      expect(@export.intacct_receivables[0].intacct_errors).to eq "Expected an AR Total of -$6.00.  Received from Alliance: -$10.00."
+
+      expect(@export.intacct_payables.size).to eq 1
+      expect(@export.intacct_payables[0].intacct_errors).to eq "Errors were found in corresponding receivables for this file.  Please address those errors before clearing this payable."
+    end
+
+    it "detects invalid AP amounts and marks valid receivables with errors if payables have errors" do
+      @line["payable"] = "Y"
+      @export.update_attributes! ap_total: '0'
+
+      @p.parse [@line]
+
+      @export.reload
+
+      expect(@export.intacct_receivables.size).to eq 1
+      expect(@export.intacct_receivables[0].intacct_errors).to eq "Errors were found in corresponding payables for this file.  Please address those errors before clearing this receivable."
+
+      expect(@export.intacct_payables.size).to eq 1
+      expect(@export.intacct_payables[0].intacct_errors).to eq "Expected an AP Total of $0.00.  Received from Alliance: $12.50."
+    end
   end
 
   describe "parse_check_query_results" do
 
     before :each do
-      @gl_account = DataCrossReference.create! key: @line['charge code'], value: "GLACCOUNT", cross_reference_type: DataCrossReference::ALLIANCE_CHARGE_TO_GL_ACCOUNT
-      @bank = DataCrossReference.create! key: @line['bank number'], value: "INTACCT BANK", cross_reference_type: DataCrossReference::ALLIANCE_BANK_ACCOUNT_TO_INTACCT
-      @bank_cash_account = DataCrossReference.create! key: @bank.value, value: "BANK CASH", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
+      @export = IntacctAllianceExport.create! file_number: '12345', check_number: '98765', export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK
+      @check = IntacctCheck.create! file_number: '12345', check_number: '98765', intacct_alliance_export_id: @export.id, intacct_errors: "Error", customer_number: "CUST", vendor_number: "VEND"
+      @line = {'file number' => '12345', 'suffix' => ' ', 'check number'=>'98765', 'division'=>'1', 'currency'=>"CAD", 'freight file' => '2131789'}
     end
 
-    it "creates an advanced check payable" do
-      OpenChain::CustomHandler::Intacct::IntacctClient.stub(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file number"], @line["freight file number"])
+    it "updates vfc check info" do
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).exactly(2).times.and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["file number"], @line["file number"])
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
 
-      @p.parse_advance_check_results [@line]
+      customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @check.customer_number), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
+      vendor = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @check.vendor_number), value: "VENDOR", cross_reference_type: DataCrossReference::INTACCT_VENDOR_XREF
 
-      p = IntacctPayable.where(bill_number: @line['invoice number']).first
-      expect(p).not_to be_nil
 
-      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_ADVANCED
+      @p.parse_check_result [@line]
 
-      expect(p.company).to eq "vfc"
-      expect(p.vendor_number).to eq @line['vendor']
-      expect(p.vendor_reference).to eq @line["vendor reference"]
-      expect(p.currency).to eq @line["currency"]
-      expect(p.bill_number).to eq @line["invoice number"]
-      expect(p.bill_date).to eq Date.strptime @line["check date"], "%Y%m%d"
-      expect(p.check_number).to eq @line["check number"]
-      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_ADVANCED
+      @export.reload
 
-      expect(p.intacct_payable_lines).to have(1).item
+      expect(@export.data_received_date).to_not be_nil
+      check = @export.intacct_checks.first
 
-      l = p.intacct_payable_lines.first
-      expect(l.charge_code).to eq @line["charge code"]
-      expect(l.gl_account).to eq "2021"
-      expect(l.amount).to eq BigDecimal.new(@line["charge amount"])
-      expect(l.charge_description).to eq "#{@line["charge description"]} - #{@line["vendor reference"]}"
-      expect(l.location).to eq @line["line division"]
-      expect(l.line_of_business).to eq "Brokerage"
-      expect(l.freight_file).to eq @line["freight file number"]
-      expect(l.customer_number).to eq @line['customer']
-      expect(l.broker_file).to eq @line['broker file number']
-      expect(l.check_number).to eq @line["check number"]
-      expect(l.bank_number).to eq @bank.value
-      expect(l.check_date).to eq Date.strptime @line["check date"], "%Y%m%d"
-      expect(l.bank_cash_gl_account).to eq @bank_cash_account.value
+      expect(check.intacct_errors).to be_nil
+      expect(check.company).to eq "vfc"
+      expect(check.line_of_business).to eq "Brokerage"
+      expect(check.location).to eq @line['division']
+      expect(check.currency).to eq @line['currency']
+      expect(check.freight_file).to eq @line['freight file']
+      expect(check.broker_file).to eq @line['file number']
+      expect(check.customer_number).to eq customer.value
+      expect(check.vendor_number).to eq vendor.value
+
+      expect(@export.division).to eq check.location
     end
 
-    it "does not create a payable if check already exists" do
-      IntacctPayable.create! company: 'vfc', vendor_number: @line['vendor'], bill_number: @line['invoice number'], check_number: @line['check number'], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK
+    it "updates updates customer and vendor numbers using xref values" do
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).exactly(2).times.and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["file number"], @line["file number"])
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
 
-      @p.parse_advance_check_results [@line]
+      @p.parse_check_result [@line]
 
-      expect(IntacctPayable.where(payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED).first).to be_nil
+      @export.reload
+
+      expect(@export.data_received_date).to_not be_nil
+      check = @export.intacct_checks.first
+
+      expect(check.intacct_errors).to be_nil
+      expect(check.company).to eq "vfc"
+      expect(check.line_of_business).to eq "Brokerage"
+      expect(check.location).to eq @line['division']
+      expect(check.currency).to eq @line['currency']
+      expect(check.freight_file).to eq @line['freight file']
+      expect(check.broker_file).to eq @line['file number']
+
+      expect(@export.division).to eq check.location
     end
 
-    it "updates an existing advanced payable" do
-      p = IntacctPayable.create! company: 'vfc', vendor_number: @line['vendor'], bill_number: @line['invoice number'], check_number: @line['check number'], payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED, intacct_errors: "Errors"
+    it 'updates lmd check info' do
+      @line['division'] = '11'
 
-      @p.parse_advance_check_results [@line]
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).once.and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
 
-      p.reload
-      expect(p.intacct_errors).to be_nil
-    end
+      @p.parse_check_result [@line]
 
-    it "uses vendor and customer cross references" do
-      @customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['customer']), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
-      @vendor = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['vendor']), value: "VENDOR", cross_reference_type: DataCrossReference::INTACCT_VENDOR_XREF
+      @export.reload
 
-      @p.parse_advance_check_results [@line]
-      p = IntacctPayable.first
+      expect(@export.data_received_date).to_not be_nil
+      check = @export.intacct_checks.first
 
-      expect(p.vendor_number).to eq @vendor.value
-      expect(p.intacct_payable_lines.first.customer_number).to eq @customer.value
-    end
-
-    it 'creates LMD advanced payable' do
-      @line['header division'] = '11'
-
-      @p.parse_advance_check_results [@line]
-      p = IntacctPayable.first
-      expect(p.company).to eq "lmd"
-    end
-
-    it "handles multiple check result lines" do
-      line2 = @line.dup
-      line2['check number'] = "0987"
-
-      @p.parse_advance_check_results [@line, line2]
-
-      expect(IntacctPayable.where(payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED).all).to have(2).items
+      expect(check.intacct_errors).to be_nil
+      expect(check.company).to eq "lmd"
+      expect(check.line_of_business).to eq "Freight"
+      expect(check.location).to eq @line['division']
+      expect(check.currency).to eq @line['currency']
+      expect(check.freight_file).to eq @line['freight file']
+      expect(check.broker_file).to be_nil
     end
   end
 end

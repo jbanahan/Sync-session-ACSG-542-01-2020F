@@ -253,14 +253,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
   describe "generate_check_gl_entry_xml" do
 
     before :each do
-      @p = IntacctPayable.new vendor_number: "v", bill_date: Time.zone.now.to_date, bill_number: "b", vendor_reference: "ref", currency: "cur"
-      @l = @p.intacct_payable_lines.build gl_account: "a", amount: BigDecimal.new("12"), charge_description: "desc", location: "loc",
-                    line_of_business: "lob", freight_file: "f", customer_number: "c", charge_code: "cc", broker_file: "brok", check_number: "123",
-                    bank_number: "bank", check_date: Date.new(2014, 4, 1), bank_cash_gl_account: "cash"
+      @check = IntacctCheck.new vendor_number: "v", bill_number: "b", vendor_reference: "ref", currency: "cur", gl_account: "a", 
+                    amount: BigDecimal.new("12"), location: "loc", line_of_business: "lob", freight_file: "f", customer_number: "c", 
+                    broker_file: "brok", check_number: "123", bank_number: "bank", check_date: Date.new(2014, 4, 1), bank_cash_gl_account: "cash"
     end
 
     it "generates xml for check entries" do
-      control_id, xml = described_class.new.generate_check_gl_entry_xml @p
+      control_id, xml = described_class.new.generate_check_gl_entry_xml @check
       expect(xml).to_not be_nil
 
       root = REXML::Document.new(xml).root
@@ -269,64 +268,64 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       g = REXML::XPath.first root, "/function/create_gltransaction"
 
       expect(g.text "journalid").to eq "GLAC"
-      expect(g.text "datecreated/year").to eq @l.check_date.strftime "%Y"
-      expect(g.text "datecreated/month").to eq @l.check_date.strftime "%m"
-      expect(g.text "datecreated/day").to eq @l.check_date.strftime "%d"
-      expect(g.text "description").to eq @l.check_number
-      expect(g.text "referenceno").to eq @p.bill_number
+      expect(g.text "datecreated/year").to eq @check.check_date.strftime "%Y"
+      expect(g.text "datecreated/month").to eq @check.check_date.strftime "%m"
+      expect(g.text "datecreated/day").to eq @check.check_date.strftime "%d"
+      expect(g.text "description").to eq @check.check_number
+      expect(g.text "referenceno").to eq @check.bill_number
 
       expect(REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements).to have(2).items
 
       e = REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements[1]
       expect(e.text "trtype").to eq "credit"
-      expect(e.text "amount").to eq @l.amount.to_s
-      expect(e.text "glaccountno").to eq @l.bank_cash_gl_account
-      expect(e.text "document").to eq @l.check_number
-      expect(e.text "datecreated/year").to eq @l.check_date.strftime "%Y"
-      expect(e.text "datecreated/month").to eq @l.check_date.strftime "%m"
-      expect(e.text "datecreated/day").to eq @l.check_date.strftime "%d"
-      expect(e.text "memo").to eq @p.vendor_number + " - " + @l.charge_description
-      expect(e.text "locationid").to eq @l.location
-      expect(e.text "departmentid").to eq @l.line_of_business
-      expect(e.text "customerid").to eq @l.customer_number
-      expect(e.text "vendorid").to eq @p.vendor_number
-      expect(e.text "projectid").to eq @l.freight_file
-      expect(e.text "itemid").to eq @l.charge_code
-      expect(e.text "classid").to eq @l.broker_file
-      expect(e.text "currency").to eq @p.currency
-      expect(e.text "exchratedate/year").to eq @l.check_date.strftime "%Y"
-      expect(e.text "exchratedate/month").to eq @l.check_date.strftime "%m"
-      expect(e.text "exchratedate/day").to eq @l.check_date.strftime "%d"
+      expect(e.text "amount").to eq @check.amount.to_s
+      expect(e.text "glaccountno").to eq @check.bank_cash_gl_account
+      expect(e.text "document").to eq @check.check_number
+      expect(e.text "datecreated/year").to eq @check.check_date.strftime "%Y"
+      expect(e.text "datecreated/month").to eq @check.check_date.strftime "%m"
+      expect(e.text "datecreated/day").to eq @check.check_date.strftime "%d"
+      expect(e.text "memo").to eq @check.vendor_number + " - " + @check.vendor_reference
+      expect(e.text "locationid").to eq @check.location
+      expect(e.text "departmentid").to eq @check.line_of_business
+      expect(e.text "customerid").to eq @check.customer_number
+      expect(e.text "vendorid").to eq @check.vendor_number
+      expect(e.text "projectid").to eq @check.freight_file
+      expect(e.text "classid").to eq @check.broker_file
+      expect(e.text "currency").to eq @check.currency
+      expect(e.text "exchratedate/year").to eq @check.check_date.strftime "%Y"
+      expect(e.text "exchratedate/month").to eq @check.check_date.strftime "%m"
+      expect(e.text "exchratedate/day").to eq @check.check_date.strftime "%d"
       expect(e.text "exchratetype").to eq "Intacct Daily Rate"
 
       e = REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements[2]
 
       expect(e.text "trtype").to eq "debit"
-      expect(e.text "amount").to eq @l.amount.to_s
-      expect(e.text "glaccountno").to eq @l.gl_account
-      expect(e.text "document").to eq @l.check_number
-      expect(e.text "datecreated/year").to eq @l.check_date.strftime "%Y"
-      expect(e.text "datecreated/month").to eq @l.check_date.strftime "%m"
-      expect(e.text "datecreated/day").to eq @l.check_date.strftime "%d"
-      expect(e.text "memo").to eq @p.vendor_number + " - " + @l.charge_description
-      expect(e.text "locationid").to eq @l.location
-      expect(e.text "departmentid").to eq @l.line_of_business
-      expect(e.text "customerid").to eq @l.customer_number
-      expect(e.text "vendorid").to eq @p.vendor_number
-      expect(e.text "projectid").to eq @l.freight_file
-      expect(e.text "itemid").to eq @l.charge_code
-      expect(e.text "classid").to eq @l.broker_file
-      expect(e.text "currency").to eq @p.currency
-      expect(e.text "exchratedate/year").to eq @l.check_date.strftime "%Y"
-      expect(e.text "exchratedate/month").to eq @l.check_date.strftime "%m"
-      expect(e.text "exchratedate/day").to eq @l.check_date.strftime "%d"
+      expect(e.text "amount").to eq @check.amount.to_s
+      expect(e.text "glaccountno").to eq @check.gl_account
+      expect(e.text "document").to eq @check.check_number
+      expect(e.text "datecreated/year").to eq @check.check_date.strftime "%Y"
+      expect(e.text "datecreated/month").to eq @check.check_date.strftime "%m"
+      expect(e.text "datecreated/day").to eq @check.check_date.strftime "%d"
+      expect(e.text "memo").to eq @check.vendor_number + " - " + @check.vendor_reference
+      expect(e.text "locationid").to eq @check.location
+      expect(e.text "departmentid").to eq @check.line_of_business
+      expect(e.text "customerid").to eq @check.customer_number
+      expect(e.text "vendorid").to eq @check.vendor_number
+      expect(e.text "projectid").to eq @check.freight_file
+      expect(e.text "classid").to eq @check.broker_file
+      expect(e.text "currency").to eq @check.currency
+      expect(e.text "exchratedate/year").to eq @check.check_date.strftime "%Y"
+      expect(e.text "exchratedate/month").to eq @check.check_date.strftime "%m"
+      expect(e.text "exchratedate/day").to eq @check.check_date.strftime "%d"
       expect(e.text "exchratetype").to eq "Intacct Daily Rate"
     end
 
     it "excludes certain blank fields" do
-      @l.update_attributes! freight_file: nil, charge_code: nil, broker_file: nil
+      @check.freight_file = nil
+      @check.broker_file = nil
+      @check.vendor_reference = nil
 
-      control_id, xml = described_class.new.generate_check_gl_entry_xml @p
+      control_id, xml = described_class.new.generate_check_gl_entry_xml @check
       expect(xml).to_not be_nil
 
       root = REXML::Document.new(xml).root
@@ -335,12 +334,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(e.text "projectid").to be_nil
       expect(e.text "itemid").to be_nil
       expect(e.text "classid").to be_nil
+      expect(e.text "memo").to be_nil
 
       e = REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements[2]
       expect(e.text "trtype").to eq "debit"
       expect(e.text "projectid").to be_nil
       expect(e.text "itemid").to be_nil
       expect(e.text "classid").to be_nil
+      expect(e.text "memo").to be_nil
     end
   end
 end

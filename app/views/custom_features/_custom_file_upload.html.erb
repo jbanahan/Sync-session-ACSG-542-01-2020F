@@ -5,9 +5,9 @@
 <% end %>
   <%# Bootstrap standard input widths (input-large, etc) don't seem to work on file inputs #%>
   <div class="form-group">
-    <label for="attached" class='col-md-1 control-label'>File:</label>
+    <label for="<%=(defined?(file_input_name) ? file_input_name : :attached).to_s%>" class='col-md-1 control-label'><%= defined?(file_label) ? file_label : "File:"%></label>
     <div class="col-md-4">
-      <%= file_field_tag :attached, :style => "width: 500px !important;"%>
+      <%= file_field_tag (defined?(file_input_name) ? file_input_name : :attached), :style => "width: 500px !important;", :placeholder => "This is a test:"%>
     </div>
   </div>
   <div class="form-group">

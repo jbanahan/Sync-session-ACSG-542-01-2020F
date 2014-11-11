@@ -22,7 +22,8 @@ describe OpenChain::Report::IntacctExceptionReport do
       p = IntacctPayable.create! company: 'A', vendor_number: 'Vend', bill_number: "Bill", bill_date: Time.zone.now, intacct_errors: "Errors"
       p.intacct_payable_lines.create! customer_number: "Cust"
 
-      described_class.new.run ['A', 'B'], ['me@there.com']
+      error_count = described_class.new.run ['A', 'B'], ['me@there.com']
+      expect(error_count).to eq 2
       mail = ActionMailer::Base.deliveries.pop
       expect(mail).not_to be_nil
       expect(mail.to).to eq ["me@there.com"]

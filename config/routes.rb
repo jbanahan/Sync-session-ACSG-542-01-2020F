@@ -25,9 +25,8 @@ OpenChain::Application.routes.draw do
       match "/products/by_uid/:uid" => "products#by_uid", :via=>:get
       match "/products/model_fields" => "products#model_fields", :via => :get
 
-      match "/intacct_data/receive_alliance_invoice_numbers" => "intacct_data#receive_alliance_invoice_numbers", :via => :post
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
-      match "/intacct_data/receive_advance_checks" => "intacct_data#receive_advance_checks", :via => :post
+      match "/intacct_data/receive_check_result" => "intacct_data#receive_check_result", :via => :post
       match "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details", :via => :post
       match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
 
@@ -253,6 +252,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/le_ci_load/:id/download" => "custom_features#le_ci_load_download", :via => :get
   match "/custom_features/rl_fabric_parse" => "custom_features#rl_fabric_parse_index", :via=>:get
   match "/custom_features/rl_fabric_parse" => "custom_features#rl_fabric_parse_run", :via=>:post
+  match "/custom_features/alliance_day_end" => "custom_features#alliance_day_end_index", :via=>:get
+  match "/custom_features/alliance_day_end/upload" => "custom_features#alliance_day_end_upload", :via => :post
+  match "/custom_features/alliance_day_end/:id/download" => "custom_features#alliance_day_end_download", :via => :get
 
   match "/custom_features/lenox_shipment_status" => "custom_features#lenox_shipment_status_index", :via=>:get
   match "/custom_features/lenox_shipment_status/upload" => "custom_features#lenox_shipment_status_upload", :via => :post
