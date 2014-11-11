@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourSap
 
   def self.run_schedulable opts={}
     g = self.new(opts)
-    g.ftp_file g.sync_csv
+    g.ftp_file g.sync_csv(true, row_sep: "\r\n")
   end
 
   def initialize opts = {}

@@ -108,14 +108,18 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourSapProductGenerator d
       out = nil
       described_class.any_instance.should_receive(:ftp_file) do |f|
         begin
-          out = CSV.read f.path
+          out = IO.binread f.path
         ensure
           f.close!
         end
       end
 
       described_class.run_schedulable
-      expect(out.second).to eq [@t.classification.country.iso_code, @t.product.unique_identifier, @t.hts_1.hts_format, ""]
+      #Make sure we're sending Windows newlines
+      expect(StringIO.new(out).gets[-2, 2]).to eq "\r\n"
+      csv = []
+      CSV.parse(out) {|row| csv << row}
+      expect(csv.second).to eq [@t.classification.country.iso_code, @t.product.unique_identifier, @t.hts_1.hts_format, ""]
     end
   end
 end
