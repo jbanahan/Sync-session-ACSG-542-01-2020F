@@ -20,6 +20,12 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       @last_csm_date_cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>'date',:label=>"CSM Received Date (Last)")
       @h = described_class.new @cf 
       Product.any_instance.stub(:can_edit?).and_return(true)
+      @snapshot_created = false
+      @snapshot_user
+      Product.any_instance.stub(:create_snapshot) do |user|
+        @snapshot_user = user
+        @snapshot_created = true
+      end
     end
 
     context :csm_season do
@@ -36,9 +42,12 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
           13=>{'value'=>'CSMDEPT','datatype'=>'string'}
         )
-        @h.process Factory(:user)
+        u = Factory(:user)
+        @h.process u
         p.reload
         p.get_custom_value(@season).value.should == "seas\nsomeval"
+        expect(@snapshot_created).to be_true
+        expect(@snapshot_user).to eq u
       end
       it "should set CSM Season for new product" do
         @xlc.should_receive(:last_row_number).and_return(1)

@@ -51,13 +51,17 @@ module OpenChain
               Product.transaction do 
                 p = Product.where(:unique_identifier=>us_style).first_or_create!
                 raise(CsmError, "File failed: #{user.full_name} can't edit product #{p.unique_identifier}") unless p.can_edit?(user)
-                p.update_custom_value! @csm_cd, csm_set.to_a.join("\n")
-                p.update_custom_value! @dept_cd, dept_map[us_style]
-                update_season p, season_map[us_style]
-                update_first_csm_date p
-                update_last_csm_date p
+                Lock.with_lock_retry(p) do
+                  p.update_custom_value! @csm_cd, csm_set.to_a.join("\n")
+                  p.update_custom_value! @dept_cd, dept_map[us_style]
+                  update_season p, season_map[us_style]
+                  update_first_csm_date p
+                  update_last_csm_date p
 
-                OpenChain::FieldLogicValidator.validate!(p) 
+                  OpenChain::FieldLogicValidator.validate!(p) 
+                  p.create_snapshot user
+                end
+                
               end
             rescue OpenChain::ValidationLogicError => e
               # Prefix the errors with the style so the user knows which one needs to be fixed
