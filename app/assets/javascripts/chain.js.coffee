@@ -1,6 +1,32 @@
 root = exports ? this
 root.Chain =
 
+  toggleNotificationCenter: () ->
+    if $("#notification-center").is(':visible')
+      Chain.hideNotificationCenter()
+    else
+      Chain.showNotificationCenter()
+      
+  showNotificationCenter : () ->
+    $('.navbar-fixed-bottom').hide()
+    $("#main-content").hide()
+    $("#notification-center-body").html("Loading notifications...")
+    $('body').css('background-color','#333;')
+    $('#notification-center').slideDown(200)
+    $.ajax({
+      url: '/messages.html',
+      success: (data) ->
+        $('#notification-center-body').html(data)
+        $('#notification-center a').addClass('btn').addClass('btn-xs').addClass('btn-primary')
+    })
+
+  hideNotificationCenter : () ->
+    $("#notification-center").slideUp () ->
+      $('body').css('background-color','white')
+      $("#main-content").show()
+      $('.navbar-fixed-bottom').show()
+      
+
   # runs the onwindowunload properly handling IE duplicate call issues
   # expects passed in function to return a string if user should be prompted
   # or undefined if no prompt is needed
@@ -275,12 +301,11 @@ root.Chain =
     getMessageCount : (url) ->
       $.getJSON url, (data) ->
         if data > 0
-          message = " message"
-          if data > 1
-            message += "s"
-          $('#message_envelope').html(data + message).show()
+          $('.message_envelope').each () ->
+            $(this).html(''+data).css('color','green')
         else
-          $('#message_envelope').html('').hide()
+          $('.message_envelope').each() ->
+            $(this).html('').css('color','#ccc')
     
     
     # If pollingSeconds is <=0, no ongoing polling is done.
@@ -290,7 +315,41 @@ root.Chain =
         @getMessageCount(@url)
         if pollingSeconds > 0
           @startPolling(pollingSeconds)
-    
+
+    initNotificationCenter : () ->
+      $('#notification-center').click (event) ->
+        if (event.target == this)
+          Chain.hideNotificationCenter()
+
+      $('#notification-center').on 'show.bs.collapse', '.panel-collapse', (event) ->
+        t = event.target
+        id = $(t).attr('message-id')
+        panel = $('#panel-'+id)
+        panel.find('.message-read-icon').removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down')
+        if panel.hasClass('unread')
+          panel.addClass('read').removeClass('unread')
+          $.get '/messages/'+id+'/read', ->
+            Chain.messagePoller.getMessageCount(Chain.messagePoller.pollingUrl())
+
+      $('#notification-center').on 'hide.bs.collapse', '.panel-collapse', (event) ->
+        t = event.target
+        id = $(t).attr('message-id')
+        panel = $('#panel-'+id)
+        panel.find('.message-read-icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right') 
+
+      $('#notification-center').on 'ajax:success', '.message-delete', (event) ->
+        t = event.target
+        id = $(t).find('input[data-message-id]').attr('data-message-id')
+        $('#panel-'+id).fadeOut ()->
+          $('#panel-'+id).remove()
+
+      $('#notification-center').on 'ajax:success', '.message-read-all', (event) ->
+        $('#notification-center').find('.unread').each () ->
+          $(this).removeClass('unread').addClass('read')
+        Chain.messagePoller.getMessageCount(Chain.messagePoller.pollingUrl())
+
+    pollingUrl : ->
+      @url
 
     startPolling : (pollingSeconds) ->
       # If there's an interval registration, we're already polling
