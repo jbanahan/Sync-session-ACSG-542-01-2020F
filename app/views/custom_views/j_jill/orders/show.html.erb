@@ -1,3 +1,22 @@
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
+  <% if @order.can_close?(current_user)%>
+    <% if @order.closed? %>
+      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% else %>
+      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% end %>
+  <% end %>
+  <% if @order.can_accept?(current_user)%>
+    <% if @order.approval_status=='Accepted' %>
+      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% else %>
+      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% end %>
+  <% end %>
+  <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
+  <button onclick="window.print();">Print</button>
+<% end %>
 <%cache [@order, 'jjillorder'] do%>
 <% 
 require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
@@ -23,25 +42,6 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
   });
 <% end %>
 
-<% content_for :action_bar do %>
-  <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
-  <% if @order.can_close?(current_user)%>
-    <% if @order.closed? %>
-      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
-    <% else %>
-      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
-    <% end %>
-  <% end %>
-  <% if @order.can_accept?(current_user)%>
-    <% if @order.approval_status=='Accepted' %>
-      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
-    <% else %>
-      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
-    <% end %>
-  <% end %>
-  <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
-  <button onclick="window.print();">Print</button>
-<% end %>
 
 <div class="container">
   <% if @order.closed? %>
@@ -230,6 +230,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
       </table>
     </div>
   </div>
+<%end%> <!--end cache-->
   <div class="row">
     <div class="col-md-6">
       <%# Template Dependency: shared/comments %>
@@ -247,4 +248,3 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
   </div>
 </div>
 <%=secure_link @order, current_user%>
-<%end%>
