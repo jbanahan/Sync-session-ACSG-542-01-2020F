@@ -103,7 +103,7 @@ FILE
     it "creates a check and export object" do
       xref = DataCrossReference.create! key: @check_info[:bank_number], value: "1234", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
 
-      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], nil, @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number]
+      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number]
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
 
@@ -137,7 +137,7 @@ FILE
       existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number]
       existing_export = IntacctAllianceExport.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, data_received_date: Time.zone.now
 
-      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:invoice_suffix], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number]
+      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number]
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
 
