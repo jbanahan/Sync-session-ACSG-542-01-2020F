@@ -14,12 +14,7 @@ describe OpenChain::SqlProxyClient do
       request_body = {'sql_params' => {:file_number=>123, :suffix=>"suffix"}, 'context' => request_context}
       @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
       
-
       @c.request_alliance_invoice_details "123", "suffix     ", request_context
-
-      export = IntacctAllianceExport.where(file_number: "123", suffix: "suffix").first
-      expect(export).to_not be_nil
-      expect(export.data_requested_date).to be >= 1.minute.ago
     end
 
     it "strips blank suffixes down to blank string" do
@@ -27,9 +22,6 @@ describe OpenChain::SqlProxyClient do
       @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.request_alliance_invoice_details "123", "     "
-
-      export = IntacctAllianceExport.where(file_number: "123", suffix: nil).first
-      expect(export).to_not be_nil
     end
 
     it "doesn't send context if a blank one is provided" do

@@ -1,0 +1,11 @@
+<% content_for :upload_form do %>
+<h2>Upload ONLY Alliance Day End Accounting Reports for Checks and Invoices in TEXT format.</h2>
+<div class="form-group">
+  <label for="check_register" class='col-md-1 control-label'>Checks:</label>
+  <div class="col-md-4">
+    <%= file_field_tag :check_register, :style => "width: 500px !important;"%>
+  </div>
+</div>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Alliance Day End Report Upload", custom_feature: "alliance_day_end", file_label: "Invoices:", file_input_name: :invoice_file} %>

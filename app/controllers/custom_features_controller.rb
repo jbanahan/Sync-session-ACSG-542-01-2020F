@@ -14,6 +14,7 @@ require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generat
 require 'open_chain/custom_handler/lands_end/le_returns_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 require 'open_chain/custom_handler/polo/polo_fiber_content_parser'
+require 'open_chain/custom_handler/intacct/alliance_day_end_handler'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -29,6 +30,7 @@ class CustomFeaturesController < ApplicationController
   UA_TBD_REPORT_PARSER = 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
   LE_RETURNS_PARSER = 'OpenChain::CustomHandler::LandsEnd::LeReturnsParser'
   LE_CI_UPLOAD = 'OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator'
+  ALLIANCE_DAY_END = 'OpenChain::CustomHandler::Intacct::AllianceDayEndHandler'
 
   def index
     render :layout=>'one_col'
@@ -475,6 +477,40 @@ class CustomFeaturesController < ApplicationController
         add_flash :notices, "The styles you have entered will be analyzed shortly."
       end
       redirect_to '/custom_features/rl_fabric_parse'
+    }
+  end
+
+  def alliance_day_end_index
+    action_secure(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"Alliance Day End Processor",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>ALLIANCE_DAY_END).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+    }
+  end
+
+  def alliance_day_end_upload
+    action_secure(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"Alliance Day End Processor",:lock_check=>false}) {
+      check_register = CustomFile.new(:file_type=>ALLIANCE_DAY_END,:uploaded_by=>current_user,:attached=>params[:check_register])
+      invoice_file = CustomFile.new(:file_type=>ALLIANCE_DAY_END,:uploaded_by=>current_user,:attached=>params[:invoice_file])
+
+      saved = false
+      CustomFile.transaction do 
+        saved = check_register.save && invoice_file.save
+      end
+
+      if saved
+        OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.new(check_register, invoice_file).delay.process current_user
+        add_flash :notices, "Your day end files are being processed.  You'll receive a system message "
+      else
+        errors_to_flash check_register
+        errors_to_flash invoice_file
+      end
+      redirect_to '/custom_features/alliance_day_end'
+    }
+  end
+
+  def alliance_day_end_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),ALLIANCE_DAY_END,{:verb=>"download",:module_name=>"Alliance Day End Processor",:lock_check=>false}) {
+      redirect_to f.secure_url
     }
   end
   

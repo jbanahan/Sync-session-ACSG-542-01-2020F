@@ -12,7 +12,21 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
   end
 
   def create_result_key_response controlid, key
-    REXML::Document.new("<result><status>success</status><controlid>#{controlid}</controlid><key>#{key}</key></result>")
+    xml = "<result><status>success</status><controlid>#{controlid}</controlid><key>#{key}</key></result>"
+    if block_given?
+      yield xml
+    else
+      REXML::Document.new xml
+    end
+  end
+
+  def create_multi_result_key_response ids
+    xml = ""
+    ids.each_pair do |key, value|
+      create_result_key_response(key, value) {|result| xml << result}
+    end
+
+    REXML::Document.new "<response>#{xml}</response>"
   end
 
   before :each do
@@ -141,73 +155,89 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
     it "sends payable information and sets key and upload date back into payable" do
       p = IntacctPayable.new intacct_errors: "Error", company: "c", vendor_number: "v"
+      c = IntacctCheck.new intacct_errors: "Error", company: "c", vendor_number: "v"
+      checks = [c]
       cid = "controlid"
       xml = "<pay>payable</pay>"
+      check_cid = "checkid"
+      check_xml = "<check>check</check>"
     
       @c.should_receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
       @xml_gen.should_receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "P-Key")
+      @xml_gen.should_receive(:generate_ap_adjustment).with(c, p).and_return [check_cid, check_xml]
+      @c.should_receive(:post_xml).with("c", true, true, xml + check_xml, [cid, check_cid]).and_return create_multi_result_key_response({cid => "P-Key", check_cid => "C-Key"})
 
-      @c.send_payable p
+      @c.send_payable p, checks
 
       expect(p.persisted?).to be_true
       expect(p.intacct_key).to eq "P-Key"
       expect(p.intacct_upload_date.to_date).to eq Time.zone.now.to_date
       expect(p.intacct_errors).to be_nil
+
+      expect(c).to be_persisted
+      expect(c.intacct_adjustment_key).to eq "C-Key"
     end
 
     it "handles missing terms for vendor" do
       p = IntacctPayable.new intacct_errors: "Error", company: "c", vendor_number: "v"
       @c.should_receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({})
 
-      @c.send_payable p
+      @c.send_payable p, []
       expect(p.persisted?).to be_true
       expect(p.intacct_errors).to eq "Failed to retrieve Terms for Vendor v.  Terms must be set up for all vendors."
     end
 
     it "handles errors creating payable" do
       p = IntacctPayable.new intacct_errors: "Error", company: "c", vendor_number: "v"
+      c = IntacctCheck.new intacct_errors: "Error", company: "c", vendor_number: "v"
+      checks = [c]
       cid = "controlid"
       xml = "<pay>payable</pay>"
+      check_cid = "checkid"
+      check_xml = "<check>check</check>"
       
       @c.should_receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
       @xml_gen.should_receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_raise "Creation error."
+      @xml_gen.should_receive(:generate_ap_adjustment).with(c, p).and_return [check_cid, check_xml]
+      @c.should_receive(:post_xml).with("c", true, true, (xml + check_xml), [cid, check_cid]).and_raise "Creation error."
 
-      @c.send_payable p
+      @c.send_payable p, checks
 
       expect(p.persisted?).to be_true
       expect(p.intacct_errors).to eq "Creation error."
-    end
 
+      expect(c).not_to be_persisted
+    end
+  end
+
+  describe "send_check" do
     it "sends checks using check xml" do
-      p = IntacctPayable.new company: "c", payable_type: IntacctPayable::PAYABLE_TYPE_CHECK
+      check = IntacctCheck.new company: "c"
 
       cid = "controlid"
       xml = "<check>check</check>"
-      @xml_gen.should_receive(:generate_check_gl_entry_xml).with(p).and_return [cid, xml]
+      @xml_gen.should_receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
       @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "GL-Account-Key")
 
-      @c.send_payable p
+      @c.send_check check
 
-      expect(p.persisted?).to be_true
-      expect(p.intacct_key).to eq "GL-Account-Key"
-      expect(p.intacct_upload_date.to_date).to eq Time.zone.now.to_date
+      expect(check.persisted?).to be_true
+      expect(check.intacct_key).to eq "GL-Account-Key"
+      expect(check.intacct_upload_date.to_date).to eq Time.zone.now.to_date
     end
 
-    it "sends advanced checks using check xml" do
-      p = IntacctPayable.new company: "c", payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED
-
+    it "logs check send errors" do
+      check = IntacctCheck.new company: "c"
       cid = "controlid"
       xml = "<check>check</check>"
-      @xml_gen.should_receive(:generate_check_gl_entry_xml).with(p).and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "GL-Account-Key")
+      
+      @xml_gen.should_receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
+      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_raise "Creation error."
 
-      @c.send_payable p
+      @c.send_check check
 
-      expect(p.persisted?).to be_true
-      expect(p.intacct_key).to eq "GL-Account-Key"
-      expect(p.intacct_upload_date.to_date).to eq Time.zone.now.to_date
+      expect(check.persisted?).to be_true
+      expect(check.intacct_errors).to eq "Creation error."
     end
   end
 
