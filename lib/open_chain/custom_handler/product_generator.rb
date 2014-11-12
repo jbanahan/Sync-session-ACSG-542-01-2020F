@@ -19,7 +19,7 @@ module OpenChain
     class ProductGenerator
       include OpenChain::FtpFileSupport
 
-      attr_reader :row_count
+      attr_reader :row_count, :custom_where
 
       def initialize(opts={})
         @custom_where = opts[:where]
@@ -31,6 +31,15 @@ module OpenChain
       # If nil or a blank array is returned then this row of sync data is skipped and will not be included
       # in the output, nor will the product be marked as synced.
       def preprocess_row row, opts = {}
+        [row]
+      end
+
+      # do any preprocessing on the row results before passing to the sync_[file_format] methods
+      # returns hash value
+      #
+      # If nil or a blank hash is returned then this row of header data is skipped and will not be included
+      # in the output
+      def preprocess_header_row row, opts = {}
         [row]
       end
 
@@ -47,6 +56,8 @@ module OpenChain
         rt.fields.each_with_index do |f,i|
           header_row[i-1] = f unless i==0
         end
+
+        header_row = preprocess_header_row header_row
 
         rt.each_with_index do |vals,i|
           fingerprint = nil
@@ -65,8 +76,10 @@ module OpenChain
           if processed_rows && processed_rows.length > 0
             # Don't send a header row until we actually have confirmed we have something to send out
             unless header_row.blank?
-              yield header_row
-              @row_count += 1
+              header_row.each do |r|
+                yield r
+                @row_count += 1
+              end
               header_row = nil
             end
             

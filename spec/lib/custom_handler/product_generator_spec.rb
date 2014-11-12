@@ -92,6 +92,58 @@ describe OpenChain::CustomHandler::ProductGenerator do
         @inst.sync {|row| nil}
       end
     end
+    context :preprocess_header_row do
+      before :each do
+        @inst = @base.new
+      end
+
+      it "does not transform header row by default" do
+        r = []
+        @inst.sync do |row|
+          r << row
+        end
+        expect(r.first).to eq({0=>'UID',1=>'NM'})
+      end
+
+      it "allows overriding with custom transform" do
+        # Strip one of the columns
+        def @inst.preprocess_header_row row, opts={}
+          [{0=>row[1]}]
+        end
+
+        r = []
+        @inst.sync do |row|
+          r << row
+        end
+        expect(r.first).to eq({0=>'NM'})
+      end
+
+      it "allows skipping the header row" do
+        def @inst.preprocess_header_row row, opts={}
+          nil
+        end
+
+        r = []
+        @inst.sync do |row|
+          r << row
+        end
+        expect(r.first).to eq({0=>@p1.unique_identifier,1=>'x'})
+      end
+
+      it "allows adding multiple header rows" do
+        def @inst.preprocess_header_row row, opts={}
+          [{0=>row[1]}, {0=>row[0]}]
+        end
+
+        r = []
+        @inst.sync do |row|
+          r << row
+        end
+        expect(r.first).to eq({0=>'NM'})
+        expect(r.second).to eq({0=>'UID'})
+        expect(@inst.row_count).to eq 3
+      end
+    end
     context :sync_records do
       context :implments_sync_code do
         before :each do

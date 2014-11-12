@@ -1,14 +1,13 @@
 Factory.sequence :iso do |n|
-  @iso_seq_1 ||= "A"
-  @iso_seq_2 ||= "A"
-  if @iso_seq_2 == "Z"
-    @iso_seq_2 = "A"
-    @iso_seq_1 = @iso_seq_1.succ
-  end
-  r = "#{@iso_seq_1}#{@iso_seq_2}"
-  @iso_seq_1 = @iso_seq_1.succ
-  @iso_seq_2 = @iso_seq_2.succ
-  r[0,2]
+  # Create fake ISO Codes starting w/ numbers so they won't collide w/ real ones
+  # Sequence goes 0A, 0B, 0C...0Z, 1A, etc
+  @first_counter ||= -1
+  @second_counter ||= -1
+
+  mod = (@second_counter += 1) % 26
+  @first_counter += 1 if mod == 0
+  
+  "#{@first_counter}#{(65 + mod).chr}"
 end
 Factory.sequence :alpha_numeric do |n|
   "ALPHA#{n}"
