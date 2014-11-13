@@ -43,6 +43,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
   private 
   def parse_order order_root, extract_date
+    @vendor_styles = Set.new
     cancel = REXML::XPath.first(order_root,'BEG/BEG01').text=='03'
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
@@ -73,6 +74,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     end
 
     if update_header || update_lines
+      ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
       ord.save! 
       ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
       ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
@@ -103,8 +105,6 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
 
   end
-
-  private
 
   def generate_fingerprint ord
     f = ""
@@ -217,6 +217,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     end
     cv = p.get_custom_value(@cdefs[:vendor_style])
     vendor_style = et(po1_el,'PO111')
+    @vendor_styles << vendor_style unless vendor_style.blank?
     if cv.value != vendor_style
       cv.value = vendor_style
       cv.save!

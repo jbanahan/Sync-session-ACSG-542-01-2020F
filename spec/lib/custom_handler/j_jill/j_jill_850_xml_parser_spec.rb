@@ -59,6 +59,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.season).to eq '1501'
       expect(o.get_custom_value(cdefs[:entry_port_name]).value).to eq 'Boston'
       expect(o.get_custom_value(cdefs[:ship_type]).value).to eq 'Boat'
+      expect(o.product_category).to eq 'Other'
       
       st  = o.ship_to
       expect(st.system_code).to eq '0101'
