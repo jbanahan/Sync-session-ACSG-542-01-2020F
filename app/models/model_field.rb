@@ -1487,7 +1487,7 @@ and classifications.product_id = products.id
             end
             max
           },
-          :qualified_field_name => "(SELECT IFNULL(max(t_count),0) FROM (SELECT ifnull(count(*),0) as 't_count', classifications.id, product_id FROM classifications INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id GROUP BY classifications.id) prod_max_component_count WHERE prod_max_component_count.product_id = products.id)",
+          :qualified_field_name => "(SELECT ifnull(max((select count(*) from tariff_records where tariff_records.classification_id = classifications.id)),0) from classifications where classifications.product_id = products.id)",
           :data_type=>:integer
         }]
       ]
