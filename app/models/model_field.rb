@@ -1476,6 +1476,19 @@ and classifications.product_id = products.id
           :export_lambda=>lambda {|obj| obj.respond_to?(:all_attachments) ? obj.all_attachments.count : obj.attachments.count},
           :qualified_field_name=>"((select count(*) from attachments where attachable_type = 'Product' and attachable_id = products.id) + (select count(*) from linked_attachments where attachable_type = 'Product' and attachable_id = products.id))",
           :data_type=>:integer
+        }],
+        [18,:prod_max_component_count,:max_component_count, 'Component Count (Max)', {
+          :import_lambda=>lambda {|o,d| "Component Count (Max) ignored. (read only)"},
+          :export_lambda=>lambda {|o| 
+            max = 0
+            o.classifications.each do |c|
+              sz = c.tariff_records.size
+              max = sz if sz && sz > max
+            end
+            max
+          },
+          :qualified_field_name => "(SELECT IFNULL(max(t_count),0) FROM (SELECT ifnull(count(*),0) as 't_count', classifications.id, product_id FROM classifications INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id GROUP BY classifications.id) prod_max_component_count WHERE prod_max_component_count.product_id = products.id)",
+          :data_type=>:integer
         }]
       ]
       add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
