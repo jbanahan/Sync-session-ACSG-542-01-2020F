@@ -5,25 +5,17 @@ describe OpenChain::CustomHandler::JJill::JJillSupport do
     before :each do
       @k = Class.new {extend OpenChain::CustomHandler::JJill::JJillSupport}
     end
-    it "should be Other if multiple categories" do
-      styles = ['K123','W123','K123']
+    it "should be Multi if multiple categories" do
+      styles = ['KDR1234','ABC9491','KDR1291']
+      expect(@k.get_product_category_from_vendor_styles styles).to eq 'Multi'
+    end
+    it "should be Other if not starting with 3 characters" do
+      styles = ['1291BAD','1291BAD','1291BAD']
       expect(@k.get_product_category_from_vendor_styles styles).to eq 'Other'
     end
-    it "should be Knit if all styles start with K" do
-      styles = ['K123','K123']
-      expect(@k.get_product_category_from_vendor_styles styles).to eq 'Knit'
-    end
-    it "should be Woven if all styles start with W" do
-      styles = ['W345','W123']
-      expect(@k.get_product_category_from_vendor_styles styles).to eq 'Woven'
-    end
-    it "should be Sweater if all styles start with S" do
-      styles = ['S444','S419312']
-      expect(@k.get_product_category_from_vendor_styles styles).to eq 'Sweater'
-    end
-    it "should be Other if all styles start with an unknown letter" do
-      styles = ['Q12','QQQQZ']
-      expect(@k.get_product_category_from_vendor_styles styles).to eq 'Other'
+    it "should be first 3 characters if all the same" do
+      styles = ['KDR1234','KDR9491','KDR1291']
+      expect(@k.get_product_category_from_vendor_styles styles).to eq 'KDR'
     end
   end
 end
