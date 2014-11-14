@@ -1563,7 +1563,8 @@ and classifications.product_id = products.id
           :data_type=>:string
         }],
         [16,:ord_season,:season,'Season',{data_type: :string}],
-        [17,:ord_terms,:terms_of_sale,'Terms of Sale',{data_type: :string}]
+        [17,:ord_terms,:terms_of_sale,'Terms of Sale',{data_type: :string}],
+        [18,:ord_product_category,:product_category,'Product Category',{data_type: :string}]
       ]
       add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
       add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
