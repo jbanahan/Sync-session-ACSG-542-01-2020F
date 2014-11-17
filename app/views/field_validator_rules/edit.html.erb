@@ -38,6 +38,7 @@ $(function() {
     <%=field_row "Is One Of", content_tag(:span,f.text_area(:one_of,:rows=>5)+tag("br")+"Put each value on it's own line.")%>
   <% end%>
   <%=field_row "Regular Expression", content_tag(:span,f.text_field(:regex)+tag("br")+"See "+link_to("this article","http://en.wikipedia.org/wiki/Regular_expression",:target=>"_blank")+".")%>
+  <%=field_row "Disabled For All Users", f.check_box(:disabled) %>
   </table>
 <%end%>
 <div style='display:none;'>

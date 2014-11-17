@@ -20,7 +20,7 @@ class QuickSearchController < ApplicationController
     cds = CustomDefinition.find_all_by_quick_searchable true
     cds.each do |cd|
       mf = cd.model_field
-      if mf 
+      if !mf.blank?
           field_map = @module_field_map[mf.core_module]
           if field_map
             field_map << mf.uid
@@ -37,7 +37,7 @@ class QuickSearchController < ApplicationController
     r = Hash.new
     mf = ModelField.find_by_uid params[:mfid]
     cm = mf.core_module unless mf.nil? 
-    if mf.nil?
+    if mf.blank?
       r["error"] = "You must specify a search field."
     elsif !cm.view?(current_user)
       r["error"] = "You do not have permission to search for module \"#{cm.label}\"."

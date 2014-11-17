@@ -149,7 +149,7 @@ module ApplicationHelper
   #show the label for the field.  show_prefix options: nil=default core module behavior, true=always show prefix, false=never show prefix
   def field_label model_field_uid, show_prefix=nil
     mf = ModelField.find_by_uid model_field_uid
-    return "Unknown Field" if mf.nil?
+    return "" if mf.blank?
     content_tag(:span,mf.label(show_prefix),{:class=>"fld_lbl",:entity_type_ids=>entity_type_ids(mf)})
   end
   def help_link(text,page_name=nil)
@@ -171,7 +171,7 @@ module ApplicationHelper
     customizable.custom_values.each {|cv| custom_value_hash[cv.custom_definition_id] = cv}
 	  CustomDefinition.where(:module_type => customizable.class.to_s).order("rank ASC, label ASC").each {|d|
       mf = d.model_field
-      next if mf.nil? || (!opts[:display_read_only] && mf.read_only?)
+      next if mf.blank? || (!opts[:display_read_only] && mf.read_only?)
 
       name = "#{customizable.class.to_s.downcase}_cf[#{d.id}]"
       name = "#{opts[:parent_name]}#{customizable.class.to_s.downcase}_cf[#{d.id}]" unless opts[:parent_name].nil?
@@ -242,7 +242,6 @@ module ApplicationHelper
     r = ""
     return "" if model_field_uid.nil?
     mf = ModelField.find_by_uid(model_field_uid)
-    return "" if mf.nil?
     return mf.label
   end
 

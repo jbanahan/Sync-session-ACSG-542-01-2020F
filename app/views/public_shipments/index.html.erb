@@ -10,7 +10,7 @@
   <table>
   <%PublicField.all.each do |pf|%>
     <%mf = ModelField.find_by_uid pf.model_field_uid%>
-    <%if mf && mf.core_module.class_name == r_class%>
+    <%if !mf.blank? && mf.core_module.class_name == r_class%>
       <%=field_row mf.label, mf.process_export(r,nil,true)%>
     <%end%>
   <%end%>

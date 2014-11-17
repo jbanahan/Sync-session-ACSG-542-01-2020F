@@ -39,8 +39,8 @@ class FieldValidatorRulesController < ApplicationController
         error_redirect "mf_id parameter must be set to create a new rule" 
         return
       end
-      if ModelField.find_by_uid(model_field_id).nil?
-        error_redirect "ModelField with id #{model_fiedl_id} not found."
+      if ModelField.find_by_uid(model_field_id).blank?
+        error_redirect "ModelField with id #{model_field_id} not found."
         return
       end
       rule = FieldValidatorRule.where(:model_field_uid=>model_field_id).first

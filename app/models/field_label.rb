@@ -30,4 +30,7 @@ class FieldLabel < ActiveRecord::Base
   def self.default_value mf_uid
     DEFAULT_VALUES_CACHE[mf_uid.to_sym]
   end
+  def self.clear_defaults
+    DEFAULT_VALUES_CACHE.clear
+  end
 end

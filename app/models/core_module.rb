@@ -128,7 +128,8 @@ class CoreModule
   end
   
   def make_default_search(user)
-    SearchSetup.create_with_columns(@default_search_columns,user)
+    dsc = ModelField.viewable_model_fields user, @default_search_columns
+    SearchSetup.create_with_columns(self, dsc, user)
   end
   #can have status set on the module 
   def statusable?
@@ -158,11 +159,12 @@ class CoreModule
   
   #hash of model_fields keyed by UID
   def model_fields user=nil
-    ModelField.reload_if_stale
-    r = ModelField::MODEL_FIELDS[@class_name.to_sym]
-    r = r.clone
-    r.delete_if {|k,mf| !mf.can_view?(user)} if user
-    r
+    r = ModelField.find_by_core_module self
+    h = {}
+    r.each do |mf|
+      h[mf.uid.to_sym] = mf if user.nil? || mf.can_view?(user)
+    end
+    h
   end
   
   #hash of model_fields for core_module and any core_modules referenced as children

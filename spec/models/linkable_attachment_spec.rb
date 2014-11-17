@@ -39,7 +39,7 @@ describe LinkableAttachment do
       linkable.model_field.uid.should == :ord_ord_num
     end
     it 'should return nil for a bad model filed' do
-      Factory(:linkable_attachment,:model_field_uid=>'somethingbad').model_field.should be nil
+      Factory(:linkable_attachment,:model_field_uid=>'somethingbad').model_field.should be_nil
     end
   end
   describe 'model_field_uids' do

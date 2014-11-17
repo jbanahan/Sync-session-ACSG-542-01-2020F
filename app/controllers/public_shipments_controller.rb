@@ -8,7 +8,7 @@ class PublicShipmentsController < ApplicationController
     @result = []
     if params[:f] && params[:v]
       field_to_search = ModelField.find_by_uid params[:f]
-      if field_to_search.nil? || !field_to_search.public_searchable?
+      if field_to_search.blank? || !field_to_search.public_searchable?
         error_redirect "The specified field is not searchable."
       else
         ss = SearchSetup.new(:module_type=>field_to_search.core_module.class_name)

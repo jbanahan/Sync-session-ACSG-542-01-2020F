@@ -1,6 +1,6 @@
 class FieldValidatorRule < ActiveRecord::Base
   include HoldsCustomDefinition
-  before_validation :set_module_type
+  before_validation :set_module_type, on: :create
   after_save :reset_model_fields
   after_commit :update_cache
   validates :model_field_uid, :presence=>true, :uniqueness => true
@@ -138,7 +138,8 @@ class FieldValidatorRule < ActiveRecord::Base
   end
 
   def set_module_type
-    if self.model_field_uid
+    # The module type (just like the uid) will never change...so we only have to set it once
+    if self.module_type.blank? && self.model_field_uid
       mf = model_field
       self.module_type = mf.core_module.class_name unless mf.nil?
     end

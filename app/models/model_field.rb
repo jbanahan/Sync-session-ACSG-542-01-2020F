@@ -18,7 +18,7 @@ class ModelField
               :import_lambda, :export_lambda, 
               :custom_id, :data_type, :core_module, 
               :join_statement, :join_alias, :qualified_field_name, :uid, 
-              :public, :public_searchable, :definition
+              :public, :public_searchable, :definition, :disabled
   
   def initialize(rank,uid,core_module, field, options={})
     o = {:import_lambda =>  lambda {|obj,data|
@@ -75,13 +75,23 @@ class ModelField
     else 
       fvr = @@field_validator_rules[@uid]
     end
-    @read_only = o[:read_only] || (fvr && fvr.read_only?)
+    @read_only = o[:read_only] || fvr.try(:read_only?)
+    @disabled = o[:disabled] || fvr.try(:disabled?)
+    if !o[:default_label].blank?
+      FieldLabel.set_default_value @uid, o[:default_label]
+    end
+
     self.base_label #load from cache if available
   end
 
   # do post processing on raw sql query result generated using qualified_field_name
   def process_query_result val, user
-    return "HIDDEN" unless can_view? user
+    if disabled?
+      return nil
+    elsif !can_view? user
+      return "HIDDEN"
+    end
+
     result = @process_query_result_lambda ? @process_query_result_lambda.call(val) : val
 
     # Make sure all times returned from the database are translated to the user's timezone (or Eastern if user has no timezone)
@@ -103,6 +113,11 @@ class ModelField
   def read_only?
     @read_only
   end
+
+  def disabled?
+    @disabled
+  end
+
   # returns true if the given user should be allowed to view this field
   def can_view? user
     @can_view_lambda.call user 
@@ -140,7 +155,8 @@ class ModelField
 
   #get the basic label content from the FieldLabel if available
   def base_label
-    return @base_label unless @base_label.blank?
+    # Load the label once, and no longer even if it's nil - no point in relooking up nil over and over again
+    return @base_label if defined?(@base_label)
     f = nil
     if @@field_label_cache.empty?
       f = FieldLabel.where(:model_field_uid=>@uid).first
@@ -152,7 +168,7 @@ class ModelField
       if self.custom?
         @base_label = self.custom_definition.label
       else
-        @base_label = FieldLabel::DEFAULT_VALUES_CACHE[@uid.to_sym]
+        @base_label = FieldLabel.default_value @uid
       end
     else
       @base_label = f.label
@@ -195,8 +211,13 @@ class ModelField
   #show the value for the given field or "HIDDEN" if the user does not have field level permission
   #if always_view is true, then the user permission check will be skipped
   def process_export obj, user, always_view = false
-    return "HIDDEN" unless always_view || can_view?(user)
-    obj.nil? ? '' : @export_lambda.call(obj)
+    if disabled?
+      nil
+    elsif !always_view && !can_view?(user)
+      "HIDDEN"
+    else
+      obj.nil? ? '' : @export_lambda.call(obj)
+    end
   end
 
   def custom?
@@ -218,6 +239,34 @@ class ModelField
       return CustomDefinition.cached_find(@custom_id).data_type.downcase.to_sym
     end
   end
+
+  def blank?
+    @uid == :____undef____ || @uid == :_blank
+  end
+
+  def self.blank_model_field
+    if !defined?(@@blank_model_field)
+      options = {
+        import_lambda: lambda {|obj, data| nil},
+        export_lambda: lambda {|obj| nil},
+        read_only: false,
+        history_ignore: true,
+        can_view_lambda: lambda {|u| false},
+        query_parameter_lambda: lambda {|obj| nil},
+        process_query_result_lambda: lambda {|obj| nil},
+        data_type: :string,
+        join_alias: "",
+        qualified_field_name: '"[Disabled]"',
+        disabled: true,
+        join_statement: "",
+        label_override: "[Disabled]"
+      }
+      @@blank_model_field = ModelField.new 1000000, :____undef____, nil, "", options
+    end
+
+    @@blank_model_field
+  end
+  private_class_method :blank_model_field
   
   #Get the unique ID to be used for a given region and model field type
   def self.uid_for_region region, type
@@ -226,15 +275,37 @@ class ModelField
 
   #should be after all class level methods are declared
   MODEL_FIELDS = Hash.new
+  # We don't want to retain disabled model fields in the main hash (since then we need 
+  # to update all the references to retrieving sets of model field to remove disabled ones
+  # - which also gets expensive computationally).  But we do need to track which were disabled
+  # because we don't want to do a reload in cases where a UID isn't in the model field hash
+  # and is disabled...it's expensive to do so in queries.
+  DISABLED_MODEL_FIELDS = Set.new
   def self.add_fields(core_module,descriptor_array)
+    descriptor_array.each do |m|
+      options = m[4].nil? ? {} : m[4]
+      options = {default_label: m[3]}.merge options
+
+      mf = ModelField.new(m[0],m[1],core_module,m[2],options)
+      add_model_fields(core_module, [mf])
+    end
+  end
+
+  def self.add_model_fields(core_module, model_fields)
     module_type = core_module.class_name.to_sym
     MODEL_FIELDS[module_type] = Hash.new if MODEL_FIELDS[module_type].nil?
-    descriptor_array.each do |m|
-      FieldLabel.set_default_value m[1], m[3]
-      mf = ModelField.new(m[0],m[1],core_module,m[2],m[4].nil? ? {} : m[4])
-      MODEL_FIELDS[module_type][mf.uid.to_sym] = mf
+
+    model_fields.each do |mf|
+      mf_uid = mf.uid.to_sym
+      if mf.disabled?
+        DISABLED_MODEL_FIELDS << mf_uid
+      else
+        DISABLED_MODEL_FIELDS.delete mf_uid
+        MODEL_FIELDS[module_type][mf.uid.to_sym] = mf
+      end
     end
-  end 
+    
+  end
 
   def self.make_comment_arrays(rank_start,uid_prefix,klass)
     r = [
@@ -679,9 +750,9 @@ class ModelField
     fld = custom_definition.model_field_uid.to_sym
     mf = ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
       :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
-      :definition => custom_definition.definition
+      :definition => custom_definition.definition, :default_label => "#{custom_definition.label}"
     })
-    model_hash[mf.uid.to_sym] = mf
+    add_model_fields core_module, [mf]
   end
   private_class_method :create_and_insert_custom_field
   
@@ -696,7 +767,10 @@ class ModelField
     CoreModule::CORE_MODULES.each do |cm|
       h = MODEL_FIELDS[cm.class_name.to_sym]
       h.each do |k,v|
-        h.delete k unless v.custom_id.nil?
+        if !v.custom_id.nil?
+          h.delete k
+          DISABLED_MODEL_FIELDS.delete v.uid
+        end
       end
     end
     ModelField.add_custom_fields(CoreModule::ORDER,Order)
@@ -718,6 +792,7 @@ class ModelField
   end
 
   def self.add_country_hts_fields
+    model_fields = []
     Country.import_locations.each do |c|
       (1..3).each do |i|
         mf = ModelField.new(next_index_number(CoreModule::PRODUCT),
@@ -767,12 +842,15 @@ class ModelField
             :process_query_result_lambda => lambda {|r| r.nil? ? nil : r.hts_format }
           }
         )
-        MODEL_FIELDS[CoreModule::PRODUCT.class_name.intern][mf.uid.to_sym] = mf
+        model_fields << mf
       end
     end
+    add_model_fields CoreModule::PRODUCT, model_fields
+    nil
   end
 
   def self.add_region_fields
+    model_fields = []
     Region.all.each do |r|
       mf = ModelField.new(next_index_number(CoreModule::PRODUCT),
         "*r_#{r.id}_class_count".to_sym,
@@ -798,8 +876,9 @@ and classifications.product_id = products.id
 )"          
         }
       )
-      MODEL_FIELDS[CoreModule::PRODUCT.class_name.intern][mf.uid.to_sym] = mf
+      model_fields << mf
     end
+    add_model_fields CoreModule::PRODUCT, model_fields
   end
 
 
@@ -860,7 +939,9 @@ and classifications.product_id = products.id
 
   def self.reload(update_cache_time=false)
     warm_expiring_caches do
+      FieldLabel.clear_defaults
       MODEL_FIELDS.clear
+      DISABLED_MODEL_FIELDS.clear
       add_fields CoreModule::SECURITY_FILING_LINE, [
         [2,:sfln_line_number,:line_number,"Line Number",{:data_type=>:integer}],
         [4,:sfln_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
@@ -1752,24 +1833,49 @@ and classifications.product_id = products.id
   reload #does the reload when the class is loaded the first time 
 
   def self.find_by_uid(uid,dont_retry=false)
+    uid_sym = uid.to_sym
     return ModelField.new(10000,:_blank,nil,nil,{
       :label_override => "[blank]",
       :import_lambda => lambda {|o,d| "Field ignored"},
       :export_lambda => lambda {|o| },
       :data_type => :string,
       :qualified_field_name => "\"\""
-    }) if uid.to_sym == :_blank
-    reload_if_stale
+    }) if uid_sym == :_blank
+
+    return blank_model_field if DISABLED_MODEL_FIELDS.include?(uid_sym)
+
+    reloaded = reload_if_stale
+
     MODEL_FIELDS.values.each do |h|
-      u = uid.to_sym
-      return h[u] unless h[u].nil?
+      mf = h[uid_sym]
+      return mf unless mf.nil?
     end
-    unless dont_retry
+
+    # There's little point to running a reload here if we just reloaded above
+    unless reloaded || dont_retry
       #reload and try again 
       ModelField.reload true 
       find_by_uid uid, true
     end
-    return nil
+
+    return blank_model_field
+  end
+
+  def self.viewable_model_fields user, fields
+    f = []
+    fields.each {|mf| f << mf if ModelField.find_by_uid(mf).can_view?(user)}
+    f
+  end
+
+  # This method is largely just for testing purposes.  It does not reload
+  # caches or anything.  You probably don't want to use it and should
+  # opt for using find_by_uid instead.
+  def self.model_field_loaded? uid
+    MODEL_FIELDS.values.each do |h|
+      u = uid.to_sym
+      return true unless h[u].nil?
+    end
+    return false
   end
 
   #get array of model fields associated with the given region
@@ -1785,16 +1891,25 @@ and classifications.product_id = products.id
     ret
   end
   
-  #DEPRECATED use find_by_core_module
-  def self.find_by_module_type(type_symbol)
+  def self.find_by_module_type(module_type)
     reload_if_stale
-    h = MODEL_FIELDS[type_symbol]
+
+    if module_type.is_a?(CoreModule)
+      module_type = module_type.class_name.to_sym
+    elsif module_type.is_a?(String)
+      module_type = module_type.to_sym
+    end
+
+    h = MODEL_FIELDS[module_type]
+    # The values call below returns a new array each call
+    # ensuring that modifications to the returned array 
+    # will not affect the internal model field list
     h.nil? ? [] : h.values.to_a
   end
 
   #get an array of model fields given core module
   def self.find_by_core_module cm
-    find_by_module_type cm.class_name.to_sym
+    find_by_module_type cm
   end
   
   def self.find_by_module_type_and_uid(type_symbol,uid_symbol)
@@ -1816,21 +1931,26 @@ and classifications.product_id = products.id
   end
 
   def self.reload_if_stale
-    return if ModelField.web_mode #see documentation at web_mode accessor
-    cache_time = CACHE.get "ModelField:last_loaded"
-    if !cache_time.nil? && !cache_time.is_a?(Time)
-      begin
-        raise "cache_time was a #{cache_time.class} object!"
-      rescue
-        $!.log_me ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]
-      ensure
-        cache_time = nil
+    reloaded = false
+    if !ModelField.web_mode #see documentation at web_mode accessor
+      cache_time = CACHE.get "ModelField:last_loaded"
+      if !cache_time.nil? && !cache_time.is_a?(Time)
+        begin
+          raise "cache_time was a #{cache_time.class} object!"
+        rescue
+          $!.log_me ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]
+        ensure
+          cache_time = nil
+          reload
+          reloaded = true
+        end
+      end
+      if !cache_time.nil? && (@@last_loaded.nil? || @@last_loaded < cache_time)
         reload
+        reloaded = true
       end
     end
-    if !cache_time.nil? && (@@last_loaded.nil? || @@last_loaded < cache_time)
-      reload
-    end
+    reloaded
   end
 
   def parse_date d

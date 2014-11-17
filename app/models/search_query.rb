@@ -149,6 +149,10 @@ class SearchQuery
     }
     @search_setup.sort_criterions.each {|sc| core_modules << sc.model_field.core_module}
 
+    # The possibility exists for a core module to be nil on a sort or a search column / criterion
+    # if the user loses visibility to a field (or a field is disabled)
+    core_modules.delete nil
+
     # loop through the chain including all modules used and all of their parents
     join_statements = []
     include_remaining = false
@@ -205,6 +209,7 @@ class SearchQuery
     module_chain_array.each {|cm| sort_clause_hash[cm] = []}
     sorts.each do |sc|
       mf = sc.model_field
+      next if mf.blank?
       sort_clause_hash[mf.core_module] << "#{mf.qualified_field_name} #{sc.descending? ? "DESC" : "ASC"}"
     end
     sort_clauses = []
