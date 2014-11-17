@@ -1,4 +1,3 @@
-require 'digest/md5'
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/j_jill/j_jill_support'
@@ -43,6 +42,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
   private 
   def parse_order order_root, extract_date
+    @vendor_styles = Set.new
     cancel = REXML::XPath.first(order_root,'BEG/BEG01').text=='03'
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
@@ -73,6 +73,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     end
 
     if update_header || update_lines
+      ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
       ord.save! 
       ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
       ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
@@ -89,7 +90,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       ord.reopen! @user
     end
 
-    fingerprint = generate_fingerprint ord
+    fingerprint = generate_order_fingerprint ord
     fp = DataCrossReference.find_jjill_order_fingerprint(ord)
     if fp.blank?
       ord.post_create_logic! @user
@@ -102,25 +103,6 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     end
 
 
-  end
-
-  private
-
-  def generate_fingerprint ord
-    f = ""
-    f << ord.customer_order_number.to_s
-    f << ord.vendor_id.to_s
-    f << ord.mode.to_s
-    f << ord.fob_point.to_s
-    f << ord.first_expected_delivery_date.to_s
-    f << ord.ship_window_start.to_s
-    f << ord.ship_window_end.to_s
-    ord.order_lines.each do |ol|
-      f << ol.quantity.to_s
-      f << ol.price_per_unit.to_s
-      f << ol.sku.to_s
-    end
-    Digest::MD5.hexdigest f
   end
 
   def update_order_header ord, extract_date, cust_ord, order_root
@@ -217,6 +199,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     end
     cv = p.get_custom_value(@cdefs[:vendor_style])
     vendor_style = et(po1_el,'PO111')
+    @vendor_styles << vendor_style unless vendor_style.blank?
     if cv.value != vendor_style
       cv.value = vendor_style
       cv.save!

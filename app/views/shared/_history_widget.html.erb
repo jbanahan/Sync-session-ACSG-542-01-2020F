@@ -1,28 +1,29 @@
 <div class='history_level'>
-  <%changed_count = diff.model_fields_changed.keys.inject(0) {|result,mfuid| 
-    mf = ModelField.find_by_uid(mfuid)
-    result + ((!mf.history_ignore? && mf.can_view?(current_user) ? 1 : 0))}%>
-  <%if changed_count > 0-%>
-    <table class='detail_table history_items'>
-      <thead><tr><th>Field</th><th>From</th><th>To</th></tr></thead>
-      <tbody>
-  <%diff.model_fields_changed.each do |mfuid,c|%> 
-    <%mf = ModelField.find_by_uid(mfuid)%>
-    <% next if mf.history_ignore? || !mf.can_view?(current_user) || (c[0].blank? && c[1].blank?) %>
-    <tr class='hover'>
-      <td><%=mf.label%></td>
-    <% 
-      if mf.data_type==:datetime
-        c[0] = Time.parse(c[0]) unless c[0].blank? || !c[0].is_a?(String)
-        c[1] = Time.parse(c[1]) unless c[1].blank? || !c[1].is_a?(String)
-      end %>
-        <td><%=c[0]%></td>
-        <td><%=c[1]%></td>
-      </tr>
-    <%end%>
-      </tbody>
-    </table>
-  <%end-%>
+  <table class='table table-condensed history_items'>
+    <thead><tr><th>Field</th><th>From</th><th>To</th></tr></thead>
+    <tbody>
+      <%model_fields_written = 0%>
+      <%diff.model_fields_changed.each do |mfuid,c|%> 
+        <%mf = ModelField.find_by_uid(mfuid)%>
+        <% next if mf.history_ignore? || !mf.can_view?(current_user) || (c[0].blank? && c[1].blank?) %>
+        <% model_fields_written += 1 %>
+        <tr class='hover'>
+          <td><%=mf.label%></td>
+        <% 
+          if mf.data_type==:datetime
+            c[0] = Time.parse(c[0]) unless c[0].blank? || !c[0].is_a?(String)
+            c[1] = Time.parse(c[1]) unless c[1].blank? || !c[1].is_a?(String)
+          end 
+        %>
+          <td><%=c[0]%></td>
+          <td><%=c[1]%></td>
+        </tr>
+      <%end%>
+      <%if model_fields_written==0%>
+        <tr><td colspan='3'>No fields changed.</td></tr>
+      <%end%>
+    </tbody>
+  </table>
 </div>
 <div class='history_children' >
   <%if !diff.nested_blank?(diff.children_added)%>
@@ -31,7 +32,7 @@
       <%r = ca.recordable%>
       <% if !ca.blank? %>
         <h3>Added <%=cm.label%>: <%=cm.unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca, :am_root=>false} %>
       <% end %>
     <% end %>
   <%end%>
@@ -41,7 +42,7 @@
       <%r = ca.recordable%>
       <% if !ca.blank? %>
         <h3>Deleted <%=cm.label%>: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca, :am_root=>false} %>
       <% end %>
     <% end %>
   <%end%>
@@ -51,7 +52,7 @@
       <%r = ca.recordable%>
       <% if !ca.blank? %>
         <h3>Changed <%=cm.label%>: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca, :am_root=>false} %>
       <% end %>
     <% end %>
   <%end%>

@@ -6,6 +6,9 @@ Factory.sequence :iso do |n|
 
   mod = (@second_counter += 1) % 26
   @first_counter += 1 if mod == 0
+  # Reset the counter if it goes over 9 (otherwise we end up getting 00A, 00B, which ends up causing problems because mysql truncates them to 00, 00 - causing duplicate
+  # key errors)
+  @first_counter = 0 if @first_counter > 9
   
   "#{@first_counter}#{(65 + mod).chr}"
 end

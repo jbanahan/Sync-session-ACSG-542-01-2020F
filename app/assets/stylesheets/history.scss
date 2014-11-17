@@ -1,23 +1,7 @@
-div.history_entry {
-  margin: 10px;
-  border-bottom: 2px solid black;
-  padding: 5px;
-  
-  .history_title {
-    font-weight: bold;
-    font-size: 125%;
-  }
-  .history_actions {
-    text-align: right;
-  }
-  .history_children {
-    padding-left: 1em;
+.history_children {
+  margin-left: 1em;
 
-    h3 {
-      margin: 0.1em;
-    }
-  }
-  .history_items td {
-    width: 33%;
+  h3 {
+    margin: 0.1em;
   }
 }

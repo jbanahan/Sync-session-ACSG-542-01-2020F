@@ -99,6 +99,37 @@ describe ModelField do
     ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
   end
   context "special cases" do
+    context "prod_max_component_count" do
+      before :each do
+        @ss = SearchSetup.new(module_type:'Product',user_id:Factory(:master_user,product_view:true).id)
+        @ss.search_columns(model_field_uid:'prod_uid',rank:1)
+        @sc = @ss.search_criterions.build(model_field_uid: 'prod_max_component_count', operator:'eq',value:'0')
+        @mf = ModelField.find_by_uid(:prod_max_component_count)
+      end
+      it "should return number for maximum components" do
+        #first record for country 1
+        tr = Factory(:tariff_record)
+        p = tr.product
+        #second record for country 1
+        tr2 = Factory(:tariff_record,classification:tr.classification,line_number:2)
+        #first record for country 2
+        tr3 = Factory(:tariff_record,classification:Factory(:classification,product:p))
+        expect(@mf.process_export(p,nil,true)).to eq 2
+        @sc.value = '2'
+        expect(@ss.result_keys.to_a).to eq [p.id]
+      end
+      it "should return 0 when no classifications" do
+        p = Factory(:product)
+        expect(@mf.process_export(p,nil,true)).to eq 0
+        expect(@ss.result_keys.to_a).to eq [p.id]
+      end
+      it "should return 0 when no components" do
+        c = Factory(:classification)
+        p = c.product
+        expect(@mf.process_export(p,nil,true)).to eq 0
+        expect(@ss.result_keys.to_a).to eq [p.id]
+      end
+    end
     context "comments" do
       it "should return comment count" do
         s = Factory(:shipment)

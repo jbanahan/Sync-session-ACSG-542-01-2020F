@@ -6,6 +6,11 @@
     display: none !important;
   }
 }
+@media not print {
+  .print-only {
+    display: none !important
+  }
+}
 a.action_link {
   color: black;
   text-decoration: none;

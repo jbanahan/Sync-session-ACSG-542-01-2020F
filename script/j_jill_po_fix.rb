@@ -12,6 +12,29 @@ class JJillPOFix
 
   SHIP_VIA_CODES ||= {'2'=>'Air Collect','3'=>'Boat','4'=>'Air Prepaid','5'=>'Air Sea Diff'}
 
+  def self.update_all_2014_11_17
+    # cdefs = prep_custom_definitions([:vendor_style])
+    x = self.new
+    jill = Company.find_by_system_code UID_PREFIX
+    jill.importer_orders.each do |ord|
+      # x.update_product_category ord, cdefs
+      x.update_fingerprint ord
+    end
+  end
+
+  def update_product_category order, cdefs = self.class.prep_custom_definitions([:vendor_style])
+    products = Set.new
+    order.order_lines.each {|ol| products << ol.product}
+    vs = products.collect {|p| p.get_custom_value(cdefs[:vendor_style]).value}.uniq
+    vs = [] if vs.blank?
+    order.update_attributes(product_category:get_product_category_from_vendor_styles(vs))
+  end
+
+  def update_fingerprint ord
+    fingerprint = generate_order_fingerprint ord
+    DataCrossReference.create_jjill_order_fingerprint!(ord,fingerprint)
+  end
+
   def self.integration_folder
     ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_jjill_850"]
   end

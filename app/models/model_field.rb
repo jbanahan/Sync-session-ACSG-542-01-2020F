@@ -1557,6 +1557,19 @@ and classifications.product_id = products.id
           :export_lambda=>lambda {|obj| obj.respond_to?(:all_attachments) ? obj.all_attachments.count : obj.attachments.count},
           :qualified_field_name=>"((select count(*) from attachments where attachable_type = 'Product' and attachable_id = products.id) + (select count(*) from linked_attachments where attachable_type = 'Product' and attachable_id = products.id))",
           :data_type=>:integer
+        }],
+        [18,:prod_max_component_count,:max_component_count, 'Component Count (Max)', {
+          :import_lambda=>lambda {|o,d| "Component Count (Max) ignored. (read only)"},
+          :export_lambda=>lambda {|o| 
+            max = 0
+            o.classifications.each do |c|
+              sz = c.tariff_records.size
+              max = sz if sz && sz > max
+            end
+            max
+          },
+          :qualified_field_name => "(SELECT ifnull(max((select count(*) from tariff_records where tariff_records.classification_id = classifications.id)),0) from classifications where classifications.product_id = products.id)",
+          :data_type=>:integer
         }]
       ]
       add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
@@ -1631,7 +1644,8 @@ and classifications.product_id = products.id
           :data_type=>:string
         }],
         [16,:ord_season,:season,'Season',{data_type: :string}],
-        [17,:ord_terms,:terms_of_sale,'Terms of Sale',{data_type: :string}]
+        [17,:ord_terms,:terms_of_sale,'Terms of Sale',{data_type: :string}],
+        [18,:ord_product_category,:product_category,'Product Category',{data_type: :string}]
       ]
       add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
       add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
