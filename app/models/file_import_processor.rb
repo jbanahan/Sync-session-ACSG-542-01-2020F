@@ -414,7 +414,7 @@ class FileImportProcessor
       r = row[col.rank + base_column]
       r = r.value if r.respond_to? :value #get real value for Excel formulas
       r = r.strip if r.is_a? String
-      data_map[mf.core_module][mf.uid] = sanitize_file_data(r, mf) unless mf.uid==:_blank
+      data_map[mf.core_module][mf.uid] = sanitize_file_data(r, mf) unless mf.blank?
     end
     data_map
   end
