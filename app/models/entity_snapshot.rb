@@ -117,16 +117,19 @@ class EntitySnapshot < ActiveRecord::Base
     d = ESDiff.new
     d.record_id = new_json.nil? ? old_json['entity']['record_id'] : new_json['entity']['record_id']
     d.core_module = new_json.nil? ? old_json['entity']['core_module'] : new_json['entity']['core_module']
+    cm = CoreModule.find_by_class_name d.core_module
     d.model_fields_changed = model_field_diff(old_json,new_json) 
 
     new_children = new_json.nil? ? [] : new_json['entity']['children']
     old_children = old_json.nil? ? [] : old_json['entity']['children']
 
     entities_in_new = []
-
     if new_children
       new_children.each do |nc|
         entities_in_new << "#{nc['entity']['record_id']}-#{nc['entity']['core_module']}"
+        cm.key_model_field_uids.each do |uid|
+          entities_in_new << "#{uid}-#{nc['entity']['model_fields'][uid.to_s]}"
+        end
         oc = old_children.nil? ? nil : find_matching_child(old_children, nc)
         if oc
           d.children_in_both << diff_json(oc, nc)
@@ -138,18 +141,31 @@ class EntitySnapshot < ActiveRecord::Base
 
     if old_children
       old_children.each do |oc|
-        if !entities_in_new.include?("#{oc['entity']['record_id']}-#{oc['entity']['core_module']}")
-          d.children_deleted << diff_json(oc,nil)
+        found = entities_in_new.include?("#{oc['entity']['record_id']}-#{oc['entity']['core_module']}")
+        cm.key_model_field_uids.each do |uid|
+          break if found
+          found = entities_in_new.include?("#{uid}-#{oc['entity']['model_fields'][uid.to_s]}")
         end
+        d.children_deleted << diff_json(oc,nil) if !found
       end
     end
-
     d
   end
 
+
   def find_matching_child container, target
     container.each do |c|
-      return c if c['entity']['record_id']==target['entity']['record_id'] && c['entity']['core_module']==target['entity']['core_module']
+      next unless c['entity']['core_module']==target['entity']['core_module']
+      if c['entity']['record_id']==target['entity']['record_id']
+        return c
+      else
+        cm = CoreModule.find_by_class_name(target['entity']['core_module'])
+        cm.key_model_field_uids.each do |uid|
+          t_val = target['entity']['model_fields'][uid.to_s]
+          c_val = c['entity']['model_fields'][uid.to_s]
+          return c if !t_val.blank? && t_val == c_val
+        end
+      end
     end
     nil
   end
