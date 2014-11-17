@@ -247,7 +247,7 @@ class ModelField
   def self.blank_model_field
     if !defined?(@@blank_model_field)
       options = {
-        import_lambda: lambda {|obj, data| nil},
+        import_lambda: lambda {|obj, data| "Field ignored"},
         export_lambda: lambda {|obj| nil},
         read_only: false,
         history_ignore: true,
