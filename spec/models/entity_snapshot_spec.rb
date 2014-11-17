@@ -1,6 +1,97 @@
 require 'spec_helper'
 
 describe EntitySnapshot do
+  describe :diff do
+    before :each do
+      @u = Factory(:user)
+    end
+    it "should return empty diff for identical snapshots" do
+      ol = Factory(:order_line)
+      o = ol.order
+      s = EntitySnapshot.create_from_entity o, @u
+      s2 = EntitySnapshot.create_from_entity o, @u
+      diff = s2.diff s
+      expect(diff.record_id).to eq o.id
+      expect(diff.core_module).to eq 'Order'
+      expect(diff.model_fields_changed).to be_empty
+      expect(diff.children_added).to be_empty
+      expect(diff.children_deleted).to be_empty
+
+      cib = diff.children_in_both
+      expect(cib.size).to eq 1
+      expect(cib.first.record_id).to eq ol.id
+      expect(cib.first.model_fields_changed).to be_empty
+    end
+    it "should reflect changed field" do
+      o = Factory(:order)
+      old_order_number = o.order_number
+      new_order_number = "#{o.order_number}X"
+
+      s = EntitySnapshot.create_from_entity o, @u
+      o.update_attributes(order_number:new_order_number)
+      s2 = EntitySnapshot.create_from_entity o, @u
+      diff = s2.diff s
+      
+      expect(diff.model_fields_changed['ord_ord_num']).to eq [old_order_number,new_order_number]
+    end
+    it "should reflect added child" do
+      o = Factory(:order)
+      s = EntitySnapshot.create_from_entity o, @u
+      ol = Factory(:order_line,order:o)
+      o.reload
+      s2 = EntitySnapshot.create_from_entity o, @u
+      diff = s2.diff s
+      
+      expect(diff.children_added.size).to eq 1
+      ca = diff.children_added.first
+      expect(ca.record_id).to eq ol.id
+      expect(ca.model_fields_changed['ordln_line_number'][1]).to eq ol.line_number
+    end
+    it "should reflect deleted child" do
+      ol = Factory(:order_line)
+      o = ol.order
+      s = EntitySnapshot.create_from_entity o, @u
+      ol.destroy
+      o.reload
+      s2 = EntitySnapshot.create_from_entity o, @u
+      diff = s2.diff s
+
+      expect(diff.children_deleted.size).to eq 1
+      cd = diff.children_deleted.first
+      expect(cd.record_id).to eq ol.id
+      expect(cd.model_fields_changed['ordln_line_number'][0]).to eq ol.line_number
+    end
+    it "should reflect field changed in child" do
+      ol = Factory(:order_line)
+      old_line_number = ol.line_number
+      new_line_number = old_line_number + 1
+      o = ol.order
+      s = EntitySnapshot.create_from_entity o, @u
+      ol.update_attributes(line_number:new_line_number)
+      o.reload
+      s2 = EntitySnapshot.create_from_entity o, @u
+      diff = s2.diff s
+      
+      expect(diff.children_in_both.size).to eq 1
+      cib = diff.children_in_both.first
+      expect(cib.model_fields_changed['ordln_line_number']).to eq [old_line_number,new_line_number]
+    end
+    it "should reflect child with new id and same logical key as update not add/delete" do
+      ol = Factory(:order_line,hts:'123456')
+      line_number = ol.line_number
+      o = ol.order
+      s = EntitySnapshot.create_from_entity o, @u
+      ol.destroy
+      ol = Factory(:order_line,order:o,line_number:line_number,hts:'654321')
+      o.reload
+      s2 = EntitySnapshot.create_from_entity o, @u
+      diff = s2.diff s
+      
+      expect(diff.children_in_both.size).to eq 1
+      cib = diff.children_in_both.first
+      expect(cib.model_fields_changed['ordln_hts']).to eq ['123456'.hts_format,'654321'.hts_format]
+    end
+  end
   describe :restore do
     before :each do 
       ModelField.reload
