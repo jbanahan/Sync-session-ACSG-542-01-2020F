@@ -1,4 +1,5 @@
 require 'digest/md5'
+require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 
 module OpenChain; module CustomHandler; module JJill; module JJillSupport
   UID_PREFIX = 'JJILL'
@@ -18,9 +19,11 @@ module OpenChain; module CustomHandler; module JJill; module JJillSupport
   end
 
   def generate_order_fingerprint ord
+    cdefs = Class.new {include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport }.prep_custom_definitions [:ship_type]
     f = ""
     f << my_tos(ord.customer_order_number)
     f << my_tos(ord.vendor_id)
+    f << my_tos(ord.get_custom_value(cdefs[:ship_type]).value)
     f << my_tos(ord.mode)
     f << my_tos(ord.fob_point)
     f << my_tos(ord.factory_id)

@@ -12,12 +12,12 @@ class JJillPOFix
 
   SHIP_VIA_CODES ||= {'2'=>'Air Collect','3'=>'Boat','4'=>'Air Prepaid','5'=>'Air Sea Diff'}
 
-  def self.update_all_2014_11_14
-    cdefs = prep_custom_definitions([:vendor_style])
+  def self.update_all_2014_11_17
+    # cdefs = prep_custom_definitions([:vendor_style])
     x = self.new
     jill = Company.find_by_system_code UID_PREFIX
     jill.importer_orders.each do |ord|
-      x.update_product_category ord, cdefs
+      # x.update_product_category ord, cdefs
       x.update_fingerprint ord
     end
   end
