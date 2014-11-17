@@ -5,7 +5,7 @@
       <%model_fields_written = 0%>
       <%diff.model_fields_changed.each do |mfuid,c|%> 
         <%mf = ModelField.find_by_uid(mfuid)%>
-        <% next if mf.nil? || mf.history_ignore? || !mf.can_view?(current_user) || (c[0].blank? && c[1].blank?) %>
+        <% next if mf.history_ignore? || !mf.can_view?(current_user) || (c[0].blank? && c[1].blank?) %>
         <% model_fields_written += 1 %>
         <tr class='hover'>
           <td><%=mf.label%></td>

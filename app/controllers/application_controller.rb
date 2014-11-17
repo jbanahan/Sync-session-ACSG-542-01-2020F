@@ -496,7 +496,6 @@ class ApplicationController < ActionController::Base
     r = ""
     return "" if model_field_uid.nil?
     mf = ModelField.find_by_uid(model_field_uid)
-    return "" if mf.nil?
     return mf.label
   end
   def new_relic

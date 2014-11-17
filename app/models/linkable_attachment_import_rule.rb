@@ -59,7 +59,7 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
     LinkableAttachmentImportRule.scoped.each do |r|
       @@link_cache_updated_at = r.updated_at if @@link_cache_updated_at.nil? || r.updated_at > @@link_cache_updated_at
       mf = ModelField.find_by_uid(r.model_field_uid)
-      next unless mf
+      next if mf.blank?
       @@link_cache << mf.core_module.klass
     end
   end

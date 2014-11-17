@@ -153,7 +153,7 @@ class ImportedFile < ActiveRecord::Base
       unless k.first.nil?
         values = GridMaker.single_row(k.first, self.search_columns, search_criterions, module_chain,self.user)
         self.search_columns.each_with_index do |sc,i|
-          if !sc.key_column? && sc.model_field_uid!='_blank'
+          if !sc.key_column? && !sc.model_field.blank?
             v = values[sc.rank]
             v = "" if v.nil?
             client.set_cell(0,row_number,sc.rank,v)

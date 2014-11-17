@@ -52,6 +52,7 @@ criterion_fields = current_search.criterion_fields_available(current_user) if cu
             <select id='used_sorts' size='10' multiple='multiple'>
               <%current_search.sort_criterions.each do |sc|-%>
                 <%mf = ModelField.find_by_uid(sc.model_field_uid)%>
+                <% next if mf.blank? %>
                 <option value='<%=mf.uid%>' ord='<%=sc.descending? ? "d" : "a"%>'><%=mf.label%> <%=sc.descending? ? " [Z > A]" : " [A > Z]" %></option>
               <%end-%>
             </select>

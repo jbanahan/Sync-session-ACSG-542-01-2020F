@@ -152,7 +152,7 @@ describe ModelField do
           c_mf.label.should == "First HTS #{i} (ZY)"
           c2_mf = ModelField.find_by_uid "*fhts_#{i}_#{c2.id}"
           c2_mf.label.should == "First HTS #{i} (ZZ)"
-          ModelField.find_by_uid("*fhts_#{i}_#{c3.id}").should be_nil #don't create because not an import location
+          expect(ModelField.model_field_loaded?("*fhts_#{i}_#{c3.id}")).to be_false #don't create because not an import location
         end
       end
       it "should allow import" do
@@ -765,6 +765,60 @@ describe ModelField do
         r = sc.apply(Entry.where("1=1")).to_a
         r.should include(@e)
       end
+    end
+  end
+
+  describe "find_by_uid" do
+    it "finds a loaded model field by stringified symbol" do
+      mf = ModelField.find_by_uid('ent_brok_ref')
+      expect(mf.uid).to eq :ent_brok_ref
+    end
+
+    it "returns a blank model field if uid doesn't exist" do
+      mf = ModelField.find_by_uid "not a model field"
+      expect(mf).to be_blank
+    end
+
+    it "reloads model fields on an initial lookup failure" do
+      ModelField.should_receive(:reload).with(true)
+      mf = ModelField.find_by_uid "not a model field"
+    end
+
+    it "ensures model field lists are not stale" do
+      ModelField.should_receive(:reload_if_stale).and_return true
+      mf = ModelField.find_by_uid "not a model field"
+    end
+
+    it "returns a blank model field if '_blank' uid used" do
+      mf = ModelField.find_by_uid('_blank')
+      expect(mf.uid).to eq :_blank
+      expect(mf).to be_blank
+    end
+
+    it "doesn't attempt to reload if fields were stale" do
+      ModelField.should_receive(:reload_if_stale).and_return true
+      ModelField.should_not_receive(:reload)
+      expect(ModelField.find_by_uid "not a model field").to be_blank
+    end
+  end
+
+  describe "add_fields" do
+    before :each do
+      ModelField::MODEL_FIELDS.clear
+    end
+
+    it "adds standard field" do
+      ModelField.add_fields CoreModule::ENTRY, [[1,:ent_brok_ref,:broker_reference, "Broker Reference",{:data_type=>:string}]]
+      mf = ModelField.find_by_uid 'ent_brok_ref'
+      expect(mf.try(:uid)).to eq :ent_brok_ref
+    end
+
+    it "does not add fields disabled via FieldValidatorRules" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'ent_brok_ref', disabled: true
+
+      ModelField.add_fields CoreModule::ENTRY, [[1,:ent_brok_ref,:broker_reference, "Broker Reference",{:data_type=>:string}]]
+      mf = ModelField.find_by_uid 'ent_brok_ref'
+      expect(mf).to be_blank
     end
   end
 end

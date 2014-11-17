@@ -101,7 +101,7 @@ module EntriesHelper
     def find_model_fields fields
       mfs = {}
       fields.each do |k, v|
-        mfs[k] = v.collect {|uid| ModelField.find_by_uid(uid)}.compact
+        mfs[k] = v.collect {|uid| mf = ModelField.find_by_uid(uid); mf.blank? ? nil : mf}.compact
       end
       mfs
     end

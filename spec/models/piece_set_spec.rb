@@ -64,4 +64,35 @@ describe PieceSet do
       expect(PieceSet.all.collect {|p| p.quantity}).to eql([1,1])
     end
   end
+
+  describe "identifiers" do
+    before :each do
+      @product = Factory(:product)
+      @ps = PieceSet.create!(:quantity=>1,
+        :order_line=>Factory(:order_line,:product=>@product),
+        :shipment_line=>Factory(:shipment_line,:product=>@product),
+        :sales_order_line=>Factory(:sales_order_line,:product=>@product),
+        :delivery_line=>Factory(:delivery_line,:product=>@product),
+        :drawback_import_line=>Factory(:drawback_import_line,:product=>@product)
+      )
+      @user = Factory(:user)
+    end
+
+    it "returns identifier list for piece set" do
+      # Make sure user can vew them all
+      ModelField.any_instance.stub(:can_view?).with(@user).and_return true
+      ids = @ps.identifiers @user
+      expect(ids[:order]).to eq({label: "Order Number", value: @ps.order_line.order.order_number})
+      expect(ids[:shipment]).to eq({label: "Reference Number", value: @ps.shipment_line.shipment.reference})
+      expect(ids[:sales_order]).to eq({label: "Sale Number", value: @ps.sales_order_line.sales_order.order_number})
+      expect(ids[:delivery]).to eq({label: "Reference", value: @ps.delivery_line.delivery.reference})
+    end
+
+    it "removes fields user does not have access to" do
+      ModelField.any_instance.stub(:can_view?).with(@user).and_return false
+      ids = @ps.identifiers @user
+      expect(ids).to be_blank
+    end
+  end
+
 end

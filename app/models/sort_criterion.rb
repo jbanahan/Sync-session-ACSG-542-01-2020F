@@ -18,12 +18,14 @@ class SortCriterion < ActiveRecord::Base
 
   private
   def add_sort p
+    mf = find_model_field
+    return p if mf.blank?
+
     if custom_field?
-      mf = find_model_field
       cd = CustomDefinition.find(mf.custom_id)
       p.order("(SELECT custom_values.#{cd.data_column} FROM custom_values WHERE custom_values.custom_definition_id = #{mf.custom_id} AND custom_values.customizable_id = #{mf.core_module.table_name}.id) #{self.descending ? "DESC" : "ASC"}")
     else
-      p.order("#{find_model_field.qualified_field_name} #{self.descending ? "DESC" : "ASC"}")
+      p.order("#{mf.qualified_field_name} #{self.descending ? "DESC" : "ASC"}")
     end
   end
 

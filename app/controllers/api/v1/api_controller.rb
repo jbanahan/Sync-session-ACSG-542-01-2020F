@@ -288,7 +288,7 @@ module Api; module V1; class ApiController < ActionController::Base
 
   def validate_model_field field_type, model_field_uid, core_module
     mf = ModelField.find_by_uid model_field_uid
-    if mf.nil?
+    if mf.blank?
       raise StatusableError.new("#{field_type} field #{model_field_uid} not found.", 400 )
       return false
     end

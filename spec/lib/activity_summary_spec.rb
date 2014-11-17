@@ -1,12 +1,12 @@
 require 'spec_helper'
 
 describe OpenChain::ActivitySummary do
-  before :all do
+  before :each do
     @us = Factory(:country,iso_code:'US')
     @ca = Factory(:country,iso_code:'CA')
   end
 
-  after :all do
+  after :each do
     Country.destroy_all
   end
 

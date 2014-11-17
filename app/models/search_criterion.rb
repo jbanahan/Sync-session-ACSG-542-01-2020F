@@ -38,6 +38,8 @@ class SearchCriterion < ActiveRecord::Base
   #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_query_parameter expects)
   def test? obj, user=nil
     mf = ModelField.find_by_uid(self.model_field_uid)
+    return false if mf.disabled?
+
     r = false
     if field_relative?
       # for relative fields, if a secondary object is needed to supply a value (ie. when we're dealing with
@@ -64,11 +66,14 @@ class SearchCriterion < ActiveRecord::Base
   end
 
   def where_clause sql_value
+    mf = find_model_field
+    # Disabled fields should cause all output to cease on a report.
+    return "1 = 0" if mf.disabled?
+
     if field_relative?
       return relative_where_clause 
     end
     
-    mf = find_model_field
     table_name = mf.join_alias
     clause = nil
 
@@ -238,6 +243,8 @@ class SearchCriterion < ActiveRecord::Base
   #does the given value pass the criterion test
   def passes?(value_to_test)
     mf = find_model_field
+    return false if mf.disabled?
+    
     d = mf.data_type
 
     # If we include empty values, Returns true for nil, blank strings (ie. only whitespace), or anything that equals zero

@@ -76,7 +76,9 @@
       <td style="width:34%;">
         <table>
           <%e_port_name_f = ModelField.find_by_uid(:ent_entry_port_code)%>
-          <%=field_row e_port_name_f.label(false), "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{e_port_name_f.process_export(@entry,current_user)}<span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe%>
+          <% if e_port_name_f.can_view?(current_user)%>
+            <%=field_row e_port_name_f.label(false), "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{e_port_name_f.process_export(@entry,current_user)}<span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe %>
+          <% end %>
           <%[:ent_mbols,:ent_hbols,:ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_carrier_name,:ent_voyage,:ent_ult_con_name,:ent_employee_name].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>

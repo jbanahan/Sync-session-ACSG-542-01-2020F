@@ -8,7 +8,7 @@
     </div>
   </div>
 </div>
-<%-fields_to_use = [:ent_entry_num,:ent_filed_date,:ent_release_date,:ent_entered_value,:ent_customer_references,:ent_po_numbers,:ent_cust_name]-%>
+<%-fields_to_use = ModelField.viewable_model_fields(current_user, [:ent_entry_num,:ent_filed_date,:ent_release_date,:ent_entered_value,:ent_customer_references,:ent_po_numbers,:ent_cust_name])-%>
 <table class="table table-striped table-bordered table-condensed table-hover">
   <thead>
     <tr>

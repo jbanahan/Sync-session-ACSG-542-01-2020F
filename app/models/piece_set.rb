@@ -60,12 +60,16 @@ class PieceSet < ActiveRecord::Base
     self.milestone_forecast_set.blank? ? nil : self.milestone_forecast_set.state
   end
 
-  def identifiers
+  def identifiers user = User.current
     r = {}
-    r[:order] = {:label=>ModelField.find_by_uid(:ord_ord_num).label,:value=>self.order_line.order.order_number} if self.order_line
-    r[:shipment] = {:label=>ModelField.find_by_uid(:shp_ref).label,:value=>self.shipment_line.shipment.reference} if self.shipment_line
-    r[:sales_order] = {:label=>ModelField.find_by_uid(:sale_order_number).label,:value=>self.sales_order_line.sales_order.order_number} if self.sales_order_line
-    r[:delivery] = {:label=>ModelField.find_by_uid(:del_ref).label,:value=>self.delivery_line.delivery.reference} if self.delivery_line
+    ord_num_field = ModelField.find_by_uid(:ord_ord_num)
+    r[:order] = {:label=>ord_num_field.label,:value=>ord_num_field.process_export(self.order_line.order, user)} if self.order_line && ord_num_field.can_view?(user)
+    ship_ref_field = ModelField.find_by_uid(:shp_ref)
+    r[:shipment] = {:label=>ship_ref_field.label,:value=>ship_ref_field.process_export(self.shipment_line.shipment, user)} if self.shipment_line && ship_ref_field.can_view?(user)
+    sales_order_field = ModelField.find_by_uid(:sale_order_number)
+    r[:sales_order] = {:label=>sales_order_field.label,:value=>sales_order_field.process_export(self.sales_order_line.sales_order, user)} if self.sales_order_line && sales_order_field.can_view?(user)
+    deliver_field = ModelField.find_by_uid(:del_ref)
+    r[:delivery] = {:label=>deliver_field.label,:value=>deliver_field.process_export(self.delivery_line.delivery, user)} if self.delivery_line && deliver_field.can_view?(user)
     r
   end
 

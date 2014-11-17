@@ -152,6 +152,29 @@ describe SearchQuery do
     it "defaults to using the max_results from search_setup as the query LIMIT" do
       expect(@sq.to_sql).to include "LIMIT #{@sq.search_setup.max_results}"
     end
+
+    it "handles search_columns that have been removed/disabled" do
+      # We can simulate a disabled column by just using a bogus model field uid
+      @ss.search_columns.build(:model_field_uid=>'prod_not_a_field',:rank=>2)
+
+      r = @sq.execute(per_page: 1000)
+      expect(r.size).to eq 2
+      expect(r[0][:result][2]).to eq ""
+    end
+
+    it "handles search_criterions that have been removed/disabled" do
+      # We can simulate a disabled column by just using a bogus model field uid
+      @ss.search_criterions.build(:model_field_uid=>'prod_not_a_field',:operator=>'in',:value=>"A\nB")
+
+      r = @sq.execute(per_page: 1000)
+      expect(r.size).to eq 0
+    end
+
+    it "handles sorts that have been removed/disabled" do
+      @ss.sort_criterions.build(:model_field_uid=>'prod_not_a_field',:rank=>0)
+      r = @sq.execute(per_page: 1000)
+      expect(r.size).to eq 2
+    end
     
     context :custom_values do
       before :each do

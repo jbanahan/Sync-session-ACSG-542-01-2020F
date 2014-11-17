@@ -67,7 +67,7 @@ class GridMaker
     return nil unless test_row(row_objects) #test against criteria before rendering row
     r = []
     @fields.each do |f|
-      if f.model_field_uid=="_blank"
+      if f.blank?
         r << ""
       else
         mf = f.model_field

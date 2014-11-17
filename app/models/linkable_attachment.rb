@@ -18,7 +18,7 @@ class LinkableAttachment < ActiveRecord::Base
   #get the associated ModelField object (or nil if it doesn't exist)
   def model_field
     mf = ModelField.find_by_uid(self.model_field_uid)
-    mf
+    mf.blank? ? nil : mf
   end
 
   def can_view? user

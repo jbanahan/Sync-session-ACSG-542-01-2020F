@@ -4,7 +4,7 @@
     <select name='f' class='form-control'>
       <%PublicField.where(:searchable=>true).each do |pf|%>
       <% mf = ModelField.find_by_uid pf.model_field_uid%>
-      <% if mf %>
+      <% if !mf.blank? %>
       <option value='<%=mf.uid%>' <%=@field && @field==mf.uid ? "selected='true'" : ""%>><%=mf.label%></option>
       <% end%>
       <%end%>

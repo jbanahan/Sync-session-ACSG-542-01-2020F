@@ -185,7 +185,7 @@ class XlsMaker
     headers = []
     cols.each_with_index do |c,i|
       mf = ModelField.find_by_uid c.model_field_uid
-      headers << (mf.nil? ? "" : mf.label)
+      headers << mf.label
     end
 
     XlsMaker.add_header_row sheet, 0, headers, @column_widths

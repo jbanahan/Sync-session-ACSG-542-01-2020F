@@ -67,11 +67,11 @@ class EntitySnapshot < ActiveRecord::Base
         end
       end
       obj_hash['model_fields'].each do |mfuid,val| 
-        #this loop writes the values in the has again.
+        #this loop writes the values in the hash again.
         #this prevents an empty value not in the hash from blanking something
         #that is in the hash like a missing Country ISO blanking an included Country Name
         mf = ModelField.find_by_uid mfuid
-        mf.process_import obj, val unless mf.custom?
+        mf.process_import obj, val unless mf.blank? || mf.custom?
       end
       obj.last_updated_by_id=user.id if obj.respond_to?(:last_updated_by_id=)
 
