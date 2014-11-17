@@ -76,7 +76,10 @@ class ModelField
       fvr = @@field_validator_rules[@uid]
     end
     @read_only = o[:read_only] || fvr.try(:read_only?)
-    @disabled = o[:disabled] || fvr.try(:disabled?)
+
+    # The respond_to here is pretty much solely there for the migration case when disabled? didn't
+    # exist and the migration is creating it- unfortunately initializers reference model fields.
+    @disabled = o[:disabled] || (fvr.respond_to?(:disabled?) && fvr.disabled?)
     if !o[:default_label].blank?
       FieldLabel.set_default_value @uid, o[:default_label]
     end
