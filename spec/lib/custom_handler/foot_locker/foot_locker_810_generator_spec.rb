@@ -125,9 +125,9 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       expect(xp "RemitToState").to eq "NJ"
       expect(xp "RemitToPostal").to eq "07066"
       expect(xp "ShippedDate").to eq @entry.export_date.iso8601
-      expect(xp "CustomsClearance").to eq @entry.release_date.to_date.iso8601
-      expect(xp "EntryFiledDate").to eq @entry.entry_filed_date.to_date.iso8601
-      expect(xp "ArrivalDate").to eq @entry.arrival_date.to_date.iso8601
+      expect(xp "CustomsClearance").to eq @entry.release_date.in_time_zone("Eastern Time (US & Canada)").to_date.iso8601
+      expect(xp "EntryFiledDate").to eq @entry.entry_filed_date.in_time_zone("Eastern Time (US & Canada)").to_date.iso8601
+      expect(xp "ArrivalDate").to eq @entry.arrival_date.in_time_zone("Eastern Time (US & Canada)").to_date.iso8601
       expect(xp "ActualPortOfEntry").to eq @entry.entry_port_code
       expect(xp "VesselName").to eq @entry.vessel
       expect(xp "FlightVoyageNumber").to eq @entry.voyage
