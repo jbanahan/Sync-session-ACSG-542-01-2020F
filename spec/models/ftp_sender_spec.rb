@@ -16,16 +16,16 @@ describe FtpSender do
 
   describe "default_options" do
     it "should have default options" do
-     FtpSender.default_options(@file, @file).should eq :binary => true, :passive => true, 
-        :remote_file_name => File.basename(@file), :force_empty => false, :protocol => "ftp"
+     FtpSender.default_options(@file, @file).should eq({:binary => true, :passive => true, 
+        :remote_file_name => File.basename(@file), :force_empty => false, :protocol => "ftp"}.with_indifferent_access)
     end
 
     it "uses the original_filename method on the file object if present to make the remote_file_name option" do
       Attachment.add_original_filename_method @file
       @file.original_filename="original.txt"
 
-      FtpSender.default_options(@file, @file).should eq :binary => true, :passive => true, 
-         :remote_file_name => "original.txt", :force_empty => false, :protocol => "ftp"
+      FtpSender.default_options(@file, @file).should eq({:binary => true, :passive => true, 
+         :remote_file_name => "original.txt", :force_empty => false, :protocol => "ftp"}.with_indifferent_access)
     end
   end
 
@@ -57,7 +57,7 @@ describe FtpSender do
 
       @ftp = mock('ftp').as_null_object
       FtpSender.should_receive(:get_ftp_client).and_return @ftp
-      @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array)).and_yield @ftp
+      @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_yield @ftp
       @ftp.should_receive(:after_login).with(kind_of(Hash))
       @ftp.should_receive(:send_file).with @file.path, 'test.txt', kind_of(Hash)
       @ftp.stub(:last_response).and_return "200"
@@ -81,7 +81,7 @@ describe FtpSender do
 
       it "should log message and requeue if error is raised" do
         # These two lines mock out the actual internal client proxy access
-        @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array)).and_raise "RANDOM ERROR"
+        @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_raise "RANDOM ERROR"
         @ftp.should_receive(:last_response).and_return "500"
 
         # We're stubbing out the create_attachment call on the ftp session to avoid S3 involvement when 
@@ -135,7 +135,7 @@ describe FtpSender do
     
     context :success do 
       before :each do 
-        @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array)).and_yield @ftp
+        @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_yield @ftp
       end
 
       it "should log message if error is not raised" do
@@ -228,6 +228,25 @@ describe FtpSender do
         session.file_name.should == "original.txt"
       end
     end
+
+    context :validate_connect do
+      it "passes through all the opts to the connect method" do
+        local_opts = {port: 1234, binary: false, passive: false, remote_file_name: "filename.txt", force_empty: true, protocol: "sftp", folder: "folder"}
+        @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array), local_opts.with_indifferent_access).and_yield @ftp
+        @ftp.should_receive(:after_login).with(kind_of(Hash))
+        @ftp.stub(:last_response).and_return "200"
+
+        session = double("Session").as_null_object
+        session.stub(:successful?).and_return true
+        FtpSender.should_receive(:find_ftp_session).and_return session
+
+        file = double('File')
+        file.stub(:size).and_return 0
+        FtpSender.should_receive(:get_file_to_ftp).and_yield file
+      
+        FtpSender.send_file @server, @username, @password, @file, local_opts
+      end
+    end
   end
 
   context :FtpClient do
@@ -242,7 +261,7 @@ describe FtpSender do
 
         test = nil
 
-        @client.connect(@server, @username, @password, []) do |client|
+        @client.connect(@server, @username, @password, [], {}) do |client|
           client.should be @client
           test = "Pass"
         end
@@ -256,7 +275,7 @@ describe FtpSender do
         @ftp = double("Net::FTP")
         # connect sets up some variables so we need to call it every time
         Net::FTP.should_receive(:open).with(@server, @username, @password).and_yield @ftp
-        @client.connect(@server, @username, @password, []){|client|}
+        @client.connect(@server, @username, @password, [], {}){|client|}
       end
 
       describe "after_login" do
@@ -306,11 +325,11 @@ describe FtpSender do
     describe "connect" do
       it "should use Net::SFTP to connect to a server and yield the given block" do
         @ftp = double("Net::SFTP")
-        Net::SFTP.should_receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false).and_yield @ftp
+        Net::SFTP.should_receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
 
         test = nil
 
-        @client.connect(@server, @username, @password, []) do |client|
+        @client.connect(@server, @username, @password, [], {}) do |client|
           client.should be @client
           test = "Pass"
         end
@@ -318,14 +337,49 @@ describe FtpSender do
         test.should eq "Pass"
         @client.last_response.should eq "0 OK"
       end
+
+      it "should allow a different port to be specified" do
+        @ftp = double("Net::SFTP")
+        Net::SFTP.should_receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10, port: 1234).and_yield @ftp
+
+        test = nil
+
+        @client.connect(@server, @username, @password, [], {port: 1234}) do |client|
+          client.should be @client
+          test = "Pass"
+        end
+
+        test.should eq "Pass"
+        @client.last_response.should eq "0 OK"
+      end
+
+      it "handles disconnect errors" do
+        @ftp = double("Net::SFTP")
+        Net::SFTP.should_receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
+
+        @client.should_receive(:session_completed?).and_return true
+
+        @client.connect(@server, @username, @password, [], {}) {|client| raise Net::SSH::Disconnect}
+        @client.last_response.should eq "0 OK"
+      end
+
+      it "handles re-raises disconnect errors if session didn't complete normally" do
+        @ftp = double("Net::SFTP")
+        Net::SFTP.should_receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
+
+        @client.should_receive(:session_completed?).and_return false
+
+        expect{@client.connect(@server, @username, @password, [], {}) {|client| raise Net::SSH::Disconnect, "Error Message"}}.to raise_error Net::SSH::Disconnect, "Error Message"
+        expect(@client.last_response).to eq "4 Error Message"
+      end
     end
 
     context :post_connect do
       before :each do 
         @ftp = double("Net::SFTP")
         # connect sets up some variables so we need to call it every time
-        Net::SFTP.should_receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false).and_yield @ftp
-        @client.connect(@server, @username, @password, []){|client|}
+        Net::SFTP.should_receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
+        @client.connect(@server, @username, @password, [], {}){|client|}
       end
 
       describe "chdir" do
@@ -399,7 +453,7 @@ describe FtpSender do
     it "should send empty file" do
       @ftp = mock('ftp').as_null_object
       FtpSender.should_receive(:get_ftp_client).and_return @ftp
-      @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array)).and_yield @ftp
+      @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_yield @ftp
       @ftp.stub(:last_response).and_return "200"
 
       attachment = double("Attachment")
