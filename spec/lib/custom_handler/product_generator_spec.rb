@@ -288,7 +288,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
     it "should generate a subselect without an alias" do
       cd = Factory(:custom_definition, :module_type=>'Product')
-      subselect = @base.new.cd_s cd.id, true
+      subselect = @base.new.cd_s cd.id, suppress_alias: true
       subselect.should == "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id})"
     end
     it "should gracefully handle missing definitions" do
@@ -296,7 +296,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       subselect.should == "(SELECT \"\") as `Custom -1`"
     end
     it "should gracefully handle missing definitions without an alias" do
-      subselect = @base.new.cd_s -1, true
+      subselect = @base.new.cd_s -1, suppress_alias: true
       subselect.should == "(SELECT \"\")"
     end
     it "should cache the custom defintion lookup" do

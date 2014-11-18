@@ -124,11 +124,11 @@ module OpenChain
           cd_s(76),
           "IFNULL((SELECT system_code FROM companies where companies.id = products.vendor_id),\"\") AS `#{ModelField.find_by_uid(:prod_ven_syscode).label}`",
           cd_s(78),
-          cd_s(79),
-          cd_s(80),
-          cd_s(81),
-          cd_s(82),
-          cd_s(83),
+          cd_s(79, boolean_y_n: true),
+          cd_s(132),
+          cd_s(137),
+          cd_s(142),
+          cd_s(147),
           cd_s(84),
           cd_s(102),
           cd_s(85),
@@ -148,24 +148,24 @@ module OpenChain
 FROM products 
 INNER JOIN classifications on classifications.product_id = products.id and classifications.country_id = (select id from countries where iso_code = \"US\" LIMIT 1)
 LEFT OUTER JOIN tariff_records on tariff_records.classification_id = classifications.id
-#{Product.need_sync_join_clause(sync_code)} 
 "
 # The JOINS + WHERE clause below generates files that need to be synced
 # && Have an HTS 1, 2, or 3 value OR are 'RL' Sets 
 # && have Barthco Customer IDs
 # && DO NOT have a 'Test Style' value, 
-        unless @custom_where
-          r += "INNER JOIN custom_values cust_id ON products.id = cust_id.customizable_id AND cust_id.customizable_type = 'Product' and cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(cust_id.string_value), '')) > 0
+        if @custom_where.blank?
+          r += "#{Product.need_sync_join_clause(sync_code)} 
+INNER JOIN custom_values cust_id ON products.id = cust_id.customizable_id AND cust_id.customizable_type = 'Product' and cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(cust_id.string_value), '')) > 0
 LEFT OUTER JOIN custom_values test_style ON products.id = test_style.customizable_id AND test_style.customizable_type = 'Product' and test_style.custom_definition_id = #{@cdefs[:test_style].id}
 LEFT OUTER JOIN custom_values set_type ON classifications.id = set_type.customizable_id AND set_type.customizable_type = 'Classification' and set_type.custom_definition_id = #{@cdefs[:set_type].id}
-"
+WHERE #{Product.need_sync_where_clause()} 
+AND (length(tariff_records.hts_1) > 0 OR length(tariff_records.hts_2) > 0 OR length(tariff_records.hts_3) > 0 OR (set_type.string_value = 'RL'))
+AND (test_style.string_value IS NULL OR length(rtrim(test_style.string_value)) = 0)"         
+        else 
+          r += @custom_where
         end
 
-        w = "WHERE #{Product.need_sync_where_clause()} 
-AND (length(tariff_records.hts_1) > 0 OR length(tariff_records.hts_2) > 0 OR length(tariff_records.hts_3) > 0 OR (set_type.string_value = 'RL'))
-AND (test_style.string_value IS NULL OR length(rtrim(test_style.string_value)) = 0)
-"
-        r << (@custom_where ? @custom_where : w)
+        r
       end
 
     end

@@ -197,7 +197,9 @@ module OpenChain
       
 
       # Generate a subselect representing a custom value based on custom definition id
-      def cd_s cd_id, suppress_alias = false, suppress_ifnull = false
+      def cd_s cd_id, opts = {}
+        opts = {suppress_alias: false, suppress_ifnull: false}.merge opts
+
         @definitions ||= {}
         if @definitions.empty?
           CustomDefinition.all.each {|cd| @definitions[cd.id] = cd}
@@ -216,18 +218,27 @@ module OpenChain
           else
             # This shouldn't really happen in prod, but it can in dev for any ids that are hardcoded and the hardcoded id links to a field 
             # for a different module
-            return missing_custom_def suppress_alias, cd_id, cd
+            return missing_custom_def opts[:suppress_alias], cd_id, cd
           end
+
+          select_clause = nil
           
-          if suppress_ifnull
-            "(SELECT #{cd.data_column} FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+          if opts[:suppress_ifnull]
+            select_clause = "(SELECT #{cd.data_column} FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})"
           else
-            "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+            select_clause = "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})"
           end
+
+          if opts[:boolean_y_n]
+            boolean_y_value = opts[:boolean_y_query_value].blank? ? "1" : opts[:boolean_y_query_value]
+            select_clause = "(CASE #{select_clause} WHEN #{boolean_y_value} THEN 'Y' ELSE 'N' END)"
+          end
+
+          select_clause += build_custom_def_query_alias(opts[:suppress_alias], cd_id, cd)
 
         else
           #so report doesn't bomb if custom field is removed from system
-          missing_custom_def suppress_alias, cd_id, cd
+          missing_custom_def opts[:suppress_alias], cd_id, cd
         end
       end
       

@@ -126,10 +126,14 @@ FROM products
 INNER JOIN classifications on classifications.product_id = products.id AND classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN (
 #{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
   ))
-INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
-#{Product.need_sync_join_clause(sync_code)} "
-        w = "WHERE #{Product.need_sync_where_clause()}"
-        q << (@custom_where ? @custom_where : w)
+INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0"
+
+        if @custom_where.blank?
+          q << "\n#{Product.need_sync_join_clause(sync_code)}\nWHERE #{Product.need_sync_where_clause()}"
+        else
+          q << "\n#{@custom_where}"
+        end
+
         q
       end
     end

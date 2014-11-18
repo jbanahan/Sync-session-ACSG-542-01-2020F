@@ -73,11 +73,11 @@ module OpenChain
           md5 = "md5(concat(
               ifnull(products.unique_identifier,''),
               classifications.iso_code,
-              ifnull(#{cd_s(@cdefs[:approved_long].id,true)},''),
-              ifnull(#{cd_s(@cdefs[:origin].id,true)},''),
+              ifnull(#{cd_s(@cdefs[:approved_long].id, suppress_alias: true)},''),
+              ifnull(#{cd_s(@cdefs[:origin].id, suppress_alias: true)},''),
               ifnull(tariff_records.hts_1,''),
-              ifnull(#{cd_s(@cdefs[:long_desc_override].id,true)},''),
-              ifnull(#{cd_s(@cdefs[:related_styles].id,true)},'')
+              ifnull(#{cd_s(@cdefs[:long_desc_override].id, suppress_alias: true)},''),
+              ifnull(#{cd_s(@cdefs[:related_styles].id, suppress_alias: true)},'')
             ))"
           fields = [
             'products.id',

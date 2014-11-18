@@ -92,8 +92,8 @@ SELECT products.id,
 #{cd_s @cdefs[:prod_part_number].id},
 products.name,
 tariff_records.hts_1,
-IF(length(#{cd_s @cdefs[:prod_country_of_origin].id, true})=2,#{cd_s @cdefs[:prod_country_of_origin].id, true},""),
-IF(#{cd_s @cdefs[:prod_fda_product].id, true} = 1, "Y", "N"),
+IF(length(#{cd_s @cdefs[:prod_country_of_origin].id, suppress_alias: true})=2,#{cd_s @cdefs[:prod_country_of_origin].id, suppress_alias: true},""),
+#{cd_s(@cdefs[:prod_fda_product].id, boolean_y_n: true)},
 #{cd_s @cdefs[:prod_fda_product_code].id},
 #{cd_s @cdefs[:prod_fda_temperature].id},
 #{cd_s @cdefs[:prod_fda_uom].id},
@@ -114,7 +114,7 @@ INNER JOIN tariff_records on length(tariff_records.hts_1)=10 AND tariff_records.
 #{Product.need_sync_join_clause(sync_code)} 
 WHERE 
 #{Product.need_sync_where_clause()} 
-AND products.importer_id = #{@importer.id} AND length(#{cd_s@cdefs[:prod_part_number].id, true})>0
+AND products.importer_id = #{@importer.id} AND length(#{cd_s @cdefs[:prod_part_number].id, suppress_alias: true})>0
 QRY
       end
     end

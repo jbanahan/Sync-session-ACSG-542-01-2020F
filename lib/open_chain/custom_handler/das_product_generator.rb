@@ -34,8 +34,8 @@ module OpenChain
         unit_cost = CustomDefinition.where(label: 'Unit Cost', module_type: 'Product').first
         coo = CustomDefinition.where(label: 'COO', module_type: 'Product').first
         "SELECT products.id, unique_identifier, name,
-        #{cd_s(unit_cost.try(:id), nil, true)},
-        #{cd_s(coo.try(:id),nil, true)},
+        #{cd_s(unit_cost.try(:id),suppress_ifnull: true)},
+        #{cd_s(coo.try(:id), suppress_ifnull: true)},
         tr.hts_1 FROM products
         INNER JOIN classifications c ON c.product_id = products.id AND c.country_id = (SELECT id FROM countries WHERE iso_code = \"US\")
         INNER JOIN tariff_records tr ON tr.classification_id = c.id 
