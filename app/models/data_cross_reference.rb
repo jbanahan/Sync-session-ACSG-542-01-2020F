@@ -39,11 +39,15 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.xref_attributes identifier, title, description, options = {}
-    options = {key_label: "Key", value_label: "Value", show_value_column: true}.merge options
+    options = {key_label: "Key", value_label: "Value", show_value_column: true, allow_duplicate_keys: false}.merge options
 
     # Title is what is displayed as the link/button to access the page
     # Description is text/instructions included at the top of the list/edit screen.
-    {title: title, description: description, identifier: identifier, key_label: options[:key_label], value_label: options[:value_label], show_value_column: options[:show_value_column]}
+    options[:title] = title
+    options[:description] = description
+    options[:identifier] = identifier
+
+    options
   end
   private_class_method :xref_attributes
 

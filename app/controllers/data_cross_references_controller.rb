@@ -19,8 +19,10 @@ class DataCrossReferencesController < ApplicationController
 
   def update
     xref = DataCrossReference.find(params[:id])
+
     action_secure(xref.can_view?(current_user), xref, {:verb => "edit", :lock_check => false, :module_name=>"cross reference"}) do
-      if xref.update_attributes params[:data_cross_reference]
+      xref.assign_attributes params[:data_cross_reference]
+      if validate_non_duplicate(xref) && xref.save
         add_flash :notices, "Cross Reference was successfully updated."
         redirect_to data_cross_references_path(cross_reference_type: params[:data_cross_reference][:cross_reference_type])
       else
@@ -35,7 +37,7 @@ class DataCrossReferencesController < ApplicationController
   def create
     action_secure(DataCrossReference.can_view?(params[:data_cross_reference][:cross_reference_type], current_user), nil, {:verb => "create", :lock_check => false, :module_name=>"cross reference"}) do
       xref = DataCrossReference.new params[:data_cross_reference]
-      if xref.save
+      if validate_non_duplicate(xref) && xref.save
         add_flash :notices, "Cross Reference was successfully created."
         redirect_to data_cross_references_path(cross_reference_type: params[:data_cross_reference][:cross_reference_type])
       else
@@ -92,5 +94,24 @@ class DataCrossReferencesController < ApplicationController
       # The xref param has already been validation in the index action prior to this method being
       # called so we're ok to always assume its presence
       DataCrossReference.where(cross_reference_type: params[:cross_reference_type])
+    end
+
+    def validate_non_duplicate xref
+      edit_hash = DataCrossReference.xref_edit_hash current_user
+
+      allow_save = true
+      # See if we may allow duplicate xref keys..(some instances may require duplicates - though likely not via the screen edits)
+      if !edit_hash[xref.cross_reference_type].try(:[], :allow_duplicate_keys)
+        
+        query = DataCrossReference.where(cross_reference_type: xref.cross_reference_type, key: xref.key)
+        if xref.id.try(:nonzero?)
+          query = query.where("id <> ?", xref.id)
+        end
+
+        allow_save = query.first.nil?
+        xref.errors.add(:base, "The #{edit_hash[xref.cross_reference_type][:key_label]} value '#{xref.key}' already exists on another cross reference record.") unless allow_save
+      end
+
+      allow_save
     end
 end

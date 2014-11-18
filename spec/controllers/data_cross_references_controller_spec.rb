@@ -114,6 +114,16 @@ describe DataCrossReferencesController do
       expect(response).to redirect_to request.referer
       expect(flash[:errors]).to include "You do not have permission to edit this cross reference."
     end
+
+    it "errors on duplicate keys" do
+      xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
+      xref2 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY2", value: "VALUE"
+
+      post :update, id: xref2.id, data_cross_reference: {key: "KEY", cross_reference_type: xref2.cross_reference_type}
+      expect(response).to be_success
+      expect(flash[:errors]).to include "The Approved Fiber value 'KEY' already exists on another cross reference record."
+      expect(assigns(:xref)).not_to be_nil
+    end
   end
 
   describe "create" do
@@ -128,6 +138,15 @@ describe DataCrossReferencesController do
       post :create, data_cross_reference: {key: "KEY", value: "CREATE", cross_reference_type: "blah"}
       expect(response).to redirect_to request.referer
       expect(flash[:errors]).to include "You do not have permission to create this cross reference."
+    end
+
+    it "errors on duplicate keys" do
+      xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
+
+      post :create, data_cross_reference: {key: "KEY", value: "CREATE", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC}
+      expect(response).to be_success
+      expect(flash[:errors]).to include "The Approved Fiber value 'KEY' already exists on another cross reference record."
+      expect(assigns(:xref)).not_to be_nil
     end
   end
 
