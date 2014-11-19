@@ -5,6 +5,9 @@ advSearchApp = angular.module('AdvancedSearchApp',['ngRoute','ChainComponents'])
     when('/:searchId',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'}).
     when('/',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'})
 ])
+advSearchApp.config ['$httpProvider', ($httpProvider) ->
+  $httpProvider.defaults.headers.common['Accept'] = 'application/json'
+]
 
 advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators',($scope,$routeParams,$location,$http,chainSearchOperators) ->
   
@@ -170,6 +173,16 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         $scope.errors.push data.error
       else
         $scope.errors.push "Error copying this report, please try again."
+    )
+
+  $scope.makeTemplate = (ss) ->
+    $http.post('/api/v1/admin/search_setups/'+ss.id+'/create_template.json',{}).success((data) ->
+      $scope.notices.push "Template created successfully."
+    ).error((data) ->
+      if data.error
+        $scope.errors.push data.error
+      else
+        $scope.errors.push "Error creating template."
     )
 
   #stateful view settings

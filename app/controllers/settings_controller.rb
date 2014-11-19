@@ -8,4 +8,7 @@ class SettingsController < ApplicationController
     render :layout=>'one_col'
   end
 
+  def setup
+  end
+
 end

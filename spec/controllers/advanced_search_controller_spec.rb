@@ -191,6 +191,7 @@ describe AdvancedSearchController do
       h['allow_ftp'].should be_false
       h['user']['email'].should == @user.email
       h['module_type'].should == @ss.module_type
+      h['allow_template'].should be_false
       search_list = h['search_list']
       search_list.should have(1).search
       search_list.first['name'].should == @ss.name

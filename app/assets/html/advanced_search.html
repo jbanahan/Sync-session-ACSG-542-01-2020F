@@ -328,6 +328,7 @@
             <button class='btn btn-lg btn-default' ng-click='newSetup()'>New</button>
             <button class='btn btn-lg btn-default' ng-click='copyPrompt=true'>Copy</button>
             <button class='btn btn-lg btn-default' ng-click='givePrompt=true'>Give</button>
+            <button class='btn btn-lg btn-default' ng-show='searchSetup.allow_template' ng-click='makeTemplate(searchSetup)'>Make Template</button>
             <button class='btn btn-lg btn-danger' ng-click='deletePrompt=true'>Delete</button>
           </div>
           <div class='col-md-12 form-horizontal' ng-show='givePrompt==true'>

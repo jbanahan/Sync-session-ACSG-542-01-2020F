@@ -151,6 +151,7 @@ class AdvancedSearchController < ApplicationController
           :include_links=>ss.include_links?,
           :no_time=>ss.no_time?,
           :allow_ftp=>ss.can_ftp?,
+          :allow_template=>current_user.admin?,
           :user=>{:email=>ss.user.email},
           :uploadable_error_messages=>ss.uploadable_error_messages,
           :search_list=>current_user.search_setups.where(:module_type=>ss.module_type).order(:name).collect {|s| {:name=>s.name,:id=>s.id,:module=>s.core_module.label}},

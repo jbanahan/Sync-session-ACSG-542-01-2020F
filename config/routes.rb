@@ -38,6 +38,8 @@ OpenChain::Application.routes.draw do
 
       namespace :admin do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
+        match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
+        match 'users/:id/add_templates' => 'users#add_templates', via: :post
       end
     end
   end  
@@ -587,6 +589,8 @@ OpenChain::Application.routes.draw do
   resources :data_cross_references do
     get 'show' => "data_cross_references#edit"
   end
+
+  resources :search_templates, only: [:index]
 
   #Griddler inbound email processing
   mount_griddler

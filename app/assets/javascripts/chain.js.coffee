@@ -76,10 +76,11 @@ root.Chain =
     writeCompany c.company for c in data
 
   #load user list from ajax callback (default url is /users.json)
-  loadUserList : (selectBox,defaultSelection) ->
+  loadUserList : (selectBox,defaultSelection,callback) ->
     url = '/users.json' unless url
     jQuery.get url, (data) ->
       Chain.populateUserList selectBox, defaultSelection, data
+      callback(selectBox) if callback
 
   #
   # Tariff Classification Mangaement Stuff
