@@ -198,7 +198,7 @@ module OpenChain
 
       # Generate a subselect representing a custom value based on custom definition id
       def cd_s cd_id, opts = {}
-        opts = {suppress_alias: false, suppress_ifnull: false}.merge opts
+        opts = {suppress_alias: false, suppress_ifnull: false, suppress_data: false}.merge opts
 
         @definitions ||= {}
         if @definitions.empty?
@@ -223,7 +223,9 @@ module OpenChain
 
           select_clause = nil
           
-          if opts[:suppress_ifnull]
+          if opts[:suppress_data]
+            select_clause = "NULL"
+          elsif opts[:suppress_ifnull]
             select_clause = "(SELECT #{cd.data_column} FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})"
           else
             select_clause = "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})"

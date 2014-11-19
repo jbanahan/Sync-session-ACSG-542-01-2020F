@@ -308,5 +308,11 @@ describe OpenChain::CustomHandler::ProductGenerator do
       subselect = gen.cd_s cd.id
       subselect.should == "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id}) as `#{cd.label}`"
     end
+
+    it "should allow disabling custom definition select" do
+      cd = Factory(:custom_definition, :module_type=>'Product')
+      subselect = @base.new.cd_s cd.id, suppress_data: true
+      subselect.should == "NULL as `#{cd.label}`"
+    end
   end
 end
