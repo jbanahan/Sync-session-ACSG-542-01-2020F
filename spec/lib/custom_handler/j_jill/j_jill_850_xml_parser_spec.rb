@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(p1.get_custom_value(cdefs[:importer_style]).value).to eq '014932'
       # expect(p1.get_custom_value(cdefs[:fish_wildlife]).value).to be_true
 
-      expect(o.entity_snapshots.count).to eq 1
+      expect(EntitySnapshot.count).to eq 1
     end
     it "should reuse same address based on hash" do
       st  = @c.addresses.create!(system_code:'0101',name:'J JILL',

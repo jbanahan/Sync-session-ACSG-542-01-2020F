@@ -78,7 +78,6 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
       ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
       update_line_custom_values ord
-      EntitySnapshot.create_from_entity ord, @user
     end
 
     if po_assigned_to_shipment
