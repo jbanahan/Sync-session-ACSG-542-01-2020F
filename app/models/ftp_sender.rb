@@ -18,9 +18,9 @@ class FtpSender
     # when the options come from a JSON option string (.ie retries)
     opts = opts.with_indifferent_access
     get_file_to_ftp(arg_file, opts) do |file|
-      log = ["Attempting to send FTP file to #{server} with username #{username}."]
       
       my_opts = default_options(arg_file, file).merge(opts).with_indifferent_access
+      log = ["Attempting to #{my_opts[:protocol]} file to #{server} with username #{username}."]
       remote_name = my_opts[:remote_file_name]
       store_sent_file = false
       ftp_client = nil
@@ -31,7 +31,7 @@ class FtpSender
           store_sent_file = true
           # Handles connecting and logging in
           ftp_client = get_ftp_client my_opts
-          ftp_client.connect(server, username, password, log) do |f|
+          ftp_client.connect(server, username, password, log, my_opts) do |f|
             log << "Opened connection to #{server}"
             log << "Logged in with account #{username}"
 
@@ -96,7 +96,7 @@ class FtpSender
     filename = arg_file.respond_to?(:original_filename) ? arg_file.original_filename : File.basename(local_file)
    
     {:binary=>true,:passive=>true,:remote_file_name=>filename,
-            :force_empty=>false, :protocol=>"ftp"}
+            :force_empty=>false, :protocol=>"ftp"}.with_indifferent_access
   end
 
   # The starting point for the delayed job re-send attempt.
@@ -189,7 +189,7 @@ class FtpSender
   class FtpClient
     attr_accessor :log
 
-    def connect server, user, password, log, &block
+    def connect server, user, password, log, opts, &block
       Net::FTP.open(server, user, password) do |client|
         @client = client
         @log = log
@@ -239,19 +239,27 @@ class FtpSender
   class SftpClient
     attr_accessor :log, :remote_path
 
-    def connect server, user, password, log, &block
+    def connect server, user, password, log, opts, &block
+      sftp_opts = {password: password, compression: true, paranoid: false, timeout: 10}
+      if opts[:port]
+        sftp_opts[:port] = opts[:port]
+      end
+
       # paranoid = false - Disables host key verfication (if this is enabled, errors are thrown here if the remote host changes its host key)
       # This would happen any time we spun up new server instances internally since the IP's change.
-      Net::SFTP.start(server, user, password: password, compression: true, paranoid: false) do |client|
+      @session_completed = false
+      Net::SFTP.start(server, user, sftp_opts) do |client|
         @client = client
         @log = log
         @remote_path = Pathname.new ''
         set_ok_response
         block.call self
+        @session_completed = true
       end
-
+      nil
     rescue => e
       handle_exception e
+      nil
     end
 
     def after_login opts={}
@@ -281,6 +289,10 @@ class FtpSender
     end
 
     private 
+      def session_completed?
+        @session_completed == true
+      end
+
       def append_path path, append
         Pathname.new(path + append).cleanpath
       end
@@ -295,8 +307,16 @@ class FtpSender
           # use to set the last response value (like with ftp codes)
           @last_response = "#{e.code} #{e.description}"
         else
-          # Just indicate something bad happened - generic error code for sftp is 4
-          @last_response = "4 #{e.message}"
+          # There's a bug in Wing FTP server or the ssh/sftp gem code that results in a Disconnect exception being 
+          # thrown when session.close is called inside the sftp#start method (this all works fine for standard sshd).  
+          # This shouldn't happen, and it's not an actual error situation (hence not propigating it).  So for now, 
+          # just swallow the error if the session completed, until we know Wing FTP has resolved the issue.
+          if e.is_a?(Net::SSH::Disconnect) && session_completed?
+            return nil
+          else
+            # Just indicate something bad happened - generic error code for sftp is 4
+            @last_response = "4 #{e.message}"
+          end
         end
         raise e
       end

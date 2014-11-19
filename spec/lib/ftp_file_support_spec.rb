@@ -5,7 +5,7 @@ describe "FtpFileSupport" do
     include OpenChain::FtpFileSupport
 
     def ftp_credentials
-      return {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r'}
+      return {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', port: 123, protocol: 'proto'}
     end
   end
 
@@ -18,17 +18,17 @@ describe "FtpFileSupport" do
     it "should ftp_file" do
       File.stub(:exists?).and_return true
       @t.should_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
+      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r', port: 123, protocol: 'proto'})
       FtpSupportImpl.new.ftp_file @t
     end
 
     it "should take option_overrides" do
       File.stub(:exists?).and_return true
-      FtpSender.should_receive(:send_file).with('otherserver','u','p',@t,{:folder=>'f',:remote_file_name=>'r', :protocol=>"test"})
+      FtpSender.should_receive(:send_file).with('otherserver','u','p',@t,{:folder=>'f',:remote_file_name=>'r', port:987, protocol: 'test'})
       @t.should_receive(:unlink)
       impl = FtpSupportImpl.new
       def impl.ftp_credentials
-        return {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test"}
+        return {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987}
       end
 
       impl.ftp_file @t, {server:'otherserver'}
@@ -37,7 +37,7 @@ describe "FtpFileSupport" do
     it 'should not unlink if false is passed' do
       File.stub(:exists?).and_return true
       @t.should_not_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
+      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r', port:123, protocol: 'proto'})
       FtpSupportImpl.new.ftp_file @t, {keep_local:true}
     end
     
@@ -76,6 +76,21 @@ describe "FtpFileSupport" do
     it "should add remote filename when given" do
       c = FtpSupportImpl.new.ftp2_vandegrift_inc 'folder', 'remotefile.txt'
       c[:remote_file_name].should eq 'remotefile.txt'
+    end
+  end
+
+  describe "connect_vfitrack_net" do
+    it "uses correct credentials" do
+      c = FtpSupportImpl.new.connect_vfitrack_net 'folder'
+      expect(c[:server]).to eq 'connect.vfitrack.net'
+      expect(c[:username]).to eq 'www-vfitrack-net'
+      expect(c[:password]).to eq 'phU^`kN:@T27w.$'
+      expect(c[:folder]).to eq 'folder'
+      expect(c[:remote_file_name]).to be_nil
+      expect(c[:protocol]).to eq "sftp"
+
+      c = FtpSupportImpl.new.connect_vfitrack_net 'folder', 'remotefile.txt'
+      expect(c[:remote_file_name]).to eq "remotefile.txt"
     end
   end
 end
