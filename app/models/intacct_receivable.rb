@@ -5,6 +5,10 @@ class IntacctReceivable < ActiveRecord::Base
   SALES_INVOICE_TYPE ||= "Sales Invoice"
   CREDIT_INVOICE_TYPE ||= "Credit Note"
 
+  def canada?
+    ['als', 'vcu'].include? company
+  end
+
   def self.create_receivable_type company, credit_invoice
     r_type = credit_invoice ? CREDIT_INVOICE_TYPE : SALES_INVOICE_TYPE
 

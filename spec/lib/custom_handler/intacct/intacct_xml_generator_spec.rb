@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
   describe "generate_receivable_xml" do
     before :each do 
-      @recv = IntacctReceivable.new receivable_type: "type", invoice_date: Time.zone.now.to_date, customer_number: "cust", invoice_number: "inv", currency: "USD", customer_reference: "REFERENCE", created_at: Time.zone.now
+      @recv = IntacctReceivable.new receivable_type: "type", invoice_date: Date.new(2014, 11, 1), customer_number: "cust", invoice_number: "inv", currency: "USD", customer_reference: "REFERENCE", created_at: Time.zone.now
       @rl = @recv.intacct_receivable_lines.build charge_code: '123', charge_description: 'desc', amount: BigDecimal("12.50"), location: "loc", 
                                   line_of_business: "lob", freight_file: "f123", vendor_number: "ven", broker_file: "b123"
     end
@@ -26,16 +26,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       validate_control_id root, control_id
 
       t = REXML::XPath.first root, "/function/create_sotransaction"
-      
-      posted = @recv.created_at.in_time_zone "Eastern Time (US & Canada)"
 
       expect(t.text "transactiontype").to eq @recv.receivable_type
       expect(t.text "datecreated/year").to eq @recv.invoice_date.strftime "%Y"
       expect(t.text "datecreated/month").to eq @recv.invoice_date.strftime "%m"
       expect(t.text "datecreated/day").to eq @recv.invoice_date.strftime "%d"
-      expect(t.text "dateposted/year").to eq posted.strftime "%Y"
-      expect(t.text "dateposted/month").to eq posted.strftime "%m"
-      expect(t.text "dateposted/day").to eq posted.strftime "%d"
+      expect(t.text "dateposted/year").to eq @recv.invoice_date.strftime "%Y"
+      expect(t.text "dateposted/month").to eq @recv.invoice_date.strftime "%m"
+      expect(t.text "dateposted/day").to eq @recv.invoice_date.strftime "%d"
       expect(t.text "customerid").to eq @recv.customer_number
       expect(t.text "referenceno").to eq @recv.customer_reference
       expect(t.text "documentno").to eq @recv.invoice_number
@@ -72,6 +70,21 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(i.text 'projectid').to be_nil
       expect(i.text 'vendorid').to be_nil
       expect(i.text 'classid').to be_nil
+    end
+
+    it "uses create date for posing date on Canadian receivables" do
+      @recv.company = 'vcu'
+      control_id, xml = described_class.new.generate_receivable_xml @recv
+      expect(xml).to_not be_nil
+
+      root = REXML::Document.new(xml).root
+
+      t = REXML::XPath.first root, "/function/create_sotransaction"
+      
+      posted = @recv.created_at.in_time_zone "Eastern Time (US & Canada)"
+      expect(t.text "dateposted/year").to eq posted.strftime "%Y"
+      expect(t.text "dateposted/month").to eq posted.strftime "%m"
+      expect(t.text "dateposted/day").to eq posted.strftime "%d"
     end
   end
 

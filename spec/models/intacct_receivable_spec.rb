@@ -57,4 +57,18 @@ describe IntacctReceivable do
       expect(IntacctReceivable.suggested_fix "Description 2: Invalid Vendor 'Test' specified.").to eq "Create Vendor account Test in Intacct and/or ensure account has payment Terms set."
     end
   end
+
+  describe "canada?" do
+    it "recognizes ALS and VCU as canadian companies" do
+      ['vcu', 'als'].each do |c|
+        expect(IntacctReceivable.new(company: c)).to be_canada
+      end
+    end
+
+    it "does not recognize lmd and vfc as canadian companies" do
+      ['lmd', 'vfc'].each do |c|
+        expect(IntacctReceivable.new(company: c)).not_to be_canada
+      end
+    end
+  end
 end
