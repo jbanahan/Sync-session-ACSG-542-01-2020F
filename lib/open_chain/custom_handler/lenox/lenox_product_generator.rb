@@ -16,6 +16,10 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
     @cdefs = self.class.prep_custom_definitions [:prod_fda_product_code, :prod_part_number]
   end
 
+  def ftp_credentials
+    {server:'ftp.lenox.com',username:"vanvendor#{@env=='production' ? '' : 'test'}",password:'$hipments',folder:'.', remote_file_name: "Item_HTS"}
+  end
+
   def preprocess_row row, opts
     # For each product, find all the HTS #'s asscociated with it and then spawn out a row for each one of them
     rows = []
