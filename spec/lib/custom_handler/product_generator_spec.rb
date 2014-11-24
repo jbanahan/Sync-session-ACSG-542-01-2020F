@@ -86,8 +86,8 @@ describe OpenChain::CustomHandler::ProductGenerator do
         p2 = Factory(:product, name: 'y')
 
         # don't care about the actual row values for this test, only the last result opt
-        @inst.should_receive(:preprocess_row).ordered.with(instance_of(Hash), last_result: false).and_return []
-        @inst.should_receive(:preprocess_row).ordered.with(instance_of(Hash), last_result: true).and_return []
+        @inst.should_receive(:preprocess_row).ordered.with(instance_of(Hash), last_result: false, product_id: @p1.id).and_return []
+        @inst.should_receive(:preprocess_row).ordered.with(instance_of(Hash), last_result: true, product_id: p2.id).and_return []
 
         @inst.sync {|row| nil}
       end
