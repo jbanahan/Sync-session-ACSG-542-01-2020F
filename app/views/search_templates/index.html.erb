@@ -1,0 +1,84 @@
+<%-content_for :action_bar do -%>
+<button id='btn_add_to_user' style='display:none;' data-toggle="modal" data-target="#modUsers">Add To User</button>
+<%-end-%>
+<%-content_for :javascript do -%>
+$(document).ready(function() {
+  OCSearchTemplates.initPage();
+});
+<%-end-%>
+<div class="container" id='main_templates'>
+  <div class="row">
+    <div class="col-md-12">
+      <h2>Search Templates</h2>
+    </div>
+  </div>
+  <div class="row-">
+    <div class="col-md-12">
+      <div class="panel panel-default" id='resultMessagePanel' style='display:none;'>
+        <div class="panel-body">
+          <span id='resultMessage'></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class='table table-striped' id='templates'>
+        <thead>
+          <tr>
+            <th>&nbsp;</th>
+            <th>Name</th>
+            <th>Module</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%SearchTemplate.order([:module_type,:name]).each do |st|%>
+            <tr>
+              <td>
+                <input type='checkbox' data-template-id='<%=st.id%>'/>
+              </td>
+              <td>
+                <%=st.name%>
+              </td>
+              <td>
+                <%=st.module_type%>
+              </td>
+            </tr>
+          <%end%>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="modal" id='modUsers'>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">Assign To User</h4>
+      </div>
+      <div class="modal-body">
+        <p>Select A User</p>
+        <select id="userListSelect"></select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id='btnAddUser'>Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="modal" id='modUsersAssigning'>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">Assigning To User</h4>
+      </div>
+      <div class="modal-body">
+        <p>Assigning To User</p>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
