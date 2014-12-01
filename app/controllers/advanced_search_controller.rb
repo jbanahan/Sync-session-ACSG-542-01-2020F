@@ -133,7 +133,7 @@ class AdvancedSearchController < ApplicationController
   end
 
   def last_search_id
-    setup = current_user.search_setups.includes(:search_runs).order("search_runs.updated_at DESC").limit(1).first
+    setup = current_user.search_setups.joins(:search_runs).order("search_runs.updated_at DESC").limit(1).first
     setup = current_user.search_setups.order("updated_at DESC").limit(1).first if setup.nil?
     render :json=>{:id=>(setup ? setup.id.to_s : "0")}
   end
