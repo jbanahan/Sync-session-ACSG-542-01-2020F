@@ -1,24 +1,8 @@
 <%content_for :javascript do -%>
 $(function() {
   $(document).ready(function() {
-    <%if current_user.view_entries? && !current_user.hide_message?('wh3')-%>
-
-      $("#what-happened").modal();
-      $("#never-show").click(function() {
-        $("#what-happened").modal('hide');
-        Chain.hideMessage('wh3');
-      });
-      $("#what-happened-close").click(function() {
-        $("#what-happened").modal('hide');
-      });
-    <%end-%>
     $("#btn_tour").click(function() {
-      bootstro.start('',{items:[
-         {selector:'#leftnav',placement:'bottom',content:'Move between system modules and build custom searches here.'},
-         {selector:'#menu_dropdown',placement:'bottom',content:'Manage your account and access extra settings here.'},
-         {selector:'#quick_search_input',placement:'bottom',content:'Search for items here.'},
-         {selector:'#nav-help-anchor',placement:'top',content:"Each page's action buttons are down here.",width:'400px'}
-        ]});
+      Chain.showNavTour();
     });
     $(".widget_box").each(function() {
       $(this).scope().loadWidget($(this).attr('widget-id'))
@@ -61,35 +45,3 @@ $(function() {
     <%end -%>
   <%end -%>
 </div>
-<%if current_user.view_entries? && !current_user.hide_message?('wh3')-%>
-  <div id='what-happened' class='modal fade'>
-    <div class='modal-dialog'>
-      <div class='modal-content'>
-        <div class='modal-header'>
-          <h3>New Feature: Browse Entries</h3>
-        </div>
-        <div class='modal-body'>
-          <p>
-            The new browse entries screen gives you a quick summary view of all of your entry activity as well as fast access to your active shipments.
-          </p>
-          <p>
-            The US &amp; Canadian screens show you...
-          </p>
-          <ul>
-            <li>Open Entries</li>
-            <li>Monthly Statement / K84 Summaries</li>
-            <li>Port &amp; Top Vendor breakouts</li>
-            <li>Year To Date Summaries</li>
-          </ul>
-          <p>
-            You can find the new screens by clicking <a href='/entries/activity_summary/us'>Browse - US</a> or <a href='/entries/activity_summary/ca'>Browse - CA</a> from the Entries menu.
-          </p>
-        </div>
-        <div class='modal-footer'>
-          <button class='btn' id='never-show'>Never Show This Again</button>
-          <button class='btn btn-primary' id='what-happened-close'>Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-<%end-%>

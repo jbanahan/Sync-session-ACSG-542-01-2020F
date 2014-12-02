@@ -1,6 +1,13 @@
 root = exports ? this
 root.Chain =
 
+  showNavTour: () ->
+    bootstro.start('',{items:[
+     {selector:'#btn-left-toggle',placement:'bottom',content:"Navigate through the system using the menu here."},
+     {selector:'.search-query:visible',placement:'bottom',content:"Search for items.  Use the '/' key to jump here."},
+     {selector:'.navbar-fixed-bottom:visible button:first',placement:'top',content:"Each page's action buttons are down here.",width:'400px'}
+    ]})
+    
   toggleNotificationCenter: () ->
     if $("#notification-center").is(':visible')
       Chain.hideNotificationCenter()
