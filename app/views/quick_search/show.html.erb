@@ -1,6 +1,6 @@
 <%content_for :javascript do%>
 $(function() {
-  $("#quick_search_input").val("<%=j raw(@value)%>");
+  $(".search-query ").val("<%=j raw(@value)%>");
   <%@module_field_map.each do |cm,fields|%>
     <%fields.each do |f|
       # We need the to_s.to_str so that an actual raw string is sent to url_encode().  There's a bug with the rails "SafeBuffer" class

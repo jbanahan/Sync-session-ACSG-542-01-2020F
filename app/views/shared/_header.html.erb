@@ -39,6 +39,21 @@
         <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
       <% end %>
       <% if show_navbar -%>
+        <form class='form-inline form visible-xs' role='search' action='/quick_search' method='GET' id='mini-qs'>
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-xs-11">
+                <input type='text' class='search-query form-control' placeholder='Quick Search' data-toggle='tooltip' title='press / to jump here' name='v' /> 
+              </div>
+              <div class='col-xs-1'>
+                <a href='#' onclick="$('#quicksearch').submit(); return false;">
+                  <span class='glyphicon glyphicon-search'></span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </form>
+
         <div class='navbar' role='navigation' id='topnav'>
           <ul class="nav navbar-nav navbar-left pull-left" style='margin-left:3px;'>
             <li>
@@ -214,21 +229,6 @@
       </div>  
   
       <div id='main-content'>
-        <form class='form-inline form visible-xs' role='search' action='/quick_search' method='GET' id='mini-qs'>
-          <div class="container">
-            <div class="row">
-              <div class="col-xs-11">
-                <input type='text' class='search-query form-control' placeholder='enter search term' data-toggle='tooltip' title='press / to jump here' name='v' /> 
-              </div>
-              <div class='col-xs-1'>
-                <a href='#' onclick="$('#quicksearch').submit(); return false;">
-                  <span class='glyphicon glyphicon-search'></span>
-                </a>
-              </div>
-              </div>
-            </div>
-        </form>
-
         <%=yield%>
       </div>
     </div>

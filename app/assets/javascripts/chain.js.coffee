@@ -371,7 +371,7 @@ root.Chain =
 
   bindBaseKeys : () ->
     $(document).on 'keyup', null, '/', () ->
-      $("#quick_search_input").focus()
+      $(".search-query:visible:first").focus()
     $(document).on 'keyup', null, "m", () ->
       $('[data-toggle="offcanvas"]:first').click()
       $('#sidebar:visible .list-group-item:first').focus()
