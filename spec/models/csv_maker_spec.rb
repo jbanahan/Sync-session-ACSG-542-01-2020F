@@ -3,8 +3,9 @@ require 'spec_helper'
 describe CsvMaker do
   context :make_from_search_query do
     before :each do
-      @logged_date = 1.minute.ago
-      @entry = Factory(:entry,:first_it_date=>1.day.ago,:file_logged_date=>@logged_date, :broker_reference => "x")
+      @logged_date = DateTime.civil_from_format(:utc,2014,7,15,12,26,22)
+      @entry = Factory(:entry,:first_it_date=>Date.new(2014,7,30),:file_logged_date=>@logged_date, :broker_reference => "x")
+      @entry.reload #get right rails date objects
       @u = Factory(:master_user,:entry_view=>true, :time_zone=>"Hawaii")
       @search = SearchSetup.create!(:name=>'t',:user=>@u,:module_type=>'Entry')
       @search.search_columns.create!(:model_field_uid=>'ent_first_it_date',:rank=>1)
@@ -18,21 +19,21 @@ describe CsvMaker do
       csv = CSV.parse CsvMaker.new.make_from_search_query(@query)
       csv.length.should eq 2
       csv[0].should eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label]
-      csv[1].should eq [@entry.first_it_date.in_time_zone("Hawaii").strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M")]
+      csv[1].should eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M")]
     end
 
     it "should add web links" do
       csv = CSV.parse CsvMaker.new(include_links: true).make_from_search_query(@query)
       csv.length.should eq 2
       csv[0].should eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label, "Links"]
-      csv[1].should eq [@entry.first_it_date.in_time_zone("Hawaii").strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M"), @entry.view_url]
+      csv[1].should eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M"), @entry.view_url]
     end
 
     it "should not include time" do
       csv = CSV.parse CsvMaker.new(no_time: true).make_from_search_query(@query)
       csv.length.should eq 2
       csv[0].should eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label]
-      csv[1].should eq [@entry.first_it_date.in_time_zone("Hawaii").strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d")]
+      csv[1].should eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d")]
     end
 
     it "should strip newline characters" do
