@@ -302,10 +302,10 @@ root.Chain =
       $.getJSON url, (data) ->
         if data > 0
           $('.message_envelope').each () ->
-            $(this).html(''+data).css('color','green')
+            $(this).html(''+data).addClass('messages')
         else
           $('.message_envelope').each () ->
-            $(this).html('').css('color','#ccc')
+            $(this).html('').removeClass('messages')
     
     
     # If pollingSeconds is <=0, no ongoing polling is done.
