@@ -138,47 +138,47 @@
             </div>
           </div>
         </div>          
-      <% end -%>
-      <%if !current_user.hide_message?('wh4') && current_user.created_at.to_i < DateTime.civil_from_format(:utc,2015,1,1).to_i%>
-        <script type="text/javascript">
-          $(document).ready(function() {
-            $("#what-happened").modal();
-            $("#never-show").click(function() {
-              $("#what-happened").modal('hide');
-              Chain.hideMessage('wh4');
+        <%if !current_user.hide_message?('wh4') && current_user.created_at.to_i < DateTime.civil_from_format(:utc,2015,1,1).to_i%>
+          <script type="text/javascript">
+            $(document).ready(function() {
+              $("#what-happened").modal();
+              $("#never-show").click(function() {
+                $("#what-happened").modal('hide');
+                Chain.hideMessage('wh4');
+              });
+              $("#what-happened-close").click(function() {
+                $("#what-happened").modal('hide');
+              });
+              $("#start-tour").click(function() {
+                $("#what-happened").modal('hide');
+                Chain.showNavTour();
+              });
             });
-            $("#what-happened-close").click(function() {
-              $("#what-happened").modal('hide');
-            });
-            $("#start-tour").click(function() {
-              $("#what-happened").modal('hide');
-              Chain.showNavTour();
-            });
-          });
-        </script>
-        <div id='what-happened' class='modal fade'>
-          <div class='modal-dialog'>
-            <div class='modal-content'>
-              <div class='modal-header'>
-                <h3>New Layout</h3>
-              </div>
-              <div class='modal-body'>
-                <p>
-                  We've updated the system layout.
-                </p>
-                <p>
-                  All of your screens still work the same. <img src="/images/smile.png">
-                </p>
-              </div>
-              <div class='modal-footer'>
-                <button class='btn btn-link' id='what-happened-close'>Close</button>
-                <button class='btn btn-link' id='never-show'>Never Show This Again</button>
-                <button class='btn btn-primary' id='start-tour'>Start Tour</button>
+          </script>
+          <div id='what-happened' class='modal fade'>
+            <div class='modal-dialog'>
+              <div class='modal-content'>
+                <div class='modal-header'>
+                  <h3>New Layout</h3>
+                </div>
+                <div class='modal-body'>
+                  <p>
+                    We've updated the system layout.
+                  </p>
+                  <p>
+                    All of your screens still work the same. <img src="/images/smile.png">
+                  </p>
+                </div>
+                <div class='modal-footer'>
+                  <button class='btn btn-link' id='what-happened-close'>Close</button>
+                  <button class='btn btn-link' id='never-show'>Never Show This Again</button>
+                  <button class='btn btn-primary' id='start-tour'>Start Tour</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      <%end%>
+        <%end%>
+      <% end -%>
     <%-end-%>
       <div class='container'>
         <div class='row'>
