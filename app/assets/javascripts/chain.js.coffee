@@ -2,11 +2,15 @@ root = exports ? this
 root.Chain =
 
   showNavTour: () ->
-    bootstro.start('',{items:[
+    itms = [
      {selector:'#btn-left-toggle',placement:'bottom',content:"Navigate through the system using the menu here."},
      {selector:'.search-query:visible',placement:'bottom',content:"Search for items.  Use the '/' key to jump here."},
      {selector:'.navbar-fixed-bottom:visible button:first',placement:'top',content:"Each page's action buttons are down here.",width:'400px'}
-    ]})
+    ]
+    ox = () ->
+      Chain.hideMessage('wh4')
+
+    bootstro.start '', {items:itms, onExit: ox}
     
   toggleNotificationCenter: () ->
     if $("#notification-center").is(':visible')
@@ -15,11 +19,8 @@ root.Chain =
       Chain.showNotificationCenter()
       
   showNotificationCenter : () ->
-    $('.navbar-fixed-bottom').hide()
-    $("#main-content").hide()
     $("#notification-center-body").html("Loading notifications...")
-    $('body').css('background-color','#333;')
-    $('#notification-center').slideDown(200)
+    $("#notification-center").modal('show')
     $.ajax({
       url: '/messages.html',
       success: (data) ->
@@ -28,10 +29,7 @@ root.Chain =
     })
 
   hideNotificationCenter : () ->
-    $("#notification-center").slideUp () ->
-      $('body').css('background-color','white')
-      $("#main-content").show()
-      $('.navbar-fixed-bottom').show()
+    $("#notification-center").modal('hide')
       
 
   # runs the onwindowunload properly handling IE duplicate call issues
@@ -371,9 +369,14 @@ root.Chain =
         @intervalRegistration = null
         clearInterval(reg)
 
-  bindQuickSearchKey : () ->
+  bindBaseKeys : () ->
     $(document).on 'keyup', null, '/', () ->
       $("#quick_search_input").focus()
+    $(document).on 'keyup', null, "m", () ->
+      $('[data-toggle="offcanvas"]:first').click()
+      $('#sidebar:visible .list-group-item:first').focus()
+    $(document).on 'keyup', null, 'n', () ->
+      $('[data-toggle="notification-center"]:first').click()
 
   tariffPopUp : (htsNumber, country_id, country_iso) ->
     mod = $("#mod_tariff_popup")
@@ -460,7 +463,7 @@ $(document).ready () ->
   # Note, this header is included twice, since jquery.form also 'helpfully' reads the crsf token and injects it as well
   $.ajaxSetup({headers: {"X-CRSF-Token": Chain.getAuthToken()}})
 
-  Chain.bindQuickSearchKey()
+  Chain.bindBaseKeys()
   $("#lnk_hide_notice").click (evt) ->
     evt.preventDefault
     $('#notice').hide()

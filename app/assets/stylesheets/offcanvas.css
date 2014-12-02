@@ -3,38 +3,37 @@
  * --------------------------------------------------
  */
 @media screen {
-  .row-offcanvas, #sidebar {
-    -webkit-transition: all .25s ease-out;
-         -o-transition: all .25s ease-out;
-            transition: all .25s ease-out;
-  }
-  .row-offcanvas {
-    position: relative;
-  }
+  /*#notification-center {
+    -webkit-transition: all .15s ease-out;
+         -o-transition: all .15s ease-out;
+            transition: all .15s ease-out;
 
-  .row-offcanvas-left {
-    left: 0;
+    z-index: 1020; behind sidebar and modal backgrounds (1050) 
+    position: absolute;
+    background: white;
+    display: none;
+    border: 3px solid #348;
   }
-  .row-offcanvas-left
-  .sidebar-offcanvas {
-    left: -50%; /* 6 columns */
-  }
+  #notification-center.active {
+    dislpay: block;
+  }*/
+  #sidebar {
+    -webkit-transition: all .15s ease-out;
+         -o-transition: all .15s ease-out;
+            transition: all .15s ease-out;
 
-  .row-offcanvas-right.active {
-    right: 50%; /* 6 columns */
+    z-index: 1040;
   }
-
-  .row-offcanvas-left.active {
-    left: 50%; /* 6 columns */
-  }
-
   .sidebar-offcanvas {
     position: absolute;
-    width: 50%; /* 6 columns */
-    left: -50%; /* 6 columns */
+    width: 80%;
+    left: -80%;
   }
   .sidebar-offcanvas.active {
     left: 0;
+    -webkit-box-shadow: 7px 7px 8px 0px rgba(0,0,0,0.75);
+       -moz-box-shadow: 7px 7px 8px 0px rgba(0,0,0,0.75);
+            box-shadow: 7px 7px 8px 0px rgba(0,0,0,0.75);
   }
   .navbar-toggle {
     display: block;
@@ -73,12 +72,10 @@
     color: black;
   }
 
-  
   #sidebar {
     margin-top: -20px;
-    border-right: 1px solid black;
+    border-right: 1px solid #348;
   }
-
 
   #sidebar .panel {
     margin-top: 0;
@@ -90,6 +87,12 @@
     background-color: #334488;
     border-radius: 0px;
   }
+  #sidebar .panel-title a {
+    display: block;
+  }
+  #sidebar .panel .list-group-item {
+    padding-left: 30px;
+  }
   #sidebar .list-group-item {
     border-radius: 0;
     border:none;
@@ -97,6 +100,7 @@
   #sidebar .list-group-item:hover {
     color:#aa6633;
     text-decoration: underline;
+    cursor: hand;
   }
 
   .navbar-fixed-bottom {
@@ -106,5 +110,14 @@
     background-color: white;
     color: #348;
     font-weight: 200;
+  }
+  .modal-max-width {
+    width: 90%;
+  }
+}
+
+@media screen and (min-width: 768px) {
+  #sidebar {
+    width: 30%;
   }
 }

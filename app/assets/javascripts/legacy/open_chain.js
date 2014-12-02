@@ -47,7 +47,7 @@ var OpenChain = (function() {
   var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
     $(document).unbind('keyup');
-    Chain.bindQuickSearchKey();
+    Chain.bindBaseKeys();
     $(document).bind('keyup','k',showKeyboardMapPopUp);
   }
   var showKeyboardMapPopUp = function() {
@@ -391,7 +391,6 @@ var OpenChain = (function() {
       initFormButtons();
       initRemoteValidate();
       initEntitySnapshotPopups();
-      Chain.bindQuickSearchKey();
     }
   };
 })();
