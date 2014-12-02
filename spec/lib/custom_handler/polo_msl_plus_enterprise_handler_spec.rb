@@ -248,8 +248,8 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       cdefs = @h.send(:init_inbound_custom_definitions)
 
       p.get_custom_value(cdefs[:msl_board_number]).value.should == "O26SC10"
-      p.get_custom_value(cdefs[:msl_gcc_desc]).value.should =='Men\'s Jacket'
-      p.get_custom_value(cdefs[:msl_hts_desc]).value.should =='100% Real Lambskin Men\'s Jacket'
+      p.get_custom_value(cdefs[:msl_gcc_desc]).value.should =="Men's Jacket"
+      p.get_custom_value(cdefs[:msl_hts_desc]).value.should =="100% Real Lambskin Men's Jacket"
       p.get_custom_value(cdefs[:msl_us_season]).value.should =='F12'
       p.get_custom_value(cdefs[:msl_item_desc]).value.should =='LEATHER BARRACUDA-POLYESTER'
       p.get_custom_value(cdefs[:msl_model_desc]).value.should =='LEATHER BARRACUDA'
@@ -259,7 +259,10 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       p.get_custom_value(cdefs[:msl_us_brand]).value.should =='Menswear'
       p.get_custom_value(cdefs[:msl_us_sub_brand]).value.should =='POLO SPORTSWEAR'
       p.get_custom_value(cdefs[:msl_us_class]).value.should =='OUTERWEAR'
-      p.get_custom_value(cdefs[:msl_receive_date]).value.should == Date.today 
+      p.get_custom_value(cdefs[:msl_receive_date]).value.should == Date.today
+
+      expect(p.entity_snapshots.size).to eq 1
+      expect(p.last_updated_by).to eq User.integration
     end
     it "should update existing product" do
       cdefs = @h.send(:init_inbound_custom_definitions)
@@ -269,7 +272,9 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @tmp = @h.process @file_content
       p = Product.find_by_unique_identifier("7352024LTBR")
       p.get_custom_value(cdefs[:msl_board_number]).value.should == "O26SC10"
-      p.get_custom_value(cdefs[:msl_receive_date]).value.should == Date.today 
+      p.get_custom_value(cdefs[:msl_receive_date]).value.should == Date.today
+      expect(p.entity_snapshots.size).to eq 1
+      expect(p.last_updated_by).to eq User.integration
     end
     it "should generate acknowledgement file" do
       @tmp = @h.process @file_content

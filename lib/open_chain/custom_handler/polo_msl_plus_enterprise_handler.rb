@@ -71,6 +71,8 @@ module OpenChain
 
       #process the inbound file
       def process file_content
+        user = User.integration
+        
         init_inbound_custom_definitions
         field_map = {
           @in_defs[:msl_us_season] => 1,
@@ -94,8 +96,11 @@ module OpenChain
             begin
             current_style = row[0]
             p = Product.find_or_create_by_unique_identifier current_style
-            field_map.each {|k,v| p.update_custom_value! k,row[v]} 
-            p.update_custom_value! @in_defs[:msl_receive_date], Date.today
+            Lock.with_lock_retry(p) do
+              field_map.each {|k,v| p.update_custom_value! k,row[v]} 
+              p.update_custom_value! @in_defs[:msl_receive_date], Date.today
+            end
+            p.create_snapshot user
             ack_file << [current_style,DateTime.now.utc.strftime("%Y%m%d%H%M%S"),"OK"].to_csv
             rescue
               ack_file << [current_style,DateTime.now.utc.strftime("%Y%m%d%H%M%S"),$!.message].to_csv
