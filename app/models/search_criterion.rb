@@ -77,7 +77,7 @@ class SearchCriterion < ActiveRecord::Base
     table_name = mf.join_alias
     clause = nil
 
-    if custom_field? 
+    if custom_field? && mf.core_module == mf.custom_definition.core_module
       c_def_id = mf.custom_id
       cd = CustomDefinition.cached_find(c_def_id)
       

@@ -16,6 +16,11 @@ class CustomDefinition < ActiveRecord::Base
   after_save :reset_field_label
   after_find :set_cache
 
+  def core_module
+    return nil if self.module_type.blank?
+    CoreModule.find_by_class_name self.module_type
+  end
+
   def self.cached_find id
     o = nil
     begin
