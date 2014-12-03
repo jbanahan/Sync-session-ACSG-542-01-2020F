@@ -1,6 +1,34 @@
 require 'spec_helper'
 
 describe ModelField do
+  describe "Product Custom Defintion On Other Module" do
+    before :each do
+      @cd = Factory(:custom_definition,module_type:'Product',data_type:'string')
+      @p = Factory(:product)
+      @p.update_custom_value!(@cd,'ABC')
+      @order_line = Factory(:order_line,product:@p)
+      @mf = ModelField.create_and_insert_product_custom_field @cd, CoreModule::ORDER_LINE, 1
+      MasterSetup.get.update_attributes(order_enabled:true)
+    end
+    it "should query properly" do
+      ss = SearchSetup.new(module_type:'Order')
+      ss.search_columns.build(model_field_uid:@mf.uid,rank:1)
+      ss.search_criterions.build(model_field_uid:@mf.uid,operator:'sw',value:'A')
+      u = Factory(:master_user,order_view:true)
+      h = SearchQuery.new(ss,u).execute
+      h.should have(1).record
+      h.first[:row_key].should == @order_line.id
+      h.first[:result].first.should == 'ABC'
+    end
+    it "should be read only" do
+      expect(@mf.process_import(@order_line,'DEF')).to eq "Value ignored. #{@mf.label} is read only."
+      expect(@mf.read_only?).to be_true
+    end
+    it "should export properly" do
+      u = Factory(:master_user,order_view:true)
+      expect(@mf.process_export(@order_line,u)).to eq 'ABC'
+    end
+  end
   describe :process_query_result do
     before :each do
       @u = User.new

@@ -749,6 +749,39 @@ class ModelField
     create_and_insert_custom_field custom_definition, core_module, index, model_hash
   end
 
+  # Add all Product Custom Definitions to given module
+  def self.create_and_insert_product_custom_fields core_module
+    start_index = next_index_number core_module
+    prod_defs = []
+    if @@custom_definition_cache.empty?
+      prod_defs = CustomDefintion.where(module_type:'Product').to_a
+    else
+      prod_defs = @@custom_definition_cache.values.collect {|cd| cd.is_a?(CustomDefinition) && cd.module_type=='Product' ? cd : nil}.compact
+    end
+    prod_defs.each_with_index {|d,i| create_and_insert_product_custom_field d, core_module, start_index+i}
+  end
+
+  # Make a ModelField based on the given module that links through 
+  # to a product custom definition.  
+  def self.create_and_insert_product_custom_field custom_definition, core_module, index
+    uid = "#{custom_definition.model_field_uid}_#{core_module.table_name}".to_sym
+    mf = ModelField.new(index,uid,core_module,uid,{
+      custom_id: custom_definition.id,
+      label_override: custom_definition.label.to_s,
+      qualified_field_name: "(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM products INNER JOIN custom_values ON custom_values.customizable_id = products.id AND custom_values.customizable_type = 'Product' and custom_values.custom_definition_id = #{custom_definition.id} WHERE products.id = #{core_module.table_name}.product_id)",
+      definition: custom_definition.definition,
+      default_label: custom_definition.label.to_s,
+      read_only: true,
+      export_lambda: lambda { |o|
+        p = o.product
+        return "" if p.nil?
+        p.get_custom_value(custom_definition).value
+      }
+    })
+    add_model_fields core_module, [mf]
+    mf
+  end
+
   def self.create_and_insert_custom_field  custom_definition, core_module, index, model_hash
     fld = custom_definition.model_field_uid.to_sym
     mf = ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
@@ -778,6 +811,7 @@ class ModelField
     end
     ModelField.add_custom_fields(CoreModule::ORDER,Order)
     ModelField.add_custom_fields(CoreModule::ORDER_LINE,OrderLine)
+    ModelField.create_and_insert_product_custom_fields(CoreModule::ORDER_LINE)
     ModelField.add_custom_fields(CoreModule::PRODUCT,Product)
     ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification)
     ModelField.add_custom_fields(CoreModule::TARIFF,TariffRecord)
