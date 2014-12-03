@@ -754,7 +754,7 @@ class ModelField
     start_index = next_index_number core_module
     prod_defs = []
     if @@custom_definition_cache.empty?
-      prod_defs = CustomDefintion.where(module_type:'Product').to_a
+      prod_defs = CustomDefinition.where(module_type:'Product').to_a
     else
       prod_defs = @@custom_definition_cache.values.collect {|cd| cd.is_a?(CustomDefinition) && cd.module_type=='Product' ? cd : nil}.compact
     end
