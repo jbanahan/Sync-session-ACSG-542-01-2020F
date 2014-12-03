@@ -774,7 +774,7 @@ class ModelField
       read_only: true,
       export_lambda: lambda { |o|
         p = o.product
-        return "" if p.nil?
+        return nil if p.nil?
         p.get_custom_value(custom_definition).value
       }
     })
