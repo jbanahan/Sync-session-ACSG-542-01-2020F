@@ -6,12 +6,13 @@ describe ModelField do
       @cd = Factory(:custom_definition,module_type:'Product',data_type:'string')
       @p = Factory(:product)
       @p.update_custom_value!(@cd,'ABC')
-      order_line = Factory(:order_line) #make to ensure that order_lines.id != products.id
+      @ignore_order_line = Factory(:order_line) #make to ensure that order_lines.id != products.id
       @order_line = Factory(:order_line,product:@p)
       @mf = ModelField.create_and_insert_product_custom_field @cd, CoreModule::ORDER_LINE, 1
       MasterSetup.get.update_attributes(order_enabled:true)
     end
     it "should query properly" do
+      @ignore_order_line.product.update_custom_value! @cd, 'DEF'
       ss = SearchSetup.new(module_type:'Order')
       ss.search_columns.build(model_field_uid:@mf.uid,rank:1)
       ss.search_criterions.build(model_field_uid:@mf.uid,operator:'sw',value:'A')
