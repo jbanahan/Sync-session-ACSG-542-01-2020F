@@ -77,30 +77,32 @@ class SearchCriterion < ActiveRecord::Base
     table_name = mf.join_alias
     clause = nil
 
-    if custom_field? && mf.core_module == mf.custom_definition.core_module
-      c_def_id = mf.custom_id
-      cd = CustomDefinition.cached_find(c_def_id)
+    if custom_field?
+      cd = mf.custom_definition
+      custom_core = cd.model_field.core_module
+
+      join_identifier = "#{table_name}." + ((mf.core_module == custom_core) ? "id" : "#{custom_core.klass.to_s.underscore}_id")
       
-      base_select = "SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_type = '#{cd.module_type}'"
+      base_select = "SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{cd.id} AND custom_values.customizable_type = '#{cd.module_type}'"
       if boolean_field?
         clause = "custom_values.boolean_value = ?"
         if self.include_empty || !sql_value
           clause = "(#{clause} OR custom_values.boolean_value IS NULL)"
         end
-        clause = "#{table_name}.id IN (#{base_select} AND #{clause})"
+        clause = "#{join_identifier} IN (#{base_select} AND #{clause})"
       elsif self.operator=='null'
-        clause = "#{table_name}.id NOT IN (#{base_select} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
+        clause = "#{join_identifier} NOT IN (#{base_select} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
       elsif self.operator=='notnull'
-        clause = "#{table_name}.id IN (#{base_select} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
+        clause = "#{join_identifier} IN (#{base_select} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
       else
-        clause = "#{table_name}.id IN (#{base_select} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
+        clause = "#{join_identifier} IN (#{base_select} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
       end
 
       # The core object may not actually have custom value rows yet for a particualr custom definition 
       # if a new custom definition was added to the system.  To account for this we'll also find any 
       # results that are missing fields if "Include Empty" is checked.
       if self.include_empty
-        clause += " OR (#{table_name}.id NOT IN (#{base_select}))"
+        clause += " OR (#{join_identifier} NOT IN (#{base_select}))"
       end
 
       clause
