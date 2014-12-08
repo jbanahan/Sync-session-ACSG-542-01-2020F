@@ -29,6 +29,7 @@ $(document).ready(function() {
             <th>&nbsp;</th>
             <th>Name</th>
             <th>Module</th>
+            <th>Delete</th>
           </tr>
         </thead>
         <tbody>
@@ -42,6 +43,9 @@ $(document).ready(function() {
               </td>
               <td>
                 <%=st.module_type%>
+              </td>
+              <td>
+                <%=button_to "Delete", st, :confirm=>'Are you sure you want to delete this?', :method=>:delete, :class=>'btn btn-danger btn-sm'%>
               </td>
             </tr>
           <%end%>

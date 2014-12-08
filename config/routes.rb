@@ -590,7 +590,7 @@ OpenChain::Application.routes.draw do
     get 'show' => "data_cross_references#edit"
   end
 
-  resources :search_templates, only: [:index]
+  resources :search_templates, only: [:index,:destroy]
 
   #Griddler inbound email processing
   mount_griddler

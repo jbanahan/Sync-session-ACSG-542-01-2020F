@@ -177,6 +177,15 @@ end
 Factory.define :search_column do |f|
   f.model_field_uid 'prod_uid' 
 end
+Factory.define :search_template do |f|
+  f.name 'search_name'
+  # {name:ss.name,
+  #     module_type:ss.module_type,
+  #     include_links:ss.include_links,
+  #     no_time:ss.no_time
+  #   }
+  f.search_json '{"name":"search_name","module_type":"Order","include_links":true,"no_time":true}'
+end
 Factory.define :custom_definition do |c|
   c.sequence(:label)
   c.data_type "string"
