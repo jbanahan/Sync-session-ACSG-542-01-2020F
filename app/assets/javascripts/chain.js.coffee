@@ -1,6 +1,16 @@
 root = exports ? this
 root.Chain =
 
+  # pass in a selector for a multi select enabled select box and
+  # this method will call the callback passing in an Array of objects with
+  # val and label attributes
+  multiSelect: (selectBoxSelector,callback) ->
+    fullSelector = selectBoxSelector+" option:selected"
+    a = $.map $.makeArray($(fullSelector)), (obj,idx) ->
+      o = $(obj)
+      {val:o.val(),label:o.html()}
+    callback a
+
   showNavTour: () ->
     itms = [
      {selector:'#btn-left-toggle',placement:'bottom',content:"Navigate through the system using the menu here."},

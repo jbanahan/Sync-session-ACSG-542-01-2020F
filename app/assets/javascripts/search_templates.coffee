@@ -15,7 +15,24 @@ root.OCSearchTemplates =
         idsToAdd = OCSearchTemplates.extractSelectedTemplateIds(jqueryObjs)
         $('#modUsers').modal('hide')
         $('#modUsersAssigning').modal('show')
-        $.ajax '/api/v1/admin/users/'+$('#userListSelect').val()+'/add_templates.json', {
+        OCSearchTemplates.addToUsers(idsToAdd)
+
+  addToUsers: (idsToAdd) ->
+    Chain.multiSelect '#userListSelect', (users) ->
+      doneUsers = []
+      makeMsg = (usersComplete) ->
+        usersRemaining = users.length - usersComplete.length
+        if usersRemaining>0
+          $('#assigning-status').html(usersComplete.length+" users added. "+usersRemaining+" left.")
+        else 
+          $('#resultMessage').html('Templates added.')
+          $('#resultMessagePanel').prop('class','panel panel-success').show()
+          $('#modUsersAssigning').modal('hide')
+
+      makeMsg doneUsers
+
+      for u in users
+        $.ajax '/api/v1/admin/users/'+u.val+'/add_templates.json', {
           method:'POST',
           headers: { 
               Accept : "application/json",
@@ -23,9 +40,8 @@ root.OCSearchTemplates =
           },
           data: JSON.stringify({'template_ids':idsToAdd}),
           success: ((response) ->
-            $('#resultMessage').html('Templates added.')
-            $('#resultMessagePanel').prop('class','panel panel-success').show()
-            $('#modUsersAssigning').modal('hide')
+            doneUsers.push u
+            makeMsg doneUsers
           ),
           error: ((response) ->
             $('#resultMessage').html('Template add failed. Please contact support.')
@@ -33,7 +49,7 @@ root.OCSearchTemplates =
             $('#modUsersAssigning').modal('hide')
           )
         }
-        
+ 
   extractSelectedTemplateIds: (checkboxes) ->
     r = []
     for b in checkboxes

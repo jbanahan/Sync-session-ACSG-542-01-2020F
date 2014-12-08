@@ -10,6 +10,7 @@ module Api; module V1; module Admin; class UsersController < Api::V1::Admin::Adm
         st.add_to_user! u
         count += 1
       end
+      sleep 3
       render json: {'message'=>"#{count} templates added."}
     end
   end
