@@ -156,6 +156,8 @@ var OCSearch = (function() {
         h += "<option value='bmf'>Before _ Months From Now</option>";
         h += "<option value='amf'>After _ Months From Now</option>";
         h += "<option value='pm'>Previous _ Months</option>";
+        h += "<option value='dt_regexp'>Regex</option>";
+        h += "<option value='dt_notregexp'>Not Regex</option>";
       }
       if(dt=="integer" || dt=="decimal" || dt=="fixnum") {
         h += "<option value='eq'>Equals</option>";
@@ -182,8 +184,10 @@ var OCSearch = (function() {
         h += "<option value='in'>One Of</option>";
         h += "<option value='notin'>Not One Of</option>";
       }
-      h += "<option value='regexp'>Regex</option>";
-      h += "<option value='notregexp'>Not Regex</option>";
+      if (dt!="date" && dt!="datetime") {
+        h += "<option value='regexp'>Regex</option>";
+        h += "<option value='notregexp'>Not Regex</option>";
+      }
       h += "<option value='null'>Is Empty</option>";
       h += "<option value='notnull'>Is Not Empty</option>";
 

@@ -454,37 +454,78 @@ describe SearchCriterion do
           sc.test?(@product).should be_false
         end
 
-        it "should find a product when there is a regex match on the appropriate date field" do
-          @product.update_attributes(created_at: Time.zone.now)
-          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>Time.now.year.to_s)
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
+        it "should find an entry when there is a regex match on the appropriate date field" do
+          # Using entry because it has an actual date field in it
+          e = Factory(:entry, eta_date: '2013-02-03')
 
-          @product.update_attributes(created_at: ActiveSupport::TimeZone["UTC"].parse("2013-02-03 04:05"))
-          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>"02-03")
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
+          sc = SearchCriterion.new(:model_field_uid=>:ent_eta_date,:operator=>"dt_regexp",:value=>"-02-")
+          sc.apply(Entry.where("1=1")).all.should include e
+          sc.test?(e).should be_true
 
-          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>"04:05")
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
-
-          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>"[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2} [[:digit:]]{2}:[[:digit:]]{2}")
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
+          sc = SearchCriterion.new(:model_field_uid=>:ent_eta_date,:operator=>"dt_regexp",:value=>"[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}")
+          sc.apply(Entry.where("1=1")).all.should include e
+          expect(sc.test?(e)).to be_true
         end
 
-        it "should find a product when there is a not regex match on the appropriate datetime field" do
-          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"notregexp",:value=>"1999")
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
+        it "should find an entry when there is a not regex match on the appropriate date field" do
+          # Using entry because it has an actual date field in it
+          e = Factory(:entry, eta_date: '2013-02-03')
+
+          sc = SearchCriterion.new(:model_field_uid=>:ent_eta_date,:operator=>"dt_notregexp",:value=>"1999")
+          sc.apply(Entry.where("1=1")).all.should include e
+          expect(sc.test?(e)).to be_true
         end
 
-        it "should not find a product when there is a not regex match on the appropriate datetime field" do
+        it "should not find an entry when there is a not regex match on the appropriate date field" do
+          # Using entry because it has an actual date field in it
+          e = Factory(:entry, eta_date: '2013-02-03')
+
+          sc = SearchCriterion.new(:model_field_uid=>:ent_eta_date,:operator=>"dt_notregexp",:value=>"2013")
+          sc.apply(Entry.where("1=1")).all.should_not include e
+          expect(sc.test?(e)).to be_false
+        end
+
+        it "finds a product when regex on datetime field" do
+          # Because of the way we use the mysql function convert_tz (which only works in prod due to having to setup the full timezone support in the database)
+          # we're only testing the test? method for this.
           @product.update_attributes(created_at: Time.zone.now)
-          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"notregexp",:value=>@product.created_at.to_s)
-          sc.apply(Product.where("1=1")).all.should_not include @product
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_regexp",:value=>Time.now.year.to_s)
+          sc.test?(@product).should be_true
+
+          Time.use_zone("Eastern Time (US & Canada)") do
+            @product.update_attributes(created_at: ActiveSupport::TimeZone["UTC"].parse("2013-02-03 04:05"))
+            # Note the day in the regex is the day before what we set in the created_at attribute
+            sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_regexp",:value=>"02-02")
+            expect(sc.test?(@product)).to be_true
+          end
+        end
+
+        it "finds a product when notregex on datetime field" do
+          # Because of the way we use the mysql function convert_tz (which only works in prod due to having to setup the full timezone support in the database)
+          # we're only testing the test? method for this
+          @product.update_attributes(created_at: Time.zone.now)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_notregexp",:value=>"1999")
+          sc.test?(@product).should be_true
+
+          Time.use_zone("Eastern Time (US & Canada)") do
+            @product.update_attributes(created_at: ActiveSupport::TimeZone["UTC"].parse("2013-02-03 04:05"))
+            sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_notregexp",:value=>"02-03")
+            sc.test?(@product).should be_true
+          end
+        end
+
+        it "does not find a product when notregex on datetime field" do
+          # Because of the way we use the mysql function convert_tz (which only works in prod due to having to setup the full timezone support in the database)
+          # we're only testing the test? method for this
+          @product.update_attributes(created_at: Time.zone.now)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_notregexp",:value=>Time.now.year.to_s)
           sc.test?(@product).should be_false
+
+          Time.use_zone("Eastern Time (US & Canada)") do
+            @product.update_attributes(created_at: ActiveSupport::TimeZone["UTC"].parse("2013-02-03 04:05"))
+            sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_notregexp",:value=>"02-02")
+            sc.test?(@product).should be_false
+          end
         end
 
         it "should find a product when there is a regex match on the appropriate integer field" do

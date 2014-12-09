@@ -512,7 +512,9 @@
                 rScope.crit.value = rScope.matchingModelFields[0].mfid
 
               v_str = "<select ng-model='crit.value' ng-options='f.mfid as f.label for f in matchingModelFields' class='form-control'></select>"
-            else
+            else if /regexp/.test rScope.crit.operator
+              v_str = rScope.renderTextInput rScope.crit.datatype, rScope.crit.operator
+            else 
               v_str = "<div style='display:inline;' chain-date-picker='crit.value'></div>"
           when "boolean"
             v_str = ""
@@ -607,8 +609,8 @@
         {operator:'notnull',label:'Is Not Empty'}
         {operator:'afld',label:'After (Field)', fieldRelative: true}
         {operator:'bfld',label:'Before (Field)', fieldRelative: true}
-        {operator:'regexp',label:'Regex'}
-        {operator:'notregexp',label:'Not Regex'}
+        {operator:'dt_regexp',label:'Regex'}
+        {operator:'dt_notregexp',label:'Not Regex'}
         ]
       datetime: [
         {operator:'eq',label:'Equals'}
@@ -628,8 +630,8 @@
         {operator:'notnull',label:'Is Not Empty'}
         {operator:'afld',label:'After (Field)', fieldRelative: true}
         {operator:'bfld',label:'Before (Field)', fieldRelative: true}
-        {operator:'regexp',label:'Regex'}
-        {operator:'notregexp',label:'Not Regex'}
+        {operator:'dt_regexp',label:'Regex'}
+        {operator:'dt_notregexp',label:'Not Regex'}
         ]
       integer: [
         {operator:'eq',label:'Equals'}
