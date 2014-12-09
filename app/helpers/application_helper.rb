@@ -43,7 +43,7 @@ module ApplicationHelper
   # otherwise it returns the result of the yield
   def read_only_wrap object, model_field_uid
     mf = ModelField.find_by_uid model_field_uid
-    if mf.read_only?
+    if mf.blank? || mf.read_only?
       mf.process_export object, current_user
     else
       yield
