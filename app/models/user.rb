@@ -194,6 +194,11 @@ class User < ActiveRecord::Base
     nil
   end
 
+  # override default clearance email authentication
+  def email_optional?
+    true
+  end
+
   # return all companies that I as a user can see that are importers
   def available_importers
     r = Company.importers

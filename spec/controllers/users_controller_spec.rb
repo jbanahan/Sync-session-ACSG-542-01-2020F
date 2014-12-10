@@ -5,6 +5,19 @@ describe UsersController do
     @user = Factory(:user)
     sign_in_as @user
   end
+  describe :create do
+    it "should create user with apostrophe in email address" do
+      User.any_instance.stub(:admin?).and_return(true)
+      u = {'username'=>"c'o@sample.com",'password'=>'pw12345','password_confirmation'=>'pw12345','email'=>"c'o@sample.com",
+        'company_id'=>@user.company_id.to_s
+      }
+      expect {
+        post :create, {'company_id'=>@user.company_id,'user'=>u}
+        byebug
+      }.to change(User,:count).by(1)
+      expect(response).to be_redirect
+    end
+  end
   describe :event_subscriptions do
     it "should work with user id" do
       u = Factory(:user)
