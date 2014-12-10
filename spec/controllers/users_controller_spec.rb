@@ -13,7 +13,6 @@ describe UsersController do
       }
       expect {
         post :create, {'company_id'=>@user.company_id,'user'=>u}
-        byebug
       }.to change(User,:count).by(1)
       expect(response).to be_redirect
     end
