@@ -230,6 +230,24 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       it "handles descriptions without spaces" do
         expect(@p.parse_fiber_content "78.5%COTTON21.5%NYLON").to eq ({fiber_1: "COTTON", type_1: "Outer", percent_1: "78.5", fiber_2: "NYLON", type_2: "Outer", percent_2: "21.5"})
       end
+
+      it "strips leading/trailing spaces from xref keys/values" do
+        DataCrossReference.create! cross_reference_type: DataCrossReference::RL_FABRIC_XREF, key: "   wool   ", value: "   XREF   "
+        expect(@p.parse_fiber_content "100% WOOL").to eq ({fiber_1: "XREF", type_1: "Outer", percent_1: "100"})
+      end
+    end
+
+    context "uses cross reference validated fibric list" do
+      it "strips leading/trailing spaces from valid fiber list keys" do
+        DataCrossReference.create! key: "   Cotton    ", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        expect(@p.parse_fiber_content "100% COTTON").to eq ({fiber_1: "COTTON", type_1: "Outer", percent_1: "100"})
+      end
+
+      it "handles mismatched spacing between xref and valid list" do
+        DataCrossReference.create! key: "   Cotton    ", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        DataCrossReference.create! cross_reference_type: DataCrossReference::RL_FABRIC_XREF, key: "   wool   ", value: " Cotton "
+        expect(@p.parse_fiber_content "100% wool").to eq ({fiber_1: "Cotton", type_1: "Outer", percent_1: "100"})
+      end
     end
 
     context "with invalid fiber descriptions" do

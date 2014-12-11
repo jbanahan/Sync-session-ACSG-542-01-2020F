@@ -519,7 +519,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         pairs = DataCrossReference.get_all_pairs(DataCrossReference::RL_FABRIC_XREF)
         # Now downcase every key, so we retain the case insenstive matching that a straight db lookup would give us
         @all_xrefs = {}
-        pairs.map {|k, v| @all_xrefs[k.downcase] = v}
+        # Strip out all whitespace RL is adding to the keys and values
+        pairs.map {|k, v| @all_xrefs[k.downcase.strip] = v.strip}
       end
 
       @all_xrefs[fabric.downcase]
@@ -532,7 +533,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     def all_validated_fabrics
       unless @all_fabrics
         # We want any case of the Fabric to be acceptable.
-        @all_fabrics = Set.new(DataCrossReference.get_all_pairs(DataCrossReference::RL_VALIDATED_FABRIC).keys.map(&:downcase))
+        @all_fabrics = Set.new(DataCrossReference.get_all_pairs(DataCrossReference::RL_VALIDATED_FABRIC).keys.map {|k| k.strip.downcase})
       end
 
       @all_fabrics
