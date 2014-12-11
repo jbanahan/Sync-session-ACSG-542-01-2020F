@@ -4,7 +4,7 @@ class MessagesController < ApplicationController
   # GET /messages
   # GET /messages.xml
   def index
-    @messages = Message.where({:user_id => current_user.id, :folder => 'inbox'}).order("created_at DESC").paginate(:per_page=>20, :page=>params[:page])
+    @messages = Message.where({:user_id => current_user.id, :folder => 'inbox'}).order("created_at DESC")
 
     respond_to do |format|
       format.html { render layout: false }# index.html.erb
