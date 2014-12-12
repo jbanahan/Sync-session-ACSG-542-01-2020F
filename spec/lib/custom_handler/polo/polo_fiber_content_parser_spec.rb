@@ -334,12 +334,13 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
     end
 
     it 'does not update custom values if fiber fingerprint is unchanged' do
-      # It should update the custom values, since the fingerprint will be unchanged.
+      # It should not update the custom values, since the fingerprint will be unchanged.
       # Think of this as the scenario where the user modifies the MSL+ fabric fields directly and the product is modified having the fiber content
       # stay exactly the same.  We don't want to overwrite the user's modifications.
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Cotton"
       results = ['Outer', 'Cotton', '100']
       42.times {results << ''}
+      results << true.to_s
       DataCrossReference.create_rl_fabric_fingerprint! @prod.unique_identifier, Digest::MD5.hexdigest(results.join("\n"))
 
       @prod.update_custom_value! @test_cds[:fabric_type_1], "Type"
@@ -374,6 +375,23 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(@prod.get_custom_value(@test_cds[:fabric_percent_1]).value).to eq BigDecimal.new("100")
 
       expect(DataCrossReference.find_rl_fabric_fingerprint @prod.unique_identifier).not_to eq "fingerprint"
+    end
+
+    it 'includes the pass fail state of the content in the fingerprint' do
+      # This is a scenario we have to account for when the fiber field doesn't change at all but the user adds xrefs 
+      # so that even though the fiber field didn't change, the output state of it does, so it should be fully updated.
+      @prod.update_custom_value! @test_cds[:fiber_content], "100% Blah"
+
+      # This first pass generates the fingerprint..marking it as invalid
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_false
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_true
+
+      # Add an xref so 'Blah' is now valid
+      DataCrossReference.create! key: "Blah", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+     
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+      @prod.reload
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_false
     end
   end
 

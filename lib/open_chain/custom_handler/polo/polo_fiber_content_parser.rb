@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
   end
 
   def self.update_styles styles
-    styles = styles.split /\s*\n\s*/
+    styles = styles.split(/\s*\r?\n\s*/)
 
     product_ids = base_query.where(unique_identifier: styles).pluck("products.id")
     # Reuse the same parser instance to avoid having to reload 47 custom definitions for each product we parse a definition for
@@ -95,7 +95,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
     # First things, first...make sure the results hash has actually changed values before we bother
     # writing the results into the custom values.
-    fingerprint = results_fingerprint result
+    fingerprint = results_fingerprint result, failed
 
     xref_fingerprint = DataCrossReference.find_rl_fabric_fingerprint product.unique_identifier
 
@@ -503,15 +503,18 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       end
 
       cv << get_or_create_cv(product, :msl_fiber_failure, parse_failed)
-
-      cv
+      cv.compact
     end
 
     def get_or_create_cv product, cv_sym, value
+      # Only save off values that actually differ
       cv = product.get_custom_value @cdefs[cv_sym]
-      cv.value = value
-
-      cv
+      if cv.value != value
+        cv.value = value
+        cv
+      else
+        nil
+      end
     end
 
     def xref_value fabric
@@ -539,7 +542,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       @all_fabrics
     end
 
-    def results_fingerprint results
+    def results_fingerprint results, failed
       # Some error cases result in missing results, just use a blank hash for these to fingerprint since the
       # actual fiber 1-15 fields will be blank anyway too.
       results = {} if results.nil?
@@ -551,6 +554,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         values << results["fiber_#{x}".to_sym].to_s
         values << results["percent_#{x}".to_sym].to_s
       end
+      values << failed.to_s
 
       # Really the only reason I'm hashing this is to ensure a constant width field, otherwise it's possible
       # concat'ing the result data together it'll overflow the 255 char width (possible, though not likely).

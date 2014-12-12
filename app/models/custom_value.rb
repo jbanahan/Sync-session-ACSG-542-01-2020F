@@ -23,7 +23,7 @@ class CustomValue < ActiveRecord::Base
         customizable_id = cv.customizable.id
         v = cv.value.nil? ? "null" : ActiveRecord::Base.sanitize(cv.value)
         deletes[cust_def_id] ||= []
-        deletes[cust_def_id] << customizable_id
+        deletes[cust_def_id] << {id: customizable_id, type: cv.customizable.class.name}
         # Sometimes we don't want to create the custom value if the field doesn't have any value in it (to lessen the length of the edit page for instance)
         if !opts[:skip_insert_nil_values] || !cv.value.nil? 
           vals = Array.new(9,"null")
@@ -36,7 +36,7 @@ class CustomValue < ActiveRecord::Base
         to_touch << cv.customizable if touch_parent && !to_touch.include?(cv.customizable)
       end
       deletes.each do |def_id,customizables|
-        ActiveRecord::Base.connection.execute "DELETE FROM custom_values WHERE custom_definition_id = #{def_id} and customizable_id IN (#{customizables.join(", ")})"
+        ActiveRecord::Base.connection.execute "DELETE FROM custom_values WHERE custom_definition_id = #{def_id} and customizable_id IN (#{customizables.collect{|c| c[:id]}.join(", ")}) and customizable_type = '#{customizables.first[:type]}'"
       end
       if !inserts.empty?
         sql = "INSERT INTO custom_values (#{BATCH_INSERT_POSITIONS.join(', ')}, customizable_type, customizable_id, custom_definition_id, updated_at, created_at) VALUES #{inserts.join(",")};"

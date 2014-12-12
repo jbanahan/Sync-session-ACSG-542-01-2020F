@@ -468,7 +468,7 @@ class CustomFeaturesController < ApplicationController
   def rl_fabric_parse_run
     action_secure(OpenChain::CustomHandler::Polo::PoloFiberContentParser.can_view?(current_user),Product,{:verb=>"view",:module_name=>"MSL Fabric Analyzer",:lock_check=>false}) {
       styles = params[:styles]
-      if styles.blank? || styles.split(/\s*\n\s*/).size == 0
+      if styles.blank? || styles.split(/\s*\r?\n\s*/).size == 0
         add_flash :errors, "You must specify at least one style."
       else
         OpenChain::CustomHandler::Polo::PoloFiberContentParser.delay.update_styles params[:styles]
