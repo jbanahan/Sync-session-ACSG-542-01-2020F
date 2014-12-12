@@ -53,7 +53,7 @@ module OpenChain; module Api; class ApiEntityJsonizer
 
       # Purposefully NOT passing the user here since there's no need to validate access to every model field
       # since we're generally only accessing a small portion of them.  Individual model_field access is checked below.
-      model_fields = core_module.model_fields
+      model_fields = core_module.model_fields {|mf| mf.user_accessible? }
 
       fields = []
 

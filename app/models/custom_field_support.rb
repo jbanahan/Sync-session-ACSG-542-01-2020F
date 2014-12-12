@@ -17,7 +17,9 @@ module CustomFieldSupport
     # Hit the database now and see if the custom value has been saved outside the normal rails model persistence methods
     # (file imports do this to optimize custom value loading).  If this isn't done, we end up with
     # unique custom value constraint errors if this model (self) is saved later
-    cv = self.custom_values.find_by_custom_definition_id id if cv.nil? && !self.lock_custom_values
+
+    # Skip if model hasn't been saved since the custom values couldn't have been saved w/o the model already existing in the db. 
+    cv = self.custom_values.find_by_custom_definition_id id if cv.nil? && !self.new_record? && !self.lock_custom_values
     if cv.nil?
       cv = self.custom_values.build(:custom_definition => custom_definition)
       cv.value = custom_definition.default_value unless custom_definition.default_value.nil?

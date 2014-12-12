@@ -7,7 +7,7 @@ module Api; module V1; class FieldsController < Api::V1::ApiController
       cm = CoreModule.find_by_class_name m.camelize
       raise StatusableError.new("Module #{m} not found.",400) if cm.nil?
       raise StatusableError.new("You do not have permission to view the #{m} module.",401) unless cm.view? current_user
-      r["#{m}_fields"] = cm.model_fields.values.collect { |mf|
+      r["#{m}_fields"] = cm.model_fields(current_user).values.collect { |mf|
         {'uid'=>mf.uid,'label'=>mf.label,'data_type'=>mf.data_type}
       }
     end

@@ -1,5 +1,7 @@
 #The definition of a test and resulting classification that could be applied to a product using the Instant Classification feature
 class InstantClassification < ActiveRecord::Base
+  include UpdateModelFieldsSupport
+
   has_many :search_criterions, :dependent=>:destroy
   has_many :classifications, :dependent=>:destroy
 
@@ -13,8 +15,7 @@ class InstantClassification < ActiveRecord::Base
       } 
       r_val
     }
-  accepts_nested_attributes_for :classifications, :allow_destroy => true,
-    :reject_if => lambda { |a| a[:country_id].blank?}
+  accepts_nested_attributes_for :classifications, :allow_destroy => true
 
   scope :ranked, order("rank ASC").includes(:search_criterions)
 
@@ -36,5 +37,21 @@ class InstantClassification < ActiveRecord::Base
     search_criterions.each {|sc| return false unless sc.test?(product,user)}
     true
   end
+
+  private
+
+    # This method overrides the method defined in UpdateModelFieldsSupport
+    def core_module_info object_or_core_module
+      return super if !object_or_core_module.is_a? InstantClassification
+
+      {model_fields: {}, child_core_module: CoreModule::CLASSIFICATION, child_association_key: "classifications_attributes"}
+    end
+
+    # This method overrides the method defined in UpdateModelFieldsSupport
+    def child_objects parent_object, child_core_module
+      return super if !parent_object.is_a? InstantClassification
+
+      classifications
+    end
 
 end

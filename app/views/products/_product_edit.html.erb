@@ -8,12 +8,10 @@ $(function() {
 <% hide_no_bulk_fields = nil if local_assigns[:hide_no_bulk_fields].nil?%>
 <table id='product_header'>
   <%unless hide_no_bulk_fields%>
-    <%=field_row field_label(:prod_uid), model_text_field(form_obj,:unique_identifier,:prod_uid)%>
-    <% if !ModelField.find_by_uid(:prod_ven_name).blank? %>
-    <%=field_row field_label(:prod_ven_name), read_only_wrap(form_obj.object,:prod_ven_name) {form_obj.collection_select(:vendor_id, Company.vendors.not_locked.order('companies.name ASC'), :id, :name, {:prompt => "Select a vendor"}, {:class=>'form-control'})} %>
-    <% end %>
+    <%= show_model_fields form_obj, :prod_uid, table: true %>
+    <%= show_model_fields form_obj, :prod_ven_id, {table: true, prod_ven_id: {prompt: "Select a vendor", select_options: lambda {|value| options_from_collection_for_select(Company.vendors.not_locked.order('companies.name ASC'), :id, :name, value)}}} %>
   <%end%>
-  <%=field_row field_label(:prod_name), model_text_field(form_obj,:name,:prod_name) %>
+  <%= show_model_fields form_obj, :prod_name, table: true %>
   <%imps = []-%>
   <%if current_user.company.master? -%>
     <%imps = Company.importers.not_locked.by_name-%>
@@ -21,15 +19,13 @@ $(function() {
     <%imps << current_user.company if current_user.company.importer?%>
     <%imps = imps + current_user.company.linked_companies.importers.not_locked.by_name.to_a -%>
   <%end-%>
-  <%=field_row field_label(:prod_imp_name), read_only_wrap(form_obj.object,:prod_imp_name) {form_obj.collection_select(:importer_id, imps, :id, :name, {:prompt => "Select an importer"}, {:class=>'form-control'})} %>
-  <%
-    entity_types = EntityType.where(:module_type=>CoreModule::PRODUCT.class_name).order('name ASC')
-    if entity_types.size > 0
-  %>
-    <%=field_row field_label(:prod_ent_type), read_only_wrap(form_obj.object,:prod_ent_type) {form_obj.collection_select(:entity_type_id, entity_types,:id,:name, {:include_blank=>true}, {:class=>"entity_type form-control"})}, true%>
+  <%= show_model_fields form_obj, :prod_imp_id, {table: true, prod_imp_id: {prompt: "Select an importer", select_options: lambda {|value| options_from_collection_for_select(imps, :id, :name, value)}}} %>
+  <% entity_types = EntityType.where(:module_type=>CoreModule::PRODUCT.class_name).order('name ASC') %>
+  <% if entity_types.size > 0 %>
+    <%= show_model_fields form_obj, :prod_ent_type_id, {table: true, prod_ent_type_id: {never_hide: true, class: "entity_type", include_blank: true, select_options: lambda {|value| options_from_collection_for_select(entity_types, :id, :name, value)}}} %>
   <% end %>
-  <%=field_row field_label(:prod_uom), model_text_field(form_obj,:unit_of_measure,:prod_uom,:id=>'txt_uom')%>
-  <%=field_row field_label(:prod_div_name), read_only_wrap(form_obj.object,:prod_div_name) {form_obj.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}, {:class=>'form-control'})} %>
-  <%=show_custom_fields form_obj.object, {:form=>true, :table=>true, :display_read_only=>!(hide_no_bulk_fields == true)}%>
-  <%=field_row field_label(:prod_changed_at),@product.changed_at unless hide_no_bulk_fields%>
+  <%= show_model_fields form_obj, :prod_uom, {table: true, prod_uom: {id: 'txt_uom'}} %>
+  <%= show_model_fields form_obj, :prod_div_id, {table: true, prod_div_id: {prompt: "Select a division", select_options: lambda {|value| options_from_collection_for_select(Division.all, :id, :name, value)}}} %>
+  <%= show_custom_fields form_obj, {:table=>true, :display_read_only=>!(hide_no_bulk_fields == true)}%>
+  <%= show_model_fields(form_obj, :prod_changed_at, table: true) unless hide_no_bulk_fields %>
 </table>	

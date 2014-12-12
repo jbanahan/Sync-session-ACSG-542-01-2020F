@@ -82,6 +82,15 @@ class FieldValidatorRule < ActiveRecord::Base
     CACHE.set "FieldValidatorRule:field:#{model_field_uid}", r
     r
   end
+
+  def view_groups
+    can_view_groups.to_s.split("\n").sort
+  end
+
+  def edit_groups
+    can_edit_groups.to_s.split("\n").sort
+  end
+
   private
   def update_cache
     FieldValidatorRule.write_module_cache CoreModule.find_by_class_name self.module_type

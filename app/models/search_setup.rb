@@ -59,7 +59,7 @@ class SearchSetup < ActiveRecord::Base
   #get all column fields as ModelFields available for the user to add to the search
   # this method is required for the OpenChain::SearchBase mixin
   def column_fields_available user
-    core_module.model_fields_including_children.values.collect {|mf| mf if mf.can_view?(user)}.compact
+    core_module.model_fields_including_children(user).values
   end
   
   #get all model fields available to be used as sorts and not already in sort columns

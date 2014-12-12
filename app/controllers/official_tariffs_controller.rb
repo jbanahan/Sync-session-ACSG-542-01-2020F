@@ -2,7 +2,7 @@ class OfficialTariffsController < ApplicationController
   skip_before_filter :require_user, :set_user_time_zone, :log_request, :only=>[:auto_classify,:auto_complete]
 
   def auto_complete
-    render :json=>OfficialTariff.where(:country_id=>params[:country]).where("hts_code LIKE ?","#{params[:hts]}%").pluck(:hts_code)
+    render :json=>OfficialTariff.where(:country_id=>params[:country]).where("hts_code LIKE ?","#{TariffRecord.clean_hts(params[:hts])}%").pluck(:hts_code)
   end
   def auto_classify
     h = params[:hts].blank? ? '' : params[:hts].strip.gsub('.','')

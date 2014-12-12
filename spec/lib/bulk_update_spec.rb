@@ -9,7 +9,7 @@ describe OpenChain::BulkUpdateClassification do
       @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true)
       @p = Factory(:product, :unit_of_measure=>"UOM")
       @country = Factory(:country)
-      @h = {"pk"=>{ "1"=>@p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"country_id"=>@country.id.to_s}}}} 
+      @h = {"pk"=>{ "1"=>@p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"class_cntry_id"=>@country.id.to_s}}}} 
     end
 
     context "can_classify" do
@@ -39,7 +39,7 @@ describe OpenChain::BulkUpdateClassification do
         # Create field validator rule to reject on 
         FieldValidatorRule.create! starts_with: "A", module_type: "Product", model_field_uid: "prod_uid"
 
-        @h['product']['unique_identifier'] = 'BBB'
+        @h['product']['prod_uid'] = 'BBB'
         m = OpenChain::BulkUpdateClassification.go(@h,@u)
 
         log = BulkProcessLog.first
@@ -72,15 +72,14 @@ describe OpenChain::BulkUpdateClassification do
         tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
         prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
         
-
-        @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => 'ABC'}}}
-        @h['tariff_custom'] = {'987654321' => {'tariffrecord_cf' => {tr_cd.id.to_s => 'DEF'}}}
-        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890', 'view_sequence'=>'987654321'}}
-        @h['product']['classifications_attributes']['0']['country_id'] = @country.id.to_s
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1234567890', 'hts_view_sequence'=>'987654321', tr_cd.model_field_uid.to_s => 'DEF'}}
+        @h['product']['classifications_attributes']['0']['class_cntry_id'] = @country.id.to_s
+        @h['product']['classifications_attributes']['0'][class_cd.model_field_uid.to_s] = 'ABC'
 
         # Set a product value and a product custom value to make sure they're also being set
-        @h['product']['unit_of_measure'] = "UOM"
-        @h['product_cf'] = {prod_cd.id.to_s => "PROD_UPDATE"}
+        @h['product']['prod_uom'] = "UOM"
+        @h['product'][prod_cd.model_field_uid.to_s] = "PROD_UPDATE"
+
         OpenChain::BulkUpdateClassification.go(@h,@u)
         @p.reload
 
@@ -108,10 +107,12 @@ describe OpenChain::BulkUpdateClassification do
 
         @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => ''}}} #blank classification shouldn't clear
         @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => ''}}} #blank tariff shouldn't clear
-        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890', 'hts_2' => ''}}
+        @h['product']['classifications_attributes']['0']['class_cntry_id'] = classification.country.id.to_s
+        @h['product']['classifications_attributes']['0'][class_cd.model_field_uid.to_s] = ''
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1234567890', 'hts_hts_2' => ''}}
         # Set a product value and a product custom value to make sure they're also being set
-        @h['product']['unit_of_measure'] = ""
-        @h['product_cf'] = {prod_cd.id.to_s => ""}
+        @h['product']['prod_uom'] = ""
+        @h['product'][prod_cd.model_field_uid.to_s] = ""
         OpenChain::BulkUpdateClassification.go(@h,@u)
         @p.reload
 
@@ -138,9 +139,8 @@ describe OpenChain::BulkUpdateClassification do
         tr.update_custom_value! tr_cd, 'DEF'
         cls = tr.classification
         cls.update_custom_value! class_cd, 'ABC'
-        @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => 'CLSOVR'}}} #blank classification shouldn't clear
-        @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => 'TAROVR'}}}
-        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890','view_sequence'=>'1','line_number'=>'1'}}
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1234567890','hts_view_sequence'=>'1','hts_line_number'=>'1', tr_cd.model_field_uid.to_s => 'TAROVR'}}
+        @h['product']['classifications_attributes']['0'][class_cd.model_field_uid.to_s] = 'CLSOVR'
         OpenChain::BulkUpdateClassification.go(@h,@u)
         @p.reload
         @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
@@ -161,8 +161,8 @@ describe OpenChain::BulkUpdateClassification do
         @p.update_custom_value! prod_cd, "PROD"
 
         @h['product'].delete 'classifications_attributes'
-        @h['product']['unit_of_measure'] = "UOM"
-        @h['product_cf'] = {prod_cd.id.to_s => "PROD_UPDATE"}
+        @h['product']['prod_uom'] = "UOM"
+        @h['product'][prod_cd.model_field_uid.to_s] = "PROD_UPDATE"
         OpenChain::BulkUpdateClassification.go(@h,@u)
         @p.reload
 
@@ -182,7 +182,7 @@ describe OpenChain::BulkUpdateClassification do
         tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
 
         # Note the long index value for the second tariff line, this is how the screen effectively sends updates when the users adds second hts lines on the bulk screen
-        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890','view_sequence'=>'0','line_number'=>'2'}, '1234567890'=>{'hts_1' => '9876543210','view_sequence'=>'1234567890','line_number'=>'1'}}
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1234567890','hts_view_sequence'=>'0','hts_line_number'=>'2'}, '1234567890'=>{'hts_hts_1' => '9876543210','hts_view_sequence'=>'1234567890','hts_line_number'=>'1'}}
 
         OpenChain::BulkUpdateClassification.go(@h,@u)
         @p.reload
@@ -198,7 +198,7 @@ describe OpenChain::BulkUpdateClassification do
         tr = Factory(:tariff_record,:hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification,:country=>@country,:product=>@p))
         tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
 
-        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '9876543210','view_sequence'=>'0'}}
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '9876543210','hts_view_sequence'=>'0'}}
 
         OpenChain::BulkUpdateClassification.go(@h,@u)
         @p.reload
@@ -215,7 +215,7 @@ describe OpenChain::BulkUpdateClassification do
         tr = Factory(:tariff_record,:hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification,:country=>@country,:product=>@p))
         tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
 
-        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1111111111','view_sequence'=>'0', 'line_number'=>'2'}}
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1111111111','hts_view_sequence'=>'0', 'hts_line_number'=>'2'}}
 
         OpenChain::BulkUpdateClassification.go(@h,@u)
         @p.reload
@@ -337,10 +337,10 @@ describe OpenChain::BulkUpdateClassification do
         'product' => {
             'classifications_attributes' => {
               "0" => {
-                  'country_id' => "#{@country.id}",
+                  'class_cntry_id' => "#{@country.id}",
                   'tariff_records_attributes' => {
                       "0" => {
-                        "hts_1" => @hts
+                        "hts_hts_1" => @hts
                       }
                   }
               }
@@ -381,6 +381,19 @@ describe OpenChain::BulkUpdateClassification do
 
         p.classifications[0].tariff_records.should have(1).item
         p.classifications[0].tariff_records[0].hts_1.should eq @hts
+      end
+    end
+
+    it "does not add custom value even if there is one present in the parameters" do
+      class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
+      @parameters['product']['classifications_attributes']['0'][class_cd.model_field_uid.to_s] = 'VALUE'
+
+      OpenChain::BulkUpdateClassification.quick_classify @parameters.to_json, @u
+
+      @products.each do |p|
+        p.reload
+
+        expect(p.classifications.first.get_custom_value(class_cd).value).to be_nil
       end
     end
 

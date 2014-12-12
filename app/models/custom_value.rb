@@ -5,10 +5,17 @@ class CustomValue < ActiveRecord::Base
     'integer_value','boolean_value','text_value']
   
   belongs_to :custom_definition
-  belongs_to :customizable, :polymorphic => true
+  belongs_to :customizable, polymorphic: true, inverse_of: :custom_values
   validates  :custom_definition, :presence => true
-  validates  :customizable_id, :presence => true
-  validates  :customizable_type, :presence => true
+  # There used to be a validation here that forced the presence of a 
+  # customizable_id/type.  That validation caused us to be unable to do a
+  # save call on a non-persisted customizable object and automatically have 
+  # the save cascade down to the  custom values (since validations are done
+  # prior to the save executing - and prior to the parent save the customizable_id will be null
+  # on non-persisted object).
+
+  # The validation was moved to the database layer as a non-null constraint on these two fields,
+  # since there's no foreseeable use case where these values should be nullable.
 
   # Writes given array of custom values directly to database
   def self.batch_write! values, touch_parent = false, opts = {}

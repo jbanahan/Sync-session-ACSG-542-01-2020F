@@ -39,34 +39,28 @@ class InstantClassificationsController < ApplicationController
   end
 
   def update
-    fail_lambda = lambda {|ic|
-      ic.classifications.each do |c|
-        ic.errors[:base] += c.errors.full_messages
-        c.tariff_records.each {|t| ic.errors[:base] += t.errors.full_messages}
-      end
-      errors_to_flash ic, :now=>true
-      @instant_classification = ic
-      render :action=> :edit 
-    }
     admin_secure {
       ic = InstantClassification.find(params[:id])
       begin
-        InstantClassification.transaction do 
-          if ic.update_attributes(params[:instant_classification])
-            OpenChain::CustomFieldProcessor.new(params).save_classification_custom_fields ic, params[:instant_classification]
+        InstantClassification.transaction do
+          # The only form parameter for instant classification we're expecting is name, so just assign it
+          # and then run the update_model_field_attributes
+          ic.assign_attributes(name: params[:name]) unless params[:name].blank?
+
+          if ic.update_model_field_attributes(params[:instant_classification], exclude_blank_values: true)
             ic.classifications.each do |c|
               OpenChain::FieldLogicValidator.validate! c
             end
             add_flash :notices, "Instant Classification saved successfully."
             redirect_to instant_classifications_path
           else
-            fail_lambda.call ic
+            failed ic
           end
         end
       rescue OpenChain::ValidationLogicError
-        fail_lambda.call ic
+        failed ic
       rescue ActiveRecord::RecordInvalid
-        fail_lambda.call ic
+        failed ic
       end
     }
   end
@@ -92,5 +86,16 @@ class InstantClassificationsController < ApplicationController
       render :text => "" #effectively noop
     }
   end
+
+  private
+    def failed ic
+      ic.classifications.each do |c|
+        ic.errors[:base] += c.errors.full_messages
+        c.tariff_records.each {|t| ic.errors[:base] += t.errors.full_messages}
+      end
+      errors_to_flash ic, :now=>true
+      @instant_classification = ic
+      render :action=> :edit 
+    end
 
 end

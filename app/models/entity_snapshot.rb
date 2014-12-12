@@ -63,7 +63,7 @@ class EntitySnapshot < ActiveRecord::Base
           cv.value = v
           custom_values << cv
         else
-          mf.process_import obj, v
+          mf.process_import obj, v, user, bypass_user_check: true
         end
       end
       obj_hash['model_fields'].each do |mfuid,val| 
@@ -71,7 +71,7 @@ class EntitySnapshot < ActiveRecord::Base
         #this prevents an empty value not in the hash from blanking something
         #that is in the hash like a missing Country ISO blanking an included Country Name
         mf = ModelField.find_by_uid mfuid
-        mf.process_import obj, val unless mf.blank? || mf.custom?
+        mf.process_import(obj, val, user, bypass_user_check: true) unless mf.blank? || mf.custom?
       end
       obj.last_updated_by_id=user.id if obj.respond_to?(:last_updated_by_id=)
 

@@ -107,9 +107,9 @@ describe Api::V1::ProductsController do
       json = ActiveSupport::JSON.decode response.body
 
       # Just validate that we have the correct # of fields
-      expect(json['product']).to have(CoreModule::PRODUCT.model_fields(@user).length).items
-      expect(json['classifications']).to have(CoreModule::CLASSIFICATION.model_fields(@user).length).items
-      expect(json['tariff_records']).to have(CoreModule::TARIFF.model_fields(@user).length).items
+      expect(json['product']).to have(CoreModule::PRODUCT.model_fields(@user) {|mf| mf.user_accessible?}.length).items
+      expect(json['classifications']).to have(CoreModule::CLASSIFICATION.model_fields(@user){|mf| mf.user_accessible?}.length).items
+      expect(json['tariff_records']).to have(CoreModule::TARIFF.model_fields(@user){|mf| mf.user_accessible?}.length).items
     end
 
     it "returns a 404 if the user can't access products" do

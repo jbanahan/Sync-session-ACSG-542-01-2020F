@@ -48,6 +48,7 @@ describe Classification do
     end
 
     it 'rejects attributes unless specific values are present' do
+      fail "Need to make this validation work with new update_model_field_attributes process"
       @c.update_attributes! @params
       @c.tariff_records.should have(0).items
     end

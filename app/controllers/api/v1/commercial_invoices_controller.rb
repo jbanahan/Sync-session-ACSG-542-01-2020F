@@ -14,8 +14,6 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
     do_update CoreModule::COMMERCIAL_INVOICE
   end
 
-  
-
   #needed for index
   def obj_to_json_hash ci
     headers_to_render = limit_fields([:ci_invoice_number,
@@ -59,17 +57,17 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
     ])
     h = {id:ci.id}
     headers_to_render.each do |uid|
-      h[uid] = ModelField.find_by_uid(uid).process_export(ci,current_user)
+      h[uid] = export_field uid, ci
     end
     ci.commercial_invoice_lines.each do |cil|
       h['lines'] ||= []
       ln = {id:cil.id,tariffs:[]}
       line_fields_to_render.each do |uid|
-        ln[uid] = ModelField.find_by_uid(uid).process_export(cil,current_user)
+        ln[uid] = export_field uid, cil
       end
       cil.commercial_invoice_tariffs.each do |cit|
         t = {id:cit.id}
-        tariff_fields_to_render.each {|uid| t[uid] = ModelField.find_by_uid(uid).process_export(cit,current_user)}
+        tariff_fields_to_render.each {|uid| t[uid] = export_field uid, cit}
         t[:cit_hts_code].gsub!('.','')
         ln[:tariffs] << t
       end

@@ -165,18 +165,18 @@ class ApplicationController < ActionController::Base
   #this method will automatically save custom fields and will rollback if the validation fails
   #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
   def validate_and_save_module base_object, parameters, succeed_lambda, fail_lambda, opts={}
-    OpenChain::CoreModuleProcessor.validate_and_save_module params, base_object, parameters, succeed_lambda, fail_lambda, opts
+    OpenChain::CoreModuleProcessor.validate_and_save_module params, base_object, parameters, current_user, succeed_lambda, fail_lambda, opts
   end
 
   #loads the custom values into the parent object without saving
   def set_custom_fields customizable_parent, customizable_parent_params = nil, &block
     cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
-    OpenChain::CoreModuleProcessor.set_custom_fields customizable_parent, cpp, &block
+    OpenChain::CoreModuleProcessor.set_custom_fields customizable_parent, cpp, current_user, &block
   end
 
   def update_custom_fields customizable_parent, customizable_parent_params=nil
     cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
-    OpenChain::CoreModuleProcessor.update_custom_fields customizable_parent, cpp
+    OpenChain::CoreModuleProcessor.update_custom_fields customizable_parent, cpp, current_user
   end
   
   def update_status(statusable)
@@ -353,9 +353,16 @@ class ApplicationController < ActionController::Base
   def current_user
     # Clearance controller defines current_user method, we need to add in run_as handling here ourselves
     user = super
-    if user && user.run_as
-      @run_as_user = user
-      user = user.run_as
+    if user
+      # Preload the user's groups - since their almost certainly going to be used for access control
+      # at some point in the request chain (use size sincce that forces the association to load, but will essentially
+      # be a no-op if they're already loaded).
+      user.groups.size
+      if user.run_as
+        @run_as_user = user
+        user = user.run_as
+        user.groups.size
+      end
     end
 
     user

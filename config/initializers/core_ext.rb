@@ -36,6 +36,10 @@ String.class_eval do
       return "#{cleaned[0..3]}.#{cleaned[4..5]}.#{cleaned[6..7]}.#{cleaned[8..(cleaned.length-1)]}"
     end 
   end
+
+  def to_boolean
+    ActiveRecord::ConnectionAdapters::Column.value_to_boolean self
+  end
 end
 
 class SerializableNoMethodError < StandardError; end;

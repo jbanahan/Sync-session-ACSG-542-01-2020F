@@ -44,6 +44,7 @@ describe FileImportProcessor do
     before :each do
       @ss = SearchSetup.new(:module_type=>"Product")
       @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product") 
+      @u = User.new
     end
     it "should save row" do
       pro = FileImportProcessor.new(@f,nil,[])
@@ -51,7 +52,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
       ])
-      pro.do_row 0, ['uid-abc','name'], true, -1
+      pro.do_row 0, ['uid-abc','name'], true, -1, @u
       Product.find_by_unique_identifier('uid-abc').name.should == 'name'
     end
     it "should not set blank values" do
@@ -61,7 +62,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
       ])
-      pro.do_row 0, ['uid-abc','  '], true, -1
+      pro.do_row 0, ['uid-abc','  '], true, -1, @u
       Product.find_by_unique_identifier('uid-abc').name.should == 'name'
     end
     it "should set boolean false values" do
@@ -71,7 +72,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
       ])
-      pro.do_row 0, ['uid-abc', false], true, -1
+      pro.do_row 0, ['uid-abc', false], true, -1, @u
       # False values, when put in string fields, turn to 0 via rails type coercion
       Product.find_by_unique_identifier('uid-abc').name.should == '0'
     end
@@ -85,7 +86,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"hts_line_number",:rank=>3),
         SearchColumn.new(:model_field_uid=>"hts_hts_1",:rank=>4)
       ])
-      pro.do_row 0, ['uid-abc',country.iso_code,1,'1234567890'], true, -1
+      pro.do_row 0, ['uid-abc',country.iso_code,1,'1234567890'], true, -1, @u
       p = Product.find_by_unique_identifier('uid-abc')
       p.should have(1).classifications
       cl = p.classifications.first
@@ -101,7 +102,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
       ])
-      pro.do_row 0, ['uid-abc','name'], true, -1
+      pro.do_row 0, ['uid-abc','name'], true, -1, @u
       p.reload
       p.name.should == 'name'
     end
@@ -113,7 +114,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name','cval'], true, -1
+      pro.do_row 0, ['uid-abc','name','cval'], true, -1, @u
       Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value.should == 'cval'
     end
     it "should set boolean custom values" do
@@ -124,7 +125,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name',true], true, -1
+      pro.do_row 0, ['uid-abc','name',true], true, -1, @u
       expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_true
     end
     it "should set boolean false custom values" do
@@ -135,7 +136,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name', false], true, -1
+      pro.do_row 0, ['uid-abc','name', false], true, -1, @u
       expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_false
     end
     it "should set boolean custom value to true w/ text of '1'" do
@@ -146,7 +147,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name', "1"], true, -1
+      pro.do_row 0, ['uid-abc','name', "1"], true, -1, @u
       expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to eq true
     end
     it "should set boolean custom value to false w/ text of '0'" do
@@ -157,7 +158,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name', "0"], true, -1
+      pro.do_row 0, ['uid-abc','name', "0"], true, -1, @u
       expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to eq false
     end
     it "should not unset boolean custom values when nil value is present" do
@@ -171,7 +172,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name', nil], true, -1
+      pro.do_row 0, ['uid-abc','name', nil], true, -1, @u
       expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_true
     end
     it "should not set read only custom values" do
@@ -183,8 +184,20 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name','cval'], true, -1
+      pro.do_row 0, ['uid-abc','name','cval'], true, -1, User.new
       Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value.should be_blank
+    end
+    it "should error when user doesn't have permission" do
+      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
+      FieldValidatorRule.create!(model_field_uid: "*cf_#{cd.id}",custom_definition_id: cd.id, can_edit_groups: "GROUP")
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+      ])
+      pro.should_receive(:fire_row).with(anything, anything, include("ERROR: You do not have permission to edit #{cd.label}."), anything)
+      pro.do_row 0, ['uid-abc','name','cval'], true, -1, User.new
     end
     context 'special cases' do
       it "should set country classification from product level fields" do
@@ -195,7 +208,7 @@ describe FileImportProcessor do
           SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
           SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
         ])
-        pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1
+        pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
         Product.count.should == 1
         p = Product.find_by_unique_identifier 'uid-abc'
         p.should have(1).classification
@@ -210,7 +223,7 @@ describe FileImportProcessor do
           SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
           SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
         ])
-        pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1
+        pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
         Product.count.should == 1
         p = Product.find_by_unique_identifier 'uid-abc'
         p.should have(1).classification
@@ -232,7 +245,7 @@ describe FileImportProcessor do
           SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
           SearchColumn.new(:model_field_uid=>"prod_uom",:rank=>3)
         ])
-        pro.do_row 0, [1.0,2.0, BigDecimal("3.0")], true, -1
+        pro.do_row 0, [1.0,2.0, BigDecimal("3.0")], true, -1, @u
         delta_p = Product.find_by_unique_identifier('1')
         delta_p.should_not be_nil
         delta_p.id.should == p.id
@@ -246,7 +259,7 @@ describe FileImportProcessor do
           SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
           SearchColumn.new(:model_field_uid=>"prod_uom",:rank=>3)
         ])
-        pro.do_row 0, [1,2.1, BigDecimal("3.10")], true, -1
+        pro.do_row 0, [1,2.1, BigDecimal("3.10")], true, -1, @u
         p = Product.find_by_unique_identifier('1')
         p.name.should == "2.1"
         p.unit_of_measure.should == "3.1"
@@ -260,7 +273,7 @@ describe FileImportProcessor do
           SearchColumn.new(:model_field_uid=>"ent_brok_ref",:rank=>1),
           SearchColumn.new(:model_field_uid=>"ent_total_packages",:rank=>2)
         ])
-        pro.do_row 0, [1,2.0], true, -1
+        pro.do_row 0, [1,2.0], true, -1, @u
         e = Entry.where(:broker_reference => "1").first
         e.total_packages.should == 2
       end
@@ -286,7 +299,7 @@ describe FileImportProcessor do
             SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
             SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
           ])
-          pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1
+          pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
 
           Product.count.should == 0
           expect(@listener.failed).to be_true
@@ -299,7 +312,7 @@ describe FileImportProcessor do
             SearchColumn.new(:model_field_uid=>"prod_name",:rank=>1)
           ])
           FileImportProcessor::MissingCoreModuleFieldError.any_instance.should_not_receive(:log_me)
-          expect {pro.do_row 0, ['name'], true, -1}.to raise_error "Cannot load Product data without a value in the 'Unique Identifier' field."
+          expect {pro.do_row 0, ['name'], true, -1, @u}.to raise_error "Cannot load Product data without a value in the 'Unique Identifier' field."
         end
 
         it "informs user of missing compound key fields" do
@@ -314,7 +327,7 @@ describe FileImportProcessor do
           ])
 
           FileImportProcessor::MissingCoreModuleFieldError.any_instance.should_not_receive(:log_me)
-          expect {pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1}.to raise_error "Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields."
+          expect {pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u}.to raise_error "Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields."
         end
       end
       

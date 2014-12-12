@@ -156,7 +156,7 @@ module OpenChain
                     id = class_attr['id'].to_i
                     classification = p.classifications.find {|c| c.id == id}
                   else
-                    country_id = class_attr['country_id'].to_i
+                    country_id = class_attr['class_cntry_id'].to_i
                     classification = p.classifications.find {|c| c.country_id == country_id}
 
                     if classification
@@ -192,7 +192,7 @@ module OpenChain
 
                 # Purposefully NOT sending all params to avoid any external processing since we're really ONLY expecting
                 # classification values to be set.
-                OpenChain::CoreModuleProcessor.validate_and_save_module(nil,p,classification_params['product'],success,failure, before_validate: before_validate, parse_custom_fields: false)
+                OpenChain::CoreModuleProcessor.validate_and_save_module(nil,p,classification_params['product'], current_user, success,failure, before_validate: before_validate, parse_custom_fields: false)
               end
             else
               error_count += 1
@@ -277,7 +277,7 @@ module OpenChain
                 # classification / tariff record should be updated.
 
                 dup_params['product']['classifications_attributes'].each do |index, class_attr|
-                  country_class = p.classifications.find {|c| c.country_id.to_s == class_attr['country_id']}
+                  country_class = p.classifications.find {|c| c.country_id == class_attr['class_cntry_id'].to_i}
                   if country_class
                     class_attr['id'] = country_class.id
 
@@ -297,16 +297,16 @@ module OpenChain
                         # If someone actually entered a line number then we'll want to use that value
                         # (creating a new record if that line number didn't already exist).
                         # Otherwise, use the index count as the line # to find the tariff record associated with this classification
-                        tariff_attr['line_number'] = (x+1).to_s if tariff_attr['line_number'].blank? 
-                        if tariff_attr['line_number']
-                          tariff_record = country_class.tariff_records.find {|t| t.line_number == tariff_attr['line_number'].to_i}
+                        tariff_attr['hts_line_number'] = (x+1).to_s if tariff_attr['hts_line_number'].blank? 
+                        if tariff_attr['hts_line_number']
+                          tariff_record = country_class.tariff_records.find {|t| t.line_number == tariff_attr['hts_line_number'].to_i}
                         end
 
                         if tariff_record
                           tariff_attr['id'] = tariff_record.id
                           # It's possible that if there's no hts/schedule b values the the tariff records won't accept the update attributes
                           # so just make sure we always set the view_sequence otherwise custom values won't get set correctly
-                          tariff_record.view_sequence = tariff_attr['view_sequence']
+                          tariff_record.view_sequence = tariff_attr['hts_view_sequence']
                         end
                       end
                     end
@@ -322,10 +322,10 @@ module OpenChain
                 raise OpenChain::ValidationLogicError.new(nil, o)
               }
               before_validate = lambda {|o| 
-                CustomFieldProcessor.new(dup_params).save_classification_custom_fields(o,dup_params['product'])
+                CustomFieldProcessor.new(dup_params).save_classification_custom_fields(o,dup_params['product'], current_user)
                 OpenChain::CoreModuleProcessor.update_status o
               }
-              OpenChain::CoreModuleProcessor.validate_and_save_module(dup_params,p,dup_params['product'],success,failure,:before_validate=>before_validate)
+              OpenChain::CoreModuleProcessor.validate_and_save_module(dup_params,p,dup_params['product'], current_user, success,failure,:before_validate=>before_validate, :exclude_blank_values=>true)
             end
           else
             error_count += 1
@@ -350,20 +350,6 @@ module OpenChain
       log.update_attributes total_object_count: total_objects, changed_object_count: good_count, finished_at: Time.zone.now
       create_bulk_user_message current_user, good_count, error_count, log, options
     end
-
-    def self.apply_custom_values_to_object custom_values, obj
-      to_write = []
-      custom_values.each do |cv|
-        new_cv = obj.get_custom_value(cv.custom_definition)
-        if new_cv.value.blank? && !cv.value.blank?
-          new_cv.value = cv.value
-          to_write << new_cv
-        end
-      end
-      CustomValue.batch_write! to_write unless to_write.blank?
-      nil
-    end
-    private_class_method :apply_custom_values_to_object
 
     def self.create_bulk_user_message current_user, good_count, error_count, bulk_log, options
       title = "#{bulk_log.bulk_type} Job Complete"
@@ -424,12 +410,12 @@ module OpenChain
     def initialize p
       @params = p
     end
-    def save_classification_custom_fields(product,product_params,ignore_blank_values=true)
+    def save_classification_custom_fields(product,product_params,user,ignore_blank_values=true)
       return if product_params.nil? || product_params['classifications_attributes'].nil? || @params['classification_custom'].nil?
       product.classifications.each do |classification|
         unless classification.destroyed?
           product_params['classifications_attributes'].each do |k,v|
-            if v['country_id'] == classification.country_id.to_s
+            if v['class_cntry_id'].to_i == classification.country_id
               custom_values = @params['classification_custom'][k.to_s]['classification_cf']
               if ignore_blank_values
                 # Strip blank custom values
@@ -437,16 +423,16 @@ module OpenChain
                   custom_values.delete(k) if v.blank?
                 end
               end
-              OpenChain::CoreModuleProcessor.update_custom_fields classification, custom_values
+              OpenChain::CoreModuleProcessor.update_custom_fields classification, custom_values, user
             end  
           end
         end
-        save_tariff_custom_fields(classification,ignore_blank_values)
+        save_tariff_custom_fields(classification, user, ignore_blank_values)
       end    
     end
 
     private
-    def save_tariff_custom_fields(classification,ignore_blank_values)
+    def save_tariff_custom_fields(classification,user, ignore_blank_values)
       return if @params['tariff_custom'].nil?
       classification.tariff_records.each do |tr|
         unless tr.destroyed?
@@ -461,7 +447,7 @@ module OpenChain
               end
             end
 
-            OpenChain::CoreModuleProcessor.update_custom_fields tr, custom_values
+            OpenChain::CoreModuleProcessor.update_custom_fields tr, custom_values, user
           end
         end
       end

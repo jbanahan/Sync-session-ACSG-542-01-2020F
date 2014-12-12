@@ -22,7 +22,7 @@ describe ModelField do
       h.first[:result].first.should == 'ABC'
     end
     it "should be read only" do
-      expect(@mf.process_import(@order_line,'DEF')).to eq "Value ignored. #{@mf.label} is read only."
+      expect(@mf.process_import(@order_line,'DEF',Factory(:user))).to eq "Value ignored. #{@mf.label} is read only."
       expect(@mf.read_only?).to be_true
     end
     it "should export properly" do
@@ -68,7 +68,7 @@ describe ModelField do
       mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{:data_type=>:string})
       mf.should_not be_read_only
       p = Product.new
-      mf.process_import p, "n"
+      mf.process_import p, "n", User.new
       p.name.should == 'n'
     end
     it "should not write if read only" do
@@ -76,7 +76,7 @@ describe ModelField do
       mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{:data_type=>:string,:read_only=>true})
       mf.should be_read_only
       p = Product.new(:name=>'x')
-      r = mf.process_import p, 'n'
+      r = mf.process_import p, 'n', User.new
       p.name.should == 'x'
       r.should == "Value ignored. PLBL is read only."
     end
@@ -111,18 +111,249 @@ describe ModelField do
     it "should be false when lambda returns false" do
       ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(Factory(:user)).should be_false
     end
-    context "process_export" do
-      it "should return HIDDEN for process_export if can_view? is false" do
-        ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:export_lambda=>lambda {|obj| "a"},:can_view_lambda=>lambda {|u| false}}).process_export("x",Factory(:user)).should == "HIDDEN"
-      end
-      it "should return appropriate value for process_export if can_view? is true" do
-        ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:export_lambda=>lambda {|obj| "a"},:can_view_lambda=>lambda {|u| true}}).process_export("x",Factory(:user)).should == "a"
-      end
-      it "should skip check if always_view is true" do
-        ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:export_lambda=>lambda {|obj| "a"},:can_view_lambda=>lambda {|u| false}}).process_export("x",Factory(:user),true).should == "a"
-      end
+
+    it "allows falls back to edit lambda if view lambda is not set" do
+      lambda_called = true
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_edit_lambda=>lambda {|user| lambda_called = true; false}}).can_view?(Factory(:user))).to be_false
+      expect(lambda_called).to be_true
+    end
+
+    it "allows viewing when user is in FieldValidatorRule view group" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
+      user = Factory(:user)
+      user.groups << Group.create!(system_code: "GROUP")
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_true
+    end
+
+    it "allows viewing when user is in FieldValidatorRule edit group" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
+      user = Factory(:user)
+      user.groups << Group.create!(system_code: "GROUP")
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_true
+    end
+
+    it "prevents viewing if user is in view group but lambda blocks access" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
+      user = Factory(:user)
+      user.groups << Group.create!(system_code: "GROUP")
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(user)).to be_false
+    end
+
+    it "prevents viewing when user is not in a group allowed to view the field" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
+      user = Factory(:user)
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_false
     end
   end
+
+  describe "can_edit?" do
+    it "allows edit by default" do
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z).can_edit?(Factory(:user))).to be_true
+    end
+
+    it "disallows edit if can_edit_lambda returns false" do
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_edit_lambda: lambda {|u| false}).can_edit?(Factory(:user))).to be_false
+    end
+
+    it "uses can_view_lambda if no edit lambda exists" do
+      lambda_called = true
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_view_lambda: lambda {|u| lambda_called=true; false}).can_edit?(Factory(:user))).to be_false
+      expect(lambda_called).to be_true
+    end
+
+    it "it allows edit if user is in edit group" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
+      user = Factory(:user)
+      user.groups << Group.create!(system_code: "GROUP")
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_true
+    end
+
+    it "disallows edit if user is not in edit group" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
+      user = Factory(:user)
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_false
+    end
+
+    it "allows edit if user is in view group when no edit groups exist" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
+      user = Factory(:user)
+      user.groups << Group.create!(system_code: "GROUP")
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_true
+    end
+
+    it "disallows edit if user is in view group when edit groups exist" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP", can_edit_groups: "GROUP2"
+      user = Factory(:user)
+      user.groups << Group.create!(system_code: "GROUP")
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_false
+    end
+  end
+
+  describe "process_export" do
+    it "returns return HIDDEN for process_export if can_view? is false" do
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:export_lambda=>lambda {|obj| "a"},:can_view_lambda=>lambda {|u| false}}).process_export("x",User.new)).to be_nil
+    end
+    it "should return appropriate value for process_export if can_view? is true" do
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:export_lambda=>lambda {|obj| "a"},:can_view_lambda=>lambda {|u| true}}).process_export("x",User.new)).to eq "a"
+    end
+    it "should skip check if always_view is true" do
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:export_lambda=>lambda {|obj| "a"},:can_view_lambda=>lambda {|u| false}}).process_export("x",User.new,true)).to eq "a"
+    end
+    it "returns nil if field is disabled" do
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,nil, disabled: true).process_export("x", User.new)).to be_nil
+    end
+    it "retrieves custom values" do
+      cd = CustomDefinition.create! data_type: :string, module_type: "Shipment", label: "TEST"
+      mf = ModelField.new(1, :x, CoreModule::SHIPMENT, nil, custom_id: cd.id, can_view_lambda: lambda {|u| true})
+      ship = Factory(:shipment)
+      ship.update_custom_value! cd, "TESTING!!!"
+      expect(mf.custom?).to be_true
+      expect(mf.process_export ship, User.new).to eq "TESTING!!!"
+    end
+    it "retrieves standard field values" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference)
+      # Using a non-shipment object because I want to ensure that this method is literally
+      # just doing the equivalent of and obj.field_name method call (rather than ActiveRecord attribute accessing, etc.)
+      c = Class.new do 
+        def reference 
+          "TEST!!!"
+        end
+      end
+      expect(mf.process_export c.new, User.new).to eq "TEST!!!"
+    end
+    it "uses export lambda when defined" do
+      called = nil
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, export_lambda: lambda {|obj| called = obj; "EXPORT"})
+      expect(mf.process_export "TEST", User.new).to eq "EXPORT"
+      expect(called).to eq "TEST"
+    end
+  end
+
+  describe "process_import" do
+    it "updates an object's value" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL")
+      c = Class.new do 
+        attr_reader :reference
+        def reference= ref
+          @reference = ref
+        end
+      end
+      c = c.new
+      result = mf.process_import c, "TESTING", User.new
+      expect(result).to eq "MY LABEL set to TESTING"
+      expect(result.error?).to be_false
+      expect(c.reference).to eq "TESTING"
+    end
+
+    it "updates a custom field" do
+      cd = CustomDefinition.create! data_type: :string, module_type: "Shipment", label: "TEST"
+      mf = ModelField.new(1, :x, CoreModule::SHIPMENT, nil, custom_id: cd.id, can_view_lambda: lambda {|u| true})
+      ship = Factory(:shipment)
+      ship.update_custom_value! cd, "BEFORE TEST"
+
+      result = mf.process_import ship, "TESTING", User.new
+      expect(result).to eq "TEST set to TESTING"
+      expect(result.error?).to be_false
+      expect(ship.get_custom_value(cd).value).to eq "TESTING"
+    end
+
+    it "updates a date field w/ hyphens" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", data_type: :date)
+      c = Class.new do 
+        attr_reader :reference
+        def reference= ref
+          @reference = ref
+        end
+      end
+      c = c.new
+      # The following looks like a bug to me because we're parsing XX-XX-XXXX as Day-Month-Year
+      # versus the US standard Month-Day-Year...it's possible that we meant hyphens to parse in the non-US
+      # standard format, but I'm dubious.
+
+      # I'm leaving in place since the code is long lived and copied into custom_value.rb as well.
+      result = mf.process_import c, "02-01-2014", User.new
+      expect(result).to eq "MY LABEL set to #{Date.new(2014, 1, 2)}"
+      expect(result.error?).to be_false
+      expect(c.reference).to eq Date.new(2014, 1, 2)
+    end
+
+    it "updates a date field w/ slashes" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", data_type: :date)
+      c = Class.new do 
+        attr_reader :reference
+        def reference= ref
+          @reference = ref
+        end
+      end
+      c = c.new
+      result = mf.process_import c, "02/01/2014", User.new
+      expect(result).to eq "MY LABEL set to #{Date.new(2014, 2, 1)}"
+      expect(result.error?).to be_false
+      expect(c.reference).to eq Date.new(2014, 2, 1)
+    end
+
+    it "sets the value when a CustomValue is passed" do
+      cd = CustomDefinition.create! data_type: :string, module_type: "Shipment", label: "TEST"
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", data_type: :string)
+      cv = CustomValue.new custom_definition: cd
+
+      result = mf.process_import cv, "TEST123", User.new
+      expect(result).to eq "MY LABEL set to TEST123"
+      expect(result.error?).to be_false
+      expect(cv.value).to eq "TEST123"
+    end
+
+    it "ignores read_only? fields" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", read_only: true)
+      result = mf.process_import "Object", "MY Value", User.new
+      expect(result).to eq "Value ignored. MY LABEL is read only."
+      expect(result.error?).to be_false
+    end
+
+    it "uses import_lambda if given" do
+      my_obj = nil
+      my_data = nil
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", import_lambda: lambda {|obj, data| my_obj=obj; my_data=data; "IMPORTED!"})
+      result = mf.process_import "OBJ", "DATA", User.new
+      expect(result).to eq "IMPORTED!"
+      expect(result.error?).to be_false
+      expect(my_obj).to eq "OBJ"
+      expect(my_data).to eq "DATA"
+    end
+
+    it "does not use import_lambda if field is read_only" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", read_only: true, import_lambda: lambda {|obj, data| raise "ERROR!!!"})
+      result = mf.process_import "Object", "MY Value", User.new
+      expect(result).to eq "Value ignored. MY LABEL is read only."
+      expect(result.error?).to be_false
+    end
+
+    it "does not allow import for user that cannot edit the field" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", import_lambda: lambda {|obj, data| raise "ERROR!!!"})
+      u = User.new
+      mf.should_receive(:can_edit?).with(u).and_return false
+      result = mf.process_import "Object", "MY Value", u
+      expect(result).to eq "You do not have permission to edit #{mf.label}."
+      expect(result.error?).to be_true
+    end
+
+    it "allows caller to forcefully allow import even if user might not be able to import" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL")
+      c = Class.new do 
+        attr_reader :reference
+        def reference= ref
+          @reference = ref
+        end
+      end
+      c = c.new
+      mf.stub(:can_edit?).and_return false
+      result = mf.process_import c, "TESTING", User.new, bypass_user_check: true
+      expect(result).to eq "MY LABEL set to TESTING"
+      expect(result.error?).to be_false
+      expect(c.reference).to eq "TESTING"
+    end
+  end
+
   it "should get uid for region" do
     r = Factory(:region)
     ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
@@ -190,7 +421,7 @@ describe ModelField do
         (1..3).each do |i|
           Factory(:official_tariff,:country=>@c,:hts_code=>"123456789#{i}")
           mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
-          r = mf.process_import(p, "123456789#{i}")
+          r = mf.process_import(p, "123456789#{i}", User.new)
           r.should == "ZY HTS #{i} set to 1234.56.789#{i}"
         end
         p.save!
@@ -206,7 +437,7 @@ describe ModelField do
         Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
         tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
-        mf.process_import tr.product, '1234567899'
+        mf.process_import tr.product, '1234567899', User.new
         tr.product.save!
         tr.reload
         tr.hts_1.should == '1234567899'
@@ -215,20 +446,20 @@ describe ModelField do
         Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
         p = Factory(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
-        mf.process_import p, '1234.567-899 '
+        mf.process_import p, '1234.567-899 ', User.new
         p.classifications.first.tariff_records.first.hts_1.should == '1234567899'
       end
       it "should not allow import of invalid HTS" do
         Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
         p = Factory(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
-        r = mf.process_import p, '0000000000'
+        r = mf.process_import p, '0000000000', User.new
         r.should == "0000000000 is not valid for ZY HTS 1"
       end
       it "should allow any HTS for country withouth official tariffs" do
         p = Factory(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
-        r = mf.process_import p, '0000000000'
+        r = mf.process_import p, '0000000000', User.new
         p.classifications.first.tariff_records.first.hts_1.should == '0000000000'
       end
       it "should format export" do
@@ -255,7 +486,7 @@ describe ModelField do
       end
       it "should not allow imports for parents" do
         p = Factory(:product)
-        r = @parent_mf.process_import p, 'abc'
+        r = @parent_mf.process_import p, 'abc', User.new
         p.should_not be_on_bill_of_materials
         r.should == "Bill of Materials ignored, cannot be changed by upload."
       end
@@ -279,7 +510,7 @@ describe ModelField do
       end
       it "should not allow imports for children" do
         p = Factory(:product)
-        r = @child_mf.process_import p, 'abc'
+        r = @child_mf.process_import p, 'abc', User.new
         p.should_not be_on_bill_of_materials
         r.should == "Bill of Materials ignored, cannot be changed by upload."
       end
@@ -396,7 +627,7 @@ describe ModelField do
           x.first.should == @p
         end
         it "should not import" do
-          @mf.process_import(@p,1).should == "Classification count ignored."
+          @mf.process_import(@p,1, User.new).should == "Classification count ignored."
         end
         it "should not count tariff records without hts_1 values" do
           @p.classifications.find_by_country_id(@c1.id).tariff_records.first.update_attributes(:hts_1=>'')
@@ -611,14 +842,14 @@ describe ModelField do
         it "should not allow you to set a container that is already on a different shipment" do
           con = Factory(:container,shipment:Factory(:shipment))
           sl = Factory(:shipment_line)
-          expect(@mf.process_import(sl,con.id)).to eq "Container with ID #{con.id} not found. Ignored."
+          expect(@mf.process_import(sl,con.id, User.new)).to eq "Container with ID #{con.id} not found. Ignored."
           sl.reload
           expect(sl.container).to be_nil
         end
         it "should allow you to set a container that is already on the shipment" do
           sl = Factory(:shipment_line)
           con = Factory(:container,entry:nil,shipment:sl.shipment)
-          expect(@mf.process_import(sl,con.id)).to eq "#{@mf.label(false)} set to #{con.id}."
+          expect(@mf.process_import(sl,con.id, User.new)).to eq "#{@mf.label(false)} set to #{con.id}."
           sl.save!
           sl.reload
           expect(sl.container).to eq con
@@ -832,10 +1063,6 @@ describe ModelField do
   end
 
   describe "add_fields" do
-    before :each do
-      ModelField::MODEL_FIELDS.clear
-    end
-
     it "adds standard field" do
       ModelField.add_fields CoreModule::ENTRY, [[1,:ent_brok_ref,:broker_reference, "Broker Reference",{:data_type=>:string}]]
       mf = ModelField.find_by_uid 'ent_brok_ref'

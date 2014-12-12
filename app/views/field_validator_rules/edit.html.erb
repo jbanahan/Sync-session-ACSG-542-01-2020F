@@ -39,6 +39,8 @@ $(function() {
   <% end%>
   <%=field_row "Regular Expression", content_tag(:span,f.text_field(:regex)+tag("br")+"See "+link_to("this article","http://en.wikipedia.org/wiki/Regular_expression",:target=>"_blank")+".")%>
   <%=field_row "Disabled For All Users", f.check_box(:disabled) %>
+  <%=field_row "Groups That Can View Field", content_tag(:span,f.text_area(:can_view_groups,:rows=>5)+tag("br")+"Put each group on it's own line.")%>
+  <%=field_row "Groups That Can Edit Field", content_tag(:span,f.text_area(:can_edit_groups,:rows=>5)+tag("br")+"Put each group on it's own line.")%>
   </table>
 <%end%>
 <div style='display:none;'>

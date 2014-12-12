@@ -27,7 +27,7 @@ module Worksheetable
       return
     end
     begin
-      wc.process obj, w.tempfile.path
+      wc.process obj, w.tempfile.path, current_user
       obj.attachments.create(:attached=>w,:uploaded_by=>current_user)
       add_flash :notices, "Your worksheet was loaded successfully." , :now => true
     rescue Ole::Storage::FormatError

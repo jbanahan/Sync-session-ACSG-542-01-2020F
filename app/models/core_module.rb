@@ -157,12 +157,16 @@ class CoreModule
     Kernel.const_get(class_name)
   end
   
-  #hash of model_fields keyed by UID
+  # Hash of model_fields keyed by UID, this method is
+  # returns all user accessible methods the (optional) user is capable of viewing
   def model_fields user=nil
     r = ModelField.find_by_core_module self
     h = {}
     r.each do |mf|
-      h[mf.uid.to_sym] = mf if user.nil? || mf.can_view?(user)
+      if mf.user_accessible? && (user.nil? || mf.can_view?(user))
+        add = block_given? ? yield(mf) : true
+        h[mf.uid.to_sym] = mf if add  
+      end
     end
     h
   end
@@ -170,9 +174,27 @@ class CoreModule
   #hash of model_fields for core_module and any core_modules referenced as children
   #and their children recursively
   def model_fields_including_children user=nil
-    r = model_fields user
+    r = block_given? ? model_fields(user, &Proc.new) : model_fields(user)
     @children.each do |c|
-      r = r.merge c.model_fields_including_children
+      r = r.merge(block_given? ? c.model_fields_including_children(user, &Proc.new) : c.model_fields_including_children(user))
+    end
+    r
+  end
+
+  def every_model_field
+    r = ModelField.find_by_core_module self
+    h = {}
+    r.each do |mf|
+      add = block_given? ? yield(mf) : true
+      h[mf.uid.to_sym] = mf if add  
+    end
+    h
+  end
+
+  def every_model_field_including_children
+    r = block_given? ? every_model_field(user, &Proc.new) : every_model_field(user)
+    @children.each do |c|
+      r = r.merge(block_given? ? c.every_model_field_including_children(&Proc.new) : c.every_model_field_including_children())
     end
     r
   end
@@ -184,6 +206,27 @@ class CoreModule
   #how many steps away is the given module from this one in the parent child tree
   def module_level(core_module)
     CoreModule.recursive_module_level(0,self,core_module)      
+  end
+
+  def child_association_name(child_core_module)
+    child_class = child_core_module.klass
+    name = child_class.to_s.underscore.pluralize
+    reflections = klass.reflections
+
+    if reflections[name.to_sym].nil?
+      name = nil
+      reflections.each_pair do |assoc_name, reflection|
+        if reflection.macro == :has_many && reflection.active_record == child_class
+          name = assoc_name.to_s    
+          break
+        end
+      end
+    end
+
+    # This should never actually happen, something's wrong if it does, so raise an argument error
+    raise ArgumentError, "Failed to find association for #{child_class} in #{klass}." if name.nil?
+
+    name
   end
 
   SECURITY_FILING_LINE = new("SecurityFilingLine","Security Line", {
@@ -318,7 +361,8 @@ class CoreModule
       :show_field_prefix=>true,
       :unique_id_field_name=>:class_cntry_iso,
       :enabled_lambda => lambda { MasterSetup.get.classification_enabled? },
-      :key_model_field_uids => [:class_cntry_name,:class_cntry_iso]
+      :key_model_field_uids => [:class_cntry_name,:class_cntry_iso],
+      :key_attribute_field_uid => :class_cntry_id
   })
   PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
       :children => [CLASSIFICATION],
@@ -398,6 +442,20 @@ class CoreModule
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
     SECURITY_FILING,SECURITY_FILING_LINE]
+
+  def self.add_virtual_identifier
+    # Add in the virtual_identifier field that is needed for update_model_field_attribute support
+    # This field is explained in the UpdateModelFieldsSupport module.
+    # It's only here becuase I couldn't figure out a way to meta-program it into that module and make sure
+    # the field was added to all child core modules as well.
+
+    # This appears to have to be done outside the CoreModule constructors becuase of the circular reference 
+    # to CoreModule inside the core module classes (.ie Product, Entry, etc)
+    CORE_MODULES.each {|cm| cm.klass.class_eval{attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)}}
+  end
+  private_class_method :add_virtual_identifier
+
+  add_virtual_identifier
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new

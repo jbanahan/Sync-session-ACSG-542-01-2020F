@@ -210,8 +210,8 @@ root.Chain =
       $("#quick_class_countries").append("<div class='quick_class_country "+(if hts_val.length then "good_class" else "")+"' country_id='"+c.country_id+"'><a href='#' country_id='"+c.country_id+"' data-action='quick-class-country'>"+c.country.name+"</a></div>")
       r = "<div quick-class-content-id='"+c.country_id+"' class='quick_class_target hts_cell' >"
       r += "<div>"
-      r += "<input type='hidden' value='"+c.country_id+"' name='product[classifications_attributes]["+classificationIndex+"][country_id]' />"
-      r += "HTS: <input type='text' class='hts_field' country='"+c.country_id+"' value='"+hts_val+"' id='product_classification_attributes_"+classificationIndex+"_tariff_records_attributes_0_hts_1' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_1]' />"
+      r += "<input type='hidden' value='"+c.country_id+"' name='product[classifications_attributes]["+classificationIndex+"][class_cntry_id]' />"
+      r += "HTS: <input type='text' class='hts_field' country='"+c.country_id+"' value='"+hts_val+"' id='product_classification_attributes_"+classificationIndex+"_tariff_records_attributes_0_hts_hts_1' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_hts_1]' />"
       if c.id?
         r += "<input type='hidden' value='"+c.id+"' name='product[classifications_attributes]["+classificationIndex+"][id]' />"
       if c.tariff_records[0]?.id
@@ -220,7 +220,7 @@ root.Chain =
       r += "</div>"
       r += "<div data-target='auto-classify' country='"+c.country_id+"'></div>"
       if c.country.iso_code=='US'
-        r += "<hr /><div>SCHED B: <input type='text' class='sched_b_field' country='"+c.country_id+"' value='"+sched_b_val+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][schedule_b_1]' /><div class='tariff_result'></div></div>"
+        r += "<hr /><div>SCHED B: <input type='text' class='sched_b_field' country='"+c.country_id+"' value='"+sched_b_val+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_hts_1_schedb]' /><div class='tariff_result'></div></div>"
       r += "</div>"
       classificationIndex++
       $("#quick_class_content").append(r)

@@ -1,16 +1,12 @@
 
-<%=field_view_bootstrap product, :prod_status_name%>
-<%=field_view_bootstrap product, :prod_uid%>
+<%= show_model_fields product, [:prod_status_name, :prod_uid] %>
 <% if product.importer_id -%>
-  <%=field_view_bootstrap product, :prod_imp_name%>
+  <%= show_model_fields product, :prod_imp_name %>
 <% end -%>
-<%=field_view_bootstrap product, :prod_name%>
+<%= show_model_fields product, :prod_name%>
 <% if product.entity_type_id -%>
-  <%=field_view_bootstrap product, :prod_ent_type%>
+  <%= show_model_fields product, :prod_ent_type %>
 <% end -%>
-<%=field_view_bootstrap product, :prod_uom%>
-<%=field_view_bootstrap product, :prod_ven_name%>
-<%=field_view_bootstrap product, :prod_div_name%>
+<%= show_model_fields product, [:prod_uom, :prod_ven_name, :prod_div_name] %>
 <%=show_custom_fields product %>
-<%=field_view_bootstrap product, :prod_changed_at%>
-<%=field_view_bootstrap product, :prod_last_changed_by%>
+<%= show_model_fields product, [:prod_changed_at, :prod_last_changed_by] %>

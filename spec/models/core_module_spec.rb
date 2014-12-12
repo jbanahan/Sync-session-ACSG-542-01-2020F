@@ -108,6 +108,60 @@ describe CoreModule do
       uids = CoreModule::OFFICIAL_TARIFF.key_model_field_uids
       uids.should == []
     end
+  end
 
+  describe "model_fields" do
+    it "returns all model fields that are user accessible" do
+      all_fields = ModelField.find_by_core_module(CoreModule::SALE).select {|m| m.user_accessible?}
+      expect(CoreModule::SALE.model_fields.values.size).to eq all_fields.size
+    end
+
+    it "uses given block to strip fields" do
+      counter = 0
+      fields = CoreModule::SALE.model_fields {|mf| (counter+=1) < 2}
+      expect(fields.size).to eq 1
+    end
+
+    it "removes fields given user can't see" do
+      u = User.new
+      ModelField.any_instance.stub(:can_view?).with(u).and_return false
+      expect(CoreModule::SALE.model_fields(u).size).to eq 0
+    end
+  end
+
+  describe "model_fields_including_children" do
+    it "returns all fields for all levels of module" do
+      fields = CoreModule::SECURITY_FILING.model_fields_including_children
+      expect(fields.size).to eq CoreModule::SECURITY_FILING.model_fields.size + CoreModule::SECURITY_FILING_LINE.model_fields.size
+    end
+
+    it "returns all fields for all levels of module user has access to" do
+      u = User.new
+      ModelField.any_instance.stub(:can_view?).with(u).and_return false
+      expect(CoreModule::SECURITY_FILING.model_fields_including_children(u).size).to eq 0
+    end
+
+    it "users given block to strip fields" do
+      fields = CoreModule::SECURITY_FILING.model_fields_including_children {|mf| mf.uid.to_s =~ /sfln_/}
+      expect(fields.size).to eq CoreModule::SECURITY_FILING_LINE.model_fields.size
+    end
+  end
+
+  describe "child_association_name" do
+    it "returns the name of the association used to join parent module to child" do
+      expect(CoreModule::PRODUCT.child_association_name(CoreModule::CLASSIFICATION)).to eq "classifications"
+    end
+
+    it "raises an error on an invalid child" do
+      expect {CoreModule::PRODUCT.child_association_name(CoreModule::ENTRY)}.to raise_error  ArgumentError, "Failed to find association for #{CoreModule::ENTRY.klass} in #{CoreModule::PRODUCT.klass}."
+    end
+
+    it "does not error for children of all core modules" do
+      # This just validates that the core module setups are ok
+      # The test passes as long as no errors are raised
+      CoreModule::CORE_MODULES.each do |cm|
+        cm.children.each {|child| cm.child_association_name(child)}
+      end
+    end
   end
 end

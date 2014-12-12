@@ -55,8 +55,7 @@ class CustomDefinition < ActiveRecord::Base
   end
 
   def model_field
-    mu = model_field_uid
-    mu.nil? ? nil : ModelField.find_by_uid(mu)
+    ModelField.find_by_uid(model_field_uid)
   end
 
   def date?

@@ -72,7 +72,7 @@ $(function() {
       <% unless @bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>
       <th>Actions</th>
       <%@current_search.search_columns.order("rank ASC").each do |c|%>
-      <th><%=model_field_label(c.model_field_uid)%></th>
+      <th><%=model_field_label(c.model_field_uid, true)%></th>
       <% end %>
     </tr></thead>
     <tbody id='result_rows'>

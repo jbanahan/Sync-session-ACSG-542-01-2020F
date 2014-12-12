@@ -1,7 +1,6 @@
 class ModelFieldsController < ApplicationController
   def find_by_module_type
-    model_fields = ModelField.sort_by_label(CoreModule.find_by_class_name(params[:module_type]).model_fields_including_children.values)
-    mfs = custom_hash_for_json model_fields.select {|m| m.can_view? current_user}
+    mfs = custom_hash_for_json ModelField.sort_by_label(CoreModule.find_by_class_name(params[:module_type]).model_fields_including_children(current_user).values)
     render :json => mfs.to_json 
   end
 
@@ -9,7 +8,7 @@ class ModelFieldsController < ApplicationController
     @cm = CoreModule.find_by_class_name(params[:core_module],true)
     return error_redirect "Module #{params[:core_module]} was not found." if @cm.nil?
     @label = @cm.label
-    @fields = @cm.model_fields_including_children.values
+    @fields = @cm.model_fields_including_children(current_user).values
   end
   
   private

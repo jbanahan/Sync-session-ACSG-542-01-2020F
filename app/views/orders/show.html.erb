@@ -94,23 +94,10 @@
   <% end %>
   <div class="row">
     <div class="col-md-6">
-      <%=field_view_bootstrap @order, :ord_ord_num, false%>
-      <%=field_view_bootstrap @order, :ord_cust_ord_no%>
-      <%=field_view_bootstrap @order, :ord_approval_status%>
-      <%=field_view_bootstrap @order, :ord_imp_name%>
-      <%=field_view_bootstrap @order, :ord_ven_name%>
-      <%=field_view_bootstrap @order, :ord_agent_name%>
-      <%=field_view_bootstrap @order, :ord_div_name%>
-      <%=field_view_bootstrap @order, :ord_factory_name%>
-      <%=field_view_bootstrap @order, :ord_ship_to_name%>
-      <%=field_view_bootstrap @order, :ord_fob_point%>
+      <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_imp_name, :ord_ven_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_fob_point] %>
     </div>
     <div class="col-md-6">
-      <%=field_view_bootstrap @order, :ord_ord_date%>
-      <%=field_view_bootstrap @order, :ord_revised_date%>
-      <%=field_view_bootstrap @order, :ord_window_start%>
-      <%=field_view_bootstrap @order, :ord_window_end%>
-      <%=field_view_bootstrap @order, :ord_first_exp_del%>
+      <%= show_model_fields @order, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
       <hr />
       <%=show_custom_fields @order%>
     </div>
@@ -120,17 +107,11 @@
       <table class="detail_table">
         <thead>
           <th>&nbsp;</th>
-          <th><%=field_label :ordln_line_number, false%></th>
-          <th><%=field_label :prod_uid, false%></th>
-          <th><%=field_label :ordln_sku, false%></th>
-          <th><%=field_label :ordln_ordered_qty, false%></th>
+          <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_sku, :ordln_ordered_qty], table:true, heading:true, show_prefix: false) %>
           <th>Shipped</th>
           <th>Received</th>
-          <th><%=field_label :prod_uom, false%></th>
-          <th><%=field_label :ordln_ppu, false%></th>
-          <th><%=field_label :ordln_currency, false%></th>
-          <th>Total Price</th>
-          <th></th>
+          <%= model_field_labels([:prod_uom, :ordln_ppu, :ordln_currency, :ordln_total_cost], table: true, heading:true, show_prefix: false) %>
+          <th>&nbsp;</th>
         </thead>
         
           <% @order.order_lines.each do |line| %>
@@ -141,22 +122,25 @@
               <button class='btn_link btn btn-default btn-xs' link_to='<%=edit_order_order_line_path(@order,line)%>'>edit</button>
             <%end%>
           </td>
-          <td class='<%=line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}"%>'><%=line.line_number%></td>
-          <td data-container='body' data-toggle="popover" data-trigger="hover" data-placement="auto" data-content="<%=ModelField.find_by_uid(:prod_name).label%>: <%=ModelField.find_by_uid(:prod_name).process_export(line.product,current_user)%>">
+          <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true, attributes: {class: (line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}")}) %>
+          <% if ModelField.find_by_uid(:prod_uid).can_view?(User.current) %>
+            <% if ModelField.find_by_uid(:prod_name).can_view?(User.current) %>
+              <td data-container='body' data-toggle="popover" data-trigger="hover" data-placement="auto" data-content="<%=ModelField.find_by_uid(:prod_name).label%>: <%=ModelField.find_by_uid(:prod_name).process_export(line.product,current_user)%>">
+            <% else %>
+              <td>
+            <% end %>
             <%-if line.product.can_view?(current_user)-%>
-              <%=link_to(line.product.unique_identifier, product_path(line.product)) %>
+              <%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %>
             <%-else-%>
-              <%=line.product.unique_identifier%>
+              <%=ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current)%>
             <%-end-%>
-          </td>
-          <td><%=line.sku%></td>
-          <td><%= line.quantity %></td>
-          <td><%=line.shipped_qty%></td>
-          <td><%=line.received_qty%></td>
-          <td><%= line.product.unit_of_measure %></td>
-          <td><%= line.price_per_unit %></td>
-          <td><%= line.currency%></td>
-          <td><%= line.total_cost %></td>
+            </td>
+          <% end %>
+          <%= show_model_fields(line, [:ordln_sku, :ordln_ordered_qty], table: true, editor_only: true) %>
+          <td class="has_numeric"><%=number_with_precision(line.shipped_qty, precision: 5, strip_insignificant_zeros: true)%></td>
+          <td class="has_numeric"><%=number_with_precision(line.received_qty, precision: 5, strip_insignificant_zeros: true)%></td>
+          <%= show_model_fields(line.product, :prod_uom, table: true, editor_only: true) %>
+          <%= show_model_fields(line, [:ordln_ppu, :ordln_currency, :ordln_total_cost], table: true, editor_only: true) %>
           <td>
             <% if @order.can_edit?(current_user) && !@order.locked?%>
               <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
@@ -167,16 +151,21 @@
           </td>
         </tr>
         <tr style='display:none;' id='det_<%=line.id%>'>
-          <td></td>
-            <td colspan='8' >
-              <%[:ordln_country_of_origin,:ordln_hts].each do |fld|%>
-                <%=field_view_bootstrap line, fld, false%>
-              <%end%>
-              <%= show_custom_fields line %><br />
-              <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
-                <div>Shipment: <%=link_to s.reference, s%></div>
-              <%end%>
-              <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
+            <td>&nbsp;</td>
+            <td colspan='<%=ModelField.viewable_model_fields(User.current, [:ordln_line_number, :prod_uid, :ordln_sku, :ordln_ordered_qty, :prod_uom, :ordln_ppu, :ordln_currency, :ordln_total_cost]).size + 4%>' >
+              <div class="container col-md-6">
+                <%= show_model_fields line, [:ordln_country_of_origin, :ordln_hts], show_prefix: false %>
+                <%= show_custom_fields line, show_prefix: false %>
+                <br>
+                <% if ModelField.find_by_uid(:shp_ref).can_view?(User.current) %>
+                  <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
+                    <% next unless s.can_view?(User.current) %>
+                    <div class="col-md-4" style="fld_lbl">Shipment:</div>
+                    <div class="col-md-8"><%=link_to ModelField.find_by_uid(:shp_ref).process_export(s, User.current), s%></div>
+                  <%end%>
+                <% end %>
+                <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
+              </div>
             </td>
         </tr>
       <%end %> 
@@ -197,15 +186,26 @@
         <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
         <table>
           <% form_line.default_line_number%>
-          <%=field_row field_label(:ordln_line_number,false), f.text_field(:line_number, "size" => 2) %>
-          <%=field_row field_label(:prod_name), form_line.new_record? ? f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"}) : form_line.product.name%>
-          <%=field_row field_label(:ordln_ordered_qty, false), f.text_field(:quantity, "size" => 5) %>
-          <%=field_row field_label(:prod_uom, false), content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
-          <%=field_row field_label(:ordln_ppu, false), f.text_field(:price_per_unit, "size" => 5) %>
-          <%if !form_line.id && !MilestonePlan.blank? %>
-            <%=field_row "Plan", select_tag("milestone_plan_id",options_from_collection_for_select(MilestonePlan.all,:id,:name,!form_line.piece_sets.first ? nil : form_line.piece_sets.first.milestone_plan_id),{:prompt=>"-Select a plan"})%>
+          <%= show_model_fields f, :ordln_line_number, table: true, show_prefix: false, ordln_line_number: {style: "width: 3em"} %>
+          <% if form_line.new_record? %>
+            <%= show_model_fields(f, :ordln_prod_id, table: true, show_prefix: false) do |mf, field_name, value, attrs|
+                  attrs[:select_options] = options_from_collection_for_select(@products, :id, :unique_identifier, value)
+                  attrs[:prompt] = "Select a product"
+                  attrs[:id] = "edit_line_product"
+                  model_select_field_tag(field_name, mf, value, attrs)
+                end %>
+          <% else %>
+            <%= show_model_fields form_line.product, :prod_name, table: true %>
+          <% end %> 
+          <%= show_model_fields f, :ordln_ordered_qty, table: true, show_prefix: false, ordln_ordered_qty: {style: "width: 5em"} %>
+          <% prod = form_line.product ? form_line.product : Product.new %>
+          <%= show_model_fields prod, :prod_uom, {table:true, show_prefix:false, wrap_with: lambda {|mf, editor| content_tag(:span, editor, :id=>"edit_line_uom")}} %>
+          <%= show_model_fields f, :ordln_ppu, table: true, show_prefix: false, ordln_ppu: {style: "width: 5em"} %>
+          <% plans = MilestonePlan.all %>
+          <%if form_line.new_record? && plans.length > 0 %>
+            <%=field_row "Plan", select_tag("milestone_plan_id",options_from_collection_for_select(plans,:id,:name,!form_line.piece_sets.first ? nil : form_line.piece_sets.first.milestone_plan_id),{prompt:"Select a plan", class:"form-control"})%>
           <%end%>
-          <%= show_custom_fields form_line, {:form => true, :table=>true}%>
+          <%= show_custom_fields f, {:table=>true, show_prefix: false}%>
         </table>
         <% end %>
       </div>

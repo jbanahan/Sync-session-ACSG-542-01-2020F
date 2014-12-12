@@ -32,7 +32,6 @@ $(function() {
   <button id='btn_save'>Save</button>
   <button id='btn_cancel'>Cancel</button>
 <% end %>
-<%= render :partial => 'shared/worksheet', :locals=>{:base_obj => @product}%>
 <%= form_for @product, :html=>{:id=>'frm_prod'} do |f| %>
   <input type='hidden' name='original_uom' id='original_uom' value='<%=@product.unit_of_measure%>' />
   <div class='container'>

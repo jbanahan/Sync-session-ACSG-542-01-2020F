@@ -4,6 +4,8 @@ describe CommercialInvoiceMap do
   describe "generate_invoice!" do
     before :each do
       ModelField.any_instance.stub(:can_view?).and_return(true) #not worrying about field permissions for this test
+      ModelField.any_instance.stub(:can_edit?).and_return(true) #not worrying about field permissions for this test
+      
       @shp_date = CustomDefinition.create!(:label=>"shpdt",:data_type=>"date",:module_type=>"Shipment")
       @shp_coo = CustomDefinition.create!(:label=>"coo",:data_type=>"string",:module_type=>"ShipmentLine")
       ModelField.reload

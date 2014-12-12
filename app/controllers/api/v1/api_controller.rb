@@ -25,24 +25,26 @@ module Api; module V1; class ApiController < ActionController::Base
   end
   
   def render_search core_module
-    raise StatusableError.new("You do not have permission to view this module.", 401) unless current_user.view_module?(core_module)
+    user = current_user
+    raise StatusableError.new("You do not have permission to view this module.", 401) unless user.view_module?(core_module)
     page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
     per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
     per_page = 50 if per_page > 50
     k = core_module.klass.scoped
     
+
     #apply search criterions
     search_criterions.each do |sc|
-      return unless validate_model_field 'Search', sc.model_field_uid, core_module
+      return unless validate_model_field 'Search', sc.model_field_uid, core_module, user
       k = sc.apply(k)
     end
 
     #apply sort criterions
     sort_criterions.each do |sc|
-      return unless validate_model_field 'Sort', sc.model_field_uid, core_module
+      return unless validate_model_field 'Sort', sc.model_field_uid, core_module, user
       k = sc.apply(k)
     end
-    k = core_module.klass.search_secure(current_user,k)
+    k = core_module.klass.search_secure(user,k)
     k = k.paginate(per_page:per_page,page:page)
     r = k.to_a.collect {|obj| obj_to_json_hash(obj)}
     render json:{results:r,page:page,per_page:per_page}
@@ -100,41 +102,54 @@ module Api; module V1; class ApiController < ActionController::Base
     end
   end
 
-  #limit list of fields to render to only those that client requested
+  #limit list of fields to render to only those that client requested and can see
   def limit_fields field_list
-    return field_list if params[:fields].blank?
-    field_list & params[:fields].split(',').collect {|x| x.to_sym}
+    if !params[:fields].blank?
+      field_list = field_list & params[:fields].split(',').collect {|x| x.to_sym}
+    end
+
+    user = current_user
+    field_list.delete_if {|uid| mf = ModelField.find_by_uid(uid); !mf.user_accessible? || !mf.can_view?(user)}
   end
 
   #load data into object via model fields
   def import_fields base_hash, obj, core_module
-    fields = ModelField.find_by_core_module(core_module)
-    fields.each do |mf|
-      next if mf.read_only?
+    fields = core_module.model_fields {|mf| mf.user_accessible? && base_hash.has_key?(mf.uid.to_s)}
+    
+    user = current_user
+    fields.each_pair do |uid, mf|
       uid = mf.uid.to_s
-      mf.process_import(obj,base_hash[uid]) if base_hash.has_key?(uid)
+      # process_import handles checking if user can edit or if field is read_only?
+      # so don't bother w/ that here
+      mf.process_import(obj,base_hash[uid], user)
     end
+    nil
   end
 
   #render field for json
-  def export_field model_field_uid, obj
+  def export_field model_field_uid, obj,opts = {}
+    opts = {force_big_decimal_numeric: false}.merge opts
     mf = ModelField.find_by_uid(model_field_uid)
     v = mf.process_export(obj,current_user)
     return "" if v.blank?
     case mf.data_type
     when :integer
       v = v.to_i
-    when :decimal
-      v = BigDecimal(v).to_f
-    when :numeric
-      v = BigDecimal(v).to_f
+    when :decimal, :numeric
+      v = BigDecimal(v)
+      # The below call (to_f) can result in loss of precision because of the translation to
+      # float.  This is done though, so that the value is serialized over the wire 
+      # as a javascript numeric instead of a string (as BigDecimal is serialized as).
+      # Be very careful if you are expecting precision even amounts w/ a relatively low
+      # number of significant digits (or decimal places)
+      v = opts[:force_big_decimal_numeric] ? v.to_f : v
     end
     v
   end
 
   #helper method to get model_field_uids for custom fields
   def custom_field_keys core_module
-    core_module.model_fields.keys.collect {|k| k.to_s.match(/\*cf_/) ? k : nil}.compact
+    core_module.model_fields(current_user) {|mf| mf.custom? }.keys
   end
 
   def require_admin
@@ -185,9 +200,10 @@ module Api; module V1; class ApiController < ActionController::Base
       @user = api_user
       yield
     end
+    
     def user_from_token t
       username, auth_token = t.split(":")
-      User.find_by_username_and_api_auth_token username, auth_token
+      User.includes(:groups).find_by_username_and_api_auth_token username, auth_token
     end
 
     def set_user_settings
@@ -286,17 +302,15 @@ module Api; module V1; class ApiController < ActionController::Base
     r
   end
 
-  def validate_model_field field_type, model_field_uid, core_module
+  def validate_model_field field_type, model_field_uid, core_module, user
     mf = ModelField.find_by_uid model_field_uid
-    if mf.blank?
+    if mf.blank? || !mf.user_accessible || !mf.can_view?(user)
       raise StatusableError.new("#{field_type} field #{model_field_uid} not found.", 400 )
-      return false
     end
     if mf.core_module != core_module
       raise StatusableError.new("#{field_type} field #{model_field_uid} is for incorrect module.", 400)
-      return false
     end
-    return true
+    true
   end
 
 end; end; end

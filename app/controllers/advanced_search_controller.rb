@@ -18,10 +18,11 @@ class AdvancedSearchController < ApplicationController
       ss.name = base_params[:name] unless base_params[:name].blank?
       ss.include_links = base_params[:include_links]
       ss.no_time = base_params[:no_time]
-      
       ss.search_columns.delete_all
+      user = current_user
       unless base_params[:search_columns].blank?
         base_params[:search_columns].each do |sc|
+          next unless ModelField.find_by_uid(sc[:mfid]).user_accessible?
           col = ss.search_columns.build :model_field_uid=>sc[:mfid], :rank=>sc[:rank]
           col.model_field_uid = "_blank" if col.model_field_uid.match /^_blank/
         end
@@ -30,6 +31,7 @@ class AdvancedSearchController < ApplicationController
       ss.sort_criterions.delete_all
       unless base_params[:sort_criterions].blank?
         base_params[:sort_criterions].each do |sc|
+          next unless ModelField.find_by_uid(sc[:mfid]).user_accessible?
           ss.sort_criterions.build :model_field_uid=>sc[:mfid], :rank=>sc[:rank], :descending=>sc[:descending]
         end
       end
@@ -59,6 +61,7 @@ class AdvancedSearchController < ApplicationController
       ss.search_criterions.delete_all
       unless base_params[:search_criterions].blank?
         base_params[:search_criterions].each do |sc|
+          next unless ModelField.find_by_uid(sc[:mfid]).user_accessible?
           ss.search_criterions.build :model_field_uid=>sc[:mfid], :operator=>sc[:operator], :value=>sc[:value], :include_empty=>sc[:include_empty]
         end
       end
@@ -144,6 +147,7 @@ class AdvancedSearchController < ApplicationController
       format.json {
         ss = current_user.search_setups.find_by_id params[:id]
         raise ActionController::RoutingError.new('Not Found') unless ss
+        model_fields = ss.core_module.model_fields_including_children(current_user) {|mf| mf.user_accessible?}.values
         h = {
           :id=>ss.id,
           :module_type=>ss.module_type,
@@ -171,7 +175,7 @@ class AdvancedSearchController < ApplicationController
             end
             f
           },
-          :model_fields => ModelField.sort_by_label(ss.core_module.model_fields_including_children(current_user).values).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
+          :model_fields => ModelField.sort_by_label(ss.core_module.model_fields_including_children(current_user) {|mf| mf.user_accessible?}.values).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
         }
         render :json=>h
       }

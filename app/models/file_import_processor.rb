@@ -31,7 +31,7 @@ class FileImportProcessor
       r = @import_file.starting_row - 1
       get_rows do |row|
         begin
-          obj = do_row r+1, row, true, @import_file.starting_column - 1
+          obj = do_row r+1, row, true, @import_file.starting_column - 1, @import_file.user
           obj.errors.full_messages.each {|m| @import_file.errors[:base] << "Row #{r+1}: #{m}"}
         rescue => e
           @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
@@ -48,7 +48,7 @@ class FileImportProcessor
   
   def preview_file
     get_rows do |row|
-      do_row @import_file.starting_row, row, false, @import_file.starting_column - 1
+      do_row @import_file.starting_row, row, false, @import_file.starting_column - 1, @import_file.user
       return @listeners.first.messages
     end
   end
@@ -63,7 +63,7 @@ class FileImportProcessor
   def get_columns
     @import_file.sorted_columns.blank? ? @search_setup.sorted_columns : @import_file.sorted_columns
   end
-  def do_row row_number, row, save, base_column
+  def do_row row_number, row, save, base_column, user
     messages = []
     object_map = {}
     begin
@@ -88,7 +88,7 @@ class FileImportProcessor
               if mf.custom?
                 custom_fields[mf] = data
               else
-                process_import mf, obj, data, messages, error_messages
+                process_import mf, obj, data, user, messages, error_messages
               end
             end
             obj = merge_or_create obj, save, !parent_mod #if !parent_mod then we're at the top level
@@ -102,7 +102,7 @@ class FileImportProcessor
               cv = CustomValue.new(:customizable_id=>obj.id,:customizable_type=>obj.class.to_s,:custom_definition_id=>cd.id) if cv.nil?
               orig_value = cv.value
               val = is_boolean ? get_boolean_value(data) : data
-              process_import mf, cv, val, messages, error_messages
+              process_import mf, cv, val, user, messages, error_messages
               if (is_boolean && !val.nil?) || !(orig_value.blank? && val.blank?) 
                 to_batch_write << cv
               else
@@ -156,8 +156,8 @@ class FileImportProcessor
     r_val
   end
 
-  def process_import mf, obj, data, messages, error_messages
-    message = mf.process_import(obj, data)
+  def process_import mf, obj, data, user, messages, error_messages
+    message = mf.process_import(obj, data, user)
     unless message.blank?
       if message.error?
         error_messages << message 

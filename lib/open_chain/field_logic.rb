@@ -19,29 +19,30 @@ module OpenChain
         end
       end
     end
+
     #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
     #this method will automatically save custom fields and will rollback if the validation fails
     #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
-    def self.validate_and_save_module all_params, base_object, object_parameters, succeed_lambda, fail_lambda, opts={}
+    def self.validate_and_save_module all_params, base_object, object_parameters, user, succeed_lambda, fail_lambda, opts={}
       inner_opts = {:before_validate=>lambda {|obj|}, :parse_custom_fields=>true}
       inner_opts.merge! opts
+      update_model_field_opts = {exclude_blank_values: opts[:exclude_blank_values], exclude_custom_fields: (opts[:parse_custom_fields] === false), user: user}
       begin
-        base_object.transaction do 
-          base_object.update_attributes!(object_parameters)
-          if inner_opts[:parse_custom_fields]
-            customizable_parent_params = all_params["#{base_object.class.to_s.downcase}_cf"]
-            OpenChain::CoreModuleProcessor.update_custom_fields base_object, customizable_parent_params
-          end
+        base_object.transaction do
+          # This saves all standard model attributes and custom values from the passed in object parameters
+          base_object.update_model_field_attributes! object_parameters, update_model_field_opts
           inner_opts[:before_validate].call base_object
           raise OpenChain::ValidationLogicError unless CoreModule.find_by_object(base_object).validate_business_logic base_object
           OpenChain::FieldLogicValidator.validate!(base_object) 
           base_object.piece_sets.each {|p| p.create_forecasts} if base_object.respond_to?('piece_sets')
           snapshot = base_object.class.find(base_object.id).create_snapshot if base_object.respond_to?('create_snapshot')
 
-          if snapshot && succeed_lambda.parameters.count > 1
-            succeed_lambda.call base_object, snapshot
-          else
-            succeed_lambda.call base_object
+          if succeed_lambda
+            if snapshot && succeed_lambda.parameters.count > 1
+              succeed_lambda.call base_object, snapshot
+            else
+              succeed_lambda.call base_object
+            end
           end
         end
       rescue OpenChain::ValidationLogicError
@@ -55,26 +56,33 @@ module OpenChain
     end
 
     #loads the custom values into the parent object without saving
-    def self.set_custom_fields customizable_parent, cpp, &block
+    def self.set_custom_fields customizable_parent, cpp, user, &block
       pass = true
       unless cpp.nil?
         cpp.each do |k,v|
-          definition_id = k.to_s
-          cd = CustomDefinition.cached_find(definition_id)
-          cv = customizable_parent.get_custom_value cd
-          unless (v.blank? && cv.value.blank?) || v==cv.value
-            cv.value = v
+          custom_def = CustomDefinition.cached_find(k.to_s)
+          model_field  = custom_def.model_field
+          next if model_field.blank? || model_field.read_only?
+
+          cv = customizable_parent.get_custom_value custom_def
+          if !model_field.can_edit? user
+            cv.errors[:base] << "You do not have permission to edit #{mf.label}."
+          elsif v != cv.value && !(v.blank? && cv.value.blank?)
+            model_field.process_import customizable_parent, v, user
             yield cv if block_given?
           end
-          pass = false unless cv.errors.empty?
-          cv.errors.full_messages.each {|m| customizable_parent.errors[:base] << m} 
+
+          if !cv.errors.empty?
+            pass = false
+            cv.errors.full_messages.each {|m| customizable_parent.errors[:base] << m} 
+          end
         end
       end
       pass
     end
 
-    def self.update_custom_fields customizable_parent, customizable_parent_params 
-      set_custom_fields(customizable_parent, customizable_parent_params) {|cv| cv.save!}
+    def self.update_custom_fields customizable_parent, customizable_parent_params, user 
+      set_custom_fields(customizable_parent, customizable_parent_params, user) {|cv| cv.save!}
     end
 
     def self.update_status(statusable)

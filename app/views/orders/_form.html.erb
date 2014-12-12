@@ -26,26 +26,37 @@
 <div class="container">
   <div class="row">
     <div class="col-md-6">
-      <%=field_bootstrap field_label(:ord_imp_name), @order.importer ? content_tag(:span,@order.importer.name) : f.collection_select(:importer_id, current_user.available_importers.select("companies.id, companies.name").order(:name), :id, :name, {:prompt=>'Select Importer'}, 'class'=>'form-control focus_first')%>
-      <%=field_bootstrap field_label(:ord_ord_num), f.text_field(:order_number, "class" => "form-control") %>
-      <%=field_bootstrap field_label(:ord_cust_ord_no), f.text_field(:customer_order_number, "class" => "form-control") %>
-      <%=field_bootstrap field_label(:ord_approval_status), f.select(:approval_status, ['Accepted','Rejected'], {include_blank:''}, {class:'form-control'}) %>
-      <%=field_bootstrap field_label(:ord_ven_name), f.collection_select(:vendor_id, @order.importer ? @order.importer.linked_companies.vendors : [], :id, :name, {:prompt => "Select a vendor"}, {class:'form-control'}) %>
-      <%=field_bootstrap field_label(:ord_agent_name), f.collection_select(:agent_id, @order.available_agents, :id, :name, {:prompt => 'Select an agent'}, {class:'form-control'})%>
-      <%=field_bootstrap field_label(:ord_div_name), f.collection_select(:division_id, @order.importer ? @order.importer.divisions.order(:name) : [], :id, :name, options ={:prompt => "Select a division"}, {class:'form-control'})%>
-      <%=field_bootstrap field_label(:ord_fob_point), f.text_field(:fob_point, "class" => "form-control") %>
+      <%= show_model_fields(f, :ord_imp_name) do |mf, field_name, value, attributes| 
+            # If an importer is already set, the field should be read only
+            field = nil
+            if @order.importer
+              field = field_value(@order, :ord_imp_name) 
+            else
+              attributes[:select_options] = options_from_collection_for_select(current_user.available_importers.select("companies.id, companies.name").order(:name), :name, :name, value)
+              attributes[:prompt] = "Select an importer"
+              attributes[:class] = "focus_first"
+
+              field = model_select_field_tag field_name, mf, value, attributes
+            end
+            field
+        end %>
+      <%= show_model_fields f, [:ord_ord_num, :ord_cust_ord_no] %>
+      <%= show_model_fields f, :ord_approval_status, ord_approval_status: {include_blank: '', select_options: lambda {|v| options_for_select(['Accepted', 'Rejected'], v)}} %>
+      <%= show_model_fields f, :ord_ven_name, ord_ven_name: {prompt: "Select a vendor", select_options: lambda {|v| options_from_collection_for_select( (@order.importer ? @order.importer.linked_companies.vendors : []), :name, :name, v)}} %>
+      <%= show_model_fields f, :ord_agent_name, ord_agent_name: {prompt: "Select an agent", select_options: lambda {|v| options_from_collection_for_select( @order.available_agents, :name, :name, v)}} %>
+      <%= show_model_fields f, :ord_div_name, ord_div_name: {prompt: "Select a division", select_options: lambda {|v| options_from_collection_for_select( (@order.importer ? @order.importer.divisions.order(:name) : []), :name, :name, v)}} %>
+      <%= show_model_fields f, :ord_fob_point %>
     </div>
     <div class="col-md-6">
-      <%=field_bootstrap field_label(:ord_ord_date), f.text_field(:order_date, "class" => "isdate form-control") %>
-      <%=field_bootstrap field_label(:ord_revised_date), f.text_field(:last_revised_date, "class" => "isdate form-control") %>
-      <%=field_bootstrap field_label(:ord_window_start), f.text_field(:ship_window_start, "class" => "isdate form-control") %>
-      <%=field_bootstrap field_label(:ord_window_end), f.text_field(:ship_window_end, "class" => "isdate form-control") %>
-      <%=field_bootstrap field_label(:ord_first_exp_del), f.text_field(:first_expected_delivery_date, "class" => "isdate form-control") %>
-
-      <%=field_bootstrap field_label(:ord_ship_to_name), f.select(:ship_to_id, [['...Loading...','']], {}, {class:'form-control'})+"<div id='ship_to_ad'></div>".
-      html_safe %>
+      <%= show_model_fields f, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
+      <%= show_model_fields(f, :ord_ship_to_id) do |mf, field_name, value, attributes| 
+            attributes[:select_options] = options_for_select(["...Loading..."], value)
+            attributes[:id] = "order_ship_to_id"
+            field = model_select_field_tag field_name, mf, value, attributes
+            field + "<div id='ship_to_ad'></div>".html_safe
+          end %>
       <hr />
-    	<%=show_custom_fields @order, {:form => true}%>
+    	<%= show_custom_fields f %>
     </div>
   </div>
 </div>

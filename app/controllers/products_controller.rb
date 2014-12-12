@@ -18,7 +18,8 @@ class ProductsController < ApplicationController
   # GET /products/1
   # GET /products/1.xml
   def show
-    p = Product.find(params[:id], :include => [:custom_values,{:classifications => [:custom_values, :tariff_records]}])
+    p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
+    freeze_custom_values p
     action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
       @product = p
       p.load_custom_values #caches all custom values
@@ -46,7 +47,8 @@ class ProductsController < ApplicationController
 
   # GET /products/1/edit
   def edit
-    p = Product.includes(:classifications=>[:tariff_records]).find(params[:id])
+    p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
+    freeze_custom_values p
     action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
       used_countries = p.classifications.collect {|cls| cls.country_id}
       Country.import_locations.sort_classification_rank.each do |c|
@@ -59,7 +61,10 @@ class ProductsController < ApplicationController
   # POST /products
   # POST /products.xml
   def create
-    p = Product.new(params[:product])
+    # What we're doing here is assigning field attributes to a dummy object just to do the security check validations
+    p = Product.new
+    p.assign_model_field_attributes params[:product], no_validation: true
+
     action_secure(current_user.add_products?,p,{:verb => "create",:module_name=>"product"}) {
       succeed = lambda { |p|
         respond_to do |format|
@@ -69,22 +74,22 @@ class ProductsController < ApplicationController
       }
       failure = lambda { |p,e|
         respond_to do |format|
-          @product = Product.new(params[:product]) #transaction failure requires new object
-          set_custom_fields(@product) {|cv| @product.inject_custom_value cv}
+          @product = Product.new
+          @product.assign_model_field_attributes params[:product], no_validation: true
+
           e.full_messages.each {|m| @product.errors[:base] << m}
           errors_to_flash @product, :now=>true
           format.html { render :action=>"new"}
         end
       }
       before_validate = lambda { |p|
-        save_classification_custom_fields(p,params[:product])
         update_status p
         if current_user.company.importer? && !p.importer_id.nil? && p.importer!=current_user.company && !current_user.company.linked_companies.include?(p.importer)
           p.errors[:base] << "You do not have permission to set importer to company #{p.importer_id}"
           raise OpenChain::ValidationLogicError
         end
       }
-      validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
+      validate_and_save_module(Product.new,params[:product],succeed, failure, before_validate: before_validate, exclude_blank_values: true)
     }  
   end
 
@@ -102,14 +107,14 @@ class ProductsController < ApplicationController
         error_redirect
       }
       before_validate = lambda {|p|
-        save_classification_custom_fields p,params[:product],false #don't ignore blank values on individual updates
         update_status p
         if current_user.company.importer? && !p.importer_id.nil? && p.importer!=current_user.company && !current_user.company.linked_companies.include?(p.importer)
           p.errors[:base] << "You do not have permission to set importer to company #{p.importer_id}"
           raise OpenChain::ValidationLogicError
         end
       }
-      validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
+      #Don't ignore blank values on individual updates
+      validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate, exclude_blank_values: false)
     }
   end
 
@@ -214,10 +219,6 @@ class ProductsController < ApplicationController
   def secure_classifications
     params[:product].delete(:classifications_attributes) unless params[:product].nil? || current_user.edit_classifications?
   end
-  
-  def save_classification_custom_fields(product,product_params,ignore_blank_values=true)
-    OpenChain::CustomFieldProcessor.new(params).save_classification_custom_fields product, product_params, ignore_blank_values
-  end
 
   def module_label
     CoreModule::PRODUCT.label
@@ -233,5 +234,15 @@ class ProductsController < ApplicationController
 
   def run_delayed params
     params[:sr_id] || (params[:pk] && params[:pk].length > 10)
+  end
+
+  def freeze_custom_values p
+    p.freeze_custom_values
+    p.classifications.each do |c|
+      c.freeze_custom_values
+      c.tariff_records.each do |t|
+        t.freeze_custom_values
+      end
+    end
   end
 end

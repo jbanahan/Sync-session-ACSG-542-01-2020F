@@ -18,41 +18,24 @@ class ModelField
               :import_lambda, :export_lambda, 
               :custom_id, :data_type, :core_module, 
               :join_statement, :join_alias, :qualified_field_name, :uid, 
-              :public, :public_searchable, :definition, :disabled
+              :public, :public_searchable, :definition, :disabled, :field_validator_rule, :user_accessible
   
-  def initialize(rank,uid,core_module, field, options={})
-    o = {:import_lambda =>  lambda {|obj,data|
-          d = [:date,:datetime].include?(self.data_type) ? parse_date(data) : data
-          if obj.is_a?(CustomValue)
-            obj.value = d
-          elsif self.custom?
-            obj.get_custom_value(@custom_definition).value = d
-          else
-            obj.send("#{@field_name}=".intern,d)
-          end
-          return "#{self.label} set to #{d}"
-        },
-          :export_lambda => lambda {|obj|
-            self.custom? ? obj.get_custom_value(@custom_definition).value(@custom_definition) : obj.send("#{@field_name}")
-          },
-          :entity_type_field => false,
-          :history_ignore => false,
-          :read_only => false,
-          :can_view_lambda => lambda {|u| true}
-        }.merge(options)
+  def initialize(rank, uid, core_module, field_name, options={})
+    o = {entity_type_field: false, history_ignore: false, read_only: false, user_accessible: true}.merge(options)
     @uid = uid
     @core_module = core_module
     @sort_rank = rank
-    @model = core_module.class_name.intern unless core_module.nil?
-    @field_name = field
+    @model = core_module.class_name.to_sym unless core_module.nil?
+    @field_name = field_name
     @definition = o[:definition]
     @import_lambda = o[:import_lambda]
     @export_lambda = o[:export_lambda]
     @can_view_lambda = o[:can_view_lambda]
+    @can_edit_lambda = o[:can_edit_lambda]
     @custom_id = o[:custom_id]
     @join_statement = o[:join_statement]
     @join_alias = o[:join_alias]
-    @data_type = o[:data_type].nil? ? determine_data_type : o[:data_type]
+    @data_type = o[:data_type].nil? ? determine_data_type : o[:data_type].to_sym
     pf = nil
     if @@public_field_cache.empty?
       pf = PublicField.find_by_model_field_uid @uid
@@ -69,21 +52,24 @@ class ModelField
     @query_parameter_lambda = o[:query_parameter_lambda]
     self.custom_definition if @custom_id #load from cache if available 
     @process_query_result_lambda = o[:process_query_result_lambda]
-    fvr = nil
+    @field_validator_rule = nil
     if @@field_validator_rules.empty?
-      fvr = FieldValidatorRule.find_by_model_field_uid @uid
+      @field_validator_rule = FieldValidatorRule.find_by_model_field_uid @uid
     else 
-      fvr = @@field_validator_rules[@uid]
+      @field_validator_rule = @@field_validator_rules[@uid]
     end
-    @read_only = o[:read_only] || fvr.try(:read_only?)
+    @read_only = o[:read_only] || @field_validator_rule.try(:read_only?)
 
     # The respond_to here is pretty much solely there for the migration case when disabled? didn't
-    # exist and the migration is creating it- unfortunately initializers reference model fields.
-    @disabled = o[:disabled] || (fvr.respond_to?(:disabled?) && fvr.disabled?)
+    # exist and the migration is creating it - unfortunately this is necesitated because 
+    # we have some initializers that reference model fields.
+    @disabled = o[:disabled] || (@field_validator_rule.respond_to?(:disabled?) && @field_validator_rule.disabled?)
+    @can_view_groups = SortedSet.new(@field_validator_rule.respond_to?(:view_groups) ? @field_validator_rule.view_groups : [])
+    @can_edit_groups = SortedSet.new(@field_validator_rule.respond_to?(:edit_groups) ? @field_validator_rule.edit_groups : [])
     if !o[:default_label].blank?
       FieldLabel.set_default_value @uid, o[:default_label]
     end
-
+    @user_accessible = o[:user_accessible]
     self.base_label #load from cache if available
   end
 
@@ -121,14 +107,81 @@ class ModelField
     @disabled
   end
 
+  def user_accessible?
+    @user_accessible
+  end
+
   # returns true if the given user should be allowed to view this field
   def can_view? user
-    @can_view_lambda.call user 
+    in_groups = false
+    if @can_edit_groups.size > 0
+      in_groups = user.in_group? @can_edit_groups
+    end
+
+    if !in_groups && @can_view_groups.size > 0
+      in_groups = user.in_group? @can_view_groups
+    end
+    
+    can_view = false
+    if in_groups || (@can_edit_groups.size == 0 && @can_view_groups.size == 0)
+      # By default, there's no can_view_lambda so we assume the default state of the field
+      # is viewable by all.
+      if @can_view_lambda.nil?
+        if @can_edit_lambda.nil?
+          can_view = true
+        else
+          @can_edit_lambda.call user
+        end
+      else
+        can_view = @can_view_lambda.call user 
+      end
+    end
+
+    can_view
+  end
+
+  def can_edit? user
+    # If there's any edit groups associated w/ the field, then the user MUST be in one of them to be able
+    # to edit...there's no other means to be able to edit this field.
+
+    # If there are no edit groups, then they either have to be in a view group or no groups
+    # must exist for the field.  At which point, use the can_edit lambda if it exists, fall back to the
+    # can_view lambda if it exists.  If can_edit / can_view lambdas don't exist, then we assume the field is
+    # editable by all.
+    do_edit_lambda = false
+    if @can_edit_groups.size > 0
+      do_edit_lambda = user.in_group? @can_edit_groups
+    else
+      if @can_view_groups.size > 0
+        do_edit_lambda = user.in_group? @can_view_groups
+      else
+        do_edit_lambda = true
+      end
+    end
+
+    can_edit = false
+    if do_edit_lambda
+      if @can_edit_lambda.nil?
+        if @can_view_lambda.nil?
+          can_edit = true
+        else
+          can_edit = @can_view_lambda.call user
+        end
+      else
+        can_edit = @can_edit_lambda.call user
+      end
+    end
+
+    can_edit
   end
 
   # returns the default currency code for the value as a lowercase symbol (like :usd) or nil
   def currency
     @currency
+  end
+
+  def date?
+    data_type == :date || data_type == :datetime
   end
   
   #should the entity snapshot system ignore this field when recording an item's history state
@@ -192,12 +245,33 @@ class ModelField
     end
   end
     #code to process when importing a field
-  def process_import(obj,data)
+  def process_import(obj, data, user, opts = {})
+    # There's a couple of scenarios which are system operated where all access level checks should
+    # be bypassed (snapshot restoration, being one).  This switch allows this.
+    opts = {bypass_user_check: false}.merge opts
     v = nil
     if self.read_only?
       v = "Value ignored. #{self.label} is read only."
     else
-      v = @import_lambda.call(obj,data)
+      if opts[:bypass_user_check] || can_edit?(user)
+        if @import_lambda.nil?
+          d = [:date,:datetime].include?(self.data_type.to_sym) ? parse_date(data) : data
+          if obj.is_a?(CustomValue)
+            obj.value = d
+          elsif self.custom?
+            obj.get_custom_value(@custom_definition).value = d
+          else
+            obj.send("#{@field_name}=".to_sym, d)
+          end
+          v = "#{self.label} set to #{d}"
+        else
+          v = @import_lambda.call(obj, data)
+        end
+      else
+        v = "You do not have permission to edit #{self.label}."
+        def v.error?; true; end
+      end
+      
     end
     # Force all responses returned from the import lambda to have an error? method.
     if v && !v.respond_to?(:error?)
@@ -211,15 +285,22 @@ class ModelField
     @query_parameter_lambda.nil? ? process_export(obj, nil, true) : @query_parameter_lambda.call(obj)
   end
 
-  #show the value for the given field or "HIDDEN" if the user does not have field level permission
+  #show the value for the given field or nil if the user does not have field level permission
   #if always_view is true, then the user permission check will be skipped
   def process_export obj, user, always_view = false
-    if disabled?
+    if disabled?  || (!always_view && !can_view?(user))
       nil
-    elsif !always_view && !can_view?(user)
-      "HIDDEN"
     else
-      obj.nil? ? '' : @export_lambda.call(obj)
+      value = nil
+      if !obj.nil?
+        if @export_lambda.nil?
+          value = (self.custom? ? obj.get_custom_value(@custom_definition).value(@custom_definition) : obj.send(@field_name))
+        else
+          value = @export_lambda.call(obj)
+        end
+      end
+
+      value
     end
   end
 
@@ -235,11 +316,13 @@ class ModelField
   end
   
   def determine_data_type
-    if @custom_id.nil?
-      col = Kernel.const_get(@model).columns_hash[@field_name.to_s]
-      return col.nil? ? nil : col.klass.to_s.downcase.to_sym #if col is nil, we probably haven't run the migration yet and are in the install process
+    if custom?
+      custom_definition.data_type.downcase.to_sym
     else
-      return CustomDefinition.cached_find(@custom_id).data_type.downcase.to_sym
+      col = Kernel.const_get(@model).columns_hash[@field_name.to_s]
+      # Interrogating the column class vs. using type returns the wrong value on integer types (fixnum instead of integer)
+      # and boolean (object vs. boolean)
+      return col.nil? ? nil : col.type #if col is nil, we probably haven't run the migration yet and are in the install process
     end
   end
 
@@ -278,12 +361,15 @@ class ModelField
 
   #should be after all class level methods are declared
   MODEL_FIELDS = Hash.new
+  private_constant :MODEL_FIELDS
   # We don't want to retain disabled model fields in the main hash (since then we need 
   # to update all the references to retrieving sets of model field to remove disabled ones
   # - which also gets expensive computationally).  But we do need to track which were disabled
   # because we don't want to do a reload in cases where a UID isn't in the model field hash
   # and is disabled...it's expensive to do so in queries.
   DISABLED_MODEL_FIELDS = Set.new
+  private_constant :DISABLED_MODEL_FIELDS
+
   def self.add_fields(core_module,descriptor_array)
     descriptor_array.each do |m|
       options = m[4].nil? ? {} : m[4]
@@ -416,7 +502,7 @@ class ModelField
     raise "Invalid shipping from/to indicator provided: #{ft}" unless ["from","to"].include?(ft)
     ftc = ft.titleize
     r = [
-      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"Ship #{ftc} ID",{:history_ignore=>true}]
+      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"Ship #{ftc} Name",{history_ignore: true, user_accessible: false}]
     ]
     n = [rank_start+1,"#{uid_prefix}_ship_#{ft}_name".to_sym,:name,"Ship #{ftc} Name", {
       :import_lambda => lambda {|obj,data|
@@ -612,6 +698,21 @@ class ModelField
       :qualified_field_name=>"(SELECT iso_code from countries where countries.id = #{table_name}.#{foreign_key})",
       :data_type=>:string
     }]
+    r << [rank_start+2,"#{uid_prefix}_cntry_id".to_sym, :country_id, "Country ID",{
+      :import_lambda => lambda {|detail, data| 
+        c = Country.where(id: data).first
+        eval "detail.#{join} = c"
+        unless c.nil?
+          return "Country set to #{c.name}"
+        else
+          return "Country not found with ISO Code \"#{data}\""
+        end    
+      },
+      :export_lambda => lambda {|detail|  eval "detail.#{join}.nil? ? nil : detail.#{join}.id"},
+      :data_type=>:integer,
+      :history_ignore=>true,
+      :user_accessible => false
+    }]
     r
   end
   def self.make_product_arrays(rank_start,uid_prefix,table_name)
@@ -648,6 +749,7 @@ class ModelField
       :history_ignore => true,
       :read_only => true
     }]
+    r << [rank_start+1, "#{uid_prefix}_prod_id".to_sym, :id,"Product Name", {user_accessible: false, history_ignore: true}]
     r
   end
   def self.make_master_setup_array rank_start, uid_prefix
@@ -1516,6 +1618,10 @@ and classifications.product_id = products.id
         [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
         [2,:prod_ent_type,:name,"Product Type",{:entity_type_field=>true,
           :import_lambda => lambda {|detail,data|
+            if data.blank?
+              return "#{ModelField.find_by_uid(:prod_ent_type).label} with name #{data} not found.  Field ignored."
+            end
+            
             et = EntityType.where(:name=>data).first
             if et
               detail.entity_type = et
@@ -1557,8 +1663,8 @@ and classifications.product_id = products.id
             INNER JOIN tariff_records pcc_tr ON pcc_tr.classification_id = pcc_cls.id AND LENGTH( pcc_tr.hts_1 ) > 0 WHERE products.id = pcc_cls.product_id)",
           :data_type => :integer
         }],
-        [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}],
-        [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true}],
+        [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
+        [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
         [14,:prod_first_hts, :prod_first_hts, "First HTS Number", {
           :import_lambda => lambda {|obj,data| "First HTS Number was ignored, must be set at the tariff level."},
           :export_lambda => lambda {|obj| 
@@ -1608,7 +1714,27 @@ and classifications.product_id = products.id
           },
           :qualified_field_name => "(SELECT ifnull(max((select count(*) from tariff_records where tariff_records.classification_id = classifications.id)),0) from classifications where classifications.product_id = products.id)",
           :data_type=>:integer
-        }]
+        }],
+        [19,:prod_ent_type_id,:entity_type_id,"Product Type",{:entity_type_field=>true, :user_accessible => false,
+          :import_lambda => lambda {|detail,data|
+            if data.blank?
+              return "#{ModelField.find_by_uid(:prod_ent_type).label} with name #{data} not found.  Field ignored."
+            end
+            
+            et = EntityType.where(:id=>data).first
+            if et
+              detail.entity_type = et
+              return "#{ModelField.find_by_uid(:prod_ent_type).label} set to #{et.name}."
+            else
+              return "#{ModelField.find_by_uid(:prod_ent_type).label} with name #{data} not found.  Field ignored."
+            end
+          },
+          :export_lambda => lambda {|detail|
+            et = detail.entity_type
+            et.nil? ? nil : et.id
+          },
+          :data_type=>:integer
+        }],
       ]
       add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
       add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")
@@ -1630,7 +1756,8 @@ and classifications.product_id = products.id
       add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications")
 
       add_fields CoreModule::TARIFF, [
-        [4,:hts_line_number,:line_number,"HTS Row"]
+        [4,:hts_line_number,:line_number,"HTS Row"],
+        [5,:hts_view_sequence, :view_sequence, "View Sequence", {data_type: :string, history_ignore: true, user_accessible: false}]
       ]
       add_fields CoreModule::TARIFF, make_hts_arrays(100,"hts")
       add_fields CoreModule::ORDER, [
@@ -1707,7 +1834,10 @@ and classifications.product_id = products.id
         [8,:ordln_hts,:hts,"HTS Code",{data_type: :string,
           :export_lambda=> lambda{|obj| obj.hts.blank? ? '' : obj.hts.hts_format}
         }],
-        [9,:ordln_sku,:sku,'SKU',{data_type: :string}]
+        [9,:ordln_sku,:sku,'SKU',{data_type: :string}],
+        [10,:ordln_total_cost, :total_cost, "Total Price", {data_type: :decimal, read_only: true, 
+          qualified_field_name: "IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)"
+        }]
       ]
       add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
 

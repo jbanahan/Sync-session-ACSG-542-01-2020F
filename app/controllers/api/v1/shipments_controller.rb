@@ -26,7 +26,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     r = []
     s.available_orders(current_user).order('customer_order_number').each do |ord|
       hsh = {id:ord.id}
-      ord_fields.each {|uid| hsh[uid] = export_field(uid,ord)}
+      ord_fields.each {|uid| hsh[uid] = export_field(uid, ord, force_big_decimal_numeric: true)}
       r << hsh
     end
     render json: {available_orders:r}
@@ -135,11 +135,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     ] + custom_field_keys(CoreModule::CONTAINER))
     
     h = {id: s.id}
-    headers_to_render.each {|uid| h[uid] = export_field(uid,s)}
+    headers_to_render.each {|uid| h[uid] = export_field(uid, s, force_big_decimal_numeric: true)}
     s.shipment_lines.each do |sl|
       h['lines'] ||= []
       slh = {id: sl.id}
-      line_fields_to_render.each {|uid| slh[uid] = export_field(uid,sl)}
+      line_fields_to_render.each {|uid| slh[uid] = export_field(uid, sl, force_big_decimal_numeric: true)}
       if render_order_fields?
         slh['order_lines'] = render_order_fields(sl) 
       end
@@ -148,7 +148,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     s.containers.each do |c|
       h['containers'] ||= []
       ch = {id: c.id}
-      container_fields_to_render.each {|uid| ch[uid] = export_field(uid,c)}
+      container_fields_to_render.each {|uid| ch[uid] = export_field(uid, c, force_big_decimal_numeric: true)}
       h['containers'] << ch
     end
     if render_carton_sets?
@@ -198,7 +198,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     ])
     return shipment.carton_sets.collect do |cs|
       ch = {id:cs.id}
-      fields.each {|uid| ch[uid] = export_field(uid,cs)}
+      fields.each {|uid| ch[uid] = export_field(uid, cs, force_big_decimal_numeric: true)}
       ch
     end
   end
@@ -228,7 +228,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
           :ordln_country_of_origin,
           :ordln_hts
         ] + custom_field_keys(CoreModule::ORDER_LINE))
-        line_fields.each {|uid| olh[uid] = export_field(uid,ol)}
+        line_fields.each {|uid| olh[uid] = export_field(uid, ol, force_big_decimal_numeric: true)}
         olh
       else
         nil

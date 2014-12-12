@@ -27,8 +27,8 @@ class Product < ActiveRecord::Base
   has_many   :parent_products, :through=>:bill_of_materials_parents
   has_and_belongs_to_many :factories, :class_name=>"Address", :join_table=>"product_factories", :foreign_key=>'product_id', :association_foreign_key=>'address_id'
 
-  accepts_nested_attributes_for :classifications, :allow_destroy => true,
-    :reject_if => lambda { |a| a[:country_id].blank?}
+  accepts_nested_attributes_for :classifications, :allow_destroy => true
+  
   def locked?
     !self.vendor.nil? && self.vendor.locked?
   end

@@ -171,11 +171,11 @@ describe OpenChain::Api::ApiEntityJsonizer do
       json = OpenChain::Api::ApiEntityJsonizer.new.model_field_list_to_json @user, CoreModule::PRODUCT
 
       model_fields = ActiveSupport::JSON.decode(json)
+      cm_fields = CoreModule::PRODUCT.model_fields(@user)
 
-      cm_fields = CoreModule::PRODUCT.model_fields @user
-      expect(model_fields['product']).to have(cm_fields.size).items
-      expect(model_fields['classifications']).to have(CoreModule::CLASSIFICATION.model_fields(@user).size).items
-      expect(model_fields['tariff_records']).to have(CoreModule::TARIFF.model_fields(@user).size).items
+      expect(model_fields['product'].size).to eq cm_fields.size
+      expect(model_fields['classifications'].size).to eq CoreModule::CLASSIFICATION.model_fields(@user).size
+      expect(model_fields['tariff_records'].size).to eq CoreModule::TARIFF.model_fields(@user).size
 
       # We can pretty much just check one of the model fields for the correct values now that we've
       # shown we're listing them all.

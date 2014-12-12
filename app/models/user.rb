@@ -46,6 +46,7 @@ class User < ActiveRecord::Base
   has_many   :support_tickets, :foreign_key => :requestor_id
   has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
   has_many   :event_subscriptions, inverse_of: :user, dependent: :destroy, autosave: true
+  has_and_belongs_to_many :groups, join_table: "user_group_memberships", after_add: :add_to_group_cache, after_remove: :remove_from_group_cache
 
   validates  :company, :presence => true
   validates  :username, presence: true, uniqueness: { case_sensitive: false }
@@ -541,6 +542,20 @@ class User < ActiveRecord::Base
     @mc
   end
 
+  def in_group? group_system_codes
+    cache = group_cache(true)
+    if group_system_codes.respond_to?(:any?)
+      group_system_codes.any? {|code| cache.include? code}
+    else
+      cache.include? group_system_codes
+    end
+    
+  end
+
+  def user_group_codes
+    group_cache(true).to_a
+  end
+
   private
   def parse_hidden_messages
     @parsed_hidden_messages ||= (self.hidden_message_json.blank? ? [] : JSON.parse(self.hidden_message_json))
@@ -559,5 +574,23 @@ class User < ActiveRecord::Base
   def reset_timestamp_flag
     self.record_timestamps = true
     true
+  end
+
+  def group_cache(ensure_created)
+    if @group_cache.nil? && ensure_created
+      @group_cache = SortedSet.new self.groups.map(&:system_code)
+    end
+
+    @group_cache
+  end
+
+  def add_to_group_cache group
+    group_cache(true) << group.system_code
+    nil
+  end
+
+  def remove_from_group_cache group
+    group_cache(false).try(:delete, group.system_code)
+    nil
   end
 end

@@ -11,7 +11,7 @@ class WorksheetConfig < ActiveRecord::Base
       (m[:model_field_uid].blank? || m[:row].blank? || m[:column].blank?) 
     }
 
-  def process(obj,data,opts={})
+  def process(obj,data,user, opts={})
     o = {:processor => XlsWorksheetProcessor.new}.merge opts
     p = o[:processor]
     custom_data = {}
@@ -19,9 +19,9 @@ class WorksheetConfig < ActiveRecord::Base
     self.worksheet_config_mappings.each do |m|
       mf = ModelField.find_by_uid m.model_field_uid 
       if mf.custom?
-        custom_data[mf] = p.value(m.row,m.column)
+        custom_data[mf] = p.value(m.row,m.column) if mf.can_edit? user
       else
-        mf.process_import(obj,p.value(m.row,m.column))
+        mf.process_import(obj,p.value(m.row,m.column), user)
       end
     end
     obj.save

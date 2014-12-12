@@ -63,7 +63,7 @@ function prep_rows() {
     <% else %>
 <% @wc.worksheet_config_mappings.build if @wc.worksheet_config_mappings.length == 0 %>
    <%=f.fields_for :worksheet_config_mappings do |m| %>
-   <% model_fields = ModelField.sort_by_label(CoreModule.find_by_class_name(@wc.module_type).model_fields_including_children.values) %>
+   <% model_fields = ModelField.sort_by_label(CoreModule.find_by_class_name(@wc.module_type).model_fields_including_children(current_user).values) %>
     <tr class='hover m_row'>
       <td><%=m.collection_select :model_field_uid, model_fields, :uid, :label, {},{:class=>"sel_mf"}%></td>
 <%

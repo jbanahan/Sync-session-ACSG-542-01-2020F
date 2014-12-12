@@ -19,7 +19,7 @@ class OrdersController < ApplicationController
         @products = Product.where(["vendor_id = ?",@order.vendor])
         respond_to do |format|
             format.html {
-              if @order.importer.order_view_template.blank?
+              if @order.importer.try(:order_view_template).blank?
                 render
               else
                 render template: @order.importer.order_view_template.to_s
@@ -53,7 +53,9 @@ class OrdersController < ApplicationController
   # POST /orders
   # POST /orders.xml
   def create
-    o = Order.new(params[:order])
+    # Create a dummy order for security validations
+    o = Order.new
+    o.assign_model_field_attributes params[:order], no_validation: true
     action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
       success = lambda {|o|
         add_flash :notices, "Order created successfully."
@@ -61,13 +63,13 @@ class OrdersController < ApplicationController
       }
       failure = lambda {|o,errors|
         errors_to_flash o, :now=>true
-        @order = Order.new(params[:order])
-        set_custom_fields(@order) {|cv| @order.inject_custom_value cv}
+        @order = Order.new
+        @order.assign_model_field_attributes params[:order], no_validation: true
         @divisions = Division.all
         @vendors = Company.vendors.not_locked
         render :action=>"new"
       }
-      validate_and_save_module(o,params[:order],success,failure)
+      validate_and_save_module(Order.new,params[:order],success,failure)
     }
   end
 
