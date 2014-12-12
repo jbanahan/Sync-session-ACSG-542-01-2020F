@@ -81,7 +81,7 @@ describe UsersController do
     end
     it "should show errors for some users while creating others" do
       User.any_instance.stub(:admin?).and_return(true)
-      data = "uname,joe@sample.com,Joe,Smith,js1234567\nun2,f,Fred,Dryer,fd654321"
+      data = "uname,joe@sample.com,Joe,Smith,js1234567\n,f,Fred,Dryer,fd654321"
       post :bulk_upload, 'company_id'=>@user.company_id.to_s, 'bulk_user_csv'=>data, 'user'=>{'order_view'=>1,'email_format'=>'html'}
       response.status.should == 400
       JSON.parse(response.body)['error'].should_not be_blank
