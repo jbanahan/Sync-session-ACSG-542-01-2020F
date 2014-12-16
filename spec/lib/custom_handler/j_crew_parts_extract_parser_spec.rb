@@ -95,11 +95,6 @@ describe 'JCrewPartsExtractParser' do
         file.close
       }
 
-      @p.should_receive(:ftp_file) {|file, opts|
-        file.path == tempfile.path
-        opts[:keep_local].should be_true
-      }
-
       @p.generate_and_send io
     end
   end
@@ -107,9 +102,6 @@ describe 'JCrewPartsExtractParser' do
   context :remote_file_name do 
     it "should use JCrew customer numbers" do
     	p = OpenChain::CustomHandler::JCrewPartsExtractParser.new
-      p.remote_file_name.should =~ /^J0000.DAT$/
-      # Subsequent calls to remote_file_name should get a filename of JCREW.DAT
-      p.remote_file_name.should =~ /^JPART.DAT$/
       p.remote_file_name.should =~ /^JPART.DAT$/
     end
   end
@@ -249,7 +241,6 @@ FILE
     	output = nil
     	# Underneath the covers, we generate a new instance of the 
     	# parser after downloading the S3 file (which is done statically)
-    	OpenChain::CustomHandler::JCrewPartsExtractParser.any_instance.should_receive(:ftp_file)
     	OpenChain::CustomHandler::JCrewPartsExtractParser.any_instance.should_receive(:ftp_file) {|file|
     		file.rewind
     		output = file.read

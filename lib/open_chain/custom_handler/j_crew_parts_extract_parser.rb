@@ -54,9 +54,6 @@ module OpenChain
           temp.binmode
           generate_product_file(input_io, temp)
           send_ftp temp
-          # Not a typo, we need to send the same file multiple times in order to send into 
-          # each JCrew account (each time its sent it gets a different name - see remote_file_name)
-          send_ftp temp
         ensure
           temp.close! unless temp.closed?
         end
@@ -67,13 +64,7 @@ module OpenChain
         # Since we need to send multiple copies of the same file via FTP (one into each JCrew account)
         # We'll just name the first file as the first account name, and then the second as JPART.DAT
         # and track the # of times the file has been FTP'ed
-        filename = "JPART.DAT"
-        if !@file_sent
-          filename = "#{J_CREW_CUSTOMER_NUMBER}.DAT"
-          @file_sent = true
-        end  
-        
-        filename
+        "JPART.DAT"
       end
 
       # Reads the IO object containing JCrew part information and writes the translated output
@@ -165,7 +156,6 @@ module OpenChain
           # same stream twice..so just use a new file object instead.
           send = File.open temp.path, "rb"
           begin
-            # Don't delete the tempfile, we have to send twice.
             ftp_file(send, {keep_local:true}) 
           ensure 
             send.close unless send.closed?
