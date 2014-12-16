@@ -11,22 +11,43 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
   # Runs the parser via the scheduler so that any fiber fields updated since the previous run are anal
   def self.run_schedulable opts = {}
-    # Reparse anything showing failed with a value updated in the last 6 months
-    OpenChain::StatClient.wall_time("rl_fiber") do
-      find_and_parse_fiber_contents (Time.zone.now - 6.months)
+    last_run = opts['last_run_time']
+    # Regardless of whether we are using the last run time from opts or
+    # from the key store, we'll store off the run time
+    key = KeyJsonItem.polo_fiber_report('fiber_analysis').first_or_create! json_data: "{}"
+
+    if last_run.nil?
+      data = key.data
+      last_run = data['last_run_time'] unless data.nil?
     end
-    
+
+    raise "Failed to determine the last start time for Fiber Analysis parsing run." unless last_run
+
+    start_time = Time.zone.now
+    OpenChain::StatClient.wall_time("rl_fiber") do
+      find_and_parse_fiber_contents Time.zone.parse last_run
+    end
+    # Everything's going to be UTC in here..that's fine
+    key.data= {'last_run_time' => start_time.to_s}
+    key.save!
+
     nil
   end
 
   def self.find_and_parse_fiber_contents updated_since, stop_time = Time.zone.now
+    # Find any product w/ an updated fiber content field OR anything that's currently in a failed state
     product_ids = base_query.where("custom_values.updated_at >= ?", updated_since)
                     .where("custom_values.updated_at <= ?", stop_time)
                     .pluck("products.id")
 
+    failure_def = prep_custom_definitions([:msl_fiber_failure])[:msl_fiber_failure]
+    failure_ids = Product.joins(:custom_values).where("custom_values.custom_definition_id = ? ", failure_def.id).where("custom_values.boolean_value = ?", true).pluck("products.id")
+
     # Reuse the same parser instance to avoid having to reload 47 custom definitions for each product we parse a definition for
     instance = self.new
-    product_ids.each do |id|
+
+    # Use the unique list of ids found in each array and reparse all of those.
+    (product_ids | failure_ids).sort.each do |id|
       parse_and_set_fiber_content id, instance
     end
   end

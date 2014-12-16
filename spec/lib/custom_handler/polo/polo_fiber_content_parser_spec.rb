@@ -400,7 +400,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
   describe "run_schedulable" do
     before :each do
       @prod = Factory(:product)
-      @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_1]
+      @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_1, :msl_fiber_failure]
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
     end
 
@@ -413,13 +413,36 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       # This should be skipped because its updated at is prior to the previous run
       old_product  = Factory(:product)
       old_product.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
-      old_product.custom_values.first.update_column :updated_at, ((Time.zone.now - 6.months) - 1.day)
+      old_product.custom_values.first.update_column :updated_at, (Time.zone.now - 1.day)
+
+      # This should be picked up because it is currently in a failure state even though the fiber field has not been updated
+      failed_product = Factory(:product)
+      failed_product.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
+      failed_product.custom_values.first.update_column :updated_at, (Time.zone.now - 1.day)
+      failed_product.update_custom_value! @test_cds[:msl_fiber_failure], true
 
       described_class.should_receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
-
-      OpenChain::StatClient.should_receive(:wall_time).with("rl_fiber").and_yield
-
+      described_class.should_receive(:parse_and_set_fiber_content).with failed_product.id, instance_of(described_class)
       described_class.run_schedulable({'last_run_time' => 5.minutes.ago.to_s})
+
+      # Make sure the json key is updated too (we're only storing down to the minute)
+      key = KeyJsonItem.polo_fiber_report('fiber_analysis').first
+      expect(Time.zone.parse key.data['last_run_time']).to be >= 1.minute.ago
+    end
+
+    it "uses previously set key json start date" do
+      KeyJsonItem.polo_fiber_report('fiber_analysis').first_or_create! json_data: "{\"last_run_time\":\"#{5.minutes.ago.to_s}\"}"
+
+      described_class.should_receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
+      described_class.run_schedulable
+
+      # Make sure the json key is updated too (we're only storing down to the minute)
+      key = KeyJsonItem.polo_fiber_report('fiber_analysis').first
+      expect(Time.zone.parse key.data['last_run_time']).to be >= 1.minute.ago
+    end
+
+    it "errors if start time is not discoverable" do
+      expect {described_class.run_schedulable}.to raise_error "Failed to determine the last start time for Fiber Analysis parsing run."
     end
   end
 
