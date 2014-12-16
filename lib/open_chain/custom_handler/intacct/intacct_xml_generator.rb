@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       bill = add_element func, "create_bill"
       add_element bill, "vendorid", payable.vendor_number
       add_date bill, "datecreated", payable.bill_date
-      add_date bill, "dateposted", payable.created_at.in_time_zone("Eastern Time (US & Canada)")
+      add_date bill, "dateposted", (payable.canada? ? payable.created_at.in_time_zone("Eastern Time (US & Canada)") : payable.bill_date)
       add_element bill, "termname", termname
       add_element bill, "billno", payable.bill_number, allow_blank: false
       add_element bill, "externalid", payable.vendor_reference, allow_blank: false

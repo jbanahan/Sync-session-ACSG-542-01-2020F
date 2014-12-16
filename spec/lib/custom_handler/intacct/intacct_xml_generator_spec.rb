@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
   describe "generate_payable_xml" do
     before :each do 
-      @p = IntacctPayable.new vendor_number: "v", bill_date: Time.zone.now.to_date, bill_number: "b", vendor_reference: "ref", currency: "cur", created_at: Time.zone.now
+      @p = IntacctPayable.new vendor_number: "v", bill_date: Date.new(2014, 12, 1), bill_number: "b", vendor_reference: "ref", currency: "cur", created_at: Time.zone.now
       @l = @p.intacct_payable_lines.build gl_account: "a", amount: BigDecimal.new("12"), charge_description: "desc", location: "loc",
                     line_of_business: "lob", freight_file: "f", customer_number: "c", charge_code: "cc", broker_file: "brok"
     end
@@ -103,7 +103,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
       b = REXML::XPath.first root, "/function/create_bill"
 
-      posted = @p.created_at.in_time_zone "Eastern Time (US & Canada)"
+      posted = @p.bill_date
 
       expect(b.text "vendorid").to eq @p.vendor_number
       expect(b.text "datecreated/year").to eq @p.bill_date.strftime "%Y"
@@ -154,6 +154,22 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(i.text "projectid").to be_nil
       expect(i.text "itemid").to be_nil
       expect(i.text "classid").to be_nil
+    end
+
+    it "uses created date as posting date for Canada" do
+      @p.company = "vcu"
+      control_id, xml = described_class.new.generate_payable_xml @p, "terms"
+
+      root = REXML::Document.new(xml).root
+      validate_control_id root, control_id
+
+      b = REXML::XPath.first root, "/function/create_bill"
+
+      posted = @p.created_at.in_time_zone "Eastern Time (US & Canada)"
+
+      expect(b.text "dateposted/year").to eq posted.strftime "%Y"
+      expect(b.text "dateposted/month").to eq posted.strftime "%m"
+      expect(b.text "dateposted/day").to eq posted.strftime "%d"
     end
   end
 

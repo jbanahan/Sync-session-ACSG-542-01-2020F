@@ -6,6 +6,10 @@ class IntacctPayable < ActiveRecord::Base
   PAYABLE_TYPE_ADVANCED ||= 'advanced'
   PAYABLE_TYPE_CHECK ||= 'invoiced check'
 
+  def canada?
+    ['als', 'vcu'].include? company
+  end
+
   def self.suggested_fix error
     return "" if error.blank?
 
