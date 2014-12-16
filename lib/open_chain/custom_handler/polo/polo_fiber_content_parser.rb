@@ -1,5 +1,6 @@
 require 'digest/md5'
 require 'open_chain/custom_handler/polo/polo_custom_definition_support'
+require 'open_chain/stat_client'
 
 module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParser
   include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
@@ -10,26 +11,11 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
   # Runs the parser via the scheduler so that any fiber fields updated since the previous run are anal
   def self.run_schedulable opts = {}
-    #TODO Log the runtime of this
-
-    last_run = opts['last_run_time']
-    # Regardless of whether we are using the last run time from opts or
-    # from the key store, we'll store off the run time
-    key = KeyJsonItem.polo_fiber_report('fiber_analysis').first_or_create! json_data: "{}"
-
-    if last_run.nil?
-      data = key.data
-      last_run = data['last_run_time'] unless data.nil?
+    # Reparse anything showing failed with a value updated in the last 6 months
+    OpenChain::StatClient.wall_time("rl_fiber") do
+      find_and_parse_fiber_contents (Time.zone.now - 6.months)
     end
-
-    raise "Failed to determine the last start time for Fiber Analysis parsing run." unless last_run
-
-    start_time = Time.zone.now
-    find_and_parse_fiber_contents Time.zone.parse last_run
-    # Everything's going to be UTC in here..that's fine
-    key.data= {'last_run_time' => start_time.to_s}
-    key.save!
-
+    
     nil
   end
 
@@ -76,18 +62,20 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     init_custom_values
     result = nil
     failed = true
+    status_message = nil
     begin
       fiber = product.get_custom_value(@cdefs[:fiber_content]).value
       unless fiber.blank?
         result = parse_fiber_content fiber
       end
       failed = false
-      
+      status_message = "Passed"
     rescue FiberParseError => e
       # If there's an actual fiber error, we can get the bad results 
       # and set them into the fiber fields so the user can see how the data was
       # badly parsed.
       result = e.parse_results
+      status_message = e.message
     rescue
       # Don't really care, we just don't want to blow out entirely.
       raise e if Rails.env.test?
@@ -103,7 +91,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     # worked without issue.
     return true if fingerprint == xref_fingerprint
 
-    batch_writes = convert_results_to_custom_values product, result, failed
+    batch_writes = convert_results_to_custom_values product, result, failed, status_message
     Lock.with_lock_retry(product) do
       CustomValue.batch_write! batch_writes, false, skip_insert_nil_values: true
       DataCrossReference.create_rl_fabric_fingerprint! product.unique_identifier, fingerprint
@@ -144,7 +132,16 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       end
       fiber = add_spaces.strip
 
-      # Some regions use a comma instead of a decial place to mark the radix point, just change those to periods
+      # Turn all tabs into spaces, strip carriage returns
+      fiber = fiber.gsub("\t", " ").gsub("\r", "")
+
+      # Normalize spaces (except newlines - handled later), compressing it down to a single whitespace. .ie "Blah      Blah" -> "Blah Blah"
+      fiber = fiber.gsub(/ {2,}/, " " )
+
+      # Normalize newlines down to a single newline
+      fiber = fiber.gsub(/\n{2,}/, "\n")
+
+      # Some regions of the world use a comma instead of a decimal place to mark the radix point, just change those to periods
       fiber = fiber.gsub /(\d+),(\d+)(\s*)%/, '\1.\2\3%'
 
       fiber
@@ -161,6 +158,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         end
         cdefs << :fiber_content
         cdefs << :msl_fiber_failure
+        cdefs << :msl_fiber_status
         @cdefs = self.class.prep_custom_definitions cdefs
       end
 
@@ -420,7 +418,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     end
 
     def invalid_results? results, strip_overages = false
-      raise error("Failed to find fabric content and percentages for all discovered components.", results) if results.nil? || results.size == 0
+      raise error("Invalid Fiber Content % format.", results) if results.nil? || results.size == 0
 
       # What we're looking for are the following
       # 1) Each set of results (fiber_X, type_X, percent_x) has values in each field
@@ -436,7 +434,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         all_blank = "#{fiber}#{type}#{percent}".blank?
         next if all_blank
 
-        raise error("Failed to find fabric content and percentages for all discovered components.", results) if (fiber.blank? || type.blank? || percent.blank?)
+        raise error("Invalid Fiber Content % format.", results) if (fiber.blank? || type.blank? || percent.blank?)
 
         percentages[type] ||= []
         p = percent.to_f
@@ -447,7 +445,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
       percentages.keys.each do |key|
         total = percentages[key].inject(:+)
-        raise error("Fabric percentages must add up to 100%.", results) if (total % 100) > 0
+        raise error("Fabric percentages for all components must add up to 100%.  Found #{total}%", results) if (total % 100) > 0
       end
 
       if strip_overages
@@ -464,7 +462,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     end
 
     def error msg, results
-      e = FiberParseError.new msg
+      e = FiberParseError.new "Failed: #{msg}"
       e.parse_results = results
       e
     end
@@ -488,7 +486,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       [results["fiber_#{index}".to_sym], results["type_#{index}".to_sym], results["percent_#{index}".to_sym]]
     end
 
-    def convert_results_to_custom_values product, results, parse_failed
+    def convert_results_to_custom_values product, results, parse_failed, status_message
       cv = []
       # Results will be nil if the process blew up (exceptionally), overwrite everything in this
       # case (don't leave stale fields behind, it's confusing).  The old fields will be listed in the history
@@ -503,6 +501,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       end
 
       cv << get_or_create_cv(product, :msl_fiber_failure, parse_failed)
+      cv << get_or_create_cv(product, :msl_fiber_status, status_message)
       cv.compact
     end
 

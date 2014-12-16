@@ -209,8 +209,8 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
         expect(@p.parse_fiber_content "100% MULBERRY SILK - SLIP 100% SILK").to eq ({fiber_1: "MULBERRY SILK", type_1: "Outer", percent_1: "100"})
       end
 
-      it "strips anything after 3 or more spaces" do
-        expect(@p.parse_fiber_content "100% MULBERRY SILK   SLIP 100% SILK").to eq ({fiber_1: "MULBERRY SILK", type_1: "Outer", percent_1: "100"})
+      it "normalizes multiple consecutive whitespace characters into to a sinlge space" do
+        expect(@p.parse_fiber_content "100% MULBERRY\t\t\tSILK   SLIP 100% SILK").to eq ({fiber_1: "MULBERRY SILK SLIP", type_1: "Outer", percent_1: "100"})
       end
 
       it "uses an xref on fiber content with initial description" do
@@ -260,26 +260,26 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
           @p.parse_fiber_content "ZINC 60%,  STEEL 10%              Cotton 30%"
           fail("Should have raised error.")
         rescue OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError => e
-          expect(e.message).to eq "Failed to find fabric content and percentages for all discovered components."
+          expect(e.message).to eq "Failed: Invalid Fiber Content % format."
           expect(e.parse_results).to eq ({fiber_1: "", type_1: "Outer", percent_1: "60", percent_2: "10", fiber_2: "Cotton", type_2: "Outer"})
         end
       end
 
       it "raises parse error for unusable fiber description" do
-        expect {@p.parse_fiber_content "30/1'S COTTON MINI PIQUE"}.to raise_error OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError, "Failed to find fabric content and percentages for all discovered components."
+        expect {@p.parse_fiber_content "30/1'S COTTON MINI PIQUE"}.to raise_error OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError, "Failed: Invalid Fiber Content % format."
       end
 
       it "raises an error when more than 100% of a fiber content is found" do
         DataCrossReference.create! key: "Wool", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-        expect {@p.parse_fiber_content "100% Cotton / 50% Wool"}.to raise_error OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError, "Fabric percentages must add up to 100%."
+        expect {@p.parse_fiber_content "100% Cotton / 50% Wool"}.to raise_error OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError, "Failed: Fabric percentages for all components must add up to 100%.  Found 150.0%"
       end
 
       it "raises an error when single fiber is more than 100" do
-        expect {@p.parse_fiber_content "101% Cotton"}.to raise_error OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError, "Fabric percentages must add up to 100%."
+        expect {@p.parse_fiber_content "101% Cotton"}.to raise_error OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError, "Failed: Fabric percentages for all components must add up to 100%.  Found 101.0%"
       end
 
       it "raises an error when an invalid fabric type is used" do
-        expect {@p.parse_fiber_content "100% Polyseter"}.to raise_error OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError, "Invalid fabric 'Polyseter' found."
+        expect {@p.parse_fiber_content "100% Polyseter"}.to raise_error OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError, "Failed: Invalid fabric 'Polyseter' found."
       end
 
       it "does not error if fabric type casing is different" do
@@ -296,7 +296,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       # then using savepoints for each spec that are rolled back after each run.  That would take some experimentation 
       # that I don't really have time to explore at the moment.
       @prod = Factory(:product)
-      @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_type_1, :fabric_1, :fabric_percent_1, :fabric_type_2, :fabric_2, :fabric_percent_2, :msl_fiber_failure]
+      @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_type_1, :fabric_1, :fabric_percent_1, :fabric_type_2, :fabric_2, :fabric_percent_2, :msl_fiber_failure, :msl_fiber_status]
       
       @prod.update_custom_value! @test_cds[:fabric_type_1], "Type"
       @prod.update_custom_value! @test_cds[:fabric_type_1], "Type2"
@@ -317,6 +317,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_false
       # Make sure unused fields are nil'ed out
       expect(@prod.get_custom_value(@test_cds[:fabric_type_2]).value).to be_nil
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Passed"
     end
 
     it "detects an error and updates fields based on that" do
@@ -331,6 +332,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_true
       expect(@prod.get_custom_value(@test_cds[:fabric_type_2]).value).to eq "Outer"
       expect(@prod.get_custom_value(@test_cds[:fabric_percent_2]).value).to eq BigDecimal.new("1")
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Failed: Invalid Fiber Content % format."
     end
 
     it 'does not update custom values if fiber fingerprint is unchanged' do
@@ -411,29 +413,13 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       # This should be skipped because its updated at is prior to the previous run
       old_product  = Factory(:product)
       old_product.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
-      old_product.custom_values.first.update_column :updated_at, (Time.zone.now - 1.day)
+      old_product.custom_values.first.update_column :updated_at, ((Time.zone.now - 6.months) - 1.day)
 
       described_class.should_receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
+
+      OpenChain::StatClient.should_receive(:wall_time).with("rl_fiber").and_yield
+
       described_class.run_schedulable({'last_run_time' => 5.minutes.ago.to_s})
-
-      # Make sure the json key is updated too (we're only storing down to the minute)
-      key = KeyJsonItem.polo_fiber_report('fiber_analysis').first
-      expect(Time.zone.parse key.data['last_run_time']).to be >= 1.minute.ago
-    end
-
-    it "uses previously set key json start date" do
-      KeyJsonItem.polo_fiber_report('fiber_analysis').first_or_create! json_data: "{\"last_run_time\":\"#{5.minutes.ago.to_s}\"}"
-
-      described_class.should_receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
-      described_class.run_schedulable
-
-      # Make sure the json key is updated too (we're only storing down to the minute)
-      key = KeyJsonItem.polo_fiber_report('fiber_analysis').first
-      expect(Time.zone.parse key.data['last_run_time']).to be >= 1.minute.ago
-    end
-
-    it "errors if start time is not discoverable" do
-      expect {described_class.run_schedulable}.to raise_error "Failed to determine the last start time for Fiber Analysis parsing run."
     end
   end
 
