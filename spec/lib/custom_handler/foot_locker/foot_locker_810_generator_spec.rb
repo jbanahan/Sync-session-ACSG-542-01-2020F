@@ -88,7 +88,9 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       @invoice = Factory(:broker_invoice, invoice_number: "INV1", invoice_date: Date.new(2014, 11, 1), invoice_total: "100.99", entry: @entry)
       @invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: @invoice, charge_type: "1", charge_code: "Code", charge_description: "Desc", charge_amount: "50.00")
       @invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: @invoice, charge_type: "2", charge_code: "Code2", charge_description: "Desc2", charge_amount: "25.00")
-      
+      # Duty Paid direct lines should be included...FOLO wants these for reporting purposes
+      @invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: @invoice, charge_type: "D", charge_code: "0099", charge_description: "Duty Paid Direct", charge_amount: "10.00")
+
       @com_invoice = Factory(:commercial_invoice, entry: @entry)
       @tar1 = Factory(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: @com_invoice, po_number: "PO#"))
       @tar2 = Factory(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: @com_invoice, po_number: "PO#"))
@@ -142,6 +144,8 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       expect(xp "Details/Detail/PoNumber", 1).to eq @tar3.commercial_invoice_line.po_number
       expect(xp "Details/Detail/Tariff", 1).to eq @tar3.hts_code
 
+      expect(REXML::XPath.match(@xml, "Lines/Line").size).to eq 7
+
       validate_charge_line 0, "D", "HMF", "HMF FEE", @h.number_with_precision(@entry.hmf, precision: 2)
       validate_charge_line 1, "D", "MPF", "MPF FEE", @h.number_with_precision(@entry.mpf, precision: 2)
       validate_charge_line 2, "D", "CTN", "COTTON FEE", @h.number_with_precision(@entry.cotton_fee, precision: 2)
@@ -151,6 +155,8 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       validate_charge_line 4, bil.charge_type, bil.charge_code, bil.charge_description, @h.number_with_precision(bil.charge_amount, precision: 2)
       bil = @invoice.broker_invoice_lines[1]
       validate_charge_line 5, bil.charge_type, bil.charge_code, bil.charge_description, @h.number_with_precision(bil.charge_amount, precision: 2)
+      bil = @invoice.broker_invoice_lines[2]
+      validate_charge_line 6, bil.charge_type, bil.charge_code, bil.charge_description, @h.number_with_precision(bil.charge_amount, precision: 2)
     end
 
     it "does not resend sent invoices" do
@@ -160,12 +166,12 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
     end
 
     it "sends additional invoices, but doesn't include duty charges" do
+      # This ir really just checking that invoices w/ suffixes don't incldue the duty data from the entry
       inv = @invoice.invoice_number
       @entry.sync_records.create! trading_partner: "foolo 810", fingerprint: inv
-      @invoice.update_attributes! invoice_number: inv + "A"
+      @invoice.update_attributes! invoice_number: inv + "A", suffix: "A"
       @h.receive nil, @entry
       expect(@ftp_files.size).to eq 1
-      expect(@entry.sync_records.first.fingerprint).to eq "#{inv}\n#{@invoice.invoice_number}"
 
       @xml = REXML::Document.new(@ftp_files[0]).root
 
@@ -186,7 +192,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       # test w/ a follow-up invoice
       inv = @invoice.invoice_number
       @entry.sync_records.create! trading_partner: "foolo 810", fingerprint: inv
-      @invoice.update_attributes! invoice_number: inv + "A"
+      @invoice.update_attributes! invoice_number: inv + "A", suffix: "A"
       @h.receive nil, @entry
       expect(@ftp_files.size).to eq 0
     end

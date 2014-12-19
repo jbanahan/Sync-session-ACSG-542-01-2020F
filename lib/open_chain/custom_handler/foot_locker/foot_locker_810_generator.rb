@@ -18,13 +18,14 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
     sync_record = entry.sync_records.where(trading_partner: "foolo 810").first_or_create(fingerprint: "")
     sent_invoices = sync_record.fingerprint.split "\n"
     
-    invoices_to_send = entry.broker_invoices.collect {|inv| sent_invoices.include?(inv.invoice_number) ? nil : inv}.compact
-    counter = 0
+    new_invoices = entry.broker_invoices.select {|inv| !sent_invoices.include? inv.invoice_number}
 
-    newly_sent_invoices = []
-    unless invoices_to_send.blank?
-      invoices_to_send.each do |invoice|
-        xml = generate_xml invoice, (sent_invoices.length == 0 && counter == 0)
+    # Due to the way we synthesize the duty fees (mpf, hmf, cotton fee, duty amounts), we're going to do a full resend 
+    # of all the invoice data for the whole entry so FOOLO can just do a full replace of the data for all the invoice files.
+    sent_invoices = []
+    unless new_invoices.blank?
+      entry.broker_invoices.each do |invoice|
+        xml = generate_xml invoice
 
         # XML might be blank if the invoices have no charges that should be transmitted
         unless xml.blank?
@@ -33,17 +34,16 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
             t.flush
             t.rewind
             ftp_file t
-            newly_sent_invoices << invoice
+            sent_invoices << invoice.invoice_number
           end
         end
-        counter += 1
       end
-      sync_record.update_attributes! fingerprint: (sent_invoices+newly_sent_invoices.map(&:invoice_number)).join("\n"), sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
+      sync_record.update_attributes! fingerprint: sent_invoices.join("\n"), sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
     end
     nil
   end
 
-  def generate_xml broker_invoice, initial_invoice
+  def generate_xml broker_invoice
     doc, root = build_xml_document "FootLockerInvoice810"
 
     add_element root, "InvoiceNumber", broker_invoice.invoice_number.strip
@@ -109,7 +109,8 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
 
     lines = nil
 
-    if initial_invoice
+    # Only include the Duty information on the initial invoice file (.ie the one sans suffix)
+    if broker_invoice.suffix.blank?
       lines ||= add_element root, "Lines"
       if (entry.hmf && entry.hmf > 0)
         add_line (add_element lines, "Line"), "D", "HMF", "HMF FEE", entry.hmf
@@ -122,15 +123,14 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
       if (entry.cotton_fee && entry.cotton_fee > 0)
         add_line (add_element lines, "Line"), "D", "CTN", "COTTON FEE", entry.cotton_fee
       end
-      
-      if (entry.total_duty && entry.total_duty > 0)
-        add_line (add_element lines, "Line"), "D", "0001", "DUTY", entry.total_duty
-      end
+
+      add_line (add_element lines, "Line"), "D", "0001", "DUTY", (entry.total_duty ? entry.total_duty : 0)
     end
 
     broker_invoice.broker_invoice_lines.each do |line|
       # Skip duty types, we've accounted for them above
-      next if line.charge_type == "D"
+      # EXCEPT, FOOLO wants to see the Duty Paid Direct (0099) lines
+      next if line.charge_type == "D" && line.charge_code != '0099'
 
       lines ||= add_element root, "Lines"
       inv_l = add_element lines, "Line"
