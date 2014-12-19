@@ -9,8 +9,8 @@
   <%=link_to "Delete", '#', :class=>'tf_remove btn btn-xs btn-danger'%>
 </div>
   <table>
-    <%= show_model_fields(f, :hts_line_number, table:true, show_prefix: false) %>
-    <%= show_custom_fields f, {show_prefix: false, table: true}%>
+    <%= show_model_fields(f, :hts_line_number, table:true) %>
+    <%= show_custom_fields f, table: true%>
   </table>
   <table class='tr_hts'>
     <thead>
@@ -23,17 +23,17 @@
     <tbody>
       <tr>
         <td class='hts_cell'>
-          <%= show_model_fields(f, :hts_hts_1, editor_only: true, show_prefix: false, attributes: {class: "hts_field", country: country_id, country_iso: iso, col: 1, size: 10}) %>
+          <%= show_model_fields(f, :hts_hts_1, editor_only: true, attributes: {class: "hts_field", country: country_id, country_iso: iso, col: 1, size: 10}) %>
           <div class='tariff_result'></div>
           <div class='auto_class_results class_col_1 cntry_<%=iso%>'></div>
         </td>
         <td class='hts_cell'>
-          <%= show_model_fields(f, :hts_hts_2, editor_only: true, show_prefix: false, attributes: {class: "hts_field", country: country_id, country_iso: iso, col: 2}) %>
+          <%= show_model_fields(f, :hts_hts_2, editor_only: true, attributes: {class: "hts_field", country: country_id, country_iso: iso, col: 2}) %>
           <div class='tariff_result'></div>
           <div class='auto_class_results class_col_2 cntry_<%=iso%>'></div>
         </td>
         <td class='hts_cell'>
-          <%= show_model_fields(f, :hts_hts_3, editor_only: true, show_prefix: false, attributes: {class: "hts_field", country: country_id, country_iso: iso, col: 3}) %>
+          <%= show_model_fields(f, :hts_hts_3, editor_only: true, attributes: {class: "hts_field", country: country_id, country_iso: iso, col: 3}) %>
           <div class='tariff_result'></div>
           <div class='auto_class_results class_col_3 cntry_<%=iso%>'></div>
         </td>
@@ -41,9 +41,9 @@
      <%if f.object.has_schedule_b? || is_us %>
       <tr><th><%=field_label :hts_hts_1_schedb, false%></th><th><%=field_label :hts_hts_2_schedb, false%></th><th><%=field_label :hts_hts_3_schedb, false%></th></tr>
       <tr>
-        <td><%= show_model_fields(f, :hts_hts_1_schedb, editor_only: true, show_prefix: false, attributes: {class: "sched_b_field", country: country_id, col: 1}) %></td>
-        <td><%= show_model_fields(f, :hts_hts_2_schedb, editor_only: true, show_prefix: false, attributes: {class: "sched_b_field", country: country_id, col: 2}) %></td>
-        <td><%= show_model_fields(f, :hts_hts_3_schedb, editor_only: true, show_prefix: false, attributes: {class: "sched_b_field", country: country_id, col: 3}) %></td>
+        <td><%= show_model_fields(f, :hts_hts_1_schedb, editor_only: true, attributes: {class: "sched_b_field", country: country_id, col: 1}) %></td>
+        <td><%= show_model_fields(f, :hts_hts_2_schedb, editor_only: true, attributes: {class: "sched_b_field", country: country_id, col: 2}) %></td>
+        <td><%= show_model_fields(f, :hts_hts_3_schedb, editor_only: true, attributes: {class: "sched_b_field", country: country_id, col: 3}) %></td>
       </tr>
      <%end%>
     </tbody>

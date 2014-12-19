@@ -47,17 +47,20 @@ class DeliveriesController < ApplicationController
   # POST /deliveries
   # POST /deliveries.xml
   def create
-    d = Delivery.new(params[:delivery])
+    d = Delivery.new
+    d.update_model_field_attributes params[:delivery], no_validate: true
+
     action_secure(d.can_edit?(current_user),d,{:verb => "create",:module_name=>"delivery"}) {
       succeed = lambda {|del|
         add_flash :notices, "Delivery was created successfully."
         redirect_to del
       }
       failure = lambda {|del,errors|
-        @delivery = Delivery.new(params[:delivery]) #transaction failure requires new object
-        set_custom_fields(@delivery) {|cv| @delivery.inject_custom_value cv}
-        errors.full_messages.each {|m| @delivery.errors[:base]<<m}
-        errors_to_flash @delivery
+        errors_to_flash del
+        
+        @delivery = Delivery.new #transaction failure requires new object
+        @delivery.update_model_field_attributes params[:delivery], no_validate: true
+        
         render :action => "new"
       }
       validate_and_save_module d, params[:delivery], succeed, failure

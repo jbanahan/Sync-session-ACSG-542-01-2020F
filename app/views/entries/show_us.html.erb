@@ -13,19 +13,6 @@
   <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>'>Sync Records</button>
 <%end-%>
 <% cache [current_user.company,current_user,@entry] do-%>
-<%if !current_user.hide_message?("ent_dl") -%>
-<%content_for :javascript do -%>
-$(function() {
-  $(document).ready(function() {
-    bootstro.start('', {items:[
-          {selector:'#ent_download', placement:'top', content:"<p>We've added a new feature!</p><p>Click to download entry data as an Excel workbook.</p>"}
-        ],
-        onExit:function(){Chain.hideMessage("ent_dl");}
-      });
-  });
-});
-<% end -%>
-<% end -%>
   <style>
   .ent_columns {
     width:99%;
@@ -61,23 +48,17 @@ $(function() {
       <tr>
         <td style="width:33%;">
           <table>
-            <%[:ent_entry_num,:ent_brok_ref,:ent_customer_references,:ent_mbols,:ent_hbols].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_entry_num,:ent_brok_ref,:ent_customer_references,:ent_mbols,:ent_hbols], table: true %>
           </table>
         </td>
         <td style="width:33%;">
           <table>
-            <%[:ent_release_cert_message,:ent_fda_message,:ent_paperless_certification,:ent_paperless_release,:ent_census_warning,:ent_error_free_release].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_release_cert_message,:ent_fda_message,:ent_paperless_certification,:ent_paperless_release,:ent_census_warning,:ent_error_free_release], table: true %>
           </table>
         </td>
         <td style="width:34%;">
           <table>
-            <%[:ent_cust_name,:ent_vendor_names,:ent_po_numbers,:ent_merch_desc].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_cust_name,:ent_vendor_names,:ent_po_numbers,:ent_merch_desc], table: true %>
           </table>
         </td>
       </tr>
@@ -90,23 +71,17 @@ $(function() {
       <tr>
         <td style="width:33%;">
           <table>
-            <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_it_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_eta_date,:ent_arrival_date,:ent_release_date].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_it_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_eta_date,:ent_arrival_date,:ent_release_date], table: true %>
           </table>
         </td>
         <td style="width:33%;">
           <table>
-            <%[:ent_fda_transmit_date,:ent_fda_review_date,:ent_fda_release_date,:ent_trucker_called_date, :ent_delivery_order_pickup_date, :ent_freight_pickup_date, :ent_free_date,:ent_duty_due_date].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_fda_transmit_date,:ent_fda_review_date,:ent_fda_release_date,:ent_trucker_called_date, :ent_delivery_order_pickup_date, :ent_freight_pickup_date, :ent_free_date,:ent_duty_due_date], table: true %>
           </table>
         </td>
         <td style="width:34%;">
           <table>
-            <%[:ent_last_billed_date,:ent_invoice_paid_date,:ent_edi_received_date,:ent_file_logged_date,:ent_first_7501_print,:ent_last_7501_print,:ent_last_exported_from_source].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_last_billed_date,:ent_invoice_paid_date,:ent_edi_received_date,:ent_file_logged_date,:ent_first_7501_print,:ent_last_7501_print,:ent_last_exported_from_source], table: true %>
           </table>
         </td>
       </tr>
@@ -118,30 +93,18 @@ $(function() {
       <tr>
         <td style="width:33%;">
           <table>
-            <%e_port_name_f = ModelField.find_by_uid(:ent_entry_port_name)%>
-            <% if e_port_name_f.can_view?(current_user) %>
-              <%=field_row e_port_name_f.label(false), "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{e_port_name_f.process_export(@entry,current_user)}<span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe%>
-            <% end %>
-            <%[
-              :ent_lading_port_name, :ent_unlading_port_name, :ent_destination_state,
-              :ent_type,:ent_mfids,:ent_export_country_codes,:ent_origin_country_codes,:ent_spis,:ent_vessel,:ent_voyage
-            ].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{editor} <span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
+            <%= show_model_fields @entry, [:ent_lading_port_name, :ent_unlading_port_name, :ent_destination_state,:ent_type,:ent_mfids,:ent_export_country_codes,:ent_origin_country_codes,:ent_spis,:vessel,:ent_voyage], table: true %>
           </table>
         </td>
         <td style="width:33%;">
           <table>
-            <%[:ent_ult_con_name,:ent_transport_mode_code,:ent_carrier_code,:ent_sbols,:ent_it_numbers,:ent_container_nums, :ent_container_sizes,:ent_fcl_lcl,:ent_ult_con_code,:ent_cust_num,:ent_comp_num,:ent_div_num,:ent_recon_flags].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+          <%= show_model_fields @entry, [:ent_ult_con_name,:ent_transport_mode_code,:ent_carrier_code,:ent_sbols,:ent_it_numbers,:ent_container_nums, :ent_container_sizes,:ent_fcl_lcl,:ent_ult_con_code,:ent_cust_num,:ent_comp_num,:ent_div_num,:ent_recon_flags], table: true %>
           </table>
         </td>
         <td style="width:34%;">
           <table>
-            <%[:ent_total_fees,:ent_total_duty,:ent_total_duty_direct,:ent_cotton_fee, :ent_hmf, :ent_mpf,:ent_entered_value,:ent_total_invoiced_value,:ent_gross_weight,:ent_total_units,:ent_total_units_uoms,:ent_total_packages,:ent_total_packages_uom, :ent_broker_invoice_total, :ent_duty_billed].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_total_fees,:ent_total_duty,:ent_total_duty_direct,:ent_cotton_fee, :ent_hmf, :ent_mpf,:ent_entered_value,:ent_total_invoiced_value,:ent_gross_weight,:ent_total_units,:ent_total_units_uoms,:ent_total_packages,:ent_total_packages_uom, :ent_broker_invoice_total, :ent_duty_billed], table: true %>
           </table>
         </td>
       </tr>
@@ -167,17 +130,12 @@ $(function() {
       <tr>
         <td style="width:50%;">
           <table>
-            <%[:ent_liq_date,:ent_liquidation_total,:ent_liquidation_duty,:ent_liquidation_fees,:ent_liquidation_tax,:ent_liquidation_ada,:ent_liquidation_cvd
-            ].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_liq_date,:ent_liquidation_total,:ent_liquidation_duty,:ent_liquidation_fees,:ent_liquidation_tax,:ent_liquidation_ada,:ent_liquidation_cvd], table: true %>
           </table>
         </td>
         <td style="width:50%;">
           <table>
-            <%[:ent_liquidation_type,:ent_liquidation_type_code,:ent_liquidation_action_description,:ent_liquidation_action_code,:ent_liquidation_extension_description,:ent_liquidation_extension_code,:ent_liquidation_extension_count].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_liquidation_type,:ent_liquidation_type_code,:ent_liquidation_action_description,:ent_liquidation_action_code,:ent_liquidation_extension_description,:ent_liquidation_extension_code,:ent_liquidation_extension_count], table: true %>
           </table>
         </td>
       </tr>
@@ -191,16 +149,11 @@ $(function() {
       <tr>
         <td style="width:50%;">
           <table>
-            <%[:ent_pay_type,:ent_daily_statement_number,:ent_daily_statement_due_date,:ent_daily_statement_approved_date].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
-          </table>
+            <%= show_model_fields @entry, [:ent_pay_type,:ent_daily_statement_number,:ent_daily_statement_due_date,:ent_daily_statement_approved_date], table: true %>
         </td>
         <td style="width:50%;">
           <table>
-            <%[:ent_statement_month,:ent_monthly_statement_number,:ent_monthly_statement_due_date,:ent_monthly_statement_received_date,:ent_monthly_statement_paid_date].each do |f|%>
-              <%=field_view_row @entry, f %>
-            <%end%>
+            <%= show_model_fields @entry, [:ent_statement_month,:ent_monthly_statement_number,:ent_monthly_statement_due_date,:ent_monthly_statement_received_date,:ent_monthly_statement_paid_date], table: true %>
           </table>
         </td>
       </tr>
@@ -217,22 +170,22 @@ $(function() {
   <%ci_line_count = @entry.commercial_invoice_lines.count  %>
   <%if @entry.commercial_invoices.count >0%>
     <h1>Commercial Invoices</h1>
-    <%ci_summary_fields = ModelField.viewable_model_fields(current_user, [:ci_invoice_number,:ci_vendor_name,:ci_invoice_value,:ci_gross_weight])%>
+    <%ci_summary_fields = [:ci_invoice_number,:ci_vendor_name,:ci_invoice_value,:ci_gross_weight]%>
     <table class='detail_table'>
-      <thead><tr>
-        <%ci_summary_fields.each do |f|%>
-          <th><%=field_label f, false%></th>
-        <%end%>
-      </tr></thead>
+      <thead>
+        <tr>
+          <%= model_field_labels ci_summary_fields, table: true, heading: true  %>
+        </tr>
+      </thead>
       <tbody>
         <%@entry.commercial_invoices.each do |ci|%>
           <tr class='hover'>
             <%ci_summary_fields.each do |f|%>
-              <%if ci_line_count < 200%>
-                <td><%=f==:ci_invoice_number ? link_to(field_value(ci,f),"#ci_#{ci.id}") : field_value(ci, f)%></td>
-              <%else  %>
-                <td><%=field_value(ci, f)%></td>
-              <%end  %>
+              <%if ci_line_count < 200 && f==:ci_invoice_number %>
+                <%= show_model_fields ci, f, table:true, editor_only: true, wrap_with: lambda {|mf, value| link_to(value, "#ci_#{ci.id}")} %>
+              <% else %>
+                <%= show_model_fields ci, f, table:true, editor_only: true %>
+              <% end %>
             <%end%>
           </tr>
         <%end%>
@@ -245,20 +198,20 @@ $(function() {
       <a name='ci_<%=ci.id%>'></a>
       <table class='ent_columns'>
         <tbody>
-          <tr><td colspan='2'><h3><%=field_label :ci_invoice_number, false%> - <%=field_value(ci,:ci_invoice_number)%></h3></td></tr>
+          <tr>
+            <td colspan='2'>
+              <h3><%= model_field_labels :ci_invoice_number %><%= show_model_fields ci, :ci_invoice_number, editor_only: true, wrap_with: lambda {|mf, value| (" - " + value).html_safe} %></h3>
+            </td>
+          </tr>
           <tr>
             <td style='width:50%;'>
               <table>
-                <%[:ci_vendor_name,:ci_mfid,:ci_invoice_date,:ci_gross_weight,:ci_country_origin_code].each do |f|%>
-                  <%=field_view_row ci,f,false%>
-                <%end%>
+                <%= show_model_fields ci, [:ci_vendor_name,:ci_mfid,:ci_invoice_date,:ci_gross_weight,:ci_country_origin_code], table:true %>
               </table>
             </td>
             <td style='width:50%;'>
               <table>
-                <%[:ci_invoice_value,:ci_total_charges,:ci_invoice_value_foreign,:ci_currency, :ci_total_quantity, :ci_total_quantity_uom].each do |f|%>
-                  <%=field_view_row ci,f,false%>
-                <%end%>
+                <%= show_model_fields ci, [:ci_invoice_value,:ci_total_charges,:ci_invoice_value_foreign,:ci_currency, :ci_total_quantity, :ci_total_quantity_uom], table:true %>
               </table>
             </td>
           </tr>
@@ -266,16 +219,16 @@ $(function() {
       </table>
       <%fields = ModelField.viewable_model_fields(current_user, [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume,:cil_hmf,:cil_prorated_mpf,:cil_cotton_fee, :cil_contract_amount])%>
       <table class='table table-condensed table-bordered'>
-        <thead><tr>
-          <%fields.each do |f|%>
-            <th><%=field_label f, false%></th>
-          <%end%>
-        </tr></thead>
+        <thead>
+          <tr>
+            <%= model_field_labels fields, table: true, heading: true %>
+          </tr>
+        </thead>
         <tbody>
           <%ci.commercial_invoice_lines.each do |line|%>
             <tr class='hover ci_line'>
               <%fields.each_with_index do |f,i|%>
-                <td <%="rowspan='2'" if i==0%> <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>><%=field_value(line, f)%></td>
+                <%= show_model_fields line, f, editor_only: true, table: true %>
               <%end%>
             </tr>
             <% 
@@ -356,20 +309,16 @@ $(function() {
     <h1>Broker Invoices</h1>
     <%fields = [:bi_invoice_number,:bi_invoice_date,:bi_suffix,:bi_invoice_total,:bi_currency]%>
     <table class='detail_table'>
-      <thead><tr>
-        <%fields.each do |f|%>
-          <th><%=field_label f, false%></th>
-        <%end%>
-      </tr></thead>
+      <thead>
+        <tr>
+          <%= model_field_labels fields, table: true, heading: true  %>
+        </tr>
+      </thead>
       <tbody>
         <%@entry.broker_invoices.each do |line|%>
           <%if line.can_view? current_user %>
             <tr class='hover'>
-              <%fields.each do |f|%>
-                <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>>
-                  <%=f==:bi_invoice_number ? link_to(field_value(line,f),"#bi_#{line.id}") : field_value(line, f)%>
-                </td>
-              <%end%>
+              <%= show_model_fields line, fields, table: true, editor_only: true, bi_invoice_number: {wrap_with: lambda{|mf, value| link_to(value, "#bi_#{line.id}")}} %>
             </tr>
           <% end %>
         <%end%>
@@ -381,20 +330,20 @@ $(function() {
         <a name='bi_<%=bi.id%>'></a>
         <table class='ent_columns'>
           <tbody>
-            <tr><td colspan='2'><h3><%=field_label :bi_invoice_date, false%> - <%=field_value(bi,:ci_invoice_date)%></h3></td></tr>
+            <tr>
+              <td colspan='2'>
+                <h3><%= model_field_labels :bi_invoice_date %><%= show_model_fields bi, :bi_invoice_date, editor_only: true, wrap_with: lambda {|mf, value| (" - " + value).html_safe} %></h3>
+              </td>
+            </tr>
             <tr>
               <td style='width:50%;'>
                 <table>
-                  <%[:bi_invoice_number,:bi_suffix,:bi_invoice_total,:bi_currency].each do |f|%>
-                    <%=field_view_row bi,f,false%>
-                  <%end%>
+                  <%= show_model_fields bi, [:bi_invoice_number,:bi_suffix,:bi_invoice_total,:bi_currency], table:true %>
                 </table>
               </td>
               <td style='width:50%;'>
                 <table>
-                  <%[:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso].each do |f|%>
-                    <%=field_view_row bi,f,false%>
-                  <%end%>
+                  <%= show_model_fields bi, [:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso], table:true %>
                 </table>
               </td>
             </tr>

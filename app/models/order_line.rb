@@ -2,6 +2,7 @@ class OrderLine < ActiveRecord::Base
   include LinesSupport
   include CustomFieldSupport
   include ShallowMerger
+  include UpdateModelFieldsSupport
   
   belongs_to :order
 

@@ -12,7 +12,12 @@ class SalesOrderLinesController < LinesController
     p.sales_order_lines
   end
   def set_products_variable p
-    @products = Product.all
+    # This is obviously not going to work
+    # for real usage, but we're not really using it
+    # in real cases yet anyway, so I'm limiting to 1000
+    # so we don't turn on and accidently load 300K products
+    # into a select box
+    @products = Product.limit(1000).all
   end
   def set_parent_variable obj
     @sales_order = obj

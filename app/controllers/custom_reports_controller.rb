@@ -135,7 +135,7 @@ class CustomReportsController < ApplicationController
   end
   private 
   def strip_fields hash
-    hash.delete_if {|k,v| mf = ModelField.find_by_uid(v[:model_field_uid]); !mf.user_accessible? || !mf.can_view?(current_user) }
+    hash.delete_if {|k,v| mf = ModelField.find_by_uid(v[:model_field_uid]); !(mf.can_view?(current_user) && mf.user_accessible?)}
   end
   def inheritance? klass
     k = klass

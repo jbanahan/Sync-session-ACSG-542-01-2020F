@@ -54,7 +54,7 @@ private
   def email cmt
     to = params[:to]
     unless to.blank?
-      OpenMailer.send_comment(current_user,to,cmt,comment_url(cmt)).deliver
+      OpenMailer.delay.send_comment(current_user,to,cmt,comment_url(cmt))
     end
   end
 

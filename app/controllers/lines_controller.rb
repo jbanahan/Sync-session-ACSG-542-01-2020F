@@ -6,14 +6,20 @@ class LinesController < ApplicationController
     action_secure(o.can_edit?(current_user),o,{:verb=>"create lines for",:module_name=>module_name}) {
       line = nil
       begin
-        o.transaction do
+        Lock.with_lock_retry(o) do 
           params[:lines].each do |p|
-            line = child_objects(o).build(p[1])
-            line.save if before_save(line)
+            line = child_objects(o).build
+            valid = line.assign_model_field_attributes p[1]
+            raise OpenChain::ValidationLogicError unless valid
+            line.save if before_save(line, p[1])
             OpenChain::FieldLogicValidator.validate! line
+
+            line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>p[1][:milestone_plan_id]) if p[1][:milestone_plan_id]
+            line.piece_sets.each {|p| p.create_forecasts}
           end
-          o.create_snapshot if o.respond_to?('create_snapshot')
         end
+
+        o.create_async_snapshot if o.respond_to?('create_snapshot')
       rescue OpenChain::ValidationLogicError
         errors_to_flash line unless line.nil?
       end
@@ -24,18 +30,20 @@ class LinesController < ApplicationController
 	def create
 		o = find_parent
 		action_secure(o.can_edit?(current_user),o,{:verb=>"create lines for",:module_name=>module_name}) {
-  		line = child_objects(o).build(params[update_symbol])
       begin
-        line.transaction do 
-          if before_save(line)
-            line.save! 
-            update_custom_fields line, params[update_custom_field_symbol]
+        line = child_objects(o).build
+        valid = line.assign_model_field_attributes params[update_symbol], exclude_blank_values: true
+        raise OpenChain::ValidationLogicError unless valid
+        Lock.with_lock_retry(o) do 
+          if before_save(line, params[update_symbol])
+            line.save!
             OpenChain::FieldLogicValidator.validate! line
             line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>params[:milestone_plan_id]) if params[:milestone_plan_id]
             line.piece_sets.each {|p| p.create_forecasts}
           end
-          o.create_snapshot if o.respond_to?('create_snapshot')
         end
+
+        o.create_async_snapshot if o.respond_to?('create_snapshot')
       rescue OpenChain::ValidationLogicError
         errors_to_flash line
       end
@@ -50,7 +58,7 @@ class LinesController < ApplicationController
   		@line = find_line
   		@line.destroy
   		errors_to_flash @line
-      o.create_snapshot if o.respond_to?('create_snapshot')
+      o.create_async_snapshot if o.respond_to?('create_snapshot')
   		redirect_to o 
 		}
 	end
@@ -69,36 +77,28 @@ class LinesController < ApplicationController
 		o = find_parent
 		action_secure(o.can_edit?(current_user),o,{:verb=>"edit lines for",:module_name=>module_name}) {
 		  set_parent_variable o
-      line = find_line 
-      line.attributes = params[update_symbol]
-      respond_to do |format|
-        good = false
-        begin
-          line.transaction do
-            if before_save(line) 
-              line.save!
-              update_custom_fields line, params[update_custom_field_symbol]
-              after_update line
-              OpenChain::FieldLogicValidator.validate! line
-              line.piece_sets.each {|p| p.create_forecasts}
-              o.create_snapshot if o.respond_to?('create_snapshot')
-              add_flash :notices, "Line updated sucessfully."
-              good = true
-            end
+      good = false
+      line = find_line
+      begin
+        Lock.with_lock_retry(line) do
+          valid = line.assign_model_field_attributes params[update_symbol]
+          raise OpenChain::ValidationLogicError unless valid
+          if before_save(line, params[update_symbol]) 
+            line.save!
+            after_update line
+            OpenChain::FieldLogicValidator.validate! line
+            line.piece_sets.each {|p| p.create_forecasts}
+            
+            add_flash :notices, "Line updated sucessfully."
+            good = true
           end
-        rescue OpenChain::ValidationLogicError 
-
         end
-        if good
-          format.html { redirect_to(o) }
-          format.xml  { head :ok }
-        else
-          errors_to_flash line
-          set_products_variable o
-          format.html { redirect_to edit_line_path(o,line) }
-          format.xml  { render :xml => @line.errors, :status => :unprocessable_entity }
-        end
+        o.create_async_snapshot if o.respond_to?('create_snapshot')
+      rescue OpenChain::ValidationLogicError 
+        errors_to_flash line
       end
+
+      good ? redirect_to(o) : redirect_to(edit_line_path(o,line))
 		}
 	end
 
@@ -107,7 +107,7 @@ class LinesController < ApplicationController
     #empty - holder for callbacks in subclasses
   end
 
-  def before_save line
+  def before_save line, line_params
     true
   end
 end

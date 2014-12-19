@@ -136,17 +136,20 @@ describe SearchSetup do
       r = Factory(:region)
       r.countries << Factory(:country)
       ModelField.reload true
+      u = Factory(:admin_user)
       CoreModule::CORE_MODULES.each do |cm|
         cm.klass.stub(:search_where).and_return("1=1")
         
         ss = SearchSetup.new(:module_type=>cm.class_name)
-        cm.model_fields.keys.each_with_index do |mfid,i|
-          ss.search_columns.build(:model_field_uid=>mfid,:rank=>i)
-          ss.sort_criterions.build(:model_field_uid=>mfid,:rank=>i)
-          ss.search_criterions.build(:model_field_uid=>mfid,:operator=>'null')
+        i = 0
+        cm.model_fields.each_pair do |uid, mf|
+          next unless mf.can_view?(u)
+          ss.search_columns.build(:model_field_uid=>uid,:rank=>(i+=1))
+          ss.sort_criterions.build(:model_field_uid=>uid,:rank=>i)
+          ss.search_criterions.build(:model_field_uid=>uid,:operator=>'null')
         end
         #just making sure each query executes without error
-        SearchQuery.new(ss,User.new).execute
+        SearchQuery.new(ss,u).execute
       end
     end
   end

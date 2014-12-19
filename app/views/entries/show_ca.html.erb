@@ -1,30 +1,3 @@
-<%content_for :javascript do %>
-  $(function() {
-    $('#lnk_add_inv').click(function(ev) {
-      ev.preventDefault();
-      $('#frm_new_bi').slideDown('slow');
-    });
-    $(document).on('click', ".inv_det_del", function(ev) {
-      ev.preventDefault();
-      $(this).parents('tr').fadeOut('slow').remove();
-    });
-    OCInvoice.init();
-    var cCodes = [
-      {code:'',desc:''},
-      <%=ChargeCode.order('code ASC').collect {|cc| "{code:'#{cc.code}',desc:'#{cc.description}',hst:'#{cc.apply_hst? ? "0.13" : "0.000" }'}"}.join(',').html_safe%>
-    ];
-    OCInvoice.addInvoiceLine("#inv_det",cCodes);
-    $(document).on('change', ".inv_det_fld", function() {
-      var v = $(this).val();
-      if(v==undefined) {
-        v = $(this).children(':selected').val();
-      }
-      if($(this).parents("tr").is(":last-child") && v && v.length > 0) {
-        OCInvoice.addInvoiceLine("#inv_det",cCodes);
-      }
-    });
-  });
-<%end%>
 <%rule_state_field = ModelField.find_by_uid(:ent_rule_state)%>
 <%content_for :action_bar do -%>
   <button class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
@@ -59,29 +32,20 @@
     <tr>
       <td style="width:33%;">
         <table>
-          <%[:ent_entry_num,:ent_brok_ref,:ent_cust_num, :ent_cust_name, :ent_importer_tax_id,:ent_cargo_control_number,
+          <%= show_model_fields @entry, [:ent_entry_num,:ent_brok_ref,:ent_cust_num, :ent_cust_name, :ent_importer_tax_id,:ent_cargo_control_number,
           :ent_ca_entry_type,:ent_po_numbers,
-          :ent_vendor_names, :ent_customer_references, :ent_total_units,:ent_total_packages, :ent_total_packages_uom, :ent_gross_weight, :ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst].each do |f|%>
-            <%=field_view_row @entry, f %>
-          <%end%>
+          :ent_vendor_names, :ent_customer_references, :ent_total_units,:ent_total_packages, :ent_total_packages_uom, :ent_gross_weight, :ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst], table:true %>
         </table>
       </td>
       <td style="width:33%;">
         <table>
-          <%[:ent_direct_shipment_date,:ent_eta_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date, :ent_k84_receive_date, :ent_k84_due_date, :ent_exam_ordered_date, :ent_b3_print_date].each do |f|%>
-            <%=field_view_row @entry, f %>
-          <%end%>
+          <%= show_model_fields @entry, [:ent_direct_shipment_date,:ent_eta_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date, :ent_k84_receive_date, :ent_k84_due_date, :ent_exam_ordered_date, :ent_b3_print_date], table: true %>
         </table>
       </td>
       <td style="width:34%;">
         <table>
-          <%e_port_name_f = ModelField.find_by_uid(:ent_entry_port_code)%>
-          <% if e_port_name_f.can_view?(current_user)%>
-            <%=field_row e_port_name_f.label(false), "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{e_port_name_f.process_export(@entry,current_user)}<span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe %>
-          <% end %>
-          <%[:ent_mbols,:ent_hbols,:ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_carrier_name,:ent_voyage,:ent_ult_con_name,:ent_employee_name].each do |f|%>
-            <%=field_view_row @entry, f %>
-          <%end%>
+          <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{editor} <span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
+          <%= show_model_fields @entry, [:ent_mbols,:ent_hbols,:ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_carrier_name,:ent_voyage,:ent_ult_con_name,:ent_employee_name], table: true %>
         </table>
       </td>
     </tr>
@@ -100,20 +64,20 @@
   <h1>Commercial Invoices</h1>
   <%ci_summary_fields = [:ci_invoice_number,:ci_vendor_name,:ci_invoice_value]%>
   <table class='detail_table'>
-    <thead><tr>
-      <%ci_summary_fields.each do |f|%>
-        <th><%=field_label f, false%></th>
-      <%end%>
-    </tr></thead>
+    <thead>
+      <tr>
+         <%= model_field_labels ci_summary_fields, table: true, heading: true  %>
+      </tr>
+    </thead>
     <tbody>
       <%@entry.commercial_invoices.each do |ci|%>
         <tr class='hover'>
           <%ci_summary_fields.each do |f|%>
-            <%if ci_line_count < 200%>
-              <td><%=f==:ci_invoice_number ? link_to(field_value(ci,f),"#ci_#{ci.id}") : field_value(ci, f)%></td>
-            <%else%>
-              <td><%=field_value(ci, f)%></td>
-            <%end  %>
+            <%if ci_line_count < 200 && f==:ci_invoice_number %>
+              <%= show_model_fields ci, f, table:true, editor_only: true, wrap_with: lambda {|mf, value| link_to(value, "#ci_#{ci.id}")} %>
+            <% else %>
+              <%= show_model_fields ci, f, table:true, editor_only: true %>
+            <% end %>
           <%end%>
         </tr>
       <%end%>
@@ -126,43 +90,43 @@
     <a name='ci_<%=ci.id%>'></a>
     <table class='ent_columns'>
       <tbody>
-        <tr><td colspan='2'><h3><%=field_label :ci_invoice_number, false%> - <%=field_value(ci,:ci_invoice_number)%></h3></td></tr>
+        <tr>
+          <td colspan='2'>
+            <h3><%= model_field_labels :ci_invoice_number %><%= show_model_fields ci, :ci_invoice_number, editor_only: true, wrap_with: lambda {|mf, value| (" - " + value).html_safe} %></h3>
+          </td>
+        </tr>
         <tr>
           <td style='width:50%;'>
             <table>
-              <%[:ci_vendor_name,:ci_invoice_date,:ci_invoice_value].each do |f|%>
-                <%=field_view_row ci,f,false%>
-              <%end%>
+              <%= show_model_fields ci, [:ci_vendor_name,:ci_invoice_date,:ci_invoice_value], table:true %>
             </table>
           </td>
           <td style='width:50%;'>
             <table>
-              <%[:ci_currency,:ci_exchange_rate].each do |f|%>
-                <%=field_view_row ci,f,false%>
-              <%end%>
+              <%= show_model_fields ci, [:ci_currency,:ci_exchange_rate], table:true %>
             </table>
           </td>
         </tr>
       </tbody>
     </table>
-    <%fields = [:cil_part_number,:cil_po_number,:cil_customer_reference, :cil_units,:cil_uom,:ent_unit_price,:cil_value,:cil_adjustments_amount,:cil_country_origin_code,:ent_state_origin_code,:cil_country_export_code,:ent_state_export_code]%>
+    <%fields = ModelField.viewable_model_fields(current_user, [:cil_part_number,:cil_po_number,:cil_customer_reference, :cil_units,:cil_uom,:ent_unit_price,:cil_value,:cil_adjustments_amount,:cil_country_origin_code,:ent_state_origin_code,:cil_country_export_code,:ent_state_export_code])%>
     <table class='table table-condensed table-bordered'>
-      <thead><tr>
-        <%fields.each do |f|%>
-          <th><%=field_label f, false%></th>
-        <%end%>
-      </tr></thead>
+      <thead>
+        <tr>
+          <%= model_field_labels fields, table: true, heading: true %>
+        </tr>
+      </thead>
       <tbody>
         <%ci.commercial_invoice_lines.each do |line|%>
           <tr class='hover ci_line'>
-            <%fields.each_with_index do |f,i|%>
-              <td <%="rowspan='2'" if i==0%> <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>><%=field_value(line, f)%></td>
+          <%fields.each_with_index do |f,i|%>
+              <%= show_model_fields line, f, editor_only: true, table: true %>
             <%end%>
           </tr>
           <% if line.commercial_invoice_tariffs.count > 0%>
             <tr>
               <td>&nbsp;</td>
-              <td colspan='11' style='font-size:111%;'>
+              <td colspan='<%=fields.length - 1%>' style='font-size:111%;'>
                 <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:ent_tariff_provision,
                   :cit_classification_qty_1,:cit_classification_uom_1,:ent_value_for_duty_code,:ent_gst_rate_code,:ent_gst_amount,
                   :ent_sima_amount,:ent_excise_amount,:ent_excise_rate_code, :cit_tariff_description], :lines=>line.commercial_invoice_tariffs,
@@ -187,20 +151,16 @@
   <h1>Broker Invoices</h1>
   <%fields = [:bi_invoice_number,:bi_invoice_date,:bi_suffix,:bi_invoice_total]%>
   <table class='detail_table'>
-    <thead><tr>
-      <%fields.each do |f|%>
-        <th><%=field_label f, false%></th>
-      <%end%>
-    </tr></thead>
+    <thead>
+      <tr>
+        <%= model_field_labels fields, table: true, heading: true  %>
+      </tr>
+    </thead>
     <tbody>
       <%@entry.broker_invoices.each do |line|%>
         <%if line.can_view? current_user %>
           <tr class='hover'>
-            <%fields.each do |f|%>
-              <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>>
-                <%=f==:bi_invoice_number ? link_to(field_value(line,f),"#bi_#{line.id}") : field_value(line, f)%>
-              </td>
-            <%end%>
+            <%= show_model_fields line, fields, table: true, editor_only: true, bi_invoice_number: {wrap_with: lambda{|mf, value| link_to(value, "#bi_#{line.id}")}} %>
           </tr>
         <% end %>
       <%end%>
@@ -212,20 +172,20 @@
       <a name='bi_<%=bi.id%>'></a>
       <table class='ent_columns'>
         <tbody>
-          <tr><td colspan='2'><h3><%=field_label :bi_invoice_date, false%> - <%=field_value(bi,:ci_invoice_date)%></h3></td></tr>
+          <tr>
+            <td colspan='2'>
+              <h3><%= model_field_labels :bi_invoice_date %><%= show_model_fields bi, :bi_invoice_date, editor_only: true, wrap_with: lambda {|mf, value| (" - " + value).html_safe} %></h3>
+            </td>
+          </tr>
           <tr>
             <td style='width:50%;'>
               <table>
-                <%[:bi_invoice_number,:bi_suffix,:bi_invoice_total,:bi_currency].each do |f|%>
-                  <%=field_view_row bi,f,false%>
-                <%end%>
+                <%= show_model_fields bi, [:bi_invoice_number,:bi_suffix,:bi_invoice_total,:bi_currency], table:true %>
               </table>
             </td>
             <td style='width:50%;'>
               <table>
-                <%[:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso].each do |f|%>
-                  <%=field_view_row bi,f,false%>
-                <%end%>
+                <%= show_model_fields bi, [:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso], table:true %>
               </table>
             </td>
           </tr>
@@ -234,27 +194,6 @@
       <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type,:bi_line_hst_percent],:lines=>bi.broker_invoice_lines}%>
       <%=secure_link bi, current_user%>
     <% end %>
-  <%end%>
-  <% if current_user.edit_broker_invoices?%>
-    <a href='#' id='lnk_add_inv'>Add Invoice</a>
-    <%=form_for [@entry, @entry.broker_invoices.build], :html=>{:id=>'frm_new_bi',:style=>'display:none;'} do |f|%>
-      <h3>New Invoice</h3>
-      <table>
-        <%=field_row field_label(:bi_invoice_number), f.text_field(:invoice_number, "class" => "focus_first") %>
-        <%=field_row field_label(:bi_suffix), f.text_field(:suffix) %>
-        <%=field_row field_label(:bi_currency), f.text_field(:currency)%>
-        <%=field_row field_label(:bi_invoice_date), f.text_field(:invoice_date, :class=>'isdate')%>
-      </table>
-      <table class='detail_table' id='inv_det'>
-        <thead><tr>
-          <%[:bi_line_charge_code, :bi_line_charge_description,:bi_line_charge_amount,:bi_line_hst_percent].each do |fl|%>
-            <th><%=field_label fl%></th>
-          <%end%>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
-      <%=f.submit "Save"%>
-    <%end%>
   <%end%>
 <%end%>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @entry, :width=>"wide"} %>

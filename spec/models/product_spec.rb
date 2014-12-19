@@ -180,4 +180,94 @@ describe Product do
       product.linkable_attachments.first.should == linkable
     end
   end
+
+  describe "missing_classification_country?" do
+    it "should reject making classification records without a country of some sort" do
+      p = Factory(:product)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
+
+      params = {
+        'id' => p.id,
+        'prod_uid' => "unique_identifier123",
+        'classifications_attributes' => [
+          {@class_cd.model_field_uid.to_s => 'testing'}
+        ]
+      }
+
+      expect(p.update_model_field_attributes! params).to be_true
+      p.reload
+      expect(p.unique_identifier).to eq "unique_identifier123"
+      expect(p.classifications.size).to eq 0
+    end
+
+    it "should not reject if updating an existing classification" do
+      c = Factory(:classification)
+      p = c.product
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:string)
+
+      params = {
+        'prod_uid' => "unique_identifier123",
+        'classifications_attributes' => [
+          {'id' => c.id, @class_cd.model_field_uid.to_s => 'testing'}
+        ]
+      }
+
+      expect(p.update_model_field_attributes! params).to be_true
+      p.reload
+      expect(p.unique_identifier).to eq "unique_identifier123"
+      expect(p.classifications.size).to eq 1
+      expect(p.classifications.first.get_custom_value(@class_cd).value).to eq "testing"
+    end
+
+    it "should allow creating classification if country id used" do
+      country = Factory(:country)
+      p = Factory(:product)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:string)
+
+      params = {
+        'classifications_attributes' => [
+          {'class_cntry_id' => country.id}
+        ]
+      }
+
+      expect(p.update_model_field_attributes! params).to be_true
+      p.reload
+      expect(p.classifications.size).to eq 1
+      expect(p.classifications.first.country).to eq country
+    end
+
+    it "should allow creating classification if country iso used" do
+      country = Factory(:country)
+      p = Factory(:product)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:string)
+
+      params = {
+        'classifications_attributes' => [
+          {'class_cntry_iso' => country.iso_code}
+        ]
+      }
+
+      expect(p.update_model_field_attributes! params).to be_true
+      p.reload
+      expect(p.classifications.size).to eq 1
+      expect(p.classifications.first.country).to eq country
+    end
+
+    it "should allow creating classification if country name used" do
+      country = Factory(:country)
+      p = Factory(:product)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:string)
+
+      params = {
+        'classifications_attributes' => [
+          {'class_cntry_name' => country.name}
+        ]
+      }
+
+      expect(p.update_model_field_attributes! params).to be_true
+      p.reload
+      expect(p.classifications.size).to eq 1
+      expect(p.classifications.first.country).to eq country
+    end
+  end
 end

@@ -1,13 +1,15 @@
 class DeliveryLinesController < LinesController
 #LinesController callback(s)
-  def before_save line
-    sale_line_id = line.linked_sales_order_line_id
+  def before_save line, line_params
+    sale_line_id = line_params[:linked_sales_order_line_id]
     ok = true
     unless sale_line_id.blank?
-      soline = SalesOrderLine.find(sale_line_id)
+      soline = SalesOrderLine.where(id: sale_line_id).first
       if !soline.nil? && !soline.sales_order.can_view?(current_user)
         ok = false
         add_flash :errors, "You do not have permission to assign values from Sale \"#{soline.sales_order.order_number}\""
+      else
+        line.linked_sales_order_line_id = soline.id
       end
     end
     ok

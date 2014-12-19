@@ -8,25 +8,9 @@
   <%=f.hidden_field :country_id%>
   <%=f.hidden_field :hts_code%>
   <table>
-    <%=field_row field_label(:ot_cntry_name), @official_tariff.country.name%>
-    <%=field_row field_label(:ot_hts_code), @official_tariff.hts_code.hts_format%>
-    <%=field_row field_label(:ot_common_rate), @official_tariff.common_rate%>
-    <%=field_row field_label(:ot_gen_rate), @official_tariff.general_rate%>
-    <%=field_row field_label(:ot_chapter), @official_tariff.chapter%>
-    <%=field_row field_label(:ot_heading), @official_tariff.heading%>
-    <%=field_row field_label(:ot_sub_heading), @official_tariff.sub_heading%>
-    <%=field_row field_label(:ot_remaining), @official_tariff.remaining_description%>
-    <%=field_row field_label(:ot_spec_rates), @official_tariff.special_rates%>
-    <%=field_row field_label(:ot_ad_v),@official_tariff.add_valorem_rate%>
-    <%=field_row field_label(:ot_per_u), @official_tariff.per_unit_rate%>
-    <%=field_row field_label(:ot_uom), @official_tariff.unit_of_measure%>
-    <%=field_row field_label(:ot_mfn), @official_tariff.most_favored_nation_rate%>
-    <%=field_row field_label(:ot_gpt), @official_tariff.general_preferential_tariff_rate%>
-    <%=field_row field_label(:ot_erga_omnes_rate), @official_tariff.erga_omnes_rate%>
-    <%=field_row field_label(:ot_col_2), @official_tariff.column_2_rate%>
+    <%= show_model_fields @official_tariff, [:ot_cntry_name, :ot_hts_code, :ot_common_rate,:ot_gen_rate,:ot_chapter,:ot_heading,:ot_sub_heading,:ot_remaining,:ot_spec_rates, :ot_ad_v, :ot_per_u, :ot_uom, :ot_mfn, :ot_gpt, :ot_erga_omnes_rate, :ot_col_2], table: true %>
     <%if @official_tariff.country.iso_code=="TW"%>
-    <%=field_row field_label(:ot_import_regs), @official_tariff.import_regulations%>
-    <%=field_row field_label(:ot_export_regs), @official_tariff.export_regulations%>
+      <%= show_model_fields @official_tariff, [:ot_import_regs, :ot_export_regs], table: true %>
     <%end%>
     <% b_ruling = @official_tariff.binding_ruling_url %>
     <% if !b_ruling.nil?%>

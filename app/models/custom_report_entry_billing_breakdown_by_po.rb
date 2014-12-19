@@ -124,18 +124,10 @@ class CustomReportEntryBillingBreakdownByPo < CustomReport
         write_columns row, col, cols
         row += 1
       end
-    end    
-
-    col = 0
-    heading_row 0
-    if self.include_links?
-      write 0, col, "Web Links"
-      col += 1
     end
 
-    write_columns 0, col, (["Broker Reference", "Invoice Number", "PO Number", "PO Total"] \
-    		+ description_columns \
-        + search_cols.collect {|c| c.model_field.label})
+    write_headers 0, (["Broker Reference", "Invoice Number", "PO Number", "PO Total"] +
+    		description_columns + search_cols), user
   end
 
   private

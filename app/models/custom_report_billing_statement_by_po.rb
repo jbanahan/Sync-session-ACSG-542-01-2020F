@@ -87,8 +87,7 @@ class CustomReportBillingStatementByPo < CustomReport
       col += 1
     end
 
-    write_columns 0, col, (["Invoice Number", "Invoice Date", "Invoice Total", "PO Number"] \
-        + search_cols.collect {|c| c.model_field.label})
+    write_headers 0, (["Invoice Number", "Invoice Date", "Invoice Total", "PO Number"] + search_cols), user
   end
 
   private

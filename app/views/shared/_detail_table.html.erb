@@ -1,27 +1,22 @@
 <% overrides = {} if local_assigns[:overrides].nil?-%>
 <table class='detail_table' style="width:100%;">
-  <thead><tr>
-    <%fields.each do |f|%>
-      <%if ModelField.find_by_uid(f).can_view? current_user%>
-        <th><%=field_label f, false%></th>
-      <%end%>
-    <%end%>
-  </tr></thead>
+  <thead>
+    <tr>
+      <%= model_field_labels fields, table: true, heading: true %>
+    </tr>
+  </thead>
   <tbody>
     <%lines.each do |line|%>
-      <tr class='hover'>
-        <%fields.each do |f|%>
-          <td style='<%="text-align:right; " if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%> border:1px solid #ccc; padding: 3px;' >
-            <% mf = ModelField.find_by_uid(f) -%>
-            <%if mf.can_view? current_user -%>
-              <% if overrides[f] -%>
-                <%=overrides[f].call(mf,line) %>
-              <% else -%>
-                <%=field_value(line, f)%>
-              <% end -%>
-            <%end -%>
-          </td>
-        <%end -%>
+      <tr class='hover detail_table_body_row'>
+        <%= show_model_fields(line, fields, table: true, editor_only: true) do |mf, form_field_name, value, attributes|
+          override = overrides[mf.uid]
+          if override && override.respond_to?(:call)
+            override.call(mf,line)
+          else
+            # nil signals to calling method to render the default view
+            nil 
+          end
+        end %>
       </tr>
     <%end%>
   </tbody>

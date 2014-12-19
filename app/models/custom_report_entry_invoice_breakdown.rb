@@ -76,21 +76,19 @@ class CustomReportEntryInvoiceBreakdown < CustomReport
     end
 
     #write headings
-    col_cursor = 0
-    heading_row 0
+    header = []
+
     if self.include_links?
-      write 0, col_cursor, "Web Links"
-      col_cursor += 1
+      header << "Web Links"
     end
     search_cols.each do |col| 
-      content = col.model_field.label 
-      write 0, col_cursor, content
-      col_cursor += 1
+      header << col
     end
-    bill_columns.each do |cd| 
-      write 0, col_cursor, cd
-      col_cursor += 1
+    bill_columns.each do |cd|
+      header << cd
     end
+
+    write_headers 0, header, run_by
   end
 
 end

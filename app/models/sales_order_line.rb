@@ -2,6 +2,7 @@ class SalesOrderLine < ActiveRecord::Base
   include LinesSupport
   include CustomFieldSupport
   include ShallowMerger
+  include UpdateModelFieldsSupport
 
   dont_shallow_merge :SalesOrderLine, ['id','created_at','updated_at','line_number']
   

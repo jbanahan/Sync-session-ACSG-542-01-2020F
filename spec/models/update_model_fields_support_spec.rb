@@ -456,5 +456,98 @@ describe UpdateModelFieldsSupport do
       expect(p.classifications.length).to eq 1
       expect(p.classifications.first.tariff_records.length).to eq 1
     end
+
+    it "rejects child attribute assignments on existing values using lambdas" do
+      l = lambda {|attrs| !attrs.include? :class_cntry_iso}
+      Product.should_receive(:model_field_attribute_rejections).and_return [l]
+
+      p = Factory(:product, unique_identifier: "unique_id")
+      cl = Factory(:classification, product: p)
+
+      params = {
+        'id' => p.id,
+        'classifications_attributes' => {'0' => {
+          'id' => cl.id,
+          @class_cd.model_field_uid => '12.3'
+          }}
+      }
+
+      expect(p.update_model_field_attributes params).to be_true
+      
+      classifications = p.classifications.collect {|c| c}
+      expect(classifications.length).to eq 1
+      expect(classifications.first.get_custom_value(@class_cd).value).to be_nil
+    end
+
+    it "rejects child attribute assignments on new values using lambdas" do
+      l = lambda {|attrs| !attrs.include? :class_cntry_iso}
+      Product.should_receive(:model_field_attribute_rejections).and_return [l]
+
+      p = Factory(:product, unique_identifier: "unique_id")
+      params = {
+        'id' => p.id,
+        'classifications_attributes' => {'0' => {
+          'class_cntry_id' => @country.id,
+          @class_cd.model_field_uid => '12.3'
+          }}
+      }
+      expect(p.update_model_field_attributes params).to be_true
+      expect(p.classifications.length).to eq 0
+    end
+
+    it "rejects child attribute assignments on existing values using methods" do
+      Product.should_receive(:model_field_attribute_rejections).and_return [:reject_me]
+      Product.should_receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
+
+      p = Factory(:product, unique_identifier: "unique_id")
+      cl = Factory(:classification, product: p)
+
+      params = {
+        'id' => p.id,
+        'classifications_attributes' => {'0' => {
+          'id' => cl.id,
+          @class_cd.model_field_uid => '12.3'
+          }}
+      }
+
+      expect(p.update_model_field_attributes params).to be_true
+      
+      classifications = p.classifications.collect {|c| c}
+      expect(classifications.length).to eq 1
+      expect(classifications.first.get_custom_value(@class_cd).value).to be_nil
+    end
+
+    it "rejects child attribute assignments on new values using methods" do
+      Product.should_receive(:model_field_attribute_rejections).and_return [:reject_me]
+      Product.should_receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
+
+      p = Factory(:product, unique_identifier: "unique_id")
+      params = {
+        'id' => p.id,
+        'classifications_attributes' => {'0' => {
+          'class_cntry_id' => @country.id,
+          @class_cd.model_field_uid => '12.3'
+          }}
+      }
+      expect(p.update_model_field_attributes params).to be_true
+      expect(p.classifications.length).to eq 0
+    end
+
+    it "does not attempt to call reject on objects marked for destruction" do
+      Product.should_not_receive(:reject_child_model_field_assignment?)
+
+      p = Factory(:product, unique_identifier: "unique_id")
+      cl = Factory(:classification, product: p)
+
+      params = {
+        'classifications_attributes' => {'0' => {
+          'id' => cl.id,
+          '_destroy' => true
+          }}
+      }
+
+      expect(p.update_model_field_attributes params).to be_true
+      expect(p.classifications.length).to eq 0
+    end
   end
 end

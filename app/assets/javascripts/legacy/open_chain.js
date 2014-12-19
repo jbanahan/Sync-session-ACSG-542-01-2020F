@@ -460,32 +460,6 @@ var OCSurvey = (function() {
     }
   }
 })();
-var OCInvoice = (function() {
-  return {
-    init: function() {
-      $('body').on('change','.cc_fld',function() {
-        var rw = $(this).parents('tr');
-        var sel = $(this).find('option:selected');
-        rw.find('.desc_fld').val(sel.attr('desc'));
-        rw.find('.hst_fld').val(sel.attr('hst'));
-      });
-    },
-    addInvoiceLine: function(parentTable,chargeCodes) {
-      var mt = new Date().getTime();
-      var namePre = "broker_invoice[broker_invoice_lines_attributes]["+mt+"]"; 
-      var h = "<tr><td>";
-      h+="<select class='inv_det_fld cc_fld' name='"+namePre+"[charge_code]'>";
-      $.each(chargeCodes,function(i,v) {h+="<option value='"+v.code+"' desc='"+v.desc+"' hst='"+v.hst+"'>"+v.code+"</option>";});
-      h+="</select></td>";
-      h+="<td><input type='text' size='30' class='inv_det_fld desc_fld' name='"+namePre+"[charge_description]'/></td>";
-      h+= "<td><input type='text' size='30' class='inv_det_fld decimal' name='"+namePre+"[charge_amount]'/></td>";
-      h+= "<td><input type='text' size='30' class='inv_det_fld decimal hst_fld' name='"+namePre+"[hst_percent]'/></td>";
-      h+= "<td><a href='#' class='inv_det_del'><img src='/assets/x.png' alt='delete'/></a></td></tr>";
-      $(parentTable+" tbody").append(h);
-      $(".decimal").jStepper();
-    }
-  }
-})();
 $( function() {
     OpenChain.init(OpenChain.user_id);
     $(".decimal").jStepper();
@@ -782,6 +756,116 @@ function getProductJSON(id, callback) {
 } 
 function stripNonNumeric(inputStr) {
     return inputStr.replace(/[^0-9]/g, ''); 
+}
+/*helpers for shipment / delivery screens*/
+function setupPackScreen(isSalesOrder,openEdit,cancelPath) {
+
+  $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
+    width:'auto',
+    buttons:{"Save":function() {$("#frm_edit_line").submit();},
+             "Cancel":function() {window.location = cancelPath;}}  
+  });
+  $("#btn_add_line").click(function() {
+    $("#mod_edit_line").dialog('open');
+  });
+  OpenChain.addClickMap(isSalesOrder ? 'l' : 'o','Add '+(isSalesOrder ? 'Sale' : 'Order'),'btn_add_order');
+  OpenChain.addClickMap('r','Add Product','btn_add_line');
+  $(".lnk_detail").click(function(ev) {
+    ev.preventDefault();
+    $(this).parents("tr.shp_line").next().toggle();
+  });
+  $("#lnk_all_details").click(function(ev) {
+    ev.preventDefault();
+    if(all_details_open) {
+      $(".shp_line_detail").hide();
+    } else {
+      $(".shp_line_detail").show();
+    }
+    all_details_open = !all_details_open;
+  });
+
+  if(openEdit) {$("#mod_edit_line").dialog('open');}
+  var titleNoun = isSalesOrder ? "Sale" : "Order"
+  $("#mod_pack_order").dialog({autoOpen:false,title:'Pack '+titleNoun,width:'auto',
+    buttons:{"Add":function() {$("#frm_pack_order").submit();},
+    "Cancel":function() {$("#mod_pack_order").dialog('close');}}
+  });
+  $("#mod_open_orders").dialog({autoOpen:false,title:'Select '+titleNoun,width:'auto',
+      buttons:{"OK":function() {
+        var id = $("#sel_open_orders").val();
+        if(id) {
+          $("#mod_open_orders").dialog('close');
+          if(isSalesOrder) {
+            openPackSalesOrder(id);
+          } else {
+            openPackOrder(id);
+          }
+        } else {
+          window.alert(isSalesOrder ? "Select a sale first." : "Select an order first.");
+        }
+      },
+      "Cancel":function() {$("#mod_open_orders").dialog('close');}}});
+  $("#btn_add_order").click(function() {
+    $("#mod_open_orders").dialog('open');
+    var openFunction = function(data) {
+      var i;
+      if(data.length==0) {
+        $("#sel_open_orders").html("<option>No "+titleNoun+"s Available</option>");
+      } else {
+        var opt = "";
+        for(i=0;i<data.length;i++) {
+          var o = isSalesOrder ? data[i].sales_order : data[i].order;
+          opt += "<option value='"+o.id+"'>"+o.order_number+"</option>";
+        }
+        $("#sel_open_orders").html(opt);
+      }
+    }
+    if(isSalesOrder) {
+      getOpenSalesOrders(openFunction);
+      } else {
+      getOpenOrders(openFunction);
+    }
+  });
+}
+function openPackSalesOrder(id) {
+  $("#div_pack_order_content").html("Loading...");
+  $("#mod_pack_order").dialog('open');
+  getSalesOrder(id,function(data) {
+    var h = "";
+    var order = data.sales_order
+    h += "<div>Pack Sale: "+order.order_number+"</div><table class='detail_table'><thead><tr><th>Sale Row</th><th>Product</th><th>Sold</th><th>Delivered</th></tr></thead><tbody>";
+    var i;
+    for(i=0;i<order.sales_order_lines.length;i++) {
+      var line = order.sales_order_lines[i];
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_sales_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][delln_prod_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][delln_delivery_qty]' mf_id='delln_delivery_qty' class='decimal rvalidate'/></td></tr>";
+    }
+    h += "</tbody></table>";
+    $("#div_pack_order_content").html(h);
+    $(".decimal").jStepper();
+  });
+}
+function openPackOrder(id) {
+  $("#div_pack_order_content").html("Loading...");
+  $("#mod_pack_order").dialog('open');
+  getOrder(id,function(data) {
+    var h = "";
+    var order = data.order
+    h += "<div>Pack Order: "+order.order_number+"</div><table class='detail_table'><thead><tr><th>Order Row</th><th>Product</th><th>Ordered</th><th>Shipped</th></tr></thead><tbody>";
+    var i;
+    for(i=0;i<order.order_lines.length;i++) {
+      var line = order.order_lines[i];
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='shpln_shipped_qty' class='decimal rvalidate'/></td></tr>";
+    }
+    h += "</tbody></table>";
+    $("#div_pack_order_content").html(h);
+    $(".decimal").jStepper();
+  });
+}
+function getOpenSalesOrders(callback) {
+  $.getJSON("/sales_orders/all_open.json",callback);
+}
+function getOpenOrders(callback) {
+  $.getJSON("/orders/all_open.json",callback);
 }
 
 function next_action_to_form(form) {

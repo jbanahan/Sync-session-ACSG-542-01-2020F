@@ -28,11 +28,13 @@ class CustomReport < ActiveRecord::Base
 
   def column_fields_available user
     #expects subclass to implement static version of this method
-    self.class.column_fields_available user
+    fields = self.class.column_fields_available user
+    fields.select {|mf| mf.can_view?(user)  && mf.user_accessible?}
   end
 
   def criterion_fields_available user
-    self.class.criterion_fields_available user
+    fields = self.class.criterion_fields_available user
+    fields.select {|mf| mf.can_view?(user) && mf.user_accessible?}
   end
 
   def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : self.name),".xls"] )
@@ -109,7 +111,7 @@ class CustomReport < ActiveRecord::Base
       query
     end
 
-    def write_headers row, headers
+    def write_headers row, headers, run_by
       heading_row row
       values = []
       values << "Web Links" if self.include_links?
@@ -117,7 +119,12 @@ class CustomReport < ActiveRecord::Base
       # Look for either search columns or strings in the headers array
       # Allows you to easily append custom headers if needed ie. -> self.search_columns + ['Custom1', 'Custom2']
       headers.each do |v|
-        values << ((v.is_a? String) ? v : v.model_field.label)
+        mf = model_field(v)
+        if mf
+          values << (mf.can_view?(run_by) ? mf.label : ModelField.disabled_label)
+        else
+          values << v
+        end
       end
 
       write_columns row, 0, values
@@ -129,7 +136,8 @@ class CustomReport < ActiveRecord::Base
 
       content = []
       values.each do |v|
-        content << (v.respond_to?(:model_field) ? v.model_field.process_export(row_object, run_by) : v)
+        mf = model_field(v)
+        content << (mf ? mf.process_export(row_object, run_by) : v)
       end
 
       write_columns row, (links ? 1 : 0), content
@@ -140,6 +148,12 @@ class CustomReport < ActiveRecord::Base
     end
 
   private 
+  def model_field v
+    return v if v.is_a?(ModelField)
+    return v.model_field if v.respond_to?(:model_field)
+    nil
+  end
+
   class ArraysListener
     attr_accessor :data
     def initialize no_time = false, csv_output = true

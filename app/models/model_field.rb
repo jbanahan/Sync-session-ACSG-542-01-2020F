@@ -75,10 +75,8 @@ class ModelField
 
   # do post processing on raw sql query result generated using qualified_field_name
   def process_query_result val, user
-    if disabled?
+    if disabled? || !can_view?(user)
       return nil
-    elsif !can_view? user
-      return "HIDDEN"
     end
 
     result = @process_query_result_lambda ? @process_query_result_lambda.call(val) : val
@@ -265,7 +263,11 @@ class ModelField
           end
           v = "#{self.label} set to #{d}"
         else
-          v = @import_lambda.call(obj, data)
+          if @import_lambda.arity == 2
+            v = @import_lambda.call(obj, data)
+          else
+            v = @import_lambda.call(obj, data, user)
+          end
         end
       else
         v = "You do not have permission to edit #{self.label}."
@@ -342,10 +344,10 @@ class ModelField
         process_query_result_lambda: lambda {|obj| nil},
         data_type: :string,
         join_alias: "",
-        qualified_field_name: '"[Disabled]"',
+        qualified_field_name: "'#{ModelField.disabled_label}'",
         disabled: true,
         join_statement: "",
-        label_override: "[Disabled]"
+        label_override: ModelField.disabled_label
       }
       @@blank_model_field = ModelField.new 1000000, :____undef____, nil, "", options
     end
@@ -410,8 +412,10 @@ class ModelField
   end
   
   def self.make_division_arrays(rank_start,uid_prefix,table_name)
+    # The id field is created pretty much solely so the screens can make select boxes using the id as the value parameter
+    # and reference the field like prod_imp_id.
     r = [
-      [rank_start,"#{uid_prefix}_div_id".to_sym,:division_id,"Division ID",{:history_ignore=>true}]
+      [rank_start,"#{uid_prefix}_div_id".to_sym,:division_id,"Division Name",{:history_ignore=>true, user_accessible: false}]
     ]
     n = [rank_start+1,"#{uid_prefix}_div_name".to_sym, :name,"Division Name",{
       :import_lambda => lambda {|obj,data|
@@ -433,8 +437,10 @@ class ModelField
     r
   end
   def self.make_company_arrays(rank_start,uid_prefix,table_name,short_prefix,description,association_name)
+    # The id field is created pretty much solely so the screens can make select boxes using the id as the value parameter
+    # and reference the field like prod_imp_id.
     r = [
-      [rank_start,"#{uid_prefix}_#{short_prefix}_id".to_sym,"#{association_name}_id".to_sym,"#{description} ID",{:history_ignore=>true}]
+      [rank_start,"#{uid_prefix}_#{short_prefix}_id".to_sym,"#{association_name}_id".to_sym,"#{description} Name",{:history_ignore=>true, user_accessible: false}]
     ]
     r << [rank_start+1,"#{uid_prefix}_#{short_prefix}_name".to_sym, :name,"#{description} Name",{
       :import_lambda => lambda {|obj,data|
@@ -749,7 +755,15 @@ class ModelField
       :history_ignore => true,
       :read_only => true
     }]
-    r << [rank_start+1, "#{uid_prefix}_prod_id".to_sym, :id,"Product Name", {user_accessible: false, history_ignore: true}]
+    r << [rank_start+1, "#{uid_prefix}_prod_id".to_sym, :id,"Product Name", {user_accessible: false, history_ignore: true,
+      :import_lambda => lambda {|detail, data, user|
+        product_id = data.to_i
+        if detail.product_id != product_id && !(prod = Product.where(id: product_id).first).nil?
+          detail.product  = prod if prod.can_view?(user)
+        end
+        ""
+      }
+    }]
     r
   end
   def self.make_master_setup_array rank_start, uid_prefix
@@ -1128,7 +1142,7 @@ and classifications.product_id = products.id
         [34,:sf_manufacturer_names, :manufacturer_names, "Manufacturer Names", {:data_type => :text}]
       ]
       add_fields CoreModule::OFFICIAL_TARIFF, [
-        [1,:ot_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
+        [1,:ot_hts_code,:hts_code,"HTS Code",{:data_type=>:string, :export_lambda => lambda {|ot| ot.hts_code.try(:hts_format)}}],
         [2,:ot_full_desc,:full_description,"Full Description",{:data_type=>:string}],
         [3,:ot_spec_rates,:special_rates,"Special Rates",{:data_type=>:string}],
         [4,:ot_gen_rate,:general_rate,"General Rate",{:data_type=>:string}],
@@ -2003,7 +2017,7 @@ and classifications.product_id = products.id
 
       add_fields CoreModule::DELIVERY_LINE, [
         [1,:delln_line_number,:line_number,"Delivery Row",{:data_type=>:integer}],
-        [2,:delln_delivery_qty,:quantity,"Delivery Row Qauntity",{:data_type=>:decimal}]
+        [2,:delln_delivery_qty,:quantity,"Delivery Row Quantity",{:data_type=>:decimal}]
       ]
       add_fields CoreModule::DELIVERY_LINE, make_product_arrays(100,"delln","delivery_lines")
       reset_custom_fields update_cache_time
@@ -2110,6 +2124,10 @@ and classifications.product_id = products.id
   
   def self.sort_by_label(mf_array)
     return mf_array.sort { |a,b| a.label <=> b.label }
+  end
+
+  def self.disabled_label 
+    "[Disabled]"
   end
 
   def self.reload_if_stale

@@ -404,6 +404,7 @@ OpenChain::Application.routes.draw do
 	end
 	
   resources :sales_orders do
+    get 'all_open', on: :collection
     member do
       get 'history'
     end

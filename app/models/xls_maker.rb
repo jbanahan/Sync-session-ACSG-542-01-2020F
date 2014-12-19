@@ -26,7 +26,7 @@ class XlsMaker
 
     max_results = ss.max_results
     cols = search_query.search_setup.search_columns.order('rank ASC')
-    wb = prep_workbook cols
+    wb = prep_workbook cols, search_query.user
     sheet = wb.worksheet 0
     row_number = 1
     base_objects = {}
@@ -50,7 +50,7 @@ class XlsMaker
   #deprecated
   def make_from_results results, columns, module_chain, user, search_criterions=[]
     @column_widths = {}
-    wb = prep_workbook columns
+    wb = prep_workbook columns, user
     sheet = wb.worksheet 0
     row_number = 1
     GridMaker.new(results,columns,search_criterions,module_chain,user).go do |row,obj|
@@ -179,13 +179,13 @@ class XlsMaker
   end
   
   private
-  def prep_workbook cols
+  def prep_workbook cols, user
     wb = XlsMaker.create_workbook "Results"
     sheet = wb.worksheet "Results"
     headers = []
     cols.each_with_index do |c,i|
       mf = ModelField.find_by_uid c.model_field_uid
-      headers << mf.label
+      headers << (mf.can_view?(user) ? mf.label : ModelField.disabled_label)
     end
 
     XlsMaker.add_header_row sheet, 0, headers, @column_widths

@@ -83,7 +83,7 @@ criterion_fields = current_search.criterion_fields_available(current_user) if cu
               <select id='used_columns' size='10' multiple='multiple'>
                 <%current_search.sorted_columns.each do |sc|-%>
                   <%mf = ModelField.find_by_uid(sc.model_field_uid)%>
-                  <option value='<%=mf.uid%>'><%=mf.label%></option>
+                  <option value='<%=mf.uid%>'><%=mf.can_view?(User.current) ? mf.label: ModelField.disabled_label%></option>
                 <%end-%>
               </select>
             </td>

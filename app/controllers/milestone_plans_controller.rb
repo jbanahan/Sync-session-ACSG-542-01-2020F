@@ -9,7 +9,7 @@ class MilestonePlansController < ApplicationController
 
   def edit
     admin_secure {
-      @available_fields = CoreModule.grouped_options({:core_modules=>[CoreModule::ORDER,CoreModule::ORDER_LINE,CoreModule::SHIPMENT,CoreModule::SHIPMENT_LINE,CoreModule::SALE,CoreModule::SALE_LINE,CoreModule::DELIVERY,CoreModule::DELIVERY_LINE],
+      @available_fields = CoreModule.grouped_options(current_user, {:core_modules=>[CoreModule::ORDER,CoreModule::ORDER_LINE,CoreModule::SHIPMENT,CoreModule::SHIPMENT_LINE,CoreModule::SALE,CoreModule::SALE_LINE,CoreModule::DELIVERY,CoreModule::DELIVERY_LINE],
           :filter=>lambda {|f| [:date,:datetime].include?(f.data_type)}})
       @milestone_plan = MilestonePlan.find params[:id]
     }
@@ -17,7 +17,7 @@ class MilestonePlansController < ApplicationController
 
   def new
     admin_secure {
-      @available_fields = CoreModule.grouped_options({:core_modules=>[CoreModule::ORDER,CoreModule::ORDER_LINE,CoreModule::SHIPMENT,CoreModule::SHIPMENT_LINE,CoreModule::SALE,CoreModule::SALE_LINE,CoreModule::DELIVERY,CoreModule::DELIVERY_LINE],
+      @available_fields = CoreModule.grouped_options(current_user, {:core_modules=>[CoreModule::ORDER,CoreModule::ORDER_LINE,CoreModule::SHIPMENT,CoreModule::SHIPMENT_LINE,CoreModule::SALE,CoreModule::SALE_LINE,CoreModule::DELIVERY,CoreModule::DELIVERY_LINE],
           :filter=>lambda {|f| [:date,:datetime].include?(f.data_type)}})
       @milestone_plan = MilestonePlan.new
     }
@@ -34,7 +34,7 @@ class MilestonePlansController < ApplicationController
           redirect_to edit_milestone_plan_path(@milestone_plan)
         else
           errors_to_flash @milestone_plan, :now=>true
-          @available_fields = CoreModule.grouped_options({:core_modules=>[CoreModule::ORDER,CoreModule::ORDER_LINE,CoreModule::SHIPMENT,CoreModule::SHIPMENT_LINE,CoreModule::SALE,CoreModule::SALE_LINE,CoreModule::DELIVERY,CoreModule::DELIVERY_LINE],
+          @available_fields = CoreModule.grouped_options(current_user, {:core_modules=>[CoreModule::ORDER,CoreModule::ORDER_LINE,CoreModule::SHIPMENT,CoreModule::SHIPMENT_LINE,CoreModule::SALE,CoreModule::SALE_LINE,CoreModule::DELIVERY,CoreModule::DELIVERY_LINE],
             :filter=>lambda {|f| [:date,:datetime].include?(f.data_type)}})
           render :action => 'new'
         end

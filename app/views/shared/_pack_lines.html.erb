@@ -1,7 +1,7 @@
 <%content_for :javascript do %>
 var all_details_open = false;
 $(function() {
-  setupPackScreen(<%=is_sales_order ? "true" : "false"%>,<%=(parent.can_edit?(current_user) && line) ? "true" : "false"%>,'<%=is_sales_order ? delivery_path(parent) : shipment_path(parent)%>');
+  setupPackScreen("true",<%=(parent.can_edit?(current_user) && line) ? "true" : "false"%>,'<%=delivery_path(parent)%>');
 });
 <%end%>
 
@@ -12,34 +12,38 @@ $(function() {
 <%end%>
   <% end %>
 
-<% form_line = line.nil? ? (is_sales_order ? parent.delivery_lines.build : parent.shipment_lines.build) : line %>
+<% form_line = line.nil? ? parent.delivery_lines.build : line %>
 <div id='mod_edit_line' style='display:none;'>
   <%= form_for([parent, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
   <table>
     <% form_line.default_line_number%>
-    <%=field_row "Line Number", model_text_field(f,:line_number,is_sales_order ? "delln_line_number" : "shpln_line_number",:size=>2)%>
-    <%=field_row "Product", f.collection_select(:product_id, products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
-    <%=field_row "Ship Quantity", model_text_field(f,:quantity,is_sales_order ? "delln_delivery_qty" : "shpln_shipped_qty",:size=>5) %>
-    <%=field_row "Unit of Measure", content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
-    <% if is_sales_order %>
-      <% form_line.sales_order_lines.each do |soline|%>
+    <% show_model_fields f, :delln_line_number, table:true, attributes: {style: "width: 3em;"} %>
+    <% if form_line.new_record? %>
+      <%= show_model_fields(f, :delln_prod_id, table: true) do |mf, field_name, value, attrs|
+            attrs[:select_options] = options_from_collection_for_select(products, :id, :unique_identifier, value)
+            attrs[:prompt] = "Select a product"
+            attrs[:id] = "edit_line_product"
+            model_select_field_tag(field_name, mf, value, attrs)
+          end %>
+    <% else %>
+      <%= show_model_fields form_line.product, :prod_name, table: true %>
+    <% end %>
+    <%= show_model_fields f, :delln_delivery_qty, table:true, attributes: {style: "width: 5em;"}  %>
+    <% prod = form_line.product ? form_line.product : Product.new %>
+    <%= show_model_fields prod, :prod_uom, {table:true, wrap_with: lambda {|mf, editor| content_tag(:span, editor, :id=>"edit_line_uom")}} %>
+    <% form_line.sales_order_lines.each do |soline|%>
         <%=field_row "Sale / Line", content_tag(:span,"#{soline.sales_order.order_number} - #{soline.line_number}")+hidden_field_tag(:linked_sales_order_line_id,soline.id)%>
       <% end %>
-    <% else %>
-      <% form_line.order_lines.each do |oline| %>
-        <%=field_row "Order / Line", content_tag(:span,"#{oline.order.order_number} - #{oline.line_number}")+hidden_field_tag(:linked_order_line_id,oline.id) %>
-      <% end %>
-    <% end %>
-    <%= show_custom_fields form_line, {:form => true, :table=>true}%>
+    <%= show_custom_fields f, table: true%>
   </table>
   <% end %>
 </div>
 <div id='mod_open_orders' style='display:none;'>
-  <div>Select <%=is_sales_order ? "a Sale" : "an Order"%>:</div>
+  <div>Select a Sale</div>
   <select id='sel_open_orders'><option>Loading...</option></select>
 </div>
 <div id='mod_pack_order' style='display:none;'>
-  <%=form_tag((is_sales_order ? create_multiple_delivery_delivery_lines_path(parent) : create_multiple_shipment_shipment_lines_path(parent)), :method=>"post", :id=>"frm_pack_order") do |f|%>
+  <%=form_tag(create_multiple_delivery_delivery_lines_path(parent), :method=>"post", :id=>"frm_pack_order") do |f|%>
     <div id='div_pack_order_content'></div>
   <%end%>
 </div>

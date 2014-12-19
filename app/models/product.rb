@@ -28,7 +28,8 @@ class Product < ActiveRecord::Base
   has_and_belongs_to_many :factories, :class_name=>"Address", :join_table=>"product_factories", :foreign_key=>'product_id', :association_foreign_key=>'address_id'
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true
-  
+  reject_nested_model_field_attributes_if :missing_classification_country?
+
   def locked?
     !self.vendor.nil? && self.vendor.locked?
   end
@@ -152,6 +153,12 @@ class Product < ActiveRecord::Base
         self.errors[:base] << "Tariff number #{tr.hts_3} is invalid for #{country.iso_code}" if !tr.hts_3.blank? && !tr.hts_3_official_tariff 
       end
     end
+  end
+
+  def self.missing_classification_country? attributes
+    return false unless attributes['id'].blank?
+    
+    attributes[:class_cntry_id].blank? && attributes[:class_cntry_name].blank? && attributes[:class_cntry_iso].blank?
   end
 
   private

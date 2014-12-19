@@ -6,13 +6,13 @@
         <tr>
           <td class='class_tr_box'>
             <div class='cf_box'>
-              <%=show_custom_fields c, {:show_prefix=>false}%>
+              <%=show_custom_fields c %>
             </div> 
             <% c.tariff_records.each do |t| %>
               <div class='tf_row'>
                 <table>
-                  <%= show_model_fields t, :hts_line_number, table: true, show_prefix: false %>
-                  <%= show_custom_fields t, {:table=>true,:show_prefix=>false} %>
+                  <%= show_model_fields t, :hts_line_number, table: true %>
+                  <%= show_custom_fields t, table: true%>
                 </table>
                 <table class='tr_hts'>
                   <thead>

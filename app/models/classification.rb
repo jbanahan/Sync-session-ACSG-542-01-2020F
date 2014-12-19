@@ -2,6 +2,7 @@ class Classification < ActiveRecord::Base
   include CustomFieldSupport
   include ShallowMerger
   include TouchesParentsChangedAt
+  include UpdateModelFieldsSupport
   
   belongs_to :product, inverse_of: :classifications
   belongs_to :country
@@ -15,7 +16,8 @@ class Classification < ActiveRecord::Base
   
   has_many :tariff_records, :dependent => :destroy, :before_add => :set_nested
    
-  accepts_nested_attributes_for :tariff_records, :allow_destroy => true, :reject_if => :creating_blank_tariff?
+  accepts_nested_attributes_for :tariff_records, :allow_destroy => true
+  reject_nested_model_field_attributes_if :creating_blank_tariff?
   dont_shallow_merge :Classification, ['id','created_at','updated_at','country_id','product_id','instant_classification_id']
     
   def find_same
@@ -32,15 +34,13 @@ class Classification < ActiveRecord::Base
 
   private
 
-  def creating_blank_tariff? a
-    # TODO Figure out how to work this with the 2-pass process import stuff in update_model_fields_supprt
+  def self.creating_blank_tariff? a
+    return false unless a[:id].blank?
 
-    # If there's an id value, then we're not creating a new tariff
-    return false if !a[:id].blank? || a[:_destroy].to_s.to_boolean || a[:virtual_identifier]
-
-    # Make sure we also account for model field attributes when looking at the attribute hash
-    values = [:hts_1, :hts_hts_1, :hts_2, :hts_hts_2, :hts_3, :hts_hts_3, :schedule_b_1, :hts_hts_1_schedb, :schedule_b_2, :hts_hts_2_schedb, :schedule_b_3, :hts_hts_2_schedb].select {|k| !a[k].blank?}
-    values.length == 0
+    # Reject if all attributes are blank (need to include model field and straight active model attributes here since we're using the same
+    # method for reject validations for both) and _destroy is false
+    values = [:hts_hts_1, :hts_hts_2, :hts_hts_3, :hts_hts_1_schedb, :hts_hts_2_schedb, :hts_hts_3_schedb].collect {|k| a[k].blank?}.uniq
+    (values.length < 2 && values[0] == true) && !a[:_destroy].to_s.to_boolean
   end
 
   def set_nested tr #needed to support the auto_set_line_number in TariffRecord on a nested form create

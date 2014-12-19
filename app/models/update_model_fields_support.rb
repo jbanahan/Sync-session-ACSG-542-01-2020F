@@ -1,6 +1,38 @@
 module UpdateModelFieldsSupport
   extend ActiveSupport::Concern
 
+  included do
+    class_attribute :model_field_attribute_rejections, instance_writer: false, instance_reader: false
+    self.model_field_attribute_rejections = []
+  end
+
+  module ClassMethods
+
+    def reject_nested_model_field_attributes_if symbol_or_lambda
+      self.model_field_attribute_rejections << symbol_or_lambda
+    end
+
+    def reject_child_model_field_assignment? child_attributes
+      reject = false
+      child_attributes = child_attributes.with_indifferent_access
+
+      self.model_field_attribute_rejections.each do |callback|
+        case callback
+        when Symbol
+          # NOTE: This must be a class method (this differs from the active record equiv. of accepts_nested_attributes_for reject_if: :symbol)
+          reject = send(callback, child_attributes)
+        when Proc
+          reject = callback.call(child_attributes)
+        end
+
+        break if reject
+      end
+
+      reject
+    end
+  end
+
+
   # Basically, this is a replacement for ActiveRecord::Base.update_attributes where 
   # the keys are model field uids and the values are all set via the model field process_import
   # methods.
@@ -140,7 +172,7 @@ module UpdateModelFieldsSupport
         model_field_params = remove_blank_values model_field_params
         update_params = remove_blank_values update_params
       end
-      update_params = clean_params_for_attribute_assignment update_params, model_field_params, self
+      update_params = clean_params_for_active_record_attribute_assignment update_params, model_field_params, self
 
       base_object.assign_attributes update_params
 
@@ -159,7 +191,6 @@ module UpdateModelFieldsSupport
 
       data = core_module_info base_object
       model_fields = data[:model_fields].select {|uid, mf| mf.can_view? user}
-
       child_core_module = data[:child_core_module]
       child_association_key = data[:child_association_key]
 
@@ -172,11 +203,15 @@ module UpdateModelFieldsSupport
         if (value.respond_to?(:each)) && child_association_key && name == child_association_key
           if value.respond_to?(:each_pair)
             value.each_pair do |child_index, child_hash|
+              next if child_hash.include? rejected_key
+
               child_object = locate_child_object(base_object, child_core_module, child_hash, user)
               process_import_parameters(root_object, child_hash, child_object, user, opts) if child_object && !child_object.destroyed? && !child_object.marked_for_destruction?
             end
           else
             value.each do |child_hash|
+              next if child_hash.include? rejected_key
+
               child_object = locate_child_object(base_object, child_core_module, child_hash, user)
               process_import_parameters(root_object, child_hash, child_object, user, opts) if child_object && !child_object.destroyed? && !child_object.marked_for_destruction?
             end
@@ -207,7 +242,7 @@ module UpdateModelFieldsSupport
       nil
     end
 
-    def clean_params_for_attribute_assignment params, model_field_params, core_module, parent = true
+    def clean_params_for_active_record_attribute_assignment params, model_field_params, core_module, parent = true
       data = core_module_info core_module
 
       # In this case, we do actually want all the model fields...we want there to be an error when the
@@ -215,6 +250,7 @@ module UpdateModelFieldsSupport
       model_fields = data[:model_fields]
       child_core_module = data[:child_core_module]
       child_association_key = data[:child_association_key]
+      core_module = data[:core_module]
 
       id_found = false
       params.each_pair do |name, value|
@@ -230,16 +266,41 @@ module UpdateModelFieldsSupport
         if (value.respond_to?(:each)) && child_association_key && name == child_association_key
           if value.respond_to?(:each_pair)
             value.each_pair do |child_index, child_hash|
+              child_original_params = model_field_params[name][child_index]
+
               if child_hash.is_a?(Hash)
-                child_original_params = model_field_params[name][child_index]
-                clean_params_for_attribute_assignment(child_hash, child_original_params, child_core_module, false) 
+                # If we're rejecting, then we want to remove the attributes from the hash we ultimately intend to pass to the active record
+                # assign_attributes call and then mark it in the original hash that will go to our sythesized attribute assignment so that 
+                # we also skip it there.
+                if rejects_child_assignment? core_module, child_hash
+                  value.delete child_index
+                  child_original_params[rejected_key] = true
+                else
+                  clean_params_for_active_record_attribute_assignment(child_hash, child_original_params, child_core_module, false) 
+                end
               end
             end
           else
-            value.each_with_index do |child_hash, idx|
+            # use each since that's the only method we've already guaranteed the object responds to
+            idx = -1
+            updated_values = []
+            value.each do |child_hash|
+              idx+=1
               child_original_params = model_field_params[name][idx]
-              clean_params_for_attribute_assignment(child_hash, child_original_params, child_core_module, false) if child_hash.is_a?(Hash)
+              if child_hash.is_a?(Hash)
+                # If we're rejecting, then we want to remove the attributes from the hash we ultimately intend to pass to the active record
+                # assign_attributes call and then mark it in the original hash that will go to our sythesized attribute assignment so that 
+                # we also skip it there.
+                if rejects_child_assignment? core_module, child_hash
+                  child_original_params[rejected_key] = true
+                else
+                  clean_params_for_active_record_attribute_assignment(child_hash, child_original_params, child_core_module, false)
+                  updated_values << child_hash
+                end
+              end
             end
+
+            params[name] = updated_values
           end
         else
           # Delete all non-identifier values from this hash, which will eventually be passed to ActiveRecord::Base#assign_attributes
@@ -263,6 +324,20 @@ module UpdateModelFieldsSupport
       end
 
       params
+    end
+
+    def rejected_key
+      :____rejected_____
+    end
+
+    def rejects_child_assignment? parent_core_module, child_hash
+      return false if child_hash['_destroy'].to_s.to_boolean
+
+      # parent_core_module may be nil for the few hacky objects we forced it onto (InstantClassification for one)
+      kl = parent_core_module.klass if parent_core_module
+      return false unless kl.respond_to?(:reject_child_model_field_assignment?)
+
+      kl.reject_child_model_field_assignment? child_hash
     end
 
     def remove_blank_values params
@@ -303,7 +378,7 @@ module UpdateModelFieldsSupport
       child_core_module = core_module.children.first
       child_association_key = child_core_module ? "#{core_module.child_association_name(child_core_module)}_attributes" : nil
 
-      {model_fields: model_fields, child_core_module: child_core_module, child_association_key: child_association_key}
+      {model_fields: model_fields, child_core_module: child_core_module, child_association_key: child_association_key, core_module: core_module}
     end
 
     # This method exists largely as extension points to shoe-horn this update attributes stuff onto 
@@ -312,5 +387,5 @@ module UpdateModelFieldsSupport
       parent_core_module = CoreModule.find_by_object parent_object
       parent_core_module.child_objects(child_core_module, parent_object)
     end
-    
+
 end

@@ -30,7 +30,7 @@ class CustomReportIsfStatus < CustomReport
     isfs = setup_report_query SecurityFiling, run_by, row_limit
 
     add_tab "ISF Report Data"
-    write_headers 0, search_columns
+    write_headers 0, search_columns, run_by
     write_query isfs, search_columns, run_by
     unless preview_run
       # The second tab shows all the unmatched ISF's for the customers returned by the customer number
@@ -43,7 +43,7 @@ class CustomReportIsfStatus < CustomReport
       isfs.limit(row_limit) if row_limit
 
       add_tab "Unmatched #{days_ago.strftime("%m-%d-%y")} thru #{Time.zone.now.strftime("%m-%d-%y")}"
-      write_headers 0, search_columns
+      write_headers 0, search_columns, run_by
       write_query isfs, search_columns, run_by
     end
   end

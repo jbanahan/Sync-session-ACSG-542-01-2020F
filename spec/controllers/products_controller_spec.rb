@@ -48,7 +48,7 @@ describe ProductsController do
   describe :create do
     it "should fail if not master and importer_id is not current company or linked company" do
       post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@other_importer.id}
-      flash[:errors].first.should == "You do not have permission to set importer to company #{@other_importer.id}"
+      flash[:errors].first.should == "You do not have permission to set Importer Name to company #{@other_importer.name}"
     end
     it "should pass if importer_id is current company" do
       post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@user.company.id}
@@ -69,7 +69,7 @@ describe ProductsController do
     end
     it "should fail if not master and importer_id is not current company or linked company" do
       put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@other_importer.id}
-      flash[:errors].should include "You do not have permission to set importer to company #{@other_importer.id}"
+      flash[:errors].should include "You do not have permission to set Importer Name to company #{@other_importer.name}"
     end
     it "should pass if importer_id is linked company" do
       put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@linked_importer.id}

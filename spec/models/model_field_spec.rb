@@ -41,7 +41,7 @@ describe ModelField do
       ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:process_query_result_lambda=>lambda {|v| v.upcase}).process_query_result("x",@u).should=="X"
     end
     it "should write HIDDEN if user cannot view column" do
-      ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:can_view_lambda=>lambda {|u| false}).process_query_result("x",@u).should=="HIDDEN"
+      expect(ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:can_view_lambda=>lambda {|u| false}).process_query_result("x",@u)).to be_nil
     end
     it "utilizes the user's timezone to translate date time values" do
       @u.time_zone = "Hawaii"

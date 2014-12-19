@@ -19,6 +19,7 @@ class OrdersController < ApplicationController
         @products = Product.where(["vendor_id = ?",@order.vendor])
         respond_to do |format|
             format.html {
+              freeze_custom_values @order
               if @order.importer.try(:order_view_template).blank?
                 render
               else
@@ -178,5 +179,14 @@ class OrdersController < ApplicationController
     }
     end
   end
+
+  private
+    def freeze_custom_values o
+      o.freeze_custom_values
+      o.order_lines.each do |ol|
+        ol.freeze_custom_values
+        ol.product.try(:freeze_custom_values)
+      end
+    end
 
 end

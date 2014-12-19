@@ -23,9 +23,14 @@ class SalesOrdersController < ApplicationController
     o = SalesOrder.find(params[:id])
     action_secure(o.can_view?(current_user),o,{:lock_check => false, :verb => "view", :module_name=>"order"}) {
       @sales_order = o
+      # This is obviously not going to work
+      # for real usage, but we're not really using it
+      # in real cases yet anyway, so I'm limiting to 1000
+      # so we don't turn on and accidently load 300K products
+      # into a select box (also in sales_order_lines_controller)
+      @products = Product.limit(1000).all
       respond_to do |format|
         format.html # show.html.erb
-        format.xml  { render :xml => @sales_order }
         format.json { render :json => @sales_order.to_json(:only=>[:id,:order_number], :include=>{
           :sales_order_lines => {:only=>[:line_number,:quantity,:id], :include=>{:product=>{:only=>[:id,:name]}}}
         })}
@@ -41,7 +46,6 @@ class SalesOrdersController < ApplicationController
       @sales_order = o
       respond_to do |format|
         format.html # new.html.erb
-        format.xml  { render :xml => @sales_order }
       end
     }
   end
@@ -57,7 +61,9 @@ class SalesOrdersController < ApplicationController
   # POST /sales_orders
   # POST /sales_orders.xml
   def create
-    o = SalesOrder.new(params[:sales_order])
+    o = SalesOrder.new
+    o.update_model_field_attributes params[:sales_order], no_validation: true
+
     action_secure(o.can_edit?(current_user),o,{:verb => "create", :module_name=>"order"}) {
       success = lambda {|so|
         add_flash :notices, "Sale created successfully."
@@ -65,8 +71,9 @@ class SalesOrdersController < ApplicationController
       }
       failure = lambda {|so, errors|
         errors_to_flash so, :now=>true
-        @sales_order = SalesOrder.new(params[:sales_order]) #transaction failure requires new object
-        set_custom_fields(@sales_order) {|cv| @sales_order.inject_custom_value cv}
+
+        @sales_order = SalesOrder.new #transaction failure requires new object
+        @sales_order.update_model_field_attributes params[:sales_order], no_validation: true
         render :action=>"new"
       }
       validate_and_save_module(o,params[:sales_order],success,failure)
@@ -101,7 +108,6 @@ class SalesOrdersController < ApplicationController
       errors_to_flash @sales_order
       respond_to do |format|
         format.html { redirect_to(sales_orders_url) }
-        format.xml  { head :ok }
       end
     }
   end

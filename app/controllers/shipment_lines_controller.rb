@@ -1,14 +1,16 @@
 class ShipmentLinesController < LinesController
 
 #callback
-  def before_save line
-    order_line_id = line.linked_order_line_id
+  def before_save line, line_params
+    order_line_id = line_params[:linked_order_line_id]
     ok_to_save = true
     unless order_line_id.blank?
-      ord_line = OrderLine.find(order_line_id)
+      ord_line = OrderLine.where(id: order_line_id).first
       if !ord_line.nil? && !ord_line.order.can_view?(current_user)
         ok_to_save = false
         add_flash :errors, "You do not have permission to assign values from order \"#{ord_line.order.order_number}\""
+      else 
+        line.linked_order_line_id = ord_line
       end
     end
     ok_to_save

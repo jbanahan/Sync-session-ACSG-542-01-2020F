@@ -86,6 +86,10 @@ div.clear {
   font-weight: bold;
   font-size: 110%;
 }
+.detail_table tr.detail_table_body_row td {
+  border:1px solid #ccc; 
+  padding: 3px;
+} 
 .drag_table {
   border: 1px solid #ccc;
   border-collapse: collapse;

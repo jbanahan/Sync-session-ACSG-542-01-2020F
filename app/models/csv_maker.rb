@@ -23,7 +23,7 @@ class CsvMaker
     columns = search_query.search_setup.search_columns.order('rank ASC')
     row_number = 1
     base_objects = {}
-    CSV.generate(prep_opts(columns)) do |csv|
+    CSV.generate(prep_opts(columns, search_query.user)) do |csv|
       search_query.execute do |row_hash|
         #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
         key = row_hash[:row_key]
@@ -43,7 +43,7 @@ class CsvMaker
   private
 
   def generate results, columns, criterions, module_chain, user
-    CSV.generate(prep_opts(columns)) do |csv|
+    CSV.generate(prep_opts(columns, user)) do |csv|
       GridMaker.new(results,columns,criterions,module_chain,user).go do |row,obj| 
         row << obj.view_url if self.include_links
         row.each_with_index {|v,i| row[i] = format_value(v) }
@@ -52,20 +52,20 @@ class CsvMaker
     end
   end
 
-  def prep_opts columns
+  def prep_opts columns, user
     opts = {:write_headers=>true,:row_sep => "\r\n",:headers=>[]} 
     columns.each do |c|
-      opts[:headers] << model_field_label(c.model_field_uid)
+      opts[:headers] << model_field_label(c.model_field_uid, user)
     end
     opts[:headers] << "Links" if self.include_links
     opts
   end
 
-  def model_field_label(model_field_uid) 
+  def model_field_label(model_field_uid, user) 
     r = ""
     return "" if model_field_uid.nil?
     mf = ModelField.find_by_uid(model_field_uid)
-    return mf.label
+    return mf.can_view?(user) ? mf.label : ModelField.disabled_label
   end
 
   def format_value val

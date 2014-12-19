@@ -75,6 +75,15 @@ module OpenChain; class EventPublisher
     def self.publish message_type, obj
       mp = MESSAGE_PROCESSORS[message_type]
       h = mp.to_h(obj)
-      AWS::SQS.new(CONFIG).client.send_message(queue_url:QUEUES[Rails.env],message_body:h.to_json)
+      # Delaying to both ensure delivery, since delayed jobs will retry in the event sqs queue is not reachable,
+      # and ensure all messages are only published if the outer transaction
+      # actually completes (.ie not rolled back due to some greater error). If we didn't do this and the 
+      # object persist that's generally called prior to this method rolled back
+      # then the message that was published would not accurately describe the state of the object.
+      self.delay.send_queue_message(QUEUES[Rails.env], h.to_json)
+    end
+
+    def self.send_queue_message url, body
+      AWS::SQS.new(CONFIG).client.send_message(queue_url:url,message_body:body)
     end
 end; end

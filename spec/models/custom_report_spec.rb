@@ -188,19 +188,28 @@ describe CustomReport do
     before :each do
       @rpt = CustomReport.new
       def @rpt.run run_by, row_limit=nil
-        write_headers 0, ["Header1", SearchColumn.new(model_field_uid: "prod_uid")]
+        write_headers 0, ["Header1", SearchColumn.new(model_field_uid: "prod_uid"), ModelField.find_by_uid(:prod_uid)], run_by
       end
     end
 
     it "adds all passed in values to the listener row specified as headers" do
       r = @rpt.to_arrays Factory(:user)
-      expect(r[0]).to eq ["Header1", ModelField.find_by_uid(:prod_uid).label]
+      expect(r[0]).to eq ["Header1", ModelField.find_by_uid(:prod_uid).label, ModelField.find_by_uid(:prod_uid).label]
     end
 
     it "adds web links as first column when include_links is true" do
       @rpt.include_links = true
       r = @rpt.to_arrays Factory(:user)
-      expect(r[0]).to eq ["Web Links", "Header1", ModelField.find_by_uid(:prod_uid).label]
+      expect(r[0]).to eq ["Web Links", "Header1", ModelField.find_by_uid(:prod_uid).label, ModelField.find_by_uid(:prod_uid).label]
+    end
+
+    it "prints disabled for fields the user can't view" do
+      uid = ModelField.find_by_uid(:prod_uid)
+      u = Factory(:user)
+      uid.stub(:can_view?).with(u).and_return false
+
+      r = @rpt.to_arrays u
+      expect(r[0]).to eq ["Header1", ModelField.disabled_label, ModelField.disabled_label]
     end
   end
 

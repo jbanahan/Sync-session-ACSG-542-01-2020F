@@ -24,40 +24,59 @@ $(function() {
 <% end %>
 
 <%= form_for(@delivery, :html => {:id=>'frm_shp'} ) do |f| %>
-<div class='content_head'>
-  <span class='content_head_label'><%=field_label :del_ref%>:</span>
-  <b><%= f.text_field :reference %></b>
-  <br />
-  <span class='content_head_label'><%=field_label :del_cust_name%>:</span>
-  <% if @delivery.delivery_lines.size > 0 %>
-    <%= f.hidden_field :customer_id %><%= @delivery.customer.name %>
-  <% elsif current_user.company.customer? 
-      @delivery.customer = current_user.company %>
-      <%= f.hidden_field :customer_id %><%= @delivery.customer.name %>
-  <% else %>
-    <%= f.collection_select :customer_id, Company.customers.not_locked, :id, :name, options ={:prompt => "-Select a customer"} %>
-  <% end %>  
-</div>
+<div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <%= show_model_fields f, :del_ref %>
+        <% @delivery.customer = current_user.company if current_user.company.customer? && @delivery.delivery_lines.size == 0 %>
+        <%= show_model_fields(f, :del_cust_name) do |mf, field_name, value, attributes|
+            attributes[:id] = "sales_order_customer_id"
+            field = ""
+            if @delivery.delivery_lines.size > 0 || current_user.company.customer?
+              field += model_hidden_field_tag(field_name, mf, value, attributes).html_safe
+              field += format_for_output(mf, value).html_safe
+            else
+              attributes[:prompt] = "Select a customer"
+              attributes[:select_options] = options_from_collection_for_select(Company.customers.not_locked, :id, :name, value)
+              field = model_select_field_tag field_name, mf, value, attributes
+            end
+            field.html_safe
+          end %>
+      </div>
+    </div>
+  </div>
 <table class='detail_table'>
-  <thead><th><%=field_label :del_ship_from_name%></th><th><%=field_label :del_ship_to_name%></th></thead>
-  <tbody><tr>
-    <td style='width:50%'>
-      <%= f.select(:ship_from_id, [['...Loading...','']])%> 
-      <div id='ship_from_ad'></div>
-    </td>
-    <td style='width:50%' class='hover'>
-      <%= f.select(:ship_to_id, [['...Loading...','']])%> 
-      <div id='ship_to_ad'></div>
-    </td>
-  </tr>
+  <thead>
+    <%= model_field_labels [:del_ship_from_name, :del_ship_to_name], table:true, heading:true %>
+  </thead>
+  <tbody>
+    <tr>
+      <%= show_model_fields(f, :del_ship_from_id, table: true, editor_only: true) do |mf, field_name, value, attributes| 
+          attributes[:select_options] = options_for_select(["...Loading..."], value)
+          attributes[:id] = "delivery_ship_from_id"
+          field = model_select_field_tag field_name, mf, value, attributes
+          field + "<div id='ship_from_ad' style='text-align: left'></div>".html_safe
+        end %>
+      <%= show_model_fields(f, :del_ship_to_id, table: true, editor_only: true) do |mf, field_name, value, attributes| 
+          attributes[:select_options] = options_for_select(["...Loading..."], value)
+          attributes[:id] = "delivery_ship_to_id"
+          field = model_select_field_tag field_name, mf, value, attributes
+          field + "<div id='ship_to_ad' style='text-align: left'></div>".html_safe
+        end %>
+    </tr>
   <tr><th colspan='2'>Attributes</th></tr>
   <tr>
     <td colspan='2'>
       <table>
         <% @delivery.carrier = current_user.company if current_user.company.carrier %>
-        <%=field_row field_label(:del_car_name), (current_user.company.carrier ? f.hidden_field(:carrier_id)+@delivery.carrier.name : f.collection_select(:carrier_id, Company.carriers.not_locked, :id, :name, options ={:prompt => "-Select a carrier"}) ) %>
-        <%=field_row field_label(:del_mode), f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
-        <%=show_custom_fields @delivery, {:table=>true, :form => true}%>
+        <% if current_user.company.carrier %>
+          <%= show_model_fields(f, :del_car_id, hidden: true, editor_only: true) %>
+          <%= show_model_fields(@delivery, :del_car_name, table:true) %>
+        <% else %>
+          <%= show_model_fields(f, :del_car_id, del_car_id: {prompt: "Select a carrier", select_options: lambda {|value| options_from_collection_for_select(Company.carriers.not_locked, :id, :name, value)}}) %>
+        <% end %>
+        <%= show_model_fields(f, :del_mode, table: true, del_mode: {prompt: "Select a mode", select_options: lambda {|value| options_for_select(Shipment.modes, value)}}) %>
+        <%=show_custom_fields f, table: true%>
       </table>
     </td>
   </tr>

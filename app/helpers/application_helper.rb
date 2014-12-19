@@ -74,7 +74,7 @@ module ApplicationHelper
   def select_model_fields_tag(name,selected,opts={})
     opts[:class] ||= ''
     opts[:class] << ' form-control'
-    select_tag name, grouped_options_for_select(CoreModule.grouped_options,selected,"Select a Field"), opts
+    select_tag name, grouped_options_for_select(CoreModule.grouped_options(User.current),selected,"Select a Field"), opts
   end
 
   #builds a text field to back a field represented with a model_field_uid in the ModelField constants.
@@ -233,7 +233,7 @@ module ApplicationHelper
     end
 
     user = User.current
-    opts = {:form=>in_form, :table=>false, :show_prefix=>nil, :never_hide=>false, :display_read_only=>true, :never_hide=>false}.merge(opts)
+    opts = {:form=>in_form, :table=>false, :show_prefix=>false, :never_hide=>false, :display_read_only=>true}.merge(opts)
 
     output = ""
     model_field_uids.each do |mf|
@@ -268,15 +268,18 @@ module ApplicationHelper
       end
 
       editor = nil
-      wrapper = opts.delete :wrap_with
+      wrapper = html_attributes.delete :wrap_with
       if hidden || (opts[:form] && !mf.read_only? && mf.can_edit?(user))
         if !hidden && block_given?
           editor = yield mf, form_field_name, mf.process_export(core_object, user), html_attributes
-        else
-          editor = model_field_editor(user, core_object, mf, form_field_name, html_attributes).html_safe
         end
+        editor = model_field_editor(user, core_object, mf, form_field_name, html_attributes).html_safe if editor.nil?
       else
-        editor = field_value(core_object, mf).html_safe
+        if block_given?
+          editor = yield mf, form_field_name, mf.process_export(core_object, user), html_attributes
+        end
+
+        editor = field_value(core_object, mf).html_safe if editor.nil?
       end
 
       # At the moment, we only hide custom fields..not standard ones..use hide_blank to hide blank standard fields
@@ -391,7 +394,7 @@ module ApplicationHelper
     end
 
     output = ""
-    opts = {attributes: {}, heading: false, show_prefix: true, table: false, row: false}.merge opts
+    opts = {attributes: {}, heading: false, show_prefix: false, table: false, row: false}.merge opts
     model_field_uids.each do |mf|
       field = field_label(mf, opts[:show_prefix])
       next if field.blank?

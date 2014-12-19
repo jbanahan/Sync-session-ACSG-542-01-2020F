@@ -19,6 +19,7 @@ describe OpenChain::EventPublisher do
       o.stub(:closed_by).and_return u
       o.closed_at = 1.hour.ago
       User.stub(:api_admin).and_return u
+      OpenChain::EventPublisher.should_receive(:delay).and_return OpenChain::EventPublisher
       c = double('client')
       s = double('sqs')
       AWS::SQS.should_receive(:new).and_return(s)

@@ -55,9 +55,7 @@ $(function() {
 <table class='detail_table'>
 <tbody><tr><td>
   <table>
-    <%=field_row field_label(:sale_order_number), @sales_order.order_number %>
-    <%=field_row field_label(:sale_order_date), @sales_order.order_date %>
-    <%=field_row field_label(:sale_cust_name), @sales_order.customer.name %>
+    <%=show_model_fields @sales_order, [:sale_order_number, :sale_order_date, :sale_cust_name], table: true %>
     <%=show_custom_fields @sales_order, {:table=>true} %>
   </table>
 </td></tr></tbody>
@@ -67,26 +65,29 @@ $(function() {
       
 <table class="detail_table">
   <thead>
-    <th><%=field_label :soln_line_number%></th>
-    <th><%=field_label :prod_name%></th>
-    <th><%=field_label :soln_ordered_qty%></th>
+    <th>&nbsp;</th>
+    <%= model_field_labels([:soln_line_number, :prod_name, :soln_ordered_qty],  table: true, heading:true) %>
     <th>Qty On Delivery</th>
-    <th><%=field_label :prod_uom%></th>
-    <th><%=field_label :soln_ppu%></th>
+    <%= model_field_labels([:prod_uom, :soln_ppu],  table: true, heading:true) %>
     <th>Total Price</th>
-    <th></th>
+    <th>&nbsp;</th>
   </thead>
 
   <% @sales_order.sales_order_lines.each do |line| %>
         <tr class='hover'>
           <% line.set_line_number if line.line_number.nil? %>
-          <td><%= @sales_order.can_edit?(current_user) && !@sales_order.locked? ? (link_to line.line_number, edit_sales_order_sales_order_line_path(@sales_order,line)) : line.line_number %></td>
-          <td><%= link_to line.product.name, product_path(line.product) %></td>
-          <td><%= line.quantity %></td>
-          <td><%= line.delivery_qty%></td>
-          <td><%= line.product.unit_of_measure %></td>
-          <td><%= line.price_per_unit %></td>
-          <td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
+          <% if @sales_order.can_edit?(current_user) && !@sales_order.locked? %>
+            <td><button class='btn_link btn btn-default btn-xs' link_to='<%=edit_sales_order_sales_order_line_path(@sales_order,line)%>'>edit</button></td>
+          <% end %>
+          <%= show_model_fields line, :soln_line_number, table: true, editor_only: true %>  
+          <% if ModelField.find_by_uid(:prod_name).can_view?(current_user) && line.product.try(:can_view?, current_user) %>
+            <td><%= link_to ModelField.find_by_uid(:prod_name).process_export(line.product, User.current), product_path(line.product) %></td>
+          <% end %>
+          <%= show_model_fields line, :soln_ordered_qty, table: true, editor_only: true %>
+          <td class="has_numeric"><%= number_with_precision(line.delivery_qty, precision: 5, strip_insignificant_zeros: true)%></td>
+          <%= show_model_fields(line.product, :prod_uom, table: true, editor_only: true) %>
+          <%= show_model_fields line, :soln_ordered_qty, table: true, editor_only: true %>
+          <td class="has_numeric"><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : number_with_precision(line.price_per_unit * line.quantity, precision: 5, strip_insignificant_zeros: true) %></td>
           <td>
             <% if @sales_order.can_edit?(current_user) && !@sales_order.locked?%>
               <%= link_to 'Delete', sales_order_sales_order_line_path(@sales_order,line) , :confirm => 'Are you sure?', :method => :delete %>
@@ -102,11 +103,21 @@ $(function() {
 <div id='mod_edit_line' style='display:none;'>
   <%= form_for([@sales_order, form_line], :html=>{:id=>"frm_edit_line"}) do |f| %>
     <table>
-      <%=field_row field_label(:soln_line_number), f.text_field(:line_number,"size"=>"2") %>
-      <%=field_row field_label(:prod_name), f.collection_select(:product_id, Product.all, :id, :name, options={:prompt=>"Select a product"},{:id=>"edit_line_product"})%>
-      <%=field_row field_label(:soln_ordered_qty), f.text_field(:quantity,"size"=>"5") %>
-      <%=field_row field_label(:prod_uom), content_tag(:span,(f.object.product.nil? ? "" : f.object.product.unit_of_measure),:id=>"edit_line_uom") %>
-      <%=field_row field_label(:soln_ppu), f.text_field(:price_per_unit, "size"=>"5") %>
+      <%= show_model_fields f, :soln_line_number, table: true, soln_line_number: {style: "width: 3em"} %>
+      <% if form_line.new_record? %>
+        <%= show_model_fields(f, :soln_prod_id, table: true) do |mf, field_name, value, attrs|
+              attrs[:select_options] = options_from_collection_for_select(@products, :id, :unique_identifier, value)
+              attrs[:prompt] = "Select a product"
+              attrs[:id] = "edit_line_product"
+              model_select_field_tag(field_name, mf, value, attrs)
+            end %>
+      <% else %>
+        <%= show_model_fields form_line.product, :prod_name, table: true %>
+      <% end %>
+      <%= show_model_fields f, :soln_ordered_qty, table: true, soln_ordered_qty: {style: "width: 5em"} %>
+      <% prod = form_line.product ? form_line.product : Product.new %>
+      <%= show_model_fields prod, :prod_uom, {table:true, wrap_with: lambda {|mf, editor| content_tag(:span, editor, :id=>"edit_line_uom")}} %>
+      <%= show_model_fields f, :soln_ppu, table: true, soln_ppu: {style: "width: 5em"} %>
     </table>
   <% end %>
 </div>

@@ -21,23 +21,21 @@ class CustomReportBillingAllocationByValue < CustomReport
   end
 
   def run run_by, row_limit = nil
-    row_cursor = 0
-    col_cursor = -1
-
+    header = []
     if self.include_links?
-      write row_cursor, (col_cursor += 1), "Web Links"
+      header << "Web Links"
     end
-    
 
     self.search_columns.each do |sc|
-      write row_cursor, (col_cursor += 1), sc.model_field.label
+      header << sc.model_field
     end
+
     hard_code_fields = [:bi_invoice_number,:bi_invoice_date,:bi_invoice_total].collect {|x| ModelField.find_by_uid(x)}
     hard_code_fields.each do |mf|
-      write row_cursor, (col_cursor += 1), (mf.uid == :bi_invoice_total) ? "#{mf.label} (not prorated)": mf.label
+      header << ((mf.uid == :bi_invoice_total) ? "#{mf.label} (not prorated)": mf)
     end
-    write row_cursor, (col_cursor += 1), "Broker Invoice - Prorated Line Total"
-    charge_start_column = col_cursor
+    header << "Broker Invoice - Prorated Line Total"
+    charge_start_column = (header.length - 1)
     
     col_cursor = -1
     row_cursor = 1
@@ -130,12 +128,11 @@ class CustomReportBillingAllocationByValue < CustomReport
       end
     end
 
-    col_cursor = charge_start_column
     bill_columns.each do |label|
-      write 0, (col_cursor += 1), label
-      
+      header << label
     end
-    heading_row 0
+
+    write_headers 0, header, run_by
   end
   private 
   def allocate_broker_invoice_line line, charge_totals, bill_columns

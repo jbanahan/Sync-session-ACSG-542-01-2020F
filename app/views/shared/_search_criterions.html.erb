@@ -28,7 +28,7 @@
     var fields = [];
     <%ModelField.sort_by_label(model_fields).each do |mf| %>
       <% next unless mf.can_view?(current_user)%>
-      fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
+      fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript (mf.can_view?(User.current) ? mf.label : ModelField.disabled_label)%>'});
     <%end%>
     OCSearch.addSearchCriterion($("#sp_table"),'<%=parent_hash_name%>',fields,m,field,operator,value,id,true, include_empty_checked);
   }

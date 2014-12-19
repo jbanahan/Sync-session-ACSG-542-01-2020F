@@ -25,28 +25,42 @@ $(function() {
 <%end%>
 <% end %>
 <%= form_for(@sales_order, :html=>{:id=>'frm_so'}) do |f| %>
-
-  <div class='content_head'>
-    <p><span class='content_head_label'><%=field_label :sale_order_number%>: </span><%=model_text_field(f,:order_number,:sale_order_number) %></p>
-    <p><span class='content_head_label'><%=field_label :sale_cust_name%>: </span><%= f.collection_select :customer_id, Company.where(:customer => true).not_locked, :id, :name, options ={:prompt => "Select a customer"} %></p>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <%= show_model_fields f, :sale_order_number %>
+        <%= show_model_fields f, :sale_cust_id, sale_cust_id: {id: "sales_order_customer_id", prompt: "Select a customer", select_options: lambda {|val| options_from_collection_for_select(Company.where(:customer => true).not_locked, :id, :name, val)}} %>
+      </div>
+    </div>
   </div>
   <table style='width:100%;'><!--table based layout... good enough for now-->
     <tr>
       <td style='vertical-align:top;'>
         <table class='detail_table'>
-          <thead><tr><th><%=field_label :sale_ship_to_name%></th></tr></thead>
-          <tbody><tr><td>
-            <%= f.select(:ship_to_id, [['...Loading...','']])%> 
-            <div id='ship_to_ad'></div>
-          </td></tr></tbody>
+          <thead>
+            <tr colspan="2">
+              <%= model_field_labels :sale_ship_to_name, table:true, heading:true %>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <%= show_model_fields(f, :sale_ship_to_id, table: true, editor_only: true) do |mf, field_name, value, attributes| 
+                    attributes[:select_options] = options_for_select(["...Loading..."], value)
+                    attributes[:id] = "sales_order_ship_to_id"
+                    field = model_select_field_tag field_name, mf, value, attributes
+                    field + "<div id='ship_to_ad' style='text-align: left'></div>".html_safe
+                  end %>
+            </tr>
+          </tbody>
         </table>
         <table class='detail_table'>
-          <thead><tr><th>Attributes</th></tr></thead>
-          <tbody><tr><td>
-            <b><%=field_label :sale_order_date%>: </b><%= model_text_field(f,:order_date,:sale_order_date, :class=>"isdate") %><br />
-            <b><%=field_label :sale_div_name%>: </b><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => (Division.all.size>1 ? "Select a division" : nil)} %><br />
-      			<%=show_custom_fields @sales_order, {:form => true}%>
-          </td></tr></tbody>  
+          <thead><tr><th colspan="2">Attributes</th></tr></thead>
+          <tbody>
+            <%= show_model_fields(f, :sale_order_date, table: true) %>
+            <% divs = Division.all %>
+            <%= show_model_fields(f, :sale_div_id, table: true, sale_div_id: {prompt: (divs.length > 0 ? "Select a division": ""), select_options: lambda {|val| options_from_collection_for_select(divs, :id, :name, val)}}) %>
+      			<%= show_custom_fields f, {:table => true}%>
+          </tbody>  
         </table>
       </td>
     </tr>

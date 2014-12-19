@@ -97,7 +97,11 @@ class SearchQuery
     r = "SELECT DISTINCT "
     flds = core_module_id_select_list opts
     unless opts[:select_core_module_keys_only] || opts[:select_parent_key_only]
-      sorted_columns.each_with_index {|sc,idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
+      sorted_columns.each_with_index do |sc,idx| 
+        # If the user doesn't have access to the field, just select as ''
+        mf = sc.model_field
+        flds << "#{mf.can_view?(@user) ? mf.qualified_field_name : "null"} AS \"#{idx}\""
+      end
     end
     r << "#{flds.join(", ")} "
     r
@@ -176,13 +180,20 @@ class SearchQuery
 
   def build_where
     wheres = @search_setup.search_criterions.collect do |sc| 
-      v = sc.where_value
-      if v.respond_to? :collect
-        v = v.collect {|val| ActiveRecord::Base.sanitize val}.join(",")
+      # If a search has a criterion field that has been disabled for a user (can happen if they had it and the field was later taken away),
+      # then it should cause the search to return no values.
+      if !sc.model_field.can_view?(@user)
+        "1 != 1"
       else
-        v = ActiveRecord::Base.sanitize v
+        v = sc.where_value
+        if v.respond_to? :collect
+          v = v.collect {|val| ActiveRecord::Base.sanitize val}.join(",")
+        else
+          v = ActiveRecord::Base.sanitize v
+        end
+        sc.where_clause(v).gsub("?",v)
       end
-      sc.where_clause(v).gsub("?",v)
+      
     end
     wheres << @search_setup.core_module.klass.search_where(@user)
     wheres << @extra_where unless @extra_where.blank?
@@ -209,7 +220,7 @@ class SearchQuery
     module_chain_array.each {|cm| sort_clause_hash[cm] = []}
     sorts.each do |sc|
       mf = sc.model_field
-      next if mf.blank?
+      next if mf.blank? || !mf.can_view?(@user)
       sort_clause_hash[mf.core_module] << "#{mf.qualified_field_name} #{sc.descending? ? "DESC" : "ASC"}"
     end
     sort_clauses = []

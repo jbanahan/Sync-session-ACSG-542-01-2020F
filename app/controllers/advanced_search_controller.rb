@@ -159,9 +159,9 @@ class AdvancedSearchController < ApplicationController
           :user=>{:email=>ss.user.email},
           :uploadable_error_messages=>ss.uploadable_error_messages,
           :search_list=>current_user.search_setups.where(:module_type=>ss.module_type).order(:name).collect {|s| {:name=>s.name,:id=>s.id,:module=>s.core_module.label}},
-          :search_columns=>ss.search_columns.collect {|c| {:mfid=>c.model_field_uid,:label=>c.model_field.label,:rank=>c.rank}},
-          :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>c.model_field.label,:rank=>c.rank,:descending=>c.descending?}},
-          :search_criterions=>ss.search_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>c.model_field.label,:operator=>c.operator,:value=>c.value,:datatype=>c.model_field.data_type,:include_empty=>c.include_empty?}},
+          :search_columns=>ss.search_columns.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank}},
+          :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank,:descending=>c.descending?}},
+          :search_criterions=>ss.search_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:operator=>c.operator,:value=>c.value,:datatype=>c.model_field.data_type,:include_empty=>c.include_empty?}},
           :search_schedules=>ss.search_schedules.collect {|s|
             f = {:email_addresses=>s.email_addresses, :run_monday=>s.run_monday?, :run_tuesday=>s.run_tuesday?, :run_wednesday=>s.run_wednesday?, :run_thursday=> s.run_thursday?, :run_friday=>s.run_friday?,
             :run_saturday=>s.run_saturday?, :run_sunday=>s.run_sunday?, :run_hour=>s.run_hour, :day_of_month=> s.day_of_month, :download_format=>s.download_format}

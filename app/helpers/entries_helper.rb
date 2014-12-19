@@ -2,7 +2,7 @@ module EntriesHelper
 
   def render_xls entry, user
     # The fields here should mirror what's in the html views for the corresponding entry types
-    fields = entry.canadian? ? build_ca_field_arrays : build_us_field_arrays
+    fields = entry.canadian? ? build_ca_field_arrays(user) : build_us_field_arrays(user)
     wb = XlsMaker.create_workbook "Entry", fields[:entry].collect{|f| f.label(false)}
     sheet = wb.worksheet 0
     XlsMaker.add_body_row sheet, 1, fields[:entry].collect {|f| f.process_export(entry, user)}
@@ -57,7 +57,7 @@ module EntriesHelper
 
   private
 
-    def build_us_field_arrays
+    def build_us_field_arrays user
       fields = {}
       fields[:entry] = [:ent_entry_num,:ent_brok_ref,:ent_customer_references,:ent_mbols,:ent_hbols,:ent_release_cert_message,:ent_fda_message,:ent_paperless_certification,:ent_paperless_release,:ent_census_warning,:ent_error_free_release,
         :ent_cust_name,:ent_vendor_names,:ent_po_numbers,:ent_merch_desc, :ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_it_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_eta_date,:ent_arrival_date,:ent_release_date,
@@ -78,10 +78,10 @@ module EntriesHelper
       ]
       fields[:broker_invoice] = [:bi_invoice_number,:bi_suffix,:bi_invoice_date,:bi_invoice_total,:bi_currency,:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso]
       fields[:broker_invoice_line] = [:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type]
-      find_model_fields fields
+      find_model_fields fields, user
     end
 
-    def build_ca_field_arrays
+    def build_ca_field_arrays user
       fields = {}
       fields[:entry] = [:ent_entry_num,:ent_brok_ref,:ent_cust_num, :ent_cust_name, :ent_importer_tax_id,:ent_cargo_control_number,:ent_ca_entry_type,:ent_po_numbers,
           :ent_vendor_names, :ent_customer_references, :ent_total_units,:ent_total_packages, :ent_total_packages_uom, :ent_gross_weight, :ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst,
@@ -95,13 +95,13 @@ module EntriesHelper
       ]
       fields[:broker_invoice] = [:bi_invoice_number,:bi_suffix,:bi_invoice_date,:bi_invoice_total,:bi_currency,:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso]
       fields[:broker_invoice_line] = [:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type,:bi_line_hst_percent]
-      find_model_fields fields
+      find_model_fields fields, user
     end
 
-    def find_model_fields fields
+    def find_model_fields fields, user
       mfs = {}
       fields.each do |k, v|
-        mfs[k] = v.collect {|uid| mf = ModelField.find_by_uid(uid); mf.blank? ? nil : mf}.compact
+        mfs[k] = v.collect {|uid| mf = ModelField.find_by_uid(uid); mf.can_view?(user) ? mf : nil}.compact
       end
       mfs
     end

@@ -35,7 +35,7 @@ $(function() {
               <%= show_model_fields cf, :class_cntry_id, {hidden: true, class_cntry_id: {class: "hdn_country_id"}} %>
               <table>
                 <%- 
-                  show_custom_options = {:table=>true, :show_prefix=>false}
+                  show_custom_options = {:table=>true}
                   show_custom_options[:display_read_only] = display_read_only if defined?(display_read_only)
                 -%>
                 <%=show_custom_fields cf, show_custom_options%>

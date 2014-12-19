@@ -4,10 +4,12 @@ htsApp.controller 'HtsCtrl', ['$scope','$http',($scope,$http) ->
   $scope.viewMode = 'base'
   $scope.country = ""
   $scope.countries = []
+  $scope.limitedMode = false
 
   $scope.loadSubscribedCountries = () ->
     $scope.countries = []
     $http.get('/hts/subscribed_countries.json').success((data)->
+      $scope.limitedMode = data.limited_mode
       $scope.countries = data.countries
       $scope.subscribed_isos = (country.iso for country in $scope.countries)
       $scope.country = $scope.countries[0]

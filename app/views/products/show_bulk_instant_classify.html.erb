@@ -35,7 +35,7 @@
             <td class='class_tr_box'>
               <div class='cf_box'>
                 <table>
-                  <%=show_custom_fields c, {:form=>false, :table=>true, :show_prefix=>false}%>
+                  <%=show_custom_fields c, {:form=>false, :table=>true}%>
                 </table>
               </div>
               <%is_us = c.country.iso_code=='US'%>
@@ -44,7 +44,7 @@
                 <div class='tf_row'>
                   <table>
                     <%=field_view_row tr, :hts_line_number%> 
-                    <%=show_custom_fields tr, {:form=>false, :show_prefix=>false, :table=>true} %>
+                    <%=show_custom_fields tr, {:form=>false, :table=>true} %>
                   </table>
                   <table class='tr_hts'>
                     <thead>

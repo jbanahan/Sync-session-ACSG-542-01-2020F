@@ -85,7 +85,7 @@ class ProductsController < ApplicationController
       before_validate = lambda { |p|
         update_status p
         if current_user.company.importer? && !p.importer_id.nil? && p.importer!=current_user.company && !current_user.company.linked_companies.include?(p.importer)
-          p.errors[:base] << "You do not have permission to set importer to company #{p.importer_id}"
+          p.errors[:base] << "You do not have permission to set #{ModelField.find_by_uid(:prod_imp_name).label} to company #{p.importer.name}"
           raise OpenChain::ValidationLogicError
         end
       }
@@ -97,6 +97,7 @@ class ProductsController < ApplicationController
   # PUT /products/1.xml
   def update
     p = Product.find(params[:id])
+    importer_id = p.importer_id
     action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
       succeed = lambda {|p|
         add_flash :notices, "Product was saved successfully."
@@ -108,8 +109,9 @@ class ProductsController < ApplicationController
       }
       before_validate = lambda {|p|
         update_status p
-        if current_user.company.importer? && !p.importer_id.nil? && p.importer!=current_user.company && !current_user.company.linked_companies.include?(p.importer)
-          p.errors[:base] << "You do not have permission to set importer to company #{p.importer_id}"
+        # Allow updating (even if bad importer), as long as you're not changing the importer
+        if p.importer_id != importer_id && current_user.company.importer? && !p.importer_id.nil? && p.importer!=current_user.company && !current_user.company.linked_companies.include?(p.importer)
+          p.errors[:base] << "You do not have permission to set #{ModelField.find_by_uid(:prod_imp_name).label} to company #{p.importer.name}"
           raise OpenChain::ValidationLogicError
         end
       }

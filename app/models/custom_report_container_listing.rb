@@ -19,9 +19,9 @@ class CustomReportContainerListing < CustomReport
     col_cursor = 0
 
     #HEADINGS
-    headers = ["Container Number"] + self.search_columns.map {|sc| sc.model_field.label}
+    headers = ["Container Number"] + self.search_columns
 
-    write_headers (row_cursor += 1), headers
+    write_headers (row_cursor += 1), headers, run_by
 
     entries = Entry.search_secure run_by, Entry.group("entries.id")
     self.search_criterions.each {|sc| entries = sc.apply(entries)}

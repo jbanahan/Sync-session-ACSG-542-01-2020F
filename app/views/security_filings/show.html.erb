@@ -4,23 +4,17 @@
     <tr>
       <td style='width:33%;'>
         <table>
-          <%[:sf_transaction_number,:sf_entry_numbers,:sf_entry_reference_numbers,:sf_master_bill_of_lading,:sf_house_bills_of_lading,:sf_container_numbers,:sf_voyage,:sf_vessel].each do |f|-%>
-            <%=field_view_row @security_filing, f%>
-          <%end-%>
+          <%= show_model_fields @security_filing, [:sf_status_code,:sf_file_logged_date,:sf_first_sent_date,:sf_last_sent_date,:sf_first_accepted_date,:sf_last_accepted_date,:sf_estimated_vessel_load_date,:sf_late_filing], table: true %>
         </table>
       </td>
       <td style='width:33%;'>
         <table>
-          <%[:sf_status_code,:sf_file_logged_date,:sf_first_sent_date,:sf_last_sent_date,:sf_first_accepted_date,:sf_last_accepted_date,:sf_estimated_vessel_load_date,:sf_late_filing].each do |f|-%>
-            <%=field_view_row @security_filing, f%>
-          <%end-%>
+          <%= show_model_fields @security_filing, [:sf_status_code,:sf_file_logged_date,:sf_first_sent_date,:sf_last_sent_date,:sf_first_accepted_date,:sf_last_accepted_date,:sf_estimated_vessel_load_date,:sf_late_filing], table: true %>
         </table>
       </td>
       <td style='width:34%;'>
         <table>
-          <%[:sf_host_system_file_number,:sf_broker_customer_number,:sf_importer_tax_id,:sf_scac,:sf_booking_number,:sf_lading_port_code,:sf_unlading_port_code,:sf_entry_port_code].each do |f|-%>
-            <%=field_view_row @security_filing, f%>
-          <%end-%>
+          <%= show_model_fields @security_filing, [:sf_host_system_file_number,:sf_broker_customer_number,:sf_importer_tax_id,:sf_scac,:sf_booking_number,:sf_lading_port_code,:sf_unlading_port_code,:sf_entry_port_code], table: true %>
         </table>
       </td>
     </tr>
@@ -28,21 +22,16 @@
 </table>
 
 <h2>Details</h2>
-<%fields = [:sfln_line_number, :sfln_hts_code, :sfln_part_number, :sfln_po_number, :sfln_commercial_invoice_number, :sfln_country_of_origin_code, :sfln_mid, :sfln_manufacturer_name]-%>
 <table class='detail_table'>
   <thead>
     <tr>
-      <%fields.each do |f|-%>
-        <th><%=field_label f, false%></th>
-      <%end-%>
+      <%= model_field_labels [:sfln_line_number, :sfln_hts_code, :sfln_part_number, :sfln_po_number, :sfln_commercial_invoice_number, :sfln_country_of_origin_code, :sfln_mid, :sfln_manufacturer_name], heading: true, table: true %>
     </tr>
   </thead>
   <tbody>
     <%@security_filing.security_filing_lines.each do |sfl| -%>
-      <tr class='hover'>
-        <%fields.each do |f|-%>
-          <td><%=field_value sfl, f%></td>
-        <%end-%>
+      <tr>
+      <%= show_model_fields sfl, [:sfln_line_number, :sfln_hts_code, :sfln_part_number, :sfln_po_number, :sfln_commercial_invoice_number, :sfln_country_of_origin_code, :sfln_mid, :sfln_manufacturer_name], editor_only:true, table: true %>
       </tr>
     <%end-%>
   </tbody>

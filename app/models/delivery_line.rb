@@ -2,6 +2,7 @@ class DeliveryLine < ActiveRecord::Base
   include LinesSupport
   include CustomFieldSupport
   include ShallowMerger
+  include UpdateModelFieldsSupport
   belongs_to :delivery
 
   validates_uniqueness_of :line_number, :scope => :delivery_id	

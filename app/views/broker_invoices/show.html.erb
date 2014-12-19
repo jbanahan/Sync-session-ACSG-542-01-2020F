@@ -1,23 +1,12 @@
 <% content_for :action_bar do%>
   <button class='btn_link' link_to='<%=broker_invoices_path%>' key_map='b'>Back To Search</button>
 <% end%>
-<table>
-  <%CoreModule::BROKER_INVOICE.model_fields.keys.each do |f|%>
-    <%if f==:bi_brok_ref%>
-      <% mf = ModelField.find_by_uid(f)%>
-      <%=field_row mf.label, link_to(mf.process_export(@invoice,current_user),entry_path(@invoice.entry))%>
-    <%else%>
-      <%=field_view_row @invoice, f%>
-    <%end%>
-  <%end%>
-</table>
-<h3>Lines</h3>
+<%= show_model_fields @invoice, CoreModule::BROKER_INVOICE.model_fields.values %>
+<h2>Lines</h2>
+<hr />
+<% line_fields = CoreModule::BROKER_INVOICE_LINE.model_fields.values %>
 <% @invoice.broker_invoice_lines.each do |line| %>
-  <table>
-    <%CoreModule::BROKER_INVOICE_LINE.model_fields.keys.each do |f| %>
-      <%=field_view_row line, f%>
-    <%end%>
-  </table>
+  <%= show_model_fields line, line_fields %>
   <hr />
 <% end %>
 
