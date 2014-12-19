@@ -1,4 +1,5 @@
 class Company < ActiveRecord::Base
+  include CoreObjectSupport
 	validates	:name,	:presence => true
 	validate  :master_lock
   validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }

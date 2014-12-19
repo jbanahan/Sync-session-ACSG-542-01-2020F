@@ -362,3 +362,28 @@ Factory.define :email, class: OpenStruct do |f|
   f.body 'Hello!'
   f.attachments {[]}
 end
+
+Factory.define :group do |f|
+end
+
+#workflow instance needs to be able to load a workflow decider
+module OpenChain
+  class MockFactoryDecider 
+    def self.update_workflow! obj, user
+      nil
+    end
+  end
+end
+Factory.define :workflow_instance do |f|
+  f.name 'MyWorkflowInstance'
+  f.workflow_decider_class 'OpenChain::MockFactoryDecider'
+  f.association :base_object, factory: :order
+end
+Factory.define :workflow_task do |f|
+  f.name 'MyWorkflowTask'
+  f.task_type_code 'FACT_TASK'
+  f.association :workflow_instance
+  f.association :group
+  f.test_class_name 'OpenChain::WorkflowTester::AttachmentTypeWorkflowTest'
+  f.payload_json '{"attachment_type":"Sample"}'
+end

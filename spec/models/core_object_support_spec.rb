@@ -1,6 +1,14 @@
 require 'spec_helper'
 
 describe CoreObjectSupport do
+  describe :workflow_instances do
+    it "should have many workflow instances" do
+      o = Factory(:order)
+      2.times {|x| Factory(:workflow_instance,base_object:o)}
+      o.reload
+      expect(o.workflow_instances.count).to eq 2
+    end
+  end
   describe :business_rules_state do
     it "should set worst state from business_validation_results" do
       ent = Factory(:entry)
