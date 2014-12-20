@@ -439,9 +439,12 @@ class CoreModule
     :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"}
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate])
+  COMPANY = new("Company","Company",
+    default_search_columns: [:cmp_name,:cmp_sys_code]
+  )
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
-    SECURITY_FILING,SECURITY_FILING_LINE]
+    SECURITY_FILING,SECURITY_FILING_LINE,COMPANY]
 
   def self.add_virtual_identifier
     # Add in the virtual_identifier field that is needed for update_model_field_attribute support

@@ -1,3 +1,4 @@
+require 'open_chain/workflow_tester/attachment_type_workflow_test'
 class WorkflowTask < ActiveRecord::Base
   belongs_to :workflow_instance, inverse_of: :workflow_tasks
   belongs_to :group, inverse_of: :workflow_tasks

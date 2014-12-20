@@ -1095,6 +1095,10 @@ and classifications.product_id = products.id
       FieldLabel.clear_defaults
       MODEL_FIELDS.clear
       DISABLED_MODEL_FIELDS.clear
+      add_fields CoreModule::COMPANY, [
+        [1,:cmp_sys_code,:system_code,"System Code",{data_type: :string}],
+        [2,:cmp_name,:name,"Name",{data_type: :string}]
+      ]
       add_fields CoreModule::SECURITY_FILING_LINE, [
         [2,:sfln_line_number,:line_number,"Line Number",{:data_type=>:integer}],
         [4,:sfln_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
