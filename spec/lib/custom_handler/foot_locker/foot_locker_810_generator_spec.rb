@@ -89,7 +89,8 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       @invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: @invoice, charge_type: "1", charge_code: "Code", charge_description: "Desc", charge_amount: "50.00")
       @invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: @invoice, charge_type: "2", charge_code: "Code2", charge_description: "Desc2", charge_amount: "25.00")
       # Duty Paid direct lines should be included...FOLO wants these for reporting purposes
-      @invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: @invoice, charge_type: "D", charge_code: "0099", charge_description: "Duty Paid Direct", charge_amount: "10.00")
+      @dpd_line = Factory(:broker_invoice_line, broker_invoice: @invoice, charge_type: "D", charge_code: "0099", charge_description: "Duty Paid Direct", charge_amount: "10.00")
+      @invoice.broker_invoice_lines << @dpd_line
 
       @com_invoice = Factory(:commercial_invoice, entry: @entry)
       @tar1 = Factory(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: @com_invoice, po_number: "PO#"))
@@ -184,6 +185,9 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
     end
 
     it "skips duty lines on invoices and doesn't send xml without any lines" do
+      @dpd_line.destroy
+      @invoice.reload
+
       @invoice.broker_invoice_lines.each do |l|
         l.update_attributes! charge_type: "D"
       end
