@@ -17,6 +17,46 @@ describe UsersController do
       expect(response).to be_redirect
     end
   end
+
+  describe :update do
+    before :each do
+      @user.admin = true
+      @user.save!
+      @u = Factory(:user, password: "blah")
+    end
+
+    it "updates a user's info without password" do
+      @u = Factory(:user, password: "blah")
+      group = Group.create! system_code: "Testing"
+      # Verify the password doesn't change if we don't include it in the params
+      pwd = @u.encrypted_password
+      params = {company_id: @u.company.id, id: @u.id, user: {username: 'testing', group_ids: [group.id]}}
+
+      post :update, params
+      expect(response).to be_redirect
+
+      @u.reload
+      expect(@u.username).to eq 'testing'
+      expect(@u.groups).to eq [group]
+      expect(@u.encrypted_password).to eq pwd
+    end
+
+    it "updates a user's password" do
+      @u = Factory(:user, password: "blah")
+      group = Group.create! system_code: "Testing"
+      # Verify the password doesn't change if we don't include it in the params
+      pwd = @u.encrypted_password
+      params = {company_id: @u.company.id, id: @u.id, user: {username: 'testing', password: "testing", password_confirmation: "testing"}}
+
+      post :update, params
+      expect(response).to be_redirect
+
+      @u.reload
+      expect(@u.username).to eq 'testing'
+      expect(@u.encrypted_password).not_to eq pwd
+      expect(User.authenticate 'testing', 'testing').to be_true
+    end
+  end
   describe :event_subscriptions do
     it "should work with user id" do
       u = Factory(:user)

@@ -29,6 +29,25 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     <% if @user.id -%>
       $("#btn_reports").click(function(evt) { window.location = "<%=user_scheduled_reports_path @user%>"});
     <% end -%>
+    function sortSelect(sel) {
+      $(sel).append($(sel + " option").remove().sort(function(a, b) {
+        var at = $(a).text().toLowerCase(), bt = $(b).text().toLowerCase();
+        return (at > bt)?1:((at < bt)?-1:0);
+    }));
+
+    }
+    $("#btn_assign_groups").click(function(evt) {
+      evt.preventDefault();
+      var selectedItems = $("#available_groups option:selected").toArray();
+      $("#user_group_ids").append(selectedItems);
+      sortSelect("#user_group_ids");
+    })
+    $("#btn_remove_groups").click(function(evt) {
+      evt.preventDefault();
+      var selectedItems = $("#user_group_ids option:selected").toArray();
+      $("#available_groups").append(selectedItems);
+      sortSelect("#available_groups");
+    })
   });
 <%end%>
 <%content_for :action_bar do %>
@@ -121,6 +140,32 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 
     <% if current_user.admin? %>
       <%=render :partial=>'permissions', :locals=>{:user=>@user,:f=>f} -%>
+
+      <h2>User Groups</h2>
+      <div class="row">
+        <div class="col-md-5">
+          <div class="form-group">
+            <label>Available Groups</label>
+            <%= select_tag(:available_groups, options_from_collection_for_select(@available_groups, :id, :name), {include_blank: false, class: "form-control", size: 5, multiple: true, id: "available_groups"}) %>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div style="display: table; margin-top: 2.5em; width: 100%;">
+            <div style="display: table-cell; text-align: center;">
+              <div style="display: inline-block;">
+                <button class="form-control btn btn-default" id="btn_assign_groups"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
+                <button class="form-control btn btn-default" style="margin-top: 1em;" id="btn_remove_groups"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="form-group">
+            <label>Assigned Groups</label>
+            <%= f.select(:group_ids, options_from_collection_for_select(@assigned_groups, :id, :name), {}, {class: "form-control", size: 5, multiple: true}) %>
+          </div>
+        </div>
+      </div>
     <% end %>
   <% end %>
 </div>

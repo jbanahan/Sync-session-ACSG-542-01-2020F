@@ -25,7 +25,7 @@ class User < ActiveRecord::Base
     :password_reset,
     :simple_entry_mode,
     :tariff_subscribed, :homepage,
-    :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password
+    :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :group_ids
   
   belongs_to :company
   belongs_to :run_as, :class_name => "User"

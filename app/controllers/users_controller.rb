@@ -38,6 +38,7 @@ class UsersController < ApplicationController
       @user = User.find(params[:id])
       action_secure(@user.can_edit?(current_user),@user,{:lock_check=>false,:module_name=>"user",:verb=>"edit"}) {
         @company = @user.company
+        add_user_groups_to_page @user
       }
     end
 
@@ -55,17 +56,22 @@ class UsersController < ApplicationController
         set_password_reset(@user)
         @user.password = password
         @company = @user.company
+
+        valid = false
         User.transaction do
-          if @user.save && @user.update_user_password(password, password_confirmation)
-            add_flash :notices, "User created successfully."
-            redirect_to(company_users_path(@company))
-          else
-            errors_to_flash @user, :now => true
-            @company = Company.find(params[:company_id])
-            render :action => "new"
-            # Rollback is swallowed by the transaction block
-            raise ActiveRecord::Rollback, "Bad user create."
-          end
+          valid = @user.save && @user.update_user_password(password, password_confirmation)
+          # Rollback is swallowed by the transaction block
+          raise ActiveRecord::Rollback, "Bad user create." unless valid
+        end
+
+        if valid
+          add_flash :notices, "User created successfully."
+          redirect_to(company_users_path(@company))
+        else
+          errors_to_flash @user, :now => true
+          @company = Company.find(params[:company_id])
+          add_user_groups_to_page @user
+          render :action => "new"
         end
       }
     end
@@ -79,8 +85,16 @@ class UsersController < ApplicationController
         set_admin_params(@user,params)
         set_debug_expiration(@user)
         set_password_reset(@user)
-        # Deleting password params because they're not set as accessible in the user model
-        if @user.update_user_password(params[:user].delete(:password), params[:user].delete(:password_confirmation)) && @user.update_attributes(params[:user])
+
+        valid = false
+        User.transaction do 
+          # Deleting password params because they're not set as accessible in the user model
+          valid = @user.update_user_password(params[:user].delete(:password), params[:user].delete(:password_confirmation)) && @user.update_attributes(params[:user])
+          # Rollback is swallowed by the transaction block
+          raise ActiveRecord::Rollback, "Bad user create." unless valid
+        end
+
+        if valid
             add_flash :notices, "Account updated successfully."
 
             # If the user is updating their own account then it's possible they've updated their password, in which case their remember token is invalid (it's re-generated
@@ -98,6 +112,7 @@ class UsersController < ApplicationController
             end
         else
           errors_to_flash @user
+          add_user_groups_to_page @user
           render :action => "edit"
         end
       }
@@ -292,5 +307,17 @@ class UsersController < ApplicationController
       errors_to_flash @user
       redirect_to company_user_path(@user.company,@user) 
     }
+  end
+
+  def add_user_groups_to_page user
+    @assigned_groups = []
+    @available_groups = []
+    Group.order("name").all.each do |g|
+      if user.in_group? g.system_code
+        @assigned_groups << g
+      else
+        @available_groups << g
+      end
+    end
   end
 end
