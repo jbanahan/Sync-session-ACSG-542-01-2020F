@@ -5,6 +5,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser do
   describe "extract_invoices" do
     it "reads invoices from day end file" do
       file = <<FILE
+      DOEDTLS1-D0-09/06/03
 ---------- -- ---- ----- -------- ---------- ------------- --------- ---------- --------------- ---  --  ---  ---  ---  ---  --- --
     571606       4 0099* 08/12/14            316-05716062            VFFTZ          390,120.41  USD  D    Y    N    N    F    N  N
     571606       4 0007  08/12/14                          0400-0004 VFFTZ              500.00  USD  R    Y    N    N    F    N  N
@@ -87,6 +88,11 @@ FILE
       expect(info[:currency]).to eq "USD"
       expect(info[:a_r]).to eq "N"
       expect(info[:a_p]).to eq "Y"
+    end
+
+    it "fails if the file does not have the expected format indicator" do
+      file = "\n\n\nDOEDTLS1-D0-09/06/14\n\n\n"
+      expect{check_info = described_class.new.extract_invoices StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Daily Billing List file that is not the correct format. Expected to find 'DOEDTLS1-D0-09/06/03' on the first line, but did not."
     end
   end
 

@@ -1,6 +1,8 @@
+require 'open_chain/s3'
+require 'open_chain/custom_handler/intacct/alliance_day_end_handler'
+
 module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArApParser
   include ActionView::Helpers::NumberHelper
-
 
   def extract_invoices fin
     invoice_info = {}
@@ -10,9 +12,14 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
     buffered_invoice_lines = []
     header_found = false
     grand_total_found = false
+    valid_file_format = nil
 
     fin.each_line do |line|
       next if line.blank?
+
+      if valid_file_format.nil?
+        valid_file_format = valid_format? line
+      end
 
       # Look for a line that starts with ---------- , this signifies that the next lines will have data for a single invoice
       if line.starts_with? "----------"
@@ -174,6 +181,14 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
       
 
       BigDecimal.new val
+    end
+
+    def valid_format? first_file_line
+      if first_file_line =~ /DOEDTLS1-D0-09\/06\/03/
+        return true
+      else
+        raise "Attempted to parse an Alliance Daily Billing List file that is not the correct format. Expected to find 'DOEDTLS1-D0-09/06/03' on the first line, but did not."
+      end
     end
 
 end; end; end; end;

@@ -5,8 +5,13 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
     check_info = {}
     buffered_checks = []
     header_found = false
+    valid_file_format = nil
     fin.each_line do |line|
       next if line.blank?
+
+      if valid_file_format.nil?
+        valid_file_format = valid_format? line
+      end
 
       # Look for a line that starts with ----------, this signifies that the next lines will have check data
       if line.starts_with? "----------"
@@ -146,6 +151,14 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
     def parse_date value
       Date.strptime value, "%m/%d/%Y"
+    end
+
+    def valid_format? first_file_line
+      if first_file_line =~ /APMRGREG-D0-06\/22\/09/
+        return true
+      else
+        raise "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first line, but did not."
+      end
     end
 
 end; end; end; end;

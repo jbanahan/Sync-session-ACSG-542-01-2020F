@@ -4,6 +4,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser do
   describe "extract_check_info" do
     it "extracts check info from file" do
       file = <<-FILE
+      APMRGREG-D0-06/22/09
 ---------- ---------- ------------  ---------- ---------- --- --------- ------------ ------------- ---------- ---- -------------  --
       9801 KINGOCEAN     1615657A              IGM        F   0202-0000 LIOPEV12468      2,295.00  08/12/2014 Adv                 AP
            KING OCEAN SERVICES         Total of Check       9801                         2,295.00
@@ -34,6 +35,12 @@ FILE
       expect(check[:vendor_reference]).to eq "LIOPEV12468"
       expect(check[:check_amount]).to eq BigDecimal.new("2295.00")
       expect(check[:check_date]).to eq Date.new(2014, 8, 12)
+    end
+
+    it "raises an error when file is not of the expected format" do
+      # Just change the date format as if it had been updated...this should force a failure
+      file = "\n\n\nAPMRGREG-D0-06/22/14\n\n\n"
+      expect{check_info = described_class.new.extract_check_info StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Check Register file that is not the correct format. Failed to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
     end
   end
 

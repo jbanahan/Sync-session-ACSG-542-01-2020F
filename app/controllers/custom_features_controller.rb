@@ -493,7 +493,7 @@ class CustomFeaturesController < ApplicationController
 
       saved = false
       CustomFile.transaction do 
-        saved = check_register.save && invoice_file.save
+        saved = check_register.save! && invoice_file.save!
       end
 
       if saved
