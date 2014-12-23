@@ -200,7 +200,19 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       @h.receive nil, @entry
       expect(@ftp_files.size).to eq 0
     end
-  end
 
- 
+    it "adds Details element even if there are no details" do
+      # blank the PO numbers so we don't generate detail lines
+      @com_invoice.commercial_invoice_lines.each {|ci| ci.update_attributes! po_number: nil}
+
+      @h.receive nil, @entry
+      expect(@ftp_files.size).to eq 1
+      @xml = REXML::Document.new(@ftp_files[0]).root
+
+      # Verify we have a blank Details element
+      x = REXML::XPath.match(@xml, "Details")
+      expect(x[0].name).to eq "Details"
+      expect(REXML::XPath.match(@xml, "Details/Detail").length).to eq 0
+    end
+  end
 end

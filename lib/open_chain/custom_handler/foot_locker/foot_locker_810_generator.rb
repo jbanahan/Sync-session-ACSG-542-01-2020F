@@ -96,10 +96,11 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
       end
     end
 
-    details = nil
+    # We need to ensure that the Details tag is always present, regardless of whether we
+    # have actual Detail elements below it for EDI handling purposes
+    details = add_element root, "Details"
     po_numbers.each_pair do |po, hts_codes|
       hts_codes.each do |hts|
-        details ||= add_element root, "Details"
         detail = add_element details, "Detail"
 
         add_element detail, "PoNumber", po
