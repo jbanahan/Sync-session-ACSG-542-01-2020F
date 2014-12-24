@@ -14,6 +14,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "reads custom files, generates sql proxy requests, kicks off upload, reports errors" do
+      user = Factory(:user)
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
       @h.should_receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
@@ -28,9 +29,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
       @h.should_receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
-      @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport)).and_return 0
-
-      user = Factory(:user)
+      @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 0
 
       @h.process user
 
@@ -47,12 +46,11 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "handles parsing errors" do
+      user = Factory(:user, time_zone: "Hawaii")
       @h.should_receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [["Check Error"], nil]
       @h.should_receive(:read_invoices).with(@invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [["Invoice Error"], nil]
 
-      @h.should_receive(:send_parser_errors).with(@check_file.attached_file_name, ["Check Error"], @invoice_file.attached_file_name, ["Invoice Error"], described_class::VFI_ACCOUNTING_EMAILS, Time.zone.now.in_time_zone("Hawaii").to_date)
-
-      user = Factory(:user, time_zone: "Hawaii")
+      @h.should_receive(:send_parser_errors).with(@check_file.attached_file_name, ["Check Error"], @invoice_file.attached_file_name, ["Invoice Error"], [user.email], Time.zone.now.in_time_zone("Hawaii").to_date)
 
       @h.process user
 
@@ -69,6 +67,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "handles upload errors" do
+      user = Factory(:user)
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
       @h.should_receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
@@ -83,9 +82,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
       @h.should_receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
-      @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport)).and_return 2
-
-      user = Factory(:user)
+      @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 2
 
       @h.process user
 
@@ -99,6 +96,32 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@invoice_file.start_at.to_date).to eq Time.zone.now.to_date
       expect(@check_file.finish_at.to_date).to eq Time.zone.now.to_date
       expect(@invoice_file.finish_at.to_date).to eq Time.zone.now.to_date
+    end
+
+    it "uses default list of users if no user is given" do
+      luca = Factory(:user, username: "luca")
+      ival = Factory(:user, username: "ivalcarcel")
+
+      check_info = {checks: ""}
+      invoice_info = {invoices: ""}
+      @h.should_receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
+      @h.should_receive(:read_invoices).with(@invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [[], invoice_info]
+
+      check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)]}
+      invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)]}
+
+      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::SqlProxyClient).and_return check_results
+      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::SqlProxyClient).and_return invoice_results
+
+      @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
+      @h.should_receive(:wait_for_dimension_uploads)
+      @h.should_receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
+      @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [ival.email, luca.email]).and_return 2
+
+      @h.process
+
+      expect(luca.messages.first).not_to be_nil
+      expect(ival.messages.first).not_to be_nil
     end
   end
 

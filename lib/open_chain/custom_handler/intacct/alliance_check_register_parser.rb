@@ -1,5 +1,58 @@
+require 'open_chain/s3'
+require 'open_chain/custom_handler/intacct/alliance_day_end_handler'
+require 'digest'
+
 module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegisterParser
   include ActionView::Helpers::NumberHelper
+
+  def self.process_from_s3 bucket, key, opts={}
+    # The first thing to do is save this file off as a CustomFile
+    # Then we want to check if there's a Check Ledger file from today that has not been processed.
+    # If so, then kick off the daily process
+    check_register = nil
+    integration = User.integration
+    filename = File.basename(key)
+    unique_file = nil
+    OpenChain::S3.download_to_tempfile(bucket, key, original_filename: filename) do |tmp|
+      # Since the files we're getting here are really just print outs of a day end report
+      # that we're pulling from an output directory in Alliance, it's very possible we'll
+      # get multiple copies of the same data in the same day..which wouldn't be very good.
+
+      # So, we'll record a checksum of the file data and see if it matches anything received recently
+      # If so, we'll skip the file.
+      md5 = Digest::MD5.file(tmp).hexdigest
+
+      Lock.acquire(Lock::ALLIANCE_DAY_END_PROCESS) do
+        # It's possible (though HIGHLY unlikely) that we'll get a hash collision, it's easy enough to make this
+        # risk basically impossible by limiting the sample size to a month.  This just keeps us from having phantom failures
+        # and then having to backtrace what's going on.
+        xref = DataCrossReference.where(cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM, key: md5).where("created_at > ? ", Time.zone.now - 1.month).first
+
+        check_register = CustomFile.new(:file_type=>self.name,:uploaded_by=>integration)
+        check_register.attached = tmp
+        if xref
+          check_register.start_at = Time.zone.now
+          check_register.finish_at = Time.zone.now
+          check_register.error_at = Time.zone.now
+          check_register.error_message = "Another file named #{xref.value} has already been received with this information."
+        else
+          unique_file = true
+        end
+        check_register.save!
+        DataCrossReference.create!(cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM, key: md5, value: filename) if unique_file
+      end
+    end
+
+    if unique_file
+      Lock.acquire(Lock::ALLIANCE_DAY_END_PROCESS) do
+        day_end_file = CustomFile.where(file_type: OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.name, uploaded_by_id: integration, start_at: nil).where('created_at >= ?', Time.zone.now.to_date).first
+
+        if day_end_file
+          OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.delay.process_delayed check_register.id, day_end_file.id, nil
+        end
+      end
+    end
+  end
 
   def extract_check_info fin
     check_info = {}
@@ -157,7 +210,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
       if first_file_line =~ /APMRGREG-D0-06\/22\/09/
         return true
       else
-        raise "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first line, but did not."
+        raise "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
       end
     end
 

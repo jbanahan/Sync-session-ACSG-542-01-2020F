@@ -18,6 +18,8 @@ require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
 require 'open_chain/custom_handler/polo/polo_tradecard_810_parser'
 require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_spreadsheet_handler'
 require 'open_chain/custom_handler/lands_end/le_parts_parser'
+require 'open_chain/custom_handler/intacct/alliance_day_end_ar_ap_parser'
+require 'open_chain/custom_handler/intacct/alliance_check_register_parser'
 
 module OpenChain
   class IntegrationClient
@@ -105,6 +107,10 @@ module OpenChain
       response_type = 'remote_file'
       if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
         OpenChain::AllianceParser.delay.process_from_s3 bucket, remote_path 
+      elsif command['path'].include?('_alliance_day_end_invoices/') && MasterSetup.get.custom_feature?('alliance')
+        OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
+       elsif command['path'].include?('_alliance_day_end_checks/') && MasterSetup.get.custom_feature?('alliance')
+        OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
       elsif command['path'].include?('_fenix_invoices/') && MasterSetup.get.custom_feature?('fenix')
         OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')

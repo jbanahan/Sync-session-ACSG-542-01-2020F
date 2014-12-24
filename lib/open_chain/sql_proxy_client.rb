@@ -28,7 +28,7 @@ module OpenChain; class SqlProxyClient
     suffix = suffix.blank? ? nil : suffix.strip
     # Alliance/Oracle won't return results if you send a blank string for suffix (since the data is stored like '        '), but will
     # return results if you send a single space instead.
-    request 'invoice_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix)}, request_context, false
+    request 'invoice_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix)}, request_context, swallow_error: false
   end
 
   def self.request_check_details file_number, check_number, check_date, bank_number, request_context = {}
@@ -40,7 +40,7 @@ module OpenChain; class SqlProxyClient
     # in the AP File table w/ any file suffix (it's always blank).  The File #, Check #, Check Date, etc are enough to ensure
     # a unique request, so that's fine.
     request 'check_details', {:file_number => file_number.to_i, check_number: check_number.to_i, 
-                                check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i}, request_context, false
+                                check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i}, request_context, swallow_error: false
   end
 
   def self.request_alliance_entry_details file_number, last_exported_from_source

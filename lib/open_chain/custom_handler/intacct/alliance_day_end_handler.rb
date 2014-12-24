@@ -8,7 +8,17 @@ require 'spreadsheet'
 module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHandler
   include ActionView::Helpers::NumberHelper
 
-  VFI_ACCOUNTING_EMAILS ||= ["ldecandia@vandegriftinc.com", "ivalcarcel@vandegriftinc.com"]
+  # Replace this array w/ group reference once that is live
+  VFI_ACCOUNTING_USERS ||= ["luca", "ivalcarcel"]
+
+  def self.process_delayed check_register_file_id, invoice_file_id
+    user = User.find user_id
+    check_register_file = CustomFile.find check_register_file_id
+    invoice_file = CustomFile.find invoice_file_id
+
+    p = self.new check_register_file, invoice_file
+    p.process
+  end
 
   def initialize check_register_file, invoice_file
     @check_register = check_register_file
@@ -20,7 +30,15 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     MasterSetup.get.system_code == 'www-vfitrack-net' && ['luca', 'ivalcarcel', 'kblackman', 'jhulford', 'bglick'].include?(user.username.downcase)
   end
 
-  def process user
+  def process user = nil
+    users = []
+    if user.nil?
+      users = User.where(username: VFI_ACCOUNTING_USERS).order(:username).all
+      raise "No users found to send Day End information to." if users.size == 0
+    else
+      users << user
+    end
+
     # Read Check Info
     start = Time.zone.now
     @check_register.update_attributes! start_at: start
@@ -35,11 +53,11 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
     # If error, abort...send errors to Luca, Isabelle..one tab for check errors, one tab for ar/ap errors.
     if check_errors.size > 0 || invoice_errors.size > 0
-      # Send errors to Luca, Isabelle informing them that the day end files have issues (or the parser has issues reading them)
-      send_parser_errors @check_register.attached_file_name, check_errors, @invoices.attached_file_name, invoice_errors, VFI_ACCOUNTING_EMAILS, ActiveSupport::TimeZone[user.time_zone].now.to_date
+      # Send errors to the users to notify for day end stuff
+      send_parser_errors @check_register.attached_file_name, check_errors, @invoices.attached_file_name, invoice_errors, users.map(&:email), ActiveSupport::TimeZone[user.time_zone].now.to_date
       subject = "Day End Processing Complete With Errors"
       message = "The day end files could not be processed.  A separate report containing the errors will be mailed to you."
-      user.messages.create! subject: subject, body: message
+      send_messages_to_users users, subject, message
     else
       proxy_client = OpenChain::SqlProxyClient
       check_results = create_checks(check_info, check_parser, proxy_client)
@@ -64,7 +82,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
       # The exception report returns the number of errors found while uploading so we can determine in the user message if there were upload
       # errors or not
-      error_count = run_exception_report OpenChain::Report::IntacctExceptionReport.new
+      error_count = run_exception_report OpenChain::Report::IntacctExceptionReport.new, users.map(&:email)
 
       subject = "Day End Processing Complete"
       message = "Day End Processing has completed.<br>AR Total: #{number_to_currency(ar_sum)}<br>AP Total: #{number_to_currency(ap_sum)}<br>Check Total: #{number_to_currency(check_sum)}"
@@ -73,7 +91,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
         subject += " With Errors"
         message += "<br>#{error_count} errors were encountered.  A separate report containing errors will be mailed to you."
       end
-      user.messages.create! subject: subject, body: message
+      send_messages_to_users users, subject, message
     end
 
     nil
@@ -186,7 +204,9 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   end
 
   def all_dimension_uploads_finished?
-     Delayed::Job.where(handler: "method_name: :#{OpenChain::CustomHandler::Intacct::IntacctClient.method(:async_send_dimension).name}").count == 0
+    return true if Rails.env.development?
+    
+    Delayed::Job.where(handler: "method_name: :#{OpenChain::CustomHandler::Intacct::IntacctClient.method(:async_send_dimension).name}").count == 0
   end
 
   def create_invoices invoice_info, parser, sql_proxy_client
@@ -211,8 +231,8 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     end
   end
 
-  def run_exception_report report
-    report.run ['vfc', 'lmd'], VFI_ACCOUNTING_EMAILS
+  def run_exception_report report, email_to
+    report.run ['vfc', 'lmd'], email_to
   end
 
   private 
@@ -232,6 +252,12 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       end
 
       wb
+    end
+
+    def send_messages_to_users users, subject, message
+      users.each do |u|
+        u.messages.create! subject: subject, body: message
+      end
     end
 
 end; end; end; end;

@@ -24,6 +24,8 @@ class DataCrossReference < ActiveRecord::Base
   RL_VALIDATED_FABRIC ||= 'rl_valid_fabric'
   RL_FABRIC_FINGERPRINT ||= 'rl_fabric_fingerprint'
   UA_DUTY_RATE ||= 'ua_duty_rate'
+  ALLIANCE_CHECK_REPORT_CHECKSUM ||= 'al_check_checksum'
+  ALLIANCE_INVOICE_REPORT_CHECKSUM ||= 'al_inv_checksum'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [

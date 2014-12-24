@@ -162,14 +162,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     company = (lmd_receivable ? LMD_COMPANY_CODE : VFI_COMPANY_CODE)
     customer_number = (lmd_receivable_from_brokerage ? LMD_VFI_CUSTOMER_CODE : find_customer_number(s(export.customer_number)))
 
-    if lmd_receivable_from_brokerage
-      # We need this LMD Identifier for cases where we are updating LMD Invoice information.  The Invoice Number coming across from Alliance
-      # is going to be identical for LMD Files on 2 different entries, so the only way we know which one to update is by using both the broker file
-      # and the freight file as some sort of identifier
-      existing = IntacctReceivable.where(company: company, customer_number: customer_number, lmd_identifier: lmd_identifier(first_line)).first_or_create!
-    else
-      existing = IntacctReceivable.where(company: company, invoice_number: s(first_line["invoice number"]), customer_number: customer_number).first_or_create!
-    end
+    existing = IntacctReceivable.where(company: company, invoice_number: s(first_line["invoice number"]), customer_number: customer_number).first_or_create!
     
     r = nil
     Lock.with_lock_retry(existing) do
@@ -184,7 +177,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       r.company = company
       # This should only ever actually happen on LMD Receivables made from Brokerage Files
       if r.invoice_number.blank?
-        r.invoice_number = lmd_receivable_invoice_number company, customer_number, s(first_line["freight file number"])
+        # Use the brokerage file number as the receivable "key" on the LMD File...if we try and use the freight file number
+        # we end up in a situation where we have to synthesize suffixes on the freight invoices since there can be multiple 
+        # brokerage files associated w/ a single freight file.  
+        # By keeping the brokerage file number as the break bulk invoice number, we also provide a simple way to track down
+        # which receivable maps to which brokerage receivable.
+        r.invoice_number = s(first_line["broker file number"])
       end
 
       r.invoice_date = export.invoice_date
@@ -521,34 +519,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       end
 
       @vend_xref[alliance_vendor]
-    end
-
-    def lmd_identifier line
-      s(line["broker file number"]) + "~" + s(line["freight file number"])
-    end
-
-    def lmd_receivable_invoice_number company, customer_number, freight_file_number
-      existing_invoice_count = IntacctReceivable.where(company: company, customer_number: customer_number).where("invoice_number REGEXP ?", "#{freight_file_number}[A-Z]*").count
-      freight_file_number + get_suffix(existing_invoice_count)
-    end
-
-    def get_suffix count
-      suffix = ""
-      if count > 0
-        first_number = (count / 27).to_i
-        second_number = (count - (26 * first_number))
-
-        # 64 below represents ASCII # directly prior to ASCII A.
-        if first_number > 0
-          suffix += (64 + first_number).chr
-        end
-
-        if second_number > 0
-          suffix += (64 + second_number).chr
-        end
-      end
-
-      suffix
     end
 
     def find_alliance_export_record result_set

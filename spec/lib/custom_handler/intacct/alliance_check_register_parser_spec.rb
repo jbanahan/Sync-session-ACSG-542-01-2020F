@@ -40,7 +40,7 @@ FILE
     it "raises an error when file is not of the expected format" do
       # Just change the date format as if it had been updated...this should force a failure
       file = "\n\n\nAPMRGREG-D0-06/22/14\n\n\n"
-      expect{check_info = described_class.new.extract_check_info StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Check Register file that is not the correct format. Failed to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
+      expect{check_info = described_class.new.extract_check_info StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
     end
   end
 
@@ -171,6 +171,108 @@ FILE
       expect(check).to be_nil
       expect(errors.length).to eq 1
       expect(errors).to include "Check # #{@check_info[:check_number]} has already been sent to Intacct."
+    end
+  end
+
+  describe "process_from_s3" do
+    before :each do
+      @tempfile = Tempfile.new ["check_register", ".rpt"]
+      @tempfile << "This is a test"
+      @tempfile.flush
+      @bucket = "bucket"
+      @path = 'path/to/file.txt'
+      OpenChain::S3.stub(:download_to_tempfile).with(@bucket, @path, original_filename: "file.txt").and_yield @tempfile
+    end
+
+    after :each do
+      @tempfile.close! unless @tempfile.closed?
+    end
+
+    it "saves given file, checks for check register file and runs day end process" do
+      # Block the attachment setting so we're not saving to S3
+      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+
+      invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
+
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:process_delayed) do |check_id, invoice_id, user_id|
+        expect(CustomFile.find(check_id).file_type).to eq "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser"
+        expect(invoice_id).to eq invoice_file.id
+        expect(user_id).to be_nil
+      end
+
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
+
+      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
+      expect(saved).not_to be_nil
+      expect(DataCrossReference.where(key: Digest::MD5.hexdigest("This is a test"), value: "file.txt", cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM).first).not_to be_nil
+    end
+
+    it "saves given file, but doesn't call day end process without a check file existing" do
+      # Block the attachment setting so we're not saving to S3
+      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
+      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
+      expect(saved).not_to be_nil
+    end
+
+    it "does not kick off day end process if invoice file has already been processed" do
+      # Block the attachment setting so we're not saving to S3
+      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      check_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration, start_at: Time.zone.now
+
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
+      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
+      expect(saved).not_to be_nil
+    end
+
+    it "does not kick off day end process if invoice file is not from today" do
+      # Block the attachment setting so we're not saving to S3
+      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      check_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration, created_at: Time.zone.now - 1.day
+
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
+      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
+      expect(saved).not_to be_nil
+    end
+
+    it "recognizes duplicate check file content and does not launch day end" do
+      DataCrossReference.create!(key: Digest::MD5.hexdigest("This is a test"), value: "existing.txt", cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM)
+
+       # Block the attachment setting so we're not saving to S3
+      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
+
+      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
+      expect(saved).not_to be_nil
+
+      expect(saved.error_message).to eq "Another file named existing.txt has already been received with this information."
+      expect(saved.start_at).not_to be_nil
+      expect(saved.finish_at).not_to be_nil
+      expect(saved.error_at).not_to be_nil
+    end
+
+    it "ignores checksums over 1 month old" do
+      DataCrossReference.create!(key: Digest::MD5.hexdigest("This is a test"), value: "existing.txt", cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM, created_at: Time.zone.now - 32.days)
+
+       # Block the attachment setting so we're not saving to S3
+      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+
+      invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
+
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:process_delayed)
+
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
     end
   end
 end
