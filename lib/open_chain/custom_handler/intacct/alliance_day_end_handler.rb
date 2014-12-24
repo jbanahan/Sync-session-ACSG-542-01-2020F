@@ -11,13 +11,13 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   # Replace this array w/ group reference once that is live
   VFI_ACCOUNTING_USERS ||= ["luca", "ivalcarcel"]
 
-  def self.process_delayed check_register_file_id, invoice_file_id
-    user = User.find user_id
+  def self.process_delayed check_register_file_id, invoice_file_id, user_id
+    user = user_id ? User.find(user_id) : nil
     check_register_file = CustomFile.find check_register_file_id
     invoice_file = CustomFile.find invoice_file_id
 
     p = self.new check_register_file, invoice_file
-    p.process
+    p.process user
   end
 
   def initialize check_register_file, invoice_file

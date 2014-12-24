@@ -358,4 +358,23 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(h.all_dimension_uploads_finished?).to be_true
     end
   end
+
+  describe "process_delayed" do
+    it "finds referenced custom files and user and calls process" do
+      cf1 = CustomFile.create! 
+      cf2 = CustomFile.create!
+      u = Factory(:user)
+
+      described_class.any_instance.should_receive(:process).with u
+      described_class.process_delayed cf1.id, cf2.id, u.id
+    end
+
+    it "accepts nil for user" do
+      cf1 = CustomFile.create! 
+      cf2 = CustomFile.create!
+
+      described_class.any_instance.should_receive(:process).with nil
+      described_class.process_delayed cf1.id, cf2.id, nil
+    end
+  end
 end
