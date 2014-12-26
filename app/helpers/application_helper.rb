@@ -1,5 +1,6 @@
 module ApplicationHelper
   include ::HeaderHelper
+  include ::WorkflowHelper
   ICON_WRITE = "icon_write.png"
   ICON_SHEET = "icon_sheet.png"
   ICON_PRESENT = "icon_present.png"

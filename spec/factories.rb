@@ -364,6 +364,7 @@ Factory.define :email, class: OpenStruct do |f|
 end
 
 Factory.define :group do |f|
+  f.sequence :system_code
 end
 
 #workflow instance needs to be able to load a workflow decider

@@ -1,6 +1,29 @@
 require 'spec_helper'
 
 describe User do
+  describe :groups do
+    before :each do
+      @gA = Factory(:group,system_code:'groupA')
+      
+      @u1 = Factory(:user)
+      @gA.users << @u1
+      @u1.reload
+
+      @gB = Factory(:group,system_code:'groupB')
+    end
+    it "should find in_group?" do
+      expect(@u1.in_group?('groupA')).to be_true
+      expect(@u1.in_group?(@gA)).to be_true
+      expect(@u1.in_group?('groupB')).to be_false
+      expect(@u1.in_group?(@gB)).to be_false
+    end
+    it "should find in_any_group?" do
+      expect(@u1.in_any_group?(['groupA','groupB'])).to be_true
+      expect(@u1.in_any_group?([@gA,@gB])).to be_true
+      expect(@u1.in_any_group?(['groupB'])).to be_false
+      expect(@u1.in_any_group?([@gB])).to be_false
+    end
+  end
   describe :available_importers do
     before :each do
       @c1 = Factory(:company,importer:true)

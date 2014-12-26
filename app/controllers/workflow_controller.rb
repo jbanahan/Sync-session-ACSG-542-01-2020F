@@ -4,6 +4,7 @@ class WorkflowController < ApplicationController
     raise ActionController::RoutingError.new('Module Not Found') if m.nil?
     o = m.klass.find params[:id]
     raise ActionController::RoutingError.new("Object Not Found") unless o.can_view?(current_user)
-    @workflow_instances = o.workflow_instances
+    @base_object = o
+    render layout: false
   end
 end

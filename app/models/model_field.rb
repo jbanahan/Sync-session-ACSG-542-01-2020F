@@ -113,11 +113,11 @@ class ModelField
   def can_view? user
     in_groups = false
     if @can_edit_groups.size > 0
-      in_groups = user.in_group? @can_edit_groups
+      in_groups = user.in_any_group? @can_edit_groups
     end
 
     if !in_groups && @can_view_groups.size > 0
-      in_groups = user.in_group? @can_view_groups
+      in_groups = user.in_any_group? @can_view_groups
     end
     
     can_view = false
@@ -125,11 +125,7 @@ class ModelField
       # By default, there's no can_view_lambda so we assume the default state of the field
       # is viewable by all.
       if @can_view_lambda.nil?
-        if @can_edit_lambda.nil?
-          can_view = true
-        else
-          @can_edit_lambda.call user
-        end
+        can_view = true
       else
         can_view = @can_view_lambda.call user 
       end
@@ -148,10 +144,10 @@ class ModelField
     # editable by all.
     do_edit_lambda = false
     if @can_edit_groups.size > 0
-      do_edit_lambda = user.in_group? @can_edit_groups
+      do_edit_lambda = user.in_any_group? @can_edit_groups
     else
       if @can_view_groups.size > 0
-        do_edit_lambda = user.in_group? @can_view_groups
+        do_edit_lambda = user.in_any_group? @can_view_groups
       else
         do_edit_lambda = true
       end
@@ -332,6 +328,10 @@ class ModelField
     @uid == :____undef____ || @uid == :_blank
   end
 
+
+  def self.admin_edit_lambda
+    lambda {|u| u.admin?}
+  end
   def self.blank_model_field
     if !defined?(@@blank_model_field)
       options = {
@@ -941,6 +941,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::BROKER_INVOICE,BrokerInvoice)
     ModelField.add_custom_fields(CoreModule::BROKER_INVOICE_LINE,BrokerInvoiceLine)
     ModelField.add_custom_fields(CoreModule::SECURITY_FILING,SecurityFiling)
+    ModelField.add_custom_fields(CoreModule::COMPANY,Company)
     ModelField.update_last_loaded update_cache_time
   end
 
@@ -1096,8 +1097,51 @@ and classifications.product_id = products.id
       MODEL_FIELDS.clear
       DISABLED_MODEL_FIELDS.clear
       add_fields CoreModule::COMPANY, [
-        [1,:cmp_sys_code,:system_code,"System Code",{data_type: :string}],
-        [2,:cmp_name,:name,"Name",{data_type: :string}]
+        [1,:cmp_sys_code,:system_code,"System Code",{data_type: :string,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [2,:cmp_name,:name,"Name",{data_type: :string}],
+        [3,:cmp_carrier,:carrier,"Is Carrier",{data_type: :boolean,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [4,:cmp_vendor,:vendor,"Is Vendor",{data_type: :boolean,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [5,:cmp_created_at,:created_at,"Create Date",{data_type: :datetime, read_only: true}],
+        [6,:cmp_updated_at,:updated_at,"Update Date",{data_type: :datetime, read_only: true}],
+        [7,:cmp_locked,:locked,"Is Locked",{data_type: :boolean,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [8,:cmp_customer,:customer,"Is Customer",{data_type: :boolean,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [9,:cmp_importer,:importer,"Is Importer",{data_type: :boolean,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [10,:cmp_alliance,:alliance_customer_number,"Alliance Customer Number",{
+          data_type: :string,
+          can_view_lambda: lambda {|u| u.company.broker?},
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [11,:cmp_broker,:broker,"Is Broker",{data_type: :boolean,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [12,:cmp_fenix,:fenix_customer_number,"Fenix Customer Number",{
+          data_type: :string,
+          can_view_lambda: lambda {|u| u.company.broker?},
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [13,:cmp_agent,:agent,"Is Agent",{data_type: :boolean,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [14,:cmp_factory,:factory,"Is Factory",{data_type: :boolean,
+          can_edit_lambda: admin_edit_lambda()
+        }],
+        [15,:cmp_order_view_template,:order_view_template,'Order View Template',{
+          data_type: :string,
+          can_edit_lambda: admin_edit_lambda(),
+          can_view_lambda: admin_edit_lambda()
+        }]
       ]
       add_fields CoreModule::SECURITY_FILING_LINE, [
         [2,:sfln_line_number,:line_number,"Line Number",{:data_type=>:integer}],

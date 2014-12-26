@@ -105,12 +105,22 @@
 
   .navbar-fixed-bottom {
     border-top: 1px solid #348;
+    .workflow-nav-icon, .btn {
+      color: #348;
+      font-weight: 200;
+    }
+    .workflow-nav-icon {
+      margin: 0px 10px;
+      font-size: 150%;
+    }
+    .workflow-nav-icon-has-tasks {
+      color: red;
+    }
+    .btn {
+      background-color: white;
+    }
   }
-  .navbar-fixed-bottom .btn {
-    background-color: white;
-    color: #348;
-    font-weight: 200;
-  }
+
   .modal-max-width {
     width: 90%;
   }

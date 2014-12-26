@@ -1,18 +1,7 @@
-<div class="container">
-  <div class="row">
-    <div class="col-md-12">
-      <ul>
-        <%@workflow_instances.each do |wi|%>
-          <li>
-            <%=wi.id%>
-            <ul>
-              <%wi.workflow_tasks.each do |wt|%>
-                <li><%=wt.name%></li>
-              <%end%>
-            </ul>
-          </li>
-        <%end%>
-      </ul>
-    </div>
+<%if @base_object.workflow_instances.empty?%>
+  <div class="alert alert-info">
+    There aren't any workflow items for this page.
   </div>
-</div>
+<%else%>
+  <%=task_panel @base_object%>
+<%end%>

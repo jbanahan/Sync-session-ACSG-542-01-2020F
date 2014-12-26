@@ -12,19 +12,11 @@ $(function() {
 
 <%= form_for @company, :html=>{:id=>'frm_cmp'} do |f| %>
   <div class="container">
-    <%=field_bootstrap "Name", f.text_field(:name,:class=>"required")%>
-    <%=field_bootstrap "System Code", f.text_field(:system_code,{:title=>"Code used to integrate with another system.",:class=>"fieldtip"}) %>
-    <%=field_bootstrap "Agent", f.check_box(:agent) %>
-    <%=field_bootstrap "Broker", f.check_box(:broker) %>
-    <%=field_bootstrap "Carrier", f.check_box(:carrier) %>
-    <%=field_bootstrap "Customer", f.check_box(:customer) %>
-    <%=field_bootstrap "Drawback", f.check_box(:drawback) %>
-    <%=field_bootstrap "Factory", f.check_box(:factory) %>
-    <%=field_bootstrap "Importer", f.check_box(:importer) %>
-    <%=field_bootstrap "Vendor", f.check_box(:vendor) %>
-    <%=field_bootstrap("Alliance Customer Number", f.text_field(:alliance_customer_number)) if MasterSetup.get.custom_feature? "alliance"%>
-    <%=field_bootstrap("Fenix Customer Number", f.text_field(:fenix_customer_number)) if MasterSetup.get.custom_feature? "fenix"%>
-    <%=field_bootstrap("ECellerate Customer Number", f.text_field(:ecellerate_customer_number)) if MasterSetup.get.custom_feature? 'ecellerate'%>
-    <%=field_bootstrap("Importer's Custom Order View Page", f.text_field(:order_view_template))%>
+    <div class="row">
+      <div class="col-md-12">
+        <%= show_model_fields f, [:cmp_name, :cmp_sys_code, :cmp_agent, :cmp_broker, :cmp_carrier, :cmp_customer, :cmp_factory, :cmp_importer, :cmp_vendor, :cmp_created_at, :cmp_updated_at, :cmp_alliance, :cmp_fenix ] %>
+        <%= show_custom_fields f %>
+      </div>
+    </div>
   </div>
 <% end %>

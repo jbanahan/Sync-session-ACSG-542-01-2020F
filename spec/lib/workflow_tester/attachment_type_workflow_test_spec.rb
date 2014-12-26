@@ -1,7 +1,12 @@
 require 'spec_helper'
 
 describe OpenChain::WorkflowTester::AttachmentTypeWorkflowTest do
-  describe :test! do
+  describe :category do
+    it "should return Attachments" do
+      expect(described_class.category).to eq 'Attachments'
+    end
+  end
+  describe :pass? do
     before :each do
       @t = Factory(:workflow_task,test_class_name:'OpenChain::WorkflowTester::AttachmentTypeWorkflowTest',payload_json:'{"attachment_type":"Sample"}')
     end

@@ -73,6 +73,11 @@ class ApplicationController < ActionController::Base
     MasterSetup.get
   end
 
+  # turn on the workflow popup icon
+  def enable_workflow base_object
+    @workflow_object = base_object
+  end
+
   def redirect_by_core_module core_module, force_search=false
     redirect_path = "root_path"
     case core_module

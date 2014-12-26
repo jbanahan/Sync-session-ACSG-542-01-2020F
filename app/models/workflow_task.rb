@@ -1,12 +1,22 @@
 require 'open_chain/workflow_tester/attachment_type_workflow_test'
+require 'open_chain/workflow_tester/multi_state_workflow_test'
+require 'open_chain/workflow_tester/model_field_workflow_test'
+
 class WorkflowTask < ActiveRecord::Base
-  belongs_to :workflow_instance, inverse_of: :workflow_tasks
+  belongs_to :workflow_instance, inverse_of: :workflow_tasks, touch: true
   belongs_to :group, inverse_of: :workflow_tasks
+  has_one :multi_state_workflow_task, inverse_of: :workflow_task, dependent: :destroy
 
   validates :test_class_name, presence: true
   validates :name, presence: true
   validates :task_type_code, presence: true
   validates :workflow_instance, presence: true
+
+  scope :for_user, lambda {|u| where('workflow_tasks.group_id IN (SELECT group_id FROM user_group_memberships WHERE user_id = ?)',u.id)}
+
+  scope :not_passed, where('passed_at is null')
+
+  scope :for_base_object, lambda {|o| joins(:workflow_instance).where("workflow_instances.base_object_type = :obj_type AND workflow_instances.base_object_id = :obj_id",{obj_type:o.class.name,obj_id:o.id})}
 
   def test_class
     self.test_class_name.constantize
@@ -42,5 +52,12 @@ class WorkflowTask < ActiveRecord::Base
       end
       return false
     end
+  end
+
+  def can_edit? user
+    return false if self.group.nil?
+    return false unless user.in_group?(self.group)
+    return false unless self.workflow_instance.base_object.can_view?(user)
+    return true
   end
 end

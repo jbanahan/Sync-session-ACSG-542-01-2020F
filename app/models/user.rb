@@ -542,14 +542,17 @@ class User < ActiveRecord::Base
     @mc
   end
 
-  def in_group? group_system_codes
+  def in_group? group
     cache = group_cache(true)
-    if group_system_codes.respond_to?(:any?)
-      group_system_codes.any? {|code| cache.include? code}
-    else
-      cache.include? group_system_codes
+    to_find = group.respond_to?(:system_code) ? group.system_code : group
+    cache.include? to_find.to_s
+  end
+
+  def in_any_group? groups
+    groups.each do |g|
+      return true if self.in_group? g
     end
-    
+    return false
   end
 
   def user_group_codes

@@ -37,6 +37,7 @@ class CompaniesController < ApplicationController
   def show
     @company = Company.find(params[:id])
     action_secure(@company.can_view?(current_user), @company, {:verb => "view", :lock_check => false, :module_name=>"company"}) {
+      enable_workflow @company
       @countries = Country.all  
       respond_to do |format|
         format.html # show.html.erb
@@ -59,14 +60,14 @@ class CompaniesController < ApplicationController
   def edit
      @company = Company.find(params[:id])
      action_secure(current_user.company.master, @company, {:verb => "edit", :module_name=>"company"}) { 
-       #no extras needed
+       enable_workflow @company
      }
   end
 
   # POST /companies
   # POST /companies.xml
   def create
-    @company = Company.new(params[:company])
+    @company = Company.new.update_model_field_attributes(params[:company])
     action_secure(current_user.company.master, @company, {:verb => "create", :lock_check => false, :module_name=>"company"}) {
       respond_to do |format|
         if @company.save
@@ -87,7 +88,7 @@ class CompaniesController < ApplicationController
     unlocking = !params[:company][:locked].nil? && params[:company][:locked]=="0"
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
       respond_to do |format|
-        if @company.update_attributes(params[:company])
+        if @company.update_model_field_attributes(params[:company])
           add_flash :notices, "Company was updated successfully."
           format.html { redirect_to(@company) }
         else

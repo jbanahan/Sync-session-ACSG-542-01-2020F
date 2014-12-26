@@ -8,6 +8,10 @@ describe OpenChain::WorkflowDecider do
 
         def self.do_workflow! o, w, u
         end
+
+        def self.workflow_name
+          "My Name"
+        end
       end
       @k.stub(:name).and_return "MyWorkflowDecider"
       @o = Factory(:order)
@@ -25,7 +29,7 @@ describe OpenChain::WorkflowDecider do
     it "should create workflow instance" do
       expect {@k.update_workflow!(@o,@u)}.to change(WorkflowInstance,:count).from(0).to(1)
       @o.reload
-      expect(@o.workflow_instances.where(workflow_decider_class:"MyWorkflowDecider").count).to eq 1
+      expect(@o.workflow_instances.where(workflow_decider_class:"MyWorkflowDecider",name:@k.workflow_name).count).to eq 1
     end
     it "should find existing workflow instance" do
       expect {@k.update_workflow!(@o,@u)}.to change(WorkflowInstance,:count).from(0).to(1)

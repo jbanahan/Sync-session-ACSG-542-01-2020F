@@ -1,18 +1,57 @@
 require 'open_chain/workflow_decider'
+require 'open_chain/workflow_tester/attachment_type_workflow_test'
+require 'open_chain/workflow_tester/multi_state_workflow_test'
+require 'open_chain/workflow_tester/model_field_workflow_test'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVendorWorkflowDecider
   extend OpenChain::WorkflowDecider
+  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
+
+  def self.workflow_name
+    'Vendor Setup'
+  end
   def self.do_workflow! vendor, workflow_inst, user
     compliance = Group.use_system_group 'LL-COMPLIANCE', "Lumber Liquidators Compliance"
-    vendor_agreement = workflow_inst.workflow_tasks.where(task_type_code:'LL-VENDOR-AGREEMENT').first_or_create!(
-      display_rank:100,
-      test_class_name:'OpenChain::WorkflowTester::AttachmentTypeWorkflowTest',
-      payload_json:'{"attachment_type":"Vendor Agreement"}',
-      name:'Attach Vendor Agreement',
-      group_id:compliance.id
-    )
-    vendor_agreement.test!
+    finance = Group.use_system_group 'LL-FINANCE', 'Lumber Liquidators Finance'
+    # workflow_instance, task_type_code, display_rank, test_class, name, assigned_group, payload_hash
+    vendor_agreement_attach = first_or_create_test! workflow_inst,
+      'LL-VENDOR-AGREEMENT', 
+      100, 
+      OpenChain::WorkflowTester::AttachmentTypeWorkflowTest, 
+      'Attach Vendor Agreement', 
+      compliance, 
+      {'attachment_type'=>'Vendor Agreement'}
+    if vendor_agreement_attach.test!
+      vendor_agreement_approve = first_or_create_test! workflow_inst,
+        'LL-VEN-AGR-APPROVE',
+        200,
+        OpenChain::WorkflowTester::MultiStateWorkflowTest,
+        'Approve Vendor Agreement',
+        compliance,
+        {'state_options'=>['Approve','Reject']}
+        if vendor_agreement_approve.test! && vendor_agreement_approve.multi_state_workflow_task.state=='Approve'
+          finance_approve = first_or_create_test! workflow_inst,
+            'LL-FIN-APR',
+            300,
+            OpenChain::WorkflowTester::MultiStateWorkflowTest,
+            'Approve For SAP',
+            finance,
+            {'state_options'=>['Approve','Reject']}
+          if finance_approve.test! && finance_approve.multi_state_workflow_task.state=='Approve'
+            sap_cd = prep_custom_definitions([:sap_company])[:sap_company]
+            sap_num = first_or_create_test! workflow_inst,
+              'LL-FIN-SAP',
+              400,
+              OpenChain::WorkflowTester::ModelFieldWorkflowTest,
+              'Add SAP Number',
+              finance,
+              {'model_fields'=>[{'uid'=>sap_cd.model_field_uid}]}
+            sap_num.test!
+          end
+        end
+    end
     return nil
   end
 end; end; end; end;

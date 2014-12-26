@@ -169,7 +169,7 @@ module Api; module V1; class ApiController < ActionController::Base
 
   private
     def validate_format
-      if request.headers["HTTP_ACCEPT"] != "application/json"
+      if request.headers["HTTP_ACCEPT"].match /application\json/
         raise StatusableError.new("Request must include Accept header of 'application/json'.", :not_acceptable)
       end
 

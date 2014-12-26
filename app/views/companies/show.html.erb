@@ -56,31 +56,38 @@ $(function() {
   <button class='btn_link' link_to='<%=companies_path%>' key_map='b'>Back</button>
 <% end %>
 
-<%if @company.locked %>
-  <span style='color:red;font-size:115%'>Locked</span>
-<%end%>
-<table>
-<%=field_row "Name", @company.name%>
-<%=field_row "System Code", @company.system_code %>
-<%=field_row "Broker", bool_txt(@company.broker?)%>
-<%=field_row "Carrier", bool_txt(@company.carrier?) %>
-<%=field_row "Customer", bool_txt(@company.customer?) %>
-<%=field_row "Drawback", bool_txt(@company.drawback?)%>
-<%=field_row "Factory", bool_txt(@company.factory?)%>
-<%=field_row "Importer", bool_txt(@company.importer?)%>
-<%=field_row "Vendor", bool_txt(@company.vendor?) %>
-<%=field_row("Alliance Customer Number", @company.alliance_customer_number) if !@company.alliance_customer_number.blank?%>
-<%=field_row("Fenix Customer Number", @company.fenix_customer_number) if !@company.fenix_customer_number.blank?%>
-<%=field_row("ECellerate Customer Number", @company.ecellerate_customer_number) if !@company.ecellerate_customer_number.blank?%>
-<%=field_row "Internal System ID Number", @company.id %>
-<%=field_row "Importer's Custom Order View Page", @company.order_view_template if !@company.order_view_template.blank?%>
-</table>
+<div class="container">
+  <%if @company.locked %>
+    <div class="row">
+      <div class="col-md-12">
+        <div class='alert alert-danger'>Company Locked</div>
+      </div>
+    </div>
+  <%end%>
+  <div class="row">
+    <div class="col-md-12">
+      <%= show_model_fields @company, [:cmp_name, :cmp_sys_code, :cmp_agent, :cmp_broker, :cmp_carrier, :cmp_customer, :cmp_factory, :cmp_importer, :cmp_vendor, :cmp_created_at, :cmp_updated_at, :cmp_alliance, :cmp_fenix, :cmp_order_view_template ] %>
+      <%= show_custom_fields @company %>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <%= render :partial => 'companies/division', :locals => { :edit_div => @division } %>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <%= render :partial => 'companies/address', :locals => { :edit_add => @address } %>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <%= render :partial => 'shared/attachments', :locals => { :attachable => @company } %>
+    </div>
+  </div>
+</div>
 
-<%= render :partial => 'shared/attachments', :locals => { :attachable => @company } %>
 
-<%= render :partial => 'companies/address', :locals => { :edit_add => @address } %>
-
-<%= render :partial => 'companies/division', :locals => { :edit_div => @division } %>
 
 <%if current_user.admin? %>
 <div id='mod_lock' style='display:none; text-align:center;'>
