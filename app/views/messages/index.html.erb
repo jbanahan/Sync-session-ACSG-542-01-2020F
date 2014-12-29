@@ -1,40 +1,51 @@
-<div class='row'>
-  <div class="col-xs-8">
-    <%= form_tag users_email_new_message_path, :remote => true, :id => :email_form, :class=>'form-horizontal' do  %>
-      <%= check_box_tag(:email_new_messages, true, User.current.email_new_messages, { :onclick => "$('#email_form').submit();" }) %> Email me when I have a new message
-    <% end %>
+<div class="container-fluid">
+  <div class='row'>
+    <div class="col-md-12">
+      <div class="btn-group">
+        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+          <span class='glyphicon glyphicon-cog'></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a href="#" class='notification-mark-all-read'>Mark all read</a></li>
+          <li class="divider"></li>
+          <li><a href="#" class='email-message-toggle'><span class='email-message-check-wrap'><%if current_user.email_new_messages%><span class='glyphicon glyphicon-ok'></span><%end%></span> Email new messages</a></li>
+        </ul>
+      </div>
+    </div>
   </div>
-  <div class='col-xs-4 text-right'>
-    <%= button_to('Mark All Read', read_all_messages_path, method: 'get', remote: true, class:'btn btn-default', form_class:'message-read-all')%>
-  </div>
-</div>
-<div class='row'>
-  <div class='col-md-12'>
-    <div class="panel-group" style="margin-top: 10px">
-      <%- @messages.each do |message| %>
-        <div class="panel <%=message.viewed ? 'read' : 'unread'%>" id="panel-<%=message.id%>">
-          <div class="panel-heading">
-            <h3 class="panel-title" data-toggle="collapse" data-target="#msg-<%=message.id%>" style="cursor: pointer;" >
-              <div style="float: left;"><span class='glyphicon glyphicon-chevron-right message-read-icon'></span> <%=(message.subject.empty? ? '[No Subject]' : message.subject)%></div>
-              <div style="float: right;" class='hidden-xs'><%=message.created_at%></div>
-              <div class="clear"></div>
-            </h3>
-          </div>
-          <div id="msg-<%=message.id%>" class="panel-collapse collapse" message-id='<%=message.id%>'>
-            <div class="panel-body">
-              <%= raw message.body%>
-              <div class='text-right'>
-                <%= button_to('Delete', message_path(message), method: "delete", remote: true, class:'btn btn-sm btn-danger', form_class:'message-delete', data: { confirm: 'Are you sure?', disable_with: 'deleting...', message_id: message.id})%>
+  <div class='row'>
+    <div class='col-md-12'>
+      <div class="panel-group" style="margin-top: 10px">
+        <%- @messages.each do |message| %>
+          <div class="panel <%=message.viewed ? 'read' : 'unread'%>" id="message-panel-<%=message.id%>">
+            <div class="panel-heading">
+              <h3 class="panel-title" data-toggle="collapse" data-target="#msg-<%=message.id%>" style="cursor: pointer;" >
+                <button class='btn btn-xs btn-link'>
+                  <span class='glyphicon glyphicon-chevron-right message-read-icon'></span> 
+                </button> <%=(message.subject.empty? ? '[No Subject]' : message.subject)%>
+                <span class='pull-right'>
+                  <button class='btn btn-xs btn-default show-time-btn' title='<%=message.created_at%>'>
+                    <span class='glyphicon glyphicon-time'></span>
+                  </button>
+                  <button class='btn btn-xs btn-danger delete-message-btn' message-id='<%=message.id%>' title='Delete'>
+                    <span class='glyphicon glyphicon-trash'></span>
+                  </button>
+                </span>
+              </h3>
+            </div>
+            <div id="msg-<%=message.id%>" class="panel-collapse collapse" message-id='<%=message.id%>'>
+              <div class="panel-body message-body">
+                <%= raw message.body%>
               </div>
             </div>
           </div>
-        </div>
-      <%- end %>  
+        <%- end %>  
+      </div>
     </div>
   </div>
-</div>
-<div class='row'>
-  <div class='col-md-6 col-md-offset-3 text-center'>
-    <strong>All messages are deleted after 30 days.</strong>
+  <div class='row'>
+    <div class='col-md-6 col-md-offset-3 text-center'>
+      <strong>All messages are deleted after 30 days.</strong>
+    </div>
   </div>
 </div>

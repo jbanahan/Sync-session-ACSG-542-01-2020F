@@ -35,7 +35,7 @@ root.Chain =
       url: '/messages.html',
       success: (data) ->
         $('#notification-center-body').html(data)
-        $('#notification-center a').addClass('btn').addClass('btn-xs').addClass('btn-primary')
+        $('#notification-center-body .message-body a').addClass('btn').addClass('btn-xs').addClass('btn-primary')
     })
 
   hideNotificationCenter : () ->
@@ -332,6 +332,35 @@ root.Chain =
           @startPolling(pollingSeconds)
 
     initNotificationCenter : () ->
+      $('#notification-center').on 'click', '.delete-message-btn', (evt) ->
+        msgId = $(this).attr('message-id')
+        evt.preventDefault()
+        if(window.confirm('Are you sure you want to delete this message?'))
+          $.ajax {
+            url:'/messages/'+msgId
+            type: "post"
+            data: {"_method":"delete"}
+            success: () ->
+              $('#message-panel-'+msgId).fadeOut()
+          }
+
+      $('#notification-center').on 'click', '.email-message-toggle', (evt) ->
+        evt.preventDefault()
+        $.ajax {
+          url:'/users/email_new_message.json'
+          success: (data) ->
+            h = ''
+            h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
+            $('#notification-center .email-message-check-wrap').html(h)
+        }
+
+      $('#notification-center').on 'click', '.show-time-btn', (evt) ->
+        t = $(this)
+        if(t.html()==t.attr('title')) 
+          t.html("<span class='glyphicon glyphicon-time'></span>")
+        else
+          t.html(t.attr('title'))
+
       $('#notification-center').click (event) ->
         if (event.target == this)
           Chain.hideNotificationCenter()
@@ -339,7 +368,7 @@ root.Chain =
       $('#notification-center').on 'show.bs.collapse', '.panel-collapse', (event) ->
         t = event.target
         id = $(t).attr('message-id')
-        panel = $('#panel-'+id)
+        panel = $('#message-panel-'+id)
         panel.find('.message-read-icon').removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down')
         if panel.hasClass('unread')
           panel.addClass('read').removeClass('unread')
@@ -349,19 +378,16 @@ root.Chain =
       $('#notification-center').on 'hide.bs.collapse', '.panel-collapse', (event) ->
         t = event.target
         id = $(t).attr('message-id')
-        panel = $('#panel-'+id)
-        panel.find('.message-read-icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right') 
+        $('#message-panel-'+id+' .message-read-icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right') 
 
-      $('#notification-center').on 'ajax:success', '.message-delete', (event) ->
-        t = event.target
-        id = $(t).find('input[data-message-id]').attr('data-message-id')
-        $('#panel-'+id).fadeOut ()->
-          $('#panel-'+id).remove()
-
-      $('#notification-center').on 'ajax:success', '.message-read-all', (event) ->
-        $('#notification-center').find('.unread').each () ->
-          $(this).removeClass('unread').addClass('read')
-        Chain.messagePoller.getMessageCount(Chain.messagePoller.pollingUrl())
+      $('#notification-center').on 'click', '.notification-mark-all-read', (event) ->
+        $.ajax {
+          url:'/messages/read_all'
+          success: () ->
+            $('#notification-center').find('.unread').each () ->
+              $(this).removeClass('unread').addClass('read')
+            Chain.messagePoller.getMessageCount(Chain.messagePoller.pollingUrl())
+        }
 
     pollingUrl : ->
       @url
