@@ -24,6 +24,10 @@ module CoreObjectSupport
     base.instance_eval("scope :has_attachment, joins(\"LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '\#{self.name}' AND linked_attachments.attachable_id = \#{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '\#{self.name}' AND attachments.attachable_id = \#{self.table_name}.id\").where('attachments.id is not null OR linked_attachments.id is not null').uniq")
   end
 
+  def core_module
+    CoreModule.find_by_object self
+  end
+
   def business_rules_state
     r = nil
     self.business_validation_results.each do |bvr|

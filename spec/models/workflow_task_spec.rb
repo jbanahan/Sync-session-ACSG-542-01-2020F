@@ -46,6 +46,26 @@ describe WorkflowTask do
     end
   end
 
+  describe :are_overdue do
+    it "should find workflow_tasks with due_at in the past" do
+      wt1 = Factory(:workflow_task,due_at:1.year.ago)
+      wt2 = Factory(:workflow_task,due_at:1.year.from_now)
+      wt3 = Factory(:workflow_task,due_at:nil)
+      expect(WorkflowTask.are_overdue.to_a).to eq [wt1]
+    end
+  end
+
+  describe :overdue? do
+    it "should be true when workflow_task due_at is in the past" do
+      expect(WorkflowTask.new(due_at:1.hour.ago)).to be_overdue
+    end
+    it "should be false when workflow_task due_at is in the future" do
+      expect(WorkflowTask.new(due_at:1.hour.from_now)).to_not be_overdue
+    end
+    it "should be false when workflow_task doesn't have a due_at value" do
+      expect(WorkflowTask.new).to_not be_overdue
+    end
+  end
   describe :test_class do
     it "should get test class" do
       wt = WorkflowTask.new(test_class_name:"OpenChain::Test::MyTestWorkflowTask")

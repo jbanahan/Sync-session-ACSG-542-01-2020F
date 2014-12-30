@@ -53,7 +53,8 @@ OpenChain::Application.routes.draw do
     end
   end
 
-  match '/workflow/:core_module/:id' => 'workflow#show'
+  match '/my_tasks' => 'workflow#my_tasks', :via => :get
+  match '/workflow/:core_module/:id' => 'workflow#show', :via => :get
   match '/entries/activity_summary/us' => 'entries#us_activity_summary', :via => :get
   match '/entries/importer/:importer_id/activity_summary/us' => 'entries#us_activity_summary', :via => :get
   match '/entries/importer/:importer_id/activity_summary/us/content' => 'entries#us_activity_summary_content', :via => :get

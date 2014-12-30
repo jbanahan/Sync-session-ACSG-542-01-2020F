@@ -40,7 +40,84 @@ module WorkflowHelper
 
   end
 
+  def my_task_panel
+    r = content_tag(:div,"You have no incomplete tasks.",:class=>'alert alert-success')
+    tasks = WorkflowTask.for_user(current_user).not_passed.order('workflow_tasks.due_at DESC').to_a
+    if tasks.size > 0
+      by_base_object_hash = {}
+      by_due_at_hash = {}
+      tasks.each do |t|
+        base_object = t.base_object
+        due_label = due_at_label(t)
+        by_due_at_hash[due_label] ||= []
+        by_due_at_hash[due_label] << t
+        by_base_object_hash[base_object] ||= []
+        by_base_object_hash[base_object] << t
+      end
+      by_base_object_pane, by_base_object_count = 
+      task_tabs = [
+        task_tab('By Page',nil,'wf-my-tasks',{active:true}),
+        task_tab('By Due Date',nil,'wf-my-due')
+      ]
+      task_panes = [
+        grouped_task_tab_pane(by_base_object_hash, 'wf-my-tasks', {active:true}) {|base_object| task_group_label(base_object)}.first,
+        grouped_task_tab_pane(by_due_at_hash,'wf-my-due',{show_object_label:true}) {|due_at| due_at}.first
+      ]
+      tab_list = content_tag(:ul,task_tabs.join.html_safe,:class=>'nav nav-tabs',:role=>'tablist')
+      tab_content = content_tag(:div,task_panes.join.html_safe,:class=>'tab-content')
+      r = content_tag(:div,tab_list+tab_content,:role=>'tabpanel')
+    end
+    r
+  end
+
   private
+  def task_tab_pane tasks, anchor, active=false
+    c = generic_tab_task_pane(task_collection_to_widgets(tasks.sort_by {|x| x.passed_at || 1000.years.ago}).join.html_safe, anchor, active)
+    [c,open_count(tasks)]
+  end
+
+  def grouped_task_tab_pane task_hash, anchor, opts={}
+    total_open_count = 0
+    coll = []
+    label_hash = {}
+    task_hash.keys.each {|hash_key| label_hash[yield(hash_key)] = hash_key}
+    label_hash.keys.sort.each do |label|
+      k = label_hash[label]
+      tasks = task_hash[k]
+      total_open_count += open_count(tasks)
+      collapse_anchor = "wrkflw-panel-body-#{k.to_s.gsub(/\W/,'')}"
+      coll << content_tag(:div,:class=>'panel panel-default') do
+        heading = content_tag(:div,:class=>'panel-heading') do
+          content_tag(:h4,:class=>'panel-title') do
+            (content_tag(:span,tasks.count.to_s,'class'=>'label label-default pull-right') + ' ' + content_tag(:a,label,:href=>"##{collapse_anchor}",'data-toggle'=>'collapse')).html_safe
+          end
+        end
+        body = content_tag(:div,content_tag(:div,task_collection_to_widgets(tasks,opts).join.html_safe,:class=>'panel-body'),'id'=>collapse_anchor,'class'=>'panel-collapse collapse')
+        (heading + body).html_safe
+      end
+    end
+    [generic_tab_task_pane(content_tag(:div,coll.join.html_safe,:class=>'panel-group'), anchor, opts[:active]),total_open_count]
+  end
+
+  def task_group_label base_object
+    cm = base_object.core_module
+    label = "#{cm.label}: #{ModelField.find_by_uid(cm.default_search_columns.first).process_export(base_object,nil,true)}"
+  end
+
+  def generic_tab_task_pane content, anchor, active
+    content_tag(:div,content.html_safe,:role=>'tabpanel',:class=>"tab-pane workflow-pane #{active ? 'active' : ''}",:id=>anchor).html_safe
+  end
+
+  def open_count tasks
+    tasks.inject(0) { |mem, t| mem + (t.passed? ? 0 : 1) }
+  end
+
+  def task_collection_to_widgets tasks, opts={}
+    tab_tasks = []
+    tasks.each {|wt| tab_tasks << task_widget(wt,opts)}
+    tab_tasks
+  end
+
   def summary_tab base_object
     tasks = base_object.workflow_instances.collect {|wi| wi.workflow_tasks.to_a}.flatten
     task_tab_pane tasks, 'wf-summary', true
@@ -53,27 +130,17 @@ module WorkflowHelper
 
   def task_tab title, open_count, anchor, opts={}
     inner_opts = {label_type:'default'}.merge(opts)
-    open_count_label = open_count > 0 ? content_tag(:span,open_count.to_s,:class=>"label label-#{inner_opts[:label_type]}") : ''
+    open_count_label = (!open_count.nil? && open_count > 0) ? content_tag(:span,open_count.to_s,:class=>"label label-#{inner_opts[:label_type]}") : ''
     content_tag(:li,content_tag(:a,"#{sanitize title} #{open_count_label}".html_safe,'href'=>"##{anchor}",'aria-controls'=>anchor,'role'=>'tab','data-toggle'=>'tab'),'role'=>'presentation','class'=>"#{inner_opts[:active] ? 'active' : ''}")
   end
 
-  def task_tab_pane tasks, anchor, active=false
-    #tab content
-    tab_tasks = []
-    tasks.sort_by {|x| x.passed_at || 1000.years.ago}.each do |wt|
-      tab_tasks << task_widget(wt)
-    end
-
-    content = content_tag(:div,tab_tasks.join.html_safe,:role=>'tabpanel',:class=>"tab-pane workflow-pane #{active ? 'active' : ''}",:id=>anchor).html_safe
-    open_count = tasks.inject(0) { |mem, t| mem + (t.passed? ? 0 : 1) }
-    [content,open_count]
-  end
-
-  def task_widget task
-    inner = content_tag(:span,'',:class=>"glyphicon #{task_glyphicon(task)}") + ' ' + content_tag(:span,task.name) + ' ' +
+  def task_widget task, opts={}
+    due_at_tag = task.due_at ? content_tag(:span,'','due-at'=>task.due_at.getutc.iso8601,:class=>"label label-#{task.overdue? ? 'danger' : 'default'}",:title=>task.due_at) : ''
+    inner = content_tag(:span,'',:class=>"glyphicon #{task_glyphicon(task)}") + ' ' + content_tag(:span,(opts[:show_object_label] ? "#{task_group_label(task.base_object)}: " : '')+task.name) + ' ' +
       content_tag(:span,task.group.name.upcase,:class=>'text-muted') + ' ' +
+       due_at_tag + ' ' +
       task_actions(task)
-    content_tag(:div,inner,:title=>task_tooltip(task),:class=>"task-widget #{task.passed? ? 'text-muted' : ''} clearfix")
+    content_tag(:div,inner,:title=>task_tooltip(task),:class=>"task-widget #{task.passed? ? 'text-muted' : ''} clearfix",'task-id'=>task.id.to_s)
   end
 
   def task_tooltip task
@@ -109,13 +176,27 @@ module WorkflowHelper
         end
         content_tag(:button,opt,opts_hash)
       }
-      inner_content = btns.join.html_safe unless btns.empty?
+      btns << link_to_task_object_button(task)
+      inner_content = btns.join.html_safe 
     when /ModelFieldWorkflowTest$/
       inner_content = link_to('Edit',
         edit_polymorphic_path(task.base_object),:class=>"btn #{task.passed? ? 'btn-default' : 'btn-primary'}"
       )
+    else 
+      inner_content = link_to_task_object_button(task,true)
     end
     return content_tag(:div,inner_content,:class=>'btn-group btn-group-sm pull-right') unless inner_content.blank?
     return ""
+  end
+
+  def link_to_task_object_button task, primary = false
+    link_to('View',polymorphic_path(task.base_object),:class=>"btn #{!task.passed? && primary ? 'btn-primary' : 'btn-default'}")
+  end
+
+  def due_at_label task
+    return "No Due Date" if task.due_at.nil?
+    return "Overdue" if task.overdue?
+    return "Upcoming" if task.due_at < 3.days.from_now
+    return "Later"
   end
 end

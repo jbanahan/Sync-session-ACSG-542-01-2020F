@@ -30,7 +30,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
         OpenChain::WorkflowTester::MultiStateWorkflowTest,
         'Approve Vendor Agreement',
         compliance,
-        {'state_options'=>['Approve','Reject']}
+        {'state_options'=>['Approve','Reject']},
+        due_in_days(7)
         if vendor_agreement_approve.test! && vendor_agreement_approve.multi_state_workflow_task.state=='Approve'
           finance_approve = first_or_create_test! workflow_inst,
             'LL-FIN-APR',
@@ -47,11 +48,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
               OpenChain::WorkflowTester::ModelFieldWorkflowTest,
               'Add SAP Number',
               finance,
-              {'model_fields'=>[{'uid'=>sap_cd.model_field_uid}]}
+              {'model_fields'=>[{'uid'=>sap_cd.model_field_uid}]},
+              due_in_days(3)
             sap_num.test!
           end
         end
     end
     return nil
+  end
+
+  private 
+  def self.due_in_days increment
+    Time.use_zone('Eastern Time (US & Canada)') {return increment.days.from_now.beginning_of_day}
   end
 end; end; end; end;

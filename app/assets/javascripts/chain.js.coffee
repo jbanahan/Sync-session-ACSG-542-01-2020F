@@ -29,14 +29,29 @@ root.Chain =
       Chain.showNotificationCenter()
       
   showNotificationCenter : () ->
-    $("#notification-center-body").html("Loading notifications...")
     $("#notification-center").modal('show')
-    $.ajax({
-      url: '/messages.html',
+    Chain.showNotificationCenterPane('messages')
+
+  showNotificationCenterPane: (target) ->
+    $("[notification-center-pane]").hide()
+    $("[notification-center-toggle-target]").removeClass('btn-primary').addClass('btn-default')
+    $("[notification-center-toggle-target='"+target+"']").removeClass('btn-default').addClass('btn-primary')
+    pane = $("[notification-center-pane='"+target+"']")
+    pane.html('loading')
+    pane.show()
+    $.ajax {
+      url: pane.attr('content-url')
       success: (data) ->
-        $('#notification-center-body').html(data)
-        $('#notification-center-body .message-body a').addClass('btn').addClass('btn-xs').addClass('btn-primary')
-    })
+        extraTrigger = pane.attr('data-load-trigger')
+        pane.html(data)
+        pane.trigger('chain:notification-load')
+        pane.trigger(extraTrigger) if extraTrigger
+
+      error: () ->
+        pane.html "<div class='alert alert-danger'>We're sorry, an error occurred while trying to load this information.</div>"
+    }
+
+
 
   hideNotificationCenter : () ->
     $("#notification-center").modal('hide')
@@ -332,6 +347,9 @@ root.Chain =
           @startPolling(pollingSeconds)
 
     initNotificationCenter : () ->
+      $('[notification-center-toggle-target]').on 'click', () ->
+        Chain.showNotificationCenterPane($(this).attr('notification-center-toggle-target'))
+
       $('#notification-center').on 'click', '.delete-message-btn', (evt) ->
         msgId = $(this).attr('message-id')
         evt.preventDefault()
@@ -388,6 +406,9 @@ root.Chain =
               $(this).removeClass('unread').addClass('read')
             Chain.messagePoller.getMessageCount(Chain.messagePoller.pollingUrl())
         }
+
+      $('#notification-center').on 'chain:notification-load', '[notification-center-pane="messages"]', () ->
+        $('[notification-center-pane="messages"] .message-body a').addClass('btn').addClass('btn-xs').addClass('btn-primary')
 
     pollingUrl : ->
       @url
@@ -535,6 +556,11 @@ $(document).ready () ->
         window.history.back()
       else
         window.location=link
+
+  $(document).on 'chain:workflow-load', (evt) ->
+    $('.task-widget [due-at]').each () ->
+      t = $(this)
+      t.html('due '+moment(t.attr('due-at')).fromNow())
 
   $("#set-homepage-btn").click (evt) ->
     $.post("/users/set_homepage", {homepage: $(location).attr("href")})

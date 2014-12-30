@@ -85,12 +85,16 @@
         <div class="modal fade" id="notification-center">
           <div class="modal-dialog modal-max-width">
             <div class="modal-content">
-              <div class="modal-header">
+              <div class="modal-header text-center">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title">Notification Center</h4>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-default" notification-center-toggle-target='messages'>Messages</button>
+                  <button type="button" class="btn btn-default" notification-center-toggle-target='tasks'>Tasks</button>
+                </div>
               </div>
               <div class="modal-body" id='notification-center-body'>
-                
+                <div notification-center-pane='messages' content-url='/messages'></div>
+                <div notification-center-pane='tasks' content-url='/my_tasks' data-load-trigger='chain:workflow-load'></div>
               </div>
             </div><!-- /.modal-content -->
           </div><!-- /.modal-dialog -->

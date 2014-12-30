@@ -64,6 +64,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
         expect(wt.name).to eq 'Approve Vendor Agreement'
         expect(wt.test_class_name).to eq 'OpenChain::WorkflowTester::MultiStateWorkflowTest'
         expect(wt.payload_json).to eq '{"state_options":["Approve","Reject"]}'
+        expect(wt.due_at > 5.days.from_now).to be_true
       end
       context 'vendor agrement approved' do
         before :each do

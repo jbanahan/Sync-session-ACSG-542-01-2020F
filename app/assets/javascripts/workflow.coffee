@@ -13,6 +13,7 @@ root.ChainWorkflow =
       type:'GET'
       success: (data) ->
         mb.html(data)
+        mb.trigger('chain:workflow-load')
       error: (data,status,errorThrown) ->
         mb.html("<div class='alert alert-danger'>There was an error loading this workflow data.  Please contact support.</div>")
     }

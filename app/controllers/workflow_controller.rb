@@ -7,4 +7,8 @@ class WorkflowController < ApplicationController
     @base_object = o
     render layout: false
   end
+
+  def my_tasks
+    render layout: false
+  end
 end

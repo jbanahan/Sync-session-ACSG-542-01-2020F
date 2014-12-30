@@ -11,7 +11,7 @@ describe WorkflowController do
       o = Factory(:order)
       get :show, core_module:'Order', id:o.id.to_s
       expect(response).to be_success
-      expect(assigns(:base_object).to_a).to eq [w1,w2]
+      expect(assigns(:base_object)).to eq o
     end
     it "should fail if user cannot view core_object" do
       Order.any_instance.stub(:can_view?).and_return(false)

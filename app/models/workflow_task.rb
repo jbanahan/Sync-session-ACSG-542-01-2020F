@@ -14,9 +14,17 @@ class WorkflowTask < ActiveRecord::Base
 
   scope :for_user, lambda {|u| where('workflow_tasks.group_id IN (SELECT group_id FROM user_group_memberships WHERE user_id = ?)',u.id)}
 
-  scope :not_passed, where('passed_at is null')
+  scope :not_passed, where('workflow_tasks.passed_at is null')
 
   scope :for_base_object, lambda {|o| joins(:workflow_instance).where("workflow_instances.base_object_type = :obj_type AND workflow_instances.base_object_id = :obj_id",{obj_type:o.class.name,obj_id:o.id})}
+
+  #named this are_overdue to avoid confusion with object level "overdue?" method
+  scope :are_overdue, where('workflow_tasks.due_at < now()')
+
+  def overdue?
+    return false unless self.due_at
+    return self.due_at < 0.seconds.ago
+  end
 
   def test_class
     self.test_class_name.constantize
