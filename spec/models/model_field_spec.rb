@@ -112,10 +112,9 @@ describe ModelField do
       ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(Factory(:user)).should be_false
     end
 
-    it "allows falls back to edit lambda if view lambda is not set" do
-      lambda_called = true
-      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_edit_lambda=>lambda {|user| lambda_called = true; false}}).can_view?(Factory(:user))).to be_false
-      expect(lambda_called).to be_true
+    it "allows if view lambda is not set" do
+      #edit lambda below is ignored
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_edit_lambda=>lambda {|user| false}}).can_view?(Factory(:user))).to be_true
     end
 
     it "allows viewing when user is in FieldValidatorRule view group" do
