@@ -144,19 +144,26 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
     # If so, it means the check was issued AFTER the invoice and it must be manually entered into Intacct.
     bill_number = check_info[:invoice_number].strip + check_info[:invoice_suffix].strip
 
-    invoice = IntacctPayable.where(bill_number: bill_number, vendor_number: check_info[:vendor_number]).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").first
+    invoice = IntacctPayable.where(bill_number: bill_number, vendor_number: check_info[:vendor_number], payable_type: IntacctPayable::PAYABLE_TYPE_BILL).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").first
     if invoice
       errors << "An invoice has already been filed in Intacct for File # #{bill_number}.  Check # #{check_info[:check_number]} must be filed manually in Intacct."
     else
-      check = nil
       export = nil
+      payable = nil
       Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do
         suffix = check_info[:invoice_suffix].blank? ? nil : check_info[:invoice_suffix].strip
-        check = IntacctCheck.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number]).first_or_create!
-        if check.intacct_upload_date.nil? && check.intacct_key.nil?
-          export = IntacctAllianceExport.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK).first_or_create!
-        else
-          check = nil
+
+        # Check if there's a payable already created for this check number...if so skip.  This is solely needed for the transition period from the old way
+        # to the new report based way of retrieving the data from Alliance.  After a couple weeks looking for the check payable should be able to be removed.
+        payable = IntacctPayable.where(bill_number: check_info[:invoice_number] + suffix.to_s, check_number: check_info[:check_number], payable_type: [IntacctPayable::PAYABLE_TYPE_ADVANCED, IntacctPayable::PAYABLE_TYPE_CHECK]).first
+
+        if payable.nil?
+          check = IntacctCheck.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number]).first_or_create!
+          if check.intacct_upload_date.nil? && check.intacct_key.nil?
+            export = IntacctAllianceExport.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK).first_or_create!
+          else
+            check = nil
+          end
         end
       end
 
@@ -187,7 +194,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
         sql_proxy_client.delay.request_check_details check.file_number, check.check_number, check.check_date, check.bank_number
       else
-        errors << "Check # #{check_info[:check_number]} has already been sent to Intacct."
+        errors << "Check # #{check_info[:check_number]} has already been sent to Intacct." unless payable
       end
     end
 

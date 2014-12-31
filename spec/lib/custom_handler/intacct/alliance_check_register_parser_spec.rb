@@ -156,7 +156,7 @@ FILE
     it "errors if a payable for the same file number has already been sent to intacct" do
       @check_info[:invoice_suffix] = "A"
       bill_number = @check_info[:invoice_number]+@check_info[:invoice_suffix]
-      IntacctPayable.create! bill_number: bill_number, vendor_number: @check_info[:vendor_number], intacct_upload_date: Time.zone.now, intacct_key: "Key"
+      IntacctPayable.create! bill_number: bill_number, vendor_number: @check_info[:vendor_number], intacct_upload_date: Time.zone.now, intacct_key: "Key", payable_type: IntacctPayable::PAYABLE_TYPE_BILL
 
       check, errors = described_class.new.create_and_request_check @check_info, nil
       expect(check).to be_nil
@@ -171,6 +171,26 @@ FILE
       expect(check).to be_nil
       expect(errors.length).to eq 1
       expect(errors).to include "Check # #{@check_info[:check_number]} has already been sent to Intacct."
+    end
+
+    it "skips creating check info if old-style advanced check payable exists" do
+      @check_info[:invoice_suffix] = "A"
+      IntacctPayable.create! bill_number: @check_info[:invoice_number]  + "A", check_number: @check_info[:check_number], payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED
+
+
+      check, errors = described_class.new.create_and_request_check @check_info, nil
+      expect(check).to be_nil
+      expect(errors.length).to eq 0
+    end
+
+    it "skips creating check info if old-style invoiced check payable exists" do
+      @check_info[:invoice_suffix] = "A"
+      IntacctPayable.create! bill_number: @check_info[:invoice_number]  + "A", check_number: @check_info[:check_number], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK
+
+
+      check, errors = described_class.new.create_and_request_check @check_info, nil
+      expect(check).to be_nil
+      expect(errors.length).to eq 0
     end
   end
 
