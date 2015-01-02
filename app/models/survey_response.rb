@@ -2,6 +2,7 @@ class SurveyResponse < ActiveRecord::Base
   attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date, :archived, :expiration_notification_sent_at
   belongs_to :user
   belongs_to :survey
+  belongs_to :base_object, polymorphic: true, inverse_of: :survey_responses
   has_many :answers, :inverse_of=>:survey_response
   has_many :questions, :through=>:survey
   has_many :survey_response_logs, :dependent=>:destroy
@@ -33,7 +34,18 @@ class SurveyResponse < ActiveRecord::Base
 
   def can_view? user
     return true if user.id==self.user_id
-    can_edit? user
+    return true if user.company_id == self.survey.company_id
+    return false
+  end
+
+  def self.search_secure user, base
+    r = nil
+    if user.view_surveys?
+      r = base.joins(:survey).where("survey_responses.user_id = :user_id OR surveys.company_id = :company_id",{user_id:user.id,company_id:user.company_id})
+    else
+      r = base.where(user_id:user.id)
+    end
+    r
   end
   
   def can_edit? user

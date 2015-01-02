@@ -1,0 +1,19 @@
+.google-maps-wrap iframe {
+  border: none;
+  width: 100%;
+  height:100%;
+}
+
+.address-selector {
+  border: 1px solid #fff;
+}
+.address-selector:hover {
+    cursor: pointer;
+}
+.address-selector:hover {
+  border: 1px solid #eee;
+  background-color: #eef;
+}
+.address-selector.google-maps-active {
+  border-left: 1px solid #348;
+}

@@ -1,0 +1,16 @@
+<div>
+  <table class='detail_table' id='order-rows' data-infinite-table-src='/vendors/<%=@company.id%>/orders'>
+    <thead>
+      <tr>
+        <th></th>
+        <%[:ord_cust_ord_no,:ord_ord_date,:ord_approval_status].each do |mfuid|%>
+          <th><%=ModelField.find_by_uid(mfuid).label%></th>
+        <%end%>
+      </tr>
+    </thead>
+    <tbody>
+        <%=render :partial=>'order_rows', locals:{orders:@orders}%>
+    </tbody>
+  </table>
+  <div><button data-infinite-table-target='#order-rows' class='btn btn-link btn-lg btn-block'>Load More</button></div>
+</div>

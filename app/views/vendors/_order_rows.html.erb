@@ -1,0 +1,12 @@
+<%orders.each do |order|%>
+  <tr>
+    <td>
+      <a href='<%=order_path(order)%>'>View</a>
+    </td>
+    <%[:ord_cust_ord_no,:ord_ord_date,:ord_approval_status].each do |mfuid|%>
+      <td>
+        <%=ModelField.find_by_uid(mfuid).process_export(order,current_user)%>
+      </td>
+    <%end%>
+  </tr>
+<%end%>

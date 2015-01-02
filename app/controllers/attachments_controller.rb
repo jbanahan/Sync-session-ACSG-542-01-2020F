@@ -21,13 +21,13 @@ class AttachmentsController < ApplicationController
         att.save
         attachable.log_update(current_user) if attachable.respond_to?(:log_update)
         respond_to do |format|
-          format.html {redirect_to attachable}
+          format.html {redirect_to redirect_location(attachable)}
           format.json {render json: Attachment.attachments_as_json(attachable)}
         end
       else
         errors_to_flash att
         respond_to do |format|
-          format.html {redirect_to attachable}
+          format.html {redirect_to redirect_location(attachable)}
           format.json {render json: {errors:flash[:errors]}, status: 400}
         end
       end
@@ -47,7 +47,7 @@ class AttachmentsController < ApplicationController
       add_flash :errors, "You do not have permission to delete this attachment."
     end
     
-    redirect_to attachable
+    redirect_to redirect_location(attachable)
   end
   
   def download
@@ -68,6 +68,11 @@ class AttachmentsController < ApplicationController
   def send_email_attachable
     Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
     render text: "OK"
+  end
+
+  private 
+  def redirect_location attachable
+    params[:redirect_to].blank? ? attachable : params[:redirect_to]
   end
 
 end

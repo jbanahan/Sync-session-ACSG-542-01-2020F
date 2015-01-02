@@ -438,6 +438,13 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  resources :vendors, :only => [:show] do
+    member do
+      get 'locations'
+      get 'orders'
+      get 'survey_responses'
+    end
+  end
   resources :companies do
     member do
       get 'show_children'

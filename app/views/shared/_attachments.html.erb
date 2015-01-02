@@ -26,9 +26,10 @@
         <% attachment_counter += 1%>
           <div class='col-sm-6 col-md-4'>
             <div class='thumbnail text-center'>
-              <div class='attachment_delete'>
+              <div class='attachment_delete' class='text-right'>
                 <%if attachable.can_edit?(current_user) && !att.attachable.is_a?(LinkableAttachment)%>
-                  <%=link_to(image_tag("x.png",:size=>"16x16"), att, :method => :delete, :confirm => "Are you sure you want to delete this?")%>
+                  <%del_path = local_assigns.has_key?(:redirect_to) ? attachment_path(:id=>att.id,:redirect_to=>redirect_to) : att%>
+                  <%=link_to(image_tag("x.png",:size=>"16x16"), del_path, :method => :delete, :confirm => "Are you sure you want to delete this?")%>
                 <%else%>
                   <%=image_tag('spacer.gif',:size=>'16x16')%>
                 <%end%>
@@ -55,12 +56,13 @@
   <div class="row">
     <div class="col-md-12 text-center">
       <a href="/attachments/email_attachable/<%= attachable.class %>/<%= attachable.id %>">
-        <button class="btn" id="email_attachments_button">Email attachments</button>
+        <button class="btn btn-default" id="email_attachments_button">Email attachments</button>
       </a>
     </div>
   </div>
 <%end-%>
 
+<%content_for :modal_container do %>
 <div class="modal fade" id="mod_attach_bs">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -71,6 +73,9 @@
       <div class="modal-body">  
         <% att = attachable.attachments.build %>
         <%= form_for att, html: {multipart: true, id: "frm_attach", role: "form"} do |f| %>
+          <% if local_assigns.has_key?(:redirect_to) %>
+            <input type='hidden' name='redirect_to' value="<%=redirect_to%>" />
+          <% end %>
           <%= f.hidden_field :attachable_id %>
           <%= f.hidden_field :attachable_type %>
           <div class="form-group">
@@ -91,6 +96,7 @@
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" onclick="$('#frm_attach').submit();">Attach</button>
       </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+    </div>
+  </div>
+</div>
+<%end%>

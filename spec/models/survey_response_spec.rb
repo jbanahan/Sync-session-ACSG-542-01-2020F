@@ -87,15 +87,30 @@ describe SurveyResponse do
     it "should pass if user is response user" do
       @sr.can_view?(@response_user).should be_true
     end
-    it "should pass if user can_edit?" do
-      u = Factory(:user)
-      @sr.should_receive(:can_edit?).with(u).and_return true
-      @sr.can_view?(u).should be_true
+    it "should pass if user can view_survey? and survey is created by user's company" do
+      other_user = Factory(:user, company:@survey.company,survey_view:true)
+      expect(@sr.can_view?(other_user)).to be_true
     end
-    it "should fail if user cannot edit?" do 
-      u = Factory(:user)
-      @sr.should_receive(:can_edit?).with(u).and_return false
-      @sr.can_view?(u).should be_false
+    it "should fail if user can view_survey? and survey is NOT created by user's company" do
+      other_user = Factory(:user)
+      expect(@sr.can_view?(other_user)).to be_false
+    end
+  end
+  describe :search_secure do
+    it "should find assigned to me, even if I cannot view_survey" do
+      u = Factory(:user,survey_view:false)
+      sr = Factory(:survey_response,user:u)
+      expect(SurveyResponse.search_secure(u,SurveyResponse).to_a).to eq [sr]
+    end
+    it "should find where survey is created by my company and I can view" do
+      u = Factory(:user,survey_view:true)
+      sr = Factory(:survey_response,survey:Factory(:survey,company:u.company))
+      expect(SurveyResponse.search_secure(u,SurveyResponse).to_a).to eq [sr]
+    end
+    it "should not find where survey is created by my company and I canNOT view surveys" do
+      u = Factory(:user,survey_view:false)
+      sr = Factory(:survey_response,survey:Factory(:survey,company:u.company))
+      expect(SurveyResponse.search_secure(u,SurveyResponse).to_a).to eq []
     end
   end
   describe "can_edit?" do

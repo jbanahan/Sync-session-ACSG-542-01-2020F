@@ -1,0 +1,14 @@
+<div>
+  <table class='detail_table' id='survey-responses' data-infinite-table-src='/vendors/<%=@company.id%>/survey_responses'>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Survey Name</th>
+      </tr>
+    </thead>
+    <tbody>
+        <%=render :partial=>'survey_response_rows', locals:{survey_responses:@survey_responses}%>
+    </tbody>
+  </table>
+  <div><button data-infinite-table-target='#survey-responses' class='btn btn-link btn-lg btn-block'>Load More</button></div>
+</div>

@@ -562,5 +562,40 @@ $(document).ready () ->
       t = $(this)
       t.html('due '+moment(t.attr('due-at')).fromNow())
 
+  $(document).on 'show.bs.tab', '[tab-src]', (evt) ->
+    t = $(this)
+    if t.attr('tab-src-reload')=='true' || !t.attr('tab-src-loaded')
+      src = t.attr('tab-src')
+      targetPane = $(t.attr('href'))
+      $.ajax {
+        method:'get'
+        url: src
+        success: (data) ->
+          t.attr('tab-src-loaded','true')
+          targetPane.html(data)
+        error: (data) ->
+          targetPane.html("<div class='alert alert-danger'>There was an error loading this tab.  Please contact support.</div>")
+      }
+
+  $(document).on 'click', '[data-infinite-table-target]', (evt) ->
+    targetTable = $($(evt.target).attr('data-infinite-table-target'))
+    url = targetTable.attr('data-infinite-table-src')
+    page = targetTable.attr('data-infinite-table-page')
+    if page==undefined || page.length == 0
+      page = 2
+    else
+      page = parseInt(page) + 1
+    if url
+      $.ajax {
+        method: 'get'
+        url: url
+        data: {page:page}
+        success: (data) ->
+          targetTable.attr('data-infinite-table-page',page)
+          if data.match(/last-row/)
+            evt.target.remove() #remove the load more button
+          targetTable.find('tbody').append(data)
+      }
+
   $("#set-homepage-btn").click (evt) ->
     $.post("/users/set_homepage", {homepage: $(location).attr("href")})

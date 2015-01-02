@@ -1,0 +1,10 @@
+<%survey_responses.each do |sr|%>
+  <tr>
+    <td>
+      <a href='<%=survey_response_path(sr)%>'>View</a>
+    </td>
+    <td>
+      <%=sr.survey.name%>
+    </td>
+  </tr>
+<%end%>

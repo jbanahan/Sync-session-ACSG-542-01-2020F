@@ -12,6 +12,13 @@ class Address < ActiveRecord::Base
     Digest::MD5.hexdigest base
   end	
 
+  def google_maps_url query_options={}
+    inner_opts = {q:"#{self.name} #{self.line_1} #{self.line_2} #{self.line_3} #{self.city} #{self.state} #{self.postal_code} #{self.country.iso_code}",
+      key:'AIzaSyD-m0qPlvgU9SZ9eniFuRLF8DJD7CqszZU',zoom:6}
+    qry = inner_opts.merge(query_options).to_query
+    "https://www.google.com/maps/embed/v1/place?#{qry}"
+  end
+
 	def self.find_shipping
 		return self.where(["shipping = ?",true])
 	end

@@ -1,0 +1,71 @@
+<%content_for :javascript do %>
+$(document).ready(function() {
+  ChainAddress.initAddresses();
+});
+<%end%>
+<style type="text/css">
+  #address_map {
+    -webkit-transition: all .15s ease-out;
+         -o-transition: all .15s ease-out;
+            transition: all .15s ease-out;
+    height: 0px;
+  }
+  #address_map.google-maps-wrap {
+    height: 300px;
+    background-color: #ccc;
+    padding: 0px;
+  }
+  .address-selector {
+    padding: 5px;
+  }
+
+</style>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h1><%=ModelField.find_by_uid(:cmp_name).process_export(@company,current_user)%></h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-2"> <!-- required for floating -->
+      <!-- Nav tabs -->
+      <ul class="nav nav-tabs tabs-left">
+        <li class="active"><a href="#home" data-toggle="tab">Home</a></li>
+        <li><a href="#locations" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/locations'>Locations</a></li>
+        <li><a href="#attributes" data-toggle="tab">Attributes</a></li>
+        <li><a href="#attachments" data-toggle="tab">Attachments</a></li>
+        <li><a href="#orders" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/orders'>Orders</a></li>
+        <li><a href="#survey_responses" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/survey_responses'>Surveys</a></li>
+      </ul>
+    </div>
+
+    <div class="col-xs-10">
+      <!-- Tab panes -->
+      <div class="tab-content">
+        <div class="tab-pane active" id="home">Home Tab.</div>
+        <div class="tab-pane" id="locations">
+          Loading locations
+        </div>
+        <div class="tab-pane" id="attributes">
+          <h3>Attributes</h3>
+          <%= show_custom_fields @company %>
+        </div>
+        <div class="tab-pane" id="attachments">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-12">
+                <%= render :partial => 'shared/attachments', :locals => { :attachable => @company, :redirect_to=>"/vendors/#{@company.id}" } %>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane" id="orders">
+          Loading orders
+        </div>
+        <div class="tab-pane" id="survey_responses">
+          Loading surveys
+        </div>
+      </div>
+    </div>  
+  </div>
+</div>

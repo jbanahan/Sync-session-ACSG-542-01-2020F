@@ -18,6 +18,7 @@ module CoreObjectSupport
     base.instance_eval("has_many :sync_records, :as => :syncable, :dependent=>:destroy")
     base.instance_eval("has_many :business_validation_results, as: :validatable, dependent: :destroy")
     base.instance_eval("has_many :workflow_instances, as: :base_object, dependent: :destroy, inverse_of: :base_object")
+    base.instance_eval("has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object")
     base.instance_eval("after_save :process_linked_attachments")
 
     base.instance_eval("scope :need_sync, lambda {|trading_partner| joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause())}")
