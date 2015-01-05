@@ -23,6 +23,7 @@ describe AnswersController do
       @answer.choice.should == 'abc'
     end
     it 'should allow can_edit? user to save rating' do
+      SurveyResponse.any_instance.stub(:can_view?).and_return true
       SurveyResponse.any_instance.stub(:can_edit?).and_return true
       put :update, id: @answer.id, answer:{rating:'abc'}, format: :json
       response.should be_success
@@ -31,6 +32,7 @@ describe AnswersController do
     end
     it "should not change choice if user is not the assigned user" do
       @answer.update_attributes(choice:'def')
+      SurveyResponse.any_instance.stub(:can_view?).and_return true
       SurveyResponse.any_instance.stub(:can_edit?).and_return true
       put :update, id: @answer.id, answer:{choice:'abc'}, format: :json
       response.should be_success

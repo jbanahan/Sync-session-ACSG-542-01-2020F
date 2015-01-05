@@ -61,7 +61,7 @@ describe AttachmentArchivesController do
       post :complete, :company_id=>@c.id, :id=>@arch.id
       response.should be_success
       @arch.reload
-      @arch.finish_at.should > 1.second.ago
+      @arch.finish_at.to_i.should > 10.second.ago.to_i
     end
     it "should 404 if user does not have permission" do
       User.any_instance.stub(:edit_attachment_archives?).and_return false
