@@ -76,7 +76,7 @@ EOS
     @user = current_user
     @params = params
     @request = request
-    mail(:to => 'chainio-feedback@aspect9.com',
+    mail(:to => 'chainio-feedback@vandegriftinc.com',
          :subject => "[VFI Track] [User Feedback] #{current_user.full_name} - #{current_user.company.name} - #{Time.now}",
          :reply_to => current_user.email
         )
@@ -92,7 +92,7 @@ EOS
 
   def send_new_system_init(password)
     @pwd = password
-    mail(:to => "admin@aspect9.com", :subject => "New System Initialization") do |format|
+    mail(:to => "admin@vandegriftinc.com", :subject => "New System Initialization") do |format|
       format.text
     end
   end
@@ -185,7 +185,7 @@ EOS
   def send_imported_file_process_fail imported_file, source="Not Specified" #source can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
     @imported_file = imported_file
     @source = source
-    mail(:to=>"bug@aspect9.com",:subject =>"[VFI Track Exception] - Imported File Error") do |format|
+    mail(:to=>"bug@vandegriftinc.com",:subject =>"[VFI Track Exception] - Imported File Error") do |format|
       format.text
     end
   end
@@ -194,7 +194,7 @@ EOS
     @user = user
     @error = error  
     @params = params
-    mail(:to => "bug@aspect9.com", :subject => "[VFI Track Exception] Search Failure") do |format|
+    mail(:to => "bug@vandegriftinc.com", :subject => "[VFI Track Exception] Search Failure") do |format|
       format.text
     end
   end
@@ -211,13 +211,13 @@ EOS
     @process_id = Process.pid
     local_attachments = {}
     attachment_paths.each do |ap|
-      if save_large_attachment ap, 'bug@aspect9.com' 
+      if save_large_attachment ap, 'bug@vandegriftinc.com' 
         @additional_messages << @body_text
       else
         local_attachments[File.basename(ap)] = create_attachment ap
       end
     end  
-    m = mail(:to=>"bug@aspect9.com", :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
+    m = mail(:to=>"bug@vandegriftinc.com", :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
       format.text
     end
 

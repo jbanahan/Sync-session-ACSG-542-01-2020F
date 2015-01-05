@@ -245,13 +245,13 @@ class User < ActiveRecord::Base
     OpenMailer.send_password_reset(self).deliver
   end
   
-  # is an administrator within the application (as opposed to a sys_admin who is an Aspect 9 employee with master control)
+  # is an administrator within the application (as opposed to a sys_admin who is an Vandegrift employee with master control)
   # If you are a sys_admin, you are automatically an admin (as long as this method is called instead of looking directly at the db value)
   def admin?
     self.admin || self.sys_admin
   end
 
-  # is a super administrator (generally an Aspect 9 employee) who can control settings not visible to other users
+  # is a super administrator (generally an Vandegrift employee) who can control settings not visible to other users
   def sys_admin?
     self.sys_admin
   end

@@ -157,11 +157,11 @@ hrs_opts = {"midnight"=>"0"}
 (1..23).each {|n| hrs_opts["#{n}:00"]=n}
 %>
       <%=field_row "Email Addresses",
-        text_field_tag("eml","",{:id=>"sd_email",:class=>'dialogtip',:title=>"Like: joe@sample.com,max@aspect9.com"})+"<br /><span style='font-size:75%;'>Separate with commas.</span>".html_safe%>
+        text_field_tag("eml","",{:id=>"sd_email",:class=>'dialogtip',:title=>"Like: joe@sample.com,max@vandegriftinc.com"})+"<br /><span style='font-size:75%;'>Separate with commas.</span>".html_safe%>
       <% if current_user.admin? %>
         <%=field_row "FTP Server", text_field_tag("ftpsvr","",{:id=>"sd_ftpsvr",:class=>"dialogtip",:title=>"FTP Server address where files will be sent."}) %>
         <%=field_row "FTP User", text_field_tag("ftpusr","",{:id=>"sd_ftpusr"}) %>
-        <%=field_row "FTP Password", password_field_tag("ftppass","",{:id=>"sd_ftppass",:class=>"dialogtip",:title=>"Note: FTP passwords are stored unencrypted in the database. Aspect 9 employees are able to view these passwords."}) %>
+        <%=field_row "FTP Password", password_field_tag("ftppass","",{:id=>"sd_ftppass",:class=>"dialogtip",:title=>"Note: FTP passwords are stored unencrypted in the database. Vandegrift employees are able to view these passwords."}) %>
         <%=field_row "FTP Subfolder", text_field_tag("ftpfldr","",{:id=>"sd_ftpfldr",:class=>"dialogtip",:title=>"Subfolder on FTP server (optional)"}) %>
       <% end %>
       <%=field_row "File Format", select_tag("frmt",options_for_select(["csv","xls"]),{:id=>"sd_frmt"}) %>

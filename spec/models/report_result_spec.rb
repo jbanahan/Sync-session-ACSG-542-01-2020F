@@ -3,7 +3,7 @@ require 'spec_helper'
 
 describe ReportResult do
   before :each do
-    @u = Factory(:user, :email=>'a@aspect9.com', :time_zone => 'Hawaii')
+    @u = Factory(:user, :email=>'a@vandegriftinc.com', :time_zone => 'Hawaii')
     MasterSetup.any_instance.stub(:request_host).and_return "localhost"
   end
 

@@ -107,7 +107,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
             <%=field_row "Support Agent", f.check_box(:support_agent)%>
             <%=field_row "Disallow Password", f.check_box(:disallow_password)%>
             <% if current_user.sys_admin? %>
-              <%=field_row "Sys Administrator", raw("<input type='checkbox' name='is_sys_admin' id='sys_admin' value='true' #{@user.sys_admin ? "checked='true'" : ""} />  (Aspect 9 Employees Only)")%>
+              <%=field_row "Sys Administrator", raw("<input type='checkbox' name='is_sys_admin' id='sys_admin' value='true' #{@user.sys_admin ? "checked='true'" : ""} />  (Vandegrift Employees Only)")%>
               <%=field_row "Reset Password", raw("<input type='checkbox' name='password_reset' id='password_reset' value='true' #{@user.password_reset ? "checked='true'" : ""} />")%>
               <% if @user.debug_active? %>
                 <%= f.field_row "Debug will expire", @user.debug_expires %>

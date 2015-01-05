@@ -41,7 +41,7 @@ end
 class SerializableNoMethodError < StandardError; end;
 
 Exception.class_eval do
-  #logs the exception to the database and emails it to bug@aspect9.com
+  #logs the exception to the database and emails it to bug@vandegriftinc.com
   def log_me messages=[], attachment_paths=[], send_now=false
     return unless MasterSetup.connection.table_exists? 'error_log_entries'
     e = ErrorLogEntry.create_from_exception self, messages
