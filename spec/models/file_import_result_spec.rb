@@ -70,10 +70,9 @@ describe FileImportResult do
     end
 
     it "should create a new attachment when delayed" do
-      FileImportResult.download_results(true, @user.id, @fir, true)
+      expect{FileImportResult.download_results(true, @user.id, @fir, true)}.to change(Attachment,:count).from(0).to(1)
       a = Attachment.last
       a.attached_file_name.should == "Log for file name - Results.xls"
-      a.created_at.should > Time.now - 15.seconds
       a.attachable_type.should == "FileImportResult"
     end
 
