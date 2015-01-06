@@ -46,7 +46,8 @@ DATEDIFF(now(),orders.last_revised_date) as 'Days Unapproved'
 FROM orders
 LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id
 WHERE 
-orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
+orders.closed_at is null 
+AND orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 AND (orders.approval_status is null OR orders.approval_status != 'Accepted')
 AND (orders.fob_point IN ('VN','PH','ID'))
 AND DATEDIFF(now(),orders.last_revised_date) > 7
@@ -64,6 +65,8 @@ DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) as 'Deliver
 FROM orders 
 left outer join order_lines on orders.id = order_lines.order_id
 WHERE 
+orders.closed_at is null 
+  AND 
   orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
   AND
   (
@@ -93,6 +96,8 @@ FROM orders
 LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id
 LEFT OUTER JOIN piece_sets ON piece_sets.order_line_id = order_lines.id AND piece_sets.shipment_line_id IS NOT NULL
 WHERE 
+orders.closed_at is null 
+  AND 
 orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 AND (orders.approval_status = 'Accepted')
 AND DATEDIFF(orders.ship_window_end,now()) < 14
