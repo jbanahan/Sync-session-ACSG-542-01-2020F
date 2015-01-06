@@ -183,7 +183,10 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
           <th>Unit Price</th>
           <th>Description</th>
           <th>HTS</th>
-          <th class='no-print'></th>
+          <th class='no-print'>
+            <button id='show-all-detail' class='btn btn-xs btn-default' onclick="$('.order-detail-line').show();$('#show-all-detail').hide();$('#hide-all-detail').show();">Show All</button>
+            <button id='hide-all-detail' class='btn btn-xs btn-default' onclick="$('.order-detail-line').hide();$('#show-all-detail').show();$('#hide-all-detail').hide();" style='display:none;'>Hide All</button>
+          </th>
         </thead>
         
         <tbody>
@@ -208,11 +211,10 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
               <td><%=line.product ? line.product.name : nil%></td>
               <td><%=field_value line, :ordln_hts%></td>
               <td class='no-print'>
-                <a class='btn btn-xs btn-default' id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
-                <a class='btn btn-xs btn-default' id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
+                <button class='btn btn-xs btn-default' onclick="$('#det_<%=line.id%>').toggle();">Detail</button>
               </td>
             </tr>
-            <tr style='display:none;' id='det_<%=line.id%>'>
+            <tr style='display:none;' class='order-detail-line' id='det_<%=line.id%>'>
               <td></td>
                 <td colspan='8' >
                   <%=field_bootstrap 'Shipped', line.shipped_qty%>
