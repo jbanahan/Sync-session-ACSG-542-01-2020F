@@ -1394,7 +1394,8 @@ and classifications.product_id = products.id
         [45,:cil_visa_uom, :visa_uom, "Visa UOM",{:data_type=>:string}],
         [46,:cil_value_foreign,:value_foreign,'Value (Foreign)',{data_type: :decimal, currency: :other}],
         [47,:cil_currency,:currency,'Currency',{data_type: :string}],
-        [48,:cil_store_name, :store_name, "Store Name",{data_type: :string}]
+        [48,:cil_store_name, :store_name, "Store Name",{data_type: :string}],
+        [49,:cil_subheader_number, :subheader_number, "Subheader Number", {datatype: :integer}]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],

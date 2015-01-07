@@ -287,6 +287,8 @@ module OpenChain
       inv_ln.state_origin_code = org[1]
       inv_ln.unit_price = dec_val(line[39])
       inv_ln.customer_reference = line[103] unless line[103].blank?
+      inv_ln.customs_line_number = int_val(line[92])
+      inv_ln.subheader_number = int_val(line[93])
       accumulate_string :exp_country, exp[0]
       accumulate_string :exp_state, exp[1]
       accumulate_string :org_country, org[0]
