@@ -262,7 +262,7 @@ describe "SurveyResponseApp", () ->
           question: {warning:true, choice_list: ['A', 'B']}
           answer_comments: [{content:'x',user:{id:1}}]
         }
-        sr = {user:{id:1}}
+        sr = {survey_takers: [1]}
         $scope.resp = sr
 
       it "should show warning if question warning is true and no comments or choice", () ->
@@ -313,7 +313,7 @@ describe "SurveyResponseApp", () ->
           {id:7,rating:'y',choice:'y', question: {require_attachment: true}}
           {id:8,rating:'y',choice:'x', question: {require_comment: true}}
           ]
-        $scope.resp.user = {id: 1}
+        $scope.resp.survey_takers = [1]
         $scope.resp.answers = answers
 
       it "should show all when filter mode is 'All'", () ->
@@ -351,7 +351,7 @@ describe "SurveyResponseApp", () ->
 
       beforeEach () -> 
         answer = {id: 1, choice: "", question: {}}
-        $scope.resp.user = {id: 1}
+        $scope.resp.survey_takers = [1]
 
       it "does not show message for answer without errors", () ->
         expect($scope.warningMessage(answer)).toEqual("")
