@@ -322,10 +322,10 @@ class SearchCriterion < ActiveRecord::Base
         return vt < self_val.days.from_now.to_date
       elsif self.operator == "nq"
         return vt.nil?  || vt!=self_val
-      elsif self.operator == "regexp"
+      elsif self.operator == "dt_regexp"
         # This should be in the form of YYYY-mm-dd for dates and YYYY-mm-dd HH:MM for DateTimes
         return !vt.to_s.match(self.value).nil?
-      elsif self.operator == "notregexp"
+      elsif self.operator == "dt_notregexp"
         return vt.to_s.match(self.value).nil?
       elsif self.operator == "pm"
         base_date = self_val.months.ago

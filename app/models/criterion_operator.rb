@@ -1,16 +1,23 @@
 class CriterionOperator
-  attr_reader :key, :label, :relative_to_start_of_day
+  attr_reader :key, :label, :relative_to_start_of_day, :relative_to_user_timezone
 
   def initialize(key, query_string, label, opts = {})
     @key = key
     @query_string = query_string
     @label = label
     @relative_to_start_of_day = opts[:relative_to_start_of_day]
+    @relative_to_user_timezone = opts[:relative_to_user_timezone]
   end
 
   def query_string(field_name, data_type, include_empty = false)
-    # This code is test cased in the search_criterion's test case
-    query = @query_string.gsub(/_fn_/,field_name)
+    if @relative_to_user_timezone && data_type == :datetime
+      mysql_user_time_zone = Time.zone.tzinfo.name
+      query = @query_string.gsub /_fn_/, "convert_tz(#{field_name}, 'GMT', '#{mysql_user_time_zone}')"
+    else
+      # This code is test cased in the search_criterion's test case
+      query = @query_string.gsub(/_fn_/,field_name)
+    end
+    
 
     # Any field that requires be centered around the current date needs to have the
     # date based around the user's timezone.  In other words, if it's 11 PM and user is in
@@ -57,6 +64,8 @@ class CriterionOperator
     new("new","_fn_ NOT LIKE ?","Does Not End With"),
     new("regexp","_fn_ REGEXP ?", "Regex"),
     new("notregexp","_fn_ NOT REGEXP ?", "Not Regex"),
+    new("dt_regexp","_fn_ REGEXP ?", "Regex", relative_to_user_timezone: true),
+    new("dt_notregexp","_fn_ NOT REGEXP ?", "Not Regex", relative_to_user_timezone: true),
     new("null","_fn_ IS NULL OR trim(_fn_)=''","Is Empty"),
     new("notnull","_fn_ IS NOT NULL AND NOT trim(_fn_)=''","Is Not Empty"),
     new("bda","_fn_ < DATE_ADD(_CURRENT_DATE_, INTERVAL -? DAY)","Before _ Days Ago", relative_to_start_of_day: true),
