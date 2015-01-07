@@ -1,11 +1,11 @@
 class SurveyResponsesController < ApplicationController
   def show
     @sr = SurveyResponse.find params[:id]
-    if @sr.user_id != current_user.id && (@sr.survey.company_id!=current_user.company_id || !current_user.edit_surveys?)
+    if !@sr.can_view?(current_user) && !@sr.can_edit?(current_user)
       error_redirect "You do not have permission to work with this survey."
       return
     end
-    if @sr.user_id == current_user.id
+    if @sr.assigned_to_user? current_user
       if @sr.response_opened_date.nil?
         @sr.response_opened_date = 0.seconds.ago 
         @sr.save
@@ -30,8 +30,7 @@ class SurveyResponsesController < ApplicationController
             question:{methods:[:html_content,:choice_list], only:[:id,:warning, :require_comment, :require_attachment],include:{attachments:{only:[:id,:attached_file_name]}}},
             answer_comments:{only:[:content,:private,:created_at],include:[{user:{only:[:id],methods:[:full_name]}}]}
           }}},
-          {survey:{only:[:id,:name],methods:[:rating_values]}},
-          {user:{only:[:id],methods:[:full_name]}}
+          {survey:{only:[:id,:name],methods:[:rating_values]}}
         ])
         h['survey_response']['archived'] = archived
         h['survey_response']['can_rate'] = !archived && @rate_mode
@@ -45,6 +44,18 @@ class SurveyResponsesController < ApplicationController
           end
           a[:attachments] = Attachment.attachments_as_json(Answer.find(a['id']))[:attachments]
         end
+
+        # In order to do some validation that questions requiring comments actually have 
+        # comments made by the survey takers, we need to know the full list of survey takers
+        # and check against those.  Another means of attacking this would be to denote via a method at the 
+        # answer comment level if the comment was by a survey taker or not.  This approach seems easier though.
+        survey_takers = []
+        if @sr.user
+          survey_takers << @sr.user.id
+        else
+          survey_takers.push *@sr.group.users.collect(&:id)
+        end
+        h['survey_response']['survey_takers'] = survey_takers
         
         render json: h
       }
@@ -53,12 +64,12 @@ class SurveyResponsesController < ApplicationController
   
   def update
     sr = SurveyResponse.find params[:id]
-    if sr.survey.company_id!=current_user.company_id && sr.user!=current_user
+    if !sr.can_view?(current_user) && !sr.can_edit?(current_user)
       error_redirect "You do not have permission to work with this survey."
       return
     end
     log_message = "Response saved."
-    if sr.user==current_user
+    if sr.assigned_to_user? current_user
       if params[:do_submit]
         sr.submitted_date = 0.seconds.ago 
         sr.save!
@@ -80,7 +91,7 @@ class SurveyResponsesController < ApplicationController
     if old_ie_version? 
       add_flash :errors, "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers.", now: true
     end
-    @survey_responses = SurveyResponse.where(:user_id=>current_user.id).joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false))
+    @survey_responses = SurveyResponse.where("user_id = ? OR group_id IN (?)", current_user.id, current_user.groups.map(&:id)).joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false))
   end
 
   def archive

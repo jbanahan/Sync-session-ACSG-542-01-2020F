@@ -65,22 +65,23 @@ describe Survey do
       u = Factory(:user)
       s = Factory(:survey)
       s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
-      sr = s.generate_response! u
-      sr.answers.should have(2).answers
+      sr = s.generate_response! u, "abc"
+      expect(sr.answers.size).to eq 2
+      expect(sr.survey_response_logs.where(:message=>"Survey assigned to #{u.full_name}").size).to eq 1
+      expect(sr.subtitle).to eq "abc"
     end
-    it 'should log response generation' do
+  end
+  describe 'generate_group_response' do
+    it 'should make a response with all answers' do
       u = Factory(:user)
+      group = Group.create! system_code: "G", name: "Group"
+      u.groups << group
       s = Factory(:survey)
       s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
-      sr = s.generate_response! u
-      sr.survey_response_logs.where(:message=>"Survey assigned to #{u.full_name}").should have(1).item
-    end
-    it 'should set response subtitle' do
-      u = Factory(:user)
-      s = Factory(:survey)
-      s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
-      sr = s.generate_response! u, 'abc'
-      sr.subtitle.should == 'abc'
+      sr = s.generate_group_response! group, 'abc'
+      expect(sr.answers.size).to eq 2
+      expect(sr.survey_response_logs.where(:message=>"Survey assigned to group #{group.name}").size).to eq 1
+      expect(sr.subtitle).to eq "abc"
     end
   end
   describe "assigned_users" do

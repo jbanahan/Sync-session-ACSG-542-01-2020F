@@ -153,28 +153,55 @@ describe SurveyResponse do
       @sr.can_view_private_comments?(@response_user).should be_false
     end
   end
-  describe "notify user" do
+  describe "invite_user!" do
     before :each do
       MasterSetup.get.update_attributes(:request_host=>"a.b.c")
       @survey = Factory(:question).survey
       @survey.update_attributes(:email_subject=>"TEST SUBJ",:email_body=>"EMLBDY")
       @u = Factory(:user)
-      @response = @survey.generate_response! @u
-      @response.invite_user!
     end
-    it "should log that notification was sent" do
-      @response.survey_response_logs.collect{ |log| log.message}.should include "Invite sent to #{@u.email}"
+    context "assigned to a user" do
+      before :each do
+        @response = @survey.generate_response! @u
+        @response.invite_user!
+      end
+      it "should log that notification was sent" do
+        @response.survey_response_logs.collect{ |log| log.message}.should include "Invite sent to #{@u.email}"
+      end
+      it "should update email_sent_date if not set" do
+        @response.reload
+        @response.email_sent_date.should > 1.second.ago
+      end
+      it "should email user with survey email, body, and link" do
+        last_delivery = ActionMailer::Base.deliveries.last
+        last_delivery.to.should == [@u.email]
+        last_delivery.subject.should == @survey.email_subject
+        last_delivery.body.raw_source.should include @survey.email_body
+        last_delivery.body.raw_source.should include "<a href='http://a.b.c/survey_responses/#{@response.id}'>http://a.b.c/survey_responses/#{@response.id}</a>"
+      end
     end
-    it "should update email_sent_date if not set" do
-      @response.reload
-      @response.email_sent_date.should > 1.second.ago
-    end
-    it "should email user with survey email, body, and link" do
-      last_delivery = ActionMailer::Base.deliveries.last
-      last_delivery.to.should == [@u.email]
-      last_delivery.subject.should == @survey.email_subject
-      last_delivery.body.raw_source.should include @survey.email_body
-      last_delivery.body.raw_source.should include "<a href='http://a.b.c/survey_responses/#{@response.id}'>http://a.b.c/survey_responses/#{@response.id}</a>"
+    
+    context "assigned to a group" do
+      before :each do
+        @group = Group.create! system_code: "g"
+        @u.groups << @group
+        @u2 = Factory(:user, groups: [@group])
+
+        @response = @survey.generate_group_response! @group
+        @response.invite_user!
+      end
+
+      it "sends an email notification to all members of the group" do
+        @response.reload
+        expect(@response.survey_response_logs.collect{ |log| log.message}).to include "Invite sent to #{@u.email}, #{@u2.email}"
+        expect(@response.email_sent_date.to_date).to eq Time.zone.now.to_date
+
+        last_delivery = ActionMailer::Base.deliveries.last
+        expect(last_delivery.to).to eq [@u.email, @u2.email]
+        expect(last_delivery.subject).to eq @survey.email_subject
+        expect(last_delivery.body.raw_source).to include @survey.email_body
+        expect(last_delivery.body.raw_source).to include "<a href='http://a.b.c/survey_responses/#{@response.id}'>http://a.b.c/survey_responses/#{@response.id}</a>"
+      end
     end
   end
   describe :was_archived do
@@ -203,6 +230,65 @@ describe SurveyResponse do
       @response.save!
       @survey.survey_responses.where("1=1").merge(SurveyResponse.was_archived(true)).first.id.should == @response.id
       @survey.survey_responses.where("1=1").merge(SurveyResponse.was_archived(false)).first.should be_nil
+    end
+  end
+
+  describe "most_recent_user_log" do
+    it "returns the newest log with a user_id associated with it" do
+      @survey = Factory(:question).survey
+      @u = Factory(:user)
+      @response = @survey.generate_response! @u
+
+      l1 = @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now
+      l2 = @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now - 1.day, user: @u
+      l3 = @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now - 2.days, user: @u
+
+      expect(@response.most_recent_user_log).to eq l2
+    end
+  end
+
+  describe "assigned_to_user?" do
+    before :each do
+      @survey = Factory(:question).survey
+      @group = Group.create! system_code: "G"
+      @u = Factory(:user)
+    end
+
+    it "shows as assigned if user matches response user" do
+      response = @survey.generate_response! @u
+      expect(response.assigned_to_user? @u).to be_true
+    end
+
+    it "does not show as assigned if user is not response user" do
+      response = @survey.generate_response! @u
+      expect(response.assigned_to_user? Factory(:user)).to be_false
+    end
+
+    it "shows as assigned if user in in group assigned to response" do
+      @u.groups << @group
+      response = @survey.generate_group_response! @group
+      expect(response.assigned_to_user? @u).to be_true
+    end
+
+    it "does not show as assigned if user is not in response group" do
+      response = @survey.generate_group_response! @group
+      expect(response.assigned_to_user? @u).to be_false
+    end
+  end
+
+  describe "responder_name" do
+    before :each do
+      @survey = Factory(:question).survey
+      @group = Group.create! system_code: "G", name: "Group"
+      @u = Factory(:user)
+    end
+
+    it "uses user name as responder when assigned to a user" do
+      expect(@survey.generate_response!(@u).responder_name).to eq @u.full_name
+    end
+
+    it "uses group name as responder when assigned to a group" do
+      expect(@survey.generate_group_response!(@group).responder_name).to eq @group.name
     end
   end
 end

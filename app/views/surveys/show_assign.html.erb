@@ -1,16 +1,9 @@
 <%content_for :action_bar do %>
-  <button id='btn_submit' style='display:none;'>Assign</button>
+  <button id='btn_submit'>Assign</button>
   <button class='btn_link' link_to='<%=survey_path @survey%>'>Cancel</button>
 <%end%>
 <%content_for :javascript do%>
 $(function() {
-  $("#assign_lst").change(function() {
-    if($("#assign_lst").find(":selected").size()>0) {
-      $("#btn_submit").slideDown('fast');
-    } else {
-      $("#btn_submit").slideUp('fast');
-    }
-  });
   $("#btn_submit").click(function() {
     var h = "";
     $("#assign_lst").find(":selected").each(function (idx,opt) {
@@ -22,33 +15,50 @@ $(function() {
 });
 <%end%>
 <%= form_for @survey, :url=>assign_survey_path(@survey), :html=>{:method=>"POST",:id=>"frm_as"} do |f| %>
-<table class='detail_table'>
-  <thead><tr><th style='text-align:center;'>Assign Users To <%=@survey.name%></th></tr></thead>
+<table>
+  <%=field_row "Report Label", text_field_tag(:subtitle)%>
+</table>
+<table class='detail_table' style="margin-top: 2em;">
+  <thead><tr><th style='text-align:center;'>Assign Survey '<%=@survey.name%>' To Users</th></tr></thead>
   <tbody>
-    <tr><td>
-      <table>
-        <%=field_row "Report Label", text_field_tag(:subtitle)%>
-      </table>
-    <select id='assign_lst' name='to_assign' multiple='multiple' size='10' style='width:100%;'>
-      <% @visible_companies.each do |c|%>
-        <optgroup label='<%=c.name%>'>
-          <%c.users.sort_by {|n| n.full_name.upcase}.each do |u|%>
-            <option value='<%=u.id%>'><%=u.full_name%></option>
+    <tr>
+      <td>
+        <select id='assign_lst' name='to_assign' multiple='multiple' size='10' style='width:100%;'>
+          <% @visible_companies.each do |c|%>
+            <optgroup label='<%=c.name%>'>
+              <%c.users.sort_by {|n| n.full_name.upcase}.each do |u|%>
+                <option value='<%=u.id%>'><%=u.full_name%></option>
+              <%end%>
+            </optgroup>
           <%end%>
-        </optgroup>
-      <%end%>
-    </select>
-    </td></tr>
+        </select>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class='detail_table' style="margin-top: 2em;">
+  <thead><tr><th style='text-align:center;'>Assign Survey '<%=@survey.name%>' To Groups</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>
+        <select id='group_list' name='groups[]' multiple='multiple' size='10' style='width:100%;'>
+          <% @groups.each do |g|%>
+            <option value='<%=g.id%>' title="<%=h(g.description)%>"><%=g.name%></option>
+          <%end%>
+        </select>
+      </td>
+    </tr>
   </tbody>
 </table>
   <div id='hdn_assigns' style='display:none;'></div>
   
 <% end %>
-<p><em><b>Be careful</b>, when you assign a user... </em>
+<p><em><b>Be careful</b>, when you assign the survey to a user or a group... </em>
 <ul>
-  <li style='color:red;'>you won't be able to edit the survey anymore.</li>
-  <li>he or she will receive an email notification.</li>
-  <li>he or she will be permanently assigned to this survey.</li>
+  <li><b style="color: red">You will not be able to edit the survey any longer.</b></li>
+  <li>Each User or Group you have assigned will receive their own <b>distinct</b> copy of the survey.</li>
+  <li>The survey taker(s) will receive an email notification.</li>
+  <li>The survey taker(s) will be permanently assigned to this survey.</li>
 </ul>
 </p>
 

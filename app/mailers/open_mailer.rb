@@ -250,7 +250,10 @@ EOS
     @body_textile = survey.email_body
     @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
     email_subject = survey.email_subject + (@subtitle.blank? ? "" : " - #{@subtitle}")
-    mail(:to=>survey_response.user.email,:subject=>email_subject) do |format|
+    to = [survey_response.user.try(:email)]
+    to << survey_response.group
+    to = explode_group_email_list to.compact, "TO"
+    mail(:to=>to,:subject=>email_subject) do |format|
       format.html
     end
   end
@@ -271,7 +274,10 @@ EOS
   def send_survey_user_update survey_response, corrective_action_plan = false
     @cap_mode = corrective_action_plan
     @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
-    mail(:to=>survey_response.user.email, :subject=>"#{survey_response.survey.name} - Updated") do |format|
+    to = [survey_response.user.try(:email)]
+    to << survey_response.group
+    to = explode_group_email_list to.compact, "TO"
+    mail(:to=>to, :subject=>"#{survey_response.survey.name} - Updated") do |format|
       format.html
     end
   end
@@ -410,6 +416,26 @@ EOS
         message.to = User.first.email
         message.cc, message.bcc = [""], [""] #Postmark doesn't like blank strings, nils, or blank lists...
       end
+    end
+
+    def explode_group_email_list list, list_type
+      list = (list.respond_to?(:each) ? list : [list])
+
+      new_list = []
+      group_codes = []
+      list.each do |email_address|
+        if email_address.is_a? Group
+          group_codes << email_address.system_code
+          emails = email_address.users.map(&:email).find_all {|em| !em.blank?}
+          new_list.push(*emails) if emails.size > 0
+        else
+          new_list << email_address
+        end
+      end
+      # Track the groups being sent to under the covers to easily back-trace actual emails to distinct
+      # groups
+      headers["X-ORIGINAL-GROUP-#{list_type}"] = group_codes.join(", ") unless group_codes.blank?
+      new_list.blank? ? nil : new_list
     end
 
     def large_attachment? file

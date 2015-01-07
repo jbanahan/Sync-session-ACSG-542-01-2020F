@@ -50,6 +50,19 @@ class Survey < ActiveRecord::Base
     sr
   end
 
+  def generate_group_response! target_group, subtitle = nil
+    sr = self.survey_responses.create!(:group=>target_group,:subtitle=>subtitle)
+    self.questions.each do |q|
+      sr.answers.create!(:question=>q)
+    end
+    sr.survey_response_logs.create(:message=>"Survey assigned to group #{target_group.name}")
+    sr
+  end
+
+  def most_recent_response_log
+    SurveyResponseLog.joins([survey_response: [:survey]]).where(surveys: {id: self.id}).where("survey_response_logs.user_id IS NOT NULL").order("updated_at DESC").first
+  end
+
   def to_xls 
     wb = Spreadsheet::Workbook.new
     create_responses_sheet wb
@@ -88,7 +101,7 @@ class Survey < ActiveRecord::Base
       cols = []
       cols << r.user.company.name
       cols << r.subtitle
-      cols << r.user.full_name
+      cols << r.responder_name
       cols << r.status
       cols << r.rating
       cols << r.email_sent_date

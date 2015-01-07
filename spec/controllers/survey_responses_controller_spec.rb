@@ -14,6 +14,16 @@ describe SurveyResponsesController do
       assigns(:rate_mode).should be_false
       assigns(:respond_mode).should be_true
     end
+    it 'should be respond mode if current_user is in survey group and not submitted' do
+      group = Group.create! system_code: "g1"
+      @u.groups << group
+      sr = Factory(:survey_response, group: group)
+
+      get :show, :id=>sr.id
+      assigns(:sr).should == sr
+      assigns(:rate_mode).should be_false
+      assigns(:respond_mode).should be_true
+    end
     it 'should not be respond mode if submitted' do
       sr = Factory(:survey_response,:user=>@u,:submitted_date=>1.day.ago)
       get :show, :id=>sr.id
@@ -45,6 +55,14 @@ describe SurveyResponsesController do
     end
     it "should mark response_opened_date if current_user == survey_response.user and response_opened_date.nil?" do
       sr = Factory(:survey_response,:user=>@u)
+      get :show, :id=>sr.id
+      SurveyResponse.find(sr.id).response_opened_date.should > 2.minutes.ago
+    end
+    it "should mark response_opened_date if current_user is in response group and response_opened_date.nil?" do
+      group = Group.create! system_code: "g1"
+      @u.groups << group
+
+      sr = Factory(:survey_response, group: group)
       get :show, :id=>sr.id
       SurveyResponse.find(sr.id).response_opened_date.should > 2.minutes.ago
     end
@@ -171,6 +189,16 @@ describe SurveyResponsesController do
         post :update, :id=>@sr.id, :do_submit=>"1"
         SurveyResponse.find(@sr.id).submitted_date.should > 10.seconds.ago
       end
+       it "should update submitted date if flag set and user is in survey response user group" do
+        group_user = Factory(:user)
+        group = Group.create! system_code: "g1"
+        group_user.groups << group
+        @sr.update_attributes! group: group
+        sign_in_as group_user
+        post :update, :id=>@sr.id, :do_submit=>"1"
+        expect(response).to redirect_to @sr
+        SurveyResponse.find(@sr.id).submitted_date.should > 10.seconds.ago
+      end
       it "should create update record" do
         sign_in_as @response_user
         post :update, :id=>@sr.id, :do_submit=>"1"
@@ -240,10 +268,17 @@ describe SurveyResponsesController do
     it 'should only show survey responses assigned to current_user' do
       to_find = Factory(:survey_response,:user=>@u)
       dont_find = Factory(:survey_response)
+      group = Group.create! system_code: "g"
+      @u.groups << group
+      group_find = Factory(:survey_response, group: group)
+
       get :index
       response.should be_success
-      assigns(:survey_responses).to_a.should == [to_find]
+      srs = assigns(:survey_responses).to_a
+      expect(srs).to include to_find
+      expect(srs).to include group_find
     end
+
 
     it "shows error if user is using IE < 9" do
       @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"

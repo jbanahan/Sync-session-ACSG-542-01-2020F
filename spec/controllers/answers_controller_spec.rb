@@ -9,6 +9,7 @@ describe AnswersController do
       @answer = Factory(:answer)
     end
     it 'should log update' do
+      SurveyResponse.any_instance.should_receive(:assigned_to_user?).with(@u).and_return true
       SurveyResponse.any_instance.stub(:can_view?).and_return true
       Answer.any_instance.should_receive(:log_update).with @u
       put :update, id: @answer.id, answer:{choice:'abc'}, format: :json
@@ -17,6 +18,17 @@ describe AnswersController do
     it 'should allow survey user to save choice' do
       @answer.survey_response.user = @u
       @answer.survey_response.save!
+      put :update, id: @answer.id, answer:{choice:'abc'}, format: :json
+      response.should be_success
+      @answer.reload
+      @answer.choice.should == 'abc'
+    end
+    it 'should allow survey group user to save choice' do
+      group = Group.create! system_code: "g"
+      @answer.survey_response.group = group
+      @answer.survey_response.save!
+      @u.groups << group
+
       put :update, id: @answer.id, answer:{choice:'abc'}, format: :json
       response.should be_success
       @answer.reload
@@ -50,6 +62,21 @@ describe AnswersController do
     end
     it "should 404 if user cannot view survey" do
       lambda {put :update, id: @answer.id, answer:{rating:'abc'}, format: :json}.should raise_error ActionController::RoutingError
+    end
+    it "does not log updates when the answer choice is not modified" do
+      @answer.update_attributes! choice: "abc"
+      SurveyResponse.any_instance.should_receive(:assigned_to_user?).with(@u).and_return true
+      SurveyResponse.any_instance.stub(:can_view?).and_return true
+      Answer.any_instance.should_not_receive(:log_update)
+      put :update, id: @answer.id, answer:{choice:'abc'}, format: :json
+    end
+
+    it "does not log updates when the answer rating is not modified" do
+      @answer.update_attributes! rating: "abc"
+      SurveyResponse.any_instance.should_receive(:can_view?).with(@u).and_return true
+      SurveyResponse.any_instance.should_receive(:can_edit?).with(@u).and_return true
+      Answer.any_instance.should_not_receive(:log_update)
+      put :update, id: @answer.id, answer:{rating:'abc'}, format: :json
     end
   end
 end

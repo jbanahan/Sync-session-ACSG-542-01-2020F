@@ -303,6 +303,22 @@ describe SurveysController do
       response.should redirect_to survey_path(@s)
       SurveyResponse.find_by_survey_id_and_user_id(@s.id,u2.id).subtitle.should == 'sub'
     end
+    it "assigns to groups" do
+      g = Group.create! system_code: "g", name: "Group"
+      Survey.any_instance.stub(:can_edit?).and_return(true)
+      SurveyResponse.any_instance.should_receive(:invite_user!)
+      post :assign, :id=>@s.id, :groups=>[g.id], :subtitle=>'sub'
+
+      expect(response).to redirect_to @s
+      expect(flash[:notices]).to include "1 group assigned."
+      expect(SurveyResponse.where("group_id = ? AND subtitle = ? ", g.id, "sub").first).not_to be_nil
+    end
+    it "fails when no groups or users are selected" do
+      Survey.any_instance.stub(:can_edit?).and_return(true)
+      post :assign, :id=>@s.id, :subtitle=>'sub'
+      expect(response).to redirect_to @s
+      expect(flash[:errors]).to include "You must assign this survey to at least one user or group."
+    end
   end
   describe "toggle subscription" do
     before :each do 

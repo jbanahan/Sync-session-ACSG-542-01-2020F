@@ -1,5 +1,5 @@
-<table class='detail_table'>
-  <thead><tr><th>&nbsp;</th><th>Name</th><th>Assignments</th><th>Incomplete</th><th>Not Rated</th><th>Need Improvement</th><th>Accepted</th></tr></thead>
+<table class='detail_table table table-striped'>
+  <thead><tr><th>&nbsp;</th><th>Name</th><th>Assignments</th><th>Incomplete</th><th>Not Rated</th><th>Need Improvement</th><th>Accepted</th><th>Last Updated / By</tr></thead>
   <tbody>
 <%surveys.each do |s|%>
 <tr class='hover'>
@@ -15,6 +15,7 @@
   <td><%=s.survey_responses.where(:status=>"Not Rated").count%></td>
   <td><%=s.survey_responses.where(:status=>"Needs Improvement").count%></td>
   <td><%=s.survey_responses.where(:status=>"Accepted").count%></td>
+  <td><%- log = s.most_recent_response_log%><%= log ? (log.updated_at.in_time_zone(current_user.time_zone).to_s + " / " + log.user.full_name) : ""%></td>
 </tr>
 <%end%>
   </tbody>

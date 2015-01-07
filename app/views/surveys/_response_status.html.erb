@@ -1,11 +1,11 @@
-<table class='detail_table'>
-  <thead><tr><th>Company</th><th>Label</th><th>Responder</th><th>Status</th><th>Rating</th><th>Invited</th><th>Opened</th><th>Submitted</th><th>Last Updated / By</th><th><abbr title='Corrective Action Plan'>CAP</abbr></th></tr></thead>
+<table class='detail_table table table-striped'>
+  <thead><tr><th>Company / Group</th><th>Label</th><th>Responder</th><th>Status</th><th>Rating</th><th>Invited</th><th>Opened</th><th>Submitted</th><th>Last Updated / By</th><th><abbr title='Corrective Action Plan'>CAP</abbr></th></tr></thead>
   <tbody>
     <%survey_responses.each do |sr| %>
       <tr class='hover'>
-        <td><%=link_to sr.user.company.name, sr%></td>
+        <td><% if sr.user %><%=link_to sr.user.company.name, sr%><% else %><%=link_to sr.responder_name, sr%><%end%></td>
         <td><%=sr.subtitle%></td>
-        <td><%=sr.user.full_name%>
+        <td><% if sr.user %>User:<%else%>Group:<%end%> <%=sr.responder_name%><br>
           <%- if defined?(show_archive_control) && show_archive_control && sr.survey.can_edit?(current_user)-%>
             <%=form_for sr, url: archive_survey_response_path(sr), html: {style: "display: inline;"} do |f|%>
               <button type="submit" class="btn btn-xs btn-default">Archive</button>
@@ -22,7 +22,7 @@
         <td><%=sr.email_sent_date%></td>
         <td><%=sr.response_opened_date%></td>
         <td><%=sr.submitted_date%></td>
-        <td><%=sr.updated_at%> / <%- log = sr.survey_response_logs.order("updated_at DESC").first%><%=log && log.user ? log.user.full_name : ""%></td>
+        <td><%- log = sr.most_recent_user_log%><%= log ? (log.updated_at.in_time_zone(current_user.time_zone).to_s + " / " + log.user.full_name) : ""%></td>
         <td><%=sr.corrective_action_plan ? link_to(sr.corrective_action_plan.status,[sr,sr.corrective_action_plan]) : ''%></td>
       </tr>
     <% end%>

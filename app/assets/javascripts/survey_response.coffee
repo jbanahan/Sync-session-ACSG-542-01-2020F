@@ -84,12 +84,15 @@ srApp.factory 'srService', ['$http','$sce',($http,$sce) ->
         {survey_response:{id:sr.id,rating:sr.rating}}
     
     submit: (r) ->
+      svc = @
       saveResponse r, ((sr) ->
         {do_submit:true}
       ), (resp) ->
         r.success_message = 'Your survey has been submitted successfully.'
         r.can_submit = false
+        r.can_answer = false
         r.status = 'Needs Rating'
+        svc.settings.filterMode = "Not Rated"
 
     invite: (r) ->
       r.success_message = 'Sending invite.'
@@ -153,7 +156,7 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
   $scope.answerHasUserComments = (answer) ->
     if answer.answer_comments
       for ac in answer.answer_comments
-        return true if ac.user.id == $scope.resp.user.id && ac.content.trim().length > 0
+        return true if ac.content.trim().length > 0 && $scope.resp.survey_takers.indexOf(ac.user.id) >= 0
     false
 
   $scope.answerHasAttachments = (answer) ->

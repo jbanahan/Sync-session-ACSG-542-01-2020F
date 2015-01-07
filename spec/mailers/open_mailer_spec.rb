@@ -592,38 +592,48 @@ EMAIL
   end
 
   describe :send_survey_invite do
+    before :each do
+      @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
+      @survey = Factory(:survey)
+      @survey.email_subject = "test subject"
+      @survey.email_body = "test body"
+      @survey_response = @survey.survey_responses.build :user => @user
+    end
+    
     context 'with a non-blank subtitle' do
-      before :each do
-        @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
-        @survey = Factory(:survey)
-        @survey.email_subject = "test subject"
-        @survey.email_body = "test body"
-
-        survey_response = @survey.survey_responses.build :user => @user, :subtitle => 'test subtitle'
-
-        @m = OpenMailer.send_survey_invite(survey_response)
-      end
-
       it 'appends a line including the label to the body of the email and the subject' do
-        expect(@m.subject).to eq "test subject - test subtitle"
-        expect(@m.body.raw_source).to match(/To view the survey labeled &#x27;test subtitle,&#x27; follow this link:/)
+        @survey_response.update_attributes! subtitle: "test subtitle"
+        m = OpenMailer.send_survey_invite(@survey_response)
+        expect(m.body.raw_source).to match(/To view the survey labeled &#x27;test subtitle,&#x27; follow this link:/)
       end
     end
 
-    context 'without a blank subtitle' do
-      before :each do
-        @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
-        @survey = Factory(:survey)
-        @survey.email_subject = "test subject"
-        @survey.email_body = "test body"
-        survey_response = @survey.survey_responses.build :user => @user
+    context 'with a blank subtitle' do
+      it 'does not add a blank subtitle line to the normal body or subject' do
+        m = OpenMailer.send_survey_invite(@survey_response)
+        expect(m.subject).to eq "test subject"
+        expect(m.body.raw_source).to match(/To view the survey, follow this link:/)
+      end
+    end
 
-        @m = OpenMailer.send_survey_invite(survey_response)
+    context 'with user group' do
+      before :each do
+        @group = Group.create! system_code: "g1"
+        @user1 = Factory(:user)
+        @user2 = Factory(:user)
+        @user1.groups << @group
+        @user2.groups << @group
+        @survey_response.group = @group
       end
 
-      it 'does not add a blank subtitle line to the normal body or subject' do
-        expect(@m.subject).to eq "test subject"
-        expect(@m.body.raw_source).to match(/To view the survey, follow this link:/)
+      it "splits out user groups emails" do
+        OpenMailer.send_survey_invite(@survey_response).deliver!
+        m = ActionMailer::Base.deliveries.pop
+        expect(m.to).to include @user.email
+        expect(m.to).to include @user1.email
+        expect(m.to).to include @user2.email
+
+        expect(m.header["X-ORIGINAL-GROUP-TO"].value).to eq @group.system_code
       end
     end
   end

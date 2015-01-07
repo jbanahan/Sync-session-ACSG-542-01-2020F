@@ -60,10 +60,10 @@
     <% end %>
     <% if @survey.can_edit?(current_user)%>
       <button id='btn_cpy'>Copy Survey</button>
-      <%= button_to "Archive Survey", {action: :archive, id: @survey.id}, method: :put, class:'btn btn-default', form_class:'inline-button-to'%>
+      <%= button_to "Archive Survey", {action: :archive, id: @survey.id}, method: :put, class:'btn navbar-btn btn-default', form_class:'inline-button-to'%>
     <% end %>
   <% elsif @survey.can_edit?(current_user) %>
-      <%= button_to "Restore Survey", {action: :restore, id: @survey.id}, method: :put, class:'btn btn-default', form_class:'inline-button-to'%>
+      <%= button_to "Restore Survey", {action: :restore, id: @survey.id}, method: :put, class:'btn navbar-btn btn-default', form_class:'inline-button-to'%>
   <% end %>
   
   <% if @survey.can_edit?(current_user) && @survey.survey_responses.was_archived(true).count > 0 %>
@@ -79,7 +79,7 @@
 <div id='resp_chart' style='text-align:center; width:45%; margin:0;'></div>
 <div style='clear:both'></div>
 <h3>Survey Responses</h3>
-<%=render :partial=>'response_status', locals: {survey_responses: @survey.survey_responses.was_archived(false).order('survey_responses.updated_at DESC'), show_archive_control: true} %>
+<%=render :partial=>'response_status', locals: {survey_responses: @survey_responses, show_archive_control: true} %>
 <%- archived = @survey.survey_responses.was_archived(true).count -%> 
 <% if @show_archived && archived > 0 %>
 <h3>Archived Responses</h3>
@@ -89,7 +89,7 @@
 <% end %>
 
 <h2>Questions</h2>
-<table class='detail_table'>
+<table class='detail_table table table-striped'>
   <thead><tr><th>Question</th><th>Answered</th>
   <%@survey.rating_values.each do |rv|%>
     <th><%=rv%></th>
