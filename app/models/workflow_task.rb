@@ -22,7 +22,7 @@ class WorkflowTask < ActiveRecord::Base
   scope :are_overdue, where('workflow_tasks.due_at < now()')
 
   def overdue?
-    return false unless self.due_at
+    return false unless self.due_at && ! self.passed?
     return self.due_at < 0.seconds.ago
   end
 

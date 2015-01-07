@@ -135,12 +135,19 @@ module WorkflowHelper
   end
 
   def task_widget task, opts={}
-    due_at_tag = task.due_at ? content_tag(:span,'','due-at'=>task.due_at.getutc.iso8601,:class=>"label label-#{task.overdue? ? 'danger' : 'default'}",:title=>task.due_at) : ''
     inner = content_tag(:span,'',:class=>"glyphicon #{task_glyphicon(task)}") + ' ' + content_tag(:span,(opts[:show_object_label] ? "#{task_group_label(task.base_object)}: " : '')+task.name) + ' ' +
       content_tag(:span,task.group.name.upcase,:class=>'text-muted') + ' ' +
-       due_at_tag + ' ' +
+       task_label(task) + ' ' +
       task_actions(task)
     content_tag(:div,inner,:title=>task_tooltip(task),:class=>"task-widget #{task.passed? ? 'text-muted' : ''} clearfix",'task-id'=>task.id.to_s)
+  end
+
+  def task_label task
+    if task.passed?
+      return content_tag(:span,'','rel-date'=>task.passed_at.getutc.iso8601,'rel-date-prefix'=>'done ',:class=>"label label-default",:title=>task.passed_at)
+    else
+      return task.due_at ? content_tag(:span,'','rel-date'=>task.due_at.getutc.iso8601,:class=>"label label-#{task.overdue? ? 'danger' : 'default'}",'rel-date-prefix'=>'due ',:title=>task.due_at) : ''
+    end
   end
 
   def task_tooltip task
@@ -194,6 +201,7 @@ module WorkflowHelper
   end
 
   def due_at_label task
+    return "Complete" if task.passed?
     return "No Due Date" if task.due_at.nil?
     return "Overdue" if task.overdue?
     return "Upcoming" if task.due_at < 3.days.from_now

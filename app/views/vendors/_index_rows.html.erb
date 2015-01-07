@@ -1,0 +1,10 @@
+<%companies.each do |c|%>
+  <tr>
+    <td width='1%'>
+      <%=link_to('View',vendor_path(c),:class=>'btn btn-xs btn-default')%>
+    </td>
+    <td>
+      <%=c.name%>
+    </td>
+  </tr>
+<%end%>

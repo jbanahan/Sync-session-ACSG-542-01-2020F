@@ -54,6 +54,14 @@ class Company < ActiveRecord::Base
 	    return Company.where(:id => user.company_id)
 	  end
 	end
+
+  def self.search_secure user, base_search
+    if user.company.master?
+      return base_search.where('1=1')
+    else
+      return base_search.where('companies.id = :ucid OR (companies.id IN (SELECT linked_companies.child_id FROM linked_companies WHERE linked_companies.parent_id = :ucid))',{ucid:user.company_id})
+    end
+  end
 	
   # find all companies that aren't children of this one through the linked_companies relationship
   def unlinked_companies
@@ -71,6 +79,13 @@ class Company < ActiveRecord::Base
 	    return user.company == self
 	  end
 	end
+
+  def can_view_as_vendor?(user)
+    self.vendor && 
+    user.view_vendors? && (
+      user.company.master? || user.company == self || user.company.linked_company?(self)
+    )
+  end
 
   def can_attach?(user)
     can_edit? user
@@ -169,6 +184,10 @@ class Company < ActiveRecord::Base
   end
   def comment_orders?
     return master_setup.order_enabled && (self.master? || self.vendor? || self.importer? || self.agent?)
+  end
+
+  def view_vendors?
+    return master_setup.vendor_management_enabled?
   end
   
   def view_products?

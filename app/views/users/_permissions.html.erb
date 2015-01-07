@@ -125,5 +125,15 @@
         <td class='hover'><span class='light_text'>n/a</span></td>
       </tr>
     <% end -%>
+    <% if ms.vendor_management_enabled? -%>
+      <tr class='permission_row'>
+        <td class='hover label_cell'><div>Vendor</div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
+        <td class='hover'><%= permission_box user, 'view_vendors?', :vendor_view, f %></td>
+        <td class='hover'><%= permission_box user, 'view_vendors?', :vendor_edit, f %></td>
+        <td class='hover'><span class='light_text'>n/a</span></td>
+        <td class='hover'><%= permission_box user, 'view_vendors?', :vendor_comment, f %></td>
+        <td class='hover'><%= permission_box user, 'view_vendors?', :vendor_attach, f %></td>
+      </tr>
+    <% end -%>
   </tbody>
 </table>

@@ -30,25 +30,35 @@ $(document).ready(function() {
     <div class="col-xs-2"> <!-- required for floating -->
       <!-- Nav tabs -->
       <ul class="nav nav-tabs tabs-left">
-        <li class="active"><a href="#home" data-toggle="tab">Home</a></li>
+        <li class="active"><a href="#attributes" data-toggle="tab">Attributes</a></li>
         <li><a href="#locations" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/locations'>Locations</a></li>
-        <li><a href="#attributes" data-toggle="tab">Attributes</a></li>
         <li><a href="#attachments" data-toggle="tab">Attachments</a></li>
         <li><a href="#orders" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/orders'>Orders</a></li>
         <li><a href="#survey_responses" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/survey_responses'>Surveys</a></li>
+        <li><a href="#products" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/products'>Products</a></li>
       </ul>
     </div>
 
     <div class="col-xs-10">
       <!-- Tab panes -->
       <div class="tab-content">
-        <div class="tab-pane active" id="home">Home Tab.</div>
         <div class="tab-pane" id="locations">
           Loading locations
         </div>
-        <div class="tab-pane" id="attributes">
+        <div class="tab-pane active" id="attributes">
           <h3>Attributes</h3>
-          <%= show_custom_fields @company %>
+          
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-12">
+                <%=form_for @company do |f| %>
+                  <%= show_model_fields f, [:cmp_name] %>
+                  <%= show_custom_fields @company %>
+                <%end%>
+              </div>
+            </div>
+          </div>
+
         </div>
         <div class="tab-pane" id="attachments">
           <div class="container-fluid">
@@ -64,6 +74,9 @@ $(document).ready(function() {
         </div>
         <div class="tab-pane" id="survey_responses">
           Loading surveys
+        </div>
+        <div class="tab-pane" id="products">
+          Loading products
         </div>
       </div>
     </div>  

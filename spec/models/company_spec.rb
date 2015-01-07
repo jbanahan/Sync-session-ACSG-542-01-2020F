@@ -262,6 +262,63 @@ describe Company do
     end
   end
 
+  describe "search_secure" do
+    it "allows me to see myself" do
+      u = Factory(:user)
+      dont_find = Factory(:company)
+      expect(Company.search_secure(u,Company).to_a).to eq [u.company]
+    end
+    it "allows me to see my linked companies" do
+      u = Factory(:user)
+      c2 = Factory(:company)
+      u.company.linked_companies << c2
+      dont_find = Factory(:company)
+      expect(Company.search_secure(u,Company).to_a).to eq [u.company,c2]
+    end
+    it "allows me to see all if I'm master" do
+      u = Factory(:master_user)
+      c2 = Factory(:company)
+      expect(Company.search_secure(u,Company).to_a).to eq Company.all.to_a
+    end
+  end
+
+  describe "can_view_as_vendor?" do
+    before :each do
+      @c = Factory(:company,vendor:true)
+    end
+    it "should pass if user can view_vendors? and user is from this company" do
+      u = Factory(:user,vendor_view:true,company:@c)
+      u.stub(:view_vendors?).and_return true
+      expect(@c.can_view_as_vendor?(u)).to be_true
+    end
+    it "should pass if user can view_vendors? and user's company is linked" do
+      u = Factory(:user,vendor_view:true)
+      u.stub(:view_vendors?).and_return true
+      u.company.linked_companies << @c
+      expect(@c.can_view_as_vendor?(u)).to be_true
+    end
+    it "should pass if user can view_vendors? and user is from master company" do
+      u = Factory(:master_user,vendor_view:true)
+      u.stub(:view_vendors?).and_return true
+      expect(@c.can_view_as_vendor?(u)).to be_true
+    end
+    it "should fail if user can view_vendors? and is from unrelated company" do
+      u = Factory(:user,vendor_view:true)
+      u.stub(:view_vendors?).and_return true
+      expect(@c.can_view_as_vendor?(u)).to be_false
+    end
+    it "should fail if user cannot view_vendors?" do
+      u = Factory(:user,vendor_view:false,company:@c)
+      u.stub(:view_vendors?).and_return false
+      expect(@c.can_view_as_vendor?(u)).to be_false
+    end
+    it "should fail if company is not a vendor?" do
+      u = Factory(:user,vendor_view:true)
+      u.stub(:view_vendors?).and_return true
+      expect(u.company.can_view_as_vendor?(u)).to be_false
+    end
+  end
+
   describe "name_with_customer_number" do
     it "returns a string with the appropriate customer numbers appended to the name" do
       c = Factory(:company, name: "My Name")

@@ -1,0 +1,28 @@
+<div class='container'>
+  <div class='row'>
+    <div class="col-xs-8">
+      <input type='text' class='form-control' id='name-filter' data-infinite-table-filter='#company-rows' data-infinite-table-param='q' placeholder='Filter by name'/>
+    </div>
+    <div class="col-xs-4">
+      <button data-infinite-table-reset='#company-rows' class='btn btn-sm btn-default'>
+        Filter
+      </button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class='table' id='company-rows' data-infinite-table-src='/vendors' style='margin-top:10px;'>
+        <thead>
+          <tr>
+            <th width='1%'></th>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody>
+            <%=render :partial=>'index_rows', locals:{companies:@companies}%>
+        </tbody>
+      </table>
+      <div><button data-infinite-table-target='#company-rows' class='btn btn-link btn-lg btn-block'>Load More</button></div>
+    </div>
+  </div>
+</div>

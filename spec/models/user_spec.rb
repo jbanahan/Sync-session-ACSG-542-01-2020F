@@ -105,6 +105,30 @@ describe User do
     end
   end
   context "permissions" do
+    context "vendors" do
+      before :each do
+        MasterSetup.any_instance.stub(:vendor_management_enabled?).and_return true
+      end
+      it "should allow when MasterSetup.vendor_management_enabled? and I have vendor_X permission" do
+        expect(User.new(vendor_view:true).view_vendors?).to be_true
+        expect(User.new(vendor_edit:true).edit_vendors?).to be_true
+        expect(User.new(vendor_attach:true).attach_vendors?).to be_true
+        expect(User.new(vendor_comment:true).comment_vendors?).to be_true
+      end
+      it "should not allow when !MasterSetup.vendor_management_enabled?" do
+        MasterSetup.any_instance.stub(:vendor_management_enabled?).and_return false
+        expect(User.new(vendor_view:true).view_vendors?).to be_false
+        expect(User.new(vendor_edit:true).edit_vendors?).to be_false
+        expect(User.new(vendor_attach:true).attach_vendors?).to be_false
+        expect(User.new(vendor_comment:true).comment_vendors?).to be_false
+      end
+      it "should not allow when I dont have vendor_view permission" do
+        expect(User.new.view_vendors?).to be_false
+        expect(User.new.edit_vendors?).to be_false
+        expect(User.new.attach_vendors?).to be_false
+        expect(User.new.comment_vendors?).to be_false
+      end
+    end
     context "official tariffs" do
       it "should allow master company user" do
         Factory(:master_user).should be_view_official_tariffs

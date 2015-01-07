@@ -17,6 +17,7 @@ class User < ActiveRecord::Base
     :entry_view, :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
     :survey_view, :survey_edit,
     :project_view, :project_edit,
+    :vendor_view, :vendor_edit, :vendor_comment, :vendor_attach,
     :broker_invoice_view, :broker_invoice_edit,
     :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
@@ -528,6 +529,18 @@ class User < ActiveRecord::Base
     self.project_edit && self.master_company?
   end
 
+  def view_vendors?
+    self.vendor_view && master_setup.vendor_management_enabled?
+  end
+  def edit_vendors?
+    self.vendor_edit && master_setup.vendor_management_enabled?
+  end
+  def attach_vendors?
+    self.vendor_attach && master_setup.vendor_management_enabled?
+  end
+  def comment_vendors?
+    self.vendor_comment && master_setup.vendor_management_enabled?
+  end
 
   def edit_milestone_plans?
     self.admin?

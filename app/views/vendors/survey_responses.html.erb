@@ -1,4 +1,14 @@
-<div>
+<div class='container-fluid'>
+  <div class='row'>
+    <div class="col-xs-8">
+      <input type='text' class='form-control' id='name-filter' data-infinite-table-filter='#survey-responses' data-infinite-table-param='q' placeholder='Filter by name'/>
+    </div>
+    <div class="col-xs-4">
+      <button data-infinite-table-reset='#survey-responses' class='btn btn-sm btn-default'>
+        Filter
+      </button>
+    </div>
+  </div>
   <table class='detail_table' id='survey-responses' data-infinite-table-src='/vendors/<%=@company.id%>/survey_responses'>
     <thead>
       <tr>

@@ -1,6 +1,44 @@
 root = exports ? this
 root.Chain =
 
+  processInfiniteSelectLoad: (targetTableSelector) ->
+    targetTable = $(targetTableSelector)
+    url = targetTable.attr('data-infinite-table-src')
+    page = targetTable.attr('data-infinite-table-page')
+
+    if page==undefined || page.length == 0
+      page = 2
+    else
+      page = parseInt(page) + 1
+
+    queryParams = {page:page}
+    $('[data-infinite-table-filter="'+targetTableSelector+'"]').each () ->
+      val = $(this).val()
+      if val.length > 0
+        queryParams[$(this).attr('data-infinite-table-param')] = val
+
+    if url
+      $.ajax {
+        method: 'get'
+        url: url
+        data: queryParams
+        success: (data) ->
+          targetTable.attr('data-infinite-table-page',page)
+          loadMore = $('button[data-infinite-table-target="'+targetTableSelector+'"]')
+          if data.match(/last-row/)
+            loadMore.hide()
+          else
+            loadMore.show()
+
+          targetTable.find('tbody').append(data)
+      }
+
+  processInfiniteSelectReset: (targetTableSelector) ->
+    $(targetTableSelector+' tbody').html('')
+    targetTable = $(targetTableSelector)
+    targetTable.attr('data-infinite-table-page','0')
+    Chain.processInfiniteSelectLoad(targetTableSelector)
+
   # pass in a selector for a multi select enabled select box and
   # this method will call the callback passing in an Array of objects with
   # val and label attributes
@@ -558,9 +596,9 @@ $(document).ready () ->
         window.location=link
 
   $(document).on 'chain:workflow-load', (evt) ->
-    $('.task-widget [due-at]').each () ->
+    $('.task-widget [rel-date]').each () ->
       t = $(this)
-      t.html('due '+moment(t.attr('due-at')).fromNow())
+      t.html(t.attr('rel-date-prefix')+moment(t.attr('rel-date')).fromNow())
 
   $(document).on 'show.bs.tab', '[tab-src]', (evt) ->
     t = $(this)
@@ -578,24 +616,18 @@ $(document).ready () ->
       }
 
   $(document).on 'click', '[data-infinite-table-target]', (evt) ->
-    targetTable = $($(evt.target).attr('data-infinite-table-target'))
-    url = targetTable.attr('data-infinite-table-src')
-    page = targetTable.attr('data-infinite-table-page')
-    if page==undefined || page.length == 0
-      page = 2
-    else
-      page = parseInt(page) + 1
-    if url
-      $.ajax {
-        method: 'get'
-        url: url
-        data: {page:page}
-        success: (data) ->
-          targetTable.attr('data-infinite-table-page',page)
-          if data.match(/last-row/)
-            evt.target.remove() #remove the load more button
-          targetTable.find('tbody').append(data)
-      }
+    targetTableSelector = $(evt.target).attr('data-infinite-table-target')
+    Chain.processInfiniteSelectLoad(targetTableSelector)
+
+  $(document).on 'click', '[data-infinite-table-reset]', (evt) ->
+    targetTableSelector = $(evt.target).attr('data-infinite-table-reset')
+    Chain.processInfiniteSelectReset(targetTableSelector)
+
+  $(document).on 'keyup', '[data-infinite-table-filter]', (e) ->
+    if(e.keyCode == 13) 
+      targetTableSelector = $(e.target).attr('data-infinite-table-filter')
+      Chain.processInfiniteSelectReset(targetTableSelector)
+
 
   $("#set-homepage-btn").click (evt) ->
     $.post("/users/set_homepage", {homepage: $(location).attr("href")})

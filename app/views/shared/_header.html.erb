@@ -143,6 +143,9 @@
             <%=nav_item 'View', '/survey_responses'%>
             <%=nav_item 'Edit', '/surveys', current_user.view_surveys?%>
           <%end%>
+          <%=nav_section 'ven-sec', 'Vendor', (current_user.view_vendors?) do %>
+            <%=nav_item 'Search', '/vendors' %>
+          <%end%>
           <%=nav_section 'more-sec', 'more...' do%>
             <%=nav_item 'Account', "/companies/#{current_user.company_id}/users/#{current_user.id}"%>
             <%=nav_item 'Dashboard', '/dashboard_widgets'%>

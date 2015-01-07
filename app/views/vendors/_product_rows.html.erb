@@ -1,0 +1,12 @@
+<%products.each do |product|%>
+  <tr>
+    <td>
+      <a href='<%=product_path(product)%>'>View</a>
+    </td>
+    <%[:prod_uid,:prod_name].each do |mfuid|%>
+      <td>
+        <%=ModelField.find_by_uid(mfuid).process_export(product,current_user)%>
+      </td>
+    <%end%>
+  </tr>
+<%end%>
