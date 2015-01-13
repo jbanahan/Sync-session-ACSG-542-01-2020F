@@ -144,58 +144,57 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
     # If so, it means the check was issued AFTER the invoice and it must be manually entered into Intacct.
     bill_number = check_info[:invoice_number].strip + check_info[:invoice_suffix].strip
 
-    invoice = IntacctPayable.where(bill_number: bill_number, vendor_number: check_info[:vendor_number], payable_type: IntacctPayable::PAYABLE_TYPE_BILL).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").first
-    if invoice
-      errors << "An invoice has already been filed in Intacct for File # #{bill_number}.  Check # #{check_info[:check_number]} must be filed manually in Intacct."
+    export = nil
+    payable = nil
+    Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do
+      suffix = check_info[:invoice_suffix].blank? ? nil : check_info[:invoice_suffix].strip
+
+      # Check if there's a payable already created for this check number...if so skip.  This is solely needed for the transition period from the old way
+      # to the new report based way of retrieving the data from Alliance.  After a couple weeks looking for the check payable should be able to be removed.
+      payable = IntacctPayable.where(bill_number: check_info[:invoice_number] + suffix.to_s, check_number: check_info[:check_number], payable_type: [IntacctPayable::PAYABLE_TYPE_ADVANCED, IntacctPayable::PAYABLE_TYPE_CHECK]).first
+
+      if payable.nil?
+        check = IntacctCheck.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], amount: check_info[:check_amount]).first_or_create!
+        if check.intacct_upload_date.nil? && check.intacct_key.nil?
+          export = IntacctAllianceExport.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], ap_total: check_info[:check_amount], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK).first_or_create!
+        else
+          check = nil
+        end
+      end
+    end
+
+    if check
+      Lock.with_lock_retry(check) do
+        Lock.with_lock_retry(export) do
+          check.customer_number = check_info[:customer_number]
+          check.bill_number = bill_number
+          check.vendor_number = check_info[:vendor_number]
+          check.vendor_reference = check_info[:vendor_reference]
+          # This is the prepaid GL Account, it lets us track how much is floating out there in check payments associated with invoices
+          check.gl_account = '2021'
+
+          # The cash GL account to use for the check transaction record is xref'ed to the bank's name and not the bank number
+          bank_name = DataCrossReference.find_alliance_bank_number check.bank_number
+          check.bank_cash_gl_account = DataCrossReference.find_intacct_bank_gl_cash_account bank_name
+
+          export.data_requested_date = Time.zone.now
+          export.data_received_date = nil
+          export.customer_number = check.customer_number
+          export.invoice_date = check.check_date
+          export.check_number = check.check_number
+          export.save!
+
+          check.intacct_alliance_export = export
+          check.save!
+        end
+      end
+
+      # The amount thing here is a DelayedJob workaround...the version we're using doesn't serialize BigDecimal correctly.
+      # Instead it ends up in the delayed_job process as a float, which ends up being inexact when attempting to do any sort of multiplication
+      # Just do the amount change to Alliance format here instead
+      sql_proxy_client.delay.request_check_details check.file_number, check.check_number, check.check_date, check.bank_number, check.amount.to_s
     else
-      export = nil
-      payable = nil
-      Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do
-        suffix = check_info[:invoice_suffix].blank? ? nil : check_info[:invoice_suffix].strip
-
-        # Check if there's a payable already created for this check number...if so skip.  This is solely needed for the transition period from the old way
-        # to the new report based way of retrieving the data from Alliance.  After a couple weeks looking for the check payable should be able to be removed.
-        payable = IntacctPayable.where(bill_number: check_info[:invoice_number] + suffix.to_s, check_number: check_info[:check_number], payable_type: [IntacctPayable::PAYABLE_TYPE_ADVANCED, IntacctPayable::PAYABLE_TYPE_CHECK]).first
-
-        if payable.nil?
-          check = IntacctCheck.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number]).first_or_create!
-          if check.intacct_upload_date.nil? && check.intacct_key.nil?
-            export = IntacctAllianceExport.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK).first_or_create!
-          else
-            check = nil
-          end
-        end
-      end
-
-      if check
-        Lock.with_lock_retry(check) do
-          Lock.with_lock_retry(export) do
-            check.customer_number = check_info[:customer_number]
-            check.bill_number = bill_number
-            check.vendor_number = check_info[:vendor_number]
-            check.vendor_reference = check_info[:vendor_reference]
-            check.amount = check_info[:check_amount]
-            # This is the prepaid GL Account, it lets us track how much is floating out there in check payments associated with invoices
-            check.gl_account = '2021'
-            check.bank_cash_gl_account = DataCrossReference.find_intacct_bank_gl_cash_account check.bank_number
-
-            export.data_requested_date = Time.zone.now
-            export.data_received_date = nil
-            export.ap_total = check.amount
-            export.customer_number = check.customer_number
-            export.invoice_date = check.check_date
-            export.check_number = check.check_number
-            export.save!
-
-            check.intacct_alliance_export = export
-            check.save!
-          end
-        end
-
-        sql_proxy_client.delay.request_check_details check.file_number, check.check_number, check.check_date, check.bank_number
-      else
-        errors << "Check # #{check_info[:check_number]} has already been sent to Intacct." unless payable
-      end
+      errors << "Check # #{check_info[:check_number]} has already been sent to Intacct." unless payable
     end
 
     [check, errors]
@@ -206,6 +205,11 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
     def parse_number value
       # Strip commas and dollar signs
+      # Move hyphens (negative amounts) to front, BigDecimal constructor will handle it correctly then
+      if value =~ /-$/
+        value = ("-" + value[0..-2])
+      end
+
       BigDecimal.new value.to_s.gsub /[,$]/, ""
     end
 

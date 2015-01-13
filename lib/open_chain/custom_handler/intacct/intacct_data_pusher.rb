@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
           if payable.intacct_upload_date.nil?
             # Find any checks associated with this payable file / vendor and include them so we can 
             # record the payments against the payable we're loading for the check.
-            checks = IntacctCheck.where(company: payable.company, bill_number: payable.bill_number, vendor_number: payable.vendor_number).
+            checks = IntacctCheck.where(company: payable.company, bill_number: payable.bill_number, vendor_number: payable.vendor_number, intacct_adjustment_key: nil).
                       where("intacct_payable_id = ? OR intacct_payable_id IS NULL", payable.id).all
             @api_client.send_payable payable, checks
 
@@ -65,7 +65,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
         check = IntacctCheck.find id
         Lock.with_lock_retry(check) do
           # double checking the upload date just in case we're running multiple pushes at the same time
-          @api_client.send_check check if check.intacct_upload_date.nil?
+          if check.intacct_upload_date.nil?
+            # If we've already uploaded a payable with the same file / suffix as this check, then we should indicate to the api client
+            # that an account adjustment is needed at this time as well.
+            payable_count = IntacctPayable.where(company: check.company, bill_number: check.bill_number, vendor_number: check.vendor_number).
+                        where("intacct_key IS NOT NULL AND intacct_upload_date IS NOT NULL").count
+
+            @api_client.send_check check, (payable_count > 0)
+          end
         end
       rescue => e
         e.log_me ["Failed to upload Intacct Check id #{id}."]

@@ -543,9 +543,9 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
   describe "parse_check_query_results" do
 
     before :each do
-      @export = IntacctAllianceExport.create! file_number: '12345', check_number: '98765', export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK
-      @check = IntacctCheck.create! file_number: '12345', check_number: '98765', intacct_alliance_export_id: @export.id, intacct_errors: "Error", customer_number: "CUST", vendor_number: "VEND"
-      @line = {'file number' => '12345', 'check number'=>'98765', 'division'=>'1', 'currency'=>"CAD", 'freight file' => '2131789'}
+      @export = IntacctAllianceExport.create! file_number: '12345', check_number: '98765', export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, ap_total: BigDecimal.new("100")
+      @check = IntacctCheck.create! file_number: '12345', check_number: '98765', intacct_alliance_export_id: @export.id, intacct_errors: "Error", customer_number: "CUST", vendor_number: "VEND", amount: BigDecimal.new("100")
+      @line = {'file number' => '12345', 'check number'=>'98765', 'division'=>'1', 'currency'=>"CAD", 'freight file' => '2131789', 'check amount' => '100'}
     end
 
     it "updates vfc check info" do

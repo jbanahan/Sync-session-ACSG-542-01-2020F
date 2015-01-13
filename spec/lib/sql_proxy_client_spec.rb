@@ -80,15 +80,15 @@ describe OpenChain::SqlProxyClient do
 
   describe "request_check_details" do
     it "requests check details" do
-      request_body = {'sql_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10}}
+      request_body = {'sql_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10, check_amount: 101}}
 
       @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/check_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
-      @c.request_check_details "123", "456", Date.new(2014, 11, 1), "10"
+      @c.request_check_details "123", "456", Date.new(2014, 11, 1), "10", BigDecimal.new("1.01999").to_s
     end
 
     it "raises error on failed json post" do
       @http_client.should_receive(:post).and_raise "Error"
-      expect{@c.request_check_details "123", "456", Date.new(2014, 11, 1), "10"}.to raise_error "Error"
+      expect{@c.request_check_details "123", "456", Date.new(2014, 11, 1), "10", BigDecimal.new("123")}.to raise_error "Error"
     end
   end
 

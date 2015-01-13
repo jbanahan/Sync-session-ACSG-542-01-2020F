@@ -9,7 +9,14 @@ describe OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser do
       9801 KINGOCEAN     1615657A              IGM        F   0202-0000 LIOPEV12468      2,295.00  08/12/2014 Adv                 AP
            KING OCEAN SERVICES         Total of Check       9801                         2,295.00
 
-                                                   5 Checks for Bank 02 Totaling         1,234.00
+      9801 KINGOCEAN     1615657A              IGM        F   0202-0000 LIOPEV12468      2,295.00- 08/12/2014 Void                RV
+           KING OCEAN SERVICES         Total of Check       9801                         2,295.00-
+
+      9802 KINGOCEAN     1615657A              IGM        F   0202-0000 LIOPEV12468      3,000.00  08/12/2014 Adv                 AP
+           KING OCEAN SERVICES         Total of Check       9802                         3,000.00
+
+
+                                                   3 Checks for Bank 02 Totaling         3,000.00
 ---------- ---------- ------------  ---------- ---------- --- --------- ------------ ------------- ---------- ---- -------------  --
      *****  Grand Total  *****                           Record Count:    108          109,275.95
 
@@ -20,10 +27,10 @@ FILE
       expect(check_info[:total_check_amount]).to eq BigDecimal.new("109275.95")
 
       bank_check_info = check_info[:checks]["2"]
-      expect(bank_check_info[:check_count]).to eq 5
-      expect(bank_check_info[:check_total]).to eq BigDecimal.new("1234.00")
+      expect(bank_check_info[:check_count]).to eq 3
+      expect(bank_check_info[:check_total]).to eq BigDecimal.new("3000")
       checks = bank_check_info[:checks]
-      expect(checks.length).to eq 1
+      expect(checks.length).to eq 3
 
       check = checks.first
       expect(check[:bank_number]).to eq "2"
@@ -34,6 +41,28 @@ FILE
       expect(check[:customer_number]).to eq "IGM"
       expect(check[:vendor_reference]).to eq "LIOPEV12468"
       expect(check[:check_amount]).to eq BigDecimal.new("2295.00")
+      expect(check[:check_date]).to eq Date.new(2014, 8, 12)
+
+      check = checks[1]
+      expect(check[:bank_number]).to eq "2"
+      expect(check[:check_number]).to eq "9801"
+      expect(check[:vendor_number]).to eq "KINGOCEAN"
+      expect(check[:invoice_number]).to eq "1615657"
+      expect(check[:invoice_suffix]).to eq "A"
+      expect(check[:customer_number]).to eq "IGM"
+      expect(check[:vendor_reference]).to eq "LIOPEV12468"
+      expect(check[:check_amount]).to eq BigDecimal.new("-2295.00")
+      expect(check[:check_date]).to eq Date.new(2014, 8, 12)
+
+      check = checks[2]
+      expect(check[:bank_number]).to eq "2"
+      expect(check[:check_number]).to eq "9802"
+      expect(check[:vendor_number]).to eq "KINGOCEAN"
+      expect(check[:invoice_number]).to eq "1615657"
+      expect(check[:invoice_suffix]).to eq "A"
+      expect(check[:customer_number]).to eq "IGM"
+      expect(check[:vendor_reference]).to eq "LIOPEV12468"
+      expect(check[:check_amount]).to eq BigDecimal.new("3000")
       expect(check[:check_date]).to eq Date.new(2014, 8, 12)
     end
 
@@ -108,9 +137,10 @@ FILE
       @sql_proxy_client.stub(:delay).and_return @sql_proxy_client
     end
     it "creates a check and export object" do
-      xref = DataCrossReference.create! key: @check_info[:bank_number], value: "1234", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
+      bank_name = DataCrossReference.create! key: @check_info[:bank_number], value: "BANK NAME", cross_reference_type: DataCrossReference::ALLIANCE_BANK_ACCOUNT_TO_INTACCT
+      xref = DataCrossReference.create! key: "BANK NAME", value: "1234", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
 
-      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number]
+      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
 
@@ -141,10 +171,10 @@ FILE
 
     it "updates existing check / export objects" do
       @check_info[:invoice_suffix] = "A"
-      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number]
-      existing_export = IntacctAllianceExport.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, data_received_date: Time.zone.now
+      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount]
+      existing_export = IntacctAllianceExport.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, data_received_date: Time.zone.now, ap_total: @check_info[:check_amount]
 
-      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number]
+      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
 
@@ -153,20 +183,9 @@ FILE
       expect(check.intacct_alliance_export.data_received_date).to be_nil
     end
 
-    it "errors if a payable for the same file number has already been sent to intacct" do
-      @check_info[:invoice_suffix] = "A"
-      bill_number = @check_info[:invoice_number]+@check_info[:invoice_suffix]
-      IntacctPayable.create! bill_number: bill_number, vendor_number: @check_info[:vendor_number], intacct_upload_date: Time.zone.now, intacct_key: "Key", payable_type: IntacctPayable::PAYABLE_TYPE_BILL
-
-      check, errors = described_class.new.create_and_request_check @check_info, nil
-      expect(check).to be_nil
-      expect(errors.length).to eq 1
-      expect(errors).to include "An invoice has already been filed in Intacct for File # #{bill_number}.  Check # #{@check_info[:check_number]} must be filed manually in Intacct."
-    end
-
     it "errors if check has already been sent to intacct" do
       @check_info[:invoice_suffix] = "A"
-      IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], intacct_upload_date: Time.zone.now, intacct_key: "Key"
+      IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], intacct_upload_date: Time.zone.now, intacct_key: "Key", amount: @check_info[:check_amount]
       check, errors = described_class.new.create_and_request_check @check_info, nil
       expect(check).to be_nil
       expect(errors.length).to eq 1

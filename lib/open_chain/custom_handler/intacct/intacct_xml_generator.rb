@@ -82,11 +82,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
     build_function do |func|
       adj = add_element func, "create_apadjustment"
       add_element adj, "vendorid", check.vendor_number
-      add_date adj, "datecreated", payable.bill_date
-      add_date adj, "dateposted", payable.created_at.in_time_zone("Eastern Time (US & Canada)")
-      add_element adj, "adjustmentno", check.check_number
+      add_date adj, "datecreated", (payable ? payable.bill_date : check.check_date)
+      add_date adj, "dateposted", (payable ? payable.bill_date : check.check_date)
+      add_element adj, "adjustmentno", "#{check.bill_number}-#{check.check_number}"
       add_element adj, "billno", check.bill_number
       add_element adj, "description", "Check # #{check.check_number} / Check Date #{check.check_date.strftime("%Y-%m-%d")}"
+      add_element adj, "basecurr", check.currency
       add_element adj, "currency", check.currency
       add_date adj, "exchratedate", check.check_date
       add_element adj, "exchratetype", "Intacct Daily Rate"
@@ -95,12 +96,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       line = add_element adjustment, "lineitem"
       add_element line, "glaccountno", check.gl_account
       add_element line, "amount", (check.amount * -1)
-      add_element line, "memo", "Advanced check adjustment."
+      add_element line, "memo", "#{(payable ? "Advanced " : "")}Check Adjustment"
       add_element line, "locationid", check.location
       add_element line, "departmentid", check.line_of_business
+      add_element line, "projectid", check.freight_file, allow_blank: false
       add_element line, "customerid", check.customer_number
       add_element line, "vendorid", check.vendor_number
-      add_element line, "projectid", check.freight_file, allow_blank: false
       add_element line, "classid", check.broker_file, allow_blank: false
     end
   end

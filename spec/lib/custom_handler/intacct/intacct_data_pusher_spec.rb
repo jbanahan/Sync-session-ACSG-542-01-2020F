@@ -44,6 +44,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       @p.push_payables
     end
 
+    it "does not include checks that already have an adjustment associated with them" do
+      p = IntacctPayable.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill"
+      c1 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_adjustment_key: "ADJ-123"
+
+      @api_client.should_receive(:send_payable).with(p, [])
+
+      @p.push_payables
+    end
+
     it "skips payables that have been sent after being retrieved from initial lookup" do
       p3 = IntacctPayable.create! vendor_number: "Vendor"
       p3.intacct_upload_date = Time.zone.now
@@ -85,7 +94,25 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       c2 = IntacctCheck.create! vendor_number: "Vendor", intacct_errors: "Error"
       c2 = IntacctCheck.create! vendor_number: "Vendor", intacct_upload_date: Time.zone.now
 
-      @api_client.should_receive(:send_check).with c1
+      @api_client.should_receive(:send_check).with c1, false
+
+      @p.push_checks
+    end
+
+    it "pushes checks issued after the payable to intacct" do
+      c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
+      p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY", intacct_upload_date: Time.zone.now
+
+      @api_client.should_receive(:send_check).with c1, true
+
+      @p.push_checks
+    end
+
+    it "does not issue adjustments for a check if the payable has not yet been loaded" do
+      c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
+      p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
+
+      @api_client.should_receive(:send_check).with c1, false
 
       @p.push_checks
     end

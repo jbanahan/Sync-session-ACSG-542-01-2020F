@@ -31,16 +31,21 @@ module OpenChain; class SqlProxyClient
     request 'invoice_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix)}, request_context, swallow_error: false
   end
 
-  def self.request_check_details file_number, check_number, check_date, bank_number, request_context = {}
-    self.new.request_check_details file_number, check_number, check_date, bank_number, request_context
+  def self.request_check_details file_number, check_number, check_date, bank_number, check_amount, request_context = {}
+    self.new.request_check_details file_number, check_number, check_date, bank_number, check_amount, request_context
   end
 
-  def request_check_details file_number, check_number, check_date, bank_number, request_context = {}
+  def request_check_details file_number, check_number, check_date, bank_number, check_amount, request_context = {}
     # We're intentionally NOT including the suffix here, because for some reason, Alliance does NOT associate the check data
     # in the AP File table w/ any file suffix (it's always blank).  The File #, Check #, Check Date, etc are enough to ensure
     # a unique request, so that's fine.
+
+    # Check Amounts are stored sans decimal points, so multiply the amount by 100 and strip any remaining decimal information
+    # The BigDecimal.new stuff is a workaround for a delayed_job bug in serializing BigDecimals as floats...so we pass amount as a string
+    amt = (BigDecimal.new(check_amount) * 100).truncate
+
     request 'check_details', {:file_number => file_number.to_i, check_number: check_number.to_i, 
-                                check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i}, request_context, swallow_error: false
+                                check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i, check_amount: amt}, request_context, swallow_error: false
   end
 
   def self.request_alliance_entry_details file_number, last_exported_from_source

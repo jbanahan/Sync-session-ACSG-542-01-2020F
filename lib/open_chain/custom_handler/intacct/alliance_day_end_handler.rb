@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
   def self.can_view? user
     # This should be switched to a user group once we implement those
-    MasterSetup.get.system_code == 'www-vfitrack-net' && ['luca', 'ivalcarcel', 'kblackman', 'jhulford', 'bglick'].include?(user.username.downcase)
+    (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) && ['luca', 'ivalcarcel', 'kblackman', 'jhulford', 'bglick'].include?(user.username.downcase)
   end
 
   def process user = nil

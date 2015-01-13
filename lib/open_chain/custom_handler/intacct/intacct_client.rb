@@ -106,7 +106,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       all_control_ids = [payable_control_id]
       check_control_ids = {}
 
-
       linked_checks.each do |check|
         control_id, check_xml = @generator.generate_ap_adjustment check, payable
         payable_xml += check_xml
@@ -135,13 +134,26 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     payable.save!
   end
 
-  def send_check check
+  def send_check check, send_adjustment
     begin
       function_control_id = nil
       function_control_id, xml = @generator.generate_check_gl_entry_xml check
-      response = post_xml(check.company, true, true, xml, function_control_id)
+
+      control_ids = [function_control_id]
+      check_control_id = function_control_id
+      adjustment_control_id = nil
+      if send_adjustment
+        adjustment_control_id, adjustment_xml = @generator.generate_ap_adjustment check, nil
+        control_ids << adjustment_control_id
+        xml << adjustment_xml
+      end
+
+      response = post_xml(check.company, true, true, xml, control_ids)
 
       check.intacct_key = extract_result_key response, function_control_id
+      if adjustment_control_id
+        check.intacct_adjustment_key = extract_result_key response, adjustment_control_id
+      end
       check.intacct_upload_date = Time.zone.now
       check.intacct_errors = nil
     rescue => e
@@ -167,12 +179,11 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   # DON'T use this method directly, use the other public feeder methods in this class.  The method
   # is primarily exposed as non-private for simplified testing.
   def post_xml location_id, transaction, unique_request, intacct_content_xml, function_control_id, request_options = {}
-    raise "Cannot post to Intacct in development mode" if Rails.env.development?
+    raise "Cannot post to Intacct in development mode" unless production?
 
     connection_options = INTACCT_CONNECTION_INFO.merge(request_options)
 
     uri = URI.parse connection_options[:url]
-
     post = Net::HTTP::Post.new(uri)
     post["Content-Type"] = "x-intacct-xml-request"
     post.body = assemble_request_xml(location_id, transaction, unique_request, connection_options, intacct_content_xml)
@@ -183,7 +194,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     # There's no need for this now, but we may need to not fail if transaction == false and multiple control ids
     # are present.  Since in that scenario, any results w/ non-failed statuses would have taken effect in Intacct.
     control_ids = function_control_id.respond_to?(:each) ? function_control_id : [function_control_id]
-    control_ids.each {|id| handle_error xml, function_control_id}
+    control_ids.each {|id| handle_error xml, id}
 
     xml
   end
