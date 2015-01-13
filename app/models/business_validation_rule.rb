@@ -15,7 +15,8 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryHtsMatchesPo: "Entry Invoice Line HTS Matches PO HTS",
                 ValidationRuleAnyEntryInvoiceLineHasFieldFormat: "At Least One Entry Invoice Line Matches Field Format",
                 ValidationRuleAttachmentTypes: "Has Attachment Types",
-                ValidationRuleCanadaGpt: "Entry Tariff lines utilize Canadian GPT rates."
+                ValidationRuleCanadaGpt: "Entry Tariff lines utilize Canadian GPT rates.",
+                ValidationRuleEntryTariffMatchesProduct: "Entry Tariff Numbers Match Parts Database"
               }
 
   def self.subclasses_array
@@ -23,7 +24,8 @@ class BusinessValidationRule < ActiveRecord::Base
   end
 
   def rule_attributes
-    self.rule_attributes_json.blank? ? {} : JSON.parse(self.rule_attributes_json)
+    @parsed_rule_attributes ||= self.rule_attributes_json.blank? ? {} : JSON.parse(self.rule_attributes_json)
+    @parsed_rule_attributes
   end
 
   # override to allow your business rule to skip objects
