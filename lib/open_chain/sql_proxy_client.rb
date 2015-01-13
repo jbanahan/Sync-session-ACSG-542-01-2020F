@@ -26,11 +26,26 @@ module OpenChain; class SqlProxyClient
   def request_alliance_invoice_details file_number, suffix, request_context = {}
     # Alliance stores the suffix as blank strings...we want that locally as nil in our DB
     suffix = suffix.blank? ? nil : suffix.strip
-
-    export = IntacctAllianceExport.where(file_number: file_number, suffix: suffix).first_or_create! data_requested_date: Time.zone.now
     # Alliance/Oracle won't return results if you send a blank string for suffix (since the data is stored like '        '), but will
     # return results if you send a single space instead.
-    request 'invoice_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix)}, request_context
+    request 'invoice_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix)}, request_context, swallow_error: false
+  end
+
+  def self.request_check_details file_number, check_number, check_date, bank_number, check_amount, request_context = {}
+    self.new.request_check_details file_number, check_number, check_date, bank_number, check_amount, request_context
+  end
+
+  def request_check_details file_number, check_number, check_date, bank_number, check_amount, request_context = {}
+    # We're intentionally NOT including the suffix here, because for some reason, Alliance does NOT associate the check data
+    # in the AP File table w/ any file suffix (it's always blank).  The File #, Check #, Check Date, etc are enough to ensure
+    # a unique request, so that's fine.
+
+    # Check Amounts are stored sans decimal points, so multiply the amount by 100 and strip any remaining decimal information
+    # The BigDecimal.new stuff is a workaround for a delayed_job bug in serializing BigDecimals as floats...so we pass amount as a string
+    amt = (BigDecimal.new(check_amount) * 100).truncate
+
+    request 'check_details', {:file_number => file_number.to_i, check_number: check_number.to_i, 
+                                check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i, check_amount: amt}, request_context, swallow_error: false
   end
 
   def self.request_alliance_entry_details file_number, last_exported_from_source
@@ -44,14 +59,6 @@ module OpenChain; class SqlProxyClient
     # Make sure we're keeping the timezone we're sending in eastern time (the alliance parser expects it that way)
     request_context = {"broker_reference" => file_number, "last_exported_from_source" => last_exported_from_source.in_time_zone("Eastern Time (US & Canada)")}
     request 'entry_details', {:file_number => file_number.to_i}, request_context
-  end
-
-  def self.request_advance_checks oldest_check_date
-    self.new.request_advance_checks oldest_check_date
-  end
-
-  def request_advance_checks oldest_check_date
-    request 'open_check_details', {:check_date => oldest_check_date.strftime("%Y%m%d").to_i}, {}
   end
 
   def self.request_file_tracking_info start_date, end_time

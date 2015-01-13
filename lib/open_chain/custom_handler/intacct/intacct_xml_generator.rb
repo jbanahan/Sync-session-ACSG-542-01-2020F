@@ -78,24 +78,49 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
     end
   end
 
-  def generate_check_gl_entry_xml payable
-    first_line = payable.intacct_payable_lines.first
+  def generate_ap_adjustment check, payable
+    build_function do |func|
+      adj = add_element func, "create_apadjustment"
+      add_element adj, "vendorid", check.vendor_number
+      add_date adj, "datecreated", (payable ? payable.bill_date : check.check_date)
+      add_date adj, "dateposted", (payable ? payable.bill_date : check.check_date)
+      add_element adj, "adjustmentno", "#{check.bill_number}-#{check.check_number}"
+      add_element adj, "billno", check.bill_number
+      add_element adj, "description", "Check # #{check.check_number} / Check Date #{check.check_date.strftime("%Y-%m-%d")}"
+      add_element adj, "basecurr", check.currency
+      add_element adj, "currency", check.currency
+      add_date adj, "exchratedate", check.check_date
+      add_element adj, "exchratetype", "Intacct Daily Rate"
+
+      adjustment = add_element adj, "apadjustmentitems"
+      line = add_element adjustment, "lineitem"
+      add_element line, "glaccountno", check.gl_account
+      add_element line, "amount", (check.amount * -1)
+      add_element line, "memo", "#{(payable ? "Advanced " : "")}Check Adjustment"
+      add_element line, "locationid", check.location
+      add_element line, "departmentid", check.line_of_business
+      add_element line, "projectid", check.freight_file, allow_blank: false
+      add_element line, "customerid", check.customer_number
+      add_element line, "vendorid", check.vendor_number
+      add_element line, "classid", check.broker_file, allow_blank: false
+    end
+  end
+
+  def generate_check_gl_entry_xml check
 
     build_function do |func|
       req = add_element func, "create_gltransaction"
       # This is the GL Journal for Alliance checks - the only system we actually send checks for
       # so this should be fine hardcoded here.
       add_element req, "journalid", "GLAC"
-      add_date req, "datecreated", first_line.check_date
-      add_element req, "description", first_line.check_number
-      add_element req, "referenceno", payable.bill_number
+      add_date req, "datecreated", check.check_date
+      add_element req, "description", check.check_number
+      add_element req, "referenceno", check.bill_number
 
       items = add_element req, "gltransactionentries"
-      payable.intacct_payable_lines.each do |l|
-        # Each entry is a credit to the bank's cash account and a debit to the payable gl account
-        append_gl_entry items, "credit", payable, l
-        append_gl_entry items, "debit", payable, l
-      end
+     
+      append_gl_entry items, "credit", check
+      append_gl_entry items, "debit", check
     end
   end
 
@@ -189,25 +214,26 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       s.read
     end
 
-    def append_gl_entry parent, gl_entry_type, payable, payable_line
+    def append_gl_entry parent, gl_entry_type, check
       gl = add_element parent, "glentry"
 
       add_element gl, "trtype", gl_entry_type
-      add_element gl, "amount", payable_line.amount
-      gl_account = (gl_entry_type == "credit" ? payable_line.bank_cash_gl_account : payable_line.gl_account)
+      add_element gl, "amount", check.amount
+      gl_account = (gl_entry_type == "credit" ? check.bank_cash_gl_account : check.gl_account)
       add_element gl, "glaccountno", gl_account
-      add_element gl, "document", payable_line.check_number
-      add_date gl, "datecreated", payable_line.check_date
-      add_element gl, "memo", "#{payable.vendor_number} - #{payable_line.charge_description}"
-      add_element gl, "locationid", payable_line.location
-      add_element gl, "departmentid", payable_line.line_of_business
-      add_element gl, "customerid", payable_line.customer_number
-      add_element gl, "vendorid", payable.vendor_number
-      add_element gl, "projectid", payable_line.freight_file, allow_blank: false
-      add_element gl, "itemid", payable_line.charge_code, allow_blank: false
-      add_element gl, "classid", payable_line.broker_file, allow_blank: false
-      add_element gl, "currency", payable.currency
-      add_date gl, "exchratedate", payable_line.check_date
+      add_element gl, "document", check.check_number
+      add_date gl, "datecreated", check.check_date
+      if !check.vendor_reference.blank?
+        add_element gl, "memo", "#{check.vendor_number} - #{check.vendor_reference}"
+      end
+      add_element gl, "locationid", check.location
+      add_element gl, "departmentid", check.line_of_business
+      add_element gl, "customerid", check.customer_number
+      add_element gl, "vendorid", check.vendor_number
+      add_element gl, "projectid", check.freight_file, allow_blank: false
+      add_element gl, "classid", check.broker_file, allow_blank: false
+      add_element gl, "currency", check.currency
+      add_date gl, "exchratedate", check.check_date
       add_element gl, "exchratetype", "Intacct Daily Rate"
 
       gl

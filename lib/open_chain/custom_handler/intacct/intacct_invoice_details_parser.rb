@@ -1,4 +1,5 @@
 module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDetailsParser
+  include ActionView::Helpers::NumberHelper
 
   VFI_LMD_VENDOR_CODE ||= "LMD"
   LMD_VFI_CUSTOMER_CODE ||= "VANDE"
@@ -10,39 +11,54 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     self.new.parse(format_results(result_set))
   end
 
-  def self.parse_advance_check_results result_set
-    self.new.parse_advance_check_results(format_results(result_set))
+  def self.parse_check_result result_set
+    self.new.parse_check_result(format_results(result_set))
   end
 
   def parse result_set
     # The value we're receiving here is a hash exactly like you'd get back from a raw SQL connection query execution
     # Be aware that the way Alliance stores and returns most string values includes a bunch of trailing spaces
     # Also, every value in the result set (dates and numbers) are strings.
-    brokerage_receivable, lmd_receivable = extract_receivable_lines result_set
+
+    # If we're getting this data, then we should have already requested it, look up the export 
+    # based on that request.
+    export = find_alliance_export_record result_set
+    return unless export
+
+    brokerage_receivable, lmd_receivable = extract_receivable_lines export, result_set
 
     # The payables are hashes hashed by vendor number and vendor reference
-    brokerage_payables, lmd_payables = extract_payable_lines result_set
+    brokerage_payable_lines, lmd_payable_lines = extract_payable_lines export, result_set
 
-    IntacctAllianceExport.transaction do
+    Lock.with_lock_retry(export) do
       # Intacct requires that the broker file and freight file dimensions are in the system prior to 
       # uploading the payable/receivable information.  So we're tracking the numbers referenced in the 
-      # referenced and will upload them immediately.
+      # result set and will upload them immediately.
 
       lines = {:broker_file => [], :freight_file => []}
-      br = create_receivable(brokerage_receivable, true) unless brokerage_receivable.empty?
+      br = create_receivable(export, brokerage_receivable, true) unless brokerage_receivable.empty?
       merge_file_numbers(lines, extract_file_numbers(br)) if br
 
-      lr = create_receivable(lmd_receivable) unless lmd_receivable.empty?
+      lr = create_receivable(export, lmd_receivable) unless lmd_receivable.empty?
       merge_file_numbers(lines, extract_file_numbers(lr)) if lr
 
-      brokerage_payables.each_pair do |key, payable_lines|
-        p = create_payable key, payable_lines
-        merge_file_numbers(lines, extract_file_numbers(p)) if p
+
+      brokerage_payables = []
+      brokerage_payable_lines.each_pair do |key, payable_lines|
+        p = create_payable export, key, payable_lines
+        if p
+          brokerage_payables << p
+          merge_file_numbers(lines, extract_file_numbers(p))
+        end
       end
 
-      lmd_payables.each_pair do |key, payable_lines|
-        p = create_payable key, payable_lines
-        merge_file_numbers(lines, extract_file_numbers(p)) if p
+      lmd_payables = []
+      lmd_payable_lines.each_pair do |key, payable_lines|
+        p = create_payable export, key, payable_lines
+        if p
+          lmd_payables << p
+          merge_file_numbers(lines, extract_file_numbers(p))
+        end
       end
 
       lines[:broker_file].each do |bf|
@@ -53,16 +69,40 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Freight File", ff, ff)
       end
 
+      receivables_valid = validate_ar_values export, br, lr
+      payables_valid = validate_ap_values export, brokerage_payables, lmd_payables
+
+      # Ensure that nothing gets uploaded for this file if any receivables or payables are bad.
+      if receivables_valid
+        if !payables_valid
+          [br, lr].compact.each do |r|
+            r.intacct_errors = "Errors were found in corresponding payables for this file.  Please address those errors before clearing this receivable."
+            r.save!
+          end
+        end
+      else
+        # Receivables not valid - only bother w/ setting errors if the payables are valid, since we don't want to overwrite the
+        # payable errors that might be there.
+        if payables_valid
+          (brokerage_payables + lmd_payables).each do |p|
+            p.intacct_errors = "Errors were found in corresponding receivables for this file.  Please address those errors before clearing this payable."
+            p.save!
+          end
+        end
+      end
+
+      export.data_received_date = Time.zone.now
+      export.save!
     end
     nil
   end
 
-  def extract_receivable_lines result_set
+  def extract_receivable_lines export, result_set
     lmd_receivable = []
     brokerage_receivable = []
 
     result_set.each do |l|
-      if lmd_division?(s(l["header division"]))
+      if lmd_division?(s(export.division))
         lmd_receivable << l if l["print"] == "Y"
       else
         # A brokerage receivable line is any line that has a Print value of "Y"
@@ -71,34 +111,34 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         # Any line on a brokerage invoice that has a line division of 11 or 12
         # is a receivable, as these represent the "pay through" process where our VFC company
         # pays the LMD company for the portion of the business they did on this file
-        lmd_receivable << l if lmd_division?(s(l["line division"]))
+        lmd_receivable << l if lmd_division?(s(l["line division"])) && !s(l["freight file number"]).blank?
       end
     end
 
     [brokerage_receivable, lmd_receivable]
   end
 
-  def extract_payable_lines result_set
+  def extract_payable_lines export, result_set
     # using a hash here to easily associate payables w/ a single vendor
     lmd_payables = Hash.new {|h, k| h[k] = []}
     brokerage_payables = Hash.new {|h, k| h[k] = []}
 
     result_set.each do |l|
-      broker_invoice = !lmd_division?(s(l["header division"]))
+      broker_invoice = !lmd_division?(s(export.division))
 
       # A brokerage payable is any brokerage invoice line that has a vendor
       if broker_invoice 
         # Any line marked a payable is actually a payable
         if l["payable"] == "Y"
-          brokerage_payables[payable_key(l)] << l
-        elsif lmd_division?(s(l["line division"]))
+          brokerage_payables[s(l["vendor"])] << l
+        elsif lmd_division?(s(l["line division"])) && !s(l["freight file number"]).blank?
           # If the division on the line is 11 or 12, then the line becomes a payable to the LMD division from 
           # the brokerage division (essentially the inverse of the LMD receivable lines)
           brokerage_payables[VFI_LMD_VENDOR_CODE] << l
         end
       else
         # If this is an lmd invoice, then every line that's flagged a payable is truly a payable
-        lmd_payables[payable_key(l)] << l if s(l["payable"]) == "Y"
+        lmd_payables[s(l["vendor"])] << l if s(l["payable"]) == "Y"
       end
     end
 
@@ -106,12 +146,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
   end
 
 
-  def create_receivable receivable_lines, brokerage_receivable = false
+  def create_receivable export, receivable_lines, brokerage_receivable = false
     first_line = receivable_lines.first
 
     lmd_receivable = nil
     lmd_receivable_from_brokerage = nil
-    if lmd_division?(s(first_line["header division"]))
+    if lmd_division?(s(export.division))
       lmd_receivable = true
       lmd_receivable_from_brokerage = false
     else
@@ -119,26 +159,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       lmd_receivable = lmd_receivable_from_brokerage
     end
 
-    # If we're getting this data back, then we should have already requested it, look up 
-    # that request.
-    export = IntacctAllianceExport.where(file_number: s(first_line['file number']), suffix: suffix(first_line)).first
-    return unless export
-
-    # Make sure we haven't already sent data for this receivable, but we will allow recreating receivables that haven't been uploaded
     company = (lmd_receivable ? LMD_COMPANY_CODE : VFI_COMPANY_CODE)
-    customer_number = (lmd_receivable_from_brokerage ? LMD_VFI_CUSTOMER_CODE : find_customer_number(s(first_line["customer"])))
+    customer_number = (lmd_receivable_from_brokerage ? LMD_VFI_CUSTOMER_CODE : find_customer_number(s(export.customer_number)))
 
-    if lmd_receivable_from_brokerage
-      # We need this LMD Identifier for cases where we are updating LMD Invoice information.  The Invoice Number coming across from Alliance
-      # is going to be identical for LMD Files on 2 different entries, so the only way we know which one to update is by using both the broker file
-      # and the freight file as some sort of identifier
-      existing = IntacctReceivable.where(company: company, customer_number: customer_number, lmd_identifier: lmd_identifier(first_line)).first_or_create!
-    else
-      existing = IntacctReceivable.where(company: company, invoice_number: s(first_line["invoice number"]), customer_number: customer_number).first_or_create!
-    end
+    existing = IntacctReceivable.where(company: company, invoice_number: s(first_line["invoice number"]), customer_number: customer_number).first_or_create!
     
     r = nil
     Lock.with_lock_retry(existing) do
+      # Make sure we haven't already sent data for this receivable, but we will allow recreating receivables that haven't been uploaded
       return unless existing.intacct_upload_date.nil? && existing.intacct_key.nil?
 
       r = existing
@@ -149,9 +177,15 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       r.company = company
       # This should only ever actually happen on LMD Receivables made from Brokerage Files
       if r.invoice_number.blank?
-        r.invoice_number = lmd_receivable_invoice_number company, customer_number, s(first_line["freight file number"])
+        # Use the brokerage file number as the receivable "key" on the LMD File...if we try and use the freight file number
+        # we end up in a situation where we have to synthesize suffixes on the freight invoices since there can be multiple 
+        # brokerage files associated w/ a single freight file.  
+        # By keeping the brokerage file number as the break bulk invoice number, we also provide a simple way to track down
+        # which receivable maps to which brokerage receivable.
+        r.invoice_number = s(first_line["broker file number"])
       end
-      r.invoice_date = parse_date first_line["invoice date"]
+
+      r.invoice_date = export.invoice_date
       r.customer_number = customer_number
       # We're not going to get currency for our Export division, however, we know everything we do there is going to be USD
       currency = s first_line["currency"]
@@ -169,7 +203,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         # originating division.  This is because some lines on a brokerage file may be flagged as LMD lines and linked
         # to the LMD division.  This is great for behind the scenes tracking, but in reality the entirety of the brokerage
         # receivable should be against the broker division.
-        rl.location = lmd_receivable_from_brokerage ? s(line["line division"]) : s(line["header division"])
+        rl.location = lmd_receivable_from_brokerage ? s(line["line division"]) : s(export.division)
 
         rl.amount = charge_amount
         rl.charge_code = s line["charge code"]
@@ -195,33 +229,27 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       end
 
       r.save!
-      export.data_received_date = Time.zone.now
-      export.save!
     end
     
     r
   end
 
-  def create_payable payable_key, payable_lines
-    vendor = find_vendor_number(extract_vendor_from_key(payable_key))
+  def create_payable export, vendor, payable_lines
+    vendor = find_vendor_number(vendor)
     first_line = payable_lines.first
 
-    export = IntacctAllianceExport.where(file_number: s(first_line['file number']), suffix: suffix(first_line)).first
-    return unless export
-
-    lmd_company = lmd_division?(s(first_line["header division"])) 
+    header_division = export.division
+    lmd_company = lmd_division?(header_division) 
     company = (lmd_company ? LMD_COMPANY_CODE : VFI_COMPANY_CODE) 
+    # Use the invoice number as the bill number for payables (which will be unique then per vendor)
     bill_number = s first_line["invoice number"]
 
-    # Checks need to be recorded as different types so that we know when creating advanced checks if the number has already been invoiced or not.
-    # There's not really much chance of that actually being the case, but we need to be absolutely certain that doesn't happen.
-    check_number = no_zero(first_line["check number"])
-    payable_type = check_number ? IntacctPayable::PAYABLE_TYPE_CHECK : IntacctPayable::PAYABLE_TYPE_BILL
-
+    # We don't need to bother ourselves w/ checks any longer here, what we will do is look into the check file as we're uploading the data
+    # and add invoice adjustments to the payable to back out payments from check lines on the same payable.
     existing = nil
     Lock.acquire(Lock::INTACCT_DETAILS_PARSER, times: 3) do
       # Check number needs to be part of the key since it's very possible we'll issue multiple checks to the same vendor on the same invoice
-      existing = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, payable_type: payable_type, check_number: check_number).first_or_create!
+      existing = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, payable_type: IntacctPayable::PAYABLE_TYPE_BILL).first_or_create!
     end
     
     p = nil
@@ -245,9 +273,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       currency = s first_line["currency"]
       p.currency = currency.blank? ? "USD" : currency
 
-      # Use the invoice number as the bill number for payables (which will be unique then per vendor)
       p.bill_number = bill_number
-      p.bill_date = parse_date first_line["invoice date"]
+      p.bill_date = export.invoice_date
 
       payable_lines.each do |l|
         pl = p.intacct_payable_lines.build
@@ -262,146 +289,150 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
 
         # If we're generating a payable to the LMD division from a brokerage file, then we should be using
         # the header division (since we don't want to record LMD as paying itself)
-        pl.location = payable_to_lmd ? s(l["header division"]) : s(l["line division"])
+        pl.location = payable_to_lmd ? s(header_division) : s(l["line division"])
         pl.line_of_business = lmd_company ? "Freight" : "Brokerage"
         pl.freight_file = s l["freight file number"]
-        pl.customer_number = find_customer_number(s(l["customer"]))
+        pl.customer_number = find_customer_number(s(export.customer_number))
 
         # If the payable originated under the LMD Company, then we won't have a Broker File #
         pl.broker_file = s(l["broker file number"]) unless lmd_company
         pl.check_number =  no_zero l["check number"]
-
-        # Record the check number at the header to make it easier to lookup for advanced check screening.
-        if pl.check_number
-          p.check_number = pl.check_number
-        end
         bank_number = no_zero l["bank number"]
         pl.bank_number = DataCrossReference.find_alliance_bank_number(bank_number) if bank_number
         pl.check_date = parse_date l["check date"]
-        if pl.bank_number
-          # The bank cash gl account is actually the account to credit when recording the check - the debit 
-          # on invoiced checks is always against the charge code GL expense account.
-          # For checks that have been recorded as advanced payments, then we need to actually be crediting the
-          # 2021 Prepaid Advanced Payments account, since that is the account the advanced payments debit.
-          # Account is used so we know at any point how much money is floating as checks and have not been billed 
-          # to a customer.
-
-          if IntacctPayable.where(company: p.company, vendor_number: p.vendor_number, bill_number: p.bill_number, check_number: pl.check_number, payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED).exists?
-            pl.bank_cash_gl_account = PREPAID_PAYMENTS_GL_ACCOUNT
-          else
-            pl.bank_cash_gl_account = DataCrossReference.find_intacct_bank_gl_cash_account pl.bank_number
-          end
-        end
       end
 
       p.save!
-      export.data_received_date = Time.zone.now
-      export.save!
-
     end
     
     p
   end
 
-  def parse_advance_check_results result_set
-    # In theory, according to Luca, each line should be a different check...in practice, I'm not sure that's true.
-    # Split out the values that are the same invoice # and check number into distinct groups
-    checks = {}
-    result_set.each do |line|
-      key = payable_key line
-      checks[key] ||= []
-      checks[key] << line
-    end
+  def parse_check_result result_set
+    # All we're really doing here is pulling a few additional pieces of information about the check that 
+    # couldn't be retrieved from the check register report that Alliance publishes
 
-    checks.values.each do |check_lines|
-      create_advance_check_payable check_lines
-    end
+    # There should only be a single query result line and the check record and export should already exist
+    first_line = result_set.first
 
-  end
-
-  def create_advance_check_payable lines
-    first_line = lines.first
-
-    # We first need to confirm that we don't already have an open payable already in the system for this line.
-    lmd_company = lmd_division?(s(first_line["header division"])) 
-    company = (lmd_company ? LMD_COMPANY_CODE : VFI_COMPANY_CODE)
-    vendor = find_vendor_number s(first_line['vendor'])
-    check_number = s(first_line['check number'])
-    bill_number = s(first_line['invoice number'])
-
-    # We shouldn't create an advanced payment if there is a check payable (.ie the file is invoiced already)
-    p = nil
+    export = nil
     Lock.acquire(Lock::INTACCT_DETAILS_PARSER, times: 3) do
-      return if IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, check_number: check_number, payable_type: IntacctPayable::PAYABLE_TYPE_CHECK).exists?
-
-      p = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, check_number: check_number, payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED).first_or_create!
+      # The result data doesn't include the file suffix, since that's not associated w/ the check in the AP File table (for some reason)
+      export = IntacctAllianceExport.where(file_number: s(first_line['file number']), check_number: s(first_line['check number']), export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, ap_total: as_dec(first_line['check amount'])).first
     end
 
-    return unless p
-    
-    Lock.with_lock_retry(p) do 
-      return unless p.intacct_key.blank? && p.intacct_upload_date.nil?
+    if export
+      check = nil
+      Lock.with_lock_retry(export) do
+        # At this point in time, we only ever have a single check per data export object
+        check = export.intacct_checks.first 
 
-      # Blank any existing lines...
-      p.intacct_payable_lines.destroy_all
+        # Just a really basic check to verify we're dealing w/ the right export object
+        if check && check.check_number == s(first_line['check number']) && check.intacct_upload_date.nil? && check.intacct_key.nil?
+          check.intacct_errors = nil
 
-      p.intacct_errors = nil
-      p.vendor_reference = s first_line["vendor reference"]
-      p.currency = s first_line["currency"]
-      # Because the invoice hasn't been finalized, there is no invoice date associated w/ the bill yet.
-      p.bill_date = parse_date first_line["check date"]
+          # Really all we need here is to set the company, the division and the Line of Business
+          # and then adjust the customer and vendor numbers to use the xref'ed values.
+          check.customer_number = find_customer_number(check.customer_number)
+          check.vendor_number = find_vendor_number(check.vendor_number)
 
-      lines.each do |l|
-        pl = p.intacct_payable_lines.build
+          check.location = first_line["division"]
+          lmd_company = lmd_division?(check.location)
+          if lmd_company
+            check.line_of_business = "Freight"
+            check.company = LMD_COMPANY_CODE
+          else
+            check.line_of_business = 'Brokerage'
+            check.company = VFI_COMPANY_CODE
+            check.broker_file = first_line['file number']
+          end
+          check.freight_file = first_line['freight file']
+          check.currency = first_line['currency'].blank? ? 'USD' : first_line['currency']
 
-        pl.charge_code = s l["charge code"]
-        # The GL account (.ie the account to debit) is always the prepaid payments GL account.
-        # When the invoice is finally billed, the check line will come through on that and zero this balance out.
-        pl.gl_account = PREPAID_PAYMENTS_GL_ACCOUNT
-        pl.amount = as_dec l["charge amount"]
-        description = s l["charge description"]
-        # append the vendor reference to the description if there is one since the bill doesn't carry a line level reference
-        description += " - #{s(l["vendor reference"])}" unless l["vendor reference"].blank?
-        pl.charge_description = description
-        pl.location = s(l["header division"])
-        pl.line_of_business = lmd_company ? "Freight" : "Brokerage"
-        pl.freight_file = s l["freight file number"]
-        pl.customer_number = find_customer_number(s(l["customer"]))
-
-        # If the payable originated under the LMD Company, then we won't have a Broker File #
-        pl.broker_file = s(l["broker file number"]) unless lmd_company
-        pl.check_number =  no_zero l["check number"]
-
-        # Record the check number at the header so that we can easily identify it both for updates and when parsing invoice data
-        # to look for advanced checks (see #create_payable above)
-        if pl.check_number
-          p.check_number = pl.check_number
-        end
-
-        bank_number = no_zero l["bank number"]
-        pl.bank_number = DataCrossReference.find_alliance_bank_number(bank_number) if bank_number
-        pl.check_date = parse_date l["check date"]
-        if pl.bank_number
-          pl.bank_cash_gl_account = DataCrossReference.find_intacct_bank_gl_cash_account pl.bank_number
+          check.save!
+          export.division = first_line["division"]
+          export.data_received_date = Time.zone.now
+          export.save!
         end
       end
 
-      p.save!
-    end
-
-    # Send up all the referenced broker and freight file dimensions
-    broker_files = p.intacct_payable_lines.map(&:broker_file).uniq.compact
-    broker_files.each do |bf|
-      OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Broker File", bf, bf)
-    end
-
-    freight_files = p.intacct_payable_lines.map(&:freight_file).uniq.compact
-    freight_files.each do |ff|
-      OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Freight File", ff, ff)
+      if check
+        if check.company == LMD_COMPANY_CODE
+          OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Freight File", check.freight_file, check.freight_file)
+        else
+          OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Broker File", check.broker_file, check.broker_file) 
+          OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Freight File", check.freight_file, check.freight_file) if check.freight_file && !check.freight_file.empty?
+        end
+      end
     end
   end
 
-  private 
+  private
+
+    def validate_ar_values export, brokerage_receivable, lmd_receivable
+      # Since the data for this process comes from a day end Alliance report, we know how much our receivables
+      # should total to.  Verify this amount, and if it's not correct...error them all.
+
+      # If the export was originally for the LMD division (.ie not a freight passthrough)
+      # then we just need to sum the LMD receivables.
+      receivable = lmd_division?(export.division) ? lmd_receivable : brokerage_receivable
+      
+      # Credit notes should be summed as negative amounts (they're in intacct as positve amounts)
+      sum = BigDecimal.new "0"
+
+      # It's possible we don't get any receivable lines, so don't fail if that happens
+      if receivable
+        multiplier = (receivable.receivable_type =~ /#{IntacctReceivable::CREDIT_INVOICE_TYPE}/i) ? -1 : 1
+        sum = receivable.intacct_receivable_lines.inject(BigDecimal.new("0")) {|total, l| total + (l.amount * multiplier)}
+      end
+      
+      valid = true
+      if export.ar_total != sum
+        valid = false
+        [brokerage_receivable, lmd_receivable].compact.each do |r|
+          r.intacct_errors = "Expected an AR Total of #{number_to_currency(export.ar_total)}.  Received from Alliance: #{number_to_currency(sum)}."
+          r.save!
+        end
+      end
+
+      valid
+    end
+
+    def validate_ap_values export, brokerage_payables, lmd_payables
+      # Since the data for this process comes from a day end Alliance report, we know how much our payables
+      # should total to.  Verify this amount, and if it's not correct...error them all.
+
+      # If the export was originally for the LMD division (.ie not a freight passthrough)
+      # then we just need to sum the LMD payables.
+
+      # NOTE: Payables to LMD are NOT reported by the Alliance Day End reporting process, so exclude these from our
+      # validations.
+      payables = []
+      if lmd_division?(export.division)
+        payables = lmd_payables
+      else
+        brokerage_payables.each do |p|
+          payables << p unless p.vendor_number == VFI_LMD_VENDOR_CODE
+        end
+      end
+
+      sum = BigDecimal.new "0"
+      payables.each do |p|
+        sum = p.intacct_payable_lines.inject(sum) {|total, l| total + l.amount}
+      end
+
+      valid = true
+      if export.ap_total != sum
+        valid = false
+        # Make sure all the payables passed in here are errored, so that nothing from the file is uploaded.
+        (brokerage_payables + lmd_payables).each do |p|
+          p.intacct_errors = "Expected an AP Total of #{number_to_currency(export.ap_total)}.  Received from Alliance: #{number_to_currency(sum)}."
+          p.save!
+        end
+      end
+
+      valid
+    end
 
     def self.format_results r
       # Since we're serializing params as json, if we get a string, decode them
@@ -410,24 +441,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       else
         r
       end
-    end
-
-    def payable_key line
-      # The key on the payable lines needs to be the Vendor + Check No + Bank No + Check Date
-      # (Really, the Check No should suffice but the "real" alliance Primary key are those 3 pieces of info)
-      # All of checknumber, bank number, check date must be non-zero before we should use them as part of the key.
-      # For some reason, Alliance has check dates for some lines that aren't actually checks..argh...
-      key = [s(line["vendor"]), s(line["check number"]), s(line["bank number"]), s(line["check date"])]
-
-      if key.reject {|v| v.nil? || v == "0"}.size < 4
-        key = [s(line["vendor"]), "0", "0", "0"]
-      end
-
-      key.map {|v| v.to_s}.join("~")
-    end
-
-    def extract_vendor_from_key key
-      key.split("~")[0]
     end
 
     def parse_date date
@@ -508,32 +521,11 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       @vend_xref[alliance_vendor]
     end
 
-    def lmd_identifier line
-      s(line["broker file number"]) + "~" + s(line["freight file number"])
-    end
+    def find_alliance_export_record result_set
+      # Since all the data in the query comes from a single export, find the export associated w/ the first line
+      first_line = result_set.first
 
-    def lmd_receivable_invoice_number company, customer_number, freight_file_number
-      existing_invoice_count = IntacctReceivable.where(company: company, customer_number: customer_number).where("invoice_number REGEXP ?", "#{freight_file_number}[A-Z]*").count
-      freight_file_number + get_suffix(existing_invoice_count)
-    end
-
-    def get_suffix count
-      suffix = ""
-      if count > 0
-        first_number = (count / 27).to_i
-        second_number = (count - (26 * first_number))
-
-        # 64 below represents ASCII # directly prior to ASCII A.
-        if first_number > 0
-          suffix += (64 + first_number).chr
-        end
-
-        if second_number > 0
-          suffix += (64 + second_number).chr
-        end
-      end
-
-      suffix
+      IntacctAllianceExport.where(file_number: s(first_line['file number']), suffix: suffix(first_line), export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE).first
     end
 
 end; end; end; end

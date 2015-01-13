@@ -14,12 +14,7 @@ describe OpenChain::SqlProxyClient do
       request_body = {'sql_params' => {:file_number=>123, :suffix=>"suffix"}, 'context' => request_context}
       @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
       
-
       @c.request_alliance_invoice_details "123", "suffix     ", request_context
-
-      export = IntacctAllianceExport.where(file_number: "123", suffix: "suffix").first
-      expect(export).to_not be_nil
-      expect(export.data_requested_date).to be >= 1.minute.ago
     end
 
     it "strips blank suffixes down to blank string" do
@@ -27,9 +22,6 @@ describe OpenChain::SqlProxyClient do
       @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.request_alliance_invoice_details "123", "     "
-
-      export = IntacctAllianceExport.where(file_number: "123", suffix: nil).first
-      expect(export).to_not be_nil
     end
 
     it "doesn't send context if a blank one is provided" do
@@ -37,6 +29,11 @@ describe OpenChain::SqlProxyClient do
       @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.request_alliance_invoice_details "123", "A"
+    end
+
+    it "raises error on errored post" do
+      @http_client.should_receive(:post).and_raise "Error"
+      expect{@c.request_alliance_invoice_details "123", "A"}.to raise_error "Error"
     end
   end
 
@@ -81,14 +78,17 @@ describe OpenChain::SqlProxyClient do
     end
   end
 
-  describe "request_advance_checks" do
-    it "requests checks since given date" do
-      now = Time.new 2014, 1, 1, 12, 30
-      request_body = {'sql_params' => {:check_date=>20140101}}
+  describe "request_check_details" do
+    it "requests check details" do
+      request_body = {'sql_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10, check_amount: 101}}
 
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/open_check_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/check_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @c.request_check_details "123", "456", Date.new(2014, 11, 1), "10", BigDecimal.new("1.01999").to_s
+    end
 
-      @c.request_advance_checks now
+    it "raises error on failed json post" do
+      @http_client.should_receive(:post).and_raise "Error"
+      expect{@c.request_check_details "123", "456", Date.new(2014, 11, 1), "10", BigDecimal.new("123")}.to raise_error "Error"
     end
   end
 

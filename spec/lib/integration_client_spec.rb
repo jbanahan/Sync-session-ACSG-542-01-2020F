@@ -241,6 +241,20 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_alliance/x.y"} 
     end
+    it 'should send data to Alliance Day End Invoice parser if custom feature enabled and path contains _alliance_day_end_invoices' do
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
+      OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser
+      OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345', original_filename: "x.y")
+      cmd = {'request_type'=>'remote_file','path'=>'/_alliance_day_end_invoices/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+    end
+    it 'should send data to Alliance Day End Check parser if custom feature enabled and path contains _alliance_day_end_invoices' do
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345', original_filename: "x.y")
+      cmd = {'request_type'=>'remote_file','path'=>'/_alliance_day_end_checks/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+    end
     it 'should create linkable attachment if linkable attachment rule match' do
       LinkableAttachmentImportRule.create!(:path=>'/path/to',:model_field_uid=>'prod_uid')
       cmd = {'request_type'=>'remote_file','path'=>'/path/to/this.csv','remote_path'=>'12345'}

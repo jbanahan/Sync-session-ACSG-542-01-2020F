@@ -58,7 +58,7 @@ SQL
         temp.close! unless temp.nil? || temp.closed?
       end
     end
-    nil
+    total_rows
   end
 
   private

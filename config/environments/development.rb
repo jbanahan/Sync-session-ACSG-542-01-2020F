@@ -3,7 +3,8 @@ require 'mono_logger'
 
 OpenChain::Application.configure do
   # Settings specified here will take precedence over those in config/environment.rb
-  config.logger = MonoLogger.new(Rails.root.join("log", Rails.env + ".log"))
+  # Each file will be at most 10MB, storing at most 5 of them
+  config.logger = MonoLogger.new(Rails.root.join("log", Rails.env + ".log"), 5, 10485760)
 
   # In the development environment your application's code is reloaded on
   # every request.  This slows down response time but is perfect for development
