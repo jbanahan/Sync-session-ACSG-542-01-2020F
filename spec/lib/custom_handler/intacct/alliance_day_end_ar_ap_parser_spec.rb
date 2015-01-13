@@ -142,6 +142,7 @@ FILE
     end
 
     it "errors if an invoice associated w/ the export has been uploaded to intacct" do
+      @invoice_data[:lines].first[:a_r] = "Y"
       IntacctReceivable.create! invoice_number: "123", company: 'vfc', intacct_upload_date: Time.zone.now, intacct_key: "KEY"
 
       export, errors = described_class.new.create_and_request_invoice @invoice_data, @client
@@ -151,7 +152,8 @@ FILE
 
     it "errors if a payable invoice associated w/ the export has been uploaded to intacct" do
       @invoice_data[:lines].first[:suffix] = "A"
-      IntacctPayable.create! bill_number: "123A", company: 'lmd', intacct_upload_date: Time.zone.now, intacct_key: "KEY"
+      @invoice_data[:lines].first[:a_p] = "Y"
+      IntacctPayable.create! bill_number: "123A", company: 'lmd', intacct_upload_date: Time.zone.now, intacct_key: "KEY", payable_type: IntacctPayable::PAYABLE_TYPE_BILL
 
       export, errors = described_class.new.create_and_request_invoice @invoice_data, @client
       expect(export).to be_nil

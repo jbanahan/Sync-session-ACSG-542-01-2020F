@@ -226,9 +226,9 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   def upload_intacct_data pusher
     # NEVER run this unless we're in production..we don't have a test environment for Intacct
     # so make sure we don't accidently upload to intacct at all
-    if Rails.env.production?
-      pusher.run
-    end
+    
+    # For now, don't push the data at all...do it via rails console by hand until 
+    # we're reasonably sure the data we're retrieving is all good
   end
 
   def run_exception_report report, email_to

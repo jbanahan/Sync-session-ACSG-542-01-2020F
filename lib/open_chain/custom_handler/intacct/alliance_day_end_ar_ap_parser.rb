@@ -152,14 +152,16 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
     first_line = invoice_data[:lines].first
 
     invoice_number =  first_line[:invoice_number].to_s.strip + first_line[:suffix].to_s.strip
-    invoice_count = IntacctReceivable.where(company: ['lmd', 'vfc'], invoice_number: invoice_number).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count
-    bill_count = 1
+    existing_invoices = has_ar_lines?(invoice_data) ? (IntacctReceivable.where(company: ['lmd', 'vfc'], invoice_number: invoice_number).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count) : 0
 
-    if invoice_count == 0
-      bill_count = IntacctPayable.where(company: ['lmd', 'vfc'], bill_number: invoice_number).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count
+    invoice_count = IntacctReceivable.where(company: ['lmd', 'vfc'], invoice_number: invoice_number).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count
+    bill_count = 0
+
+    if existing_invoices == 0
+      bill_count = has_ap_lines?(invoice_data) ? (IntacctPayable.where(company: ['lmd', 'vfc'], bill_number: invoice_number, payable_type: IntacctPayable::PAYABLE_TYPE_BILL).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count) : 0
     end
 
-    if invoice_count > 0 || bill_count > 0
+    if existing_invoices > 0 || bill_count > 0
       errors << "An invoice and/or bill has already been filed in Intacct for File # #{invoice_number}."
     else
       Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do 
@@ -239,6 +241,22 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
       else
         raise "Attempted to parse an Alliance Daily Billing List file that is not the correct format. Expected to find 'DOEDTLS1-D0-09/06/03' on the first line, but did not."
       end
+    end
+
+    def ar_line? line
+      line[:a_r].to_s.strip.upcase == "Y"
+    end
+
+    def ap_line? line
+      line[:a_p].to_s.strip.upcase == "Y"
+    end
+
+    def has_ar_lines? invoice_data
+      invoice_data[:lines].any? {|l| ar_line?(l)}
+    end
+
+    def has_ap_lines? invoice_data
+      invoice_data[:lines].any? {|l| ap_line?(l)}
     end
 
 end; end; end; end;
