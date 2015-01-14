@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
 
     it "pushes checks issued after the payable to intacct" do
       c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
-      p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY", intacct_upload_date: Time.zone.now
+      p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY", intacct_upload_date: Time.zone.now, payable_type: IntacctPayable::PAYABLE_TYPE_BILL
 
       @api_client.should_receive(:send_check).with c1, true
 

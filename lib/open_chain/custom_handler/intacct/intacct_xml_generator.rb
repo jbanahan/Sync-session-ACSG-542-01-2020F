@@ -80,11 +80,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
 
   def generate_ap_adjustment check, payable
     build_function do |func|
+
       adj = add_element func, "create_apadjustment"
       add_element adj, "vendorid", check.vendor_number
       add_date adj, "datecreated", (payable ? payable.bill_date : check.check_date)
       add_date adj, "dateposted", (payable ? payable.bill_date : check.check_date)
-      add_element adj, "adjustmentno", "#{check.bill_number}-#{check.check_number}"
+      # The Void is added to the adjustment number on voided checks (which come through as checks w/ a negative amount)
+      # This is because there will already be an adjustment with the same number from when the check was initially cut
+      add_element adj, "adjustmentno", "#{check.bill_number}-#{check.check_number}#{check.amount < 0 ? "-Void" : ""}"
       add_element adj, "billno", check.bill_number
       add_element adj, "description", "Check # #{check.check_number} / Check Date #{check.check_date.strftime("%Y-%m-%d")}"
       add_element adj, "basecurr", check.currency
@@ -218,8 +221,18 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       gl = add_element parent, "glentry"
 
       add_element gl, "trtype", gl_entry_type
-      add_element gl, "amount", check.amount
-      gl_account = (gl_entry_type == "credit" ? check.bank_cash_gl_account : check.gl_account)
+      # Writing directly to General Ledger...doesn't like negative amounts
+      add_element gl, "amount", check.amount.abs
+
+      # Credits need to go into the cash account when we're cutting a check. When voiding a check (.ie the amount is negative)
+      # we need to put the cash back into the GL account it came from and debit it back out of the cash account.
+      # The process is revserse for debit entry types
+      if gl_entry_type == "credit"
+        gl_account = ((check.amount >= 0) ? check.bank_cash_gl_account : check.gl_account)
+      else
+        gl_account = ((check.amount >= 0) ? check.gl_account : check.bank_cash_gl_account)
+      end
+
       add_element gl, "glaccountno", gl_account
       add_element gl, "document", check.check_number
       add_date gl, "datecreated", check.check_date

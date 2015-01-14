@@ -68,7 +68,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
           if check.intacct_upload_date.nil?
             # If we've already uploaded a payable with the same file / suffix as this check, then we should indicate to the api client
             # that an account adjustment is needed at this time as well.
-            payable_count = IntacctPayable.where(company: check.company, bill_number: check.bill_number, vendor_number: check.vendor_number).
+            payable_count = IntacctPayable.where(company: check.company, bill_number: check.bill_number, vendor_number: check.vendor_number, payable_type: IntacctPayable::PAYABLE_TYPE_BILL).
                         where("intacct_key IS NOT NULL AND intacct_upload_date IS NOT NULL").count
 
             @api_client.send_check check, (payable_count > 0)

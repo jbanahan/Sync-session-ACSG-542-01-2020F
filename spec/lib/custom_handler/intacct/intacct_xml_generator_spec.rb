@@ -349,6 +349,25 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(e.text "exchratetype").to eq "Intacct Daily Rate"
     end
 
+    it "generates xml for voided check entries" do
+      @check.amount = -@check.amount
+      control_id, xml = described_class.new.generate_check_gl_entry_xml @check
+      
+      root = REXML::Document.new(xml).root
+      expect(REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements).to have(2).items
+
+      e = REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements[1]
+      expect(e.text "trtype").to eq "credit"
+      expect(e.text "amount").to eq @check.amount.abs.to_s
+      expect(e.text "glaccountno").to eq @check.gl_account
+
+      e = REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements[2]
+
+      expect(e.text "trtype").to eq "debit"
+      expect(e.text "amount").to eq @check.amount.abs.to_s
+      expect(e.text "glaccountno").to eq @check.bank_cash_gl_account
+    end
+
     it "excludes certain blank fields" do
       @check.freight_file = nil
       @check.broker_file = nil
@@ -459,6 +478,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(e.text "customerid").to eq @check.customer_number
       expect(e.text "vendorid").to eq @check.vendor_number
       expect(e.text "classid").to eq @check.broker_file
+    end
+
+    it "appends a Void to adjustmentno for voided checks" do
+      @check.amount = -1
+
+      control_id, xml = described_class.new.generate_ap_adjustment @check, nil
+      root = REXML::Document.new(xml).root
+      g = REXML::XPath.first root, "/function/create_apadjustment"
+      expect(g.text "adjustmentno").to eq "#{@check.bill_number}-#{@check.check_number}-Void"
     end
   end
 end
