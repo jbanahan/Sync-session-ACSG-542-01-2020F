@@ -43,7 +43,7 @@ module OpenChain; class StatClient
 
   def self.add_numeric stat_code, value, collected_at=Time.now
     h = {stat_code:stat_code,value:value,collected_at:collected_at}
-    post_json! '/api/v1/stat_collector/add_numeric', h
+    self.delay.post_json! '/api/v1/stat_collector/add_numeric', h
   end
 
   def self.post_json! url, json_hash

@@ -110,7 +110,9 @@ describe OpenChain::StatClient do
   describe :add_numeric do
     it "should set url and json" do
       t = 1.hour.ago
-      described_class.should_receive(:post_json!).with('/api/v1/stat_collector/add_numeric',{stat_code:'scode',value:10,collected_at:t})
+      dbl = double('stat_client')
+      described_class.should_receive(:delay).and_return(dbl)
+      dbl.should_receive(:post_json!).with('/api/v1/stat_collector/add_numeric',{stat_code:'scode',value:10,collected_at:t})
       described_class.add_numeric 'scode', 10, t
     end
   end
