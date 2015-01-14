@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module JCrew
       x = str.split(' - ')
       raise "Bad Part number in #{str}" if (x.blank? || x.length==1)
       r = x[1].split(' ').first
-      raise "Bad part number in #{r}" unless r.match(/^\d{5}/)
+      raise "Bad part number in #{r}" unless r.match(/^\w{5}/)
       r
     end
   end
