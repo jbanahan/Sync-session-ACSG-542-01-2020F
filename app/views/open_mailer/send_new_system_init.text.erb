@@ -2,3 +2,6 @@ New system created:
 
 UUID: <%=MasterSetup.get.uuid%>
 Admin Pwd: <%=@pwd%>
+Source: <%=caller.join("\n")%>
+Code Version: <%=MasterSetup.get.current_code_version%>
+PID: <%=Process.pid%>

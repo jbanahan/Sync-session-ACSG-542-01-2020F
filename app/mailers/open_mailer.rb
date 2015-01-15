@@ -92,7 +92,7 @@ EOS
 
   def send_new_system_init(password)
     @pwd = password
-    mail(:to => "admin@vandegriftinc.com", :subject => "New System Initialization") do |format|
+    mail(:to => "bug@vandegriftinc.com", :subject => "New System Initialization") do |format|
       format.text
     end
   end
