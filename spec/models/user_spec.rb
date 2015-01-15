@@ -56,10 +56,30 @@ describe User do
       expect(u.company).to be_master
       expect(u).to be_admin
       expect(u.api_auth_token).to_not be_blank
+      expect(u.time_zone).to eq "Eastern Time (US & Canada)"
+      expect(u.disallow_password).to be_true
     end
     it "should return api_admin if it exits" do
       u = Factory(:master_user,username:'ApiAdmin')
       expect(User.api_admin).to eq u
+    end
+  end
+  describe :integration do
+    it "should create integration if it doesn't exist" do
+      u = User.integration
+      expect(u.username).to eq 'integration'
+      expect(u.first_name).to eq 'Integration'
+      expect(u.last_name).to eq 'User'
+      expect(u.email).to eq 'bug+integration@vandegriftinc.com'
+      expect(u.company).to be_master
+      expect(u).to be_admin
+      expect(u.api_auth_token).to_not be_blank
+      expect(u.time_zone).to eq "Eastern Time (US & Canada)"
+      expect(u.disallow_password).to be_true
+    end
+    it "should return integration if it exits" do
+      u = Factory(:master_user,username:'integration')
+      expect(User.integration).to eq u
     end
   end
   describe :magic_columns do
