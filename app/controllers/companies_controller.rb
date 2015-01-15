@@ -69,15 +69,12 @@ class CompaniesController < ApplicationController
   def create
     @company = Company.new.update_model_field_attributes(params[:company])
     action_secure(current_user.company.master, @company, {:verb => "create", :lock_check => false, :module_name=>"company"}) {
-      respond_to do |format|
-        if @company.save
-          add_flash :notices, "Company created successfully."
-          format.html { redirect_to(@company) }
-        else
-          errors_to_flash @company, :now => true
-          format.html { render :action => "new" }
-        end
+      if @company.save
+        add_flash :notices, "Company created successfully."
+      else
+        errors_to_flash @company
       end
+      redirect_to redirect_location(@company)
     }
   end
 
@@ -87,15 +84,12 @@ class CompaniesController < ApplicationController
     @company = Company.find(params[:id])
     unlocking = !params[:company][:locked].nil? && params[:company][:locked]=="0"
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
-      respond_to do |format|
-        if @company.update_model_field_attributes(params[:company])
-          add_flash :notices, "Company was updated successfully."
-          format.html { redirect_to(@company) }
-        else
-          errors_to_flash @company, :now => true
-          format.html { render :action => "edit" }
-        end
-      end      
+      if @company.update_model_field_attributes(params[:company])
+        add_flash :notices, "Company was updated successfully."
+      else
+        errors_to_flash @company
+      end
+      redirect_to redirect_location(@company)
     }
   end
   
@@ -156,5 +150,8 @@ class CompaniesController < ApplicationController
   private 
   def secure
     Company.find_can_view(current_user)
+  end
+  def redirect_location company
+    params[:redirect_to].blank? ? company : params[:redirect_to]
   end
 end
