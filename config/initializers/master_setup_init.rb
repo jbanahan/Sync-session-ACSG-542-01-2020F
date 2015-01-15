@@ -5,7 +5,8 @@ if ActiveRecord::Base.connection.table_exists? 'master_setups'
 end
 
 if (["companies","users"] - ActiveRecord::Base.connection.tables).length == 0
-  c = Company.where(:master=>true).first_or_create!(name:'My Company')
+
+  c = Company.first_or_create!(name:'My Company',master:true) 
   if c.users.empty?
     pass = 'init_pass'
     u = c.users.build(:username=>"chainio_admin",:email=>"support@vandegriftinc.com")
