@@ -1,3 +1,4 @@
+require 'rexml/document'
 module OpenChain; module CustomHandler; module XmlHelper
   def est_time_str t
     ActiveSupport::TimeZone["Eastern Time (US & Canada)"].at(t.to_i).strftime("%Y-%m-%d %H:%M %Z")

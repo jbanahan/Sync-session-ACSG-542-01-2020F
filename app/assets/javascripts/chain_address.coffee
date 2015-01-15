@@ -14,5 +14,5 @@ root.ChainAddress =
       else
         t.addClass('google-maps-active')
         target.addClass('google-maps-wrap')
-        html = "<iframe src='"+t.attr('google-maps-src')+"'></iframe>"
+        html = "<iframe src='"+t.attr('google-maps-src')+"'></iframe><div class='text-right text-warning'><small>Map locations are approximate based on the address text provided.</small></div>"
       target.html(html)
