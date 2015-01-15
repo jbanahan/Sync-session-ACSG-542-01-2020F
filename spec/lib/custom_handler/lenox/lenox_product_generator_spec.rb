@@ -11,6 +11,18 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
     expect(line[43, 1]).to eq "\n"
   end
 
+  describe :ftp_credentials do
+    it "defaults to production server" do
+      d = described_class.new
+      expect(d.ftp_credentials).to eq(server: 'ftp.lenox.com', username:'vanvendor', password: '$hipments', folder: '.', remote_file_name: "Item_HTS")
+    end
+
+    it "gives capability to change username to test" do
+      d = described_class.new env: 'test'
+      expect(d.ftp_credentials).to eq(server: 'ftp.lenox.com', username:'vanvendortest', password: '$hipments', folder: '.', remote_file_name: "Item_HTS")
+    end
+  end
+
   describe "sync_fixed_position" do
     before :each do
       @g = described_class.new

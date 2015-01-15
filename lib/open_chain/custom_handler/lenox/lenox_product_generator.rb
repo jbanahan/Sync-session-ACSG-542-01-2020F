@@ -13,6 +13,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
 
   def initialize opts = {}
     super
+    @env = (opts[:env] ? opts[:env] : 'production')
     @cdefs = self.class.prep_custom_definitions [:prod_fda_product_code, :prod_part_number]
   end
 
