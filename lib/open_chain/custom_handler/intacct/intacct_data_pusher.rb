@@ -3,23 +3,29 @@ require 'open_chain/custom_handler/intacct/intacct_client'
 module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
   
   def self.run_schedulable opts = {}
-    self.new.run(opts)
+    opts = opts.with_indifferent_access
+
+    if !opts[:companies] || !opts[:companies].is_a?(Array) || opts[:companies].size == 0
+      raise "The Job Schedule must include a 'companies' array in the Options field."
+    end
+
+    self.new.run(opts[:companies])
   end
 
   def initialize client = IntacctClient.new
     @api_client = client
   end
 
-  def run opts
-    push_checks
-    push_receivables
-    push_payables
+  def run companies
+    push_checks companies
+    push_receivables companies
+    push_payables companies
   end
 
-  def push_payables
+  def push_payables companies
     # If a payable has errors, it's likely because of some sort of setup needing to be done or other out of band work that
     # can't be automated.  We're reporting on these so we'll skip them until they've been cleared.
-    IntacctPayable.where(intacct_upload_date: nil, intacct_errors: nil).order("created_at ASC").pluck(:id).each do |id|
+    IntacctPayable.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
       begin
         payable = IntacctPayable.find id
         Lock.with_lock_retry(payable) do 
@@ -43,10 +49,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
     end
   end
 
-  def push_receivables
+  def push_receivables companies
     # If a receivable has errors, it's likely because of some sort of setup needing to be done or other out of band work that
     # can't be automated.  We're reporting on these so we'll skip them until they've been cleared.
-    IntacctReceivable.where(intacct_upload_date: nil, intacct_errors: nil).order("created_at ASC").pluck(:id).each do |id|
+    IntacctReceivable.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
       begin
         receivable = IntacctReceivable.find id
         Lock.with_lock_retry(receivable) do
@@ -59,8 +65,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
     end
   end
 
-  def push_checks
-    IntacctCheck.where(intacct_upload_date: nil, intacct_errors: nil).order("created_at ASC").pluck(:id).each do |id|
+  def push_checks companies
+    IntacctCheck.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
       begin
         check = IntacctCheck.find id
         Lock.with_lock_retry(check) do
