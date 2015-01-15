@@ -8,6 +8,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
   extend OpenChain::WorkflowDecider
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
+  def self.base_object_class
+    Company
+  end
 
   def self.workflow_name
     'Vendor Setup'

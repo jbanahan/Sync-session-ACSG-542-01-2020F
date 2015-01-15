@@ -1,7 +1,10 @@
 <%content_for :javascript do %>
-$(document).ready(function() {
-  ChainAddress.initAddresses();
-});
+  $(document).ready(function() {
+    ChainAddress.initAddresses();
+  });
+<%end%>
+<%content_for :action_bar do %>
+  <button class='form_to' form_id='frm_attrs'>Save</button>
 <%end%>
 <style type="text/css">
   #address_map {
@@ -51,9 +54,10 @@ $(document).ready(function() {
           <div class="container-fluid">
             <div class="row">
               <div class="col-md-12">
-                <%=form_for @company do |f| %>
+                <%=form_for @company, html:{id: 'frm_attrs'} do |f| %>
+                  <input type='hidden' name='redirect_to' value="<%=vendor_path(@company)%>">
                   <%= show_model_fields f, [:cmp_name] %>
-                  <%= show_custom_fields @company %>
+                  <%= show_custom_fields f %>
                 <%end%>
               </div>
             </div>

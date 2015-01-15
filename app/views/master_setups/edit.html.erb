@@ -51,12 +51,13 @@ $(function() {
         <%=field_bootstrap "System UUID", @ms.uuid%>
         <%=field_bootstrap "Version", content_tag(:div, MasterSetup.current_code_version, class:(MasterSetup.current_code_version==@ms.target_version ? '' : 'bg-danger'))%>
         <%=field_bootstrap "Target Version", @ms.target_version%>
-        <%=field_bootstrap "System Code", f.text_field(:system_code) %>
-        <%=field_bootstrap "Request Host (with port)", f.text_field(:request_host) %>
-        <%=field_bootstrap "Stats API Key", f.text_field(:stats_api_key) %>
-        <%=field_bootstrap "Logo Image", f.text_field(:logo_image) %>
+        <%=field_bootstrap "System Code", f.text_field(:system_code,:class=>'form-control') %>
+        <%=field_bootstrap "Request Host (with port)", f.text_field(:request_host,:class=>'form-control') %>
+        <%=field_bootstrap "Stats API Key", f.text_field(:stats_api_key,:class=>'form-control') %>
+        <%=field_bootstrap "Logo Image", f.text_field(:logo_image,:class=>'form-control') %>
         <%=field_bootstrap "Server With Migration Lock", @ms.migration_host%>
-        <%=field_bootstrap "Custom Features", f.text_area(:custom_features, cols:20)%>
+        <%=field_bootstrap "Custom Features", f.text_area(:custom_features,:class=>'form-control')%>
+        <%=field_bootstrap "Workflow Classes", f.text_area(:workflow_classes, :class=>'form-control')%>
         <%=field_bootstrap "FTP Enabled", f.check_box(:ftp_polling_active) %>
         <%=field_bootstrap "Order Enabled",f.check_box(:order_enabled) %>
         <%=field_bootstrap "Shipment Enabled", f.check_box(:shipment_enabled)%>
@@ -78,7 +79,7 @@ $(function() {
           <tr><th>Host Name</th><th>Version</th><th>Last Check In</th><th>Upgrade Logs</th></tr>
         </thead>
         <% InstanceInformation.where("last_check_in > ?",10.days.ago).order("last_check_in DESC").each do |ii| %>
-          <tr class='hover <%=ii.last_check_in < 1.minute.ago ? "error" : ""%>'>
+          <tr class='hover'>
             <td><%=ii.host%></td>
             <td><%=ii.version%></td>
             <td><%=ii.last_check_in%></td>

@@ -3,7 +3,9 @@
 #
 # Expects concrete classes to implement self.do_workflow!(base_object,workflow_instance,user)
 #
-# Expects concrete classes to implement self.name method returning descrptive name of the workflow
+# Expects concrete classes to implement self.name method returning descriptive name of the workflow
+#
+# Expects concrete classes to implement self.base_object_class returning the class that matches the expected base_object for `update_workflow!` 
 module OpenChain; module WorkflowDecider
 
   def update_workflow! base_object, user
