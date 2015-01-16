@@ -15,4 +15,18 @@ describe FieldValidatorRule do
       @f.validate_input("abcd").first.should == @f.custom_message
     end
   end
+
+  describe "view_groups" do
+    it "returns a sorted list of view groups" do
+      r = FieldValidatorRule.new can_view_groups: "Z\nY\nA"
+      expect(r.view_groups).to eq ["A", "Y", "Z"]
+    end
+  end
+
+  describe "edit_groups" do
+    it "returns a sorted list of view groups" do
+      r = FieldValidatorRule.new can_edit_groups: "Z\nY\nA"
+      expect(r.edit_groups).to eq ["A", "Y", "Z"]
+    end
+  end
 end

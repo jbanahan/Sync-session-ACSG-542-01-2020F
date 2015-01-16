@@ -84,11 +84,21 @@ class FieldValidatorRule < ActiveRecord::Base
   end
 
   def view_groups
-    can_view_groups.to_s.split("\n").sort
+    # Need to do this because rules are loaded via migrations (which may be running to add the group)
+    if respond_to?(:can_view_groups)
+      can_view_groups.to_s.split("\n").sort
+    else
+      []
+    end
   end
 
   def edit_groups
-    can_edit_groups.to_s.split("\n").sort
+    # Need to do this because rules are loaded via migrations (which may be running to add the group)
+    if respond_to?(:can_edit_groups)
+      can_edit_groups.to_s.split("\n").sort
+    else
+      []
+    end
   end
 
   private
