@@ -7,7 +7,7 @@ class MessagesController < ApplicationController
     @messages = Message.where({:user_id => current_user.id, :folder => 'inbox'}).order("created_at DESC")
 
     respond_to do |format|
-      format.html { render layout: false }# index.html.erb
+      format.html { render layout: !params[:nolayout] }# index.html.erb
       format.xml  { render :xml => @messages }
     end
   end

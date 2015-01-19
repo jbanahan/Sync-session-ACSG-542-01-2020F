@@ -79,6 +79,7 @@ root.Chain =
     pane.show()
     $.ajax {
       url: pane.attr('content-url')
+      data: {nolayout:'true'}
       success: (data) ->
         extraTrigger = pane.attr('data-load-trigger')
         pane.html(data)
