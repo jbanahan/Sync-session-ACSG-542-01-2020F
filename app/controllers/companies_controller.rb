@@ -67,9 +67,9 @@ class CompaniesController < ApplicationController
   # POST /companies
   # POST /companies.xml
   def create
-    @company = Company.new.update_model_field_attributes(params[:company])
     action_secure(current_user.company.master, @company, {:verb => "create", :lock_check => false, :module_name=>"company"}) {
-      if @company.save
+      @company = Company.create(name:params[:company][:cmp_name])
+      if @company.errors.empty? && @company.update_model_field_attributes(params[:company])
         add_flash :notices, "Company created successfully."
       else
         errors_to_flash @company
