@@ -87,10 +87,9 @@ class OfficialTariff < ActiveRecord::Base
   end
   #return tariff for hts_code & country_id
   def self.find_cached_by_hts_code_and_country_id hts_code, country_id
-    t = CACHE.get("OfficialTariff:ct:#{hts_code.strip}:#{country_id}")
-    t = OfficialTariff.where(:country_id=>country_id,:hts_code=>hts_code).first if t.nil?
-    CACHE.set("OfficialTariff:ct:#{hts_code.strip}:#{country_id}",t) unless t.nil?
-    t
+    # t = CACHE.get("OfficialTariff:ct:#{hts_code.strip}:#{country_id}")
+    OfficialTariff.where(:country_id=>country_id,:hts_code=>hts_code).first
+    # CACHE.set("OfficialTariff:ct:#{hts_code.strip}:#{country_id}",t) unless t.nil?
   end
 
   #return all potential tariffs that match at the 6 digit level
