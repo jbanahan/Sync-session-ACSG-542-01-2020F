@@ -345,6 +345,8 @@ class User < ActiveRecord::Base
       return self.view_commercial_invoices?
     when CoreModule::SECURITY_FILING
       return self.view_security_filings?
+    when CoreModule::COMPANY
+      return self.view_vendors? || self.admin?
     end
     return false
   end
