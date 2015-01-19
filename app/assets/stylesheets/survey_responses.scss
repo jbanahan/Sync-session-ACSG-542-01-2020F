@@ -1,64 +1,7 @@
-#survey_response_inner {
-  #contact {
-    input {
-      width: 100%;
+@media print {
+  #survey-response-wrap {
+    .new-comment-wrap, .alert-warning, div[chain-attach], .last-updated {
+      display:none;
     }
-  }
-  textarea {
-    width: 100%;
-    height: 10em;
-    margin: 5px 0px;
-    padding: 0px;
-  }
-  .q_head {
-    font-size: 120%;
-    background-color: black;
-    color: white;
-    text-align: center;
-    margin: 0 0 5px 0;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-  .q_inner {
-    padding: 5px;
-    select  {
-      margin: auto;
-      font-size: 130%;
-      border: none;
-    }
-  }
-  .q_subhead {
-    font-weight: bold;
-    font-size: 120%;
-    color: #999; 
-    text-align: left;
-    margin: 30px 0px 5px 0px;
-  }
-  .q_content {
-    font-size: 110%;
-    padding: 5px 0 5px 10px;
-  }
-  .q_content, .comm {
-    border-left: 3px dashed #ccc;
-  }
-  .q_content:hover, .comm:hover {
-    border-left: 3px dashed black;
-  }
-  .c_warn {
-    margin: 5px 1%;
-    border: 2px solid #FF9900;
-    background-color: #FFFF66;
-    text-align: center;
-    padding: 5px 2px;
-    border-radius: 5px;
-  }
-  .comm {
-    padding: 5px 0 5px 10px;
-    margin: 2px;
-  }
-  .comm pre {
-    overflow-x: auto;
-    background: none;
-    white-space: pre-wrap;
   }
 }

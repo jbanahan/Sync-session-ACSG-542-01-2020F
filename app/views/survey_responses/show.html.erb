@@ -47,7 +47,7 @@
     </div>
   </div>
 <%-end-%>
-<div ng-app='SurveyResponseApp' ng-init='response_id = <%=@sr.id%>'>
+<div id='survey-response-wrap' ng-app='SurveyResponseApp' ng-init='response_id = <%=@sr.id%>'>
   <div class='container' ng-controller='srController'>
     <div chain-action-bar>
       <button class='btn btn-default' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
@@ -145,9 +145,9 @@
         </div>
       </div>
       <div class='row'>
-        <div class="col-md-12 text-right"><span class="label" ng-class='{"label-info": answer.hours_since_last_update<24, "label-default": answer.hours_since_last_update > 24}'>Updated <span am-time-ago='answer.updated_at'></span></span></div>
+        <div class="col-md-12 text-right last-updated"><span class="label" ng-class='{"label-info": answer.hours_since_last_update<24, "label-default": answer.hours_since_last_update > 24}'>Updated <span am-time-ago='answer.updated_at'></span></span></div>
       </div>
-      <div class='row' ng-show='warningMessage(answer).length > 0'>
+      <div class='row alert-warning' ng-show='warningMessage(answer).length > 0'>
         <div class='col-md-10 alert alert-warning'>
           {{warningMessage(answer)}}
         </div>
@@ -195,7 +195,7 @@
           {{com.content}}
         </div>
       </div>
-      <div class='row' ng-show="!resp.archived">
+      <div class='row new-comment-wrap' ng-show="!resp.archived">
         <div class='col-md-12'>
           <label for='new_comment'>New Comment:</label>
           <textarea id='new_comment' ng-model='answer.new_comment' rows='5' style='width:100%;'></textarea>
