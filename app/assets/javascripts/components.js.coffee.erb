@@ -172,6 +172,10 @@
     link: (scope,el,attrs) ->
       scope.$evalAsync () ->
         el.find('button').addClass('navbar-btn')
+        if attrs['includeWorkflow']
+          el.append('<ul class="nav navbar-nav navbar-right"><li><a data-toggle="modal" href="#modal-workflow"><span class="workflow-nav-icon glyphicon glyphicon-list-alt"></span></a></li></ul>')
+          ChainWorkflow.initWorkflow();
+        
       @
   }
 ]

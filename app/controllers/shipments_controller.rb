@@ -14,6 +14,7 @@ class ShipmentsController < ApplicationController
   def show
     @shipment_id = params[:id]
     @no_action_bar = true
+    @workflow_object = Shipment.find params[:id]
   end
 
   # GET /shipments/new
