@@ -514,7 +514,7 @@ class CoreModule
     r = {}
     core_modules.each do |cm|
       flds = cm.every_model_field {|mf| mf.can_view?(user) && inner_opts[:filter].call(mf)}
-      r[cm.label] = flds.map {|k, v| [v.label,k]}
+      r[cm.label] = flds.map {|k, v| [v.label,k]}.sort {|x, y| x[0] <=> y[0]}
     end
     r
   end
