@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-#require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
+require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
 
 def wd opts = {}
   {run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true, run_friday: true, run_saturday: true, run_sunday: true}.merge opts
@@ -18,3 +18,4 @@ SchedulableJob.where(run_class: "SurveyResponseUpdate").first_or_create! wd(run_
 SchedulableJob.where(run_class: "OfficialTariff").first_or_create! wd(run_interval: "12h", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
 SchedulableJob.where(run_class: "Message").first_or_create! wd(run_hour: "23", run_minute: "0", time_zone_name: "Eastern Time (US & Canada)")
 SchedulableJob.where(run_class: "ReportResult").first_or_create! wd(run_hour: "23", run_minute: "0", time_zone_name: "Eastern Time (US & Canada)")
+SchedulableJob.where(run_class: "OpenChain::WorkflowProcessor").first_or_create! wd(run_interval: "5m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)

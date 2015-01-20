@@ -15,6 +15,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
   def self.workflow_name
     'Vendor Setup'
   end
+
+  def self.skip? company
+    !company.vendor?
+  end
+
   def self.do_workflow! vendor, workflow_inst, user
     compliance = Group.use_system_group 'LL-COMPLIANCE', "Lumber Liquidators Compliance"
     finance = Group.use_system_group 'LL-FINANCE', 'Lumber Liquidators Finance'

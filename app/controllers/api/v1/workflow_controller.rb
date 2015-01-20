@@ -1,3 +1,4 @@
+require 'open_chain/workflow_processor'
 module Api; module V1; class WorkflowController < Api::V1::ApiController
   def set_multi_state 
     wt = WorkflowTask.find params[:id]
@@ -6,6 +7,7 @@ module Api; module V1; class WorkflowController < Api::V1::ApiController
     m = wt.multi_state_workflow_task
     m = wt.create_multi_state_workflow_task if m.nil?
     m.update_attributes(state:params[:state])
+    OpenChain::WorkflowProcessor.new.process! wt.workflow_instance.base_object, current_user
     render json:{state:m.state}
   end
 

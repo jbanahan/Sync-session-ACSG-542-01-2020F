@@ -8,9 +8,13 @@ describe Api::V1::WorkflowController do
   describe :set_multi_state do
     before :each do
       @wt = Factory(:workflow_task,test_class_name:'OpenChain::WorkflowTester::MultiStateWorkflowTest',payload_json:'{"state_options":["yes","no"]}')
+      @mp = double(:mock_processor)
+      @mp.stub(:process!)
+      OpenChain::WorkflowProcessor.stub(:new).and_return(@mp)
     end
     it "should update state" do
       WorkflowTask.any_instance.stub(:can_edit?).and_return true
+      @mp.should_receive(:process!).with(@wt.workflow_instance.base_object,@u)
       put :set_multi_state, id: @wt.id, state: 'yes'
       @wt.reload
       expect(@wt.multi_state_workflow_task.state).to eq 'yes'

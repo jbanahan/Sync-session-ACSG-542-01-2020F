@@ -12,6 +12,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
       expect(described_class.workflow_name).to eq 'Vendor Setup'
     end
   end
+  describe :skip? do
+    it "should skip non-vendor" do
+      expect(described_class.skip?(@ll)).to be_true
+      expect(described_class.skip?(@v)).to be_false
+      expect{described_class.update_workflow!(@ll,@u)}.to_not change(WorkflowInstance,:count)
+    end
+  end
   describe :do_workflow! do
     before :each do
       @wi = Factory(:workflow_instance)

@@ -597,6 +597,8 @@ $(document).ready () ->
         window.location=link
 
   $(document).on 'chain:workflow-load', (evt) ->
+    ChainWorkflow.initWorkflowButtons (data) ->
+      Chain.showNotificationCenterPane('tasks')
     $('.task-widget [rel-date]').each () ->
       t = $(this)
       t.html(t.attr('rel-date-prefix')+moment(t.attr('rel-date')).fromNow())

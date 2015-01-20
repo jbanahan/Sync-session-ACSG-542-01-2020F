@@ -5,6 +5,20 @@ root.ChainWorkflow =
     ChainWorkflow.reloadWorkflow(coreObj.coreModule,coreObj.baseObjectId)
     ChainWorkflow.loadOpenCount(coreObj.coreModule,coreObj.baseObjectId)
 
+  initWorkflowButtons: (success) ->
+    $(document).on 'click', '[data-wtask-multi-opt]', () ->
+      btn = $(this)
+      wfId = btn.attr('data-wtask-id')
+      $.ajax {
+        url:'/api/v1/workflow/'+wfId+'/set_multi_state.json'
+        contentType:'application/json'
+        type:'PUT'
+        dataType: 'json'
+        data: JSON.stringify({state:btn.attr('data-wtask-multi-opt')})
+        success: (data) ->
+          success(data)
+      }
+
   reloadWorkflow: (coreModule,baseObjectId) ->
     mb = $('#modal-workflow .workflow-content')
     mb.html('loading')
@@ -38,18 +52,7 @@ root.ChainWorkflow =
   initWorkflow: ->
     coreObj = ChainWorkflow.coreObject()
     ChainWorkflow.loadOpenCount(coreObj.coreModule,coreObj.baseObjectId)
-    $(document).on 'click', '[data-wtask-multi-opt]', () ->
-      console.log this
-      btn = $(this)
-      wfId = btn.attr('data-wtask-id')
-      $.ajax {
-        url:'/api/v1/workflow/'+wfId+'/set_multi_state.json'
-        contentType:'application/json'
-        type:'PUT'
-        dataType: 'json'
-        data: JSON.stringify({state:btn.attr('data-wtask-multi-opt')})
-        success: (data) ->
-          ChainWorkflow.reload()
-      }
+    ChainWorkflow.initWorkflowButtons (data) ->
+      ChainWorkflow.reload()
     $(document).on 'show.bs.modal', '#modal-workflow', () ->
       ChainWorkflow.reload()
