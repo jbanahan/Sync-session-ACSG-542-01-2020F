@@ -30,6 +30,11 @@ SELECT p.id as 'Clear Error', company as 'Intacct Company', (SELECT customer_num
 FROM intacct_payables p
 WHERE intacct_errors IS NOT NULL and intacct_key IS NULL AND company IN (#{company_clause})
 SQL
+    check_query = <<-SQL
+SELECT c.id as 'Clear Error', company as 'Intacct Company', customer_number  as 'Customer', vendor_number as 'Vendor', check_number as 'Check Number', check_date as 'Check Date', bill_number as 'Bill Number', intacct_errors as 'Suggested Fix', intacct_errors as 'Actual Intacct Error'
+FROM intacct_checks c
+WHERE intacct_errors IS NOT NULL and intacct_key IS NULL AND company IN (#{company_clause})
+SQL
 
     total_rows = 0
     wb = XlsMaker.create_workbook 'Receivable Errors'
@@ -45,6 +50,13 @@ SQL
     total_rows += rows
     if rows == 0
       XlsMaker.add_body_row sheet, 1, ["No Intacct Payable errors to report."]
+    end
+
+    sheet = XlsMaker.create_sheet wb, "Check Errors"
+    rows = table_from_query sheet, check_query, {0=>link_lambda('check'), 7=>payable_suggested_fix_lambda}
+    total_rows += rows
+    if rows == 0
+      XlsMaker.add_body_row sheet, 1, ["No Intacct Check errors to report."]
     end
 
     if total_rows > 0
@@ -64,8 +76,7 @@ SQL
   private
     def link_lambda intacct_type
       lambda { |result_set_row, raw_column_value|
-        base = intacct_type == "receivable" ? "intacct_receivables" : "intacct_payables"
-        url = XlsMaker.excel_url "/#{base}/#{raw_column_value}/clear"
+        url = XlsMaker.excel_url "/intacct_errors/#{raw_column_value}/clear_#{intacct_type}"
         XlsMaker.create_link_cell url, "Clear This Error"
       }
     end

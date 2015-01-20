@@ -18,12 +18,12 @@ describe OpenChain::Report::IntacctExceptionReport do
 
     it "emails receivable and payable errors to given addresses" do
       r = IntacctReceivable.create! company: 'A', customer_number: 'Cust', invoice_number: "Inv", invoice_date: Time.zone.now, intacct_errors: "Errors"
-
       p = IntacctPayable.create! company: 'A', vendor_number: 'Vend', bill_number: "Bill", bill_date: Time.zone.now, intacct_errors: "Errors"
       p.intacct_payable_lines.create! customer_number: "Cust"
+      c = IntacctCheck.create! company: 'A', customer_number: "Cust", vendor_number: 'Vend', bill_number: "Bill", check_date: Time.zone.now, check_number: '123', intacct_errors: "Errors"
 
       error_count = described_class.new.run ['A', 'B'], ['me@there.com']
-      expect(error_count).to eq 2
+      expect(error_count).to eq 3
       mail = ActionMailer::Base.deliveries.pop
       expect(mail).not_to be_nil
       expect(mail.to).to eq ["me@there.com"]
@@ -37,13 +37,19 @@ describe OpenChain::Report::IntacctExceptionReport do
 
       expect(sheet.row(0)).to eq ["Clear Error", "Intacct Company", "Customer", "Invoice Number", "Invoice Date", "Suggested Fix", "Actual Intacct Error"]
       expect(sheet.row(1)).to eq ["Clear This Error", "A", "Cust", "Inv", excel_date(r.invoice_date.to_date), "Unknown Error. Contact support@vandegriftinc.com to resolve error.", "Errors"]
-      expect(sheet.row(1)[0]).to eq Spreadsheet::Link.new(XlsMaker.excel_url("/intacct_receivables/#{r.id}/clear"), "Clear This Error")
+      expect(sheet.row(1)[0]).to eq Spreadsheet::Link.new(XlsMaker.excel_url("/intacct_errors/#{r.id}/clear_receivable"), "Clear This Error")
 
       sheet = wb.worksheets.find {|s| s.name == "Payable Errors"}
 
       expect(sheet.row(0)).to eq ["Clear Error", "Intacct Company", "Customer", "Vendor", "Bill Number", "Bill Date", "Suggested Fix", "Actual Intacct Error"]
       expect(sheet.row(1)).to eq ["Clear This Error", "A", "Cust", "Vend", "Bill", excel_date(p.bill_date.to_date), "Unknown Error. Contact support@vandegriftinc.com to resolve error.", "Errors"]
-      expect(sheet.row(1)[0]).to eq Spreadsheet::Link.new(XlsMaker.excel_url("/intacct_payables/#{r.id}/clear"), "Clear This Error")
+      expect(sheet.row(1)[0]).to eq Spreadsheet::Link.new(XlsMaker.excel_url("/intacct_errors/#{r.id}/clear_payable"), "Clear This Error")
+
+      sheet = wb.worksheets.find {|s| s.name == "Check Errors"}
+
+      expect(sheet.row(0)).to eq ["Clear Error", "Intacct Company", "Customer", "Vendor", "Check Number", "Check Date", "Bill Number", "Suggested Fix", "Actual Intacct Error"]
+      expect(sheet.row(1)).to eq ["Clear This Error", "A", "Cust", "Vend", "123", excel_date(c.check_date.to_date), "Bill", "Unknown Error. Contact support@vandegriftinc.com to resolve error.", "Errors"]
+      expect(sheet.row(1)[0]).to eq Spreadsheet::Link.new(XlsMaker.excel_url("/intacct_errors/#{c.id}/clear_check"), "Clear This Error")
     end
 
     it "does nothing if no rows are returned in either report" do
@@ -124,6 +130,7 @@ describe OpenChain::Report::IntacctExceptionReport do
     it "runs with passed in options" do
       r = IntacctReceivable.create! company: 'A', customer_number: 'Cust', invoice_number: "Inv", invoice_date: Time.zone.now, intacct_errors: "Errors"
       p = IntacctPayable.create! company: 'A', vendor_number: 'Vend', bill_number: "Bill", bill_date: Time.zone.now, intacct_errors: "Errors"
+      c = IntacctCheck.create! company: 'A', customer_number: "Cust", vendor_number: 'Vend', bill_number: "Bill", check_date: Time.zone.now, check_number: '123', intacct_errors: "Errors"
 
       described_class.run_schedulable({'email_to'=>["me@there.com"], 'companies'=>['A']})
 
@@ -131,6 +138,7 @@ describe OpenChain::Report::IntacctExceptionReport do
       expect(mail.to).to eq ["me@there.com"]
       expect(get_emailed_worksheet "Receivable Errors", mail).not_to be_nil
       expect(get_emailed_worksheet "Payable Errors", mail).not_to be_nil
+      expect(get_emailed_worksheet "Check Errors", mail).not_to be_nil
     end
 
     it "raises an error if email is missing" do

@@ -98,9 +98,10 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@invoice_file.finish_at.to_date).to eq Time.zone.now.to_date
     end
 
-    it "uses default list of users if no user is given" do
-      luca = Factory(:user, username: "luca")
-      ival = Factory(:user, username: "ivalcarcel")
+    it "uses users in accounting group if no user is given" do
+      g = Group.create! system_code: 'intacct-accounting'
+      user = Factory(:user)
+      user.groups << g
 
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
@@ -116,31 +117,32 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
       @h.should_receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
-      @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [ival.email, luca.email]).and_return 2
+      @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 2
 
       @h.process
 
-      expect(luca.messages.first).not_to be_nil
-      expect(ival.messages.first).not_to be_nil
+      expect(user.messages.first).not_to be_nil
     end
   end
 
   describe "can_view?" do
-    it "allows only certain people to view" do
+    it "allows only people in accounting group to view" do
       ms = MasterSetup.new system_code: 'www-vfitrack-net'
       MasterSetup.stub(:get).and_return ms
-      ['luca', 'ivalcarcel', 'kblackman', 'jhulford', 'bglick'].each do |u|
-        user = Factory(:user, username: u)
-        expect(described_class.can_view?(user)).to be_true
-      end
-
+      g = Group.create! system_code: 'intacct-accounting'
+      user = Factory(:user)
+      user.groups << g
+      expect(described_class.can_view?(user)).to be_true
       expect(described_class.can_view?(Factory(:user, username: "yada-yada"))).to be_false
     end
 
     it "disallows access from other systems" do
       ms = MasterSetup.new system_code: 'other'
       MasterSetup.stub(:get).and_return ms
-      expect(described_class.can_view?(Factory(:user, username: "jhulford"))).to be_false
+      g = Group.create! system_code: 'intacct-accounting'
+      user = Factory(:user)
+      user.groups << g
+      expect(described_class.can_view?(user)).to be_false
     end
   end
 

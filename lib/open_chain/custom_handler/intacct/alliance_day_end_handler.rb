@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   include ActionView::Helpers::NumberHelper
 
   # Replace this array w/ group reference once that is live
-  VFI_ACCOUNTING_USERS ||= ["luca", "ivalcarcel"]
+  
 
   def self.process_delayed check_register_file_id, invoice_file_id, user_id
     user = user_id ? User.find(user_id) : nil
@@ -26,14 +26,13 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   end
 
   def self.can_view? user
-    # This should be switched to a user group once we implement those
-    (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) && ['luca', 'ivalcarcel', 'kblackman', 'jhulford', 'bglick'].include?(user.username.downcase)
+    IntacctErrorsController.allowed_user?(user)
   end
 
   def process user = nil
     users = []
     if user.nil?
-      users = User.where(username: VFI_ACCOUNTING_USERS).order(:username).all
+      users = User.joins(:groups).where(groups: {system_code: IntacctErrorsController::VFI_ACCOUNTING_USERS}).all
       raise "No users found to send Day End information to." if users.size == 0
     else
       users << user

@@ -1,0 +1,128 @@
+<% if @checks.blank? && @payables.blank? && @receivables.blank? %>
+<div class="row">
+    <div class="col-md-12 text-center">
+      <h2>
+        There are no Intacct Integration errors that need to be cleared.
+      </h2>
+    </div>
+  </div>
+<% end %>
+
+<% if @checks.length > 0 %>
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h2>
+        Intacct Checks Integration Errors
+      </h2>
+    </div>
+  </div>
+
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>&nbsp;</th>
+        <th>Company</th>
+        <th>Customer</th>
+        <th>Vendor</th>
+        <th>Check Number</th>
+        <th>Check Date</th>
+        <th>Bill Number</th>
+        <th>Suggested Fix</th>
+        <th>Intacct Error</th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @checks.each do |c| %>
+      <tr>
+        <td><%=link_to 'Clear Error', clear_check_intacct_error_path(c), method: :put %></td>
+        <td><%=c.company%></td>
+        <td><%=c.customer_number%></td>
+        <td><%=c.vendor_number%></td>
+        <td><%=c.check_number%></td>
+        <td><%=c.check_date.strftime("%m/%d/%Y")%></td>
+        <td><%=c.bill_number%></td>
+        <td><%=IntacctPayable.suggested_fix c.intacct_errors%></td>
+        <td><pre style='height:150px;overflow:auto;resize:both;width:35em;'><%=c.intacct_errors%></pre></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+<% if @payables.length > 0 %>
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h2>
+        Intacct Payable Integration Errors
+      </h2>
+    </div>
+  </div>
+
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>&nbsp;</th>
+        <th>Company</th>
+        <th>Customer</th>
+        <th>Vendor</th>
+        <th>Bill Number</th>
+        <th>Bill Date</th>
+        <th>Suggested Fix</th>
+        <th>Intacct Error</th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @payables.each do |p| %>
+      <tr>
+        <td><%=link_to 'Clear Error', clear_payable_intacct_error_path(p), method: :put %></td>
+        <td><%=p.company%></td>
+        <td><%=p.intacct_payable_lines.first.customer_number%></td>
+        <td><%=p.vendor_number%></td>
+        <td><%=p.bill_number%></td>
+        <td><%=p.bill_date.strftime("%m/%d/%Y")%></td>
+        <td><%=IntacctPayable.suggested_fix p.intacct_errors%></td>
+        <td><pre style='height:150px;overflow:auto;resize:both;width:35em;'><%=p.intacct_errors%></pre></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% end %>
+<% if @receivables.length > 0 %>
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h2>
+        Intacct Receivable Integration Errors
+      </h2>
+    </div>
+  </div>
+
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>&nbsp;</th>
+        <th>Company</th>
+        <th>Customer</th>
+        <th>Invoice Number</th>
+        <th>Invoice Date</th>
+        <th>Suggested Fix</th>
+        <th>Intacct Error</th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @receivables.each do |r| %>
+      <tr>
+        <td><%=link_to 'Clear Error', clear_receivable_intacct_error_path(r), method: :put %></td>
+        <td><%=r.company%></td>
+        <td><%=r.customer_number%></td>
+        <td><%=r.invoice_number%></td>
+        <td><%=r.invoice_date.strftime("%m/%d/%Y")%></td>
+        <td><%=IntacctReceivable.suggested_fix r.intacct_errors%></td>
+        <td><pre style='height:10em;overflow:auto;resize:both;width:35em;'><%=r.intacct_errors%></pre></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% end %>
+<%-content_for :action_bar do-%>
+  <%=button_to "Push To Intacct", {action: :push_to_intacct}, method: :post, class:'btn btn-default navbar-btn', form_class:'inline-button-to' -%>
+<% end %>

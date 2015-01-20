@@ -593,14 +593,16 @@ OpenChain::Application.routes.draw do
   end
   resources :project_deliverables, only: [:index]
   resources :schedulable_jobs, except: [:show]
-  resources :intacct_receivables, only: [:index] do
-    put 'clear', on: :member
-    get 'clear', on: :member
+  resources :intacct_errors, only: [:index] do
+    # Gets are here to accomodate clearing directly from Excel exception report
+    put 'clear_receivable', on: :member
+    get 'clear_receivable', on: :member
+    put 'clear_payable', on: :member
+    get 'clear_payable', on: :member
+    put 'clear_check', on: :member
+    get 'clear_check', on: :member
   end
-  resources :intacct_payables, only: [:index] do
-    put 'clear', on: :member
-    get 'clear', on: :member
-  end
+  match "/intacct_errors/push_to_intacct" => "intacct_errors#push_to_intacct", via: :post
 
   resources :data_cross_references do
     get 'show' => "data_cross_references#edit"
