@@ -30,7 +30,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
       OpenChain::WorkflowTester::AttachmentTypeWorkflowTest, 
       'Attach Vendor Agreement', 
       compliance, 
-      {'attachment_type'=>'Vendor Agreement'}
+      {'attachment_type'=>'Vendor Agreement'},
+      nil,
+      view_path(vendor)
     if vendor_agreement_attach.test!
       vendor_agreement_approve = first_or_create_test! workflow_inst,
         'LL-VEN-AGR-APPROVE',
@@ -39,7 +41,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
         'Approve Vendor Agreement',
         compliance,
         {'state_options'=>['Approve','Reject']},
-        due_in_days(7)
+        due_in_days(7),
+        view_path(vendor)
         if vendor_agreement_approve.test! && vendor_agreement_approve.multi_state_workflow_task.state=='Approve'
           finance_approve = first_or_create_test! workflow_inst,
             'LL-FIN-APR',
@@ -47,7 +50,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
             OpenChain::WorkflowTester::MultiStateWorkflowTest,
             'Approve For SAP',
             finance,
-            {'state_options'=>['Approve','Reject']}
+            {'state_options'=>['Approve','Reject']},
+            nil,
+            view_path(vendor)
           if finance_approve.test! && finance_approve.multi_state_workflow_task.state=='Approve'
             sap_cd = prep_custom_definitions([:sap_company])[:sap_company]
             sap_num = first_or_create_test! workflow_inst,
@@ -57,7 +62,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
               'Add SAP Number',
               finance,
               {'model_fields'=>[{'uid'=>sap_cd.model_field_uid}]},
-              due_in_days(3)
+              due_in_days(3),
+              view_path(vendor)
             sap_num.test!
           end
         end
@@ -68,5 +74,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
   private 
   def self.due_in_days increment
     Time.use_zone('Eastern Time (US & Canada)') {return increment.days.from_now.beginning_of_day}
+  end
+
+  def self.view_path base_object
+    "/vendors/#{base_object.id}"
   end
 end; end; end; end;

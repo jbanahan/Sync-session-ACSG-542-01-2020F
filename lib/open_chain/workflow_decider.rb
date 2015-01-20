@@ -22,14 +22,15 @@ module OpenChain; module WorkflowDecider
     end
   end
 
-  def first_or_create_test! workflow_instance, task_type_code, display_rank, test_class, name, assigned_group, payload_hash, due_at=nil
+  def first_or_create_test! workflow_instance, task_type_code, display_rank, test_class, name, assigned_group, payload_hash, due_at=nil, view_path=nil
     workflow_instance.workflow_tasks.where(task_type_code:task_type_code).first_or_create!(
       display_rank:display_rank,
       test_class_name:test_class.name,
       payload_json:payload_hash.to_json,
       name:name,
       group_id:assigned_group.id,
-      due_at:due_at
+      due_at:due_at,
+      view_path: view_path
     )
   end
 

@@ -34,7 +34,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
         display_rank:100,
         test_class_name:'OpenChain::WorkflowTester::AttachmentTypeWorkflowTest',
         payload_json:'{"attachment_type":"Vendor Agreement"}',
-        passed_at:nil
+        passed_at:nil,
+        view_path:"/vendors/#{@v.id}"
       )
       expect(tasks.count).to eq 1
       expect(tasks.first.group.system_code).to eq 'LL-COMPLIANCE'
@@ -49,7 +50,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
         task_type_code:'LL-VENDOR-AGREEMENT',
         display_rank:100,
         test_class_name:'OpenChain::WorkflowTester::AttachmentTypeWorkflowTest',
-        payload_json:'{"attachment_type":"Vendor Agreement"}'
+        payload_json:'{"attachment_type":"Vendor Agreement"}',
+        view_path:"/vendors/#{@v.id}"
       ).first.passed?).to be_true
     end
     context 'vendor agreement exists' do
@@ -60,7 +62,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
           display_rank:100,
           test_class_name:'OpenChain::WorkflowTester::AttachmentTypeWorkflowTest',
           payload_json:'{"attachment_type":"Vendor Agreement"}',
-          passed_at:1.hour.ago
+          passed_at:1.hour.ago,
+          view_path:"/vendors/#{@v.id}"
         )
         @v.attachments.create(attachment_type:'Vendor Agreement')
       end

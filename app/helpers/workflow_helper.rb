@@ -197,7 +197,8 @@ module WorkflowHelper
   end
 
   def link_to_task_object_button task, primary = false
-    link_to('View',polymorphic_path(task.base_object),:class=>"btn #{!task.passed? && primary ? 'btn-primary' : 'btn-default'}")
+    url = task.view_path.blank? ? polymorphic_path(task.base_object) : task.view_path
+    link_to('View',url,:class=>"btn #{!task.passed? && primary ? 'btn-primary' : 'btn-default'}")
   end
 
   def due_at_label task
