@@ -78,9 +78,6 @@ class CustomReportEntryInvoiceBreakdown < CustomReport
     #write headings
     header = []
 
-    if self.include_links?
-      header << "Web Links"
-    end
     search_cols.each do |col| 
       header << col
     end

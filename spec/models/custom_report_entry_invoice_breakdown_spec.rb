@@ -94,8 +94,10 @@ describe CustomReportEntryInvoiceBreakdown do
     it "should include web links as first column" do
       MasterSetup.get.update_attributes(:request_host=>"http://xxxx")
       rpt = CustomReportEntryInvoiceBreakdown.create!(:include_links=>true)
-      r = rpt.to_arrays(@master_user)[1]
-      r[0].should == @invoice_line_1.broker_invoice.entry.view_url
+      rows = rpt.to_arrays(@master_user)
+      expect(rows[0][0]).to eq "Web Links"
+      expect(rows[0][1]).to eq "CD1"
+      rows[1][0].should == @invoice_line_1.broker_invoice.entry.view_url
     end
     it "should trim by search criteria" do
       bi2_line = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>222)
