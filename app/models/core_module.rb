@@ -513,10 +513,8 @@ class CoreModule
 
     r = {}
     core_modules.each do |cm|
-      flds = cm.model_fields(user).values.sort {|x,y| x.label <=> y.label}
-      fld_array = []
-      flds.each {|f| fld_array << [f.label,f.uid] if inner_opts[:filter].call(f)}
-      r[cm.label] = fld_array
+      flds = cm.every_model_field {|mf| mf.can_view?(user) && inner_opts[:filter].call(mf)}
+      r[cm.label] = flds.map {|k, v| [v.label,k]}
     end
     r
   end

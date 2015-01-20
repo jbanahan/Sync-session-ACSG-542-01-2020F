@@ -75,7 +75,13 @@ module ApplicationHelper
   def select_model_fields_tag(name,selected,opts={})
     opts[:class] ||= ''
     opts[:class] << ' form-control'
-    select_tag name, grouped_options_for_select(CoreModule.grouped_options(User.current),selected,"Select a Field"), opts
+
+    inner_opts = {}
+    if opts[:filter]
+      inner_opts[:filter] = opts.delete :filter
+    end
+    
+    select_tag name, grouped_options_for_select(CoreModule.grouped_options(User.current, inner_opts),selected,"Select a Field"), opts
   end
 
   #builds a text field to back a field represented with a model_field_uid in the ModelField constants.

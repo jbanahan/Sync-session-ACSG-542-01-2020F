@@ -28,7 +28,14 @@ class FieldValidatorRulesController < ApplicationController
 
   def index
     admin_secure {
-      @rules = FieldValidatorRule.all
+      @rules = FieldValidatorRule.all.sort do |a, b| 
+        mod_a, mod_b = CoreModule.find_by_class_name(a.module_type).label, CoreModule.find_by_class_name(b.module_type).label
+        val = mod_a <=> mod_b
+        if val == 0
+          val = FieldLabel.default_value(a.model_field_uid) <=> FieldLabel.default_value(b.model_field_uid)
+        end
+        val
+      end
     }
   end
 

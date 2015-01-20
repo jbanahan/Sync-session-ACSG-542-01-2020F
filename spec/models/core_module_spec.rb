@@ -164,4 +164,14 @@ describe CoreModule do
       end
     end
   end
+
+  describe "group_options" do
+    it "returns core module fields in a format usable for grouped_options_for_select" do
+      user = User.new
+      user.stub(:view_module?) {|m| m.label == 'Product'}
+      fields = CoreModule.grouped_options user
+      expect(fields['Product'].size).to be > 0
+      expect(fields['Product'].find {|v| v[1] == :prod_uid}).to eq ["Unique Identifier", :prod_uid]
+    end
+  end
 end
