@@ -4,6 +4,20 @@ class SchedulableJob < ActiveRecord::Base
   attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday, 
     :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running
 
+  def self.create_default_jobs!
+    base_opts = {run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true, run_friday: true, run_saturday: true, run_sunday: true}
+    # Any "standard" schedulable job should be added here
+    SchedulableJob.where(run_class: "OpenChain::StatClient").first_or_create! base_opts.merge(run_interval: "4h", time_zone_name: "Eastern Time (US & Canada)")
+    SchedulableJob.where(run_class: "OpenChain::IntegrationClient").first_or_create! base_opts.merge(run_interval: "1m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
+    SchedulableJob.where(run_class: "BusinessValidationTemplate").first_or_create! base_opts.merge(run_interval: "10m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
+    SchedulableJob.where(run_class: "SurveyResponseUpdate").first_or_create! base_opts.merge(run_interval: "1h", time_zone_name: "Eastern Time (US & Canada)")
+    SchedulableJob.where(run_class: "OfficialTariff").first_or_create! base_opts.merge(run_interval: "12h", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
+    SchedulableJob.where(run_class: "Message").first_or_create! base_opts.merge(run_hour: "23", run_minute: "0", time_zone_name: "Eastern Time (US & Canada)")
+    SchedulableJob.where(run_class: "ReportResult").first_or_create! base_opts.merge(run_hour: "23", run_minute: "0", time_zone_name: "Eastern Time (US & Canada)")
+    SchedulableJob.where(run_class: "OpenChain::WorkflowProcessor").first_or_create! base_opts.merge(run_interval: "5m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
+    SchedulableJob.where(run_class: "OpenChain::DailyTaskEmailJob").first_or_create! base_opts.merge(run_hour: '5', run_minute: '0', time_zone_name: "Eastern Time (US & Canada)")
+  end
+
   def run log=nil
     begin
       rc = self.run_class.gsub("::",":")

@@ -1,1 +1,15 @@
-<%=my_task_panel%>
+<div class='container-fluid task-wrap'>
+  <div class='row' style='margin-bottom:10px;'>
+    <div class="col-md-12">
+      <div class="btn-group">
+        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+          <span class='glyphicon glyphicon-cog'></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a href="#" class='task-email-toggle'><span class='task-email-check-wrap'><%if current_user.task_email?%><span class='glyphicon glyphicon-ok'></span><%end%></span> Send daily task summary</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <%=my_task_panel%>
+</div>

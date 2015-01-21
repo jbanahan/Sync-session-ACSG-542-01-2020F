@@ -106,7 +106,7 @@ module OpenChain
       upgrade_completed
     end
 
-    private
+    # private
     def finish_upgrade_log
       @upgrade_log.update_attributes(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
     end
@@ -126,11 +126,17 @@ module OpenChain
       capture_and_log "touch tmp/stop.txt"
       migrate
       precompile
+      init_schedulable_jobs
       log_me "Touching restart.txt"
       capture_and_log "touch tmp/restart.txt"
       log_me "Upgrade complete"
     end
     
+    def init_schedulable_jobs
+      load 'app/models/schedulable_job.rb' #get latest code
+      SchedulableJob.create_default_jobs!
+    end
+
     def migrate
       c = 0
       #10 minute wait - 5 minute wait proved to be a bit short once or twice when running migrations on data associated with a large table

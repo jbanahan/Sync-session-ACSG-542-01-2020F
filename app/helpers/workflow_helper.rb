@@ -202,10 +202,6 @@ module WorkflowHelper
   end
 
   def due_at_label task
-    return "Complete" if task.passed?
-    return "No Due Date" if task.due_at.nil?
-    return "Overdue" if task.overdue?
-    return "Upcoming" if task.due_at < 3.days.from_now
-    return "Later"
+    task.due_at_label
   end
 end

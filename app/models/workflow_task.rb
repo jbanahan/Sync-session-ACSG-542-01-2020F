@@ -3,6 +3,14 @@ require 'open_chain/workflow_tester/multi_state_workflow_test'
 require 'open_chain/workflow_tester/model_field_workflow_test'
 
 class WorkflowTask < ActiveRecord::Base
+  DUE_AT_LABELS = ["Complete","No Due Date","Overdue","Upcoming","Later"]
+  DUE_AT_DESCRIPTIONS = {
+    'Complete'=>"complete",
+    'No Due Date'=>"don't have a due date",
+    'Overdue'=>"already overdue",
+    'Upcoming'=>"due in the next 3 days",
+    'Later'=>"due more than three days from now"
+  }
   belongs_to :workflow_instance, inverse_of: :workflow_tasks, touch: true
   belongs_to :group, inverse_of: :workflow_tasks
   has_one :multi_state_workflow_task, inverse_of: :workflow_task, dependent: :destroy
@@ -24,6 +32,14 @@ class WorkflowTask < ActiveRecord::Base
   def overdue?
     return false unless self.due_at && ! self.passed?
     return self.due_at < 0.seconds.ago
+  end
+
+  def due_at_label
+    return "Complete" if self.passed?
+    return "No Due Date" if self.due_at.nil?
+    return "Overdue" if self.overdue?
+    return "Upcoming" if self.due_at < 3.days.from_now
+    return "Later"
   end
 
   def test_class

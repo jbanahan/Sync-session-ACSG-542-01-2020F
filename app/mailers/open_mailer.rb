@@ -56,6 +56,25 @@ EOS
     m
   end
 
+  def send_tasks user
+    @user = user
+    @tasks = WorkflowTask.for_user(user).not_passed.order('workflow_tasks.due_at DESC')
+    @grouped_tasks = {}
+    (WorkflowTask::DUE_AT_LABELS - ['Complete']).each {|l| @grouped_tasks[l] = []}
+    @tasks.each do |t|
+      lbl = t.due_at_label
+      @grouped_tasks[lbl] << t
+    end
+    @link = emailer_host(user)
+    mail(to: user.email, subject:"[VFI Track] Your Tasks") do |format|
+      if user.email_format == 'text'
+        format.text
+      else
+        format.html
+      end
+    end
+  end
+
   def send_change(history,subscription,text_only)
     details = history.details_hash
     type = details[:type].nil? ? "Item" : details[:type]

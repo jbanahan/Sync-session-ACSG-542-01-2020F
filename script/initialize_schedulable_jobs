@@ -9,13 +9,4 @@ end
 # Ensure the integration account exists
 integration = User.integration
 
- 
-# Any "standard" schedulable job should be added here
-SchedulableJob.where(run_class: "OpenChain::StatClient").first_or_create! wd(run_interval: "4h", time_zone_name: "Eastern Time (US & Canada)")
-SchedulableJob.where(run_class: "OpenChain::IntegrationClient").first_or_create! wd(run_interval: "1m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
-SchedulableJob.where(run_class: "BusinessValidationTemplate").first_or_create! wd(run_interval: "10m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
-SchedulableJob.where(run_class: "SurveyResponseUpdate").first_or_create! wd(run_interval: "1h", time_zone_name: "Eastern Time (US & Canada)")
-SchedulableJob.where(run_class: "OfficialTariff").first_or_create! wd(run_interval: "12h", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
-SchedulableJob.where(run_class: "Message").first_or_create! wd(run_hour: "23", run_minute: "0", time_zone_name: "Eastern Time (US & Canada)")
-SchedulableJob.where(run_class: "ReportResult").first_or_create! wd(run_hour: "23", run_minute: "0", time_zone_name: "Eastern Time (US & Canada)")
-SchedulableJob.where(run_class: "OpenChain::WorkflowProcessor").first_or_create! wd(run_interval: "5m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
+ SchedulableJob.create_default_jobs!

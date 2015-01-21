@@ -1,0 +1,13 @@
+Your Tasks
+==========
+
+<%if @tasks.size == 0 %>
+Congratulations! You don't have any tasks today.
+<% else %>
+<%@grouped_tasks.keys.each do |group_label|%>
+<%=@grouped_tasks[group_label].count%> <%=group_label%> tasks.
+<%end%>
+<% end %>
+
+==========
+https://<%=@link%>

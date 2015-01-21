@@ -1,0 +1,24 @@
+<table style='width:100%;border:none'>
+  <tbody>
+    <tr>
+      <td style='text-align:center'>
+        <h1>Your Tasks</h1>
+      </td>
+    </tr>
+    <%if @tasks.size == 0 %>
+      <tr>
+        <td>
+          Congratulations! You don't have any tasks today.
+        </td>
+      </tr>
+    <% else %>
+        <%@grouped_tasks.keys.each do |group_label|%>
+          <%cnt = @grouped_tasks[group_label].count%>
+          <tr><td><h3 style='<%=group_label=='Overdue' && cnt > 0 ? 'color:red;' : ''%><%=cnt==0 ? 'color:#5C5C5C;' : ''%>'>
+            <%=cnt%> tasks <%=WorkflowTask::DUE_AT_DESCRIPTIONS[group_label]%>.
+          </h3></td></tr>
+        <%end%>
+      <% end %>
+      <tr><td><a href='https://<%=@link%>'>Click here to login.</a></td></tr>
+  </tbody>
+</table>

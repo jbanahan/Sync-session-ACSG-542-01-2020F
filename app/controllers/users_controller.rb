@@ -124,6 +124,12 @@ class UsersController < ApplicationController
       render json: {msg_state:current_user.email_new_messages}
     end
 
+    def task_email
+      current_user.task_email = !current_user.task_email
+      current_user.save
+      render json: {msg_state:current_user.task_email}
+    end
+
     def disable
       toggle_enabled
     end

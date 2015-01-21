@@ -401,16 +401,6 @@ root.Chain =
               $('#message-panel-'+msgId).fadeOut()
           }
 
-      $('#notification-center').on 'click', '.email-message-toggle', (evt) ->
-        evt.preventDefault()
-        $.ajax {
-          url:'/users/email_new_message.json'
-          success: (data) ->
-            h = ''
-            h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
-            $('#notification-center .email-message-check-wrap').html(h)
-        }
-
       $('#notification-center').on 'click', '.show-time-btn', (evt) ->
         t = $(this)
         if(t.html()==t.attr('title')) 
@@ -631,6 +621,23 @@ $(document).ready () ->
       targetTableSelector = $(e.target).attr('data-infinite-table-filter')
       Chain.processInfiniteSelectReset(targetTableSelector)
 
-
+  $(document).on 'click', '.email-message-toggle', (evt) ->
+    evt.preventDefault()
+    $.ajax {
+      url:'/users/email_new_message.json'
+      success: (data) ->
+        h = ''
+        h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
+        $('.message-wrap .email-message-check-wrap').html(h)
+    }
+  $(document).on 'click', '.task-email-toggle', (evt) ->
+    evt.preventDefault()
+    $.ajax {
+      url:'/users/task_email.json'
+      success: (data) ->
+        h = ''
+        h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
+        $('.task-wrap .task-email-check-wrap').html(h)
+    }
   $("#set-homepage-btn").click (evt) ->
     $.post("/users/set_homepage", {homepage: $(location).attr("href")})
