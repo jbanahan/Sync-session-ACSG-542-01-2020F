@@ -17,7 +17,7 @@
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
   <button onclick="window.print();">Print</button>
 <% end %>
-<%cache [@order, 'jjillorder'] do%>
+<%cache [@order, @order.piece_sets.order('piece_sets.updated_at DESC').first, 'jjillorder'] do%>
 <% 
 require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 my_k = Class.new do
