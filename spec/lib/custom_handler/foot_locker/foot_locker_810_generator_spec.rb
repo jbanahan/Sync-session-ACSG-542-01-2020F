@@ -203,7 +203,11 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
 
     it "adds Details element even if there are no details" do
       # blank the PO numbers so we don't generate detail lines
-      @com_invoice.commercial_invoice_lines.each {|ci| ci.update_attributes! po_number: nil}
+      @com_invoice.commercial_invoice_lines.each {|ci| 
+        ci.update_attributes! po_number: nil
+        ci.commercial_invoice_tariffs.each {|t| t.update_attributes! hts_code: nil}
+      }
+
 
       @h.receive nil, @entry
       expect(@ftp_files.size).to eq 1
@@ -212,7 +216,28 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       # Verify we have a blank Details element
       x = REXML::XPath.match(@xml, "Details")
       expect(x[0].name).to eq "Details"
-      expect(REXML::XPath.match(@xml, "Details/Detail").length).to eq 0
+      expect(REXML::XPath.match(@xml, "Details/Detail").length).to eq 1
+      expect(REXML::XPath.match(@xml, "Details/Detail")[0].text("PoNumber")).to eq "0"
+      expect(REXML::XPath.match(@xml, "Details/Detail")[0].text("Tariff")).to be_nil
+    end
+
+    it "sends tariffs even if po number is missing" do
+      # blank the PO numbers so we don't generate detail lines
+      @com_invoice.commercial_invoice_lines.each {|ci| 
+        ci.update_attributes! po_number: nil
+      }
+
+
+      @h.receive nil, @entry
+      expect(@ftp_files.size).to eq 1
+      @xml = REXML::Document.new(@ftp_files[0]).root
+
+      # Verify we have a blank Details element
+      x = REXML::XPath.match(@xml, "Details")
+      expect(x[0].name).to eq "Details"
+      expect(REXML::XPath.match(@xml, "Details/Detail").length).to eq 1
+      expect(REXML::XPath.match(@xml, "Details/Detail")[0].text("PoNumber")).to eq "0"
+      expect(REXML::XPath.match(@xml, "Details/Detail")[0].text("Tariff")).to eq "1234"
     end
   end
 end

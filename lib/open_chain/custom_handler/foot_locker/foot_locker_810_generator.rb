@@ -85,8 +85,10 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
 
     po_numbers = {}
     entry.commercial_invoice_lines.each do |line|
-      next if line.po_number.blank?
-      po = line.po_number.strip
+      # We want to make sure we're sending out the tariff number even if the PO is blank
+      # In these cases, we'll send 0 as po.
+      po = line.po_number.to_s.strip
+      po = "0" if po.blank?
 
       line.commercial_invoice_tariffs.each do |t|
         next if t.hts_code.blank?
@@ -96,15 +98,20 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
       end
     end
 
-    # We need to ensure that the Details tag is always present, regardless of whether we
+    # We need to ensure that the Details/Detail/PoNumber tag is always present, regardless of whether we
     # have actual Detail elements below it for EDI handling purposes
     details = add_element root, "Details"
-    po_numbers.each_pair do |po, hts_codes|
-      hts_codes.each do |hts|
-        detail = add_element details, "Detail"
+    if po_numbers.blank?
+      detail = add_element details, "Detail"
+      add_element detail, "PoNumber", "0"
+    else
+      po_numbers.each_pair do |po, hts_codes|
+        hts_codes.each do |hts|
+          detail = add_element details, "Detail"
 
-        add_element detail, "PoNumber", po
-        add_element detail, "Tariff", hts.hts_format
+          add_element detail, "PoNumber", po
+          add_element detail, "Tariff", hts.hts_format
+        end
       end
     end
 
