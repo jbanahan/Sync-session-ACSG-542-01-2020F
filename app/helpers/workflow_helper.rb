@@ -135,10 +135,10 @@ module WorkflowHelper
   end
 
   def task_widget task, opts={}
-    inner = content_tag(:span,'',:class=>"glyphicon #{task_glyphicon(task)}") + ' ' + content_tag(:span,(opts[:show_object_label] ? "#{task_group_label(task.base_object)}: " : '')+task.name) + ' ' +
+    inner_left = content_tag(:span,'',:class=>"glyphicon #{task_glyphicon(task)}") + ' ' + content_tag(:span,(opts[:show_object_label] ? "#{task_group_label(task.base_object)}: " : '')+task.name) + ' ' +
       content_tag(:span,task.group.name.upcase,:class=>'text-muted') + ' ' +
-       task_label(task) + ' ' +
-      task_actions(task)
+       task_label(task)
+    inner = content_tag(:span,inner_left,:class=>'task-widget-left') + content_tag(:span,task_actions(task),:class=>'task-widget-right')
     content_tag(:div,inner,:title=>task_tooltip(task),:class=>"task-widget #{task.passed? ? 'text-muted' : ''} clearfix",'task-id'=>task.id.to_s)
   end
 

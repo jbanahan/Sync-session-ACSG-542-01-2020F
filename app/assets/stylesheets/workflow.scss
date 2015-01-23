@@ -1,7 +1,20 @@
 .task-widget {
   padding: 15px 10px;
   border-bottom: 1px solid #ccc;
+
+  @media screen and (max-width: 768px) {
+    .task-widget-right {
+      display: block;
+      padding-top: 10px;
+      .pull-right {
+        float: left !important;
+      }
+    }
+  }
 }
+
+
+
 .task-widget:hover {
   background-color: #eef;
 }
