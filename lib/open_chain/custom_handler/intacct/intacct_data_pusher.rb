@@ -72,10 +72,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
         Lock.with_lock_retry(check) do
           # double checking the upload date just in case we're running multiple pushes at the same time
           if check.intacct_upload_date.nil?
+            # If an adjustment wasn't already added for this check (could happen in cases where there were errors on the first upload that weren't cleared) AND 
             # If we've already uploaded a payable with the same file / suffix as this check, then we should indicate to the api client
             # that an account adjustment is needed at this time as well.
-            payable_count = IntacctPayable.where(company: check.company, bill_number: check.bill_number, vendor_number: check.vendor_number, payable_type: IntacctPayable::PAYABLE_TYPE_BILL).
-                        where("intacct_key IS NOT NULL AND intacct_upload_date IS NOT NULL").count
+            payable_count = 0
+            if check.intacct_adjustment_key.nil?
+              payable_count = IntacctPayable.where(company: check.company, bill_number: check.bill_number, vendor_number: check.vendor_number, payable_type: IntacctPayable::PAYABLE_TYPE_BILL).
+                                where("intacct_key IS NOT NULL AND intacct_upload_date IS NOT NULL").count
+            end
 
             @api_client.send_check check, (payable_count > 0)
           end

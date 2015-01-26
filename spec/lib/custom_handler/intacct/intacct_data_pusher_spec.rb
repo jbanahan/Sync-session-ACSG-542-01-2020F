@@ -130,6 +130,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
 
       @p.push_checks ["VFI"]
     end
+
+    it "does not push an adjustment if one has already been made" do
+      c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_adjustment_key: "ADJ-KEY"
+      p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY", intacct_upload_date: Time.zone.now, payable_type: IntacctPayable::PAYABLE_TYPE_BILL
+
+      @api_client.should_receive(:send_check).with c1, false
+
+      @p.push_checks ["VFI"]
+    end
   end
 
   describe "run_schedulable" do
