@@ -9,7 +9,7 @@ class DataCrossReference < ActiveRecord::Base
   RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'
   RL_PO_TO_BRAND ||= 'po_to_brand'
   UA_PLANT_TO_ISO ||= 'uap2i'
-  UA_WINSHUTTLE ||= 'uawin'
+  UA_WINSHUTTLE_FINGERPRINT ||= 'uawin-fingerprint'
   UA_315_MILESTONE_EVENT ||= 'ua-315'
   UA_MATERIAL_COLOR_PLANT ||= 'ua-mcp'
   ALLIANCE_CHARGE_TO_GL_ACCOUNT ||= 'al_gl_code'
@@ -88,10 +88,6 @@ class DataCrossReference < ActiveRecord::Base
     find_unique where(cross_reference_type:UA_PLANT_TO_ISO, key:plant)
   end
 
-  def self.find_ua_winshuttle_hts material_plant
-    find_unique where(cross_reference_type:UA_WINSHUTTLE, key:material_plant)
-  end
-
   def self.find_ua_315_milestone ua_shipment_identifier, event_code
     find_unique where(cross_reference_type: UA_315_MILESTONE_EVENT, key: make_compound_key(ua_shipment_identifier, event_code))
   end
@@ -107,6 +103,14 @@ class DataCrossReference < ActiveRecord::Base
   # never needs to change. Arrr!
   def self.create_ua_material_color_plant! material, color, plant
     add_xref! UA_MATERIAL_COLOR_PLANT, "#{material}-#{color}-#{plant}", '1'
+  end
+
+  def self.find_ua_winshuttle_fingerprint material, color, plant
+     find_unique where(cross_reference_type: UA_WINSHUTTLE_FINGERPRINT, key: make_compound_key(material, color, plant))
+  end
+
+  def self.create_ua_winshuttle_fingerprint! material, color, plant, fingerprint
+    add_xref! UA_WINSHUTTLE_FINGERPRINT, make_compound_key(material, color, plant), fingerprint
   end
 
   # Value will be MD5 hash of full line from Lenox Item Master Feed keyed by the lenox part number

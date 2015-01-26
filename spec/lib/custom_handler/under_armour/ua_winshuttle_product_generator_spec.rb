@@ -129,6 +129,24 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       r[2].should == '0011'
       r[3].should == '987654321'.hts_format
     end
+
+    it "does not send specific material / color / plant code data that is unchanged" do
+      p = Factory(:product)
+      p.update_custom_value! @plant_cd, "0010\n0011"
+      p.update_custom_value! @colors_cd, '001'
+      DataCrossReference.stub(:find_ua_material_color_plant).and_return('1')
+      [@ca,@us].each do |c|
+        #create a classification with tariff for all countries
+        Factory(:tariff_record,hts_1:"#{c.id}12345678",classification:Factory(:classification,country_id:c.id,product:p))
+      end
+      
+      DataCrossReference.create_ua_winshuttle_fingerprint! p.unique_identifier, '001', '0010', Digest::MD5.hexdigest("~#{p.unique_identifier}-001~0010~#{p.classifications[1].tariff_records.first.hts_1.hts_format}")
+
+      rows = []
+      described_class.new.sync {|row| rows << row}
+      expect(rows.size).to eq 2
+      expect(rows[1]).to eq({0 => "", 1=> "#{p.unique_identifier}-001", 2=> "0011", 3=>p.classifications.first.tariff_records.first.hts_1.hts_format})
+    end
   end
 
   describe :email_file do

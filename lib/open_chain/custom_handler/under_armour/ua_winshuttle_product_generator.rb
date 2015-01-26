@@ -1,5 +1,6 @@
 require 'open_chain/custom_handler/product_generator'
 require 'open_chain/custom_handler/under_armour/under_armour_custom_definition_support'
+require 'digest/md5'
 
 module OpenChain; module CustomHandler; module UnderArmour
   class UaWinshuttleProductGenerator < OpenChain::CustomHandler::ProductGenerator
@@ -47,10 +48,6 @@ module OpenChain; module CustomHandler; module UnderArmour
         # only use the plant code(s) for the country that is returned in the classification record
         next unless @plant_code_country_map[pc] == country_id
         good_row = base_row.clone
-        material_plant = "#{good_row[1]}#{pc}"
-        used_hts = DataCrossReference.find_ua_winshuttle_hts material_plant
-        next if used_hts == good_row[3]
-        DataCrossReference.add_xref! DataCrossReference::UA_WINSHUTTLE, material_plant, good_row[3]
         good_row[2] = pc
         # format hts values
         good_row[3] = good_row[3].hts_format
@@ -61,10 +58,20 @@ module OpenChain; module CustomHandler; module UnderArmour
           next unless DataCrossReference.find_ua_material_color_plant good_row[1], c, pc
           to_write = good_row.clone
           to_write[1] = "#{to_write[1]}-#{c}"
+
+          fingerprint = data_fingerprint to_write
+          xref_value = DataCrossReference.find_ua_winshuttle_fingerprint good_row[1], c, pc
+          next if xref_value == fingerprint
+
+          DataCrossReference.create_ua_winshuttle_fingerprint! good_row[1], c, pc, fingerprint
           r << to_write
         end
       end
       r
+    end
+
+    def data_fingerprint output
+      Digest::MD5.hexdigest output.values.join("~")
     end
 
     def query
