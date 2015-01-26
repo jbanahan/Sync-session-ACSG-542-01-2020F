@@ -85,12 +85,24 @@ describe DataCrossReference do
       described_class.find_ua_plant_to_iso('x').should == 'y'
     end
   end
-  context :find_ua_winshuttle_hts do
+  context :find_ua_winshuttle_fingerprint do
     it "should find" do
-      described_class.create!(key:'x',value:'y',cross_reference_type:described_class::UA_WINSHUTTLE)
-      described_class.find_ua_winshuttle_hts('x').should == 'y'
+      described_class.create!(key:DataCrossReference.make_compound_key('x', 'y', 'z'),value:'y',cross_reference_type:described_class::UA_WINSHUTTLE_FINGERPRINT)
+      described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z').should == 'y'
     end
   end
+  describe :create_ua_winshuttle_fingerprint! do
+    it "creates fingerprints" do
+      described_class.create_ua_winshuttle_fingerprint! 'x', 'y', 'z', 'fingerprint'
+      expect(described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z')).to eq "fingerprint"
+    end
+    it "uses existing fingerprints" do
+      xref = described_class.create_ua_winshuttle_fingerprint! 'x', 'y', 'z', 'fingerprint'
+      new_xref = described_class.create_ua_winshuttle_fingerprint! 'x', 'y', 'z', 'fingerprint'
+      expect(xref.id).to eq new_xref.id
+    end
+  end
+
   context :find_ua_material_color_plant do
     it "should find" do
       described_class.create!(key:'x-y-z',value:'a',cross_reference_type:described_class::UA_MATERIAL_COLOR_PLANT)
