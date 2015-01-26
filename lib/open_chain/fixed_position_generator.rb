@@ -3,7 +3,8 @@ module OpenChain; class FixedPositionGenerator
     @opts = {
       exception_on_truncate:false,pad_char:' ',
       line_break_replace_char:' ',
-      date_format:'%Y%m%d'
+      date_format:'%Y%m%d',
+      output_timezone: nil
     }
     @opts.merge! opts
   end
@@ -51,9 +52,15 @@ module OpenChain; class FixedPositionGenerator
     r
   end
 
-  def date d, format_override=nil
+  def date d, format_override=nil, timezone_override = nil
     f = format_override.blank? ? @opts[:date_format] : format_override
     return ''.ljust(Time.now.strftime(f).length) if d.nil?
+    if d.respond_to?(:in_time_zone)
+      # Use the override, if given, fall back to opts if there, else fall back to Time.zone setting
+      tz = timezone_override ? timezone_override : (@opts[:output_timezone] ? @opts[:output_timezone] : Time.zone )
+      d = d.in_time_zone tz if tz
+    end
+
     d.strftime(f)
   end
 
@@ -62,9 +69,6 @@ module OpenChain; class FixedPositionGenerator
     number.to_s.match(/\./)
   end
   def replace_newlines s
-    r = s.gsub("\r\n",@opts[:line_break_replace_char])
-    r = r.gsub("\n",@opts[:line_break_replace_char])
-    r = r.gsub("\r",@opts[:line_break_replace_char])
-    r
+    s.gsub(/(?:(?:\r\n)|\n|\r)/,@opts[:line_break_replace_char])
   end
 end; end

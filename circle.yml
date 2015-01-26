@@ -1,4 +1,5 @@
 machine:
+  timezone: UTC
   ruby:
     version: ruby-2.0
 dependencies:

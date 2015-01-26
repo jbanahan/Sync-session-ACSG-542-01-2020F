@@ -61,5 +61,20 @@ describe OpenChain::FixedPositionGenerator do
     it "should use override date format" do
       expect(@f.date(Date.new(2014,1,31),'%Y')).to eq '2014'
     end
+    it "converts datetimes to specified timezone" do
+      d = ActiveSupport::TimeZone["UTC"].parse("2015-01-01")
+      expect(@f.date(d, nil, ActiveSupport::TimeZone["Hawaii"])).to eq '20141231'
+    end
+    it "converts datetimes to default Time.zone if no parameter or class opt specified" do
+      d = ActiveSupport::TimeZone["UTC"].parse("2015-01-01")
+      Time.use_zone("Hawaii") do
+        expect(@f.date(d)).to eq '20141231'
+      end
+    end
+    it "converts datetimes to timezone specified in class opts" do
+      f = described_class.new output_timezone: "Hawaii"
+      d = ActiveSupport::TimeZone["UTC"].parse("2015-01-01")
+      expect(f.date(d)).to eq '20141231'
+    end
   end
 end

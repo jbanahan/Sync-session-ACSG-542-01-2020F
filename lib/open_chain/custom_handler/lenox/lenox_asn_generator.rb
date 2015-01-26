@@ -128,7 +128,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     cs
   end
   def time_and_user
-    "#{@f.date(Time.now,'%Y%m%d%H%M%S')}#{@f.str((Rails.env.production? ? 'vanvendor' : 'vanvendortest'),15) }"
+    "#{@f.date(Time.zone.now,'%Y%m%d%H%M%S', "UTC")}#{@f.str((Rails.env.production? ? 'vanvendor' : 'vanvendortest'),15) }"
   end
   def get_vendor_code_and_invoices shipment
     h = {}

@@ -38,6 +38,7 @@ Spork.prefork do
       EntitySnapshotSupport.disable_async = true
       CustomDefinition.skip_reload_trigger = true
       stub_event_publisher
+      Time.zone = ActiveSupport::TimeZone["UTC"]
     end
     
     # Clears out the deliveries array before every test..which is only done automatically

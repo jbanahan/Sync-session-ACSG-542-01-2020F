@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[257,10].rstrip).to eq 'HDC'
         expect(row[267,4]).to eq 'APP '
         expect(row[271,80]).to eq ''.ljust(80)
-        expect(row[351,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS
+        expect(row[351,14]).to match /#{ActiveSupport::TimeZone["UTC"].now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS
         expect(row[365,15].rstrip).to eq 'vanvendortest'
 
         expect(row.size).to eq 380
@@ -169,7 +169,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[192,10]).to eq '0000000002'
         expect(row[202,8].strip).to eq '' #invoice date
         expect(row[210,88]).to eq ''.ljust(88)
-        expect(row[298,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
+        expect(row[298,14]).to match /#{ActiveSupport::TimeZone["UTC"].now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
         expect(row[312,15].rstrip).to eq 'vanvendortest'
         expect(row[327,18]).to eq '000000000100100000' #100.10 / unit
         expect(row[345,18]).to eq '000000000100100000' #100.10 / unit

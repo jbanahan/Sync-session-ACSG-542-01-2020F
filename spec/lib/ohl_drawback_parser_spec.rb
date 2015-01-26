@@ -17,7 +17,7 @@ describe OpenChain::OhlDrawbackParser do
   it "should map new 20 column format" do
     ent = Entry.find_by_entry_number "OHL03410879"
     ent.importer.name.should == "UNDER ARMOUR INC."
-    ent.arrival_date.to_date.should == "Thu, 17 Apr 2014".to_date
+    ent.arrival_date.to_date.should == @est.parse("2014-04-17").to_date
     ent.entry_port_code.should == "2704"
     ent.mpf.should == 485
     ent.transport_mode_code.should == "11"

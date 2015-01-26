@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.ship_window_start).to eq Date.new(2014,11,4)
       expect(o.ship_window_end).to eq Date.new(2014,11,4)
       expect(o.first_expected_delivery_date).to eq Date.new(2014,12,12)
-      expect(o.last_exported_from_source.strftime("%Y%m%d%H%M")).to eq '201407292306'
+      expect(o.last_exported_from_source).to eq Time.gm(2014, 7, 29, 23, 6).in_time_zone(Time.zone)
       expect(o.last_revised_date).to eq Date.new(2014,7,29)
       expect(o.mode).to eq 'Ocean'
       expect(o.fob_point).to eq 'CN'

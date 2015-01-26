@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
         first_it_date:Date.new(2014,3,31),
         transport_mode_code:'11',
         export_date:Date.new(2014,3,14),
-        arrival_date:Date.new(2014,3,30),
+        arrival_date:ActiveSupport::TimeZone["UTC"].parse('2014-03-30'),
         lading_port_code:'12345',
         unlading_port_code:'1234',
         total_packages:'101',
@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       expect(ln[134,15].rstrip).to eql(@entry.vessel)
       expect(ln[149]).to eql('O')
       expect(ln[150,10]).to eql('03/14/2014')
-      expect(ln[160,10]).to eql('03/30/2014')
+      expect(ln[160,10]).to eql(@entry.arrival_date.in_time_zone("UTC").strftime("%m/%d/%Y"))
       expect(ln[170,5]).to eql(@entry.lading_port_code)
       expect(ln[175,4]).to eql(@entry.unlading_port_code)
       expect(ln[179,9]).to eql('000000101')
