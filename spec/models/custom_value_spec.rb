@@ -50,7 +50,7 @@ describe CustomValue do
       @p.get_custom_value(@cd).value.should == "abc"
       @p.get_custom_value(cd2).value.should == 2
     end
-    it "should touch parent's changed at if requested" do
+    it "should touch parent's changed at if requested during batch_write" do
       ActiveRecord::Base.connection.execute "UPDATE products SET changed_at = \"2004-01-01\";"
       @p.reload
       @p.changed_at.should < 5.seconds.ago
@@ -59,6 +59,55 @@ describe CustomValue do
       CustomValue.batch_write! [cv], true
       @p.reload
       @p.changed_at.should > 5.seconds.ago
+    end
+    it "should touch parent's changed at if new custom value added" do
+      @p.update_custom_value! @cd, 'abc'
+      @p.reload
+      expect(@p.changed_at).to be > 1.minute.ago
+    end
+    it "should touch parent's changed at if a custom value is updated" do
+      # Changed At will not be set if it's been less than a minutes since it was previously set
+      @p.update_custom_value! @cd, 'abc'
+      @p.reload
+
+      @p.update_attributes! changed_at: 1.day.ago
+      @p.reload
+
+      @p.update_custom_value! @cd, 'def'
+      @p.reload
+      expect(@p.changed_at).to be > 1.minute.ago
+    end
+    it "should not touch parent changed at if changed at is less than 1 minute ago" do
+      @p.update_custom_value! @cd, 'abc'
+      @p.reload
+      ca = @p.changed_at
+
+      @p.update_custom_value! @cd, 'def'
+      @p.reload
+      expect(@p.changed_at).to eq ca
+    end
+    it "should not touch parent's changed at if no custom value attributes have changed" do
+      @p.update_custom_value! @cd, 'abc'
+      @p.reload
+      changed_at = @p.changed_at
+
+      # Because changed_at is not updated if it's less than a minute old, update
+      # it to older than that via update_column, otherwise callbacks are invoked 
+      # and changed_at is updated to now
+      yesterday = 1.day.ago
+      @p.update_column :changed_at, yesterday
+      @p.reload
+      # The save update strips some precision on the time, so just pull the value
+      # for comparison after reloading the product
+      yesterday = @p.changed_at
+      @p.update_custom_value! @cd, 'abc'
+      @p.reload
+      expect(@p.changed_at).to eq yesterday
+
+      cv = @p.custom_values.first
+      cv.save!
+      @p.reload
+      expect(@p.changed_at).to eq yesterday
     end
     it "should sanitize parameters" do
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
