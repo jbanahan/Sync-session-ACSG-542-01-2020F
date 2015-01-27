@@ -47,6 +47,7 @@ class User < ActiveRecord::Base
   has_many   :support_tickets, :foreign_key => :requestor_id
   has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
   has_many   :event_subscriptions, inverse_of: :user, dependent: :destroy, autosave: true
+  has_many   :workflow_tasks, inverse_of: :assigned_to, foreign_key: :assigned_to_id
   has_and_belongs_to_many :groups, join_table: "user_group_memberships", after_add: :add_to_group_cache, after_remove: :remove_from_group_cache
 
   validates  :company, :presence => true

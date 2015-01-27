@@ -5,6 +5,43 @@ describe Api::V1::WorkflowController do
     @u = Factory(:user)
     allow_api_access @u
   end
+  describe :assign do
+    before :each do
+      @group = Factory(:group)
+      @group.users << @u
+      @wt = Factory(:workflow_task,group:@group)
+      WorkflowTask.any_instance.stub(:can_edit?).and_return true
+    end
+    it "should assign" do
+      put :assign, user_id: @u.id.to_s, id: @wt.id
+      expect(response).to be_success
+      @wt.reload
+      expect(@wt.assigned_to).to eq @u
+    end
+    it "should not allow assignment if current_user cannot edit" do
+      WorkflowTask.any_instance.stub(:can_edit?).and_return false
+      put :assign, user_id: @u.id.to_s, id: @wt.id
+      expect(response.status).to eq 401
+      expect(JSON.parse(response.body)['errors']).to_not be_empty
+      @wt.reload
+      expect(@wt.assigned_to).to be_nil
+    end
+    it "should not allow assignment if assignment user cannot edit" do
+      u2 = Factory(:user)
+      WorkflowTask.any_instance.should_receive(:can_edit?).twice.and_return(true,false)
+      put :assign, user_id: u2.id.to_s, id: @wt.id
+      expect(JSON.parse(response.body)['errors']).to_not be_empty
+      @wt.reload
+      expect(@wt.assigned_to).to be_nil
+    end
+    it "should turn off assignment if nil" do
+      @wt.update_attributes(assigned_to_id:@u.id)
+      put :assign, id: @wt.id
+      expect(response).to be_success
+      @wt.reload
+      expect(@wt.assigned_to).to be_nil
+    end
+  end
   describe :set_multi_state do
     before :each do
       @wt = Factory(:workflow_task,test_class_name:'OpenChain::WorkflowTester::MultiStateWorkflowTest',payload_json:'{"state_options":["yes","no"]}')

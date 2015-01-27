@@ -598,15 +598,16 @@ $(document).ready () ->
     if t.attr('tab-src-reload')=='true' || !t.attr('tab-src-loaded')
       src = t.attr('tab-src')
       targetPane = $(t.attr('href'))
-      $.ajax {
-        method:'get'
-        url: src
-        success: (data) ->
-          t.attr('tab-src-loaded','true')
-          targetPane.html(data)
-        error: (data) ->
-          targetPane.html("<div class='alert alert-danger'>There was an error loading this tab.  Please contact support.</div>")
-      }
+      if t.attr('tab-src-loading')!='y'
+        t.attr('tab-src-loading','y')
+        $.ajax {
+          method:'get'
+          url: src
+          success: (data) ->
+            targetPane.html(data)
+          error: (data) ->
+            targetPane.html("<div class='alert alert-danger'>There was an error loading this tab.  Please contact support.</div>")
+        }
 
   $(document).on 'click', '[data-infinite-table-target]', (evt) ->
     targetTableSelector = $(evt.target).attr('data-infinite-table-target')

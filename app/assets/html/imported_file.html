@@ -19,7 +19,7 @@
 <div ng-hide='showEmailCurrent'>
   <div class='container'>
     <div ng-hide='importedFile.file_name'>
-      <img src='/images/ajax_load_64.gif' title='Loading...' />
+      <div class='loader'>loading</div>
     </div>
     <div ng-show='importedFile.file_name'>
       <dl class='field_list'>
@@ -68,7 +68,7 @@
   <div ng-show='showPreviewBox'>
     <div ng-show='previewResults.length == 0'>
       <h2>Loading File Preview</h2>
-      <img src='/images/ajax_load_64.gif' title='Loading...' /><br />
+      <div class='loader'>loading</div>
     </div>
     <div ng-show='previewResults.length > 0'>
       <h2>File Preview</h2>

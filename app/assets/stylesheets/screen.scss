@@ -525,3 +525,10 @@ div.field, div.actions {
   font-size: 12px;
   list-style: square;
 }
+
+
+// blank glyphicon to match the width of gylphicon-ok-circle
+.glyphicon-blank-circle:before {
+    content: "\e089";
+    color: transparent !important;
+} 

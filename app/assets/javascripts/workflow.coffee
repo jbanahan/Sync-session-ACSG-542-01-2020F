@@ -5,8 +5,10 @@ root.ChainWorkflow =
     ChainWorkflow.reloadWorkflow(coreObj.coreModule,coreObj.baseObjectId)
     ChainWorkflow.loadOpenCount(coreObj.coreModule,coreObj.baseObjectId)
 
-  initWorkflowButtons: (success) ->
-    $(document).on 'click', '[data-wtask-multi-opt]', () ->
+  initWorkflowButtons: () ->
+    return false if root.workflowButtonsInitRun
+    $(document).on 'click', '[data-wtask-multi-opt]', (evt) ->
+      # evt.preventDefault()
       btn = $(this)
       wfId = btn.attr('data-wtask-id')
       $.ajax {
@@ -18,6 +20,25 @@ root.ChainWorkflow =
         success: (data) ->
           success(data)
       }
+    $(document).on 'click', 'a[data-assign-workflow-user]', (evt) ->
+      # evt.preventDefault()
+      lnk = $(this)
+      wfId = lnk.attr('data-wtask-id')
+      payload = {user_id:lnk.attr('data-assign-workflow-user')}
+      if lnk.attr('data-assigned')=='true'
+        payload = {}
+      $.ajax {
+        url:'/api/v1/workflow/'+wfId+'/assign.json'
+        contentType:'application/json'
+        type:'PUT'
+        dataType: 'json'
+        data: JSON.stringify(payload)
+        success: (data) ->
+          success(data)
+      }
+
+    root.workflowButtonsInitRun = true
+    return true
 
   reloadWorkflow: (coreModule,baseObjectId) ->
     mb = $('#modal-workflow .workflow-content')

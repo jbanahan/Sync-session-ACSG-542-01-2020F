@@ -5,7 +5,7 @@ module WorkflowHelper
   def task_panel base_object
     h = Hash.new
     anchors = Hash.new
-    base_object.workflow_instances.each do |wi|
+    base_object.workflow_instances.includes(:workflow_tasks).each do |wi|
       wi.workflow_tasks.each do |wt|
         category = wt.test_class.category
         h[category] ||= []
@@ -40,32 +40,53 @@ module WorkflowHelper
 
   end
 
-  def my_task_panel
-    r = content_tag(:div,"You have no incomplete tasks.",:class=>'alert alert-success')
-    tasks = WorkflowTask.for_user(current_user).not_passed.order('workflow_tasks.due_at DESC').to_a
-    if tasks.size > 0
-      by_base_object_hash = {}
-      by_due_at_hash = {}
+  def due_for_me_panel
+    tasks = WorkflowTask.includes(:workflow_instance=>:base_object).for_user(current_user).not_passed.where('workflow_tasks.assigned_to_id = ?',current_user.id).order('workflow_tasks.due_at DESC')
+    r = ''
+    if tasks.empty?
+      r = content_tag(:div,"You have no incomplete tasks assigned.",:class=>'alert alert-success')
+    else
+      by_due = {}
       tasks.each do |t|
-        base_object = t.base_object
         due_label = due_at_label(t)
-        by_due_at_hash[due_label] ||= []
-        by_due_at_hash[due_label] << t
-        by_base_object_hash[base_object] ||= []
-        by_base_object_hash[base_object] << t
+        by_due[due_label] ||= []
+        by_due[due_label] << t
       end
-      by_base_object_pane, by_base_object_count = 
-      task_tabs = [
-        task_tab('By Page',nil,'wf-my-tasks',{active:true}),
-        task_tab('By Due Date',nil,'wf-my-due')
-      ]
-      task_panes = [
-        grouped_task_tab_pane(by_base_object_hash, 'wf-my-tasks', {active:true}) {|base_object| task_group_label(base_object)}.first,
-        grouped_task_tab_pane(by_due_at_hash,'wf-my-due',{show_object_label:true}) {|due_at| due_at}.first
-      ]
-      tab_list = content_tag(:ul,task_tabs.join.html_safe,:class=>'nav nav-tabs',:role=>'tablist')
-      tab_content = content_tag(:div,task_panes.join.html_safe,:class=>'tab-content')
-      r = content_tag(:div,tab_list+tab_content,:role=>'tabpanel')
+      r = grouped_tasks(by_due) {|due_at| due_at}
+    end
+    r
+  end
+
+  def by_page_panel
+    tasks = WorkflowTask.includes(:workflow_instance=>:base_object).for_user(current_user).not_passed.order('workflow_tasks.due_at DESC')
+    r = ''
+    if tasks.empty?
+      r = content_tag(:div,"You have no incomplete tasks.",:class=>'alert alert-success')
+    else
+      by_page = {}
+      tasks.each do |t|
+        bo = t.base_object
+        by_page[bo] ||= []
+        by_page[bo] << t
+      end
+      r = grouped_tasks(by_page) {|bo| task_group_label(bo)}
+    end
+    r
+  end
+
+  def by_due_panel
+    tasks = WorkflowTask.includes(:workflow_instance=>:base_object).for_user(current_user).not_passed.order('workflow_tasks.due_at DESC')
+    r = ''
+    if tasks.empty?
+      r = content_tag(:div,"You have no incomplete tasks.",:class=>'alert alert-success')
+    else
+      by_due = {}
+      tasks.each do |t|
+        due_label = due_at_label(t)
+        by_due[due_label] ||= []
+        by_due[due_label] << t
+      end
+      r = grouped_tasks(by_due) {|due_at| due_at}
     end
     r
   end
@@ -76,7 +97,7 @@ module WorkflowHelper
     [c,open_count(tasks)]
   end
 
-  def grouped_task_tab_pane task_hash, anchor, opts={}
+  def grouped_tasks task_hash, opts={}
     total_open_count = 0
     coll = []
     label_hash = {}
@@ -96,7 +117,10 @@ module WorkflowHelper
         (heading + body).html_safe
       end
     end
-    [generic_tab_task_pane(content_tag(:div,coll.join.html_safe,:class=>'panel-group'), anchor, opts[:active]),total_open_count]
+    coll.join.html_safe
+  end
+  def grouped_task_tab_pane task_hash, anchor, opts={}
+    [generic_tab_task_pane(content_tag(:div,gouped_tasks(task_hash,opts),:class=>'panel-group'), anchor, opts[:active]),total_open_count]
   end
 
   def task_group_label base_object
@@ -136,10 +160,18 @@ module WorkflowHelper
 
   def task_widget task, opts={}
     inner_left = content_tag(:span,'',:class=>"glyphicon #{task_glyphicon(task)}") + ' ' + content_tag(:span,(opts[:show_object_label] ? "#{task_group_label(task.base_object)}: " : '')+task.name) + ' ' +
-      content_tag(:span,task.group.name.upcase,:class=>'text-muted') + ' ' +
+      content_tag(:span,task_assignment_text(task),:class=>'text-muted') + ' ' +
        task_label(task)
     inner = content_tag(:span,inner_left,:class=>'task-widget-left') + content_tag(:span,task_actions(task),:class=>'task-widget-right')
     content_tag(:div,inner,:title=>task_tooltip(task),:class=>"task-widget #{task.passed? ? 'text-muted' : ''} clearfix",'task-id'=>task.id.to_s)
+  end
+
+  def task_assignment_text task
+    r = task.group.name.upcase
+    if task.assigned_to
+      r << " (#{task.assigned_to.full_name})"
+    end
+    r
   end
 
   def task_label task
@@ -165,12 +197,18 @@ module WorkflowHelper
 
   def task_glyphicon task
     return 'glyphicon-ok' if task.passed?
-    return 'glyphicon-user' if task.can_edit?(current_user)
-    return 'glyphicon-minus'
+    if task.can_edit?(current_user)
+      if task.assigned_to == current_user
+        return 'glyphicon-user'
+      else
+        return 'glyphicon-unchecked' 
+      end
+    end
+    return 'glyphicon-blank-circle'
   end
 
   def task_actions task
-    inner_content = nil
+    btns = []
     case task.test_class_name
     when /MultiStateWorkflowTest$/
       active_state = task.multi_state_workflow_task ? task.multi_state_workflow_task.state : nil
@@ -184,21 +222,37 @@ module WorkflowHelper
         content_tag(:button,opt,opts_hash)
       }
       btns << link_to_task_object_button(task)
-      inner_content = btns.join.html_safe 
     when /ModelFieldWorkflowTest$/
-      inner_content = link_to('Edit',
+      btns << link_to('Edit',
         edit_polymorphic_path(task.base_object),:class=>"btn #{task.passed? ? 'btn-default' : 'btn-primary'}"
       )
     else 
-      inner_content = link_to_task_object_button(task,true)
+      btns << link_to_task_object_button(task)
     end
-    return content_tag(:div,inner_content,:class=>'btn-group btn-group-sm pull-right') unless inner_content.blank?
+    if task.can_edit?(current_user)
+      btns << assign_button(task)
+    end
+    return content_tag(:div,btns.join.html_safe,:class=>'btn-group btn-group-sm pull-right') unless btns.blank?
     return ""
   end
 
-  def link_to_task_object_button task, primary = false
+  def assign_button task
+    content_tag(:button,content_tag(:span,'',:class=>"glyphicon glyphicon-user"),:class=>'btn btn-default dropdown-toggle','data-toggle'=>'dropdown','aria-expanded'=>'false','title'=>'Assign User')+content_tag('ul',assign_list(task),:class=>'dropdown-menu',:role=>'menu')
+  end
+
+  def assign_list task
+    assignable_users = task.group.users
+    return "<li><a href='#'>none</a></li>" if assignable_users.blank?
+    user_links = assignable_users.collect do |u|
+      assigned_to_user = task.assigned_to==u
+      "<li><a href='#' data-wtask-id='#{task.id}' data-assign-workflow-user='#{u.id}' data-assigned='#{assigned_to_user}'><span class='glyphicon glyphicon-#{assigned_to_user ? 'ok' : 'blank-circle'}'></span> #{u.full_name}</a></li>"
+    end
+    user_links.join.html_safe
+  end
+
+  def link_to_task_object_button task
     url = task.view_path.blank? ? polymorphic_path(task.base_object) : task.view_path
-    link_to('View',url,:class=>"btn #{!task.passed? && primary ? 'btn-primary' : 'btn-default'}")
+    link_to(content_tag(:span,'',:class=>'glyphicon glyphicon-link'),url,:class=>"btn btn-default",:title=>'View')
   end
 
   def due_at_label task

@@ -11,5 +11,24 @@
       </div>
     </div>
   </div>
-  <%=my_task_panel%>
+  <div class="row">
+    <div class="col-md-12">
+      <ul class="nav nav-tabs">
+        <li class="active"><a href="#wf-my-assigned" data-toggle="tab">Assigned To Me</a></li>
+        <li><a href="#wf-my-tasks" data-toggle="tab" tab-src='/my_tasks/by_page_panel'>By Page</a></li>
+        <li><a href="#wf-my-due" data-toggle="tab" tab-src='/my_tasks/by_due_panel'>By Due Date</a></li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane active workflow-pane" id="wf-my-assigned">
+          <%=due_for_me_panel%>
+        </div>
+        <div class="tab-pane workflow-pane" id="wf-my-tasks">
+          <div class='loader'>loading</div>
+        </div>
+        <div class="tab-pane workflow-pane" id="wf-my-due">
+          <div class='loader'>loading</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

@@ -1,6 +1,6 @@
 <div class='search_result_wrapper'>
   <div ng-hide='searchResult.rows!=undefined || errors.length > 0' id='search_loading'>
-    <img src='/images/ajax_load_64.gif' title='Loading...' />
+    <div class='loader'>loading</div>
   </div>
   <div ng-show='searchResult.rows!=undefined' class='search_result'>
     <div class='container search-result-bulk-controls' ng-show='bulkSelected.length>0 || allSelected'>

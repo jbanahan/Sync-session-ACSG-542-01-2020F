@@ -11,4 +11,10 @@ class WorkflowController < ApplicationController
   def my_tasks
     render layout: false
   end
+  def my_tasks_by_page_panel
+    render layout: false
+  end
+  def my_tasks_by_due_panel
+    render layout: false
+  end
 end

@@ -13,6 +13,7 @@ class WorkflowTask < ActiveRecord::Base
   }
   belongs_to :workflow_instance, inverse_of: :workflow_tasks, touch: true
   belongs_to :group, inverse_of: :workflow_tasks
+  belongs_to :assigned_to, class_name:'User', inverse_of: :workflow_tasks
   has_one :multi_state_workflow_task, inverse_of: :workflow_task, dependent: :destroy
 
   validates :test_class_name, presence: true

@@ -142,13 +142,12 @@ function updateResolutionStatus(issueID){
     <!-- END HEADER -->
     <div class='row text-center' ng-show='settings.viewMode=="loading"'>
       <div class='col-md-12'>
-        <img src='/images/ajax_load_64.gif' title='Loading...' />
-        Loading corrective action plan data...
+        <div class="loader">loading</div>
       </div>
     </div>
     <div class='row text-center' ng-show='settings.viewMode=="saving"'>
       <div class='col-md-12'>
-        <img src='/images/ajax_load_64.gif' title='Loading...' />
+        <div class="loader">loading</div>
         Saving your update...
       </div>
     </div>

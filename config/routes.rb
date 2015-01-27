@@ -36,6 +36,7 @@ OpenChain::Application.routes.draw do
       match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post
 
       match "/workflow/:id/set_multi_state" => "workflow#set_multi_state", via: :put
+      match "/workflow/:id/assign" => "workflow#assign", via: :put
       match "/workflow/:core_module/:id/my_instance_open_task_count" => "workflow#my_instance_open_task_count", via: :get
 
       namespace :admin do
@@ -54,6 +55,8 @@ OpenChain::Application.routes.draw do
   end
 
   match '/my_tasks' => 'workflow#my_tasks', :via => :get
+  match '/my_tasks/by_page_panel' => 'workflow#my_tasks_by_page_panel', :via => :get
+  match '/my_tasks/by_due_panel' => 'workflow#my_tasks_by_due_panel', :via => :get
   match '/workflow/:core_module/:id' => 'workflow#show', :via => :get
   match '/entries/activity_summary/us' => 'entries#us_activity_summary', :via => :get
   match '/entries/importer/:importer_id/activity_summary/us' => 'entries#us_activity_summary', :via => :get

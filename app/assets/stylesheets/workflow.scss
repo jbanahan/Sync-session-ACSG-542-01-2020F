@@ -13,14 +13,17 @@
   }
 }
 
-
-
 .task-widget:hover {
   background-color: #eef;
 }
 .workflow-pane {
   border-left: 1px solid #ccc;
   border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  .panel {
+    overflow: visible;
+    margin-bottom: 0px;
+  }
 }
 [notification-center-pane="tasks"] .workflow-pane {
   padding: 5px;
