@@ -125,6 +125,23 @@ FILE
       expect(errors).to include "Expected 6 checks to be in the register file.  Found 2 checks."
       expect(errors).to include "Expected Grand Total of $400.00 to be in the register file.  Found $100.00."
     end
+
+    it "handles negative amounts in validations" do
+      file = <<-FILE
+      APMRGREG-D0-06/22/09
+---------- ---------- ------------  ---------- ---------- --- --------- ------------ ------------- ---------- ---- -------------  --
+      9801 KINGOCEAN     1615657A              IGM        F   0202-0000 LIOPEV12468      2,295.00- 08/12/2014 Void                RV
+           KING OCEAN SERVICES         Total of Check       9801                         2,295.00-
+
+                                                   1 Checks for Bank 02 Totaling         2,295.00-
+---------- ---------- ------------  ---------- ---------- --- --------- ------------ ------------- ---------- ---- -------------  --
+     *****  Grand Total  *****                           Record Count:    1              2,295.00-
+
+FILE
+      check_info = described_class.new.extract_check_info StringIO.new(file)
+      errors = described_class.new.validate_check_info check_info
+      expect(errors.size).to eq 0
+    end
   end
 
   describe "create_and_request_check" do

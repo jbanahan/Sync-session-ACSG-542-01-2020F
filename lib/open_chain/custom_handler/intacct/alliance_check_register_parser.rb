@@ -84,7 +84,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
 
           buffered_checks << local_check_info
-        elsif line =~ /(\d+) Checks? for Bank (\d+) Totaling\s+([\d\.,]+)/i
+        elsif line =~ /(\d+) Checks? for Bank (\d+) Totaling\s+([\d\.,-]+)/i
           bank_number = $2
           per_bank_check_count = $1.to_i
           per_bank_check_sum = parse_number $3
@@ -99,7 +99,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
           check_info[:checks][bank_number] = {check_count: per_bank_check_count, check_total: per_bank_check_sum, checks: buffered_checks}
           buffered_checks = []
           header_found = false
-        elsif line =~ /\s+\*+\s Grand Total \s\*+\s+Record Count:\s+(\d+)\s+([\d,\.]+)/i
+        elsif line =~ /\s+\*+\s Grand Total \s\*+\s+Record Count:\s+(\d+)\s+([\d,\.-]+)/i
           check_info[:total_check_count] = $1.to_i
           check_info[:total_check_amount] = parse_number $2
         end
