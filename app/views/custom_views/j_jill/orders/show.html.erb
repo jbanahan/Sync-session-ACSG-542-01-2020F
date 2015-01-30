@@ -28,6 +28,17 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
 <style type="text/css">
   @media print {
     @page {size: landscape}
+    body {
+      font-size: 80%;
+    }
+    .header-table, .header-table td, .header-table tr {
+      padding: 0;
+      border: none !important;
+    }
+    #detail-table td {
+      padding: 2px;
+      border-bottom: 1px solid #ccc !important;
+    }
   }
   .ord-header {
     width: 100%;
@@ -78,7 +89,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
   </div>
   <div class="row">
     <div class="col-md-12">
-      <table class="table-bordered table-condensed ord-header">
+      <table class="header-table table-bordered table-condensed ord-header">
         <tr>
           <td>
             <label>PO #</label>
@@ -102,7 +113,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
           </td>
         </tr>
       </table>
-      <table class="table-bordered table-condensed ord-header">
+      <table class="header-table table-bordered table-condensed ord-header">
         <tr>
           <td>
             <label>Created</label>
@@ -134,7 +145,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
           </td>
         </tr>
       </table>
-      <table class="table-bordered table-condensed ord-header">
+      <table class="header-table table-bordered table-condensed ord-header">
         <tr>
           <td>
             <label>Delivery Warehouse</label>
@@ -170,7 +181,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
   </div>
   <div class="row">
     <div class="col-md-12">
-      <table class="table table-condensed table-striped table-bordered">
+      <table id='detail-table' class="table table-condensed table-striped table-bordered">
         <thead>
           <th>Itm #</th>
           <th>Vend Style</th>
