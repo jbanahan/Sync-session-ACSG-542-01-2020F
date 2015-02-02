@@ -577,7 +577,7 @@ class ModelField
           end
           ot.nil? ? "" : ot.general_rate 
         },
-        :qualified_field_name => "(SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
+        :qualified_field_name => "(SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
         :history_ignore=>true
       }]
@@ -592,7 +592,7 @@ class ModelField
           end
           ot.nil? ? "" : ot.common_rate 
         },
-        :qualified_field_name => "(SELECT common_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
+        :qualified_field_name => "(SELECT common_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
         :history_ignore=>true
       }]
@@ -608,7 +608,7 @@ class ModelField
             end
             ot.nil? ? "" : ot.general_preferential_tariff_rate
           },
-          :qualified_field_name => "(SELECT general_preferential_tariff_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
+          :qualified_field_name => "(SELECT general_preferential_tariff_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
           :history_ignore=>true
         }]
@@ -625,7 +625,7 @@ class ModelField
             end
             ot.nil? ? "" : ot.import_regulations
           },
-          :qualified_field_name => "(SELECT import_regulations FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
+          :qualified_field_name => "(SELECT import_regulations FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
           :history_ignore=>true
         }]
@@ -640,7 +640,7 @@ class ModelField
             end
             ot.nil? ? "" : ot.export_regulations
           },
-          :qualified_field_name => "(SELECT export_regulations FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
+          :qualified_field_name => "(SELECT export_regulations FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
           :history_ignore=>true
         }]
