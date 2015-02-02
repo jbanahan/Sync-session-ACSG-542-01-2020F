@@ -811,7 +811,7 @@ class ModelField
         :qualified_field_name=> "(SELECT CASE COUNT(*) WHEN 0 THEN false ELSE true END FROM sync_records sr_fail WHERE sr_fail.syncable_id = #{table}.id AND sr_fail.syncable_type = '#{class_name}' AND (#{SyncRecord.problems_clause('sr_fail.')}))",
         :history_ignore=>true
       }],
-      [sequence_start+2,"#{prefix}_sync_last_sent",:sync_last_sent,"Sync Record Last Sent",{
+      [sequence_start+2,"#{prefix}_sync_last_sent".to_sym,:sync_last_sent,"Sync Record Last Sent",{
         data_type: :datetime,
         import_lambda: lambda {|o,d| "Sync Record Last Sent ignored (read only)"},
         export_lambda: lambda {|o| o.sync_records.collect {|r| r.sent_at}.compact.sort.last},
@@ -819,7 +819,7 @@ class ModelField
         history_ignore: true
         }
       ],
-      [sequence_start+3,"#{prefix}_sync_last_confirmed",:sync_last_confirmed,"Sync Record Last Confirmed",{
+      [sequence_start+3,"#{prefix}_sync_last_confirmed".to_sym,:sync_last_confirmed,"Sync Record Last Confirmed",{
         data_type: :datetime,
         import_lambda: lambda {|o,d| "Sync Record Last Confirmed ignored (read only)"},
         export_lambda: lambda {|o| o.sync_records.collect {|r| r.confirmed_at}.compact.sort.last},

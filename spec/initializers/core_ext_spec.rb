@@ -125,4 +125,15 @@ describe "log_me" do
       e.log_me ["Testing"], [], true
     end
   end
+
+  describe "deep_dup" do
+    # This just verifies that hashes + arrays are deep_dup'ed correctly
+    # This was an error that we monkey-patched in Rails 3 (shouldn't be needed in Rails 4)
+    it "correctly deep_dups hashes with arrays in them" do
+      orig = {'key' => [{'inner_key' => 'inner_value'}]}
+      orig_dupe = orig.deep_dup
+      orig_dupe['key'][0]['new_key'] = 'new_value'
+      expect(orig['key'][0]['new_key']).to be_nil
+    end
+  end
 end

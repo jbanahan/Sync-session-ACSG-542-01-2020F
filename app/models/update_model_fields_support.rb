@@ -160,19 +160,15 @@ module UpdateModelFieldsSupport
       base_object = self
       user = opts[:user]
 
-      # The reason why we're making multiple copies here is because Rails 3.x has issues
-      # with deep_dup not cloning Array keys...so if the params are like 'val' => [{'id' => 'blah'}]
-      # we can end up having key values stripped if we clone off the model_field_param after 
-      # removing blank keys...annoying, but it's not that much extra CPU usage to just traverse
-      # the params twice.
       model_field_params = object_parameters.deep_dup.with_indifferent_access
-      update_params = object_parameters.deep_dup.with_indifferent_access
+
+      normalize_params model_field_params, self
 
       if opts[:exclude_blank_values] === true
         model_field_params = remove_blank_values model_field_params
-        update_params = remove_blank_values update_params
       end
-      update_params = clean_params_for_active_record_attribute_assignment update_params, model_field_params, self
+
+      update_params = clean_params_for_active_record_attribute_assignment model_field_params.deep_dup, model_field_params, self
 
       base_object.assign_attributes update_params
 
@@ -363,6 +359,27 @@ module UpdateModelFieldsSupport
       end
     end
 
+    def normalize_params params, base_object
+      # This method basically takes the child association keys and makes sure
+      # they're of the format 'childs_attributes' so that the rails update_attributes
+      # stuff will work correctly.  We don't want to push that requirement out to the API
+      # level though..we want it to be able to receive data like: => children => [{}, {}] rather
+      # than children_attributes =>
+      data = core_module_info(base_object)
+
+      child_association_name = data[:child_association]
+      child_association_key = data[:child_association_key]
+      if child_association_name && params[child_association_name].respond_to?(:each)
+        value = params.delete child_association_name
+        params[child_association_key] = value
+
+        child_vals = value.respond_to?(:values) ? value.values : value.each
+        child_vals.each do |vals|
+          normalize_params(vals, data[:child_core_module])  
+        end
+      end
+    end
+    
     # This method exist largely as extension points to shoe-horn this update attributes stuff onto 
     # base objects that are not core modules, but have core module children (See InstantClassification)
     def core_module_info object_or_core_module
@@ -376,9 +393,15 @@ module UpdateModelFieldsSupport
       model_fields = core_module.every_model_field
 
       child_core_module = core_module.children.first
-      child_association_key = child_core_module ? "#{core_module.child_association_name(child_core_module)}_attributes" : nil
+      if child_core_module
+        child_association = core_module.child_association_name(child_core_module)
+        child_association_key = "#{child_association}_attributes"
+      else
+        child_association = nil
+        child_association_key = nil
+      end
 
-      {model_fields: model_fields, child_core_module: child_core_module, child_association_key: child_association_key, core_module: core_module}
+      {model_fields: model_fields, child_core_module: child_core_module, child_association: child_association, child_association_key: child_association_key, core_module: core_module}
     end
 
     # This method exists largely as extension points to shoe-horn this update attributes stuff onto 

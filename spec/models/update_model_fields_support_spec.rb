@@ -131,6 +131,35 @@ describe UpdateModelFieldsSupport do
       expect(p.last_updated_by).to eq User.current
     end
 
+    it "updates model field attributes and custom fields (creating new nested children) using 'abbreviated' hash layout" do
+      params = {
+        :prod_uid => 'unique_id',
+        @prod_cd.model_field_uid.to_sym => 'custom',
+        :classifications => [{
+          :class_cntry_iso => @country.iso_code,
+          @class_cd.model_field_uid.to_sym => '12.3',
+          :tariff_records => [{
+            :hts_line_number => '1',
+            :hts_hts_1 => '1234.56.7890',
+            @tariff_cd.model_field_uid.to_sym => '2014-12-01'
+          }]
+        }]
+      }
+
+      p = Product.new
+      expect(p.update_model_field_attributes params).to be_true
+      expect(p.unique_identifier).to eq "unique_id"
+      expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
+      expect(p.classifications.length).to eq 1
+      expect(p.classifications.first.country).to eq @country
+      expect(p.classifications.first.get_custom_value(@class_cd).value).to eq 12.3
+      expect(p.classifications.first.tariff_records.length).to eq 1
+      expect(p.classifications.first.tariff_records.first.hts_1).to eq "1234567890"
+      expect(p.classifications.first.tariff_records.first.get_custom_value(@tariff_cd).value).to eq Date.new(2014, 12, 1)
+
+      expect(p.last_updated_by).to eq User.current
+    end
+
     it "does not raise an error on active record validation errors" do
       existing = Factory(:product)
       p = Product.new
@@ -210,6 +239,35 @@ describe UpdateModelFieldsSupport do
           :class_cntry_id => @country.id.to_s,
           @class_cd.model_field_uid.to_sym => '12.3',
           :tariff_records_attributes => [{
+            :hts_line_number => '1',
+            :hts_hts_1 => '1234.56.7890',
+            @tariff_cd.model_field_uid.to_sym => '2014-12-01'
+          }]
+        }]
+      }
+
+      p = Product.new
+      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.unique_identifier).to eq "unique_id"
+      expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
+      expect(p.classifications.length).to eq 1
+      expect(p.classifications.first.country).to eq @country
+      expect(p.classifications.first.get_custom_value(@class_cd).value).to eq 12.3
+      expect(p.classifications.first.tariff_records.length).to eq 1
+      expect(p.classifications.first.tariff_records.first.hts_1).to eq "1234567890"
+      expect(p.classifications.first.tariff_records.first.get_custom_value(@tariff_cd).value).to eq Date.new(2014, 12, 1)
+
+      expect(p.last_updated_by).to eq User.current
+    end
+
+    it "updates model field attributes and custom fields (creating new nested children) using 'abbreviated' hash layout" do
+      params = {
+        :prod_uid => 'unique_id',
+        @prod_cd.model_field_uid.to_sym => 'custom',
+        :classifications => [{
+          :class_cntry_id => @country.id.to_s,
+          @class_cd.model_field_uid.to_sym => '12.3',
+          :tariff_records => [{
             :hts_line_number => '1',
             :hts_hts_1 => '1234.56.7890',
             @tariff_cd.model_field_uid.to_sym => '2014-12-01'
@@ -320,6 +378,37 @@ describe UpdateModelFieldsSupport do
         'classifications_attributes' => [{
           'id' => cl.id,
           'tariff_records_attributes' => [{
+              'id' => t.id,
+              'hts_hts_1' => '',
+              @tariff_cd.model_field_uid.to_s => '2014-12-01'
+            }]
+          }]
+      }
+
+      expect(p.update_model_field_attributes! params, exclude_blank_values:true).to be_true
+      expect(p.unit_of_measure).to eq "UOM"
+      expect(p.name).to eq "NAME"
+      expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
+      tr = p.classifications.first.tariff_records.first
+
+      expect(tr.hts_1).to eq "9876543210"
+      expect(tr.get_custom_value(@tariff_cd).value).to eq Date.new(2014, 12, 1)
+    end
+
+    t "skips blank fields when instructed to with abbreviated hash" do
+      p = Factory(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
+      p.update_custom_value! @prod_cd, 'custom'
+      cl = Factory(:classification, product: p)
+      t = Factory(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
+
+      params = {
+        'id' => p.id,
+        'prod_uom' => "",
+        'prod_name' => "NAME",
+        @prod_cd.model_field_uid.to_s => "",
+        'classifications' => [{
+          'id' => cl.id,
+          'tariff_records' => [{
               'id' => t.id,
               'hts_hts_1' => '',
               @tariff_cd.model_field_uid.to_s => '2014-12-01'

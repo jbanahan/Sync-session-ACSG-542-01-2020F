@@ -1,4 +1,4 @@
-module Api; module V1; class OrdersController < Api::V1::ApiController
+module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleControllerBase
   def core_module
     CoreModule::ORDER
   end
@@ -32,14 +32,9 @@ module Api; module V1; class OrdersController < Api::V1::ApiController
       :ordln_hts,
       :ordln_sku
     ] + custom_field_keys(CoreModule::ORDER_LINE))
-    h = {id:o.id}
-    headers_to_render.each {|uid| h[uid] = export_field(uid,o)}
-    o.order_lines.each do |ol|
-      h['lines'] ||= []
-      olh = {id: ol.id}
-      line_fields_to_render.each {|uid| olh[uid] = export_field(uid,ol)}
-      h['lines'] << olh
-    end
-    h
+
+    o.freeze_all_custom_values_including_children
+    o.order_lines.each {|ol| ol.product.try(:freeze_custom_values)}
+    to_entity_hash(o, headers_to_render + line_fields_to_render)
   end
 end; end; end

@@ -23,9 +23,9 @@ OpenChain::Application.routes.draw do
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
       end
-      match "/products/by_id/:id" => "products#show", :via=>:get
-      match "/products/by_uid/:uid" => "products#by_uid", :via=>:get
-      match "/products/model_fields" => "products#model_fields", :via => :get
+      resources :products, only: [:index, :show, :create, :update] do
+        get 'by_uid/:uid' => "products#by_uid", on: :collection
+      end
 
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
       match "/intacct_data/receive_check_result" => "intacct_data#receive_check_result", :via => :post

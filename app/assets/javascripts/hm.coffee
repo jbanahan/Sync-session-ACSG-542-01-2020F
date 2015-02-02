@@ -18,7 +18,7 @@ app.factory 'hmService', ['$http',($http) ->
         ci_rater_comments:line.comment
         ci_mfid:line.mid
         ci_destination_code:line.coast
-        lines:[
+        commercial_invoice_lines:[
           {
             cil_value_foreign:line.adjusted_value
             cil_currency:line.currency
@@ -26,7 +26,7 @@ app.factory 'hmService', ['$http',($http) ->
             cil_units:line.quantity
             cil_country_origin_code:line.origin_country
             ent_unit_price:line.unit_cost
-            tariffs:[{
+            commercial_invoice_tariffs:[{
               cit_hts_code:line.hts_code
               cit_gross_weight: line.gross_weight
               cit_classification_qty_1: line.reporting_quantity
@@ -38,15 +38,15 @@ app.factory 'hmService', ['$http',($http) ->
       }
     }
     r.commercial_invoice.id = line.id if line.id
-    r.commercial_invoice.lines[0].id = line.ci_line_id if line.ci_line_id
+    r.commercial_invoice.commercial_invoice_lines[0].id = line.ci_line_id if line.ci_line_id
     if line.net_weight && line.net_weight > 0
-      t = r.commercial_invoice.lines[0].tariffs[0]
+      t = r.commercial_invoice.commercial_invoice_lines[0].commercial_invoice_tariffs[0]
       t.cit_classification_qty_2 = line.net_weight
       t.cit_classification_uom_2 = 'KGS'
     r
 
   api_to_line : (ci) ->
-    ci_line = ci.lines[0]
+    ci_line = ci.commercial_invoice_lines[0]
     r = {
       po_number:ci.ci_invoice_number
       id:ci.id
@@ -65,9 +65,9 @@ app.factory 'hmService', ['$http',($http) ->
       mid:ci.ci_mfid
       coast:ci.ci_destination_code
     }
-    if ci_line.tariffs && ci_line.tariffs[0]
-      t = ci_line.tariffs[0]
-      r.hts_code = t.cit_hts_code
+    if ci_line.commercial_invoice_tariffs && ci_line.commercial_invoice_tariffs[0]
+      t = ci_line.commercial_invoice_tariffs[0]
+      r.hts_code = (if t.cit_hts_code then t.cit_hts_code.replace(/\./g, '') else null)
       r.net_weight = Number(t.cit_classification_qty_2 )
       r.gross_weight = Number(t.cit_gross_weight)
       r.reporting_quantity = Number(t.cit_classification_qty_1)

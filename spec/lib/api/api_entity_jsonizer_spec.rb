@@ -27,15 +27,17 @@ describe OpenChain::Api::ApiEntityJsonizer do
           'prod_uid'=> @product.unique_identifier,
           'classifications' => [
             {
+              "id" => @classification.id,
               "class_cntry_iso" => @country_1.iso_code, 
               "tariff_records" => [
-                {'hts_hts_1' => @tariff_record.hts_1.hts_format}
+                {'id' => @tariff_record.id, 'hts_hts_1' => @tariff_record.hts_1.hts_format}
               ]
             },
             {
+              "id" => @classification_2.id,
               "class_cntry_iso" => @country_2.iso_code, 
               "tariff_records" => [
-                {'hts_hts_1' => @tariff_record_2.hts_1.hts_format}
+                {'id' => @tariff_record_2.id, 'hts_hts_1' => @tariff_record_2.hts_1.hts_format}
               ]
             }
           ]
@@ -44,7 +46,18 @@ describe OpenChain::Api::ApiEntityJsonizer do
       expect(ActiveSupport::JSON.decode(json)).to eq hash
     end
 
-    it 'skips levels that did not have model fields requested for them' do
+    it 'skips child and grand-child levels that did not have model fields requested for them' do
+      json = OpenChain::Api::ApiEntityJsonizer.new.entity_to_json @user, @product, ['prod_uid']
+      hash = {
+        'product' => {
+          'id' => @product.id,
+          'prod_uid'=> @product.unique_identifier
+        }
+      }
+      expect(ActiveSupport::JSON.decode(json)).to eq hash
+    end
+
+    it 'skips grand-child levels that did not have model fields requested for them' do
       json = OpenChain::Api::ApiEntityJsonizer.new.entity_to_json @user, @product, ['prod_uid', 'class_cntry_iso']
       hash = {
         'product' => {
@@ -52,9 +65,11 @@ describe OpenChain::Api::ApiEntityJsonizer do
           'prod_uid'=> @product.unique_identifier,
           'classifications' => [
             {
+              "id" => @classification.id,
               "class_cntry_iso" => @country_1.iso_code, 
             },
             {
+              "id" => @classification_2.id,
               "class_cntry_iso" => @country_2.iso_code, 
             }
           ]
@@ -71,13 +86,15 @@ describe OpenChain::Api::ApiEntityJsonizer do
           'prod_uid'=> @product.unique_identifier,
           'classifications' => [
             {
+              "id" => @classification.id,
               "tariff_records" => [
-                {'hts_hts_1' => @tariff_record.hts_1.hts_format}
+                {'id' => @tariff_record.id, 'hts_hts_1' => @tariff_record.hts_1.hts_format}
               ]
             },
             {
+              "id" => @classification_2.id,
               "tariff_records" => [
-                {'hts_hts_1' => @tariff_record_2.hts_1.hts_format}
+                {'id' => @tariff_record_2.id, 'hts_hts_1' => @tariff_record_2.hts_1.hts_format}
               ]
             }
           ]
@@ -98,9 +115,10 @@ describe OpenChain::Api::ApiEntityJsonizer do
           'ent_div_num'=> nil,
           'commercial_invoices' => [
             {
+              'id' => line.commercial_invoice.id,
               'ci_total_quantity_uom' => nil,
               'commercial_invoice_lines' => [
-                {'cil_po_number' => nil}
+                {'id'=>line.id, 'cil_po_number' => nil}
               ]
             }
           ]
@@ -143,15 +161,17 @@ describe OpenChain::Api::ApiEntityJsonizer do
             "*cf_#{@p_def.id}"=> "Value1",
             'classifications' => [
               {
+                "id" => @classification.id,
                 "*cf_#{@c_def.id}" => Date.new(2013, 12, 20).to_s, 
                 "tariff_records" => [
-                  {"*cf_#{@t_def.id}" => BigDecimal.new("10.99").to_s}
+                  {"id" => @tariff_record.id, "*cf_#{@t_def.id}" => BigDecimal.new("10.99").to_s}
                 ]
               },
               {
+                "id" => @classification_2.id,
                 "*cf_#{@c_def.id}" => nil, 
                 "tariff_records" => [
-                  {"*cf_#{@t_def.id}" => nil}
+                  {"id" => @tariff_record_2.id, "*cf_#{@t_def.id}" => nil}
                 ]
               }
             ]
@@ -174,8 +194,8 @@ describe OpenChain::Api::ApiEntityJsonizer do
       cm_fields = CoreModule::PRODUCT.model_fields(@user)
 
       expect(model_fields['product'].size).to eq cm_fields.size
-      expect(model_fields['classifications'].size).to eq CoreModule::CLASSIFICATION.model_fields(@user).size
-      expect(model_fields['tariff_records'].size).to eq CoreModule::TARIFF.model_fields(@user).size
+      expect(model_fields['classification'].size).to eq CoreModule::CLASSIFICATION.model_fields(@user).size
+      expect(model_fields['tariff_record'].size).to eq CoreModule::TARIFF.model_fields(@user).size
 
       # We can pretty much just check one of the model fields for the correct values now that we've
       # shown we're listing them all.
@@ -193,8 +213,87 @@ describe OpenChain::Api::ApiEntityJsonizer do
       model_fields = ActiveSupport::JSON.decode(json)
 
       expect(model_fields['product']).to be_nil
-      expect(model_fields['classifications']).to be_nil
-      expect(model_fields['tariff_records']).to be_nil
+      expect(model_fields['classification']).to be_nil
+      expect(model_fields['tariff_record']).to be_nil
+    end
+  end
+
+  describe "export_field" do
+    it "outputs string data" do
+      mf = ModelField.find_by_uid :prod_uid
+      u = User.new
+      p = Product.new unique_identifier: "ABC"
+
+      expect(described_class.new.export_field u, p, mf).to eq "ABC"
+    end
+
+    it "outputs nil for nil values by default" do
+      mf = ModelField.find_by_uid :prod_uid
+      u = User.new
+      p = Product.new
+      expect(described_class.new.export_field u, p, mf).to be_nil
+    end
+
+    it "outputs blank for nil if specified" do
+      mf = ModelField.find_by_uid :prod_uid
+      u = User.new
+      p = Product.new
+      expect(described_class.new(blank_if_nil:true).export_field u, p, mf).to eq ""
+    end
+
+    it "outputs integer values as integers" do
+      # make sure that regardless of the value returned by the process_export
+      # that an actual integer is returned
+      mf = double
+      u = User.new
+      p = Product.new
+      mf.should_receive(:process_export).with(p, u).and_return "1"
+      mf.should_receive(:data_type).and_return :integer
+      expect(described_class.new.export_field u, p, mf).to eq 1
+    end
+
+    it "outputs decimal values as BigDecimals by default" do
+      # make sure that regardless of the value returned by the process_export
+      # that an actual BigDecimal is returned
+      mf = double
+      u = User.new
+      p = Product.new
+      mf.should_receive(:process_export).with(p, u).and_return "123.12"
+      mf.should_receive(:data_type).and_return :decimal
+      expect(described_class.new.export_field u, p, mf).to eq BigDecimal("123.12")
+    end
+
+    it "outputs numeric values as BigDecimals by default" do
+      # make sure that regardless of the value returned by the process_export
+      # that an actual BigDecimal is returned
+      mf = double
+      u = User.new
+      p = Product.new
+      mf.should_receive(:process_export).with(p, u).and_return "123.12"
+      mf.should_receive(:data_type).and_return :numeric
+      expect(described_class.new.export_field u, p, mf).to eq BigDecimal("123.12")
+    end
+
+    it "outputs numeric values as floats if specified" do
+      # make sure that regardless of the value returned by the process_export
+      # that an actual float is returned
+      mf = double
+      u = User.new
+      p = Product.new
+      mf.should_receive(:process_export).with(p, u).and_return "123.12"
+      mf.should_receive(:data_type).and_return :numeric
+      expect(described_class.new(force_big_decimal_numeric: true).export_field u, p, mf).to eq BigDecimal("123.12").to_f
+    end
+
+    it "converts datetimes to user's timezone" do
+      t = Time.zone.now.in_time_zone("UTC")
+      u = User.new time_zone: "Hawaii"
+      p = Product.new
+      mf = double
+      mf.should_receive(:process_export).with(p, u).and_return t
+      mf.should_receive(:data_type).and_return :datetime
+      time = described_class.new.export_field u, p, mf
+      expect(time).to eq t.in_time_zone("Hawaii")
     end
   end
 end 

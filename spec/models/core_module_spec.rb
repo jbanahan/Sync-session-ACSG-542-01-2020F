@@ -174,4 +174,21 @@ describe CoreModule do
       expect(fields['Product'].find {|v| v[1] == :prod_uid}).to eq ["Unique Identifier", :prod_uid]
     end
   end
+
+  describe "walk_object_heirarchy" do
+    it "yields each object in core module heirarchy" do
+      p = Factory(:product)
+      t1 = Factory(:tariff_record, classification: Factory(:classification, product: p))
+      t2 = Factory(:tariff_record, classification: Factory(:classification, product: p))
+
+      yielded_vals = []
+      CoreModule.walk_object_heirarchy(p) {|cm, obj| yielded_vals << [cm, obj]}
+      expect(yielded_vals.length).to eq 5
+      expect(yielded_vals[0]).to eq [CoreModule::PRODUCT, p]
+      expect(yielded_vals[1]).to eq [CoreModule::CLASSIFICATION, t1.classification]
+      expect(yielded_vals[2]).to eq [CoreModule::TARIFF, t1]
+      expect(yielded_vals[3]).to eq [CoreModule::CLASSIFICATION, t2.classification]
+      expect(yielded_vals[4]).to eq [CoreModule::TARIFF, t2]
+    end
+  end
 end

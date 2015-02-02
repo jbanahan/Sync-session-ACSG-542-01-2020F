@@ -42,7 +42,7 @@ describe 'ShipmentApp', () ->
 
     describe 'totalToShip', ->
       it 'should total all data types', ->
-        o = {lines:[
+        o = {order_lines:[
           {quantity_to_ship:4}
           {quantity_to_ship:'x'}
           {}
@@ -65,9 +65,9 @@ describe 'ShipmentApp', () ->
         r = q.defer()
         spyOn(svc,'getOrder').andReturn(r.promise)
         scope.getOrder(ord)
-        r.resolve({data:{order:{id:99,lines:[]}}})
+        r.resolve({data:{order:{id:99,order_lines:[]}}})
         scope.$apply()
-        expect(scope.activeOrder).toEqual {id:99,lines:[]}
+        expect(scope.activeOrder).toEqual {id:99,order_lines:[]}
         expect(svc.getOrder).toHaveBeenCalledWith 1
       
       it "should set quantity_to_ship to ordln_ordered_qty", ->
@@ -75,43 +75,43 @@ describe 'ShipmentApp', () ->
         r = q.defer()
         spyOn(svc,'getOrder').andReturn(r.promise)
         scope.getOrder(ord)
-        r.resolve({data:{order:{id:99,lines:[{ordln_ordered_qty:10}]}}})
+        r.resolve({data:{order:{id:99,order_lines:[{ordln_ordered_qty:10}]}}})
         scope.$apply()
-        expect(scope.activeOrder).toEqual {id:99,lines:[{ordln_ordered_qty:10,quantity_to_ship:10}]}
+        expect(scope.activeOrder).toEqual {id:99,order_lines:[{ordln_ordered_qty:10,quantity_to_ship:10}]}
 
     describe 'resetQuantityToShip', ->
       it 'should set quantity_to_ship to ordln_ordered_qty', ->
-        ord = {lines:[{ordln_ordered_qty:1,quantity_to_ship:2},{ordln_ordered_qty:10,quantity_to_ship:3}]}
+        ord = {order_lines:[{ordln_ordered_qty:1,quantity_to_ship:2},{ordln_ordered_qty:10,quantity_to_ship:3}]}
         scope.resetQuantityToShip(ord)
-        expect(ord).toEqual {lines:[{ordln_ordered_qty:1,quantity_to_ship:1},{ordln_ordered_qty:10,quantity_to_ship:10}]}
+        expect(ord).toEqual {order_lines:[{ordln_ordered_qty:1,quantity_to_ship:1},{ordln_ordered_qty:10,quantity_to_ship:10}]}
 
     describe 'clearQuantityToShip', ->
       it 'should set quantity_to_ship to 0', ->
-        ord = {lines:[{ordln_ordered_qty:1,quantity_to_ship:2},{ordln_ordered_qty:10,quantity_to_ship:3}]}
+        ord = {order_lines:[{ordln_ordered_qty:1,quantity_to_ship:2},{ordln_ordered_qty:10,quantity_to_ship:3}]}
         scope.clearQuantityToShip(ord)
-        expect(ord).toEqual {lines:[{ordln_ordered_qty:1,quantity_to_ship:0},{ordln_ordered_qty:10,quantity_to_ship:0}]}        
+        expect(ord).toEqual {order_lines:[{ordln_ordered_qty:1,quantity_to_ship:0},{ordln_ordered_qty:10,quantity_to_ship:0}]}        
     
     describe 'prorate', ->
       ord = null
       beforeEach ->
-        ord = {lines:[{quantity_to_ship:2},{quantity_to_ship:1000}]}
+        ord = {order_lines:[{quantity_to_ship:2},{quantity_to_ship:1000}]}
       it 'should add percentage', ->
         p = {sign:'Add',amount:'50'}
         scope.prorate(ord,p)
-        expect(ord).toEqual {lines:[{quantity_to_ship:3},{quantity_to_ship:1500}]}
+        expect(ord).toEqual {order_lines:[{quantity_to_ship:3},{quantity_to_ship:1500}]}
 
       it 'should remove percentage', ->
         p = {sign:'Remove',amount:10}
         scope.prorate(ord,p)
-        expect(ord).toEqual {lines:[{quantity_to_ship:2},{quantity_to_ship:900}]}        
+        expect(ord).toEqual {order_lines:[{quantity_to_ship:2},{quantity_to_ship:900}]}        
       it 'should do nothing if amount is NaN', ->
         p = {sign:'Add',amount:'BAD'}
         scope.prorate(ord,p)
-        expect(ord).toEqual {lines:[{quantity_to_ship:2},{quantity_to_ship:1000}]}
+        expect(ord).toEqual {order_lines:[{quantity_to_ship:2},{quantity_to_ship:1000}]}
 
     describe 'addOrderToShipment', ->
       it 'should add to shipment with no lines', ->
-        ord = {id:1,ord_ord_num:'abc',ord_cust_ord_no:'def',lines:[
+        ord = {id:1,ord_ord_num:'abc',ord_cust_ord_no:'def',order_lines:[
           {id:2,ordln_line_number:'10',ordln_puid:'SKU1',ordln_pname:'CHAIR',quantity_to_ship:3}
           {id:4,ordln_line_number:'20',ordln_puid:'SKU2',ordln_pname:'HAT',quantity_to_ship:7}
           ]}

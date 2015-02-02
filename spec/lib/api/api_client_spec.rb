@@ -67,7 +67,7 @@ describe OpenChain::Api::ApiClient do
             'Content-Type' => "application/json; charset=utf-8"
           }
         )
-        json = @c.send_request "/path/file.json", {"mf_uids" => "1,2,3"}
+        json = @c.get "/path/file.json", {"mf_uids" => "1,2,3"}
         json['ok'].should == "Ök"
         WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
@@ -89,7 +89,7 @@ describe OpenChain::Api::ApiClient do
             'Content-Type' => "application/json; charset=utf-8"
           }
         )
-        expect{@c.send_request "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
+        expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
         WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").times(3)
     end
 
@@ -110,7 +110,7 @@ describe OpenChain::Api::ApiClient do
             'Content-Type' => "application/json; charset=utf-8"
           }
         )
-        expect{@c.send_request "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
+        expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
         WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
 
@@ -131,7 +131,7 @@ describe OpenChain::Api::ApiClient do
             'Content-Type' => "application/json; charset=utf-8"
           }
         )
-        expect{@c.send_request "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiAuthenticationError, "Authentication to #{@c.endpoint} failed for user '#{@c.username}' and api token '#{@c.authtoken}'. Error: Error Response"
+        expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiAuthenticationError, "Authentication to #{@c.endpoint} failed for user '#{@c.username}' and api token '#{@c.authtoken}'. Error: Error Response"
         WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
 
@@ -155,7 +155,7 @@ describe OpenChain::Api::ApiClient do
           }
         )
 
-        expect{@c.send_request "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "API Request failed with error: invalid byte sequence in US-ASCII"
+        expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "API Request failed with error: invalid byte sequence in US-ASCII"
         WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3")
     end
 
@@ -177,7 +177,7 @@ describe OpenChain::Api::ApiClient do
           }
         )
 
-        json = @c.send_request "/path/file.json", {"mf uids" => "1 3"}
+        json = @c.get "/path/file.json", {"mf uids" => "1 3"}
         json['ok'].should == "ok"
     end
   end

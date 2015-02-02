@@ -47,4 +47,26 @@ describe "CustomFieldSupport" do
       expect(fresh_p.get_custom_value(cd2).value).to be_nil
     end
   end
+
+  describe :freeze_all_custom_values_including_children do
+    it "calls freeze_custom_values on all levels of the obj" do
+      p = Product.new
+      c = Classification.new
+      c2 = Classification.new
+      t = TariffRecord.new
+      t2 = TariffRecord.new
+
+      c.tariff_records << t
+      c.tariff_records << t2
+      p.classifications << c
+      p.classifications << c2
+
+      p.should_receive(:freeze_custom_values)
+      c.should_receive(:freeze_custom_values)
+      c2.should_receive(:freeze_custom_values)
+      t.should_receive(:freeze_custom_values)
+      t2.should_receive(:freeze_custom_values)
+      p.freeze_all_custom_values_including_children
+    end
+  end
 end
