@@ -1,6 +1,7 @@
 require 'open_chain/workflow_tester/attachment_type_workflow_test'
 require 'open_chain/workflow_tester/multi_state_workflow_test'
 require 'open_chain/workflow_tester/model_field_workflow_test'
+require 'open_chain/workflow_tester/survey_complete_workflow_test'
 
 class WorkflowTask < ActiveRecord::Base
   DUE_AT_LABELS = ["Complete","No Due Date","Overdue","Upcoming","Later"]

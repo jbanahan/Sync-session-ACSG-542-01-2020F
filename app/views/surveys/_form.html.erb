@@ -1,7 +1,7 @@
 <% content_for :javascript do%>
   $(function() {
     $('#frm_svy').submit(function(){
-      if ($('#survey_name').val().length == 0){
+      if ($('#survey-name').val().length == 0){
         alert("Please name your survey before saving.");
         return false;
       }
@@ -74,24 +74,29 @@
 }
 </style>
 <%content_for :action_bar do %>
-<button class='form_to' form_id="frm_svy">Save</button>
-<button class='btn_link' link_to='<%=surveys_path%>'>Back</button>
+  <button class='form_to' form_id="frm_svy">Save</button>
+  <button class='btn_link' link_to='<%=surveys_path%>'>Back</button>
 <% end %>
-<%=form_for @survey, :html=>{ :id=>'frm_svy', :multipart=>true } do |f|%>
-  <table>
-    <%=field_row "Survey Name", f.text_field(:name), id: "survey-name"%>
-    <%=field_row "Expires in... (days)", f.text_field(:expiration_days, maxlength: 4, size: 20, placeholder: "Number of days. Ex: 365")%> 
-    <%=field_row "Rating Options", f.text_area(:ratings_list, :rows=>"5")%>
-    <%=field_row "", "One rating per line."%>
-  </table>
-  <h2 id='email_head'>Email Setup</h2>
-  <table>
-    <%=field_row "Subject", f.text_field(:email_subject, :id=>"eml_sub")%>
-    <%=field_row "Body", f.text_area(:email_body, :id=>"email_body")%>
-    <%=field_row "", "<a href='#' id='preview_link'>Preview</a> | <a href='http://redcloth.org/hobix.com/textile/quick.html' target='_blank'>Formatting Guide</a>".html_safe%>
-  </table>
-  <hr />
-  <div id='questions'>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <%=form_for @survey, :html=>{ :id=>'frm_svy', :multipart=>true } do |f|%>
+          <%=field_bootstrap "Survey Name", f.text_field(:name, id: "survey-name", :class=>'form-control')%>
+          <%=field_bootstrap "Expires in... (days)", f.text_field(:expiration_days, maxlength: 4, size: 20, placeholder: "Number of days. Ex: 365", :class=>'form-control')%> 
+          <%=field_bootstrap "System Code", f.text_field(:system_code,:title=>"A code used by the workflow system to track the survey.", :class=>'form-control')%>
+          <%=field_bootstrap "Rating Options", f.text_area(:ratings_list, :rows=>"5", :class=>'form-control')%>
+          <%=field_bootstrap "", "One rating per line."%>
+        <h2 id='email_head'>Email Setup</h2>
+          <%=field_bootstrap "Subject", f.text_field(:email_subject, :id=>"eml_sub", :class=>'form-control')%>
+          <%=field_bootstrap "Body", f.text_area(:email_body, :id=>"email_body", :class=>'form-control')%>
+          <%=field_bootstrap "", "<a href='#' id='preview_link'>Preview</a> | <a href='http://redcloth.org/hobix.com/textile/quick.html' target='_blank'>Formatting Guide</a>".html_safe%>
+        <hr />
+        <div id='questions'>
+        </div>
+      <%end%>
+      <button id='btn_add_q'>Add Question</button>      
+    </div>
   </div>
-<%end%>
-<button id='btn_add_q'>Add Question</button>
+</div>
+

@@ -73,7 +73,12 @@
 <% if @survey.archived? %>
 <div class="alert alert-warning"><p>This survey has been archived.  You may not change anything on archived surveys.  Use the 'Restore Survey' button to change this survey to active.</p></div>
 <% end %>
-<h1><%=@survey.name%></h1>
+<h1>
+  <%=@survey.name%>
+  <%if !@survey.system_code.blank?%>
+    <small title='System tracking code.'>(<%=@survey.system_code%>)</small>
+  <%end%>
+</h1>
 
 <div id='stat_chart' style='text-align:center; width:45%; margin:0; float:right;'></div>
 <div id='resp_chart' style='text-align:center; width:45%; margin:0;'></div>

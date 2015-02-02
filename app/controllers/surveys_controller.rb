@@ -159,19 +159,33 @@ class SurveysController < ApplicationController
       error_redirect "You cannot assign users to this survey."
       return
     end
+    base_object = nil
+    if !params[:base_object_id].blank? && !params[:base_object_type].blank?
+      cm = CoreModule.find_by_class_name params[:base_object_type], true
+      if cm.blank?
+        error_redirect "Object type #{params[:base_object_type]} not found."
+        return
+      end
+      bo = cm.klass.find_by_id params[:base_object_id]
+      if bo.blank? || !bo.can_view?(current_user)
+        error_redirect "#{params[:base_object_type]} #{params[:base_object_id]} not found."
+        return
+      end
+      base_object = bo
+    end
 
     users = params[:assign]
     groups = params[:groups]
     if users.blank? && groups.blank?
       add_flash :errors, "You must assign this survey to at least one user or group."
-      redirect_to s
+      redirect_to redirect_location(s)
       return
     end
 
     cnt = 0
     if !users.blank?
       users.values.each do |uid|
-        s.generate_response!(User.find(uid),params[:subtitle]).delay.invite_user!
+        s.generate_response!(User.find(uid),params[:subtitle],bo).delay.invite_user!
         cnt += 1
       end
       if cnt > 0
@@ -182,7 +196,7 @@ class SurveysController < ApplicationController
     cnt = 0
     if !groups.blank?
       groups.each do |g_id|
-        s.generate_group_response!(Group.find(g_id), params[:subtitle]).delay.invite_user!
+        s.generate_group_response!(Group.find(g_id), params[:subtitle],base_object).delay.invite_user!
         cnt += 1
       end
 
@@ -191,7 +205,7 @@ class SurveysController < ApplicationController
       end
     end
     
-    redirect_to s
+    redirect_to redirect_location(s)
   end
   def toggle_subscription
     @survey = Survey.find params[:id]
@@ -230,5 +244,10 @@ class SurveysController < ApplicationController
       end 
       redirect_to survey_path s
     end
+  end
+
+  private 
+  def redirect_location s
+    params[:redirect_to].blank? ? s : params[:redirect_to]
   end
 end

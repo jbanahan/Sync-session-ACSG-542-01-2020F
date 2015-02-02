@@ -618,6 +618,12 @@ $(document).ready () ->
     Chain.processInfiniteSelectReset(targetTableSelector)
 
   $(document).on 'keyup', '[data-infinite-table-filter]', (e) ->
+    tgt = $(e.target)
+    btn = $('button[data-infinite-table-reset="'+tgt.attr('data-infinite-table-filter')+'"]')
+    if tgt.val().length > 0
+      btn.removeClass('btn-default').addClass('btn-primary')
+    else
+      btn.addClass('btn-default').removeClass('btn-primary')
     if(e.keyCode == 13) 
       targetTableSelector = $(e.target).attr('data-infinite-table-filter')
       Chain.processInfiniteSelectReset(targetTableSelector)

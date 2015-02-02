@@ -41,8 +41,8 @@ class Survey < ActiveRecord::Base
   end
 
   # generates a survey response in the target_user's account
-  def generate_response! target_user, subtitle=nil
-    sr = self.survey_responses.create!(:user=>target_user,:subtitle=>subtitle)
+  def generate_response! target_user, subtitle=nil, base_object=nil
+    sr = self.survey_responses.create!(:user=>target_user,:subtitle=>subtitle,:base_object=>base_object)
     self.questions.each do |q|
       sr.answers.create!(:question=>q)
     end
@@ -50,8 +50,8 @@ class Survey < ActiveRecord::Base
     sr
   end
 
-  def generate_group_response! target_group, subtitle = nil
-    sr = self.survey_responses.create!(:group=>target_group,:subtitle=>subtitle)
+  def generate_group_response! target_group, subtitle = nil, base_object=nil
+    sr = self.survey_responses.create!(:group=>target_group,:subtitle=>subtitle,:base_object=>base_object)
     self.questions.each do |q|
       sr.answers.create!(:question=>q)
     end

@@ -1,19 +1,27 @@
 <div class='container-fluid'>
-  <div class='row'>
+  <div class='row' style='margin-bottom: 5px;'>
     <div class="col-xs-8">
-      <input type='text' class='form-control' id='name-filter' data-infinite-table-filter='#survey-responses' data-infinite-table-param='q' placeholder='Filter by name'/>
+      <div class='form-inline'>
+        <div class="form-group">
+          <input type='text' class='form-control' id='name-filter' data-infinite-table-filter='#survey-responses' data-infinite-table-param='q' placeholder='Filter by name'/>
+          <button data-infinite-table-reset='#survey-responses' class='btn btn-sm btn-default'>
+            Filter
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="col-xs-4">
-      <button data-infinite-table-reset='#survey-responses' class='btn btn-sm btn-default'>
-        Filter
-      </button>
+    <div class="col-xs-4 text-right">
+      <%if current_user.edit_surveys?%>
+        <button class='btn btn-success' id='btn_add_survey' title='Add Survey'><span class='glyphicon glyphicon-plus'></span></button>
+      <% end %>      
     </div>
   </div>
-  <table class='detail_table' id='survey-responses' data-infinite-table-src='/vendors/<%=@company.id%>/survey_responses'>
+  <table class='detail_table' style='width:100%' id='survey-responses' data-infinite-table-src='/vendors/<%=@company.id%>/survey_responses'>
     <thead>
       <tr>
         <th></th>
         <th>Survey Name</th>
+        <th>Label</th>
       </tr>
     </thead>
     <tbody>
@@ -22,3 +30,72 @@
   </table>
   <div><button data-infinite-table-target='#survey-responses' class='btn btn-link btn-lg btn-block'>Load More</button></div>
 </div>
+<%if current_user.edit_surveys?%>
+  <div class="modal fade" id="add_survey_modal">
+    <%= form_for :survey, :url=>assign_survey_path(Survey.first), :html=>{:method=>"POST",:id=>"add_survey_form"} do |f| %>
+
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header text-center">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4>Add Survey</h4>
+          </div>
+          <div class="modal-body">
+            <input type='hidden' name='base_object_type' value='Company'/>
+            <input type='hidden' name='base_object_id' value='<%=@company.id%>' />
+            <input type='hidden' name='redirect_to' value='/vendors/<%=@company.id%>'/>
+            <div class='form-group'>
+              <label for='survey_id'>Name</label>
+              <select id='survey_list' class='form-control'>
+                <option></option>
+                <%Survey.where(:company_id=>current_user.company_id, :archived => false).each do |s|%>
+                  <option value='<%=s.id%>'><%=s.name%></option>
+                <%end%>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="survey_group">Group</label>
+              <select id='survey_group' name='groups[]' class='form-control'>
+                <option></option>
+                <%Group.visible_to_user(current_user).each do |g|%>
+                  <option value='<%=g.id%>'><%=g.name%></option>
+                <%end%>
+              </select>
+            </div>
+            <div class='form-group'>
+              <label for="subtitle">Label <small class='text-muted'>(optional)</small></label>
+              <input type="text" id="subtitle" name='subtitle' class='form-control' />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id='add_survey_cancel' class='btn btn-default'>Cancel</button>
+            <input type='submit' value='Assign' class='btn btn-primary' />
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    <%end%>
+  </div><!-- /.modal -->
+<%end%>
+<script type='text/javascript'>
+  $('#btn_add_survey').click(function() {
+    $('#add_survey_modal').modal('show');
+  });
+  $('#add_survey_cancel').click(function() {
+    $('#add_survey_modal').modal('hide');
+  });
+  $('#add_survey_form').submit(function() {
+    var s_list_val, s_group_val;
+    s_list_val = $('#survey_list').val();
+    s_group_val = $('#survey_group').val();
+    if(s_list_val.length==0) {
+      window.alert('You must select a survey.');
+      return false;
+    }
+    if(s_group_val.length==0) {
+      window.alert('You must select a group.');
+      return false;
+    }
+    $(this).attr('action','/surveys/'+s_list_val+'/assign')
+    return true;
+  })
+</script>

@@ -313,6 +313,28 @@ describe SurveysController do
       expect(flash[:notices]).to include "1 group assigned."
       expect(SurveyResponse.where("group_id = ? AND subtitle = ? ", g.id, "sub").first).not_to be_nil
     end
+    it "should associate with base_object" do
+      Survey.any_instance.stub(:can_edit?).and_return(true)
+      Company.any_instance.stub(:can_view?).and_return(true)
+      expect {
+        post :assign, :id=>@s.id, :assign=>{'0'=>@u.id.to_s}, :base_object_type => 'Company', :base_object_id => @u.company_id.to_s
+      }.to change(SurveyResponse.where(base_object_id:@u.company_id,base_object_type:'Company'),:count).from(0).to(1)
+      expect(flash[:errors]).to be_blank
+      expect(response).to be_redirect
+    end
+    it "should error if user cannot view base_object" do
+      Survey.any_instance.stub(:can_edit?).and_return(true)
+      Company.any_instance.stub(:can_view?).and_return(false)
+      expect {
+        post :assign, :id=>@s.id, :assign=>{'0'=>@u.id.to_s}, :base_object_type => 'Company', :base_object_id => @u.company_id.to_s
+      }.to_not change(SurveyResponse,:count)
+      expect(flash[:errors].first).to match /not found/
+    end
+    it "should redirect to special path" do
+      Survey.any_instance.stub(:can_edit?).and_return(true)
+      post :assign, :id=>@s.id, :assign=>{'0'=>@u.id.to_s}, :redirect_to=>'/my_path'
+      expect(response).to redirect_to '/my_path'
+    end
     it "fails when no groups or users are selected" do
       Survey.any_instance.stub(:can_edit?).and_return(true)
       post :assign, :id=>@s.id, :subtitle=>'sub'
