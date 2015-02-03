@@ -75,7 +75,7 @@ root.Chain =
     $("[notification-center-toggle-target]").removeClass('btn-primary').addClass('btn-default')
     $("[notification-center-toggle-target='"+target+"']").removeClass('btn-default').addClass('btn-primary')
     pane = $("[notification-center-pane='"+target+"']")
-    pane.html('loading')
+    pane.html('<div class="loader"></div>')
     pane.show()
     $.ajax {
       url: pane.attr('content-url')
@@ -646,5 +646,9 @@ $(document).ready () ->
         h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
         $('.task-wrap .task-email-check-wrap').html(h)
     }
+    
+  $("div[notification-center-pane='tasks']").on 'chain:workflow-change', () ->
+    Chain.showNotificationCenterPane('tasks')
+
   $("#set-homepage-btn").click (evt) ->
     $.post("/users/set_homepage", {homepage: $(location).attr("href")})

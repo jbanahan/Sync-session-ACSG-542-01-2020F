@@ -22,9 +22,8 @@ module OpenChain; module WorkflowDecider
     end
   end
 
-  def first_or_create_test! workflow_instance, task_type_code, display_rank, test_class, name, assigned_group, payload_hash, due_at=nil, view_path=nil
+  def first_or_create_test! workflow_instance, task_type_code,  test_class, name, assigned_group, payload_hash, due_at=nil, view_path=nil
     workflow_instance.workflow_tasks.where(task_type_code:task_type_code).first_or_create!(
-      display_rank:display_rank,
       test_class_name:test_class.name,
       payload_json:payload_hash.to_json,
       name:name,
@@ -32,6 +31,23 @@ module OpenChain; module WorkflowDecider
       due_at:due_at,
       view_path: view_path
     )
+  end
+
+  # convenience method for first_or_create_test! with AttachmentTypeWorkflowTest
+  #
+  # method also makes sure the requested attachment type is in the AttachmentType table
+  def first_or_create_attachment_test! attachment_type_name, workflow_instance, task_type_code, name, assigned_group, due_at=nil, view_path=nil
+    AttachmentType.transaction do 
+      AttachmentType.where(name:attachment_type_name).first_or_create!
+      first_or_create_test! workflow_instance, 
+        task_type_code, 
+        OpenChain::WorkflowTester::AttachmentTypeWorkflowTest, 
+        name, 
+        assigned_group, 
+        {'attachment_type'=>attachment_type_name}, 
+        due_at,
+        view_path
+    end
   end
 
   #override to skip objects in `update_workflow!`

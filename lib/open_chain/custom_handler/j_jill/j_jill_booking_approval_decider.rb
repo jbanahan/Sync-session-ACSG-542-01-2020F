@@ -24,7 +24,6 @@ module OpenChain; module CustomHandler; module JJill; class JJillBookingApproval
     approvers = Group.use_system_group 'JJILL-BOOK-APRV', "J Jill Booking Approvers"
     book_req = first_or_create_test! workflow_inst,
       'JJILL-BOOKREQ',
-      100,
       OpenChain::WorkflowTester::MultiStateWorkflowTest,
       'Request Booking Approval',
       lmd,
@@ -33,7 +32,6 @@ module OpenChain; module CustomHandler; module JJill; class JJillBookingApproval
     if book_req.test! && book_req.multi_state_workflow_task.state=='Request'
       book_approval = first_or_create_test! workflow_inst,
         'JJILL-BOOK-APRV',
-        200,
         OpenChain::WorkflowTester::MultiStateWorkflowTest,
         'Approve Booking',
         approvers,

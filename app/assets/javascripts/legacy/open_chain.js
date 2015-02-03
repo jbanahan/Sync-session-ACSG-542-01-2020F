@@ -28,7 +28,7 @@ var OpenChain = (function() {
     }
 
     field.nextAll(".val_status").remove();
-    field.after("<img src='/assets/ajax_load_64.gif' class='val_status' title='Validating...' style='display:none;' height='16' width='16'/>");
+    field.after("<i class='fa fa-circle-o-notch fa-spin val_status'></i>");
     field.next().fadeIn();
     $.getJSON('/field_validator_rules/validate',{mf_id: mf_id, value: field.val()},function(data) {
       field.nextAll(".val_status").remove();
@@ -36,7 +36,7 @@ var OpenChain = (function() {
         var m = "";
         $.each(data,function(i,v) {m += v+"<br />"});
         field.addClass("error");
-        field.after("<img src='/assets/error.png' alt='Field Error' class='val_status'/>");
+        field.after("<i class='fa fa-exclamation-circle val_status error'></i>");
         field.parent().tooltip("option", "content", m);
       } else {
         field.removeClass("error");
@@ -648,7 +648,7 @@ function addHiddenFormField(parentForm,name,value,id,style_class) {
     .appendTo(parentForm);
 }
 function loading(wrapper) {
-  wrapper.html("<img src='/assets/ajax_load_64.gif' alt='loading' height='16' width='16'/>");
+  wrapper.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
 }
 
 //address setup

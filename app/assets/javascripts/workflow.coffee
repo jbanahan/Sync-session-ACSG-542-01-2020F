@@ -9,8 +9,11 @@ root.ChainWorkflow =
     return false if root.workflowButtonsInitRun
     $(document).on 'click', '[data-wtask-multi-opt]', (evt) ->
       # evt.preventDefault()
-      btn = $(this)
+      btn = $(evt.target)
       wfId = btn.attr('data-wtask-id')
+      grp = btn.parent('.btn-group')
+      grp.children().hide()
+      grp.append('<i class="fa fa-circle-o-notch fa-spin"></i>')
       $.ajax {
         url:'/api/v1/workflow/'+wfId+'/set_multi_state.json'
         contentType:'application/json'
@@ -18,11 +21,11 @@ root.ChainWorkflow =
         dataType: 'json'
         data: JSON.stringify({state:btn.attr('data-wtask-multi-opt')})
         success: (data) ->
-          success(data)
+          btn.trigger('chain:workflow-change')
       }
     $(document).on 'click', 'a[data-assign-workflow-user]', (evt) ->
       # evt.preventDefault()
-      lnk = $(this)
+      lnk = $(evt.target)
       wfId = lnk.attr('data-wtask-id')
       payload = {user_id:lnk.attr('data-assign-workflow-user')}
       if lnk.attr('data-assigned')=='true'
@@ -34,7 +37,7 @@ root.ChainWorkflow =
         dataType: 'json'
         data: JSON.stringify(payload)
         success: (data) ->
-          success(data)
+          lnk.trigger('chain:workflow-change')
       }
 
     root.workflowButtonsInitRun = true
@@ -42,7 +45,7 @@ root.ChainWorkflow =
 
   reloadWorkflow: (coreModule,baseObjectId) ->
     mb = $('#modal-workflow .workflow-content')
-    mb.html('loading')
+    mb.html("<div class='loader'>loading</div>")
     $.ajax {
       url: '/workflow/'+coreModule+'/'+baseObjectId
       type:'GET'
@@ -77,3 +80,9 @@ root.ChainWorkflow =
       ChainWorkflow.reload()
     $(document).on 'show.bs.modal', '#modal-workflow', () ->
       ChainWorkflow.reload()
+    $(document).on 'chain:workflow-change', (evt) ->
+      console.log evt
+      if ChainWorkflow.coreObject().coreModule
+        ChainWorkflow.reload() 
+      else
+        'no core module'
