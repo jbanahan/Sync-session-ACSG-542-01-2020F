@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
   def initialize opts = {}
     super
     @env = (opts[:env] ? opts[:env] : 'production')
-    @cdefs = self.class.prep_custom_definitions [:prod_fda_product_code, :prod_part_number]
+    @cdefs = self.class.prep_custom_definitions [:prod_fda_product_code, :prod_part_number, :class_set_type]
   end
 
   def ftp_credentials
@@ -26,18 +26,34 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
     rows = []
     counter = 0
 
-    tariffs = TariffRecord.joins(classification: [:country]).where(classifications: {product_id: opts[:product_id]}, countries: {iso_code: row[1]}).order("line_number ASC")
-    tariffs.each do |t|
-      if !t.hts_1.blank?
-        rows << [row[0], row[1], t.hts_1, (counter += 1).to_s.rjust(3, "0"), row[4]]
-      end
+    c = Classification.includes(:custom_values).where(id: row[5]).first
+    set_type = c.get_custom_value(@cdefs[:class_set_type]).value
 
-      if !t.hts_2.blank?
-        rows << [row[0], row[1], t.hts_2, (counter += 1).to_s.rjust(3, "0"), row[4]]
+    if set_type.to_s.strip.upcase == "XVV"
+      # Return the second tariff record - the first should be the set hts, which isn't what Lenox wants...they want the hts that will determine the duty rate
+      component_tariff = c.tariff_records.order("line_number ASC").second
+      if component_tariff && !component_tariff.hts_1.blank?
+        rows << [row[0], row[1], component_tariff.hts_1, (counter += 1).to_s.rjust(3, "0"), row[4]]
       end
+    else
+      c.tariff_records.order("line_number ASC").each do |t|
+        # HTS codes in chapter 98 are all special case tariffs, Lenox only wants 
+        # this code as it's the one used to determine the duty rate
+        if t.hts_1.to_s.strip[0, 2] == "98"
+          rows << [row[0], row[1], t.hts_1, (counter += 1).to_s.rjust(3, "0"), row[4]]
+        else
+          if !t.hts_1.blank?
+            rows << [row[0], row[1], t.hts_1, (counter += 1).to_s.rjust(3, "0"), row[4]]
+          end
 
-      if !t.hts_3.blank?
-        rows << [row[0], row[1], t.hts_3, (counter += 1).to_s.rjust(3, "0"), row[4]]
+          if !t.hts_2.blank?
+            rows << [row[0], row[1], t.hts_2, (counter += 1).to_s.rjust(3, "0"), row[4]]
+          end
+
+          if !t.hts_3.blank?
+            rows << [row[0], row[1], t.hts_3, (counter += 1).to_s.rjust(3, "0"), row[4]]
+          end
+        end
       end
     end
 
@@ -72,7 +88,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
     part_number = @cdefs[:prod_part_number]
 
     qry = <<-QRY
-SELECT products.id, v.string_value, cod.iso_code, '', '', cv.string_value
+SELECT products.id, v.string_value, cod.iso_code, '', '', cv.string_value, c.id
 FROM products products
 INNER JOIN companies i ON i.id = products.importer_id AND i.system_code = 'LENOX'
 INNER JOIN custom_values v on products.id = v.customizable_id and v.customizable_type = 'Product' and v.custom_definition_id = #{part_number.id} and v.string_value <> ''

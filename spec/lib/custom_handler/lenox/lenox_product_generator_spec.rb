@@ -90,5 +90,31 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
       verify_line lines[0], part: "PARTNO", iso: @c.country.iso_code, hts: @t.hts_1, line: 0, fda: "FDA"
       verify_line lines[1], part: "PARTNO", iso: t2.classification.country.iso_code, hts: t2.hts_1, line: 0, fda: "FDA"
     end
+
+    it "sends the second tariff line for XVV sets" do
+      cdef = described_class.prep_custom_definitions([:class_set_type])[:class_set_type]
+      @c.update_custom_value! cdef, "XVV"
+
+      t2 = Factory(:tariff_record, hts_1: "7531594560", classification: @c, line_number: 2)
+      @temp = @g.sync_fixed_position
+      lines = IO.readlines @temp.path
+
+      expect(lines.length).to eq 1
+      verify_line lines[0], part: "PARTNO", iso: t2.classification.country.iso_code, hts: t2.hts_1, line: 0, fda: "FDA"
+    end
+
+    it "sends hts_2 for tariff lines where hts_1 starts with 98" do
+      @t.update_attributes! hts_1: "9801123456", hts_2: "1234567890"
+
+      @temp = @g.sync_fixed_position
+      lines = IO.readlines @temp.path
+
+      expect(lines.length).to eq 1
+
+      verify_line lines[0], part: "PARTNO", iso: @c.country.iso_code, hts: @t.hts_1, line: 0, fda: "FDA"
+
+      # Verify the sync record was made for the product
+      expect(@p.sync_records.first.trading_partner).to eq @g.sync_code
+    end
   end
 end
