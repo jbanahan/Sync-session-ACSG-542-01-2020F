@@ -85,11 +85,14 @@
           <div class="form-group">
             <input type="file" id="attachment_attached" name="attachment[attached]" style="width: 100%">
           </div>
-          <div class="checkbox">
-            <label>
-              <%= f.check_box :is_private %> Private Attachment?
-            </label>
-          </div>
+          <%if current_user.company.master? %>
+            <%att.is_private = true%>
+            <div class="checkbox">
+              <label>
+                <%= f.check_box :is_private %> Private Attachment?
+              </label>
+            </div>
+          <%end%>
         <% end %>
       </div>
       <div class="modal-footer">
