@@ -160,9 +160,15 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     unless obj
       raise StatusableError.new("#{cm.label} Not Found" ,404)
     else
-      obj.freeze_all_custom_values_including_children
+      # Preload the custom values for the object, but don't freeze them....if we freeze them before saving, then the snapshot that's done
+      # later potentially won't store off some of the custom values
+      CoreModule.walk_object_heirarchy(obj) {|cm, o| o.custom_values.to_a if o.respond_to?(:custom_values)}
       if obj.update_model_field_attributes obj_hash
         raise StatusableError.new("You do not have permission to save this #{cm.label}.", :forbidden) unless obj.can_edit?(current_user)
+
+        # Now we can freeze the model fields, since all the possible new data should be loaded now.
+        # Freezing at this point makes the snapshot run faster, and any actual data load that's done following the save
+        obj.freeze_all_custom_values_including_children
       end
     end
 
