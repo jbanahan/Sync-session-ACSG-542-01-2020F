@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Api::V1::ProductsController do
 
   before :each do
-    @user = Factory(:master_user, product_view: true, api_auth_token: "Token", time_zone: "Hawaii")
+    @user = Factory(:master_user, product_view: true, api_auth_token: "Token", time_zone: "Hawaii", product_edit: true)
   end
 
   describe "#show" do
@@ -28,7 +28,7 @@ describe Api::V1::ProductsController do
         expect(response.status).to eq 404
 
         json = ActiveSupport::JSON.decode response.body
-        expect(json['errors']).to eq ['Not Found.']
+        expect(json['errors']).to eq ['Not Found']
       end
 
       it "returns a 404 if user can't access the product" do
@@ -38,7 +38,7 @@ describe Api::V1::ProductsController do
         expect(response.status).to eq 404
 
         json = ActiveSupport::JSON.decode response.body
-        expect(json['errors']).to eq ['Not Found.']
+        expect(json['errors']).to eq ['Not Found']
       end
     end
 
@@ -81,7 +81,7 @@ describe Api::V1::ProductsController do
       expect(response.status).to eq 404
 
       json = ActiveSupport::JSON.decode response.body
-      expect(json['errors']).to eq ['Not Found.']
+      expect(json['errors']).to eq ['Not Found']
     end
 
     it "returns a 404 if user can't access the product" do
@@ -91,34 +91,7 @@ describe Api::V1::ProductsController do
       expect(response.status).to eq 404
 
       json = ActiveSupport::JSON.decode response.body
-      expect(json['errors']).to eq ['Not Found.']
-    end
-  end
-
-  describe "model_fields" do
-    before :each do
-      allow_api_access @user
-    end
-
-    it "returns all model fields for Product" do
-      get 'model_fields', {format: 'json'}
-
-      expect(response).to be_success
-      json = ActiveSupport::JSON.decode response.body
-
-      # Just validate that we have the correct # of fields
-      expect(json['product']).to have(CoreModule::PRODUCT.model_fields(@user) {|mf| mf.user_accessible?}.length).items
-      expect(json['classifications']).to have(CoreModule::CLASSIFICATION.model_fields(@user){|mf| mf.user_accessible?}.length).items
-      expect(json['tariff_records']).to have(CoreModule::TARIFF.model_fields(@user){|mf| mf.user_accessible?}.length).items
-    end
-
-    it "returns a 404 if the user can't access products" do
-      @user.update_attributes! product_view: false
-      get 'model_fields', {format: 'json'}
-      expect(response.status).to eq 404
-
-      json = ActiveSupport::JSON.decode response.body
-      expect(json['errors']).to eq ['Not Found.']
+      expect(json['errors']).to eq ['Not Found']
     end
   end
 
@@ -263,7 +236,7 @@ describe Api::V1::ProductsController do
           get 'show', id: 1, format: 'json'
           expect(response.status).to eq 404
           json = ActiveSupport::JSON.decode response.body
-          expect(json['errors']).to eq ["Not Found."]
+          expect(json['errors']).to eq ["Not Found"]
         end
 
         it "handles all other exceptions as server errors" do
@@ -278,103 +251,152 @@ describe Api::V1::ProductsController do
           expect(json['errors']).to eq ["Oops, something weird happened!"]
         end
       end
+    end
+  end
 
-      describe "render_obj" do
-        before :each do 
-          @product = Factory(:product)
-          @params = {id: @product.id, mf_uids: [:prod_uid], format: "json"}
-        end
+  describe "index" do
+    before :each do
+      allow_api_access @user
+      @p1 = Factory(:product, unit_of_measure: "UOM")
+      @p2 = Factory(:product, unit_of_measure: "UOM")
 
-        it "renders an object using the api jsonizer" do
-          controller.should_receive(:show) do
-            controller.render_obj @product
-          end
+    end
+    it "renders a search result" do
+      get :index
+      expect(response).to be_success
+      j = JSON.parse response.body
+      uids = j['results'].collect{|r| r['prod_uid']}
+      expect(uids).to include @p1.unique_identifier
+      expect(uids).to include @p2.unique_identifier
+    end
 
-          controller.jsonizer.should_receive(:entity_to_json).with(instance_of(User), instance_of(Product), [:prod_uid]).and_return({"ok"=>true})
+    it "limits search result 'columns' to those requested" do
+      get :index, {fields: 'prod_uid, prod_uom'}
+      expect(response).to be_success
+      j = JSON.parse response.body
 
-          get 'show', @params
-          expect(response.status).to eq 200
-        end
+      # 3 keys = id, uid, uom
+      expect(j['results'].first.keys.size).to eq 3
+      expect(j['results'].first['prod_uom']).to eq @p1.unit_of_measure
+      expect(j['results'].second.keys.size).to eq 3
+    end
 
-        it 'does not render objects the user cannot view' do
-          Product.any_instance.should_receive(:can_view?).with(instance_of(User)).and_return false
-          controller.should_receive(:show) do
-            controller.render_obj @product
-          end
+    it "limits search results by params" do
+      get :index, {fields: 'prod_uid', sid1: 'prod_uid', sop1: "eq", sv1: @p1.unique_identifier}
 
-          get 'show', @params
-          expect(response.status).to eq 404
-        end
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['results'].size).to eq 1
+      expect(j['results'].first['prod_uid']).to eq @p1.unique_identifier
+    end
+  end
 
-        it 'renders a 404 if the object is nil' do
-          controller.should_receive(:show) do
-            controller.render_obj nil
-          end
+  describe "create" do
+    before :each do
+      allow_api_access @user
+      @country = Factory(:country)
+    end
 
-          get 'show', @params
-          expect(response.status).to eq 404
-        end
-      end
+    it "creates a new product" do
+      # Make sure we're testing that it creates the whole product heirarchy (don't need to go into
+      # TOO much detail here since this uses code that's thoroughly tested elsewhere)
+      params = {
+        :prod_uid => 'unique_id',
+        :classifications_attributes => [{
+          :class_cntry_iso => @country.iso_code,
+          :tariff_records_attributes => [{
+            :hts_hts_1 => '1234.56.7890'
+          }]
+        }]
+      }
+      post :create, {product: params}
+      expect(response).to be_success
+      j = JSON.parse response.body
 
-      describe "show_module" do
-        before :each do 
-          @product = Factory(:product)
-          @params = {id: @product.id, mf_uids: "prod_uid,prod_name", format: "json"}
-        end
+      p = Product.where(unique_identifier: 'unique_id').first
 
-        it "renders an object using the api jsonizer" do
-          controller.should_receive(:show) do
-            controller.show_module Product
-          end
+      expect(j['product']['id']).to eq p.id
+    end
 
-          controller.jsonizer.should_receive(:entity_to_json).with(instance_of(User), instance_of(Product), ['prod_uid', 'prod_name']).and_return({"ok"=>true})
+    it "raises an error if product validation fails" do
+      p = Factory(:product)
+      # Try and create a non-unique product - which should always trip a failure
+      params = {:prod_uid => p.unique_identifier}
 
-          get 'show', @params
-          expect(response.status).to eq 200
-        end
+      post :create, {product: params}
+      expect(response.status).to eq 400
 
-        it 'does not render objects the user cannot view' do
-          Product.any_instance.should_receive(:can_view?).with(instance_of(User)).and_return false
-          controller.should_receive(:show) do
-            controller.show_module Product
-          end
+      j = JSON.parse response.body
+      expect(j['errors'].first).to eq "Unique identifier has already been taken"
+    end
 
-          get 'show', @params
-          expect(response.status).to eq 404
-        end
+    it "raises an error if the user cannot access the product" do
+      @user.update_attributes! product_edit: false
 
-        it 'renders a 404 if the object is nil' do
-          controller.should_receive(:show) do
-            controller.show_module Product
-          end
+      params = {:prod_uid => 'uid'}
 
-          @params[:id] = -1
-          get 'show', @params
-          expect(response.status).to eq 404
-        end
-      end
+      post :create, {product: params}
+      expect(response.status).to eq 403
+      j = JSON.parse response.body
+      expect(j['errors'].first).to eq "You do not have permission to save this Product."
+    end
+  end
 
-      describe 'render_model_field_list' do
-        it "uses the jsonizer to render the full list of model fields for a module" do
-          controller.should_receive(:show) do
-            controller.render_model_field_list CoreModule::PRODUCT
-          end
-          controller.jsonizer.should_receive(:model_field_list_to_json).with(instance_of(User), CoreModule::PRODUCT).and_return({"ok"=>true})
+  describe "update" do
+    before :each do
+      allow_api_access @user
+    end
 
-          get 'show', {id: 1, format: "json"}
-          expect(response.status).to eq 200
-        end
+    it "updates an existing product" do
+      country = Factory(:country)
+      p = Factory(:product)
 
-        it "validates user has access to the core module" do
-          controller.should_receive(:show) do
-            controller.render_model_field_list CoreModule::PRODUCT
-          end
+      params = {
+        :id => p.id,
+        :prod_uom => "UOM",
+        :classifications_attributes => [{
+          :class_cntry_iso => country.iso_code,
+          :tariff_records_attributes => [{
+            :hts_hts_1 => '1234.56.7890'
+          }]
+        }]
+      }
 
-          CoreModule::PRODUCT.should_receive(:view?).with(instance_of(User)).and_return false
-          get 'show', {id: 1, format: "json"}
-          expect(response.status).to eq 404
-        end
-      end
+      post :update, {id: p.id, product: params}
+
+      expect(response).to be_success
+      j = JSON.parse response.body
+
+      expect(j['product']['classifications'].first['class_cntry_iso']).to eq country.iso_code
+      expect(j['product']['classifications'].first['tariff_records'].first['hts_hts_1']).to eq "1234.56.7890"
+      # Check to make sure that values that are autopopulated are sent too
+      expect(j['product']['classifications'].first['tariff_records'].first['hts_line_number']).to eq 1
+    end
+
+    it "raises an error if product isn't found" do
+      params = {
+        :id => 12345,
+        :prod_uom => "UOM",
+      }
+
+      post :update, {id: 12345, product: params}
+      expect(response.status).to eq 404
+      j = JSON.parse response.body
+      expect(j['errors'].first).to eq "Product Not Found"
+    end
+
+    it "raises an error if user doesn't have ability to edit product" do
+      @user.update_attributes! product_edit: false
+
+      p = Factory(:product)
+      params = {
+        :id => p.id,
+        :prod_uom => "UOM"
+      }
+      post :update, {id: p.id, product: params}
+      expect(response).to be_forbidden
+      j = JSON.parse response.body
+      expect(j['errors'].first).to eq "You do not have permission to save this Product."
     end
   end
 end

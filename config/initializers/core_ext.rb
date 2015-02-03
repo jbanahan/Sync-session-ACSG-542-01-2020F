@@ -42,6 +42,38 @@ String.class_eval do
   end
 end
 
+# Backporting Array#deep_dup, Hash#deep_dup, Object#deep_dup from Rails 4 to 3.2 (.ie remove this when we move to Rails 4)
+# In Rails 3.x, if you deep_dup a Hash with an array value, the array contents are not duped.  So if you have a hash inside that
+# array (like when posting nested AR attributes) and you clone it, and then modify the hash inside the cloned array, both 
+# the original and the cloned hash reflect the changes.
+# 
+# In other words, without the patch, the following happens: 
+# 
+# orig = {'key' => [{'inner_key' => 'inner_value'}]}
+# orig_dupe = orig.deep_dup
+# orig_dupe['key'][0]['new_key'] = 'new_value'
+# orig['key'][0]['new_key'] # => "new_value" !!!! WTF - Should be nil !!!!
+
+Array.class_eval do
+  def deep_dup
+    map { |it| it.deep_dup }
+  end
+end
+
+Hash.class_eval do
+  def deep_dup
+    each_with_object(dup) do |(key, value), hash|
+      hash[key.deep_dup] = value.deep_dup
+    end
+  end
+end
+
+Object.class_eval do
+  def deep_dup
+    duplicable? ? dup : self
+  end
+end
+
 class SerializableNoMethodError < StandardError; end;
 
 Exception.class_eval do

@@ -62,49 +62,31 @@ module OpenChain; module Api; class ApiClient
     uids.blank? ? {} : {"mf_uids" => uids.inject(""){|i, uid| i += "#{uid.to_s},"}[0..-2]}
   end
 
-  def send_request path, parameters = {}
-    path = path[1..-1] if path.starts_with? "/"
-
-    uri_string = "#{endpoint}/api/v1/#{URI.encode(path)}"
+  def get path, parameters = {}
+    uri_string = construct_path path
     uri_string += "?#{encode_parameters(parameters)}" unless parameters.blank?
-    authtoken = "#{username}:#{@authtoken}"
+    execute_request {|token| JsonHttpClient.new.get uri_string, {}, token}
+  end
 
-    uri = URI.parse(uri_string)
-    retry_count = 0
-    r = nil
-    status = nil
-    begin
-      r = JsonHttpClient.new.get uri_string, {}, authtoken
-    rescue => e
-      # There's no real point in retrying 400 series errors, since they're all going to be issues in some manner with the 
-      # client request.  The only one we want to specifically watch out for and raise differently is a 401, since that means authentication failed.
-      if e.is_a? OpenChain::HttpErrorWithResponse
-        http_status = e.http_status.to_i
-        if http_status == 401
-          raise ApiAuthenticationError.new(http_status, (e.http_response_body ? e.http_response_body : make_errors_json("Access to API denied.")), endpoint, username, @authtoken)
-        elsif (http_status / 100) == 4
-          raise ApiError.new(http_status, e.http_response_body ? e.http_response_body : make_errors_json(e.message))
-        elsif (http_status / 100) == 5
-          # Retry 500 series errors a couple times, just in case
-          retry_count += 1
-          if retry_count < 3
-            r = nil
-            sleep 1
-            retry
-          end
+  def delete path, parameters = {}
+    uri_string = construct_path path
+    uri_string += "?#{encode_parameters(parameters)}" unless parameters.blank?
+    execute_request {|token| JsonHttpClient.new.delete uri_string, {}, token}
+  end
 
-          # Set the backtrace information to be that of the actual underlying error
-          raise_api_error_from_error_response(http_status, e)
-        else
-          # This means we likely got a valid response but there was something wrong w/ the data (perhaps invalid json?) that caused an error
-          raise_api_error_from_error_response(http_status, e)
-        end
-      else
-        raise e
-      end
-    end
+  def post path, request_body
+    uri_string = construct_path path
+    execute_request {|token| JsonHttpClient.new.post uri_string, request_body, {}, token}
+  end
 
-    r
+  def put path, request_body
+    uri_string = construct_path path
+    execute_request {|token| JsonHttpClient.new.put uri_string, request_body, {}, token}
+  end
+
+  def patch path, request_body
+    uri_string = construct_path path
+    execute_request {|token| JsonHttpClient.new.patch uri_string, request_body, {}, token}
   end
 
   def raise_api_error_from_error_response http_status, e
@@ -147,7 +129,61 @@ module OpenChain; module Api; class ApiClient
     end
   end
 
+  protected
+    def execute_request
+      request_authtoken = build_authtoken
+
+      retry_count = 0
+      r = nil
+      status = nil
+      begin
+        r = yield request_authtoken
+      rescue => e
+        # There's no real point in retrying 400 series errors, since they're all going to be issues in some manner with the 
+        # client request.  The only one we want to specifically watch out for and raise differently is a 401, since that means authentication failed.
+        if e.is_a? OpenChain::HttpErrorWithResponse
+          http_status = e.http_status.to_i
+          if http_status == 401
+            raise ApiAuthenticationError.new(http_status, (e.http_response_body ? e.http_response_body : make_errors_json("Access to API denied.")), endpoint, username, authtoken)
+          elsif (http_status / 100) == 4
+            raise ApiError.new(http_status, e.http_response_body ? e.http_response_body : make_errors_json(e.message))
+          elsif (http_status / 100) == 5
+            # Retry 500 series errors a couple times, just in case
+            retry_count += 1
+            if retry_count < 3
+              r = nil
+              sleep 1
+              retry
+            end
+
+            # Set the backtrace information to be that of the actual underlying error
+            raise_api_error_from_error_response(http_status, e)
+          else
+            # This means we likely got a valid response but there was something wrong w/ the data (perhaps invalid json?) that caused an error
+            raise_api_error_from_error_response(http_status, e)
+          end
+        else
+          raise e
+        end
+      end
+
+      r
+    end
+
+    def not_found_error? e
+      e.is_a?(OpenChain::Api::ApiClient::ApiError) && e.http_status.to_s == "404"
+    end
+
   private 
+    def construct_path path
+      path = path[1..-1] if path.starts_with? "/"
+
+      uri_string = "#{endpoint}/api/v1/#{URI.encode(path)}"
+    end
+
+    def build_authtoken
+      "#{username}:#{authtoken}"
+    end
 
     def encode_parameters parameters
       parameters.map {|k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}"}.join("&")

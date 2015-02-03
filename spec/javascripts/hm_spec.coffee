@@ -24,8 +24,8 @@ describe 'HMApp', () ->
       beforeEach ->
         expected_url = '/api/v1/commercial_invoices.json?oid1=ci_updated_at&oo1=D&page=99&per_page=20&sid1=ci_imp_syscode&sop1=eq&sv1=HENNE'
         response_obj = {page:99,per_page:20,results:[
-          {ci_invoice_number:'123',ci_imp_syscode:'HENNE',lines:[{cil_line_number:1,cil_units:230,cil_value:420.90,ent_unit_price:1.83}]},
-          {ci_invoice_number:'124',ci_imp_syscode:'HENNE',lines:[{cil_line_number:1,cil_units:230,cil_value:420.90,ent_unit_price:1.83}]}
+          {ci_invoice_number:'123',ci_imp_syscode:'HENNE',commercial_invoice_lines:[{cil_line_number:1,cil_units:230,cil_value:420.90,ent_unit_price:1.83}]},
+          {ci_invoice_number:'124',ci_imp_syscode:'HENNE',commercial_invoice_lines:[{cil_line_number:1,cil_units:230,cil_value:420.90,ent_unit_price:1.83}]}
         ]}
       it 'should make request', () ->
         http.expectGET(expected_url).respond(response_obj)
@@ -86,14 +86,14 @@ describe 'HMApp', () ->
             ci_rater_comments:'COMM'
             ci_mfid:'MID1'
             ci_destination_code:'East'
-            lines:[{
+            commercial_invoice_lines:[{
                 cil_line_number:1
                 cil_units:230
                 cil_value_foreign:422.63
                 ent_unit_price:1.83
                 cil_currency:'USD'
                 cil_country_origin_code:'CN'
-                tariffs:[{
+                commercial_invoice_tariffs:[{
                   cit_gross_weight:123
                   cit_hts_code:'1234567890'
                   cit_classification_qty_1:103
@@ -128,7 +128,7 @@ describe 'HMApp', () ->
         ln.ci_line_id = 10
         ln.id = 100
         expected_obj.commercial_invoice.id = 100 #should have id set
-        expected_obj.commercial_invoice.lines[0].id = 10
+        expected_obj.commercial_invoice.commercial_invoice_lines[0].id = 10
         http.expectPUT('/api/v1/commercial_invoices/100.json',expected_obj).respond(expected_obj)
         svc.saveLine ln
         http.flush()
@@ -136,7 +136,7 @@ describe 'HMApp', () ->
       it "should add line to return data on success", () ->
         returnObj = jQuery.extend(true, {}, expected_obj)
         returnObj.commercial_invoice.id = 1
-        returnObj.commercial_invoice.lines[0].id = 2
+        returnObj.commercial_invoice.commercial_invoice_lines[0].id = 2
         http.expectPOST('/api/v1/commercial_invoices.json',expected_obj).respond(returnObj)
         p = svc.saveLine ln
         myLine = null

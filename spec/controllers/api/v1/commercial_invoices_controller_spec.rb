@@ -101,10 +101,10 @@ describe Api::V1::CommercialInvoicesController do
           'ci_docs_ok_date'=>'2014-05-01',
           'ci_issue_codes'=>'A',
           'ci_rater_comments'=>'COMM',
-          'lines'=>[{'cil_po_number'=>'po','cil_part_number'=>'part','cil_units'=>10,'cil_value'=>100.2,ent_unit_price:10.02,'cil_line_number'=>1,'cil_uom'=>'EA','cil_country_origin_code'=>'DE','cil_country_export_code'=>'GB',
+          'commercial_invoice_lines'=>[{'cil_po_number'=>'po','cil_part_number'=>'part','cil_units'=>10,'cil_value'=>100.2,ent_unit_price:10.02,'cil_line_number'=>1,'cil_uom'=>'EA','cil_country_origin_code'=>'DE','cil_country_export_code'=>'GB',
             'cil_currency'=>'GBP',
             'cil_value_foreign'=>'53',
-            'tariffs'=>[{'cit_hts_code'=>'1234567890',
+            'commercial_invoice_tariffs'=>[{'cit_hts_code'=>'1234567890',
               'cit_entered_value'=>99.45,
               'cit_spi_primary'=>'A',
               'cit_spi_secondary'=>'B',
@@ -163,7 +163,7 @@ describe Api::V1::CommercialInvoicesController do
 
     context :lines do
       it "should save lines" do
-        @base_hash['commercial_invoice']['lines'] << {
+        @base_hash['commercial_invoice']['commercial_invoice_lines'] << {
           'cil_po_number'=>'po2','cil_part_number'=>'p0','cil_units'=>11,'cil_line_number'=>'2'
         }
         expect {post :create, @base_hash}.to change(CommercialInvoiceLine,:count).from(0).to(2)
@@ -184,12 +184,12 @@ describe Api::V1::CommercialInvoicesController do
         expect(ln2.part_number).to eql('p0')
       end
       it "should return invoice lines" do
-        @base_hash['commercial_invoice']['lines'] << {
+        @base_hash['commercial_invoice']['commercial_invoice_lines'] << {
           'cil_po_number'=>'po2','cil_part_number'=>'p0','cil_units'=>11,'cil_line_number'=>'2'
         }
         post :create, @base_hash
         expect(response).to be_success
-        j = JSON.parse(response.body)['commercial_invoice']['lines']
+        j = JSON.parse(response.body)['commercial_invoice']['commercial_invoice_lines']
         expect(j.size).to eql 2
         j1 = j.first
         #'cil_po_number'=>'po','cil_part_number'=>'part','cil_units'=>10,'cil_value'=>100.2,ent_unit_price:10.02,'cil_line_number'=>1,'cil_uom'=>'EA','cil_country_origin_code'=>'DE','cil_country_export_code'=>'GB',
@@ -212,7 +212,7 @@ describe Api::V1::CommercialInvoicesController do
 
       end
       it "should require invoice line number" do
-        @base_hash['commercial_invoice']['lines'].first.delete('cil_line_number')
+        @base_hash['commercial_invoice']['commercial_invoice_lines'].first.delete('cil_line_number')
         expect {post :create, @base_hash}.to_not change(CommercialInvoice,:count)
         expect(response.status).to eq 400
         j = JSON.parse(response.body)['errors'].first
@@ -236,7 +236,7 @@ describe Api::V1::CommercialInvoicesController do
           expect(t.entered_value).to eql(99.45)
         end
         it "should return tariff records" do
-          expected = {'cit_hts_code'=>'1234567890',
+          expected = {'cit_hts_code'=>'1234.56.7890',
             'cit_entered_value'=>'99.45',
             'cit_spi_primary'=>'A',
             'cit_spi_secondary'=>'B',
@@ -250,7 +250,7 @@ describe Api::V1::CommercialInvoicesController do
             'cit_tariff_description'=>'My Desc'}
           expect {post :create, @base_hash}.to change(CommercialInvoiceTariff,:count).from(0).to(1)
           expected['id'] = CommercialInvoiceTariff.first.id
-          expect(JSON.parse(response.body)['commercial_invoice']['lines'][0]['tariffs'][0]).to eql expected
+          expect(JSON.parse(response.body)['commercial_invoice']['commercial_invoice_lines'][0]['commercial_invoice_tariffs'][0]).to eql expected
         end
       end
     end
@@ -294,10 +294,10 @@ describe Api::V1::CommercialInvoicesController do
         'ci_docs_ok_date'=>'2014-05-01',
         'ci_issue_codes'=>'A',
         'ci_rater_comments'=>'COMM',
-        'lines'=>[{'id'=>@cil.id,'cil_po_number'=>'po','cil_part_number'=>'part','cil_units'=>10,'cil_value'=>100.2,ent_unit_price:10.02,'cil_line_number'=>1,'cil_uom'=>'EA','cil_country_origin_code'=>'DE','cil_country_export_code'=>'GB',
+        'commercial_invoice_lines'=>[{'id'=>@cil.id,'cil_po_number'=>'po','cil_part_number'=>'part','cil_units'=>10,'cil_value'=>100.2,ent_unit_price:10.02,'cil_line_number'=>1,'cil_uom'=>'EA','cil_country_origin_code'=>'DE','cil_country_export_code'=>'GB',
           'cil_currency'=>'GBP',
           'cil_value_foreign'=>'53',
-          'tariffs'=>[{'cit_hts_code'=>'1234567890',
+          'commercial_invoice_tariffs'=>[{'cit_hts_code'=>'1234567890',
             'cit_entered_value'=>99.45,
             'cit_spi_primary'=>'A',
             'cit_spi_secondary'=>'B',

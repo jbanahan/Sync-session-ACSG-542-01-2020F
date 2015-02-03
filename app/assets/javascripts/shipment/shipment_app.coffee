@@ -114,19 +114,19 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
       $scope.orderLoadingFlag = null
 
   $scope.resetQuantityToShip = (order) ->
-    if order.lines
-      ln.quantity_to_ship = ln.ordln_ordered_qty for ln in order.lines
+    if order.order_lines
+      ln.quantity_to_ship = parseInt(ln.ordln_ordered_qty) for ln in order.order_lines
 
   $scope.clearQuantityToShip = (order) ->
-    if order.lines
-      ln.quantity_to_ship = 0 for ln in order.lines
+    if order.order_lines
+      ln.quantity_to_ship = 0 for ln in order.order_lines
 
   $scope.prorate = (order,proration) ->
     percentToChange = parseInt(proration.amount)
     return order if isNaN(percentToChange)
     percentToChange = percentToChange/100
-    return order unless order.lines
-    for ln in order.lines
+    return order unless order.order_lines
+    for ln in order.order_lines
       qty = parseInt(ln.quantity_to_ship)
       if !isNaN(qty)
         amountToChange = Math.floor(percentToChange * qty)
@@ -137,8 +137,8 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
   $scope.addOrderToShipment = (shp, ord, container_to_pack) ->
     shp.lines = [] if shp.lines==undefined
     nextLineNumber = maxVal(shp.lines,'shpln_line_number',0) + 1
-    return shp unless ord.lines
-    for oln in ord.lines
+    return shp unless ord.order_lines
+    for oln in ord.order_lines
       sl = {
         shpln_line_number:nextLineNumber,
         shpln_puid:oln.ordln_puid,
@@ -153,9 +153,9 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
     shp
 
   $scope.totalToShip = (ord) ->
-    return 0 unless ord && ord.lines
+    return 0 unless ord && ord.order_lines
     total = 0
-    for ln in ord.lines
+    for ln in ord.order_lines
       inc = parseInt(ln.quantity_to_ship)
       total = total + inc unless isNaN(inc)
     total

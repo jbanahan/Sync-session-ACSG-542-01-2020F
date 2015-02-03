@@ -39,6 +39,14 @@ module CustomFieldSupport
     self.lock_custom_values = true
   end
 
+  # Freeze's this object's custom values and all child / grandchild / etc's custom values
+  def freeze_all_custom_values_including_children
+    CoreModule.walk_object_heirarchy(self) do |cm, obj|
+      # It's possible not every object in the heirarchy has custom values
+      obj.freeze_custom_values if obj.respond_to?(:freeze_custom_values)
+    end
+  end
+
   #pre-loads all custom values for the object into memory.  
   #once this is called, the object will no longer hit the DB to get refreshed objects, so you shouldn't change the values through anything
   #except this object's returned CustomValue objects for the lifetime of this object

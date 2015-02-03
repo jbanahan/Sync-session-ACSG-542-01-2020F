@@ -200,7 +200,10 @@ class CoreModule
   end
   
   def child_objects(child_core_module,base_object)
-    @child_lambdas[child_core_module].call(base_object)
+    # If you call this on a leaf level core module (.ie tariff record) then the child lambda 
+    # is likely nil, so just return an empty array
+    lmda = @child_lambdas ? @child_lambdas[child_core_module] : nil
+    lmda ? lmda.call(base_object) : []
   end
 
   #how many steps away is the given module from this one in the parent child tree
@@ -521,6 +524,19 @@ class CoreModule
 
   def enabled?
     @enabled_lambda.call
+  end
+
+  def self.walk_object_heirarchy object, core_module = nil
+    core_module = find_by_object(object) if core_module.nil?
+    yield core_module, object
+
+    child_core_module = core_module.children.first
+    children = core_module.child_objects(child_core_module, object)
+    children.each do |c|
+      walk_object_heirarchy c, child_core_module, &Proc.new
+    end
+
+    nil
   end
 
   private
