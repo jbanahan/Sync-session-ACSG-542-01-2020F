@@ -29,7 +29,6 @@ describe OpenChain::CustomHandler::JJill::JJillBookingApprovalDecider do
       tasks = @wi.workflow_tasks.where(
         name:'Request Booking Approval',
         task_type_code:'JJILL-BOOKREQ',
-        display_rank:100,
         test_class_name:'OpenChain::WorkflowTester::MultiStateWorkflowTest',
         payload_json:'{"state_options":["Request","Cancel"]}',
         passed_at:nil
@@ -41,7 +40,6 @@ describe OpenChain::CustomHandler::JJill::JJillBookingApprovalDecider do
         wt = @wi.workflow_tasks.where(
           name:'Request Booking Approval',
           task_type_code:'JJILL-BOOKREQ',
-          display_rank:100,
           test_class_name:'OpenChain::WorkflowTester::MultiStateWorkflowTest',
           payload_json:'{"state_options":["Request","Cancel"]}',
           passed_at:nil
@@ -54,7 +52,6 @@ describe OpenChain::CustomHandler::JJill::JJillBookingApprovalDecider do
         tasks = @wi.workflow_tasks.where(
           name:'Approve Booking',
           task_type_code:'JJILL-BOOK-APRV',
-          display_rank:200,
           test_class_name:'OpenChain::WorkflowTester::MultiStateWorkflowTest',
           payload_json:'{"state_options":["Approve","Cancel"]}',
           passed_at:nil
