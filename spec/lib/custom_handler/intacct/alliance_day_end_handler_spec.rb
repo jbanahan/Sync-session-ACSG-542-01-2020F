@@ -28,6 +28,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
+      @h.should_receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
       @h.should_receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
       @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 0
 
@@ -81,6 +82,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
+      @h.should_receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
       @h.should_receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
       @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 2
 
@@ -90,6 +92,37 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(m).not_to be_nil
       expect(m.subject).to eq "Day End Processing Complete With Errors"
       expect(m.body).to eq "Day End Processing has completed.<br>AR Total: $20.00<br>AP Total: $10.00<br>Check Total: $10.00<br>2 errors were encountered.  A separate report containing errors will be mailed to you."
+      @check_file.reload
+      @invoice_file.reload
+      expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
+      expect(@invoice_file.start_at.to_date).to eq Time.zone.now.to_date
+      expect(@check_file.finish_at.to_date).to eq Time.zone.now.to_date
+      expect(@invoice_file.finish_at.to_date).to eq Time.zone.now.to_date
+    end
+
+    it "handles invalid amount errors" do
+      user = Factory(:user, time_zone: "Hawaii")
+      check_info = {checks: ""}
+      invoice_info = {invoices: ""}
+      @h.should_receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
+      @h.should_receive(:read_invoices).with(@invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [[], invoice_info]
+
+      check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)]}
+      invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)]}
+
+      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::SqlProxyClient).and_return check_results
+      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::SqlProxyClient).and_return invoice_results
+
+      @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
+      @h.should_receive(:wait_for_dimension_uploads)
+      @h.should_receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({checks: ["Error", "Error"], invoices: ["Error", "Error"]})
+      
+      @h.process user
+
+      m = user.messages.first
+      expect(m).not_to be_nil
+      expect(m.subject).to eq "Day End Processing Complete With Errors"
+      expect(m.body).to eq "Day End Processing has completed.<br>AR Total: $20.00<br>AP Total: $10.00<br>Check Total: $10.00<br>4 errors were encountered.  A separate report containing errors will be mailed to you."
       @check_file.reload
       @invoice_file.reload
       expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
@@ -116,6 +149,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
+      @h.should_receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
       @h.should_receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
       @h.should_receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 2
 
@@ -377,6 +411,45 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       described_class.any_instance.should_receive(:process).with nil
       described_class.process_delayed cf1.id, cf2.id, nil
+    end
+  end
+
+  describe "validate_export_amounts_received" do
+    it "ensures the expected amounts were received" do
+      check_export = IntacctAllianceExport.create! ap_total: 10, export_type: 'check', data_received_date: Time.zone.now
+      check = IntacctCheck.create! intacct_alliance_export: check_export, amount: 10
+
+      invoice_export = IntacctAllianceExport.create! ap_total: 20, ar_total: 30, export_type: 'invoice', data_received_date: Time.zone.now
+      receivable = IntacctReceivable.create! company: 'vfc', intacct_alliance_export: invoice_export
+      receivable_line = IntacctReceivableLine.create! amount: 50, intacct_receivable: receivable
+
+      # Create a credit so we know we're handling the sign reversal (credit amounts are stored as positive values internally for Intacct's sake)
+      credit_receivable = IntacctReceivable.create! company: 'vfc', receivable_type: 'Credit Note', intacct_alliance_export: invoice_export
+      credit_receivable_line = IntacctReceivableLine.create! amount: 20, intacct_receivable: credit_receivable
+
+      # The amount from this receivable should be skipped, since it's something that is not in the invoice report, 
+      # we generate it out of thin air for an internal billing process
+      lmd_receivable_from_vfi = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", intacct_alliance_export: invoice_export
+      lmd_receivable_from_vfi_line = IntacctReceivableLine.create! amount: 100, intacct_receivable: lmd_receivable_from_vfi
+
+      payable = IntacctPayable.create! company: 'lmd', intacct_alliance_export: invoice_export
+      payable_line = IntacctPayableLine.create! amount: 20, intacct_payable: payable
+
+      # This payable should be skipped, since it's something that is not in the invoice report, 
+      # we generate it out of thin air for an internal billing process
+      vfi_to_lmd_payable = IntacctPayable.create! company: 'vfi', vendor_number: "LMD", intacct_alliance_export: invoice_export
+      vfi_to_lmd_payable_line = IntacctPayableLine.create! amount: 20, intacct_payable: vfi_to_lmd_payable
+
+      errors = described_class.new(nil, nil).send(:validate_export_amounts_received, Time.zone.now() - 5.minutes, 10, 30, 20)
+      expect(errors.size).to eq 0
+    end
+
+    it "returns errors if unexpected values are returned" do
+      errors = described_class.new(nil, nil).send(:validate_export_amounts_received, Time.zone.now() - 5.minutes, 10, 30, 20)
+      expect(errors.values.flatten.size).to eq 3
+
+      expect(errors[:checks]).to eq ["Expected to retrieve $10.00 in Check data from Alliance.  Received $0.00 instead."]
+      expect(errors[:invoices]).to eq ["Expected to retrieve $30.00 in AR lines from Alliance.  Received $0.00 instead.", "Expected to retrieve $20.00 in AP lines from Alliance.  Received $0.00 instead."]
     end
   end
 end

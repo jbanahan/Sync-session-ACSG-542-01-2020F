@@ -8,9 +8,6 @@ require 'spreadsheet'
 module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHandler
   include ActionView::Helpers::NumberHelper
 
-  # Replace this array w/ group reference once that is live
-  
-
   def self.process_delayed check_register_file_id, invoice_file_id, user_id
     user = user_id ? User.find(user_id) : nil
     check_register_file = CustomFile.find check_register_file_id
@@ -77,11 +74,20 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       wait_for_export_updates check_results[:exports] + invoice_results[:exports]
       wait_for_dimension_uploads
 
-      upload_intacct_data OpenChain::CustomHandler::Intacct::IntacctDataPusher.new
+      errors = validate_export_amounts_received start, check_sum, ar_sum, ap_sum
 
-      # The exception report returns the number of errors found while uploading so we can determine in the user message if there were upload
-      # errors or not
-      error_count = run_exception_report OpenChain::Report::IntacctExceptionReport.new, users.map(&:email)
+      error_count = 0
+      if errors.try(:size) > 0
+        error_count = errors[:checks].try(:length).to_i + errors[:invoices].try(:length)
+
+        send_parser_errors @check_register.attached_file_name, errors[:checks], @invoices.attached_file_name, errors[:invoices], users.map(&:email), ActiveSupport::TimeZone[user.time_zone].now.to_date
+      else
+        upload_intacct_data OpenChain::CustomHandler::Intacct::IntacctDataPusher.new
+
+        # The exception report returns the number of errors found while uploading so we can determine in the user message if there were upload
+        # errors or not
+        error_count = run_exception_report OpenChain::Report::IntacctExceptionReport.new, users.map(&:email)
+      end
 
       subject = "Day End Processing Complete"
       message = "Day End Processing has completed.<br>AR Total: #{number_to_currency(ar_sum)}<br>AP Total: #{number_to_currency(ap_sum)}<br>Check Total: #{number_to_currency(check_sum)}"
@@ -135,14 +141,14 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       Attachment.add_original_filename_method f
       f.original_filename = (filename + ".xls")
       body = "Errors were encountered while attempting to read the Alliance Day end files.<br>"
-      if check_errors.length > 0
+      if check_errors.try(:length) > 0
         body += "Found #{check_errors.length} #{"error".pluralize(invoice_errors.length)} in the Check Register File #{check_filename}.<br>"
       end
-      if invoice_errors.length > 0
+      if invoice_errors.try(:length) > 0
         body += "Found #{invoice_errors.length} #{"error".pluralize(invoice_errors.length)} in the Invoice File #{invoice_filename}.<br>"
       end
 
-      body += "Please see the attached report for allerror messages and resolve the issues before resending the files."
+      body += "Please see the attached report for all error messages and resolve the issues before resending the files."
 
       OpenMailer.send_simple_html(email_to, "Alliance Day End Errors", body.html_safe, [f]).deliver!
     end
@@ -257,6 +263,51 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       users.each do |u|
         u.messages.create! subject: subject, body: message
       end
+    end
+
+    def validate_export_amounts_received start_time, check_total, ar_total, ap_total
+      errors = {}
+      db_start_time = start_time.to_s(:db)
+
+      qry = <<-QRY
+SELECT SUM(c.amount)
+FROM intacct_alliance_exports e
+INNER JOIN intacct_checks c on e.id = c.intacct_alliance_export_id
+WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_CHECK}' and e.data_received_date >= '#{db_start_time}'
+QRY
+      amount = ActiveRecord::Base::connection.execute(qry).first[0]
+      errors[:checks] = ["Expected to retrieve #{number_to_currency(check_total)} in Check data from Alliance.  Received #{number_to_currency(amount ? amount : 0)} instead."] if amount != check_total
+
+      # AR Total - This is the sum of all the AR lines received by our invoicing process
+      # The bit in the middle w/ the VFI/LMD stuff is excluding any receivables for the LMD company that
+      # represent the internal billing process we do for Freight Shipments.
+      qry = <<-QRY
+SELECT SUM(CASE 
+WHEN r.receivable_type like '%#{IntacctReceivable::CREDIT_INVOICE_TYPE}%'  THEN l.amount * -1
+ELSE l.amount
+END) FROM intacct_alliance_exports e 
+INNER JOIN intacct_receivables r on r.intacct_alliance_export_id = e.id AND (r.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE}' OR (r.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE}' and r.customer_number <> '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_VFI_CUSTOMER_CODE}'))
+INNER JOIN intacct_receivable_lines l on r.id = l.intacct_receivable_id
+WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_INVOICE}' AND e.data_received_date >= '#{db_start_time}'
+QRY
+      amount = ActiveRecord::Base::connection.execute(qry).first[0]
+      errors[:invoices] = []
+      errors[:invoices] << "Expected to retrieve #{number_to_currency(ar_total)} in AR lines from Alliance.  Received #{number_to_currency(amount ? amount : 0)} instead." if amount != ar_total
+
+      # The bit in the middle below excludes the payables generated from VFI to LMD as part of the inter-company
+      # freight billing process.
+      qry = <<-QRY
+SELECT SUM(l.amount)
+FROM intacct_alliance_exports e
+INNER JOIN intacct_payables p on p.intacct_alliance_export_id = e.id and (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE}' or (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE}' and p.vendor_number <> '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_VFI_CUSTOMER_CODE}'))
+INNER JOIN intacct_payable_lines l on p.id = l.intacct_payable_id
+WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_INVOICE}' and e.data_received_date > '#{db_start_time}'
+QRY
+      amount = ActiveRecord::Base::connection.execute(qry).first[0]
+      errors[:invoices] << "Expected to retrieve #{number_to_currency(ap_total)} in AP lines from Alliance.  Received #{number_to_currency(amount ? amount : 0)} instead." if amount != ap_total
+
+      errors.delete(:invoices) if errors[:invoices].length == 0
+      errors
     end
 
 end; end; end; end;
