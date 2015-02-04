@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/api_sync_client'
+require 'open_chain/api/product_api_client'
 
 # This is a simple base class to extend for instance/company specific 
 # syncing of data meant for syncing to VFI Track.
@@ -15,6 +16,10 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       @api_client = opts[:api_client]
     end
     validate_query_row_map
+  end
+
+  def self.run_schedulable opts = {}
+    new(opts).sync
   end
 
   def sync_code
