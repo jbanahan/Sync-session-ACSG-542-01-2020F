@@ -8,13 +8,22 @@ class Group < ActiveRecord::Base
       Group.scoped
     else
       sql_where = <<-QRY
-(user_group_memberships.user_id = #{u.id}) 
-OR 
-(user_group_memberships.user_id IN (select user_id from users where company_id = #{u.company_id}))
-OR
-(user_group_memberships.user_id IN (select user_id from users where company_id IN (select child_id from linked_companies where parent_id = #{u.company_id})))
+  SELECT g.id
+  FROM groups g
+  INNER JOIN user_group_memberships m ON m.group_id = g.id AND m.user_id = #{u.id}
+  UNION
+  SELECT g.id 
+  FROM groups g
+  INNER JOIN user_group_memberships m ON m.group_id = g.id
+  INNER JOIN users u on u.id = m.user_id AND u.company_id = #{u.company_id}
+  UNION
+  SELECT g.id
+  FROM groups g
+  INNER JOIN user_group_memberships m ON m.group_id = g.id
+  INNER JOIN users u on u.id = m.user_id
+  INNER JOIN linked_companies l on u.company_id = l.child_id AND l.parent_id = #{u.company_id}
 QRY
-      Group.joins('INNER JOIN user_group_memberships ON user_group_memberships.group_id = groups.id').where(sql_where)
+      Group.joins("INNER JOIN (#{sql_where}) subquery ON subquery.id = groups.id")
     end
   }
   # Finds (and creates if not found) the system group w/ the given system code
