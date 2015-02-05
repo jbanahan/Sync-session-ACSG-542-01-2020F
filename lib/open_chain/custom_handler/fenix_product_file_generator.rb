@@ -47,7 +47,10 @@ module OpenChain
           c = p.classifications.find_by_country_id(@canada_id)
           next unless c
           c.tariff_records.each do |tr|
-            t << file_output(@fenix_customer_code, p, c, tr) unless tr.hts_1.blank?
+            unless tr.hts_1.blank?
+              t << file_output(@fenix_customer_code, p, c, tr) unless tr.hts_1.blank?
+              break
+            end
           end
 
           sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize

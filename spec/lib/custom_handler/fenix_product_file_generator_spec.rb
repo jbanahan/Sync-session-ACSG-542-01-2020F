@@ -120,6 +120,15 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       # This would be where description is if we turned it on..should be blank
       expect(read[135, 50]).to eq "".ljust(50)
     end
+
+    it "only uses the first hts line" do
+      h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      t2 = Factory(:tariff_record, hts_1: "12345", classification: @c)
+      @t = h.make_file [@p]
+      read = IO.read(@t.path)
+      expect(read.lines.length).to eq 1
+      expect(read[71, 10]).to eq @c.tariff_records.first.hts_1.ljust(10)
+    end
   end
 
   describe "ftp file" do
