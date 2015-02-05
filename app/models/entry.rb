@@ -148,15 +148,22 @@ class Entry < ActiveRecord::Base
     true
   end
   def update_k84
-    unless self.cadex_accept_date.blank?
-      date = self.cadex_accept_date
-      month = date.month 
+    k84_basis = nil
+
+    if entry_number.to_s.starts_with?("119810") && entry_type.to_s.upcase == "V"
+      k84_basis = k84_receive_date
+    else
+      k84_basis = cadex_accept_date
+    end
+
+    unless k84_basis.blank?
+      month = k84_basis.month 
       # Anything after the 24th is the next month
-      month += 1 if  date.day > 24
+      month += 1 if  k84_basis.day > 24
       # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber), 
       # so loop back to 1
       month = (month % 12) if month > 12
-      year = month==1 && date.month == 12 ? date.year + 1 : date.year
+      year = month==1 && k84_basis.month == 12 ? k84_basis.year + 1 : k84_basis.year
       self.k84_month = month
       self.k84_due_date = Date.new(year,month,25)
     end

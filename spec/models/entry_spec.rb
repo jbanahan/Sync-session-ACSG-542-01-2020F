@@ -205,21 +205,27 @@ describe Entry do
     end
 
     it "should set k84 month" do
-      @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-01-01")
+      @entry.update_attributes! cadex_accept_date: Time.zone.parse("2013-01-01")
       @entry.k84_month.should eq 1
       @entry.k84_due_date.to_date.should == Date.new(2013,1,25)
     end
 
     it "should set k84 month to next month if cadex accept is 25th or later" do
-      @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-01-25")
+      @entry.update_attributes! cadex_accept_date: Time.zone.parse("2013-01-25")
       @entry.k84_month.should eq 2
       @entry.k84_due_date.to_date.should == Date.new(2013,2,25)
     end
 
     it "should set k84 month to 1 if cadex accept is after Dec 24th" do
-      @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-12-25")
+      @entry.update_attributes! cadex_accept_date: Time.zone.parse("2013-12-25")
       @entry.k84_due_date.to_date.should == Date.new(2014,1,25)
       @entry.k84_month.should eq 1
+    end
+
+    it "uses k84 receive date for manual low-value entries, rather than cadex accept" do
+      @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "V", cadex_accept_date: Time.zone.now
+      @entry.k84_month.should eq 1
+      @entry.k84_due_date.to_date.should == Date.new(2013,1,25)
     end
   end
 
