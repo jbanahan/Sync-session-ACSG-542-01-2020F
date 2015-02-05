@@ -77,8 +77,8 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       errors = validate_export_amounts_received start, check_sum, ar_sum, ap_sum
 
       error_count = 0
-      if errors.try(:size) > 0
-        error_count = errors[:checks].try(:length).to_i + errors[:invoices].try(:length)
+      if errors.try(:size).to_i > 0
+        error_count = errors[:checks].try(:length).to_i + errors[:invoices].try(:length).to_i
 
         send_parser_errors @check_register.attached_file_name, errors[:checks], @invoices.attached_file_name, errors[:invoices], users.map(&:email), ActiveSupport::TimeZone[user.time_zone].now.to_date
       else
@@ -141,10 +141,10 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       Attachment.add_original_filename_method f
       f.original_filename = (filename + ".xls")
       body = "Errors were encountered while attempting to read the Alliance Day end files.<br>"
-      if check_errors.try(:length) > 0
-        body += "Found #{check_errors.length} #{"error".pluralize(invoice_errors.length)} in the Check Register File #{check_filename}.<br>"
+      if check_errors && check_errors.length > 0
+        body += "Found #{check_errors.length} #{"error".pluralize(check_errors.length)} in the Check Register File #{check_filename}.<br>"
       end
-      if invoice_errors.try(:length) > 0
+      if invoice_errors && invoice_errors.length > 0
         body += "Found #{invoice_errors.length} #{"error".pluralize(invoice_errors.length)} in the Invoice File #{invoice_filename}.<br>"
       end
 

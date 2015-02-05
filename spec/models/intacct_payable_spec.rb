@@ -6,6 +6,10 @@ describe IntacctPayable do
       expect(IntacctPayable.suggested_fix "Description 2: Invalid Vendor").to eq "Create Vendor account in Intacct and/or ensure account has payment Terms set."
     end
 
+    it "recognizes Payable missing vendor errors" do
+      expect(IntacctPayable.suggested_fix "Failed to find vendor object with key SSA.").to eq "Create Vendor account in Intacct and/or ensure account has payment Terms set."
+    end
+
     it "recognizes Payable missing vendor terms errors" do
       expect(IntacctPayable.suggested_fix "Failed to retrieve Terms for Vendor").to eq "Create Vendor account in Intacct and/or ensure account has payment Terms set."
     end

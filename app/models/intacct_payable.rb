@@ -15,7 +15,7 @@ class IntacctPayable < ActiveRecord::Base
     return "" if error.blank?
 
     case error
-    when /Description 2: Invalid Vendor/i, /Failed to retrieve Terms for Vendor/i
+    when /Description 2: Invalid Vendor/i, /Failed to retrieve Terms for Vendor/i, /Failed to find vendor object/i
       "Create Vendor account in Intacct and/or ensure account has payment Terms set."
     when /Description 2: Invalid Customer/i
       "Create Customer account in Intacct."
