@@ -310,6 +310,7 @@ module OpenChain
       t.classification_qty_1 = dec_val(line[31])
       t.classification_uom_1 = str_val(line[32]) 
       t.value_for_duty_code = str_val(line[33])
+      t.special_authority = str_val(line[34])
       t.entered_value = dec_val(line[45])
       @total_entered_value += t.entered_value if t.entered_value
       # For duty rate, we'll either get the specific duty rate (ie. 1.45 / KG) OR

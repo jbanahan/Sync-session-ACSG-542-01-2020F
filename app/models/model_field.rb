@@ -1583,7 +1583,8 @@ and classifications.product_id = products.id
         [23,:ent_excise_amount,:excise_amount,"Excise Amount",{:data_type=>:decimal}],
         [24,:ent_excise_rate_code,:excise_rate_code,"Excise Rate Code",{:data_type=>:string}],
         [25,:cit_duty_rate,:duty_rate,"Duty Rate",{:data_type=>:decimal}],
-        [26,:cit_quota_category,:quota_category,"Quota Category",{:data_type=>:integer}]
+        [26,:cit_quota_category,:quota_category,"Quota Category",{:data_type=>:integer}],
+        [27,:cit_special_authority,:special_authority,"Special Authority",{:data_type=>:string}]
       ]
       add_fields CoreModule::BROKER_INVOICE, [
         make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),
