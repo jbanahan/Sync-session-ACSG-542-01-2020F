@@ -122,7 +122,7 @@ module OpenChain; module CustomHandler; module Polo
         unless value.nil?
           # Basically, take everything after the last slash in the string
           last_index = value.reverse.index("/")
-          if last_index > 0
+          if last_index && last_index > 0
             value = value[(last_index * -1)..-1].strip
           else
             value = ""

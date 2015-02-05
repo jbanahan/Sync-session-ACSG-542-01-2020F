@@ -215,6 +215,20 @@ describe OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler do
       expect(inv).to_not be_nil
       expect(inv.commercial_invoice_lines.first.commercial_invoice_tariffs.first.hts_code).to eq "12345"
     end
+
+    it "handles missing currency" do
+      s3_path = "/path/to/file.xls"
+      headers = default_xl_client_header_values
+      headers[[0, 15]] = "EXW GREENSBORO, NC"
+      rows = default_xl_client_get_row_values
+
+      setup_xl_client_stub @g, s3_path, headers, defaul_xl_client_summary_values(rows.keys.sort.last), rows
+      @g.parse s3_path, true
+
+      inv = CommercialInvoice.first
+      expect(inv).to_not be_nil
+      expect(inv.currency).to eq ""
+    end
   end
 
   context :can_view? do
