@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/duty_calc/export_history_parser'
+require 'open_chain/custom_handler/duty_calc/claim_audit_parser'
 class DrawbackClaimsController < ApplicationController 
   def index
     action_secure(current_user.view_drawback?, current_user, {:verb => "view", :lock_check => false, :module_name=>"drawback claims"}) do
@@ -49,7 +50,10 @@ class DrawbackClaimsController < ApplicationController
     }
   end
 
-  REPORT_PARSERS = {'exphist'=>OpenChain::CustomHandler::DutyCalc::ExportHistoryParser}
+  REPORT_PARSERS = {
+    'exphist'=>OpenChain::CustomHandler::DutyCalc::ExportHistoryParser,
+    'audrpt'=>OpenChain::CustomHandler::DutyCalc::ClaimAuditParser
+  }
   def process_report
     claim = DrawbackClaim.find(params[:id])
     action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
