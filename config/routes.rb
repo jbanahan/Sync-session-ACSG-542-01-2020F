@@ -574,7 +574,9 @@ OpenChain::Application.routes.draw do
   resources :duty_calc_export_files, :only=>[:create] do
     get 'download', on: :member
   end
-  resources :drawback_claims
+  resources :drawback_claims do
+    post 'process_report', on: :member
+  end
 
   resources :error_log_entries, :only => [:index, :show]
   match '/ang_error' => 'error_log_entries#log_angular', via: :post

@@ -1,6 +1,10 @@
+<%include_process_actions = !@claim.attachments.empty? %>
 <%content_for :action_bar do-%>
   <%if @claim.can_edit?(current_user)-%>
-  <button class='btn_link' link_to='<%=edit_drawback_claim_path(@claim)%>'>Edit</button>
+    <button class='btn_link' link_to='<%=edit_drawback_claim_path(@claim)%>'>Edit</button>
+    <%if include_process_actions %>
+      <button data-toggle='modal' data-target='#process_actions_modal'>Process Reports</button>
+    <%end%>
   <%end-%>
 <%end-%>
 <h2>Drawback Claim: <%=@claim.name%></h2>
@@ -48,3 +52,37 @@
     <%= render :partial => 'shared/attachments', :locals => { :attachable => @claim } %>
   </div>
 </div>
+
+<%if include_process_actions %>
+  <div class="modal fade" id="process_actions_modal" tabindex="-1" role="dialog" aria-labelledby="process_actions_modal_label" aria-hidden="true">
+    <div class="modal-dialog">
+      <%=form_for @claim, url: process_report_drawback_claim_path(@claim), method:'POST', html:{id:'frm_process_action', claim:@claim.id.to_s} do%>
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="process_actions_modal_label">Process Reports</h4>
+          </div>
+          <div class="modal-body">
+            <div class='form-group'>
+              <label for='attachment_id'>Attachment</label>
+              <select name='attachment_id' id='attachment_id' class='form-control'>
+                <%=options_from_collection_for_select(@claim.attachments.collect {|a| a.can_view?(current_user) ? a : nil}.compact, :id, :attached_file_name)%>
+              </select>
+            </div>
+            <div class='form-group'>
+              <label for='process_type'>Attachment Type</label>
+              <select name='process_type' id='process_type' class='form-control'>
+                <option value='exphist'>Export History</option>
+                <option value='audrpt'>Audit Report</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <input type='submit' class='btn btn-primary' value='Process' />
+          </div>
+        </div>
+      <%end%>
+    </div>
+  </div>
+<%end%>

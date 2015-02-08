@@ -1,3 +1,4 @@
+require 'open_chain/custom_handler/duty_calc/export_history_parser'
 class DrawbackClaimsController < ApplicationController 
   def index
     action_secure(current_user.view_drawback?, current_user, {:verb => "view", :lock_check => false, :module_name=>"drawback claims"}) do
@@ -45,6 +46,21 @@ class DrawbackClaimsController < ApplicationController
       else
         redirect_to request.referrer 
       end
+    }
+  end
+
+  REPORT_PARSERS = {'exphist'=>OpenChain::CustomHandler::DutyCalc::ExportHistoryParser}
+  def process_report
+    claim = DrawbackClaim.find(params[:id])
+    action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+      parser = REPORT_PARSERS[params[:process_type]]
+      if parser.nil?
+        add_flash :errors, "Invalid parser type #{params[:process_type]}"
+      else
+        parser.delay.process_excel_from_attachment params[:attachment_id], current_user.id
+        add_flash :notices, "Report is being processed.  You'll receive a system message when it is complete."
+      end
+      redirect_to claim
     }
   end
 

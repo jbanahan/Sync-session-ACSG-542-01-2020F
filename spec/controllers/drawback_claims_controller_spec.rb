@@ -113,4 +113,18 @@ describe DrawbackClaimsController do
       DrawbackClaim.all.should be_empty
     end
   end
+  describe :process_report do
+    before :each do
+      @u = Factory(:user)
+      @claim = Factory(:drawback_claim)
+      @att = Factory(:attachment,attachable:@claim)
+      sign_in_as @u
+    end
+    it "should process export history" do
+      eh = double(:export_history_parser)
+      OpenChain::CustomHandler::DutyCalc::ExportHistoryParser.should_receive(:delay).and_return(eh)
+      eh.should_receive(:process_excel_from_attachment).with(@att.id,@u.id)
+      post :process_report, id:@claim.id, attachment_id:@att.id, process_type:'exphist'
+    end
+  end
 end
