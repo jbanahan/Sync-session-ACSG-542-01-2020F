@@ -1,4 +1,8 @@
-<%include_process_actions = !@claim.attachments.empty? %>
+<%
+  include_process_actions = !@claim.attachments.empty? &&
+  (@claim.drawback_claim_audits.count == 0 || @claim.drawback_export_histories.count == 0)
+
+%>
 <%content_for :action_bar do-%>
   <%if @claim.can_edit?(current_user)-%>
     <button class='btn_link' link_to='<%=edit_drawback_claim_path(@claim)%>'>Edit</button>
@@ -19,6 +23,8 @@
         <%=field_row "Entry Number", @claim.entry_number%>
         <%=field_row "Pieces (Claimed / Exported)", "#{number_with_delimiter @claim.total_pieces_claimed} / #{number_with_delimiter @claim.total_pieces_exported} (#{number_to_percentage(@claim.percent_pieces_claimed*100,:precision=>1)})"%>
         <%=field_row "Claim Amount (Claimed / Planned)", "#{number_to_currency(@claim.total_claim_amount)} / #{number_to_currency(@claim.planned_claim_amount)} (#{number_to_percentage(@claim.percent_money_claimed*100,:precision=>1)})"%>
+        <%=field_row "Claim Audit Record Count", @claim.drawback_claim_audits.count%>
+        <%=field_row "Export History Record Count", @claim.drawback_export_histories.count%>
       </table>
     </td>
     <td>
@@ -72,8 +78,12 @@
             <div class='form-group'>
               <label for='process_type'>Attachment Type</label>
               <select name='process_type' id='process_type' class='form-control'>
-                <option value='exphist'>Export History</option>
-                <option value='audrpt'>Audit Report</option>
+                <%if @claim.drawback_export_histories.count == 0%>
+                  <option value='exphist'>Export History</option>
+                <%end%>
+                <%if @claim.drawback_claim_audits.count == 0%>
+                  <option value='audrpt'>Audit Report</option>
+                <%end%>
               </select>
             </div>
           </div>

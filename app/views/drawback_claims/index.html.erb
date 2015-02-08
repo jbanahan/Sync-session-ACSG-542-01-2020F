@@ -1,30 +1,9 @@
-<%content_for :head_tags do-%>
-  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-<%end-%>
-<%content_for :javascript do-%>
-google.load('visualization', '1.0', {'packages':['corechart']});
-var claimCharts = function drawChart() {
-  var data = new google.visualization.DataTable();
-  data.addColumn('string','Name');
-  data.addColumn('number','Pieces Claimed Rate');
-
-  data.addRows([
-  <%=@claims.collect {|c| "['#{c.name.gsub("'","\"")}',#{c.percent_pieces_claimed*100}]"}.reverse.join(",").html_safe%>
-  ]);
-
-  var opts = {title:'Pieces Claimed Rate',legend:{position:'none'},vAxis:{maxValue:100}};
-  var chart = new google.visualization.ColumnChart(document.getElementById('pieces_chart'));
-  chart.draw(data,opts);
-}
-google.setOnLoadCallback(claimCharts);
-<%end-%>
 <%content_for :action_bar do-%>
   <%if current_user.edit_drawback?-%>
     <button class='btn_link' link_to='<%=new_drawback_claim_path%>'>New</button>
   <%end-%>
 <%end-%>
 <h2>Drawback Claims</h2>
-<div id='pieces_chart'></div>
 <table class='detail_table'>
   <thead>
     <tr>
