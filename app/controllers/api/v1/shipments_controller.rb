@@ -108,7 +108,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_arrival_port_date,
       :shp_est_delivery_date,
       :shp_delivered_date,
-      :shp_comment_count
+      :shp_comment_count,
+      :shp_dest_port_name,
+      :shp_dest_port_id,
+      :shp_cargo_ready_date
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     line_fields_to_render = limit_fields([

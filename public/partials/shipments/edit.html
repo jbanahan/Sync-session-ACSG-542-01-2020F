@@ -28,6 +28,8 @@
           <input type="text" id="shp_booking_number" ng-model="shp.shp_booking_number" class="form-control" />
           <label for="shp_receipt_location">Receipt Location</label>
           <input type="text" id="shp_receipt_location" ng-model="shp.shp_receipt_location" class="form-control" />
+          <label for="shp_dest_port">Destination Port</label>
+          <angucomplete-alt id='shp_dest_port' input-class='form-control' placeholder='port name' selected-object='shp.dest_port' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{shp.shp_dest_port_name}}'></angucomplete-alt>
           <label for="shp_freight_terms">Freight Terms</label>
           <input type="text" id="shp_freight_terms" ng-model="shp.shp_freight_terms" class="form-control" />
           <label for="shp_lcl">LCL</label>
@@ -72,6 +74,8 @@
           <input type="date" id="shp_booking_cutoff_date" ng-model="shp.shp_booking_cutoff_date" class="form-control" />
           <label for="shp_booking_est_departure_date">Est Departure Date - Booked</label>
           <input type="date" id="shp_booking_est_departure_date" ng-model="shp.shp_booking_est_departure_date" class="form-control" />
+          <label for="shp_cargo_ready_date">Cargo Ready Date</label>
+          <input type="date" id="shp_cargo_ready_date" ng-model='shp.shp_cargo_ready_date' class="form-control" />
           <label for="shp_booking_est_arrival_date">Est Arrival Date - Booked</label>
           <input type="date" id="shp_booking_est_arrival_date" ng-model="shp.shp_booking_est_arrival_date" class="form-control" />
           <label for="shp_booking_shipment_type">Booked Shipment Type</label>

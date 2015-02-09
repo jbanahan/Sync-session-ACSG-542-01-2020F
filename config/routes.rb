@@ -27,6 +27,8 @@ OpenChain::Application.routes.draw do
         get 'by_uid/:uid' => "products#by_uid", on: :collection
       end
 
+      match "/ports/autocomplete" => "ports#autocomplete", :via => :get
+
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
       match "/intacct_data/receive_check_result" => "intacct_data#receive_check_result", :via => :post
       match "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details", :via => :post

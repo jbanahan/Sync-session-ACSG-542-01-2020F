@@ -672,6 +672,33 @@ class ModelField
   def self.make_ship_from_arrays(rank_start,uid_prefix,table_name)
     make_ship_arrays(rank_start,uid_prefix,table_name,"from")
   end
+  def self.make_port_arrays(rank_start,uid_prefix,table_name,join_field,name_prefix)
+    r_count = rank_start
+    r = []
+    r << [r_count,"#{uid_prefix}_id".to_sym, "#{join_field}_id".to_sym, "#{name_prefix} ID",{
+        data_type: :integer,
+        history_ignore: true
+      }]
+    r << [r_count,"#{uid_prefix}_name".to_sym, :name, "#{name_prefix} Name",{
+        import_lambda: lambda {|obj,data| 
+          p = Port.find_by_name(data)
+          if p
+            eval "obj.#{join_field}= p"
+            return "#{name_prefix} set to #{p.name}"
+          else
+            return "Port with name \"#{data}\" not found."
+          end
+        },
+        export_lambda: lambda {|obj|
+          to_eval = "obj.#{join_field}.nil? ? '' : obj.#{join_field}.name"
+          eval to_eval
+        },
+        qualified_field_name: "(SELECT name FROM ports WHERE #{table_name}.#{join_field}_id = ports.id)",
+        data_type: 'string'
+      }]
+    r_count += 1
+    r
+  end
   def self.make_country_arrays(rank_start,uid_prefix,table_name,join='country')
     foreign_key = "#{join}_id"
     r = []
@@ -1945,7 +1972,8 @@ and classifications.product_id = products.id
         [29,:shp_arrival_port_date,:arrival_port_date,"Arrival Date",{:data_type=>:date}],
         [30,:shp_est_delivery_date,:est_delivery_date,"Est Delivery Date",{:data_type=>:date}],
         [31,:shp_delivered_date,:delivered_date,"Delivered Date",{:data_type=>:date}],
-        [32,:shp_importer_reference,:importer_reference,"Importer Reference",{data_type: :string}]
+        [32,:shp_importer_reference,:importer_reference,"Importer Reference",{data_type: :string}],
+        [33,:shp_cargo_ready_date,:cargo_ready_date,'Cargo Ready Date',{data_type: :date}]
       ]
       add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -1954,6 +1982,7 @@ and classifications.product_id = products.id
       add_fields CoreModule::SHIPMENT, make_master_setup_array(400,"shp")
       add_fields CoreModule::SHIPMENT, make_importer_arrays(500,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_comment_arrays(600,'shp','Shipment')
+      add_fields CoreModule::SHIPMENT, make_port_arrays(700,'shp_dest_port','shipments','destination_port','Destination Port')
       
       add_fields CoreModule::SHIPMENT_LINE, [
         [1,:shpln_line_number,:line_number,"Shipment Row",{:data_type=>:integer}],

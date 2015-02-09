@@ -11,11 +11,19 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         else
           updatedLines.push ln if qty && qty>0
       shipment.lines = updatedLines
+    if shipment.dest_port.title
+      shipment.shp_dest_port_name = shipment.dest_port.title
+      shipment.shp_dest_port_id = undefined
     shipment
 
   currentShipment = null
   getShipmentSuccessHandler = (resp) ->
     currentShipment = resp.data.shipment
+    if currentShipment.shp_dest_port_id > 0
+      currentShipment.dest_port = {
+        id: currentShipment.shp_dest_port_id
+        name: currentShipment.shp_dest_port_name
+      }
     commentSvc.injectComments(currentShipment,'Shipment')
     resp
 

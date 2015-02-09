@@ -358,6 +358,30 @@ describe ModelField do
     ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
   end
   context "special cases" do
+    context 'ports' do
+      before :each do
+        @port = Factory(:port,name:'MyName')
+        @u = Factory(:master_user,shipment_view:true)
+        @ss = SearchSetup.new(module_type:'Shipment',user_id:@u.id)
+        @ss.search_columns.build(model_field_uid:'shp_dest_port_name',rank:1)
+        @sc = @ss.search_criterions.build(model_field_uid:'shp_dest_port_name',operator:'eq',value:@port.name)
+        @mf = ModelField.find_by_uid(:shp_dest_port_name)
+      end
+      it "should process_export" do
+        s = Shipment.new(destination_port:@port)
+        expect(@mf.process_export(s,@u,true)).to eq @port.name
+      end
+      it "should process_import" do
+        s = Shipment.new
+        @mf.process_import s, @port.name, @u
+        expect(s.destination_port).to eq @port
+      end
+      it "should find" do
+        s = Factory(:shipment,destination_port:@port)
+        expect(@ss.result_keys).to eq [s.id]
+      end
+    end
+
     context "prod_max_component_count" do
       before :each do
         @ss = SearchSetup.new(module_type:'Product',user_id:Factory(:master_user,product_view:true).id)
