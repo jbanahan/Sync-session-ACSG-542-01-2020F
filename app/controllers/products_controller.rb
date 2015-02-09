@@ -183,8 +183,7 @@ class ProductsController < ApplicationController
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       else 
         log = OpenChain::BulkUpdateClassification.quick_classify params, current_user, :no_user_message => true
-        add_flash :notices, "Your products have been updated, here is the log."
-        return redirect_to(log)
+        add_flash :notices, "Your products have been updated."
       end
 
       # Going back to the referrer here will preserve any query params that were included when the 

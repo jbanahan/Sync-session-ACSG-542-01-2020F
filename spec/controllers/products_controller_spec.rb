@@ -218,7 +218,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to b
+      response.should redirect_to products_path
     end
 
     it "should allow user to bulk update classifications" do
