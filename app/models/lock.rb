@@ -2,6 +2,14 @@
 
 # Every distinct lock name used creates a new row in the locks table.  These rows are not
 # removed.
+#
+# I'm starting to realize this whole locking scheme is really quite hacky (especially after having
+# to add in all the deadlock detetion and retrys.  It probably should
+# really instead by implemented w/ some sort of real distributed mutex/semaphore
+# system.
+#
+# Something like this would be preferable as the locking engine: https://github.com/dv/redis-semaphore (side bonues - Redis is also available as a AWS ElastiCache engine)
+# This would also work: https://github.com/songkick/mega_mutex
 class Lock < ActiveRecord::Base
 
   FENIX_PARSER_LOCK ||= 'FenixParser'
@@ -13,6 +21,8 @@ class Lock < ActiveRecord::Base
   INTACCT_DETAILS_PARSER ||= 'IntacctParser'
   TRADE_CARD_PARSER ||= 'TradecardParser'
   ALLIANCE_DAY_END_PROCESS ||= 'AllianceDayEnd'
+
+  PERMENANT_LOCKS = Set.new
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
   # for the duration of the block passed to this method returning wahtever
@@ -41,41 +51,71 @@ class Lock < ActiveRecord::Base
       # on the temp locks.
       my_lock = nil
       begin
-        begin
-          create(:name => name) unless find_by_name(name)
-        rescue ActiveRecord::RecordNotUnique
-          # concurrent create is okay since there's a unique index on the name attribute
+        # When dealing w/ long running processes and permanent locks, record if this process has seen them 
+        # before and just skip the create part next time
+        if opts[:temp_lock] == true || !PERMENANT_LOCKS.include?(name)
+          begin
+            create! name: name
+            PERMENANT_LOCKS << name unless opts[:temp_lock] == true
+          rescue ActiveRecord::RecordNotUnique
+            # concurrent create is okay since there's a unique index on the name attribute
+          rescue ActiveRecord::StatementInvalid => e
+            retry if lock_deadlock?(e)
+          end
         end
-
+        
         counter = 0
         begin
           transaction do
             my_lock = find_by_name(name, :lock => true) # this is the call that will block in concurrent Lock.acquire attempts
-            # The lock could technically have been removed since it was initially created and here..if so, just retry
+            # The lock could technically have been removed since it was initially created (like if multiple temp locks are being
+            # attempted for the same key)..if so, just retry
             raise LockMissingError, name unless my_lock
             acquired_lock(name)
             result = yield
+            my_lock.delete if opts[:temp_lock] == true && !my_lock.nil?
+            my_lock = nil
           end
         rescue ActiveRecord::StatementInvalid => e
           # We only want to retry acquiring the lock, we don't want to retry the 
           # actual code inside the yielded block.
-          unless definitely_acquired?(name)
+          if !definitely_acquired?(name)
             retry if lock_wait_timeout?(e) && (counter += 1) <= opts[:times]
+
+            # Only retry lock aquisition deadlocks...don't retry delete ones since if the delete deadlocked
+            # then the yield block ran, and we don't want to retry that.  I don't think there should be a deadlock
+            # on the delete anyway since we should have an exclusive lock on the record at the point of the delete call
+            # anyway.
+            retry if lock_deadlock? e, false
           end
 
           raise e
         ensure
           maybe_released_lock(name)
-          # This needs to be outside the inner transaction because if the yield block blows up it'll
+          # This follow-up check needs to be outside the inner transaction because if the yield block blows up it'll
           # roll back the transaction (nullifying any delete occurring inside it)
-          my_lock.destroy if opts[:temp_lock] == true && !my_lock.nil?
+          begin
+            my_lock.delete if opts[:temp_lock] == true && !my_lock.nil?
+          rescue ActiveRecord::StatementInvalid => e
+            retry if lock_deadlock? e
+          end
         end
       rescue LockMissingError
+        # If we're missing a permanent lock (shouldn't happen, but could if someone accidently clears the db)
+        # clear the permanent locks Set so we don't get caught in a loop
+        PERMENANT_LOCKS.clear unless opts[:temp_lock] == true
         retry
       end
     end
 
     result
+  end
+
+  def self.lock_deadlock? e, include_delete = true
+    msg = e.message
+    deadlock = (msg =~ /deadlock found/i && (msg =~ /select\s+`locks`./i || msg =~ /insert into `locks`/i || (include_delete && msg =~ /delete from `locks`/i )))
+    sleep(Random.rand(0.05..0.20)) if deadlock
+    deadlock
   end
 
   # if true, the lock is acquired
