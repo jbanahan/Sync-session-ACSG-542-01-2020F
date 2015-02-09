@@ -296,12 +296,16 @@
       title:'=title'
       asButton:'=asButton'
       extraClass:'=extraClass'
+      buttonIconClass:'@buttonIconClass'
     }
     transclude:true
     template:"<div class='dialog_content_wrap' ng-transclude></div>"
     link: (scope,el,attrs) ->
       if scope.asButton
-        el.prepend("<button class='btn chainMessageBoxLauncher "+scope.extraClass+"'>"+scope.title+"</button>")
+        buttonContent = scope.title
+        if scope.buttonIconClass
+          buttonContent = "<i class='"+scope.buttonIconClass+"'></i>"
+        el.prepend("<button class='btn chainMessageBoxLauncher "+scope.extraClass+"' title='"+scope.title+"'>"+buttonContent+"</button>")
       else
         el.prepend("<a class='btn chainMessageBoxLauncher "+scope.extraClass+"'>"+scope.title+'</a>')
       d = el.find("div.dialog_content_wrap")

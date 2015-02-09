@@ -11,6 +11,17 @@
     display: none !important
   }
 }
+@media screen and (max-width: 991px) {
+  .navbar-fixed-bottom {
+    position: relative !important;
+    z-index: inherit !important;
+    margin-top: 10px;
+    border-bottom: 1px solid #334488;
+  }
+  body {
+    padding-bottom: 0px !important;
+  }
+}
 a.action_link {
   color: black;
   text-decoration: none;
@@ -43,7 +54,7 @@ input.decimal {
 #main-content {
   margin: 0 20px;
 }
-div.navbar-fixed-bottom {
+.navbar-fixed-bottom {
   padding-left: 5px;
 }
 div.section_box {

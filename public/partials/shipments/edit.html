@@ -1,12 +1,4 @@
 <chain-loading-wrapper loading-flag='{{loadingFlag}}'>
-  <div chain-action-bar>
-    <button class='btn btn-default' ng-show='shp.id || shp.shp_ref' ng-click='saveShipment(shp)'>Save</button>
-    <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
-    <button class='btn btn-default' ng-click='addContainer(shp)' ng-show='shp'>Add Container</button>
-    <button class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
-    <button class='btn btn-default' ng-click='showProcessManifest()'>Process Manifest</button>
-  </div>
-  
   <div class="container">
     <div class="row">
       <div class="col-md-12">
@@ -254,5 +246,12 @@
         </div>
       </div>
     </div> <!--end lines section -->
+  </div>
+  <div chain-action-bar>
+    <button class='btn btn-default' ng-show='shp.id || shp.shp_ref' ng-click='saveShipment(shp)'>Save</button>
+    <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
+    <button class='btn btn-default' ng-click='addContainer(shp)' ng-show='shp'>Add Container</button>
+    <button class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
+    <button class='btn btn-default' ng-click='showProcessManifest()'>Process Manifest</button>
   </div>
 </chain-loading-wrapper>

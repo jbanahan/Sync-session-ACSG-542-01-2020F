@@ -49,19 +49,6 @@
 <%-end-%>
 <div id='survey-response-wrap' ng-app='SurveyResponseApp' ng-init='response_id = <%=@sr.id%>'>
   <div class='container' ng-controller='srController'>
-    <div chain-action-bar>
-      <button class='btn btn-default' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
-      <button class='btn btn-default' ng-show="!resp.archived" ng-click='srService.invite(resp)'>Resend Email Invite</button>
-      <%-if @sr.survey.can_edit?(current_user)-%>
-        <button class='btn_link btn btn-default' link_to='<%=survey_path(@sr.survey)%>'>Survey Dashboard</button>
-      <%-end-%>
-      <%-if @sr.can_edit?(current_user) && @sr.submitted_date && @sr.corrective_action_plan.nil?-%>
-        <%=button_to 'Corrective Action Plan', survey_response_corrective_action_plans_path(@sr), :method=>'POST', :class=>'btn btn-default', :form_class=>'inline-button-to', :class=>'btn btn-default'%>
-      <%-end-%>
-      <%-if @sr.submitted_date && @sr.corrective_action_plan && @sr.corrective_action_plan.can_view?(current_user) -%>
-        <button class='btn_link btn <%= @sr.corrective_action_plan.status==CorrectiveActionPlan::STATUSES[:active] ? 'btn-danger' : 'btn-default'%>' link_to='<%=survey_response_corrective_action_plan_path(@sr,@sr.corrective_action_plan)%>'>Corrective Action Plan</button>
-      <%-end-%>
-    </div>
     <div class='row text-center' style='margin-bottom:20px;'>
       <div class='col-md-12'>
         <h1>{{resp.survey.name}} <span ng-show='resp.subtitle.length>0'> - {{resp.subtitle}}</span></h1>
@@ -228,5 +215,18 @@
         </div>
       </div>
     </div>
+    <div chain-action-bar>
+      <button class='btn btn-default' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
+      <button class='btn btn-default' ng-show="!resp.archived" ng-click='srService.invite(resp)'>Resend Email Invite</button>
+      <%-if @sr.survey.can_edit?(current_user)-%>
+        <button class='btn_link btn btn-default' link_to='<%=survey_path(@sr.survey)%>'>Survey Dashboard</button>
+      <%-end-%>
+      <%-if @sr.can_edit?(current_user) && @sr.submitted_date && @sr.corrective_action_plan.nil?-%>
+        <%=button_to 'Corrective Action Plan', survey_response_corrective_action_plans_path(@sr), :method=>'POST', :class=>'btn btn-default', :form_class=>'inline-button-to', :class=>'btn btn-default'%>
+      <%-end-%>
+      <%-if @sr.submitted_date && @sr.corrective_action_plan && @sr.corrective_action_plan.can_view?(current_user) -%>
+        <button class='btn_link btn <%= @sr.corrective_action_plan.status==CorrectiveActionPlan::STATUSES[:active] ? 'btn-danger' : 'btn-default'%>' link_to='<%=survey_response_corrective_action_plan_path(@sr,@sr.corrective_action_plan)%>'>Corrective Action Plan</button>
+      <%-end-%>
+    </div>    
   </div>
 </div>
