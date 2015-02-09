@@ -210,7 +210,7 @@ describe OpenMailer do
           pa = mail.attachments[File.basename(f2)]
           pa.should_not be_nil
           pa.read.should == File.read(f2)
-          pa.content_type.should == "application/octet-stream"
+          expect(pa.content_type).to match /application\/octet-stream/
 
           ea = EmailAttachment.all.first
           ea.should be_nil
@@ -352,7 +352,7 @@ EMAIL
           pa = mail.attachments[File.basename(f2)]
           pa.should_not be_nil
           pa.read.should == File.read(f2)
-          pa.content_type.should == "application/octet-stream"
+          expect(pa.content_type).to match /application\/octet-stream/
 
           ea = EmailAttachment.all.first
           ea.should be_nil
