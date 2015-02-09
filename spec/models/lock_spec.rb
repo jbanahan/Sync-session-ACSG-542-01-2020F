@@ -122,7 +122,6 @@ describe Lock do
 
       # To simulate the lock missing, we need to stub out the find_by_name method so that it returns
       # nil when it attempts to lock the Lock record the first time.  This should force a retry
-      Lock.should_receive(:find_by_name).ordered.twice.with("TempLock").and_return(lock)
       Lock.should_receive(:find_by_name).ordered.twice.with("TempLock", lock: true).and_return(nil, lock)
 
       block_ran = false

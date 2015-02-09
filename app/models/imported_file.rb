@@ -350,7 +350,9 @@ class ImportedFile < ActiveRecord::Base
           $!.log_me
         end
       end
-      object.create_snapshot(@fr.run_by,@imported_file) if object.respond_to?('create_snapshot')
+      
+      object.create_snapshot(@fr.run_by,@imported_file) if object.respond_to?(:create_snapshot)
+      
     end
 
     def process_start time

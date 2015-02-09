@@ -93,7 +93,7 @@ module OpenChain
   end
 
   class FieldLogicValidator 
-    def self.validate record, nested=false
+    def self.validate record, nested=false, skip_read_only=false
       passed = true
       cm = CoreModule.find_by_class_name record.class.to_s
       #need more info on why we got records in here without appropriate core modules
@@ -107,6 +107,10 @@ module OpenChain
       end
       rules = FieldValidatorRule.find_cached_by_core_module cm
       rules.each do |rule|
+        # The readonly skip is basically for cases where you've already done ModelField#process_imports
+        # and are just checking any other field validations.  Since process_import already enforces
+        # the readonly rule, we can skip these here if instructed.
+        next if skip_read_only && rule.readonly?
         msg = rule.validate_field record, nested
         if !msg.empty?
           msg.each {|m| record.errors[:base] << m}
@@ -124,8 +128,8 @@ module OpenChain
       end
       return passed
     end
-    def self.validate! record
-      raise ValidationLogicError.new(nil, record) unless validate record
+    def self.validate! record, nested=false, skip_read_only=false
+      raise ValidationLogicError.new(nil, record) unless validate record, nested, skip_read_only
     end
   end
 

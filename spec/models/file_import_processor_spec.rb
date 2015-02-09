@@ -312,7 +312,9 @@ describe FileImportProcessor do
             SearchColumn.new(:model_field_uid=>"prod_name",:rank=>1)
           ])
           FileImportProcessor::MissingCoreModuleFieldError.any_instance.should_not_receive(:log_me)
-          expect {pro.do_row 0, ['name'], true, -1, @u}.to raise_error "Cannot load Product data without a value in the 'Unique Identifier' field."
+          pro.do_row 0, ['name'], true, -1, @u
+          expect(@listener.failed).to be_true
+          expect(@listener.messages).to include("ERROR: Cannot load Product data without a value in the 'Unique Identifier' field.")
         end
 
         it "informs user of missing compound key fields" do
@@ -327,7 +329,9 @@ describe FileImportProcessor do
           ])
 
           FileImportProcessor::MissingCoreModuleFieldError.any_instance.should_not_receive(:log_me)
-          expect {pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u}.to raise_error "Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields."
+          pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
+          expect(@listener.failed).to be_true
+          expect(@listener.messages).to include("ERROR: Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields.")
         end
       end
       

@@ -16,10 +16,6 @@ class FileImportProcessor
     @module_chain = @core_module.default_module_chain
     @data = data
     @listeners = listeners
-    @custom_definition_map = {}
-    CustomDefinition.all.each do |cd|
-      @custom_definition_map[cd.id] = cd
-    end
   end
   
   
@@ -68,7 +64,17 @@ class FileImportProcessor
     object_map = {}
     begin
       data_map = make_data_map row, base_column
-      ActiveRecord::Base.transaction do
+      # Throw away the name of the key field, don't really care here
+      *, key_model_field_value = find_module_key_field(data_map, @core_module)
+
+      # The following lock prevents any other process from attempting a concurrent data import on the same 
+      # Core Module + Key combination.  The process attempts to retry the lock wait up to 5 times (default aquire time
+      # is 60 seconds, so that's waiting up to 5 minutes for the lock to clear across other processes).
+
+      # We could have attempted to just lock on the object itself once it was found, but then we're not covering
+      # the case of multiple file importing NEW objects at the same time, ending up w/ multiple object creates.
+      # It'd also require a bit of a re-write of the following code-flow.
+      Lock.acquire("#{@core_module.class_name}-#{key_model_field_value}", times: 5, temp_lock: true) do
         error_messages = []
         @module_chain.to_a.each do |mod|
           if fields_for_me_or_children? data_map, mod
@@ -86,30 +92,27 @@ class FileImportProcessor
                 next
               end
               if mf.custom?
-                custom_fields[mf] = data
+                cv = obj.custom_values.find {|cv| mf.custom_definition.id == cv.custom_definition_id}
+                if cv.nil?
+                  cv = obj.custom_values.build
+                  cv.custom_definition = mf.custom_definition
+                end
+                is_boolean = mf.custom_definition.data_type.to_sym==:boolean
+                val = is_boolean ? get_boolean_value(data) : data
+                orig_value = cv.value
+                # If field is a boolean and the value is not nil OR
+                # if either of the original or new value is not blank.
+                if (is_boolean && !val.nil?) || !(orig_value.blank? && val.blank?) 
+                  process_import mf, cv, val, user, messages, error_messages
+                else
+                  # Don't think this condition ever actually happens since we're already skipping blank values above
+                  cv.mark_for_destruction
+                end
               else
                 process_import mf, obj, data, user, messages, error_messages
               end
             end
             obj = merge_or_create obj, save, !parent_mod #if !parent_mod then we're at the top level
-            cv_map = {}
-            obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
-            to_batch_write = []
-            custom_fields.each do |mf,data|
-              cd = @custom_definition_map[mf.custom_id]
-              is_boolean = cd.data_type.to_sym==:boolean
-              cv = cv_map[cd.id]
-              cv = CustomValue.new(:customizable_id=>obj.id,:customizable_type=>obj.class.to_s,:custom_definition_id=>cd.id) if cv.nil?
-              orig_value = cv.value
-              val = is_boolean ? get_boolean_value(data) : data
-              process_import mf, cv, val, user, messages, error_messages
-              if (is_boolean && !val.nil?) || !(orig_value.blank? && val.blank?) 
-                to_batch_write << cv
-              else
-                obj.custom_values.delete(cv)
-              end
-            end
-            CustomValue.batch_write! to_batch_write if save
             object_map[mod] = obj
           end
         end
@@ -126,27 +129,40 @@ class FileImportProcessor
         # If we get blank rows in here somehow (should be prevented elsewhere) it's possible that the object map will be
         # blank, in which case we don't want to do anything of the following
         if object_map[@core_module]
+          object = object_map[@core_module]
+
           # Add our object errors before validating since the validator may raise an error and we want our
           # process_import errors included in the object too.
-          object_map[@core_module].errors[:base].push(*error_messages) unless error_messages.blank?
-          OpenChain::FieldLogicValidator.validate! object_map[@core_module]
+          object.errors[:base].push(*error_messages) unless error_messages.blank?
+          
+          # Reload and freeze all custom values
+          if object.respond_to?(:freeze_all_custom_values_including_children)
+            CoreModule.walk_object_heirarchy(object) {|cm, obj| obj.custom_values.reload if obj.respond_to?(:custom_values)}
+            object.freeze_all_custom_values_including_children
+          end
+
+          OpenChain::FieldLogicValidator.validate! object, false, true
           # FieldLogicValidator only raises an error if a rule fails, we still want to raise an error if any of our process import calls resulted
           # in an error.
-          raise OpenChain::ValidationLogicError.new(nil, object_map[@core_module]) unless object_map[@core_module].errors[:base].empty?
-          fire_row row_number, object_map[@core_module], messages
+          raise OpenChain::ValidationLogicError.new(nil, object) unless object.errors[:base].empty?
+          fire_row row_number, object, messages
         end
         
       end
-    rescue OpenChain::ValidationLogicError => e
-      my_base = e.base_object
+    rescue OpenChain::ValidationLogicError, MissingCoreModuleFieldError => e
+      my_base = e.base_object if e.respond_to?(:base_object)
       my_base = @core_object unless my_base
       my_base = object_map[@core_module] unless my_base
-      my_base.errors.full_messages.each {|m| 
-        messages << "ERROR: #{m}"
-      }
+      # Put the major error (missing fields) first here
+      messages << "ERROR: #{e.message}" if e.is_a? MissingCoreModuleFieldError
+      if my_base
+        my_base.errors.full_messages.each {|m| 
+          messages << "ERROR: #{m}"
+        } 
+      end
       fire_row row_number, nil, messages, true #true = failed
     rescue => e
-      e.log_me(["Imported File ID: #{@import_file.id}"]) unless e.is_a? MissingCoreModuleFieldError
+      e.log_me(["Imported File ID: #{@import_file.id}"])
       messages << "SYS ERROR: #{e.message}"
       fire_row row_number, nil, messages, true
       raise e
@@ -375,13 +391,7 @@ class FileImportProcessor
       search_scope = parent_core_module.child_objects my_core_module, parent_object
     end    
 
-    key_model_field = nil
-    key_model_field_value = nil
-    my_core_module.key_model_field_uids.each do |mfuid|
-      key_model_field_value = data_map[my_core_module][mfuid.intern]
-      key_model_field = mfuid.intern unless key_model_field_value.blank?
-      break if key_model_field
-    end
+    key_model_field, key_model_field_value = find_module_key_field(data_map, my_core_module)
 
     unless key_model_field
       # Tell the users what actual field they're missing data for.
@@ -394,13 +404,26 @@ class FileImportProcessor
 
       raise MissingCoreModuleFieldError, e
     end
-     
-    obj = search_scope.where("#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value).first
-
-    obj = search_scope.build if obj.nil?
-
-    obj
     
+    search_scope = search_scope.where("#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value)
+    if my_core_module.klass.new.respond_to?(:custom_values)
+      search_scope = search_scope.includes(:custom_values)
+    end
+
+    obj = search_scope.first
+    obj = search_scope.build if obj.nil?
+    obj
+  end
+
+  def find_module_key_field data_map, core_module
+    key_model_field = nil
+    key_model_field_value = nil
+    core_module.key_model_field_uids.each do |mfuid|
+      key_model_field_value = data_map[core_module][mfuid.to_sym]
+      key_model_field = mfuid.to_sym unless key_model_field_value.blank?
+      break if key_model_field
+    end
+    [key_model_field, key_model_field_value]
   end
 
   # map a row from the file into data elements mapped by CoreModule & ModelField.uid
