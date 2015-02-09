@@ -13,7 +13,7 @@ describe OpenChain::Report::StaleTariffs do
   
   describe 'security' do
     it 'throws error when user does not have view product & is from master company' do
-      @u.expects(:view_products?).returns(false)
+      @u.should_receive(:view_products?).and_return(false)
       expect {
         OpenChain::Report::StaleTariffs.run_report(@u)
       }.to raise_error(/have permission to view products/)
