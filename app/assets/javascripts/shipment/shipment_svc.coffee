@@ -11,7 +11,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         else
           updatedLines.push ln if qty && qty>0
       shipment.lines = updatedLines
-    if shipment.dest_port.title
+    if shipment.dest_port && shipment.dest_port.title
       shipment.shp_dest_port_name = shipment.dest_port.title
       shipment.shp_dest_port_id = undefined
     shipment
