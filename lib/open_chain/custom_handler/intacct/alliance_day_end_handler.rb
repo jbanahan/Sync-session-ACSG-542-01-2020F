@@ -299,7 +299,7 @@ QRY
       qry = <<-QRY
 SELECT SUM(l.amount)
 FROM intacct_alliance_exports e
-INNER JOIN intacct_payables p on p.intacct_alliance_export_id = e.id and (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE}' or (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE}' and p.vendor_number <> '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_VFI_CUSTOMER_CODE}'))
+INNER JOIN intacct_payables p on p.intacct_alliance_export_id = e.id and (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE}' or (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE}' and p.vendor_number <> '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_LMD_VENDOR_CODE}'))
 INNER JOIN intacct_payable_lines l on p.id = l.intacct_payable_id
 WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_INVOICE}' and e.data_received_date > '#{db_start_time}'
 QRY

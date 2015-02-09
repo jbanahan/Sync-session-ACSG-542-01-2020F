@@ -437,8 +437,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       # This payable should be skipped, since it's something that is not in the invoice report, 
       # we generate it out of thin air for an internal billing process
-      vfi_to_lmd_payable = IntacctPayable.create! company: 'vfi', vendor_number: "LMD", intacct_alliance_export: invoice_export
-      vfi_to_lmd_payable_line = IntacctPayableLine.create! amount: 20, intacct_payable: vfi_to_lmd_payable
+      vfi_to_lmd_payable = IntacctPayable.create! company: 'vfc', vendor_number: "LMD", intacct_alliance_export: invoice_export
+      vfi_to_lmd_payable_line = IntacctPayableLine.create! amount: 50, intacct_payable: vfi_to_lmd_payable
 
       errors = described_class.new(nil, nil).send(:validate_export_amounts_received, Time.zone.now() - 5.minutes, 10, 30, 20)
       expect(errors.size).to eq 0
