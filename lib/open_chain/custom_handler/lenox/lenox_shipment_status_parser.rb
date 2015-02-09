@@ -16,9 +16,14 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
 
   #required to support CustomFile
   def process user
-    raise "Processing Failed because you cannot view this file." unless self.class.can_view? user
     @user = user
-    self.parse OpenChain::XLClient.new_from_attachable(@attachable)
+    begin
+      raise "Processing Failed because you cannot view this file." unless self.class.can_view? user
+      self.parse OpenChain::XLClient.new_from_attachable(@attachable)
+      user.messages.create!(subject:'Lenox Shipment Status Processing Complete',body:"Shipment status file complete.")
+    rescue
+      user.messages.create!(subject:'Lenox Shipment Status Processing Complete WITH ERRORS',body:"Shipment status file complete with the following error: #{$!.message}") if user.persisted?
+    end
   end
 
   def parse xlclient

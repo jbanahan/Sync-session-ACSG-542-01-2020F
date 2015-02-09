@@ -44,10 +44,19 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       described_class.stub(:can_view?).and_return true
       described_class.new(@cf).process User.new
     end
-    it "should raise error if user cannot view" do
+    it "should not run if user cannot view" do
       u = User.new
       described_class.should_receive(:can_view?).with(u).and_return false
-      expect {described_class.new(@cf).process(u) }.to raise_error "Processing Failed because you cannot view this file."
+      described_class.should_not_receive(:parse)
+      described_class.new(@cf).process(u)
+    end
+    it "should write error message to user" do
+      u = Factory(:user)
+      OpenChain::XLClient.stub(:new_from_attachable).and_return(double('x'))
+      described_class.should_receive(:can_view?).and_return true
+      described_class.any_instance.should_receive(:parse).and_raise "some error"
+      expect{described_class.new(@cf).process(u)}.to change(u.messages,:count).from(0).to(1)
+      expect(u.messages.first.subject).to match /ERROR/
     end
   end
 
