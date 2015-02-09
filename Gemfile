@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'rails', '3.2.12'
+gem 'rails', '3.2.21'
 gem 'mysql2', '0.3.13'
 gem 'sqlite3'
 # AWS-SDK prior to 1.15 has a timeout bug in Ruby 2 on s3_object.write
