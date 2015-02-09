@@ -146,6 +146,14 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       expect(sl.gross_kgs).to eq BigDecimal(r[14])
       expect(sl.cbms).to eq BigDecimal(r[16])
     end
+    it "should fail on bad lading port" do
+      @pol.update_attributes(name:'x')
+      expect{@p.process_shipment [default_row]}.to raise_error /\ lading port/
+    end
+    it "should fail on bad unlading port" do
+      @pod.update_attributes(name:'x')
+      expect{@p.process_shipment [default_row]}.to raise_error /\ unlading port/
+    end
     it "should clean trailing .0 from product" do
       r = default_row
       r[4] = "#{r[4]}.0"

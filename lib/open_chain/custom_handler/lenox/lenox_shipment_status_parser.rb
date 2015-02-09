@@ -54,7 +54,9 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
       shp = Shipment.new(importer_id:@lenox.id,reference:shp_ref) unless shp
       shp.house_bill_of_lading = r[9]
       shp.lading_port = Port.find_by_name r[6].strip
+      raise "Invalid port name #{r[6].strip} for lading port." unless shp.lading_port
       shp.unlading_port = Port.find_by_name(clean_us_port_name(r[8].strip))
+      raise "Invalid port name #{r[8].strip} for unlading port." unless shp.unlading_port
       shp.est_departure_date = r[7]
       shp.vessel = r[10]
       rows.each_with_index {|row, i| process_line shp, row, i+i}
