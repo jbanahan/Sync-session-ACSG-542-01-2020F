@@ -35,7 +35,6 @@ describe ImportedFilesController do
       r['uploaded_at'].should == 0.seconds.ago.strftime("%Y-%m-%d %H:%M")
       r['uploaded_by'].should == @u.full_name
       r['total_rows'].should == 3
-      r['total_records'].should == 2
       r['last_processed'].should == finished_at.strftime("%Y-%m-%d %H:%M")
       r['time_to_process'].should == 89
       r['processing_error_count'].should == 61
