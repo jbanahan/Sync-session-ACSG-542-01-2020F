@@ -404,13 +404,7 @@ class FileImportProcessor
 
       raise MissingCoreModuleFieldError, e
     end
-    
-    search_scope = search_scope.where("#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value)
-    if my_core_module.klass.new.respond_to?(:custom_values)
-      search_scope = search_scope.includes(:custom_values)
-    end
-
-    obj = search_scope.first
+    obj = search_scope.where("#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value).first
     obj = search_scope.build if obj.nil?
     obj
   end
