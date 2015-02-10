@@ -62,7 +62,7 @@ describe OpenChain::SearchQueryControllerHelper do
   it "should get total_objects" do
     sq = SearchQuery.new(@ss,@user)
     sq.stub(:unique_parent_count).and_return(42)
-    r = @k.new.total_object_count_hash(sq,@user)
+    r = @k.new.total_object_count_hash(sq)
     r['total_objects'].should == 42
   end
   

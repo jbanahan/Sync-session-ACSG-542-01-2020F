@@ -332,7 +332,6 @@ describe AdvancedSearchController do
         r['name'].should == @ss.name
         r['page'].should == 1
         r['total_pages'].should == 11
-        r['total_objects'].should == 42
         r['columns'].should == [ModelField.find_by_uid(:prod_uid).label,ModelField.find_by_uid(:prod_name).label]
         r['rows'].should == [
           { 'id'=>@p.id,
