@@ -111,6 +111,12 @@ class AdvancedSearchController < ApplicationController
     end
   end
 
+  def total_objects
+    ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
+    raise ActionController::RoutingError.new('Not Found') unless ss
+    render :json=>total_object_count_hash(SearchQuery.new(ss,current_user))
+  end
+
   def download
     ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
     raise ActionController::RoutingError.new('Not Found') unless ss

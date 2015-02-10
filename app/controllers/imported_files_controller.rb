@@ -61,7 +61,7 @@ class ImportedFilesController < ApplicationController
           :uploaded_by=>f.user.full_name,
           :never_processed=>fir.nil?,
           :total_rows=>(fir ? fir.change_records.size : ''),
-          :total_records=>f.result_keys.count,
+          # :total_records=>f.result_keys.count,
           :last_processed=>(fir && fir.finished_at ? fir.finished_at.strftime("%Y-%m-%d %H:%M") : ''),
           :time_to_process=>(fir ? fir.time_to_process : ''),
           :processing_error_count=>(fir ? fir.error_count : ''),
@@ -75,6 +75,12 @@ class ImportedFilesController < ApplicationController
         render :json=>r
       }
     end
+  end
+
+  def total_objects
+    f = ImportedFile.find params[:id]
+    raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
+    render json: total_object_count_hash(SearchQuery.new(f,current_user,:extra_from=>f.result_keys_from))
   end
   
   def results

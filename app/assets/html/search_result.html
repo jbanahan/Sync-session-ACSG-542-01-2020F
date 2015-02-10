@@ -54,7 +54,7 @@
           <span ng-repeat='b in searchResult.bulk_actions' ng-show='bulkSelected.length > 0'>
             <button class='btn navbar-btn btn-default navbar-btn' ng-click='executeBulkAction(b)' title='{{b.label}}'>{{b.label}}</button>
           </span>
-          <button ng-show="!allSelected && searchResult.total_objects > 0 " ng-click='selectAll()' class='btn navbar-btn btn-default' title='Select All'><i class='fa fa-check-square-o'></i> ({{searchResult.total_objects}})</button>
+          <button ng-show="!allSelected" ng-click='selectAll()' class='btn navbar-btn btn-default' title='Select All'><i class='fa fa-check-square-o'></i> ({{searchResult.total_objects}})</button>
           <span ng-show='bulkSelected.length>0 || allSelected'>
             <button ng-click='selectNone()' class='btn navbar-btn btn-default' title='Select None' id="search_clear"><i class='fa fa-square-o'></i></button>
           </span>

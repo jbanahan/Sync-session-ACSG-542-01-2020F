@@ -222,6 +222,7 @@ OpenChain::Application.routes.draw do
     get 'last_search_id', :on=>:collection
     get 'setup', :on=>:member
     get 'download', :on=>:member
+    get 'total_objects', :on=>:member
   end
 
   #custom features
@@ -517,6 +518,7 @@ OpenChain::Application.routes.draw do
     resources :imported_file_downloads, :only=>[:index,:show]
   end
   match "/imported_files_results/:id" => "imported_files#results", :via=>:get
+  match "/imported_files_results/:id/total_objects" => "imported_files#total_objects", :via => :get
 
   resources :search_setups do
     collection do

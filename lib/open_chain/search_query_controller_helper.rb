@@ -50,7 +50,6 @@ module OpenChain
           :columns=>cols,
           :rows=>rows,
           :total_pages=>total_pages,
-          :total_objects=>sq.unique_parent_count,
           :core_module_name=>ss.core_module.label,
           :too_big=>(sq.count>=1000),
           :bulk_actions=>prep_bulk_actions(ss.core_module,user)
@@ -59,6 +58,10 @@ module OpenChain
       h[:search_run_id]=ss.search_run.id if ss.respond_to?(:search_run) && ss.search_run
       h
     end
+    def total_object_count_hash search_query
+      r = {'total_objects'=>search_query.unique_parent_count}
+    end
+
     def number_from_param param, default
       r = default
       r = param.to_i if !param.blank? && param.match(/^[1-9][0-9]*$/)

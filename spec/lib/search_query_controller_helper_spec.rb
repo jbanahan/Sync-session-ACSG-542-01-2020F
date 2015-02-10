@@ -21,7 +21,6 @@ describe OpenChain::SearchQueryControllerHelper do
     Product.any_instance.stub(:can_edit?).and_return(true)
     User.any_instance.stub(:edit_classifications?).and_return(true) #to allow bulk actions
     SearchQuery.any_instance.stub(:count).and_return(501)
-    SearchQuery.any_instance.stub(:unique_parent_count).and_return(42)
     Product.any_instance.stub(:can_view?).and_return(true)
     Product.any_instance.stub(:can_edit?).and_return(true)
     @user = Factory(:master_user,:email=>'a@example.com', :time_zone => "Hawaii")
@@ -36,7 +35,6 @@ describe OpenChain::SearchQueryControllerHelper do
     r['name'].should == @ss.name
     r['page'].should == 1
     r['total_pages'].should == 11
-    r['total_objects'].should == 42
     r['columns'].should == [ModelField.find_by_uid(:prod_uid).label,ModelField.find_by_uid(:prod_name).label, ModelField.find_by_uid(:prod_changed_at).label]
     r['rows'].should == [
       { 'id'=>@p.id,
@@ -59,6 +57,13 @@ describe OpenChain::SearchQueryControllerHelper do
     end
     r['bulk_actions'].should == expected_bulk_actions 
     r['too_big'].should be_false
+  end
+
+  it "should get total_objects" do
+    sq = SearchQuery.new(@ss,@user)
+    sq.stub(:unique_parent_count).and_return(42)
+    r = @k.new.total_object_count_hash(sq,@user)
+    r['total_objects'].should == 42
   end
   
   it "should set too_big flag when more than 1000 results" do

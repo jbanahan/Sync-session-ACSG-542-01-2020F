@@ -27,7 +27,6 @@
         <dt>Uploaded At:</dt><dd>&nbsp;{{importedFile.uploaded_at}}</dd>
         <dt>Uploaded By:</dt><dd>&nbsp;{{importedFile.uploaded_by}}</dd>
         <dt>File Rows:</dt><dd>&nbsp;{{importedFile.total_rows}}</dd>
-        <dt>Unique Records</dt><dd>&nbsp;{{importedFile.total_records}}</dd>
         <dt>Last Processed:</dt><dd>&nbsp;{{importedFile.last_processed}}</dd>
         <dt>Time To Process:</dt><dd>&nbsp;{{importedFile.time_to_process}} minutes</dd>
         <dt ng-show='importedFile.processing_error_count > 0'>Processing Errors</dt><dd ng-show='importedFile.processing_error_count > 0'>{{importedFile.processing_error_count}}</dd>
@@ -46,9 +45,9 @@
         </div>
         Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in importedFile.model_fields'>
         </select>
-        <a ng-show='criterionToAdd' class='btn' ng-click='addCriterion(criterionToAdd)'>Add</a>
+        <a ng-show='criterionToAdd' class='btn btn-default' ng-click='addCriterion(criterionToAdd)'>Add</a>
         <br />
-        <a class='btn' ng-click='updateSearchCriterions()'>Save</a>
+        <a class='btn btn-default' ng-click='updateSearchCriterions()'>Save</a>
       </div>
     </div>
   </div>
