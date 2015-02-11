@@ -5,6 +5,9 @@
 cancel_redirect = "/"
 cancel_redirect = company_users_path(@company) if current_user.admin?
 %>
+    $("#frm_user").submit(function() {
+      $("#user_group_ids option").prop('selected','selected');
+    });
     $("#btn_cancel").click(function() {window.location = '<%=cancel_redirect%>'});
     $(".check_all").click(function(evt) {
       evt.preventDefault();
@@ -13,7 +16,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     $("#mod_run_as").dialog({autoOpen:false,title:'Run As',
       width:'auto',
       buttons:{"OK":function() {$("#frm_run_as").submit();},
-               "Cancel":function() {$("#mod_run_as").dialog('close');}}  
+               "Cancel":function() {$("#mod_run_as").dialog('close');}}
     });
     $("#btn_run_as").click(function() {
       <% if current_user == @user %>
@@ -60,7 +63,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     <button id="btn_reports">Reports</button>
     <button class="btn_link btn btn-default" link_to="<%=event_subscriptions_company_user_path(@user.company,@user)%>">Subscriptions</button>
   <% end -%>
-  
+
 <%end%>
 
 <div class="container">
@@ -106,7 +109,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
         <div class="form-group">
           <label>Email format</label>
           <%= f.select(:email_format, ["html","text"], {}, {class: "form-control", title: "Email format"}) %>
-        </div> 
+        </div>
 
         <% if current_user.admin? && current_user.sys_admin? %>
           <div class="form-group" style="margin-top: 8px;">
