@@ -91,7 +91,7 @@ module OpenChain
           :origin_wildlife => {label: "Origin of Wildlife", data_type: :string, module_type: "Product"},
           :semi_precious => {label: "Semi-Precious", data_type: :boolean, module_type: "Product"},
           :semi_precious_type => {label: "Type of Semi-Precious", data_type: :string, module_type: "Product"},
-          :cites => {label: "CITES", data_type: :string, module_type: "Product"},
+          :cites => {label: "CITES", data_type: :boolean, module_type: "Product"},
           :fish_wildlife => {label: "Fish & Wildlife", data_type: :boolean, module_type: "Product"},
           :msl_fiber_status => {label: "MSL Fiber Status", data_type: :string, module_type: "Product"}
         }

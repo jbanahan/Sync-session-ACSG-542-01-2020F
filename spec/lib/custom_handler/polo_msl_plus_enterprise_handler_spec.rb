@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @p.update_custom_value! custom_defs[:origin_wildlife], "ow"
       @p.update_custom_value! custom_defs[:semi_precious], true
       @p.update_custom_value! custom_defs[:semi_precious_type], "spt"
-      @p.update_custom_value! custom_defs[:cites], "cites"
+      @p.update_custom_value! custom_defs[:cites], true
       @p.update_custom_value! custom_defs[:fish_wildlife], false
 
       @tmp = @h.generate_outbound_sync_file Product.where("1=1")
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       row[8].should == "3.0" #height
       # Fabric Fields are all nil
       (9..53).each {|x| expect(row[x]).to be_nil}
-      expect(row[54..72]).to eq ["k", "fc", "cn1", "cn2", "cn3", "sn1", "sn2", "sn3", "fwo1", "fwo2", "fwo3", "fws1", "fws2", "fws3", "ow", "true", "spt", "cites", "false"]
+      expect(row[54..72]).to eq ["k", "fc", "cn1", "cn2", "cn3", "sn1", "sn2", "sn3", "fwo1", "fwo2", "fwo3", "fws1", "fws2", "fws3", "ow", "true", "spt", "true", "false"]
     end
 
     it "should handle multiple products" do
