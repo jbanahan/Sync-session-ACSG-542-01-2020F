@@ -139,6 +139,8 @@ describe Lock do
       Lock.should_receive(:acquired_lock).and_return true
 
       started = false
+      # We have to fake out the lock, since this test is, in-fact running in an open transaction
+      Lock.should_receive(:inside_nested_transaction?).and_return false
       Lock.acquire 'LockSpec', times: 2 do
         started = true
       end
@@ -147,6 +149,9 @@ describe Lock do
     end
 
     it "should not attempt to retry and aquire locks when a lock wait timeout occurs inside the yielded block" do
+      # We have to fake out the lock, since this test is, in-fact running in an open transaction
+      Lock.should_receive(:inside_nested_transaction?).and_return false
+
       Lock.should_not_receive(:lock_wait_timeout?)
 
       started = false
@@ -172,6 +177,60 @@ describe Lock do
       }.to raise_error ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
 
       started.should be_false
+    end
+
+    it "should not attempt to retry locks if lock.aquire attempt occurs inside an open transaction" do
+      Lock.should_receive(:acquired_lock).and_raise ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
+      call_count = 0
+
+      expect {
+        ActiveRecord::Base.connection.transaction do 
+          Lock.acquire 'LockSpec', times: 5 do
+            call_count += 1
+          end
+        end
+      }.to raise_error ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
+      expect(call_count).to eq 0
+    end
+
+    it "should not attempt to retry deadlocks if deadlock occurs inside yield block of an open transaction" do
+      call_count = 0
+
+      expect {
+        ActiveRecord::Base.connection.transaction do 
+          Lock.acquire 'LockSpec', times: 5 do
+            call_count += 1
+            raise ActiveRecord::StatementInvalid, "deadlock found select `locks`."
+          end
+        end
+      }.to raise_error ActiveRecord::StatementInvalid, "deadlock found select `locks`."
+      expect(call_count).to eq 1
+    end
+
+    it "does not attempt to retry failed lock deletion if inside nested transaction" do
+      Lock.any_instance.should_receive(:delete).exactly(2).times.and_raise ActiveRecord::StatementInvalid, "deadlock found delete from `locks`"
+      call_count = 0
+      expect {
+        ActiveRecord::Base.connection.transaction do 
+          Lock.acquire 'LockSpec', times: 5, temp_lock:true do
+            call_count += 1
+          end
+        end
+      }.to raise_error ActiveRecord::StatementInvalid, "deadlock found delete from `locks`"
+      expect(call_count).to eq 1
+    end
+
+    it "does not attempt to retry failed lock creation if inside nested transaction" do
+      Lock.should_receive(:create!).with(name: "LockSpec-Temp").and_raise ActiveRecord::StatementInvalid, "deadlock found insert into `locks`"
+      call_count = 0
+      expect {
+        ActiveRecord::Base.connection.transaction do 
+          Lock.acquire 'LockSpec-Temp', times: 5, temp_lock:true do
+            call_count += 1
+          end
+        end
+      }.to raise_error ActiveRecord::StatementInvalid, "deadlock found insert into `locks`"
+      expect(call_count).to eq 0
     end
   end
 
@@ -216,6 +275,10 @@ describe Lock do
 
     it "should retry lock aquisition 4 times by default" do
       e = double("MyModel")
+
+      # We have to fake out the lock, since this test is, in-fact running in an open transaction
+      Lock.should_receive(:inside_nested_transaction?).and_return false
+
       e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
       e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
       e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
@@ -226,6 +289,9 @@ describe Lock do
     end
 
     it "should throw an error if it retries too many times" do
+      # We have to fake out the lock, since this test is, in-fact running in an open transaction
+      Lock.should_receive(:inside_nested_transaction?).and_return false
+      
       # This also ensures that we're using the retry parameter
       e = double("MyModel")
       e.should_receive(:with_lock).exactly(3).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"

@@ -50,16 +50,22 @@ class Lock < ActiveRecord::Base
       # The outer block is solely for handling the potential for the lock missing error / retry
       # on the temp locks.
       my_lock = nil
+
+      # If we're in a nested transaction, we can't retry anything here because the state of the transaction is 
+      # blown out.  We need to raise out and possibly handle this via retrying at the outer edge of the transaction
+      # Think of cases where we're using nested locks.
+      nested_transaction = inside_nested_transaction?
       begin
         # When dealing w/ long running processes and permanent locks, record if this process has seen them 
         # before and just skip the create part next time
         if opts[:temp_lock] == true || !PERMENANT_LOCKS.include?(name)
           begin
             create! name: name
-            PERMENANT_LOCKS << name unless opts[:temp_lock] == true
           rescue ActiveRecord::RecordNotUnique
             # concurrent create is okay since there's a unique index on the name attribute
           rescue ActiveRecord::StatementInvalid => e
+            raise e if nested_transaction
+
             retry if lock_deadlock?(e)
           end
         end
@@ -79,6 +85,8 @@ class Lock < ActiveRecord::Base
         rescue ActiveRecord::StatementInvalid => e
           # We only want to retry acquiring the lock, we don't want to retry the 
           # actual code inside the yielded block.
+          raise e if nested_transaction
+
           if !definitely_acquired?(name)
             retry if lock_wait_timeout?(e) && (counter += 1) <= opts[:times]
 
@@ -97,16 +105,23 @@ class Lock < ActiveRecord::Base
           begin
             my_lock.delete if opts[:temp_lock] == true && !my_lock.nil?
           rescue ActiveRecord::StatementInvalid => e
+            raise e if nested_transaction
+
             retry if lock_deadlock? e
           end
         end
       rescue LockMissingError
+        # This is not an error resulting from an actual database call, so we can safely retry it even if 
+        # we're nested in a transaction
+
         # If we're missing a permanent lock (shouldn't happen, but could if someone accidently clears the db)
         # clear the permanent locks Set so we don't get caught in a loop
         PERMENANT_LOCKS.clear unless opts[:temp_lock] == true
         retry
       end
     end
+
+    PERMENANT_LOCKS << name unless opts[:temp_lock] == true
 
     result
   end
@@ -151,15 +166,22 @@ class Lock < ActiveRecord::Base
   # See ActiveRecord::Locking::Pessimistic.lock! for explanation of lock_clause
   def self.with_lock_retry object_to_lock, lock_clause = true, max_retry_count = 4
     counter = 0
+    active_transaction = inside_nested_transaction?
     begin
       object_to_lock.with_lock(lock_clause) do 
         return yield
       end
     rescue ActiveRecord::StatementInvalid => e
+      raise e if active_transaction
+
       retry if Lock.lock_wait_timeout?(e) && ((counter += 1) <= max_retry_count)
 
       raise e
     end
+  end
+
+  def self.inside_nested_transaction?
+    ActiveRecord::Base.connection.open_transactions > 0
   end
 
   class LockMissingError < StandardError; end

@@ -528,7 +528,7 @@ describe OpenChain::FenixParser do
   end
 
   it "should retry with_lock 5 times and re-raise error if failed after that" do
-    Entry.any_instance.should_receive(:with_lock).exactly(5).times.and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+    Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_raise  ActiveRecord::StatementInvalid
     expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error ActiveRecord::StatementInvalid
   end
 
