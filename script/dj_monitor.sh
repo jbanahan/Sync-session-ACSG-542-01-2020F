@@ -9,13 +9,23 @@
 #
 # nohup ./dj_monitor.sh >dj_monitor_stdout.txt 2>dj_monitor_stderr.txt &
 
+# Make sure RVM is loaded in our shell environment
+if [ "$(type rvm | head -1)" != "rvm is a function" ]; then
+  [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+fi
+
 while [[ ! -f ./dj_stop ]]; do
   for D in $(find . -mindepth 1 -maxdepth 1 -type d -print0 | xargs -0 -n1 basename) ; do
     cd $D
     if [ -f script/start_dj.sh ]; then
       if [[ ! -f tmp/upgrade_running.txt ]]; then
-        echo "$(date) - Starting jobs for $D"
-        ./script/start_dj.sh
+        if [ -z "$1" ] || [ "$1"  != "quiet" ]; then
+          echo "$(date) - Starting jobs for $D"
+          script/start_dj.sh
+        else
+          script/start_dj.sh $1
+        fi
+        
       else
         echo "$(date) - Skipping $D because tmp/upgrade_running.txt exists."
       fi
