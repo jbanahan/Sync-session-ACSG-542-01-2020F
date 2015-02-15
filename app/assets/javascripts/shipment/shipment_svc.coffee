@@ -31,7 +31,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     getShipment: (shipmentId,forceReload) ->
       if !forceReload && currentShipment && parseInt(currentShipment.id) == parseInt(shipmentId)
         deferred = $q.defer()
-        deferred.resolve {data:{shipment:currentShipment}}
+        deferred.resolve {data: {shipment: currentShipment}}
         return deferred.promise
       else
         return $http.get('/api/v1/shipments/'+shipmentId+'.json?include=order_lines,attachments').then(getShipmentSuccessHandler)
@@ -39,16 +39,16 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       currentShipment = null
       s = prepForSave shipment
       if shipment.id && shipment.id > 0
-        $http.put('/api/v1/shipments/'+s.id+'.json',{shipment: s, include:'order_lines,attachments'}).then(getShipmentSuccessHandler)
+        $http.put('/api/v1/shipments/'+s.id+'.json', {shipment: s, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
       else
-        $http.post('/api/v1/shipments',{shipment: s, include:'order_lines,attachments'}).then(getShipmentSuccessHandler)
+        $http.post('/api/v1/shipments',{shipment: s, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
     getParties: ->
       $http.get('/api/v1/companies?roles=importer,carrier')
-    getAvailableOrders : (shipment) ->
+    getAvailableOrders: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
     processTradecardPackManifest: (shp, attachment) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest',{attachment_id:attachment.id, include:'order_lines,attachments'}).then(getShipmentSuccessHandler)
+      $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest', {attachment_id: attachment.id, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
   }
 ]

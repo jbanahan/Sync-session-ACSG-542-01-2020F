@@ -5,7 +5,7 @@
 # You can optionally set the responseErrorHandler to a function that takes the rejection object from the http response and does something special with it.  (See ShipmentCtrl for an implementation example)
 @components.service 'chainErrorHandler', ->
   {
-    errorMessage:null
+    errorMessage: null
     clear: ->
       @.errorMessage = null
     responseErrorHandler: null
@@ -14,7 +14,7 @@
 # listens for HTTP errors and passes them to the chainErrorHandler which should be added to you controller
 @components.factory 'chainHttpErrorInterceptor', ['$q','chainErrorHandler',($q,chainErrorHandler) ->
   {
-    error: null 
+    error: null
     responseError: (rejection) ->
       em = "Server error."
       data = rejection.data
@@ -29,14 +29,14 @@
 
 # Transcludes it's content in a wrapper that hides the content and replaces it with a loading message
 # whenever the loading-flag property is set to "loading"
-@components.directive 'chainLoadingWrapper', () ->
+@components.directive 'chainLoadingWrapper', ->
   {
-    restrict:'E'
+    restrict: 'E'
     scope: {
-      loadingFlag:'@'
+      loadingFlag: '@'
     }
-    transclude:true
-    templateUrl:'/partials/components/loading.html'
+    transclude: true
+    templateUrl: '/partials/components/loading.html'
   }
 
 @components.directive 'focusWhen', ['$timeout','$parse', ($timeout, $parse) ->
@@ -45,27 +45,27 @@
       model = $parse(attrs.focusWhen)
       scope.$watch model, (value) ->
         if value == true
-          $timeout () ->
+          $timeout ->
             element[0].focus()
             element[0].scrollIntoView()
-      element.bind 'blur', () ->
+      element.bind 'blur', ->
          scope.$apply(model.assign(scope, false))
   }
 ]
 
 #Boolean filter for writing text, works similar to a ternary operator like:
 # <div>{{x==1 | ifTrue : "I'm True" : "I'm not true"}}
-@components.filter 'ifTrue', () ->
+@components.filter 'ifTrue', ->
   (input,tVal,fVal) ->
     if input then tVal else fVal
 
-@components.directive 'chainTextileView', [() ->
+@components.directive 'chainTextileView', [ ->
   {
     restrict: 'AE'
     scope: {
-      ngModel:'='
+      ngModel: '='
     }
-    template:"<div class='textile-view'></div>"
+    template: "<div class='textile-view'></div>"
     link: (scope,el,attrs) ->
       if scope.ngModel && scope.ngModel.length > 0
         $(el).html(textile.convert(scope.ngModel))
@@ -74,14 +74,14 @@
     }
 ]
 
-@components.directive 'chainTextileEdit', [() ->
+@components.directive 'chainTextileEdit', [ ->
   {
     restrict: 'AE'
     scope: {
-      ngModel:'='
-      defaultView:'@'
+      ngModel: '='
+      defaultView: '@'
     }
-    template:"<div>
+    template: "<div>
       <div ng-show='showPreview' class='text-prev'>
       </div>
       <div ng-hide='showPreview'>
@@ -94,11 +94,11 @@
     </div>"
     link: (scope,el,attrs) ->
       scope.showPreview = scope.defaultView == 'preview'
-      scope.togglePreview = () ->
+      scope.togglePreview = ->
         scope.showPreview = !scope.showPreview
       scope.$watch 'ngModel', (newVal,oldVal) ->
         $(el).find('div.text-prev').html(textile.convert(newVal))
-      @
+      this
   }
 ]
 
@@ -106,17 +106,17 @@
 # <chain-panel panel-title='Errors' panel-message="obj.error_message" panel-type='panel-danger' />
 #
 # auto hides / shows if message is set
-@components.directive 'chainPanel', [() ->
+@components.directive 'chainPanel', [ ->
   {
     restrict: 'AE'
     scope: {
-      panelTitle:'@'
-      panelMessage:'='
-      panelType:'@'
+      panelTitle: '@'
+      panelMessage: '='
+      panelType: '@'
     }
-    template:"<div ng-show='panelMessage && panelMessage.length>0'><div class='panel' ng-class='panelType'><div class='panel-heading'><h3 class='panel-title'>{{panelTitle}}</h3></div><div class='panel-body'><p>{{panelMessage}}</p></div></div></div>"
+    template: "<div ng-show='panelMessage && panelMessage.length>0'><div class='panel' ng-class='panelType'><div class='panel-heading'><h3 class='panel-title'>{{panelTitle}}</h3></div><div class='panel-body'><p>{{panelMessage}}</p></div></div></div>"
     link: (scope,el,attrs) ->
-      @
+      this
   }
 ]
 # based on: http://coding-issues.blogspot.in/2013/10/angularjs-blur-directive.html
@@ -125,33 +125,33 @@
   (scope, element, attr) ->
     fn = $parse(attr['ngBlur'])
     element.bind 'blur', (event) ->
-      scope.$apply () ->
-        fn(scope, {$event:event})
+      scope.$apply ->
+        fn(scope, {$event: event})
 ])
 
-# Shows the message from the given binding in a modal every time it changes. 
+# Shows the message from the given binding in a modal every time it changes.
 # Closes the modal if the message is changed to blank, nil or undefined
 # The title attribute becomes the modal header title
 @components.directive 'chainModalMessage', ['$timeout',($timeout) ->
   {
-    scope:{
-      messageObject:'=' 
-      messageProperty:'@'
-      clearOnClose:'='
+    scope: {
+      messageObject: '='
+      messageProperty: '@'
+      clearOnClose: '='
     }
-    template:"<div class='modal fade'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h3>{{title}}</h3></div>
+    template: "<div class='modal fade'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h3>{{title}}</h3></div>
       <div class='modal-body'><p>{{message()}}</p></div>
       <div class='modal-footer'><button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button></div>
       </div></div></div>"
     link: (scope,el,attrs) ->
       scope.title = attrs.title
 
-      scope.message = () ->
+      scope.message = ->
         scope.messageObject[scope.messageProperty]
 
       if scope.clearOnClose
-        el.find('.modal').on 'hide.bs.modal', () ->
-          $timeout () -> #prevents $digest already in progress error while also making sure $apply is called
+        el.find('.modal').on 'hide.bs.modal', ->
+          $timeout -> #prevents $digest already in progress error while also making sure $apply is called
             scope.messageObject[scope.messageProperty] = ''
 
       scope.$watch 'messageObject[messageProperty]', (newVal,oldVal) ->
@@ -159,43 +159,42 @@
           el.find('.modal').modal('show')
         else
           el.find('.modal').modal('hide')
-      @
+      this
   }
 ]
 # Full action bar replacement that loads up the action bar with the transcluded content.
 # Use in conjunction with the @no_action_bar = true option in the rails controller which will hide the normal action bar in the layout
-@components.directive 'chainActionBar', [() ->
+@components.directive 'chainActionBar', [ ->
   {
-    transclude:true
-    template:"<div class='navbar navbar-default navbar-fixed-bottom'><ul class='nav navbar-nav'><li><span ng-transclude></span></li></ul></div>"
+    transclude: true
+    template: "<div class='navbar navbar-default navbar-fixed-bottom'><ul class='nav navbar-nav'><li><span ng-transclude></span></li></ul></div>"
     replace: true
     link: (scope,el,attrs) ->
-      scope.$evalAsync () ->
+      scope.$evalAsync ->
         el.find('button').addClass('navbar-btn')
         if attrs['includeWorkflow']
           el.append('<ul class="nav navbar-nav navbar-right"><li><a data-toggle="modal" href="#modal-workflow"><span class="workflow-nav-icon glyphicon glyphicon-list-alt"></span></a></li></ul>')
           ChainWorkflow.initWorkflow();
-        
-      @
+      this
   }
 ]
 
 
 # file upload form based on: http://hayageek.com/ajax-file-upload-jquery/
 # requires: jquery.form.js
-@components.directive 'chainAttach', [() ->
+@components.directive 'chainAttach', [ ->
   {
     restrict: 'A'
-    scope:{
-      chainAttach:'='
-      attachableId:'@'
-      attachableType:'@'
+    scope: {
+      chainAttach: '='
+      attachableId: '@'
+      attachableType: '@'
     }
-    template:"<form class='form-inline' role='form' action='/attachments' method='post' enctype='multipart/form-data'>
+    template: "<form class='form-inline' role='form' action='/attachments' method='post' enctype='multipart/form-data'>
       <div class='row'><div class='col-xs-4'>
         <input type='hidden' name='attachment[attachable_type]' value='{{attachableType}}' />
         <input type='hidden' name='attachment[attachable_id]' value='{{attachableId}}' />
-        <input type='file' size='60' name='attachment[attached]' class='form-control' /> 
+        <input type='file' size='60' name='attachment[attached]' class='form-control' />
       </div><div class='col-xs-2'>
         <input type='submit' value='Upload' class='btn btn-sm btn-success' style='display:none;'>
       </div>
@@ -210,15 +209,15 @@
     link: (scope,el,attrs) ->
       el.find('div.progress').hide()
       fileEl = el.find('form input[type="file"]')
-      fileEl.on('change', () ->
-        if $(@).val()
+      fileEl.on('change', ->
+        if $(this).val()
           el.find('form input[type="submit"]').show()
         else
           el.find('form input[type="submit"]').hide()
       )
       options = {
         dataType: 'json'
-        beforeSend: () ->
+        beforeSend: ->
           if el.find('form input[type="file"]').val()
             el.find('form').hide()
             el.children('div.progress').show()
@@ -242,7 +241,7 @@
           scope.$apply()
         complete: (response) ->
           el.find('div.progress').hide()
-        error: () ->
+        error: ->
           el.find('div.att-msg').addClass('error').html('There was an error uploading this file. Please reload the page.')
       }
       el.find('form').ajaxForm(options)
@@ -251,7 +250,7 @@
 
 @components.directive 'chainActionButton', ['$parse',($parse) ->
   {
-    restrict:'A'
+    restrict: 'A'
     link: (scope,el,attrs) ->
       bId = el.attr('id')
       newButton = $('#nav-action-bar #chain-action-button-'+bId)
@@ -260,25 +259,24 @@
         actionBar = $('#nav-action-bar')
         actionBar.append("<button class='btn btn-default' id='chain-action-button-"+bId+"'>"+el.html()+"</button>")
         newButton = actionBar.find('#chain-action-button-'+bId)
-        newButton.on('click',() ->
+        newButton.on('click', ->
           $('#'+bId).click()
         )
 
       if attrs.chainShow
-        scope.$watch $parse(attrs.chainShow)(scope), (newVal,oldVal)->
+        scope.$watch $parse(attrs.chainShow)(scope), (newVal,oldVal) ->
           if newVal
             newButton.show()
           else
             newButton.hide()
-      
   }
 ]
 # moves the transcluded content into the action bar
 # each instance must have a unique ID attribute
-@components.directive 'chainActionBarItem', [() ->
+@components.directive 'chainActionBarItem', [ ->
   {
-    transclude:true
-    template:"<div class='chainActionBarWrap' style='display:inline;' ng-transclude></div>"
+    transclude: true
+    template: "<div class='chainActionBarWrap' style='display:inline;' ng-transclude></div>"
     link: (scope,el,attrs) ->
       d = el.find('div.chainActionBarWrap')
       d.attr('action-bar-item-id',el.attr('id'))
@@ -290,16 +288,16 @@
 ]
 
 # creates a modal dialog box with a link based on the title attributes and transcludes the content into the body of the dialog.  There will be an "OK" button to close the dialog.
-@components.directive 'chainMessageBox', [() ->
+@components.directive 'chainMessageBox', [ ->
   {
     scope: {
-      title:'=title'
-      asButton:'=asButton'
-      extraClass:'=extraClass'
-      buttonIconClass:'@buttonIconClass'
+      title: '=title'
+      asButton: '=asButton'
+      extraClass: '=extraClass'
+      buttonIconClass: '@buttonIconClass'
     }
-    transclude:true
-    template:"<div class='dialog_content_wrap' ng-transclude></div>"
+    transclude: true
+    template: "<div class='dialog_content_wrap' ng-transclude></div>"
     link: (scope,el,attrs) ->
       if scope.asButton
         buttonContent = scope.title
@@ -310,19 +308,19 @@
         el.prepend("<a class='btn chainMessageBoxLauncher "+scope.extraClass+"'>"+scope.title+'</a>')
       d = el.find("div.dialog_content_wrap")
       d.dialog({
-        modal:true
-        autoOpen:false
-        buttons:{
-          "OK": () ->
-            $(@).dialog('close')
+        modal: true
+        autoOpen: false
+        buttons: {
+          "OK": ->
+            $(this).dialog('close')
           }
         }
       )
-      el.find(".chainMessageBoxLauncher").click(() ->
+      el.find(".chainMessageBoxLauncher").click(->
         d.dialog('open')
       )
 
-      scope.$on('$destroy', () ->
+      scope.$on('$destroy', ->
         el.find(".chainMessageBoxLauncher").off('click')
         d.dialog('destroy')
         d.html("")
@@ -334,13 +332,12 @@
 
 
 @components.service 'userListCache', ['$http',($http) ->
-  
   {
     users: []
     waiting: false
     getListForCurrentUser: (callback) ->
       if @.users.length == 0
-        svc = @
+        svc = this
         $http.get('/users.json').success((data) ->
           svc.users = []
           for c in data
@@ -352,19 +349,19 @@
         )
       else
         callback(@.users)
-      
   }
 ]
-# shows the user a drop down to select a user and sets the 
+
+# shows the user a drop down to select a user and sets the
 # selected user id into the passed in object
 # <div user-list="myUserIdVariable"></div>
 # optionally adding form-control="true" to the div will make the select object have the boostrap friendly form-control class
 @components.directive 'chainUserList', ['$parse','$http','userListCache',($parse,$http,userListCache) ->
   {
     scope: {
-      chainUserList:"="
+      chainUserList: "="
     }
-    template:"<select ng-model='chainUserList' ng-options='u.id as u.full_name group by u.company_name for u in users'></select>"
+    template: "<select ng-model='chainUserList' ng-options='u.id as u.full_name group by u.company_name for u in users'></select>"
     link: (scope,el,attrs) ->
       if $(el).attr('form-control') == 'true'
         $(el).find('select').addClass('form-control')
@@ -372,27 +369,27 @@
         scope.users = users
     }
 ]
-@components.directive 'chainMessages', [() ->
+@components.directive 'chainMessages', [ ->
   {
     scope: {
-      errors:"=",
-      notices:"="
+      errors: "=",
+      notices: "="
     }
-    templateUrl:'<%=asset_path("chain_messages.html")%>'
+    templateUrl: '<%=asset_path("chain_messages.html")%>'
     }
 ]
-@components.directive 'chainDatePicker', [() ->
+@components.directive 'chainDatePicker', [ ->
   {
     scope: {
-      chainDatePicker:"="
+      chainDatePicker: "="
     }
-    template:"<input type='text' disabled='disabled' />",
+    template: "<input type='text' disabled='disabled' />",
     link: (scope,el,attrs) ->
       el.find('input').datepicker({
-        buttonText:'Select Date',
-        dateFormat:'yy-mm-dd',
-        onSelect:(text,dp) ->
-          scope.$apply () ->
+        buttonText: 'Select Date',
+        dateFormat: 'yy-mm-dd',
+        onSelect: (text,dp) ->
+          scope.$apply ->
             scope.chainDatePicker = text
         showOn: 'button'
         }
@@ -402,14 +399,14 @@
         el.find('input').val(newVal)
 
       # Remove the watch so el can get cleaned up
-      scope.$on('$destroy', () ->
+      scope.$on('$destroy', ->
         deregister()
         input = el.find('input')
         if input.datepicker('widget')
           # Clear the onSelect for this datepicker so the scope is no longer referenced by the onSelect closure
           # Typically, we'd want to destroy the datepicker, but for some reason the destroy is blowing up because
           # the internal instance found in the destroy method is undefined (not sure if it's a jquery bug or usage bug)
-          input.datepicker("option", "onSelect", () ->
+          input.datepicker("option", "onSelect", ->
 
           )
       )
@@ -420,15 +417,14 @@
   # Note:
   # The boundItem JSON object requires a search_criterions key containing a list of the criteria
   # already created for that object.
-  
   {
     scope: {
-      crit:"=chainSearchCriterion"
+      crit: "=chainSearchCriterion"
       boundItem: "=boundItem"
       modelFields: "=modelFields"
     }
 
-    templateUrl:'<%=asset_path("chain_search_criteria.html")%>'
+    templateUrl: '<%=asset_path("chain_search_criteria.html")%>'
 
     controller: ['$scope', ($scope) ->
       $scope.operators = chainSearchOperators.ops
@@ -438,7 +434,7 @@
         criterions.splice($.inArray(crit, criterions ),1)
 
       $scope.addCriterion = (toAddId) ->
-        toAdd = {value:''}
+        toAdd = {value: ''}
         mf = findByMfid $scope.modelFields, toAddId
         toAdd.uid = mf.uid
         toAdd.datatype = mf.datatype
@@ -467,10 +463,10 @@
 @components.directive 'chainSearchCriterion', ['$compile','chainSearchOperators',($compile,chainSearchOperators) ->
   {
     scope: {
-      crit:"=chainSearchCriterion"
+      crit: "=chainSearchCriterion"
       modelFields: "=modelFields"
     }
-    templateUrl:'<%=asset_path("chain_search_criterion.html")%>'
+    templateUrl: '<%=asset_path("chain_search_criterion.html")%>'
     controller: ['$scope',($scope) ->
       $scope.operators = chainSearchOperators.ops
 
@@ -522,7 +518,7 @@
               v_str = "<select ng-model='crit.value' ng-options='f.mfid as f.label for f in matchingModelFields' class='form-control'></select>"
             else if /regexp/.test rScope.crit.operator
               v_str = rScope.renderTextInput rScope.crit.datatype, rScope.crit.operator
-            else 
+            else
               v_str = "<div style='display:inline;' chain-date-picker='crit.value'></div>"
           when "boolean"
             v_str = ""
@@ -535,7 +531,7 @@
 
         switch rScope.crit.datatype
           when "integer", "fixnum"
-            va.find('input').jStepper({allowDecimals:false})
+            va.find('input').jStepper({allowDecimals: false})
           when "decimal"
             va.find('input').jStepper()
         va.find('input').jStepper() if dateStepper
@@ -549,11 +545,11 @@
         if cbScope.crit.datatype=='date' || cbScope.crit.datatype=='datetime'
           if !chainSearchOperators.isCompatibleDateOperators cbScope.crit.datatype, newVal, oldVal
             cbScope.crit.value = ""
-         
+
         cbScope.renderInput(cbScope, el)
       ), false
 
-      scope.$on('$destroy', () ->
+      scope.$on('$destroy', ->
         deregister()
         deregister = null
       )
@@ -562,27 +558,27 @@
       null
   }
 ]
-@components.service 'chainSearchOperators', [() ->
+@components.service 'chainSearchOperators', [ ->
   {
-    findOperator : (datatype, name) ->
+    findOperator: (datatype, name) ->
       opList = @.ops[datatype]
       op = null
       if opList
         for o in opList
           if o.operator == name
-            op = o 
+            op = o
             break
       op
 
-    isRelative : (datatype, operator) ->
+    isRelative: (datatype, operator) ->
       op = @.findOperator datatype, operator
       if op then op.relative else false
 
-    isFieldRelative : (datatype, operator) ->
+    isFieldRelative: (datatype, operator) ->
       op = @.findOperator datatype, operator
       if op then op.fieldRelative else false
 
-    isCompatibleDateOperators : (datatype, newOperatorString, oldOperatorString) ->
+    isCompatibleDateOperators: (datatype, newOperatorString, oldOperatorString) ->
       newOp = @.findOperator datatype, newOperatorString
       oldOp = @.findOperator datatype, oldOperatorString
 
@@ -592,143 +588,143 @@
           compatible = oldOp.relative == true
         else if newOp.fieldRelative
           compatible = oldOp.fieldRelative == true
-        else 
+        else
           compatible = (!oldOp.relative? && !oldOp.fieldRelative?)
 
       return compatible
 
 
-    ops : {
+    ops: {
       date: [
-        {operator:'eq',label:'Equals'}
-        {operator:'nq',label:'Not Equal To'}
-        {operator:'gt',label:'After'}
-        {operator:'lt',label:'Before'}
-        {operator:'bda',label:'Before _ Days Ago',relative:true}
-        {operator:'ada',label:'After _ Days Ago',relative:true}
-        {operator:'bdf',label:'Before _ Days From Now',relative:true}
-        {operator:'adf',label:'After _ Days From Now',relative:true}
-        {operator:'bma',label:'Before _ Months Ago',relative:true}
-        {operator:'ama',label:'After _ Months Ago',relative:true}
-        {operator:'bmf',label:'Before _ Months From Now',relative:true}
-        {operator:'amf',label:'After _ Months From Now',relative:true}
-        {operator:'pm',label:'Previous _ Months',relative:true}
-        {operator:'null',label:'Is Empty'}
-        {operator:'notnull',label:'Is Not Empty'}
-        {operator:'afld',label:'After (Field)', fieldRelative: true}
-        {operator:'bfld',label:'Before (Field)', fieldRelative: true}
-        {operator:'dt_regexp',label:'Regex'}
-        {operator:'dt_notregexp',label:'Not Regex'}
+        {operator: 'eq', label: 'Equals'}
+        {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'gt', label: 'After'}
+        {operator: 'lt', label: 'Before'}
+        {operator: 'bda', label: 'Before _ Days Ago', relative: true}
+        {operator: 'ada', label: 'After _ Days Ago', relative: true}
+        {operator: 'bdf', label: 'Before _ Days From Now', relative: true}
+        {operator: 'adf', label: 'After _ Days From Now', relative: true}
+        {operator: 'bma', label: 'Before _ Months Ago', relative: true}
+        {operator: 'ama', label: 'After _ Months Ago', relative: true}
+        {operator: 'bmf', label: 'Before _ Months From Now', relative: true}
+        {operator: 'amf', label: 'After _ Months From Now', relative: true}
+        {operator: 'pm', label: 'Previous _ Months', relative: true}
+        {operator: 'null', label: 'Is Empty'}
+        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'afld', label: 'After (Field)', fieldRelative: true}
+        {operator: 'bfld', label: 'Before (Field)', fieldRelative: true}
+        {operator: 'dt_regexp', label: 'Regex'}
+        {operator: 'dt_notregexp', label: 'Not Regex'}
         ]
       datetime: [
-        {operator:'eq',label:'Equals'}
-        {operator:'nq',label:'Not Equal To'}
-        {operator:'gt',label:'After'}
-        {operator:'lt',label:'Before'}
-        {operator:'bda',label:'Before _ Days Ago',relative:true}
-        {operator:'ada',label:'After _ Days Ago',relative:true}
-        {operator:'bdf',label:'Before _ Days From Now',relative:true}
-        {operator:'adf',label:'After _ Days From Now',relative:true}
-        {operator:'bma',label:'Before _ Months Ago',relative:true}
-        {operator:'ama',label:'After _ Months Ago',relative:true}
-        {operator:'bmf',label:'Before _ Months From Now',relative:true}
-        {operator:'amf',label:'After _ Months From Now',relative:true}
-        {operator:'pm',label:'Previous _ Months',relative:true}
-        {operator:'null',label:'Is Empty'}
-        {operator:'notnull',label:'Is Not Empty'}
-        {operator:'afld',label:'After (Field)', fieldRelative: true}
-        {operator:'bfld',label:'Before (Field)', fieldRelative: true}
-        {operator:'dt_regexp',label:'Regex'}
-        {operator:'dt_notregexp',label:'Not Regex'}
+        {operator: 'eq', label: 'Equals'}
+        {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'gt', label: 'After'}
+        {operator: 'lt', label: 'Before'}
+        {operator: 'bda', label: 'Before _ Days Ago', relative: true}
+        {operator: 'ada', label: 'After _ Days Ago', relative: true}
+        {operator: 'bdf', label: 'Before _ Days From Now', relative: true}
+        {operator: 'adf', label: 'After _ Days From Now', relative: true}
+        {operator: 'bma', label: 'Before _ Months Ago', relative: true}
+        {operator: 'ama', label: 'After _ Months Ago', relative: true}
+        {operator: 'bmf', label: 'Before _ Months From Now', relative: true}
+        {operator: 'amf', label: 'After _ Months From Now', relative: true}
+        {operator: 'pm', label: 'Previous _ Months', relative: true}
+        {operator: 'null', label: 'Is Empty'}
+        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'afld', label: 'After (Field)', fieldRelative: true}
+        {operator: 'bfld', label: 'Before (Field)', fieldRelative: true}
+        {operator: 'dt_regexp', label: 'Regex'}
+        {operator: 'dt_notregexp', label: 'Not Regex'}
         ]
       integer: [
-        {operator:'eq',label:'Equals'}
-        {operator:'nq',label:'Not Equal To'}
-        {operator:'gt',label:'Greater Than'}
-        {operator:'lt',label:'Less Than'}
-        {operator:'sw',label:'Starts With'}
-        {operator:'ew',label:'Ends With'}
-        {operator:'nsw',label:"Does Not Start With"}
-        {operator:'new',label:"Does Not End With"}
-        {operator:'co',label:'Contains'}
-        {operator:'in',label:'One Of'}
-        {operator:'notin',label:'Not One Of'}
-        {operator:'null',label:'Is Empty'}
-        {operator:'notnull',label:'Is Not Empty'}
-        {operator:'regexp',label:'Regex'}
-        {operator:'notregexp',label:'Not Regex'}
+        {operator: 'eq', label: 'Equals'}
+        {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'gt', label: 'Greater Than'}
+        {operator: 'lt', label: 'Less Than'}
+        {operator: 'sw', label: 'Starts With'}
+        {operator: 'ew', label: 'Ends With'}
+        {operator: 'nsw', label: 'Does Not Start With'}
+        {operator: 'new', label: 'Does Not End With'}
+        {operator: 'co', label: 'Contains'}
+        {operator: 'in', label: 'One Of'}
+        {operator: 'notin', label: 'Not One Of'}
+        {operator: 'null', label: 'Is Empty'}
+        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'regexp', label: 'Regex'}
+        {operator: 'notregexp', label: 'Not Regex'}
         ]
       decimal: [
-        {operator:'eq',label:'Equals'}
-        {operator:'nq',label:'Not Equal To'}
-        {operator:'gt',label:'Greater Than'}
-        {operator:'lt',label:'Less Than'}
-        {operator:'sw',label:'Starts With'}
-        {operator:'ew',label:'Ends With'}
-        {operator:'nsw',label:"Does Not Start With"}
-        {operator:'new',label:"Does Not End With"}
-        {operator:'co',label:'Contains'}
-        {operator:'in',label:'One Of'}
-        {operator:'notin',label:'Not One Of'}
-        {operator:'null',label:'Is Empty'}
-        {operator:'notnull',label:'Is Not Empty'}
-        {operator:'regexp',label:'Regex'}
-        {operator:'notregexp',label:'Not Regex'}
+        {operator: 'eq', label: 'Equals'}
+        {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'gt', label: 'Greater Than'}
+        {operator: 'lt', label: 'Less Than'}
+        {operator: 'sw', label: 'Starts With'}
+        {operator: 'ew', label: 'Ends With'}
+        {operator: 'nsw', label: 'Does Not Start With'}
+        {operator: 'new', label: 'Does Not End With'}
+        {operator: 'co', label: 'Contains'}
+        {operator: 'in', label: 'One Of'}
+        {operator: 'notin', label: 'Not One Of'}
+        {operator: 'null', label: 'Is Empty'}
+        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'regexp', label: 'Regex'}
+        {operator: 'notregexp', label: 'Not Regex'}
         ]
       fixnum: [
-        {operator:'eq',label:'Equals'}
-        {operator:'nq',label:'Not Equal To'}
-        {operator:'gt',label:'Greater Than'}
-        {operator:'lt',label:'Less Than'}
-        {operator:'sw',label:'Starts With'}
-        {operator:'ew',label:'Ends With'}
-        {operator:'nsw',label:"Does Not Start With"}
-        {operator:'new',label:"Does Not End With"}
-        {operator:'co',label:'Contains'}
-        {operator:'in',label:'One Of'}
-        {operator:'notin',label:'Not One Of'}
-        {operator:'null',label:'Is Empty'}
-        {operator:'notnull',label:'Is Not Empty'}
-        {operator:'regexp',label:'Regex'}
-        {operator:'notregexp',label:'Not Regex'}
+        {operator: 'eq', label: 'Equals'}
+        {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'gt', label: 'Greater Than'}
+        {operator: 'lt', label: 'Less Than'}
+        {operator: 'sw', label: 'Starts With'}
+        {operator: 'ew', label: 'Ends With'}
+        {operator: 'nsw', label: "Does Not Start With"}
+        {operator: 'new', label: "Does Not End With"}
+        {operator: 'co', label: 'Contains'}
+        {operator: 'in', label: 'One Of'}
+        {operator: 'notin', label: 'Not One Of'}
+        {operator: 'null', label: 'Is Empty'}
+        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'regexp', label: 'Regex'}
+        {operator: 'notregexp', label: 'Not Regex'}
         ]
       string: [
-        {operator:'eq',label:'Equals'}
-        {operator:'nq',label:'Not Equal To'}
-        {operator:'sw',label:'Starts With'}
-        {operator:'ew',label:'Ends With'}
-        {operator:'nsw',label:"Does Not Start With"}
-        {operator:'new',label:"Does Not End With"}
-        {operator:'co',label:'Contains'}
-        {operator:'nc',label:"Doesn't Contain"}
-        {operator:'in',label:'One Of'}
-        {operator:'notin',label:'Not One Of'}
-        {operator:'null',label:'Is Empty'}
-        {operator:'notnull',label:'Is Not Empty'}
-        {operator:'regexp',label:'Regex'}
-        {operator:'notregexp',label:'Not Regex'}
+        {operator: 'eq', label: 'Equals'}
+        {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'sw', label: 'Starts With'}
+        {operator: 'ew', label: 'Ends With'}
+        {operator: 'nsw', label: "Does Not Start With"}
+        {operator: 'new', label: "Does Not End With"}
+        {operator: 'co', label: 'Contains'}
+        {operator: 'nc', label: "Doesn't Contain"}
+        {operator: 'in', label: 'One Of'}
+        {operator: 'notin', label: 'Not One Of'}
+        {operator: 'null', label: 'Is Empty'}
+        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'regexp', label: 'Regex'}
+        {operator: 'notregexp', label: 'Not Regex'}
         ]
       text: [
-        {operator:'eq',label:'Equals'}
-        {operator:'nq',label:'Not Equal To'}
-        {operator:'sw',label:'Starts With'}
-        {operator:'ew',label:'Ends With'}
-        {operator:'nsw',label:"Does Not Start With"}
-        {operator:'new',label:"Does Not End With"}
-        {operator:'co',label:'Contains'}
-        {operator:'nc',label:"Doesn't Contain"}
-        {operator:'in',label:'One Of'}
-        {operator:'notin',label:'Not One Of'}
-        {operator:'null',label:'Is Empty'}
-        {operator:'notnull',label:'Is Not Empty'}
-        {operator:'regexp',label:'Regex'}
-        {operator:'notregexp',label:'Not Regex'}
+        {operator: 'eq', label: 'Equals'}
+        {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'sw', label: 'Starts With'}
+        {operator: 'ew', label: 'Ends With'}
+        {operator: 'nsw', label: "Does Not Start With"}
+        {operator: 'new', label: "Does Not End With"}
+        {operator: 'co', label: 'Contains'}
+        {operator: 'nc', label: "Doesn't Contain"}
+        {operator: 'in', label: 'One Of'}
+        {operator: 'notin', label: 'Not One Of'}
+        {operator: 'null', label: 'Is Empty'}
+        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'regexp', label: 'Regex'}
+        {operator: 'notregexp', label: 'Not Regex'}
         ]
       boolean: [
-        {operator:'notnull',label:'Yes'}
-        {operator:'null',label:'No'}
-        {operator:'regexp',label:'Regex'}
-        {operator:'notregexp',label:'Not Regex'}
+        {operator: 'notnull', label: 'Yes'}
+        {operator: 'null', label: 'No'}
+        {operator: 'regexp', label: 'Regex'}
+        {operator: 'notregexp', label: 'Not Regex'}
         ]
       }
     }
@@ -736,16 +732,16 @@
 @components.directive 'chainSearchResult', ['$http', '$location',($http, $location) ->
   {
     scope: {
-      searchResult:"=chainSearchResult"
+      searchResult: "=chainSearchResult"
       page: "="
-      errors:"="
-      notices:"="
-      urlPrefix:"@src"
+      errors: "="
+      notices: "="
+      urlPrefix: "@src"
       noChrome: "@"
       perPage: "="
     }
-    transclude:true
-    templateUrl:'<%=asset_path("search_result.html")%>'
+    transclude: true
+    templateUrl: '<%=asset_path("search_result.html")%>'
     controller: ['$scope',($scope) ->
 
       $scope.loadedSearchId = null
@@ -758,7 +754,7 @@
 
       #write cookie for current selection state
       writeSelectionCookie = (scope) ->
-        o = {rows:scope.bulkSelected,all:scope.allSelected}
+        o = {rows: scope.bulkSelected, all: scope.allSelected}
         $.cookie(cookieIdentifier(scope),JSON.stringify(o))
 
 
@@ -780,7 +776,7 @@
 
       loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
-        sr  = scope.searchResult = {id:searchId}
+        sr  = scope.searchResult = {id: searchId}
         url = scope.urlPrefix+searchId+'.json?page='+p #need to specify json here because of this rails bug https://github.com/rails/rails/issues/9940
         if scope.perPage
           url += "&per_page=" + scope.perPage
@@ -799,7 +795,7 @@
             )
           else
             loadResultPage(scope, searchId, 1)
-            
+
         ).error((data,status) ->
           if scope.errors
             if status == 404
@@ -814,12 +810,12 @@
         if saved
           clearSelectionCookie scope
           scope.selectNone()
-        
+
         if scope.searchResult.id != scope.loadedSearchId
           loadResultPage(scope, scope.searchResult.id, scope.page)
 
       #return array of valid page numbers for the current search result
-      $scope.pageNumberArray = () ->
+      $scope.pageNumberArray = ->
         if $scope.searchResult && $scope.searchResult.total_pages
           [1..$scope.searchResult.total_pages]
         else
@@ -849,7 +845,7 @@
       $scope.selectPageCheck = false
 
       #clear selection
-      $scope.selectNone = () ->
+      $scope.selectNone = ->
         $scope.bulkSelected = []
         $scope.allSelected = false
         r.bulk_selected = false for r in $scope.searchResult.rows if $scope.searchResult.rows
@@ -859,11 +855,11 @@
         clearSelectionCookie($scope)
         $location.search('clearSelection', null)
 
-      $scope.selectAll = () ->
+      $scope.selectAll = ->
         $scope.allSelected = true
         r.bulk_selected = true for r in $scope.searchResult.rows
 
-      $scope.selectPage = () ->
+      $scope.selectPage = ->
         r.bulk_selected = true for r in $scope.searchResult.rows
 
       #run a bulk action
@@ -876,18 +872,18 @@
           BulkActions.submitBulkAction selectedItems, sId, bulkAction.path, 'post', cb
         else
           BulkActions.submitBulkAction selectedItems, sId, bulkAction.path, 'post'
-      
+
       #pagination
-      $scope.firstPage = () ->
+      $scope.firstPage = ->
         $scope.searchResult.page = 1
-      
-      $scope.lastPage = () ->
+
+      $scope.lastPage = ->
         $scope.searchResult.page = $scope.searchResult.total_pages
 
-      $scope.nextPage = () ->
+      $scope.nextPage = ->
         $scope.searchResult.page++
 
-      $scope.previousPage = () ->
+      $scope.previousPage = ->
         $scope.searchResult.page--
 
       registrations = []
@@ -922,7 +918,7 @@
           # put the selected items into the scope
           for sId in selectedIds
             cbScope.bulkSelected.push sId unless $.inArray(sId,cbScope.bulkSelected)>=0
-            
+
 
         cbScope.selectPageCheck = false
         writeSelectionCookie cbScope if $scope.selectionCookieRead
@@ -937,7 +933,7 @@
           onSearchLoaded cbScope.searchResult.saved, cbScope
       )
 
-      $scope.$on('$destroy', () ->
+      $scope.$on('$destroy', ->
         deregister() for deregister in registrations
         registrations = null
       )
