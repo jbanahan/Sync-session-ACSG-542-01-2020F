@@ -19,13 +19,23 @@ describe 'ShipmentApp', ->
     describe 'getShipment', ->
       it 'should get shipment from server', ->
         resp = {shipment: {id: 1}}
-        http.expectGET('/api/v1/shipments/1.json?include=order_lines,attachments').respond resp
+        http.expectGET('/api/v1/shipments/1.json?summary=true&no_lines=true&include=order_lines,attachments').respond resp
         shp = null
         svc.getShipment(1).then (data) ->
           shp = data.data
         http.flush()
         expect(shp).toEqual resp
         expect(commentSvc.injectComments).toHaveBeenCalledWith(resp.shipment,'Shipment')
+
+    describe 'injectLines', ->
+      it 'should add lines to existing object', ->
+        expected_line_array = [{id: 10},{id: 11}]
+        resp = {shipment: {id: 1, lines: expected_line_array}}
+        s = {id: 1}
+        http.expectGET('/api/v1/shipments/1.json?include=order_lines').respond resp
+        svc.injectLines(s)
+        http.flush()
+        expect(s.lines).toEqual expected_line_array
 
     describe 'saveShipment', ->
       it "should remove zero quantity lines that don't already have an ID", ->

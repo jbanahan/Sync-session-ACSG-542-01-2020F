@@ -34,7 +34,11 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         deferred.resolve {data: {shipment: currentShipment}}
         return deferred.promise
       else
-        return $http.get('/api/v1/shipments/'+shipmentId+'.json?include=order_lines,attachments').then(getShipmentSuccessHandler)
+        return $http.get('/api/v1/shipments/'+shipmentId+'.json?summary=true&no_lines=true&include=order_lines,attachments').then(getShipmentSuccessHandler)
+    injectLines: (shipment) ->
+      $http.get('/api/v1/shipments/'+shipment.id+'.json?include=order_lines').then (resp) ->
+        shipment.lines = resp.data.shipment.lines
+
     saveShipment: (shipment) ->
       currentShipment = null
       s = prepForSave shipment

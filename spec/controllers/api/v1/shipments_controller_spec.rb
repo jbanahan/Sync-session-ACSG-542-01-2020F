@@ -9,8 +9,8 @@ describe Api::V1::ShipmentsController do
 
   describe "index" do
     it "should find shipments" do
-      s1 = Factory(:shipment,reference:'123')
-      s2 = Factory(:shipment,reference:'ABC')
+      Factory(:shipment,reference:'123')
+      Factory(:shipment,reference:'ABC')
       get :index
       expect(response).to be_success
       j = JSON.parse response.body
@@ -51,6 +51,31 @@ describe Api::V1::ShipmentsController do
       expect(pj['can_attach']).to eq true
       expect(pj['can_comment']).to eq false
     end
+
+    it "should render without lines" do
+      sl = Factory(:shipment_line)
+      get :show, id: sl.shipment_id.to_s, no_lines: 'true'
+      j = JSON.parse response.body
+      expect(j['shipment']['lines']).to be_nil
+      expect(j['shipment']['id']).to eq sl.shipment_id
+    end
+
+    it "should render summary section" do
+      ol1 = Factory(:order_line)
+      ol2 = Factory(:order_line,order: ol1.order)
+      sl1 = Factory(:shipment_line,quantity:1100,product:ol1.product)
+      sl1.linked_order_line_id = ol1.id
+      sl2 = Factory(:shipment_line,shipment:sl1.shipment,quantity:25,product:ol2.product)
+      sl2.linked_order_line_id = ol2.id
+      [sl1,sl2].each {|s| s.update_attributes(updated_at:Time.now)}
+
+      get :show, id: sl1.shipment_id.to_s, summary: 'true'
+      j = JSON.parse response.body
+      expect(j['shipment']['id']).to eq sl1.shipment_id
+      expected_summary = {'line_count'=>'2','piece_count'=>'1,125','order_count'=>'1','product_count'=>'2'}
+      expect(j['shipment']['summary']).to eq expected_summary
+    end
+
     it "should convert numbers to numeric" do
       sl = Factory(:shipment_line,quantity:10)
       get :show, id: sl.shipment_id
@@ -107,7 +132,7 @@ describe Api::V1::ShipmentsController do
     end
     it "should optionally render carton sets" do
       cs = Factory(:carton_set,starting_carton:1000)
-      sl = Factory(:shipment_line,shipment:cs.shipment,carton_set:cs)
+      Factory(:shipment_line,shipment:cs.shipment,carton_set:cs)
       get :show, id: cs.shipment_id, include: 'carton_sets'
       expect(response).to be_success
       j = JSON.parse response.body

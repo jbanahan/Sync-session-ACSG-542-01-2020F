@@ -1,4 +1,5 @@
 module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControllerBase
+  include ActionView::Helpers::NumberHelper
 
   def initialize
     super(OpenChain::Api::ApiEntityJsonizer.new(force_big_decimal_numeric:true, blank_if_nil:true))
@@ -60,7 +61,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     ]).find_by_id(h['id'])
     raise StatusableError.new("Object with id #{h['id']} not found.",404) if shp.nil?
     shp = freeze_custom_values shp, false #don't include order fields
-    original_importer = shp.importer
     import_fields h, shp, CoreModule::SHIPMENT
     load_containers shp, h
     load_carton_sets shp, h
@@ -140,17 +140,19 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :con_quantity,
       :con_uom
     ] + custom_field_keys(CoreModule::CONTAINER))
-    
+
     h = {id: s.id}
     headers_to_render.each {|uid| h[uid] = export_field(uid, s)}
-    s.shipment_lines.each do |sl|
-      h['lines'] ||= []
-      slh = {id: sl.id}
-      line_fields_to_render.each {|uid| slh[uid] = export_field(uid, sl)}
-      if render_order_fields?
-        slh['order_lines'] = render_order_fields(sl) 
+    if render_lines?
+      s.shipment_lines.each do |sl|
+        h['lines'] ||= []
+        slh = {id: sl.id}
+        line_fields_to_render.each {|uid| slh[uid] = export_field(uid, sl)}
+        if render_order_fields?
+          slh['order_lines'] = render_order_fields(sl)
+        end
+        h['lines'] << slh
       end
-      h['lines'] << slh
     end
     s.containers.each do |c|
       h['containers'] ||= []
@@ -163,6 +165,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     end
     if render_attachments?
       render_attachments(s,h)
+    end
+    if render_summary?
+      h['summary'] = render_summary(s)
     end
     h['permissions'] = render_permissions(s)
     h
@@ -189,6 +194,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_comment:shipment.can_comment?(current_user)
     }
   end
+  def render_lines?
+    params[:no_lines].blank?
+  end
   def render_carton_sets?
     params[:include] && params[:include].match(/carton_sets/)
   end
@@ -209,13 +217,30 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       ch
     end
   end
+  def render_summary?
+    params[:summary]
+  end
+  def render_summary shipment
+    piece_count = 0
+    order_ids = Set.new
+    product_ids = Set.new
+    shipment.shipment_lines.each do |sl|
+      piece_count += sl.quantity unless sl.quantity.nil?
+      sl.order_lines.each {|ol| order_ids << ol.order_id}
+      product_ids << sl.product_id
+    end
+    {
+      line_count: number_with_delimiter(shipment.shipment_lines.count),
+      piece_count: number_with_delimiter(number_with_precision(piece_count, strip_insignificant_zeros:true)),
+      order_count: number_with_delimiter(order_ids.to_a.compact.size),
+      product_count: number_with_delimiter(product_ids.to_a.compact.size)
+    }
+  end
   def render_order_fields?
     params[:include] && params[:include].match(/order_lines/)
   end
   #return hash with extra order line fields
   def render_order_fields shipment_line
-    ord_ord_num = ModelField.find_by_uid(:ord_ord_num)
-    ord_cust_ord_no = ModelField.find_by_uid(:ord_cust_ord_no)
     shipment_line.piece_sets.collect do |ps|
       if ps.order_line_id
         ol = ps.order_line
@@ -310,16 +335,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def freeze_custom_values s, include_order_lines
-    #force the internal cache of custom values for so the 
+    #force the internal cache of custom values for so the
     #get_custom_value methods don't double check the DB for missing custom values
-    if s 
+    if s
       s.freeze_custom_values
       s.shipment_lines.each {|sl|
         sl.freeze_custom_values
         if sl.product
           sl.product.freeze_custom_values
         end
-        
+
         if include_order_lines
           sl.piece_sets.each {|ps|
             ol = ps.order_line

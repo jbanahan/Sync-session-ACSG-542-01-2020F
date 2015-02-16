@@ -9,157 +9,223 @@
   <div class='container'>
     <div class="row"> <!-- start ship header -->
       <div class="col-md-4">
-        <h2 ng-click='hideShipInfo = !hideShipInfo'>
-          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideShipInfo,'glyphicon-chevron-up':!hideShipInfo}"></span>
-          Shipment
-        </h2>
-        <div ng-hide='hideShipInfo'>
-          <label for='shp_ref'>Reference</label>
-          <div>{{shp.shp_ref}}</div>
-          <label for='shp_importer_reference'>Importer Reference</label>
-          <div>{{shp.shp_importer_reference}}</div>
-          <label for="shp_master_bill_of_lading">Master Bill</label>
-          <div>{{shp.shp_master_bill_of_lading}}</div>
-          <label for="shp_house_bill_of_lading">House Bill</label>
-          <div>{{shp.shp_house_bill_of_lading}}</div>
-          <label for="shp_booking_number">Booking #</label>
-          <div>{{shp.shp_booking_number}}</div>
-          <label for="shp_receipt_location">Receipt Location</label>
-          <div>{{shp.shp_receipt_location}}</div>
-          <label for='shp_dest_port_name'>Destination Port</label>
-          <div>{{shp.shp_dest_port_name}}</div>
-          <label for="shp_freight_terms">Freight Terms</label>
-          <div>{{shp.shp_freight_terms}}</div>
-          <label for="shp_lcl">LCL</label>
-          <div>{{shp.shp_lcl}}</div>
-          <label for="shp_shipment_type">Shipment Type</label>
-          <div>{{shp.shp_shipment_type}}</div>
-          <label for="shp_vessel">Vessel</label>
-          <div>{{shp.shp_vessel}}</div>
-          <label for="shp_voyage">Voyage</label>
-          <div>{{shp.shp_voyage}}</div>
-          <label for="shp_vessel_carrier_scac">Vessel SCAC</label>
-          <div>{{shp.shp_vessel_carrier_scac}}</div>
-          <label for='shp_mode'>Mode</label>
-          <div>{{shp.shp_mode}}</div>
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Shipment</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label class="control-label" for="shp_ref">Reference</label>
+              <p class="form-control-static" id='shp_ref'>{{shp.shp_ref}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_importer_reference" class="control-label">Importer Reference</label>
+              <p class="form-control-static" id="shp_importer_reference">{{shp.shp_importer_reference}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_master_bill_of_lading" class="control-label">Master Bill</label>
+              <p class="form-control-static" id="shp_master_bill_of_lading">{{shp.shp_master_bill_of_lading}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_house_bill_of_lading" class="control-label">House Bill</label>
+              <p class="form-control-static" id="shp_house_bill_of_lading">{{shp.shp_house_bill_of_lading}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_booking_number" class="control-label">Booking #</label>
+              <p class="form-control-static" id="shp_booking_number">{{shp.shp_booking_number}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_receipt_location" class="control-label">Receipt Location</label>
+              <p class="form-control-static" id="shp_receipt_location">{{shp.shp_receipt_location}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_dest_port_name" class="control-label">Destination Port</label>
+              <p class="form-control-static" id="shp_dest_port_name">{{shp.shp_dest_port_name}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_freight_terms" class="control-label">Freight Terms</label>
+              <p class="form-control-static" id="shp_freight_terms">{{shp.shp_freight_terms}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_lcl" class="control-label">LCL Flag</label>
+              <p class="form-control-static" id="shp_lcl">{{shp.shp_lcl ? "Y" : ""}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_shipment_type" class="control-label">Shipment Type</label>
+              <p class="form-control-static" id="shp_shipment_type">{{shp.shp_shipment_type}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_vessel" class="control-label">Vessel</label>
+              <p class="form-control-static" id="shp_vessel">{{shp.shp_vessel}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_voyage" class="control-label">Voyage</label>
+              <p class="form-control-static" id="shp_voyage">{{shp.shp_voyage}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_vessel_carrier_scac" class="control-label">Vessel SCAC</label>
+              <p class="form-control-static" id="shp_vessel_carrier_scac">{{shp.shp_vessel_carrier_scac}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_mode" class="control-label">Mode</label>
+              <p class="form-control-static" id="shp_mode">{{shp.shp_mode}}</p>
+            </div>
+          </div>
         </div>
       </div>
       <div class="col-md-4">
-        <h2 ng-click='hideBookingInfo = !hideBookingInfo'>
-          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideBookingInfo,'glyphicon-chevron-up':!hideBookingInfo}"></span>
-          Booking
-        </h2>
-        <div ng-hide='hideBookingInfo'>
-          <label for="shp_booking_received_date">Booking Received</label>
-          <div>{{shp.shp_booking_received_date}}</div>
-          <label for="shp_booking_confirmed_date">Booking Confirmed</label>
-          <div>{{shp.shp_booking_confirmed_date}}</div>
-          <label for="shp_booking_cutoff_date">Booking Cutoff</label>
-          <div>{{shp.shp_booking_cutoff_date}}</div>
-          <label for="shp_booking_est_departure_date">Est Departure Date - Booked</label>
-          <div>{{shp.shp_booking_est_departure_date}}</div>
-          <label for='shp_cargo_ready_date'>Cargo Ready Date</label>
-          <div>{{shp.shp_cargo_ready_date}}</div>
-          <label for="shp_booking_est_arrival_date">Est Arrival Date - Booked</label>
-          <div>{{shp.shp_booking_est_arrival_date}}</div>
-          <label for="shp_booking_shipment_type">Booked Shipment Type</label>
-          <div>{{shp.shp_booking_shipment_type}}</div>
-          <label for='shp_booking_mode'>Booked Mode</label>
-          <div>{{shp.shp_booking_mode}}</div>
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Booking</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="shp_booking_received_date" class="control-label">Booking Received</label>
+              <p class="form-control-static" id="shp_booking_received_date">{{shp.shp_booking_received_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_booking_confirmed_date" class="control-label">Booking Confirmed</label>
+              <p class="form-control-static" id="shp_booking_confirmed_date">{{shp.shp_booking_confirmed_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_booking_cutoff_date" class="control-label">Booking Cutoff</label>
+              <p class="form-control-static" id="shp_booking_cutoff_date">{{shp.shp_booking_cutoff_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_booking_est_departure_date" class="control-label">Est Departure Date - Booked</label>
+              <p class="form-control-static" id="shp_booking_est_departure_date">{{shp.shp_booking_est_departure_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_cargo_ready_date" class="control-label">Cargo Ready Date</label>
+              <p class="form-control-static" id="shp_cargo_ready_date">{{shp.shp_cargo_ready_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_booking_est_arrival_date" class="control-label">Est Arrival Date - Booked</label>
+              <p class="form-control-static" id="shp_booking_est_arrival_date">{{shp.shp_booking_est_arrival_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_booking_shipment_type" class="control-label">Booked Shipment Type</label>
+              <p class="form-control-static" id="shp_booking_shipment_type">{{shp.shp_booking_shipment_type}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_booking_mode" class="control-label">Booked Mode</label>
+              <p class="form-control-static" id="shp_booking_mode">{{shp.shp_booking_mode}}</p>
+            </div>
+          </div>
         </div>
-        <h2 ng-click='hidePartyInfo = !hidePartyInfo'>
-          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hidePartyInfo,'glyphicon-chevron-up':!hidePartyInfo}"></span>
-          Parties
-        </h2>
-        <div ng-hide="hidePartyInfo">
-            <label for='shp_car_syscode'>Carrier</label>
-            <div>{{shp.shp_car_name}}</div>
-            <label for='shp_imp_syscode'>Importer</label>
-            <div>{{shp.shp_imp_name}}</div>
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Parties</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="shp_car_name" class="control-label">Carrier</label>
+              <p class="form-control-static" id="shp_car_name">{{shp.shp_car_name}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_imp_name" class="control-label">Importer</label>
+              <p class="form-control-static" id="shp_imp_name">{{shp.shp_imp_name}}</p>
+            </div>
+          </div>
         </div>
       </div>
       <div class="col-md-4">
-        <h2 ng-click='hideTrackingInfo = !hideTrackingInfo'>
-          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideTrackingInfo,'glyphicon-chevron-up':!hideTrackingInfo}"></span>
-          Tracking
-        </h2>
-        <div ng-hide='hideTrackingInfo'>
-          <label for="shp_est_departure_date">Est Departure Date</label>
-          <div>{{shp.shp_est_departure_date}}</div>
-          <label for="shp_est_arrival_port_date">Est Arrival Date</label>
-          <div>{{shp.shp_est_arrival_port_date}}</div>
-          <label for="shp_est_delivery_date">Est Delivery Date</label>
-          <div>{{shp.shp_est_delivery_date}}</div>
-          <hr />
-          <label for="shp_docs_received_date">Docs Received Date</label>
-          <div>{{shp.shp_docs_received_date}}</div>
-          <label for="shp_cargo_on_hand_date">Cargo On Hand Date</label>
-          <div>{{shp.shp_cargo_on_hand_date}}</div>
-          <label for="shp_departure_date">Departure Date</label>
-          <div>{{shp.shp_departure_date}}</div>
-          <label for="shp_arrival_port_date">Arrival Date</label>
-          <div>{{shp.shp_arrival_port_date}}</div>
-          <label for="shp_delivered_date">Delivered Date</label>
-          <div>{{shp.shp_delivered_date}}</div>
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Tracking</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="shp_est_departure_date" class="control-label">Est Departure Date</label>
+              <p class="form-control-static" id="shp_est_departure_date">{{shp.shp_est_departure_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_est_arrival_port_date" class="control-label">Est Arrival Date</label>
+              <p class="form-control-static" id="shp_est_arrival_port_date">{{shp.shp_est_arrival_port_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_est_delivery_date" class="control-label">Est Delivery Date</label>
+              <p class="form-control-static" id="shp_est_delivery_date">{{shp.shp_est_delivery_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_docs_received_date" class="control-label">Docs Received Date</label>
+              <p class="form-control-static" id="shp_docs_received_date">{{shp.shp_docs_received_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_cargo_on_hand_date" class="control-label">Cargo On Hand Date</label>
+              <p class="form-control-static" id="shp_cargo_on_hand_date">{{shp.shp_cargo_on_hand_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_departure_date" class="control-label">Departure Date</label>
+              <p class="form-control-static" id="shp_departure_date">{{shp.shp_departure_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_arrival_port_date" class="control-label">Arrival Date</label>
+              <p class="form-control-static" id="shp_arrival_port_date">{{shp.shp_arrival_port_date}}</p>
+            </div>
+            <div class="form-group">
+              <label for="shp_delivered_date" class="control-label">Delivered Date</label>
+              <p class="form-control-static" id="shp_delivered_date">{{shp.shp_delivered_date}}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div> <!-- end ship header -->
     <hr />
-    <div> <!--start attachments-->
-      <div class="row">
-        <div class="col-md-12">
-          <h2>Attachments</h2>
-        </div>
-      </div>
-      <div class="row" ng-repeat='att in shp.attachments' style='margin-bottom:5px;'>
-        <div class="col-md-12">
-            <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
-        </div>
-      </div>
-      <div class="row" ng-if="shp.permissions.can_attach">
-        <div class="col-md-12">
-          <div chain-attach='shp' attachable-type='Shipment' attachable-id='{{shp.id}}'></div>
-        </div>
-      </div>
-    </div><!--end attachments-->
-    <hr />
-    <div> <!--start comments-->
-      <div class="row">
-        <div class="col-md-12">
-          <h2 ng-click='hideComments = !hideComments'>
-            <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideComments,'glyphicon-chevron-up':!hideComments}"></span>
-            Comments 
-            <span class="badge">{{shp.comments ? shp.comments.length : shp.shp_comment_count}}</span>
-          </h2>
-          <div ng-hide='hideComments'>
+    <div class="row">
+      <div class="col-md-8"> <!--start comments-->
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Comments</h3>
+          </div>
+          <div class="panel-body">
             <chain-comment parent-object='shp' module-type='Shipment'></chain-comment>
           </div>
         </div>
-      </div>
-    </div> <!--end comments -->
+      </div>  <!--end comments -->
+      <div class="col-md-4">  <!--start attachments-->
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Attachments</h3>
+          </div>
+          <ul class="list-group">
+            <li ng-repeat="att in shp.attachments" class="list-group-item">
+              <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
+            </li>
+          </ul>
+          <div class="panel-footer" ng-if="shp.permissions.can_attach">
+            <div class="container-fluid">
+              <div chain-attach='shp' attachable-type='Shipment' attachable-id='{{shp.id}}'></div>
+            </div>
+          </div>
+        </div>
+      </div> <!--end attachments-->
+    </div>
+    <hr />
     <div class="row"> <!-- start container section -->
       <div class="col-md-12">
-        <h2>
-          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideContainerInfo,'glyphicon-chevron-up':!hideContainerInfo}"></span>
-          Containers
-        </h2>
-        <div ng-hide='hideContainerInfo'>
-          <div ng-repeat='con in shp.containers'>
-            <div class="panel" ng-class="{'panel-default':!con._destroy,'panel-danger':con._destroy}">
-              <div class="panel-heading" ng-show="con._destroy">Will Be Deleted</div>
-              <div class="panel-body">
-                <div class="row" >
-                  <div class="col-md-4">
-                    <label for="con_container_number">Container Number</label>
-                    <div>{{con.con_container_number}}</div>
-                  </div>
-                  <div class="col-md-4">
-                    <label for="con_container_size">Container Size</label>
-                    <div>{{con.con_container_size}}</div>
-                  </div>
-                  <div class="col-md-4">
-                    <label for="con_seal_number">Seal Number(s)</label>
-                    <div>{{con.con_seal_number}}</div>
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Containers</h3>
+          </div>
+          <div class="panel-body">
+            <div ng-repeat='con in shp.containers'>
+              <div class="panel" ng-class="{'panel-info':!con._destroy,'panel-danger':con._destroy}">
+                <div class="panel-heading" ng-show="con._destroy">Will Be Deleted</div>
+                <div class="panel-body">
+                  <div class="row" >
+                    <div class="col-md-4">
+                      <label for="con_container_number">Container Number</label>
+                      <div>{{con.con_container_number}}</div>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="con_container_size">Container Size</label>
+                      <div>{{con.con_container_size}}</div>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="con_seal_number">Seal Number(s)</label>
+                      <div>{{con.con_seal_number}}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -169,56 +235,80 @@
       </div>
     </div> <!-- end container section-->
     <hr />
-    <div class="row" > <!--start lines section -->
-      <div class="col-md-12">
-        <h2 ng-click='hideLineInfo = !hideLineInfo'>
-          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideLineInfo,'glyphicon-chevron-up':!hideLineInfo}"></span>
-          Lines
-        </h2>
-        <div ng-hide='hideLineInfo'>
-          <table class='table table-striped'>
-            <thead>
-              <tr>
-                <th>Line #</th>
-                <th>Product</th>
-                <th>Order Number - Line</th>
-                <th>Quantity</th>
-                <th>Cartons</th>
-                <th>Volume (CBMS)</th>
-                <th>Gross Weight (KGS)</th>
-                <th>Container</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
-                <td>{{ln.shpln_line_number}}</td>
-                <td>{{ln.shpln_puid}}</td>
-                <td>
-                  <div ng-repeat='ol in ln.order_lines'>
-                    <a href='/orders/{{ol.order_id}}'>{{ol.ord_cust_ord_no}} - {{ol.ordln_line_number}}</a>
-                  </div>
-                </td>
-                <td>
-                  {{ln.shpln_shipped_qty}}
-                </td>
-                <td>
-                  {{ln.shpln_carton_qty}}
-                </td>
-                <td>
-                  {{ln.shpln_cbms}}
-                </td>
-                <td>
-                  {{ln.shpln_gross_kgs}}
-                </td>
-                <td>
-                  {{ln.shpln_container_number}}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    <div role="tabpanel">
+
+      <!-- Nav tabs -->
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a data-target="#line_summary" aria-controls="line_summary" role="tab" data-toggle="tab">Summary</a></li>
+        <li role="presentation"><a ng-click="loadLines(shp)" data-target="#line_detail" aria-controls="line_detail" role="tab" data-toggle="tab">Detail</a></li>
+      </ul>
+
+      <!-- Tab panes -->
+      <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="line_summary">
+          <chain-ship-detail-summary shipment='shp'></chain-ship-detail-summary>
         </div>
+        <div role="tabpanel" class="tab-pane" id="line_detail">
+          <div class="container-fluid">  <!--start lines section -->
+            <div class="row">
+              <div class='col-md-12' ng-hide='shp.lines'>
+                <div class='loader'>Loading</div>
+              </div>
+              <div class="col-md-12" ng-show='shp.lines'>
+                <h2>
+                  Lines
+                </h2>
+                <div>
+                  <table class='table table-striped'>
+                    <thead>
+                      <tr>
+                        <th>Line #</th>
+                        <th>Product</th>
+                        <th>Order Number - Line</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMS)</th>
+                        <th>Gross Weight (KGS)</th>
+                        <th>Container</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
+                        <td>{{ln.shpln_line_number}}</td>
+                        <td>{{ln.shpln_puid}}</td>
+                        <td>
+                          <div ng-repeat='ol in ln.order_lines'>
+                            <a href='/orders/{{ol.order_id}}'>{{ol.ord_cust_ord_no}} - {{ol.ordln_line_number}}</a>
+                          </div>
+                        </td>
+                        <td>
+                          {{ln.shpln_shipped_qty}}
+                        </td>
+                        <td>
+                          {{ln.shpln_carton_qty}}
+                        </td>
+                        <td>
+                          {{ln.shpln_cbms}}
+                        </td>
+                        <td>
+                          {{ln.shpln_gross_kgs}}
+                        </td>
+                        <td>
+                          {{ln.shpln_container_number}}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div> <!--end lines section -->
+        </div>
+        <div role="tabpanel" class="tab-pane" id="messages">...</div>
+        <div role="tabpanel" class="tab-pane" id="settings">...</div>
       </div>
-    </div> <!--end lines section -->
+
+    </div>
   </div>
   <div chain-action-bar include-workflow='yes'>
     <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='edit()'>Edit</button>

@@ -78,6 +78,16 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
       ]
       })
 ]
+
+shipmentApp.directive 'chainShipDetailSummary', ->
+  {
+    restrict: 'E'
+    scope: {
+      shipment: '='
+    }
+    templateUrl: '/partials/shipments/ship_detail_summary.html'
+  }
+
 shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
   maxVal = (ary,attr,min) ->
     r = min
@@ -209,7 +219,6 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
   $scope.eh.responseErrorHandler = (rejection) ->
     $scope.notificationMessage = null
   $scope.shp = null
-  $scope.hideComments = true
   $scope.loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id).then (resp) ->
@@ -218,6 +227,9 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
 
   $scope.edit = ->
     $state.go('edit',{shipmentId: $scope.shp.id})
+
+  $scope.loadLines = (shp) ->
+    shipmentSvc.injectLines shp unless shp.lines
 
   if shipmentId
     $scope.loadShipment shipmentId
@@ -255,6 +267,9 @@ shipmentApp.controller 'ShipmentEditCtrl', ['$scope','$state','shipmentSvc','cha
       $scope.hasNewContainer = false
       $scope.loadingFlag = null
     )
+
+  $scope.loadLines = (shp) ->
+    shipmentSvc.injectLines(shp) unless shp.lines
 
   $scope.cancel = ->
     $scope.loadingFlag = 'loading'

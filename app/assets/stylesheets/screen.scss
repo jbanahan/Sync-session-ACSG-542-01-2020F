@@ -1,8 +1,14 @@
 body {
-  padding-bottom: 70px; //padding to accomodate sticky footer nav bar 
+  padding-bottom: 70px; //padding to accomodate sticky footer nav bar
 }
 img {
   border-style: none;
+}
+
+// fix for bootstrap tabs using data-target instead of href to avoid angularjs routing conflict
+// http://stackoverflow.com/a/19947501/514712
+.nav-tabs a {
+  cursor: pointer;
 }
 .dash-logo {
   height: 30px;
@@ -46,7 +52,7 @@ div.clear {
   width: 100%;
 }
 .section_insert_heading {
-  font-size: 2em; 
+  font-size: 2em;
 }
 .search_row_break td {
   border-top: 1px solid #d7d7d7;
@@ -74,7 +80,7 @@ div.clear {
 .detail_table thead a {
   color: white;
   text-decoration: none;
-} 
+}
 .detail_table th:hover, .detail_table th:hover a {
   background-color: rgb(241, 241, 241);
   color: #000;
@@ -87,9 +93,9 @@ div.clear {
   font-size: 110%;
 }
 .detail_table tr.detail_table_body_row td {
-  border:1px solid #ccc; 
+  border:1px solid #ccc;
   padding: 3px;
-} 
+}
 .drag_table {
   border: 1px solid #ccc;
   border-collapse: collapse;
@@ -456,7 +462,7 @@ p {
   margin: 0;
   width: 100%;
   height: 22px;
-}  
+}
 
 #nb_r {
   position: absolute;
@@ -531,4 +537,4 @@ div.field, div.actions {
 .glyphicon-blank-circle:before {
     content: "\e089";
     color: transparent !important;
-} 
+}

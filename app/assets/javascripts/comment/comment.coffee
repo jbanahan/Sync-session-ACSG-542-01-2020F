@@ -10,7 +10,7 @@ com.factory 'commentSvc', ['$http', ($http) ->
         obj.comments = resp.data.comments
 
     addComment: (comment,commentArray) ->
-      $http.post('/api/v1/comments.json',{comment:comment}).then (resp) ->
+      $http.post('/api/v1/comments.json',{comment: comment}).then (resp) ->
         commentArray.push resp.data.comment
 
     #delete the comment and remove it from the given (optional) array by id number
@@ -25,10 +25,10 @@ com.factory 'commentSvc', ['$http', ($http) ->
 
 com.directive 'chainComment', ['commentSvc',(commentSvc) ->
   {
-    restrict:'E'
-    scope:{
-      parentObject:'='
-      moduleType:'@'
+    restrict: 'E'
+    scope: {
+      parentObject: '='
+      moduleType: '@'
     }
     link: (scope, element, attrs) ->
       scope.deleteComment = (c) ->
@@ -39,9 +39,9 @@ com.directive 'chainComment', ['commentSvc',(commentSvc) ->
         c.commentable_type = scope.moduleType
         c.commentable_id = scope.parentObject.id
         commentSvc.addComment(c, scope.parentObject.comments).then (resp) ->
-          scope.commentToAdd = {}   
-    template:"<div ng-repeat='c in parentObject.comments'>
-      <div class='panel panel-default'>
+          scope.commentToAdd = {}
+    template: "<div ng-repeat='c in parentObject.comments'>
+      <div class='panel panel-info'>
         <div class='panel-heading'>
           <div><div class='pull-right'><abbr am-time-ago='c.created_at' title='{{c.created_at}}'></abbr> {{c.user.full_name}}</div>{{c.subject}}</div>
         </div>
@@ -57,7 +57,7 @@ com.directive 'chainComment', ['commentSvc',(commentSvc) ->
         </div>
       </div>
       </div>
-      <div class='panel panel-default'>
+      <div class='panel panel-success'>
         <div class='panel-heading'>
           <input type='text' class='form-control' placeholder='Subject' ng-model='commentToAdd.subject' />
         </div>
@@ -65,7 +65,7 @@ com.directive 'chainComment', ['commentSvc',(commentSvc) ->
            <textarea ng-model='commentToAdd.body' class='form-control'></textarea>
         </div>
         <div class='panel-footer text-right'>
-          <button class='btn btn-sm btn-default' ng-click='addComment(commentToAdd)' ng-show='commentToAdd.body.length > 0'>Save</button>
+          <button class='btn btn-sm btn-success' ng-click='addComment(commentToAdd)' ng-disabled='!(commentToAdd.body.length > 0)'><i class='fa fa-plus'></i></button>
         </div>
       </div>"
   }

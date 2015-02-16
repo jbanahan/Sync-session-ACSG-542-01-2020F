@@ -12,7 +12,7 @@ There will not be breaking changes within the same major version.  Field and met
 **Data Format**
 
 _Date_: YYYY-MM-DD (December 25, 2014 = 2014-12-25)
-_Number_: 
+_Number_:
 
 * Decimal points must be included.  Non significant are optional do not need to be included. (One Hundred dollars can be represented as 100 or 100.0 or 100.00)
 * Negative numbers should be prefixed with a `-` like `-100`
@@ -53,7 +53,7 @@ You can have as many search criteria and order operations as you want, just incr
 
 **Response**
 ```
-200 - 
+200 -
 {
   results:[
     {
@@ -83,7 +83,7 @@ You can have as many search criteria and order operations as you want, just incr
 
 **Search Operators**
 
-* eq - Equals 
+* eq - Equals
 * gt - Greater Than
 * lt - Less Than
 * co - Contains
@@ -210,7 +210,7 @@ Values should be converted to the currency of the country where the customs entr
         cit_spi_secondary:'B' #special program indicator 2
         cit_classification_qty_1:100 #customs quantity 1
         cit_classification_uom_1:'DOZ' #customs unit of measure 1
-        cit_classification_qty_2:101 #customs quantity 2 
+        cit_classification_qty_2:101 #customs quantity 2
         cit_classification_uom_2:'KGS' #customs unit of measure 2
         cit_classification_qty_3:102 #customs quantity 3
         cit_classification_uom_3:'OTR' #customs unit of measure 3
@@ -282,7 +282,7 @@ _* These descriptions are a partial list of the things that each role may do in 
     name:'My Company'
     system_code:'MCOM' #code used to assign company in other api modules
     master: true #is the company the master company
-    vendor: true 
+    vendor: true
     customer: true
     importer: true
     broker: true
@@ -467,7 +467,7 @@ order_id: 77 #db id of order
     shpln_puid: 'PARTNUM' #unique ID of product shipped
     shpln_pname: 'CHAIR' #product name
     shpln_container_uid: 123 #database id of container
-    shpln_container_number: 'ABCD12345' 
+    shpln_container_number: 'ABCD12345'
     shpln_container_size: '40HC'
     *cf_1: 'VAL' #custom field value for custom definition 1, see the custom values section of this documentation for more info
     #OPTIONAL with includes=order_lines parameter
@@ -526,6 +526,20 @@ Retrieve one shipment by ID
 _Request_
 
 `GET - /shipments/1.json`
+
+Options
+
+`no_lines=true` - Do not include `lines` array
+
+`summary=true` - Include summary of lines like
+```
+{shipment:
+  summary: {
+    line_count: 7 #number of detail lines
+    order_count: 3 #number of unique purchase orders on shipment
+    piece_count: 123 #total quantity of all units on shipment
+  }
+}
 
 _Response_
 
@@ -605,6 +619,3 @@ _Response_
 Replace user's subscriptions with the given array
 
 `POST - /users/7/event_subscriptions` with a JSON payload of an event_subscriptions object with array of event subscriptions (just like `index`).  The `user_id` attribute in the subscription objects will be ignored in favor of the `user_id` in the URL.
-
-
-

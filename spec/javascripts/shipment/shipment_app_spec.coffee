@@ -151,14 +151,29 @@ describe 'ShipmentApp', ->
 
     describe "loadShipment", ->
       it "should delegate to getShipment and toggle state", ->
-        data = {shipment: {id: 1,shp_ref: 'REF'}}
+        data = {shipment: {id: 1,shp_ref: 'REF', lines: []}}
         r = q.defer()
         spyOn(svc, 'getShipment').andReturn(r.promise)
+        spyOn(svc, 'injectLines')
         scope.loadShipment(1)
         r.resolve({data: data})
         scope.$apply()
         expect(svc.getShipment).toHaveBeenCalledWith(1)
+        expect(svc.injectLines).not.toHaveBeenCalled()
         expect(scope.shp).toEqual data.shipment
+
+    describe 'loadLines', ->
+      it "should inject lines if not already loaded", ->
+        shp = {id: 1}
+        spyOn(svc,'injectLines')
+        scope.loadLines(shp)
+        expect(svc.injectLines).toHaveBeenCalledWith(shp)
+
+      it "should not inject lines if they are already loaded", ->
+        shp = {id: 1, lines: []}
+        spyOn(svc,'injectLines')
+        scope.loadLines(shp)
+        expect(svc.injectLines).not.toHaveBeenCalledWith(shp)
 
     describe 'saveShipment', ->
       it 'should delegate to service', ->
