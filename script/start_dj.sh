@@ -14,7 +14,10 @@ if [ -f config/dj_count.txt ]; then
       echo "$(date) - Starting DJ with $restart_count jobs."
     fi
 
-    script/delayed_job start -n $restart_count
+    # Don't show any actual output..it's largely pointless and just a log clogger
+    # Since 99.99% of the time, the output is going to be errors about how there's
+    # already X processes running
+    script/delayed_job start -n $restart_count > /dev/null 2>&1
   fi
 else
   echo "$(date) - No $(pwd)/config/dj_count.txt file found.  Add one if you wish to run delayed jobs for this instance."

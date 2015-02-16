@@ -80,7 +80,7 @@ $(function() {
         </thead>
         <% InstanceInformation.where("last_check_in > ?",10.days.ago).order("last_check_in DESC").each do |ii| %>
           <tr class='hover'>
-            <td><%=ii.host%></td>
+            <td><%=ii.host%><br><%=ii.name%><br><%=ii.role%></td>
             <td><%=ii.version%></td>
             <td><%=ii.last_check_in%></td>
             <td>
