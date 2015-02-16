@@ -219,9 +219,9 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
   $scope.eh.responseErrorHandler = (rejection) ->
     $scope.notificationMessage = null
   $scope.shp = null
-  $scope.loadShipment = (id) ->
+  $scope.loadShipment = (id,forceReload) ->
     $scope.loadingFlag = 'loading'
-    shipmentSvc.getShipment(id).then (resp) ->
+    shipmentSvc.getShipment(id,forceReload).then (resp) ->
       $scope.shp = resp.data.shipment
       $scope.loadingFlag = null
 
@@ -230,6 +230,17 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
 
   $scope.loadLines = (shp) ->
     shipmentSvc.injectLines shp unless shp.lines
+
+  $scope.requestBooking = (shipment) ->
+    doRequest = true
+    if shipment.shp_booking_received_date.length > 0
+      doRequest = window.confirm("A booking has already been requested. Are you sure you want to request again?")
+    if doRequest
+      $scope.loadingFlag = 'loading'
+      sId = shipment.id
+      shipmentSvc.requestBooking(shipment).then (resp) ->
+        $scope.loadShipment(sId,true).then ->
+          window.alert('Booking requested.')
 
   if shipmentId
     $scope.loadShipment shipmentId

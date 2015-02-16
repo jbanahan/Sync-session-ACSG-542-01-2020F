@@ -540,6 +540,7 @@ Options
     piece_count: 123 #total quantity of all units on shipment
   }
 }
+```
 
 _Response_
 
@@ -584,6 +585,16 @@ _Response_
   ord_ven_name: 'My Vendor LLC' #vendor name
 }]}
 ```
+
+#### Request Booking
+
+Issue a booking request on behalf of the user.
+
+`POST - /shipments/1/request_booking.json`
+
+_Response_
+
+`200` status with JSON object that does not contain valuable data
 
 ## User - Event Subscriptions
 

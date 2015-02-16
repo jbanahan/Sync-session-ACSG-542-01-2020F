@@ -35,6 +35,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         return deferred.promise
       else
         return $http.get('/api/v1/shipments/'+shipmentId+'.json?summary=true&no_lines=true&include=order_lines,attachments').then(getShipmentSuccessHandler)
+
     injectLines: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'.json?include=order_lines').then (resp) ->
         shipment.lines = resp.data.shipment.lines
@@ -46,13 +47,20 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         $http.put('/api/v1/shipments/'+s.id+'.json', {shipment: s, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
       else
         $http.post('/api/v1/shipments',{shipment: s, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
+
     getParties: ->
       $http.get('/api/v1/companies?roles=importer,carrier')
+
     getAvailableOrders: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')
+
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
+
     processTradecardPackManifest: (shp, attachment) ->
       $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest', {attachment_id: attachment.id, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
+
+    requestBooking: (shp) ->
+      $http.post('/api/v1/shipments/'+shp.id+'/request_booking.json',{id: shp.id}) #need some json content for API controller
   }
 ]

@@ -6,7 +6,7 @@ module Api; module V1; class ApiController < ActionController::Base
   around_filter :set_user_settings
 
   def current_user
-    @user 
+    @user
   end
 
   def render_forbidden
@@ -26,8 +26,8 @@ module Api; module V1; class ApiController < ActionController::Base
       e = [errors.to_s]
     end
     render json: {:errors => e}, status: status
-  end  
-  
+  end
+
   class StatusableError < StandardError
     attr_accessor :http_status, :errors
 
@@ -41,7 +41,7 @@ module Api; module V1; class ApiController < ActionController::Base
 
   private
     def validate_format
-      if !request.headers["HTTP_ACCEPT"].match /application\/json/
+      if !request.headers["HTTP_ACCEPT"].match(/application\/json/)
         raise StatusableError.new("Request must include Accept header of 'application/json'.", :not_acceptable)
       end
 
@@ -57,9 +57,9 @@ module Api; module V1; class ApiController < ActionController::Base
           # Token should be username:token (username is there to mitigate timing attacks)
           user_from_token token
         end
-      rescue 
-        # Invalid authentication tokens will blow up the rails token parser (stupid), we don't really want to hear about this error 
-        # since it's the client's fault they didn't set up their request correctly, so just let the api_user check below handle 
+      rescue
+        # Invalid authentication tokens will blow up the rails token parser (stupid), we don't really want to hear about this error
+        # since it's the client's fault they didn't set up their request correctly, so just let the api_user check below handle
         # this as an access denied error
       end
       if api_user.nil?
@@ -72,7 +72,7 @@ module Api; module V1; class ApiController < ActionController::Base
       @user = api_user
       yield
     end
-    
+
     def user_from_token t
       username, auth_token = t.split(":")
       User.includes(:groups).find_by_username_and_api_auth_token username, auth_token
@@ -99,7 +99,7 @@ module Api; module V1; class ApiController < ActionController::Base
     end
 
     def error_handler error
-      # Rails makes it a bit of a pain in the butt to use custom exception handling for json requests, 
+      # Rails makes it a bit of a pain in the butt to use custom exception handling for json requests,
       # so we have this handler.  But it doesn't propagate out the exceptions so that our notififier
       # is called, so we'll manually handle that below.
       if error.is_a?(StatusableError)

@@ -14,12 +14,12 @@ class ModelField
   @@field_label_cache = HashWithIndifferentAccess.new
 
   @@last_loaded = nil
-  attr_reader :model, :field_name, :label_prefix, :sort_rank, 
-              :import_lambda, :export_lambda, 
-              :custom_id, :data_type, :core_module, 
-              :join_statement, :join_alias, :qualified_field_name, :uid, 
+  attr_reader :model, :field_name, :label_prefix, :sort_rank,
+              :import_lambda, :export_lambda,
+              :custom_id, :data_type, :core_module,
+              :join_statement, :join_alias, :qualified_field_name, :uid,
               :public, :public_searchable, :definition, :disabled, :field_validator_rule, :user_accessible
-  
+
   def initialize(rank, uid, core_module, field_name, options={})
     o = {entity_type_field: false, history_ignore: false, read_only: false, user_accessible: true}.merge(options)
     @uid = uid
@@ -50,18 +50,18 @@ class ModelField
     @history_ignore = o[:history_ignore]
     @currency = o[:currency]
     @query_parameter_lambda = o[:query_parameter_lambda]
-    self.custom_definition if @custom_id #load from cache if available 
+    self.custom_definition if @custom_id #load from cache if available
     @process_query_result_lambda = o[:process_query_result_lambda]
     @field_validator_rule = nil
     if @@field_validator_rules.empty?
       @field_validator_rule = FieldValidatorRule.find_by_model_field_uid @uid
-    else 
+    else
       @field_validator_rule = @@field_validator_rules[@uid]
     end
     @read_only = o[:read_only] || @field_validator_rule.try(:read_only?)
 
     # The respond_to here is pretty much solely there for the migration case when disabled? didn't
-    # exist and the migration is creating it - unfortunately this is necesitated because 
+    # exist and the migration is creating it - unfortunately this is necesitated because
     # we have some initializers that reference model fields.
     @disabled = o[:disabled] || (@field_validator_rule.respond_to?(:disabled?) && @field_validator_rule.disabled?)
     @can_view_groups = SortedSet.new(@field_validator_rule.respond_to?(:view_groups) ? @field_validator_rule.view_groups : [])
@@ -119,7 +119,7 @@ class ModelField
     if !in_groups && @can_view_groups.size > 0
       in_groups = user.in_any_group? @can_view_groups
     end
-    
+
     can_view = false
     if in_groups || (@can_edit_groups.size == 0 && @can_view_groups.size == 0)
       # By default, there's no can_view_lambda so we assume the default state of the field
@@ -127,7 +127,7 @@ class ModelField
       if @can_view_lambda.nil?
         can_view = true
       else
-        can_view = @can_view_lambda.call user 
+        can_view = @can_view_lambda.call user
       end
     end
 
@@ -177,7 +177,7 @@ class ModelField
   def date?
     data_type == :date || data_type == :datetime
   end
-  
+
   #should the entity snapshot system ignore this field when recording an item's history state
   def history_ignore?
     @history_ignore
@@ -185,10 +185,10 @@ class ModelField
 
   #get the array of entity types for which this field should be displayed
   def entity_type_ids
-    EntityTypeField.cached_entity_type_ids self 
+    EntityTypeField.cached_entity_type_ids self
   end
 
-  #does this field represent the "Entity Type" field for the module.  This is used by the application helper to 
+  #does this field represent the "Entity Type" field for the module.  This is used by the application helper to
   #make sure that this field is always displayed (even if it is not on the entity type field list)
   def entity_type_field?
     @entity_type_field
@@ -213,7 +213,7 @@ class ModelField
     else
       f = @@field_label_cache[@uid]
     end
-    if f.nil? 
+    if f.nil?
       #didn't find in database, check default cache or custom definition table
       if self.custom?
         @base_label = self.custom_definition.label
@@ -269,7 +269,7 @@ class ModelField
         v = "You do not have permission to edit #{self.label}."
         def v.error?; true; end
       end
-      
+
     end
     # Force all responses returned from the import lambda to have an error? method.
     if v && !v.respond_to?(:error?)
@@ -305,14 +305,14 @@ class ModelField
   def custom?
     return !@custom_id.nil?
   end
-  
+
   def public?
     @public
   end
   def public_searchable?
     @public_searchable
   end
-  
+
   def determine_data_type
     if custom?
       custom_definition.data_type.downcase.to_sym
@@ -355,16 +355,16 @@ class ModelField
     @@blank_model_field
   end
   private_class_method :blank_model_field
-  
+
   #Get the unique ID to be used for a given region and model field type
   def self.uid_for_region region, type
-    "*r_#{region.id}_#{type}" 
+    "*r_#{region.id}_#{type}"
   end
 
   #should be after all class level methods are declared
   MODEL_FIELDS = Hash.new
   private_constant :MODEL_FIELDS
-  # We don't want to retain disabled model fields in the main hash (since then we need 
+  # We don't want to retain disabled model fields in the main hash (since then we need
   # to update all the references to retrieving sets of model field to remove disabled ones
   # - which also gets expensive computationally).  But we do need to track which were disabled
   # because we don't want to do a reload in cases where a UID isn't in the model field hash
@@ -395,7 +395,7 @@ class ModelField
         MODEL_FIELDS[module_type][mf.uid.to_sym] = mf
       end
     end
-    
+
   end
 
   def self.make_comment_arrays(rank_start,uid_prefix,klass)
@@ -410,7 +410,7 @@ class ModelField
         }]
     ]
   end
-  
+
   def self.make_division_arrays(rank_start,uid_prefix,table_name)
     # The id field is created pretty much solely so the screens can make select boxes using the id as the value parameter
     # and reference the field like prod_imp_id.
@@ -487,10 +487,10 @@ class ModelField
   def self.make_carrier_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, "car", "Carrier", "carrier"
   end
-  def self.make_customer_arrays(rank_start,uid_prefix,table_name) 
+  def self.make_customer_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, "cust", "Customer", "customer"
   end
-  def self.make_vendor_arrays(rank_start,uid_prefix,table_name) 
+  def self.make_vendor_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, "ven", "Vendor", "vendor"
   end
   def self.make_importer_arrays(rank_start,uid_prefix,table_name)
@@ -524,7 +524,7 @@ class ModelField
           return "Ship #{ftc} not found with name \"#{data}\""
         end
       },
-      :export_lambda => lambda {|obj| 
+      :export_lambda => lambda {|obj|
         if ft=="to"
           return obj.ship_to.nil? ? "" : obj.ship_to.name
         elsif ft=="from"
@@ -538,21 +538,21 @@ class ModelField
     r
   end
 
-  def self.make_hts_arrays(rank_start,uid_prefix) 
+  def self.make_hts_arrays(rank_start,uid_prefix)
     canada = Country.where(:iso_code=>"CA").first
     us = Country.where(:iso_code=>"US").first
     id_counter = rank_start
     r = []
     (1..3).each do |i|
       r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}",{
-        :export_lambda => lambda {|t| 
+        :export_lambda => lambda {|t|
           h = case i
             when 1 then t.hts_1
             when 2 then t.hts_2
             when 3 then t.hts_3
           end
           h.blank? ? "" : h.hts_format
-        }, 
+        },
         :query_parameter_lambda => lambda {|t|
           case i
             when 1 then t.hts_1
@@ -575,7 +575,7 @@ class ModelField
             when 2 then t.hts_2_official_tariff
             when 3 then t.hts_3_official_tariff
           end
-          ot.nil? ? "" : ot.general_rate 
+          ot.nil? ? "" : ot.general_rate
         },
         :qualified_field_name => "(SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
@@ -590,7 +590,7 @@ class ModelField
             when 2 then t.hts_2_official_tariff
             when 3 then t.hts_3_official_tariff
           end
-          ot.nil? ? "" : ot.common_rate 
+          ot.nil? ? "" : ot.common_rate
         },
         :qualified_field_name => "(SELECT common_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
@@ -665,7 +665,7 @@ class ModelField
     end
     r
   end
-  
+
   def self.make_ship_to_arrays(rank_start,uid_prefix,table_name)
     make_ship_arrays(rank_start,uid_prefix,table_name,"to")
   end
@@ -680,7 +680,7 @@ class ModelField
         history_ignore: true
       }]
     r << [r_count,"#{uid_prefix}_name".to_sym, :name, "#{name_prefix} Name",{
-        import_lambda: lambda {|obj,data| 
+        import_lambda: lambda {|obj,data|
           p = Port.find_by_name(data)
           if p
             eval "obj.#{join_field}= p"
@@ -725,21 +725,21 @@ class ModelField
           return "Country set to #{c.name}"
         else
           return "Country not found with ISO Code \"#{data}\""
-        end    
+        end
       },
       :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.iso_code"},
       :qualified_field_name=>"(SELECT iso_code from countries where countries.id = #{table_name}.#{foreign_key})",
       :data_type=>:string
     }]
     r << [rank_start+2,"#{uid_prefix}_cntry_id".to_sym, :country_id, "Country ID",{
-      :import_lambda => lambda {|detail, data| 
+      :import_lambda => lambda {|detail, data|
         c = Country.where(id: data).first
         eval "detail.#{join} = c"
         unless c.nil?
           return "Country set to #{c.name}"
         else
           return "Country not found with ISO Code \"#{data}\""
-        end    
+        end
       },
       :export_lambda => lambda {|detail|  eval "detail.#{join}.nil? ? nil : detail.#{join}.id"},
       :data_type=>:integer,
@@ -808,7 +808,7 @@ class ModelField
     [
       [rank,"#{uid_prefix}_last_changed_by".to_sym,:username,"Last Changed By", {
         :import_lambda => lambda {|a,b| return "Last Changed By cannot be set by import, ignored."},
-        :export_lambda => lambda {|obj| 
+        :export_lambda => lambda {|obj|
           obj.last_updated_by.blank? ? "" : obj.last_updated_by.username
         },
         :qualified_field_name => "(SELECT username FROM users where users.id = #{table_name}.last_updated_by_id)",
@@ -817,7 +817,7 @@ class ModelField
       }],
       [rank + 1,"#{uid_prefix}_last_changed_by_full_name".to_sym,:username,"Last Changed By Full Name", {
         :import_lambda => lambda {|a,b| return "Last Changed By cannot be set by import, ignored."},
-        :export_lambda => lambda {|obj| 
+        :export_lambda => lambda {|obj|
           # purposefully not using the fullname user method, since it falls back to returning username if names are blank, which we don't want here
           obj.last_updated_by.blank? ? "" : ("#{obj.last_updated_by.first_name} #{obj.last_updated_by.last_name}")
         },
@@ -826,7 +826,7 @@ class ModelField
         :history_ignore => true
       }]
     ]
-    
+
   end
   def self.make_broker_invoice_entry_field sequence_number, mf_uid,field_reference,label,data_type,ent_exp_lambda,can_view_lambda=nil
     h = {:data_type=>data_type,
@@ -917,8 +917,8 @@ class ModelField
     prod_defs.each_with_index {|d,i| create_and_insert_product_custom_field d, core_module, start_index+i}
   end
 
-  # Make a ModelField based on the given module that links through 
-  # to a product custom definition.  
+  # Make a ModelField based on the given module that links through
+  # to a product custom definition.
   def self.create_and_insert_product_custom_field custom_definition, core_module, index
     uid = "#{custom_definition.model_field_uid}_#{core_module.table_name}".to_sym
     mf = ModelField.new(index,uid,core_module,uid,{
@@ -947,14 +947,14 @@ class ModelField
     add_model_fields core_module, [mf]
   end
   private_class_method :create_and_insert_custom_field
-  
+
   #update the internal last_loaded flag and optionally retrigger all instances to invalidate their caches
   def self.update_last_loaded update_global_cache
     @@last_loaded = Time.now
     Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_global_cache
     CACHE.set "ModelField:last_loaded", @@last_loaded if update_global_cache
   end
-  
+
   def self.reset_custom_fields(update_cache_time=false)
     CoreModule::CORE_MODULES.each do |cm|
       h = MODEL_FIELDS[cm.class_name.to_sym]
@@ -1008,7 +1008,7 @@ class ModelField
               end
               cls = nil
               #find classifications & tariff records in memory so this can work on objects that are dirty
-              p.classifications.each do |existing| 
+              p.classifications.each do |existing|
                 cls = existing if existing.country_id == c.id
                 break if cls
               end
@@ -1063,11 +1063,11 @@ class ModelField
           :data_type => :integer,
           :history_ignore => true,
           :qualified_field_name => "(
-select count(*) from classifications 
-inner join countries_regions on countries_regions.region_id = #{r.id} and countries_regions.country_id = classifications.country_id 
+select count(*) from classifications
+inner join countries_regions on countries_regions.region_id = #{r.id} and countries_regions.country_id = classifications.country_id
 where (select count(*) from tariff_records where tariff_records.classification_id = classifications.id and length(tariff_records.hts_1)>0) > 0
 and classifications.product_id = products.id
-)"          
+)"
         }
       )
       model_fields << mf
@@ -1250,7 +1250,7 @@ and classifications.product_id = products.id
         [18,:ot_export_regs,:export_regulations,"Export Regulations",{:data_type=>:string}],
         [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}],
         [20,:ot_chapter_number, :chapter_number,"Chapter Number",{:data_type=>:string,
-            :import_lambda => lambda { |ent, data| 
+            :import_lambda => lambda { |ent, data|
               "Chapter Number ignored. (read only)"
             },
             :export_lambda => lambda { |obj|
@@ -1456,9 +1456,9 @@ and classifications.product_id = products.id
         [137,:ent_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
           :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
           :export_lambda=>lambda {|obj| obj.business_rules_state },
-          :qualified_field_name=> "(select state 
-            from business_validation_results bvr 
-            where bvr.validatable_type = 'Entry' and bvr.validatable_id = entries.id 
+          :qualified_field_name=> "(select state
+            from business_validation_results bvr
+            where bvr.validatable_type = 'Entry' and bvr.validatable_id = entries.id
             order by (
             case bvr.state
                 when 'Fail' then 0
@@ -1485,7 +1485,7 @@ and classifications.product_id = products.id
         [151,:ent_attachment_types,:attachment_types,"Attachment Types",{:data_type=>:string,
           :import_lambda=>lambda {|o,d| "Attachment Types ignored. (read only)"},
           :export_lambda=>lambda {|obj| t = obj.attachment_types.join("\n ") },
-          :qualified_field_name=> "(SELECT GROUP_CONCAT(DISTINCT a_types.attachment_type ORDER BY a_types.attachment_type SEPARATOR '\n ') 
+          :qualified_field_name=> "(SELECT GROUP_CONCAT(DISTINCT a_types.attachment_type ORDER BY a_types.attachment_type SEPARATOR '\n ')
             FROM attachments a_types
             WHERE a_types.attachable_id = entries.id AND a_types.attachable_type = 'Entry' AND LENGTH(RTRIM(IFNULL(a_types.attachment_type, ''))) > 0)",
           :can_view_lambda=>lambda {|u| u.company.master?}
@@ -1495,7 +1495,7 @@ and classifications.product_id = products.id
           :import_lambda=>lambda {|o,d| "Failed Business Rule Names ignored. (read only)"},
           :export_lambda=>lambda {|obj| obj.failed_business_rules.join("\n ") },
           :qualified_field_name=> "(SELECT GROUP_CONCAT(failed_rule.name ORDER BY failed_rule.name SEPARATOR '\n ')
-            FROM business_validation_results failed_bvr 
+            FROM business_validation_results failed_bvr
             INNER JOIN business_validation_rules failed_rule ON failed_rule.business_validation_template_id = failed_bvr.business_validation_template_id
             INNER JOIN business_validation_rule_results failed_bvrr ON failed_bvr.id = failed_bvrr.business_validation_result_id AND failed_bvrr.business_validation_rule_id = failed_rule.id AND failed_bvrr.state = 'Fail'
             WHERE failed_bvr.validatable_id = entries.id AND failed_bvr.validatable_type = 'Entry'
@@ -1572,7 +1572,7 @@ and classifications.product_id = products.id
         [38,:cil_total_duty, :total_duty, "Total Duty", {:data_type=>:decimal,:currency=>:other,
           :import_lambda=>lambda {|o,d| "Total Duty ignored. (read only)"},
           :export_lambda=>lambda {|obj| obj.total_duty },
-          :qualified_field_name=> "(SELECT ifnull(sum(total_duty_t.duty_amount), 0) FROM commercial_invoice_tariffs total_duty_t 
+          :qualified_field_name=> "(SELECT ifnull(sum(total_duty_t.duty_amount), 0) FROM commercial_invoice_tariffs total_duty_t
             WHERE total_duty_t.commercial_invoice_line_id = commercial_invoice_lines.id)"
         }],
         [39,:cil_total_fees, :total_fees, "Total Fees", {:data_type=>:decimal,:currency=>:other,
@@ -1584,10 +1584,10 @@ and classifications.product_id = products.id
         [40,:cil_total_duty_plus_fees, :duty_plus_fees_amount, "Total Duty + Fees", {:data_type=>:decimal,:currency=>:other,
           :import_lambda=>lambda {|o,d| "Total Fees ignored. (read only)"},
           :export_lambda=>lambda {|obj| obj.duty_plus_fees_amount },
-          :qualified_field_name=> "(SELECT ifnull(total_duty_fees_l.prorated_mpf, 0) + ifnull(total_duty_fees_l.hmf, 0) + ifnull(total_duty_fees_l.cotton_fee, 0) + 
-              (SELECT ifnull(sum(total_duty_fees_t.duty_amount), 0) 
-                FROM commercial_invoice_tariffs total_duty_fees_t 
-                WHERE total_duty_fees_t.commercial_invoice_line_id = commercial_invoice_lines.id) 
+          :qualified_field_name=> "(SELECT ifnull(total_duty_fees_l.prorated_mpf, 0) + ifnull(total_duty_fees_l.hmf, 0) + ifnull(total_duty_fees_l.cotton_fee, 0) +
+              (SELECT ifnull(sum(total_duty_fees_t.duty_amount), 0)
+                FROM commercial_invoice_tariffs total_duty_fees_t
+                WHERE total_duty_fees_t.commercial_invoice_line_id = commercial_invoice_lines.id)
             FROM commercial_invoice_lines total_duty_fees_l
             WHERE total_duty_fees_l.id = commercial_invoice_lines.id)"
         }],
@@ -1724,7 +1724,7 @@ and classifications.product_id = products.id
             if data.blank?
               return "#{ModelField.find_by_uid(:prod_ent_type).label} with name #{data} not found.  Field ignored."
             end
-            
+
             et = EntityType.where(:name=>data).first
             if et
               detail.entity_type = et
@@ -1755,14 +1755,14 @@ and classifications.product_id = products.id
         [10,:prod_class_count, :class_count, "Complete Classification Count", {
           :import_lambda => lambda {|obj,data|
             return "Complete Classification Count was ignored. (read only)"},
-          :export_lambda => lambda {|obj| 
+          :export_lambda => lambda {|obj|
             r = 0
-            obj.classifications.each {|c| 
+            obj.classifications.each {|c|
               r += 1 if c.tariff_records.length > 0
             }
             r
           },
-          :qualified_field_name => "(SELECT COUNT(distinct pcc_cls.id) FROM classifications pcc_cls 
+          :qualified_field_name => "(SELECT COUNT(distinct pcc_cls.id) FROM classifications pcc_cls
             INNER JOIN tariff_records pcc_tr ON pcc_tr.classification_id = pcc_cls.id AND LENGTH( pcc_tr.hts_1 ) > 0 WHERE products.id = pcc_cls.product_id)",
           :data_type => :integer
         }],
@@ -1770,7 +1770,7 @@ and classifications.product_id = products.id
         [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
         [14,:prod_first_hts, :prod_first_hts, "First HTS Number", {
           :import_lambda => lambda {|obj,data| "First HTS Number was ignored, must be set at the tariff level."},
-          :export_lambda => lambda {|obj| 
+          :export_lambda => lambda {|obj|
             r = ""
             cls = obj.classifications.sort_classification_rank.first
             unless cls.nil?
@@ -1807,7 +1807,7 @@ and classifications.product_id = products.id
         }],
         [18,:prod_max_component_count,:max_component_count, 'Component Count (Max)', {
           :import_lambda=>lambda {|o,d| "Component Count (Max) ignored. (read only)"},
-          :export_lambda=>lambda {|o| 
+          :export_lambda=>lambda {|o|
             max = 0
             o.classifications.each do |c|
               sz = c.tariff_records.size
@@ -1823,7 +1823,7 @@ and classifications.product_id = products.id
             if data.blank?
               return "#{ModelField.find_by_uid(:prod_ent_type).label} with name #{data} not found.  Field ignored."
             end
-            
+
             et = EntityType.where(:id=>data).first
             if et
               detail.entity_type = et
@@ -1845,7 +1845,7 @@ and classifications.product_id = products.id
       add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
       add_fields CoreModule::PRODUCT, make_importer_arrays(250,"prod","products")
       add_fields CoreModule::PRODUCT, make_sync_record_arrays(300,'prod','products','Product')
-      
+
       add_fields CoreModule::CLASSIFICATION, [
         [1,:class_comp_cnt, :comp_count, "Component Count", {
           :import_lambda => lambda {|obj,data| return "Component Count was ignored. (read only)"},
@@ -1869,11 +1869,11 @@ and classifications.product_id = products.id
         [3,:ord_ms_state,:state,"Milestone State",{:data_type=>:string,
           :import_lambda => lambda {|o,d| return "Milestone State was ignored. (read only)"},
           :export_lambda => lambda {|obj| obj.worst_milestone_state },
-          :qualified_field_name => %{(SELECT milestone_forecast_sets.state as ms_state 
-              FROM milestone_forecast_sets 
-              INNER JOIN piece_sets on piece_sets.id = milestone_forecast_sets.piece_set_id 
+          :qualified_field_name => %{(SELECT milestone_forecast_sets.state as ms_state
+              FROM milestone_forecast_sets
+              INNER JOIN piece_sets on piece_sets.id = milestone_forecast_sets.piece_set_id
               INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id
-              WHERE order_lines.order_id = orders.id 
+              WHERE order_lines.order_id = orders.id
               ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)}
         },],
         [4,:ord_cust_ord_no, :customer_order_number, "Customer Order Number"],
@@ -1882,9 +1882,9 @@ and classifications.product_id = products.id
         [7,:ord_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
           :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
           :export_lambda=>lambda {|obj| obj.business_rules_state },
-          :qualified_field_name=> "(select state 
-            from business_validation_results bvr 
-            where bvr.validatable_type = 'Order' and bvr.validatable_id = orders.id 
+          :qualified_field_name=> "(select state
+            from business_validation_results bvr
+            where bvr.validatable_type = 'Order' and bvr.validatable_id = orders.id
             order by (
             case bvr.state
                 when 'Fail' then 0
@@ -1905,7 +1905,7 @@ and classifications.product_id = products.id
         [14,:ord_closed_at,:closed_at,'Closed At',{data_type: :datetime}],
         [15,:ord_closed_by,:username,"Closed By", {
           :import_lambda => lambda {|a,b| return "Closed By cannot be set by import, ignored."},
-          :export_lambda => lambda {|obj| 
+          :export_lambda => lambda {|obj|
             obj.closed_by.blank? ? "" : obj.closed_by.username
           },
           :qualified_field_name => "(SELECT username FROM users where users.id = orders.closed_by_id)",
@@ -1938,7 +1938,7 @@ and classifications.product_id = products.id
           :export_lambda=> lambda{|obj| obj.hts.blank? ? '' : obj.hts.hts_format}
         }],
         [9,:ordln_sku,:sku,'SKU',{data_type: :string}],
-        [10,:ordln_total_cost, :total_cost, "Total Price", {data_type: :decimal, read_only: true, 
+        [10,:ordln_total_cost, :total_cost, "Total Price", {data_type: :decimal, read_only: true,
           qualified_field_name: "IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)"
         }]
       ]
@@ -1959,7 +1959,7 @@ and classifications.product_id = products.id
         [16,:shp_vessel,:vessel,"Vessel",{:data_type=>:string}],
         [17,:shp_voyage,:voyage,"Voyage",{:data_type=>:string}],
         [18,:shp_vessel_carrier_scac,:vessel_carrier_scac,"Vessel SCAC",{:data_type=>:string}],
-        [19,:shp_booking_received_date,:booking_received_date,"Booking Received Date",{:data_type=>:date}],
+        [19,:shp_booking_received_date,:booking_received_date,"Booking Received Date",{:data_type=>:date,:read_only=>true}],
         [20,:shp_booking_confirmed_date,:booking_confirmed_date,"Booking Confirmed Date",{:data_type=>:date}],
         [21,:shp_booking_cutoff_date,:booking_cutoff_date,"Cutoff Date",{:data_type=>:date}],
         [22,:shp_booking_est_arrival_date,:booking_est_arrival_date,"Est Arrival Date - Booked",{:data_type=>:date}],
@@ -1973,7 +1973,16 @@ and classifications.product_id = products.id
         [30,:shp_est_delivery_date,:est_delivery_date,"Est Delivery Date",{:data_type=>:date}],
         [31,:shp_delivered_date,:delivered_date,"Delivered Date",{:data_type=>:date}],
         [32,:shp_importer_reference,:importer_reference,"Importer Reference",{data_type: :string}],
-        [33,:shp_cargo_ready_date,:cargo_ready_date,'Cargo Ready Date',{data_type: :date}]
+        [33,:shp_cargo_ready_date,:cargo_ready_date,'Cargo Ready Date',{data_type: :date}],
+        [34,:shp_booking_requested_by_full_name,:username,"Booking Requested By", {
+          :import_lambda => lambda {|a,b| return "Booking Requested By cannot be set by import, ignored."},
+          :export_lambda => lambda {|obj|
+            u = obj.booking_requested_by
+            u.blank? ? "" : u.full_name
+          },
+          :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.booking_requested_by_id)",
+          :data_type=>:string
+        }]
       ]
       add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -1983,7 +1992,7 @@ and classifications.product_id = products.id
       add_fields CoreModule::SHIPMENT, make_importer_arrays(500,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_comment_arrays(600,'shp','Shipment')
       add_fields CoreModule::SHIPMENT, make_port_arrays(700,'shp_dest_port','shipments','destination_port','Destination Port')
-      
+
       add_fields CoreModule::SHIPMENT_LINE, [
         [1,:shpln_line_number,:line_number,"Shipment Row",{:data_type=>:integer}],
         [2,:shpln_shipped_qty,:quantity,"Quantity Shipped",{:data_type=>:decimal}],
@@ -2017,7 +2026,7 @@ and classifications.product_id = products.id
         [6,:shpln_cbms,:cbms,"Volume (CBMS)",{data_type: :decimal}],
         [7,:shpln_gross_kgs,:gross_kgs,"Gross Weight (KGS)",{data_type: :decimal}],
         [8,:shpln_carton_qty,:carton_qty,"Cartons",{data_type: :integer}],
-        [9,:shpln_vendors,:vendor_name,"Vendor(s)",{data_type: :text, 
+        [9,:shpln_vendors,:vendor_name,"Vendor(s)",{data_type: :text,
           read_only: true,
           export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.vendor ? ol.order.vendor.name : nil}.uniq.compact.sort.join(',') },
           import_lambda: lambda {|o,d| "Linked fields are read only."},
@@ -2027,7 +2036,7 @@ and classifications.product_id = products.id
         [10,:shpln_po_value,:po_value,"Shipped PO Value",{
           data_type: :currency,
           read_only: true,
-          export_lambda: lambda {|sl| sl.order_lines.inject(BigDecimal('0.00')) {|i,ol| 
+          export_lambda: lambda {|sl| sl.order_lines.inject(BigDecimal('0.00')) {|i,ol|
             ppu = ol.price_per_unit.blank? ? 0 : ol.price_per_unit
             qty = sl.quantity.blank? ? 0 : sl.quantity
             i + (ppu*qty)}},
@@ -2036,7 +2045,7 @@ and classifications.product_id = products.id
           history_ignore:true,
           read_only:true
           }],
-        [11,:shpln_cust_ord_no,:customer_order_number,"Order(s)",{data_type: :text, 
+        [11,:shpln_cust_ord_no,:customer_order_number,"Order(s)",{data_type: :text,
           read_only: true,
           export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.customer_order_number}.uniq.compact.sort.join(',') },
           import_lambda: lambda {|o,d| "Linked fields are read only."},
@@ -2045,7 +2054,7 @@ and classifications.product_id = products.id
           read_only:true
           }],
         [12,:shpln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",{data_type: :integer,
-          import_lambda: lambda {|sl,id| 
+          import_lambda: lambda {|sl,id|
             return "#{ModelField.find_by_uid(:shpln_carton_set_uid).label} was blank." if id.blank?
             cs = CartonSet.find_by_id id
             return "Carton Set with ID #{id} not found. Ignored." unless cs
@@ -2095,7 +2104,7 @@ and classifications.product_id = products.id
         [4,:soln_ppu,:price_per_unit,"Price / Unit",{:data_type => :decimal}]
       ]
       add_fields CoreModule::SALE_LINE, make_product_arrays(100,"soln","sales_order_lines")
-      
+
       add_fields CoreModule::DELIVERY, [
         [1,:del_ref,:reference,"Reference",{:data_type=>:string}],
         [2,:del_mode,:mode,"Mode",{:data_type=>:string}],
@@ -2117,7 +2126,7 @@ and classifications.product_id = products.id
     end
   end
 
-  reload #does the reload when the class is loaded the first time 
+  reload #does the reload when the class is loaded the first time
 
   def self.find_by_uid(uid,dont_retry=false)
     uid_sym = uid.to_sym
@@ -2140,8 +2149,8 @@ and classifications.product_id = products.id
 
     # There's little point to running a reload here if we just reloaded above
     unless reloaded || dont_retry
-      #reload and try again 
-      ModelField.reload true 
+      #reload and try again
+      ModelField.reload true
       find_by_uid uid, true
     end
 
@@ -2177,7 +2186,7 @@ and classifications.product_id = products.id
     end
     ret
   end
-  
+
   def self.find_by_module_type(module_type)
     reload_if_stale
 
@@ -2189,7 +2198,7 @@ and classifications.product_id = products.id
 
     h = MODEL_FIELDS[module_type]
     # The values call below returns a new array each call
-    # ensuring that modifications to the returned array 
+    # ensuring that modifications to the returned array
     # will not affect the internal model field list
     h.nil? ? [] : h.values.to_a
   end
@@ -2198,26 +2207,26 @@ and classifications.product_id = products.id
   def self.find_by_core_module cm
     find_by_module_type cm
   end
-  
+
   def self.find_by_module_type_and_uid(type_symbol,uid_symbol)
     find_by_module_type(type_symbol).each { |mf|
       return mf if mf.uid == uid_symbol
     }
     return nil
   end
-  
+
   def self.find_by_module_type_and_custom_id(type_symbol,id)
-    find_by_module_type(type_symbol).each {|mf| 
+    find_by_module_type(type_symbol).each {|mf|
       return mf if mf.custom_id==id
       }
     return nil
   end
-  
+
   def self.sort_by_label(mf_array)
     return mf_array.sort { |a,b| a.label <=> b.label }
   end
 
-  def self.disabled_label 
+  def self.disabled_label
     "[Disabled]"
   end
 

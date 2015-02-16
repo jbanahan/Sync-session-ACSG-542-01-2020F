@@ -9,6 +9,7 @@ class Shipment < ActiveRecord::Base
   belongs_to :unlading_port, :class_name=>"Port"
   belongs_to :entry_port, :class_name=>"Port"
   belongs_to :destination_port, :class_name=>"Port"
+  belongs_to :booking_requested_by, :class_name=>"User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -19,6 +20,27 @@ class Shipment < ActiveRecord::Base
   validates_uniqueness_of :reference
 
   dont_shallow_merge :Shipment, ['id','created_at','updated_at','vendor_id','reference']
+
+
+  #########
+  # Booking Request / Accept / Cancel logic
+  #########
+  def can_request_booking? user
+    return false unless self.can_view?(user)
+    return false unless self.vendor == user.company || user.company.master?
+    return true
+  end
+  def request_booking! user, async_snapshot = false
+    self.booking_received_date = 0.seconds.ago
+    self.booking_requested_by = user
+    self.save!
+    OpenChain::EventPublisher.publish :shipment_booking_request, self
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+  def async_request_booking! user
+    self.request_booking! user, true
+  end
+
   def find_same
     f = self.reference.nil? ? [] : Shipment.where(:reference=>self.reference.to_s)
     raise "Multiple shipments wtih reference \"#{self.reference} exist." if f.size > 1

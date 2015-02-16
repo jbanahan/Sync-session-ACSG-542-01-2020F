@@ -141,6 +141,25 @@ describe Api::V1::ShipmentsController do
       expect(j['shipment']['lines'][0]['shpln_carton_set_uid']).to eq cs.id
     end
   end
+  describe "request booking" do
+    before :each do
+      @s = double("shipment")
+      Shipment.should_receive(:find).with('1').and_return @s
+    end
+    it "should error if user cannot request booking" do
+      @s.should_receive(:can_request_booking?).with(@u).and_return false
+      @s.should_not_receive(:request_booking!)
+      @s.should_not_receive(:async_request_booking!)
+      post :request_booking, id: '1'
+      expect(response.status).to eq 403
+    end
+    it "should request booking" do
+      @s.should_receive(:can_request_booking?).with(@u).and_return true
+      @s.should_receive(:async_request_booking!).with(@u)
+      post :request_booking, id: '1'
+      expect(response).to be_success
+    end
+  end
   describe "process_tradecard_pack_manifest" do
     before :each do
       @s = Factory(:shipment)

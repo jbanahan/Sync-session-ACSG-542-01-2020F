@@ -51,6 +51,44 @@ describe Shipment do
       expect(Shipment.search_secure(u,Shipment).to_a).to be_empty
     end
   end
+
+  describe "request booking" do
+    it "should set booking received date and booking request by" do
+      u = Factory(:user)
+      s = Factory(:shipment)
+      s.should_receive(:create_snapshot_with_async_option).with false, u
+      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_booking_request,s)
+      s.request_booking! u
+      s.reload
+      expect(s.booking_received_date).to_not be_nil
+      expect(s.booking_requested_by).to eq u
+    end
+  end
+
+  describe "can_request_booking?" do
+    it "should allow if user is from master & can view shipment" do
+      expect(Shipment.new.can_request_booking?(Factory(:master_user,shipment_view:true))).to be_true
+    end
+    it "should allow if user is from vendor & can view shipment" do
+      u = Factory(:user,shipment_view:true,company:Factory(:company,vendor:true))
+      s = Shipment.new
+      s.stub(:can_view?).and_return true
+      s.vendor = u.company
+      expect(s.can_request_booking?(u)).to be_true
+    end
+    it "should not allow if user cannot edit shipment" do
+      u = Factory(:user,shipment_view:false)
+      s = Shipment.new
+      s.vendor = u.company
+      expect(s.can_request_booking?(u)).to be_false
+    end
+    it "should not allow if user not from vendor or master" do
+      u = Factory(:user,shipment_view:false)
+      s = Shipment.new
+      expect(s.can_request_booking?(u)).to be_false
+    end
+  end
+
   describe "available_orders" do
     it "should find nothing if importer not set" do
       expect(Shipment.new.available_orders(User.new)).to be_empty
@@ -68,7 +106,7 @@ describe Shipment do
       end
       it "should find all orders with approval_status == Accepted where user is importer if vendor isn't set" do
         #don't find because not accepted
-        order_4 = Factory(:order,importer:@imp,vendor:@vendor_1)
+        Factory(:order,importer:@imp,vendor:@vendor_1)
         u = Factory(:user,company:@imp,order_view:true)
         expect(@s.available_orders(u).to_a).to eq [@order_1,@order_2]
       end
@@ -92,7 +130,7 @@ describe Shipment do
         expect(@s.available_orders(u).to_a).to eq [@order_1]
       end
     end
-    
+
   end
   describe "commercial_invoices" do
     it "should find linked invoices" do
@@ -130,7 +168,7 @@ describe Shipment do
     it 'should have linkable attachments' do
       s = Factory(:shipment,:reference=>'ordn')
       linkable = Factory(:linkable_attachment,:model_field_uid=>'shp_ref',:value=>'ordn')
-      linked = LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>s)
+      LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>s)
       s.reload
       s.linkable_attachments.first.should == linkable
     end

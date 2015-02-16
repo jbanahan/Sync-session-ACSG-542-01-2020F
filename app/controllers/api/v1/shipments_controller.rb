@@ -53,6 +53,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     end
   end
 
+  def request_booking
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to request a booking.",:forbidden) unless s.can_request_booking?(current_user)
+    s.async_request_booking! current_user
+    render json: {'ok'=>'ok'}
+  end
+
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
@@ -111,7 +118,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_comment_count,
       :shp_dest_port_name,
       :shp_dest_port_id,
-      :shp_cargo_ready_date
+      :shp_cargo_ready_date,
+      :shp_booking_requested_by_full_name
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     line_fields_to_render = limit_fields([
@@ -191,7 +199,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_edit:shipment.can_edit?(current_user),
       can_view:shipment.can_view?(current_user),
       can_attach:shipment.can_attach?(current_user),
-      can_comment:shipment.can_comment?(current_user)
+      can_comment:shipment.can_comment?(current_user),
+      can_request_booking:shipment.can_request_booking?(current_user)
     }
   end
   def render_lines?

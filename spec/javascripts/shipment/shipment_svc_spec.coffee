@@ -79,6 +79,14 @@ describe 'ShipmentApp', ->
         http.flush()
         expect(shp).toEqual resp
 
+    describe 'requestBooking', ->
+      it 'should request booking', ->
+        resp = {ok: 'ok'}
+        shp = {id: 10}
+        http.expectPOST('/api/v1/shipments/10/request_booking.json').respond resp
+        svc.requestBooking(shp)
+        http.flush()
+
     describe 'getParties', ->
       it 'should query companies api', ->
         resp = {'importers': [{id: 1}]}

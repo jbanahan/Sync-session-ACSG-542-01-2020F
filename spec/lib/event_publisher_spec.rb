@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::EventPublisher do
   before :each do
-    #spec_helper stubs EventPublisher.publish so events aren't constantly published in other tests.  
+    #spec_helper stubs EventPublisher.publish so events aren't constantly published in other tests.
     #We need to reset it here to allow these tests to call the method
     OpenChain::EventPublisher.rspec_reset
   end
@@ -32,8 +32,8 @@ describe OpenChain::EventPublisher do
         expect(b['id']).to eq 7
         expect(b['api_token']).to eq 'abc:def'
         expect(b['link']).to eq 'https://abc/orders/7'
-        expect(b['short_message']).to match /CORD/
-        expect(b['long_message']).to match /CORD/
+        expect(b['short_message']).to match(/CORD/)
+        expect(b['long_message']).to match(/CORD/)
       end
       OpenChain::EventPublisher.publish(:order_reopen,o)
     end

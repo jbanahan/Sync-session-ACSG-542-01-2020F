@@ -69,6 +69,11 @@ module OpenChain; class EventPublisher
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
         lambda {|obj| "Order #{obj.customer_order_number} updated."},
         lambda {|obj| "Order #{obj.customer_order_number} updated."}
+      ),
+      shipment_booking_request: MessageType.new('SHIPMENT_BOOK_REQ',
+        lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
+        lambda {|obj| "Shipment #{obj.reference} booking requested."},
+        lambda {|obj| "Shipment #{obj.reference} booking requested."}
       )
     }
 
@@ -77,7 +82,7 @@ module OpenChain; class EventPublisher
       h = mp.to_h(obj)
       # Delaying to both ensure delivery, since delayed jobs will retry in the event sqs queue is not reachable,
       # and ensure all messages are only published if the outer transaction
-      # actually completes (.ie not rolled back due to some greater error). If we didn't do this and the 
+      # actually completes (.ie not rolled back due to some greater error). If we didn't do this and the
       # object persist that's generally called prior to this method rolled back
       # then the message that was published would not accurately describe the state of the object.
       self.delay.send_queue_message(QUEUES[Rails.env], h.to_json)

@@ -84,6 +84,10 @@
               <p class="form-control-static" id="shp_booking_received_date">{{shp.shp_booking_received_date}}</p>
             </div>
             <div class="form-group">
+              <label for="shp_booking_requested_by_full_name" class="control-label">Booking Requested By</label>
+              <p class="form-control-static" id="shp_booking_requested_by_full_name">{{shp.shp_booking_requested_by_full_name}}</p>
+            </div>
+            <div class="form-group">
               <label for="shp_booking_confirmed_date" class="control-label">Booking Confirmed</label>
               <p class="form-control-static" id="shp_booking_confirmed_date">{{shp.shp_booking_confirmed_date}}</p>
             </div>
@@ -304,13 +308,12 @@
             </div>
           </div> <!--end lines section -->
         </div>
-        <div role="tabpanel" class="tab-pane" id="messages">...</div>
-        <div role="tabpanel" class="tab-pane" id="settings">...</div>
       </div>
-
     </div>
   </div>
   <div chain-action-bar include-workflow='yes'>
-    <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='edit()'>Edit</button>
+    <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='edit()' title='Edit Shipment'><i class='fa fa-edit'></i></button>
+    <button ng-show='shp.permissions.can_request_booking' class='btn btn-default' ng-click='requestBooking(shp)'>Request Booking</button>
+    <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>
   </div>
 </chain-loading-wrapper>

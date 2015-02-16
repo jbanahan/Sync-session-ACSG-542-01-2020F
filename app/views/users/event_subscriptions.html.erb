@@ -1,4 +1,4 @@
-<% 
+<%
   subs = @user.event_subscriptions
   email_subs = subs.collect {|s| s.email? ? s.event_type : nil}
 %>
@@ -79,6 +79,10 @@
               <td>Comment</td>
               <td><input type='checkbox' event_type='SHIPMENT_COMMENT_CREATE' sub_type='email' <%=email_subs.include?('SHIPMENT_COMMENT_CREATE') ? 'checked="checked"' : ""%> </td>
             </tr>
+            <tr>
+              <td>Booking Request</td>
+              <td><input type='checkbox' event_type='SHIPMENT_BOOK_REQ' sub_type='email' <%=email_subs.include?('SHIPMENT_BOOK_REQ') ? 'checked="checked"' : ""%> </td>
+            </tr>
           <%end%>
         </tbody>
       </table>
@@ -107,8 +111,8 @@ $('document').ready(function() {
       type: "POST",
       url: '/api/v1/users/<%=@user.id%>/event_subscriptions',
       data: JSON.stringify({event_subscriptions:toSendArray}),
-      // dataType: 'json', 
-      headers: { 
+      // dataType: 'json',
+      headers: {
         Accept : "application/json",
         "Content-Type": "application/json"
       }
