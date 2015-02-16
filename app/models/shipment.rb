@@ -1,5 +1,5 @@
 class Shipment < ActiveRecord::Base
-  include CoreObjectSupport	
+  include CoreObjectSupport
 	belongs_to	:carrier, :class_name => "Company"
 	belongs_to  :vendor,  :class_name => "Company"
 	belongs_to	:ship_from,	:class_name => "Address"
@@ -9,7 +9,7 @@ class Shipment < ActiveRecord::Base
   belongs_to :unlading_port, :class_name=>"Port"
   belongs_to :entry_port, :class_name=>"Port"
   belongs_to :destination_port, :class_name=>"Port"
-	
+
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :piece_sets, :through=>:shipment_lines
@@ -37,8 +37,8 @@ class Shipment < ActiveRecord::Base
     CommercialInvoice.
       joins(:commercial_invoice_lines=>[:piece_sets=>[:shipment_line]]).
       where("shipment_lines.shipment_id = ?",self.id).uniq
-  end 
-	def self.modes 
+  end
+	def self.modes
 	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']
 	end
 
@@ -49,12 +49,12 @@ class Shipment < ActiveRecord::Base
     return false unless imp && (imp==user.company || imp.linked_company?(user.company))
 	  return (user.company == self.vendor || user.company == self.carrier || user.company = self.importer || (self.vendor && self.vendor.linked_companies.include?(user.company)))
 	end
-	
+
 	def can_edit?(user)
 	  #same rules as view
 	  return user.edit_shipments? && can_view?(user)
 	end
-  
+
   def can_comment?(user)
     return user.comment_shipments? && self.can_view?(user)
   end
@@ -62,13 +62,13 @@ class Shipment < ActiveRecord::Base
   def can_attach?(user)
     return user.attach_shipments? && self.can_view?(user)
   end
-	
+
 	def locked?
 	  (!self.vendor.nil? && self.vendor.locked?) ||
 	  (!self.carrier.nil? && self.carrier.locked?)
 	end
-	
-	def self.search_secure user, base_object
+
+  def self.search_secure user, base_object
     base_object.where search_where user
   end
 
