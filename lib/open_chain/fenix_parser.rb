@@ -214,10 +214,26 @@ module OpenChain
       entry.duty_due_date = parse_date(line[56])
       entry.entry_filed_date = entry.across_sent_date = parse_date_time(line, 57)
       entry.first_release_date = entry.pars_ack_date = parse_date_time(line,59)
-      entry.pars_reject_date = parse_date_time(line,61) 
-      entry.release_date = parse_date_time(line,65)
-      entry.cadex_accept_date = parse_date_time(line,67)
-      entry.cadex_sent_date = parse_date_time(line,69)
+      entry.pars_reject_date = parse_date_time(line,61)
+
+      # We get 3 date values via a separate LVS file feed from Fenix for low-value entries
+      # These are K84 Receive Date, Release Date, and Cadex Accept.
+      # A b3 file generally follows the LVS file, but it likely doesn't have any of these 
+      # date values, so we don't want to blank them out if the LVS came through.
+      # If the K84 Receive date has been set, then we've received the LVS file for an entry,
+      # In these cases the release date and cadex date should only update the entry if they 
+      # have a value in them
+
+      if entry.k84_receive_date.nil?
+        entry.release_date = parse_date_time(line,65)
+        entry.cadex_accept_date = parse_date_time(line,67)
+        entry.cadex_sent_date = parse_date_time(line,69)
+      else
+        entry.release_date = ((dt = parse_date_time(line,65)).blank? ? entry.release_date : dt)
+        entry.cadex_accept_date = ((dt = parse_date_time(line,67)).blank? ? entry.cadex_accept_date : dt)
+        entry.cadex_sent_date = ((dt = parse_date_time(line,69)).blank? ? entry.cadex_sent_date : dt)
+      end
+
       entry.release_type = str_val(line[89])
       entry.employee_name = str_val(line[88])
       entry.po_numbers = str_val(line[14])

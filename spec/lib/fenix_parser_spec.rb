@@ -556,6 +556,29 @@ describe OpenChain::FenixParser do
     expect(Entry.where(id: shell_entry.id).first).to be_nil
   end
 
+  it "does not blank out release date or cadex accept date if LVS file has been received" do
+    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
+    @release_date = ','
+    @cadex_accept_date = ','
+    @cadex_sent_date = ','
+
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    expect(ent.cadex_accept_date.to_i).to eq entry.cadex_accept_date.to_i
+    expect(ent.cadex_sent_date.to_i).to eq entry.cadex_sent_date.to_i
+    expect(ent.release_date.to_i).to eq entry.release_date.to_i
+  end
+
+  it "allows updates (but not blanks) to release date / cadex accept if LVS file has been received" do
+    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
+  
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    expect(ent.cadex_accept_date.strftime("%m/%d/%Y")).to eq @cadex_accept_date[0, 10]
+    expect(ent.cadex_sent_date.strftime("%m/%d/%Y")).to eq @cadex_sent_date[0, 10]
+    expect(ent.release_date.strftime("%m/%d/%Y")).to eq @release_date[0, 10]
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
