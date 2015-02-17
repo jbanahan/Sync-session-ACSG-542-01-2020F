@@ -9,8 +9,8 @@ class InstanceInformation < ActiveRecord::Base
     ii.last_check_in = 0.seconds.ago
     ii.version = MasterSetup.current_code_version
     # Only needed for initial migration run since instance information is referenced in initailizers
-    ii.name = server_name if respond_to?(:name)
-    ii.role = server_role if respond_to?(:role)
+    ii.name = server_name if ii.respond_to?(:name=)
+    ii.role = server_role if ii.respond_to?(:role=)
     ii.save
     ii
   end
