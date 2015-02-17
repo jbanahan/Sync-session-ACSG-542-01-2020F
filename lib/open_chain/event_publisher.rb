@@ -74,6 +74,16 @@ module OpenChain; class EventPublisher
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
         lambda {|obj| "Shipment #{obj.reference} booking requested."},
         lambda {|obj| "Shipment #{obj.reference} booking requested."}
+      ),
+      shipment_booking_confirm: MessageType.new('SHIPMENT_BOOK_CONFIRM',
+        lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
+        lambda {|obj| "Shipment #{obj.reference} booking confirmed."},
+        lambda {|obj| "Shipment #{obj.reference} booking confirmed."}
+      ),
+      shipment_booking_approve: MessageType.new('SHIPMENT_BOOK_APPROVE',
+        lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
+        lambda {|obj| "Shipment #{obj.reference} booking approved."},
+        lambda {|obj| "Shipment #{obj.reference} booking approved."}
       )
     }
 

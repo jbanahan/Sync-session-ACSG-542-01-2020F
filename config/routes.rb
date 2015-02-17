@@ -15,6 +15,8 @@ OpenChain::Application.routes.draw do
       resources :shipments, only: [:index,:show,:create,:update] do
         post :process_tradecard_pack_manifest, on: :member
         post :request_booking, on: :member
+        post :approve_booking, on: :member
+        post :confirm_booking, on: :member
         get :available_orders, on: :member
       end
       resources :fields, only: [:index]

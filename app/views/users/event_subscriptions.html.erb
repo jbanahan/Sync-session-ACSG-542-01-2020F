@@ -83,6 +83,14 @@
               <td>Booking Request</td>
               <td><input type='checkbox' event_type='SHIPMENT_BOOK_REQ' sub_type='email' <%=email_subs.include?('SHIPMENT_BOOK_REQ') ? 'checked="checked"' : ""%> </td>
             </tr>
+            <tr>
+              <td>Booking Approval</td>
+              <td><input type='checkbox' event_type='SHIPMENT_BOOK_APPROVE' sub_type='email' <%=email_subs.include?('SHIPMENT_BOOK_APPROVE') ? 'checked="checked"' : ""%> </td>
+            </tr>
+            <tr>
+              <td>Booking Confirmation</td>
+              <td><input type='checkbox' event_type='SHIPMENT_BOOK_CONFIRM' sub_type='email' <%=email_subs.include?('SHIPMENT_BOOK_CONFIRM') ? 'checked="checked"' : ""%> </td>
+            </tr>
           <%end%>
         </tbody>
       </table>

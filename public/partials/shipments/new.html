@@ -1,0 +1,26 @@
+<chain-loading-wrapper loading-flag='{{parties ? "" : "loading"}}'>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">New Shipment</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="shp_ref">Reference</label>
+              <input type="text" class="form-control" ng-model="shp.shp_ref">
+            </div>
+            <div class="form-group">
+              <label for='shp_imp_syscode'>Importer</label>
+              <select id='shp_imp_syscode' ng-model='shp.shp_imp_syscode' ng-options='c.system_code as c.name for c in parties.importers' class='form-control'></select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div chain-action-bar>
+    <button ng-disabled='!shp.shp_ref.length > 0 || !shp.shp_imp_syscode.length > 0' class='btn btn-default' ng-click='save(shp)'>Save</button>
+  </div>
+</chain-loading-wrapper>

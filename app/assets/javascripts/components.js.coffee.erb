@@ -27,6 +27,39 @@
   }
 ]
 
+# Make a bootstrap panel with view content and button to edit w/ modal
+#
+# view-template = url of template for view content
+# edit-if = show the edit button if true
+# edit-template = url of modal content
+# panel-title = title of view panel
+# before-edit = method called before modal is displayed
+# on-save = method called when save is clicked on modal
+# panel-class = class for panel (panel-default, panel-primary, etc)
+@components.directive 'chainViewEdit', ->
+  {
+    restrict: 'E'
+    scope: {
+      viewTemplate: '@'
+      editTemplate: '@'
+      panelTitle: '@'
+      panelClass: '@'
+      editIf: '='
+      beforeEdit: '&'
+      onSave: '&'
+    }
+    templateUrl: '/partials/components/chain_view_edit.html'
+    link: (scope,el,attrs) ->
+      scope.outerScope = scope.$parent
+      jqEl = $(el)
+      jqEl.find('.chain-edit-btn').click ->
+        scope.$apply(scope.beforeEdit()) if scope.beforeEdit
+        jqEl.find('.modal:first').modal('show')
+      jqEl.find('.chain-save-btn').click ->
+        scope.$apply(scope.onSave()) if scope.onSave
+        jqEl.find('.modal:first').modal('hide')
+  }
+
 # Transcludes it's content in a wrapper that hides the content and replaces it with a loading message
 # whenever the loading-flag property is set to "loading"
 @components.directive 'chainLoadingWrapper', ->

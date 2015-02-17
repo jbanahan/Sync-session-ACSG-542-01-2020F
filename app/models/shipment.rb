@@ -10,6 +10,8 @@ class Shipment < ActiveRecord::Base
   belongs_to :entry_port, :class_name=>"Port"
   belongs_to :destination_port, :class_name=>"Port"
   belongs_to :booking_requested_by, :class_name=>"User"
+  belongs_to :booking_confirmed_by, :class_name=>"User"
+  belongs_to :booking_approved_by, :class_name=>"User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -23,7 +25,7 @@ class Shipment < ActiveRecord::Base
 
 
   #########
-  # Booking Request / Accept / Cancel logic
+  # Booking Request / Approve / Confirm
   #########
   def can_request_booking? user
     return false unless self.can_view?(user)
@@ -39,6 +41,40 @@ class Shipment < ActiveRecord::Base
   end
   def async_request_booking! user
     self.request_booking! user, true
+  end
+
+  def can_approve_booking? user
+    return false unless self.booking_received_date
+    return false unless self.can_edit?(user)
+    return false unless self.importer == user.company || user.company.master?
+    return true
+  end
+  def approve_booking! user, async_snapshot = false
+    self.booking_approved_date = 0.seconds.ago
+    self.booking_approved_by = user
+    self.save!
+    OpenChain::EventPublisher.publish :shipment_booking_approve, self
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+  def async_approve_booking! user
+    self.approve_booking! user, true
+  end
+
+  def can_confirm_booking? user
+    return false unless self.booking_received_date
+    return false unless self.can_edit?(user)
+    return false unless self.carrier == user.company || user.company.master?
+    return true
+  end
+  def confirm_booking! user, async_snapshot = false
+    self.booking_confirmed_date = 0.seconds.ago
+    self.booking_confirmed_by = user
+    self.save!
+    OpenChain::EventPublisher.publish :shipment_booking_confirm, self
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+  def async_confirm_booking! user
+    self.confirm_booking! user, true
   end
 
   def find_same

@@ -1982,7 +1982,26 @@ and classifications.product_id = products.id
           },
           :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.booking_requested_by_id)",
           :data_type=>:string
-        }]
+        }],
+        [35,:shp_booking_confirmed_by_full_name,:username,"Booking Confirmed By", {
+          :import_lambda => lambda {|a,b| return "Booking Confirmed By cannot be set by import, ignored."},
+          :export_lambda => lambda {|obj|
+            u = obj.booking_confirmed_by
+            u.blank? ? "" : u.full_name
+          },
+          :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.booking_confirmed_by_id)",
+          :data_type=>:string
+        }],
+        [36,:shp_booking_approved_by_full_name,:username,"Booking Approved By", {
+          :import_lambda => lambda {|a,b| return "Booking Approved By cannot be set by import, ignored."},
+          :export_lambda => lambda {|obj|
+            u = obj.booking_approved_by
+            u.blank? ? "" : u.full_name
+          },
+          :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.booking_approved_by_id)",
+          :data_type=>:string
+        }],
+        [37,:shp_booking_approved_date,:booking_approved_date,"Booking Approved Date",{data_type: 'date', read_only: true}]
       ]
       add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -2076,7 +2095,14 @@ and classifications.product_id = products.id
         [7,:con_teus,:teus,"TEUs",{data_type: :integer}],
         [8,:con_fcl_lcl,:fcl_lcl,"Full Container",{data_type: :string}],
         [9,:con_quantity,:quantity,"AMS Qauntity",{data_type: :integer}],
-        [10,:con_uom,:uom,"AMS UOM",{data_type: :string}]
+        [10,:con_uom,:uom,"AMS UOM",{data_type: :string}],
+        [11,:con_shipment_line_count,:shipment_line_count,"Shipment Line Count",{data_type: :integer,
+          import_lambda: lambda {|con,data| return "Shipment line count cannot be set by import."},
+          export_lambda: lambda {|con| con.shipment_lines.size},
+          qualified_field_name: "(SELECT count(*) FROM shipment_lines WHERE shipment_lines.container_id = containers.id)",
+          history_ignore: true,
+          read_only: true
+        }]
       ]
       add_fields CoreModule::CARTON_SET, [
         [1,:cs_starting_carton,:starting_carton,"Starting Carton",{data_type: :integer}],

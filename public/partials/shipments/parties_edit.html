@@ -1,0 +1,7 @@
+<div ng-hide='outerScope.parties' class='loader'>Parties loading</div>
+<div ng-show='outerScope.parties'>
+  <label for='shp_car_syscode'>Carrier</label>
+  <select id='shp_car_syscode' ng-model='outerScope.partiesEditObj.shp_car_syscode' ng-options='c.system_code as c.name for c in outerScope.parties.carriers' class='form-control'></select>
+  <label for='shp_imp_syscode'>Importer</label>
+  <select id='shp_imp_syscode' ng-model='outerScope.partiesEditObj.shp_imp_syscode' ng-options='c.system_code as c.name for c in outerScope.parties.importers' class='form-control'></select>
+</div>

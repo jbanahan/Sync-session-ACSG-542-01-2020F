@@ -44,9 +44,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       currentShipment = null
       s = prepForSave shipment
       if shipment.id && shipment.id > 0
-        $http.put('/api/v1/shipments/'+s.id+'.json', {shipment: s, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
+        $http.put('/api/v1/shipments/'+s.id+'.json', {shipment: s, no_lines: 'true'}).then(getShipmentSuccessHandler)
       else
-        $http.post('/api/v1/shipments',{shipment: s, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
+        $http.post('/api/v1/shipments',{shipment: s, no_lines: 'true'}).then(getShipmentSuccessHandler)
 
     getParties: ->
       $http.get('/api/v1/companies?roles=importer,carrier')
@@ -58,9 +58,16 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       $http.get('/api/v1/orders/'+id)
 
     processTradecardPackManifest: (shp, attachment) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest', {attachment_id: attachment.id, include: 'order_lines,attachments'}).then(getShipmentSuccessHandler)
+      $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest', {attachment_id: attachment.id, no_lines: 'true'}).then(getShipmentSuccessHandler)
 
     requestBooking: (shp) ->
       $http.post('/api/v1/shipments/'+shp.id+'/request_booking.json',{id: shp.id}) #need some json content for API controller
+
+    approveBooking: (shp) ->
+      $http.post('/api/v1/shipments/'+shp.id+'/approve_booking.json',{id: shp.id}) #need some json content for API controller
+
+    confirmBooking: (shp) ->
+      $http.post('/api/v1/shipments/'+shp.id+'/confirm_booking.json',{id: shp.id}) #need some json content for API controller
+
   }
 ]

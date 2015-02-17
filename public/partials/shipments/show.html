@@ -9,170 +9,18 @@
   <div class='container'>
     <div class="row"> <!-- start ship header -->
       <div class="col-md-4">
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Shipment</h3>
-          </div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label class="control-label" for="shp_ref">Reference</label>
-              <p class="form-control-static" id='shp_ref'>{{shp.shp_ref}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_importer_reference" class="control-label">Importer Reference</label>
-              <p class="form-control-static" id="shp_importer_reference">{{shp.shp_importer_reference}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_master_bill_of_lading" class="control-label">Master Bill</label>
-              <p class="form-control-static" id="shp_master_bill_of_lading">{{shp.shp_master_bill_of_lading}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_house_bill_of_lading" class="control-label">House Bill</label>
-              <p class="form-control-static" id="shp_house_bill_of_lading">{{shp.shp_house_bill_of_lading}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_booking_number" class="control-label">Booking #</label>
-              <p class="form-control-static" id="shp_booking_number">{{shp.shp_booking_number}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_receipt_location" class="control-label">Receipt Location</label>
-              <p class="form-control-static" id="shp_receipt_location">{{shp.shp_receipt_location}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_dest_port_name" class="control-label">Destination Port</label>
-              <p class="form-control-static" id="shp_dest_port_name">{{shp.shp_dest_port_name}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_freight_terms" class="control-label">Freight Terms</label>
-              <p class="form-control-static" id="shp_freight_terms">{{shp.shp_freight_terms}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_lcl" class="control-label">LCL Flag</label>
-              <p class="form-control-static" id="shp_lcl">{{shp.shp_lcl ? "Y" : ""}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_shipment_type" class="control-label">Shipment Type</label>
-              <p class="form-control-static" id="shp_shipment_type">{{shp.shp_shipment_type}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_vessel" class="control-label">Vessel</label>
-              <p class="form-control-static" id="shp_vessel">{{shp.shp_vessel}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_voyage" class="control-label">Voyage</label>
-              <p class="form-control-static" id="shp_voyage">{{shp.shp_voyage}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_vessel_carrier_scac" class="control-label">Vessel SCAC</label>
-              <p class="form-control-static" id="shp_vessel_carrier_scac">{{shp.shp_vessel_carrier_scac}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_mode" class="control-label">Mode</label>
-              <p class="form-control-static" id="shp_mode">{{shp.shp_mode}}</p>
-            </div>
-          </div>
-        </div>
+        <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/header_view.html' edit-template='/partials/shipments/header_edit.html'
+          panel-title='Shipment' panel-class='panel-primary' before-edit='prepShipmentHeaderEditObject(shp)' on-save='saveShipment(header)'></chain-view-edit>
       </div>
       <div class="col-md-4">
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Booking</h3>
-          </div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label for="shp_booking_received_date" class="control-label">Booking Received</label>
-              <p class="form-control-static" id="shp_booking_received_date">{{shp.shp_booking_received_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_booking_requested_by_full_name" class="control-label">Booking Requested By</label>
-              <p class="form-control-static" id="shp_booking_requested_by_full_name">{{shp.shp_booking_requested_by_full_name}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_booking_confirmed_date" class="control-label">Booking Confirmed</label>
-              <p class="form-control-static" id="shp_booking_confirmed_date">{{shp.shp_booking_confirmed_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_booking_cutoff_date" class="control-label">Booking Cutoff</label>
-              <p class="form-control-static" id="shp_booking_cutoff_date">{{shp.shp_booking_cutoff_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_booking_est_departure_date" class="control-label">Est Departure Date - Booked</label>
-              <p class="form-control-static" id="shp_booking_est_departure_date">{{shp.shp_booking_est_departure_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_cargo_ready_date" class="control-label">Cargo Ready Date</label>
-              <p class="form-control-static" id="shp_cargo_ready_date">{{shp.shp_cargo_ready_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_booking_est_arrival_date" class="control-label">Est Arrival Date - Booked</label>
-              <p class="form-control-static" id="shp_booking_est_arrival_date">{{shp.shp_booking_est_arrival_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_booking_shipment_type" class="control-label">Booked Shipment Type</label>
-              <p class="form-control-static" id="shp_booking_shipment_type">{{shp.shp_booking_shipment_type}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_booking_mode" class="control-label">Booked Mode</label>
-              <p class="form-control-static" id="shp_booking_mode">{{shp.shp_booking_mode}}</p>
-            </div>
-          </div>
-        </div>
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Parties</h3>
-          </div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label for="shp_car_name" class="control-label">Carrier</label>
-              <p class="form-control-static" id="shp_car_name">{{shp.shp_car_name}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_imp_name" class="control-label">Importer</label>
-              <p class="form-control-static" id="shp_imp_name">{{shp.shp_imp_name}}</p>
-            </div>
-          </div>
-        </div>
+        <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/booking_view.html' edit-template='/partials/shipments/booking_edit.html'
+          panel-title='Booking' panel-class='panel-primary' before-edit='prepBookingEditObject(shp)' on-save='saveShipment(booking)'></chain-view-edit>
+        <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/parties_view.html' edit-template='/partials/shipments/parties_edit.html'
+          panel-title='Parties' panel-class='panel-primary' before-edit='prepPartiesEditObject(shp)' on-save='saveShipment(partiesEditObj)'></chain-view-edit>
       </div>
       <div class="col-md-4">
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Tracking</h3>
-          </div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label for="shp_est_departure_date" class="control-label">Est Departure Date</label>
-              <p class="form-control-static" id="shp_est_departure_date">{{shp.shp_est_departure_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_est_arrival_port_date" class="control-label">Est Arrival Date</label>
-              <p class="form-control-static" id="shp_est_arrival_port_date">{{shp.shp_est_arrival_port_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_est_delivery_date" class="control-label">Est Delivery Date</label>
-              <p class="form-control-static" id="shp_est_delivery_date">{{shp.shp_est_delivery_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_docs_received_date" class="control-label">Docs Received Date</label>
-              <p class="form-control-static" id="shp_docs_received_date">{{shp.shp_docs_received_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_cargo_on_hand_date" class="control-label">Cargo On Hand Date</label>
-              <p class="form-control-static" id="shp_cargo_on_hand_date">{{shp.shp_cargo_on_hand_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_departure_date" class="control-label">Departure Date</label>
-              <p class="form-control-static" id="shp_departure_date">{{shp.shp_departure_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_arrival_port_date" class="control-label">Arrival Date</label>
-              <p class="form-control-static" id="shp_arrival_port_date">{{shp.shp_arrival_port_date}}</p>
-            </div>
-            <div class="form-group">
-              <label for="shp_delivered_date" class="control-label">Delivered Date</label>
-              <p class="form-control-static" id="shp_delivered_date">{{shp.shp_delivered_date}}</p>
-            </div>
-          </div>
-        </div>
+        <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/tracking_view.html' edit-template='/partials/shipments/tracking_edit.html'
+          panel-title='Parties' panel-class='panel-primary' before-edit='prepTrackingEditObject(shp)' on-save='saveShipment(tracking)'></chain-view-edit>
       </div>
     </div> <!-- end ship header -->
     <hr />
@@ -214,8 +62,7 @@
           </div>
           <div class="panel-body">
             <div ng-repeat='con in shp.containers'>
-              <div class="panel" ng-class="{'panel-info':!con._destroy,'panel-danger':con._destroy}">
-                <div class="panel-heading" ng-show="con._destroy">Will Be Deleted</div>
+              <div class="panel panel-info">
                 <div class="panel-body">
                   <div class="row" >
                     <div class="col-md-4">
@@ -232,88 +79,167 @@
                     </div>
                   </div>
                 </div>
+                <div ng-show='$parent.shp.permissions.can_edit' class="panel-footer text-right">
+                  <button class="btn btn-danger btn-sm" title='{{con.con_shipment_line_count > 0 ? "Remove lines from container first." : "Delete"}}' ng-disabled='con.con_shipment_line_count > 0' ng-click='$parent.deleteContainer($parent.shp,con)'><i class="fa fa-trash"></i></button>
+                  <button class="btn btn-default btn-sm" title='Edit' ng-click='$parent.editContainer(con)' data-toggle='modal' data-target='#mod_new_container'><i class="fa fa-edit"></i></button>
+                </div>
               </div>
+            </div>
+          </div>
+          <div ng-show='shp.permissions.can_edit' class="panel-footer text-right">
+            <button class='btn btn-sm btn-success' data-toggle='modal' data-target='#mod_new_container' ng-click='editContainer()'><i class='fa fa-plus'></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade panel-modal" id='mod_new_container' tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">Edit Container</h4>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="nc_con_container_number">Container Number</label>
+                <input type="text" class='form-control' id='nc_con_container_number' ng-model="containerToEdit.con_container_number">
+              </div>
+              <div class="form-group">
+                <label for="nc_con_container_size">Container Size</label>
+                <input type="text" class='form-control' id='nc_con_container_size' ng-model="containerToEdit.con_container_size">
+              </div>
+              <div class="form-group">
+                <label for="nc_con_seal_number">Seal Number(s)</label>
+                <input type="text" class='form-control' id="nc_con_seal_number" ng-model="containerToEdit.con_seal_number">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" ng-click='saveContainer(shp,containerToEdit)' data-dismiss="modal">Save changes</button>
             </div>
           </div>
         </div>
       </div>
     </div> <!-- end container section-->
     <hr />
-    <div role="tabpanel">
-
-      <!-- Nav tabs -->
-      <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active"><a data-target="#line_summary" aria-controls="line_summary" role="tab" data-toggle="tab">Summary</a></li>
-        <li role="presentation"><a ng-click="loadLines(shp)" data-target="#line_detail" aria-controls="line_detail" role="tab" data-toggle="tab">Detail</a></li>
-      </ul>
-
-      <!-- Tab panes -->
-      <div class="tab-content">
-        <div role="tabpanel" class="tab-pane active" id="line_summary">
-          <chain-ship-detail-summary shipment='shp'></chain-ship-detail-summary>
-        </div>
-        <div role="tabpanel" class="tab-pane" id="line_detail">
-          <div class="container-fluid">  <!--start lines section -->
-            <div class="row">
-              <div class='col-md-12' ng-hide='shp.lines'>
-                <div class='loader'>Loading</div>
-              </div>
-              <div class="col-md-12" ng-show='shp.lines'>
-                <h2>
-                  Lines
-                </h2>
-                <div>
-                  <table class='table table-striped'>
-                    <thead>
-                      <tr>
-                        <th>Line #</th>
-                        <th>Product</th>
-                        <th>Order Number - Line</th>
-                        <th>Quantity</th>
-                        <th>Cartons</th>
-                        <th>Volume (CBMS)</th>
-                        <th>Gross Weight (KGS)</th>
-                        <th>Container</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
-                        <td>{{ln.shpln_line_number}}</td>
-                        <td>{{ln.shpln_puid}}</td>
-                        <td>
-                          <div ng-repeat='ol in ln.order_lines'>
-                            <a href='/orders/{{ol.order_id}}'>{{ol.ord_cust_ord_no}} - {{ol.ordln_line_number}}</a>
-                          </div>
-                        </td>
-                        <td>
-                          {{ln.shpln_shipped_qty}}
-                        </td>
-                        <td>
-                          {{ln.shpln_carton_qty}}
-                        </td>
-                        <td>
-                          {{ln.shpln_cbms}}
-                        </td>
-                        <td>
-                          {{ln.shpln_gross_kgs}}
-                        </td>
-                        <td>
-                          {{ln.shpln_container_number}}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">Lines</h3>
+      </div>
+      <div class="panel-body">
+        <div role="tabpanel">
+          <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a data-target="#line_summary" aria-controls="line_summary" role="tab" data-toggle="tab">Summary</a></li>
+            <li role="presentation"><a ng-click="loadLines(shp)" data-target="#line_detail" aria-controls="line_detail" role="tab" data-toggle="tab">Detail</a></li>
+          </ul>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane active" id="line_summary">
+              <chain-ship-detail-summary shipment='shp'></chain-ship-detail-summary>
             </div>
-          </div> <!--end lines section -->
+            <div role="tabpanel" class="tab-pane" id="line_detail">
+              <div class="container-fluid">  <!--start lines section -->
+                <div class="row">
+                  <div class='col-md-12' ng-hide='shp.lines'>
+                    <div class='loader'>Loading</div>
+                  </div>
+                  <div class="col-md-12" ng-show='shp.lines'>
+                    <table class='table table-striped'>
+                      <thead>
+                        <tr>
+                          <th>Line #</th>
+                          <th>Product</th>
+                          <th>Order Number - Line</th>
+                          <th>Quantity</th>
+                          <th>Cartons</th>
+                          <th>Volume (CBMS)</th>
+                          <th>Gross Weight (KGS)</th>
+                          <th>Container</th>
+                          <th ng-show='shp.permissions.can_edit'></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
+                          <td>{{ln.shpln_line_number}}</td>
+                          <td>{{ln.shpln_puid}}</td>
+                          <td>
+                            <div ng-repeat='ol in ln.order_lines'>
+                              <a href='/orders/{{ol.order_id}}'>{{ol.ord_cust_ord_no}} - {{ol.ordln_line_number}}</a>
+                            </div>
+                          </td>
+                          <td>
+                            {{ln.shpln_shipped_qty}}
+                          </td>
+                          <td>
+                            {{ln.shpln_carton_qty}}
+                          </td>
+                          <td>
+                            {{ln.shpln_cbms}}
+                          </td>
+                          <td>
+                            {{ln.shpln_gross_kgs}}
+                          </td>
+                          <td>
+                            {{ln.shpln_container_number}}
+                          </td>
+                          <td ng-show='shp.permissions.can_edit' class='text-right'>
+                            <button class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                            <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="modal fade panel-modal" id='mod_edit_line' tabindex="-1" role="dialog" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Edit Line</h4>
+                      </div>
+                      <div class="modal-body">
+                        <div class="form-group">
+                          <label for="shpln_shipped_qty">Quantity</label>
+                          <input type="number" class='form-control' id='shpln_shipped_qty' ng-model="lineToEdit.shpln_shipped_qty">
+                        </div>
+                        <div class="form-group">
+                          <label for="shpln_carton_qty">Cartons</label>
+                          <input type="number" class='form-control' id='shpln_carton_qty' ng-model="lineToEdit.shpln_carton_qty">
+                        </div>
+                        <div class="form-group">
+                          <label for="shpln_cbms">CBMs</label>
+                          <input type="number" class='form-control' id='shpln_cbms' ng-model="lineToEdit.shpln_cbms">
+                        </div>
+                        <div class="form-group">
+                          <label for="shpln_gross_kgs">Gross KGS</label>
+                          <input type="number" class='form-control' id='shpln_gross_kgs' ng-model="lineToEdit.shpln_gross_kgs">
+                        </div>
+                        <div class="form-group">
+                          <label for="shpln_container_uid">Container</label>
+                          <select ng-model='lineToEdit.shpln_container_uid' class='form-control' ng-options='c.con_uid as c.con_container_number for c in shp.containers'>
+                            <option></option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" ng-click='saveLine(shp,lineToEdit)' data-dismiss="modal">Save changes</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div> <!--end lines section -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
   <div chain-action-bar include-workflow='yes'>
-    <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='edit()' title='Edit Shipment'><i class='fa fa-edit'></i></button>
     <button ng-show='shp.permissions.can_request_booking' class='btn btn-default' ng-click='requestBooking(shp)'>Request Booking</button>
+    <button ng-show='shp.permissions.can_approve_booking' class='btn btn-default' ng-click='approveBooking(shp)'>Approve Booking</button>
+    <button ng-show='shp.permissions.can_confirm_booking' class='btn btn-default' ng-click='confirmBooking(shp)'>Confirm Booking</button>
+    <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
+    <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='showProcessManifest()' ng-show='shp && shp.attachments.length > 0'>Process Manifest</button>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>
   </div>
 </chain-loading-wrapper>

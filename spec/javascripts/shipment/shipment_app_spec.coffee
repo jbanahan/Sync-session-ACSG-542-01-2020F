@@ -117,8 +117,8 @@ describe 'ShipmentApp', ->
           ]}
         shp = {shp_ref: 'x', id: 3}
         expected = {shp_ref: 'x', id: 3, lines: [
-          {shpln_line_number: 1, shpln_puid: 'SKU1' ,shpln_pname: 'CHAIR', linked_order_line_id: 2, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '10'}],shpln_shipped_qty: 3}
-          {shpln_line_number: 2, shpln_puid: 'SKU2' ,shpln_pname: 'HAT', linked_order_line_id: 4, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '20'}],shpln_shipped_qty: 7}
+          {shpln_puid: 'SKU1' ,shpln_pname: 'CHAIR', linked_order_line_id: 2, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '10'}],shpln_shipped_qty: 3}
+          {shpln_puid: 'SKU2' ,shpln_pname: 'HAT', linked_order_line_id: 4, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '20'}],shpln_shipped_qty: 7}
           ]}
         scope.addOrderToShipment shp, ord, null
         expect(shp).toEqual expected
@@ -134,84 +134,3 @@ describe 'ShipmentApp', ->
         r.resolve(shipment: {id: 10})
         expect(scope.addOrderToShipment).toHaveBeenCalled()
         expect(svc.saveShipment).toHaveBeenCalled()
-
-  describe 'ShipmentEditCtrl', ->
-    ctrl = svc = scope = q = null
-
-    beforeEach ->
-      module ($provide) ->
-        $provide.value('shipmentId',null)
-        null #must return null not the provider
-
-      inject ($rootScope,$controller,shipmentSvc,$q) ->
-        scope = $rootScope.$new()
-        svc = shipmentSvc
-        ctrl = $controller('ShipmentEditCtrl', {$scope: scope, shpmentSvc: svc})
-        q = $q
-
-    describe "loadShipment", ->
-      it "should delegate to getShipment and toggle state", ->
-        data = {shipment: {id: 1,shp_ref: 'REF', lines: []}}
-        r = q.defer()
-        spyOn(svc, 'getShipment').andReturn(r.promise)
-        spyOn(svc, 'injectLines')
-        scope.loadShipment(1)
-        r.resolve({data: data})
-        scope.$apply()
-        expect(svc.getShipment).toHaveBeenCalledWith(1)
-        expect(svc.injectLines).not.toHaveBeenCalled()
-        expect(scope.shp).toEqual data.shipment
-
-    describe 'loadLines', ->
-      it "should inject lines if not already loaded", ->
-        shp = {id: 1}
-        spyOn(svc,'injectLines')
-        scope.loadLines(shp)
-        expect(svc.injectLines).toHaveBeenCalledWith(shp)
-
-      it "should not inject lines if they are already loaded", ->
-        shp = {id: 1, lines: []}
-        spyOn(svc,'injectLines')
-        scope.loadLines(shp)
-        expect(svc.injectLines).not.toHaveBeenCalledWith(shp)
-
-    describe 'saveShipment', ->
-      it 'should delegate to service', ->
-        shp = {shp_ref: 'OLD'}
-        data = {shipment: {id: 1, shp_ref: 'REF'}}
-        r = q.defer()
-        spyOn(svc,'saveShipment').andReturn(r.promise)
-        scope.saveShipment shp
-        r.resolve {data: data}
-        scope.$apply()
-        expect(svc.saveShipment).toHaveBeenCalledWith shp
-        expect(scope.shp).toEqual data.shipment
-
-    describe 'loadParties', ->
-      it 'should delegate to service', ->
-        data = {x: 'y'}
-        promise = {
-          success: (fn) ->
-            fn(data,null,null,null)
-            this
-          error: (fn) ->
-            this
-        }
-        spyOn(svc,'getParties').andReturn(promise)
-        scope.loadParties()
-        expect(svc.getParties).toHaveBeenCalled()
-        expect(scope.parties).toEqual data
-
-    describe 'init', ->
-      it 'should call load shipment and load parties', ->
-        spyOn(scope,'loadParties')
-        spyOn(scope,'loadShipment')
-        scope.init(3)
-        expect(scope.loadParties).toHaveBeenCalled()
-        expect(scope.loadShipment).toHaveBeenCalledWith(3)
-
-    describe 'addContainer', ->
-      it 'should addContainer and set isNew field', ->
-        shp = {containers: []}
-        scope.addContainer(shp)
-        expect(shp).toEqual {containers: [{isNew: true}]}

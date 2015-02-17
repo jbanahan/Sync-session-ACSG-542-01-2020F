@@ -49,7 +49,7 @@ com.directive 'chainComment', ['commentSvc',(commentSvc) ->
            {{c.body}}
         </div>
         <div class='panel-footer text-right' ng-if='c.permissions.can_delete'>
-          <button class='btn btn-sm btn-danger' ng-click='c.deleteCheck=true' ng-hide='c.deleteCheck'>Delete</button>
+          <button class='btn btn-sm btn-danger' ng-click='c.deleteCheck=true' ng-hide='c.deleteCheck' title='Delete'><i class='fa fa-trash'></i></button>
           <div ng-show='c.deleteCheck && !c.deleting'>
             Are you sure you want to delete this? <button class='btn btn-sm btn-danger' ng-click='deleteComment(c)'>Yes</button>&nbsp;<button class='btn btn-sm btn-default' ng-click='c.deleteCheck=false'>No</button>
           </div>

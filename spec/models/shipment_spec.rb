@@ -89,6 +89,101 @@ describe Shipment do
     end
   end
 
+  describe "can_approve_booking?" do
+    it "should allow approval for importer user who can edit shipment" do
+      u = Factory(:user,shipment_edit:true,company:Factory(:company,importer:true))
+      s = Shipment.new(booking_received_date:Time.now)
+      s.importer = u.company
+      s.stub(:can_edit?).and_return true
+      expect(s.can_approve_booking?(u)).to be_true
+    end
+    it "should allow approval for master user who can edit shipment" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new(booking_received_date:Time.now)
+      s.should_receive(:can_edit?).with(u).and_return true
+      expect(s.can_approve_booking?(u)).to be_true
+    end
+    it "should not allow approval for user who cannot edit shipment" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new(booking_received_date:Time.now)
+      s.should_receive(:can_edit?).with(u).and_return false
+      expect(s.can_approve_booking?(u)).to be_false
+    end
+    it "should not allow approval for user from a different associated company" do
+      u = Factory(:user,shipment_edit:true,company:Factory(:company,importer:true))
+      s = Shipment.new(booking_received_date:Time.now)
+      s.vendor = u.company
+      s.stub(:can_edit?).and_return true
+      expect(s.can_approve_booking?(u)).to be_false
+    end
+    it "should not allow approval when booking not received" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new(booking_received_date:nil)
+      s.stub(:can_edit?).and_return true
+      expect(s.can_approve_booking?(u)).to be_false
+    end
+  end
+
+  describe "approve_booking!" do
+    it "should set booking_approved_date and booking_approved_by" do
+      u = Factory(:user)
+      s = Factory(:shipment)
+      s.should_receive(:create_snapshot_with_async_option).with false, u
+      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_booking_approve,s)
+      s.approve_booking! u
+      s.reload
+      expect(s.booking_approved_date).to_not be_nil
+      expect(s.booking_approved_by).to eq u
+    end
+  end
+
+  describe "can_confirm_booking?" do
+    it "should allow confirmation for carrier user who can edit shipment" do
+      u = Factory(:user,shipment_edit:true,company:Factory(:company,carrier:true))
+      s = Shipment.new(booking_received_date:Time.now)
+      s.stub(:can_edit?).and_return true
+      s.carrier = u.company
+      expect(s.can_confirm_booking?(u)).to be_true
+    end
+    it "should allow confirmation for master user who can edit shipment" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new(booking_received_date:Time.now)
+      s.should_receive(:can_edit?).with(u).and_return true
+      expect(s.can_confirm_booking?(u)).to be_true
+    end
+    it "should not allow confirmation for user who cannot edit shipment" do
+      u = Factory(:master_user,shipment_edit:false)
+      s = Shipment.new(booking_received_date:Time.now)
+      s.should_receive(:can_edit?).with(u).and_return false
+      expect(s.can_confirm_booking?(u)).to be_false
+    end
+    it "should not allow confirmation for user who can edit shipment but isn't carrier or master" do
+      u = Factory(:user,shipment_edit:true,company:Factory(:company,vendor:true))
+      s = Shipment.new(booking_received_date:Time.now)
+      s.stub(:can_edit?).and_return true
+      s.vendor = u.company
+      expect(s.can_confirm_booking?(u)).to be_false
+    end
+    it "should not allow confirmation when booking has not been received" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new(booking_received_date:nil)
+      s.stub(:can_edit?).and_return true
+      expect(s.can_confirm_booking?(u)).to be_false
+    end
+  end
+  describe "confirm booking" do
+    it "should set booking confirmed date and booking confirmed by" do
+      u = Factory(:user)
+      s = Factory(:shipment)
+      s.should_receive(:create_snapshot_with_async_option).with false, u
+      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_booking_confirm,s)
+      s.confirm_booking! u
+      s.reload
+      expect(s.booking_confirmed_date).to_not be_nil
+      expect(s.booking_confirmed_by).to eq u
+    end
+  end
+
   describe "available_orders" do
     it "should find nothing if importer not set" do
       expect(Shipment.new.available_orders(User.new)).to be_empty

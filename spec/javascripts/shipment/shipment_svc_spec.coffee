@@ -41,28 +41,28 @@ describe 'ShipmentApp', ->
       it "should remove zero quantity lines that don't already have an ID", ->
         start = {ship_ref: 'REF',lines: [{shpln_shipped_qty: '0'}]}
         expected = {ship_ref: 'REF', lines: []}
-        http.expectPOST('/api/v1/shipments',{shipment: expected,include: 'order_lines,attachments'}).respond {shipment: expected}
+        http.expectPOST('/api/v1/shipments',{shipment: expected,no_lines: 'true'}).respond {shipment: expected}
         svc.saveShipment(start)
         http.flush()
 
       it "should flag zero quantity lines with an ID for destroy", ->
         start = {ship_ref: 'REF', lines: [{id: 7, shpln_shipped_qty: '0'}]}
         expected = {ship_ref: 'REF', lines: [{id: 7, shpln_shipped_qty: '0', _destroy: true}]}
-        http.expectPOST('/api/v1/shipments', {shipment: expected, include: 'order_lines,attachments'}).respond {shipment: expected}
+        http.expectPOST('/api/v1/shipments', {shipment: expected, no_lines: 'true'}).respond {shipment: expected}
         svc.saveShipment(start)
         http.flush()
 
       it "should keep lines with a quantity", ->
         start = {ship_ref: 'REF', lines: [{id: 7, shpln_shipped_qty: '5'}, {shpln_shipped_qty: '6'}]}
         expected = {ship_ref: 'REF', lines: [{id: 7, shpln_shipped_qty: '5'}, {shpln_shipped_qty: '6'}]}
-        http.expectPOST('/api/v1/shipments', {shipment: expected, include: 'order_lines,attachments'}).respond {shipment: expected}
+        http.expectPOST('/api/v1/shipments', {shipment: expected, no_lines: 'true'}).respond {shipment: expected}
         svc.saveShipment(start)
         http.flush()
 
       it 'should send post for create', ->
         base = {shp_ref: 'REF'}
         resp = {shipment: {id: 1}}
-        http.expectPOST('/api/v1/shipments', {shipment: base, include: 'order_lines,attachments'}).respond resp
+        http.expectPOST('/api/v1/shipments', {shipment: base, no_lines: 'true'}).respond resp
         shp = null
         svc.saveShipment(base).then (data) ->
           shp = data.data
@@ -72,7 +72,7 @@ describe 'ShipmentApp', ->
       it 'should send put for update', ->
         base = {shp_ref: 'REF', id: 1}
         resp = {shipment: {id: 1}}
-        http.expectPUT('/api/v1/shipments/1.json',{shipment: base, include: 'order_lines,attachments'}).respond resp
+        http.expectPUT('/api/v1/shipments/1.json',{shipment: base, no_lines: 'true'}).respond resp
         shp = null
         svc.saveShipment(base).then (data) ->
           shp = data.data
@@ -85,6 +85,22 @@ describe 'ShipmentApp', ->
         shp = {id: 10}
         http.expectPOST('/api/v1/shipments/10/request_booking.json').respond resp
         svc.requestBooking(shp)
+        http.flush()
+
+    describe 'approveBooking', ->
+      it 'should approve booking', ->
+        resp = {ok: 'ok'}
+        shp = {id: 10}
+        http.expectPOST('/api/v1/shipments/10/approve_booking.json').respond resp
+        svc.approveBooking(shp)
+        http.flush()
+
+    describe 'confirmBooking', ->
+      it 'should confirm booking', ->
+        resp = {ok: 'ok'}
+        shp = {id: 10}
+        http.expectPOST('/api/v1/shipments/10/confirm_booking.json').respond resp
+        svc.confirmBooking(shp)
         http.flush()
 
     describe 'getParties', ->
@@ -121,7 +137,7 @@ describe 'ShipmentApp', ->
     describe 'processTradecardPackManifest', ->
       it 'should submit', ->
         resp = {shipment: {id: 1}}
-        http.expectPOST('/api/v1/shipments/1/process_tradecard_pack_manifest',{attachment_id: 2,include: 'order_lines,attachments'}).respond resp
+        http.expectPOST('/api/v1/shipments/1/process_tradecard_pack_manifest',{attachment_id: 2,no_lines: 'true'}).respond resp
         shp = null
         svc.processTradecardPackManifest({id: 1},{id: 2}).then (data) ->
           shp = data.data

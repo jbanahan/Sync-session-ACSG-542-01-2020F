@@ -1,0 +1,18 @@
+<label for="shp_booking_cutoff_date">Booking Cutoff</label>
+<input type="date" id="shp_booking_cutoff_date" ng-model="outerScope.booking.shp_booking_cutoff_date" class="form-control" />
+<label for="shp_booking_est_departure_date">Est Departure Date - Booked</label>
+<input type="date" id="shp_booking_est_departure_date" ng-model="outerScope.booking.shp_booking_est_departure_date" class="form-control" />
+<label for="shp_cargo_ready_date">Cargo Ready Date</label>
+<input type="date" id="shp_cargo_ready_date" ng-model='outerScope.booking.shp_cargo_ready_date' class="form-control" />
+<label for="shp_booking_est_arrival_date">Est Arrival Date - Booked</label>
+<input type="date" id="shp_booking_est_arrival_date" ng-model="outerScope.booking.shp_booking_est_arrival_date" class="form-control" />
+<label for="shp_booking_shipment_type">Booked Shipment Type</label>
+<input type="text" id="shp_booking_shipment_type" ng-model="outerScope.booking.shp_booking_shipment_type" class="form-control" />
+<label for='shp_booking_mode'>Booked Mode</label>
+<select id='shp_booking_mode' ng-model='outerScope.booking.shp_booking_mode' class='form-control'>
+  <option></option>
+  <option>Air</option>
+  <option>Ocean - LCL</option>
+  <option>Ocean - FCL</option>
+  <option>Truck</option>
+</select>

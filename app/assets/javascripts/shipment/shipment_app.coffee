@@ -18,16 +18,6 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
           ]
         }
       }).
-    state('edit',{
-      url: '/:shipmentId/edit'
-      templateUrl: '/partials/shipments/edit.html'
-      controller: 'ShipmentEditCtrl'
-      resolve: {
-        shipmentId: ['$stateParams', ($stateParams) ->
-          $stateParams.shipmentId
-          ]
-        }
-      }).
     state('process_manifest',{
       abstract: true
       url: '/:shipmentId/process_manifest'
@@ -59,13 +49,8 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
     }).
     state('new',{
       url: '/new'
-      templateUrl: '/partials/shipments/edit.html'
-      controller: 'ShipmentEditCtrl'
-      resolve: {
-        shipmentId: ['$stateParams', ($stateParams) ->
-          -1
-          ]
-        }
+      templateUrl: '/partials/shipments/new.html'
+      controller: 'ShipmentNewCtrl'
       }).
     state('index',{
       url: '/'
@@ -87,6 +72,168 @@ shipmentApp.directive 'chainShipDetailSummary', ->
     }
     templateUrl: '/partials/shipments/ship_detail_summary.html'
   }
+
+shipmentApp.controller 'ShipmentNewCtrl', ['$scope','shipmentSvc','$state',($scope,shipmentSvc,$state) ->
+  loadParties = ->
+    $scope.parties = undefined
+    shipmentSvc.getParties().success((data) ->
+      $scope.parties = data
+    )
+
+  $scope.shp = {}
+
+  $scope.save = (shipment) ->
+    $scope.parties = undefined #reset loading flag
+    shipmentSvc.saveShipment(shipment).then ((resp) ->
+      shipmentSvc.getShipment(resp.data.shipment.id,true).then ->
+        $state.go('show',{shipmentId: resp.data.shipment.id})
+    ),((resp) ->
+      loadParties()
+    )
+
+
+  loadParties()
+]
+shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
+  loadParties = ->
+    $scope.parties = undefined
+    shipmentSvc.getParties().success((data) ->
+      $scope.parties = data
+    )
+
+  bookingAction = (shipment, redoCheckField, actionMethod, namePastTense) ->
+    doRequest = true
+    if redoCheckField.length > 0
+      doRequest = window.confirm("A booking has already been "+namePastTense+". Are you sure you want to do this again?")
+    if doRequest
+      $scope.loadingFlag = 'loading'
+      sId = shipment.id
+      actionMethod(shipment).then (resp) ->
+        $scope.loadShipment(sId,true).then ->
+          window.alert('Booking '+namePastTense+'.')
+
+  $scope.eh = chainErrorHandler
+  $scope.eh.responseErrorHandler = (rejection) ->
+    $scope.notificationMessage = null
+  $scope.shp = null
+  $scope.loadShipment = (id,forceReload) ->
+    $scope.loadingFlag = 'loading'
+    shipmentSvc.getShipment(id,forceReload).then (resp) ->
+      $scope.shp = resp.data.shipment
+      $scope.loadingFlag = null
+
+  $scope.edit = ->
+    $state.go('edit',{shipmentId: $scope.shp.id})
+
+  $scope.loadLines = (shp) ->
+    shipmentSvc.injectLines shp unless shp.lines
+
+  $scope.requestBooking = (shipment) ->
+    bookingAction(shipment,shipment.shp_booking_received_date,shipmentSvc.requestBooking,'requested')
+
+  $scope.approveBooking = (shipment) ->
+    bookingAction(shipment,shipment.shp_booking_approved_date,shipmentSvc.approveBooking,'approved')
+
+  $scope.confirmBooking = (shipment) ->
+    bookingAction(shipment,shipment.shp_booking_confirmed_date,shipmentSvc.confirmBooking,'confirmed')
+
+  $scope.prepShipmentHeaderEditObject = (shipment) ->
+    $scope.header = {id: shipment.id}
+    $scope.header['shp_ref'] = shipment.shp_ref
+    $scope.header['shp_importer_reference'] = shipment.shp_importer_reference
+    $scope.header['shp_master_bill_of_lading'] = shipment.shp_master_bill_of_lading
+    $scope.header['shp_house_bill_of_lading'] = shipment.shp_house_bill_of_lading
+    $scope.header['shp_booking_number'] = shipment.shp_booking_number
+    $scope.header['shp_receipt_location'] = shipment.shp_receipt_location
+    $scope.header['shp_dest_port_name'] = shipment.shp_dest_port_name
+    $scope.header['shp_freight_terms'] = shipment.shp_freight_terms
+    $scope.header['shp_lcl'] = shipment.shp_lcl
+    $scope.header['shp_shipment_type'] = shipment.shp_shipment_type
+    $scope.header['shp_vessel'] = shipment.shp_vessel
+    $scope.header['shp_voyage'] = shipment.shp_voyage
+    $scope.header['shp_vessel_carrier_scac'] = shipment.shp_vessel_carrier_scac
+    $scope.header['shp_mode'] = shipment.shp_mode
+
+  $scope.prepShipmentLineEditObject = (line) ->
+    $scope.lineToEdit = {id: line.id}
+    $scope.lineToEdit.shpln_shipped_qty = line.shpln_shipped_qty
+    $scope.lineToEdit.shpln_carton_qty = line.shpln_carton_qty
+    $scope.lineToEdit.shpln_cbms = line.shpln_cbms
+    $scope.lineToEdit.shpln_gross_kgs = line.shpln_gross_kgs
+    $scope.lineToEdit.shpln_container_uid = line.shpln_container_uid
+
+  $scope.saveLine = (shipment,line) ->
+    $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
+      $scope.loadLines($scope.shp)
+
+  $scope.deleteLine = (shipment,line) ->
+    if window.confirm("Are you sure you want to delete this line?")
+      line._destroy = 'true'
+      $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
+        $scope.loadLines($scope.shp)
+
+  $scope.prepBookingEditObject = (shipment) ->
+    $scope.booking = {id: shipment.id}
+    $scope.booking['shp_booking_cutoff_date'] = shipment.shp_booking_cutoff_date
+    $scope.booking['shp_booking_est_departure_date'] = shipment.shp_booking_est_departure_date
+    $scope.booking['shp_cargo_ready_date'] = shipment.shp_cargo_ready_date
+    $scope.booking['shp_booking_est_arrival_date'] = shipment.shp_booking_est_arrival_date
+    $scope.booking['shp_booking_shipment_type'] = shipment.shp_booking_shipment_type
+    $scope.booking['shp_booking_mode'] = shipment.shp_booking_mode
+
+  $scope.prepPartiesEditObject = (shipment) ->
+    loadParties() unless $scope.parties
+    $scope.partiesEditObj = {id: shipment.id}
+    $scope.partiesEditObj.shp_car_syscode = shipment.shp_car_syscode
+    $scope.partiesEditObj.shp_imp_syscode = shipment.shp_imp_syscode
+
+  $scope.prepTrackingEditObject = (shipment) ->
+    $scope.tracking = {id: shipment.id}
+    $scope.tracking.shp_est_departure_date = shipment.shp_est_departure_date
+    $scope.tracking.shp_est_arrival_port_date = shipment.shp_est_arrival_port_date
+    $scope.tracking.shp_est_delivery_date = shipment.shp_est_delivery_date
+    $scope.tracking.shp_docs_received_date = shipment.shp_docs_received_date
+    $scope.tracking.shp_cargo_on_hand_date = shipment.shp_cargo_on_hand_date
+    $scope.tracking.shp_departure_date = shipment.shp_departure_date
+    $scope.tracking.shp_arrival_port_date = shipment.shp_arrival_port_date
+    $scope.tracking.shp_delivered_date = shipment.shp_delivered_date
+
+  $scope.editContainer = (c) ->
+    container = (if c then c else {isNew: true})
+    $scope.containerToEdit = {id: container.id}
+    $scope.containerToEdit.con_container_number = container.con_container_number
+    $scope.containerToEdit.con_container_size = container.con_container_size
+    $scope.containerToEdit.con_seal_number = container.con_seal_number
+
+  $scope.saveContainer = (shipment,container) ->
+    $scope.saveShipment({id: shipment.id, containers: [container]})
+
+  $scope.deleteContainer = (shipment,container) ->
+    doAction = window.confirm("Are you sure you want to delete this container?")
+    if doAction
+      container._destroy = 'true'
+      $scope.saveShipment({id: shipment.id, containers: [container]})
+
+  $scope.showProcessManifest = ->
+    $state.go('process_manifest.main',{shipmentId: $scope.shp.id})
+
+  $scope.showAddOrder = ->
+    $state.go('add_order',{shipmentId: $scope.shp.id})
+
+  $scope.saveShipment = (shipment) ->
+    $scope.loadingFlag = 'loading'
+    $scope.eh.clear()
+    $scope.notificationMessage = "Saving shipment."
+    shipmentSvc.saveShipment(shipment).then ((resp) ->
+      $scope.loadShipment(shipment.id,true)
+    ),((resp) ->
+      $scope.loadingFlag = null
+    )
+
+  if shipmentId
+    $scope.loadShipment shipmentId
+
+]
 
 shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
   maxVal = (ary,attr,min) ->
@@ -146,11 +293,9 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
       #create shipment lines for all lines on the given order
   $scope.addOrderToShipment = (shp, ord, container_to_pack) ->
     shp.lines = [] if shp.lines==undefined
-    nextLineNumber = maxVal(shp.lines,'shpln_line_number',0) + 1
     return shp unless ord.order_lines
     for oln in ord.order_lines
       sl = {
-        shpln_line_number: nextLineNumber,
         shpln_puid: oln.ordln_puid,
         shpln_pname: oln.ordln_pname,
         linked_order_line_id: oln.id,
@@ -159,7 +304,6 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
       }
       sl.shpln_container_uid = container_to_pack.id if container_to_pack
       shp.lines.push sl
-      nextLineNumber = nextLineNumber + 1
     shp
 
   $scope.totalToShip = (ord) ->
@@ -174,10 +318,11 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
     $scope.loadingFlag = 'loading'
     $scope.addOrderToShipment(shp,ord,container_to_pack)
     shipmentSvc.saveShipment(shp).then (resp) ->
-      $state.go('edit',{shipmentId: $scope.shp.id})
+      shipmentSvc.getShipment(shp.id,true).then ->
+        $state.go('show',{shipmentId: $scope.shp.id})
 
   $scope.cancel = ->
-    $state.go('edit',{shipmentId: $scope.shp.id})
+    $state.go('show',{shipmentId: $scope.shp.id})
 
 
   if shipmentId
@@ -212,114 +357,4 @@ shipmentApp.controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','shipmentI
 
   if shipmentId
     $scope.loadShipment shipmentId
-]
-
-shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
-  $scope.eh = chainErrorHandler
-  $scope.eh.responseErrorHandler = (rejection) ->
-    $scope.notificationMessage = null
-  $scope.shp = null
-  $scope.loadShipment = (id,forceReload) ->
-    $scope.loadingFlag = 'loading'
-    shipmentSvc.getShipment(id,forceReload).then (resp) ->
-      $scope.shp = resp.data.shipment
-      $scope.loadingFlag = null
-
-  $scope.edit = ->
-    $state.go('edit',{shipmentId: $scope.shp.id})
-
-  $scope.loadLines = (shp) ->
-    shipmentSvc.injectLines shp unless shp.lines
-
-  $scope.requestBooking = (shipment) ->
-    doRequest = true
-    if shipment.shp_booking_received_date.length > 0
-      doRequest = window.confirm("A booking has already been requested. Are you sure you want to request again?")
-    if doRequest
-      $scope.loadingFlag = 'loading'
-      sId = shipment.id
-      shipmentSvc.requestBooking(shipment).then (resp) ->
-        $scope.loadShipment(sId,true).then ->
-          window.alert('Booking requested.')
-
-  if shipmentId
-    $scope.loadShipment shipmentId
-
-]
-
-shipmentApp.controller 'ShipmentEditCtrl', ['$scope','$state','shipmentSvc','chainErrorHandler','shipmentId',($scope,$state,shipmentSvc,chainErrorHandler,shipmentId) ->
-  $scope.eh = chainErrorHandler
-  $scope.eh.responseErrorHandler = (rejection) ->
-    $scope.notificationMessage = null
-  $scope.shipmentSvc = shipmentSvc #only here for debugging
-  $scope.shp = null
-  $scope.viewMode = 'shp'
-  $scope.errorMessage = null
-  $scope.notificationMessage = null
-
-  $scope.init = (id) ->
-    $scope.loadShipment(id) if id
-    $scope.loadParties()
-
-  $scope.loadParties = ->
-    $scope.loadingParties = true
-    shipmentSvc.getParties().success((data) ->
-      $scope.parties = data
-      $scope.loadingParties = false
-    ).error((data) ->
-      $scope.loadingParties = false
-    )
-  $scope.loadShipment = (id) ->
-    $scope.loadingFlag = 'loading'
-    $scope.eh.clear()
-    p = shipmentSvc.getShipment(id)
-    p.then((resp) ->
-      $scope.shp = resp.data.shipment
-      $scope.hasNewContainer = false
-      $scope.loadingFlag = null
-    )
-
-  $scope.loadLines = (shp) ->
-    shipmentSvc.injectLines(shp) unless shp.lines
-
-  $scope.cancel = ->
-    $scope.loadingFlag = 'loading'
-    $scope.eh.clear()
-    shipmentSvc.getShipment($scope.shp.id,true).then((resp) ->
-      $state.go('show',{shipmentId: $scope.shp.id})
-    )
-
-  $scope.saveShipment = (shipment) ->
-    $scope.loadingFlag = 'loading'
-    $scope.eh.clear()
-    $scope.notificationMessage = "Saving shipment."
-    shipmentSvc.saveShipment(shipment).then ((resp) ->
-      $scope.shp = resp.data.shipment
-      $scope.loadingFlag = null
-      $scope.notificationMessage = "Shipment saved."
-      $scope.hasNewContainer = false
-    ),((resp) ->
-      $scope.loadingFlag = null
-    )
-
-  $scope.addContainer = (shipment) ->
-    $scope.hasNewContainer = true
-    shipment.containers = [] unless shipment.containers
-    shipment.containers.push({isNew: true})
-
-  $scope.showProcessManifest = ->
-    $state.go('process_manifest.main',{shipmentId: $scope.shp.id})
-
-  $scope.showAddOrder = ->
-    $state.go('add_order',{shipmentId: $scope.shp.id})
-
-  $scope.$watch('eh.errorMessage',(nv,ov) ->
-    $scope.errorMessage = nv
-  )
-
-  if shipmentId==-1
-    $scope.shp = {permissions: {can_edit: true, can_view: true, can_attach: true}}
-    $scope.init()
-  else if shipmentId
-    $scope.init(shipmentId)
 ]

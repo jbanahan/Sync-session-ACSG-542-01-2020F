@@ -21,8 +21,9 @@ describe Api::V1::ShipmentsController do
       s1 = Factory(:shipment,reference:'123',mode:'Air',master_bill_of_lading:'MBOL')
       get :index, fields:'shp_ref,shp_mode'
       expect(response).to be_success
-      j = JSON.parse response.body
-      expect(j['results']).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air',"permissions"=>{"can_edit"=>true, "can_view"=>true, "can_attach"=>false, "can_comment"=>false}}]
+      j = JSON.parse(response.body)['results']
+      j.first.delete 'permissions' #not testing permissions hash
+      expect(j).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air'}]
     end
   end
 
@@ -157,6 +158,44 @@ describe Api::V1::ShipmentsController do
       @s.should_receive(:can_request_booking?).with(@u).and_return true
       @s.should_receive(:async_request_booking!).with(@u)
       post :request_booking, id: '1'
+      expect(response).to be_success
+    end
+  end
+  describe "approve booking" do
+    before :each do
+      @s = double("shipment")
+      Shipment.should_receive(:find).with('1').and_return @s
+    end
+    it "should error if user cannot approve booking" do
+      @s.should_receive(:can_approve_booking?).with(@u).and_return false
+      @s.should_not_receive(:approve_booking!)
+      @s.should_not_receive(:async_approve_booking!)
+      post :approve_booking, id: '1'
+      expect(response.status).to eq 403
+    end
+    it "should approve booking" do
+      @s.should_receive(:can_approve_booking?).with(@u).and_return true
+      @s.should_receive(:async_approve_booking!).with(@u)
+      post :approve_booking, id: '1'
+      expect(response).to be_success
+    end
+  end
+  describe "confirm booking" do
+    before :each do
+      @s = double("shipment")
+      Shipment.should_receive(:find).with('1').and_return @s
+    end
+    it "should error if user cannot confirm booking" do
+      @s.should_receive(:can_confirm_booking?).with(@u).and_return false
+      @s.should_not_receive(:confirm_booking!)
+      @s.should_not_receive(:async_confirm_booking!)
+      post :confirm_booking, id: '1'
+      expect(response.status).to eq 403
+    end
+    it "should confirm booking" do
+      @s.should_receive(:can_confirm_booking?).with(@u).and_return true
+      @s.should_receive(:async_confirm_booking!).with(@u)
+      post :confirm_booking, id: '1'
       expect(response).to be_success
     end
   end

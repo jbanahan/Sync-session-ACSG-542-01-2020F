@@ -1,0 +1,42 @@
+<label for='shp_ref'>Reference</label>
+<input type='text' ng-model='outerScope.$parent.header.shp_ref' id='shp_ref' class='form-control' />
+<label for='shp_importer_reference'>Importer Reference</label>
+<input type='text' ng-model='outerScope.header.shp_importer_reference' id='shp_importer_reference' class='form-control' />
+<label for="shp_master_bill_of_lading">Master Bill</label>
+<input type="text" id="shp_master_bill_of_lading" ng-model="outerScope.header.shp_master_bill_of_lading" class="form-control" />
+<label for="shp_house_bill_of_lading">House Bill</label>
+<input type="text" id="shp_house_bill_of_lading" ng-model="outerScope.header.shp_house_bill_of_lading" class="form-control" />
+<label for="shp_booking_number">Booking #</label>
+<input type="text" id="shp_booking_number" ng-model="outerScope.header.shp_booking_number" class="form-control" />
+<label for="shp_receipt_location">Receipt Location</label>
+<input type="text" id="shp_receipt_location" ng-model="outerScope.header.shp_receipt_location" class="form-control" />
+<label for="shp_dest_port">Destination Port</label>
+<angucomplete-alt id='shp_dest_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.dest_port' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_dest_port_name}}'></angucomplete-alt>
+<label for="shp_freight_terms">Freight Terms</label>
+<input type="text" id="shp_freight_terms" ng-model="outerScope.header.shp_freight_terms" class="form-control" />
+<label for="shp_lcl">LCL</label>
+<div>
+  <input type="checkbox" id="shp_lcl" ng-model="outerScope.header.shp_lcl" />
+</div>
+<label for="shp_shipment_type">Shipment Type</label>
+<select id="shp_shipment_type" ng-model="outerScope.header.shp_shipment_type" class="form-control" >
+  <option></option>
+  <option>CY/CY</option>
+  <option>CFS/CY</option>
+  <option>CY/CFS</option>
+  <option>CFS/CFS</option>
+</select>
+<label for="shp_vessel">Vessel</label>
+<input type="text" id="shp_vessel" ng-model="outerScope.header.shp_vessel" class="form-control" />
+<label for="shp_voyage">Voyage</label>
+<input type="text" id="shp_voyage" ng-model="outerScope.header.shp_voyage" class="form-control" />
+<label for="shp_vessel_carrier_scac">Vessel SCAC</label>
+<input type="text" id="shp_vessel_carrier_scac" ng-model="outerScope.header.shp_vessel_carrier_scac" class="form-control" />
+<label for='shp_mode'>Mode</label>
+<select id='shp_mode' ng-model='outerScope.header.shp_mode' class='form-control'>
+  <option></option>
+  <option>Air</option>
+  <option>Ocean - LCL</option>
+  <option>Ocean - FCL</option>
+  <option>Truck</option>
+</select>

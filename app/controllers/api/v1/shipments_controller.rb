@@ -60,6 +60,20 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {'ok'=>'ok'}
   end
 
+  def approve_booking
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to approve a booking.",:forbidden) unless s.can_approve_booking?(current_user)
+    s.async_approve_booking! current_user
+    render json: {'ok'=>'ok'}
+  end
+
+  def confirm_booking
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to confirm a booking.",:forbidden) unless s.can_confirm_booking?(current_user)
+    s.async_confirm_booking! current_user
+    render json: {'ok'=>'ok'}
+  end
+
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
@@ -119,7 +133,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_dest_port_name,
       :shp_dest_port_id,
       :shp_cargo_ready_date,
-      :shp_booking_requested_by_full_name
+      :shp_booking_requested_by_full_name,
+      :shp_booking_confirmed_by_full_name,
+      :shp_booking_approved_by_full_name,
+      :shp_booking_approved_date
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     line_fields_to_render = limit_fields([
@@ -146,7 +163,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :con_teus,
       :con_fcl_lcl,
       :con_quantity,
-      :con_uom
+      :con_uom,
+      :con_shipment_line_count
     ] + custom_field_keys(CoreModule::CONTAINER))
 
     h = {id: s.id}
@@ -200,7 +218,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_view:shipment.can_view?(current_user),
       can_attach:shipment.can_attach?(current_user),
       can_comment:shipment.can_comment?(current_user),
-      can_request_booking:shipment.can_request_booking?(current_user)
+      can_request_booking:shipment.can_request_booking?(current_user),
+      can_approve_booking:shipment.can_approve_booking?(current_user),
+      can_confirm_booking:shipment.can_confirm_booking?(current_user)
     }
   end
   def render_lines?
@@ -299,7 +319,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
         end
         shipment.errors[:base] << "Product required for shipment lines." unless s_line.product
         shipment.errors[:base] << "Product not found." if s_line.product && !s_line.product.can_view?(current_user)
-        shipment.errors[:base] << "Line #{i+1} is missing #{ModelField.find_by_uid(:shpln_line_number).label}." if s_line.line_number.blank?
+        # shipment.errors[:base] << "Line #{i+1} is missing #{ModelField.find_by_uid(:shpln_line_number).label}." if s_line.line_number.blank?
       end
     end
   end
