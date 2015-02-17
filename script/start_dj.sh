@@ -10,8 +10,14 @@ if [ -f config/dj_count.txt ]; then
   elif [ -f tmp/upgrade_error.txt ]; then
     echo "$(date) - Skipping $(pwd) because tmp/upgrade_error.txt exists."
   else
-    echo "$(date) - Starting DJ with $restart_count jobs."
-    ./script/delayed_job start -n $restart_count
+    if [ -z "$1" ] || [ "$1"  != "quiet" ]; then
+      echo "$(date) - Starting DJ with $restart_count jobs."
+    fi
+
+    # Don't show any actual output..it's largely pointless and just a log clogger
+    # Since 99.99% of the time, the output is going to be errors about how there's
+    # already X processes running
+    script/delayed_job start -n $restart_count > /dev/null 2>&1
   fi
 else
   echo "$(date) - No $(pwd)/config/dj_count.txt file found.  Add one if you wish to run delayed jobs for this instance."
