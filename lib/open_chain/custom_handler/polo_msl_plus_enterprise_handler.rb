@@ -100,6 +100,7 @@ module OpenChain
               field_map.each {|k,v| p.update_custom_value! k,row[v]} 
               p.update_custom_value! @in_defs[:msl_receive_date], Date.today
             end
+            p.update_attributes! last_updated_by: user
             p.create_snapshot user
             ack_file << [current_style,DateTime.now.utc.strftime("%Y%m%d%H%M%S"),"OK"].to_csv
             rescue

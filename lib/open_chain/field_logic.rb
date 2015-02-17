@@ -35,6 +35,8 @@ module OpenChain
           raise OpenChain::ValidationLogicError unless CoreModule.find_by_object(base_object).validate_business_logic base_object
           OpenChain::FieldLogicValidator.validate!(base_object) 
           base_object.piece_sets.each {|p| p.create_forecasts} if base_object.respond_to?('piece_sets')
+          
+          base_object.update_attributes(:last_updated_by_id=>user.id) if base_object.respond_to?(:last_updated_by_id)
           snapshot = base_object.class.find(base_object.id).create_snapshot if base_object.respond_to?('create_snapshot')
 
           if succeed_lambda

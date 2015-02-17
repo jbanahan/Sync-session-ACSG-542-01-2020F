@@ -56,6 +56,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductParser
     pgroup_cv.value = "#{ln[92,15].strip}-#{ln[109,20].strip}"
     batch_write_vals << pgroup_cv 
     CustomValue.batch_write! batch_write_vals
+    p.update_attributes! last_updated_by: @user
     p.create_snapshot @user
   end
 

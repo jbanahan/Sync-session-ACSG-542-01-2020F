@@ -351,6 +351,7 @@ class ImportedFile < ActiveRecord::Base
         end
       end
       
+      object.update_attributes(:last_updated_by_id=>@fr.run_by.id) if object.respond_to?(:last_updated_by_id)
       object.create_snapshot(@fr.run_by,@imported_file) if object.respond_to?(:create_snapshot)
       
     end

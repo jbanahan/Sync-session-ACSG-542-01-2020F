@@ -43,6 +43,7 @@ class LinesController < ApplicationController
           end
         end
 
+        o.update_attributes(:last_updated_by_id=>current_user.id) if o.respond_to?(:last_updated_by_id)
         o.create_async_snapshot if o.respond_to?('create_snapshot')
       rescue OpenChain::ValidationLogicError
         errors_to_flash line

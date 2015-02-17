@@ -396,8 +396,9 @@ module OpenChain
       OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, product|
         result_record = icr.instant_classification_result_records.build(:product_id=>product.id)
         ic_to_use = InstantClassification.find_by_product product, current_user, instant_classifications
-        if ic_to_use
-          result_record.entity_snapshot = product.create_snapshot(current_user) if product.replace_classifications ic_to_use.classifications.to_a
+        if ic_to_use && product.replace_classifications(ic_to_use.classifications.to_a)
+          product.update_attributes(:last_updated_by_id=>user.id)
+          result_record.entity_snapshot = product.create_snapshot(current_user)
         end
         result_record.save
       end

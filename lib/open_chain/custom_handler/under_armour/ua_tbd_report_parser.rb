@@ -60,6 +60,7 @@ module OpenChain; module CustomHandler; module UnderArmour
         DataCrossReference.find_ua_plant_to_iso self.class.prep_plant_code(k)
       }
       p.name = desc
+      p.last_updated_by=user
       p.save!
       p.create_snapshot user
       self.class.write_material_color_plant_xrefs array_of_rows

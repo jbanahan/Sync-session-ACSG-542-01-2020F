@@ -41,6 +41,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     ActiveRecord::Base.transaction do
       obj_hash = object_params
       obj = save_object obj_hash
+      obj.update_attributes(last_updated_by: current_user) if obj.respond_to?(:last_updated_by)
       if obj.errors.full_messages.blank?
         obj.create_async_snapshot if obj.respond_to?('create_async_snapshot')
       else
@@ -59,6 +60,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
       obj_hash = object_params
       raise StatusableError.new("Path ID #{params[:id]} does not match JSON ID #{obj_hash['id']}.",400) unless params[:id].to_s == obj_hash['id'].to_s
       obj = save_object obj_hash
+      obj.update_attributes(last_updated_by: current_user) if obj.respond_to?(:last_updated_by)
       if obj.errors.full_messages.blank?
         obj.create_async_snapshot if obj.respond_to?('create_async_snapshot')
       else
@@ -165,6 +167,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
       CoreModule.walk_object_heirarchy(obj) {|cm, o| o.custom_values.to_a if o.respond_to?(:custom_values)}
       if obj.update_model_field_attributes obj_hash
         raise StatusableError.new("You do not have permission to save this #{cm.label}.", :forbidden) unless obj.can_edit?(current_user)
+        obj.update_attributes(last_updated_by: current_user) if obj.respond_to?(:last_updated_by)
 
         # Now we can freeze the model fields, since all the possible new data should be loaded now.
         # Freezing at this point makes the snapshot run faster, and any actual data load that's done following the save

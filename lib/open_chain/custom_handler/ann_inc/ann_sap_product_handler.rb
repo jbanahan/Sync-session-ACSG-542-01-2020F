@@ -116,7 +116,7 @@ module OpenChain
                     update_sap_revised_date = true if base_values[f] != p.get_custom_value(@cdefs[f]).value
                   end
                   p.update_custom_value! @cdefs[:sap_revised_date], Time.zone.now if update_sap_revised_date
-                  
+                  p.update_attributes! last_updated_by: run_by
                   p.create_snapshot run_by
                 end
               rescue

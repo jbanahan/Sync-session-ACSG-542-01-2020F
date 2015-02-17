@@ -59,6 +59,7 @@ module OpenChain
                   update_last_csm_date p
 
                   OpenChain::FieldLogicValidator.validate!(p) 
+                  p.update_attributes! last_updated_by: user
                   p.create_snapshot user
                 end
                 
