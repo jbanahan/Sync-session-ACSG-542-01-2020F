@@ -17,13 +17,41 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
   end
   describe :run_schedulable do
-    it "should call ftp_file & sync_csv" do
-      pg = mock 'product generator'
-      csv_output = mock 'CSV Output'
-      pg.should_receive(:ftp_file).with(csv_output).and_return('x')
-      pg.should_receive(:sync_csv).and_return(csv_output)
-      described_class.should_receive(:new).with("ABC").and_return(pg)
-      described_class.run_schedulable "ABC"
+
+    before :each do
+      us = Factory(:country,:iso_code=>'US')
+      ca = Factory(:country,:iso_code=>'CA')
+      italy = Factory(:country,:iso_code=>'IT')
+      nz = Factory(:country,:iso_code=>'NZ')
+      @p = Factory(:product)
+      @p.update_custom_value! @sap_brand_cd, true
+      @p2 = Factory(:product)
+      @p2.update_custom_value! @sap_brand_cd, true
+      [us,ca,italy,nz].each do |country|
+        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>@p))
+        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>@p2))
+      end
+      @files = []
+    end
+
+    after :each do
+      @files.each {|f| f.close! unless f.closed?}
+    end
+
+    it "should call ftp_file & sync_csv repeatedly until all products are sent" do
+      described_class.any_instance.should_receive(:ftp_file).exactly(2).times do |file|
+        @files << file
+      end
+      # Mock out the max product count so we only have 1 product per file
+      described_class.any_instance.should_receive(:max_products).exactly(3).times.and_return 1
+      described_class.run_schedulable
+      expect(@files.size).to eq 2
+
+      expect(IO.readlines(@files[0].path)[1].split(",")[0]).to eq @p.unique_identifier
+      expect(IO.readlines(@files[1].path)[1].split(",")[0]).to eq @p2.unique_identifier
+
+      expect(@p.reload.sync_records.first.trading_partner).to eq "polo_sap"
+      expect(@p2.reload.sync_records.first.trading_partner).to eq "polo_sap"
     end
   end
 

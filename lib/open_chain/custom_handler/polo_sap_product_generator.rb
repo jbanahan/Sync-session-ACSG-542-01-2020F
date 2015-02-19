@@ -6,7 +6,14 @@ module OpenChain
       #SchedulableJob compatibility
       def self.run_schedulable opts={}
         g = self.new(opts)
-        g.ftp_file g.sync_csv
+        f = nil
+        begin
+          # Sync only does 500 products at a time now, so keep running the send 
+          # until we get a file output w/ zero lines (sync_csv returns a nil file in this case, 
+          # it's also smart enough not to send a file w/ only headers in it)
+          f = g.sync_csv
+          g.ftp_file f unless f.nil?
+        end while !f.nil?
       end
 
       #Accepts 3 parameters
@@ -89,6 +96,10 @@ module OpenChain
         vals
       end
 
+      def max_products
+        500
+      end
+
       def query
         q = "SELECT products.id,
 products.unique_identifier, 
@@ -126,14 +137,28 @@ FROM products
 INNER JOIN classifications on classifications.product_id = products.id AND classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN (
 #{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
   ))
-INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0"
+INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
+INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id"
 
+        q
+      end
+
+      def inner_query
+        q = <<-QRY
+SELECT DISTINCT products.id
+FROM products
+#{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
+INNER JOIN classifications on classifications.product_id = products.id AND classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN (
+#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}))
+INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
+QRY
         if @custom_where.blank?
           q << "\n#{Product.need_sync_join_clause(sync_code)}\nWHERE #{Product.need_sync_where_clause()}"
         else
           q << "\n#{@custom_where}"
         end
 
+        q << " ORDER BY products.updated_at ASC LIMIT #{max_products}"
         q
       end
     end
