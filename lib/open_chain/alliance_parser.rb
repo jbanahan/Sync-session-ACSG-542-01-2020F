@@ -37,7 +37,8 @@ module OpenChain
       '00025'=>:delivery_order_pickup_date,
       '00026'=>:freight_pickup_date,
       '02222'=>:worksheet_date,
-      '02223'=>:available_date
+      '02223'=>:available_date,
+      '02014'=>:final_delivery_date
     }
 
     def self.integration_folder
