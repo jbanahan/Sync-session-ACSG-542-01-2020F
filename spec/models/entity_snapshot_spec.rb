@@ -135,6 +135,7 @@ describe EntitySnapshot do
       restored.last_updated_by_id.should == other_user.id
     end
     it "should not restore if user does not have permission" do
+      @p.update_attributes! last_updated_by: @u
       Product.any_instance.stub(:can_edit?).and_return(false)
       @p.update_attributes(:name=>'n2')
       other_user = Factory(:user)

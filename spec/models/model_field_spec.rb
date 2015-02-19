@@ -938,9 +938,8 @@ describe ModelField do
         p2 = Factory(:product)
         u1 = Factory(:user,:username=>'abcdef',:company=>c)
         u2 = Factory(:user,:username=>'ghijkl',:company=>c)
-        p.create_snapshot u1
-        p.create_snapshot u2
-        p2.create_snapshot u1
+        p.update_attributes! last_updated_by: u2
+        p2.update_attributes! last_updated_by: u1
         ss = Factory(:search_setup,:module_type=>'Product',:user=>u1)
         ss.search_criterions.create!(:model_field_uid=>'prod_last_changed_by',
           :operator=>'sw',:value=>'ghi')
