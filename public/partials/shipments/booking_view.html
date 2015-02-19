@@ -10,6 +10,10 @@
   <label for="shp_booking_confirmed_date" class="control-label">Booking Confirmed</label>
   <p class="form-control-static" id="shp_booking_confirmed_date">{{outerScope.shp.shp_booking_confirmed_date}} <i ng-show='outerScope.shp.shp_booking_confirmed_by_full_name' title='{{outerScope.shp.shp_booking_confirmed_by_full_name}}' class='text-muted fa fa-user'></i></p>
 </div>
+<div class="form-group" ng-show="outerScope.shp.shp_booked_quantity">
+  <label for="shp_booked_quantity" class="control-label">Booked Quantity</label>
+  <p class="form-control-static" id="shp_booked_quantity">{{outerScope.shp.shp_booked_quantity}}</p>
+</div>
 <div class="form-group">
   <label for="shp_booking_cutoff_date" class="control-label">Booking Cutoff</label>
   <p class="form-control-static" id="shp_booking_cutoff_date">{{outerScope.shp.shp_booking_cutoff_date}}</p>

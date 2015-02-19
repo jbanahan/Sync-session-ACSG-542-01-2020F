@@ -143,7 +143,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_booking_requested_by_full_name,
       :shp_booking_confirmed_by_full_name,
       :shp_booking_approved_by_full_name,
-      :shp_booking_approved_date
+      :shp_booking_approved_date,
+      :shp_booked_quantity
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     line_fields_to_render = limit_fields([

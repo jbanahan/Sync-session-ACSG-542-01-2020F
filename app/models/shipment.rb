@@ -79,6 +79,7 @@ class Shipment < ActiveRecord::Base
   def confirm_booking! user, async_snapshot = false
     self.booking_confirmed_date = 0.seconds.ago
     self.booking_confirmed_by = user
+    self.booked_quantity = self.shipment_lines.sum('quantity')
     self.save!
     OpenChain::EventPublisher.publish :shipment_booking_confirm, self
     self.create_snapshot_with_async_option async_snapshot, user

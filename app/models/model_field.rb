@@ -2002,7 +2002,8 @@ and classifications.product_id = products.id
           :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.booking_approved_by_id)",
           :data_type=>:string
         }],
-        [37,:shp_booking_approved_date,:booking_approved_date,"Booking Approved Date",{data_type: 'date', read_only: true}]
+        [37,:shp_booking_approved_date,:booking_approved_date,"Booking Approved Date",{data_type: 'date', read_only: true}],
+        [38,:shp_booked_quantity,:booked_quantity,"Booked Quantity",{data_type: :decimal, read_only:true}]
       ]
       add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")

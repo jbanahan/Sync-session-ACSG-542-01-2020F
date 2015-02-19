@@ -191,15 +191,18 @@ describe Shipment do
     end
   end
   describe "confirm booking" do
-    it "should set booking confirmed date and booking confirmed by" do
+    it "should set booking confirmed date and booking confirmed by and booked quantity" do
       u = Factory(:user)
       s = Factory(:shipment)
+      Factory(:shipment_line,shipment:s,quantity:50)
+      Factory(:shipment_line,shipment:s,quantity:100)
       s.should_receive(:create_snapshot_with_async_option).with false, u
       OpenChain::EventPublisher.should_receive(:publish).with(:shipment_booking_confirm,s)
       s.confirm_booking! u
       s.reload
       expect(s.booking_confirmed_date).to_not be_nil
       expect(s.booking_confirmed_by).to eq u
+      expect(s.booked_quantity).to eq 150
     end
   end
 
