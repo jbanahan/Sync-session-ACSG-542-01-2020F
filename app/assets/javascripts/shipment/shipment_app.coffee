@@ -137,6 +137,14 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
   $scope.confirmBooking = (shipment) ->
     bookingAction(shipment,shipment.shp_booking_confirmed_date,shipmentSvc.confirmBooking,'confirmed')
 
+  $scope.reviseBooking = (shipment) ->
+    if window.confirm("Revising this booking will remove all approvals and requests. Only do this if you need to add or remove lines.\n\nAre you sure you want to continue?")
+      $scope.loadingFlag = 'loading'
+      sId = shipment.id
+      shipmentSvc.reviseBooking(shipment).then (resp) ->
+        $scope.loadShipment(sId,true).then ->
+          window.alert('Booking opened for revision.')
+
   $scope.prepShipmentHeaderEditObject = (shipment) ->
     $scope.header = {id: shipment.id}
     $scope.header['shp_ref'] = shipment.shp_ref

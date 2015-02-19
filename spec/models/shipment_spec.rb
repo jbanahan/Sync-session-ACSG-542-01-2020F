@@ -87,6 +87,13 @@ describe Shipment do
       s = Shipment.new
       expect(s.can_request_booking?(u)).to be_false
     end
+    it "should not allow if booking is approved" do
+      u = Factory(:user,shipment_view:true,company:Factory(:company,vendor:true))
+      s = Shipment.new(booking_approved_date:Time.now)
+      s.stub(:can_view?).and_return true
+      s.vendor = u.company
+      expect(s.can_request_booking?(u)).to be_false
+    end
   end
 
   describe "can_approve_booking?" do
@@ -120,6 +127,12 @@ describe Shipment do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(booking_received_date:nil)
       s.stub(:can_edit?).and_return true
+      expect(s.can_approve_booking?(u)).to be_false
+    end
+    it "should not allow if booking has been confirmed" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new(booking_received_date:Time.now,booking_confirmed_date:Time.now)
+      s.stub(:can_edit?).and_return true # make sure we're not testing the wrong thing
       expect(s.can_approve_booking?(u)).to be_false
     end
   end
@@ -170,6 +183,12 @@ describe Shipment do
       s.stub(:can_edit?).and_return true
       expect(s.can_confirm_booking?(u)).to be_false
     end
+    it "should not allow if booking already confiremd" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new(booking_received_date:Time.now,booking_confirmed_date:Time.now)
+      s.stub(:can_edit?).and_return true #make sure we're not accidentally testing the wrong thing
+      expect(s.can_confirm_booking?(u)).to be_false
+    end
   end
   describe "confirm booking" do
     it "should set booking confirmed date and booking confirmed by" do
@@ -181,6 +200,92 @@ describe Shipment do
       s.reload
       expect(s.booking_confirmed_date).to_not be_nil
       expect(s.booking_confirmed_by).to eq u
+    end
+  end
+
+  describe "can_revise_booking" do
+    it "should allow user to revise if approved but not confirmed and user can request_booking" do
+      u = double('u')
+      s = Shipment.new(booking_approved_date:Time.now)
+      s.should_receive(:can_request_booking?).with(u,true).and_return true
+      s.stub(:can_approve_booking?).and_return false #make sure we're not testing the wrong thing
+      s.stub(:can_confirm_booking?).and_return false #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_true
+    end
+    it "should allow user to revise if approved but not confirmed and user can approve_booking" do
+      u = double('u')
+      s = Shipment.new(booking_approved_date:Time.now)
+      s.should_receive(:can_approve_booking?).with(u,true).and_return true
+      s.stub(:can_request_booking?).and_return false #make sure we're not testing the wrong thing
+      s.stub(:can_confirm_booking?).and_return false #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_true
+    end
+
+    it "should allow user to revise if confirmed and user can confirm_booking" do
+      u = double('u')
+      s = Shipment.new(booking_approved_date:Time.now,booking_confirmed_date:Time.now)
+      s.should_receive(:can_confirm_booking?).with(u,true).and_return true
+      s.stub(:can_approve_booking?).and_return false #make sure we're not testing the wrong thing
+      s.stub(:can_request_booking?).and_return false #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_true
+    end
+    it "should not allow user to revise if confirmed and user cannot confirm_booking" do
+      u = double('u')
+      s = Shipment.new(booking_approved_date:Time.now,booking_confirmed_date:Time.now)
+      s.should_receive(:can_confirm_booking?).with(u,true).and_return false
+      s.stub(:can_approve_booking?).and_return true #make sure we're not testing the wrong thing
+      s.stub(:can_request_booking?).and_return true #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_false
+    end
+    it "should not allow if not approved or confirmed" do #since it wouldn't be logical
+      u = double('u')
+      s = Shipment.new
+      s.stub(:can_approve_booking?).and_return true #make sure we're not testing the wrong thing
+      s.stub(:can_request_booking?).and_return true #make sure we're not testing the wrong thing
+      s.stub(:can_confirm_booking?).and_return true #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_false
+    end
+  end
+  describe "revise booking" do
+    it "should remove received, requested, approved and confirmed date and 'by' fields" do
+      u = Factory(:user)
+      s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:Time.now,booking_approved_date:Time.now,booking_confirmed_date:Time.now)
+      s.should_receive(:create_snapshot_with_async_option).with(false,u)
+      s.revise_booking! u
+      s.reload
+      expect(s.booking_approved_by).to be_nil
+      expect(s.booking_approved_date).to be_nil
+      expect(s.booking_confirmed_by).to be_nil
+      expect(s.booking_confirmed_date).to be_nil
+      expect(s.booking_received_date).to be_nil
+      expect(s.booking_requested_by).to be_nil
+    end
+  end
+
+  describe :can_add_remove_lines? do
+    it "should allow adding lines if user can edit" do
+      u = double('user')
+      s = Shipment.new
+      s.should_receive(:can_edit?).with(u).and_return true
+      expect(s.can_add_remove_lines?(u)).to be_true
+    end
+    it "should not allow adding lines if user cannot edit" do
+      u = double('user')
+      s = Shipment.new
+      s.should_receive(:can_edit?).with(u).and_return false
+      expect(s.can_add_remove_lines?(u)).to be_false
+    end
+    it "should not allow adding lines if booking is approved" do
+      u = double('user')
+      s = Shipment.new(booking_approved_date:Time.now)
+      s.stub(:can_edit?).and_return true #make sure we're not testing the wrong thing
+      expect(s.can_add_remove_lines?(u)).to be_false
+    end
+    it "should not allow adding lines if booking is confirmed" do
+      u = double('user')
+      s = Shipment.new(booking_confirmed_date:Time.now)
+      s.stub(:can_edit?).and_return true #make sure we're not testing the wrong thing
+      expect(s.can_add_remove_lines?(u)).to be_false
     end
   end
 

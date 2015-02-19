@@ -103,6 +103,14 @@ describe 'ShipmentApp', ->
         svc.confirmBooking(shp)
         http.flush()
 
+    describe 'reviseBooking', ->
+      it 'should revise booking', ->
+        resp = {ok: 'ok'}
+        shp = {id: 10}
+        http.expectPOST('/api/v1/shipments/10/revise_booking.json').respond resp
+        svc.reviseBooking(shp)
+        http.flush()
+
     describe 'getParties', ->
       it 'should query companies api', ->
         resp = {'importers': [{id: 1}]}

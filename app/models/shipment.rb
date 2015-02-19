@@ -25,9 +25,12 @@ class Shipment < ActiveRecord::Base
 
 
   #########
-  # Booking Request / Approve / Confirm
+  # Booking Request / Approve / Confirm / Revise
   #########
-  def can_request_booking? user
+  def can_request_booking? user, ignore_shipment_state=false
+    unless ignore_shipment_state
+      return false if self.booking_received_date || self.booking_approved_date || self.booking_confirmed_date
+    end
     return false unless self.can_view?(user)
     return false unless self.vendor == user.company || user.company.master?
     return true
@@ -43,8 +46,12 @@ class Shipment < ActiveRecord::Base
     self.request_booking! user, true
   end
 
-  def can_approve_booking? user
-    return false unless self.booking_received_date
+  def can_approve_booking? user, ignore_shipment_state=false
+    unless ignore_shipment_state
+      return false if self.booking_confirmed_date
+      return false if self.booking_approved_date
+      return false unless self.booking_received_date
+    end
     return false unless self.can_edit?(user)
     return false unless self.importer == user.company || user.company.master?
     return true
@@ -60,8 +67,11 @@ class Shipment < ActiveRecord::Base
     self.approve_booking! user, true
   end
 
-  def can_confirm_booking? user
-    return false unless self.booking_received_date
+  def can_confirm_booking? user, ignore_shipment_state=false
+    unless ignore_shipment_state
+      return false if self.booking_confirmed_date
+      return false unless self.booking_received_date
+    end
     return false unless self.can_edit?(user)
     return false unless self.carrier == user.company || user.company.master?
     return true
@@ -75,6 +85,29 @@ class Shipment < ActiveRecord::Base
   end
   def async_confirm_booking! user
     self.confirm_booking! user, true
+  end
+
+  def can_revise_booking? user
+    return false unless self.booking_approved_date || self.booking_confirmed_date
+    if !self.booking_confirmed_date
+      return true if self.can_approve_booking?(user,true) || self.can_request_booking?(user,true)
+    else
+      return true if self.can_confirm_booking?(user,true)
+    end
+    return false
+  end
+  def revise_booking! user, async_snapshot = false
+    self.booking_approved_by = nil
+    self.booking_approved_date = nil
+    self.booking_confirmed_by = nil
+    self.booking_confirmed_date = nil
+    self.booking_received_date = nil
+    self.booking_requested_by = nil
+    self.save!
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+  def async_revise_booking! user
+    self.revise_booking! user, true
   end
 
   def find_same
@@ -112,6 +145,12 @@ class Shipment < ActiveRecord::Base
 	  #same rules as view
 	  return user.edit_shipments? && can_view?(user)
 	end
+
+  # can the user currently add lines to this shipment
+  def can_add_remove_lines?(user)
+    return false if self.booking_confirmed_date || self.booking_approved_date
+    return self.can_edit?(user)
+  end
 
   def can_comment?(user)
     return user.comment_shipments? && self.can_view?(user)

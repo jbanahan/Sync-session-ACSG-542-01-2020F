@@ -199,6 +199,25 @@ describe Api::V1::ShipmentsController do
       expect(response).to be_success
     end
   end
+  describe "revise booking" do
+    before :each do
+      @s = double("shipment")
+      Shipment.should_receive(:find).with('1').and_return @s
+    end
+    it "should call async_revise_booking" do
+      @s.should_receive(:can_revise_booking?).with(@u).and_return true
+      @s.should_receive(:async_revise_booking!).with(@u)
+      post :revise_booking, id: 1
+      expect(response).to be_success
+    end
+    it "should fail if user cannot approve booking" do
+      @s.should_receive(:can_revise_booking?).with(@u).and_return false
+      @s.should_not_receive(:revise_booking!)
+      @s.should_not_receive(:async_revise_booking!)
+      post :revise_booking, id: '1'
+      expect(response.status).to eq 403
+    end
+  end
   describe "process_tradecard_pack_manifest" do
     before :each do
       @s = Factory(:shipment)
@@ -397,6 +416,27 @@ describe Api::V1::ShipmentsController do
       sl.reload
       expect(sl.quantity).to eq 24
     end
+    it "should not allow new lines if !can_add_remove_lines?" do
+      Shipment.any_instance.stub(:can_add_remove_lines?).and_return false
+      @s_hash['lines'] = [
+        { 'shpln_shipped_qty'=>'104',
+          'shpln_puid'=>@product.unique_identifier
+        }
+      ]
+      expect {put :update, id: @shipment.id, shipment: @s_hash}.to_not change(ShipmentLine,:count)
+      expect(response.status).to eq 400
+    end
+    it "should not allow lines to be deleted if !can_add_remove_lines?" do
+      Shipment.any_instance.stub(:can_add_remove_lines?).and_return false
+      sl = Factory(:shipment_line,shipment:@shipment)
+      @s_hash['lines'] = [
+        { 'id'=>sl.id,
+          '_destroy' => 'true'
+        }
+      ]
+      expect {put :update, id: @shipment.id, shipment: @s_hash}.to_not change(ShipmentLine,:count)
+      expect(response.status).to eq 400
+    end
     it "should update container" do
       con = Factory(:container,entry:nil,shipment:@shipment,container_number:'CNOLD')
       @s_hash['containers'] = [{'id'=>con.id,'con_container_number'=>'CNUM','con_container_size'=>'40'}]
@@ -421,7 +461,7 @@ describe Api::V1::ShipmentsController do
     end
     it "should not allow containers to be deleted if they have lines" do
       con = Factory(:container,entry:nil,shipment:@shipment,container_number:'CNOLD')
-      sl = Factory(:shipment_line,shipment:@shipment,product:@product,quantity:100,line_number:1,container:con)
+      Factory(:shipment_line,shipment:@shipment,product:@product,quantity:100,line_number:1,container:con)
       @s_hash['containers'] = [{'id'=>con.id,'_destroy'=>true}]
       put :update, id: @shipment.id, shipment: @s_hash
       expect(response.status).to eq 400

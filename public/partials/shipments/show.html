@@ -181,7 +181,7 @@
                             {{ln.shpln_container_number}}
                           </td>
                           <td ng-show='shp.permissions.can_edit' class='text-right'>
-                            <button class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                            <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
                             <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
                           </td>
                         </tr>
@@ -238,8 +238,9 @@
     <button ng-show='shp.permissions.can_request_booking' class='btn btn-default' ng-click='requestBooking(shp)'>Request Booking</button>
     <button ng-show='shp.permissions.can_approve_booking' class='btn btn-default' ng-click='approveBooking(shp)'>Approve Booking</button>
     <button ng-show='shp.permissions.can_confirm_booking' class='btn btn-default' ng-click='confirmBooking(shp)'>Confirm Booking</button>
-    <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
-    <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='showProcessManifest()' ng-show='shp && shp.attachments.length > 0'>Process Manifest</button>
+    <button ng-show='shp.permissions.can_revise_booking' class='btn btn-default' ng-click='reviseBooking(shp)'>Revise Booking</button>
+    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
+    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showProcessManifest()' ng-show='shp && shp.attachments.length > 0'>Process Manifest</button>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>
   </div>
 </chain-loading-wrapper>

@@ -74,6 +74,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {'ok'=>'ok'}
   end
 
+  def revise_booking
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to revise this booking.",:forbidden) unless s.can_revise_booking?(current_user)
+    s.async_revise_booking! current_user
+    render json: {'ok'=>'ok'}
+  end
+
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
@@ -220,7 +227,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_comment:shipment.can_comment?(current_user),
       can_request_booking:shipment.can_request_booking?(current_user),
       can_approve_booking:shipment.can_approve_booking?(current_user),
-      can_confirm_booking:shipment.can_confirm_booking?(current_user)
+      can_confirm_booking:shipment.can_confirm_booking?(current_user),
+      can_revise_booking:shipment.can_revise_booking?(current_user),
+      can_add_remove_lines:shipment.can_add_remove_lines?(current_user)
     }
   end
   def render_lines?
@@ -304,8 +313,12 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
           ln.delete 'shpln_pname' #dont' need to update for both
         end
         s_line = shipment.shipment_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['shpln_line_number'], obj.line_number)}
-        s_line = shipment.shipment_lines.build(line_number:ln['cil_line_number']) if s_line.nil?
+        if s_line.nil?
+          raise StatusableError.new("You cannot add lines to this shipment.",400) unless shipment.can_add_remove_lines?(current_user)
+          s_line = shipment.shipment_lines.build(line_number:ln['cil_line_number'])
+        end
         if ln['_destroy']
+          raise StatusableError.new("You cannot remove lines from this shipment.",400) unless shipment.can_add_remove_lines?(current_user)
           s_line.mark_for_destruction
           next
         end

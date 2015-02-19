@@ -505,6 +505,13 @@ order_id: 77 #db id of order
     can_edit:false
     can_attach:true #can add file attachments
     can_comment:false #cannot add comments
+
+    #these permissions take into account the state of the object and not just the user's general permissions
+    can_request_booking:true
+    can_approve_booking:true
+    can_confirm_booking:true
+    can_revise_booking:true
+    can_add_remove_lines:true
   ]
   }
 ```
