@@ -25,7 +25,7 @@ module OpenChain; module Report; class JCrewBillingReport
     row_number = 0
     headers = ["Invoice #", "Invoice Date", "Entry #", "Direct Brokerage", "Direct Duty", "Retail Brokerage", "Retail Duty", "Factory Brokerage", "Factory Duty",
                 "Factory Direct Brokerage", "Factory Direct Duty", "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
-                "Retail T & E Brokerage", "Retail T & E Duty", "Madewell Factory Brokerage", "Madewell Factory Duty", "Total Brokerage", "Total Duty", "Errors"]    
+                "Retail T & E Brokerage", "Retail T & E Duty", "Madewell Factory Brokerage", "Madewell Factory Duty", "Madewell Wholesale Brokerage", "Madewell Wholesale Duty", "Total Brokerage", "Total Duty", "Errors"]    
     error_format = Spreadsheet::Format.new :pattern_fg_color => :yellow, :pattern => 1, :pattern_bg_color=>:xls_color_26
     error_with_date = Spreadsheet::Format.new :pattern_fg_color => :yellow, :pattern => 1, :pattern_bg_color=>:xls_color_26, :number_format=>'YYYY-MM-DD'
     column_widths = []
@@ -66,6 +66,7 @@ module OpenChain; module Report; class JCrewBillingReport
       row << invoice_data[:t_e_amount]
       row << 0 # There's never any duty on T/E lines since this bucket is just a brokerage fee they want allocated to a different GL account
       add_bucket_data row, buckets, :madewell_factory
+      add_bucket_data row, buckets, :madewell_wholesale
       row << invoice_data[:amount] + invoice_data[:t_e_amount]
       row << (invoice_data[:previously_invoiced] ? 0 : [entry.total_fees, entry.total_duty].compact.sum)
       row << errors_message if errors_message
@@ -199,7 +200,9 @@ module OpenChain; module Report; class JCrewBillingReport
       po_number = po_number.to_s.strip
 
       bucket = nil
-      if ["1", "8"].include? po_number[0]
+      if po_number.start_with?("02")
+        bucket = [:madewell_wholesale, 8]
+      elsif ["1", "8"].include? po_number[0]
         bucket = [:direct, 1]
       elsif ["2", "5"].include? po_number[0]
         bucket = [:retail, 2]
@@ -210,7 +213,7 @@ module OpenChain; module Report; class JCrewBillingReport
       elsif po_number[0] == "6"
         bucket = [:factory_direct, 4]
       elsif po_number.start_with?("4")
-          bucket = [:madewell_retail, 5]
+        bucket = [:madewell_retail, 5]
       elsif po_number.start_with?("7")
         bucket = [:madewell_direct, 6]
       else

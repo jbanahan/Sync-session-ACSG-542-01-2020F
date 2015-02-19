@@ -40,7 +40,7 @@ describe OpenChain::Report::JCrewBillingReport do
 
     def column_values values
       v = []
-      (0..15).each do |x|
+      (0..17).each do |x|
         v << ((values[x]) ? values[x] : 0)
       end
       v
@@ -52,9 +52,21 @@ describe OpenChain::Report::JCrewBillingReport do
 
       expect(s.row(0)).to eq ["Invoice #", "Invoice Date", "Entry #", "Direct Brokerage", "Direct Duty", "Retail Brokerage", "Retail Duty", "Factory Brokerage", "Factory Duty",
                 "Factory Direct Brokerage", "Factory Direct Duty", "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
-                "Retail T & E Brokerage", "Retail T & E Duty", "Madewell Factory Brokerage", "Madewell Factory Duty", "Total Brokerage", "Total Duty", "Errors"]
+                "Retail T & E Brokerage", "Retail T & E Duty", "Madewell Factory Brokerage", "Madewell Factory Duty", "Madewell Wholesale Brokerage", "Madewell Wholesale Duty", "Total Brokerage", "Total Duty", "Errors"]
 
       expect(s.row(1)).to eq ["Inv#", excel_date("2014-01-01".to_date), "123-45", column_values(0=>100.0, 1=>57.25), 100.0, 19.99].flatten
+    end
+
+    it "identifies Madewell Wholesale PO's" do
+      @entry.commercial_invoice_lines.first.update_attributes! po_number: "02123"
+      @temp = @r.run
+      s = Spreadsheet.open(@temp.path).worksheet 0
+
+      expect(s.row(0)).to eq ["Invoice #", "Invoice Date", "Entry #", "Direct Brokerage", "Direct Duty", "Retail Brokerage", "Retail Duty", "Factory Brokerage", "Factory Duty",
+                "Factory Direct Brokerage", "Factory Direct Duty", "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
+                "Retail T & E Brokerage", "Retail T & E Duty", "Madewell Factory Brokerage", "Madewell Factory Duty", "Madewell Wholesale Brokerage", "Madewell Wholesale Duty", "Total Brokerage", "Total Duty", "Errors"]
+
+      expect(s.row(1)).to eq ["Inv#", excel_date("2014-01-01".to_date), "123-45", column_values(16=>100.0, 17=>57.25), 100.0, 19.99].flatten
     end
 
     it "splits brokerage charges into multiple buckets prorating by PO # counts" do
