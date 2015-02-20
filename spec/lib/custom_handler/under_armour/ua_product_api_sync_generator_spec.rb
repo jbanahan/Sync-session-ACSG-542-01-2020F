@@ -14,12 +14,15 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
 
     it "syncs new objects to vfi track" do
       # Set up the product so it has 3 colors, but only 2 to send (ie only set up 2 ua materiacl color plant xrefs)
+      # Validate that we're not trying to send the same style + color combo more than once
       @product.update_custom_value! @cdefs[:colors], "A\nB\nC"
-      @product.update_custom_value! @cdefs[:plant_codes], "US Plant\nCA Plant"
+      @product.update_custom_value! @cdefs[:plant_codes], "US Plant\nCA Plant\nUS Plant 2"
 
       DataCrossReference.create! cross_reference_type: DataCrossReference::UA_PLANT_TO_ISO, key: "US Plant", value: "US"
+      DataCrossReference.create! cross_reference_type: DataCrossReference::UA_PLANT_TO_ISO, key: "US Plant 2", value: "US"
       DataCrossReference.create! cross_reference_type: DataCrossReference::UA_PLANT_TO_ISO, key: "CA Plant", value: "CA"
       DataCrossReference.create_ua_material_color_plant! @product.unique_identifier, "A", "US Plant"
+      DataCrossReference.create_ua_material_color_plant! @product.unique_identifier, "A", "US Plant 2"
       DataCrossReference.create_ua_material_color_plant! @product.unique_identifier, "B", "US Plant"
 
       # We're going to mock out the data for the remote calls

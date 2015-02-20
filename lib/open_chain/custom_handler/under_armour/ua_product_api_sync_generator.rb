@@ -22,17 +22,22 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
     colors = row[6].to_s.split(/\s*\r?\n\s*/)
 
     api_objects = []
+
+    # We can skip any colors we've already generated data for the product
+    sent_codes = Set.new
     plants.each do |plant|
       next unless @us_plant_codes.include?(plant)
 
       colors.each do |color|
+        unique_identifier = "#{row[1]}-#{color}"
+        next if sent_codes.include?(unique_identifier)
         next unless DataCrossReference.find_ua_material_color_plant(row[1], color, plant)
 
         product = {}
         product['id'] = row[0]
         product['prod_imp_syscode'] = vfitrack_importer_syscode(nil)
-        product['prod_uid'] = "#{row[1]}-#{color}"
-        product["prod_part_number"] = "#{row[1]}-#{color}"
+        product['prod_uid'] = unique_identifier
+        product["prod_part_number"] = unique_identifier
         product['class_cntry_iso'] = row[2]
         tariff = {}
         product['tariff_records'] = [tariff]
@@ -40,6 +45,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
         tariff['hts_hts_1'] = row[4]
 
         api_objects << ApiSyncObject.new(row[0], product)
+        sent_codes << unique_identifier
       end
     end
 
