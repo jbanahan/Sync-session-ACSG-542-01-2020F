@@ -14,14 +14,15 @@ describe OpenChain::CustomHandler::ApiSyncClient do
         ActiveRecord::Base.stub(:connection).and_return @active_record_connection
       end
 
-      it "executes query, parses results, calls do_sync for each result" do
+      it "executes query, parses results, calls do_sync for each result, checks for more data to sync" do
         row_1 = [1, 'UID']
         row_2 = [2, 'UID2']
         query = "SELECT 1"
 
         query_result = [OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(1, {'id' => 1}), OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(2, {'id' => 2})]
-        @client.should_receive(:query).and_return query
+        @client.should_receive(:query).exactly(2).times.and_return query
         @active_record_connection.should_receive(:execute).with(query).and_return [row_1, row_2]
+        @active_record_connection.should_receive(:execute).with(query).and_return []
         @client.should_receive(:process_query_result).with(row_1, last_result: false).and_return nil
         @client.should_receive(:process_query_result).with(row_2, last_result: true).and_return query_result
         @client.should_receive(:do_sync).with query_result[0]

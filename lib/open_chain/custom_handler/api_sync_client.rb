@@ -52,15 +52,22 @@ module OpenChain; module CustomHandler; class ApiSyncClient
 
   protected 
     def sync_via_query
-      results = ActiveRecord::Base.connection.execute query
+      results = nil
+      # Just keep trying to sync while there are results remaining, this 
+      # way the query can define a limit or not and we don't care about it
+      # either way.
+      begin
+        results = ActiveRecord::Base.connection.execute query
 
-      num_results = results.size
-      results.each_with_index do |cols, x|
-        # Indicate a last_result option since preprocess rows might be internally buffering results
-        # so as to merge multiple query rows into a single JSON object
-        sync_objects = process_query_result cols, last_result: (num_results == (x + 1))
-        yield sync_objects unless sync_objects.nil?
-      end
+        num_results = results.size
+        results.each_with_index do |cols, x|
+          # Indicate a last_result option since preprocess rows might be internally buffering results
+          # so as to merge multiple query rows into a single JSON object
+          sync_objects = process_query_result cols, last_result: (num_results == (x + 1))
+          yield sync_objects unless sync_objects.nil?
+        end
+      end while results.size > 0
+      
     end
 
     def sync_via_objects

@@ -155,13 +155,13 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
         "*cf_43" => local_data['prod_part_number']
       }
 
-      if @query_map[:fda_product_code]
+      if @query_map.has_key?(:fda_product_code)
         remote_data["*cf_78"] = local_data['fda_product_code']
         remote_data["*cf_77"] = (local_data['fda_product_code'].blank? ? false : true)
       end
 
-      remote_data["prod_name"] = local_data["prod_name"] if @query_map[:prod_name]
-      remote_data["*cf_41"] = local_data["prod_country_of_origin"] if @query_map[:prod_country_of_origin]
+      remote_data["prod_name"] = local_data["prod_name"] if @query_map.has_key?(:prod_name)
+      remote_data["*cf_41"] = local_data["prod_country_of_origin"] if @query_map.has_key?(:prod_country_of_origin)
 
       insert_classification_data remote_data, local_data
 
@@ -173,13 +173,13 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       remote_data["prod_imp_syscode"] = local_data["prod_imp_syscode"]
       remote_data["*cf_43"] = local_data['prod_part_number']
 
-      if @query_map[:fda_product_code]
+      if @query_map.has_key?(:fda_product_code)
         remote_data["*cf_78"] = local_data['fda_product_code']
         remote_data["*cf_77"] = (local_data['fda_product_code'].blank? ? false : true)
       end
 
-      remote_data["prod_name"] = local_data["prod_name"] if @query_map[:prod_name]
-      remote_data["*cf_41"] = local_data["prod_country_of_origin"] if @query_map[:prod_country_of_origin]
+      remote_data["prod_name"] = local_data["prod_name"] if @query_map.has_key?(:prod_name)
+      remote_data["*cf_41"] = local_data["prod_country_of_origin"] if @query_map.has_key?(:prod_country_of_origin)
 
       if remote_data['classifications'] && remote_data['classifications'].size > 0
         # Find the corresponding classification recore
@@ -188,7 +188,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
           classification = remote_data['classifications'].find {|c| c['class_cntry_iso'] == country}
           if classification
             # if we found the classification, then insert the classification description, if needed, then sync the tariff data
-            classification['*cf_99'] = local_data["class_customs_description"] if @query_map[:class_customs_description]
+            classification['*cf_99'] = local_data["class_customs_description"] if @query_map.has_key?(:class_customs_description)
 
             if classification['tariff_records'] && classification['tariff_records'].size > 0
               if local_data["tariff_records"].blank? || local_data["tariff_records"].size == 0
@@ -205,7 +205,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
                     new_tariff = new_tariff_data(tr)
                     line_numbers << new_tariff['hts_line_number']
                     remote_tariff['hts_line_number'] = new_tariff['hts_line_number']
-                    remote_tariff['hts_hts_1'] = new_tariff['hts_hts_1'] if @query_map[:hts_hts_1]
+                    remote_tariff['hts_hts_1'] = new_tariff['hts_hts_1'] if @query_map.has_key?(:hts_hts_1)
                   else
                     new_tariff = new_tariff_data(tr)
                     line_numbers << new_tariff['hts_line_number']
@@ -236,7 +236,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       # We're only expecting to sync US data at this point, so there's only a single 
       # US classification in our own data, hence no classification looping required
       classification = {'class_cntry_iso' => local_data['class_cntry_iso']}
-      if @query_map[:class_customs_description]
+      if @query_map.has_key?(:class_customs_description)
         classification['*cf_99'] = local_data["class_customs_description"]
       end
       if remote_data['classifications']
@@ -263,7 +263,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       # Use hts format so we're retaining the same data formatting in and out
       # otherwise we'll break the local fingerprinting being done
       tariff = {"hts_line_number" => local_data['hts_line_number'].to_i}
-      tariff['hts_hts_1'] = local_data["hts_hts_1"].hts_format if @query_map[:hts_hts_1]
+      tariff['hts_hts_1'] = local_data["hts_hts_1"].hts_format if @query_map.has_key?(:hts_hts_1)
 
       tariff
     end
