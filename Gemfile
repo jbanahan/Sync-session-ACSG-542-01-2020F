@@ -54,6 +54,10 @@ gem "mono_logger", '1.1.0'
 gem "net-sftp", '2.1.2'
 gem "clearance", '1.3.0'
 
+gem 'redis-semaphore', '~> 0.2'
+gem 'redis-namespace', '~> 1.5'
+gem 'connection_pool', '~> 2.1'
+
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
   gem 'factory_girl', '2.5.2'

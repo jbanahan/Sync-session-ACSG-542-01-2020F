@@ -39,7 +39,6 @@ Spork.prefork do
       CustomDefinition.skip_reload_trigger = true
       stub_event_publisher
       Time.zone = ActiveSupport::TimeZone["UTC"]
-      Lock::PERMENANT_LOCKS.clear if Lock::PERMENANT_LOCKS
     end
     
     # Clears out the deliveries array before every test..which is only done automatically

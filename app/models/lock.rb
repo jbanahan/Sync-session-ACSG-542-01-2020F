@@ -1,3 +1,9 @@
+require 'redis'
+require 'redis-semaphore'
+require 'redis-namespace'
+require 'connection_pool'
+require 'yaml'
+
 # Code taken from https://makandracards.com/makandra/1026-simple-database-mutex-mysql-lock
 
 # Every distinct lock name used creates a new row in the locks table.  These rows are not
@@ -10,7 +16,7 @@
 #
 # Something like this would be preferable as the locking engine: https://github.com/dv/redis-semaphore (side bonues - Redis is also available as a AWS ElastiCache engine)
 # This would also work: https://github.com/songkick/mega_mutex
-class Lock < ActiveRecord::Base
+class Lock
 
   FENIX_PARSER_LOCK ||= 'FenixParser'
   UPGRADE_LOCK ||= 'Upgrade'
@@ -22,10 +28,22 @@ class Lock < ActiveRecord::Base
   TRADE_CARD_PARSER ||= 'TradecardParser'
   ALLIANCE_DAY_END_PROCESS ||= 'AllianceDayEnd'
 
-  PERMENANT_LOCKS = Set.new
+  def self.create_connection_pool
+    config = YAML.load_file('config/redis.yml')[Rails.env]
+    raise "No configuration found for #{Rails.env} in config/redis.yml" unless config
+
+    config = config.with_indifferent_access
+    ConnectionPool.new(size: (config[:pool_size] ? config[:pool_size] : 10), timeout: 60) do 
+      redis = Redis.new(host: config[:server], port: config[:port])
+
+      # Now we need to make sure we're namespacing so we don't cross lock with other instances or versions
+      # We're not persisting our redis store and we don't really run jobs across differing versions
+      Redis::Namespace.new("#{Rails.root.basename}", redis: redis)
+    end
+  end
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
-  # for the duration of the block passed to this method returning wahtever
+  # for the duration of the block passed to this method returning whatever
   # the yielded block returns.
   #
   # This means that while this process is running the block no other process for the entire
@@ -34,107 +52,83 @@ class Lock < ActiveRecord::Base
   #
   # In other words, use this locking mechanism judiciously and keep the execution time low for the 
   # block you pass in.
+  #
+  # Be aware, by default, the duration of the lock is only 3 minutes.  You can extend this by 
+  # passing a longer # of seconds in the lock_expiration option.
   # 
   # options accepted:
-  # times- The number of times to retry after lock wait failure attempts (failures are currently 60 seconds in DB)
-  # temp_lock - If true, the lock record created will be removed after it is utilized.
-  def self.acquire(name, opts = {})
-    already_acquired = definitely_acquired?(name)
+  #
+  # timeout - The amount of time to wait for the lock before failing (defaults to 60).  No retries are attempted.  If you want to wait
+  # longer than the 60 second default than pass a longer timeout value.  A Timeout::Error is raised when a timeout occurs
+  #
+  # yield_in_transaction - If true (default), the method yields to the given block inside an open database transaction.  Pass
+  # false if you don't want this.  This is done largely for backwards compatibility with the old DB locking scheme.
+  #
+  # lock_expiration - The amount of time in seconds before the lock is reaped by the lock server.  This is largely here
+  # to ensure that failed clients don't lock out others indefinitely.  You MAY pass nil for this value to utilize 
+  # indifinite locks, but that's probably not entirely wise (if an indefinite lock happens and is blocking for too long
+  # it can be cleared by using the release_stale_locks! method of Redis::Semaphore).
+  def self.acquire(lock_name, opts = {})
+    @@connection_pool ||= create_connection_pool()
 
-    opts = {:times => 0, :temp_lock => false}.merge opts
+    already_acquired = definitely_acquired?(lock_name)
+
+    # The whole concept of temp locks is largely moot w/ redis...given the temporal nature of its "database"
+    # We're going to reverse the understanding (mostly to guard against dying processes leaving locks permanently locked)
+    # and if you want a PERMANENT lock, you will need to explicitly pass nil for lock_expiration
+    # The VAST majority of time we're using this lock construct is for things that take seconds at most, so 
+    # we won't have to retrofit any external callsites with this change
+    opts = {timeout: 60, yield_in_transaction: true, lock_expiration: 300}.merge opts
 
     result = nil
     if already_acquired
-      result = yield
+      if opts[:yield_in_transaction] == true
+        ActiveRecord::Base.transaction do
+          result = yield
+        end
+      else
+        result = yield
+      end
     else
-      # The outer block is solely for handling the potential for the lock missing error / retry
-      # on the temp locks.
-      my_lock = nil
-
-      # If we're in a nested transaction, we can't retry anything here because the state of the transaction is 
-      # blown out.  We need to raise out and possibly handle this via retrying at the outer edge of the transaction
-      # Think of cases where we're using nested locks.
-      nested_transaction = inside_nested_transaction?
+      timeout = opts[:timeout]
+      semaphore = nil
       begin
-        # When dealing w/ long running processes and permanent locks, record if this process has seen them 
-        # before and just skip the create part next time
-        if opts[:temp_lock] == true || !PERMENANT_LOCKS.include?(name)
-          begin
-            create! name: name
-          rescue ActiveRecord::RecordNotUnique
-            # concurrent create is okay since there's a unique index on the name attribute
-          rescue ActiveRecord::StatementInvalid => e
-            raise e if nested_transaction
-
-            retry if lock_deadlock?(e)
+        @@connection_pool.with(timeout: timeout) do |redis|
+          # We're going to expire temp locks in 10 minutes, this is really just housekeeping so that 
+          # we don't build up vast amounts of temp keys for now purpose.  This just tells redis to 
+          # reap the lock name after 5 minutes..if another lock tries to re-use the name, then 
+          # the expire time is updated to 5 minutes after that new call.
+          semaphore = opts[:lock_expiration] ? Redis::Semaphore.new(lock_name, redis: redis, expiration: opts[:lock_expiration]) : Redis::Semaphore.new(lock_name, redis: redis)
+          # The lock call denotes a timeout by returning false, but it will also return the result of the block
+          # So, to avoid cases where we potentially have the block returning false and the lock returning false
+          # just assume that if the lock's block isn't yielded to that the lock timed out.
+          timed_out = true
+          semaphore.lock(timeout) do 
+            timed_out = false
+            acquired_lock(lock_name)
+            if opts[:yield_in_transaction] == true
+              ActiveRecord::Base.transaction do
+                result = yield
+              end
+            else
+              result = yield
+            end
           end
+
+          raise Timeout::Error if timed_out
         end
-        
-        counter = 0
-        begin
-          transaction do
-            my_lock = find_by_name(name, :lock => true) # this is the call that will block in concurrent Lock.acquire attempts
-            # The lock could technically have been removed since it was initially created (like if multiple temp locks are being
-            # attempted for the same key)..if so, just retry
-            raise LockMissingError, name unless my_lock
-            acquired_lock(name)
-            result = yield
-            my_lock.delete if opts[:temp_lock] == true && !my_lock.nil?
-            my_lock = nil
-          end
-        rescue ActiveRecord::StatementInvalid => e
-          # We only want to retry acquiring the lock, we don't want to retry the 
-          # actual code inside the yielded block.
-          raise e if nested_transaction
-
-          if !definitely_acquired?(name)
-            retry if lock_wait_timeout?(e) && (counter += 1) <= opts[:times]
-
-            # Only retry lock aquisition deadlocks...don't retry delete ones since if the delete deadlocked
-            # then the yield block ran, and we don't want to retry that.  I don't think there should be a deadlock
-            # on the delete anyway since we should have an exclusive lock on the record at the point of the delete call
-            # anyway.
-            retry if lock_deadlock? e, false
-          end
-
-          raise e
-        ensure
-          maybe_released_lock(name)
-          # This follow-up check needs to be outside the inner transaction because if the yield block blows up it'll
-          # roll back the transaction (nullifying any delete occurring inside it)
-          begin
-            my_lock.delete if opts[:temp_lock] == true && !my_lock.nil?
-          rescue ActiveRecord::StatementInvalid => e
-            raise e if nested_transaction
-
-            retry if lock_deadlock? e
-          end
-        end
-      rescue LockMissingError
-        # This is not an error resulting from an actual database call, so we can safely retry it even if 
-        # we're nested in a transaction
-
-        # If we're missing a permanent lock (shouldn't happen, but could if someone accidently clears the db)
-        # clear the permanent locks Set so we don't get caught in a loop
-        PERMENANT_LOCKS.clear unless opts[:temp_lock] == true
-        retry
+      rescue Timeout::Error => e
+        # Just catch and re-raise the error after normalize the message (since we raise an error and the connection pool potentially raises one)
+        raise Timeout::Error, "Waited #{timeout} #{"second".pluralize(timeout)} while attempting to acquire lock '#{lock_name}'.", e.backtrace
+      ensure
+        release_lock(lock_name)
       end
     end
-
-    PERMENANT_LOCKS << name unless opts[:temp_lock] == true
 
     result
   end
 
-  def self.lock_deadlock? e, include_delete = true
-    msg = e.message
-    deadlock = (msg =~ /deadlock found/i && (msg =~ /select\s+`locks`./i || msg =~ /insert into `locks`/i || (include_delete && msg =~ /delete from `locks`/i )))
-    sleep(Random.rand(0.05..0.20)) if deadlock
-    deadlock
-  end
-
-  # if true, the lock is acquired
-  # if false, the lock might still be acquired, because we were in another db transaction
+  # if true, the lock is already acquired
   def self.definitely_acquired?(name)
     !!Thread.current[:definitely_acquired_locks] and Thread.current[:definitely_acquired_locks].has_key?(name)
   end
@@ -144,18 +138,46 @@ class Lock < ActiveRecord::Base
     Thread.current[:definitely_acquired_locks][name] = true
   end
 
-  def self.maybe_released_lock(name)
+  def self.release_lock(name)
     Thread.current[:definitely_acquired_locks] ||= {}
     Thread.current[:definitely_acquired_locks].delete(name)
   end
+
+  def self.unlocked?(lock_name)
+    # this is solely used in the unit tests
+    # It's reaching into redis-semaphore a bit, but it's here to make
+    # sure the locks are being cleared as expected
+    @@connection_pool.with do |redis|
+      return redis.lrange("#{lock_name}:AVAILABLE", 0, -1).length > 0
+    end
+  end
+
+  def self.expires_in(lock_name)
+    # this is solely used in the unit tests
+    # It's reaching into redis-semaphore a bit, but it's here to make
+    # sure the expiration is working as expected
+    @@connection_pool.with do |redis|
+      return redis.ttl("#{lock_name}:EXISTS")
+    end
+  end
+
+  def self.flushall force = false
+    # This method blows up the whole redis database...don't use it for anything other than tests
+    raise "Only available in testing environment" unless Rails.env.test? || force
+
+    @@connection_pool ||= create_connection_pool()
+    @@connection_pool.with do |redis|
+      redis.redis.flushall
+    end
+  end
+
+  private_class_method :acquired_lock, :release_lock, :expires_in, :unlocked?, :flushall
 
   def self.lock_wait_timeout? exception
     # Unfortunately, active record (or mysql adapter) uses a single error for all database errors
     # so the only real way of determining issues is by examing the error message
     exception.message && !(exception.message =~ /Error: Lock wait timeout exceeded/).nil?
   end
-
-  private_class_method :acquired_lock, :maybe_released_lock
 
   # This method basically just attempts to call with_lock on the passed in object
   # up to max_retry_count times handling any lock wait timeouts that may occur in the 
@@ -184,6 +206,6 @@ class Lock < ActiveRecord::Base
     ActiveRecord::Base.connection.open_transactions > 0
   end
 
-  class LockMissingError < StandardError; end
+  
 
 end
