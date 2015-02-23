@@ -31,6 +31,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
         Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>@p))
         Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>@p2))
       end
+      @p.update_column :updated_at, (1.year.ago)
       @files = []
     end
 

@@ -245,14 +245,15 @@ module OpenChain
       end
       
       #remove new lines and optionally quotes from string values
-      def clean_string_values values, strip_quotes=false
+      def clean_string_values values, strip_quotes=false, strip_tabs=false
+        regex = ["\r", "\n"]
+        regex << '"' if strip_quotes
+        regex << "\t" if strip_tabs
+
+        regex = "[" + regex.join("") + "]"
         values.each do |v| 
           next unless v.respond_to?(:gsub!)
-          if strip_quotes
-            v.gsub!(/[\r\n\"]/,' ')
-          else
-            v.gsub!(/[\r\n]/,' ')
-          end
+          v.gsub!(/#{regex}/,' ')
         end
       end
 

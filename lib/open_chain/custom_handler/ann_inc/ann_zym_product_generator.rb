@@ -53,7 +53,7 @@ module OpenChain
           end
         end
         def before_csv_write cursor, vals
-          clean_string_values vals
+          clean_string_values vals, false, true
 
           #replace the long description with the override value from the classification
           #unless the override is blank
