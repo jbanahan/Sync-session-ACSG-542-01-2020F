@@ -49,6 +49,14 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
       end
     end
 
+    # If there's no records to send, then we want to make sure that we still log a sync record against this product 
+    # otherwise we'll get a pile-up of records indicating they need syncing but no sync records being built for them.
+    if api_objects.length == 0
+      sr = SyncRecord.where(syncable_id: row[0], syncable_type: syncable_type, trading_partner: sync_code).first_or_create!
+      sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute), fingerprint: nil, confirmation_file_name: "No US data to send."
+    end
+
+
     return api_objects
   end
 

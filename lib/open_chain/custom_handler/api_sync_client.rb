@@ -166,6 +166,7 @@ module OpenChain; module CustomHandler; class ApiSyncClient
           sr.confirmed_at = (sr.sent_at + 1.minute)
         end
         sr.failure_message = sync_error
+        sr.confirmation_file_name = nil
         sr.save!
       end
       sr
