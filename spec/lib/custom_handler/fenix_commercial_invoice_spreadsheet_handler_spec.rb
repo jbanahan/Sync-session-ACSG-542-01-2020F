@@ -155,6 +155,17 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       errors[0].should include("No Fenix Importer associated with the Tax ID 'NOIMPORTER'.")
     end
 
+    it "should error if importer is blank" do
+      @importer = Factory(:company, importer: true, fenix_customer_number: "  ")
+      file_contents = [["Column", "Heading"],["  ", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
+      OpenChain::CustomHandler::FenixInvoiceGenerator.should_not_receive(:generate)
+
+      errors = @h.parse "file.xlsx"
+      errors.length.should eq 1
+      errors[0].should include("No Fenix Importer associated with the Tax ID '  '.")
+    end
+
     it "should not send invoices if suppressed" do
       file_contents = [["Column", "Heading"],[@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
