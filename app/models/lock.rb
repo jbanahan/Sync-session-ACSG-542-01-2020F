@@ -34,13 +34,25 @@ class Lock
 
     config = config.with_indifferent_access
     ConnectionPool.new(size: (config[:pool_size] ? config[:pool_size] : 10), timeout: 60) do 
-      redis = Redis.new(host: config[:server], port: config[:port])
-
-      # Now we need to make sure we're namespacing so we don't cross lock with other instances or versions
-      # We're not persisting our redis store and we don't really run jobs across differing versions
-      Redis::Namespace.new("#{Rails.root.basename}", redis: redis)
+      get_redis_client config
     end
   end
+  private_class_method :create_connection_pool
+
+  def self.get_redis_client config
+    redis = Redis.new(host: config[:server], port: config[:port])
+
+    # Now we need to make sure we're namespacing so we don't cross lock with other instances or versions
+    # We're not persisting our redis store and we don't really run jobs across differing versions
+    Redis::Namespace.new("#{Rails.root.basename}", redis: redis)
+  end
+  private_class_method :get_redis_client
+
+  def self.get_connection_pool
+    @@connection_pool ||= create_connection_pool()
+    @@connection_pool
+  end
+  private_class_method :get_connection_pool
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
   # for the duration of the block passed to this method returning whatever
@@ -69,8 +81,6 @@ class Lock
   # indifinite locks, but that's probably not entirely wise (if an indefinite lock happens and is blocking for too long
   # it can be cleared by using the release_stale_locks! method of Redis::Semaphore).
   def self.acquire(lock_name, opts = {})
-    @@connection_pool ||= create_connection_pool()
-
     already_acquired = definitely_acquired?(lock_name)
 
     # The whole concept of temp locks is largely moot w/ redis...given the temporal nature of its "database"
@@ -80,14 +90,15 @@ class Lock
     # we won't have to retrofit any external callsites with this change
     opts = {timeout: 60, yield_in_transaction: true, lock_expiration: 300}.merge opts
 
+    yield_in_transaction = opts[:yield_in_transaction] == true
     result = nil
     if already_acquired
-      result = execute_block opts[:yield_in_transaction] == true, &Proc.new
+      result = execute_block yield_in_transaction, &Proc.new
     else
       timeout = opts[:timeout]
       semaphore = nil
       begin
-        @@connection_pool.with(timeout: timeout) do |redis|
+        get_connection_pool.with(timeout: timeout) do |redis|
           # We're going to expire temp locks in 10 minutes, this is really just housekeeping so that 
           # we don't build up vast amounts of temp keys for now purpose.  This just tells redis to 
           # reap the lock name after 5 minutes..if another lock tries to re-use the name, then 
@@ -100,9 +111,7 @@ class Lock
           semaphore.lock(timeout) do 
             timed_out = false
             acquired_lock(lock_name)
-            # Pass the given block to our execute_block method
-            # Which largely just exists for testing purposes
-            result = execute_block opts[:yield_in_transaction] == true, &Proc.new
+            result = execute_block yield_in_transaction, &Proc.new
           end
 
           raise Timeout::Error if timed_out
@@ -145,7 +154,7 @@ class Lock
     # this is solely used in the unit tests
     # It's reaching into redis-semaphore a bit, but it's here to make
     # sure the locks are being cleared as expected
-    @@connection_pool.with do |redis|
+    get_connection_pool.with do |redis|
       return redis.lrange("#{lock_name}:AVAILABLE", 0, -1).length > 0
     end
   end
@@ -154,7 +163,7 @@ class Lock
     # this is solely used in the unit tests
     # It's reaching into redis-semaphore a bit, but it's here to make
     # sure the expiration is working as expected
-    @@connection_pool.with do |redis|
+    get_connection_pool.with do |redis|
       return redis.ttl("#{lock_name}:EXISTS")
     end
   end
@@ -162,9 +171,7 @@ class Lock
   def self.flushall force = false
     # This method blows up the whole redis database...don't use it for anything other than tests
     raise "Only available in testing environment" unless Rails.env.test? || force
-
-    @@connection_pool ||= create_connection_pool()
-    @@connection_pool.with do |redis|
+    get_connection_pool.with do |redis|
       redis.redis.flushall
     end
   end

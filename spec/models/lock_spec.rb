@@ -23,14 +23,15 @@ describe Lock do
       lock1ReturnValue = nil
       t1 = Thread.new {
         sleep (1.0 / 10.0) while !run
+        ActiveRecord::Base.connection_pool.with_connection do
+          lock1ReturnValue = Lock.acquire 'LockSpec' do
+            lockAcquired = true
+            # Make sure we can re-aquire the same lock from the same thread
+            Lock.acquire 'LockSpec' do
+              sleep sleepSeconds
 
-        lock1ReturnValue = Lock.acquire 'LockSpec' do
-          lockAcquired = true
-          # Make sure we can re-aquire the same lock from the same thread
-          Lock.acquire 'LockSpec' do
-            sleep sleepSeconds
-
-            "Success"
+              "Success"
+            end
           end
         end
       }
@@ -43,8 +44,10 @@ describe Lock do
         start_blocking = Time.now
         # By using the lock's return value we're also validating
         # that Lock is correctly returning the block's value.
-        end_blocking = Lock.acquire 'LockSpec' do
-          Time.now
+        ActiveRecord::Base.connection_pool.with_connection do
+          end_blocking = Lock.acquire 'LockSpec' do
+            Time.now
+          end
         end
       }
 
@@ -69,9 +72,11 @@ describe Lock do
       errored = nil
       t1 = Thread.new {
         begin
-          Lock.acquire 'LockSpec' do
-            started = true
-            raise Exception, "Failure"
+          ActiveRecord::Base.connection_pool.with_connection do
+            Lock.acquire 'LockSpec' do
+              started = true
+              raise Exception, "Failure"
+            end
           end
         rescue Exception
           errored = true
@@ -106,18 +111,35 @@ describe Lock do
     end
 
     it "yields inside of a transaction by default" do
-      # We really can't mess w/ transactions, and our tests are already wrapped
-      # in a transactions - so just confirming the presence of one
-      # in the block won't work, so all we're really doing here is confirming a 
-      # helper method is received w/ parameters indicating it should
-      # run inside a transaction
-      Lock.should_receive(:execute_block).with(true)
-      Lock.acquire('LockSpec'){}
+      # By running in a thread, we can assert we're not in a transaction the
+      # standard ActiveRecord way
+      open_transactions = -1
+      t = Thread.new {
+        ActiveRecord::Base.connection_pool.with_connection do
+          Lock.acquire('LockSpec', yield_in_transaction: true) {
+            open_transactions = ActiveRecord::Base.connection.open_transactions
+          }
+        end
+      }
+
+      t.join(5) if t.status
+      expect(open_transactions).to eq 1
     end
 
     it "yields outside a transaction if instructed" do
-      Lock.should_receive(:execute_block).with(false)
-      Lock.acquire('LockSpec', yield_in_transaction: false){}
+      # By running in a thread, we can assert we're not in a transaction the
+      # standard ActiveRecord way
+      open_transactions = -1
+      t = Thread.new {
+        ActiveRecord::Base.connection_pool.with_connection do
+          Lock.acquire('LockSpec', yield_in_transaction: false) {
+            open_transactions = ActiveRecord::Base.connection.open_transactions
+          }
+        end
+      }
+
+      t.join(5) if t.status
+      expect(open_transactions).to eq 0
     end
 
     it "raises a timeout error when connection pool timesout" do
@@ -125,17 +147,20 @@ describe Lock do
       # at a time so we can force a timeout
       config = YAML.load_file('config/redis.yml')
       config['test']['pool_size'] = 1
-      YAML.should_receive(:load_file) do 
-        config
+      cp = ConnectionPool.new(size: 1, timeout: 1) do 
+        Lock.send(:get_redis_client, config['test'].with_indifferent_access)
       end
+      Lock.stub(:get_connection_pool).and_return cp
 
       done = false
       lockAcquired = false
       end_time = Time.now + 3.seconds
       t1 = Thread.new {
-        Lock.acquire('LockSpec') do
-          lockAcquired = true
-          sleep(0.1) while !done && Time.now < end_time
+        ActiveRecord::Base.connection_pool.with_connection do
+          Lock.acquire('LockSpec') do
+            lockAcquired = true
+            sleep(0.1) while !done && Time.now < end_time
+          end
         end
       }
 
@@ -143,7 +168,9 @@ describe Lock do
       t2 = Thread.new {
         sleep (1.0 / 100.0) while !lockAcquired
         begin
-          Lock.acquire('LockSpec', timeout: 1) {}
+          ActiveRecord::Base.connection_pool.with_connection do
+            Lock.acquire('LockSpec', timeout: 1) {}
+          end
         rescue => e
           done = true
           error = e
@@ -165,9 +192,11 @@ describe Lock do
       lockAcquired = false
       end_time = Time.now + 3.seconds
       t1 = Thread.new {
-        Lock.acquire('LockSpec') do
-          lockAcquired = true
-          sleep(10) while !done && Time.now < end_time
+        ActiveRecord::Base.connection_pool.with_connection do
+          Lock.acquire('LockSpec') do
+            lockAcquired = true
+            sleep(0.1) while !done && Time.now < end_time
+          end
         end
       }
 
@@ -175,7 +204,9 @@ describe Lock do
       t2 = Thread.new {
         sleep (1.0 / 100.0) while !lockAcquired
         begin
-          Lock.acquire('LockSpec', timeout: 1) {}
+          ActiveRecord::Base.connection_pool.with_connection do
+            Lock.acquire('LockSpec', timeout: 1) {}
+          end
         rescue => e
           done = true
           error = e
