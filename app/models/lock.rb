@@ -82,13 +82,7 @@ class Lock
 
     result = nil
     if already_acquired
-      if opts[:yield_in_transaction] == true
-        ActiveRecord::Base.transaction do
-          result = yield
-        end
-      else
-        result = yield
-      end
+      result = execute_block opts[:yield_in_transaction] == true, &Proc.new
     else
       timeout = opts[:timeout]
       semaphore = nil
@@ -106,13 +100,9 @@ class Lock
           semaphore.lock(timeout) do 
             timed_out = false
             acquired_lock(lock_name)
-            if opts[:yield_in_transaction] == true
-              ActiveRecord::Base.transaction do
-                result = yield
-              end
-            else
-              result = yield
-            end
+            # Pass the given block to our execute_block method
+            # Which largely just exists for testing purposes
+            result = execute_block opts[:yield_in_transaction] == true, &Proc.new
           end
 
           raise Timeout::Error if timed_out
@@ -126,6 +116,14 @@ class Lock
     end
 
     result
+  end
+
+  def self.execute_block with_transaction
+    if with_transaction
+      ActiveRecord::Base.transaction { return yield}
+    else
+      return yield
+    end
   end
 
   # if true, the lock is already acquired
@@ -205,7 +203,5 @@ class Lock
   def self.inside_nested_transaction?
     ActiveRecord::Base.connection.open_transactions > 0
   end
-
-  
 
 end

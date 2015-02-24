@@ -106,12 +106,17 @@ describe Lock do
     end
 
     it "yields inside of a transaction by default" do
-      ActiveRecord::Base.should_receive(:transaction).and_yield
+      # We really can't mess w/ transactions, and our tests are already wrapped
+      # in a transactions - so just confirming the presence of one
+      # in the block won't work, so all we're really doing here is confirming a 
+      # helper method is received w/ parameters indicating it should
+      # run inside a transaction
+      Lock.should_receive(:execute_block).with(true)
       Lock.acquire('LockSpec'){}
     end
 
     it "yields outside a transaction if instructed" do
-      ActiveRecord::Base.should_not_receive(:transaction)
+      Lock.should_receive(:execute_block).with(false)
       Lock.acquire('LockSpec', yield_in_transaction: false){}
     end
 
