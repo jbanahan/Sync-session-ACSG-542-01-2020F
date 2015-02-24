@@ -59,7 +59,7 @@ class TariffLoader
 #ignored fields
     "CALCULATIONMETHOD" => lambda {|o,d|}
   }
-  MIN_VALID_COLUMN_LENGTH = 14
+  MIN_VALID_COLUMN_LENGTH = 10
 
   # Enables some special MFN handling for these countries
   MOST_FAVORED_NATION_SPECIAL_PARSE_ISOS = ['CN']

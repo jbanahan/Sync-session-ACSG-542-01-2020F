@@ -1,6 +1,6 @@
 class EntityTypesController < ApplicationController
 
-  HIDE_FROM_EDIT_SCREEN = [:prod_ven_id,:prod_ven_syscode,:prod_div_id,:prod_system_code,:prod_class_count]
+  HIDE_FROM_EDIT_SCREEN = [:prod_system_code,:prod_class_count, :prod_ent_type_id, :prod_ent_type]
 
   def index
     admin_secure {
@@ -69,10 +69,10 @@ class EntityTypesController < ApplicationController
   private
   def prep_edit_screen et
     @entity_type = et
-    base_fields = CoreModule.find_by_class_name(@entity_type.module_type).model_fields.clone
+    base_fields = CoreModule.find_by_class_name(@entity_type.module_type).every_model_field {|mf| mf.can_view? current_user }
     #remove fields that we know we shouldn't show
     base_fields.delete_if {|k,v| HIDE_FROM_EDIT_SCREEN.include? k}
-    @all_fields = base_fields.values
+    @all_fields = base_fields.values.sort {|a, b| a.label.upcase <=> b.label.upcase}
     @active_uids = @entity_type.entity_type_fields.collect {|f| f.model_field_uid.to_sym}
   end
 end

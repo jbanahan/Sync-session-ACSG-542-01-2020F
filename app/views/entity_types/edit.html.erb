@@ -17,7 +17,7 @@ $(function() {$("#btn_delete_redirect").click(function() {$("#btn_delete").click
   <h2>Fields</h2>
   <ul style='list-style-type:none'>
     <%@all_fields.each do |mf| %>
-      <li><%=check_box_tag "entity_type_fields[#{mf.uid}]", true, @active_uids.include?(mf.uid)%> <%=mf.label%></li>
+      <li><%=check_box_tag "entity_type_fields[#{mf.uid}]", true, @active_uids.include?(mf.uid)%> <%=mf.label%> (<%=mf.uid.to_s%>)</li>
     <%end%>
   </ul>
 <%end%>
