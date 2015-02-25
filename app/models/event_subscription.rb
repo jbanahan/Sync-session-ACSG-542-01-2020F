@@ -8,7 +8,7 @@ class EventSubscription < ActiveRecord::Base
     obj = object_for_event_type(event_type,object_id)
     return [] unless obj
     all_subs = EventSubscription.where(event_type:event_subscription_type(event_type,obj)).where(subscription_type=>true).includes(:user)
-    matches = all_subs.collect {|es| obj.can_view?(es.user) ? es : nil}.compact
+    all_subs.collect {|es| obj.can_view?(es.user) ? es : nil}.compact
   end
 
   private
@@ -21,11 +21,15 @@ class EventSubscription < ActiveRecord::Base
     end
   end
   def self.object_for_event_type event_type, object_id
+    # The order of these when statements is relevant, don't shift them around
     case event_type
     when /COMMENT_CREATE$/
       return Comment.find(object_id).commentable
-    when 'ORDER_CLOSE', 'ORDER_REOPEN', 'ORDER_UPDATE', 'ORDER_CREATE', 'ORDER_ACCEPT', 'ORDER_UNACCEPT'
-      return Order.find(object_id)
+    else
+      core_module_name = event_type.split('_').first
+      cm = CoreModule.find_by_class_name(core_module_name,true) #case insensitive
+      raise "CoreModule not found for #{core_module_name}" if cm.nil?
+      cm.find object_id
     end
   end
 end
