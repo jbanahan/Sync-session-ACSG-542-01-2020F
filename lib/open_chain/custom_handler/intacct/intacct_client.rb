@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   INTACCT_CONNECTION_INFO ||= {
     :sender_id => 'vandegriftinc',
     :sender_password => '9gUMGbFIMy',
-    :url => 'https://www.intacct.com/ia/xml/xmlgw.phtml',
+    :url => 'https://api.intacct.com/ia/xml/xmlgw.phtml',
     :company_id => 'vfi',
     :user_id => 'integration',
     # encode call is because of the & and > in the password since we're just templating the xml as a string below rather than
@@ -29,8 +29,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   end
 
   def self.async_send_dimension type, id, value, company = nil
-    return unless Rails.env.production?
-    
     self.new.send_dimension type, id, value, company
   end
 

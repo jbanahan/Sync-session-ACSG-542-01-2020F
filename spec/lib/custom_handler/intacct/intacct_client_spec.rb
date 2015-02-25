@@ -300,7 +300,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       # We're primarily concerned with what we're actually posting here, so check out the URI and post values
       # we've captured.
-      expect(@uri.to_s).to eq "https://www.intacct.com/ia/xml/xmlgw.phtml"
+      expect(@uri.to_s).to eq "https://api.intacct.com/ia/xml/xmlgw.phtml"
       expect(@post.uri).to eq @uri
       expect(@post['content-type']).to eq "x-intacct-xml-request"
 
