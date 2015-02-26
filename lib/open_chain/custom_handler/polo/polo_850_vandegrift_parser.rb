@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module Polo
     }
 
     def initialize
-      @cdefs = self.class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number]
+      @cdefs = self.class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date]
     end
 
     def integration_folder
@@ -150,6 +150,9 @@ module OpenChain; module CustomHandler; module Polo
           # This is the number of UOM's ordered
           line.quantity = xml.text("ProductQuantityDetails/QuantityOrdered")
 
+          ex_factory_cv = line.custom_values.find( lambda {line.custom_values.build(custom_definition_id: @cdefs[:ord_line_ex_factory_date].id)}) {|v| v.custom_definition_id = @cdefs[:ord_line_ex_factory_date].id}
+          ex_factory_cv.value = best_ex_factory(xml.text("ProductDates/DatesTimes[DateTimeType = '065']/Date"), xml.text("ProductDates/DatesTimes[DateTimeType = '118']/Date"))
+
           # Because we're storing these products in our system (which holds other importer product data), we need to preface the 
           # table's unique identifier column with the importer identifier.
           product = Product.where(importer_id: po.importer_id, unique_identifier: po.importer.fenix_customer_number + "-" + style).first_or_initialize
@@ -169,7 +172,7 @@ module OpenChain; module CustomHandler; module Polo
           line.product = product
         end
 
-        po.order_lines.select {|l| !(line_numbers.include?(l.line_number))}.map &:destroy
+        po.order_lines.select {|l| !(line_numbers.include?(l.line_number))}.map &:mark_for_destruction
         po.save!
 
         # If we have a REF w/ Qualifier of 9V w/ a value field of TC or TCF, then mark the order as having the invoice system as Tradecard.
@@ -187,6 +190,15 @@ module OpenChain; module CustomHandler; module Polo
         end
 
         text
+      end
+
+      def best_ex_factory date_1, date_2
+        # So, the first date is the "original" ex factory date, the second is the updated one.
+        # Always go w/ the updated one if it's present
+        date_1 = date_1.blank? ? nil : Date.strptime(date_1, "%Y-%m-%d") rescue nil
+        date_2 = date_2.blank? ? nil : Date.strptime(date_2, "%Y-%m-%d") rescue nil
+
+        date_2 ? date_2 : date_1
       end
   end
 end; end; end;
