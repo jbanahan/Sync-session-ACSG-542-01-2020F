@@ -5,9 +5,10 @@ class ShipmentLine < ActiveRecord::Base
   belongs_to :shipment, inverse_of: :shipment_lines
   belongs_to :container, inverse_of: :shipment_lines
   belongs_to :carton_set, inverse_of: :shipment_lines
+  belongs_to :canceled_order_line, class_name: 'OrderLine'
 
-  validates_uniqueness_of :line_number, :scope => :shipment_id	
-  
+  validates_uniqueness_of :line_number, :scope => :shipment_id
+
   dont_shallow_merge :ShipmentLine, ['id','created_at','updated_at','line_number']
 
   def related_orders
@@ -28,14 +29,14 @@ class ShipmentLine < ActiveRecord::Base
   def locked?
     (self.shipment && self.shipment.locked?) || !self.commercial_invoice_lines.blank?
   end
-  
+
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment
   end
-  
+
   def parent_id_where #supporting method for LinesSupport
     return :shipment_id => self.shipment.id
   end
-  
+
 end

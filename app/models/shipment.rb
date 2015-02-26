@@ -12,6 +12,7 @@ class Shipment < ActiveRecord::Base
   belongs_to :booking_requested_by, :class_name=>"User"
   belongs_to :booking_confirmed_by, :class_name=>"User"
   belongs_to :booking_approved_by, :class_name=>"User"
+  belongs_to :canceled_by, :class_name=>"User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -110,6 +111,83 @@ class Shipment < ActiveRecord::Base
   def async_revise_booking! user
     self.revise_booking! user, true
   end
+
+  ###################
+  # Cancel Shipment
+  ###################
+  def can_cancel? user
+    return false if self.canceled_date
+    return false unless self.can_edit?(user)
+    return true if self.can_cancel_by_role?(user)
+    return false
+  end
+  def cancel_shipment! user, async_snapshot = false
+    Shipment.transaction do
+      self.canceled_date = 0.seconds.ago
+      self.canceled_by = user
+      self.save!
+      self.shipment_lines.each do |sl|
+        sl.piece_sets.where('piece_sets.order_line_id IS NOT NULL').each do |ps|
+          sl.canceled_order_line_id = ps.order_line_id
+          sl.save!
+          ps.order_line_id = nil
+          if !ps.destroy_if_one_key
+            ps.save!
+            PieceSet.merge_duplicates! ps
+          end
+        end
+      end
+    end
+    OpenChain::EventPublisher.publish :shipment_cancel, self
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+  def async_cancel_shipment! user
+    self.cancel_shipment! user, true
+  end
+  def can_uncancel? user
+    return false unless self.canceled_date
+    return false unless self.can_edit?(user)
+    return true if self.can_cancel_by_role?(user)
+    return false
+  end
+  def uncancel_shipment! user, async_snapshot = false
+    Shipment.transaction do
+      self.canceled_by = nil
+      self.canceled_date = nil
+      self.save!
+      self.shipment_lines.where('shipment_lines.canceled_order_line_id is not null').each do |sl|
+        ol_id = sl.canceled_order_line_id
+        sl.canceled_order_line_id = nil
+        sl.linked_order_line_id = ol_id
+        sl.save!
+      end
+    end
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+  def async_uncancel_shipment! user
+    self.uncancel_shipment! user, true
+  end
+
+  #private support methods for can cancel
+  def can_cancel_as_vendor? user
+    (!self.booking_received_date) && user.company==self.vendor
+  end
+  private :can_cancel_as_vendor?
+  def can_cancel_as_importer? user
+    (!self.booking_confirmed_date) && user.company==self.importer
+  end
+  private :can_cancel_as_importer?
+  def can_cancel_as_carrier? user
+    user.company==self.carrier
+  end
+  private :can_cancel_as_carrier?
+  def can_cancel_by_role? user
+    return true if user.company.master?
+    return true if can_cancel_as_vendor?(user)
+    return true if can_cancel_as_importer?(user)
+    return true if can_cancel_as_carrier?(user)
+  end
+
 
   def find_same
     f = self.reference.nil? ? [] : Shipment.where(:reference=>self.reference.to_s)

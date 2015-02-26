@@ -7,6 +7,21 @@
 </div>
 <chain-loading-wrapper loading-flag='{{loadingFlag}}'>
   <div class='container'>
+    <div ng-show='shp.shp_canceled_date' class="row">
+      <div class="col-md-12">
+        <div class="panel panel-danger">
+          <div class="panel-heading">
+            <h3 class="panel-title">Shipment Canceled</h3>
+          </div>
+          <div class="panel-body">
+            This shipment was cancelled on {{shp.shp_canceled_date}} by {{shp.shp_canceled_by_full_name}}.
+          </div>
+          <div class="panel-footer text-right" ng-show='shp.permissions.can_uncancel'>
+            <button class='btn btn-sm btn-default' ng-click='uncancelShipment(shp)'>Undo Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="row"> <!-- start ship header -->
       <div class="col-md-4">
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/header_view.html' edit-template='/partials/shipments/header_edit.html'
@@ -239,6 +254,7 @@
     <button ng-show='shp.permissions.can_approve_booking' class='btn btn-default' ng-click='approveBooking(shp)'>Approve Booking</button>
     <button ng-show='shp.permissions.can_confirm_booking' class='btn btn-default' ng-click='confirmBooking(shp)'>Confirm Booking</button>
     <button ng-show='shp.permissions.can_revise_booking' class='btn btn-default' ng-click='reviseBooking(shp)'>Revise Booking</button>
+    <button ng-show='shp.permissions.can_cancel' class='btn btn-default' ng-click='cancelShipment(shp)'>Cancel Shipment</button>
     <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
     <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showProcessManifest()' ng-show='shp && shp.attachments.length > 0'>Process Manifest</button>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>

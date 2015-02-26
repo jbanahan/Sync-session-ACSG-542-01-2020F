@@ -81,6 +81,20 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {'ok'=>'ok'}
   end
 
+  def cancel
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to cancel this booking.",:forbidden) unless s.can_cancel?(current_user)
+    s.async_cancel_shipment! current_user
+    render json: {'ok'=>'ok'}
+  end
+
+  def uncancel
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to undo canceling this booking.",:forbidden) unless s.can_uncancel?(current_user)
+    s.async_uncancel_shipment! current_user
+    render json: {'ok'=>'ok'}
+  end
+
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
@@ -144,7 +158,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_booking_confirmed_by_full_name,
       :shp_booking_approved_by_full_name,
       :shp_booking_approved_date,
-      :shp_booked_quantity
+      :shp_booked_quantity,
+      :shp_canceled_by_full_name,
+      :shp_canceled_date
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     line_fields_to_render = limit_fields([
@@ -230,7 +246,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_approve_booking:shipment.can_approve_booking?(current_user),
       can_confirm_booking:shipment.can_confirm_booking?(current_user),
       can_revise_booking:shipment.can_revise_booking?(current_user),
-      can_add_remove_lines:shipment.can_add_remove_lines?(current_user)
+      can_add_remove_lines:shipment.can_add_remove_lines?(current_user),
+      can_cancel:shipment.can_cancel?(current_user),
+      can_uncancel:shipment.can_uncancel?(current_user)
     }
   end
   def render_lines?

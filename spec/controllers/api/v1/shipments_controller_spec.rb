@@ -218,6 +218,44 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 403
     end
   end
+  describe "cancel" do
+    before :each do
+      @s = double("shipment")
+      Shipment.should_receive(:find).with('1').and_return @s
+    end
+    it "should call async_cancel_booking" do
+      @s.should_receive(:can_cancel?).with(@u).and_return true
+      @s.should_receive(:async_cancel_shipment!).with(@u)
+      post :cancel, id: 1
+      expect(response).to be_success
+    end
+    it "should fail if user cannot cancel" do
+      @s.should_receive(:can_cancel?).with(@u).and_return false
+      @s.should_not_receive(:async_cancel_shipment!)
+      @s.should_not_receive(:cancel_shipment!)
+      post :cancel, id: 1
+      expect(response.status).to eq 403
+    end
+  end
+  describe "uncancel" do
+    before :each do
+      @s = double("shipment")
+      Shipment.should_receive(:find).with('1').and_return @s
+    end
+    it "should call async_uncancel_booking" do
+      @s.should_receive(:can_uncancel?).with(@u).and_return true
+      @s.should_receive(:async_uncancel_shipment!).with(@u)
+      post :uncancel, id: 1
+      expect(response).to be_success
+    end
+    it "should fail if user cannot uncancel" do
+      @s.should_receive(:can_uncancel?).with(@u).and_return false
+      @s.should_not_receive(:async_uncancel_shipment!)
+      @s.should_not_receive(:uncancel_shipment!)
+      post :uncancel, id: 1
+      expect(response.status).to eq 403
+    end
+  end
   describe "process_tradecard_pack_manifest" do
     before :each do
       @s = Factory(:shipment)

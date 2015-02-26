@@ -2003,7 +2003,17 @@ and classifications.product_id = products.id
           :data_type=>:string
         }],
         [37,:shp_booking_approved_date,:booking_approved_date,"Booking Approved Date",{data_type: 'date', read_only: true}],
-        [38,:shp_booked_quantity,:booked_quantity,"Booked Quantity",{data_type: :decimal, read_only:true}]
+        [38,:shp_booked_quantity,:booked_quantity,"Booked Quantity",{data_type: :decimal, read_only:true}],
+        [39,:shp_canceled_by_full_name,:username,"Canceled By", {
+          :import_lambda => lambda {|a,b| return "Canceled By cannot be set by import, ignored."},
+          :export_lambda => lambda {|obj|
+            u = obj.canceled_by
+            u.blank? ? "" : u.full_name
+          },
+          :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.canceled_by_id)",
+          :data_type=>:string
+        }],
+        [40,:shp_canceled_date,:canceled_date,"Canceled Date",{data_type: 'date', read_only: true}],
       ]
       add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")

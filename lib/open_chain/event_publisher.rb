@@ -84,6 +84,11 @@ module OpenChain; class EventPublisher
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
         lambda {|obj| "Shipment #{obj.reference} booking approved."},
         lambda {|obj| "Shipment #{obj.reference} booking approved."}
+      ),
+      shipment_cancel: MessageType.new('SHIPMENT_CANCEL',
+        lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
+        lambda {|obj| "Shipment #{obj.reference} has been canceled."},
+        lambda {|obj| "Shipment #{obj.reference} has been canceled."}
       )
     }
 

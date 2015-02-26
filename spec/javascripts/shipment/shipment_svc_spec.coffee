@@ -111,6 +111,22 @@ describe 'ShipmentApp', ->
         svc.reviseBooking(shp)
         http.flush()
 
+    describe 'cancelShipment', ->
+      it 'should cancel', ->
+        resp = {ok: 'ok'}
+        shp = {id: 10}
+        http.expectPOST('/api/v1/shipments/10/cancel.json').respond resp
+        svc.cancelShipment(shp)
+        http.flush()
+
+    describe 'uncancelShipment', ->
+      it 'should uncancel', ->
+        resp = {ok: 'ok'}
+        shp = {id: 10}
+        http.expectPOST('/api/v1/shipments/10/uncancel.json').respond resp
+        svc.uncancelShipment(shp)
+        http.flush()
+
     describe 'getParties', ->
       it 'should query companies api', ->
         resp = {'importers': [{id: 1}]}

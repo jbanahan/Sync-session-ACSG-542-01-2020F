@@ -72,5 +72,10 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     reviseBooking: (shp) ->
       $http.post('/api/v1/shipments/'+shp.id+'/revise_booking.json',{id: shp.id}) #need some json content for API controller
 
+    cancelShipment: (shp) ->
+      $http.post('/api/v1/shipments/'+shp.id+'/cancel.json',{id: shp.id}) #need some json content for API controller
+
+    uncancelShipment: (shp) ->
+      $http.post('/api/v1/shipments/'+shp.id+'/uncancel.json',{id: shp.id}) #need some json content for API controller
   }
 ]

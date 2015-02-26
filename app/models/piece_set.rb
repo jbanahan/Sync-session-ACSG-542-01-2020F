@@ -14,7 +14,7 @@ class PieceSet < ActiveRecord::Base
   validates :quantity, :presence => true
   validates_numericality_of :quantity, :greater_than_or_equal_to => 0
   validate :validate_product_integrity
-  
+
   #merge all piece sets together that have the same linked keys and set the quantity to the sum of all records
   def self.merge_duplicates! base
     all = PieceSet.where(
@@ -36,6 +36,23 @@ class PieceSet < ActiveRecord::Base
         raise "Error destroying PieceSet with ID #{ps.id}" unless destroyed
       end
       first.save!
+    end
+  end
+
+  #destroy this piece set if it only has one foriegn key
+  def destroy_if_one_key
+    keys = [:order_line_id,
+      :sales_order_line_id,
+      :shipment_line_id,
+      :delivery_line_id,
+      :commercial_invoice_line_id,
+      :drawback_import_line_id,
+      :security_filing_line_id,]
+    key_count = keys.inject(0) {|i,m| i + (!self.attributes[m.to_s].blank? ? 1 : 0)}
+    if key_count <= 1
+      return self.destroy
+    else
+      return false
     end
   end
 

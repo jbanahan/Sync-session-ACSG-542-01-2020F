@@ -18,6 +18,8 @@ OpenChain::Application.routes.draw do
         post :approve_booking, on: :member
         post :confirm_booking, on: :member
         post :revise_booking, on: :member
+        post :cancel, on: :member
+        post :uncancel, on: :member
         get :available_orders, on: :member
       end
       resources :fields, only: [:index]

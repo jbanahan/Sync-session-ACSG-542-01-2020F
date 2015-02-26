@@ -512,6 +512,8 @@ order_id: 77 #db id of order
     can_approve_booking:true
     can_confirm_booking:true
     can_revise_booking:true
+    can_cancel:true
+    can_uncancel:false
     can_add_remove_lines:true
   ]
   }
@@ -599,6 +601,59 @@ _Response_
 Issue a booking request on behalf of the user.
 
 `POST - /shipments/1/request_booking.json`
+
+_Response_
+
+`200` status with JSON object that does not contain valuable data
+
+
+#### Approve Booking
+
+Approve a booking request on behalf of the user.
+
+`POST - /shipments/1/approve_booking.json`
+
+_Response_
+
+`200` status with JSON object that does not contain valuable data
+
+
+#### Confirm Booking
+
+Confirm a booking request on behalf of the user.
+
+`POST - /shipments/1/confirm_booking.json`
+
+_Response_
+
+`200` status with JSON object that does not contain valuable data
+
+#### Revise Booking
+
+Roll back booking approvals and confirmations on behalf of the user.
+
+`POST - /shipments/1/revise_booking.json`
+
+_Response_
+
+`200` status with JSON object that does not contain valuable data
+
+#### Cancel
+
+Cancel shipment on behalf of the user.
+
+`POST - /shipments/1/cancel.json`
+
+_Response_
+
+`200` status with JSON object that does not contain valuable data
+
+#### UnCancel
+
+Undo shipment cancellation on behalf of the user
+Cancel shipment on behalf of the user.
+
+`POST - /shipments/1/uncancel.json`
 
 _Response_
 

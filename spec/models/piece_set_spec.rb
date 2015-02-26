@@ -30,6 +30,26 @@ describe PieceSet do
     end
   end
 
+  describe :destroy_if_one_key! do
+    it "should destroy if only has one foreign key" do
+      product = Factory(:product)
+      ps = PieceSet.create!(:quantity=>1,
+        :order_line=>Factory(:order_line,:product=>product)
+      )
+      expect(ps.destroy_if_one_key).to be_true
+      expect(PieceSet.count).to eq 0
+    end
+    it "should not destroy if has multiple foreign_keys" do
+      product = Factory(:product)
+      ps = PieceSet.create!(:quantity=>1,
+        :order_line=>Factory(:order_line,:product=>product),
+        :shipment_line=>Factory(:shipment_line,:product=>product)
+      )
+      expect(ps.destroy_if_one_key).to be_false
+      expect(PieceSet.count).to eq 1
+    end
+  end
+
   describe 'merge_duplicates' do
     before :each do
       @product = Factory(:product)

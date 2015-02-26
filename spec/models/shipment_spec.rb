@@ -52,6 +52,162 @@ describe Shipment do
     end
   end
 
+  describe "can_cancel?" do
+    it "should allow master to cancel if can edit shipment" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new
+      s.should_receive(:can_edit?).with(u).and_return true
+      expect(s.can_cancel?(u)).to be_true
+    end
+    it "should not allow cancel if cannot edit" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new
+      s.should_receive(:can_edit?).with(u).and_return false
+      expect(s.can_cancel?(u)).to be_false
+    end
+    it "should not allow cancel if already canceled" do
+      u = Factory(:master_user,shipment_edit:true)
+      s = Shipment.new(canceled_date:Time.now)
+      s.stub(:can_edit?).and_return true
+      expect(s.can_cancel?(u)).to be_false
+    end
+    context :vendor do
+      before :each do
+        @u = Factory(:user,company:Factory(:company,vendor:true))
+        @s = Shipment.new
+        @s.vendor = @u.company
+        @s.should_receive(:can_edit?).with(@u).and_return true
+      end
+      it "should allow vendor to cancel if not received" do
+        expect(@s.can_cancel?(@u)).to be_true
+      end
+      it "should not allow vendor to cancel if received" do
+        @s.booking_received_date = Time.now
+        expect(@s.can_cancel?(@u)).to be_false
+      end
+    end
+    context :importer do
+      before :each do
+        @u = Factory(:user,company:Factory(:company,importer:true))
+        @s = Shipment.new
+        @s.importer = @u.company
+        @s.should_receive(:can_edit?).with(@u).and_return true
+      end
+      it "should allow importer to cancel if not confirmed" do
+        expect(@s.can_cancel?(@u)).to be_true
+      end
+      it "should not allow importer to cancel if confirmed" do
+        @s.booking_confirmed_date = Time.now
+        expect(@s.can_cancel?(@u)).to be_false
+      end
+    end
+    it "should allow carrier to cancel" do
+      @u = Factory(:user,company:Factory(:company,carrier:true))
+      @s = Shipment.new
+      @s.carrier = @u.company
+      @s.should_receive(:can_edit?).with(@u).and_return true
+      @s.booking_confirmed_date = Time.now
+      expect(@s.can_cancel?(@u)).to be_true
+    end
+  end
+  describe "cancel_shipment!" do
+    it "should set cancel fields" do
+      u = Factory(:user)
+      s = Factory(:shipment)
+      s.should_receive(:create_snapshot_with_async_option).with false, u
+      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_cancel,s)
+      s.cancel_shipment! u
+      s.reload
+      expect(s.canceled_date).to_not be_nil
+      expect(s.canceled_by).to eq u
+    end
+    it "should set canceled_order_line_id for linked orders and remove shipment_line_id from piece_sets" do
+      u = Factory(:user)
+      s = Factory(:shipment)
+      s.should_receive(:create_snapshot_with_async_option).with false, u
+      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_cancel,s)
+      p = Factory(:product)
+      ol = Factory(:order_line,product:p,quantity:100)
+      sl1 = s.shipment_lines.build(quantity:5)
+      sl2 = s.shipment_lines.build(quantity:10)
+      [sl1,sl2].each do |sl|
+        sl.product = p
+        sl.linked_order_line_id = ol.id
+        sl.save!
+      end
+      #merge the two piece sets but don't delete so we don't have to check if they're linked
+      #to other things
+      expect{s.cancel_shipment!(u)}.to change(PieceSet,:count).from(2).to(0)
+      [sl1,sl2].each do |sl|
+        sl.reload
+        expect(sl.canceled_order_line).to eq ol
+      end
+    end
+  end
+
+  describe :can_uncancel? do
+    it "should allow if can_cancel_by_role? & can_edit & has canceled_date" do
+      u = double(:user)
+      s = Shipment.new(canceled_date:Time.now)
+      s.should_receive(:can_edit?).with(u).and_return true
+      s.should_receive(:can_cancel_by_role?).with(u).and_return true
+      expect(s.can_uncancel?(u)).to be_true
+    end
+    it "should not allow if cannot edit" do
+      u = double(:user)
+      s = Shipment.new(canceled_date:Time.now)
+      s.stub(:can_cancel_by_role?).and_return true
+      s.should_receive(:can_edit?).with(u).and_return false
+      expect(s.can_uncancel?(u)).to be_false
+    end
+    it "should not allow if cannot cancel by role" do
+      u = double(:user)
+      s = Shipment.new(canceled_date:Time.now)
+      s.stub(:can_edit?).and_return true
+      s.should_receive(:can_cancel_by_role?).with(u).and_return false
+      expect(s.can_uncancel?(u)).to be_false
+    end
+    it "should not allow if does not have canceled date" do
+      u = double(:user)
+      s = Shipment.new(canceled_date:nil)
+      s.stub(:can_edit?).and_return true
+      s.stub(:can_cancel_by_role?).and_return true
+      expect(s.can_uncancel?(u)).to be_false
+    end
+  end
+  describe :uncancel_shipment! do
+    it "should remove cancellation" do
+      u = Factory(:user)
+      s = Factory(:shipment,canceled_by:u,canceled_date:Time.now)
+      s.should_receive(:create_snapshot_with_async_option).with false, u
+      s.uncancel_shipment! u
+      s.reload
+      expect(s.canceled_by).to be_nil
+      expect(s.canceled_date).to be_nil
+    end
+    it "should restore cancelled order line links" do
+      u = Factory(:user)
+      s = Factory(:shipment)
+      s.should_receive(:create_snapshot_with_async_option).with false, u
+      p = Factory(:product)
+      ol = Factory(:order_line,product:p,quantity:100)
+      sl1 = s.shipment_lines.build(quantity:5)
+      sl2 = s.shipment_lines.build(quantity:10)
+      [sl1,sl2].each do |sl|
+        sl.product = p
+        sl.canceled_order_line_id = ol.id
+        sl.save!
+      end
+      #merge the two piece sets but don't delete so we don't have to check if they're linked
+      #to other things
+      expect{s.uncancel_shipment!(u)}.to change(PieceSet.where(order_line_id:ol.id),:count).from(0).to(2)
+      [sl1,sl2].each do |sl|
+        sl.reload
+        expect(sl.order_lines.to_a).to eq [ol]
+      end
+    end
+  end
+
   describe "request booking" do
     it "should set booking received date and booking request by" do
       u = Factory(:user)

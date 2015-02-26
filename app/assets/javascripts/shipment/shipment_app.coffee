@@ -145,6 +145,22 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
         $scope.loadShipment(sId,true).then ->
           window.alert('Booking opened for revision.')
 
+  $scope.cancelShipment = (shipment) ->
+    if window.confirm("Are you sure you want to cancel this shipment?")
+      $scope.loadingFlag = 'loading'
+      sId = shipment.id
+      shipmentSvc.cancelShipment(shipment).then (resp) ->
+        $scope.loadShipment(sId,true).then ->
+          window.alert('Shipment canceled.')
+
+  $scope.uncancelShipment = (shipment) ->
+    if window.confirm("Are you sure you want to undo canceling this shipment?")
+      $scope.loadingFlag = 'loading'
+      sId = shipment.id
+      shipmentSvc.uncancelShipment(shipment).then (resp) ->
+        $scope.loadShipment(sId,true).then ->
+          window.alert('Shipment no longer canceled.')
+
   $scope.prepShipmentHeaderEditObject = (shipment) ->
     $scope.header = {id: shipment.id}
     $scope.header['shp_ref'] = shipment.shp_ref
