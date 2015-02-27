@@ -195,7 +195,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     
     def process_response response
       # The response from Intacct should always be an XML document.
-      REXML::Document.new(response.body)
+      begin
+        REXML::Document.new(response.body)
+      rescue REXML::ParseException => e
+        e.log_me ["Invalid Intacct API Response:\n" + response.body]
+        raise e
+      end
     end
 
     def handle_error xml, function_control_id
