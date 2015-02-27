@@ -23,7 +23,7 @@ describe Api::V1::ShipmentsController do
       expect(response).to be_success
       j = JSON.parse(response.body)['results']
       j.first.delete 'permissions' #not testing permissions hash
-      expect(j).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air'}]
+      expect(j).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air','lines'=>[]}]
     end
   end
 
