@@ -121,12 +121,14 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
     shipmentSvc.getShipment(id,forceReload).then (resp) ->
       $scope.shp = resp.data.shipment
       $scope.loadingFlag = null
+      $scope.loadLines($scope.shp) if $scope.linesNeeded
+
+  $scope.loadLines = (shp) ->
+    $scope.linesNeeded = true
+    shipmentSvc.injectLines shp unless shp.lines
 
   $scope.edit = ->
     $state.go('edit',{shipmentId: $scope.shp.id})
-
-  $scope.loadLines = (shp) ->
-    shipmentSvc.injectLines shp unless shp.lines
 
   $scope.requestBooking = (shipment) ->
     bookingAction(shipment,shipment.shp_booking_received_date,shipmentSvc.requestBooking,'requested')

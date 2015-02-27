@@ -153,11 +153,14 @@
             <div role="tabpanel" class="tab-pane" id="line_detail">
               <div class="container-fluid">  <!--start lines section -->
                 <div class="row">
-                  <div class='col-md-12' ng-hide='shp.lines'>
+                  <div class='col-md-12' ng-hide='shp.lines.length >= 0'>
                     <div class='loader'>Loading</div>
                   </div>
-                  <div class="col-md-12" ng-show='shp.lines'>
-                    <table class='table table-striped'>
+                  <div class="col-md-12" ng-show='shp.lines.length >= 0'>
+                    <div class="panel" ng-show='shp.lines.length == 0'>
+                      <div class="panel-body">This shipment does't have any lines.</div>
+                    </div>
+                    <table class='table table-striped' ng-show='shp.lines.length > 0'>
                       <thead>
                         <tr>
                           <th>Line #</th>

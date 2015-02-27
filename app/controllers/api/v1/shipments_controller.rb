@@ -194,8 +194,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     h = {id: s.id}
     headers_to_render.each {|uid| h[uid] = export_field(uid, s)}
     if render_lines?
+      h['lines'] ||= []
       s.shipment_lines.each do |sl|
-        h['lines'] ||= []
         slh = {id: sl.id}
         line_fields_to_render.each {|uid| slh[uid] = export_field(uid, sl)}
         if render_order_fields?
