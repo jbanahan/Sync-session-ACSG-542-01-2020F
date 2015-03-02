@@ -2,6 +2,11 @@ require 'spec_helper'
 
 describe Lock do
 
+  after :each do
+    Lock.send(:flushall)
+    Lock.class_variable_set :@@connection_pool, nil
+  end
+
   context :acquire do
 
     it "should lock while a process is running" do
@@ -18,14 +23,15 @@ describe Lock do
       lock1ReturnValue = nil
       t1 = Thread.new {
         sleep (1.0 / 10.0) while !run
+        ActiveRecord::Base.connection_pool.with_connection do
+          lock1ReturnValue = Lock.acquire 'LockSpec' do
+            lockAcquired = true
+            # Make sure we can re-aquire the same lock from the same thread
+            Lock.acquire 'LockSpec' do
+              sleep sleepSeconds
 
-        lock1ReturnValue = Lock.acquire 'LockSpec' do
-          lockAcquired = true
-          # Make sure we can re-aquire the same lock from the same thread
-          Lock.acquire 'LockSpec' do
-            sleep sleepSeconds
-
-            "Success"
+              "Success"
+            end
           end
         end
       }
@@ -38,9 +44,10 @@ describe Lock do
         start_blocking = Time.now
         # By using the lock's return value we're also validating
         # that Lock is correctly returning the block's value.
-        end_blocking = Lock.acquire 'LockSpec' do
-
-          Time.now
+        ActiveRecord::Base.connection_pool.with_connection do
+          end_blocking = Lock.acquire 'LockSpec' do
+            Time.now
+          end
         end
       }
 
@@ -54,6 +61,8 @@ describe Lock do
       # Make sure the latter thread waited at least sleepSeconds to get the lock 
       # (Due to thread scheduling and timing the sleeps might be slightly quicker that sleepSeconds)
       (end_blocking - start_blocking).should >= (sleepSeconds - 0.1)
+      expect(Lock.send(:expires_in, 'LockSpec')).to be <= 300
+      expect(Lock.send(:unlocked?, 'LockSpec')).to be_true
     end
 
     it "should release the lock if an error occurs in the first thread" do
@@ -63,9 +72,11 @@ describe Lock do
       errored = nil
       t1 = Thread.new {
         begin
-          Lock.acquire 'LockSpec' do
-            started = true
-            raise Exception, "Failure"
+          ActiveRecord::Base.connection_pool.with_connection do
+            Lock.acquire 'LockSpec' do
+              started = true
+              raise Exception, "Failure"
+            end
           end
         rescue Exception
           errored = true
@@ -95,167 +106,135 @@ describe Lock do
       # if the raised exception in the first thread doesn't release the lock
       # then the latter thread is going to block undefinitely anyway.
       (end_time - start_time).should <= 1.0
+      expect(Lock.send(:expires_in, 'LockSpec')).to be <= 300
+      expect(Lock.send(:unlocked?, 'LockSpec')).to be_true
     end
 
-    it "allows for temp locks to be used that clean up the lock name record" do
-      started = nil
-      Lock.acquire 'LockSpecTemp', :temp_lock=>true do
-        started = true
+    it "yields inside of a transaction by default" do
+      # By running in a thread, we can assert we're not in a transaction the
+      # standard ActiveRecord way
+      open_transactions = -1
+      t = Thread.new {
+        ActiveRecord::Base.connection_pool.with_connection do
+          Lock.acquire('LockSpec', yield_in_transaction: true) {
+            open_transactions = ActiveRecord::Base.connection.open_transactions
+          }
+        end
+      }
+
+      t.join(5) if t.status
+      expect(open_transactions).to eq 1
+    end
+
+    it "yields outside a transaction if instructed" do
+      # By running in a thread, we can assert we're not in a transaction the
+      # standard ActiveRecord way
+      open_transactions = -1
+      t = Thread.new {
+        ActiveRecord::Base.connection_pool.with_connection do
+          Lock.acquire('LockSpec', yield_in_transaction: false) {
+            open_transactions = ActiveRecord::Base.connection.open_transactions
+          }
+        end
+      }
+
+      t.join(5) if t.status
+      expect(open_transactions).to eq 0
+    end
+
+    it "raises a timeout error when connection pool timesout" do
+      # Need to rejigger the connection pool so it only allows a single connection checked out
+      # at a time so we can force a timeout
+      config = YAML.load_file('config/redis.yml')
+      config['test']['pool_size'] = 1
+      cp = ConnectionPool.new(size: 1, timeout: 1) do 
+        Lock.send(:get_redis_client, config['test'].with_indifferent_access)
       end
+      Lock.stub(:get_connection_pool).and_return cp
 
-      expect(started).to be_true
-      expect(Lock.find_by_name('LockSpecTemp')).to be_nil
+      done = false
+      lockAcquired = false
+      end_time = Time.now + 3.seconds
+      t1 = Thread.new {
+        ActiveRecord::Base.connection_pool.with_connection do
+          Lock.acquire('LockSpec') do
+            lockAcquired = true
+            sleep(0.1) while !done && Time.now < end_time
+          end
+        end
+      }
+
+      error = nil
+      t2 = Thread.new {
+        sleep (1.0 / 100.0) while !lockAcquired
+        begin
+          ActiveRecord::Base.connection_pool.with_connection do
+            Lock.acquire('LockSpec', timeout: 1) {}
+          end
+        rescue => e
+          done = true
+          error = e
+        end
+      }
+
+      t1.join(5) if t1.status
+      t2.join(1) if t2.status
+
+      expect(error).not_to be_nil
+      expect(error.message).to eq "Waited 1 second while attempting to acquire lock 'LockSpec'."
+      # Just verify the backtrace has something about ConnectionPool in it...to show we're copying the backtrace
+      # over
+      expect(error.backtrace.first).to include("connection_pool")
     end
 
-    it "removes temp locks when errors occur in yield block" do
-      expect {
-        Lock.acquire 'LockSpecTemp', :temp_lock=>true do
-          raise "Blah"
-        end  
-      }.to raise_error "Blah"
-      
-      expect(Lock.find_by_name('LockSpecTemp')).to be_nil
+    it "raises timeout error when waiting for the semaphore lock times out" do
+      done = false
+      lockAcquired = false
+      end_time = Time.now + 3.seconds
+      t1 = Thread.new {
+        ActiveRecord::Base.connection_pool.with_connection do
+          Lock.acquire('LockSpec') do
+            lockAcquired = true
+            sleep(0.1) while !done && Time.now < end_time
+          end
+        end
+      }
+
+      error = nil
+      t2 = Thread.new {
+        sleep (1.0 / 100.0) while !lockAcquired
+        begin
+          ActiveRecord::Base.connection_pool.with_connection do
+            Lock.acquire('LockSpec', timeout: 1) {}
+          end
+        rescue => e
+          done = true
+          error = e
+        end
+      }
+
+      t1.join(10) if t1.status
+      t2.join(1) if t2.status
+
+      expect(error).not_to be_nil
+      expect(error.message).to eq "Waited 1 second while attempting to acquire lock 'LockSpec'."
+      # Just verify the first frame of the backtrace comes from lock.rb, which means our code raised it
+      # after a mutex timeout
+      expect(error.backtrace.first).to include("lock.rb")
     end
 
-    it "handles temp locks being deleted by retrying transaction when attempting to lock" do
-      lock = Lock.create! name: "TempLock"
-
-      # To simulate the lock missing, we need to stub out the find_by_name method so that it returns
-      # nil when it attempts to lock the Lock record the first time.  This should force a retry
-      Lock.should_receive(:find_by_name).ordered.twice.with("TempLock", lock: true).and_return(nil, lock)
-
-      block_ran = false
-      Lock.acquire('TempLock', temp_lock: true) { block_ran = true}
-      expect(block_ran).to be_true
-      expect(Lock.where(name:"TempLock").first).to be_nil
+    it "attempts to retry connecting if server is not reachable" do
+      # Just have the connection pool raise the Redis::CannotConnectError, which tells our process
+      # to sleep and try again to connect.
+      Redis::Semaphore.any_instance.stub(:lock).and_raise Redis::CannotConnectError
+      start = Time.now.to_i
+      expect { Lock.acquire('LockSpec', timeout: 2) }.to raise_error Timeout::Error, "Waited 2 seconds while attempting to connect to lock server for lock 'LockSpec'."
+      stop = Time.now.to_i
+      expect(stop - start).to be >= 2
     end
   end
 
-  context :retry_lock_aquire do
-
-    it "should attempt to acquire lock multiple times" do
-      Lock.should_receive(:acquired_lock).and_raise ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
-      Lock.should_receive(:acquired_lock).and_raise ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
-      Lock.should_receive(:acquired_lock).and_return true
-
-      started = false
-      # We have to fake out the lock, since this test is, in-fact running in an open transaction
-      Lock.should_receive(:inside_nested_transaction?).and_return false
-      Lock.acquire 'LockSpec', times: 2 do
-        started = true
-      end
-
-      started.should be_true
-    end
-
-    it "should not attempt to retry and aquire locks when a lock wait timeout occurs inside the yielded block" do
-      # We have to fake out the lock, since this test is, in-fact running in an open transaction
-      Lock.should_receive(:inside_nested_transaction?).and_return false
-
-      Lock.should_not_receive(:lock_wait_timeout?)
-
-      started = false
-      expect {
-        Lock.acquire 'LockSpec', times: 5 do
-          started = true
-          raise ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
-        end
-      }.to raise_error ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
-
-      started.should be_true
-      Lock.definitely_acquired?('LockSpec').should be_false
-    end
-
-    it "should not attempt to retry lock acquisition on other errors" do 
-      Lock.should_receive(:acquired_lock).and_raise ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
-
-      started = false
-      expect {
-        Lock.acquire 'LockSpec', times: 5 do
-          started = true
-        end
-      }.to raise_error ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
-
-      started.should be_false
-    end
-
-    it "should not attempt to retry locks if lock.aquire attempt occurs inside an open transaction" do
-      Lock.should_receive(:acquired_lock).and_raise ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
-      call_count = 0
-
-      expect {
-        ActiveRecord::Base.connection.transaction do 
-          Lock.acquire 'LockSpec', times: 5 do
-            call_count += 1
-          end
-        end
-      }.to raise_error ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
-      expect(call_count).to eq 0
-    end
-
-    it "should not attempt to retry deadlocks if deadlock occurs inside yield block of an open transaction" do
-      call_count = 0
-
-      expect {
-        ActiveRecord::Base.connection.transaction do 
-          Lock.acquire 'LockSpec', times: 5 do
-            call_count += 1
-            raise ActiveRecord::StatementInvalid, "deadlock found select `locks`."
-          end
-        end
-      }.to raise_error ActiveRecord::StatementInvalid, "deadlock found select `locks`."
-      expect(call_count).to eq 1
-    end
-
-    it "does not attempt to retry failed lock deletion if inside nested transaction" do
-      Lock.any_instance.should_receive(:delete).exactly(2).times.and_raise ActiveRecord::StatementInvalid, "deadlock found delete from `locks`"
-      call_count = 0
-      expect {
-        ActiveRecord::Base.connection.transaction do 
-          Lock.acquire 'LockSpec', times: 5, temp_lock:true do
-            call_count += 1
-          end
-        end
-      }.to raise_error ActiveRecord::StatementInvalid, "deadlock found delete from `locks`"
-      expect(call_count).to eq 1
-    end
-
-    it "does not attempt to retry failed lock creation if inside nested transaction" do
-      Lock.should_receive(:create!).with(name: "LockSpec-Temp").and_raise ActiveRecord::StatementInvalid, "deadlock found insert into `locks`"
-      call_count = 0
-      expect {
-        ActiveRecord::Base.connection.transaction do 
-          Lock.acquire 'LockSpec-Temp', times: 5, temp_lock:true do
-            call_count += 1
-          end
-        end
-      }.to raise_error ActiveRecord::StatementInvalid, "deadlock found insert into `locks`"
-      expect(call_count).to eq 0
-    end
-  end
-
-  context :lock_wait_timeout? do
-    it "should identify a lock wait timeout exception by the message" do
-      object = double()
-      object.stub(:message).and_return "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
-
-      Lock.lock_wait_timeout?(object).should be_true
-    end
-
-    it "should not-identify other exeptions as timeouts" do
-      object = double()
-      object.stub(:message).and_return "Runtime error"
-      Lock.lock_wait_timeout?(object).should be_false
-    end
-
-    it "should be defensive about the error object" do
-      object = double()
-      object.stub(:message).and_return nil
-      Lock.lock_wait_timeout?(object).should be_false
-    end
-  end
-
-  context :locK_with_retry do
+  context :lock_with_retry do
     it "should lock an object and yield" do
       e = Factory(:entry)
       v = Lock.with_lock_retry(e) do 
