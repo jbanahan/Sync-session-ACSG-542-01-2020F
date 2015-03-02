@@ -28,6 +28,21 @@ module CustomFieldSupport
     cv
   end
 
+
+  # This method ONLY uses the custom_values association to find the custom value object to use 
+  # to set the passed in value - returning the custom value object that had its value set. 
+  #
+  # It also does NOT save the value.
+  #
+  # For that you should either rely on the autosave aspect of the custom_values relation OR directly save the custom_value
+  # returned by this method.
+  def find_and_set_custom_value custom_definition, value
+    cv = self.custom_values.find {|v| v.custom_definition_id == custom_definition.id}
+    cv = self.custom_values.build(:custom_definition => custom_definition) if cv.nil?
+    cv.value = value
+    cv
+  end
+
   def get_custom_value_by_label label
     get_custom_value CustomDefinition.find_by_label(label)
   end

@@ -11,10 +11,9 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
   describe :parse do
     context :standard_line_type do
       before :each do
-        @cdefs = described_class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date]
+        @cdefs = described_class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date, :ord_division]
         @po_type = ""
         @po_number = "PO"
-        @merchandise_division = "MERCH"
         @message_date = "2014-01-01"
         @message_time = "1200"
         @line_number = "00010"
@@ -33,6 +32,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
           style: "STYLE",
           uom: "UOM",
           quantity: "10",
+          merchandise_division_numeric: "200",
           merchandise_division: "MERCH",
           primary_ex_factory: '2014-02-01',
           updated_ex_factory: '2014-03-01'
@@ -78,7 +78,8 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
                     </ProductQuantityDetails>
                     <ProductDescriptions>
                       <ItemCharacteristicsDescriptionCodeDesc>MDV</ItemCharacteristicsDescriptionCodeDesc>
-                      <ItemCharacteristicsDescriptionCode>#{line[:merchandise_division]}</ItemCharacteristicsDescriptionCode>
+                      <ItemCharacteristicsDescriptionCode>#{line[:merchandise_division_numeric]}</ItemCharacteristicsDescriptionCode>
+                      <ItemDescription>#{line[:merchandise_division]}</ItemDescription>
                     </ProductDescriptions>
                     <ProductDates>
                       <DatesTimes>
@@ -103,7 +104,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         r = DataCrossReference.first
         r.cross_reference_type.should eq DataCrossReference::RL_PO_TO_BRAND
         r.key.should eq @po_number
-        r.value.should eq @po_lines.first[:merchandise_division]
+        r.value.should eq @po_lines.first[:merchandise_division_numeric]
       end
 
       it "should update existing cross reference records" do
@@ -112,7 +113,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         described_class.new.parse @xml_lambda.call
 
         r = DataCrossReference.first
-        r.value.should eq @po_lines.first[:merchandise_division]
+        r.value.should eq @po_lines.first[:merchandise_division_numeric]
       end
 
       it "saves XML information as an Order" do
@@ -127,6 +128,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         expect(order.importer).to eq @importer
         expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("#{@message_date} #{@message_time[0,2]}:#{@message_time[2,2]}").in_time_zone("UTC")
         expect(order.get_custom_value(@cdefs[:ord_invoicing_system]).value).to eq "Tradecard"
+        expect(order.get_custom_value(@cdefs[:ord_division]).value).to eq @po_lines.first[:merchandise_division]
         expect(order.order_lines).to have(1).item
 
         l = order.order_lines.first
@@ -227,6 +229,9 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         @merchandise_division = "MERCH"
         @buyer_id = "0200011989"
         @importer = Factory(:company, fenix_customer_number: "806167003RM0001")
+        @style = "Style"
+        @merchandise_division_desc = "MERCH"
+        @cdefs = described_class.prep_custom_definitions [:ord_division]
         @xml_lambda = lambda do 
           <<-XML
 <Orders>
@@ -243,10 +248,17 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
   </Parties>
   <Lines>
     <ProductLine>
+      <PositionNumber>1</PositionNumber>
+      <ProductDetails3>
+        <ProductID>
+          <ProductIDValue>#{@style}</ProductIDValue>
+        </ProductID>
+      </ProductDetails3>
       <SubLine>
         <ProductDescriptions>
           <ItemCharacteristicsDescriptionCodeDesc>MDV</ItemCharacteristicsDescriptionCodeDesc>
           <ItemCharacteristicsDescriptionCode>#{@merchandise_division}</ItemCharacteristicsDescriptionCode>
+          <ItemDescription>#{@merchandise_division_desc}</ItemDescription>
         </ProductDescriptions>
       </SubLine>
     </ProductLine>
@@ -263,6 +275,10 @@ XML
         r.cross_reference_type.should eq DataCrossReference::RL_PO_TO_BRAND
         r.key.should eq @po_number
         r.value.should eq @merchandise_division
+
+        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        expect(order).not_to be_nil
+        expect(order.get_custom_value(@cdefs[:ord_division]).value).to eq @merchandise_division_desc
       end
     end
   end

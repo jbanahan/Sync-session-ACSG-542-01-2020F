@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module Polo
     }
 
     def initialize
-      @cdefs = self.class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date]
+      @cdefs = self.class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date, :ord_division]
     end
 
     def integration_folder
@@ -66,24 +66,32 @@ module OpenChain; module CustomHandler; module Polo
         po_number = first_xpath_text dom, "/Orders/MessageInformation/MessageOrderNumber"
 
         unless po_number.nil? || sap_po?(po_number)
-          # Every line will have the same merchandise division so we only need to find a single one in the document
-          merchandise_division = first_xpath_text dom, "/Orders/Lines/ProductLine/ProductDescriptions[ItemCharacteristicsDescriptionCodeDesc = 'MDV']/ItemCharacteristicsDescriptionCode"
-
-          # If the 850 consisted solely of prepack lines then the Merchandise division is at the subline level
-          unless merchandise_division
-            merchandise_division = first_xpath_text dom, "/Orders/Lines/ProductLine/SubLine/ProductDescriptions[ItemCharacteristicsDescriptionCodeDesc = 'MDV']/ItemCharacteristicsDescriptionCode"
-          end
-
-          if merchandise_division
+          merch_div_no = merchandise_division(dom, true)
+         
+          if merch_div_no
             DataCrossReference.transaction do 
-              cr = DataCrossReference.where(cross_reference_type: DataCrossReference::RL_PO_TO_BRAND, key: po_number).first_or_create! value: merchandise_division
+              cr = DataCrossReference.where(cross_reference_type: DataCrossReference::RL_PO_TO_BRAND, key: po_number).first_or_create! value: merch_div_no
 
               # I'm relying here on the save being a no-op in cases where we've created the cross-reference - since the value isn't dirty.
-              cr.value = merchandise_division
+              cr.value = merch_div_no
               cr.save!
             end
           end
         end
+      end
+
+      def merchandise_division dom, numeric
+        merch_attribute = numeric == true ? "ItemCharacteristicsDescriptionCode" : "ItemDescription"
+
+        # Every line will have the same merchandise division so we only need to find a single one in the document
+        merchandise_division = first_xpath_text dom, "/Orders/Lines/ProductLine/ProductDescriptions[ItemCharacteristicsDescriptionCodeDesc = 'MDV']/#{merch_attribute}"
+
+        # If the 850 consisted solely of prepack lines then the Merchandise division is at the subline level
+        unless merchandise_division
+          merchandise_division = first_xpath_text dom, "/Orders/Lines/ProductLine/SubLine/ProductDescriptions[ItemCharacteristicsDescriptionCodeDesc = 'MDV']/#{merch_attribute}"
+        end
+
+        merchandise_division
       end
 
       def find_purchase_order importer, po_number, source_system_export_date
@@ -150,9 +158,8 @@ module OpenChain; module CustomHandler; module Polo
           # This is the number of UOM's ordered
           line.quantity = xml.text("ProductQuantityDetails/QuantityOrdered")
 
-          ex_factory_cv = line.custom_values.find( lambda {line.custom_values.build(custom_definition_id: @cdefs[:ord_line_ex_factory_date].id)}) {|v| v.custom_definition_id = @cdefs[:ord_line_ex_factory_date].id}
-          ex_factory_cv.value = best_ex_factory(xml.text("ProductDates/DatesTimes[DateTimeType = '065']/Date"), xml.text("ProductDates/DatesTimes[DateTimeType = '118']/Date"))
-
+          line.find_and_set_custom_value @cdefs[:ord_line_ex_factory_date], best_ex_factory(xml.text("ProductDates/DatesTimes[DateTimeType = '065']/Date"), xml.text("ProductDates/DatesTimes[DateTimeType = '118']/Date"))
+         
           # Because we're storing these products in our system (which holds other importer product data), we need to preface the 
           # table's unique identifier column with the importer identifier.
           product = Product.where(importer_id: po.importer_id, unique_identifier: po.importer.fenix_customer_number + "-" + style).first_or_initialize
@@ -166,18 +173,19 @@ module OpenChain; module CustomHandler; module Polo
             product.unit_of_measure = xml.text("ProductQuantityDetails/ProductQuantityUOM")
 
             # Part Number is the importer's unique identifier, but not the system unique identifier
+            product.find_and_set_custom_value @cdefs[:prod_part_number], style
             product.save!
-            product.update_custom_value! @cdefs[:prod_part_number], style
           end
           line.product = product
         end
 
-        po.order_lines.select {|l| !(line_numbers.include?(l.line_number))}.map &:mark_for_destruction
-        po.save!
-
+        po.find_and_set_custom_value @cdefs[:ord_division], merchandise_division(dom, false)
         # If we have a REF w/ Qualifier of 9V w/ a value field of TC or TCF, then mark the order as having the invoice system as Tradecard.
         invoicing_system = (["TC", "TCF"].include?(first_xpath_text(dom, "/Orders/MessageReferences/References[ReferenceType = '9V']/ReferenceValue")) ? "Tradecard" : "")
-        po.update_custom_value! @cdefs[:ord_invoicing_system], invoicing_system
+        po.find_and_set_custom_value @cdefs[:ord_invoicing_system], invoicing_system
+
+        po.order_lines.select {|l| !(line_numbers.include?(l.line_number))}.map &:mark_for_destruction
+        po.save!
 
         po
       end

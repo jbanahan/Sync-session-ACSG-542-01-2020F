@@ -32,7 +32,8 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     class_set_type: {label: "Set Type", data_type: :string, module_type: "Classification"},
     ord_invoicing_system: {label: "Invoicing System", data_type: :string, module_type: "Order"},
     ord_invoiced: {label: "Invoice Received?", data_type: :boolean, module_type: "Order"},
-    ord_line_ex_factory_date: {label: "Planned Ex-Factory", data_type: :date, module_type: "OrderLine"}
+    ord_line_ex_factory_date: {label: "Planned Ex-Factory", data_type: :date, module_type: "OrderLine"},
+    ord_division: {label: "Division", data_type: :string, module_type: "Order"}
   } 
   
   def self.included(base)

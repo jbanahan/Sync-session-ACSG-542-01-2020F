@@ -69,4 +69,39 @@ describe "CustomFieldSupport" do
       p.freeze_all_custom_values_including_children
     end
   end
+
+  describe "find_and_set_custom_value" do
+    it "finds a custom value object in the custom_values relation and sets it to the given value" do
+      cd = Factory(:custom_definition,:module_type=>'Product',data_type:'string')
+      p = Factory(:product)
+      p.update_custom_value! cd, "VALUE"
+
+      cv = p.find_and_set_custom_value cd, "OTHER VALUE"
+
+      expect(cv.changed?).to be_true
+      expect(cv.value).to eq "OTHER VALUE"
+      p.save!
+      expect(cv.changed?).to be_false
+
+      p.reload
+      p.custom_values.reload
+      expect(p.custom_values.first).to be_persisted
+      expect(p.get_custom_value(cd).value).to eq "OTHER VALUE"
+    end
+
+    it "creates a new custom value if no existing one is found" do
+      cd = Factory(:custom_definition,:module_type=>'Product',data_type:'string')
+      p = Product.new unique_identifier: "ABC"
+
+      cv = p.find_and_set_custom_value cd, "VALUE"
+      expect(cv.changed?).to be_true
+      expect(cv).not_to be_persisted
+      p.save!
+
+      p.reload
+      p.custom_values.reload
+      expect(p.custom_values.first).to be_persisted
+      expect(p.get_custom_value(cd).value).to eq "VALUE"
+    end
+  end
 end

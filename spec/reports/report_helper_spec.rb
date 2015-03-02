@@ -163,4 +163,39 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  describe "workbook_to_tempfile" do
+
+    before :each do 
+      @wb = XlsMaker.create_workbook "Name", ["Header"]
+    end
+
+    it "writes a workbook to a tempfile and yields the tempfile" do
+      workbook = nil
+      path = nil
+      name = nil
+      tempfile = nil
+      @helper.new.workbook_to_tempfile(@wb, "prefix", file_name: "test.xls") do |tf|
+        workbook = Spreadsheet.open tf
+        name = tf.original_filename
+        tempfile = tf
+      end
+
+      expect(workbook.worksheet(0).row(0)).to eq ["Header"]
+      expect(tempfile.closed?).to be_true
+      expect(name).to eq "test.xls"
+    end
+
+    it "writes workbook to tempfile returning tempfile" do
+      tf = nil
+      begin
+        tf = @helper.new.workbook_to_tempfile(@wb, "prefix", file_name: "test.xls")
+        expect(tf.original_filename).to eq "test.xls"
+        workbook = Spreadsheet.open tf
+        expect(workbook.worksheet(0).row(0)).to eq ["Header"]
+      ensure
+        tf.close! unless tf.closed?
+      end
+    end
+  end
+
 end
