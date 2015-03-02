@@ -3,7 +3,7 @@ class OpenMailer < ActionMailer::Base
 
   after_filter :modify_email_for_development
 
-  ATTACHMENT_LIMIT ||= 1.kilobyte
+  ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
 An attachment named '_filename_' for this message was larger than the maximum system size.
 Click <a href='_path_'>here</a> to download the attachment directly.
