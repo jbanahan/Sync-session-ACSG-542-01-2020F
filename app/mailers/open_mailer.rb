@@ -3,7 +3,7 @@ class OpenMailer < ActionMailer::Base
 
   after_filter :modify_email_for_development
 
-  ATTACHMENT_LIMIT ||= 10.megabytes
+  ATTACHMENT_LIMIT ||= 1.kilobyte
   ATTACHMENT_TEXT ||= <<EOS
 An attachment named '_filename_' for this message was larger than the maximum system size.
 Click <a href='_path_'>here</a> to download the attachment directly.
@@ -163,19 +163,28 @@ EOS
   def send_s3_file current_user, to, cc, subject, body_text, bucket, s3_path, attachment_name=nil
     a_name = attachment_name.blank? ? s3_path.split('/').last : attachment_name
     t = OpenChain::S3.download_to_tempfile bucket, s3_path
-    @body_text = ''
-    attachment_saved = save_large_attachment(t.path, to)
+    email_text = [body_text]
+    large_attachment = false
+    save_large_attachment(t.path, to) do |large_file_attachment, attachment_text|
+      if large_file_attachment
+        large_attachment = true
+      end
+
+      if !attachment_text.blank?
+        # Concatenate passed message with the text set when large file is saved
+        # to S3 for direct download
+        email_text << "<br><br>".html_safe
+        email_text << attachment_text
+      end
+    end
     @user = current_user
-    # Concatenate passed message with the text set when large file is saved
-    # to S3 for direct download
-    @body_text = body_text + @body_text
+    @body_text = email_text
+
     m = mail(:to=>to, :reply_to=>current_user.email, :subject => subject)
     # Postmark does not handle blank CC / BCC fields any longer without erroring (dumb)
     m.cc = cc unless cc.blank?
+    m.attachments[a_name] = create_attachment(t) unless large_attachment
 
-    unless attachment_saved
-      m.attachments[a_name] = create_attachment(t)
-    end
     m
   end
 

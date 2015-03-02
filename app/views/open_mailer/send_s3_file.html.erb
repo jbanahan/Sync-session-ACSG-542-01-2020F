@@ -1,5 +1,7 @@
 <p>
-  <%=@body_text%>
+  <%@body_text.each do |text| %>
+    <%=text%>
+  <% end %>
 </p>
 -- 
 <br>
