@@ -222,6 +222,16 @@ describe Lock do
       # after a mutex timeout
       expect(error.backtrace.first).to include("lock.rb")
     end
+
+    it "attempts to retry connecting if server is not reachable" do
+      # Just have the connection pool raise the Redis::CannotConnectError, which tells our process
+      # to sleep and try again to connect.
+      Redis::Semaphore.any_instance.stub(:lock).and_raise Redis::CannotConnectError
+      start = Time.now.to_i
+      expect { Lock.acquire('LockSpec', timeout: 2) }.to raise_error Timeout::Error, "Waited 2 seconds while attempting to connect to lock server for lock 'LockSpec'."
+      stop = Time.now.to_i
+      expect(stop - start).to be >= 2
+    end
   end
 
   context :lock_with_retry do

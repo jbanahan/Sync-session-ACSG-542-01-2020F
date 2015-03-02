@@ -96,6 +96,7 @@ class Lock
       result = execute_block yield_in_transaction, &Proc.new
     else
       timeout = opts[:timeout]
+      timeout_at = Time.now.to_i + timeout
       semaphore = nil
       begin
         get_connection_pool.with(timeout: timeout) do |redis|
@@ -116,9 +117,18 @@ class Lock
 
           raise Timeout::Error if timed_out
         end
-      rescue Timeout::Error => e
-        # Just catch and re-raise the error after normalize the message (since we raise an error and the connection pool potentially raises one)
+      rescue Timeout::Error, Redis::TimeoutError => e
+        # Just catch and re-raise the error after normalize the message (since we raise an error and the connection pool/redis potentially raises one)
         raise Timeout::Error, "Waited #{timeout} #{"second".pluralize(timeout)} while attempting to acquire lock '#{lock_name}'.", e.backtrace
+      rescue Redis::CannotConnectError, Redis::ConnectionError => e
+        # In this case, the attempt to connect to redis for the lock failed (server restart/maint etc)..keep retrying until we've waiting longer than
+        # the given timeout.
+        if (Time.now.to_i) < timeout_at
+          sleep(1)
+          retry
+        else
+          raise Timeout::Error, "Waited #{timeout} #{"second".pluralize(timeout)} while attempting to connect to lock server for lock '#{lock_name}'.", e.backtrace
+        end
       ensure
         release_lock(lock_name)
       end
