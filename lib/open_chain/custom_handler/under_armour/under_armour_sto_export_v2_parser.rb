@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourSto
   def self.get_export_date xlc
     export_date = xlc.get_cell(0,0,0)
     raise "Cell A1 must contain export date." if export_date.blank?
-    return export_date if export_date.respond_to?(:acts_like_date?)
+    return export_date if export_date.respond_to?(:acts_like_date?) || export_date.respond_to?(:strftime)
     date_parts = export_date.split('/')
     Date.new(date_parts[2].to_s.to_i,date_parts[0].to_s.to_i,date_parts[1].to_s.to_i)
   end
