@@ -5,6 +5,7 @@ module OpenChain
   module CustomHandler
     class PoloMslPlusEnterpriseHandler
       include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
+      include ActionView::Helpers::NumberHelper
 
       # :env=>:qa will put files in _test_to_msl instead of _to_msl
       def initialize opts={}
@@ -223,7 +224,17 @@ module OpenChain
         end
 
         def get_custom_values product, *defs
-          defs.map {|d| product.get_custom_value(@out_cdefs[d]).value }
+          defs.map do |d| 
+            value = product.get_custom_value(@out_cdefs[d]).value
+
+            # This is pretty much solely for formatting the Fiber Percentage fields, but there's no other fields that are 
+            # decimal values that will be more than 2 decimal places, so it works here in the main method for getting the custom values
+            if value.is_a?(Numeric)
+              value = number_with_precision(value, precision: 2, strip_insignificant_zeros: true)
+            end
+
+            value            
+          end
         end
     end
   end
