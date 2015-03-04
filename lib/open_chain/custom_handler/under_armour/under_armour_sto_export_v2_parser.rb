@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourSto
   def self.get_ref_num xlc
     ref_num = xlc.get_cell(0,1,0)
     raise "Cell A2 must contain a shipment reference number." if ref_num.blank?
-    ref_num.strip
+    ref_num.to_s.strip.gsub(/\.0$/,'')
   end
   private_class_method :get_ref_num
 
