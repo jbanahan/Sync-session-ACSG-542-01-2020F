@@ -109,9 +109,9 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       row[3].should == @t.hts_1.hts_format
       row[4].should == @t.hts_2.hts_format
       row[5].should == @t.hts_3.hts_format
-      row[6].should == "1.0" #length
-      row[7].should == "2.0" #width
-      row[8].should == "3.0" #height
+      row[6].should == "1" #length
+      row[7].should == "2" #width
+      row[8].should == "3" #height
       # Fabric Fields are all nil
       (9..53).each {|x| expect(row[x]).to be_nil}
       expect(row[54..72]).to eq ["k", "fc", "cn1", "cn2", "cn3", "sn1", "sn2", "sn3", "fwo1", "fwo2", "fwo3", "fws1", "fws2", "fws3", "ow", "true", "spt", "true", "false"]
@@ -211,6 +211,49 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @tmp = @h.generate_outbound_sync_file Product.where("1=1")
       r = CSV.parse IO.read @tmp.path
       expect(r[1][3]).to eq t2.hts_1.hts_format
+    end
+
+    it "sends fiber fields if barthco id is not blank" do
+      # Just use the first and last fiber fields, otherwise the whole process takes WAY too long to generate
+      # 45 new fields
+      custom_defs = @h.send(:init_outbound_custom_definitions)
+      @p.update_custom_value! custom_defs[:bartho_customer_id], "ID"
+      @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
+      @p.update_custom_value! custom_defs[:fabric_1], "Fabric 1"
+      @p.update_custom_value! custom_defs[:fabric_percent_1], 1
+      @p.update_custom_value! custom_defs[:fabric_percent_15], 15.123
+
+
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+      row = r[1]
+      expect(row[9]).to eq "Fabric Type 1"
+      expect(row[10]).to eq "Fabric 1"
+      expect(row[11]).to eq "1"
+      expect(row[53]).to eq "15.12"
+    end
+
+    it "does not send fiber fields if barthco id is blocked" do
+      custom_defs = @h.send(:init_outbound_custom_definitions)
+      @p.update_custom_value! custom_defs[:bartho_customer_id], "48650"
+      @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
+      @p.update_custom_value! custom_defs[:fabric_percent_15], 15
+
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+      (9..53).each {|x| expect(r[1][x]).to be_nil}
+    end
+
+    it "does not send fiber fields fiber parser failed to parse the fiber content field" do
+      custom_defs = @h.send(:init_outbound_custom_definitions)
+      @p.update_custom_value! custom_defs[:bartho_customer_id], "ID"
+      @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
+      @p.update_custom_value! custom_defs[:fabric_percent_15], 15
+      @p.update_custom_value! custom_defs[:msl_fiber_failure], true
+
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+      (9..53).each {|x| expect(r[1][x]).to be_nil}
     end
   end
   describe :send_file do

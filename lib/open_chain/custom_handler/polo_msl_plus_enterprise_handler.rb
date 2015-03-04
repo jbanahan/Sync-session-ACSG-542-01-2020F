@@ -5,6 +5,7 @@ module OpenChain
   module CustomHandler
     class PoloMslPlusEnterpriseHandler
       include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
+      include ActionView::Helpers::NumberHelper
 
       # :env=>:qa will put files in _test_to_msl instead of _to_msl
       def initialize opts={}
@@ -170,15 +171,18 @@ module OpenChain
         def init_outbound_custom_definitions
           if @out_cdefs.nil?
             cdefs = [:length_cm, :width_cm, :height_cm, :msl_receive_date, :csm_numbers]
+            @fiber_defs = []
             (1..15).each do |x|
-              cdefs << "fabric_type_#{x}".to_sym
-              cdefs << "fabric_#{x}".to_sym
-              cdefs << "fabric_percent_#{x}".to_sym
+              @fiber_defs << "fabric_type_#{x}".to_sym
+              @fiber_defs << "fabric_#{x}".to_sym
+              @fiber_defs << "fabric_percent_#{x}".to_sym
             end
+
+            cdefs.push *@fiber_defs
 
             cdefs.push :knit_woven, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1, :scientific_name_2, :scientific_name_3,
                         :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3,
-                        :origin_wildlife, :semi_precious, :semi_precious_type, :cites, :fish_wildlife
+                        :origin_wildlife, :semi_precious, :semi_precious_type, :cites, :fish_wildlife, :bartho_customer_id, :msl_fiber_failure
 
             @out_cdefs = self.class.prep_custom_definitions cdefs
           end
@@ -195,11 +199,22 @@ module OpenChain
         end
 
         def outbound_file_content p, cl, tr, iso
+          p.freeze_custom_values
+
           file = [p.unique_identifier, iso, mp1_value(tr,iso), hts_value(tr.hts_1,iso), hts_value(tr.hts_2,iso), hts_value(tr.hts_3,iso)]
           file.push *get_custom_values(p, :length_cm, :width_cm, :height_cm)
 
-          # This is just filler for the fiber 1-15 fields we're not sending yet
-          45.times {file << nil}
+          # RL wants to prevent certain divisions from sending fiber content values at this time.
+          # Mostly due to the fiber content from these divisions being garbage
+          barthco_id = p.get_custom_value(@out_cdefs[:bartho_customer_id]).value.to_s.strip
+
+          # Don't send fiber fields if the fiber parser process was unable to read them either
+          msl_fiber_failure = p.get_custom_value(@out_cdefs[:msl_fiber_failure]).value == true
+          if msl_fiber_failure || barthco_id.blank? || ["48650", "35368", "73720", "47080"].include?(barthco_id)
+            45.times {file << nil}
+          else
+            file.push *get_custom_values(p, *@fiber_defs)
+          end
 
           file.push *get_custom_values(p, :knit_woven, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1, :scientific_name_2, :scientific_name_3,
                         :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3,
@@ -210,7 +225,17 @@ module OpenChain
         end
 
         def get_custom_values product, *defs
-          defs.map {|d| product.get_custom_value(@out_cdefs[d]).value }
+          defs.map do |d| 
+            value = product.get_custom_value(@out_cdefs[d]).value
+
+            # This is pretty much solely for formatting the Fiber Percentage fields, but there's no other fields that are 
+            # decimal values that will be more than 2 decimal places, so it works here in the main method for getting the custom values
+            if value.is_a?(Numeric)
+              value = number_with_precision(value, precision: 2, strip_insignificant_zeros: true)
+            end
+
+            value            
+          end
         end
     end
   end
