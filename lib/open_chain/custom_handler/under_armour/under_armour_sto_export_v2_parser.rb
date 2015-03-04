@@ -21,6 +21,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourSto
 
   def self.process_row r, export_date, ref_num, export_country_iso, importer, file_name, row
     return if r[0].blank?
+    r.pop until r.last #remove nil from end
     raise "Body rows must be 4 columns: #{r}" unless r.size == 4
     raise "Column C must be a number: #{r}" unless r[2].to_s.match(/^\d*\.?\d*$/)
     d = DutyCalcExportFileLine.new
