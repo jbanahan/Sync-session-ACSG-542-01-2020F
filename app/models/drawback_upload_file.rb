@@ -3,6 +3,7 @@ require 'open_chain/ohl_drawback_parser'
 require 'open_chain/custom_handler/under_armour/under_armour_drawback_processor'
 require 'open_chain/custom_handler/under_armour/under_armour_export_parser'
 require 'open_chain/custom_handler/under_armour/under_armour_sto_export_parser'
+require 'open_chain/custom_handler/under_armour/under_armour_sto_export_v2_parser'
 require 'open_chain/custom_handler/j_crew_shipment_parser'
 require 'open_chain/custom_handler/j_crew/j_crew_drawback_export_parser'
 require 'open_chain/custom_handler/j_crew/j_crew_borderfree_drawback_export_parser'
@@ -19,6 +20,7 @@ class DrawbackUploadFile < ActiveRecord::Base
   PROCESSOR_UA_DDB_EXPORTS ||= 'ua_ddb_exports'
   PROCESSOR_UA_FMI_EXPORTS ||= 'ua_fmi_exports'
   PROCESSOR_UA_STO_EXPORTS ||= 'ua_sto_exports'
+  PROCESSOR_UA_STO_EXPORTS_V2 ||= 'ua_sto_exports_v2'
   PROCESSOR_OHL_ENTRY ||= 'ohl_entry'
   PROCESSOR_JCREW_SHIPMENTS ||= 'j_crew_shipments'
   PROCESSOR_JCREW_BORDERFREE ||= 'j_crew_borderfree'
@@ -35,11 +37,11 @@ class DrawbackUploadFile < ActiveRecord::Base
   }
 
   #validate the file layout vs. the specification, return array of error messages or empty array
-  def validate_layout 
+  def validate_layout
     r = []
     case self.processor
     when PROCESSOR_UA_WM_IMPORTS
-      r = OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser.validate_s3 self.attachment.attached.path 
+      r = OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser.validate_s3 self.attachment.attached.path
     end
     r
   end
@@ -55,6 +57,7 @@ class DrawbackUploadFile < ActiveRecord::Base
       PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)},
       PROCESSOR_UA_FMI_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_fmi_csv_file tempfile.path},
       PROCESSOR_UA_STO_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportParser.parse self.attachment.attached.path},
+      PROCESSOR_UA_STO_EXPORTS_V2 => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser.parse self.attachment.attached.path},
       PROCESSOR_JCREW_SHIPMENTS => lambda {OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file tempfile.path},
       PROCESSOR_JCREW_BORDERFREE => lambda {OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("JCREW")},
       PROCESSOR_JCREW_CANADA_EXPORTS => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("JCREW")},

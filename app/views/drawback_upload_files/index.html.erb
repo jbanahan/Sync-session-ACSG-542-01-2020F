@@ -164,6 +164,11 @@
             <p><em>Excel Invoice File</em></p>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_STO_EXPORTS}%>
           </div>
+          <div>
+            <h3>Stock Transfer Files After 12/1/2014</h3>
+            <p><em>Excel files</em></p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_STO_EXPORTS_V2}%>
+          </div>
         </div>
         <%end-%>
       </div>
@@ -178,7 +183,7 @@
           <%@import_lines_not_in_duty_calc.each do |comp,cnt|-%>
           <li>
             <%=form_tag '/duty_calc_import_files', method: :post do%>
-              <%=comp.name%> - <%=cnt%> 
+              <%=comp.name%> - <%=cnt%>
               <input type='hidden' name='importer_id' value='<%=comp.id%>'/>
               <input type='submit' class='btn btn-xs' value='Make File'/>
             <%end%>
@@ -192,7 +197,7 @@
           <%@export_lines_not_in_duty_calc.each do |comp,cnt|-%>
           <li>
             <%=form_tag '/duty_calc_export_files', method: :post do%>
-              <%=comp.name%> - <%=cnt%> 
+              <%=comp.name%> - <%=cnt%>
               <input type='hidden' name='importer_id' value='<%=comp.id%>'/>
               <input type='submit' class='btn btn-xs' value='Make File'/>
             <%end%>
@@ -235,6 +240,6 @@
 </div>
 <script>
   $(document).ready(function() {
-    $('#uploadTabs a:first').tab('show');    
+    $('#uploadTabs a:first').tab('show');
   });
 </script>
