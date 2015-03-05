@@ -23,7 +23,11 @@ OpenChain::Application.routes.draw do
         get :available_orders, on: :member
       end
       resources :fields, only: [:index]
-      resources :companies, only: [:index]
+      resources :companies, only: [:index] do
+
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
+      end
       resources :orders, only: [:index,:show]
 
       resources :users, only: [] do

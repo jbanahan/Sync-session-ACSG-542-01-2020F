@@ -1,4 +1,4 @@
-module Api; module V1; class CompaniesController < Api::V1::ApiController
+module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControllerBase
   def index
     r = {}
     if params[:roles].blank?
@@ -12,6 +12,10 @@ module Api; module V1; class CompaniesController < Api::V1::ApiController
       }
     end
     render json: r
+  end
+
+  def core_module
+    CoreModule::COMPANY
   end
 
   private

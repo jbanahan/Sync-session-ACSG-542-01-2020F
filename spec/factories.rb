@@ -9,7 +9,7 @@ Factory.sequence :iso do |n|
   # Reset the counter if it goes over 9 (otherwise we end up getting 00A, 00B, which ends up causing problems because mysql truncates them to 00, 00 - causing duplicate
   # key errors)
   @first_counter = 0 if @first_counter > 9
-  
+
   "#{@first_counter}#{(65 + mod).chr}"
 end
 Factory.sequence :alpha_numeric do |n|
@@ -28,17 +28,17 @@ Factory.define :address do |a|
   a.association :country
   a.association :company
 end
-Factory.define :user do |f|  
-  f.sequence(:username) { |n| "foo#{n}" }   
+Factory.define :user do |f|
+  f.sequence(:username) { |n| "foo#{n}" }
   f.password "foobar"
-  f.sequence(:email) { |n| "foo#{n}@example.com" }  
+  f.sequence(:email) { |n| "foo#{n}@example.com" }
   f.association :company
-end  
+end
 Factory.define :master_user, :parent=>:user do |f|
   f.after_create {|u| u.company.update_attributes(:master=>true)}
 end
 Factory.define :admin_user, :parent=>:master_user do |f|
-  f.after_create do |u| 
+  f.after_create do |u|
     u.admin = true
     u.save!
   end
@@ -175,7 +175,7 @@ Factory.define :sort_criterion do |f|
   f.model_field_uid 'prod_uid'
 end
 Factory.define :search_column do |f|
-  f.model_field_uid 'prod_uid' 
+  f.model_field_uid 'prod_uid'
 end
 Factory.define :search_template do |f|
   f.name 'search_name'
@@ -315,7 +315,7 @@ Factory.define :security_filing do |f|
   f.association :importer, :factory => :company
 end
 Factory.define :schedulable_job do |f|
-  
+
 end
 Factory.define :project do |f|
 
@@ -340,7 +340,7 @@ Factory.define :business_validation_result do |f|
 end
 Factory.define :business_validation_rule_result do |f|
   f.association :business_validation_rule
-  f.after_create {|rr| 
+  f.after_create {|rr|
     bvt = rr.business_validation_rule.business_validation_template
     rr.business_validation_result = bvt.business_validation_results.create!
     rr.save!
@@ -369,7 +369,7 @@ end
 
 #workflow instance needs to be able to load a workflow decider
 module OpenChain
-  class MockFactoryDecider 
+  class MockFactoryDecider
     def self.update_workflow! obj, user
       nil
     end
@@ -387,4 +387,8 @@ Factory.define :workflow_task do |f|
   f.association :group
   f.test_class_name 'OpenChain::WorkflowTester::AttachmentTypeWorkflowTest'
   f.payload_json '{"attachment_type":"Sample"}'
+end
+
+Factory.define :state_toggle_button do |f|
+
 end

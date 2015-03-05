@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<% 
+<%
   no_buttons = false
   no_buttons = true if @no_buttons
   no_buttons = true if !local_assigns[:not_buttons].nil?
@@ -25,7 +25,12 @@
     <script type='text/javascript'>
       <% if current_user %>
         Chain.messagePoller.initialize('<%=current_user.id%>', 30);
-        $(document).ready(function() {Chain.messagePoller.initNotificationCenter();});
+        $(document).ready(function() {
+          Chain.messagePoller.initNotificationCenter();
+          <% if @state_button_path && @state_button_object_id %>
+            ChainStateButtons.initialize('<%=@state_button_path%>',<%=@state_button_object_id%>);
+          <% end %>
+        });
         <% if @include_legacy_scripts %>
           OpenChain.user_id = <%=current_user.id%>;
         <% end %>
@@ -43,7 +48,7 @@
           <div class="container-fluid" id='mini-qs-container'>
             <div class="row">
               <div class="col-xs-11">
-                <input type='text' class='search-query form-control' placeholder='Quick Search' data-toggle='tooltip' title='press / to jump here' name='v' /> 
+                <input type='text' class='search-query form-control' placeholder='Quick Search' data-toggle='tooltip' title='press / to jump here' name='v' />
               </div>
               <div class='col-xs-1'>
                 <a href='#' onclick="$('#quicksearch').submit(); return false;">
@@ -74,7 +79,7 @@
           </ul>
           <form class='navbar-form hidden-xs' role='search' action='/quick_search' method='GET' id='quicksearch'>
             <div class='form-group'>
-              <input type='text' class='search-query form-control' placeholder='enter search term' data-toggle='tooltip' title='shortcut key: /' name='v' id='quick_search_input' /> 
+              <input type='text' class='search-query form-control' placeholder='enter search term' data-toggle='tooltip' title='shortcut key: /' name='v' id='quick_search_input' />
               &nbsp;
               <a href='#' onclick="$('#quicksearch').submit(); return false;">
                 <span class='glyphicon glyphicon-search'></span>
@@ -233,8 +238,8 @@
             </div>
           <%end-%>
         </div>
-      </div>  
-  
+      </div>
+
       <div id='main-content'>
         <%=yield%>
       </div>
@@ -291,7 +296,7 @@
         <%-unless ms.request_host.blank?-%>
           <%-case ms.request_host -%>
           <%-when /chain\.io/-%>
-            ga('create', 'UA-43758898-2', 'chain.io'); 
+            ga('create', 'UA-43758898-2', 'chain.io');
           <%-else-%>
             ga('create', 'UA-43758898-1', 'vfitrack.net');
           <%-end-%>

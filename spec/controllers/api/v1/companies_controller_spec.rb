@@ -10,7 +10,7 @@ describe Api::V1::CompaniesController do
     it "should only return self and linked companies" do
       c2 = Factory(:company,name:'c2',importer:true,system_code:'B')
       c3 = Factory(:company,name:'a3',vendor:true,system_code:'C')
-      dont_find = Factory(:company,name:'bad',system_code:'BAD')
+      Factory(:company,name:'bad',system_code:'BAD') #don't find this
       [c2,c3].each {|c| @c.linked_companies << c}
       get :index
       expect(response).to be_success
@@ -33,7 +33,7 @@ describe Api::V1::CompaniesController do
     it "should find all companies for master" do
       @c.master = true
       @c.save!
-      c2 = Factory(:company,name:'c2',importer:true,system_code:'c2')
+      Factory(:company,name:'c2',importer:true,system_code:'c2')
       get :index
       expect(response).to be_success
       j = JSON.parse(response.body)['companies']

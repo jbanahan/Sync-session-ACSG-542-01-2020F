@@ -12,7 +12,10 @@ class VendorsController < ApplicationController
   end
 
   def show
-    secure_company_view
+    secure_company_view do |c|
+      @state_button_path = 'companies'
+      @state_button_object_id = c.id
+    end
   end
 
   def locations
@@ -68,7 +71,7 @@ class VendorsController < ApplicationController
     if collection.empty?
       if params[:page].blank?
         render text: "<div class='alert alert-success'>There aren't any #{noun}.</div>"
-      else 
+      else
         render text: "<tr class='last-row'><td colspan='50'><div class='alert alert-info text-center' style='margin-top:10px'>There aren't any more #{noun}.</div></td></tr>"
       end
       return true

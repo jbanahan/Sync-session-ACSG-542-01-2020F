@@ -1,7 +1,8 @@
 require 'open_chain/api/api_entity_jsonizer'
+require 'api/v1/state_toggle_support'
 
 module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiController
-
+  include Api::V1::StateToggleSupport
   attr_accessor :jsonizer
 
   def initialize jsonizer = OpenChain::Api::ApiEntityJsonizer.new
@@ -35,7 +36,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     render json:{object_param_name => obj_to_json_hash(obj)}
   end
 
-  # generic create method 
+  # generic create method
   # subclasses must implement the save_object method which takes a hash and should return the object that was saved with any errors set
   def do_create core_module
     ActiveRecord::Base.transaction do
@@ -112,11 +113,11 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   end
 
   # load data into object via model fields
-  # This method should be avoided unless for some reason you cannot use 
+  # This method should be avoided unless for some reason you cannot use
   # update_model_field_attributes on your core_object
   def import_fields base_hash, obj, core_module
     fields = core_module.model_fields {|mf| mf.user_accessible? && base_hash.has_key?(mf.uid.to_s)}
-    
+
     user = current_user
     fields.each_pair do |uid, mf|
       uid = mf.uid.to_s
@@ -148,7 +149,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
 
   # Simple implementation of a save_object method, which is called by do_create and do_update
   def generic_save_object obj_hash
-    # For any simple enough object structure that only grants access to the data found in the 
+    # For any simple enough object structure that only grants access to the data found in the
     # base object's CoreModule heirarchy, this method should be find to reference directly
     # as your sole piece of code when implementing "save_object"
     cm = core_module
@@ -178,8 +179,8 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     obj
   end
 
-  # Utilizes the internal jsonizer object to generate an object hash 
-  # containing the values for the given object for every model field uid listed in the 
+  # Utilizes the internal jsonizer object to generate an object hash
+  # containing the values for the given object for every model field uid listed in the
   # field_list argument.
   def to_entity_hash(obj, field_list)
     jsonizer.entity_to_hash(current_user, obj, field_list.map {|f| f.to_s})
@@ -192,7 +193,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
     per_page = 50 if per_page > 50
     k = core_module.klass.scoped
-    
+
     #apply search criterions
     search_criterions.each do |sc|
       return unless validate_model_field 'Search', sc.model_field_uid, core_module, user
