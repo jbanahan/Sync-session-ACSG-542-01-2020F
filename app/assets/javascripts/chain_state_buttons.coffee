@@ -26,7 +26,7 @@ root.ChainStateButtons = {
     objId = btn.attr('data-object-id')
     buttonId = btn.attr('data-state-toggle-id')
     confirmationMsg = btn.attr('data-confirmation')
-    if confirmationMsg && window.confirm(confirmationMsg)
+    if !confirmationMsg || window.confirm(confirmationMsg)
       ChainStateButtons.toggleButton(coreModulePath,objId,buttonId).done (data) ->
         location.reload(true)
 
