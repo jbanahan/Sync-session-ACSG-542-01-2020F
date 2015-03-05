@@ -25,8 +25,10 @@ root.ChainStateButtons = {
     coreModulePath = btn.attr('data-core-module-path')
     objId = btn.attr('data-object-id')
     buttonId = btn.attr('data-state-toggle-id')
-    ChainStateButtons.toggleButton(coreModulePath,objId,buttonId).done (data) ->
-      location.reload(true)
+    confirmationMsg = btn.attr('data-confirmation')
+    if confirmationMsg && window.confirm(confirmationMsg)
+      ChainStateButtons.toggleButton(coreModulePath,objId,buttonId).done (data) ->
+        location.reload(true)
 
   injectButtons: (outer,buttons) ->
     $(outer).find('[data-state-toggle-id]').remove()
