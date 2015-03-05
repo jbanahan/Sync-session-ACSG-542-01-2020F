@@ -2,23 +2,25 @@ require 'open_chain/custom_handler/hm/hm_custom_definition_support'
 module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
   include OpenChain::CustomHandler::Hm::HmCustomDefinitionSupport
   def self.parse data, user
-    Shipment.transaction do 
-      cdefs = prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
-      lines = data.lines
-      mode, file_date = process_first_line lines[0]
-      file_name, import_number = process_second_line lines[1]
-      return unless file_name.match /\.US$/ #only process US files
-      vessel, voyage, etd, act_dest_code, receipt_location = process_fifth_line lines[4]
-      con_num, con_size, con_type, seal, eta = process_eighth_line lines[7]
-      importer = find_importer
-      header_data = {mode:mode,import_number:import_number,file_date:file_date,vessel:vessel,voyage:voyage,etd:etd,con_num:con_num,con_size:con_size,con_type:con_type,seal:seal,eta:eta,importer:importer,act_dest_code:act_dest_code,user:user,receipt_location:receipt_location}
-      shp = build_shipment header_data
-      con = (header_data[:mode]=='Ocean' ? build_container(shp, header_data) : nil) 
-      build_lines shp, con, lines, cdefs, header_data
-      raise "You do not have permission to edit this shipment." unless shp.can_edit?(user)
-      shp.save!
-      shp.create_snapshot user
-      attach_file shp, data, "#{file_name}.txt"
+    Lock.acquire_for_class(self) do
+      Shipment.transaction do
+        cdefs = prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
+        lines = data.lines
+        mode, file_date = process_first_line lines[0]
+        file_name, import_number = process_second_line lines[1]
+        return unless file_name.match(/\.US$/) #only process US files
+        vessel, voyage, etd, act_dest_code, receipt_location = process_fifth_line lines[4]
+        con_num, con_size, con_type, seal, eta = process_eighth_line lines[7]
+        importer = find_importer
+        header_data = {mode:mode,import_number:import_number,file_date:file_date,vessel:vessel,voyage:voyage,etd:etd,con_num:con_num,con_size:con_size,con_type:con_type,seal:seal,eta:eta,importer:importer,act_dest_code:act_dest_code,user:user,receipt_location:receipt_location}
+        shp = build_shipment header_data
+        con = (header_data[:mode]=='Ocean' ? build_container(shp, header_data) : nil)
+        build_lines shp, con, lines, cdefs, header_data
+        raise "You do not have permission to edit this shipment." unless shp.can_edit?(user)
+        shp.save!
+        shp.create_snapshot user
+        attach_file shp, data, "#{file_name}.txt"
+      end
     end
   end
 
@@ -58,10 +60,10 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
 
   def self.build_line shp, con, ln, cdefs, hd
     ord_num = ln[33,8].strip
-    sl = shp.shipment_lines.find {|my_line| 
+    sl = shp.shipment_lines.find {|my_line|
       ol = my_line.order_lines.first
       on = ol.order.customer_order_number if ol
-      on == ord_num 
+      on == ord_num
     }
     if sl.nil?
       sl = shp.shipment_lines.build
@@ -153,7 +155,7 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
 
   def self.validate_first_line line
     if !line.match /^TRANSPORT INFORMATION/
-      raise "First line must start with TRANSPORT INFORMATION (#{line})" 
+      raise "First line must start with TRANSPORT INFORMATION (#{line})"
     end
     true
   end

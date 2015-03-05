@@ -7,6 +7,18 @@ describe Lock do
     Lock.class_variable_set :@@connection_pool, nil
   end
 
+  describe "acquire_for_class" do
+    it "should lock with fully qualified class name" do
+      k = OpenChain::XLClient
+      opts = {a:'b'}
+      Lock.should_receive(:acquire).with('OpenChain::XLClient',opts).and_yield
+      yield_value = Lock.acquire_for_class(k,opts) do
+        'hello'
+      end
+      expect(yield_value).to eq 'hello'
+    end
+  end
+
   context :acquire do
 
     it "should lock while a process is running" do
@@ -58,7 +70,7 @@ describe Lock do
       end_blocking.should_not be_nil
       lock1ReturnValue.should == "Success"
 
-      # Make sure the latter thread waited at least sleepSeconds to get the lock 
+      # Make sure the latter thread waited at least sleepSeconds to get the lock
       # (Due to thread scheduling and timing the sleeps might be slightly quicker that sleepSeconds)
       (end_blocking - start_blocking).should >= (sleepSeconds - 0.1)
       expect(Lock.send(:expires_in, 'LockSpec')).to be <= 300
@@ -81,8 +93,8 @@ describe Lock do
         rescue Exception
           errored = true
         end
-      } 
-      
+      }
+
 
       start_time = nil
       end_time = nil
@@ -93,7 +105,7 @@ describe Lock do
           Time.now
         end
       }
-      
+
       t1.join(5) if t1.status
       t2.join(1) if t2.status
 
@@ -147,7 +159,7 @@ describe Lock do
       # at a time so we can force a timeout
       config = YAML.load_file('config/redis.yml')
       config['test']['pool_size'] = 1
-      cp = ConnectionPool.new(size: 1, timeout: 1) do 
+      cp = ConnectionPool.new(size: 1, timeout: 1) do
         Lock.send(:get_redis_client, config['test'].with_indifferent_access)
       end
       Lock.stub(:get_connection_pool).and_return cp
@@ -237,7 +249,7 @@ describe Lock do
   context :lock_with_retry do
     it "should lock an object and yield" do
       e = Factory(:entry)
-      v = Lock.with_lock_retry(e) do 
+      v = Lock.with_lock_retry(e) do
         e.update_attributes :entry_number => "123"
         "return val"
       end
@@ -270,7 +282,7 @@ describe Lock do
     it "should throw an error if it retries too many times" do
       # We have to fake out the lock, since this test is, in-fact running in an open transaction
       Lock.should_receive(:inside_nested_transaction?).and_return false
-      
+
       # This also ensures that we're using the retry parameter
       e = double("MyModel")
       e.should_receive(:with_lock).exactly(3).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
