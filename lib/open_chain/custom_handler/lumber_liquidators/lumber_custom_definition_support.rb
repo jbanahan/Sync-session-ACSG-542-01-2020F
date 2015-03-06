@@ -2,13 +2,14 @@ require 'open_chain/custom_handler/custom_definition_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; module LumberCustomDefinitionSupport
   CUSTOM_DEFINITION_INSTRUCTIONS = {
-    sap_company:{label:'SAP Company #',data_type: :string, module_type:'Company'}
-  } 
-  
+    sap_company:{label:'SAP Company #',data_type: :string, module_type:'Company'},
+    ven_tc_approved_date:{label:'Trade Compliance Approved Date', data_type: :date, module_type:'Company'}
+  }
+
   def self.included(base)
     base.extend(::OpenChain::CustomHandler::CustomDefinitionSupport)
     base.extend(ClassMethods)
-  end 
+  end
 
   module ClassMethods
     def prep_custom_definitions fields

@@ -25,12 +25,12 @@ module WorkflowHelper
     ]
     h.keys.sort.collect do |tab_name|
       anchor = anchors[tab_name]
-      
+
       tab_page_content, open_count = task_tab_pane(h[tab_name],anchor)
       tabs << task_tab(tab_name,open_count,anchor)
 
       tab_pages << tab_page_content
-      
+
     end
     tab_list = content_tag(:ul,tabs.join.html_safe,:class=>'nav nav-tabs',:role=>'tablist')
 
@@ -201,7 +201,7 @@ module WorkflowHelper
       if task.assigned_to == current_user
         return 'glyphicon-user'
       else
-        return 'glyphicon-unchecked' 
+        return 'glyphicon-unchecked'
       end
     end
     return 'glyphicon-blank-circle'
@@ -223,10 +223,8 @@ module WorkflowHelper
       }
       btns << link_to_task_object_button(task)
     when /ModelFieldWorkflowTest$/
-      btns << link_to('Edit',
-        edit_polymorphic_path(task.base_object),:class=>"btn #{task.passed? ? 'btn-default' : 'btn-primary'}"
-      )
-    else 
+      btns << link_to_task_object_button(task)
+    else
       btns << link_to_task_object_button(task)
     end
     if task.can_edit?(current_user)

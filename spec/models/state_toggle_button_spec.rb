@@ -45,6 +45,9 @@ describe StateToggleButton do
   end
 
   describe :toggle! do
+    before :each do
+      OpenChain::WorkflowProcessor.any_instance.stub(:process!)
+    end
     it "should set the date and user_id fields" do
       btn = Factory(:state_toggle_button,module_type:'Shipment',date_attribute:'canceled_date',user_attribute:'canceled_by')
       s = Factory(:shipment)
@@ -127,6 +130,17 @@ describe StateToggleButton do
 
       s.should_receive(:create_snapshot_with_async_option).with(true,u)
       btn.toggle! s, u, true
+    end
+    it "should reprocess workfow" do
+      wp = double('workflow processor')
+      OpenChain::WorkflowProcessor.should_receive(:new).and_return wp
+      btn = Factory(:state_toggle_button,module_type:'Shipment',date_attribute:'canceled_date',user_attribute:'canceled_by')
+      s = Factory(:shipment)
+      u = Factory(:user)
+
+      s.stub(:create_snapshot_with_async_option)
+      wp.should_receive(:process!).with(s,u)
+      btn.toggle! s, u
     end
   end
 
