@@ -619,4 +619,34 @@ module ApplicationHelper
 
     ((a.nil? ? [] : a) + (b.nil? ? [] : b)).uniq.compact
   end
+
+  def favicon_links
+    # Icons + raw html generated using http://realfavicongenerator.net/
+
+    # We should probably do some browser sniffing to eliminate sending browser specific tags that aren't 
+    # meant for the current request's browser.
+    tags = []
+    tags << tag('link', rel: "apple-touch-icon", sizes:"57x57", href: "/apple-touch-icon-57x57.png")
+    tags << tag('link', rel: "apple-touch-icon", sizes:"60x60", href: path_to_image("/apple-touch-icon-60x60.png"))
+    tags << tag('link', rel: "apple-touch-icon", sizes:"57x57", href: path_to_image("/apple-touch-icon-72x72.png"))
+    tags << tag('link', rel: "apple-touch-icon", sizes:"72x72", href: path_to_image("/apple-touch-icon-76x76.png"))
+    tags << tag('link', rel: "apple-touch-icon", sizes:"76x76", href: path_to_image("/apple-touch-icon-114x114.png"))
+    tags << tag('link', rel: "apple-touch-icon", sizes:"114x114", href: path_to_image("/apple-touch-icon-120x120.png"))
+    tags << tag('link', rel: "apple-touch-icon", sizes:"120x120", href: path_to_image("/apple-touch-icon-144x144.png"))
+    tags << tag('link', rel: "apple-touch-icon", sizes:"152x152", href: path_to_image("/apple-touch-icon-152x152.png"))
+    tags << tag('link', rel: "apple-touch-icon", sizes:"180x180", href: path_to_image("/apple-touch-icon-180x180.png"))
+    tags << tag('link', rel: "icon", type:"image/png", href: path_to_image("/favicon-32x32.png"), sizes:"32x32")
+    tags << tag('link', rel: "icon", type:"image/png", href: path_to_image("/favicon-194x194.png"), sizes:"194x194")
+    tags << tag('link', rel: "icon", type:"image/png", href: path_to_image("/favicon-96x96.png"), sizes:"96x96")
+    tags << tag('link', rel: "icon", type:"image/png", href: path_to_image("/android-chrome-192x192.png"), sizes:"192x192")
+    tags << tag('link', rel: "icon", type:"image/png", href: path_to_image("/favicon-16x16.png"), sizes:"16x16")
+    # The date in the ico name is to force IE to update the icon image..otherwise if the user has the old favicon.ico 
+    # loaded, IE will not check for a new one.  The only other alternative is having the users clear their browsing history.
+    tags << tag('link', rel: "shortcut icon", href: path_to_image("/favico.ico"))
+    tags << tag('meta', name: "msapplication-TileColor", content: "#2b5797")
+    tags << tag('meta', name: "msapplication-TileImage", content: path_to_image("/mstile-144x144.png"))
+    tags << tag('meta', name: "theme-color", content: "#ffffff")
+
+    tags.join("\n").html_safe
+  end
 end

@@ -10,7 +10,7 @@
   <head>
     <title><%=@page_title.blank? ? 'VFI Track' : @page_title%></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <%= favicon_link_tag -%>
+    <%= favicon_links -%>
     <%= stylesheet_link_tag    "application", :media => "all" -%>
     <%= javascript_include_tag "application" -%>
     <% if @include_legacy_scripts %>
