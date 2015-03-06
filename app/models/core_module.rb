@@ -1,8 +1,8 @@
 class CoreModule
   attr_reader :class_name, :label, :table_name,
-      :new_object_lambda, 
+      :new_object_lambda,
       :children, #array of child CoreModules used for :has_many (not for :belongs_to)
-      :child_lambdas, #hash of lambdas to access child CoreModule data 
+      :child_lambdas, #hash of lambdas to access child CoreModule data
       :child_joins, #hash of join statements to link up child CoreModule to parent
       :statusable, #works with status rules
       :worksheetable, #works with worksheet uploads
@@ -16,9 +16,9 @@ class CoreModule
       :enabled_lambda, #is the module enabled in master setup
       :key_model_field_uids #the uids represented by this array of model_field_uids can be used to find a unique record in the database
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
-  
+
   def initialize(class_name,label,opts={})
-    o = {:worksheetable => false, :statusable=>false, :file_format=>false, 
+    o = {:worksheetable => false, :statusable=>false, :file_format=>false,
         :new_object => lambda {Kernel.const_get(class_name).new},
         :children => [], :make_default_search => lambda {|user|
           ss = SearchSetup.create(:name=>"Default",:user => user,:module_type=>class_name,:simple=>false)
@@ -36,7 +36,7 @@ class CoreModule
           mf_hash = master_hash['entity']['model_fields']
           self.model_fields.values.each do |mf|
             unless mf.history_ignore?
-              v = mf.process_export entity, nil, true 
+              v = mf.process_export entity, nil, true
               mf_hash[mf.uid] = v unless v.nil?
             end
           end
@@ -79,7 +79,7 @@ class CoreModule
     @business_logic_validations = o[:business_logic_validations]
     @key_model_field_uids = o[:key_model_field_uids]
   end
-  
+
   #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
   def validate_business_logic base_object
     @business_logic_validations.call(base_object)
@@ -100,7 +100,7 @@ class CoreModule
 
   #returns a json representation of the entity and all of it's children
   def entity_json base_object
-    j = @entity_json_lambda.call(base_object,default_module_chain)   
+    j = @entity_json_lambda.call(base_object,default_module_chain)
     ActiveSupport::JSON.encode j
   end
 
@@ -126,12 +126,12 @@ class CoreModule
   def bulk_actions user
     @bulk_actions_lambda.call user
   end
-  
+
   def make_default_search(user)
     dsc = ModelField.viewable_model_fields user, @default_search_columns
     SearchSetup.create_with_columns(self, dsc, user)
   end
-  #can have status set on the module 
+  #can have status set on the module
   def statusable?
     @statusable
   end
@@ -143,20 +143,20 @@ class CoreModule
   def file_formatable?
     @file_formatable
   end
-  
+
   def new_object
     @new_object_lambda.call
   end
 
   def find id
-    klass.find id 
+    klass.find id
   end
 
   # return the class represented by the core module
   def klass
     Kernel.const_get(class_name)
   end
-  
+
   # Hash of model_fields keyed by UID, this method is
   # returns all user accessible methods the (optional) user is capable of viewing
   def model_fields user=nil
@@ -165,12 +165,12 @@ class CoreModule
     r.each do |mf|
       if mf.user_accessible? && (user.nil? || mf.can_view?(user))
         add = block_given? ? yield(mf) : true
-        h[mf.uid.to_sym] = mf if add  
+        h[mf.uid.to_sym] = mf if add
       end
     end
     h
   end
-  
+
   #hash of model_fields for core_module and any core_modules referenced as children
   #and their children recursively
   def model_fields_including_children user=nil
@@ -186,7 +186,7 @@ class CoreModule
     h = {}
     r.each do |mf|
       add = block_given? ? yield(mf) : true
-      h[mf.uid.to_sym] = mf if add  
+      h[mf.uid.to_sym] = mf if add
     end
     h
   end
@@ -198,9 +198,9 @@ class CoreModule
     end
     r
   end
-  
+
   def child_objects(child_core_module,base_object)
-    # If you call this on a leaf level core module (.ie tariff record) then the child lambda 
+    # If you call this on a leaf level core module (.ie tariff record) then the child lambda
     # is likely nil, so just return an empty array
     lmda = @child_lambdas ? @child_lambdas[child_core_module] : nil
     lmda ? lmda.call(base_object) : []
@@ -208,7 +208,7 @@ class CoreModule
 
   #how many steps away is the given module from this one in the parent child tree
   def module_level(core_module)
-    CoreModule.recursive_module_level(0,self,core_module)      
+    CoreModule.recursive_module_level(0,self,core_module)
   end
 
   def child_association_name(child_core_module)
@@ -220,7 +220,7 @@ class CoreModule
       name = nil
       reflections.each_pair do |assoc_name, reflection|
         if reflection.macro == :has_many && reflection.active_record == child_class
-          name = assoc_name.to_s    
+          name = assoc_name.to_s
           break
         end
       end
@@ -258,7 +258,7 @@ class CoreModule
     :object_from_piece_set_lambda => lambda {|ps| ps.order_line},
     :enabled_lambda => lambda { MasterSetup.get.order_enabled? },
     :key_model_field_uids => [:ordln_line_number]
-  }) 
+  })
   ORDER = new("Order","Order",
     {:file_formatable=>true,
       :children => [ORDER_LINE],
@@ -283,8 +283,8 @@ class CoreModule
   CARTON_SET = new("CartonSet","Carton Set",{
     show_field_prefix: false,
     unique_id_field_name: :cs_starting_carton,
-    object_from_piece_set_lambda: lambda {|ps| 
-      return nil if ps.shipment_line.nil? 
+    object_from_piece_set_lambda: lambda {|ps|
+      return nil if ps.shipment_line.nil?
       ps.shipment_line.carton_set.nil? ? nil : ps.shipment_line.carton_set
       },
     enabled_lambda: lambda {MasterSetup.get.shipment_enabled?},
@@ -372,7 +372,7 @@ class CoreModule
       :child_lambdas => {CLASSIFICATION => lambda {|p| p.classifications}},
       :child_joins => {CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id"},
       :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts,:prod_ven_name],
-      :bulk_actions_lambda => lambda {|current_user| 
+      :bulk_actions_lambda => lambda {|current_user|
         bulk_actions = {}
         bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products? || current_user.edit_classifications?
         bulk_actions["Classify"]={:path=>'/products/bulk_classify.json',:callback=>'BulkActions.submitBulkClassify',:ajax_callback=>'BulkActions.handleBulkClassify'} if current_user.edit_classifications?
@@ -432,7 +432,7 @@ class CoreModule
     :default_search_columns => [:ent_brok_ref,:ent_entry_num,:ent_release_date],
     :unique_id_field_name=>:ent_brok_ref,
     :key_model_field_uids=>[:ent_brok_ref],
-    :bulk_actions_lambda => lambda {|current_user| 
+    :bulk_actions_lambda => lambda {|current_user|
       bulk_actions = {}
       bulk_actions["Update Images"] = "bulk_get_images_entries_path" if current_user.company.master? && current_user.view_entries?
       bulk_actions
@@ -455,7 +455,7 @@ class CoreModule
     # It's only here becuase I couldn't figure out a way to meta-program it into that module and make sure
     # the field was added to all child core modules as well.
 
-    # This appears to have to be done outside the CoreModule constructors becuase of the circular reference 
+    # This appears to have to be done outside the CoreModule constructors becuase of the circular reference
     # to CoreModule inside the core module classes (.ie Product, Entry, etc)
     CORE_MODULES.each {|cm| cm.klass.class_eval{attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)}}
   end
@@ -477,7 +477,7 @@ class CoreModule
   set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
   set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
   set_default_module_chain SECURITY_FILING, [SECURITY_FILING,SECURITY_FILING_LINE]
-  
+
   def self.find_by_class_name(c,case_insensitive=false)
     CORE_MODULES.each do|m|
       if case_insensitive
@@ -492,15 +492,15 @@ class CoreModule
   def self.find_by_object(obj)
     find_by_class_name obj.class.to_s
   end
-  
+
   def self.find_file_formatable
     test_to_array {|c| c.file_formatable?}
   end
-  
+
   def self.find_statusable
     test_to_array {|c| c.statusable?}
   end
-  
+
   #make array of arrays for use in select boxes
   def self.to_a_label_class
     to_proc = test_to_array {|c| block_given? ? (yield c) : true}
@@ -547,7 +547,7 @@ class CoreModule
   end
 
   def self.recursive_module_level(start_level,current_module,target_module)
-    if current_module == target_module 
+    if current_module == target_module
       return start_level + 0
     elsif current_module.children.include? target_module
       return start_level + 1

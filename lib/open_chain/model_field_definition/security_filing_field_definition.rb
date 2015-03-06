@@ -1,0 +1,40 @@
+module OpenChain; module ModelFieldDefinition; module SecurityFilingFieldDefinition
+  def add_security_filing_fields
+    add_fields CoreModule::SECURITY_FILING, [
+      [1,:sf_transaction_number,:transaction_number, "Transaction Number",{:data_type=> :string}],
+      [2,:sf_host_system_file_number,:host_system_file_number, "Host System File Number",{:data_type=> :string}],
+      [3,:sf_host_system,:host_system, "Host System",{:data_type=> :string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [4,:sf_broker_customer_number,:broker_customer_number, "Customer Number",{:data_type=> :string}],
+      [5,:sf_importer_tax_id,:importer_tax_id, "Importer Tax ID",{:data_type=> :string}],
+      [6,:sf_transport_mode_code,:transport_mode_code, "Mode of Transport",{:data_type=> :string}],
+      [7,:sf_scac,:scac, "SCAC Code",{:data_type=> :string}],
+      [8,:sf_booking_number,:booking_number, "Booking Number",{:data_type=> :string}],
+      [9,:sf_vessel,:vessel, "Vessel",{:data_type=> :string}],
+      [10,:sf_voyage,:voyage, "Voyage",{:data_type=> :string}],
+      [11,:sf_lading_port_code,:lading_port_code, "Port of Lading Code",{:data_type=> :string}],
+      [12,:sf_unlading_port_code,:unlading_port_code, "Port of Unlading Code",{:data_type=> :string}],
+      [13,:sf_entry_port_code,:entry_port_code, "Port of Entry Code",{:data_type=> :string}],
+      [14,:sf_status_code,:status_code, "Customs Status Code",{:data_type=> :string}],
+      [15,:sf_late_filing,:late_filing, "Late Filing",{:data_type=> :boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [16,:sf_master_bill_of_lading,:master_bill_of_lading, "Master Bill of Lading",{:data_type=> :string}],
+      [17,:sf_house_bills_of_lading,:house_bills_of_lading, "House Bill(s) of Lading",{:data_type=> :string}],
+      [18,:sf_container_numbers,:container_numbers, "Container Numbers",{:data_type=> :string}],
+      [19,:sf_entry_numbers,:entry_numbers, "Entry Number(s)",{:data_type=> :string}],
+      [20,:sf_entry_reference_numbers,:entry_reference_numbers, "Entry File Number(s)",{:data_type=> :string}],
+      [21,:sf_file_logged_date,:file_logged_date, "File Logged Date",{:data_type=> :datetime}],
+      [22,:sf_first_sent_date,:first_sent_date, "First Sent Date",{:data_type=> :datetime}],
+      [23,:sf_first_accepted_date,:first_accepted_date, "First Accepted Date",{:data_type=> :datetime}],
+      [24,:sf_last_sent_date,:last_sent_date, "Last Sent Date",{:data_type=> :datetime}],
+      [25,:sf_last_accepted_date,:last_accepted_date, "Last Accepted Date",{:data_type=> :datetime}],
+      [26,:sf_estimated_vessel_load_date,:estimated_vessel_load_date, "Estimated Vessel Load Date",{:data_type=> :date}],
+      [27,:sf_po_numbers,:po_numbers, "PO Number(s)",{:data_type=> :string}],
+      [28,:sf_estimated_vessel_arrival_date,:estimated_vessel_arrival_date, "Estimated Vessel Arrival Date",{:data_type=> :date}],
+      [29,:sf_countries_of_origin,:countries_of_origin,"Countries of Origin",{data_type: :text}],
+      [30,:sf_estimated_vessel_sailing_date,:estimated_vessel_sailing_date, "Estimated Vessel Sailing Date",{:data_type=> :date}],
+      [31,:sf_cbp_updated_at,:cbp_updated_at, "Last CBP Message Date",{:data_type => :datetime}],
+      [32,:sf_status_description,:status_description, "Status Description", {:data_type => :string}],
+      [33,:sf_last_event, :last_event, "Last Event Date", {:data_type => :datetime}],
+      [34,:sf_manufacturer_names, :manufacturer_names, "Manufacturer Names", {:data_type => :text}]
+    ]
+  end
+end; end; end
