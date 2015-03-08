@@ -11,6 +11,7 @@ class UserSessionsController < ApplicationController
   end
 
   def new
+    @no_action_bar = true
     if current_user
       redirect_to root_path
     else
@@ -40,9 +41,9 @@ class UserSessionsController < ApplicationController
       if user_info[:errors]
         user_info[:errors].each {|e| add_flash :errors, e}
       end
-      
+
       redirect_to login_path
-    end                                                                                   
+    end
   end
 
   def handle_sign_in(user)
@@ -67,7 +68,7 @@ class UserSessionsController < ApplicationController
       end
     end
   end
-  
+
   # DELETE /user_sessions/1
   def destroy
     sign_out
@@ -76,7 +77,7 @@ class UserSessionsController < ApplicationController
     redirect_to new_user_session_path
   end
 
-  private 
+  private
 
     def remember_me
       # Clearance (due to wanting a "clean codebase"), removed the option to
@@ -86,7 +87,7 @@ class UserSessionsController < ApplicationController
       # to the browser cookies.  Therefore, we can set a cookie here if the user wants to be remembered and then
       # check in the callback for it and not allow the remember_token cookie to expire.
       if params[:remember_me] && !Rails.application.config.disable_remember_me
-        # We don't use SSL in development, so make sure we don't use secure cookies there, otherwise, 
+        # We don't use SSL in development, so make sure we don't use secure cookies there, otherwise,
         # remember me won't work.
         cookies.permanent[:remember_me] = {value: "", secure: !Rails.env.development?, httponly: true}
       else

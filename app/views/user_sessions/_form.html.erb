@@ -1,113 +1,132 @@
 <% content_for :head_tags do %>
 <style type="text/css">
+  body {
+    background-image: url("<%=image_path('SERVICES.jpg')%>");
+    background-size: cover;
+    padding-top: 15px;
+  }
+  .outer-well {
+    margin-top: 10px;
+    background-color: rgba(255,255,255,0.6);
+    border: none;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+  }
   #new_user_session .small-margin {margin-bottom: 5px;}
   #new_user_session {margin-bottom: 0;}
   #forgot_password {font-size: small;}
   #forgot_password_dialog p {font-size: smaller;}
+  #login-container {
+  }
 </style>
 <% end %>
 <div class='container'>
   <div class='row'>
-    <div class='text-center'>
-      <%=image_tag(master_setup.logo_image.blank? ? "vfi_logo.png" : master_setup.logo_image, :id=>'dash-logo')%>
+    <div class="col-md-12">
+      <div class='text-center'>
+        <%=image_tag(master_setup.logo_image.blank? ? "vfi_logo.png" : master_setup.logo_image, :id=>'dash-logo')%>
+      </div>
     </div>
-    <h2 class='text-center'>Welcome To VFI Track</h2>
   </div>
-</div>
-<div class='container'>
-  <div class='well well-small'>
-    <div id='login' class='row'>
-      <%=form_tag("/user_sessions", :method=>'post', :id=>"new_user_session") do -%>
-      <div class='col-md-6'>
-        <div class="form-group small-margin">
-          <%=label_tag('user_session_username', "Username", class: "control-label")%>
-          <div class="controls"><%=text_field_tag('user_session[username]', "", class: "focus_first input-lg form-control", id: "user_session_id")%></div>
-        </div>
-        <div class="form-group small-margin">
-          <%=label_tag("user_session_password", 'Password', class: "control-label")%>
-          <div class="controls"><%=password_field_tag('user_session[password]', nil, class: "input-lg form-control", id: 'user_session_password')%></div>
-        </div>
-        <% unless Rails.application.config.disable_remember_me %>
-        <div class="form-group">
-          <div class="controls">
-            <%=check_box_tag(:remember_me, "1", false, style: "display: inline;")%>
-            <%=label_tag(:remember_me, "Remember Me", title: "Check this to remain logged in even after you close your browser.", style: "display: inline;")%><br>
+  <div class="well outer-well">
+    <div>
+      <div id='login' class='row'>
+        <%=form_tag("/user_sessions", :method=>'post', :id=>"new_user_session") do -%>
+        <div class='col-md-12'>
+          <div class="form-group small-margin">
+            <%=label_tag('user_session_username', "Username", class: "control-label")%>
+            <div class="controls"><%=text_field_tag('user_session[username]', "", class: "focus_first input-lg form-control", id: "user_session_id")%></div>
+          </div>
+          <div class="form-group small-margin">
+            <%=label_tag("user_session_password", 'Password', class: "control-label")%>
+            <div class="controls"><%=password_field_tag('user_session[password]', nil, class: "input-lg form-control", id: 'user_session_password')%></div>
+          </div>
+          <% unless Rails.application.config.disable_remember_me %>
+          <div class="form-group">
+            <div class="controls">
+              <%=check_box_tag(:remember_me, "1", false, style: "display: inline;")%>
+              <%=label_tag(:remember_me, "Remember Me", title: "Check this to remain logged in even after you close your browser.", style: "display: inline;")%><br>
+            </div>
+          </div>
+          <% end %>
+          <div class="form-group">
+            <div class="controls">
+              <span><%=submit_tag 'Log In', class: 'btn btn-success' %></span>
+              <% if Rails.configuration.use_google_auth %>
+                <span> or </span>
+
+                <a href="/auth/google_oauth2"
+                   style="background: #da4835; padding-top: 7px; padding-bottom: 10px; border-bottom-left-radius: 5px; border-top-left-radius: 5px;
+                          border-top-right-radius: 5px; border-bottom-right-radius: 5px; text-decoration: none">
+
+                  <span>
+                    <%= image_tag "google_plus_small.png",
+                                  style: "height: 33px; border-bottom-left-radius: 5px; border-top-left-radius: 5px;
+                                          padding-right: 5px; border-right: thin solid white;" %>
+                  </span>
+
+                  <span style="color: white; padding-right: 10px; font-weight: 700; margin-left: 3px;">
+                    Sign in with Google+
+                  </span>
+
+                </a>
+              <% end %>
+              <% if Rails.application.config.pepsi_sso_url %> or
+                <a href="<%=Rails.application.config.pepsi_sso_url%>" alt="myPepsiCo Login"><%= image_tag "mypepsico.png"%></a>
+              <% end %>
+            </div>
+          </div>
+          <div class="form-group small-margin">
+            <div class="controls">
+              <a id="forgot_password" href="javascript:void(0)" data-toggle="modal" data-target="#forgot-password-modal">Forgot your VFI Track password?</a>
+            </div>
           </div>
         </div>
         <% end %>
-        <div class="form-group">
-          <div class="controls">
-            <span><%=submit_tag 'Log In', class: 'btn btn-primary' %></span>
-            <% if Rails.configuration.use_google_auth %>
-              <span> or </span>
-
-              <a href="/auth/google_oauth2" 
-                 style="background: #da4835; padding-top: 7px; padding-bottom: 10px; border-bottom-left-radius: 5px; border-top-left-radius: 5px;
-                        border-top-right-radius: 5px; border-bottom-right-radius: 5px; text-decoration: none">
-
-                <span>
-                  <%= image_tag "google_plus_small.png", 
-                                style: "height: 33px; border-bottom-left-radius: 5px; border-top-left-radius: 5px; 
-                                        padding-right: 5px; border-right: thin solid white;" %>
-                </span>
-
-                <span style="color: white; padding-right: 10px; font-weight: 700; margin-left: 3px;">
-                  Sign in with Google+
-                </span>
-                
-              </a>
-            <% end %>
-            <% if Rails.application.config.pepsi_sso_url %> or 
-              <a href="<%=Rails.application.config.pepsi_sso_url%>" alt="myPepsiCo Login"><%= image_tag "mypepsico.png"%></a>
-            <% end %>
-          </div>
-        </div>
-        <div class="form-group small-margin">
-          <div class="controls">
-            <a id="forgot_password" href="javascript:void(0)" data-toggle="modal" data-target="#forgot-password-modal">Forgot your VFI Track password?</a>
+        <div class="modal fade" id="forgot-password-modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4>Reset Password</h4>
+              </div>
+              <div class="modal-body">
+                <p>Enter your email and we'll send you instructions for resetting your password.</p>
+                <%=form_tag password_resets_path, id: "password_reset_form" do -%>
+                <div class="col-md-8">
+                  <%=text_field_tag("email", "", :class=>"form-control")-%>
+                </div>
+                <div style='margin-top:5px;'>
+                  <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn btn-primary' -%>
+                </div>
+                <% end -%>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <% end %>
-      <div class="modal fade" id="forgot-password-modal">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">&times;</button>
-              <h4>Reset Password</h4>
-            </div>
-            <div class="modal-body">
-              <p>Enter your email and we'll send you instructions for resetting your password.</p>
-              <%=form_tag password_resets_path, id: "password_reset_form" do -%>
-              <div class="col-md-8">
-                <%=text_field_tag("email", "", :class=>"form-control")-%>
-              </div>
-              <div style='margin-top:5px;'>
-                <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn btn-primary' -%>
-              </div>
-              <% end -%>
-            </div>
-          </div>
-        </div>
-      </div>      
     </div>
   </div>
-  <%-if MasterSetup.get.custom_feature? 'public hts'-%>
-  <div class='well'>
-    <h2>Public HTS Database</h2>
-    <a href='/hts' class='btn btn-default'>Click Here</a>
-  </div>
-  <%-end-%>
-  <%unless PublicField.scoped.empty?-%>
-  <div class='well'>
-    <h2>Public Shipment Tracking</h2>
-      <%=render :partial=>'shared/tracker' %>
+  <%if MasterSetup.get.custom_feature?('public hts') || !PublicField.scoped.empty? || MasterSetup.get.custom_feature?('fenix') %>
+  <div class='well outer-well'>
+    <%-if MasterSetup.get.custom_feature? 'public hts'-%>
+    <div>
+      <h2>Public HTS Database</h2>
+      <a href='/hts' class='btn btn-default'>Click Here</a>
+    </div>
+    <%-end-%>
+    <%unless PublicField.scoped.empty?-%>
+    <div>
+      <h2>Public Shipment Tracking</h2>
+        <%=render :partial=>'shared/tracker' %>
     </div>
     <%end-%>
     <%if MasterSetup.get.custom_feature? 'fenix'-%>
-    <div class='well'>
+    <div>
       <h2>PARS Check - Canada Imports</h2>
       <button class='btn_link btn btn-default' style='text-align:left;' link_to='http://www.parslookup.com?vcu'>Click Here To Check Canada PARS Status</button>
     </div>
     <%end-%>
   </div>
+  <%end%>
+</div>
