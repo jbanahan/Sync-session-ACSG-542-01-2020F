@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
   def self.process_from_s3 bucket, key, opts={}
     # The first thing to do is save this file off as a CustomFile
-    # Then we want to check if there's a Check Ledger file from today that has not been processed.
+    # Then we want to check if there's a AP/AR Invoice Report file from today that has not been processed.
     # If so, then kick off the daily process
     check_register = nil
     integration = User.integration
@@ -139,35 +139,35 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
   def create_and_request_check check_info, sql_proxy_client
     errors = []
     check = nil
-
-    # The first thing we need to check is if there is an invoice already in the system for this check that has been uploaded to intacct..
-    # If so, it means the check was issued AFTER the invoice and it must be manually entered into Intacct.
-    bill_number = check_info[:invoice_number].strip + check_info[:invoice_suffix].strip
-
     export = nil
-    payable = nil
+    suffix = check_info[:invoice_suffix].blank? ? nil : check_info[:invoice_suffix].strip
     Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do
-      suffix = check_info[:invoice_suffix].blank? ? nil : check_info[:invoice_suffix].strip
 
-      # Check if there's a payable already created for this check number...if so skip.  This is solely needed for the transition period from the old way
-      # to the new report based way of retrieving the data from Alliance.  After a couple weeks looking for the check payable should be able to be removed.
-      payable = IntacctPayable.where(bill_number: check_info[:invoice_number] + suffix.to_s, check_number: check_info[:check_number], payable_type: [IntacctPayable::PAYABLE_TYPE_ADVANCED, IntacctPayable::PAYABLE_TYPE_CHECK]).first
-
-      if payable.nil?
-        check = IntacctCheck.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], amount: check_info[:check_amount]).first_or_create!
-        if check.intacct_upload_date.nil? && check.intacct_key.nil?
-          export = IntacctAllianceExport.where(file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], ap_total: check_info[:check_amount], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK).first_or_create!
-        else
-          check = nil
+      # There's error cases where the check number appears on multiple lines...this happens when the check print queue is screwed up and isn't resolved
+      # correctly by the users.  This results in check numbers being physically printed twice - for different files or the same file twice.  In this case, the check
+      # registry will have BOTH check lines in it and will sum So, if we only log one of the check numbers listed (by only using the check number/bank/check_date/check_type) 
+      # then when the amounts are totalled at the end of the day end processed against the registry amount, the amounts will be (correctly) off and kick out an
+      # error on the exception report forcing the user to validate the amounts.  This is what we want.
+      check = IntacctCheck.where(check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], voided: (check_info[:check_amount].to_f) < 0.0).first_or_create!
+      if check.intacct_upload_date.nil? && check.intacct_key.nil?
+        export = check.intacct_alliance_export
+        if export.nil?
+          export = IntacctAllianceExport.create! file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], 
+                                                  ap_total: check_info[:check_amount], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, intacct_checks: [check]
         end
+      else
+        check = nil
       end
     end
 
     if check
       Lock.with_lock_retry(check) do
         Lock.with_lock_retry(export) do
+          check.amount = check_info[:check_amount]
+          check.file_number = check_info[:invoice_number]
+          check.suffix = suffix
           check.customer_number = check_info[:customer_number]
-          check.bill_number = bill_number
+          check.bill_number = (check_info[:invoice_number].strip + check_info[:invoice_suffix].strip)
           check.vendor_number = check_info[:vendor_number]
           check.vendor_reference = check_info[:vendor_reference]
           # This is the prepaid GL Account, it lets us track how much is floating out there in check payments associated with invoices
@@ -194,7 +194,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
       # Just do the amount change to Alliance format here instead
       sql_proxy_client.delay.request_check_details check.file_number, check.check_number, check.check_date, check.bank_number, check.amount.to_s
     else
-      errors << "Check # #{check_info[:check_number]} has already been sent to Intacct." unless payable
+      errors << "Check # #{check_info[:check_number]} has already been sent to Intacct."
     end
 
     [check, errors]

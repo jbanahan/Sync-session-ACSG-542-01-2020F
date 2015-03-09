@@ -80,7 +80,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       if errors.try(:size).to_i > 0
         error_count = errors[:checks].try(:length).to_i + errors[:invoices].try(:length).to_i
 
-        send_parser_errors @check_register.attached_file_name, errors[:checks], @invoices.attached_file_name, errors[:invoices], users.map(&:email), ActiveSupport::TimeZone[user.time_zone].now.to_date
+        send_parser_errors @check_register.attached_file_name, errors[:checks], @invoices.attached_file_name, errors[:invoices], users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
       else
         upload_intacct_data OpenChain::CustomHandler::Intacct::IntacctDataPusher.new
 

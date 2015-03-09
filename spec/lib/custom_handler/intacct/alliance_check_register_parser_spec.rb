@@ -188,8 +188,8 @@ FILE
 
     it "updates existing check / export objects" do
       @check_info[:invoice_suffix] = "A"
-      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount]
-      existing_export = IntacctAllianceExport.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, data_received_date: Time.zone.now, ap_total: @check_info[:check_amount]
+      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount], voided: false
+      existing_export = IntacctAllianceExport.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, data_received_date: Time.zone.now, ap_total: @check_info[:check_amount], intacct_checks: [existing_check]
 
       @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
@@ -202,32 +202,48 @@ FILE
 
     it "errors if check has already been sent to intacct" do
       @check_info[:invoice_suffix] = "A"
-      IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], intacct_upload_date: Time.zone.now, intacct_key: "Key", amount: @check_info[:check_amount]
+      IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], intacct_upload_date: Time.zone.now, intacct_key: "Key", amount: @check_info[:check_amount], voided: false
       check, errors = described_class.new.create_and_request_check @check_info, nil
       expect(check).to be_nil
       expect(errors.length).to eq 1
       expect(errors).to include "Check # #{@check_info[:check_number]} has already been sent to Intacct."
     end
 
-    it "skips creating check info if old-style advanced check payable exists" do
-      @check_info[:invoice_suffix] = "A"
-      IntacctPayable.create! bill_number: @check_info[:invoice_number]  + "A", check_number: @check_info[:check_number], payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED
+    it "creates a single check when multiple rows reference the same check number with different file number" do
+      # This is testing that an error condition is handled correctly by re-using the same check object (and not creating two distinct ones)
+      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount], voided: false
+      
+      @check_info[:invoice_number] = "987654"
+      @check_info[:suffix] = "A"
+      @check_info[:check_amount] = BigDecimal.new("200")
 
 
-      check, errors = described_class.new.create_and_request_check @check_info, nil
-      expect(check).to be_nil
+      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
+      check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
+
+      expect(check).to eq existing_check
+      expect(check.intacct_alliance_export).not_to be_nil
+      expect(check.file_number).to eq "987654"
+      expect(check.amount).to eq BigDecimal.new("200")
     end
 
-    it "skips creating check info if old-style invoiced check payable exists" do
-      @check_info[:invoice_suffix] = "A"
-      IntacctPayable.create! bill_number: @check_info[:invoice_number]  + "A", check_number: @check_info[:check_number], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK
+     it "creates a single check when multiple rows reference the same info except vendor reference" do
+      # This is another error case..the only information that differed across lines in the registry for these
+      # were the vendor reference.  This should still only create a single reference.
+      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount], voided: false
+      
+      @check_info[:vendor_reference] = "DIFFERENT REFERENCE"
 
 
-      check, errors = described_class.new.create_and_request_check @check_info, nil
-      expect(check).to be_nil
+      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
+      check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
-    end
+
+      expect(check).to eq existing_check
+      expect(check.intacct_alliance_export).not_to be_nil
+      expect(check.vendor_reference).to eq "DIFFERENT REFERENCE"
+     end
   end
 
   describe "process_from_s3" do
