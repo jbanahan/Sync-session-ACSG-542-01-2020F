@@ -299,7 +299,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_type_1, :fabric_1, :fabric_percent_1, :fabric_type_2, :fabric_2, :fabric_percent_2, :msl_fiber_failure, :msl_fiber_status]
       
       @prod.update_custom_value! @test_cds[:fabric_type_1], "Type"
-      @prod.update_custom_value! @test_cds[:fabric_type_1], "Type2"
+      @prod.update_custom_value! @test_cds[:fabric_type_2], "Type2"
       @prod.update_custom_value! @test_cds[:fabric_1], "Fabric"
       @prod.update_custom_value! @test_cds[:fabric_percent_1], "0"
       @prod.update_custom_value! @test_cds[:msl_fiber_failure], true
@@ -308,6 +308,9 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
     it "parses a fiber content field and sets the values into the given product" do
       DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
+      changed_at = 1.day.ago
+      @prod.update_column :changed_at, changed_at
+      @prod.update_column :updated_at, changed_at
       expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
 
       @prod.reload
@@ -315,9 +318,13 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(@prod.get_custom_value(@test_cds[:fabric_1]).value).to eq "Canvas"
       expect(@prod.get_custom_value(@test_cds[:fabric_percent_1]).value).to eq BigDecimal.new("100")
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_false
-      # Make sure unused fields are nil'ed out
-      expect(@prod.get_custom_value(@test_cds[:fabric_type_2]).value).to be_nil
+      # Make sure unused fields are deleted
+      expect(@prod.custom_values.find{|cv| cv.custom_definition_id == @test_cds[:fabric_type_2].id}).to be_nil
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Passed"
+      # Make sure the product's changed at is set (which also updates the updated at, so that setting the fiber fields
+      # will trigger a send to MSL+ - which is where this fiber data ultimately needs to end up)
+      expect(@prod.changed_at.to_i).to be > changed_at.to_i
+      expect(@prod.updated_at.to_i).to be > changed_at.to_i
     end
 
     it "detects an error and updates fields based on that" do
@@ -342,7 +349,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Cotton"
       results = ['Outer', 'Cotton', '100']
       42.times {results << ''}
-      results << true.to_s
+      results << "Failed: Invalid fabric 'Cotton' found."
       DataCrossReference.create_rl_fabric_fingerprint! @prod.unique_identifier, Digest::MD5.hexdigest(results.join("\n"))
 
       @prod.update_custom_value! @test_cds[:fabric_type_1], "Type"
@@ -379,7 +386,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(DataCrossReference.find_rl_fabric_fingerprint @prod.unique_identifier).not_to eq "fingerprint"
     end
 
-    it 'includes the pass fail state of the content in the fingerprint' do
+    it 'includes the pass fail message in the fingerprint' do
       # This is a scenario we have to account for when the fiber field doesn't change at all but the user adds xrefs 
       # so that even though the fiber field didn't change, the output state of it does, so it should be fully updated.
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Blah"
@@ -394,6 +401,21 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
       @prod.reload
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_false
+    end
+
+    it "updates failure message if new failure type is encountered, but underlying data is unchanged" do
+      # This is just a scenario where the original issue was that one fiber type was bad, and a cross reference
+      # was added to fix that, but now another one is bad.  The old fingerprinting didn't take this into account
+      # so the error message was telling the user the wrong thing was bad.
+      @prod.update_custom_value! @test_cds[:fiber_content], "50% Cotton / 50% Wool"
+
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_false
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Failed: Invalid fabric 'Cotton' found."
+
+      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_false
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Failed: Invalid fabric 'Wool' found."
     end
   end
 

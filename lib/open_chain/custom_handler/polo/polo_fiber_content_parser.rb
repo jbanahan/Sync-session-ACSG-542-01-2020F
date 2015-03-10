@@ -104,7 +104,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
     # First things, first...make sure the results hash has actually changed values before we bother
     # writing the results into the custom values.
-    fingerprint = results_fingerprint result, failed
+    fingerprint = results_fingerprint result, status_message
 
     xref_fingerprint = DataCrossReference.find_rl_fabric_fingerprint product.unique_identifier
 
@@ -112,9 +112,9 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     # worked without issue.
     return true if fingerprint == xref_fingerprint
 
-    batch_writes = convert_results_to_custom_values product, result, failed, status_message
     Lock.with_lock_retry(product) do
-      CustomValue.batch_write! batch_writes, false, skip_insert_nil_values: true
+      convert_results_to_custom_values product, result, failed, status_message
+      product.save!
       DataCrossReference.create_rl_fabric_fingerprint! product.unique_identifier, fingerprint
     end
     !failed
@@ -146,6 +146,10 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
   private
 
     def preprocess_fiber fiber
+      # Ruby has issues not handling other unicode space characters with strip (.ie nonbreaking space)
+      # ..change them all to standard space (this also handles tabs)
+      fiber = fiber.gsub /[[:blank:]]/, " "
+
       # A lot of descriptions have no spaces, add spaces between any numeric percentages and text descriptions
       add_spaces = fiber.clone
       loop do 
@@ -153,8 +157,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       end
       fiber = add_spaces.strip
 
-      # Turn all tabs into spaces, strip carriage returns
-      fiber = fiber.gsub("\t", " ").gsub("\r", "")
+      # Strip carriage returns
+      fiber = fiber.gsub("\r", "")
 
       # Normalize spaces (except newlines - handled later), compressing it down to a single whitespace. .ie "Blah      Blah" -> "Blah Blah"
       fiber = fiber.gsub(/ {2,}/, " " )
@@ -516,25 +520,26 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
       (1..15).each do |x|
         fiber, type, percent = all_fiber_fields results, x
-        cv << get_or_create_cv(product, "fabric_type_#{x}".to_sym, type)
-        cv << get_or_create_cv(product, "fabric_#{x}".to_sym, fiber)
-        cv << get_or_create_cv(product, "fabric_percent_#{x}".to_sym, percent)
+        update_or_create_cv(product, "fabric_type_#{x}".to_sym, type)
+        update_or_create_cv(product, "fabric_#{x}".to_sym, fiber)
+        update_or_create_cv(product, "fabric_percent_#{x}".to_sym, percent)
       end
 
-      cv << get_or_create_cv(product, :msl_fiber_failure, parse_failed)
-      cv << get_or_create_cv(product, :msl_fiber_status, status_message)
-      cv.compact
+      update_or_create_cv(product, :msl_fiber_failure, parse_failed)
+      update_or_create_cv(product, :msl_fiber_status, status_message)
     end
 
-    def get_or_create_cv product, cv_sym, value
+    def update_or_create_cv product, cv_sym, value
+      cd = @cdefs[cv_sym]
       # Only save off values that actually differ
-      cv = product.get_custom_value @cdefs[cv_sym]
-      if cv.value != value
-        cv.value = value
-        cv
+      if value.nil?
+        # Mark the CV for destruction if the value is nil
+        cv = product.custom_values.find {|v| v.custom_definition_id == cd.id}
+        cv.mark_for_destruction if cv
       else
-        nil
+        product.find_and_set_custom_value cd, value
       end
+      nil
     end
 
     def xref_value fabric
@@ -562,7 +567,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       @all_fabrics
     end
 
-    def results_fingerprint results, failed
+    def results_fingerprint results, status_message
       # Some error cases result in missing results, just use a blank hash for these to fingerprint since the
       # actual fiber 1-15 fields will be blank anyway too.
       results = {} if results.nil?
@@ -574,7 +579,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         values << results["fiber_#{x}".to_sym].to_s
         values << results["percent_#{x}".to_sym].to_s
       end
-      values << failed.to_s
+      values << status_message.to_s
 
       # Really the only reason I'm hashing this is to ensure a constant width field, otherwise it's possible
       # concat'ing the result data together it'll overflow the 255 char width (possible, though not likely).
