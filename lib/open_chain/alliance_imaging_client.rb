@@ -180,7 +180,8 @@ class OpenChain::AllianceImagingClient
         raise "Failed to stitch together documents for reference key #{message_hash['stitch_response']['reference_key']}: #{message_hash['stitch_response']['errors'][0]['message']}"
       rescue => e
         # We have to raise / catch / log this, otherwise the stitch response message isn't removed from the queue...which is not what we want
-        e.log_me
+        # Swallow this main excpetion error we get when the docs have some issue w/ the pdf and the pdf is not capable of being stitched together
+        e.log_me unless e.message =~ /Unexpected Exception in open_reader\(\)\nUnhandled Java Exception:\njava\.lang\.NullPointerException\n/
       end
       return nil
     end

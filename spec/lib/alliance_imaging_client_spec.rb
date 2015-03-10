@@ -371,6 +371,24 @@ describe OpenChain::AllianceImagingClient do
 
       expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_nil
     end
+
+    it "swallows specific error response" do
+      error = <<-ERR
+A pdftk error occurred while stitching together the paths ["file", "file2"]: Error: Unexpected Exception in open_reader()
+Unhandled Java Exception:
+java.lang.NullPointerException
+   at gnu.gcj.runtime.NameFinder.lookup(libgcj.so.14)
+   at java.lang.Throwable.getStackTrace(libgcj.so.14)
+   at java.lang.Throwable.stackTraceString(libgcj.so.14)
+   at java.lang.Throwable.printStackTrace(libgcj.so.14)
+   at java.lang.Throwable.printStackTrace(libgcj.so.14)
+ERR
+      @resp['stitch_response']['errors'] = [{'message' => error}]
+
+      StandardError.any_instance.should_not_receive(:log_me)
+
+      expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_nil
+    end
   end
 
   describe "send_outstanding_stitch_requests" do
