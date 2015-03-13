@@ -242,7 +242,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :can_view_lambda=>lambda {|u| u.company.master?}
       }],
       [154, :ent_store_names, :store_names, "Store Names", {:data_type=>:text}],
-      [155, :ent_final_delivery_date, :final_delivery_date, "Final Delivery Date", {:data_type=>:datetime}]
+      [155, :ent_final_delivery_date, :final_delivery_date, "Final Delivery Date", {:data_type=>:datetime}],
+      [156, :ent_expected_update_time, :expected_update_time, "Expected Update Time", {:data_type=>:datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

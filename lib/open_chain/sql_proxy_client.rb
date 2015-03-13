@@ -69,14 +69,29 @@ module OpenChain; class SqlProxyClient
     request 'file_tracking', {:start_date => start_date.strftime("%Y%m%d").to_i, :end_time => end_time.strftime("%Y%m%d%H%M").to_i}, {}, results_as_array: true, swallow_error: false
   end
 
+  def request_entry_data file_no
+    request 'entry_data', {file_no: file_no.to_i}, {}
+  end
+
+  # Requests sql proxy return a list of entry numbers that were updated 
+  # during the timeframe specified by the parameters.  Which are expected 
+  # to be Time objects.
+  def request_updated_entry_numbers updated_since, updated_before
+    updated_since = updated_since.in_time_zone("Eastern Time (US & Canada)").strftime "%Y%m%d%H%M"
+    updated_before = updated_before.in_time_zone("Eastern Time (US & Canada)").strftime "%Y%m%d%H%M"
+
+    request 'updated_entries', {start_date: updated_since, end_date: updated_before}, {}
+  end
+
   def report_query query_name, query_params = {}, context = {}
     # We actually want this to raise an error so that it's reported in the report result, rather than just left hanging out there in a "Running" state
     request query_name, query_params, context, swallow_error: false
   end
  
-  def request query_name, sql_params, request_context, request_params = {}
+  def request job_name, job_params, request_context, request_params = {}
+    # TODO - Change 'sql_params' to 'job_params' after sql_proxy is updated
     request_params = {swallow_error: true}.merge request_params
-    request_body = {'sql_params' => sql_params}
+    request_body = {'sql_params' => job_params}
     request_body['context'] = request_context unless request_context.blank?
     if request_params[:results_as_array].to_s == "true"
       request_body['results_as_array'] = true
@@ -84,10 +99,11 @@ module OpenChain; class SqlProxyClient
 
     begin
       config = PROXY_CONFIG[Rails.env]
-      @json_client.post "#{config['url']}/query/#{query_name}", request_body, {}, config['auth_token']
+      # TODO - Change 'query' in path to 'job' after sql_proxy is updated
+      @json_client.post "#{config['url']}/query/#{job_name}", request_body, {}, config['auth_token']
     rescue => e
       raise e if request_params[:swallow_error] === false
-      e.log_me ["Failed to initiate sql_proxy query for #{query_name} with params #{request_body.to_json}."]
+      e.log_me ["Failed to initiate sql_proxy query for #{job_name} with params #{request_body.to_json}."]
     end
   end
 

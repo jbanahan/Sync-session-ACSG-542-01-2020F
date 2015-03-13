@@ -17,8 +17,9 @@ class EntryComment < ActiveRecord::Base
         /^Pay Due not changed, Same Pay Due Date/i,\
         /^Payment Type Changed/i,\
         /^STMNT DATA REPLACED AS REQUESTED/i,\
-        /^stmt.*authorized/i].any?() {|r| r =~ self.body}
+        /^stmt.*authorized/i].any?{|r| r =~ self.body}
 
-        self.public_comment = !match
+      self.public_comment = !match
+      true
     end
 end

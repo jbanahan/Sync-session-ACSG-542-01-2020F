@@ -62,4 +62,46 @@ describe Api::V1::AllianceDataController do
       expect(response.body).to eq ({"errors" => ["Access denied."]}.to_json)
     end
   end
+
+  describe "receive_updated_entry_numbers" do
+    it "receives data" do
+      results = {"1"=>201503010000, "2"=>201503020000}
+      OpenChain::CustomHandler::KewillDataRequester.stub(:delay).and_return OpenChain::CustomHandler::KewillDataRequester
+      OpenChain::CustomHandler::KewillDataRequester.should_receive(:request_entry_data).with("1", "201503010000")
+      OpenChain::CustomHandler::KewillDataRequester.should_receive(:request_entry_data).with("2", "201503020000")
+
+      post "receive_updated_entry_numbers", results: results, context: {}
+      expect(response.body).to eq ({"OK" => ""}.to_json)
+    end
+
+    it "errors if user is not an admin" do
+      @user.admin = false
+      @user.save!
+
+      post "receive_updated_entry_numbers", results: []
+      expect(response.status).to eq 401
+      expect(response.body).to eq ({"errors" => ["Access denied."]}.to_json)
+    end
+  end
+
+  describe "receive_entry_data" do
+    it "receives entry data" do
+      results = {"entry" => {"data" => "data"}}
+
+      OpenChain::CustomHandler::KewillEntryParser.should_receive(:delay).and_return OpenChain::CustomHandler::KewillEntryParser
+      OpenChain::CustomHandler::KewillEntryParser.should_receive(:parse_json).with(results.to_json)
+
+      post "receive_entry_data", results: results, context: {}
+      expect(response.body).to eq ({"OK" => ""}.to_json)
+    end
+
+    it "errors if user is not an admin" do
+      @user.admin = false
+      @user.save!
+
+      post "receive_entry_data", results: []
+      expect(response.status).to eq 401
+      expect(response.body).to eq ({"errors" => ["Access denied."]}.to_json)
+    end
+  end
 end

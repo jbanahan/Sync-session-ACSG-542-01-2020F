@@ -18,6 +18,8 @@ class KeyJsonItem < ActiveRecord::Base
   KS_LANDS_END_CD ||= 'le_cd'
   # Polo Fiber Report Date
   RL_FIBER_REPORT ||= 'rl_fiber'
+  # Entry Data Request Time
+  KEWILL_ENTRY_DATA ||= 'kc_entry'
 
   # turn the object into a json string and store it in the json_data field
   def data= d
@@ -32,4 +34,5 @@ class KeyJsonItem < ActiveRecord::Base
 
   scope :lands_end_cd, lambda {|logical_key| where(:key_scope=>KS_LANDS_END_CD).where(:logical_key=>logical_key)}
   scope :polo_fiber_report, lambda {|logical_key| where(:key_scope=>RL_FIBER_REPORT).where(:logical_key=>logical_key)}
+  scope :updated_entry_data, lambda {|logical_key| where(:key_scope=>KEWILL_ENTRY_DATA).where(:logical_key=>logical_key)}
 end
