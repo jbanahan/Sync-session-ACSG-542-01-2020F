@@ -887,6 +887,8 @@ module OpenChain
               end
             rescue => e
               # Catch any errors and write them out using another writer format
+              raise e unless production?
+
               writer = create_writer(rl_company, :exception)
               writers[:exception] ||= writer
               writer.add_invoice broker_invoice, e
@@ -930,28 +932,36 @@ module OpenChain
 
         def determine_invoice_output_format broker_invoice
           output_format = nil
+          entry = broker_invoice.entry
 
-          # Can we find an actual Brand?
-          # This applies to both SAP and non-SAP PO's
-          brand = find_rl_brand(broker_invoice.entry)
+          # Because RL can't consistently supply us with PO data for stock transfers between 
+          # US and Canada we're going to force all their invoices to use the ffi format.
+          if (entry.importer_tax_id == RL_INVOICE_CONFIGS[:rl_canada][:tax_id]) && entry.vendor_names.to_s.strip =~ /^Ralph Lauren/i
+            output_format = :ffi
+          else
+            # Can we find an actual Brand?
+            # This applies to both SAP and non-SAP PO's
+            brand = find_rl_brand(entry)
 
-          if brand
-            # If we can find a profit center, then we can possibly use the MM interface
-            profit_center = find_profit_center broker_invoice.entry
+            if brand
+              # If we can find a profit center, then we can possibly use the MM interface
+              profit_center = find_profit_center entry
 
-            if profit_center
-              # We can't handle multiple MM invoices for the same entry because we 
-              # send all the po/commercial invoice information for an entry on the first transmission
-              # of the first broker invoice.  The MM interface requires PO information for all invoices
-              # and we can't resend the full invoice line set again (otherwise the duty will get added twice in RL's system).
-              # So we fall back to sending via the FFI interface.
-              if !previously_invoiced?(broker_invoice.entry)
-                output_format = :mmgl
+              if profit_center
+                # We can't handle multiple MM invoices for the same entry because we 
+                # send all the po/commercial invoice information for an entry on the first transmission
+                # of the first broker invoice.  The MM interface requires PO information for all invoices
+                # and we can't resend the full invoice line set again (otherwise the duty will get added twice in RL's system).
+                # So we fall back to sending via the FFI interface.
+                if !previously_invoiced?(entry)
+                  output_format = :mmgl
+                end
               end
             end
+
+            output_format = :ffi unless output_format
           end
 
-          output_format = :ffi unless output_format
           output_format
         end
 
@@ -989,6 +999,10 @@ module OpenChain
           job.export_type = ((format == :mmgl) ? ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE : ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE)
 
           job
+        end
+
+        def production?
+          Rails.env.production?
         end
     end
   end
