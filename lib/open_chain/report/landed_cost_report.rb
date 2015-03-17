@@ -23,7 +23,7 @@ module OpenChain; module Report
 
     def run 
       headers = [:ent_brok_ref, :ent_entry_num, :ent_release_date, :ent_transport_mode_code, :ent_customer_references, 
-        :cit_hts_code, :cil_po_number, :cil_units, :cit_entered_value, "Entry Fee", "Other Fees", "Actual Freight", 
+        :cit_hts_code, :cil_country_origin_code, :cil_po_number, :cil_units, :cit_entered_value, "Entry Fee", "Other Fees", "Actual Freight", 
         :cil_hmf, :cil_prorated_mpf, :cil_cotton_fee, :cit_duty_amount, "Total Per Line", "Total Per Unit"].map {|v| ((v.is_a? String) ? v : ModelField.find_by_uid(v).label(false))}
 
       wb = XlsMaker.create_workbook "#{@alliance_customer_number} #{@release_date_start} - #{@release_date_end}", headers
@@ -58,6 +58,7 @@ module OpenChain; module Report
             XlsMaker.insert_cell_value sheet, row_counter, (column += 1), entry[:transport_mode_code], column_widths
             XlsMaker.insert_cell_value sheet, row_counter, (column += 1), entry[:customer_reference].join(", "), column_widths
             XlsMaker.insert_cell_value sheet, row_counter, (column += 1), line[:hts_code].collect{|h| h.hts_format}.join(", "), column_widths
+            XlsMaker.insert_cell_value sheet, row_counter, (column += 1), line[:country_origin_code], column_widths
             XlsMaker.insert_cell_value sheet, row_counter, (column += 1), line[:po_number], column_widths
             XlsMaker.insert_cell_value sheet, row_counter, (column += 1), line[:quantity], column_widths
             XlsMaker.insert_cell_value sheet, row_counter, (column += 1), line[:entered_value], column_widths, :format=>ReportHelper::CURRENCY_FORMAT

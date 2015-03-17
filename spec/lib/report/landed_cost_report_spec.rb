@@ -33,7 +33,7 @@ describe OpenChain::Report::LandedCostReport do
 
       # don't really care about the header names, just make sure they're there
       sheet.row(0)[0].should == "Broker Reference"
-      sheet.row(0)[17].should == "Total Per Unit"
+      sheet.row(0)[18].should == "Total Per Unit"
       
       sheet.row(1)[0].should == @entry1.broker_reference
       sheet.row(1)[1].should == @entry1.entry_number
@@ -42,18 +42,19 @@ describe OpenChain::Report::LandedCostReport do
       sheet.row(1)[4].should == @entry1.customer_references.split("\n").join(", ")
       # This info is all hardcoded in the generator_data method
       sheet.row(1)[5].should == "1234.56.7890, 9876.54.3210"
-      sheet.row(1)[6].should == "PO"
-      sheet.row(1)[7].should == 1
-      sheet.row(1)[8].should == BigDecimal.new("1")
-      sheet.row(1)[9].should == BigDecimal.new("2")
-      sheet.row(1)[10].should == BigDecimal.new("3")
-      sheet.row(1)[11].should == BigDecimal.new("4")
-      sheet.row(1)[12].should == BigDecimal.new("5")
-      sheet.row(1)[13].should == BigDecimal.new("6")
-      sheet.row(1)[14].should == BigDecimal.new("7")
-      sheet.row(1)[15].should == BigDecimal.new("8")
-      sheet.row(1)[16].should == BigDecimal.new("9")
-      sheet.row(1)[17].should == BigDecimal.new("10.99") # landed cost is rounded to 2 decimal places
+      sheet.row(1)[6].should == "CO"
+      sheet.row(1)[7].should == "PO"
+      sheet.row(1)[8].should == 1
+      sheet.row(1)[9].should == BigDecimal.new("1")
+      sheet.row(1)[10].should == BigDecimal.new("2")
+      sheet.row(1)[11].should == BigDecimal.new("3")
+      sheet.row(1)[12].should == BigDecimal.new("4")
+      sheet.row(1)[13].should == BigDecimal.new("5")
+      sheet.row(1)[14].should == BigDecimal.new("6")
+      sheet.row(1)[15].should == BigDecimal.new("7")
+      sheet.row(1)[16].should == BigDecimal.new("8")
+      sheet.row(1)[17].should == BigDecimal.new("9")
+      sheet.row(1)[18].should == BigDecimal.new("10.99") # landed cost is rounded to 2 decimal places
 
       # Just make sure the second entry's row is there
       sheet.row(2)[0].should == @entry2.broker_reference
@@ -65,7 +66,7 @@ describe OpenChain::Report::LandedCostReport do
         :transport_mode_code=>entry.transport_mode_code, :customer_reference=>entry.customer_references.split("\n"),
         :commercial_invoices=>[
           {:commercial_invoice_lines=>[
-            :hts_code =>["1234567890", "9876543210"], :po_number=>"PO", :quantity => 1, :entered_value=>BigDecimal.new("1"),
+            :hts_code =>["1234567890", "9876543210"], :country_origin_code => "CO", :po_number=>"PO", :quantity => 1, :entered_value=>BigDecimal.new("1"),
             :brokerage=>BigDecimal.new("2"), :other=>BigDecimal.new("3"), :international_freight=>BigDecimal.new("4"),
             :hmf=>BigDecimal.new("5"), :mpf=>BigDecimal.new("6"), :cotton_fee=>BigDecimal.new("7"), :duty=>BigDecimal.new("8"),
             :landed_cost=>BigDecimal.new("9"), :per_unit=>{:landed_cost=>BigDecimal.new("10.987")}
