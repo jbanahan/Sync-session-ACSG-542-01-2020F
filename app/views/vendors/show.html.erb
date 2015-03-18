@@ -21,7 +21,6 @@
   .address-selector {
     padding: 5px;
   }
-
 </style>
 <div class="container">
   <div class="row">
@@ -36,6 +35,7 @@
         <li class="active"><a href="#attributes" data-toggle="tab">Attributes</a></li>
         <li><a href="#locations" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/locations'>Locations</a></li>
         <li><a href="#attachments" data-toggle="tab">Attachments</a></li>
+        <li><a href="#product_groups" data-toggle="tab">Product Groups</a></li>
         <li><a href="#orders" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/orders'>Orders</a></li>
         <li><a href="#survey_responses" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/survey_responses'>Surveys</a></li>
         <li><a href="#products" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/products'>Products</a></li>
@@ -61,7 +61,6 @@
               </div>
             </div>
           </div>
-
         </div>
         <div class="tab-pane" id="attachments">
           <div class="container-fluid">
@@ -71,6 +70,94 @@
               </div>
             </div>
           </div>
+        </div>
+        <div class="tab-pane" id="product_groups">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-12 text-center">
+                <h3>Product Groups</h3>
+              </div>
+            </div>
+            <%if @company.can_edit?(current_user)%>
+              <div class="row">
+                <div class="col-md-12 text-right">
+                  <button class='btn btn-success' id='btn_assign_vendor_product_group' title='Add Product Group' data-vendor-id='<%=@company.id%>'>
+                    <span class='glyphicon glyphicon-plus'></span>
+                  </button>
+                </div>
+              </div>
+            <%end%>
+          </div>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Group</th>
+                <th>Approved</th>
+              </tr>
+            </thead>
+            <tbody>
+              <%@company.vendor_product_group_assignments.each do |vpga|%>
+                <tr>
+                  <td><%=link_to 'View', vendor_product_group_assignment_path(vpga), class:'btn btn-xs btn-default'%></td>
+                  <td>
+                    <%=vpga.product_group.name%>
+                  </td>
+                  <td></td>
+                </tr>
+              <%end%>
+            </tbody>
+          </table>
+          <div class="modal fade" id='mod_assign_product_group'>
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <h4 class="modal-title">Add Product Group</h4>
+                </div>
+                <div class="modal-body">
+                  <div class='loader'></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-success" disabled='disabled'>Add</button>
+                </div>
+              </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+          </div><!-- /.modal -->
+          <script type='text/javascript'>
+            $(document).ready(function() {
+              $('#mod_assign_product_group .btn-success').click(function () {
+                pgId = $('#mod_assign_product_group select option:selected').val();
+                if(pgId) {
+                  $.post('/vendors/'+vendor_id+'/assign_product_group.json',{product_group_id:pgId},function(data) {
+                    $('#mod_assign_product_group').modal('hide');
+                    window.alert('Product group added.');
+                    $('#main-content').html("<div class='loader'></div>");
+                    location.reload();
+                  });
+                } else {
+                  window.alert('No product group selected');
+                }
+              });
+              $('#btn_assign_vendor_product_group').click(function() {
+                vendor_id = $(this).attr('data-vendor-id')
+                load = function() {
+                  $.get('/vendors/'+vendor_id+'/unassigned_product_groups.json', function(data) {
+                    html = "<select class='form-control'>";
+                    $.each(data.product_groups,function(idx,v) {
+                      html += "<option value='"+v.id+"'>"+v.name+"</option>";
+                    });
+                    html += "</select>";
+                    $('#mod_assign_product_group .btn-success').removeAttr('disabled');
+                    $('#mod_assign_product_group .modal-body').html(html);
+                  });
+                }
+                $('#mod_assign_product_group').modal('show');
+                load();
+              });
+            });
+          </script>
         </div>
         <div class="tab-pane" id="orders">
           <div class='loader'></div>
@@ -82,6 +169,6 @@
           <div class='loader'></div>
         </div>
       </div>
-    </div>  
+    </div>
   </div>
 </div>

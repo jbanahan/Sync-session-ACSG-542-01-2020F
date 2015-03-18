@@ -24,7 +24,6 @@ OpenChain::Application.routes.draw do
       end
       resources :fields, only: [:index]
       resources :companies, only: [:index] do
-
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
       end
@@ -35,6 +34,11 @@ OpenChain::Application.routes.draw do
       end
       resources :products, only: [:index, :show, :create, :update] do
         get 'by_uid/:uid' => "products#by_uid", on: :collection
+      end
+
+      resources :vendor_product_group_assignments do
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
       end
 
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
@@ -414,6 +418,7 @@ OpenChain::Application.routes.draw do
     end
     post :import_new_worksheet, :on=>:new
   end
+  resources :product_groups, only: [:index, :create, :update, :destroy]
 
   resources :orders do
     member do
@@ -463,8 +468,11 @@ OpenChain::Application.routes.draw do
       get 'orders'
       get 'survey_responses'
       get 'products'
+      get 'unassigned_product_groups'
+      post 'assign_product_group'
     end
   end
+  resources :vendor_product_group_assignments, only: [:show]
   resources :companies do
     member do
       get 'show_children'

@@ -89,6 +89,9 @@ end
 Factory.define :tariff_record do |t|
   t.association :classification
 end
+Factory.define :product_group do |f|
+  f.sequence(:name)
+end
 Factory.define :change_record do |t|
   t.association :file_import_result
 end
@@ -391,4 +394,9 @@ end
 
 Factory.define :state_toggle_button do |f|
 
+end
+
+Factory.define :vendor_product_group_assignment do |f|
+  f.association :vendor, factory: :company
+  f.association :product_group
 end

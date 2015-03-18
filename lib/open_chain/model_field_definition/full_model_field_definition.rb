@@ -21,6 +21,7 @@ require 'open_chain/model_field_definition/security_filing_line_field_definition
 require 'open_chain/model_field_definition/shipment_field_definition'
 require 'open_chain/model_field_definition/shipment_line_field_definition'
 require 'open_chain/model_field_definition/tariff_field_definition'
+require 'open_chain/model_field_definition/vendor_product_group_assignment_definition'
 
 module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::BrokerInvoiceFieldDefinition
@@ -46,6 +47,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentLineFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
+  include OpenChain::ModelFieldDefinition::VendorProductGroupAssignmentDefinition
 
   def add_field_definitions
     add_company_fields
@@ -71,5 +73,6 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_sale_line_fields
     add_delivery_fields
     add_delivery_line_fields
+    add_vendor_product_group_assignment_fields
   end
 end; end; end

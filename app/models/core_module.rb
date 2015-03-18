@@ -445,9 +445,10 @@ class CoreModule
   COMPANY = new("Company","Company",
     default_search_columns: [:cmp_name,:cmp_sys_code]
   )
+  VENDOR_PRODUCT_GROUP_ASSIGNMENT = new("VendorProductGroupAssignment","Vendor / Product Group Assignment")
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
-    SECURITY_FILING,SECURITY_FILING_LINE,COMPANY]
+    SECURITY_FILING,SECURITY_FILING_LINE,COMPANY,VENDOR_PRODUCT_GROUP_ASSIGNMENT]
 
   def self.add_virtual_identifier
     # Add in the virtual_identifier field that is needed for update_model_field_attribute support

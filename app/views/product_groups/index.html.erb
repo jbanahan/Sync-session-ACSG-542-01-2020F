@@ -1,0 +1,43 @@
+<%content_for :action_bar do %>
+  <button class='btn btn-default' id='btn_new'>New</button>
+<%end%>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h2>Product Groups
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class='table table-striped'>
+        <tbody>
+          <%ProductGroup.all.each do |pg|%>
+          <tr>
+            <td>
+              <%= pg.name%>
+            </td>
+            <td>
+              <%=button_to "Delete", product_group_path(pg), method: :delete, confirm: 'Are you sure you want to delete this?', disabled: pg.in_use?, class: 'btn btn-danger'%>
+            </td>
+          </tr>
+          <%end%>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%=form_for ProductGroup.new, html: {id: 'frm_pg'} do |f|%>
+  <%=f.hidden_field :name, id: 'pg_name'%>
+<%end%>
+<script type='text/javascript'>
+$(document).ready(function() {
+  $('#btn_new').click(function() {
+    val = window.prompt('Enter group name:')
+    if(val) {
+      $('#pg_name').val(val);
+      $('#frm_pg').submit();
+    }
+  });
+});
+</script>

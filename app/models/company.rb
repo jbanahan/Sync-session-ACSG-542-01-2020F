@@ -28,11 +28,13 @@ class Company < ActiveRecord::Base
   has_many  :attachment_archive_manifests, :dependent=>:destroy
   has_many  :surveys, dependent: :destroy
   has_many  :attachments, as: :attachable, dependent: :destroy
+  has_many  :vendor_product_group_assignments, dependent: :destroy, foreign_key: :vendor_id, inverse_of: :vendor
+  has_many  :product_groups, through: :vendor_product_group_assignments
 
   has_one :attachment_archive_setup, :dependent => :destroy
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
-	
+
   scope :carriers, where(:carrier=>true)
   scope :vendors, where(:vendor=>true)
   scope :customers, where(:customer=>true)
@@ -62,7 +64,7 @@ class Company < ActiveRecord::Base
       return base_search.where('companies.id = :ucid OR (companies.id IN (SELECT linked_companies.child_id FROM linked_companies WHERE linked_companies.parent_id = :ucid))',{ucid:user.company_id})
     end
   end
-	
+
   # find all companies that aren't children of this one through the linked_companies relationship
   def unlinked_companies
     Company.select("distinct companies.*").joins("LEFT OUTER JOIN (select child_id as cid FROM linked_companies where parent_id = #{self.id}) as lk on companies.id = lk.cid").where("lk.cid IS NULL").where("NOT companies.id = ?",self.id)
@@ -71,7 +73,7 @@ class Company < ActiveRecord::Base
 	def can_edit?(user)
 	  return user.admin?
 	end
-	
+
 	def can_view?(user)
 	  if user.company.master
 	    return true
@@ -81,7 +83,7 @@ class Company < ActiveRecord::Base
 	end
 
   def can_view_as_vendor?(user)
-    self.vendor && 
+    self.vendor &&
     user.view_vendors? && (
       user.company.master? || user.company == self || user.company.linked_company?(self)
     )
@@ -90,7 +92,7 @@ class Company < ActiveRecord::Base
   def can_attach?(user)
     can_edit? user
   end
-	
+
   #migrate all users and surveys to the target company
   def migrate_accounts target_company
     self.users.update_all(company_id:target_company.id,updated_at:Time.now)
@@ -100,7 +102,7 @@ class Company < ActiveRecord::Base
 	def self.not_locked
 	  Company.where("locked = ? OR locked is null",false)
 	end
-	
+
 	def self.find_master
 	  Company.where(:master => true).first
 	end
@@ -120,7 +122,7 @@ class Company < ActiveRecord::Base
 
   #permissions
   def view_security_filings?
-    master_setup.security_filing_enabled? && (self.master? || self.broker? || self.importer?) 
+    master_setup.security_filing_enabled? && (self.master? || self.broker? || self.importer?)
   end
   def edit_security_filings?
     master_setup.security_filing_enabled? && (self.master? || self.broker?)
@@ -189,7 +191,7 @@ class Company < ActiveRecord::Base
   def view_vendors?
     return master_setup.vendor_management_enabled?
   end
-  
+
   def view_products?
     true
   end
@@ -211,7 +213,7 @@ class Company < ActiveRecord::Base
   def comment_products?
     view_products?
   end
-  
+
   def view_sales_orders?
     return master_setup.sales_order_enabled && (self.master? || self.customer?)
   end
@@ -231,9 +233,9 @@ class Company < ActiveRecord::Base
     return master_setup.sales_order_enabled && (self.master? || self.customer?)
   end
 
-  
+
   def view_shipments?
-    return company_view_edit_shipments? 
+    return company_view_edit_shipments?
   end
   def add_shipments?
     return company_view_edit_shipments?
@@ -250,12 +252,12 @@ class Company < ActiveRecord::Base
   def attach_shipments?
     return company_view_edit_shipments?
   end
-  
+
   def view_deliveries?
     return company_view_deliveries?
   end
   def add_deliveries?
-    return company_edit_deliveries? 
+    return company_edit_deliveries?
   end
   def edit_deliveries?
     return company_edit_deliveries?
@@ -264,14 +266,14 @@ class Company < ActiveRecord::Base
     return master_setup.delivery_enabled && self.master?
   end
   def comment_deliveries?
-    return company_view_deliveries? 
+    return company_view_deliveries?
   end
   def attach_deliveries?
     return company_view_deliveries?
   end
 
   def add_classifications?
-    return master_setup.classification_enabled && edit_products? 
+    return master_setup.classification_enabled && edit_products?
   end
   def edit_classifications?
     return add_classifications?
@@ -291,8 +293,8 @@ class Company < ActiveRecord::Base
     n
   end
 
-	
-	private 
+
+	private
 
   def master_setup
     MasterSetup.get
