@@ -155,7 +155,7 @@ describe VendorsController do
         post :assign_product_group, id: @u.company_id.to_s, product_group_id:pg.id.to_s
       }.to change(VendorProductGroupAssignment,:count).from(0).to(1)
 
-      expect(response).to be_redirect
+      expect(response).to be_success
       expect(flash[:errors]).to be_blank
     end
   end
