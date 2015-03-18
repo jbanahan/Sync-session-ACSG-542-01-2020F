@@ -1,17 +1,17 @@
 class CustomDefinition < ActiveRecord::Base
   cattr_accessor :skip_reload_trigger
-  
+
   validates  :label, :presence => true
   validates  :data_type, :presence => true
   validates  :module_type, :presence => true
-  
+
   has_many   :custom_values, :dependent => :destroy
   has_many   :sort_criterions, :dependent => :destroy
   has_many   :search_criterions, :dependent => :destroy
   has_many   :search_columns, :dependent => :destroy
   has_many   :field_validator_rules, :dependent => :destroy
   has_many   :milestone_definitions, :dependent => :destroy
-  
+
   after_save :reset_cache
   after_save :reset_field_label
   after_find :set_cache
@@ -33,7 +33,7 @@ class CustomDefinition < ActiveRecord::Base
     end
     o
   end
-  
+
   #returns an Array of custom definitions for the module, sorted by rank then label
   #Note: Internally this calls .all on the result from the DB, so are getting back a real array, not an ActiveRecord result.
   def self.cached_find_by_module_type module_type
@@ -61,32 +61,32 @@ class CustomDefinition < ActiveRecord::Base
   def date?
     (!self.data_type.nil?) && self.data_type=="date"
   end
-  
+
   def data_column
     "#{self.data_type}_value"
   end
-  
+
   def can_edit?(user)
     user.company.master?
   end
-  
+
   def can_view?(user)
     user.company.master?
   end
-  
+
   def locked?
     false
   end
-  
+
   DATA_TYPE_LABELS = {
-    :text => "Text - Long", 
+    :text => "Text - Long",
     :string => "Text",
     :date => "Date",
     :boolean => "Checkbox",
     :decimal => "Decimal",
     :integer => "Integer"
   }
-  
+
   def set_cache
     @@already_set ||= {}
     to_set = self.destroyed? ? nil : self
@@ -100,18 +100,8 @@ class CustomDefinition < ActiveRecord::Base
     CACHE.delete "CustomDefinition:id:#{self.id}" unless self.id.nil?
     CACHE.delete "CustomDefinition:module_type:#{self.module_type}" unless self.module_type.nil?
     set_cache
-
-    if @@skip_reload_trigger
-      # This call is a quick shortcut for our test cases where we don't 
-      # actually have to reload and recache the whole module field data structures
-      # so they can be pushed out to all the running processes.  There's only a single
-      # process so, we don't need or want this.  (At the time of writing, this change shaved off ~2 minutes on 
-      # a full test suite run)
-      ModelField.add_update_custom_field self
-    else
-      # Reload and recache the whole model field data structure
-      ModelField.reload true
-    end
+    # Reload and recache the whole model field data structure
+    ModelField.reload true
   end
 
   private
@@ -119,5 +109,5 @@ class CustomDefinition < ActiveRecord::Base
     def reset_field_label
       FieldLabel.set_label "*cf_#{self.id}", self.label
     end
-    
+
 end
