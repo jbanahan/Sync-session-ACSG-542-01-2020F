@@ -1,7 +1,7 @@
 require 'open_chain/schedule_support'
 class SchedulableJob < ActiveRecord::Base
   include OpenChain::ScheduleSupport
-  attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday, 
+  attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday,
     :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running
 
   def self.create_default_jobs!
@@ -16,6 +16,7 @@ class SchedulableJob < ActiveRecord::Base
     SchedulableJob.where(run_class: "ReportResult").first_or_create! base_opts.merge(run_hour: "23", run_minute: "0", time_zone_name: "Eastern Time (US & Canada)")
     SchedulableJob.where(run_class: "OpenChain::WorkflowProcessor").first_or_create! base_opts.merge(run_interval: "5m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
     SchedulableJob.where(run_class: "OpenChain::DailyTaskEmailJob").first_or_create! base_opts.merge(run_hour: '5', run_minute: '0', time_zone_name: "Eastern Time (US & Canada)")
+    SchedulableJob.where(run_class: "OpenChain::LoadCountriesSchedulableJob").first_or_create! base_opts.merge(run_hour: '2', run_minute: '0', time_zone_name: "Eastern Time (US & Canada)")
   end
 
   def run log=nil
@@ -36,14 +37,14 @@ class SchedulableJob < ActiveRecord::Base
       log.info "Running schedule for #{k.to_s} with options #{run_opts}" if log
 
       raise "No 'run_schedulable' method exists on '#{self.run_class}' class." unless k.respond_to?(:run_schedulable)
-      
+
       method = k.method(:run_schedulable)
       if method.parameters.length == 0
         k.run_schedulable
       else
         k.run_schedulable run_opts
       end
-      
+
       OpenMailer.send_simple_html(self.success_email,"[VFI Track] Scheduled Job Succeeded",
           "Scheduled job for #{k.to_s} with options #{run_opts} has succeeded.").deliver! unless self.success_email.blank?
     rescue => e
@@ -66,7 +67,7 @@ class SchedulableJob < ActiveRecord::Base
   end
 
   def day_to_run
-    self.day_of_month 
+    self.day_of_month
   end
 
   def hour_to_run
@@ -114,7 +115,7 @@ class SchedulableJob < ActiveRecord::Base
     !self.no_concurrent_jobs
   end
 
-  private 
+  private
   def opts_hash
     return {} if self.opts.blank?
     JSON.parse self.opts
