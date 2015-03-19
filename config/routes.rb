@@ -31,6 +31,7 @@ OpenChain::Application.routes.draw do
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
+        post :login, on: :collection
       end
       resources :products, only: [:index, :show, :create, :update] do
         get 'by_uid/:uid' => "products#by_uid", on: :collection
