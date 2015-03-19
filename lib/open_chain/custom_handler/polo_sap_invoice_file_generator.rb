@@ -733,9 +733,7 @@ module OpenChain
             # We only need to output the Duty and GST lines if this entry hasn't already been invoiced.
             unless @inv_generator.previously_invoiced? broker_invoice.entry
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "23109000", profit_center, broker_invoice.entry.total_duty, "Duty", :duty, broker_invoice.entry.entry_number)
-              # RL Canada probably should be using the unallocated account here too, but we haven't been doing that from the start so we're keeping this as is for the momemnt
-              # Joanne from RL will let us know if we can use it instead of raw one
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", hst_gst_profit_center(profit_center), broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", @config[:unallocated_profit_center], broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
             end
 
             # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
@@ -745,7 +743,7 @@ module OpenChain
               # Duty is included at the "header" level so skip it at the invoice line level
               next if line.duty_charge_type?
               gl_account = line.hst_gst_charge_code? ? "14311000" : brokerage_gl_account
-              local_profit_center = (line.hst_gst_charge_code? ? (hst_gst_profit_center(profit_center)) : profit_center)
+              local_profit_center = (line.hst_gst_charge_code? ? @config[:unallocated_profit_center] : profit_center)
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, gl_account, local_profit_center, line.charge_amount, line.charge_description, :brokerage, broker_invoice.entry.entry_number)
             end
 
@@ -766,10 +764,6 @@ module OpenChain
             end
 
             rows
-          end
-
-          def hst_gst_profit_center main_profit_center
-            @rl_company == :rl_canada ? main_profit_center : @config[:unallocated_profit_center]
           end
 
           def create_line invoice_number, invoice_date, gl_account, profit_center, amount, description, line_type, entry_number
@@ -856,7 +850,7 @@ module OpenChain
           "An MM and/or FFI invoice file is attached for #{rl_company_name} for #{broker_invoices.length} #{"invoice".pluralize(broker_invoices.length)} as of #{start_time.strftime("%m/%d/%Y")}."
         end
 
-        def generate_invoice_output rl_company, broker_invoices
+        def generate_invoice_output rl_company, broker_invoices, save_export_jobs = true
           # This set is used so that we don't attempt to generate multiple mmgl invoices
           # against the same entry.  It's basically here because we're not saving the export
           # jobs until after files are actually written and attached to the export jobs.
@@ -903,7 +897,7 @@ module OpenChain
             export_job = export_jobs[format]
 
             # Some outputs purposefully may not result in export jobs or files (.ie the exception report)
-            if export_job && output_files
+            if save_export_jobs && export_job && output_files
               output_files.each do |type, files|
                 files.each do |file|
                   attachment = export_job.attachments.build
