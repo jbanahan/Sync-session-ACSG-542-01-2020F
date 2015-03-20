@@ -733,9 +733,7 @@ module OpenChain
             # We only need to output the Duty and GST lines if this entry hasn't already been invoiced.
             unless @inv_generator.previously_invoiced? broker_invoice.entry
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "23109000", profit_center, broker_invoice.entry.total_duty, "Duty", :duty, broker_invoice.entry.entry_number)
-              # RL Canada probably should be using the unallocated account here too, but we haven't been doing that from the start so we're keeping this as is for the momemnt
-              # Joanne from RL will let us know if we can use it instead of raw one
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", hst_gst_profit_center(profit_center), broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", @config[:unallocated_profit_center], broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
             end
 
             # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
@@ -745,7 +743,7 @@ module OpenChain
               # Duty is included at the "header" level so skip it at the invoice line level
               next if line.duty_charge_type?
               gl_account = line.hst_gst_charge_code? ? "14311000" : brokerage_gl_account
-              local_profit_center = (line.hst_gst_charge_code? ? (hst_gst_profit_center(profit_center)) : profit_center)
+              local_profit_center = (line.hst_gst_charge_code? ? @config[:unallocated_profit_center] : profit_center)
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, gl_account, local_profit_center, line.charge_amount, line.charge_description, :brokerage, broker_invoice.entry.entry_number)
             end
 
@@ -766,10 +764,6 @@ module OpenChain
             end
 
             rows
-          end
-
-          def hst_gst_profit_center main_profit_center
-            @rl_company == :rl_canada ? main_profit_center : @config[:unallocated_profit_center]
           end
 
           def create_line invoice_number, invoice_date, gl_account, profit_center, amount, description, line_type, entry_number
@@ -856,7 +850,7 @@ module OpenChain
           "An MM and/or FFI invoice file is attached for #{rl_company_name} for #{broker_invoices.length} #{"invoice".pluralize(broker_invoices.length)} as of #{start_time.strftime("%m/%d/%Y")}."
         end
 
-        def generate_invoice_output rl_company, broker_invoices
+        def generate_invoice_output rl_company, broker_invoices, save_export_jobs = true
           # This set is used so that we don't attempt to generate multiple mmgl invoices
           # against the same entry.  It's basically here because we're not saving the export
           # jobs until after files are actually written and attached to the export jobs.
@@ -887,6 +881,8 @@ module OpenChain
               end
             rescue => e
               # Catch any errors and write them out using another writer format
+              raise e unless production?
+
               writer = create_writer(rl_company, :exception)
               writers[:exception] ||= writer
               writer.add_invoice broker_invoice, e
@@ -901,7 +897,7 @@ module OpenChain
             export_job = export_jobs[format]
 
             # Some outputs purposefully may not result in export jobs or files (.ie the exception report)
-            if export_job && output_files
+            if save_export_jobs && export_job && output_files
               output_files.each do |type, files|
                 files.each do |file|
                   attachment = export_job.attachments.build
@@ -930,28 +926,36 @@ module OpenChain
 
         def determine_invoice_output_format broker_invoice
           output_format = nil
+          entry = broker_invoice.entry
 
-          # Can we find an actual Brand?
-          # This applies to both SAP and non-SAP PO's
-          brand = find_rl_brand(broker_invoice.entry)
+          # Because RL can't consistently supply us with PO data for stock transfers between 
+          # US and Canada we're going to force all their invoices to use the ffi format.
+          if (entry.importer_tax_id == RL_INVOICE_CONFIGS[:rl_canada][:tax_id]) && entry.vendor_names.to_s.strip =~ /^Ralph Lauren/i
+            output_format = :ffi
+          else
+            # Can we find an actual Brand?
+            # This applies to both SAP and non-SAP PO's
+            brand = find_rl_brand(entry)
 
-          if brand
-            # If we can find a profit center, then we can possibly use the MM interface
-            profit_center = find_profit_center broker_invoice.entry
+            if brand
+              # If we can find a profit center, then we can possibly use the MM interface
+              profit_center = find_profit_center entry
 
-            if profit_center
-              # We can't handle multiple MM invoices for the same entry because we 
-              # send all the po/commercial invoice information for an entry on the first transmission
-              # of the first broker invoice.  The MM interface requires PO information for all invoices
-              # and we can't resend the full invoice line set again (otherwise the duty will get added twice in RL's system).
-              # So we fall back to sending via the FFI interface.
-              if !previously_invoiced?(broker_invoice.entry)
-                output_format = :mmgl
+              if profit_center
+                # We can't handle multiple MM invoices for the same entry because we 
+                # send all the po/commercial invoice information for an entry on the first transmission
+                # of the first broker invoice.  The MM interface requires PO information for all invoices
+                # and we can't resend the full invoice line set again (otherwise the duty will get added twice in RL's system).
+                # So we fall back to sending via the FFI interface.
+                if !previously_invoiced?(entry)
+                  output_format = :mmgl
+                end
               end
             end
+
+            output_format = :ffi unless output_format
           end
 
-          output_format = :ffi unless output_format
           output_format
         end
 
@@ -989,6 +993,10 @@ module OpenChain
           job.export_type = ((format == :mmgl) ? ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE : ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE)
 
           job
+        end
+
+        def production?
+          Rails.env.production?
         end
     end
   end

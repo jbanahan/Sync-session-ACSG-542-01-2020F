@@ -651,6 +651,19 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/CreditDebitIndicator")).to eq "H"
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/AMOUNT")).to eq @broker_invoice_line3.charge_amount.abs.to_s
       end
+
+      it "generates FF invoices for RL Canada stock transfers" do
+        # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
+        # behavior for stock transfers
+        make_sap_po
+        @entry.update_attributes! vendor_names: "Ralph Lauren Corp"
+
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+
+        # A single ExportJob should have been created
+        job = ExportJob.all.first
+        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+      end
     end
 
     context :multiple_invoices_same_entry do
@@ -823,6 +836,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         sheet = Spreadsheet.open(file_paths[0]).worksheet 0
       end
 
+      @gen.should_receive(:production?).and_return true
       @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
       sheet.row(1)[0].should == @broker_invoice.invoice_number
