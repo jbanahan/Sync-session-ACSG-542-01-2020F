@@ -28,22 +28,15 @@ class FieldValidatorRulesController < ApplicationController
 
   def index
     admin_secure {
-      @rules = FieldValidatorRule.all.sort do |a, b| 
-        mod_a, mod_b = CoreModule.find_by_class_name(a.module_type).label, CoreModule.find_by_class_name(b.module_type).label
-        val = mod_a <=> mod_b
-        if val == 0
-          val = FieldLabel.default_value(a.model_field_uid) <=> FieldLabel.default_value(b.model_field_uid)
-        end
-        val
-      end
+      @rules = FieldValidatorRule.all
     }
   end
 
-  def new 
+  def new
     admin_secure {
       model_field_id = params[:mf_id]
       if model_field_id.blank?
-        error_redirect "mf_id parameter must be set to create a new rule" 
+        error_redirect "mf_id parameter must be set to create a new rule"
         return
       end
       if ModelField.find_by_uid(model_field_id).blank?
@@ -54,7 +47,7 @@ class FieldValidatorRulesController < ApplicationController
       rule = FieldValidatorRule.create(:model_field_uid=>model_field_id) if rule.nil?
       redirect_to edit_field_validator_rule_path rule
     }
-  end 
+  end
 
   def edit
     admin_secure {
@@ -67,7 +60,7 @@ class FieldValidatorRulesController < ApplicationController
       @rule = FieldValidatorRule.find params[:id]
       render 'edit'
     }
-    
+
   end
 
   def update
@@ -75,7 +68,7 @@ class FieldValidatorRulesController < ApplicationController
       @rule = FieldValidatorRule.find params[:id]
       if @rule.update_attributes(params[:field_validator_rule])
         add_flash :notices, "Rule was updated successfully."
-        redirect_to field_validator_rules_path 
+        redirect_to field_validator_rules_path
       else
         errors_to_flash @rule, :now=>true
         render 'edit'

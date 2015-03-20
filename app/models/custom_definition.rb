@@ -100,8 +100,18 @@ class CustomDefinition < ActiveRecord::Base
     CACHE.delete "CustomDefinition:id:#{self.id}" unless self.id.nil?
     CACHE.delete "CustomDefinition:module_type:#{self.module_type}" unless self.module_type.nil?
     set_cache
-    # Reload and recache the whole model field data structure
-    ModelField.reload true
+
+    if @@skip_reload_trigger
+      # This call is a quick shortcut for our test cases where we don't
+      # actually have to reload and recache the whole module field data structures
+      # so they can be pushed out to all the running processes.  There's only a single
+      # process so, we don't need or want this.  (At the time of writing, this change shaved off ~2 minutes on
+      # a full test suite run)
+      ModelField.add_update_custom_field self
+    else
+      # Reload and recache the whole model field data structure
+      ModelField.reload true
+    end
   end
 
   private

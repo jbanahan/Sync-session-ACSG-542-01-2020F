@@ -78,7 +78,7 @@ class SearchCriterion < ActiveRecord::Base
     table_name = mf.join_alias
     clause = nil
 
-    if custom_field?
+    if custom_field? && !mf.qualified_field_name_overridden?
       cd = mf.custom_definition
       custom_core = cd.model_field.core_module
 

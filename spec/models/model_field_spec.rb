@@ -213,8 +213,8 @@ describe ModelField do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference)
       # Using a non-shipment object because I want to ensure that this method is literally
       # just doing the equivalent of and obj.field_name method call (rather than ActiveRecord attribute accessing, etc.)
-      c = Class.new do 
-        def reference 
+      c = Class.new do
+        def reference
           "TEST!!!"
         end
       end
@@ -231,7 +231,7 @@ describe ModelField do
   describe "process_import" do
     it "updates an object's value" do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL")
-      c = Class.new do 
+      c = Class.new do
         attr_reader :reference
         def reference= ref
           @reference = ref
@@ -258,7 +258,7 @@ describe ModelField do
 
     it "updates a date field w/ hyphens" do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", data_type: :date)
-      c = Class.new do 
+      c = Class.new do
         attr_reader :reference
         def reference= ref
           @reference = ref
@@ -278,7 +278,7 @@ describe ModelField do
 
     it "updates a date field w/ slashes" do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", data_type: :date)
-      c = Class.new do 
+      c = Class.new do
         attr_reader :reference
         def reference= ref
           @reference = ref
@@ -338,7 +338,7 @@ describe ModelField do
 
     it "allows caller to forcefully allow import even if user might not be able to import" do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL")
-      c = Class.new do 
+      c = Class.new do
         attr_reader :reference
         def reference= ref
           @reference = ref
@@ -629,7 +629,7 @@ describe ModelField do
           tr1 = Factory(:tariff_record,:hts_1=>'12345678',:classification=>Factory(:classification,:country=>@c1,:product=>@p))
           tr2 = Factory(:tariff_record,:hts_1=>'12345678',:classification=>Factory(:classification,:country=>@c2,:product=>@p))
           @sc = SearchCriterion.new(:model_field_uid=>@mf.uid,:operator=>'eq',:value=>"1")
-          
+
           #don't find this product because it's classified for a different country
           Factory(:tariff_record,:hts_1=>'12345678',:classification=>Factory(:classification,:country=>@c2))
         end
@@ -665,7 +665,7 @@ describe ModelField do
       end
     end
     context "PMS Month" do
-      before :each do 
+      before :each do
         @ent = Factory(:entry,:monthly_statement_due_date=>Date.new(2012,9,1))
         @mf = ModelField.find_by_uid :ent_statement_month
       end
@@ -909,12 +909,12 @@ describe ModelField do
         ModelField.find_by_uid(:bi_duty_due_date).can_view?(u).should be_false
       end
       it "should secure error_free_release" do
-        mf = ModelField.find_by_uid(:ent_error_free_release) 
+        mf = ModelField.find_by_uid(:ent_error_free_release)
         mf.can_view?(@broker_user).should be_true
         mf.can_view?(@non_broker_user).should be_false
       end
       it "should secure census warning" do
-        mf = ModelField.find_by_uid(:ent_census_warning) 
+        mf = ModelField.find_by_uid(:ent_census_warning)
         mf.can_view?(@broker_user).should be_true
         mf.can_view?(@non_broker_user).should be_false
       end
@@ -1012,7 +1012,7 @@ describe ModelField do
     end
 
     context :ent_failed_business_rules do
-      before :each do 
+      before :each do
         @entry = Factory(:entry)
         @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
         @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
@@ -1097,6 +1097,53 @@ describe ModelField do
       ModelField.add_fields CoreModule::ENTRY, [[1,:ent_brok_ref,:broker_reference, "Broker Reference",{:data_type=>:string}]]
       mf = ModelField.find_by_uid 'ent_brok_ref'
       expect(mf).to be_blank
+    end
+  end
+
+  context :user_custom_definition do
+    it "should create username fields when custom_definition is user" do
+      cd = CustomDefinition.create!(label:'User',module_type:'Company',data_type: :integer, is_user: true)
+      mf = ModelField.find_by_uid("*uf_#{cd.id}_username")
+      comp = Factory(:company)
+      u = Factory(:admin_user,username:'uname_test',first_name:'Joe',last_name:'Jackson') #using admin to avoid any permissions issues
+
+      expect(mf.label).to eq 'User (Username)'
+
+      #set the value
+      mf.process_import(comp,u.username,u)
+      comp.save!
+      expect(comp.get_custom_value(cd).value).to eq u.id
+
+      #retrieve the value
+      expect(mf.process_export(comp,u)).to eq u.username
+
+      #query the value
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:u.username)
+      Factory(:company) #don't find this one
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [comp]
+    end
+
+    it "should create fullname fields when custom_definition is user" do
+      cd = CustomDefinition.create!(label:'User',module_type:'Company',data_type: :integer, is_user: true)
+      mf = ModelField.find_by_uid("*uf_#{cd.id}_fullname")
+      comp = Factory(:company)
+      u = Factory(:admin_user,username:'uname_test',first_name:'Joe',last_name:'Jackson') #using admin to avoid any permissions issues
+
+      expect(mf.label).to eq 'User (Name)'
+
+      expect(mf).to be_read_only
+      comp.get_custom_value(cd).value = u.id
+      comp.save!
+
+      #retrieve the value
+      expect(mf.process_export(comp,u)).to eq u.full_name
+
+      #query the value
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:u.full_name)
+      Factory(:company) #don't find this one
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [comp]
     end
   end
 end
