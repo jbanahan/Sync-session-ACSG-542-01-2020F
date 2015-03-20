@@ -25,13 +25,13 @@ module Api; module V1; class UsersController < Api::V1::ApiController
 
   def prevent_clearance_response_cookies
     session = clearance_session
-    # Protection from clearance internal API changes
-    raise "Failed to restrict response cookies." if Rails.env.production? && (session.nil? || !session.respond_to?(:add_cookie_to_headers) || !session.respond_to?(:cookies))
-
-    # Override these methods to prevent clearance from writing cookies to the response
-    # We don't want these for the API.
-    def session.add_cookie_to_headers(h); nil; end
-    def session.cookies; {}; end
+    
+    if session
+      # Override these methods to prevent clearance from writing cookies to the response
+      # We don't want these for the API.
+      def session.add_cookie_to_headers(h); nil; end
+      def session.cookies; {}; end
+    end
 
     true
   end
