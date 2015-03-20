@@ -11,7 +11,13 @@ module Api; module V1; class UsersController < Api::V1::ApiController
     sign_in(user) do |status|
       if status.success?
         user.on_successful_login request
-        render json: {username: current_user.username, token: current_user.api_auth_token}
+
+        if user.api_auth_token.blank?
+          user.api_auth_token = User.generate_authtoken(user)
+          user.save!
+        end
+
+        render json: {username: current_user.username, token: user.user_auth_token}
       else
         render_forbidden
       end

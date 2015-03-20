@@ -14,7 +14,7 @@ describe Api::V1::UsersController do
       post :login, {user: {username: "user", password: "password"}}
 
       expect(response).to be_success
-      expect(JSON.parse(response.body)).to eq({"username" => "user", "token" => "auth_token"})
+      expect(JSON.parse(response.body)).to eq({"username" => "user", "token" => "user:auth_token"})
 
       # Validate the login was recorded by just lookign for a last login at value
       expect(u.reload).not_to be_nil
@@ -25,6 +25,17 @@ describe Api::V1::UsersController do
 
       expect(response.status).to eq 401
       expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
+    end
+
+    it "generates an authtoken for users without one" do
+      u = Factory(:user, username: "user")
+      u.update_user_password "password", "password"
+      post :login, {user: {username: "user", password: "password"}}
+
+      expect(response).to be_success
+      u.reload
+      expect(u.api_auth_token).not_to be_blank
+      expect(JSON.parse(response.body)["token"]).to eq "#{u.username}:#{u.api_auth_token}"
     end
   end
 end

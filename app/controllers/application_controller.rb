@@ -555,7 +555,7 @@ class ApplicationController < ActionController::Base
         u.api_auth_token = User.generate_authtoken(u)
         u.save
       end
-      cookies['AUTH-TOKEN'] = {value:"#{u.username}:#{u.api_auth_token}"}
+      cookies['AUTH-TOKEN'] = {value:u.user_auth_token}
     end
   end
 end

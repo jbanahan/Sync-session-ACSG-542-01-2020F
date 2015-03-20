@@ -578,6 +578,10 @@ class User < ActiveRecord::Base
     group_cache(true).to_a
   end
 
+  def user_auth_token
+    "#{username}:#{api_auth_token}"
+  end
+
   private
   def parse_hidden_messages
     @parsed_hidden_messages ||= (self.hidden_message_json.blank? ? [] : JSON.parse(self.hidden_message_json))
