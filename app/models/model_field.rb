@@ -70,6 +70,7 @@ class ModelField
       FieldLabel.set_default_value @uid, o[:default_label]
     end
     @user_accessible = o[:user_accessible]
+    @user_field = o[:user_field]
     self.base_label #load from cache if available
   end
 
@@ -107,6 +108,10 @@ class ModelField
 
   def user_accessible?
     @user_accessible
+  end
+
+  def user_field?
+    @user_field
   end
 
   # returns true if the given user should be allowed to view this field
@@ -448,7 +453,8 @@ class ModelField
           return r
         },
         data_type: :string,
-        field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid)
+        field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+        user_field: true
       })
       fields_to_add << ModelField.new(index, "#{uid_prefix}fullname", core_module, "#{uid_prefix}fullname", {
         custom_id: custom_definition.id,
@@ -470,7 +476,8 @@ class ModelField
         },
         data_type: :string,
         field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
-        read_only: true
+        read_only: true,
+        user_field: true
       })
       fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
         :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
