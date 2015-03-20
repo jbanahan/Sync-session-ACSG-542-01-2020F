@@ -1146,4 +1146,29 @@ describe ModelField do
       expect(search_result.to_a).to eq [comp]
     end
   end
+  context :product_groups do
+    it "should aggregate product groups with commas" do
+      u = Factory(:admin_user) #using admin to avoid any permissions issues
+
+      v = Factory(:company)
+      pg = Factory(:product_group,name:'x')
+      pg2 = Factory(:product_group,name:'a')
+      [pg,pg2].each {|p| v.product_groups << p}
+
+      dont_find = Factory(:company)
+      dont_find.product_groups << pg
+
+      Factory(:company) #don't find this one either
+
+      mf = ModelField.find_by_uid(:cmp_product_groups)
+
+      expect(mf).to be_read_only
+
+      expect(mf.process_export(v,u)).to eq "a, x"
+
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'co',value:pg2.name)
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [v]
+    end
+  end
 end

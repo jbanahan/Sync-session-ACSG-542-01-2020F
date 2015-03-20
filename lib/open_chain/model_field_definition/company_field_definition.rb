@@ -45,6 +45,12 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
         data_type: :string,
         can_edit_lambda: admin_edit_lambda(),
         can_view_lambda: admin_edit_lambda()
+      }],
+      [16,:cmp_product_groups,:name,'Product Groups', {
+        data_type: :string,
+        read_only: true,
+        export_lambda: lambda {|c| c.product_groups.collect {|pg| pg.name}.sort.join(", ")},
+        qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT name ORDER BY name SEPARATOR ', ') FROM product_groups INNER JOIN vendor_product_group_assignments ON vendor_product_group_assignments.product_group_id = product_groups.id WHERE vendor_product_group_assignments.vendor_id = companies.id)"
       }]
     ]
   end
