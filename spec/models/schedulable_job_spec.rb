@@ -5,7 +5,7 @@ describe SchedulableJob do
   describe :create_default_jobs! do
     it "should create new jobs and respect existing" do
       SchedulableJob.create!(run_class:'OpenChain::StatClient')
-      expect{SchedulableJob.create_default_jobs!}.to change(SchedulableJob,:count).from(1).to(9)
+      expect{SchedulableJob.create_default_jobs!}.to change(SchedulableJob,:count).from(1).to(10)
     end
   end
   describe "run" do
