@@ -6,18 +6,19 @@ describe OpenChain::CustomHandler::ApiSyncClient do
 
     before :each do
       @client = Class.new(OpenChain::CustomHandler::ApiSyncClient).new
+      @client.stub(:syncable_type).and_return "TestObject"
+      @client.stub(:sync_code).and_return "Test"
     end
 
     context "query method" do
-      before :each do
-        @active_record_connection = double
-        ActiveRecord::Base.stub(:connection).and_return @active_record_connection
-      end
 
       it "executes query, parses results, calls do_sync for each result, checks for more data to sync" do
         row_1 = [1, 'UID']
         row_2 = [2, 'UID2']
         query = "SELECT 1"
+
+        @active_record_connection = double
+        ActiveRecord::Base.stub(:connection).and_return @active_record_connection
 
         query_result = [OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(1, {'id' => 1}), OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(2, {'id' => 2})]
         @client.should_receive(:query).exactly(2).times.and_return query
@@ -29,6 +30,22 @@ describe OpenChain::CustomHandler::ApiSyncClient do
         @client.should_receive(:do_sync).with query_result[1]
 
         @client.sync
+      end
+
+      it "does not repeatedly send the same failed object" do
+        query = "SELECT 1, 'UID'"
+        row_1 = [1, 'UID']
+        query_result = OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(1, {'id' => 1})
+        @client.should_receive(:query).and_return query
+        @client.should_receive(:process_query_result).with(row_1, last_result: true).and_return query_result
+        # Just blow up the first call we can easily do so inside the rescue'd block
+        @client.should_receive(:retrieve_remote_data).and_raise "Error Message"
+        @client.should_receive(:raise_sync_error?).and_return false
+
+        @client.sync
+
+        # We should have a sync record created w/ the error
+        expect(SyncRecord.where(syncable_id: 1).first.try(:failure_message)).to eq "Error Message"
       end
     end
 
@@ -79,6 +96,27 @@ describe OpenChain::CustomHandler::ApiSyncClient do
         @client.should_receive(:do_sync).with object_result[1]
 
         @client.sync
+      end
+
+      it "does not repeatedly send the same failed object" do
+        o1 = Object.new
+        object_result = OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(1, {'id' => 1})
+
+        result_set = double
+        result_set.should_receive(:limit).with(500).and_return result_set
+        result_set.should_receive(:each).and_yield(o1)
+        @client.should_receive(:objects_to_sync).and_return result_set
+
+        @client.should_receive(:process_object_result).with(o1).and_return object_result
+
+        # Just blow up the first call we can easily do so inside the rescue'd block
+        @client.should_receive(:retrieve_remote_data).and_raise "Error Message"
+        @client.should_receive(:raise_sync_error?).and_return false
+
+        @client.sync
+
+        # We should have a sync record created w/ the error
+        expect(SyncRecord.where(syncable_id: 1).first.try(:failure_message)).to eq "Error Message"
       end
     end
   end

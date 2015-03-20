@@ -43,6 +43,7 @@ module OpenChain; module CustomHandler; class ApiSyncClient
   def sync
     raise "#{self.class} must respond to the 'query' method or the 'objects_to_sync' method." unless respond_to?(:query) || respond_to?(:objects_to_sync)
 
+    @error_ids = Set.new
     if respond_to?(:objects_to_sync)
       sync_via_objects {|sync_objects| do_multiple_sync(sync_objects)}
     else
@@ -53,20 +54,26 @@ module OpenChain; module CustomHandler; class ApiSyncClient
   protected 
     def sync_via_query
       results = nil
-      # Just keep trying to sync while there are results remaining, this 
-      # way the query can define a limit or not and we don't care about it
-      # either way.
+      # Just keep trying to sync while there are results remaining (and we acutally sent 
+      # at least one valid result), this way the query can define a limit or not and we 
+      # don't care about it either way.
       begin
         results = ActiveRecord::Base.connection.execute query
 
         num_results = results.size
+        result_ids = nil
         results.each_with_index do |cols, x|
+          result_ids = Set.new
           # Indicate a last_result option since preprocess rows might be internally buffering results
           # so as to merge multiple query rows into a single JSON object
           sync_objects = process_query_result cols, last_result: (num_results == (x + 1))
-          yield sync_objects unless sync_objects.nil?
+          if sync_objects
+            result_ids.merge(Array.wrap(sync_objects).map(&:syncable_id))
+            yield sync_objects
+          end
+
         end
-      end while results.size > 0
+      end while results.size > 0 && had_valid_result_data?(result_ids)
       
     end
 
@@ -74,16 +81,24 @@ module OpenChain; module CustomHandler; class ApiSyncClient
       max_results = max_object_results
       begin
         count = 0
+        result_ids = nil
         # Objects to sync should return a relation that obeys limits
         objects_to_sync.limit(max_results).each do |obj|
+          result_ids = Set.new
           count += 1
           sync_objects = process_object_result obj
-          yield sync_objects unless sync_objects.nil?
+          if sync_objects
+            result_ids.merge(Array.wrap(sync_objects).map(&:syncable_id))
+            yield sync_objects
+          end
         end
-      end while count == max_results
+      end while count == max_results && had_valid_result_data?(result_ids)
     end
 
     def do_sync sync_object
+      # Don't bother re-syncing if the object errored in this session
+      return if errored_ids.include?(sync_object.syncable_id)
+
       local_data = sync_object.local_data
       local_fingerprint = local_data_fingerprint local_data
       begin
@@ -123,9 +138,11 @@ module OpenChain; module CustomHandler; class ApiSyncClient
           save_sync_record sync_object, local_fingerprint, sr
         end
       rescue => e
+        errored_ids << sync_object.syncable_id
+
         e.log_me ["Failed to sync #{syncable_type} data #{sync_object.local_data}."]
         save_sync_record sync_object, local_fingerprint, nil, e.message
-        raise e if Rails.env.test?
+        raise e if raise_sync_error?
       end
     end
 
@@ -147,6 +164,10 @@ module OpenChain; module CustomHandler; class ApiSyncClient
     end
 
   private
+
+    def raise_sync_error?
+      Rails.env.test?
+    end
 
     def do_multiple_sync sync_objects
       Array.wrap(sync_objects).each do |jo|
@@ -170,6 +191,16 @@ module OpenChain; module CustomHandler; class ApiSyncClient
         sr.save!
       end
       sr
+    end
+
+    def had_valid_result_data? result_ids
+      # If every result id is listed in the error list, then return false
+      intersection = (result_ids & @error_ids)
+      intersection.length < result_ids.length
+    end
+
+    def errored_ids
+      @error_ids ||= Set.new
     end
 
 end; end; end;
