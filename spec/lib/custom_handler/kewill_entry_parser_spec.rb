@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe OpenChain::CustomHandler::KewillEntryParser do
 
   def tz
@@ -15,7 +17,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'updated_at' => 201502120600,
         'extract_time' => '2015-03-12T13:26:20-04:00',
         'dates' => [
-          {'date_no'=>19, 'date'=>201503010600},
+          # Note the time ending in 60..stupid Alliance has dates w/ a minute value of 60 rather
+          # than incrementing the hour.
+          {'date_no'=>19, 'date'=>201503010660},
           {'date_no'=>20, 'date'=>201503020600},
           {'date_no'=>108, 'date'=>201503030600},
           {'date_no'=>2014, 'date'=>201503040600},
@@ -35,7 +39,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
        expect(entry.fda_message).to eq "FDA MESSAGE"
 
        expect(entry.expected_update_time).to eq tz.parse "201502120600"
-       expect(entry.release_date).to eq tz.parse "201503010600"
+       expect(entry.release_date).to eq tz.parse "201503010700"
        expect(entry.fda_release_date).to eq tz.parse "201503020600"
        expect(entry.fda_transmit_date).to eq tz.parse "201503030600"
        expect(entry.final_delivery_date).to eq tz.parse "201503040600"

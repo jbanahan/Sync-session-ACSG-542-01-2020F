@@ -63,7 +63,17 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def parse_numeric_date d
       # Every numeric date value that comes across is going to be Eastern Time
       if d > 0
-        tz.parse d.to_i.to_s
+        time = d.to_i.to_s
+        begin
+          tz.parse time
+        rescue 
+          # For some reason Alliance will send us dates with a 60 in the minutes columns (rather than adding an hour)
+          # .ie  201305152260
+          if time =~ /60$/
+            time = tz.parse(time[0..-3] + "00")
+            time + 1.hour
+          end
+        end
       else
         nil
       end
