@@ -74,6 +74,8 @@ class FileImportProcessor
       # We could have attempted to just lock on the object itself once it was found, but then we're not covering
       # the case of multiple file importing NEW objects at the same time, ending up w/ multiple object creates.
       # It'd also require a bit of a re-write of the following code-flow.
+
+      # If you change this lock name, make sure you also modify the lock name in OpenChain::CoreModuleProcessor#lock_name
       Lock.acquire("#{@core_module.class_name}-#{key_model_field_value}", times: 5, temp_lock: true) do
         error_messages = []
         @module_chain.to_a.each do |mod|

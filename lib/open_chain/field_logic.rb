@@ -8,14 +8,23 @@ module OpenChain
         sr = SearchRun.find sr_id
         good_count = sr.total_objects
         sr.find_all_object_keys do |k|
-          yield good_count, core_module.find(k)
+          p = core_module.find(k)
+          # Don't yield directly in an open transaction...there's some code paths where a transaction
+          # doesn't need to be run and it's pointless to open one when not needed.
+          Lock.acquire(lock_name(core_module, p), times: 5, yield_in_transaction: false) do
+            yield good_count, p
+          end
         end
       else
         pks = primary_keys.respond_to?(:values) ? primary_keys.values : primary_keys
         good_count = pks.size
         pks.each do |key|
           p = core_module.find key
-          yield good_count, p  
+          # Don't yield directly in an open transaction...there's some code paths where a transaction
+          # doesn't need to be run and it's pointless to open one when not needed.
+          Lock.acquire(lock_name(core_module, p), times: 5, yield_in_transaction: false) do
+            yield good_count, p
+          end
         end
       end
     end
@@ -92,6 +101,20 @@ module OpenChain
       statusable.set_status
       statusable.save if current_status!=statusable.status_rule_id
     end
+
+    def self.lock_name core_module, object
+      # All the root core modules have a single key module field..so there's no point
+      # in writing a loop here
+      mfuid = core_module.key_model_field_uids.first
+      mf = ModelField.find_by_uid mfuid
+
+      # Make sure this lock name is identical to the one used in file import processing.
+
+      # Disable any per-user security here by passing nil for user...Since this is just a
+      # lock name on the backend there's no need for screening the object's value for it.
+      "#{core_module.class_name}-#{mf.process_export(object, nil, true).to_s}"
+    end
+    private_class_method :lock_name
   end
 
   class FieldLogicValidator 
