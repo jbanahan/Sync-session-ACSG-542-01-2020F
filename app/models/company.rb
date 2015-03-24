@@ -28,9 +28,7 @@ class Company < ActiveRecord::Base
   has_many  :attachment_archive_manifests, :dependent=>:destroy
   has_many  :surveys, dependent: :destroy
   has_many  :attachments, as: :attachable, dependent: :destroy
-  has_many  :vendor_product_group_assignments, dependent: :destroy, foreign_key: :vendor_id, inverse_of: :vendor
-  has_many  :product_groups, through: :vendor_product_group_assignments
-
+  
   has_one :attachment_archive_setup, :dependent => :destroy
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
