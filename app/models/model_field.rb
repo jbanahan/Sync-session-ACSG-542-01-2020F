@@ -199,6 +199,11 @@ class ModelField
     @entity_type_field
   end
 
+  def tool_tip
+    tt = @custom_definition ? @custom_definition.tool_tip : ''
+    tt.nil? ? '' : tt
+  end
+
   #get the label that can be shown to the user.  If force_label is true or false, the CoreModule's prefix will or will not be appended.  If nil, it will use the default of the CoreModule's show_field_prefix
   def label(force_label=nil)
     do_prefix = force_label.nil? && self.core_module ? self.core_module.show_field_prefix : force_label
