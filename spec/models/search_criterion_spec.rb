@@ -1056,4 +1056,52 @@ describe SearchCriterion do
       end
     end
   end
+
+  context "not starts with" do
+    it "tests for strings not starting with" do
+      sc = SearchCriterion.new(model_field_uid:'prod_uid',operator:'nsw', value: "ZZZZZZZZZ")
+      expect(sc.test? @product).to be_true
+      expect(sc.apply(Product).all).to eq [@product]
+
+      sc.value = @product.unique_identifier
+      expect(sc.test? @product).to be_false
+      expect(sc.apply(Product).all).to eq []
+    end
+
+    it "tests for numbers not starting with" do
+      ent = Factory(:entry, total_packages: 10)
+      sc = SearchCriterion.new(model_field_uid:'ent_total_packages',operator:'nsw', value: "9")
+
+      expect(sc.test? ent).to be_true
+      expect(sc.apply(Entry).all).to eq [ent]
+
+      sc.value = 1
+      expect(sc.test? ent).to be_false
+      expect(sc.apply(Entry).all).to eq []
+    end
+  end
+
+  context "not ends with" do
+    it "tests for strings not ending with" do
+      sc = SearchCriterion.new(model_field_uid:'prod_uid',operator:'new', value: "ZZZZZZZZZ")
+      expect(sc.test? @product).to be_true
+      expect(sc.apply(Product).all).to eq [@product]
+
+      sc.value = @product.unique_identifier[-2..-1]
+      expect(sc.test? @product).to be_false
+      expect(sc.apply(Product).all).to eq []
+    end
+
+    it "tests for numbers not ending with" do
+      ent = Factory(:entry, total_packages: 10)
+      sc = SearchCriterion.new(model_field_uid:'ent_total_packages',operator:'new', value: "9")
+
+      expect(sc.test? ent).to be_true
+      expect(sc.apply(Entry).all).to eq [ent]
+
+      sc.value = 0
+      expect(sc.test? ent).to be_false
+      expect(sc.apply(Entry).all).to eq []
+    end
+  end
 end

@@ -271,12 +271,16 @@ class SearchCriterion < ActiveRecord::Base
         return !value_to_test.downcase.include?(self.value.downcase)
       elsif self.operator == "sw"
         return value_to_test.downcase.start_with?(self.value.downcase)
+      elsif self.operator == "nsw"
+        return !value_to_test.downcase.start_with?(self.value.downcase)
       elsif self.operator == "regexp"
         return !value_to_test.to_s.match(self.value).nil?
       elsif self.operator == "notregexp"
         return value_to_test.to_s.match(self.value).nil?
       elsif self.operator == "ew"
         return value_to_test.downcase.end_with?(self.value.downcase)
+      elsif self.operator == "new"
+        return !value_to_test.downcase.end_with?(self.value.downcase)
       elsif self.operator == "nq"
         # The rstrip here is to match how the inequality operator works in MySQL.
         return value_to_test.nil? || value_to_test.downcase.rstrip != self.value.downcase.rstrip
@@ -373,8 +377,12 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test < self_val
       elsif self.operator == "sw"
         return value_to_test.to_s.start_with?(self.value.to_s)
+      elsif self.operator == "nsw"
+        return !value_to_test.to_s.start_with?(self.value.to_s)
       elsif self.operator == "ew"
         return value_to_test.to_s.end_with?(self.value.to_s)
+      elsif self.operator == "new"
+        return !value_to_test.to_s.end_with?(self.value.to_s)
       elsif self.operator == "nq"
         return value_to_test.nil? || value_to_test!=self_val
       elsif self.operator == "in"
