@@ -1,6 +1,4 @@
 class ProductGroup < ActiveRecord::Base
-  has_many :vendor_product_group_assignments, inverse_of: :product_group
-  has_many :vendors, through: :vendor_product_group_assignments
 
   validates :name, presence: true, uniqueness: true
 
@@ -8,7 +6,7 @@ class ProductGroup < ActiveRecord::Base
 
   #linked to another object?
   def in_use?
-    !self.vendor_product_group_assignments.empty?
+    return false
   end
 
   def validate_in_use

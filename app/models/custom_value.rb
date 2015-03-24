@@ -3,13 +3,13 @@ class CustomValue < ActiveRecord::Base
 
   BATCH_INSERT_POSITIONS = ['string_value','date_value','decimal_value',
     'integer_value','boolean_value','text_value']
-  
+
   belongs_to :custom_definition
   belongs_to :customizable, polymorphic: true, inverse_of: :custom_values
   validates  :custom_definition, :presence => true
-  # There used to be a validation here that forced the presence of a 
+  # There used to be a validation here that forced the presence of a
   # customizable_id/type.  That validation caused us to be unable to do a
-  # save call on a non-persisted customizable object and automatically have 
+  # save call on a non-persisted customizable object and automatically have
   # the save cascade down to the  custom values (since validations are done
   # prior to the save executing - and prior to the parent save the customizable_id will be null
   # on non-persisted object).
@@ -32,9 +32,9 @@ class CustomValue < ActiveRecord::Base
         deletes[cust_def_id] ||= []
         deletes[cust_def_id] << {id: customizable_id, type: cv.customizable.class.name}
         # Sometimes we don't want to create the custom value if the field doesn't have any value in it (to lessen the length of the edit page for instance)
-        if !opts[:skip_insert_nil_values] || !cv.value.nil? 
+        if !opts[:skip_insert_nil_values] || !cv.value.nil?
           vals = Array.new(9,"null")
-          vals[BATCH_INSERT_POSITIONS.index(cv.sql_field_name)] = v 
+          vals[BATCH_INSERT_POSITIONS.index(cv.sql_field_name)] = v
           vals[6] = ActiveRecord::Base.sanitize cv.customizable.class.name
           vals[7] = customizable_id
           vals[8] = cust_def_id
@@ -60,6 +60,18 @@ class CustomValue < ActiveRecord::Base
     customizable.custom_values.where(:custom_definition_id=>custom_definition_id).first
   end
 
+  def self.sort_by_rank_and_label custom_values
+    return custom_values.sort do |a, b|
+      a_rank = a.custom_definition.rank
+      b_rank = b.custom_definition.rank
+      rank = (a_rank.blank? ? 1000000 : a_rank) <=> (b_rank.blank? ? 1000000 : b_rank)
+      if rank == 0
+        rank = a.label <=> b.label
+      end
+      rank
+    end
+  end
+
   def value cached_custom_definition = nil
     d = cached_custom_definition.nil? ? self.custom_definition : cached_custom_definition
     raise "Cannot get custom value without a custom definition" if d.nil?
@@ -75,9 +87,9 @@ class CustomValue < ActiveRecord::Base
 
   def sql_field_name
     raise "Cannot get sql field name without a custom definition" if self.custom_definition.nil?
-    "#{self.custom_definition.data_type}_value" 
+    "#{self.custom_definition.data_type}_value"
   end
-  
+
 
   def touch_parents_changed_at #overriden to find core module differently
     ct = self.customizable_type

@@ -51,24 +51,6 @@ class VendorsController < ApplicationController
     end
   end
 
-  def unassigned_product_groups
-    secure_company_view do |c|
-      groups = ProductGroup.
-        joins("LEFT OUTER JOIN vendor_product_group_assignments ON vendor_product_group_assignments.product_group_id = product_groups.id AND vendor_product_group_assignments.vendor_id = #{c.id}").
-        where("vendor_product_group_assignments.vendor_id IS NULL").to_a
-      r = groups.collect {|pg| {id: pg.id, name: pg.name}}
-      render json: {'product_groups'=>r}
-    end
-  end
-
-  def assign_product_group
-    secure_company_view do |c|
-      pg = ProductGroup.find params[:product_group_id]
-      c.product_groups << pg
-      render json: {'ok'=>'ok'}
-    end
-  end
-
   private
   def render_infinite noun, partial, partial_local_name
     secure_company_view do |c|

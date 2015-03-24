@@ -1,6 +1,10 @@
+require 'open_chain/model_field_renderer/field_helper_support'
+
 module ApplicationHelper
   include ::HeaderHelper
   include ::WorkflowHelper
+  include ::OpenChain::ModelFieldRenderer::FieldHelperSupport
+
   ICON_WRITE = "icon_write.png"
   ICON_SHEET = "icon_sheet.png"
   ICON_PRESENT = "icon_present.png"
@@ -20,14 +24,14 @@ module ApplicationHelper
     else
       inner_opts[:class] = "section_box"
     end
-    content_tag('div', inner_opts) do 
+    content_tag('div', inner_opts) do
       content_tag('div',title,:class=>'section_head') +
       content_tag('div',:class=>'section_body') do
-        yield 
+        yield
       end
     end
   end
-  def search_result_value result_value, no_time 
+  def search_result_value result_value, no_time
     return "false" if !result_value.nil? && result_value.is_a?(FalseClass)
     return "&nbsp;".html_safe if result_value.blank?
     if result_value.respond_to?(:strftime)
@@ -80,7 +84,7 @@ module ApplicationHelper
     if opts[:filter]
       inner_opts[:filter] = opts.delete :filter
     end
-    
+
     select_tag name, grouped_options_for_select(CoreModule.grouped_options(User.current, inner_opts),selected,"Select a Field"), opts
   end
 
@@ -151,7 +155,7 @@ module ApplicationHelper
     title = "Uploaded: " + att.created_at.to_date.to_s
     title += "<br>Uploaded by: " + att.uploaded_by.full_name if att.uploaded_by && !att.uploaded_by.full_name.blank?
     title += "<br>Archive Title: " + att.attachment_archives.first.name unless att.try(:attachment_archives).try(:first).try(:name).blank?
-    
+
     opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px",
             "data-container" => "body", "data-toggle" => "popover", "data-placement" => "top",
             "data-content" => title, "data-trigger" => "hover", "data-delay" => '{"show":"500"}' }
@@ -169,7 +173,7 @@ module ApplicationHelper
     end
     link_to icon, download_attachment_path(att), link_opts
   end
-  
+
   #show the label for the field.  show_prefix options: nil=default core module behavior, true=always show prefix, false=never show prefix
   def field_label model_field, show_prefix=nil
     mf = get_model_field(model_field)
@@ -186,7 +190,7 @@ module ApplicationHelper
     image_tag("help/#{file_name}",:class=>'help_pic')
   end
 
-  def bool_txt(bool) 
+  def bool_txt(bool)
     bool ? "Yes" : "No"
   end
 
@@ -211,120 +215,86 @@ module ApplicationHelper
     # avoid a database call
     cm = CoreModule.find_by_object(customizable)
     custom_fields = cm.model_fields(User.current) {|mf| mf.custom?}.values
-    custom_fields.sort do |a, b|
-      a_rank = a.custom_definition.rank
-      b_rank = b.custom_definition.rank
-      rank = (a_rank.blank? ? 1000000 : a_rank) <=> (b_rank.blank? ? 1000000 : b_rank)
-      if rank == 0
-        rank = a.label <=> b.label
-      end
-      rank
-    end
+    custom_fields = CustomValue.sort_by_rank_and_label(custom_fields) unless custom_fields.blank?
     show_model_fields (form ? form : customizable), custom_fields, opts
   end
 
-  def show_model_fields(obj, model_field_uids, opts = {})
-    if !model_field_uids.respond_to? :each
-      model_field_uids = [model_field_uids]
-    end
 
-    core_object = nil
-    form_object = nil
-    in_form = false
-    if obj.respond_to?(:fields_for)
-      core_object = obj.object
-      form_object = obj
-      in_form = true
-    else
-      core_object = obj
-    end
+  def show_model_field core_object, form_object, mf, opts
+    output = ""
 
     user = User.current
-    opts = {:form=>in_form, :table=>false, :show_prefix=>false, :never_hide=>false, :display_read_only=>true}.merge(opts)
+
+    # Don't display model fields that are missing or the user doesn't have permission to view
+    # OR if we're not showing read only fields, don't show any fields the user also can't edit
+    html_attributes = create_field_html_attributes mf, opts
+
+    add_tooltip_to_html_options(mf,html_attributes)
+
+    hidden = html_attributes[:hidden] === true || opts[:hidden]
+    return "" if skip_field?(mf,user,hidden,opts[:display_read_only])
+    html_attributes[:hidden] = hidden if html_attributes[:hidden].nil?
+
+    editor = nil
+    wrapper = html_attributes.delete :wrap_with
+
+    form_field_name = get_form_field_name(opts[:parent_name],opts[:form],mf)
+    if hidden || (opts[:form] && !mf.read_only? && mf.can_edit?(user))
+      if !hidden && block_given?
+        editor = yield mf, form_field_name, mf.process_export(core_object, user), html_attributes
+      end
+      editor = model_field_editor(user, core_object, mf, form_field_name, html_attributes).html_safe if editor.nil?
+    else
+      if block_given?
+        editor = yield mf, form_field_name, mf.process_export(core_object, user), html_attributes
+      end
+      editor = field_value(core_object, mf).html_safe if editor.nil?
+    end
+
+    # At the moment, we only hide custom fields..not standard ones..use hide_blank to hide blank standard fields
+    return "" if (opts[:hide_blank] == true || html_attributes[:hide_blank] == true || mf.custom?) && !(opts[:never_hide] == true || html_attributes[:never_hide] == true) && editor.blank?
+
+    if wrapper && wrapper.respond_to?(:call)
+      editor = wrapper.call(mf, editor)
+    end
+
+    label = ""
+    label = render_field_label(mf,opts[:show_prefix]) unless opts[:editor_only]
+
+
+    if opts[:editor_only] || hidden
+      if opts[:table]
+        attrs = {}
+        attrs[:class] = "has_numeric" if [:decimal,:integer].include?(mf.data_type)
+        output << content_tag(:td, editor, attrs)
+      else
+        output << editor
+      end
+
+    elsif opts[:table]
+      output << field_row(label, editor, (opts[:never_hide] || html_attributes[:never_hide]), mf)
+    else
+      output << field_bootstrap(label, editor)
+    end
+
+    output
+  end
+  def show_model_fields(obj, model_field_uids, opts = {})
+
+    core_object, form_object = get_core_and_form_objects(obj)
+
+    opts = {:form=>form_object, :table=>false, :show_prefix=>false, :never_hide=>false, :display_read_only=>true}.merge(opts)
 
     output = ""
-    model_field_uids.each do |mf|
-      mf = get_model_field(mf)
-      
-      # Don't display model fields that are missing or the user doesn't have permission to view
-      # OR if we're not showing read only fields, don't show any fields the user also can't edit
-      html_attributes = create_field_html_attributes mf, opts
-
-      next if mf.blank?
-
-      hidden = html_attributes[:hidden] === true || opts[:hidden]
-
-      # We'll allow printing of all fields designated as hidden
-      if !hidden
-        next if !mf.can_view?(user) || (!opts[:display_read_only] && (mf.read_only? || !mf.can_edit?(user)))
-      end
-
-      parent_name = opts[:parent_name].blank? ? (form_object ? form_object.object_name : "") : opts[:parent_name]
-      form_field_name = parent_name.blank? ? "#{mf.uid}" : "#{parent_name}[#{mf.uid}]"
-      tooltip = nil
-      if mf.custom?
-        d = mf.custom_definition
-        tooltip = d.tool_tip
-      end
-
-      html_attributes[:hidden] = hidden if html_attributes[:hidden].nil?
-
-      if !tooltip.blank? 
-        html_attributes[:title] = tooltip if html_attributes[:title].blank?
-        html_attributes[:class] << "fieldtip"
-      end
-
-      editor = nil
-      wrapper = html_attributes.delete :wrap_with
-      if hidden || (opts[:form] && !mf.read_only? && mf.can_edit?(user))
-        if !hidden && block_given?
-          editor = yield mf, form_field_name, mf.process_export(core_object, user), html_attributes
-        end
-        editor = model_field_editor(user, core_object, mf, form_field_name, html_attributes).html_safe if editor.nil?
-      else
-        if block_given?
-          editor = yield mf, form_field_name, mf.process_export(core_object, user), html_attributes
-        end
-
-        editor = field_value(core_object, mf).html_safe if editor.nil?
-      end
-
-      # At the moment, we only hide custom fields..not standard ones..use hide_blank to hide blank standard fields
-      next if (opts[:hide_blank] == true || html_attributes[:hide_blank] == true || mf.custom?) && !(opts[:never_hide] == true || html_attributes[:never_hide] == true) && editor.blank?
-
-      if wrapper && wrapper.respond_to?(:call)
-        editor = wrapper.call(mf, editor)
-      end
-
-      label = nil
-      if opts[:editor_only]
-        label = ""
-      else
-        label = render_field_label(mf,opts[:show_prefix])
-      end
-
-      if opts[:editor_only] || hidden
-        if opts[:table]
-          attrs = {}
-          attrs[:class] = "has_numeric" if [:decimal,:integer].include?(mf.data_type)
-          output << content_tag(:td, editor, attrs)
-        else
-          output << editor
-        end
-        
-      elsif opts[:table]
-        output << field_row(label, editor, (opts[:never_hide] || html_attributes[:never_hide]), mf)
-      else
-        output << field_bootstrap(label, editor)
-      end
-      
+    for_model_fields(model_field_uids) do |mf|
+      output << show_model_field(core_object, form_object, mf, opts)
     end
 
     if output.blank?
-      ""
+      return ""
     else
       output = output.html_safe
-      (opts[:table] || opts[:editor_only] || opts[:hidden]) ? output : content_tag(:div, output, :class=>'model_field_box')
+      return (opts[:table] || opts[:editor_only] || opts[:hidden]) ? output : content_tag(:div, output, :class=>'model_field_box')
     end
   end
 
@@ -348,12 +318,10 @@ module ApplicationHelper
 
     type_class = data_type_class(model_field)
     html_attributes[:class] << type_class unless type_class.blank?
-    html_attributes[:custom_editor] = opts[:custom_editor] if html_attributes[:custom_editor].nil?
     html_attributes[:wrap_with] = opts[:wrap_with] if html_attributes[:wrap_with].nil?
 
     html_attributes
   end
-  private :create_field_html_attributes
 
   def model_field_editor user, core_object, model_field, form_field_name, html_attributes
     # We're going to assume that hidden attributes can be allowed to be written to the page
@@ -366,28 +334,24 @@ module ApplicationHelper
     end
 
     field = nil
-    c_val = model_field.process_export core_object, user
+    c_val = model_field.process_export(core_object, user)
 
-    if html_attributes[:custom_editor]
-      field = html_attributes[:custom_editor].call(form_field_name, c_val)
+    case model_field.data_type
+    when :boolean
+      # The cv_chkbx tag is monitored by a jquery expression and copies the state of the check into the hidden field (which is what is read on form submission)
+      html_attributes[:class] << "cv_chkbx"
+      chb_field_name = form_field_name.gsub(/[\[\]*]/, '_')
+      html_attributes[:id] = "cbx_"+chb_field_name
+      field = hidden_field_tag(form_field_name,c_val,:id=>"hdn_"+chb_field_name) + check_box_tag('ignore_me', "1", c_val, html_attributes)
+    when :text
+      html_attributes[:rows] = 5 unless html_attributes[:rows]
+      field = model_text_area_tag(form_field_name, model_field, c_val, html_attributes)
     else
-      case model_field.data_type
-      when :boolean
-        # The cv_chkbx tag is monitored by a jquery expression and copies the state of the check into the hidden field (which is what is read on form submission)
-        html_attributes[:class] << "cv_chkbx"
-        chb_field_name = form_field_name.gsub(/[\[\]*]/, '_')
-        html_attributes[:id] = "cbx_"+chb_field_name
-        field = hidden_field_tag(form_field_name,c_val,:id=>"hdn_"+chb_field_name) + check_box_tag('ignore_me', "1", c_val, html_attributes)
-      when :text
-        html_attributes[:rows] = 5 unless html_attributes[:rows]
-        field = model_text_area_tag(form_field_name, model_field, c_val, html_attributes)
+      if html_attributes[:select_options]
+        field = model_select_field_tag(form_field_name, model_field, c_val, html_attributes)
       else
-        if html_attributes[:select_options]
-          field = model_select_field_tag(form_field_name, model_field, c_val, html_attributes)
-        else
-          html_attributes[:size] = 30 unless html_attributes[:size]
-          field = model_text_field_tag(form_field_name, model_field, c_val, html_attributes)
-        end
+        html_attributes[:size] = 30 unless html_attributes[:size]
+        field = model_text_field_tag(form_field_name, model_field, c_val, html_attributes)
       end
     end
 
@@ -419,9 +383,9 @@ module ApplicationHelper
 
     output.html_safe
   end
-  
+
   # render <tr> with field content
-  def field_row(label, field, never_hide=false, model_field=nil) 
+  def field_row(label, field, never_hide=false, model_field=nil)
     model_field = get_model_field(model_field)
     content_tag(:tr, content_tag(:td, label.blank? ? "" : label+": ", :class => 'label_cell')+content_tag(:td, field, :style=>"#{model_field && [:decimal,:integer].include?(model_field.data_type) ? "text-align:right;" : ""}"), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
@@ -435,7 +399,7 @@ module ApplicationHelper
       field = field.gsub(/(:?\r\n)|(:?\r)|(:?\n)/, "<br>").html_safe
       field_content = content_tag(:span,field,:class=>'pre-ish')
     end
-    content_tag(:div, 
+    content_tag(:div,
       content_tag(:div,
         label.blank? ? '' : label,
         :class=>'col-md-4', :style=>'font-weight:bold;'
@@ -444,7 +408,7 @@ module ApplicationHelper
       :class=>'row bootstrap-hover'
     )
   end
-  
+
   def model_field_label(model_field_uid, always_view = false)
     mf = get_model_field(model_field_uid)
     (always_view || mf.can_view?(User.current)) ? mf.label : ""
@@ -454,7 +418,7 @@ module ApplicationHelper
   def comma_list &block
     base = []
     yield base
-    CSV.generate_line base, {:row_sep=>"",:col_sep=>", "} 
+    CSV.generate_line base, {:row_sep=>"",:col_sep=>", "}
   end
 
   def show_schedule_b schedule_b_number, with_popup_link=true
@@ -531,7 +495,7 @@ module ApplicationHelper
 
    # Given a model field and a value, render an output formatted, html-safe representation of the value
   def format_for_output model_field, val
-    if val 
+    if val
       if model_field.currency
         case model_field.currency
         when :usd
@@ -542,9 +506,11 @@ module ApplicationHelper
       elsif model_field.data_type == :decimal
         # Using precision 5 since that'll cover pretty much every decimal field in the system.
         val = number_with_precision val, :precision => 5, :strip_insignificant_zeros => true
+      elsif model_field.custom_definition && model_field.custom_definition.is_user?
+        u = User.find_by_id(val)
+        val = u.full_name if u
       end
     end
-
     html_escape val
   end
 
@@ -582,7 +548,7 @@ module ApplicationHelper
   end
 
   def entity_type_ids model_field
-    ids = model_field.entity_type_ids 
+    ids = model_field.entity_type_ids
     r = "*"
     ids.each {|i| r << "#{i}*"}
     r
@@ -607,12 +573,6 @@ module ApplicationHelper
     content_tag(:span,mf.label(show_prefix),{:class=>"fld_lbl",:entity_type_ids=>entity_type_ids(mf)})
   end
 
-  def get_model_field model_field_uid
-    return nil if model_field_uid.nil?
-
-    mf = model_field_uid.is_a?(ModelField) ? model_field_uid : ModelField.find_by_uid(model_field_uid)
-  end
-
   def merge_css_attributes a, b
     a = a.is_a?(String) ? [a] : a
     b = b.is_a?(String) ? [b] : b
@@ -623,7 +583,7 @@ module ApplicationHelper
   def favicon_links
     # Icons + raw html generated using http://realfavicongenerator.net/
 
-    # We should probably do some browser sniffing to eliminate sending browser specific tags that aren't 
+    # We should probably do some browser sniffing to eliminate sending browser specific tags that aren't
     # meant for the current request's browser.
     tags = []
     tags << tag('link', rel: "apple-touch-icon", sizes:"57x57", href: path_to_image("apple-touch-icon-57x57.png"))
@@ -640,7 +600,7 @@ module ApplicationHelper
     tags << tag('link', rel: "icon", type:"image/png", href: path_to_image("favicon-96x96.png"), sizes:"96x96")
     tags << tag('link', rel: "icon", type:"image/png", href: path_to_image("android-chrome-192x192.png"), sizes:"192x192")
     tags << tag('link', rel: "icon", type:"image/png", href: path_to_image("favicon-16x16.png"), sizes:"16x16")
-    # The date in the ico name is to force IE to update the icon image..otherwise if the user has the old favicon.ico 
+    # The date in the ico name is to force IE to update the icon image..otherwise if the user has the old favicon.ico
     # loaded, IE will not check for a new one.  The only other alternative is having the users clear their browsing history.
     tags << tag('link', rel: "shortcut icon", href: path_to_image("favicon.ico"))
     tags << tag('meta', name: "msapplication-TileColor", content: "#2b5797")

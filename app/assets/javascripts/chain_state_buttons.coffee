@@ -4,6 +4,10 @@ root.ChainStateButtons = {
     $.ajax {
       url: '/api/v1/'+coreModulePath+'/'+objId+'/state_toggle_buttons.json'
       contentType: 'application/json'
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
       type: 'GET'
       dataType: 'json'
     }

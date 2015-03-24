@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SearchCriterion do
-  before :each do 
+  before :each do
     @product = Factory(:product)
   end
   describe :core_module do
@@ -67,7 +67,7 @@ describe SearchCriterion do
       @def2 = Factory(:custom_definition,:data_type=>'date', :module_type=>'Entry')
       @sc.model_field_uid = SearchCriterion.make_field_name @def1
       @sc.value = SearchCriterion.make_field_name @def2
-      
+
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
       ent.update_custom_value! @def1, 1.months.ago
       ent.update_custom_value! @def2, 2.month.ago
@@ -147,7 +147,7 @@ describe SearchCriterion do
       @def2 = Factory(:custom_definition,:data_type=>'date')
       @sc.model_field_uid = SearchCriterion.make_field_name @def1
       @sc.value = SearchCriterion.make_field_name @def2
-      
+
       @product.update_custom_value! @def1, 2.months.ago
       @product.update_custom_value! @def2, 1.month.ago
 
@@ -751,7 +751,7 @@ describe SearchCriterion do
       sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\n#{@product.unique_identifier}\nval2")
       sc.apply(Product.where("1=1")).all.should include @product
     end
-    
+
     it "should find something using a string field from a list of values using windows newlines" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\r\n#{@product.unique_identifier}\r\nval2")
       sc.apply(Product.where("1=1")).all.should include @product
@@ -762,7 +762,7 @@ describe SearchCriterion do
     end
     it "should find something using a numeric field from a list of values" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_class_count, :operator=>"in", :value=>"1\n0\r\n3")
-      sc.apply(Product.where("1=1")).all.should include @product        
+      sc.apply(Product.where("1=1")).all.should include @product
     end
     it "should find something with a blank value provided a blank IN list value" do
       # Without the added code backing what's in this test, the query produced for a blank IN list value would be IN (null),
@@ -772,11 +772,11 @@ describe SearchCriterion do
       sc.apply(Product.where("1=1")).all.should include @product
     end
   end
-  
+
   context 'date time field' do
     it "should properly handle not null" do
       u = Factory(:master_user)
-      cd = Factory(:custom_definition,module_type:'Product',data_type:'date') 
+      cd = Factory(:custom_definition,module_type:'Product',data_type:'date')
       @product.update_custom_value! cd, Time.now
       p2 = Factory(:product)
       p3 = Factory(:product)
@@ -789,7 +789,7 @@ describe SearchCriterion do
     end
     it "should properly handle null" do
       u = Factory(:master_user)
-      cd = Factory(:custom_definition,module_type:'Product',data_type:'date') 
+      cd = Factory(:custom_definition,module_type:'Product',data_type:'date')
       @product.update_custom_value! cd, Time.now
       p2 = Factory(:product)
       p3 = Factory(:product)
@@ -812,20 +812,20 @@ describe SearchCriterion do
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"lt", :value=>value)
       sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/
     end
-      
+
     it "should translate datetime values to UTC for gt operator" do
       # Make sure we're also allowing actual time values as well
       tz = "Hawaii"
-      date = "2012-01-01 07:08:09" 
+      date = "2012-01-01 07:08:09"
       value = date + " " + tz
       expected_value = Time.use_zone(tz) do
         Time.zone.parse(date).utc.to_formatted_s(:db)
       end
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"gt", :value=>value)
       sql = sc.apply(Product.where("1=1")).to_sql
-      sql.should =~ /#{expected_value}/ 
+      sql.should =~ /#{expected_value}/
     end
-      
+
     it "should translate datetime values to UTC for eq operator" do
       # Make sure that if the timezone is not in the value, that we add eastern timezone to it
       value = "2012-01-01"
@@ -834,11 +834,11 @@ describe SearchCriterion do
         Time.zone.parse(value + " 00:00:00").utc.to_formatted_s(:db)
       end
 
-      sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/ 
-      
+      sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/
+
       #verify the nq operator is translated too
       sc.operator = "nq"
-      sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/ 
+      sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/
     end
 
     it "should not translate date values to UTC for lt, gt, or eq operators" do
@@ -857,10 +857,10 @@ describe SearchCriterion do
     it "should not translate datetime values to UTC for any operator other than lt, gt, eq, or nq" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"bda", :value=>10)
       sc.apply(Entry.where("1=1")).to_sql.should =~ /10/
-      
+
       sc.operator = "ada"
       sc.apply(Entry.where("1=1")).to_sql.should =~ /10/
-      
+
       sc.operator = "bdf"
       sc.apply(Entry.where("1=1")).to_sql.should =~ /10/
 
@@ -881,11 +881,11 @@ describe SearchCriterion do
       tz = "Hawaii"
       date = "2013-01-01"
       value = date + " " + tz
-      
+
 
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"gt", :value=>value)
       p = Product.new
-      # Hawaii is 10 hours behind UTC so adjust our created at to make sure 
+      # Hawaii is 10 hours behind UTC so adjust our created at to make sure
       # the offset is being calculated
       p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 10:01"
 
@@ -967,20 +967,20 @@ describe SearchCriterion do
       it 'should return for Is Empty and false' do
         @custom_value.value = false
         @custom_value.save!
-        @search_criterion.apply(Product).should include @product 
+        @search_criterion.apply(Product).should include @product
         @search_criterion.test?(@product).should == true
       end
       it 'should return for Is Empty and nil' do
         @custom_value.value = nil
         @custom_value.save!
-        @search_criterion.apply(Product).should include @product 
+        @search_criterion.apply(Product).should include @product
         @search_criterion.test?(@product).should == true
       end
 
       it 'should not return for Is Empty and true' do
         @custom_value.value = true
         @custom_value.save!
-        @search_criterion.apply(Product).should_not include @product 
+        @search_criterion.apply(Product).should_not include @product
         @search_criterion.test?(@product).should == false
       end
 
@@ -995,7 +995,7 @@ describe SearchCriterion do
           expect(@sc.apply(Entry)).to be_empty
         end
         it "should test on empty string" do
-          expect(@sc.test?(@ent)).to be_true          
+          expect(@sc.test?(@ent)).to be_true
           @ent.update_attributes(broker_reference:'x')
           expect(@sc.test?(@ent)).to be_false
         end
@@ -1013,21 +1013,21 @@ describe SearchCriterion do
       it 'should return for Is Not Empty and true' do
         @custom_value.value = true
         @custom_value.save!
-        @search_criterion.apply(Product).should include @product 
+        @search_criterion.apply(Product).should include @product
         @search_criterion.test?(@product).should == true
       end
 
       it 'should not return for Is Not Empty and false' do
         @custom_value.value = false
         @custom_value.save!
-        @search_criterion.apply(Product).should_not include @product 
+        @search_criterion.apply(Product).should_not include @product
         @search_criterion.test?(@product).should == false
       end
 
       it 'should not return for Is Not Empty and nil' do
         @custom_value.value = nil
         @custom_value.save!
-        @search_criterion.apply(Product).should_not include @product 
+        @search_criterion.apply(Product).should_not include @product
         @search_criterion.test?(@product).should == false
       end
 
@@ -1035,7 +1035,7 @@ describe SearchCriterion do
         @custom_value.value = nil
         @custom_value.save!
         @search_criterion.include_empty = true
-        @search_criterion.apply(Product).should include @product 
+        @search_criterion.apply(Product).should include @product
         @search_criterion.test?(@product).should == true
       end
       context :string_handling do
@@ -1049,7 +1049,7 @@ describe SearchCriterion do
           expect(@sc.apply(Entry)).to be_empty
         end
         it "should test on empty string" do
-          expect(@sc.test?(@ent)).to be_true          
+          expect(@sc.test?(@ent)).to be_true
           @ent.update_attributes(broker_reference:' ')
           expect(@sc.test?(@ent)).to be_false
         end

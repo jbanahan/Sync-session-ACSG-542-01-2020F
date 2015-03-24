@@ -9,6 +9,10 @@ describe 'getButtons', ->
       contentType: 'application/json'
       type: 'GET'
       dataType: 'json'
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
     }
     expect(jQuery.ajax).toHaveBeenCalledWith(expected)
 

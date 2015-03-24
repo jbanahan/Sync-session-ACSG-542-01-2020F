@@ -56,12 +56,8 @@ class ModelField
     @query_parameter_lambda = o[:query_parameter_lambda]
     self.custom_definition if @custom_id #load from cache if available
     @process_query_result_lambda = o[:process_query_result_lambda]
-    @field_validator_rule = nil
-    if @@field_validator_rules.empty?
-      @field_validator_rule = FieldValidatorRule.find_by_model_field_uid @uid
-    else
-      @field_validator_rule = @@field_validator_rules[@uid]
-    end
+    @field_validator_rule = self.class.field_validator_rule uid
+    @field_validator_rule = o[:field_validator_rule] ? o[:field_validator_rule] : @field_validator_rule
     @read_only = o[:read_only] || @field_validator_rule.try(:read_only?)
 
     # The respond_to here is pretty much solely there for the migration case when disabled? didn't
@@ -74,6 +70,7 @@ class ModelField
       FieldLabel.set_default_value @uid, o[:default_label]
     end
     @user_accessible = o[:user_accessible]
+    @user_field = o[:user_field]
     self.base_label #load from cache if available
   end
 
@@ -111,6 +108,10 @@ class ModelField
 
   def user_accessible?
     @user_accessible
+  end
+
+  def user_field?
+    @user_field
   end
 
   # returns true if the given user should be allowed to view this field
@@ -198,6 +199,11 @@ class ModelField
     @entity_type_field
   end
 
+  def tool_tip
+    tt = @custom_definition ? @custom_definition.tool_tip : ''
+    tt.nil? ? '' : tt
+  end
+
   #get the label that can be shown to the user.  If force_label is true or false, the CoreModule's prefix will or will not be appended.  If nil, it will use the default of the CoreModule's show_field_prefix
   def label(force_label=nil)
     do_prefix = force_label.nil? && self.core_module ? self.core_module.show_field_prefix : force_label
@@ -232,6 +238,10 @@ class ModelField
 
   def qualified_field_name
     @qualified_field_name.nil? ? "#{self.join_alias}.#{@field_name}" : @qualified_field_name
+  end
+
+  def qualified_field_name_overridden?
+    !@qualified_field_name.nil?
   end
 
   #table alias to use in where clause
@@ -371,6 +381,16 @@ class ModelField
   DISABLED_MODEL_FIELDS = Set.new
   private_constant :DISABLED_MODEL_FIELDS
 
+  def self.field_validator_rule model_field_uid
+    r = nil
+    if @@field_validator_rules.empty?
+      r = FieldValidatorRule.find_by_model_field_uid model_field_uid
+    else
+      r =  @@field_validator_rules[model_field_uid]
+    end
+    r
+  end
+
   def self.add_fields(core_module,descriptor_array)
     descriptor_array.each do |m|
       options = m[4].nil? ? {} : m[4]
@@ -406,12 +426,80 @@ class ModelField
 
   def self.add_custom_fields(core_module,base_class)
     model_hash = MODEL_FIELDS[core_module.class_name.to_sym]
-    max = next_index_number core_module
     base_class.new.custom_definitions.each_with_index do |d,index|
-      create_and_insert_custom_field d, core_module, (max+index), model_hash
+      create_and_insert_custom_field(d, core_module, next_index_number(core_module), model_hash)
     end
   end
+  def self.create_and_insert_custom_field  custom_definition, core_module, index, model_hash
+    fld = custom_definition.model_field_uid.to_sym
+    fields_to_add = []
+    if(custom_definition.data_type.to_sym==:integer && custom_definition.is_user?)
+      uid_prefix = "*uf_#{custom_definition.id}_"
+      fields_to_add << ModelField.new(index, "#{uid_prefix}username", core_module, "#{uid_prefix}username", {
+        custom_id: custom_definition.id,
+        label_override: "#{custom_definition.label} (Username)",
+        qualified_field_name: "(SELECT IFNULL(users.username,\"\") FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
+        definition: custom_definition.definition,
+        import_lambda: lambda {|obj,data|
+          user_id = nil
+          u = User.find_by_username data
+          user_id = u.id if u
+          obj.get_custom_value(custom_definition).value = user_id
+          return "#{custom_definition.label} set to #{u.nil? ? 'BLANK' : u.username}"
+        },
+        export_lambda: lambda {|obj|
+          r = ""
+          cv = obj.get_custom_value(custom_definition)
+          user_id = cv.value
+          if user_id
+            u = User.find_by_id user_id
+            r = u.username if u
+          end
+          return r
+        },
+        data_type: :string,
+        field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+        user_field: true
+      })
+      fields_to_add << ModelField.new(index, "#{uid_prefix}fullname", core_module, "#{uid_prefix}fullname", {
+        custom_id: custom_definition.id,
+        label_override: "#{custom_definition.label} (Name)",
+        qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
+        definition: custom_definition.definition,
+        import_lambda: lambda {|obj,data|
+          return "#{custom_definition.label} cannot be imported by full name, try the username field."
+        },
+        export_lambda: lambda {|obj|
+          r = ""
+          cv = obj.get_custom_value(custom_definition)
+          user_id = cv.value
+          if user_id
+            u = User.find_by_id user_id
+            r = u.full_name if u
+          end
+          return r
+        },
+        data_type: :string,
+        field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+        read_only: true,
+        user_field: true
+      })
+      fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
+        :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+        :definition => custom_definition.definition, :default_label => "#{custom_definition.label}",
+        :read_only => true
+      })
+    else
+      fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
+        :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+        :definition => custom_definition.definition, :default_label => "#{custom_definition.label}"
+      })
+    end
+    add_model_fields core_module, fields_to_add
+  end
+  private_class_method :create_and_insert_custom_field
 
+  #called by the testing optimization in CustomDefinition.reset_cache
   def self.add_update_custom_field custom_definition
     core_module = CoreModule.find_by_class_name custom_definition.module_type
     return unless core_module
@@ -463,16 +551,6 @@ class ModelField
     mf
   end
 
-  def self.create_and_insert_custom_field  custom_definition, core_module, index, model_hash
-    fld = custom_definition.model_field_uid.to_sym
-    mf = ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
-      :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
-      :definition => custom_definition.definition, :default_label => "#{custom_definition.label}"
-    })
-    add_model_fields core_module, [mf]
-  end
-  private_class_method :create_and_insert_custom_field
-
   #update the internal last_loaded flag and optionally retrigger all instances to invalidate their caches
   def self.update_last_loaded update_global_cache
     @@last_loaded = Time.now
@@ -507,7 +585,6 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::BROKER_INVOICE_LINE,BrokerInvoiceLine)
     ModelField.add_custom_fields(CoreModule::SECURITY_FILING,SecurityFiling)
     ModelField.add_custom_fields(CoreModule::COMPANY,Company)
-    ModelField.add_custom_fields(CoreModule::VENDOR_PRODUCT_GROUP_ASSIGNMENT,VendorProductGroupAssignment)
     ModelField.update_last_loaded update_cache_time
   end
 

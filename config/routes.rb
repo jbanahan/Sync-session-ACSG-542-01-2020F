@@ -37,11 +37,6 @@ OpenChain::Application.routes.draw do
         get 'by_uid/:uid' => "products#by_uid", on: :collection
       end
 
-      resources :vendor_product_group_assignments do
-        get :state_toggle_buttons, on: :member
-        post :toggle_state_button, on: :member
-      end
-
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
 
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
@@ -469,11 +464,8 @@ OpenChain::Application.routes.draw do
       get 'orders'
       get 'survey_responses'
       get 'products'
-      get 'unassigned_product_groups'
-      post 'assign_product_group'
     end
   end
-  resources :vendor_product_group_assignments, only: [:show]
   resources :companies do
     member do
       get 'show_children'
