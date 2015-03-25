@@ -11,22 +11,22 @@ describe OpenChain::SqlProxyClient do
   describe "request_alliance_invoice_details" do
     it "requests invoice details from alliance" do
       request_context = {'content' => 'context'}
-      request_body = {'sql_params' => {:file_number=>123, :suffix=>"suffix"}, 'context' => request_context}
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      request_body = {'job_params' => {:file_number=>123, :suffix=>"suffix"}, 'context' => request_context}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
       
       @c.request_alliance_invoice_details "123", "suffix     ", request_context
     end
 
     it "strips blank suffixes down to blank string" do
-      request_body = {'sql_params' => {:file_number=>123, :suffix=>' '}}
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      request_body = {'job_params' => {:file_number=>123, :suffix=>' '}}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.request_alliance_invoice_details "123", "     "
     end
 
     it "doesn't send context if a blank one is provided" do
-      request_body = {'sql_params' => {:file_number=>123, :suffix=>'A'}}
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      request_body = {'job_params' => {:file_number=>123, :suffix=>'A'}}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/invoice_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.request_alliance_invoice_details "123", "A"
     end
@@ -39,8 +39,8 @@ describe OpenChain::SqlProxyClient do
 
   describe "request_alliance_invoice_numbers_since" do
     it "requests invoice numbers since given date" do
-      request_body = {'sql_params' => {:invoice_date=>20140101}}
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/find_invoices", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      request_body = {'job_params' => {:invoice_date=>20140101}}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/find_invoices", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.request_alliance_invoice_numbers_since Date.new(2014,1,1)
     end
@@ -49,9 +49,9 @@ describe OpenChain::SqlProxyClient do
   describe "request_alliance_entry_details" do
     it "requests alliance entry details" do
       last_exported_date = Time.zone.now
-      body = {'sql_params' => {:file_number => 12345}, 'context' => {'broker_reference' => '12345', 'last_exported_from_source' => last_exported_date.in_time_zone("Eastern Time (US & Canada)")}}
+      body = {'job_params' => {:file_number => 12345}, 'context' => {'broker_reference' => '12345', 'last_exported_from_source' => last_exported_date.in_time_zone("Eastern Time (US & Canada)")}}
 
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/entry_details", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/entry_details", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
       @c.request_alliance_entry_details "12345", last_exported_date
     end
   end
@@ -61,8 +61,8 @@ describe OpenChain::SqlProxyClient do
       params = {"1"=>"2"}
       context = {"id"=>"1"}
 
-      body = {'sql_params' => params, "context" => context}
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/query_name", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      body = {'job_params' => params, "context" => context}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/query_name", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.report_query "query_name", params, context
     end
@@ -71,8 +71,8 @@ describe OpenChain::SqlProxyClient do
       params = {"1"=>"2"}
       context = {"id"=>"1"}
 
-      body = {'sql_params' => params, "context" => context}
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/query_name", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token']).and_raise "JSON CLIENT ERROR"
+      body = {'job_params' => params, "context" => context}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/query_name", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token']).and_raise "JSON CLIENT ERROR"
 
       expect { @c.report_query "query_name", params, context }.to raise_error "JSON CLIENT ERROR"
     end
@@ -80,9 +80,9 @@ describe OpenChain::SqlProxyClient do
 
   describe "request_check_details" do
     it "requests check details" do
-      request_body = {'sql_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10, check_amount: 101}}
+      request_body = {'job_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10, check_amount: 101}}
 
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/check_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/check_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
       @c.request_check_details "123", "456", Date.new(2014, 11, 1), "10", BigDecimal.new("1.01999").to_s
     end
 
@@ -97,9 +97,9 @@ describe OpenChain::SqlProxyClient do
       start = Time.zone.now
       end_t = start + 1.hour
 
-      request_body = {'results_as_array' => true, 'sql_params' => {start_date: start.strftime("%Y%m%d").to_i, end_time: end_t.strftime("%Y%m%d%H%M").to_i}}
+      request_body = {'results_as_array' => true, 'job_params' => {start_date: start.strftime("%Y%m%d").to_i, end_time: end_t.strftime("%Y%m%d%H%M").to_i}}
 
-      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/file_tracking", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/file_tracking", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.request_file_tracking_info start, end_t
     end

@@ -83,5 +83,8 @@ module OpenChain
       # Anything matching this regular expression is turned into an underscore
       :restricted_characters => /[\x00-\x1F\/\\:\*\?\"<>\|]/u
     }
+
+    require 'open_chain/rack_request_inflater'
+    config.middleware.insert_before ActionDispatch::ParamsParser, OpenChain::RackRequestInflater
   end
 end

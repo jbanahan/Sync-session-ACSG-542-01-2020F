@@ -22,17 +22,18 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     raise "Expected to find 'entry' entity inside JSON.  Nothing was found." if json.nil?
 
     entry = find_and_process_entry(json.with_indifferent_access) do |e, entry|
-      entry.customer_number = e[:cust_no]
-      entry.release_cert_message = e[:cr_certification_output_mess]
-      entry.fda_message = e[:fda_output_mess]
+      process_entry_header e, entry
       process_dates e, entry
+      process_notes e, entry
 
       entry.save!
       entry
     end
 
+    OpenChain::AllianceImagingClient.request_images(entry.broker_reference) if entry
+
     # At this point, we're not processing enough information via this method for us to bother doing event notifications.
-    # Until we have commercial and broker invoices, we probably should do notifies.
+    # Once we parse all commercial and broker invoices, we probably should do notifies.
     entry
   end
 
@@ -62,6 +63,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def parse_numeric_date d
       # Every numeric date value that comes across is going to be Eastern Time
+      d = d.to_i
       if d > 0
         time = d.to_i.to_s
         begin
@@ -102,23 +104,133 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       end
     end
 
+    def process_entry_header e, entry
+      entry.customer_number = e[:cust_no]
+      entry.entry_number = e[:entry_number]
+      entry.release_cert_message = e[:cr_certification_output_mess]
+      entry.fda_message = e[:fda_output_mess]
+    end
+
+    def process_notes e, entry
+      notes = Array.wrap(e[:notes])
+
+      notes.each do |n|
+        note = n[:note]
+        generated_at = parse_numeric_date(n[:date_updated])
+
+        #comment = entry.entry_comments.build body: n[:note], username: n[:modified_by], generated_at: parse_numeric_date(n[:date_updated])
+        # The public private flag is set a little wonky because we do a before_save callback as a further step to determine if the 
+        # comment should be public or not.  This is skipped if the flag is already set.
+        #if n[:confidential].to_s == "Y"
+        #  comment.public_comment = false
+        #end
+
+        if note.to_s.downcase.include?("document image created for f7501f") || note.to_s.downcase.include?("document image created for form_n7501")
+          entry.first_7501_print = earliest_date(generated_at, entry.first_7501_print)
+          entry.last_7501_print = latest_date(generated_at, entry.last_7501_print)
+        end
+      end
+    end
+
     def process_dates e, entry
       dates = Array.wrap(e[:dates])
 
       dates.each do |date_field|
         date = parse_numeric_date(date_field[:date])
-        case date_field[:date_no]
+        case date_field[:date_no].to_i
+        when 1
+          entry.export_date = date
+        when 3, 98
+          #both 3 and 98 are docs received for different customers
+          entry.docs_received_date = date
+        when 4
+          entry.file_logged_date = date
+        when 9
+          entry.first_it_date = earliest_date(entry.first_it_date, date)
+        when 11
+          entry.eta_date = date
+        when 12
+          entry.arrival_date = date
+        when 16
+          entry.entry_filed_date = date
         when 19
           entry.release_date = date
         when 20
           entry.fda_release_date = date
+        when 24
+          entry.trucker_called_date = date
+        when 25
+          entry.delivery_order_pickup_date = date
+        when 26
+          entry.freight_pickup_date = date
+        when 28
+          entry.last_billed_date = date
+        when 32
+          entry.invoice_paid_date = date
+        when 42
+          entry.duty_due_date = date
+        when 48
+          entry.daily_statement_due_date = date
+        when 52
+          entry.free_date = date
+        when 85
+          entry.edi_received_date = date
         when 108
           entry.fda_transmit_date = date
+        when 121
+          entry.daily_statement_approved_date = date
         when 2014
           entry.final_delivery_date = date
+        when 99202
+          entry.first_release_date = date
+        when 92007
+          entry.isf_sent_date = date
+        when 92008
+          entry.isf_accepted_date = date
         when 93002
           entry.fda_review_date = date
+        when 99212
+          entry.first_entry_sent_date = date
+        when 99310
+          entry.monthly_statement_received_date = date
+        when 99311
+          entry.monthly_statement_paid_date = date
         end
+      end
+    end
+
+    def process_bill_numbers e, entry
+      it_numbers = Set.new
+      master_bills = Set.new
+      house_bills = Set.new
+      subhouse_bills = Set.new
+
+      Array.wrap(e[:ids]).each do |id|
+        it_numbers << id[:it_no]
+        master_bills << id[:scac].to_s + id[:master_bill].to_s
+        house_bills << id[:house_bill].to_s
+        subhouse_bills << id[:sub_bill].to_s
+      end
+      blank = lambda {|d| d.blank?}
+      entry.it_numbers = it_numbers.reject &blank
+      entry.master_bills_of_lading = master_bills.reject &blank
+      entry.house_bills_of_lading = house_bills.reject &blank
+      entry.sub_house_bills_of_lading = subhouse_bills.reject &blank
+    end
+
+    def earliest_date d1, d2
+      if d1 && d2
+        return d1 < d2 ? d1 : d2
+      else
+        return d1 ? d1 : d2
+      end
+    end
+
+    def latest_date d1, d2
+      if d1 && d2
+        return d1 > d2 ? d1 : d2
+      else
+        return d1 ? d1 : d2
       end
     end
 end; end; end;

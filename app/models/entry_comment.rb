@@ -8,6 +8,14 @@ class EntryComment < ActiveRecord::Base
 
   private 
     def identify_public_comments
+      # Don't run regexes if the flag has been set
+      return false unless public_comment.nil?
+
+      self.public_comment = publicly_viewable?(self.body)
+      true
+    end
+
+    def publicly_viewable? comment
       # If any of the following regex's match, then this entry comment
       # should be private.
       match = [/^Document image created for/i,\
@@ -17,9 +25,8 @@ class EntryComment < ActiveRecord::Base
         /^Pay Due not changed, Same Pay Due Date/i,\
         /^Payment Type Changed/i,\
         /^STMNT DATA REPLACED AS REQUESTED/i,\
-        /^stmt.*authorized/i].any?{|r| r =~ self.body}
+        /^stmt.*authorized/i].any?{|r| r =~ comment}
 
-      self.public_comment = !match
-      true
+      !match
     end
 end

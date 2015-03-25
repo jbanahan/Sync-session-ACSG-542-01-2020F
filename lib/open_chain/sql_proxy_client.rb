@@ -89,9 +89,8 @@ module OpenChain; class SqlProxyClient
   end
  
   def request job_name, job_params, request_context, request_params = {}
-    # TODO - Change 'sql_params' to 'job_params' after sql_proxy is updated
     request_params = {swallow_error: true}.merge request_params
-    request_body = {'sql_params' => job_params}
+    request_body = {'job_params' => job_params}
     request_body['context'] = request_context unless request_context.blank?
     if request_params[:results_as_array].to_s == "true"
       request_body['results_as_array'] = true
@@ -99,8 +98,7 @@ module OpenChain; class SqlProxyClient
 
     begin
       config = PROXY_CONFIG[Rails.env]
-      # TODO - Change 'query' in path to 'job' after sql_proxy is updated
-      @json_client.post "#{config['url']}/query/#{job_name}", request_body, {}, config['auth_token']
+      @json_client.post "#{config['url']}/job/#{job_name}", request_body, {}, config['auth_token']
     rescue => e
       raise e if request_params[:swallow_error] === false
       e.log_me ["Failed to initiate sql_proxy query for #{job_name} with params #{request_body.to_json}."]

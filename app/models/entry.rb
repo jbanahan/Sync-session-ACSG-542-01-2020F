@@ -11,7 +11,7 @@ class Entry < ActiveRecord::Base
 
   has_many :broker_invoices, :dependent => :destroy
   has_many :broker_invoice_lines, :through => :broker_invoices
-  has_many :commercial_invoices, :dependent => :destroy
+  has_many :commercial_invoices, :dependent => :destroy, :autosave => true
   has_many :commercial_invoice_lines, :through => :commercial_invoices
   has_many :commercial_invoice_tariffs, :through => :commercial_invoice_lines
   has_many :entry_comments, :dependent=>:destroy

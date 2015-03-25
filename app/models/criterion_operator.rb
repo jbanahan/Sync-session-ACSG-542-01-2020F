@@ -60,7 +60,7 @@ class CriterionOperator
     new("nc","NOT _fn_ LIKE ?","Doesn't Contain"),
     new("sw","_fn_ LIKE ?","Starts With"),
     new("ew","_fn_ LIKE ?","Ends With"),
-    new("nsw","_fn_ NOT LIKE ?","Noes Not Start With"),
+    new("nsw","_fn_ NOT LIKE ?","Does Not Start With"),
     new("new","_fn_ NOT LIKE ?","Does Not End With"),
     new("regexp","_fn_ REGEXP ?", "Regex"),
     new("notregexp","_fn_ NOT REGEXP ?", "Not Regex"),
