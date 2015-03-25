@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def find_and_process_entry(e)
       entry = nil 
       file_no = e['file_no'].to_s
-      updated_at = parse_numeric_date(e['updated_at'])
+      updated_at = parse_numeric_datetime(e['updated_at'])
 
       Lock.acquire(Lock::ALLIANCE_PARSER, times: 3) do
         entry = Entry.where(broker_reference: file_no, source_system: OpenChain::AllianceParser::SOURCE_CODE).first_or_create! expected_update_time: updated_at
@@ -61,7 +61,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       end
     end
 
-    def parse_numeric_date d
+    def parse_numeric_datetime d
       # Every numeric date value that comes across is going to be Eastern Time
       d = d.to_i
       if d > 0
@@ -76,6 +76,23 @@ module OpenChain; module CustomHandler; class KewillEntryParser
             time + 1.hour
           end
         end
+      else
+        nil
+      end
+    end
+
+    def parse_numeric_date d
+      d = d.to_i
+      if d > 0
+        time = d.to_i.to_s
+        date = Date.strptime(time, "%Y%m%d") rescue nil
+
+        # Stupid alliance sometimes sends dates with a time component of 24
+        # If that happens, roll the date forward a day
+        if date && time[8,2] == "24"
+          date = date + 1.day
+        end
+        date
       else
         nil
       end
@@ -116,7 +133,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
       notes.each do |n|
         note = n[:note]
-        generated_at = parse_numeric_date(n[:date_updated])
+        generated_at = parse_numeric_datetime(n[:date_updated])
 
         #comment = entry.entry_comments.build body: n[:note], username: n[:modified_by], generated_at: parse_numeric_date(n[:date_updated])
         # The public private flag is set a little wonky because we do a before_save callback as a further step to determine if the 
@@ -126,8 +143,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         #end
 
         if note.to_s.downcase.include?("document image created for f7501f") || note.to_s.downcase.include?("document image created for form_n7501")
-          entry.first_7501_print = earliest_date(generated_at, entry.first_7501_print)
-          entry.last_7501_print = latest_date(generated_at, entry.last_7501_print)
+          entry.first_7501_print = earliest_date(entry.first_7501_print, generated_at)
+          entry.last_7501_print = latest_date(entry.first_7501_print, generated_at)
         end
       end
     end
@@ -136,65 +153,64 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       dates = Array.wrap(e[:dates])
 
       dates.each do |date_field|
-        date = parse_numeric_date(date_field[:date])
         case date_field[:date_no].to_i
         when 1
-          entry.export_date = date
+          entry.export_date = parse_numeric_date(date_field[:date])
         when 3, 98
           #both 3 and 98 are docs received for different customers
-          entry.docs_received_date = date
+          entry.docs_received_date = parse_numeric_date(date_field[:date])
         when 4
-          entry.file_logged_date = date
+          entry.file_logged_date = parse_numeric_datetime(date_field[:date])
         when 9
-          entry.first_it_date = earliest_date(entry.first_it_date, date)
+          entry.first_it_date = earliest_date(entry.first_it_date, parse_numeric_date(date_field[:date]))
         when 11
-          entry.eta_date = date
+          entry.eta_date = parse_numeric_date(date_field[:date])
         when 12
-          entry.arrival_date = date
+          entry.arrival_date = parse_numeric_datetime(date_field[:date])
         when 16
-          entry.entry_filed_date = date
+          entry.entry_filed_date = parse_numeric_datetime(date_field[:date])
         when 19
-          entry.release_date = date
+          entry.release_date = parse_numeric_datetime(date_field[:date])
         when 20
-          entry.fda_release_date = date
+          entry.fda_release_date = parse_numeric_datetime(date_field[:date])
         when 24
-          entry.trucker_called_date = date
+          entry.trucker_called_date = parse_numeric_datetime(date_field[:date])
         when 25
-          entry.delivery_order_pickup_date = date
+          entry.delivery_order_pickup_date = parse_numeric_datetime(date_field[:date])
         when 26
-          entry.freight_pickup_date = date
+          entry.freight_pickup_date = parse_numeric_datetime(date_field[:date])
         when 28
-          entry.last_billed_date = date
+          entry.last_billed_date = parse_numeric_datetime(date_field[:date])
         when 32
-          entry.invoice_paid_date = date
+          entry.invoice_paid_date = parse_numeric_datetime(date_field[:date])
         when 42
-          entry.duty_due_date = date
+          entry.duty_due_date = parse_numeric_date(date_field[:date])
         when 48
-          entry.daily_statement_due_date = date
+          entry.daily_statement_due_date = parse_numeric_date(date_field[:date])
         when 52
-          entry.free_date = date
+          entry.free_date = parse_numeric_datetime(date_field[:date])
         when 85
-          entry.edi_received_date = date
+          entry.edi_received_date = parse_numeric_date(date_field[:date])
         when 108
-          entry.fda_transmit_date = date
+          entry.fda_transmit_date = parse_numeric_datetime(date_field[:date])
         when 121
-          entry.daily_statement_approved_date = date
+          entry.daily_statement_approved_date = parse_numeric_date(date_field[:date])
         when 2014
-          entry.final_delivery_date = date
+          entry.final_delivery_date = parse_numeric_datetime(date_field[:date])
         when 99202
-          entry.first_release_date = date
+          entry.first_release_date = parse_numeric_datetime(date_field[:date])
         when 92007
-          entry.isf_sent_date = date
+          entry.isf_sent_date = parse_numeric_datetime(date_field[:date])
         when 92008
-          entry.isf_accepted_date = date
+          entry.isf_accepted_date = parse_numeric_datetime(date_field[:date])
         when 93002
-          entry.fda_review_date = date
+          entry.fda_review_date = parse_numeric_datetime(date_field[:date])
         when 99212
-          entry.first_entry_sent_date = date
+          entry.first_entry_sent_date = parse_numeric_datetime(date_field[:date])
         when 99310
-          entry.monthly_statement_received_date = date
+          entry.monthly_statement_received_date = parse_numeric_date(date_field[:date])
         when 99311
-          entry.monthly_statement_paid_date = date
+          entry.monthly_statement_paid_date = parse_numeric_date(date_field[:date])
         end
       end
     end
@@ -220,7 +236,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def earliest_date d1, d2
       if d1 && d2
-        return d1 < d2 ? d1 : d2
+        return ((d1 <=> d2) <= 0) ? d1 : d2
       else
         return d1 ? d1 : d2
       end
@@ -228,7 +244,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def latest_date d1, d2
       if d1 && d2
-        return d1 > d2 ? d1 : d2
+        return ((d1 <=> d2) < 0) ? d2 : d1
       else
         return d1 ? d1 : d2
       end

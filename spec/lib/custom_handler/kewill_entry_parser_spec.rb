@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     before :each do
       OpenChain::AllianceImagingClient.stub(:request_images)
-      
+
       @e = {
         'cust_no' => 'TEST',
         'file_no' => 12345,
@@ -72,11 +72,11 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       # This is the only field different that the value above, since it's testing
       # that we handle date times w/ 60 as a minute value correctly
-      expect(entry.export_date).to eq tz.parse "201503010700"
-      expect(entry.docs_received_date).to eq tz.parse "201503010800"
+      expect(entry.export_date).to eq tz.parse("201503010700").to_date
+      expect(entry.docs_received_date).to eq tz.parse("201503010800").to_date
       expect(entry.file_logged_date).to eq tz.parse "201503010900"
-      expect(entry.first_it_date).to eq tz.parse "201503011000"
-      expect(entry.eta_date).to eq tz.parse "201503011100"
+      expect(entry.first_it_date).to eq tz.parse("201503011000").to_date
+      expect(entry.eta_date).to eq tz.parse("201503011100").to_date
       expect(entry.arrival_date).to eq tz.parse "201503011200"
       expect(entry.entry_filed_date).to eq tz.parse "201503011300"
       expect(entry.release_date).to eq tz.parse "201503011400"
@@ -86,19 +86,19 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.freight_pickup_date).to eq tz.parse "201503011800"
       expect(entry.last_billed_date).to eq tz.parse "201503011900"
       expect(entry.invoice_paid_date).to eq tz.parse "201503012000"
-      expect(entry.duty_due_date).to eq tz.parse "201503012100"
-      expect(entry.daily_statement_due_date).to eq tz.parse "201503012200"
+      expect(entry.duty_due_date).to eq tz.parse("201503012100").to_date
+      expect(entry.daily_statement_due_date).to eq tz.parse("201503012200").to_date
       expect(entry.free_date).to eq tz.parse "201503012300"
-      expect(entry.edi_received_date).to eq tz.parse "201503020000"
+      expect(entry.edi_received_date).to eq tz.parse("201503020000").to_date
       expect(entry.fda_transmit_date).to eq tz.parse "201503020100"
-      expect(entry.daily_statement_approved_date).to eq tz.parse "201503020200"
+      expect(entry.daily_statement_approved_date).to eq tz.parse("201503020200").to_date
       expect(entry.final_delivery_date).to eq tz.parse "201503020300"
       expect(entry.isf_sent_date).to eq tz.parse "201503020400"
       expect(entry.isf_accepted_date).to eq tz.parse "201503020500"
       expect(entry.fda_review_date).to eq tz.parse "201503020600"
       expect(entry.first_entry_sent_date).to eq tz.parse "201503020700"
-      expect(entry.monthly_statement_received_date).to eq tz.parse "201503020800"
-      expect(entry.monthly_statement_paid_date).to eq tz.parse "201503020900"
+      expect(entry.monthly_statement_received_date).to eq tz.parse("201503020800").to_date
+      expect(entry.monthly_statement_paid_date).to eq tz.parse("201503020900").to_date
       expect(entry.first_release_date).to eq tz.parse "201503021000"
 
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
@@ -108,13 +108,15 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     it "handles 98 date for docs received" do
       @e['dates'] << {'date_no'=>98, 'date'=>201503310000}
       entry = described_class.parse @json.to_json
-      expect(entry.docs_received_date).to eq tz.parse "201503310000"
+      expect(entry.docs_received_date).to eq tz.parse("201503310000").to_date
     end
 
     it "uses earliest it date value" do
-      @e['dates'] << {'date_no'=>9, 'date'=>201401010000}
+      # Put an actual Date value in the entry here so that we're also making sure that
+      # the earliest value is handing comparison against the actual entry itself
+      e = Factory(:entry, broker_reference: @e['file_no'], source_system: "Alliance", first_it_date: Date.new(2016, 1, 1))
       entry = described_class.parse @json.to_json
-      expect(entry.first_it_date).to eq tz.parse "201401010000"
+      expect(entry.first_it_date).to eq tz.parse("201503011000").to_date
     end
 
     it "updates an entry using json data" do
