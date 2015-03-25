@@ -6,7 +6,7 @@ class ProductsController < ApplicationController
   include OpenChain::NextPreviousSupport
   before_filter :secure_classifications
 
-	def root_class 
+	def root_class
 		Product
 	end
 
@@ -22,13 +22,15 @@ class ProductsController < ApplicationController
     freeze_custom_values p
     action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
       @product = p
+      @state_button_path = 'products'
+      @state_button_object_id = @product.id
       p.load_custom_values #caches all custom values
       @json_product = json_product_for_classification @product
       respond_to do |format|
           format.html # show.html.erb
           format.xml  { render :xml => @product }
           format.json { render :json => @product }
-      end          
+      end
     }
   end
 
@@ -52,7 +54,7 @@ class ProductsController < ApplicationController
     action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
       used_countries = p.classifications.collect {|cls| cls.country_id}
       Country.import_locations.sort_classification_rank.each do |c|
-        p.classifications.build(:country => c) unless used_countries.include?(c.id) 
+        p.classifications.build(:country => c) unless used_countries.include?(c.id)
       end
       @product = p
     }
@@ -90,7 +92,7 @@ class ProductsController < ApplicationController
         end
       }
       validate_and_save_module(Product.new,params[:product],succeed, failure, before_validate: before_validate, exclude_blank_values: true)
-    }  
+    }
   end
 
   # PUT /products/1
@@ -135,7 +137,7 @@ class ProductsController < ApplicationController
       end
     }
   end
-  
+
   def bulk_edit
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
@@ -153,7 +155,7 @@ class ProductsController < ApplicationController
         if current_user.edit_products? || current_user.edit_classifications?
           OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id
           add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
-        end 
+        end
       else
         messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true
         # Show the user the update message and any errors if there were some
@@ -181,18 +183,18 @@ class ProductsController < ApplicationController
       if run_delayed params
         OpenChain::BulkUpdateClassification.delay.quick_classify params.to_json, current_user
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
-      else 
+      else
         log = OpenChain::BulkUpdateClassification.quick_classify params, current_user, :no_user_message => true
         add_flash :notices, "Your products have been updated."
       end
 
-      # Going back to the referrer here will preserve any query params that were included when the 
-      # previous page was loaded (ie. search page position).  However, we don't want to 
+      # Going back to the referrer here will preserve any query params that were included when the
+      # previous page was loaded (ie. search page position).  However, we don't want to
       # redo the search if we're reloading the first search page after a search was run
       # so we're stripping the force_search param from the redirect uri
       if !params['back_to'].blank?
         redirect_to strip_uri_params(params['back_to'],'force_search')
-      else 
+      else
         redirect_to products_path
       end
     }
@@ -210,11 +212,11 @@ class ProductsController < ApplicationController
   #render html block for instant classification preview on a single product
   def show_bulk_instant_classify
     @pks = params[:pk]
-    @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil 
+    @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @preview_product = @pks.blank? ? Product.find(@search_run.parent.result_keys(:page=>1,:per_page=>1).first) : Product.find(@pks.values.first)
     @preview_instant_classification = InstantClassification.find_by_product @preview_product, current_user
   end
-    
+
   private
 
   def secure_classifications

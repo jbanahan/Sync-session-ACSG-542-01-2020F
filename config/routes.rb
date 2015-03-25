@@ -35,6 +35,8 @@ OpenChain::Application.routes.draw do
       end
       resources :products, only: [:index, :show, :create, :update] do
         get 'by_uid/:uid' => "products#by_uid", on: :collection
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
       end
 
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
