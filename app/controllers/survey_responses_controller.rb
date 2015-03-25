@@ -1,6 +1,4 @@
 class SurveyResponsesController < ApplicationController
-  include SurveyResponsesControllerSupport
-
   def show
     @sr = SurveyResponse.find params[:id]
     if !@sr.can_view?(current_user) && !@sr.can_edit?(current_user)
@@ -90,11 +88,10 @@ class SurveyResponsesController < ApplicationController
   end
 
   def index
-
     if old_ie_version? 
       add_flash :errors, "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers.", now: true
     end
-    @survey_responses = surveys_for_index(current_user)
+    @survey_responses = SurveyResponse.where("user_id = ? OR group_id IN (?)", current_user.id, current_user.groups.map(&:id)).joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false))
   end
 
   def archive
