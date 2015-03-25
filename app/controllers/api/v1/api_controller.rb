@@ -10,7 +10,7 @@ module Api; module V1; class ApiController < ActionController::Base
   end
 
   def render_forbidden
-    render_error "Access denied.", :unauthorized
+    render_error "Access denied.", :forbidden
   end
 
   def require_admin

@@ -22,7 +22,7 @@ describe Api::V1::IntacctDataController do
       @user.save!
 
       post "receive_alliance_invoice_details", results: []
-      expect(response.status).to eq 401
+      expect(response.status).to eq 403
       expect(response.body).to eq ({"errors" => ["Access denied."]}.to_json)
     end
 

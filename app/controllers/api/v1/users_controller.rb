@@ -17,7 +17,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
           user.save!
         end
 
-        render json: {username: current_user.username, token: user.user_auth_token}
+        render json: {id: user.id, username: user.username, token: user.user_auth_token, full_name: user.full_name}
       else
         render_forbidden
       end

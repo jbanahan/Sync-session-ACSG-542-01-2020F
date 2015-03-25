@@ -37,7 +37,7 @@ describe Api::V1::SchedulableJobsController do
         allow_api_access u
 
         post "run_jobs", {}
-        expect(response.status).to eq 401
+        expect(response.status).to eq 403
       end
     end
   end

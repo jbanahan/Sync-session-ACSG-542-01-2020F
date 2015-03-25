@@ -208,7 +208,7 @@ describe Api::V1::ProductsController do
       describe "error_handler" do
         it "handles a StatusableError and uses its data in the json response" do
           controller.should_receive(:show) do
-            raise Api::V1::ApiController::StatusableError.new "Error1", 501
+            raise StatusableError.new "Error1", 501
           end
 
           get 'show', id: 1, format: 'json'
@@ -219,7 +219,7 @@ describe Api::V1::ProductsController do
 
         it "handles a StatusableError with multiple errors and uses its data in the json response" do
           controller.should_receive(:show) do
-            raise Api::V1::ApiController::StatusableError.new ["Error1", "Error2"], 501
+            raise StatusableError.new ["Error1", "Error2"], 501
           end
 
           get 'show', id: 1, format: 'json'

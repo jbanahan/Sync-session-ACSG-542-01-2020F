@@ -18,7 +18,7 @@ describe Api::V1::Admin::AdminApiController do
       u = Factory(:master_user)
       allow_api_access u
       get :index
-      expect(response.status).to eq 401
+      expect(response.status).to eq 403
     end
   end
 end
