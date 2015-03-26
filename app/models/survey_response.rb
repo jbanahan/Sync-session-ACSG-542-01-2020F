@@ -1,5 +1,5 @@
 class SurveyResponse < ActiveRecord::Base
-  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date, :archived, :expiration_notification_sent_at
+  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date, :archived, :expiration_notification_sent_at, :checkout_by_user, :checkout_token, :checkout_expiration
   belongs_to :user
   belongs_to :survey
   belongs_to :base_object, polymorphic: true, inverse_of: :survey_responses
@@ -9,6 +9,7 @@ class SurveyResponse < ActiveRecord::Base
   has_many :survey_response_logs, :dependent=>:destroy
   has_many :survey_response_updates, :dependent=>:destroy
   has_one :corrective_action_plan, :dependent=>:destroy
+  belongs_to :checkout_by_user, class_name: "User"
 
   validates_presence_of :survey
   validates_presence_of :user, if: lambda {|sr| sr.group.nil?}, message: "User and Group can't be blank."

@@ -53,7 +53,9 @@ OpenChain::Application.routes.draw do
       match "/workflow/:id/assign" => "workflow#assign", via: :put
       match "/workflow/:core_module/:id/my_instance_open_task_count" => "workflow#my_instance_open_task_count", via: :get
 
-      resources :survey_responses, only: [:index, :show]
+      resources :survey_responses, only: [:index, :show] do
+        post :checkout, on: :member
+      end
 
       namespace :admin do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get

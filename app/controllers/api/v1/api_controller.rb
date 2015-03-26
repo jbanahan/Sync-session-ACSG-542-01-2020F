@@ -9,15 +9,15 @@ module Api; module V1; class ApiController < ActionController::Base
     @user
   end
 
-  def render_forbidden
-    render_error "Access denied.", :forbidden
+  def render_forbidden message = "Access denied."
+    render_error message, :forbidden
   end
 
   def require_admin
     render_forbidden unless User.current.admin?
   end
 
-  def render_error errors, status = :not_found
+  def render_error errors, status = :internal_server_error
     e = nil
     if errors.respond_to? :each
       e = []

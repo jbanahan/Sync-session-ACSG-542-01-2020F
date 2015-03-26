@@ -41,6 +41,14 @@ module SurveyResponsesControllerSupport
     end
   end
 
+  def checkout_token sr, user
+    (sr.checkout_by_user == user ? sr.checkout_token : nil) 
+  end
+
+  def survey_user user
+    user.nil? ? nil : {'id' => user.id, 'username' => user.username, 'full_name' => user.full_name}
+  end
+
   def json_survey_response sr, user
     rate_mode = rate_mode?(sr, user)
     respond_mode = respond_mode?(sr, user)
@@ -77,6 +85,13 @@ module SurveyResponsesControllerSupport
       survey_takers.push *sr.group.users.collect(&:id)
     end
     h['survey_response']['survey_takers'] = survey_takers
+
+    h['survey_response']['checkout_by_user'] = nil
+    if sr.checkout_by_user
+      h['survey_response']['checkout_by_user'] = survey_user(sr.checkout_by_user)
+    end
+    h['checkout_expiration'] = sr.checkout_expiration
+    h['checkout_token'] = checkout_token(sr, user)
 
     h
   end
