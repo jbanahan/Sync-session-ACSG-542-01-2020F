@@ -25,7 +25,7 @@ describe AttachmentArchiveManifest do
   describe :generate_manifest_tempfile! do
     before :each do
       @rel_date = 1.day.ago
-      @ent = Factory(:entry,:importer=>@c,:broker_reference=>'123',:release_date=>@rel_date,:master_bills_of_lading=>'mbol',:arrival_date=>1.day.ago)
+      @ent = Factory(:entry,:importer=>@c,:broker_reference=>'123',:release_date=>@rel_date,:master_bills_of_lading=>'mbol',:arrival_date=>1.day.ago, :po_numbers => "PO")
       @inv = Factory(:broker_invoice, :entry=>@ent, :invoice_date => 2.months.ago)
       @att1 = @ent.attachments.create!(:attached_file_name=>'a.txt',:attached_file_size=>100,:attachment_type=>'EDOC')
       @a_setup = @c.create_attachment_archive_setup(:start_date=>10.years.ago)
@@ -43,7 +43,7 @@ describe AttachmentArchiveManifest do
       @tmp = @m.generate_manifest_tempfile! 1.year.ago
       sheet = Spreadsheet.open(@tmp).worksheet(0)
       title_row = sheet.row(0)
-      ["Archive Name","Archive Date","Broker Reference","Master Bill of Lading",
+      ["Archive Name","Archive Date","Broker Reference","Master Bill of Lading", "PO Numbers",
         "Release Date","Doc Type","Doc Name"].each_with_index do |n,i|
         title_row[i].should == n
       end
@@ -56,18 +56,20 @@ describe AttachmentArchiveManifest do
       r[1].should == Time.now.to_date
       r[2].should == '123'
       r[3].should == 'mbol'
-      r[4].should == @rel_date.to_date
-      r[5].should == 'EDOC'
-      r[6].should == @att1.unique_file_name 
+      r[4].should == "PO"
+      r[5].should == @rel_date.to_date
+      r[6].should == 'EDOC'
+      r[7].should == @att1.unique_file_name 
 
       r = lines[1]
       r[0].should == "bname"
       r[1].should == Time.now.to_date
       r[2].should == '123'
       r[3].should == 'mbol'
-      r[4].should == @rel_date.to_date
-      r[5].should == '7501'
-      r[6].should == @att2.unique_file_name 
+      r[4].should == "PO"
+      r[5].should == @rel_date.to_date
+      r[6].should == '7501'
+      r[7].should == @att2.unique_file_name 
 
       r = sheet.row(3)
       r[0].should be_nil

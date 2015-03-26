@@ -18,12 +18,12 @@ class AttachmentArchiveManifest < ActiveRecord::Base
 
   #generates the manifest file but doesn't attach it or set the finish_at variable
   def generate_manifest_tempfile! oldest_archive_start_date_to_include
-    wb = XlsMaker.create_workbook 'Archive', ["Archive Name","Archive Date","Broker Reference","Master Bill of Lading", "Release Date","Doc Type","Doc Name"]
+    wb = XlsMaker.create_workbook 'Archive', ["Archive Name","Archive Date","Broker Reference","Master Bill of Lading", "PO Numbers", "Release Date","Doc Type","Doc Name"]
     sheet = wb.worksheet "Archive"
     cursor = 0
     column_widths = []
     qry = "SELECT attachment_archives.name as \"Name\", attachment_archives.start_at as \"Archive Date\", entries.broker_reference as \"Broker Reference\",
-entries.master_bills_of_lading as \"MBOL\",entries.release_date as \"Release\", attachments.attachment_type as \"DocType\", attachment_archives_attachments.file_name as \"FileName\" 
+entries.master_bills_of_lading as \"MBOL\",entries.po_numbers as \"PO Numbers\", entries.release_date as \"Release\", attachments.attachment_type as \"DocType\", attachment_archives_attachments.file_name as \"FileName\" 
 FROM attachment_archives 
 INNER JOIN attachment_archives_attachments ON attachment_archives.id = attachment_archives_attachments.attachment_archive_id 
 INNER JOIN attachments on attachment_archives_attachments.attachment_id = attachments.id 
