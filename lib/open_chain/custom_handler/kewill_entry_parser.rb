@@ -123,7 +123,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def process_entry_header e, entry
       entry.customer_number = e[:cust_no]
-      entry.entry_number = e[:entry_number]
+      entry.entry_number = e[:entry_no]
       entry.release_cert_message = e[:cr_certification_output_mess]
       entry.fda_message = e[:fda_output_mess]
     end

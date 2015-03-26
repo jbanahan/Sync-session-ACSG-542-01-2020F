@@ -14,6 +14,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       @e = {
         'cust_no' => 'TEST',
         'file_no' => 12345,
+        'entry_no' => '316123456',
         'cr_certification_output_mess' => 'CERT MESSAGE',
         'fda_output_mess' => 'FDA MESSAGE',
         'updated_at' => 201502120600,
@@ -66,6 +67,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       expect(entry).to be_persisted
       expect(entry.broker_reference).to eq "12345"
+      expect(entry.entry_number).to eq "316123456"
       expect(entry.source_system).to eq "Alliance"
       expect(entry.release_cert_message).to eq "CERT MESSAGE"
       expect(entry.fda_message).to eq "FDA MESSAGE"
