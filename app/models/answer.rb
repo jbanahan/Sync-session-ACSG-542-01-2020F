@@ -1,7 +1,7 @@
 class Answer < ActiveRecord::Base
   belongs_to :survey_response, :touch=>true
   belongs_to :question
-  has_many :answer_comments, :inverse_of=>:answer, :dependent=>:destroy
+  has_many :answer_comments, inverse_of: :answer, dependent: :destroy, autosave: true
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
   
   validates_presence_of :survey_response

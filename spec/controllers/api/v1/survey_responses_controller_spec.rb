@@ -121,7 +121,7 @@ describe Api::V1::SurveyResponsesController do
       post :checkout, {id: @survey_response.id, checkout_token: "token"}
 
       expect(response.status).to eq 403
-      expect(JSON.parse response.body).to eq({'errors' => ['Survey is already checked out by another user.']})
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is checked out by another user.']})
     end
 
     it "fails if survey is checked out to user on another device/token" do
@@ -132,7 +132,7 @@ describe Api::V1::SurveyResponsesController do
       post :checkout, {id: @survey_response.id, checkout_token: "token"}
 
       expect(response.status).to eq 403
-      expect(JSON.parse response.body).to eq({'errors' => ["Survey is already checked out to you on another device."]})
+      expect(JSON.parse response.body).to eq({'errors' => ["Survey is checked out to you on another device."]})
     end
 
     it 'errors if checkout token is not sent' do
@@ -176,14 +176,14 @@ describe Api::V1::SurveyResponsesController do
       post :cancel_checkout, {id: @survey_response.id, checkout_token: "token"}
 
       expect(response.status).to eq 403
-      expect(JSON.parse response.body).to eq({'errors' => ['Survey is already checked out by another user.']})
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is checked out by another user.']})
     end
 
     it "fails if another device owns the checkout" do
       post :cancel_checkout, {id: @survey_response.id, checkout_token: "token2"}
 
       expect(response.status).to eq 403
-      expect(JSON.parse response.body).to eq({'errors' => ["Survey is already checked out to you on another device."]})
+      expect(JSON.parse response.body).to eq({'errors' => ["Survey is checked out to you on another device."]})
     end
 
     it "fails if checkout token is missing" do
@@ -200,6 +200,149 @@ describe Api::V1::SurveyResponsesController do
 
       expect(response.status).to eq 403
       expect(JSON.parse response.body).to eq({'errors' => ['Access denied.']})
+    end
+  end
+
+  describe :checkin do
+
+    before :each do
+      @user = Factory(:user, survey_view: true)
+      @survey = Factory(:survey)
+      @question = Factory(:question, survey: @survey, content: "Is this a test?", choices: "Yes\nNo")
+      @survey_response = Factory(:survey_response, survey: @survey, user: @user, checkout_by_user: @user, checkout_token: "token", checkout_expiration: Time.zone.now)
+      
+      allow_api_access @user
+
+      @req = {
+        id: @survey_response.id,
+        checkout_token: @survey_response.checkout_token,
+        name: "Mr. Survey Taker",
+        address: "123 Fake St.\nAnywhere, PA, 01234",
+        phone: "123-456-7890",
+        email: "me@there.com",
+        fax: "098-765-4321",
+        answers: [
+          {
+            choice: "Yes",
+            question_id: @question.id,
+            answer_comments: [
+              {
+                content: "This is a comment."
+              }
+            ]
+          }
+        ]
+      }
+    end
+
+
+    it "checks in a survey" do
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response).to be_success
+      
+      @survey_response.reload
+
+      expect(@survey_response.name).to eq @req[:name]
+      expect(@survey_response.address).to eq @req[:address]
+      expect(@survey_response.phone).to eq @req[:phone]
+      expect(@survey_response.address).to eq @req[:address]
+      expect(@survey_response.email).to eq @req[:email]
+      expect(@survey_response.fax).to eq @req[:fax]
+      expect(@survey_response.checkout_by_user).to be_nil
+      expect(@survey_response.checkout_token).to be_nil
+      expect(@survey_response.checkout_expiration).to be_nil
+
+      expect(@survey_response.answers.size).to eq 1
+
+      a = @survey_response.answers.first
+      expect(a.choice).to eq "Yes"
+      expect(a.question).to eq @question
+      expect(a.answer_comments.size).to eq 1
+
+      expect(a.answer_comments.first.content).to eq "This is a comment."
+      expect(a.answer_comments.first.user).to eq @user
+    end
+
+    it "updates existing answers" do
+      answer = @survey_response.answers.create! question: @question, choice: "No"
+      @req[:answers].first[:id] = answer.id
+
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response).to be_success
+      
+      @survey_response.reload
+
+      expect(@survey_response.answers.size).to eq 1
+      a = @survey_response.answers.first
+      expect(a.choice).to eq "Yes"
+      expect(a.answer_comments.size).to eq 1
+      expect(a.answer_comments.first.content).to eq "This is a comment."
+    end
+
+    it "skips updating existing answer comments" do
+      answer = @survey_response.answers.create! question: @question, choice: "No"
+      comment = answer.answer_comments.create! content: "Comment", user: @user
+
+      @req[:answers].first[:id] = answer.id
+      @req[:answers].first[:answer_comments].first[:id] = answer.id
+
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response).to be_success
+      
+      @survey_response.reload
+      expect(@survey_response.answers.size).to eq 1
+      a = @survey_response.answers.first
+      expect(a.choice).to eq "Yes"
+      expect(a.answer_comments.size).to eq 1
+      # Validate the original data is present, and wasn't updated to what was in the request
+      expect(a.answer_comments.first.content).to eq "Comment"
+    end
+
+    it "errors if bad question is attempted to be answered" do
+      @req[:answers].first[:question_id] = -1
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response.status).to eq 500
+      expect(JSON.parse response.body).to eq({'errors' => ["Invalid Question responded to."]})
+    end
+
+    it "errors if invalid answer is provided" do
+      # The idea here is that we don't want to allow someone to send a choice that isn't
+      # specified by the question
+      @req[:answers].first[:choice] = "I don't know"
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response.status).to eq 500
+      expect(JSON.parse response.body).to eq({'errors' => ["Invalid Answer of 'I don't know' given for question id #{@question.id}."]})
+    end
+
+    it "errors if attempting to update a non-existent answer" do 
+      @req[:answers].first[:id] = -1
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response.status).to eq 500
+      expect(JSON.parse response.body).to eq({'errors' => ["Attempted to update an answer that does not exist."]})
+    end
+
+    it "errors if survey is not checked out to user" do
+      @survey_response.checkout_by_user = Factory(:user)
+      @survey_response.save!
+
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["Survey is checked out by another user."]})
+    end
+
+    it "errors if survey is checked out on another device" do
+      @req[:checkout_token] = "New token"
+
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["Survey is checked out to you on another device."]})
+    end
+
+    it "errors if checkout token is blank" do
+      @req[:checkout_token] = ""
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response.status).to eq 500
+      expect(JSON.parse response.body).to eq({'errors' => ["No checkout_token received."]})
     end
   end
 end

@@ -56,8 +56,11 @@ OpenChain::Application.routes.draw do
       match "/workflow/:core_module/:id/my_instance_open_task_count" => "workflow#my_instance_open_task_count", via: :get
 
       resources :survey_responses, only: [:index, :show] do
-        post :checkout, on: :member
-        post :cancel_checkout, on: :member
+        member do
+          post :checkout
+          post :cancel_checkout
+          post :checkin
+        end
       end
 
       namespace :admin do

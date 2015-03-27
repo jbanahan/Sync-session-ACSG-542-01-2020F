@@ -57,7 +57,7 @@ module SurveyResponsesControllerSupport
     h = sr.as_json(include: [
         {answers:{methods:[:hours_since_last_update],include: {
           question:{methods:[:html_content,:choice_list], only:[:id,:warning, :require_comment, :require_attachment],include:{attachments:{only:[:id,:attached_file_name]}}},
-          answer_comments:{only:[:content,:private,:created_at],include:[{user:{only:[:id],methods:[:full_name]}}]}
+          answer_comments:{only:[:id,:content,:private,:created_at],include:[{user:{only:[:id, :username],methods:[:full_name]}}]}
         }}},
         {survey:{only:[:id,:name],methods:[:rating_values]}}
       ])
@@ -90,8 +90,8 @@ module SurveyResponsesControllerSupport
     if sr.checkout_by_user
       h['survey_response']['checkout_by_user'] = survey_user(sr.checkout_by_user)
     end
-    h['checkout_expiration'] = sr.checkout_expiration
-    h['checkout_token'] = checkout_token(sr, user)
+    h['survey_response']['checkout_expiration'] = sr.checkout_expiration
+    h['survey_response']['checkout_token'] = checkout_token(sr, user)
 
     h
   end

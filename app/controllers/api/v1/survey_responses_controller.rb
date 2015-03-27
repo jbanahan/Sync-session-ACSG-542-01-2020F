@@ -30,7 +30,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
   end
 
   def checkout
-    sr = checkout_handling(params) do |sr|
+    sr = checkout_handling(params[:id], params[:checkout_token]) do |sr|
       sr.checkout_by_user = current_user
       sr.checkout_token = params[:checkout_token]
       sr.checkout_expiration = Time.zone.now + 2.days
@@ -42,40 +42,64 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
   end
 
   def cancel_checkout
-    sr = checkout_handling(params) do |sr|
-      sr.checkout_by_user = nil
-      sr.checkout_token = nil
-      sr.checkout_expiration = nil
-
+    sr = checkout_handling(params[:id], params[:checkout_token]) do |sr|
+      remove_checkout_info sr
       sr.save!
     end
 
     render json: json_survey_response(sr, current_user) if sr
   end
 
+  def checkin
+    #TODO Figure out how to handle attachments
+    req = params[:survey_response]
 
-  private 
-    def checkout_handling params
-      sr = SurveyResponse.find params[:id]
-      checkout_token = params[:checkout_token]
+    sr = checkout_handling(req.try(:[], 'id'), req.try(:[], 'checkout_token')) do |sr|
+      # We ONLY want to check in/update data that the survey taker themselves can actually update
+      # (This skips such things as ratings and any answer/comments/etc that already have an id).
+      sr.name = req[:name]
+      sr.address = req[:address]
+      sr.phone = req[:phone]
+      sr.email = req[:email]
+      sr.fax = req[:fax]
+
+      answers = req[:answers]
+      if answers.respond_to?(:each)
+        answers.each do |a|
+          build_answer sr, current_user, a
+        end
+      end
+
+      remove_checkout_info sr
+
+      sr.save!
+    end
+    
+    render json: json_survey_response(sr, current_user) if sr
+  end
+
+
+  private
+    def checkout_handling survey_response_id, checkout_token
+      sr = SurveyResponse.find survey_response_id
 
       if checkout_token.blank?
         render_error "No checkout_token received."
         return
       end
 
-      if !sr.assigned_to_user? current_user
+      if !sr.can_view?(current_user)
         render_forbidden
         return
       end
 
       Lock.with_lock_retry(sr) do 
         if sr.checkout_by_user && sr.checkout_by_user != current_user
-          render_forbidden "Survey is already checked out by another user."
+          render_forbidden "Survey is checked out by another user."
           return
         else
           if sr.checkout_by_user && sr.checkout_token && sr.checkout_token != checkout_token
-            render_forbidden "Survey is already checked out to you on another device."
+            render_forbidden "Survey is checked out to you on another device."
             return
           end
         end
@@ -85,6 +109,50 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       end
 
       sr
+    end
+
+    def remove_checkout_info sr
+      sr.checkout_by_user = nil
+      sr.checkout_token = nil
+      sr.checkout_expiration = nil
+    end
+
+    def build_answer sr, user, json
+      # Validate the choice supplied is valid
+      question = Question.where(id: json[:question_id], survey_id: sr.survey.id).first
+
+      # Raise an error if this is invalid..it shouldn't happen and basiclly indicates someone
+      # is messing w/ the request or bad programming..either way it should raise.
+      raise StatusableError.new("Invalid Question responded to.", :internal_server_error) if question.nil?
+
+      choices = question.choice_list
+
+      # Just flat out raise an error if the choice given is invalid...this should
+      # never happen unless someone's tampering w/ the response.
+
+      # Leaving an answer blank is ok too
+      raise StatusableError.new("Invalid Answer of '#{json[:choice]}' given for question id #{json[:question_id]}.", :internal_server_error) unless choices.include?(json[:choice]) || json[:choice].blank?
+
+      if json[:id]
+        answer = sr.answers.find {|a| a.id }
+        raise StatusableError.new("Attempted to update an answer that does not exist.", :internal_server_error) unless answer
+      else
+        answer = sr.answers.build question: question
+      end
+
+      answer.choice = json[:choice]
+      
+      comments = json[:answer_comments]
+      # Only bother adding comments that do not have ids..you can't update existing comments.
+      if comments && comments.respond_to?(:each)
+        comments.each do |comment|
+          next unless comment[:id].nil?
+
+          answer.answer_comments.build content: comment[:content], user: user
+        end
+      end
+
+      answer
     end
 
 end; end; end

@@ -4,7 +4,7 @@ class SurveyResponse < ActiveRecord::Base
   belongs_to :survey
   belongs_to :base_object, polymorphic: true, inverse_of: :survey_responses
   belongs_to :group
-  has_many :answers, :inverse_of=>:survey_response
+  has_many :answers, inverse_of: :survey_response, autosave: true
   has_many :questions, :through=>:survey
   has_many :survey_response_logs, :dependent=>:destroy
   has_many :survey_response_updates, :dependent=>:destroy
