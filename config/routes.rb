@@ -55,6 +55,7 @@ OpenChain::Application.routes.draw do
 
       resources :survey_responses, only: [:index, :show] do
         post :checkout, on: :member
+        post :cancel_checkout, on: :member
       end
 
       namespace :admin do

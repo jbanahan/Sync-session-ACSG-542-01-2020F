@@ -30,39 +30,61 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
   end
 
   def checkout
-    sr = SurveyResponse.find params[:id]
-    checkout_token = params[:checkout_token]
-
-    if checkout_token.blank?
-      render_error "No checkout_token received."
-      return
-    end
-
-    if !sr.assigned_to_user? current_user
-      render_forbidden
-      return
-    end
-
-    Lock.with_lock_retry(sr) do 
-      if sr.checkout_by_user && sr.checkout_by_user != current_user
-        render_forbidden "Survey is already checked out by another user."
-        return
-      else
-        if sr.checkout_by_user && sr.checkout_token && sr.checkout_token != checkout_token
-          render_forbidden "Survey is already checked out to you on another device."
-          return
-        end
-      end
-
+    sr = checkout_handling(params) do |sr|
       sr.checkout_by_user = current_user
-      sr.checkout_token = checkout_token
+      sr.checkout_token = params[:checkout_token]
       sr.checkout_expiration = Time.zone.now + 2.days
 
       sr.save!
     end
 
-    sr = show_survey_response params[:id], current_user
-    render json: json_survey_response(sr, current_user)
+    render json: json_survey_response(sr, current_user) if sr
   end
+
+  def cancel_checkout
+    sr = checkout_handling(params) do |sr|
+      sr.checkout_by_user = nil
+      sr.checkout_token = nil
+      sr.checkout_expiration = nil
+
+      sr.save!
+    end
+
+    render json: json_survey_response(sr, current_user) if sr
+  end
+
+
+  private 
+    def checkout_handling params
+      sr = SurveyResponse.find params[:id]
+      checkout_token = params[:checkout_token]
+
+      if checkout_token.blank?
+        render_error "No checkout_token received."
+        return
+      end
+
+      if !sr.assigned_to_user? current_user
+        render_forbidden
+        return
+      end
+
+      Lock.with_lock_retry(sr) do 
+        if sr.checkout_by_user && sr.checkout_by_user != current_user
+          render_forbidden "Survey is already checked out by another user."
+          return
+        else
+          if sr.checkout_by_user && sr.checkout_token && sr.checkout_token != checkout_token
+            render_forbidden "Survey is already checked out to you on another device."
+            return
+          end
+        end
+
+        yield sr
+
+      end
+
+      sr
+    end
 
 end; end; end

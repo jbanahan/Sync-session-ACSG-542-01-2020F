@@ -142,4 +142,64 @@ describe Api::V1::SurveyResponsesController do
       expect(JSON.parse response.body).to eq({'errors' => ["No checkout_token received."]})
     end
   end
+
+  describe "cancel_checkout" do
+    before :each do
+      @user = Factory(:user, survey_view: true)
+      @survey_response = Factory(:survey_response, user: @user, checkout_by_user: @user, checkout_token: "token", checkout_expiration: Time.zone.now)
+
+      allow_api_access @user
+    end
+
+    it "removes checkout info from survey response" do
+      post :cancel_checkout, {id: @survey_response.id, checkout_token: "token"}
+
+      expect(response).to be_success
+      j = JSON.parse response.body
+
+      # This method calls the same renderer as show, just test that some of the data we're
+      # expecting to modify is in the rendered result and the survey_resposne
+      expect(j['survey_response']['checkout_token']).to be_nil
+      expect(j['survey_response']['checkout_expiration']).to be_nil
+      expect(j['survey_response']['checkout_by_user']).to be_nil
+
+      @survey_response.reload
+      expect(@survey_response.checkout_by_user).to be_nil
+      expect(@survey_response.checkout_token).to be_nil
+      expect(@survey_response.checkout_expiration).to be_nil
+    end
+
+    it "fails if user doesn't own the checkout" do
+      @survey_response.checkout_by_user = Factory(:user)
+      @survey_response.save!
+
+      post :cancel_checkout, {id: @survey_response.id, checkout_token: "token"}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is already checked out by another user.']})
+    end
+
+    it "fails if another device owns the checkout" do
+      post :cancel_checkout, {id: @survey_response.id, checkout_token: "token2"}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["Survey is already checked out to you on another device."]})
+    end
+
+    it "fails if checkout token is missing" do
+      post :cancel_checkout, {id: @survey_response.id}
+
+      expect(response.status).to eq 500
+      expect(JSON.parse response.body).to eq({'errors' => ["No checkout_token received."]})
+    end
+
+    it "fails if user doesn't have access to survey" do
+      SurveyResponse.any_instance.should_receive(:assigned_to_user?).and_return false
+
+      post :cancel_checkout, {id: @survey_response.id, checkout_token: "token"}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Access denied.']})
+    end
+  end
 end
