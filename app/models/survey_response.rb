@@ -85,6 +85,32 @@ class SurveyResponse < ActiveRecord::Base
     self.survey_response_logs.create(:message=>"Invite sent to #{emails}")
   end
 
+  def clear_checkout
+    self.checkout_by_user = nil
+    self.checkout_token = nil
+    self.checkout_expiration = nil
+  end
+
+  def checkout user, token
+    self.checkout_by_user = user
+    self.checkout_token = token
+    self.checkout_expiration = Time.zone.now + 2.days
+  end
+
+  def self.run_schedulable
+    clear_expired_checkouts Time.zone.now
+  end
+
+  def self.clear_expired_checkouts relative_to
+    # Find all responses that have expired checkout times and clear them all
+    integration = User.integration
+    SurveyResponse.where("checkout_expiration < ? ", relative_to).each do |sr|
+      sr.clear_checkout
+      sr.save!
+      sr.survey_response_logs.create!(message: "Check out expired.", user: integration)
+    end
+  end
+
   private
   def update_status
     s = STATUSES[:incomplete]

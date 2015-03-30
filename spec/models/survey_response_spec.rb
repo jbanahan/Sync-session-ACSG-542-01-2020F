@@ -291,4 +291,25 @@ describe SurveyResponse do
       expect(@survey.generate_group_response!(@group).responder_name).to eq @group.name
     end
   end
+
+  describe "clear_expired_checkouts" do
+    it "clears checkout information and logs expiration" do
+      user = Factory(:user)
+      sr = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: Time.zone.now - 1.day)
+      sr2 = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: Time.zone.now - 1.day + 2.seconds)
+
+      SurveyResponse.clear_expired_checkouts(Time.zone.now - 1.day + 1.second)
+
+      sr.reload
+      expect(sr.checkout_token).to be_nil
+      expect(sr.checkout_by_user).to be_nil
+      expect(sr.checkout_expiration).to be_nil
+      expect(sr.survey_response_logs.first.message).to eq "Check out expired."
+      expect(sr.survey_response_logs.first.user).to eq User.integration
+
+      # Second one should still be checked out
+      sr2.reload
+      expect(sr2.checkout_token).to eq "token"
+    end
+  end
 end

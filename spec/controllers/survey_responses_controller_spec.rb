@@ -130,6 +130,39 @@ describe SurveyResponsesController do
         ac.collect {|c| c['content']}.should == ['mycomment','pcomment']
       end
 
+      it "makes survey read only of takers if its checked out" do
+        SurveyResponse.any_instance.stub(:can_view?).and_return true
+        SurveyResponse.any_instance.stub(:can_edit?).and_return false
+
+        sr = Factory(:survey_response, user: @u, checkout_by_user: @u)
+        get :show, :id=>sr.id, :format=>:json
+
+        response.should be_success
+        j = JSON.parse response.body
+        expect(j['survey_response']['can_rate']).to be_false
+        expect(j['survey_response']['can_answer']).to be_false
+        expect(j['survey_response']['can_submit']).to be_false
+        expect(j['survey_response']['can_comment']).to be_false
+        expect(j['survey_response']['can_make_private_comment']).to be_false
+      end
+
+      it "makes survey read only to survey raters if its checked out" do
+        SurveyResponse.any_instance.stub(:can_view?).and_return true
+        SurveyResponse.any_instance.stub(:can_edit?).and_return true
+
+        taker = Factory(:user)
+        sr = Factory(:survey_response, user: taker, checkout_by_user: taker, submitted_date: Time.zone.now)
+        get :show, :id=>sr.id, :format=>:json
+
+        response.should be_success
+        j = JSON.parse response.body
+        expect(j['survey_response']['can_rate']).to be_false
+        expect(j['survey_response']['can_answer']).to be_false
+        expect(j['survey_response']['can_submit']).to be_false
+        expect(j['survey_response']['can_comment']).to be_false
+        expect(j['survey_response']['can_make_private_comment']).to be_false
+      end
+
       context "archived" do
         it "disables all can_* attributes on archived survey responses" do
           sr = Factory(:survey_response, user:@u, archived: true)

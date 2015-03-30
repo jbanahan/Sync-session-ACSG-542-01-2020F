@@ -61,11 +61,15 @@ module SurveyResponsesControllerSupport
         }}},
         {survey:{only:[:id,:name],methods:[:rating_values]}}
       ])
+    # Since the web doesn't have support for checking out survey's...if we encounter a survey that's been checked out...just
+    # treat it like it's read only...even if the user that checked out the survey is the one attempting to view it.  Since they
+    # didn't check out the survey via their web browser.
     h['survey_response']['archived'] = archived
-    h['survey_response']['can_rate'] = !archived && rate_mode?(sr, user)
-    h['survey_response']['can_answer'] = !archived && respond_mode?(sr, user)
-    h['survey_response']['can_submit'] = !archived && respond_mode && sr.submitted_date.blank?
-    h['survey_response']['can_make_private_comment'] = !archived && sr.can_edit?(user)
+    h['survey_response']['can_rate'] = !archived && rate_mode?(sr, user) && sr.checkout_by_user.nil?
+    h['survey_response']['can_answer'] = !archived && respond_mode?(sr, user) && sr.checkout_by_user.nil?
+    h['survey_response']['can_submit'] = !archived && respond_mode && sr.submitted_date.blank? && sr.checkout_by_user.nil?
+    h['survey_response']['can_comment'] = sr.checkout_by_user.nil?
+    h['survey_response']['can_make_private_comment'] = !archived && sr.can_edit?(user) && sr.checkout_by_user.nil?
     h['survey_response'][:answers].each_with_index do |a,i| 
       a['sort_number'] = (i+1)
       if a[:answer_comments] && !sr.can_edit?(user)

@@ -1,8 +1,21 @@
+<% content_for :head_tags do %>
+  <style>
+    .checked-out {
+      background-color: green !important;
+    }
+  </style>
+<% end %>
+
+<% checkout_count = 0 %>
 <table class='detail_table table table-striped'>
   <thead><tr><th>Company / Group</th><th>Label</th><th>Responder</th><th>Status</th><th>Rating</th><th>Invited</th><th>Opened</th><th>Submitted</th><th>Last Updated / By</th><th><abbr title='Corrective Action Plan'>CAP</abbr></th></tr></thead>
   <tbody>
     <%survey_responses.each do |sr| %>
-      <tr class='hover'>
+      <%- 
+        checked_out = !sr.checkout_by_user.nil?
+        checkout_count += 1 if checked_out
+      -%>
+      <tr class='hover<%=(checked_out ? " alert-warning" : "")%>'>
         <td><% if sr.user %><%=link_to sr.user.company.name, sr%><% else %><%=link_to sr.responder_name, sr%><%end%></td>
         <td><%=sr.subtitle%></td>
         <td><% if sr.user %>User:<%else%>Group:<%end%> <%=sr.responder_name%><br>
@@ -28,3 +41,7 @@
     <% end%>
   </tbody>
 </table>
+
+<% if checkout_count > 0 %>
+<p>Survey Responses highlighted in <span class="alert-warning" style="width: 2em; display: inline-block;">&nbsp;</span> have been checked out by a survey responder.</p>
+<% end %>

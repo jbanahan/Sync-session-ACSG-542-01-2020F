@@ -103,7 +103,7 @@ describe Api::V1::SurveyResponsesController do
       j = JSON.parse response.body
 
       # This method calls the same renderer as show, just test that some of the data we're
-      # expecting to modify is in the rendered result and the survey_resposne
+      # expecting to modify is in the rendered result and the survey_response
       expect(j['survey_response']['checkout_token']).to eq "token"
       expect(Time.zone.parse(j['survey_response']['checkout_expiration'][0, 11])).to eq 2.days.from_now.strftime("%Y%m%d")
       expect(j['survey_response']['checkout_by_user']).to eq({id: @user.id, username: @user.username, full_name: @user.full_name}.with_indifferent_access)
@@ -112,6 +112,8 @@ describe Api::V1::SurveyResponsesController do
       expect(@survey_response.checkout_by_user).to eq @user
       expect(@survey_response.checkout_token).to eq "token"
       expect(@survey_response.checkout_expiration.strftime("%Y%m%d")).to eq 2.days.from_now.strftime("%Y%m%d")
+      expect(@survey_response.survey_response_logs.first.message).to eq "Checked out."
+      expect(@survey_response.survey_response_logs.first.user).to eq @user
     end
 
     it "fails if survey is already checked out" do
@@ -141,6 +143,26 @@ describe Api::V1::SurveyResponsesController do
       expect(response.status).to eq 500
       expect(JSON.parse response.body).to eq({'errors' => ["No checkout_token received."]})
     end
+
+    it "fails if survey is archived" do
+      @survey_response.archived = true
+      @survey_response.save!
+
+      post :checkout, {id: @survey_response.id, checkout_token: "token"}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is archived.']})
+    end
+
+    it "fails if survey is archived" do
+      @survey_response.survey.archived = true
+      @survey_response.survey.save!
+
+      post :checkout, {id: @survey_response.id, checkout_token: "token"}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is archived.']})
+    end
   end
 
   describe "cancel_checkout" do
@@ -158,7 +180,7 @@ describe Api::V1::SurveyResponsesController do
       j = JSON.parse response.body
 
       # This method calls the same renderer as show, just test that some of the data we're
-      # expecting to modify is in the rendered result and the survey_resposne
+      # expecting to modify is in the rendered result and the survey_response
       expect(j['survey_response']['checkout_token']).to be_nil
       expect(j['survey_response']['checkout_expiration']).to be_nil
       expect(j['survey_response']['checkout_by_user']).to be_nil
@@ -167,6 +189,9 @@ describe Api::V1::SurveyResponsesController do
       expect(@survey_response.checkout_by_user).to be_nil
       expect(@survey_response.checkout_token).to be_nil
       expect(@survey_response.checkout_expiration).to be_nil
+
+      expect(@survey_response.survey_response_logs.first.message).to eq "Check out cancelled."
+      expect(@survey_response.survey_response_logs.first.user).to eq @user
     end
 
     it "fails if user doesn't own the checkout" do
@@ -200,6 +225,26 @@ describe Api::V1::SurveyResponsesController do
 
       expect(response.status).to eq 403
       expect(JSON.parse response.body).to eq({'errors' => ['Access denied.']})
+    end
+
+    it "fails if survey is archived" do
+      @survey_response.archived = true
+      @survey_response.save!
+
+      post :cancel_checkout, {id: @survey_response.id, checkout_token: "token"}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is archived.']})
+    end
+
+    it "fails if survey is archived" do
+      @survey_response.survey.archived = true
+      @survey_response.survey.save!
+
+      post :cancel_checkout, {id: @survey_response.id, checkout_token: "token"}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is archived.']})
     end
   end
 
@@ -261,6 +306,10 @@ describe Api::V1::SurveyResponsesController do
 
       expect(a.answer_comments.first.content).to eq "This is a comment."
       expect(a.answer_comments.first.user).to eq @user
+
+      expect(@survey_response.survey_response_logs.first.message).to eq "Checked in."
+      expect(@survey_response.survey_response_logs.first.user).to eq @user
+      expect(@survey_response.survey_response_updates.first.user).to eq @user
     end
 
     it "updates existing answers" do
@@ -277,6 +326,17 @@ describe Api::V1::SurveyResponsesController do
       expect(a.choice).to eq "Yes"
       expect(a.answer_comments.size).to eq 1
       expect(a.answer_comments.first.content).to eq "This is a comment."
+    end
+
+    it "errors if survey checkout has expired" do
+      @survey_response.checkout_by_user = nil
+      @survey_response.checkout_token = nil
+      @survey_response.checkout_expiration = nil
+      @survey_response.save!
+
+      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["The survey checkout has expired.  Check out the survey again before checking it back in."]})
     end
 
     it "skips updating existing answer comments" do
@@ -343,6 +403,26 @@ describe Api::V1::SurveyResponsesController do
       post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
       expect(response.status).to eq 500
       expect(JSON.parse response.body).to eq({'errors' => ["No checkout_token received."]})
+    end
+
+    it "fails if survey is archived" do
+      @survey_response.archived = true
+      @survey_response.save!
+
+      post :checkin, {id: @survey_response.id, 'survey_response' => @req}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is archived.']})
+    end
+
+    it "fails if survey is archived" do
+      @survey_response.survey.archived = true
+      @survey_response.survey.save!
+
+      post :checkin, {id: @survey_response.id, 'survey_response' => @req}
+
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Survey is archived.']})
     end
   end
 end

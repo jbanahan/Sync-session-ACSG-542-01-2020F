@@ -25,27 +25,6 @@
       });
     });
   </script>
-  <div id='survey_response_1' class='modal fade' role='modal'>
-    <div class='modal-dialog'>
-      <div class='modal-content'>
-        <div class='modal-header'>
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h3>New Survey Updates</h3>
-        </div>
-        <div class='modal-body'>
-          <p>Welcome to the new survey screen. We've made some improvements!</p>
-          <ul>
-            <li>We've removed the save button. Everything is now automatically saved each time you leave a field.</li>
-            <li>If someone is making changes, you'll only receive notifications once per hour.</li>
-          </ul>
-        </div>
-        <div class='modal-footer'>
-          <button class='btn' id='sr1_never_show'>Never Show This Again</button>
-          <button class='btn btn-primary' id='sr1_hide'>OK</button>
-        </div>
-      </div>
-    </div>
-  </div>
 <%-end-%>
 <div id='survey-response-wrap' ng-app='SurveyResponseApp' ng-init='response_id = <%=@sr.id%>'>
   <div class='container' ng-controller='srController'>
@@ -57,6 +36,7 @@
     <div chain-modal-message message-object='resp' message-property='success_message' title='Success' clear-on-close='true'></div>
     <div chain-modal-message message-object='resp' message-property='error_message' title='Error' clear-on-close='true'></div>
     <div class="alert alert-warning" ng-show="resp.archived"><p>This survey has been archived.  You may not change anything on archived surveys.</p></div>
+    <div class="alert alert-warning" ng-show="resp.checkout_by_user"><p>This survey has been checked out by {{resp.checkout_by_user.full_name}}.  You may not change anything on checked out surveys.</p></div>
     <div>
       <div class='col-md-12'>
         <span ng-show='resp.saving' class='label label-info'>Saving...</span>&nbsp;
@@ -182,7 +162,7 @@
           {{com.content}}
         </div>
       </div>
-      <div class='row new-comment-wrap' ng-show="!resp.archived">
+      <div class='row new-comment-wrap' ng-show="!resp.archived && resp.can_comment">
         <div class='col-md-12'>
           <label for='new_comment'>New Comment:</label>
           <textarea id='new_comment' ng-model='answer.new_comment' rows='5' style='width:100%;'></textarea>
@@ -209,7 +189,7 @@
           <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
         </div>
       </div>
-      <div class='row' style='margin-top:10px;' ng-show="!resp.archived">
+      <div class='row' style='margin-top:10px;' ng-show="!resp.archived && resp.can_answer">
         <div class='col-md-12'>
           <div chain-attach='answer' attachable-type='Answer' attachable-id='{{answer.id}}'></div>
         </div>

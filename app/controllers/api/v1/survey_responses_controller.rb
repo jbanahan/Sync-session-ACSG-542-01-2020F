@@ -31,11 +31,9 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
 
   def checkout
     sr = checkout_handling(params[:id], params[:checkout_token]) do |sr|
-      sr.checkout_by_user = current_user
-      sr.checkout_token = params[:checkout_token]
-      sr.checkout_expiration = Time.zone.now + 2.days
-
+      sr.checkout current_user, params[:checkout_token]
       sr.save!
+      sr.survey_response_logs.create!(:message=>"Checked out.",:user_id=>current_user.id)
     end
 
     render json: json_survey_response(sr, current_user) if sr
@@ -43,8 +41,9 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
 
   def cancel_checkout
     sr = checkout_handling(params[:id], params[:checkout_token]) do |sr|
-      remove_checkout_info sr
+      sr.clear_checkout
       sr.save!
+      sr.survey_response_logs.create!(:message=>"Check out cancelled.",:user_id=>current_user.id)
     end
 
     render json: json_survey_response(sr, current_user) if sr
@@ -54,7 +53,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
     #TODO Figure out how to handle attachments
     req = params[:survey_response]
 
-    sr = checkout_handling(req.try(:[], 'id'), req.try(:[], 'checkout_token')) do |sr|
+    sr = checkout_handling(req.try(:[], 'id'), req.try(:[], 'checkout_token'), true) do |sr|
       # We ONLY want to check in/update data that the survey taker themselves can actually update
       # (This skips such things as ratings and any answer/comments/etc that already have an id).
       sr.name = req[:name]
@@ -70,9 +69,10 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
         end
       end
 
-      remove_checkout_info sr
-
+      sr.clear_checkout
       sr.save!
+      sr.survey_response_logs.create!(:message=>"Checked in.",:user_id=>current_user.id)
+      sr.log_update current_user
     end
     
     render json: json_survey_response(sr, current_user) if sr
@@ -80,7 +80,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
 
 
   private
-    def checkout_handling survey_response_id, checkout_token
+    def checkout_handling survey_response_id, checkout_token, checking_in = false
       sr = SurveyResponse.find survey_response_id
 
       if checkout_token.blank?
@@ -93,12 +93,21 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
         return
       end
 
-      Lock.with_lock_retry(sr) do 
+      if sr.archived? || sr.survey.archived?
+        render_forbidden "Survey is archived."
+        return
+      end
+
+      Lock.with_lock_retry(sr) do
         if sr.checkout_by_user && sr.checkout_by_user != current_user
           render_forbidden "Survey is checked out by another user."
           return
         else
-          if sr.checkout_by_user && sr.checkout_token && sr.checkout_token != checkout_token
+          # Handle cases where you're trying to checkin a survey that has its checkout expired
+          if checking_in && sr.checkout_by_user.nil?
+            render_forbidden "The survey checkout has expired.  Check out the survey again before checking it back in."
+            return
+          elsif sr.checkout_token && sr.checkout_token != checkout_token
             render_forbidden "Survey is checked out to you on another device."
             return
           end
@@ -109,12 +118,6 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       end
 
       sr
-    end
-
-    def remove_checkout_info sr
-      sr.checkout_by_user = nil
-      sr.checkout_token = nil
-      sr.checkout_expiration = nil
     end
 
     def build_answer sr, user, json
