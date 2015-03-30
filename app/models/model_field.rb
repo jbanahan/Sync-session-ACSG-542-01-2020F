@@ -585,6 +585,8 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::BROKER_INVOICE_LINE,BrokerInvoiceLine)
     ModelField.add_custom_fields(CoreModule::SECURITY_FILING,SecurityFiling)
     ModelField.add_custom_fields(CoreModule::COMPANY,Company)
+    ModelField.add_custom_fields(CoreModule::PLANT,Plant)
+    ModelField.add_custom_fields(CoreModule::PLANT_PRODUCT_GROUP_ASSIGNMENT,PlantProductGroupAssignment)
     ModelField.update_last_loaded update_cache_time
   end
 

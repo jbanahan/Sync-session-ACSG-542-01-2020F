@@ -4,7 +4,7 @@ describe User do
   describe :groups do
     before :each do
       @gA = Factory(:group,system_code:'groupA')
-      
+
       @u1 = Factory(:user)
       @gA.users << @u1
       @u1.reload
@@ -278,7 +278,7 @@ describe User do
     end
     context "broker invoice" do
       context "with company permission" do
-        before :each do 
+        before :each do
           Company.any_instance.stub(:edit_broker_invoices?).and_return(true)
           Company.any_instance.stub(:view_broker_invoices?).and_return(true)
         end
@@ -322,7 +322,7 @@ describe User do
         User.new(:survey_edit=>false).edit_surveys?.should be_false
       end
     end
-    context "entry" do 
+    context "entry" do
       before :each do
         @company = Factory(:company,:broker=>true)
       end
@@ -382,7 +382,7 @@ describe User do
     end
 
     it "should set/unset User settings" do
-      
+
       val = User.run_with_user_settings(@run_as) do
         User.current.should == @run_as
         Time.zone.should == ActiveSupport::TimeZone[@run_as.time_zone]
@@ -401,7 +401,7 @@ describe User do
         User.run_with_user_settings(@run_as) {
           raise Exception, "Error"
         }
-      }.to raise_exception "Error" 
+      }.to raise_exception "Error"
 
       User.current.should == @current_user
       Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
@@ -454,7 +454,7 @@ describe User do
       e.should_receive(:deliver)
       u = Factory(:user)
 
-      OpenMailer.should_receive(:send_invite) do |user, password| 
+      OpenMailer.should_receive(:send_invite) do |user, password|
         user.id.should == u.id
         # Make sure the password has been updated by checking the encrypted
         # versions
@@ -462,7 +462,7 @@ describe User do
         expect(user.password_reset).to be_true
         e
       end
-      
+
       User.send_invite_emails u.id
     end
 
@@ -476,7 +476,7 @@ describe User do
     end
   end
 
-  describe "authenticate" do 
+  describe "authenticate" do
     before :each do
       @user = Factory :user, password: "abc"
     end
@@ -515,7 +515,7 @@ describe User do
       expect(User.access_allowed? user).to be_false
     end
 
-    it "validates user" do 
+    it "validates user" do
       user = Factory(:user)
       expect(User.access_allowed? user).to be_true
     end

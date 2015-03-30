@@ -1,0 +1,90 @@
+<%content_for :javascript do%>
+  $(document).ready(function() {
+    var submitCreate = function() {
+      $('#vname').val($('#ven_name').val());
+      $('#frm_new').submit();
+    }
+    $('#make_vendor').click(function() {
+      var name = $('#ven_name').val();
+      var success = function(data) {
+        var matches = data.matches;
+        if(matches.length==0) {
+          submitCreate();
+        } else {
+          var html = '';
+          $.each(matches, function( index, ven ) {
+            html += "<tr><td><a href='/vendors/"+ven.id+"' class='btn btn-xs btn-default'>Use</a></td><td>"+ven.name+"</td><tr>";
+          });
+          $('#table_matches').html(html);
+          $('#choices_loading').hide();
+          $('#vendor_choices').modal('show');
+        }
+      }
+      if(!name || name.length < 3) {
+        window.alert('Name must be at least 3 letters');
+      } else {
+        $('#choices_loading').show();
+        $.ajax({
+          url: '/vendors/matching_vendors',
+          data: {name: name},
+          success: success
+        });
+      }
+    });
+    $('#btn_create').click(function() {
+      submitCreate();
+    });
+  });
+
+<%end%>
+<%content_for :action_bar do%>
+  <button id='make_vendor'>Create</button>
+<%end%>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="h2">New Vendor</div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class='form'>
+        <div class='form-group'>
+          <label for='ven_name'>Company Name:</label>
+          <input type='text' name='ven_name' id='ven_name' class='form-control'/>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='loader' id='choices_loading' style='display:none;'></div>
+  <div class="modal" id='vendor_choices'>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">Matching Vendors</h4>
+        </div>
+        <div class="modal-body">
+          <p><strong>Are you looking for one of these vendors?</strong></p>
+          <p>If not, click Create New below.</p>
+          <table class="table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Name</th>
+              </tr>
+            </thead>
+            <tbody id='table_matches'></tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id='btn_create'>Create New</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+</div>
+<%=form_for Company.new(vendor:true), url:vendors_path, html:{id:'frm_new'} do |f|%>
+  <%=f.hidden_field :name, id: 'vname'%>
+<%end%>

@@ -5,8 +5,8 @@ class User < ActiveRecord::Base
   include Clearance::User
 
   cattr_accessor :current
-  
-  attr_accessible :username, :email, :time_zone, 
+
+  attr_accessible :username, :email, :time_zone,
     :email_format, :company_id,
     :first_name, :last_name, :search_open,
     :order_view, :order_edit, :order_delete, :order_attach, :order_comment,
@@ -27,10 +27,10 @@ class User < ActiveRecord::Base
     :simple_entry_mode,
     :tariff_subscribed, :homepage,
     :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :group_ids
-  
+
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
-  
+
   has_many   :histories, :dependent => :destroy
   has_many   :item_change_subscriptions, :dependent => :destroy
   has_many   :search_setups, :dependent => :destroy
@@ -189,7 +189,7 @@ class User < ActiveRecord::Base
     ids.each_entry do |id|
       user = User.where(id: id).first
       if user
-        # Because we only store hashed versions of passwords, if we're going to relay users their temporary 
+        # Because we only store hashed versions of passwords, if we're going to relay users their temporary
         # password in an email, the only way we can send them a cleartext password is if we generate and save one here.
         cleartext = SecureRandom.urlsafe_base64(12, false)[0, 8]
         user.update_user_password cleartext, cleartext
@@ -250,7 +250,7 @@ class User < ActiveRecord::Base
     forgot_password!
     OpenMailer.send_password_reset(self).deliver
   end
-  
+
   # is an administrator within the application (as opposed to a sys_admin who is an Vandegrift employee with master control)
   # If you are a sys_admin, you are automatically an admin (as long as this method is called instead of looking directly at the db value)
   def admin?
@@ -261,11 +261,11 @@ class User < ActiveRecord::Base
   def sys_admin?
     self.sys_admin
   end
-  
+
   def active?
     return !self.disabled
   end
-  
+
   #should the advanced search box be open on the user's screen
   def search_open?
     return self.search_open
@@ -276,7 +276,7 @@ class User < ActiveRecord::Base
     n = self.username if n.strip.length==0
     return n
   end
-  
+
   #should a user message be hidden for this user
   def hide_message? message_name
     parse_hidden_messages
@@ -284,7 +284,7 @@ class User < ActiveRecord::Base
   end
 
   #add a message to the list that shouldn't be displayed for this user
-  def add_hidden_message message_name 
+  def add_hidden_message message_name
     parse_hidden_messages
     @parsed_hidden_messages << message_name.upcase
     store_hidden_messages
@@ -299,7 +299,7 @@ class User < ActiveRecord::Base
   def can_view?(user)
     return user.admin? || self==user
   end
-  
+
   def can_edit?(user)
     return user.admin? || self==user
   end
@@ -331,7 +331,7 @@ class User < ActiveRecord::Base
     when CoreModule::CLASSIFICATION
       return self.view_products?
     when CoreModule::OFFICIAL_TARIFF
-      return self.view_official_tariffs? 
+      return self.view_official_tariffs?
     when CoreModule::ENTRY
       return self.view_entries?
     when CoreModule::BROKER_INVOICE
@@ -348,17 +348,19 @@ class User < ActiveRecord::Base
       return self.view_security_filings?
     when CoreModule::COMPANY
       return self.view_vendors? || self.admin?
+    when CoreModule::PLANT
+      return self.view_module?(CoreModule::COMPANY)
     end
     return false
   end
-  
+
   #permissions
   def view_business_validation_results?
     self.company.master?
   end
   def edit_business_validation_results?
     self.company.master?
-  end  
+  end
   def view_business_validation_rule_results?
     self.company.master?
   end
@@ -375,16 +377,16 @@ class User < ActiveRecord::Base
     self.view_attachment_archives?
   end
   def view_security_filings?
-    self.security_filing_view? && self.company.view_security_filings? 
+    self.security_filing_view? && self.company.view_security_filings?
   end
   def edit_security_filings?
-    self.security_filing_edit? && self.company.edit_security_filings? 
+    self.security_filing_edit? && self.company.edit_security_filings?
   end
   def attach_security_filings?
-    self.security_filing_attach? && self.company.attach_security_filings? 
+    self.security_filing_attach? && self.company.attach_security_filings?
   end
   def comment_security_filings?
-    self.security_filing_comment? && self.company.comment_security_filings? 
+    self.security_filing_comment? && self.company.comment_security_filings?
   end
   def view_drawback?
     self.drawback_view? && MasterSetup.get.drawback_enabled?
@@ -423,7 +425,7 @@ class User < ActiveRecord::Base
     self.entry_edit? && self.company.broker?
   end
   def view_orders?
-    self.order_view? && self.company.view_orders? 
+    self.order_view? && self.company.view_orders?
   end
   def add_orders?
     self.order_edit? && self.company.add_orders?
@@ -440,9 +442,9 @@ class User < ActiveRecord::Base
   def comment_orders?
     self.order_comment? && self.company.comment_orders?
   end
-  
+
   def view_products?
-    self.product_view? && self.company.view_products? 
+    self.product_view? && self.company.view_products?
   end
   def add_products?
     self.product_edit? && self.company.add_products?
@@ -462,9 +464,9 @@ class User < ActiveRecord::Base
   def comment_products?
     self.product_comment? && self.company.comment_products?
   end
-  
+
   def view_sales_orders?
-    self.sales_order_view? && self.company.view_sales_orders? 
+    self.sales_order_view? && self.company.view_sales_orders?
   end
   def add_sales_orders?
     self.sales_order_edit? && self.company.add_sales_orders?
@@ -482,7 +484,7 @@ class User < ActiveRecord::Base
     self.sales_order_comment? && self.company.comment_sales_orders?
   end
 
-  
+
   def view_shipments?
     self.shipment_view && self.company.view_shipments?
   end
@@ -501,7 +503,7 @@ class User < ActiveRecord::Base
   def attach_shipments?
     self.shipment_attach? && self.company.attach_shipments?
   end
-  
+
   def view_deliveries?
     self.delivery_view? && self.company.view_deliveries?
   end
@@ -541,6 +543,9 @@ class User < ActiveRecord::Base
   def edit_vendors?
     self.vendor_edit && master_setup.vendor_management_enabled?
   end
+  def create_vendors?
+    self.edit_vendors?
+  end
   def attach_vendors?
     self.vendor_attach && master_setup.vendor_management_enabled?
   end
@@ -551,7 +556,7 @@ class User < ActiveRecord::Base
   def edit_milestone_plans?
     self.admin?
   end
-  
+
   def edit_status_rules?
     self.admin?
   end
@@ -590,7 +595,7 @@ class User < ActiveRecord::Base
     self.hidden_message_json = @parsed_hidden_messages.to_json unless @parsed_hidden_messages.nil?
   end
   def master_setup
-    MasterSetup.get 
+    MasterSetup.get
   end
   def should_update_timestaps?
     no_timestamp_reset_fields = ['confirmation_token','remember_token','last_request_at', 'last_login_at', 'current_login_at', 'failed_login_count', 'host_with_port']

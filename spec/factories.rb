@@ -396,7 +396,11 @@ Factory.define :state_toggle_button do |f|
 
 end
 
-Factory.define :vendor_product_group_assignment do |f|
-  f.association :vendor, factory: :company
+Factory.define :plant do |f|
+  f.sequence(:name) { |n| "pname#{n}"}
+  f.association :company
+end
+Factory.define :plant_product_group_assignment do |f|
+  f.association :plant
   f.association :product_group
 end

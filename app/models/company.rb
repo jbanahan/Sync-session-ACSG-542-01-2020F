@@ -28,7 +28,8 @@ class Company < ActiveRecord::Base
   has_many  :attachment_archive_manifests, :dependent=>:destroy
   has_many  :surveys, dependent: :destroy
   has_many  :attachments, as: :attachable, dependent: :destroy
-  
+  has_many  :plants, dependent: :destroy, inverse_of: :company
+
   has_one :attachment_archive_setup, :dependent => :destroy
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
@@ -55,6 +56,10 @@ class Company < ActiveRecord::Base
 	  end
 	end
 
+  def plants_user_can_view user
+    self.plants.reject{|plant| !plant.can_view?(user)}
+  end
+
   def self.search_secure user, base_search
     if user.company.master?
       return base_search.where('1=1')
@@ -69,7 +74,9 @@ class Company < ActiveRecord::Base
   end
 
 	def can_edit?(user)
-	  return user.admin?
+	  return true if user.admin?
+    return true if self.vendor? && user.edit_vendors?
+    return false
 	end
 
 	def can_view?(user)
@@ -88,7 +95,9 @@ class Company < ActiveRecord::Base
   end
 
   def can_attach?(user)
-    can_edit? user
+    return true if user.admin?
+    return true if self.can_view_as_vendor?(user) && user.attach_vendors?
+    return false
   end
 
   #migrate all users and surveys to the target company

@@ -14,6 +14,8 @@ require 'open_chain/model_field_definition/official_tariff_field_definition'
 require 'open_chain/model_field_definition/order_field_definition'
 require 'open_chain/model_field_definition/order_line_field_definition'
 require 'open_chain/model_field_definition/product_field_definition'
+require 'open_chain/model_field_definition/plant_field_definition'
+require 'open_chain/model_field_definition/plant_product_group_assignment_field_definition'
 require 'open_chain/model_field_definition/sale_field_definition'
 require 'open_chain/model_field_definition/sale_line_field_definition'
 require 'open_chain/model_field_definition/security_filing_field_definition'
@@ -38,6 +40,8 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::OfficialTariffFieldDefinition
   include OpenChain::ModelFieldDefinition::OrderFieldDefinition
   include OpenChain::ModelFieldDefinition::OrderLineFieldDefinition
+  include OpenChain::ModelFieldDefinition::PlantFieldDefinition
+  include OpenChain::ModelFieldDefinition::PlantProductGroupAssignmentFieldDefinition
   include OpenChain::ModelFieldDefinition::ProductFieldDefinition
   include OpenChain::ModelFieldDefinition::SaleFieldDefinition
   include OpenChain::ModelFieldDefinition::SaleLineFieldDefinition
@@ -71,5 +75,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_sale_line_fields
     add_delivery_fields
     add_delivery_line_fields
+    add_plant_fields
+    add_plant_product_group_assignment_fields
   end
 end; end; end

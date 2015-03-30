@@ -1,0 +1,19 @@
+<%content_for :action_bar do %>
+  <button class='form_to' form_id='frm_plant' key_map='s'>Save</button>
+  <button class='btn_link' link_to='<%=vendor_vendor_plant_path(@vendor,@plant)%>'>Cancel</button>
+<%end %>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h2>Edit Plant</h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <%=form_for [@vendor,@plant], url: vendor_vendor_plant_path(@vendor,@plant), html: {id:'frm_plant'} do |f| %>
+        <%=show_model_fields f, [:plant_name]%>
+        <%=show_custom_fields f %>
+      <%end%>
+    </div>
+  </div>
+</div>

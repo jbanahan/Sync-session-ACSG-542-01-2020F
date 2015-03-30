@@ -1,14 +1,13 @@
 class VendorsController < ApplicationController
+  around_filter :view_vendors_filter, only: [:index, :matching_vendors]
   def index
-    action_secure(current_user.view_vendors?, nil, {:verb => "view", :lock_check => false, :module_name=>"vendors"}) {
-      c = Company.where(vendor:true).order(:name)
-      c = Company.search_secure(current_user,c)
-      c = c.where('name like ?',"%#{params[:q]}%") if params[:q]
-      @companies = c.paginate(:per_page=>20, page: params[:page])
-      if !render_infinite_empty(@companies,'vendors')
-        render_layout_or_partial 'index_rows', {companies:@companies}, false
-      end
-    }
+    c = Company.where(vendor:true).order(:name)
+    c = Company.search_secure(current_user,c)
+    c = c.where('name like ?',"%#{params[:q]}%") if params[:q]
+    @companies = c.paginate(:per_page=>20, page: params[:page])
+    if !render_infinite_empty(@companies,'vendors')
+      render_layout_or_partial 'index_rows', {companies:@companies}, false
+    end
   end
 
   def show
@@ -18,7 +17,41 @@ class VendorsController < ApplicationController
     end
   end
 
-  def locations
+  def new
+    action_secure(current_user.create_vendors?,nil, {verb: 'create',module_name:'vendors', lock_check:false}) {
+
+    }
+  end
+
+  def create
+    action_secure(current_user.create_vendors?,nil, {verb: 'create',module_name:'vendors', lock_check:false}) {
+      name = params[:company][:name]
+      if(name.blank?)
+        error_redirect('Name is required.')
+        return
+      end
+      c = Company.create(name:name.strip,vendor:true)
+      if c.errors.full_messages.blank?
+        redirect_to vendor_path(c)
+      else
+        errors_to_flash c
+        redirect_to new_vendor_path
+      end
+    }
+  end
+
+  def matching_vendors
+    error_redirect 'Name must be provided.' if params[:name].blank?
+    test_name = params[:name].gsub(/ /,'')
+    test_name = test_name[0,3] if test_name.length > 3
+    h = {matches:[]}
+    Company.where(vendor:true).where("replace(companies.name,' ','') LIKE ?","%#{test_name}%").order(:name).each do |c|
+      h[:matches] << {id:c.id, name:c.name}
+    end
+    render json:h
+  end
+
+  def addresses
     secure_company_view do |c|
       render layout: false
     end
@@ -48,6 +81,12 @@ class VendorsController < ApplicationController
       @products = @products.where('unique_identifier like ?',"%#{params[:q]}%") if params[:q]
       @products = @products.paginate(:per_page=>20,:page => params[:page])
       @products
+    end
+  end
+
+  def plants
+    secure_company_view do |c|
+      render layout: false
     end
   end
 
@@ -86,4 +125,11 @@ class VendorsController < ApplicationController
       yield @company if block_given?
     }
   end
+
+  def view_vendors_filter
+    action_secure(current_user.view_vendors?, nil, {:verb => "view", :lock_check => false, :module_name=>"vendors"}) {
+      yield
+    }
+  end
+  private :view_vendors_filter
 end

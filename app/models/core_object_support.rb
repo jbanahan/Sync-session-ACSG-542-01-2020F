@@ -7,13 +7,17 @@ module CoreObjectSupport
     base.instance_eval("include EntitySnapshotSupport")
     base.instance_eval("include BroadcastsEvents")
     base.instance_eval("include UpdateModelFieldsSupport")
-    base.instance_eval("has_many   :histories, :dependent => :destroy")
+    if History.column_names.include?(base.name.foreign_key)
+      base.instance_eval("has_many   :histories, :dependent => :destroy")
+    end
+    if ItemChangeSubscription.column_names.include?(base.name.foreign_key)
+      base.instance_eval("has_many   :item_change_subscriptions, :dependent => :destroy")
+    end
     base.instance_eval("has_many   :comments, :as => :commentable, :dependent => :destroy")
-    base.instance_eval("has_many   :attachments, :as => :attachable, :dependent => :destroy") 	
-    base.instance_eval("has_many   :attachment_process_jobs, :as => :attachable, :dependent => :destroy")   
+    base.instance_eval("has_many   :attachments, :as => :attachable, :dependent => :destroy")
+    base.instance_eval("has_many   :attachment_process_jobs, :as => :attachable, :dependent => :destroy")
     base.instance_eval("has_many   :linked_attachments, :as => :attachable, :dependent => :destroy")
     base.instance_eval("has_many   :linkable_attachments, :through => :linked_attachments")
-    base.instance_eval("has_many   :item_change_subscriptions, :dependent => :destroy")
     base.instance_eval("has_many   :change_records, :as => :recordable")
     base.instance_eval("has_many :sync_records, :as => :syncable, :dependent=>:destroy")
     base.instance_eval("has_many :business_validation_results, as: :validatable, dependent: :destroy")
@@ -72,7 +76,7 @@ module CoreObjectSupport
   def view_url
     self.class.excel_url self.id
   end
-  
+
   #return the relative url to the view page for the object
   def relative_url
     self.class.relative_url self.id
@@ -89,11 +93,11 @@ module CoreObjectSupport
       sanitize_sql_array([sql, name, trading_partner])
     end
 
-    def need_sync_where_clause 
-      "(sync_records.id is NULL OR 
+    def need_sync_where_clause
+      "(sync_records.id is NULL OR
          (
-            (sync_records.sent_at is NULL OR 
-             sync_records.confirmed_at is NULL OR 
+            (sync_records.sent_at is NULL OR
+             sync_records.confirmed_at is NULL OR
              sync_records.sent_at > sync_records.confirmed_at OR
              #{table_name}.updated_at > sync_records.sent_at
             ) AND

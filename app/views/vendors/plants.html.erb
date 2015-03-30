@@ -1,0 +1,47 @@
+<script type='text/javascript'>
+  $('#btn_add_plant').click(function() {
+    var pname;
+    pname = window.prompt('Enter plant name:')
+    if(pname && pname.length > 0) {
+      $('#new_plant_name').val(pname);
+      $('#frm_plant').submit();
+    }
+  });
+</script>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12 text-right">
+      <%if @company.can_edit?(current_user)%>
+        <button class='btn btn-success' id='btn_add_plant' title='Add Plant'><span class='glyphicon glyphicon-plus'></span></button>
+        <%=form_for [@company,Plant.new], url: vendor_vendor_plants_path(@company,Plant.new), html: {id:'frm_plant'} do |f| %>
+          <input type='hidden' id='new_plant_name' name='plant[plant_name]' />
+        <%end%>
+      <% end %>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <% if @company.plants.empty? %>
+      <div class="alert alert-info" role="alert">
+        There aren't any plants for this vendor.
+      </div>
+      <% end %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%-@company.plants_user_can_view(current_user).each do |plant|-%>
+            <tr>
+              <td><%=link_to 'View', vendor_vendor_plant_path(@company,plant)%></td>
+              <td><%=plant.name%></td>
+            </tr>
+          <%-end-%>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

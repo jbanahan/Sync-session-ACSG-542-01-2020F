@@ -1,0 +1,23 @@
+<%vendor = @ppga.plant.company%>
+<%content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=vendor_path(vendor)%>'>Vendor</button>
+  <button class='btn_link' link_to='<%=vendor_vendor_plant_path(vendor,@ppga.plant)%>'>Plant</button>
+<%end%>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h2>
+        <a href='<%=vendor_path(vendor)%>'><%=vendor.name%></a>
+        &gt;
+        <a href='<%=vendor_vendor_plant_path(vendor,@ppga.plant)%>'><%=@ppga.plant.name%></a>
+        &gt;
+        <%=@ppga.product_group.name%>
+      </h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <%= show_custom_fields @ppga %>
+    </div>
+  </div>
+</div>

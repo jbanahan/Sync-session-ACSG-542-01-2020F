@@ -39,6 +39,16 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
 
+      resources :plants, only: [] do
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
+      end
+
+      resources :plant_product_group_assignments, only: [] do
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
+      end
+
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
 
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
@@ -468,12 +478,23 @@ OpenChain::Application.routes.draw do
     end
   end
 
-  resources :vendors, :only => [:show,:index] do
+  resources :vendors, :only => [:show,:index,:new,:create] do
     member do
-      get 'locations'
+      get 'addresses'
       get 'orders'
-      get 'survey_responses'
+      get 'plants'
       get 'products'
+      get 'survey_responses'
+    end
+    collection do
+      get 'matching_vendors'
+    end
+    resources :vendor_plants, only: [:show,:edit,:update,:create] do
+      member do
+        get 'unassigned_product_groups'
+        post 'assign_product_group'
+      end
+      resources :plant_product_group_assignments, only: [:show]
     end
   end
   resources :companies do

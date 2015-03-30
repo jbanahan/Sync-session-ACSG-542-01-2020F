@@ -1,5 +1,7 @@
 class ProductGroup < ActiveRecord::Base
 
+  has_many :plant_product_group_assignments, inverse_of: :product_group, dependent: :destroy
+
   validates :name, presence: true, uniqueness: true
 
   before_destroy :validate_in_use
