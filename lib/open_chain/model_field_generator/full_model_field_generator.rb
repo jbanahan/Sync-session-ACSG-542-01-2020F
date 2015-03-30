@@ -1,4 +1,5 @@
 require 'open_chain/model_field_generator/address_generator'
+require 'open_chain/model_field_generator/attachment_generator'
 require 'open_chain/model_field_generator/broker_invoice_entry_field_generator'
 require 'open_chain/model_field_generator/comment_generator'
 require 'open_chain/model_field_generator/company_generator'
@@ -13,6 +14,7 @@ require 'open_chain/model_field_generator/sync_record_generator'
 
 module OpenChain; module ModelFieldGenerator; module FullModelFieldGenerator
   include OpenChain::ModelFieldGenerator::AddressGenerator
+  include OpenChain::ModelFieldGenerator::AttachmentGenerator
   include OpenChain::ModelFieldGenerator::BrokerInvoiceEntryFieldGenerator
   include OpenChain::ModelFieldGenerator::CommentGenerator
   include OpenChain::ModelFieldGenerator::CompanyGenerator

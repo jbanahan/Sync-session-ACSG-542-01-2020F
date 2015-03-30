@@ -47,5 +47,6 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
         can_view_lambda: admin_edit_lambda()
       }]
     ]
+    add_fields CoreModule::COMPANY, make_attachment_arrays(100,'cmp',CoreModule::COMPANY)
   end
 end; end; end

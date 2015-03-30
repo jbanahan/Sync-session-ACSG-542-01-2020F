@@ -221,14 +221,6 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [148,:ent_departments, :departments, "Departments", {:data_type=>:text}],
       [149,:ent_total_add, :total_add, "Total ADD", {:data_type=>:decimal,:currency=>:usd}],
       [150,:ent_total_cvd, :total_cvd, "Total CVD", {:data_type=>:decimal,:currency=>:usd}],
-      [151,:ent_attachment_types,:attachment_types,"Attachment Types",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Attachment Types ignored. (read only)"},
-        :export_lambda=>lambda {|obj| obj.attachment_types.join("\n ") },
-        :qualified_field_name=> "(SELECT GROUP_CONCAT(DISTINCT a_types.attachment_type ORDER BY a_types.attachment_type SEPARATOR '\n ')
-          FROM attachments a_types
-          WHERE a_types.attachable_id = entries.id AND a_types.attachable_type = 'Entry' AND LENGTH(RTRIM(IFNULL(a_types.attachment_type, ''))) > 0)",
-        :can_view_lambda=>lambda {|u| u.company.master?}
-      }],
       [152,:ent_b3_print_date, :b3_print_date, "B3 Print Date", {:data_type=>:datetime}],
       [153,:ent_failed_business_rules,:failed_business_rules,"Failed Business Rule Names",{:data_type=>:string,
         :import_lambda=>lambda {|o,d| "Failed Business Rule Names ignored. (read only)"},
@@ -247,5 +239,6 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
+    add_fields CoreModule::ENTRY, make_attachment_arrays(700,'ent',CoreModule::ENTRY,{ent_attachment_types: lambda {|u| u.company.master?}})
   end
 end; end; end
