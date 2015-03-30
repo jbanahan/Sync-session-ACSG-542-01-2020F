@@ -34,7 +34,7 @@ class FieldValidatorRule < ActiveRecord::Base
   def validate_input(input,nested=false)
     raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if model_field.nil?
     @nested = nested
-    @mf = model_field 
+    @mf = model_field
     r = []
     if self.required? && input.blank?
       r << error_message("#{@mf.label} is required.")
@@ -58,14 +58,14 @@ class FieldValidatorRule < ActiveRecord::Base
   end
 
   #returns the value of the one_of field as an array
-  def one_of_array 
+  def one_of_array
     return [] if self.one_of.blank?
     r = self.one_of.split("\n")
     return r.collect {|v| v.strip}
   end
 
-  def required? 
-    self.required 
+  def required?
+    self.required
   end
 
   def model_field
@@ -86,7 +86,7 @@ class FieldValidatorRule < ActiveRecord::Base
   def view_groups
     # Need to do this because rules are loaded via migrations (which may be running to add the group)
     if respond_to?(:can_view_groups)
-      can_view_groups.to_s.split("\n").sort
+      can_view_groups.to_s.lines.collect{|ln| ln.strip}.sort
     else
       []
     end
@@ -95,7 +95,7 @@ class FieldValidatorRule < ActiveRecord::Base
   def edit_groups
     # Need to do this because rules are loaded via migrations (which may be running to add the group)
     if respond_to?(:can_edit_groups)
-      can_edit_groups.to_s.split("\n").sort
+      can_edit_groups.to_s.lines.collect{|ln| ln.strip}.sort
     else
       []
     end
@@ -144,7 +144,7 @@ class FieldValidatorRule < ActiveRecord::Base
   end
   def validate_one_of val
     return [] if self.one_of.blank?
-    good_vals = self.one_of_array 
+    good_vals = self.one_of_array
     test_vals = good_vals.collect {|v| v.downcase} #remove whitespace and make lowercase
     return [error_message("#{@mf.label} must be one of: #{good_vals.join(", ")}.")] unless test_vals.include? val.to_s.strip.downcase
     return []
