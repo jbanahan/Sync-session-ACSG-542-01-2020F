@@ -350,7 +350,7 @@ describe "SurveyResponseApp", () ->
       answer = null
 
       beforeEach () -> 
-        answer = {id: 1, choice: "", question: {}}
+        answer = {id: 1, choice: "", question: {require_comment_for_choices: [], require_attachment_for_choices: []}}
         $scope.resp.survey_takers = [1]
 
       it "does not show message for answer without errors", () ->
@@ -383,6 +383,16 @@ describe "SurveyResponseApp", () ->
       it "shows warning message for answers without attachments required by question", () ->
         answer.question.require_attachment = true
         answer.attachments = []
+        expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide an attachment.")
+
+      it "shows warning message for answer choice without comment required by question", () ->
+        answer.question.require_comment_for_choices.push "A"
+        answer.choice = "A"
+        expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide a comment.")
+
+      it "shows warning message for answer choice without attachment required by question", () ->
+        answer.question.require_attachment_for_choices.push "A"
+        answer.choice = "A"
         expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide an attachment.")
 
 

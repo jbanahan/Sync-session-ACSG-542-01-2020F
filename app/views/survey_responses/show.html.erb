@@ -106,16 +106,14 @@
     <div ng-repeat='answer in filteredAnswers' style='margin-bottom:20px;'>
       <div class='row'>
         <div class='col-md-12'>
-          <legend class='text-info'>
+          <legend class='text-info' style="padding-bottom: 3px;">
             Question #{{answer.sort_number}} <span ng-show='answer.saving' class='label label-info'>Saving...</span>
+            <div class="pull-right last-updated"><span class="label" style="font-size: 60%" ng-class='{"label-info": answer.hours_since_last_update<24, "label-default": answer.hours_since_last_update > 24}'>Updated <span am-time-ago='answer.updated_at'></span></span></div>
           </legend>
         </div>
       </div>
-      <div class='row'>
-        <div class="col-md-12 text-right last-updated"><span class="label" ng-class='{"label-info": answer.hours_since_last_update<24, "label-default": answer.hours_since_last_update > 24}'>Updated <span am-time-ago='answer.updated_at'></span></span></div>
-      </div>
-      <div class='row alert-warning' ng-show='warningMessage(answer).length > 0'>
-        <div class='col-md-10 alert alert-warning'>
+      <div class='row' ng-show='warningMessage(answer).length > 0'>
+        <div class='alert alert-warning'>
           {{warningMessage(answer)}}
         </div>
       </div>
@@ -125,7 +123,7 @@
         </div>
       </div>
       <div class='row' ng-show='answer.error_message'>
-        <div class='col-md-12 alert alert-error'>{{answer.error_message}}</div>
+        <div class='alert alert-error'>{{answer.error_message}}</div>
       </div>
       <div class='row' ng-show='answer.question.attachments'>
         <div class='col-md-12'>

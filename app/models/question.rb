@@ -1,5 +1,5 @@
 class Question < ActiveRecord::Base
-  belongs_to :survey, :touch=>true
+  belongs_to :survey, touch: true, inverse_of: :questions
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
   
   validates_presence_of :survey
@@ -27,6 +27,14 @@ class Question < ActiveRecord::Base
       return true if response.can_view?(user)
     end
     return false
+  end
+
+  def require_attachment_for_choices
+    self.attachment_required_for_choices.to_s.split(/\r?\n\s*/)
+  end
+
+  def require_comment_for_choices
+    self.comment_required_for_choices.to_s.split(/\r?\n\s*/)
   end
 
   private

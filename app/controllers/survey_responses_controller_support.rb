@@ -56,7 +56,7 @@ module SurveyResponsesControllerSupport
 
     h = sr.as_json(include: [
         {answers:{methods:[:hours_since_last_update],include: {
-          question:{methods:[:html_content,:choice_list], only:[:id,:warning, :require_comment, :require_attachment],include:{attachments:{only:[:id,:attached_file_name]}}},
+          question:{methods:[:html_content,:choice_list, :require_comment_for_choices, :require_attachment_for_choices], only:[:id,:warning, :require_comment, :require_attachment],include:{attachments:{only:[:id,:attached_file_name]}}},
           answer_comments:{only:[:id,:content,:private,:created_at],include:[{user:{only:[:id, :username],methods:[:full_name]}}]}
         }}},
         {survey:{only:[:id,:name],methods:[:rating_values]}}
