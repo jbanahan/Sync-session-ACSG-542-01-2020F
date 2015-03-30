@@ -12,7 +12,7 @@ class AttachmentsController < ApplicationController
           att.delete
           add_flash :errors, "Please choose a file before uploading."
           respond_to do |format|
-            format.html {redirect_to attachable}
+            format.html {redirect_to redirect_location(attachable)}
             format.json {render json: Attachment.attachments_as_json(attachable)}
           end
           return nil #avoid frozen hash issues with the rest of the action
@@ -36,7 +36,7 @@ class AttachmentsController < ApplicationController
       raise $!
     end
   end
-  
+
   def destroy
     att = Attachment.find(params[:id])
     attachable = att.attachable
@@ -46,10 +46,10 @@ class AttachmentsController < ApplicationController
     else
       add_flash :errors, "You do not have permission to delete this attachment."
     end
-    
+
     redirect_to redirect_location(attachable)
   end
-  
+
   def download
     att = Attachment.find(params[:id])
     attachable = att.attachable
@@ -70,7 +70,7 @@ class AttachmentsController < ApplicationController
     render text: "OK"
   end
 
-  private 
+  private
   def redirect_location attachable
     params[:redirect_to].blank? ? attachable : params[:redirect_to]
   end
