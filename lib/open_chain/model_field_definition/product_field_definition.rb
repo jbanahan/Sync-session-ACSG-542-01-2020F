@@ -132,6 +132,7 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
     add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
     add_fields CoreModule::PRODUCT, make_importer_arrays(250,"prod","products")
     add_fields CoreModule::PRODUCT, make_sync_record_arrays(300,'prod','products','Product')
+    add_fields CoreModule::PRODUCT, make_attachment_arrays(400,'prod',CoreModule::PRODUCT)
     add_model_fields CoreModule::PRODUCT, make_country_hts_fields
     add_model_fields CoreModule::PRODUCT, make_region_fields
   end
