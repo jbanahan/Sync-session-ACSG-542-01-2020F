@@ -21,7 +21,7 @@ module OpenChain; module ModelFieldDefinition; module PlantProductGroupAssignmen
           return '' if ppga.plant.company.blank?
           return ppga.plant.company.name
         },
-        qualified_field_name: '(SELECT company.name from plants INNER JOIN companies ON companies.id = plants.company_id WHERE plants.id = plant_product_group_assignments.plant_id)'
+        qualified_field_name: '(SELECT companies.name from plants INNER JOIN companies ON companies.id = plants.company_id WHERE plants.id = plant_product_group_assignments.plant_id)'
       }]
     ]
     add_fields CoreModule::PLANT_PRODUCT_GROUP_ASSIGNMENT, make_attachment_arrays(100,'ppga',CoreModule::PLANT_PRODUCT_GROUP_ASSIGNMENT)
