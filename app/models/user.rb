@@ -350,6 +350,8 @@ class User < ActiveRecord::Base
       return self.view_vendors? || self.admin?
     when CoreModule::PLANT
       return self.view_module?(CoreModule::COMPANY)
+    when CoreModule::PLANT_PRODUCT_GROUP_ASSIGNMENT
+      return self.view_module?(CoreModule::PLANT)
     end
     return false
   end
