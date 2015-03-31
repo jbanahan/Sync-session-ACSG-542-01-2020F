@@ -2,6 +2,9 @@
 <%content_for :action_bar do %>
   <button class='btn_link' link_to='<%=vendor_path(vendor)%>'>Vendor</button>
   <button class='btn_link' link_to='<%=vendor_vendor_plant_path(vendor,@ppga.plant)%>'>Plant</button>
+  <% if @ppga.can_edit?(current_user) %>
+    <button class='form_to' form_id='frm_update' key_map='s'>Save</button>
+  <% end %>
 <%end%>
 <div class="container">
   <div class="row">
@@ -17,7 +20,9 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <%= show_custom_fields @ppga %>
+      <%=form_for [vendor,@ppga.plant,@ppga], url:vendor_vendor_plant_plant_product_group_assignment_path(vendor,@ppga.plant,@ppga), html:{id:'frm_update'} do |f|%>
+        <%= show_custom_fields f %>
+      <%end%>
     </div>
   </div>
 </div>

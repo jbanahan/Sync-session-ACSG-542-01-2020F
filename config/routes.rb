@@ -494,7 +494,7 @@ OpenChain::Application.routes.draw do
         get 'unassigned_product_groups'
         post 'assign_product_group'
       end
-      resources :plant_product_group_assignments, only: [:show]
+      resources :plant_product_group_assignments, only: [:show,:update]
     end
   end
   resources :companies do
