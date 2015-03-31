@@ -100,6 +100,12 @@ class Company < ActiveRecord::Base
     return false
   end
 
+  def can_comment?(user)
+    return true if user.admin?
+    return true if self.can_view_as_vendor?(user) && user.comment_vendors?
+    return false
+  end
+
   #migrate all users and surveys to the target company
   def migrate_accounts target_company
     self.users.update_all(company_id:target_company.id,updated_at:Time.now)

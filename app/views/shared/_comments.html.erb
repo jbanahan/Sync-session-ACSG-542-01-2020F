@@ -12,9 +12,9 @@ $(function() {
                   else
                   {
                     alert("Please enter a valid email address, or leave the \"Email To\" field blank.");
-                  } 
+                  }
                 },
-               "Cancel":function() {$("#mod_comments_add").dialog('close');}}  
+               "Cancel":function() {$("#mod_comments_add").dialog('close');}}
     });
   $("#btn_comment_add").click(function() {
     $("#mod_comments_add").dialog('open');
@@ -75,6 +75,9 @@ function sendComment() {
       </tr>
       <tr class='comment_edit'><td colspan="3">
         <%=form_for c do |f| %>
+          <% if local_assigns.has_key?(:redirect_to)%>
+            <input type='hidden' name='redirect_to' value='<%=redirect_to%>' />
+          <% end %>
           <%=f.hidden_field :commentable_id %>
           <%=f.hidden_field :commentable_type %>
           <%=f.text_field :subject, :class=>'comment_input' %><br />
@@ -91,6 +94,9 @@ function sendComment() {
   <%=form_for(commentable.comments.build, :html=>{:id=>'frm_comment_add'}) do |f| %>
     <%=f.hidden_field :commentable_id %>
     <%=f.hidden_field :commentable_type %>
+    <% if local_assigns.has_key?(:redirect_to)%>
+      <input type='hidden' name='redirect_to' value='<%=redirect_to%>' />
+    <% end %>
     <table>
     <%=field_row "Subject", f.text_field(:subject, :class=>'comment_input') %>
     <%=field_row "Message", f.text_area(:body, :rows => '5', :class=>'comment_input') %>
@@ -99,7 +105,7 @@ function sendComment() {
   <%end%>
 </div>
 <div id='mod_comment_send' style='display:none;'>
-    <input type='hidden' id='send_comment_id' value='' /> 
+    <input type='hidden' id='send_comment_id' value='' />
     To: <input type='text' name='to' id='send_comment_to' /><br />
     <p>Separate addresses with commas (a@b.com, d@b.com)</p>
 </div>
