@@ -22,17 +22,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
   end
 
   def self.do_workflow! vendor, workflow_inst, user
-    cdefs = prep_custom_definitions([:ven_tc_approved_date])
-    trade_compliance = Group.use_system_group 'LL-TRADE-COMP', 'Trade Compliance'
-    tc_approval = first_or_create_test! workflow_inst,
-      'LL-TC-APRV',
-      OpenChain::WorkflowTester::ModelFieldWorkflowTest,
-      'Approve vendor for trade compliance',
-      trade_compliance,
-      {'model_fields'=>[{'uid'=>cdefs[:ven_tc_approved_date].model_field_uid}]},
-      nil,
-      view_path(vendor)
-    tc_approval.test!
+    # cdefs = prep_custom_definitions([:ven_tc_approved_date])
+    # trade_compliance = Group.use_system_group 'LL-TRADE-COMP', 'Trade Compliance'
+    # tc_approval = first_or_create_test! workflow_inst,
+    #   'LL-TC-APRV',
+    #   OpenChain::WorkflowTester::ModelFieldWorkflowTest,
+    #   'Approve vendor for trade compliance',
+    #   trade_compliance,
+    #   {'model_fields'=>[{'uid'=>cdefs[:ven_tc_approved_date].model_field_uid}]},
+    #   nil,
+    #   view_path(vendor)
+    # tc_approval.test!
     return nil
   end
 
