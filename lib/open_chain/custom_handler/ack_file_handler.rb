@@ -23,10 +23,17 @@ module OpenChain
         errors = []
         row_count = 0
         csv_opts = opts[:csv_opts] ? opts[:csv_opts] : {}
+
+        # Trim each line so that there's no trailing spaces on each line
+        # and then use CSV.parse so that we're handling quoted newlines correctly
+        output = StringIO.new
         StringIO.new(file_content).each do |line|
+          output << (line.strip + "\n")
+        end
+        output.rewind
+        CSV.parse(output.read, csv_opts) do |row|
           row_count += 1
           next if row_count == 1
-          row = CSV.parse_line line.strip, csv_opts
           errors << "Malformed response line: #{row.to_csv}" unless row.size==3
           prod = find_object row, opts
           if prod.nil?
