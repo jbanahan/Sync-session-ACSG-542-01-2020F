@@ -21,18 +21,14 @@ class OpenChain::FeedMonitor
   def self.monitor_business_hours monitor_name, current_time, timestamp
     if current_time.wday.between?(1,5) && current_time.hour.between?(8,20)
       if timestamp && (current_time - timestamp) > 2.hours
-        begin
-          raise "#{monitor_name} not updating. Last updated at: #{timestamp.in_time_zone("Eastern Time (US & Canada)").strftime('%Y-%m-%d %H:%M %Z')}"
-        rescue
-          $!.log_me
-        end
+        StandardError.new("#{monitor_name} not updating. Last recorded data exported: #{timestamp.in_time_zone("Eastern Time (US & Canada)").strftime('%Y-%m-%d %H:%M %Z')}").log_me
       end
     end
   end
   def self.monitor_entries source_system, current_time
     if MasterSetup.get.custom_feature?(source_system.downcase) 
-      last_entry = Entry.select("updated_at").where(:source_system=>source_system).order("updated_at DESC").limit(1).first
-      monitor_business_hours source_system, current_time, (last_entry ? last_entry.updated_at : nil) 
+      last_entry = Entry.select("last_exported_from_source").where(:source_system=>source_system).order("last_exported_from_source DESC").limit(1).first
+      monitor_business_hours source_system, current_time, (last_entry ? last_entry.last_exported_from_source : nil) 
     end
   end
 end
