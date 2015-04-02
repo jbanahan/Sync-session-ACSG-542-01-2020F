@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::KewillDataRequester do
 
-  describe "run_schedulable" do
+  describe "request_updated_since_last_run" do
     it "requests updated entry data via sql proxy client" do
       sql_proxy_client = double("SqlProxyClient")
 
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
         true
       end
 
-      described_class.run_schedulable({'sql_proxy_client' => sql_proxy_client})
+      described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client})
 
       # Check that a json key value was created
       key = KeyJsonItem.updated_entry_data('last_request').first
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       sql_proxy_client = double("SqlProxyClient")
       sql_proxy_client.should_receive(:request_updated_entry_numbers).with(ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(original_request), instance_of(ActiveSupport::TimeWithZone))
 
-      described_class.run_schedulable({'sql_proxy_client' => sql_proxy_client})
+      described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client})
 
       # Check that a json key value was updated
       key = KeyJsonItem.updated_entry_data('last_request').first
@@ -42,12 +42,36 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       sql_proxy_client = double("SqlProxyClient")
       sql_proxy_client.should_receive(:request_updated_entry_numbers).and_raise "Error"
       expect {
-        described_class.run_schedulable({'sql_proxy_client' => sql_proxy_client})
+        described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client})
       }.to raise_error
 
       key = KeyJsonItem.updated_entry_data('last_request').first
       expect(key).not_to be_nil
       expect(key.data).to be_blank
+    end
+  end
+
+  describe "request_since_hours_ago" do
+    it "requests data using given hours ago value" do
+      now = Time.zone.now
+      Time.zone.should_receive(:now).and_return now
+      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client.should_receive(:request_updated_entry_numbers).with(now - 1.hour, now)
+
+      described_class.request_update_after_hours_ago 1, 'sql_proxy_client' => sql_proxy_client
+    end
+  end
+
+  describe "run_schedulable" do
+    it "defaults to updated since last run call" do
+      described_class.should_receive(:request_updated_since_last_run)
+
+      described_class.run_schedulable
+    end
+
+    it "uses request update after hours ago if hours ago value is present" do
+      described_class.should_receive(:request_update_after_hours_ago).with(10, {'hours_ago' => 10})
+      described_class.run_schedulable({'hours_ago' => 10})
     end
   end
 

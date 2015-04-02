@@ -66,7 +66,7 @@ module OpenChain; class SqlProxyClient
   end
 
   def request_file_tracking_info start_date, end_time
-    request 'file_tracking', {:start_date => start_date.strftime("%Y%m%d").to_i, :end_time => end_time.strftime("%Y%m%d%H%M").to_i}, {}, results_as_array: true, swallow_error: false
+    request 'file_tracking', {:start_date => start_date.strftime("%Y%m%d").to_i, :end_time => end_time.strftime("%Y%m%d%H%M").to_i}, {results_as_array: true}, swallow_error: false
   end
 
   def request_entry_data file_no
@@ -92,9 +92,6 @@ module OpenChain; class SqlProxyClient
     request_params = {swallow_error: true}.merge request_params
     request_body = {'job_params' => job_params}
     request_body['context'] = request_context unless request_context.blank?
-    if request_params[:results_as_array].to_s == "true"
-      request_body['results_as_array'] = true
-    end
 
     begin
       config = PROXY_CONFIG[Rails.env]

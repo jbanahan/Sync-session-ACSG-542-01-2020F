@@ -3,6 +3,21 @@ require 'open_chain/sql_proxy_client'
 module OpenChain; module CustomHandler; class KewillDataRequester
 
   def self.run_schedulable opts={}
+    if !opts['hours_ago'].blank?
+      request_update_after_hours_ago opts['hours_ago'], opts
+    else
+      request_updated_since_last_run opts
+    end
+  end
+
+  def self.request_update_after_hours_ago hours, opts = {}
+    now = Time.zone.now
+    start_time = now - hours.to_i.hours
+
+    sql_proxy_client(opts).request_updated_entry_numbers start_time, now
+  end
+
+  def self.request_updated_since_last_run opts = {}
     key = KeyJsonItem.updated_entry_data('last_request').first_or_create! json_data: "{}"
     data = key.data
     last_request = data['last_request']
@@ -16,9 +31,7 @@ module OpenChain; module CustomHandler; class KewillDataRequester
     end
 
     now = time_zone.now
-    sql_proxy_client = (opts['sql_proxy_client'] ? opts['sql_proxy_client'] : OpenChain::SqlProxyClient.new)
-
-    sql_proxy_client.request_updated_entry_numbers last_request, now
+    sql_proxy_client(opts).request_updated_entry_numbers last_request, now
 
     # Only save the data once we're pretty sure the query to the sql proxy system was successful
     # This allows us to have the next run just re-request all the data if the query failed
@@ -26,6 +39,11 @@ module OpenChain; module CustomHandler; class KewillDataRequester
     key.data = {'last_request' => now.strftime("%Y-%m-%d %H:%M")}
     key.save!
   end
+
+  def self.sql_proxy_client opts
+    (opts['sql_proxy_client'] ? opts['sql_proxy_client'] : OpenChain::SqlProxyClient.new)
+  end
+  private_class_method :sql_proxy_client
 
   # This method requests all entry data from sql_proxy if the local entry data still shows an update time 
   # prior to the given time.  

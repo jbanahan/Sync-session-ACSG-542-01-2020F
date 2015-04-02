@@ -5,7 +5,7 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
   describe "process_alliance_query_details" do
 
     before :each do 
-      @existing_entry = Factory(:entry, broker_reference: "existing", source_system: "Alliance")
+      @existing_entry = Factory(:entry, broker_reference: "existing", source_system: "Alliance", last_exported_from_source: Time.zone.now)
       @existing_invoice = Factory(:broker_invoice, entry: @existing_entry)
     end
 
@@ -34,7 +34,7 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
       sheet = wb.worksheet 0
       expect(sheet.rows.length).to eq 2
       expect(sheet.name).to eq "Missing File #s"
-      expect(sheet.row(0)).to eq ["File #", "File Logged Date", 'Last Billed Date']
+      expect(sheet.row(0)).to eq ["File #", "File Logged Date", 'Invoice Prepared Date']
       expect(sheet.row(1)).to eq ["file1", '2014-10-01', '2014-10-07']
 
       sheet = wb.worksheet 1

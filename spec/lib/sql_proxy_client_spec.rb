@@ -97,7 +97,7 @@ describe OpenChain::SqlProxyClient do
       start = Time.zone.now
       end_t = start + 1.hour
 
-      request_body = {'results_as_array' => true, 'job_params' => {start_date: start.strftime("%Y%m%d").to_i, end_time: end_t.strftime("%Y%m%d%H%M").to_i}}
+      request_body = {'job_params' => {start_date: start.strftime("%Y%m%d").to_i, end_time: end_t.strftime("%Y%m%d%H%M").to_i}, 'context'=>{results_as_array: true}}
 
       @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/file_tracking", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 

@@ -21,7 +21,6 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
     # The results are a union of two queries.  One which lists all entry files logged in last X days
     # The other is all invoices file in last X days.  The first query is just a file number
     # with blank data in column 2 and the other is the invoice numbers in column 2 blank data in 1
-
     entries_to_query = {}
     invoices_to_query = {}
 
@@ -44,7 +43,10 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
     # see which ones are missing.
     missing_entries = []
     entries_to_query.keys.each_slice(100) do |list|
-      found = Entry.where(source_system: 'Alliance', broker_reference: list).pluck :broker_reference
+      # The last exported from source check is doing an end run around data that might have come over via our new real time feed 
+      # adding entry data on the fly, which will almost always be there prior to this check.
+      # We still want to report the data as missing, since the real time feed only includes dates currently (4/2/2015)
+      found = Entry.where(source_system: 'Alliance', broker_reference: list).where("last_exported_from_source IS NOT NULL").pluck :broker_reference
       if found.size < list.size
         list.each do |e|
           missing_entries << entries_to_query[e] if !found.include?(e)
@@ -67,7 +69,7 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
       wb = XlsMaker.new_workbook
 
       if missing_entries.length > 0
-        add_results wb, "Missing File #s",  ["File #", "File Logged Date", "Last Billed Date"], [:broker_reference, :file_logged_date, :last_billed_date], missing_entries
+        add_results wb, "Missing File #s",  ["File #", "File Logged Date", "Invoice Prepared Date"], [:broker_reference, :file_logged_date, :last_billed_date], missing_entries
       end
 
       if missing_invoices.length > 0
