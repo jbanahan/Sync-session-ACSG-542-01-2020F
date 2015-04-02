@@ -45,6 +45,10 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
     if unique_file
       Lock.acquire(Lock::ALLIANCE_DAY_END_PROCESS) do
+        # Make sure a delayed job hasn't already been queued - this could happen if both files are queued at the exact same time.
+        job = Delayed::Job.where("handler LIKE ?", "%OpenChain::CustomHandler::Intacct::AllianceDayEndHandler%").where("handler LIKE ?", "%process_delayed%").first
+        return if job
+
         day_end_file = CustomFile.where(file_type: OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.name, uploaded_by_id: integration, start_at: nil).where('created_at >= ?', Time.zone.now.to_date).first
 
         if day_end_file

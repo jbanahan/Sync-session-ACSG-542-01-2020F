@@ -302,18 +302,6 @@ FILE
       expect(saved).not_to be_nil
     end
 
-    it "does not kick off day end process if invoice file is not from today" do
-      # Block the attachment setting so we're not saving to S3
-      CustomFile.any_instance.should_receive(:attached=).with @tempfile
-      check_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration, created_at: Time.zone.now - 1.day
-
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
-
-      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
-      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
-      expect(saved).not_to be_nil
-    end
-
     it "recognizes duplicate check file content and does not launch day end" do
       DataCrossReference.create!(key: Digest::MD5.hexdigest("This is a test"), value: "existing.txt", cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM)
 
@@ -345,6 +333,21 @@ FILE
       OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:process_delayed)
 
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
+    end
+
+    it "does not queue day end job if one is already on the queue" do
+      invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
+      dj = Delayed::Job.new
+      dj.handler = "OpenChain::CustomHandler::Intacct::AllianceDayEndHandler--process_delayed"
+      dj.save!
+      
+      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+
+      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
+
+      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
+      expect(saved).not_to be_nil
     end
   end
 end

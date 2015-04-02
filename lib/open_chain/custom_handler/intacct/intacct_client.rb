@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       # bother with the error reporting since our end goal of getting the dimension out there has been met we
       # don't care if this particular call errored.
       message = e.message.try(:downcase)
-      if message.include?("a successful transaction has already been recorded") || message.include?("another class with the given value(s)")
+      if message.include?("a successful transaction has already been recorded") || (message =~ /another \S+ with the given value\(s\)/i)
         return id
       else
         e.log_me ["Failed to find and/or create dimension #{type} #{id} for location #{company}."]

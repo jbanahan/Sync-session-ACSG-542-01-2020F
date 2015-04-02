@@ -86,11 +86,20 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(@c.send_dimension "type", "id", "value").to eq "id"
     end
 
-    it "swallows errors returned by Intacct API related to duplicate create calls" do
+    it "swallows errors returned by Intacct API related to duplicate Class create calls" do
       get_xml = "<xml>test</xml>"
       control = "controlid"
       @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
-      @c.should_receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Another Class with the given value(s) already exists."
+      @c.should_receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Another Class with the given value(s) 12345 already exists."
+
+      expect(@c.send_dimension "type", "id", "value").to eq "id"
+    end
+
+    it "swallows errors returned by Intacct API related to duplicate Project create calls" do
+      get_xml = "<xml>test</xml>"
+      control = "controlid"
+      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      @c.should_receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Another Project with the given value(s) 12345 already exists."
 
       expect(@c.send_dimension "type", "id", "value").to eq "id"
     end
