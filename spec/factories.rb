@@ -33,6 +33,7 @@ Factory.define :user do |f|
   f.password "foobar"
   f.sequence(:email) { |n| "foo#{n}@example.com" }
   f.association :company
+  f.api_auth_token "auth_token"
 end
 Factory.define :master_user, :parent=>:user do |f|
   f.after_create {|u| u.company.update_attributes(:master=>true)}

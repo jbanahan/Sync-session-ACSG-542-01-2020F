@@ -102,16 +102,26 @@ end
     r = {attachable:{id:attachable.id,type:attachable.class.to_s},attachments:[]}
     ra = r[:attachments]
     attachable.attachments.each do |att|
-      x = {
-        name:att.attached_file_name,
-        size:ActionController::Base.helpers.number_to_human_size(att.attached_file_size),
-        type:att.attachment_type,
-        id:att.id
-      }
-      x[:user] = {id:att.uploaded_by.id,full_name:att.uploaded_by.full_name} if att.uploaded_by
-      ra << x
+      ra << attachment_json(att)
     end
     r
+  end
+
+  def self.attachment_json att
+    json = {
+      id: att.id,
+      name: att.attached_file_name, 
+      size: ActionController::Base.helpers.number_to_human_size(att.attached_file_size),
+      type: att.attachment_type
+    }
+    if att.uploaded_by
+      json[:user] = {
+        id: att.uploaded_by.id, 
+        username: att.uploaded_by.username, 
+        full_name: att.uploaded_by.full_name
+      }
+    end
+    json
   end
 
   def self.add_original_filename_method attached_object

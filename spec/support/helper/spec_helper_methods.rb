@@ -22,6 +22,10 @@ module Helpers
   
   def allow_api_access user
     use_json
+    allow_api_user user
+  end
+
+  def allow_api_user user
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials "#{user.username}:#{user.api_auth_token}"
   end
 
@@ -32,5 +36,9 @@ module Helpers
 
   def stub_event_publisher
     OpenChain::EventPublisher.stub(:publish).and_return nil
+  end
+
+  def stub_paperclip
+    Paperclip::Attachment.class.any_instance.stub(:save).and_return true
   end
 end

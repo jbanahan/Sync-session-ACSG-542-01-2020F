@@ -66,7 +66,7 @@ module Api; module V1; class ApiController < ActionController::Base
 
     def user_from_token t
       username, auth_token = t.split(":")
-      User.includes(:groups).find_by_username_and_api_auth_token username, auth_token
+      User.includes(:groups).find_by_username_and_api_auth_token username, (auth_token ? auth_token : "PREVENTS_ACCIDENTAL_NULL_TOKEN_USAGE")
     end
 
     def set_user_settings
