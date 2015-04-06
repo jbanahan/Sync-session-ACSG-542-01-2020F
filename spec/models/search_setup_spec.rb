@@ -61,7 +61,7 @@ describe SearchSetup do
       @s.search_schedules.build
       @s.save
       @s.give_to @u2, true
-      
+
       d = SearchSetup.find_by_user_id @u2.id
       d.name.should == "X (From #{@u.full_name})"
       d.search_schedules.should have(1).item
@@ -75,7 +75,7 @@ describe SearchSetup do
 
   end
   describe :deep_copy do
-    before :each do 
+    before :each do
       @u = Factory(:user)
       @s = SearchSetup.create!(:name=>"ABC",:module_type=>"Order",:user=>@u,:simple=>false,:download_format=>'csv',:include_links=>true)
     end
@@ -139,22 +139,25 @@ describe SearchSetup do
       u = Factory(:admin_user)
       CoreModule::CORE_MODULES.each do |cm|
         cm.klass.stub(:search_where).and_return("1=1")
-        
-        ss = SearchSetup.new(:module_type=>cm.class_name)
-        i = 0
-        cm.model_fields.each_pair do |uid, mf|
-          next unless mf.can_view?(u)
-          ss.search_columns.build(:model_field_uid=>uid,:rank=>(i+=1))
-          ss.sort_criterions.build(:model_field_uid=>uid,:rank=>i)
-          ss.search_criterions.build(:model_field_uid=>uid,:operator=>'null')
+
+        cm.model_fields.keys.in_groups_of(20,false) do |uids|
+          i = 0
+          ss = SearchSetup.new(:module_type=>cm.class_name)
+          uids.each do |uid|
+            mf = cm.model_fields[uid]
+            next unless mf.can_view?(u)
+            ss.search_columns.build(:model_field_uid=>uid,:rank=>(i+=1))
+            ss.sort_criterions.build(:model_field_uid=>uid,:rank=>i)
+            ss.search_criterions.build(:model_field_uid=>uid,:operator=>'null')
+          end
+          #just making sure each query executes without error
+          SearchQuery.new(ss,u).execute
         end
-        #just making sure each query executes without error
-        SearchQuery.new(ss,u).execute
       end
     end
   end
   context :last_accessed do
-    before :each do 
+    before :each do
       @s = Factory :search_setup
     end
 
