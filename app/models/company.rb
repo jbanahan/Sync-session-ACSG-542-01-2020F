@@ -117,7 +117,7 @@ class Company < ActiveRecord::Base
 	end
 
 	def self.find_master
-	  Company.where(:master => true).first
+	  Company.first_or_create(:master => true,name:'Master Company')
 	end
 
   def visible_companies
