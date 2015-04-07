@@ -2,7 +2,7 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
   #find or create all given custom definitions based on the available_fields
   def prep_custom_defs fields_to_init, available_fields
     custom_definitions = {}
-    cloned_instructions = available_fields.clone
+    available_fields.clone
     fields_to_init.each do |code|
       # Clone the instructions so we can modify the read_only value without impacting future runs
       # this prevents weird behavior with multiple calls (like test case runs).
@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
       if cdi
         cust_def = CustomDefinition.where(cdi).first
         if !cust_def
-          cust_def = CustomDefinition.create!(cdi) 
+          cust_def = CustomDefinition.create!(cdi)
           cust_def.reset_cache
         end
         custom_definitions[code] = cust_def
