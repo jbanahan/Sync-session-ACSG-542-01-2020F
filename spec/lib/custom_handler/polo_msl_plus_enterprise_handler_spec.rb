@@ -6,8 +6,9 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   end
   describe :products_to_send do
     before :each do
-      @cd_msl_rec = Factory(:custom_definition,:label=>"MSL+ Receive Date",:data_type=>"date",:module_type=>"Product")
-      @cd_csm_num = Factory(:custom_definition,:label=>"CSM Number",:data_type=>:text,:module_type=>"Product")
+      cdefs = described_class.prep_custom_definitions [:msl_receive_date,:csm_numbers]
+      @cd_msl_rec = cdefs[:msl_receive_date]
+      @cd_csm_num = cdefs[:csm_numbers]
       @countries = {}
       ['US','IT','CA','TW'].each {|iso| @countries[iso] = Factory(:country,:iso_code=>iso)}
       t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['IT']))
