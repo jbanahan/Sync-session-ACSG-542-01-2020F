@@ -42,13 +42,14 @@ module OpenChain
           headers << "Fabric - #{x}"
           headers << "Fabric % - #{x}"
         end
-        headers.push *["Knit / Woven?", "Fiber Content %s", "Common Name 1", "Common Name 2", "Common Name 3", 
+        headers.push *["Knit / Woven?", "Fiber Content %s", "Common Name 1", "Common Name 2", "Common Name 3",
           "Scientific Name 1", "Scientific Name 2", "Scientific Name 3", "F&W Origin 1", "F&W Origin 2", "F&W Origin 3",
           "F&W Source 1", "F&W Source 2", "F&W Source 3", "Origin of Wildlife", "Semi-Precious", "Type of Semi-Precious", "CITES", "Fish & Wildlife"]
 
         file << headers.to_csv
         dont_send_countries = dont_send_classification_countries
         init_outbound_custom_definitions
+        byebug
         products.each do |p|
           classifications = p.classifications.includes(:country, :tariff_records).where("not classifications.country_id IN (?)",dont_send_countries)
           classifications.each do |cl|
@@ -67,13 +68,13 @@ module OpenChain
       # Send the file created by `generate_outbound_sync_file`
       def send_and_delete_sync_file local_file, send_time=Time.now #only override send_time for test case
         send_file local_file, "ChainIO_HTSExport_#{send_time.strftime('%Y%m%d%H%M%S')}.csv"
-        File.delete local_file 
+        File.delete local_file
       end
 
       #process the inbound file
       def process file_content
         user = User.integration
-        
+
         init_inbound_custom_definitions
         field_map = {
           @in_defs[:msl_us_season] => 1,
@@ -92,13 +93,13 @@ module OpenChain
         current_style = nil
         ack_file = Tempfile.new(['msl_ack','.csv'])
         ack_file << ['Style','Time Processed','Status'].to_csv
-        begin 
+        begin
           CSV.parse(file_content,:headers=>true) do |row|
             begin
             current_style = row[0]
             p = Product.find_or_create_by_unique_identifier current_style
             Lock.with_lock_retry(p) do
-              field_map.each {|k,v| p.update_custom_value! k,row[v]} 
+              field_map.each {|k,v| p.update_custom_value! k,row[v]}
               p.update_custom_value! @in_defs[:msl_receive_date], Date.today
             end
             p.update_attributes! last_updated_by: user
@@ -132,7 +133,7 @@ module OpenChain
         ext = parts.slice!(-1)
         fn = "#{parts.join(".")}-ack.#{ext}"
         send_file ack_file, fn
-        File.delete ack_file 
+        File.delete ack_file
       end
 
       def self.send_and_delete_ack_file_from_s3 bucket, path, original_filename
@@ -146,7 +147,7 @@ module OpenChain
         FtpSender.send_file("connect.vfitrack.net",'polo','pZZ117',local_file,{:folder=>(@env==:qa ? '/_test_to_msl' : '/_to_msl'),:remote_file_name=>destination_file_name})
       end
 
-      private 
+      private
 
         def dont_send_classification_countries
           @dont_send_countries ||= Country.where("iso_code IN (?)",['US','CA']).collect{|c| c.id}
@@ -191,8 +192,8 @@ module OpenChain
 
         def init_inbound_custom_definitions
           if @in_defs.nil?
-            @in_defs = self.class.prep_custom_definitions [:msl_receive_date, :msl_us_class, :msl_us_brand, :msl_us_sub_brand, :msl_model_desc, 
-                          :msl_hts_desc, :msl_hts_desc_2, :msl_hts_desc_3, :ax_subclass, :msl_item_desc, :msl_us_season, 
+            @in_defs = self.class.prep_custom_definitions [:msl_receive_date, :msl_us_class, :msl_us_brand, :msl_us_sub_brand, :msl_model_desc,
+                          :msl_hts_desc, :msl_hts_desc_2, :msl_hts_desc_3, :ax_subclass, :msl_item_desc, :msl_us_season,
                           :msl_gcc_desc, :msl_board_number]
           end
           @in_defs
@@ -225,16 +226,16 @@ module OpenChain
         end
 
         def get_custom_values product, *defs
-          defs.map do |d| 
+          defs.map do |d|
             value = product.get_custom_value(@out_cdefs[d]).value
 
-            # This is pretty much solely for formatting the Fiber Percentage fields, but there's no other fields that are 
+            # This is pretty much solely for formatting the Fiber Percentage fields, but there's no other fields that are
             # decimal values that will be more than 2 decimal places, so it works here in the main method for getting the custom values
             if value.is_a?(Numeric)
               value = number_with_precision(value, precision: 2, strip_insignificant_zeros: true)
             end
 
-            value            
+            value
           end
         end
     end

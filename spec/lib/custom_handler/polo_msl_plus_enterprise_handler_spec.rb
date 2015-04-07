@@ -50,6 +50,13 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     end
   end
   describe :outbound_file do
+    before :all do
+      @custom_defs = described_class.new.send(:init_outbound_custom_definitions)
+    end
+    after :all do
+      CustomDefinition.scoped.destroy_all
+      @custom_defs = nil
+    end
     before :each do
       # This example group takes a long time to run just due to the sheer number of custom values
       # created in here.
@@ -62,7 +69,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     end
 
     it "should generate file with appropriate values" do
-      custom_defs = @h.send(:init_outbound_custom_definitions)
+      custom_defs = @custom_defs
       @p.update_custom_value! custom_defs[:length_cm], "1"
       @p.update_custom_value! custom_defs[:width_cm], "2"
       @p.update_custom_value! custom_defs[:height_cm], "3"
@@ -98,7 +105,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
         expect(row[counter+=1]).to eq "Fabric - #{x}"
         expect(row[counter+=1]).to eq "Fabric % - #{x}"
       end
-      expect(row[54..row.length-1]).to eq ["Knit / Woven?", "Fiber Content %s", "Common Name 1", "Common Name 2", "Common Name 3", 
+      expect(row[54..row.length-1]).to eq ["Knit / Woven?", "Fiber Content %s", "Common Name 1", "Common Name 2", "Common Name 3",
           "Scientific Name 1", "Scientific Name 2", "Scientific Name 3", "F&W Origin 1", "F&W Origin 2", "F&W Origin 3",
           "F&W Source 1", "F&W Source 2", "F&W Source 3", "Origin of Wildlife", "Semi-Precious", "Type of Semi-Precious", "CITES", "Fish & Wildlife"]
 
@@ -195,7 +202,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     end
 
     it "strips newlines from values" do
-      custom_defs = @h.send(:init_outbound_custom_definitions)
+      custom_defs = @custom_defs
       @p.update_custom_value! custom_defs[:fiber_content], "1\r\n2\n3"
 
       @tmp = @h.generate_outbound_sync_file Product.where("1=1")
@@ -207,7 +214,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     it "orders tariff records by line number" do
       t2 = Factory(:tariff_record, hts_1: "987654321", classification: @c, line_number: 2)
       @t.update_attributes! line_number: 3
-      
+
       @tmp = @h.generate_outbound_sync_file Product.where("1=1")
       r = CSV.parse IO.read @tmp.path
       expect(r[1][3]).to eq t2.hts_1.hts_format
@@ -216,7 +223,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     it "sends fiber fields if barthco id is not blank" do
       # Just use the first and last fiber fields, otherwise the whole process takes WAY too long to generate
       # 45 new fields
-      custom_defs = @h.send(:init_outbound_custom_definitions)
+      custom_defs = @custom_defs
       @p.update_custom_value! custom_defs[:bartho_customer_id], "ID"
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_1], "Fabric 1"
@@ -234,7 +241,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     end
 
     it "does not send fiber fields if barthco id is blocked" do
-      custom_defs = @h.send(:init_outbound_custom_definitions)
+      custom_defs = @custom_defs
       @p.update_custom_value! custom_defs[:bartho_customer_id], "48650"
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15
@@ -245,7 +252,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     end
 
     it "does not send fiber fields fiber parser failed to parse the fiber content field" do
-      custom_defs = @h.send(:init_outbound_custom_definitions)
+      custom_defs = @custom_defs
       @p.update_custom_value! custom_defs[:bartho_customer_id], "ID"
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15
@@ -271,6 +278,13 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     end
   end
   describe :inbound_file do
+    before :all do
+      @custom_defs = described_class.new.send(:init_inbound_custom_definitions)
+    end
+    after :all do
+      @custom_defs = nil
+      CustomDefinition.destroy_all
+    end
     before :each do
       @file_content = "US Style Number,US Season,Board Number,Item Description,US Model Description,GCC Style Description,HTS Description 1,HTS Description 2,HTS Description 3,AX Sub Class,US Brand,US Sub Brand,US Class
 7352024LTBR,F12,O26SC10,LEATHER BARRACUDA-POLYESTER,LEATHER BARRACUDA,Men's Jacket,100% Real Lambskin Men's Jacket,TESTHTS2,TESTHTS3,Suede/Leather Outerwear,Menswear,POLO SPORTSWEAR,OUTERWEAR
@@ -282,13 +296,13 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @style_numbers = ["7352024LTBR","3221691177NY","322169117JAL","443590","4371543380AX"]
       @h.stub(:send_file)
     end
-    
+
     it "should write new product" do
       @tmp = @h.process @file_content
       Product.count.should == 5
-      Product.all.collect {|p| p.unique_identifier}.should == @style_numbers 
+      Product.all.collect {|p| p.unique_identifier}.should == @style_numbers
       p = Product.where(:unique_identifier=>"7352024LTBR").includes(:custom_values).first
-      cdefs = @h.send(:init_inbound_custom_definitions)
+      cdefs = @custom_defs
 
       p.get_custom_value(cdefs[:msl_board_number]).value.should == "O26SC10"
       p.get_custom_value(cdefs[:msl_gcc_desc]).value.should =="Men's Jacket"
@@ -308,7 +322,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       expect(p.last_updated_by).to eq User.integration
     end
     it "should update existing product" do
-      cdefs = @h.send(:init_inbound_custom_definitions)
+      cdefs = @custom_defs
       p = Product.create!(:unique_identifier=>"7352024LTBR")
       p.update_custom_value! cdefs[:msl_board_number], "ABC"
       p.update_custom_value! cdefs[:msl_receive_date], 1.year.ago
@@ -348,7 +362,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @tmp = @h.process @file_content
       tmp_content = CSV.parse IO.read @tmp.path
       tmp_content[1][2].should == "PERROR"
-      tmp_content[2][0].should == "3221691177NY" 
+      tmp_content[2][0].should == "3221691177NY"
     end
     it "should FTP acknowledgement file" do
       @tmp = File.new('spec/support/tmp/abc.csv','w')
@@ -369,7 +383,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @tempfile.flush
     end
 
-    after :each do 
+    after :each do
       @tempfile.close! unless @tempfile.closed?
     end
 

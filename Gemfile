@@ -60,6 +60,7 @@ gem 'connection_pool', '~> 2.1'
 
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
+  # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
   gem 'factory_girl', '2.5.2'
   gem 'spork'
   gem 'byebug'
@@ -78,4 +79,3 @@ group :assets do
   gem 'coffee-rails', " ~> 3.2.1"
   gem 'uglifier'
 end
-
