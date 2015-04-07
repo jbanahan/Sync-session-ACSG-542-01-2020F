@@ -60,6 +60,7 @@ OpenChain::Application.routes.draw do
           post :checkout
           post :cancel_checkout
           post :checkin
+          post :submit
         end
       end
 

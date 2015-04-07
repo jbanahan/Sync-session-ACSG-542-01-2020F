@@ -424,5 +424,335 @@ describe Api::V1::SurveyResponsesController do
       expect(response.status).to eq 403
       expect(JSON.parse response.body).to eq({'errors' => ['Survey is archived.']})
     end
+
+    context "with corrective_action_plan" do
+      before :each do
+        @cap = @survey_response.create_corrective_action_plan! status: CorrectiveActionPlan::STATUSES[:active]
+        @comment = @cap.comments.create! body: "Comment", user: @user, created_at: (Time.zone.now - 1.day)
+        @issue = @cap.corrective_issues.create! description: "Description", suggested_action: "Do this", action_taken: "Did that"
+        @att = @issue.attachments.create! attached_file_name: "file.txt", attached_file_size: 1
+
+        @req = {
+          id: @survey_response.id,
+          checkout_token: @survey_response.checkout_token,
+          corrective_action_plan: {
+            comments: [
+              {id: @comment.id, body: "body"},
+              {body: "Another Comment"}
+            ],
+            corrective_issues: [
+              {id: @issue.id, action_taken: "Did something else"}
+            ]
+          }
+        }
+
+      end
+
+      it "updates corrective action plan data" do
+        post :checkin, {id: @survey_response.id, 'survey_response' => @req}
+        expect(response).to be_success
+
+        @cap.reload
+        @issue.reload
+        # Comments are ordered in desc order
+        expect(@cap.comments.size).to eq 2
+        expect(@cap.comments.first.body).to eq "Another Comment"
+        expect(@cap.corrective_issues.size).to eq 1
+        expect(@cap.corrective_issues.first.action_taken).to eq "Did something else"
+
+        j = JSON.parse response.body
+        cp = j['survey_response']['corrective_action_plan']
+        first_comment = @cap.comments.first
+        second_comment = @cap.comments.second
+        expect(cp).to eq({
+          id: @cap.id,
+          status: "Active",
+          can_edit: false,
+          can_update_actions: true,
+          comments: [
+            {
+              id: first_comment.id,
+              body: first_comment.body,
+              html_body: first_comment.html_body,
+              user: {
+                id: first_comment.user.id,
+                username: first_comment.user.username,
+                full_name: first_comment.user.full_name
+              }
+            },
+            {
+              id: second_comment.id,
+              body: second_comment.body,
+              html_body: second_comment.html_body,
+              user: {
+                id: first_comment.user.id,
+                username: first_comment.user.username,
+                full_name: first_comment.user.full_name
+              }
+            }
+          ],
+          corrective_issues: [
+            {
+              id: @issue.id,
+              description: @issue.description,
+              html_description: @issue.html_description,
+              suggested_action: @issue.suggested_action,
+              html_suggested_action: @issue.html_suggested_action,
+              action_taken: @issue.action_taken,
+              html_action_taken: @issue.html_action_taken,
+              resolved: nil,
+              attachments: [
+                {
+                  id: @att.id,
+                  name: @att.attached_file_name,
+                  type: nil,
+                  size: "1 Byte"
+                }
+              ]
+            }
+          ]
+
+        }.with_indifferent_access)
+
+      end
+
+      it "skips action plan data for new plans" do
+        @cap.status = CorrectiveActionPlan::STATUSES[:new]
+        @cap.save!
+
+        post :checkin, {id: @survey_response.id, 'survey_response' => @req}
+        expect(response).to be_success
+
+        @cap.reload
+        expect(@cap.comments.size).to eq 1
+        expect(@cap.corrective_issues.first.action_taken).to eq "Did that"
+      end
+
+      it "skips action plan data for resolved plans" do
+        @cap.status = CorrectiveActionPlan::STATUSES[:resolved]
+        @cap.save!
+
+        post :checkin, {id: @survey_response.id, 'survey_response' => @req}
+        expect(response).to be_success
+
+        @cap.reload
+        expect(@cap.comments.size).to eq 1
+        expect(@cap.corrective_issues.first.action_taken).to eq "Did that"
+      end
+    end
+  end
+
+  describe "submit" do
+     before :each do
+      @user = Factory(:user, survey_view: true)
+      @survey = Factory(:survey)
+      @question = Factory(:question, survey: @survey, content: "Is this a test?", choices: "Yes\nNo", rank: 1)
+      @survey_response = @survey.generate_response! @user
+      @survey_response.update_attributes! name: "Name", address: "123 Fake St", phone: "123-456-7890", email: "me@there.com"
+      @survey_response.survey_response_logs.destroy_all
+      @answer = @survey_response.answers.first
+      allow_api_access @user
+    end
+
+    it "marks a response as submitted" do
+      post :submit, {id: @survey_response.id}
+      expect(response).to be_success
+      @survey_response.reload
+
+      j = JSON.parse response.body
+      # The response should be the same as a show response...just check for an id
+      expect(j['survey_response']['id']).to eq @survey_response.id
+
+      expect(@survey_response.submitted_date.strftime "%Y-%m-%d").to eq Time.zone.now.strftime("%Y-%m-%d")
+      expect(@survey_response.survey_response_logs.size).to eq 1
+      expect(@survey_response.survey_response_logs.first.message).to eq "Response submitted."
+      expect(@survey_response.survey_response_logs.first.user).to eq @user
+      expect(@survey_response.survey_response_updates.size).to eq 1
+      expect(@survey_response.survey_response_updates.first.user).to eq @user
+    end
+
+    it "validates name present" do
+      @survey_response.update_attributes! name: nil
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+    end
+
+    it "validates address present" do
+      @survey_response.update_attributes! address: nil
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+    end
+
+    it "validates phone present" do
+      @survey_response.update_attributes! phone: nil
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+    end
+
+    it "validates email present" do
+      @survey_response.update_attributes! email: nil
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+    end
+
+    it "validates not archived" do
+      @survey_response.archived = true
+      @survey_response.save!
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["Archived surveys cannot be submitted."]})
+    end
+
+    it "validates not rated" do
+      @survey_response.rating = "Rated"
+      @survey_response.save!
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["Rated surveys cannot be submitted."]})
+    end
+
+    it "validates not expired" do
+      @survey_response.expiration_notification_sent_at = (Time.zone.now - 1.minute)
+      @survey_response.save!
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["Expired surveys cannot be submitted."]})
+    end
+
+    it "validates not checked out" do
+      @survey_response.checkout_token = "token"
+      @survey_response.save!
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["Checked out surveys cannot be submitted."]})
+    end
+
+    it "validates not submitted" do
+      @survey_response.submitted_date = Time.zone.now
+      @survey_response.save!
+      post :submit, {id: @survey_response.id}
+      expect(response.status).to eq 403
+      expect(JSON.parse response.body).to eq({'errors' => ["Submitted surveys cannot be submitted."]})
+    end
+
+    context "without locked questions" do
+      before :each do
+        Survey.any_instance.stub(:locked?).and_return false
+      end
+
+      it "validates required questions are answered" do
+        @question.warning = true
+        @question.save!
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ["Question #1 is a required question. You must provide an answer."]})
+      end
+
+      it "validates required questions have comments" do
+        @question.warning = true
+        @question.choices = nil
+        @question.save!
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ["Question #1 is a required question. You must provide a comment."]})
+      end
+
+      it "validates questions marked as requiring comments have them" do
+        @question.require_comment = true
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ["Question #1 is a required question. You must provide a comment."]})
+      end
+
+      it "validates questions marked as requiring comments have them, ignoring comments by non-survey takers" do
+        @question.require_comment = true
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+         @answer.answer_comments.create! content: "Comment", user: Factory(:user)
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ["Question #1 is a required question. You must provide a comment."]})
+      end
+
+      it "validates does not error if questions requiring comments have comments" do
+        @question.require_comment = true
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        @answer.answer_comments.create! content: "Comment", user: @user
+        post :submit, {id: @survey_response.id}
+        expect(response).to be_success
+      end
+
+      it "validates questions marked as requiring comments for a specific choice have them" do
+        @question.comment_required_for_choices = "Yes"
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ["Question #1 is a required question. You must provide a comment."]})
+      end
+
+      it "validates questions marked as requiring comments for a specific choice doesn't fail if choice is not in list" do
+        @question.comment_required_for_choices = "No"
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        post :submit, {id: @survey_response.id}
+        expect(response).to be_success
+      end
+
+      it "validates questions marked as requiring attachments have them" do
+        @question.require_attachment = true
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ["Question #1 is a required question. You must provide an attachment."]})
+      end
+
+      it "validates questions marked as requiring attachments have them, ignoring attachments by non-survey takers" do
+        @question.require_attachment = true
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        @answer.attachments.create! attached_file_name: "file.text", uploaded_by: Factory(:user)
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ["Question #1 is a required question. You must provide an attachment."]})
+      end
+
+      it "validates does not error if questions requiring attachments have comments" do
+        @question.warning = true
+        @question.require_attachment = true
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        @answer.attachments.create! attached_file_name: "file.text", uploaded_by: @user
+        post :submit, {id: @survey_response.id}
+        expect(response).to be_success
+      end
+
+      it "validates questions marked as requiring comments for a specific choice have them" do
+        @question.warning = true
+        @question.attachment_required_for_choices = "Yes"
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ["Question #1 is a required question. You must provide an attachment."]})
+      end
+
+      it "validates questions marked as requiring attachments for a specific choice doesn't fail if choice is not in list" do
+        @question.attachment_required_for_choices = "No"
+        @question.save!
+        @answer.update_attributes! choice: "Yes"
+        post :submit, {id: @survey_response.id}
+        expect(response).to be_success
+      end
+    end
+    
   end
 end

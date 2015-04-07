@@ -35,17 +35,19 @@ class SurveyResponsesController < ApplicationController
       error_redirect "You do not have permission to work with this survey."
       return
     end
-    log_message = "Response saved."
-    if sr.assigned_to_user? current_user
-      if params[:do_submit]
-        sr.submitted_date = 0.seconds.ago 
-        sr.save!
-        log_message = "Response submitted."
+
+    Lock.with_lock_retry(sr) do
+      if sr.assigned_to_user?(current_user) && params[:do_submit]
+        if submit_survey_response sr, current_user
+          sr.save
+        end
+      else
+        sr.update_attributes params[:survey_response]
+        sr.survey_response_logs.create!(:message=>"Response saved.",:user=>current_user)
+        sr.log_update current_user
       end
     end
-    sr.update_attributes params[:survey_response] unless params[:survey_response].blank?
-    sr.survey_response_logs.create!(:message=>log_message,:user_id=>current_user.id)
-    sr.log_update current_user
+    
     add_flash :notices, "Response saved successfully."
     respond_to do |format|
       format.html {redirect_to sr}

@@ -36,25 +36,6 @@ $(function() {
   });
 
 });
-
-function updateResolutionStatus(issueID){
-  resolutionStatus = $("#ci-"+issueID+"-checkbox").prop("checked");
-
-  $.ajax({
-  url: '/corrective_issues/'+issueID+'/update_resolution',
-  type: 'POST',
-  data:
-    {
-      is_resolved: resolutionStatus
-    }
-  })
-  .done(function(data){
-    console.log("The resolution status of this issue has been updated.");
-  })
-  .fail(function(data){
-    alert("This issue's resolution status could not be updated.  Please try again after reloading the page.");
-  });
-}
 <%-end-%>
 <%-content_for :action_bar do -%>
   <button class='btn btn_link' link_to='<%=url_for survey_response_path(@cap.survey_response)%>'>Back</button>
@@ -212,14 +193,11 @@ function updateResolutionStatus(issueID){
                 <div class="checkbox">
                   <label>
                     <% if @cap.can_edit?(current_user) %>
-                      <span ng-switch on="ci.resolved">
-                        <input ng-switch-when="true" type="checkbox" checked id="ci-{{ci.id}}-checkbox" onclick="updateResolutionStatus({{ci.id}})">
-                        <input ng-switch-default type="checkbox" id="ci-{{ci.id}}-checkbox" onclick="updateResolutionStatus({{ci.id}})">
-                      </span>
+                      <input type="checkbox" name="resolved" ng-model="ci.resolved" ng-change="updateResolutionStatus(ci)">
                     <% else %>
                       <span ng-switch on="ci.resolved">
-                        <input ng-switch-when="true" type="checkbox" checked disabled title="You do not have permission to change this issue's resolution status." id="ci-{{ci.id}}-checkbox">
-                        <input ng-switch-default type="checkbox" disabled title="You do not have permission to change this issue's resolution status." id="ci-{{ci.id}}-checkbox">
+                        <input ng-switch-when="true" type="checkbox" checked disabled title="You do not have permission to change this issue's resolution status.">
+                        <input ng-switch-default type="checkbox" disabled title="You do not have permission to change this issue's resolution status.">
                       </span>
                     <% end %>
                       Issue resolved
