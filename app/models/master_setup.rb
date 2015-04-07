@@ -3,7 +3,7 @@ class MasterSetup < ActiveRecord::Base
 
   CACHE_KEY = "MasterSetup:setup"
 
-  after_update :update_cache 
+  after_update :update_cache
   after_find :update_cache
 
   def self.current_config_version
@@ -24,12 +24,12 @@ class MasterSetup < ActiveRecord::Base
   def self.get use_in_memory_version=true
     m = (use_in_memory_version ? MasterSetup.current : nil)
     begin
-      m = CACHE.get CACHE_KEY unless m 
+      m = CACHE.get CACHE_KEY unless m
     rescue
     end
     if m.nil? || !m.is_a?(MasterSetup)
       m = init_base_setup
-      CACHE.set CACHE_KEY, m 
+      CACHE.set CACHE_KEY, m
     end
     m.is_a?(MasterSetup) ? m : MasterSetup.first
   end
@@ -68,6 +68,18 @@ class MasterSetup < ActiveRecord::Base
     m = MasterSetup.first
     if m.nil?
       m = MasterSetup.create!(:uuid => UUIDTools::UUID.timestamp_create.to_s)
+      if User.scoped.empty?
+        c = Company.first_or_create!(name:'My Company',master:true)
+        if c.users.empty?
+          pass = 'init_pass'
+          u = c.users.build(:username=>"chainio_admin",:email=>"support@vandegriftinc.com")
+          u.password = pass
+          u.sys_admin = true
+          u.admin = true
+          u.save
+          OpenMailer.send_new_system_init(pass).deliver if Rails.env=="production"
+        end
+      end
     end
     m
   end
