@@ -49,7 +49,6 @@ module OpenChain
         file << headers.to_csv
         dont_send_countries = dont_send_classification_countries
         init_outbound_custom_definitions
-        byebug
         products.each do |p|
           classifications = p.classifications.includes(:country, :tariff_records).where("not classifications.country_id IN (?)",dont_send_countries)
           classifications.each do |cl|
