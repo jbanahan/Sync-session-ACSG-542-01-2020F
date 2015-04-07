@@ -122,7 +122,7 @@ module SurveyResponsesControllerSupport
       }
     )
     j[:can_edit] = (cap.can_edit?(user) && cap.status!=CorrectiveActionPlan::STATUSES[:resolved])
-    j[:can_update_actions] = (cap.can_update_actions?(user) && !cap.status!=CorrectiveActionPlan::STATUSES[:resolved])
+    j[:can_update_actions] = (cap.can_update_actions?(user) && cap.status == CorrectiveActionPlan::STATUSES[:active])
     j["corrective_action_plan"][:corrective_issues].each do |ci|
       issue = cap.corrective_issues.find {|iss| ci['id'].to_i == iss.id}
       ci[:attachments] = Attachment.attachments_as_json(issue)[:attachments] unless issue.nil?
