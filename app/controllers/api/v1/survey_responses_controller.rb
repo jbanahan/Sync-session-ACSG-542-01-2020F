@@ -69,15 +69,47 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
         end
       end
 
+      save_cap = false
+      if req[:corrective_action_plan] && sr.corrective_action_plan && sr.corrective_action_plan.can_view?(current_user) && sr.corrective_action_plan.status == CorrectiveActionPlan::STATUSES[:active]
+        update_corrective_action_plan(sr.corrective_action_plan, req[:corrective_action_plan], current_user)
+        save_cap = true
+      end
+
       sr.clear_checkout
       sr.save!
+      sr.corrective_action_plan.save! if save_cap
       sr.survey_response_logs.create!(:message=>"Checked in.",:user_id=>current_user.id)
       sr.log_update current_user
+      if save_cap
+        sr.corrective_action_plan.save!
+      end
+      
     end
     
     render json: json_survey_response(sr, current_user) if sr
   end
 
+  def submit
+    sr = find_survey_response params[:id], current_user
+
+    # Only survey takers (.ie can_view?) can submit, raters (can_edit?) 
+    # cannot submit
+    if !sr.can_view?(current_user)
+      render_forbidden "Survey is archived."
+      return
+    end
+
+    Lock.with_lock_retry(sr) do 
+      if submit_survey_response(sr, current_user)
+        sr.save!
+      else
+        render_forbidden sr.errors.full_messages
+        return
+      end
+    end
+
+    render json: json_survey_response(sr, current_user)
+  end
 
   private
     def checkout_handling survey_response_id, checkout_token, checking_in = false
@@ -156,6 +188,26 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       end
 
       answer
+    end
+
+    def update_corrective_action_plan cap, req, user
+      # caps can have comments, only create these...user can't update comments
+      Array.wrap(req[:comments]).each do |com|
+        next unless com[:id].blank?
+
+        cap.comments.build body: com[:body], user: user
+      end
+
+      # caps can have corrective issues, only update the action_taken on these.  This is
+      # the only portion of the issue the survey taker can update.
+      Array.wrap(req[:corrective_issues]).each do |iss|
+        # There are never new issues added by the end-user..
+        issue = cap.corrective_issues.find {|i| i.id == iss['id'].to_i}
+        next unless issue
+
+        issue.action_taken = iss[:action_taken]
+      end
+
     end
 
 end; end; end

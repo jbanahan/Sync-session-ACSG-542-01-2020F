@@ -1,8 +1,8 @@
 class CorrectiveActionPlan < ActiveRecord::Base
   belongs_to :survey_response
   belongs_to :created_by, :class_name => 'User'
-  has_many   :comments, :as => :commentable, :dependent => :destroy  
-  has_many   :corrective_issues, dependent: :destroy, inverse_of: :corrective_action_plan
+  has_many   :comments, as: :commentable, dependent: :destroy, autosave: true
+  has_many   :corrective_issues, dependent: :destroy, inverse_of: :corrective_action_plan, autosave: true
   
   attr_accessible :status, :created_by_id
 

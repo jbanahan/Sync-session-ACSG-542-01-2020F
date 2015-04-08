@@ -127,8 +127,8 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
   $scope.warningMessage = (answer) ->
     show_warning = $scope.showWarning(answer)
     has_comments = $scope.answerHasUserComments(answer)
-    show_require_attachment = answer.question.require_attachment && !$scope.answerHasAttachments(answer)
-    show_require_comment = answer.question.require_comment && !has_comments
+    show_require_attachment = $scope.answerRequiresAttachment(answer) && !$scope.answerHasAttachments(answer)
+    show_require_comment =  $scope.answerRequiresUserComments(answer) && !has_comments
 
     warning = ""
     if show_warning || show_require_attachment || show_require_comment
@@ -152,6 +152,12 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
       else
         return if $scope.answerHasUserComments(answer) then false else true
     false
+
+  $scope.answerRequiresUserComments = (answer) -> 
+    answer.question.require_comment || (answer.question.require_comment_for_choices && answer.question.require_comment_for_choices.length > 0 && (answer.choice in answer.question.require_comment_for_choices))
+
+  $scope.answerRequiresAttachment = (answer) -> 
+    answer.question.require_attachment || (answer.question.require_attachment_for_choices && answer.question.require_attachment_for_choices.length > 0 && (answer.choice in answer.question.require_attachment_for_choices))
 
   $scope.answerHasUserComments = (answer) ->
     if answer.answer_comments

@@ -20,6 +20,10 @@ class CorrectiveIssue < ActiveRecord::Base
     mdown action_taken
   end
 
+  def can_view? user
+    corrective_action_plan.can_view?(user) || corrective_action_plan.can_edit?(user)
+  end
+
   private
   def mdown t
     return '' if t.blank?

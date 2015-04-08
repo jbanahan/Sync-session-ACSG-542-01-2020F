@@ -36,36 +36,17 @@ $(function() {
   });
 
 });
-
-function updateResolutionStatus(issueID){
-  resolutionStatus = $("#ci-"+issueID+"-checkbox").prop("checked");
-
-  $.ajax({
-  url: '/corrective_issues/'+issueID+'/update_resolution',
-  type: 'POST',
-  data:
-    {
-      is_resolved: resolutionStatus
-    }
-  })
-  .done(function(data){
-    console.log("The resolution status of this issue has been updated.");
-  })
-  .fail(function(data){
-    alert("This issue's resolution status could not be updated.  Please try again after reloading the page.");
-  });
-}
 <%-end-%>
 <%-content_for :action_bar do -%>
   <button class='btn btn_link' link_to='<%=url_for survey_response_path(@cap.survey_response)%>'>Back</button>
   <%-if @cap.status!=@cap.class::STATUSES[:active] && @cap.can_edit?(current_user) -%>
-  <%=button_to 'Activate', activate_survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:put, :form_class=>"inline-button-to", :class=>'btn btn-default', :id=>'btn-activate'%>
+  <%=button_to 'Activate', activate_survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:put, :form_class=>"inline-button-to", :class=>'btn navbar-btn btn-default', :id=>'btn-activate'%>
   <%-end-%>
   <%-if @cap.can_delete?(current_user)-%>
-    <%=button_to 'Delete', survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:delete, :form_class=>'inline-button-to', :class=>'btn btn-default'%>
+    <%=button_to 'Delete', survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:delete, :form_class=>'inline-button-to', :class=>'btn navbar-btn btn-default'%>
   <%-end-%>
   <%-if @cap.status==@cap.class::STATUSES[:active] && @cap.can_edit?(current_user)-%>
-    <%=button_to 'Resolve', resolve_survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:put, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <%=button_to 'Resolve', resolve_survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:put, :form_class=>"inline-button-to", :class=>'btn navbar-btn btn-default'%>
   <%-end-%>
 <%-end-%>
 <style>
@@ -211,19 +192,14 @@ function updateResolutionStatus(issueID){
               <div class="col-md-4">
                 <div class="checkbox">
                   <label>
-                    <% if @cap.can_edit?(current_user) %>
-                      <span ng-switch on="ci.resolved">
-                        <input ng-switch-when="true" type="checkbox" checked id="ci-{{ci.id}}-checkbox" onclick="updateResolutionStatus({{ci.id}})">
-                        <input ng-switch-default type="checkbox" id="ci-{{ci.id}}-checkbox" onclick="updateResolutionStatus({{ci.id}})">
-                      </span>
+                    <% if @cap.can_edit?(current_user) && @cap.status != @cap.class::STATUSES[:resolved] %>
+                      <input type="checkbox" name="resolved" ng-model="ci.resolved" ng-change="updateResolutionStatus(ci)"> Issue resolved
                     <% else %>
                       <span ng-switch on="ci.resolved">
-                        <input ng-switch-when="true" type="checkbox" checked disabled title="You do not have permission to change this issue's resolution status." id="ci-{{ci.id}}-checkbox">
-                        <input ng-switch-default type="checkbox" disabled title="You do not have permission to change this issue's resolution status." id="ci-{{ci.id}}-checkbox">
+                        <span ng-switch-when="true">This issue has been marked as resolved.</span>
+                        <span ng-switch-default>This issue <em>has not</em> been marked as resolved.</span>
                       </span>
                     <% end %>
-                      Issue resolved
-                    </input>
                   </label>
                 </div>
               </div>
@@ -238,11 +214,13 @@ function updateResolutionStatus(issueID){
                 <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
               </div>
             </div>
+            <%- if @cap.status != @cap.class::STATUSES[:resolved] -%>
             <div class='row' style='margin-top:10px;'>
               <div class='col-md-12'>
                 <div chain-attach='ci' attachable-type='CorrectiveIssue' attachable-id='{{ci.id}}'></div>
               </div>
             </div>
+            <%- end -%>
           </fieldset>
         </div>
       </div>

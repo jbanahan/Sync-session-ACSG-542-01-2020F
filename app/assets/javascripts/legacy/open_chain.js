@@ -396,7 +396,7 @@ var OpenChain = (function() {
 })();
 var OCSurvey = (function() {
   return {
-    addQuestion: function(id,content,choices,attachments,warning, require_comment, require_attachment) {
+    addQuestion: function(id,content,choices,attachments,warning, require_comment, require_attachment, comment_required_for_choices, attachment_required_for_choices) {
       var mid = id ? id : new Date().getTime();
       var h = "<div class='question_box' id='q-"+mid+"' style='display:none;'>";
 
@@ -406,11 +406,14 @@ var OCSurvey = (function() {
       h += "<div id='qb-"+mid+"'><img src='/assets/drag_handle.gif' alt='move' class='question_handle'/>Question Body:</div><textarea id='q_"+mid+"' class='q_area' q-id='"+mid+"' name='survey[questions_attributes]["+mid+"][content]' rows='8'>"+content+"</textarea><br/>";
       h += "<div style='display:none;' id='q_error_"+mid+"' class='text-danger'></div>";
       h += "<a href='#' class='q_preview' qid='"+mid+"'>Preview</a><br />";
-      h += "Possible Answers: (put one answer on each line)<br/><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
+      h += "Possible Answers: (put one answer on each line)<br><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
       h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"
-      h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Require respondant to select an answer OR if no answers are given above, require a comment?</div>"
-      h += "<div><input id='rc_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][require_comment]' value='1' "+(require_comment ? "checked='checked'" : "")+"/> Require respondant to add a comment?</div>"
-      h += "<div><input id='ra_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][require_attachment]' value='1' "+(require_attachment ? "checked='checked'" : "")+"/> Require respondant to add an attachment?</div>"
+      h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"> Require respondent to select an answer OR if no answers are given above, require a comment?</div>"
+      h += "<div><input id='rc_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][require_comment]' value='1' "+(require_comment ? "checked='checked'" : "")+"> Require respondent to add a comment?</div>"
+      h += "Require respondent to add a comment if choice is one of:<br><textarea id='rafc_"+mid+"' name='survey[questions_attributes]["+mid+"][comment_required_for_choices]' rows='3'>" + (comment_required_for_choices ? comment_required_for_choices : "")+ "</textarea>"
+      h += "<div><input id='ra_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][require_attachment]' value='1' "+(require_attachment ? "checked='checked'" : "")+"> Require respondent to add an attachment?</div>"
+      h += "Require respondent to add an attachment if choice is one of:<br><textarea id='rafc_"+mid+"' name='survey[questions_attributes]["+mid+"][attachment_required_for_choices]' rows='3'>" + (attachment_required_for_choices ? attachment_required_for_choices : "") + "</textarea>"
+
 
       h += "<div id='qa_"+mid+"'><div class='row'><div class='col-md-12'><h4>Attachments</h4></div></div>"
       if (typeof(attachments) != "undefined" && attachments != null){

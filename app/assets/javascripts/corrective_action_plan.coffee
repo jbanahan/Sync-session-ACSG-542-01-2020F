@@ -95,6 +95,13 @@ capApp.factory 'correctiveActionPlanService', ['$http','$sce',($http,$sce) ->
           svc.settings.viewMode = 'error'
         ))
 
+    updateResolutionStatus: (issue) ->
+      $http.post('/corrective_issues/'+issue.id+'/update_resolution', {is_resolved: issue.resolved}).then(((resp) ->
+        # do nothing
+      ), ((resp) -> 
+        svc.settings.viewMode = 'error'
+      ))
+
     load: (surveyResponseId,correctiveActionPlanId) ->
       @.setDataFromPromise $http.get(@.makeUrl(surveyResponseId,correctiveActionPlanId))
 
@@ -124,4 +131,7 @@ capApp.controller 'CorrectiveActionPlanController', ['$scope','$http','correctiv
   $scope.$watch 'capService.cap', ((newVal,oldVal) ->
     $scope.cap = newVal
   )
+
+  $scope.updateResolutionStatus = (issue) ->
+    $scope.capService.updateResolutionStatus(issue)
 ]
