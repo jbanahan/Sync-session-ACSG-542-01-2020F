@@ -69,6 +69,7 @@ class Lock
   # indifinite locks, but that's probably not entirely wise (if an indefinite lock happens and is blocking for too long
   # it can be cleared by using the release_stale_locks! method of Redis::Semaphore).
   def self.acquire(lock_name, opts = {})
+    lock_name = clean_lock_name(lock_name)
     already_acquired = definitely_acquired?(lock_name)
 
     # The whole concept of temp locks is largely moot w/ redis...given the temporal nature of its "database"
@@ -124,6 +125,24 @@ class Lock
 
     result
   end
+
+  def self.clean_lock_name lock_name
+    # If the lock IS UTF-8, strip any invalid chars...these seem to sometimes crop up when we're 
+    # parsing data from untrusted sources and using it for key values (like in imported file spreadsheets, csv files, etc.)
+    # We don't really care that the lock name has bad UTF-8 chars in it...let that get handled elsewhere
+    # All we care about here is that the mutex lock is established.
+    if lock_name.encoding && lock_name.encoding.name == "UTF-8"
+      if !lock_name.valid_encoding?
+        lock_name = lock_name.chars.select(&:valid_encoding?).join
+      end
+    else
+      # If the lock isn't UTF-8, convert it to that (for the redis ruby client's sake).
+      lock_name = lock_name.encode('UTF-8', invalid: :replace, replace: '')
+    end
+
+    lock_name
+  end
+  private_class_method :clean_lock_name
 
   def self.acquire_for_class klass, opts={}
     return self.acquire(klass.name,opts) {yield}

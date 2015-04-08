@@ -244,6 +244,35 @@ describe Lock do
       stop = Time.now.to_i
       expect(stop - start).to be >= 2
     end
+
+    it "handles invalid UTF-8 encoded strings" do
+      lock_name = "€foo\xA0"
+
+      # Just short circuit the actual code by insisting the lock has already been seen to avoid
+      # hassle of a bunch of other setup crap
+      Lock.should_receive(:definitely_acquired?).with("€foo").and_return true
+
+      locked = false
+      Lock.acquire(lock_name) { locked = true}
+      expect(locked).to be_true
+    end
+
+    it "transcodes lock names to UTF-8" do
+      # Value used will be "foo", since € is not a valid ASCII char so the system won't
+      # know how to translate when forcing the encoding
+      lock_name = "€foo\xA0".force_encoding("ASCII")
+
+      locked_name = nil
+      Lock.should_receive(:definitely_acquired?) do |name|
+        locked_name = name
+        true
+      end
+      locked = false
+      Lock.acquire(lock_name) { locked = true}
+      expect(locked).to be_true
+      expect(locked_name).to eq "foo"
+      expect(locked_name.encoding.name).to eq "UTF-8"
+    end
   end
 
   context :lock_with_retry do
