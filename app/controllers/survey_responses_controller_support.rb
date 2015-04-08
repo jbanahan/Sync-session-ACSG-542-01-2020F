@@ -1,7 +1,16 @@
 module SurveyResponsesControllerSupport
 
   def survey_responses_for_index user
-    SurveyResponse.where("user_id = ? OR group_id IN (?)", user.id, user.groups.map(&:id)).joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false))
+    responses = SurveyResponse.where("user_id = ? OR group_id IN (?)", user.id, user.groups.map(&:id)).joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false)).readonly(false)
+    responses.each do |resp|
+      # Clear any checkout information if it's out-dated
+      if resp.checkout_expiration && resp.checkout_expiration < Time.zone.now
+        resp.clear_checkout
+        resp.save!
+      end
+    end
+
+    responses
   end
 
   def find_survey_response id, current_user
@@ -68,7 +77,7 @@ module SurveyResponsesControllerSupport
     h['survey_response']['can_rate'] = !archived && rate_mode?(sr, user) && sr.checkout_by_user.nil?
     h['survey_response']['can_answer'] = !archived && respond_mode?(sr, user) && sr.checkout_by_user.nil?
     h['survey_response']['can_submit'] = !archived && respond_mode && sr.submitted_date.blank? && sr.checkout_by_user.nil?
-    h['survey_response']['can_comment'] = sr.checkout_by_user.nil?
+    h['survey_response']['can_comment'] = !archived && sr.checkout_by_user.nil?
     h['survey_response']['can_make_private_comment'] = !archived && sr.can_edit?(user) && sr.checkout_by_user.nil?
     h['survey_response'][:answers].each_with_index do |a, i| 
       a['sort_number'] = (i+1)
@@ -199,13 +208,12 @@ module SurveyResponsesControllerSupport
       missing_user_comments = requires_comment && a.answer_comments.find {|c| survey_takers.include? c.user}.nil?
       missing_attachment = requires_attachment && a.attachments.find {|att| survey_takers.include? att.uploaded_by}.nil?
 
-      error_base = "Question ##{q.rank} is a required question."
       error = nil
 
       # Technically, there can be more than one issue w/ an answer.  You can error requiring a choice, requiring a comment and an attachemnt.
       # So make sure we list everything that might be wrong.
       if missing_answer || missing_user_comments || missing_attachment
-        error = "Question ##{q.rank} is a required question."
+        error = "Question ##{q.rank + 1} is a required question."
 
         error << " You must provide an answer." if missing_answer
         error << " You must provide a comment." if missing_user_comments

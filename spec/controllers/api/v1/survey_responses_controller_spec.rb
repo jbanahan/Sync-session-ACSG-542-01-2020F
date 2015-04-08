@@ -66,7 +66,7 @@ describe Api::V1::SurveyResponsesController do
 
     it "includes checkout information" do
       user = Factory(:user, survey_view: true)
-      s = Factory(:survey_response, subtitle: "sub", user: user, checkout_by_user: user, checkout_token: "token", checkout_expiration: Time.zone.now)
+      s = Factory(:survey_response, subtitle: "sub", user: user, checkout_by_user: user, checkout_token: "token", checkout_expiration: Time.zone.now + 1.day)
       c = s.checkout_by_user
       allow_api_access s.user
 
@@ -77,7 +77,7 @@ describe Api::V1::SurveyResponsesController do
 
     it "excludes checkout token if checked out by another user" do
       user = Factory(:user, survey_view: true)
-      s = Factory(:survey_response, subtitle: "sub", user: user, checkout_by_user: Factory(:user), checkout_token: "token", checkout_expiration: Time.zone.now)
+      s = Factory(:survey_response, subtitle: "sub", user: user, checkout_by_user: Factory(:user), checkout_token: "token", checkout_expiration: Time.zone.now + 1.day)
 
       c = s.checkout_by_user
       allow_api_access s.user
@@ -85,6 +85,17 @@ describe Api::V1::SurveyResponsesController do
       get :index
       expect(response).to be_success
       expect(response.body).to eq({results: [{id: s.id, name: s.survey.name, subtitle: s.subtitle, status: s.status, checkout_token: nil, checkout_by_user: {id: c.id, username: c.username, full_name: c.full_name}, checkout_expiration: s.checkout_expiration}]}.to_json)
+    end
+
+    it "clears checkout information if its outdated" do
+      user = Factory(:user, survey_view: true)
+      s = Factory(:survey_response, subtitle: "sub", user: user, checkout_by_user: Factory(:user), checkout_token: "token", checkout_expiration: Time.zone.now - 1.day)
+
+      c = s.checkout_by_user
+      allow_api_access s.user
+      get :index
+      expect(response).to be_success
+      expect(response.body).to eq({results: [{id: s.id, name: s.survey.name, subtitle: s.subtitle, status: s.status, checkout_token: nil, checkout_by_user: nil, checkout_expiration: nil}]}.to_json)
     end
   end
 
@@ -546,7 +557,7 @@ describe Api::V1::SurveyResponsesController do
      before :each do
       @user = Factory(:user, survey_view: true)
       @survey = Factory(:survey)
-      @question = Factory(:question, survey: @survey, content: "Is this a test?", choices: "Yes\nNo", rank: 1)
+      @question = Factory(:question, survey: @survey, content: "Is this a test?", choices: "Yes\nNo", rank: 0)
       @survey_response = @survey.generate_response! @user
       @survey_response.update_attributes! name: "Name", address: "123 Fake St", phone: "123-456-7890", email: "me@there.com"
       @survey_response.survey_response_logs.destroy_all
