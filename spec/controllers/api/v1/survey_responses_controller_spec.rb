@@ -99,6 +99,41 @@ describe Api::V1::SurveyResponsesController do
     end
   end
 
+  describe "show" do
+
+    before :each do
+      @user = Factory(:user, survey_view: true)
+      @survey_response = Factory(:survey_response,:user=>@user)
+
+      allow_api_access @user
+    end
+
+    it "retrieves a survey response" do
+      get :show, {id: @survey_response.id}
+
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['survey_response']['id']).to eq @survey_response.id
+    end
+
+    it "clears expired checkout information" do
+      @survey_response.checkout_token = "token"
+      @survey_response.checkout_by_user = @user
+      @survey_response.checkout_expiration = Time.zone.now - 1.day
+      @survey_response.save!
+
+      get :show, {id: @survey_response.id}
+
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['survey_response']['id']).to eq @survey_response.id
+      @survey_response.reload
+      expect(@survey_response.checkout_by_user).to be_nil
+      expect(@survey_response.checkout_token).to be_nil
+      expect(@survey_response.checkout_expiration).to be_nil
+    end
+  end
+
   describe "checkout" do
     before :each do
       @user = Factory(:user, survey_view: true)

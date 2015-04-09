@@ -3,11 +3,7 @@ module SurveyResponsesControllerSupport
   def survey_responses_for_index user
     responses = SurveyResponse.where("user_id = ? OR group_id IN (?)", user.id, user.groups.map(&:id)).joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false)).readonly(false)
     responses.each do |resp|
-      # Clear any checkout information if it's out-dated
-      if resp.checkout_expiration && resp.checkout_expiration < Time.zone.now
-        resp.clear_checkout
-        resp.save!
-      end
+      handle_checkout_expiration resp
     end
 
     responses
@@ -31,7 +27,17 @@ module SurveyResponsesControllerSupport
       sr.save
     end
 
+    handle_checkout_expiration sr
+    
     sr
+  end
+
+  def handle_checkout_expiration resp
+    # Clear any checkout information if it's out-dated
+    if resp.checkout_expiration && resp.checkout_expiration < Time.zone.now
+      resp.clear_checkout
+      resp.save!
+    end
   end
 
   def rate_mode? sr, user
