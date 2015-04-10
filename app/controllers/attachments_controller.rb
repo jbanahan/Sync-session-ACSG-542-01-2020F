@@ -61,8 +61,19 @@ class AttachmentsController < ApplicationController
   end
 
   def show_email_attachable
-    @attachments_array = Attachment.where(attachable_type: params[:attachable_type], attachable_id: params[:attachable_id])
-    @attachable = @attachments_array.first.attachable #first doesn't matter; just take any
+    @attachments_array = Attachment.where(attachable_type: params[:attachable_type], attachable_id: params[:attachable_id]).find_all {|a| a.can_view?(current_user)}
+    if @attachments_array.size > 0
+      @attachable = @attachments_array.first.attachable
+    else
+      add_flash :errors, "No attachments available to email."
+      begin
+        attachable = params[:attachable_type].to_s.camelize.constantize.where(id: params[:attachable_id]).first
+        redirect_to redirect_location attachable
+      rescue
+        redirect_back_or_default :root
+      end
+      return
+    end
   end
 
   def send_email_attachable

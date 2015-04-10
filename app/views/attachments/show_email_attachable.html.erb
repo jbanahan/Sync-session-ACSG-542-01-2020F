@@ -1,4 +1,4 @@
-<% number_of_attachments = @attachable.attachments.length %>
+<% number_of_attachments = @attachments_array.length %>
 
 <div class="container">
   <div class="row">
@@ -47,7 +47,7 @@
       <% end %>
     <% end %>
 
-    <% @attachable.attachments.each do |single_attachment| %>
+    <% @attachments_array.each do |single_attachment| %>
       <div class="row">
         <div class="col-md-4 col-md-offset-4">
           <div class="checkbox">
