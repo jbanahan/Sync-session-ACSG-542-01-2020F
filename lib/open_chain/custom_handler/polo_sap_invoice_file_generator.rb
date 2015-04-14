@@ -14,10 +14,10 @@ module OpenChain
       # These are the ONLY the RL Canada importer accounts we're doing automatically, other RL accounts are done by hand for now
       RL_INVOICE_CONFIGS ||= {
         :rl_canada => {name: "RL Canada", tax_id: '806167003RM0001', start_date: Date.new(2013, 6, 01), 
-          email_to: ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
+          email_to: ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "paula.mildon@ralphlauren.com", "brian.fenelli@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
           unallocated_profit_center: "19999999", company_code: "1017", filename_prefix: "RL"
         }, 
-        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["joanne.pauta@ralphlauren.com", "matthew.dennis@ralphlauren.com", "jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
+        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["joanne.pauta@ralphlauren.com", "matthew.dennis@ralphlauren.com", "jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "paula.mildon@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
           unallocated_profit_center: "20399999", company_code: "1710", filename_prefix: "CM"
         }
       }
