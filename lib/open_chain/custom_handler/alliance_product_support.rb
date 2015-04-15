@@ -18,7 +18,8 @@ module OpenChain
             if translated =~ /\x07/
               raise "Untranslatable Non-ASCII character for Part Number '#{row[0]}' found at string index #{$~.begin(0)} in product query column #{column}: '#{val}'."
             else
-              row[column] = translated
+              # Strip newlines from everything, there's no scenario where a newline should be present in the file data
+              row[column] = translated.gsub(/\r?\n/, " ")
             end
           end
         end

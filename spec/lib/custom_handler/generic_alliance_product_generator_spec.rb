@@ -140,6 +140,18 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         expect(described_class.new(@c).sync_fixed_position).to be_nil
         expect(error.message).to eq "Untranslatable Non-ASCII character for Part Number 'Pilcrow ¶' found at string index 8 in product query column 0: 'Pilcrow ¶'."
       end
+      it "replaces carriage return w/ a space" do
+        build_custom_fields @standard_custom_fields, @p
+        @p.update_attributes! name: "Test\nTest"
+        @tmp = described_class.new(@c).sync_fixed_position
+        expect(IO.read(@tmp.path)).to start_with "#{@cd[:prod_part_number][0..14]}Test Test"
+      end
+      it "replaces carriage return / line feed w/ space" do
+        build_custom_fields @standard_custom_fields, @p
+        @p.update_attributes! name: "Test\r\nTest"
+        @tmp = described_class.new(@c).sync_fixed_position
+        expect(IO.read(@tmp.path)).to start_with "#{@cd[:prod_part_number][0..14]}Test Test"
+      end
     end
     describe "query" do
       before :each do
