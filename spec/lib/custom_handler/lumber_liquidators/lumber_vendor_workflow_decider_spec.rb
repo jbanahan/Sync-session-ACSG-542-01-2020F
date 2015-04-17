@@ -230,8 +230,53 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
         end
       end
 
-      it "should assign product compliance vendor agreement review if vendor agreement is attached"
-      it "should assign product compliance approval after vendor agreement review and merch approved"
+      it "should assign product compliance vendor agreement review if vendor agreement is attached and merchandising approved" do
+        # at the time of writing we shouldn't have to test for vendor agreement
+        # being attached since you can't CMP-MERCH-APPROVE without it, but we're
+        # going to check anyway since the rules should be decoupled
+        @v.attachments.create!(attachment_type:'Vendor Agreement (Standard)')
+        cdef = described_class.prep_custom_definitions([:cmp_vendor_agreement_review]).values.first
+        test_doubles = build_passing_tests(['CMP-MERCH-FLDS','CMP-MERCH-VAGREE','CMP-MERCH-APPROVE'])
+        run_with_tests(test_doubles) do
+          wi = described_class.update_workflow!(@v,@u)
+
+          tasks = wi.workflow_tasks.where(task_type_code:'CMP-PC-VAGREE')
+          expect(tasks.count).to eq 1
+
+          wt = tasks.first
+          expect(wt.name).to eq 'Approve vendor agreement for Product Compliance'
+          expect(wt.group.system_code).to eq 'PRODUCTCOMP'
+          expect(wt.test_class_name).to eq 'OpenChain::WorkflowTester::ModelFieldWorkflowTest'
+          expect(wt.due_at).to be_nil
+          expect(wt.view_path).to eq "/vendors/#{@v.id}"
+          expect(wt.passed_at).to be_nil
+          expect(wt.assigned_to).to be_nil
+          p = wt.payload
+          expect(p['model_fields']).to eq [{'uid'=>cdef.model_field_uid.to_s}]
+        end
+      end
+      it "should assign product compliance approval after vendor agreement re view and merch approved" do
+        @v.attachments.create!(attachment_type:'Vendor Agreement (Standard)')
+        cdef = described_class.prep_custom_definitions([:cmp_pc_approved_date]).values.first
+        test_doubles = build_passing_tests(['CMP-MERCH-FLDS','CMP-MERCH-VAGREE','CMP-MERCH-APPROVE','CMP-PC-VAGREE'])
+        run_with_tests(test_doubles) do
+          wi = described_class.update_workflow!(@v,@u)
+
+          tasks = wi.workflow_tasks.where(task_type_code:'CMP-PC-APPROVE')
+          expect(tasks.count).to eq 1
+
+          wt = tasks.first
+          expect(wt.name).to eq 'Approve vendor (Product Compliance)'
+          expect(wt.group.system_code).to eq 'PRODUCTCOMP'
+          expect(wt.test_class_name).to eq 'OpenChain::WorkflowTester::ModelFieldWorkflowTest'
+          expect(wt.due_at).to be_nil
+          expect(wt.view_path).to eq "/vendors/#{@v.id}"
+          expect(wt.passed_at).to be_nil
+          expect(wt.assigned_to).to be_nil
+          p = wt.payload
+          expect(p['model_fields']).to eq [{'uid'=>cdef.model_field_uid.to_s}]
+        end
+      end
     end
     context 'plant level' do
       it "should assign merch required fields"
