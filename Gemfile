@@ -31,7 +31,7 @@ gem 'execjs', '2.0.1'
 gem 'therubyracer', '0.12.0', :require => 'v8'
 gem 'browser'
 
-gem "google-api-client", "0.7.1"
+gem "google-api-client", "0.8.6"
 gem "omniauth-google-oauth2", "0.2.2"
 gem "omniauth-saml", "~> 1.2.0"
 
