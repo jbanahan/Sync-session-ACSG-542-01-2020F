@@ -36,8 +36,6 @@ module Api; module V1; class UsersController < Api::V1::ApiController
       begin
         result = strategy.client.request(:get, 'https://www.googleapis.com/oauth2/v3/userinfo', params: {access_token: access_token}).parsed.with_indifferent_access
       rescue => e
-        byebug
-        puts e.message
         # If the token is bad or old then we'll get an error..we don't really care..just forbid access in this case
       end
 
