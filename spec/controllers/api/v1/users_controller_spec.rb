@@ -60,6 +60,7 @@ describe Api::V1::UsersController do
     end
 
     it "returns 404 if server is not setup for google oauth logins" do
+      described_class.any_instance.should_receive(:test?).and_return false
       Rails.application.config.should_receive(:respond_to?).with(:google_oauth2_api_login).and_return false
 
       post :google_oauth2, access_token: "token"

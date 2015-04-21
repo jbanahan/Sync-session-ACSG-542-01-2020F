@@ -22,8 +22,8 @@ module Api; module V1; class UsersController < Api::V1::ApiController
 
     # Raise a 404 if the interface isn't set up
     # The client_id / client_secret really should be in secrets when we move to rails 4
-    raise ActiveRecord::RecordNotFound unless Rails.application.config.respond_to?(:google_oauth2_api_login) && Rails.application.config.google_oauth2_api_login[:client_id] &&
-                                                Rails.application.config.google_oauth2_api_login[:client_secret]
+    raise ActiveRecord::RecordNotFound unless test? || (Rails.application.config.respond_to?(:google_oauth2_api_login) && Rails.application.config.google_oauth2_api_login[:client_id] &&
+                                                Rails.application.config.google_oauth2_api_login[:client_secret])
 
     access_token = params[:auth_token].presence || params[:access_token]
 
@@ -53,6 +53,10 @@ module Api; module V1; class UsersController < Api::V1::ApiController
   end
 
   private
+    def test? 
+      Rails.env.test?
+    end
+
     def authenticate params
       # This is here so we don't have to conform to Clearance's expected user data hash format
       User.authenticate(params[:user].try(:[], :username), params[:user].try(:[], :password))
