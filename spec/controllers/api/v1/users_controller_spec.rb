@@ -44,6 +44,9 @@ describe Api::V1::UsersController do
     before :each do
       use_json
       @u = Factory(:user, username: "user", api_auth_token: "auth_token", email: "me@gmail.com")
+      @config = {client_secret: "secret", client_id: "id"}
+      Rails.application.config.stub(:google_oauth2_api_login).and_return @config
+      described_class.any_instance.stub(:test?).and_return false
     end
 
     it "uses an omniauth request to validate a user's access token" do
@@ -64,6 +67,18 @@ describe Api::V1::UsersController do
       Rails.application.config.should_receive(:respond_to?).with(:google_oauth2_api_login).and_return false
 
       post :google_oauth2, access_token: "token"
+      expect(response.status).to eq 404
+    end
+
+    it "returns 404 if client_id is not setup" do 
+      @config.delete :client_id
+      post :google_oauth2
+      expect(response.status).to eq 404
+    end
+
+    it "returns 404 if client_secret is not setup" do 
+      @config.delete :client_secret
+      post :google_oauth2
       expect(response.status).to eq 404
     end
 
