@@ -147,8 +147,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
       f = g.generate_file entry_data
       doc = REXML::Document.new(IO.read(f.path))
 
-      expect(f.match(/\*/)).to be_nil
-      expect(f.match(/\?/)).to be_nil
+      expect(f.path.match(/\*/)).to be_nil
+      expect(f.path.match(/\?/)).to be_nil
 
       # just verify some piece of data is there..the whole file is already validated in another test
       REXML::XPath.first(doc, "/tXML/Message/MANH_TPM_Shipment/@Id").value.should eq entry_data[:shipment_identifier]
