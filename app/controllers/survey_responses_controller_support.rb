@@ -93,6 +93,7 @@ module SurveyResponsesControllerSupport
 
       answer = sr.answers.find {|ans| a['id'].to_i == ans.id}
       a[:attachments] = Attachment.attachments_as_json(answer)[:attachments] unless answer.nil?
+      a[:question][:attachments] = Attachment.attachments_as_json(answer.question)[:attachments] unless a[:question].nil? || answer.nil? || answer.question.nil?
     end
 
     # In order to do some validation that questions requiring comments actually have 
