@@ -62,7 +62,7 @@ module OpenChain; module CustomHandler; module UnderArmour
 </tXML>
 XML
 
-      Tempfile.open(["Vandegrift_Event_#{data[:shipment_identifier]}", ".xml"]) do |f|
+      Tempfile.open(["Vandegrift_Event_#{Attachment.get_sanitized_filename(data[:shipment_identifier])}", ".xml"]) do |f|
         f.binmode
         f << xml
         f.flush

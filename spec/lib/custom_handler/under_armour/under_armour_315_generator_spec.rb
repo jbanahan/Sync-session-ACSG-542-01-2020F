@@ -140,12 +140,18 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
 
   describe "generate_file" do
     it "should generate data to a file and return the file" do
-      entry_data = {shipment_identifier: "IO", event_code: "EVENT_CODE", date: Time.zone.now}
+      # make sure we're sanitizing the filename (add illegal characters for windows to make sure they're removed)
+      entry_data = {shipment_identifier: "IO*<>?", event_code: "EVENT_CODE", date: Time.zone.now}
       g = described_class.new
 
       f = g.generate_file entry_data
       doc = REXML::Document.new(IO.read(f.path))
 
+      expect(f.match(/\*/)).to be_nil
+      expect(f.match(/</)).to be_nil
+      expect(f.match(/>/)).to be_nil
+      expect(f.match(/\?/)).to be_nil
+      
       # just verify some piece of data is there..the whole file is already validated in another test
       REXML::XPath.first(doc, "/tXML/Message/MANH_TPM_Shipment/@Id").value.should eq entry_data[:shipment_identifier]
     end
