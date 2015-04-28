@@ -22,11 +22,15 @@ module OpenChain; module WorkflowDecider
     end
   end
 
-  def first_or_create_test! workflow_instance, task_type_code,  test_class, name, assigned_group, payload_hash, due_at=nil, view_path=nil
+  def first_or_create_test! workflow_instance, task_type_code,  test_class, name, assigned_group, payload_hash, due_at=nil, view_path=nil, target_object = nil
     inst = @@test_cache[task_type_code] if defined?(@@test_cache)
     return inst if inst
 
-    workflow_instance.workflow_tasks.where(task_type_code:task_type_code).first_or_create!(
+    wt_scope = workflow_instance.workflow_tasks.where(task_type_code:task_type_code)
+    if target_object
+      wt_scope = wt_scope.where(target_object_id: target_object.id, target_object_type: target_object.class.name)
+    end
+    wt = wt_scope.first_or_create!(
       test_class_name:test_class.name,
       payload_json:payload_hash.to_json,
       name:name,
@@ -34,6 +38,7 @@ module OpenChain; module WorkflowDecider
       due_at:due_at,
       view_path: view_path
     )
+    wt
   end
 
   # convenience method for first_or_create_test! with AttachmentTypeWorkflowTest

@@ -89,6 +89,9 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  namespace :customer do
+    match '/lumber_liquidators/sap_vendor_setup_form/:vendor_id' => 'lumber_liquidators#sap_vendor_setup_form', via: :get
+  end
   resources :delayed_jobs, :only => [:destroy]
   resources :ftp_sessions, :only => [:index, :show] do
     member do

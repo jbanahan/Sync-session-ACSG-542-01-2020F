@@ -1,10 +1,16 @@
 <%content_for :javascript do %>
   $(document).ready(function() {
     ChainAddress.initAddresses();
+    $('#vendor_setup_form').click(function() {
+      window.open('/customer/lumber_liquidators/sap_vendor_setup_form/<%=@company.id%>');
+    });
   });
 <%end%>
 <%content_for :action_bar do %>
   <button class='form_to' form_id='frm_attrs'>Save</button>
+  <%if MasterSetup.get.custom_feature?('Lumber SAP')%>
+    <button id='vendor_setup_form'>Vendor Setup Form</button>
+  <%end%>
 <%end%>
 <style type="text/css">
   #address_map {

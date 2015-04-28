@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SAP Vendor Setup Form</title>
+  <style type="text/css">
+   @page {
+      size: auto;   /* auto is the current printer page size */
+    }
+
+    body {
+      background-color:#FFFFFF; 
+    }
+    .label_cell {
+      font-weight: bold;
+      width: 25%;
+    }
+    #main_title {
+      text-align: center;
+    }
+    #main_flds {
+      width: 90%;
+      margin: auto;
+    }
+    #main_flds td {
+      padding: 1em;
+      border-bottom: 1px solid #ddd;
+    }
+    #print_details {
+      text-align:right;
+      margin-top: 2em;
+      font-size: 80%;
+    }
+  </style>
+</head>
+<body>
+  <h1 id='main_title'>Lumber Liquidators Vendor Setup &amp; Change Form</h1>
+  <table id='main_flds'>
+    <%=show_model_fields @vendor, @model_fields, {table: true, never_hide: true}%>
+  </table>
+  <hr>
+  <div id='print_details'>
+    Printed by: <%=current_user.full_name%><br />
+    Printed date: <%=l 0.seconds.ago%>
+  </div>
+</body>
+</html>

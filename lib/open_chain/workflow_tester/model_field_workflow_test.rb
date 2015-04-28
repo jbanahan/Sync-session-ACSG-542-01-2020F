@@ -1,7 +1,7 @@
 module OpenChain; module WorkflowTester; class ModelFieldWorkflowTest
   def self.category; 'Data'; end
   def self.pass? workflow_task
-    bo = workflow_task.base_object
+    bo = workflow_task.object_to_test
     payload = workflow_task.payload
     regex_hash = {}
     payload['model_fields'].each do |m|

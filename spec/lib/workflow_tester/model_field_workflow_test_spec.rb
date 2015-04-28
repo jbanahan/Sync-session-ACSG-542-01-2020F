@@ -18,10 +18,16 @@ describe OpenChain::WorkflowTester::ModelFieldWorkflowTest do
       @c.update_attributes(system_code:nil)
       expect(described_class.pass?(@t)).to be_false
     end
-    it "shoudl fail if model field doesn't match regex" do
+    it "should fail if model field doesn't match regex" do
       @c.update_attributes(name:'FRED')
       expect(described_class.pass?(@t)).to be_false
     end
-
+    it "should test target_object" do
+      plnt = Factory(:plant,company:@c,name:'Plant Name')
+      @t.target_object = plnt
+      @t.payload_json = '{"model_fields":[{"uid":"plant_name","regex":"Plant Name"}]}'
+      @t.save!
+      expect(described_class.pass?(@t)).to be_true
+    end
   end
 end

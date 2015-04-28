@@ -7,7 +7,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberG
     'PRODUCTCOMP'=>'Product Compliance',
     'EXPRODUCTCOMP'=>'Executive Product Compliance',
     'SAPV'=>'SAP Vendor Management',
-    'LEGAL'=>'Legal'
+    'LEGAL'=>'Legal',
+    'QUALITY'=>'Quality'
   }
 
   def self.included(base)

@@ -6,5 +6,8 @@ class WorkflowInstance < ActiveRecord::Base
   validates :base_object, presence: true
   validates :workflow_decider_class, presence: true
 
+  def destroy_stale_tasks tasks_to_keep, types_to_destroy
+    self.workflow_tasks.where('NOT workflow_tasks.id IN (?)',tasks_to_keep.compact.collect {|t| t.id}.compact).where('task_type_code IN (?)',types_to_destroy).destroy_all
+  end
 
 end

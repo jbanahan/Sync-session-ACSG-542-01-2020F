@@ -13,4 +13,12 @@ class PlantProductGroupAssignment < ActiveRecord::Base
     return false unless self.plant
     return self.plant.can_edit?(user)
   end
+
+  def plant_name
+    self.plant ? self.plant.name : nil
+  end
+
+  def product_group_name
+    self.product_group ? self.product_group.name : nil
+  end
 end

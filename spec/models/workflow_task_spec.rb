@@ -46,6 +46,21 @@ describe WorkflowTask do
     end
   end
 
+  describe :object_to_test do
+    it "should test target_object" do
+      p = Product.new
+      w = WorkflowTask.new
+      w.target_object = p
+      expect(w.object_to_test).to be p
+    end
+    it "should test base_object if target_object.nil?" do
+      p = Product.new
+      w = WorkflowTask.new
+      w.should_receive(:base_object).and_return(p)
+      expect(w.object_to_test).to be p
+    end
+  end
+
   describe :are_overdue do
     it "should find workflow_tasks with due_at in the past" do
       wt1 = Factory(:workflow_task,due_at:1.year.ago)
