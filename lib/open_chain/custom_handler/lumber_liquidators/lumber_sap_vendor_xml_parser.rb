@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize opts={}
     inner_opts = {workflow_processor:WorkflowProcessor.new}.merge opts
-    @cdefs = self.class.prep_custom_definitions [:sap_company]
+    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company]
     @wfp = inner_opts[:workflow_processor]
     @user = User.integration
   end
@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     name = et(base,'NAME1')
     ActiveRecord::Base.transaction do
       c = Company.where(system_code:sap_code).first_or_create!(name:name,vendor:true)
-      sap_num_cv = c.get_custom_value(@cdefs[:sap_company])
+      sap_num_cv = c.get_custom_value(@cdefs[:cmp_sap_company])
       
       attributes_to_update = {}      
       attributes_to_update[:vendor] = true unless c.vendor?
