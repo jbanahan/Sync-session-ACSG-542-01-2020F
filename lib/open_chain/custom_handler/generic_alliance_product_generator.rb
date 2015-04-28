@@ -26,7 +26,7 @@ module OpenChain
         nil
       end
 
-      def initialize importer
+      def initialize importer, custom_where = nil
         # Anything other than a company we'll assume is suitable to be used to lookup a company
         unless importer.nil? || importer.is_a?(Company)
           importer = Company.where(:id => importer).first
@@ -38,6 +38,7 @@ module OpenChain
         @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, 
                     :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, 
                     :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance]
+        @custom_where = custom_where
       end
 
       def sync
@@ -87,7 +88,7 @@ module OpenChain
       end
 
       def query
-        <<-QRY
+        qry = <<-QRY
 SELECT products.id,
 #{cd_s @cdefs[:prod_part_number].id},
 products.name,
@@ -111,11 +112,16 @@ IF(length(#{cd_s @cdefs[:prod_country_of_origin].id, suppress_alias: true})=2,#{
 FROM products
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
 INNER JOIN tariff_records on length(tariff_records.hts_1)=10 AND tariff_records.classification_id = classifications.id
-#{Product.need_sync_join_clause(sync_code)} 
-WHERE 
-#{Product.need_sync_where_clause()} 
-AND products.importer_id = #{@importer.id} AND length(#{cd_s @cdefs[:prod_part_number].id, suppress_alias: true})>0
 QRY
+        if @custom_where.blank?
+          qry += "#{Product.need_sync_join_clause(sync_code)} 
+WHERE 
+#{Product.need_sync_where_clause()} "
+        else 
+          qry += "WHERE #{@custom_where} "
+        end
+        
+        qry += "AND products.importer_id = #{@importer.id} AND length(#{cd_s @cdefs[:prod_part_number].id, suppress_alias: true})>0"
       end
     end
   end
