@@ -371,7 +371,7 @@ module ApplicationHelper
       next if field.blank?
 
       if opts[:table]
-        field = content_tag((opts[:heading] ? :th : :td), field.html_safe, opts[:attributes])
+        field = content_tag((opts[:heading] ? :th : :td), field.html_attributessafe, opts[:attributes])
 
         if opts[:row]
           field = content_tag(:tr, field.html_safe)
@@ -388,7 +388,7 @@ module ApplicationHelper
   def field_row(label, field, never_hide=false, model_field=nil)
     model_field = get_model_field(model_field)
     td_label = content_tag(:td, label.blank? ? "" : label+": ", :class => 'label_cell')
-    is_numeric = model_field && [:decimal,:integer].include?(model_field.data_type) && field && field.to_s.match(/\A[\d\.\-]+\Z/)
+    is_numeric = model_field && [:decimal,:integer].include?(model_field.data_type) && field && !field.to_s.match(/[a-zA-Z\s]/)
     td_content = content_tag(:td, field, :style=>"#{is_numeric ? "text-align:right;" : ""}")
     content_tag(:tr, td_label+td_content, :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
