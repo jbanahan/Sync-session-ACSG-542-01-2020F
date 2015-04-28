@@ -34,7 +34,7 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbackController
 
   def receive_entry_data
     extract_results(params) do |results, context|
-      OpenChain::CustomHandler::KewillEntryParser.delay.parse_json results.to_json
+      OpenChain::CustomHandler::KewillEntryParser.delay.parse results.to_json, save_to_s3: true
       render json: {"OK" => ""}
     end
   end

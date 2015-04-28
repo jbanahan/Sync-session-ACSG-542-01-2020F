@@ -5,8 +5,8 @@
 # `json_data` must be JSON (use the `data` accessor helps with the conversion)
 #
 # For example, you might have 2 entries like with key_scope = car like
-# `logical_key: 'audi', json_data: {'country':'germany','price_level':'mid'`
-# `logical_key: 'ferrari', json_data: {'country':'italy','price_level':'high'`
+# `logical_key: 'audi', json_data: {'country':'germany','price_level':'mid'}`
+# `logical_key: 'ferrari', json_data: {'country':'italy','price_level':'high'}`
 #
 # `json_data` is a TEXT field so it's limited by MYSQL max_allowed_packet size
 class KeyJsonItem < ActiveRecord::Base
@@ -20,6 +20,8 @@ class KeyJsonItem < ActiveRecord::Base
   RL_FIBER_REPORT ||= 'rl_fiber'
   # Entry Data Request Time
   KEWILL_ENTRY_DATA ||= 'kc_entry'
+  # US CUSTOMS PERIODIC MONTHLY DATES (logical key is the year, data is month => day)
+  PERIODIC_MONTHLY_DATES ||= 'usc_periodic_dates'
 
   # turn the object into a json string and store it in the json_data field
   def data= d
@@ -35,4 +37,5 @@ class KeyJsonItem < ActiveRecord::Base
   scope :lands_end_cd, lambda {|logical_key| where(:key_scope=>KS_LANDS_END_CD).where(:logical_key=>logical_key)}
   scope :polo_fiber_report, lambda {|logical_key| where(:key_scope=>RL_FIBER_REPORT).where(:logical_key=>logical_key)}
   scope :updated_entry_data, lambda {|logical_key| where(:key_scope=>KEWILL_ENTRY_DATA).where(:logical_key=>logical_key)}
+  scope :usc_periodic_dates, lambda {|logical_key| where(:key_scope=>PERIODIC_MONTHLY_DATES).where(:logical_key=>logical_key)}
 end

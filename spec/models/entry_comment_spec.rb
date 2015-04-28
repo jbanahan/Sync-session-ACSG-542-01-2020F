@@ -61,6 +61,12 @@ describe EntryComment do
 
       @entry.entry_comments.first.public_comment.should be_false
     end
+
+    it "does not run after hook setting to private if public_comment is already set" do
+      # This would normally be a private comment
+      com = @entry.entry_comments.create!(body: 'stmnt data replaced as requested', public_comment: true)
+      expect(com.public_comment).to be_true
+    end
   end
 
   context :can_view? do
