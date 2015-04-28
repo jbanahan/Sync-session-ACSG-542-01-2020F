@@ -387,7 +387,10 @@ module ApplicationHelper
   # render <tr> with field content
   def field_row(label, field, never_hide=false, model_field=nil)
     model_field = get_model_field(model_field)
-    content_tag(:tr, content_tag(:td, label.blank? ? "" : label+": ", :class => 'label_cell')+content_tag(:td, field, :style=>"#{model_field && [:decimal,:integer].include?(model_field.data_type) ? "text-align:right;" : ""}"), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
+    td_label = content_tag(:td, label.blank? ? "" : label+": ", :class => 'label_cell')
+    is_numeric = model_field && [:decimal,:integer].include?(model_field.data_type) && field && field.to_s.match(/\A[\d\.\-]+\Z/)
+    td_content = content_tag(:td, field, :style=>"#{is_numeric ? "text-align:right;" : ""}")
+    content_tag(:tr, td_label+td_content, :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
 
   # render bootstrap friendly field content
