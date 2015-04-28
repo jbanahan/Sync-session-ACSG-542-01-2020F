@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     # If error, abort...send errors to Luca, Isabelle..one tab for check errors, one tab for ar/ap errors.
     if check_errors.size > 0 || invoice_errors.size > 0
       # Send errors to the users to notify for day end stuff
-      send_parser_errors @check_register.attached_file_name, check_errors, @invoices.attached_file_name, invoice_errors, users.map(&:email), ActiveSupport::TimeZone[user.time_zone].now.to_date
+      send_parser_errors @check_register.attached_file_name, check_errors, @invoices.attached_file_name, invoice_errors, users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
       subject = "Day End Processing Complete With Errors"
       message = "The day end files could not be processed.  A separate report containing the errors will be mailed to you."
       send_messages_to_users users, subject, message
@@ -211,7 +211,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   def all_dimension_uploads_finished?
     return true if Rails.env.development?
     
-    Delayed::Job.where(handler: "method_name: :#{OpenChain::CustomHandler::Intacct::IntacctClient.method(:async_send_dimension).name}").count == 0
+    Delayed::Job.where("handler like ? ", "%method_name: :#{OpenChain::CustomHandler::Intacct::IntacctClient.method(:async_send_dimension).name}%").count == 0
   end
 
   def create_invoices invoice_info, parser, sql_proxy_client
