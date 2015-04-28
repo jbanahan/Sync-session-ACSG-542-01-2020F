@@ -1,3 +1,4 @@
+require 'open_chain/workflow_processor'
 class VendorsController < ApplicationController
   around_filter :view_vendors_filter, only: [:index, :matching_vendors]
   def index
@@ -32,6 +33,7 @@ class VendorsController < ApplicationController
       end
       c = Company.create(name:name.strip,vendor:true)
       if c.errors.full_messages.blank?
+        OpenChain::WorkflowProcessor.async_process c
         redirect_to vendor_path(c)
       else
         errors_to_flash c

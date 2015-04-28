@@ -56,6 +56,7 @@ describe VendorPlantsController do
         'plant_name'=> 'MyPlant',
         "*cf_#{cd.id}"=>'cval'
       }
+      OpenChain::WorkflowProcessor.should_receive(:async_process).with(instance_of(Company))
       put :update, vendor_id: p.company_id, id: p.id, plant:update_hash
       expect(response).to redirect_to("/vendors/#{p.company_id}/vendor_plants/#{p.id}")
       expect(flash[:errors]).to be_blank
@@ -75,6 +76,7 @@ describe VendorPlantsController do
       expect(flash[:errors].size).to eq 1
     end
     it "should create and redirect to edit page" do
+      OpenChain::WorkflowProcessor.should_receive(:async_process).with(instance_of(Company))
       Company.any_instance.stub(:can_edit?).and_return true
       c = Factory(:company)
       expect {post :create, vendor_id: c.id, plant:{plant_name:'MyPlant'}}.to change(c.plants,:count).from(0).to(1)
@@ -115,6 +117,7 @@ describe VendorPlantsController do
       expect(flash[:errors].size).to eq 1
     end
     it "should assign product_group" do
+      OpenChain::WorkflowProcessor.should_receive(:async_process).with(instance_of(Company))
       Plant.any_instance.stub(:can_edit?).and_return true
       plant = Factory(:plant)
       pg = Factory(:product_group)

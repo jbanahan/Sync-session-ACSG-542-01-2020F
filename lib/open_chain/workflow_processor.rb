@@ -42,6 +42,22 @@ HAVING ifnull(wpr.finished_at,DATE('1970-01-01')) < GREATEST(obj.updated_at,ifnu
     return base_object_class.select("#{table_name}.*").joins(join)
   end
 
+  def self.async_process base_object, user=User.integration
+    j = Class.new do
+      include SuckerPunch::Job
+
+      def perform obj, u
+        # The connection pool stuff is needed since SuckerPunch / Celluloid ends up runnign the following
+        # code in a seperate thread which will not have a sql connection established yet, so we get a new one
+        # and run in that.
+        ActiveRecord::Base.connection_pool.with_connection do
+          OpenChain::WorkflowProcessor.new.process!(obj,u)
+        end
+      end
+    end
+    j.new.async.perform(base_object,user)
+  end
+
   def initialize opts = {}
     inner_opts = {stat_client:OpenChain::StatClient}.merge(opts)
     @stat_client = inner_opts[:stat_client]

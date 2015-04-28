@@ -60,6 +60,7 @@ describe VendorsController do
       expect(flash[:errors].first).to match(/create/)
     end
     it "should create if user can create vendors" do
+      OpenChain::WorkflowProcessor.should_receive(:async_process)
       User.any_instance.stub(:create_vendors?).and_return true
       expect{post :create, company:{name:'VNAME'}}.to change(Company,:count).by(1)
       c = Company.last

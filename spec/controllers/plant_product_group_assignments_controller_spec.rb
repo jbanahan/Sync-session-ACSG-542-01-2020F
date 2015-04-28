@@ -28,6 +28,7 @@ describe PlantProductGroupAssignmentsController do
       @h = {"*cf_#{@cd.id}"=>'myval'}
     end
     it "should update if can edit" do
+      OpenChain::WorkflowProcessor.should_receive(:async_process).with(instance_of(Company))
       PlantProductGroupAssignment.any_instance.stub(:can_edit?).and_return true
       post :update, vendor_id: @ppga.plant.company_id, vendor_plant_id:@ppga.plant_id, id: @ppga.id, plant_product_group_assignment: @h
       expect(response).to be_redirect

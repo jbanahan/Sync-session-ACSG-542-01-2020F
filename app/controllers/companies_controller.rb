@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/generic_alliance_product_generator'
+require 'open_chain/workflow_processor'
 class CompaniesController < ApplicationController
   # GET /companies
   # GET /companies.xml
@@ -70,6 +71,7 @@ class CompaniesController < ApplicationController
     action_secure(current_user.company.master, @company, {:verb => "create", :lock_check => false, :module_name=>"company"}) {
       @company = Company.create(name:params[:company][:cmp_name])
       if @company.errors.empty? && @company.update_model_field_attributes(params[:company])
+        OpenChain::WorkflowProcessor.async_process @company
         add_flash :notices, "Company created successfully."
       else
         errors_to_flash @company
@@ -85,6 +87,7 @@ class CompaniesController < ApplicationController
     unlocking = !params[:company][:locked].nil? && params[:company][:locked]=="0"
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
       if @company.update_model_field_attributes(params[:company])
+        OpenChain::WorkflowProcessor.async_process @company
         add_flash :notices, "Company was updated successfully."
       else
         errors_to_flash @company

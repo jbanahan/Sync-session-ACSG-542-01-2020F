@@ -1,3 +1,4 @@
+require 'open_chain/workflow_processor'
 class VendorPlantsController < ApplicationController
   around_filter :view_permission_filter, only: [:show,:unassigned_product_groups]
   around_filter :edit_permission_filter, only: [:edit, :assign_product_group]
@@ -17,6 +18,7 @@ class VendorPlantsController < ApplicationController
     plant = Plant.find(params[:id])
     action_secure(plant.can_edit?(current_user),plant,{:module_name=>"plant",:verb=>'edit'}) {
       succeed = lambda {|pl|
+        OpenChain::WorkflowProcessor.async_process pl.company
         add_flash :notices, "Plant was updated successfully."
         redirect_to vendor_vendor_plant_path(pl.company,pl)
       }
@@ -34,6 +36,7 @@ class VendorPlantsController < ApplicationController
     vendor = Company.find(params[:vendor_id])
     action_secure(vendor.can_edit?(current_user),vendor,{:module_name=>'vendor',:verb=>'create plant'}) {
       succeed = lambda {|pl|
+        OpenChain::WorkflowProcessor.async_process pl.company
         add_flash :notices, 'Plant was created successfully.'
         redirect_to edit_vendor_vendor_plant_path(pl.company,pl)
       }
@@ -60,6 +63,8 @@ class VendorPlantsController < ApplicationController
 
     @plant.product_groups << pg
 
+    OpenChain::WorkflowProcessor.async_process @plant.company
+    
     render json: {'ok'=>'ok'}
   end
 

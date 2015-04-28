@@ -1,3 +1,4 @@
+require 'open_chain/workflow_processor'
 class PlantProductGroupAssignmentsController < ApplicationController
   def show
     ppga = PlantProductGroupAssignment.find params[:id]
@@ -14,6 +15,7 @@ class PlantProductGroupAssignmentsController < ApplicationController
     ppga = PlantProductGroupAssignment.find params[:id]
     action_secure(ppga.can_edit?(current_user),ppga,{:verb=>"edit",:module_name=>"plant product group assignment"}) {
       succeed = lambda {|pl|
+        OpenChain::WorkflowProcessor.async_process(ppga.plant.company)
         add_flash :notices, "Product Group assignment was updated successfully."
         redirect_to vendor_vendor_plant_plant_product_group_assignment_path(ppga.plant.company,ppga.plant,ppga)
       }
