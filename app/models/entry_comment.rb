@@ -9,9 +9,10 @@ class EntryComment < ActiveRecord::Base
   private 
     def identify_public_comments
       # Don't run regexes if the flag has been set
-      return false unless public_comment.nil?
-
-      self.public_comment = publicly_viewable?(self.body)
+      if public_comment.nil?
+        self.public_comment = publicly_viewable?(self.body)
+      end
+      
       true
     end
 

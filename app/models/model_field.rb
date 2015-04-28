@@ -72,6 +72,9 @@ class ModelField
     @user_accessible = o[:user_accessible]
     @user_field = o[:user_field]
     self.base_label #load from cache if available
+  rescue => e
+    # Re-raise any error here but add a message identifying the field that failed
+    raise e.class, "Failed loading uid #{uid}: #{e.message}", e.backtrace
   end
 
   # do post processing on raw sql query result generated using qualified_field_name
