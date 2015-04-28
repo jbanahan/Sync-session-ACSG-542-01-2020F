@@ -115,7 +115,7 @@ count(*) as 'Transport Units' from (
 select distinct master_bills_of_lading, (case entries.transport_mode_code when 40 then "AIR" when 11 then "OCEAN" when 30 then 'OCEAN' when 21 then 'OCEAN' else "OTHER" end) as 'Mode', 
 if(export_country_codes like '%DE%', 'DE', export_country_codes) as 'ecc'
 from entries 
-where customer_number = 'HENNE'
+where customer_number = 'HENNE' and export_country_codes <> ''
 and 
 arrival_date between '#{start_date}' and '#{end_date}'
 and
