@@ -371,7 +371,7 @@ module ApplicationHelper
       next if field.blank?
 
       if opts[:table]
-        field = content_tag((opts[:heading] ? :th : :td), field.html_attributessafe, opts[:attributes])
+        field = content_tag((opts[:heading] ? :th : :td), field.html_safe, opts[:attributes])
 
         if opts[:row]
           field = content_tag(:tr, field.html_safe)
