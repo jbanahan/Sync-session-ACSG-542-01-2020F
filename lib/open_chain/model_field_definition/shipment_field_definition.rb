@@ -69,6 +69,13 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :data_type=>:string
       }],
       [40,:shp_canceled_date,:canceled_date,"Canceled Date",{data_type: 'date', read_only: true}],
+      [41,:shp_total_cartons,:total_cartons,"Total Cartons",{
+        data_type: :integer,
+        read_only: true,
+        import_lambda: lambda {|a,b| return "Total cartons is read only."},
+        export_lambda: lambda {|obj| obj.carton_sets.inject(0) { |tot, cs| tot + (cs.carton_qty.nil? ? 0 : cs.carton_qty) }},
+        qualified_field_name: "(SELECT SUM(carton_qty) FROM carton_sets WHERE carton_sets.shipment_id = shipments.id)"
+      }]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
