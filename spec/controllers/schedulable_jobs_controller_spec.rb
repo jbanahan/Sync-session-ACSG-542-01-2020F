@@ -108,4 +108,29 @@ describe SchedulableJobsController do
     end
   end
 
+  describe "run" do
+    before :each do
+      @sj = Factory(:schedulable_job, run_class: "My::RunClass")
+    end
+
+    it "runs a job on demand" do
+      login Factory(:sys_admin_user)
+      sj = double
+      SchedulableJob.any_instance.should_receive(:delay).and_return @sj
+      @sj.should_receive(:run_if_needed).with(force_run: true)
+
+      post :run, id: @sj.id
+
+      expect(response).to redirect_to schedulable_jobs_path
+      expect(flash[:notices].first).to eq "RunClass is running."
+    end
+
+    it "only allows sysadmins" do
+      login Factory(:user)
+      post :run, id: @sj.id
+      response.should be_redirect
+      flash[:errors].first.should match /Only system admins/
+    end
+  end
+
 end
