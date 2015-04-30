@@ -47,6 +47,20 @@ describe OpenChain::ScheduleSupport do
       sj.should_receive(:run)
       expect(sj.run_if_needed).to be_true
     end
+
+    it "force starts a job if told to" do
+      @ss.stub(:next_run_time).and_return 1.year.from_now
+      @ss.should_receive(:run)
+      expect(@ss.run_if_needed force_run: true).to be_true
+    end
+
+    it "does not force start a job if concurrency is disallowed and job is currently running" do
+      last_start = 1.year.ago
+      sj = SchedulableJob.create! run_class: "OpenChain::StatClient", last_start_time: last_start, run_interval: "* * * * *", running: true, no_concurrent_jobs: true
+      sj.should_not_receive(:run)
+      sj.reload
+      expect(sj.run_if_needed force_run: true).to be_false
+    end
   end
 
   describe "needs_to_run?" do

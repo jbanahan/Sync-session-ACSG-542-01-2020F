@@ -126,7 +126,7 @@ module OpenChain
     end
 
     #run the job if it should be run (next scheduled time < now & not already run by another process)
-    def run_if_needed log=nil
+    def run_if_needed force_run: false
       need_run = false
       begin   
         # Make sure nothing else is trying to also check if this job should run at the exact same time
@@ -135,7 +135,7 @@ module OpenChain
           # Reload so we're sure we have the newest start time recorded (in the time we may have been
           # waiting on the lock another process could have updated the start time)
           self.reload
-          if needs_to_run? && no_other_instance_running?
+          if (force_run == true || needs_to_run?) && no_other_instance_running?
             need_run = true
             attributes = {last_start_time: Time.zone.now}
             attributes[:running] = true if track_running?
@@ -145,7 +145,7 @@ module OpenChain
         end
 
         if need_run
-          self.run log
+          self.run
         end
       ensure
         # We can be reasonably sure that we won't be setting the running flag to false in cases 

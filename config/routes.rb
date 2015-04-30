@@ -657,7 +657,9 @@ OpenChain::Application.routes.draw do
     put 'toggle_on_hold', on: :member
   end
   resources :project_deliverables, only: [:index]
-  resources :schedulable_jobs, except: [:show]
+  resources :schedulable_jobs, except: [:show] do
+    post 'run', on: :member
+  end
   resources :intacct_errors, only: [:index] do
     # Gets are here to accomodate clearing directly from Excel exception report
     put 'clear_receivable', on: :member

@@ -45,4 +45,16 @@ class SchedulableJobsController < ApplicationController
       redirect_to schedulable_jobs_path
     end
   end
+
+  def run
+    sys_admin_secure do
+      sj = SchedulableJob.find(params[:id])
+      if sj
+        sj.delay.run_if_needed force_run: true
+        add_flash :notices, "#{sj.run_class.to_s.split("::").last} is running."
+      end
+      
+      redirect_to schedulable_jobs_path
+    end
+  end
 end
