@@ -300,8 +300,14 @@ describe Api::V1::SurveyResponsesController do
       @user = Factory(:user, survey_view: true)
       @survey = Factory(:survey)
       @question = Factory(:question, survey: @survey, content: "Is this a test?", choices: "Yes\nNo")
-      @survey_response = Factory(:survey_response, survey: @survey, user: @user, checkout_by_user: @user, checkout_token: "token", checkout_expiration: Time.zone.now)
+      @question2 = Factory(:question, survey: @survey, content: "Is this a second question?", choices: "Y\nN")
+      @survey_response = @survey.generate_response! @user
+      @survey_response.checkout @user, "token"
+      @survey_response.save!
       
+      @answer_1 = @survey_response.answers.first
+      @answer_2 = @survey_response.answers.second
+
       allow_api_access @user
 
       @req = {
@@ -314,11 +320,22 @@ describe Api::V1::SurveyResponsesController do
         fax: "098-765-4321",
         answers: [
           {
+            id: @answer_1.id,
             choice: "Yes",
             question_id: @question.id,
             answer_comments: [
               {
                 content: "This is a comment."
+              }
+            ]
+          },
+          {
+            id: @answer_2.id,
+            choice: "N",
+            question_id: @question2.id,
+            answer_comments: [
+              {
+                content: "This is a comment on the second question."
               }
             ]
           }
@@ -343,7 +360,7 @@ describe Api::V1::SurveyResponsesController do
       expect(@survey_response.checkout_token).to be_nil
       expect(@survey_response.checkout_expiration).to be_nil
 
-      expect(@survey_response.answers.size).to eq 1
+      expect(@survey_response.answers.size).to eq 2
 
       a = @survey_response.answers.first
       expect(a.choice).to eq "Yes"
@@ -353,25 +370,17 @@ describe Api::V1::SurveyResponsesController do
       expect(a.answer_comments.first.content).to eq "This is a comment."
       expect(a.answer_comments.first.user).to eq @user
 
-      expect(@survey_response.survey_response_logs.first.message).to eq "Checked in."
-      expect(@survey_response.survey_response_logs.first.user).to eq @user
-      expect(@survey_response.survey_response_updates.first.user).to eq @user
-    end
-
-    it "updates existing answers" do
-      answer = @survey_response.answers.create! question: @question, choice: "No"
-      @req[:answers].first[:id] = answer.id
-
-      post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
-      expect(response).to be_success
-      
-      @survey_response.reload
-
-      expect(@survey_response.answers.size).to eq 1
-      a = @survey_response.answers.first
-      expect(a.choice).to eq "Yes"
+      a = @survey_response.answers.second
+      expect(a.choice).to eq "N"
+      expect(a.question).to eq @question2
       expect(a.answer_comments.size).to eq 1
-      expect(a.answer_comments.first.content).to eq "This is a comment."
+      expect(a.answer_comments.first.content).to eq "This is a comment on the second question."
+      expect(a.answer_comments.first.user).to eq @user
+
+      log = @survey_response.survey_response_logs.find {|l| l.message == "Checked in."}
+      expect(log).not_to be_nil
+      expect(log.user).to eq @user
+      expect(@survey_response.survey_response_updates.first.user).to eq @user
     end
 
     it "errors if survey checkout has expired" do
@@ -386,22 +395,17 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "skips updating existing answer comments" do
-      answer = @survey_response.answers.create! question: @question, choice: "No"
-      comment = answer.answer_comments.create! content: "Comment", user: @user
-
-      @req[:answers].first[:id] = answer.id
-      @req[:answers].first[:answer_comments].first[:id] = answer.id
+      comment = @answer_1.answer_comments.create! content: "Comment", user: @user
+      @req[:answers].first[:answer_comments].first[:id] = comment.id
 
       post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
       expect(response).to be_success
       
-      @survey_response.reload
-      expect(@survey_response.answers.size).to eq 1
-      a = @survey_response.answers.first
-      expect(a.choice).to eq "Yes"
-      expect(a.answer_comments.size).to eq 1
+      @answer_1.reload
+      expect(@answer_1.choice).to eq "Yes"
+      expect(@answer_1.answer_comments.size).to eq 1
       # Validate the original data is present, and wasn't updated to what was in the request
-      expect(a.answer_comments.first.content).to eq "Comment"
+      expect(@answer_1.answer_comments.first.content).to eq "Comment"
     end
 
     it "errors if bad question is attempted to be answered" do

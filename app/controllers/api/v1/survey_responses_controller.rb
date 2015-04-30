@@ -65,7 +65,9 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       answers = req[:answers]
       if answers.respond_to?(:each)
         answers.each do |a|
-          build_answer sr, current_user, a
+          # Skip anything that doesn't have an answer id, every answer object is alerady constructed
+          # at the point when the survey is assigned to the user and turned into a survey_response
+          build_answer(sr, current_user, a) if a[:id].to_i.nonzero?
         end
       end
 
@@ -154,7 +156,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
 
     def build_answer sr, user, json
       # Validate the choice supplied is valid
-      question = Question.where(id: json[:question_id], survey_id: sr.survey.id).first
+      question = Question.where(id: json[:question_id].to_i, survey_id: sr.survey.id).first
 
       # Raise an error if this is invalid..it shouldn't happen and basiclly indicates someone
       # is messing w/ the request or bad programming..either way it should raise.
@@ -168,12 +170,8 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       # Leaving an answer blank is ok too
       raise StatusableError.new("Invalid Answer of '#{json[:choice]}' given for question id #{json[:question_id]}.", :internal_server_error) unless choices.include?(json[:choice]) || json[:choice].blank?
 
-      if json[:id]
-        answer = sr.answers.find {|a| a.id }
-        raise StatusableError.new("Attempted to update an answer that does not exist.", :internal_server_error) unless answer
-      else
-        answer = sr.answers.build question: question
-      end
+      answer = sr.answers.find {|a| a.id == json[:id].to_i }
+      raise StatusableError.new("Attempted to update an answer that does not exist.", :internal_server_error) unless answer
 
       answer.choice = json[:choice]
       
