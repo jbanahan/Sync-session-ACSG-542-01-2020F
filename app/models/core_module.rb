@@ -14,7 +14,9 @@ class CoreModule
       :entity_json_lambda, #lambda return hash suitable for conversion into json containing all model fields
       :business_logic_validations, #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
       :enabled_lambda, #is the module enabled in master setup
-      :key_model_field_uids #the uids represented by this array of model_field_uids can be used to find a unique record in the database
+      :key_model_field_uids, #the uids represented by this array of model_field_uids can be used to find a unique record in the database
+      :view_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine view path for the module (may return null if no view path exists)
+      :edit_path_proc# Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
 
   def initialize(class_name,label,opts={})
@@ -78,6 +80,20 @@ class CoreModule
     @enabled_lambda = o[:enabled_lambda]
     @business_logic_validations = o[:business_logic_validations]
     @key_model_field_uids = o[:key_model_field_uids]
+    if o[:edit_path_proc].nil?
+      # The result handles cases where the path doesn't exist.  This code was largely hoisted from search_query_controller_helper 
+      # which did basically the same thing...so we don't care if we get objects that don't have edit paths.
+      @edit_path_proc = Proc.new {|obj| edit_polymorphic_path(obj) rescue nil }
+    else
+      @edit_path_proc = o[:edit_path_proc]
+    end
+
+    if o[:view_path_proc].nil?
+      # See above for comment about edit paths
+      @view_path_proc = Proc.new {|obj| polymorphic_path(obj) rescue nil }
+    else
+      @view_path_proc = o[:view_path_proc]
+    end
   end
 
   #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
@@ -442,11 +458,33 @@ class CoreModule
     :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"}
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate])
-  COMPANY = new("Company","Company",
-    default_search_columns: [:cmp_name,:cmp_sys_code]
+  PLANT_PRODUCT_GROUP_ASSIGNMENT = new('PlantProductGroupAssignment','Plant Product Group Assignment',default_search_columns:[:ppga_pg_name], show_field_prefix: true)
+  PLANT = new("Plant","Plant", 
+    default_search_columns: [:plant_name],
+    unique_id_field_name: :plant_name,
+    show_field_prefix: true,
+    key_model_field_uids: [:plant_name],
+    children: [PLANT_PRODUCT_GROUP_ASSIGNMENT],
+    child_lambdas: {PLANT_PRODUCT_GROUP_ASSIGNMENT => lambda {|p| p.plant_product_group_assignments}},
+    child_joins: {PLANT_PRODUCT_GROUP_ASSIGNMENT => "LEFT OUTER JOIN plant_product_group_assignments ON plants.id = plant_product_group_assignments.plant_id"},
   )
-  PLANT = new("Plant","Plant",default_search_columns: [:plant_name])
-  PLANT_PRODUCT_GROUP_ASSIGNMENT = new('PlantProductGroupAssignment','Plant Product Group Assignment',default_search_columns:[:ppga_pg_name])
+  # NOTE: Since we're setting up VENDOR as a full-blown core module based search, it means other variants of Company itself cannot have one, unless further changes are made 
+  # to the searching classes.
+  if MasterSetup.get.vendor_management_enabled?
+    COMPANY = new("Company","Vendor",
+      default_search_columns: [:cmp_name,:cmp_sys_code],
+      unique_id_field_name: :cmp_sys_code,
+      key_model_field_uids: :cmp_sys_code,
+      children: [PLANT],
+      child_lambdas: {PLANT => lambda {|c| c.plants}},
+      child_joins: {PLANT => "LEFT OUTER JOIN plants plants ON companies.id = plants.company_id"},
+      edit_path_proc: Proc.new {|obj| nil},
+      view_path_proc: Proc.new {|obj| vendor_path(obj)}
+    )
+  else
+    COMPANY = new("Company","Company",default_search_columns: [:cmp_name,:cmp_sys_code])
+  end
+
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
     SECURITY_FILING,SECURITY_FILING_LINE,COMPANY,PLANT,PLANT_PRODUCT_GROUP_ASSIGNMENT]
@@ -479,6 +517,7 @@ class CoreModule
   set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
   set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
   set_default_module_chain SECURITY_FILING, [SECURITY_FILING,SECURITY_FILING_LINE]
+  set_default_module_chain COMPANY, [PLANT, PLANT_PRODUCT_GROUP_ASSIGNMENT]
 
   def self.find_by_class_name(c,case_insensitive=false)
     CORE_MODULES.each do|m|

@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe OpenChain::SearchQueryControllerHelper do
   before :each do
     @k = Class.new do
@@ -11,8 +13,8 @@ describe OpenChain::SearchQueryControllerHelper do
       def show_bulk_instant_classify_products_path 
         "/products/show_bulk_instant_classify"
       end
-      def edit_product_path
-
+      def edit_polymorphic_path o
+        "/products/#{o.id}/edit"
       end
     end
   end

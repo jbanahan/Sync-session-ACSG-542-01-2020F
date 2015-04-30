@@ -61,11 +61,20 @@ class Company < ActiveRecord::Base
   end
 
   def self.search_secure user, base_search
+    base_search.where(secure_search(user))
+  end
+
+  def self.secure_search user
     if user.company.master?
-      return base_search.where('1=1')
+      '1=1'
     else
-      return base_search.where('companies.id = :ucid OR (companies.id IN (SELECT linked_companies.child_id FROM linked_companies WHERE linked_companies.parent_id = :ucid))',{ucid:user.company_id})
+      "companies.id = #{user.company_id} OR (companies.id IN (SELECT linked_companies.child_id FROM linked_companies WHERE linked_companies.parent_id = #{user.company_id}))"  
     end
+  end
+
+  def self.search_where user
+    # Since we only do full searches on Vendors, scope it only to vendor companies.
+    "companies.vendor = 1 AND " + secure_search(user)
   end
 
   # find all companies that aren't children of this one through the linked_companies relationship
