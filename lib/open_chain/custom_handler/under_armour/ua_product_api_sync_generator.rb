@@ -70,7 +70,7 @@ SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.h
 FROM products products
 INNER JOIN classifications c on products.id = c.product_id
 INNER JOIN tariff_records r on r.classification_id = c.id and line_number = 1
-INNER JOIN countries iso on iso.id = c.country_id and iso.iso_code = 'US'
+INNER JOIN countries iso on iso.id = c.country_id and iso.iso_code in ('US', 'CA')
 INNER JOIN custom_values color on color.customizable_id = products.id and color.customizable_type = 'Product' and color.custom_definition_id = #{@colors_cd.id} and length(color.text_value) > 0
 QRY
     if @custom_where.blank?
