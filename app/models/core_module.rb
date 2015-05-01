@@ -16,7 +16,8 @@ class CoreModule
       :enabled_lambda, #is the module enabled in master setup
       :key_model_field_uids, #the uids represented by this array of model_field_uids can be used to find a unique record in the database
       :view_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine view path for the module (may return null if no view path exists)
-      :edit_path_proc# Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
+      :edit_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
+      :quicksearch_lambda # Scope for quick searching
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
 
   def initialize(class_name,label,opts={})
@@ -93,6 +94,12 @@ class CoreModule
       @view_path_proc = Proc.new {|obj| polymorphic_path(obj) rescue nil }
     else
       @view_path_proc = o[:view_path_proc]
+    end
+
+    if o[:quicksearch_lambda]
+      @quicksearch_lambda = o[:quicksearch_lambda]
+    else
+      @quicksearch_lambda = lambda {|user, scope| klass.search_secure(user, scope)}
     end
   end
 
@@ -337,7 +344,7 @@ class CoreModule
       :default_search_columns => [:sale_order_number,:sale_order_date,:sale_cust_name],
       :unique_id_field_name=>:sale_order_number,
       :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line.nil? ? nil : ps.sales_order_line.sales_order},
-      :enabled_lambda => lambda { MasterSetup.get.sale_enabled? },
+      :enabled_lambda => lambda { MasterSetup.get.sales_order_enabled? },
       :key_model_field_uids => [:sale_order_number]
     })
   DELIVERY_LINE = new("DeliveryLine","Delivery Line",{
@@ -469,21 +476,19 @@ class CoreModule
     child_joins: {PLANT_PRODUCT_GROUP_ASSIGNMENT => "LEFT OUTER JOIN plant_product_group_assignments ON plants.id = plant_product_group_assignments.plant_id"},
   )
   # NOTE: Since we're setting up VENDOR as a full-blown core module based search, it means other variants of Company itself cannot have one, unless further changes are made 
-  # to the searching classes.
-  if MasterSetup.get.vendor_management_enabled?
-    COMPANY = new("Company","Vendor",
-      default_search_columns: [:cmp_name,:cmp_sys_code],
-      unique_id_field_name: :cmp_sys_code,
-      key_model_field_uids: :cmp_sys_code,
-      children: [PLANT],
-      child_lambdas: {PLANT => lambda {|c| c.plants}},
-      child_joins: {PLANT => "LEFT OUTER JOIN plants plants ON companies.id = plants.company_id"},
-      edit_path_proc: Proc.new {|obj| nil},
-      view_path_proc: Proc.new {|obj| vendor_path(obj)}
-    )
-  else
-    COMPANY = new("Company","Company",default_search_columns: [:cmp_name,:cmp_sys_code])
-  end
+  # to the searching classes in quicksearch_controller, api_core_module_base, application_controller, search_query, search_query_controller_helper (possibly others).
+   COMPANY = new("Company","Vendor",
+    default_search_columns: [:cmp_name,:cmp_sys_code],
+    unique_id_field_name: :cmp_sys_code,
+    key_model_field_uids: :cmp_sys_code,
+    children: [PLANT],
+    child_lambdas: {PLANT => lambda {|c| c.plants}},
+    child_joins: {PLANT => "LEFT OUTER JOIN plants plants ON companies.id = plants.company_id"},
+    edit_path_proc: Proc.new {|obj| nil},
+    view_path_proc: Proc.new {|obj| vendor_path(obj)},
+    quicksearch_lambda: lambda {|user, scope| scope.where(Company.search_where(user))},
+    enabled_lambda: lambda { MasterSetup.get.vendor_management_enabled? },
+  )
 
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
@@ -517,7 +522,7 @@ class CoreModule
   set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
   set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
   set_default_module_chain SECURITY_FILING, [SECURITY_FILING,SECURITY_FILING_LINE]
-  set_default_module_chain COMPANY, [PLANT, PLANT_PRODUCT_GROUP_ASSIGNMENT]
+  set_default_module_chain COMPANY, [COMPANY, PLANT, PLANT_PRODUCT_GROUP_ASSIGNMENT]
 
   def self.find_by_class_name(c,case_insensitive=false)
     CORE_MODULES.each do|m|

@@ -2,22 +2,40 @@ require 'spec_helper'
 
 describe QuickSearchController do
   before :each do 
-    MasterSetup.get.update_attributes(:entry_enabled=>true)
+    MasterSetup.get.update_attributes(vendor_management_enabled: true, entry_enabled: true)
     c = Factory(:company,:master=>true)
-    @u = Factory(:user,:entry_view=>true,:company=>c)
+    @u = Factory(:user, vendor_view: true, entry_view: true, company: c)
 
     sign_in_as @u
   end
 
   describe "module_result" do
-    it "should return a result" do
-      ent = Factory(:entry,:entry_number=>'12345678901')
+    it "should return a result for Vendor" do
+      vendor = Factory(:company, :name=>'Company', vendor: true, system_code: "CODE")
+      mfid = "cmp_name"
+      get :module_result, :mfid=>mfid, :v=>'Co'
+      expect(response).to be_success
+      r = JSON.parse response.body
+      expect(r["rows"].length).to eq 1
+      row = r["rows"].first
+      expect(row["id"]).to eq vendor.id
+      expect(row["values"]).to eq ["Company", "CODE"]
+      expect(row["link"]).to eq "/vendors/#{vendor.id}"
+      expect(r["headings"]).to eq ["Name", "System Code"]
+    end
+
+    it "should return a result for Entry" do
+      ent = Factory(:entry,:entry_number=>'12345678901', broker_reference: "REF", release_date: Time.zone.now)
       mfid = "ent_entry_num"
       get :module_result, :mfid=>mfid, :v=>'123'
-      response.should be_success
+      expect(response).to be_success
       r = JSON.parse response.body
-      r["rows"].should have(1).item
-      r["rows"].first["id"].should == ent.id
+      expect(r["rows"].length).to eq 1
+      row = r["rows"].first
+      expect(row["id"]).to eq ent.id
+      expect(row["values"]).to eq ["REF", "12345678901", ent.release_date.strftime("%Y-%m-%d %H:%M")]
+      expect(row["link"]).to eq "/entries/#{ent.id}"
+      expect(r["headings"]).to eq ["Broker Reference", "Entry Number", "Release Date"]
     end
   end
 

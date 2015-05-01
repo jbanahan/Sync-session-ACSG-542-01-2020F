@@ -14,8 +14,12 @@ class QuickSearchController < ApplicationController
       CoreModule::SHIPMENT=>[:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number],
       CoreModule::SALE=>[:sale_order_number],
       CoreModule::DELIVERY=>[:del_ref],
-      CoreModule::OFFICIAL_TARIFF=>[:ot_hts_code,:ot_full_desc]
+      CoreModule::OFFICIAL_TARIFF=>[:ot_hts_code,:ot_full_desc],
+      CoreModule::COMPANY=>[:cmp_name]
     }
+    # Delete any core modules that aren't enabled or the user can't view
+    @module_field_map.delete_if {|c, v| (c.enabled_lambda && !c.enabled_lambda.call) || !c.view?(current_user)}
+
     # Find and add all custom fields that are enabled as quick searchable
     cds = CustomDefinition.find_all_by_quick_searchable true
     cds.each do |cd|
@@ -27,7 +31,7 @@ class QuickSearchController < ApplicationController
           end
       end
     end
-    @module_field_map.delete_if {|k,v| !k.view?(current_user)}
+    
     @value = params[:v].strip
     render :layout=>'one_col'
   end
@@ -46,7 +50,7 @@ class QuickSearchController < ApplicationController
     else
       k = cm.klass 
       search_results = SearchCriterion.new(:model_field_uid=>params[:mfid],:operator=>"co",:value=>params[:v].strip).apply k
-      search_results = k.search_secure(current_user,search_results).limit(11).order("#{cm.table_name}.id DESC").select("DISTINCT(#{cm.table_name}.id)")
+      search_results = cm.quicksearch_lambda.call(current_user, search_results).limit(11).order("#{cm.table_name}.id DESC").select("DISTINCT(#{cm.table_name}.id)")
       search_results = cm.klass.where("ID IN (?)",search_results.collect {|sr| sr.id})
       default_fields = cm.default_search_columns
       default_fields = default_fields[0,3] if default_fields.size > 3
@@ -69,7 +73,7 @@ class QuickSearchController < ApplicationController
           end
           v
         }
-        row["link"] = url_for o
+        row["link"] = instance_exec(o, &cm.view_path_proc)
         row["id"] = o.id
         r["rows"] << row
       end
