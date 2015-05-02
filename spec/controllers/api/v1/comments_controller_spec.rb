@@ -8,7 +8,11 @@ describe Api::V1::CommentsController do
     allow_api_access @u
   end
   describe :destroy do
+    before :each do
+      OpenChain::WorkflowProcessor.stub(:async_process)
+    end
     it "should destroy if user is current_user" do
+      OpenChain::WorkflowProcessor.should_receive(:async_process).with(instance_of(Shipment))
       c = @s.comments.create!(user_id:@u.id,subject:'s1',body:'b1')
       expect{delete :destroy, id: c.id.to_s}.to change(Comment,:count).from(1).to(0)
       expect(response).to be_success
@@ -36,6 +40,8 @@ describe Api::V1::CommentsController do
       }}
     end
     it "should create comment" do
+      OpenChain::WorkflowProcessor.stub(:async_process)
+      OpenChain::WorkflowProcessor.should_receive(:async_process).with(instance_of(Shipment))
       expect{post :create, @comment_hash}.to change(Comment,:count).from(0).to(1)
       expect(response).to be_success
       expect(@s.comments.first.subject).to eq 'sub'

@@ -1,3 +1,5 @@
+require 'open_chain/workflow_processor'
+
 module Api; module V1; class CommentsController < Api::V1::ApiController
   def for_module
     r = {comments:[]}
@@ -13,6 +15,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
     my_params = params[:comment]
     my_params[:user_id] = current_user.id
     c = Comment.create!(my_params)
+    OpenChain::WorkflowProcessor.async_process(c.commentable)
     render json: {comment:comment_json(c)}
   end
 
@@ -20,6 +23,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
     c = Comment.find params[:id]
     raise StatusableError.new("You cannot delete a comment that another user created.",401) unless c.user == current_user || current_user.sys_admin?
     raise StatusableError.new(c.errors.full_messages.join("\n")) unless c.destroy
+    OpenChain::WorkflowProcessor.async_process(c.commentable)
     render json: {message:'Comment deleted'}
   end
 

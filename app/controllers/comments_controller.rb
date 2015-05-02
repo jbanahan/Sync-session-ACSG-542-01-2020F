@@ -1,3 +1,5 @@
+require 'open_chain/workflow_processor'
+
 class CommentsController < ApplicationController
   def create
     cmt = nil
@@ -12,6 +14,7 @@ class CommentsController < ApplicationController
       if cmt.save
         email cmt
       end
+      OpenChain::WorkflowProcessor.async_process(commentable)
       errors_to_flash cmt
     end
     redirect_to redirect_location(commentable)
@@ -20,7 +23,10 @@ class CommentsController < ApplicationController
     cmt = Comment.find(params[:id])
     commentable = cmt.commentable
     action_secure((current_user.admin? || current_user.id == cmt.user_id), cmt, {:lock_check => false, :verb => "delete", :module_name => "comment"}) {
-      add_flash :notices, "Comment deleted successfully."  if cmt.destroy
+      if cmt.destroy
+        add_flash :notices, "Comment deleted successfully."  
+        OpenChain::WorkflowProcessor.async_process(commentable)
+      end
       errors_to_flash cmt
     }
     redirect_to redirect_location(commentable)
@@ -38,6 +44,7 @@ class CommentsController < ApplicationController
     action_secure(current_user.id==cmt.user_id, cmt, {:lock_check => false, :verb => "edit", :module_name => "comment"}) {
       if cmt.update_attributes(params[:comment])
         add_flash :notices, "Comment updated successfully."
+        OpenChain::WorkflowProcessor.async_process(commentable)
         email cmt
       end
       errors_to_flash cmt
