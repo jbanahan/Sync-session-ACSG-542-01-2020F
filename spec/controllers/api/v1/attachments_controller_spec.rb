@@ -121,8 +121,13 @@ describe Api::V1::AttachmentsController do
     end
 
     describe "destroy" do
+      before :each do
+        OpenChain::WorkflowProcessor.stub(:async_process)
+      end
       it "deletes an attachment" do
         @attachable.class.any_instance.should_receive(:can_attach?).with(@user).and_return true
+
+        OpenChain::WorkflowProcessor.should_receive(:async_process)
 
         delete :destroy, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
         expect(response).to be_success
@@ -143,10 +148,12 @@ describe Api::V1::AttachmentsController do
     before :each do
       stub_paperclip
       @file = fixture_file_upload('/files/test.txt', 'text/plain')
+      OpenChain::WorkflowProcessor.stub(:async_process)
     end
 
     it "creates an attachment" do
       @attachable.class.any_instance.should_receive(:can_attach?).and_return true
+      OpenChain::WorkflowProcessor.should_receive(:async_process)
       post :create, attachable_type: "Product", attachable_id: @attachable.id, file: @file, type: "Testing"
       expect(response).to be_success
       j = JSON.parse response.body

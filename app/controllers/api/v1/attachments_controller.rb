@@ -1,3 +1,5 @@
+require 'open_chain/workflow_processor'
+
 module Api; module V1; class AttachmentsController < Api::V1::ApiController
 
   # The create call is done via a multipart/form posting..so don't check for json
@@ -31,6 +33,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
 
     if attachment && attachment.attachable.can_attach?(current_user)
       attachment.destroy
+      OpenChain::WorkflowProcessor.async_process(attachment.attachable)
       render json: {}
     else
       raise ActiveRecord::RecordNotFound
@@ -59,6 +62,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
       attachment.uploaded_by = current_user
       attachment.save!
 
+      OpenChain::WorkflowProcessor.async_process(attachable)
       attachable.log_update(current_user) if attachable.respond_to?(:log_update)
       render json: Attachment.attachment_json(attachment)
     else

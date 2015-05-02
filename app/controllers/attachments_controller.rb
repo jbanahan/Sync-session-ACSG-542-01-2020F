@@ -1,3 +1,5 @@
+require 'open_chain/workflow_processor'
+
 class AttachmentsController < ApplicationController
   def create
     att = nil
@@ -19,6 +21,7 @@ class AttachmentsController < ApplicationController
         end
         att.uploaded_by = current_user
         att.save
+        OpenChain::WorkflowProcessor.async_process(attachable)
         attachable.log_update(current_user) if attachable.respond_to?(:log_update)
         respond_to do |format|
           format.html {redirect_to redirect_location(attachable)}
@@ -43,6 +46,7 @@ class AttachmentsController < ApplicationController
     if attachable.can_attach?(current_user)
       att.destroy
       errors_to_flash att
+      OpenChain::WorkflowProcessor.async_process(attachable)
     else
       add_flash :errors, "You do not have permission to delete this attachment."
     end
@@ -52,7 +56,7 @@ class AttachmentsController < ApplicationController
 
   def download
     att = Attachment.find(params[:id])
-    attachable = att.attachable
+    att.attachable
     if att.can_view?(current_user)
       redirect_to att.secure_url
     else
