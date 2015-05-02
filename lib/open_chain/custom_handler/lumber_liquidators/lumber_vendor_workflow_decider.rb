@@ -187,7 +187,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
         :cmp_industry,
         :cmp_payment_address,
         :cmp_business_address,
-        :cmp_primary_phone
+        :cmp_primary_phone,
+        :cmp_merch_coc_review
       ]
       fields_payload = {'model_fields'=>[]}
       field_keys.each {|k| fields_payload['model_fields'] << {'uid'=>company_cdefs[k].model_field_uid}}

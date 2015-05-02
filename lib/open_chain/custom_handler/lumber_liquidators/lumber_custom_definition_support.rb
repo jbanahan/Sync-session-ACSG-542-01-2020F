@@ -3,6 +3,7 @@ require 'open_chain/custom_handler/custom_definition_support'
 module OpenChain; module CustomHandler; module LumberLiquidators; module LumberCustomDefinitionSupport
   CUSTOM_DEFINITION_INSTRUCTIONS = {
     cmp_sap_company: {label: 'SAP Company #', data_type: :string, module_type: 'Company'},
+    cmp_merch_coc_review: {label: 'Merch COC Review', data_type: :string, module_type: 'Company'},
     cmp_pc_approved_date: {label: 'PC Approved Date', data_type: :date, module_type: 'Company'},
     cmp_pc_approved_by: {label: 'PC Approved By', data_type: :integer, module_type: 'Company'},
     cmp_dba_name: {label: 'DBA Name', data_type: :string, module_type: 'Company'},
