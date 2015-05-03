@@ -18,12 +18,31 @@ root.OCQuickSearch =
     $('#modwrap_'+moduleType)
 
   makeCard: (fields, obj, searchTerm) ->
+    getHtmlVal = (val, searchTerm) ->
+      highlightVal = (str, startIdx, searchTerm) ->
+        index = str.toLowerCase().indexOf(searchTerm.toLowerCase(),startIdx)
+        r = {}
+        if (index >= 0)
+          r.str = str.substring(0, index) + '<mark>' + str.substring(index, index + searchTerm.length) + '</mark>'+ str.substring(index+searchTerm.length)
+          r.nextIndex = index + searchTerm.length + 13 # 13 == <mark></mark> which needs to be added on so we don't research the same space
+        else
+          r.str = str
+          r.nextIndex = -1
+        return r
+
+      highlighted = highlightVal(val, 0, searchTerm)
+      # keep looping and highlighting until you get all of the instances of the search term in the value
+      while highlighted.nextIndex > 0
+        highlighted = highlightVal(highlighted.str, highlighted.nextIndex, searchTerm)
+
+      return highlighted.str
+
     h = "<div class='panel panel-primary qs-card'>"
     fieldCounter = 0
     for id, lbl of fields
       val = obj[id]
       if val && val.length > 0
-        htmlVal = val.replace(searchTerm,"<mark>"+searchTerm+"</mark>")
+        htmlVal = getHtmlVal(val,searchTerm)
         if fieldCounter == 0
           h += "<div class='panel-heading'><h3 class='panel-title'><a href='"+obj['view_url']+"'>"+val+"</a></h3></div><table class='table table-hover'>"
         h += "<tr><td class='qs-td-label'><strong>"+lbl+":</strong></td><td>"+htmlVal+"</td></tr>"
