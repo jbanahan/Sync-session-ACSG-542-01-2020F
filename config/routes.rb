@@ -247,7 +247,7 @@ OpenChain::Application.routes.draw do
   match "/users/task_email" => "users#task_email"
   match "/hide_message/:message_name" => 'users#hide_message', :via => :post
   match "/quick_search" => "quick_search#show"
-  match "/quick_search/module_result" => "quick_search#module_result"
+  match '/quick_search/by_module/:module_type' => 'quick_search#by_module', via: :get
   match "/enable_run_as" => "users#enable_run_as"
   match "/disable_run_as" => "users#disable_run_as"
   match "/users/set_homepage" => "users#set_homepage", :via => :post
