@@ -8,7 +8,8 @@ class QuickSearchController < ApplicationController
     CoreModule::SHIPMENT=>[:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number],
     CoreModule::SALE=>[:sale_order_number],
     CoreModule::DELIVERY=>[:del_ref],
-    CoreModule::OFFICIAL_TARIFF=>[:ot_hts_code,:ot_full_desc]
+    CoreModule::OFFICIAL_TARIFF=>[:ot_hts_code,:ot_full_desc],
+    CoreModule::COMPANY=>[:cmp_name]
   }
 
   def show
@@ -27,7 +28,7 @@ class QuickSearchController < ApplicationController
     cm = CoreModule.find_by_class_name(params[:module_type])
     raise ActionController::RoutingError.new('Not Found') unless cm && cm.view?(current_user)
     return error_redirect("Parameter v is required.") if params[:v].blank?
-    r = {module_type: cm.class_name, fields:{},vals:[],search_term:params[:v].strip}
+    r = {module_type: cm.class_name, fields:{}, vals:[], search_term:ActiveSupport::Inflector.transliterate(params[:v].to_s.strip)}
     with_fields_to_use(cm,current_user) do |uids|
       or_clause_array = []
       
@@ -35,17 +36,19 @@ class QuickSearchController < ApplicationController
         mf = ModelField.find_by_uid(uid)
         r[:fields][mf.uid] = mf.label
         
-        sc = SearchCriterion.new(model_field_uid:mf.uid.to_s,operator:'co',value:params[:v])
-        or_clause_array << "(#{sc.where_clause(sc.where_value).gsub(/\?/,':qval')})"
+        sc = SearchCriterion.new(model_field_uid:mf.uid.to_s, operator:'co', value: r[:search_term])
+        value = sc.where_value
+        or_clause_array << ActiveRecord::Base.send(:sanitize_sql_array, ["(#{sc.where_clause(value)})", value])
       end
 
-      results = cm.klass.search_secure(current_user,cm.klass)
-      results = results.where(or_clause_array.join(' OR '),qval:"%#{params[:v].strip}%").limit(10)
+      results = cm.quicksearch_lambda.call(current_user, cm.klass)
+      results = results.where(or_clause_array.join(' OR ')).limit(10)
 
+      sql = results.to_sql
       results.each do |obj|
         obj_hash = {
           id:obj.id,
-          view_url: url_for(obj)
+          view_url: instance_exec(obj, &cm.view_path_proc)
         }
         uids.each {|uid| obj_hash[uid] = ModelField.find_by_uid(uid).process_export(obj,current_user)}
         r[:vals] << obj_hash

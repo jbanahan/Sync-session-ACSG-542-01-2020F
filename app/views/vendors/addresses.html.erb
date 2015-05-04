@@ -10,7 +10,7 @@
             <%unless ad.line_2.blank?%><%=ad.line_2%><br /><%end%>
             <%unless ad.line_3.blank?%><%=ad.line_3%><br /><%end%>
             <%=ad.city.blank? ? '' : "#{ad.city},"%> <%=ad.state%> <%=ad.postal_code%><br />
-            <%=ad.country.name.titleize%>
+            <%=ad.country.try(:name).try(:titleize)%>
           </div>
         <%end%>
     </div>

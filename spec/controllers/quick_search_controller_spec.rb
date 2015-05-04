@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe QuickSearchController do
   before :each do 
-    MasterSetup.get.update_attributes(:entry_enabled=>true)
+    MasterSetup.get.update_attributes(vendor_management_enabled: true, entry_enabled: true)
     c = Factory(:company,:master=>true)
-    @u = Factory(:user,:entry_view=>true,:company=>c)
+    @u = Factory(:user, vendor_view: true, entry_view: true, company: c)
 
     sign_in_as @u
   end
@@ -46,7 +46,7 @@ describe QuickSearchController do
       end
       expected_response['qs_result']['fields']["*cf_#{cd_1.id}"] = 'cfield'
       expected_response['qs_result']['vals'][0]["*cf_#{cd_1.id}"] = 'Test'
-      expected_response['qs_result']['vals'][0]['view_url'] = "http://test.host/entries/#{ent.id}"
+      expected_response['qs_result']['vals'][0]['view_url'] = "/entries/#{ent.id}"
       expected_response['qs_result']['search_term'] = '123'
       
       get :by_module, module_type:'Entry', v: '123'
@@ -54,6 +54,25 @@ describe QuickSearchController do
       j = JSON.parse response.body
       expect(j).to eq expected_response
     end
+
+    it "should return a result for Vendor" do
+      vendor = Factory(:company, :name=>'Company', vendor: true, system_code: "CODE")
+      mfid = "cmp_name"
+      get :by_module, module_type: "Company", v: 'Co'
+      expect(response).to be_success
+      r = JSON.parse response.body
+      expect(r).to eq({
+        'qs_result' => {
+          'module_type' => 'Company',
+          'fields' => {
+            "cmp_name" => "Name"
+          },
+          'vals' => [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name}],
+          'search_term' => "Co"
+        }
+      })
+    end
+
     it "should 404 if user doesn't have permission" do
       CoreModule::ENTRY.stub(:view?).and_return false
       expect {get :by_module, module_type:'Entry', v: '123'}.to raise_error ActionController::RoutingError

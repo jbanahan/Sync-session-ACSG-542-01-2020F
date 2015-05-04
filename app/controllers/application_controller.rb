@@ -106,11 +106,13 @@ class ApplicationController < ActionController::Base
     when CoreModule::OFFICIAL_TARIFF
       redirect_path = "official_tariffs_path"
     end
+
+    search_params = {}
     if force_search
-      redirect_to eval(redirect_path<<"(:force_search=>true)")
-    else
-      redirect_to eval(redirect_path)
+      search_params[:force_search] = true
     end
+
+    redirect_to send(redirect_path.to_sym, search_params)
   end
 
   class SearchResult
