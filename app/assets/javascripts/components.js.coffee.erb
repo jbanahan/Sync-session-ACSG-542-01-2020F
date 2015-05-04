@@ -224,12 +224,17 @@
       attachableType: '@'
     }
     template: "<form class='form-inline' role='form' action='/attachments' method='post' enctype='multipart/form-data'>
-      <div class='row'><div class='col-xs-4'>
-        <input type='hidden' name='attachment[attachable_type]' value='{{attachableType}}' />
-        <input type='hidden' name='attachment[attachable_id]' value='{{attachableId}}' />
-        <input type='file' size='60' name='attachment[attached]' class='form-control' />
-      </div><div class='col-xs-2'>
-        <input type='submit' value='Upload' class='btn btn-sm btn-success' style='display:none;'>
+      <div class='row'>
+        <div class='col-xs-4'>
+          <input type='hidden' name='attachment[attachable_type]' value='{{attachableType}}' />
+          <input type='hidden' name='attachment[attachable_id]' value='{{attachableId}}' />
+          <input type='file' size='60' name='attachment[attached]' class='form-control' />
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col-xs-2' style='margin-top: 5px'>
+          <input type='submit' value='Upload' class='btn btn-sm btn-success' style='display:none;'>
+        </div>
       </div>
     </form>
     <div class='progress progress-striped active'>
@@ -255,20 +260,21 @@
             el.find('form').hide()
             el.children('div.progress').show()
             #clear everything
-            el.find('div.progress').show()
             el.find('div.progress div.progress-bar').width('0%')
             el.find('div.att-msg').html('Upload starting')
+            el.find('div.progress').show()
           else
             el.find('div.att-msg').html('You must select a file to upload.')
         uploadProgress: (event, position, total, percentComplete) ->
-          el.find('div.progress div.progressbar').width(percentComplete+"%")
+          el.find('div.progress div.progress-bar').width(percentComplete+"%")
           if percentComplete == 100
-            el.find('div.att-msg').html("processing upload")
+            el.find('div.att-msg').html("Processing Upload")
           else
-            el.find('div.att-msg').html(percentComplete+'% uploaded')
+            el.find('div.att-msg').html(percentComplete+'% Uploaded')
         success: (data) ->
           el.find('div.att-msg').html('')
           el.find('form input[type="file"]').val('')
+          el.find('form input[type="submit"]').hide()
           el.find('form').show()
           scope.chainAttach.attachments = data.attachments
           scope.$apply()
@@ -280,6 +286,49 @@
       el.find('form').ajaxForm(options)
   }
 ]
+
+
+@components.directive 'chainAttachmentPanel', ['$http',($http) ->
+  {
+    restrict: 'A'
+    scope: {
+      attachments: "="
+      attachable: "="
+      attachableType: "@"
+      attachableId: "@"
+      canAttach: "="
+    }
+    template: '<div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Attachments</h3>
+          </div>
+          <ul class="list-group">
+            <li ng-repeat="att in attachments" class="list-group-item">
+              <a ng-click="deleteAttachment(att.id)" href="javascript:;" ng-if="canAttach"><span class="glyphicon glyphicon-remove error"></span></a>
+              <a href="/attachments/{{att.id}}/download" target="_blank">{{att.name}} <span class="badge">{{att.size}}</span></a>
+            </li>
+          </ul>
+          <div class="panel-footer" ng-if="canAttach">
+            <div class="container-fluid">
+              <div chain-attach="attachable" attachable-type="{{attachableType}}" attachable-id="{{attachableId}}"></div>
+            </div>
+          </div>
+        </div>'
+
+    controller: ['$scope',($scope) ->
+      $scope.deleteAttachment = (attId) ->
+        if window.confirm("Are you sure you want to delete this attachment?")
+          $http.delete("/api/v1/" + $scope.attachableType+"/" + $scope.attachableId + "/attachments/" + attId + ".json").then(((resp) -> 
+              attachments = (attachment for attachment in $scope.attachments when attachment.id != attId)
+              $scope.attachments = attachments
+            ), ((resp) ->
+              window.alert("Failed to delete this attachment.")
+            )
+          )
+    ]
+  }
+]
+
 
 @components.directive 'chainActionButton', ['$parse',($parse) ->
   {
