@@ -61,6 +61,21 @@ describe OpenChain::ScheduleSupport do
       sj.reload
       expect(sj.run_if_needed force_run: true).to be_false
     end
+
+    it "does not run if job is stopped" do
+      last_start = 1.year.ago
+      sj = SchedulableJob.create! run_class: "OpenChain::StatClient", last_start_time: last_start, run_interval: "* * * * *", stopped: true
+      sj.should_not_receive(:run)
+      sj.reload
+      expect(sj.run_if_needed).to be_false
+    end
+
+    it "force starts a job if told to even if stopped" do
+      last_start = 1.year.ago
+      sj = SchedulableJob.create! run_class: "OpenChain::StatClient", last_start_time: last_start, run_interval: "* * * * *", stopped: true
+      sj.should_receive(:run)
+      expect(sj.run_if_needed force_run: true).to be_true
+    end
   end
 
   describe "needs_to_run?" do

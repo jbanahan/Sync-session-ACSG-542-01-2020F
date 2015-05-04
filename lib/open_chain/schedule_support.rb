@@ -77,6 +77,8 @@ module OpenChain
 
     # get the next time in UTC that this schedule should be executed
     def next_run_time
+      return nil if self.respond_to?(:stopped?) && stopped?
+
       base_time = self.last_start_time.nil? ? self.created_at : self.last_start_time
       return nil unless base_time
       
