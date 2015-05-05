@@ -20,14 +20,19 @@ module OpenChain
       results.each do |row|
         obj = ar_objects[row[:row_key]]
         links = []
-        view_path = polymorphic_path(obj)
-        links << {'label'=>'View', 'url'=>view_path} if obj.can_view?(user)
+        view_proc = ss.core_module.view_path_proc
+        # We use instance exec here so that the proc is running in the context of the controller, thereby
+        # making the helper paths available to the code running inside the proc
+        view_path = instance_exec(obj, &view_proc) if view_proc
+        links << {'label'=>'View', 'url'=>view_path} if view_path && obj.can_view?(user)
+
         unless no_edit_links
-          begin
-            ep = "edit_#{obj.class.to_s.underscore}_path"
-            edit_path = "#{view_path}/edit"
-            links << {'label'=>'Edit', 'url'=>edit_path} if !no_edit_links && obj.respond_to?(:can_edit?) && obj.can_edit?(user) && self.respond_to?(ep)
-          rescue ActionController::RoutingError
+          edit_proc = ss.core_module.edit_path_proc
+          edit_path = instance_exec(obj, &edit_proc) if edit_proc
+
+          if edit_path && obj.respond_to?(:can_edit?)
+             links << {'label'=>'Edit', 'url'=>edit_path} if obj.can_edit?(user)
+          else
             no_edit_links = true
           end
         end

@@ -13,7 +13,7 @@ class Address < ActiveRecord::Base
   end	
 
   def google_maps_url query_options={}
-    inner_opts = {q:"#{self.line_1} #{self.line_2} #{self.line_3}, #{self.city} #{self.state}, #{self.country.iso_code}",
+    inner_opts = {q:"#{self.line_1} #{self.line_2} #{self.line_3}, #{self.city} #{self.state}, #{self.country.try(:iso_code)}",
       key:'AIzaSyD-m0qPlvgU9SZ9eniFuRLF8DJD7CqszZU',zoom:6}
     qry = inner_opts.merge(query_options).to_query
     "https://www.google.com/maps/embed/v1/place?#{qry}"

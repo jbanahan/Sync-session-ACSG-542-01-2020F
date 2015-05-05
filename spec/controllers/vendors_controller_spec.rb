@@ -13,13 +13,13 @@ describe VendorsController do
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/view/)
     end
-    it "should search_secure results" do
+    it "should redirect to advanced search" do
       @u.company.update_attributes(vendor:true)
       User.any_instance.stub(:view_vendors?).and_return true
-      Factory(:company,vendor:true) #shouldn't be found
+
       get :index
-      expect(response).to be_success
-      expect(assigns(:companies)).to eq [@u.company]
+
+      expect(response.location).to match /advanced_search/
     end
   end
 

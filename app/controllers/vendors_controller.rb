@@ -1,14 +1,10 @@
 require 'open_chain/workflow_processor'
 class VendorsController < ApplicationController
   around_filter :view_vendors_filter, only: [:index, :matching_vendors]
+  
   def index
-    c = Company.where(vendor:true).order(:name)
-    c = Company.search_secure(current_user,c)
-    c = c.where('name like ?',"%#{params[:q]}%") if params[:q]
-    @companies = c.paginate(:per_page=>20, page: params[:page])
-    if !render_infinite_empty(@companies,'vendors')
-      render_layout_or_partial 'index_rows', {companies:@companies}, false
-    end
+    flash.keep
+    redirect_to advanced_search CoreModule::COMPANY, params[:force_search]
   end
 
   def show
