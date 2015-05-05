@@ -12,6 +12,7 @@
   </div>
   <%=form_for @sj, html:{id:'frm_sj'} do |f|-%>
     <%=field_bootstrap 'Class', f.text_field(:run_class, size: "100")-%>
+    <%=field_bootstrap 'Stopped?', f.check_box(:stopped) %>
     <%=field_bootstrap 'Time', f.number_field(:run_hour,min:0,max:23,style:'width:4em;')+':'+f.number_field(:run_minute,min:0,max:59,style:'width:4em;')+' '+f.time_zone_select(:time_zone_name,ActiveSupport::TimeZone.us_zones, default: "Eastern Time (US & Canada)")-%>
     <%=field_bootstrap 'Day of Month (Optional if Time used.  N/A if Run Interval is used)', f.number_field(:day_of_month,min:0,max:31)-%>
     <%=field_bootstrap 'Run Interval / Cron Expression (Takes precedence over Time and Day of Month)', f.text_field(:run_interval)-%>

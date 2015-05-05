@@ -51,21 +51,7 @@
         </div>
       </div>  <!--end comments -->
       <div class="col-md-4">  <!--start attachments-->
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Attachments</h3>
-          </div>
-          <ul class="list-group">
-            <li ng-repeat="att in shp.attachments" class="list-group-item">
-              <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
-            </li>
-          </ul>
-          <div class="panel-footer" ng-if="shp.permissions.can_attach">
-            <div class="container-fluid">
-              <div chain-attach='shp' attachable-type='Shipment' attachable-id='{{shp.id}}'></div>
-            </div>
-          </div>
-        </div>
+        <div chain-attachment-panel attachable="shp" attachable-type='Shipment' attachable-id='{{shp.id}}' can-attach='shp.permissions.can_attach' attachments="shp.attachments" />
       </div> <!--end attachments-->
     </div>
     <hr />

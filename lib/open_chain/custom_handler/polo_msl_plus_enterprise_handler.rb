@@ -210,7 +210,7 @@ module OpenChain
 
           # Don't send fiber fields if the fiber parser process was unable to read them either
           msl_fiber_failure = p.get_custom_value(@out_cdefs[:msl_fiber_failure]).value == true
-          if msl_fiber_failure || barthco_id.blank? || ["48650", "35368", "73720", "47080"].include?(barthco_id)
+          if msl_fiber_failure || barthco_id.blank? || ["48650", "73720", "47080"].include?(barthco_id)
             45.times {file << nil}
           else
             file.push *get_custom_values(p, *@fiber_defs)
