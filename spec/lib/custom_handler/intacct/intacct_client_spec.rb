@@ -377,13 +377,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect{@c.post_xml nil, false, false, "<f>content</f>", "id"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
     end
 
-    it "raises retry error for errors with only 'Could not create Document record!' errors" do
+    it "raises retry error for errors with correction values of 'Check the transaction for errors or inconsistencies, then try again.'" do
       error_response = "<errormessage>
-      <error><errorno>BL01001973</errorno><description></description><description2>Desc 1</description2><correction></correction></error>
+      <error><errorno>BL01001973</errorno><description></description><description2>Desc 1</description2><correction>Check the transaction for errors or inconsistencies, then try again.</correction></error>
       <error><errorno>XL03000009</errorno><description></description><description2>Desc 2</description2><correction></correction></error>
       </errormessage>"
       @resp = REXML::Document.new error_response
-      error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: "
+      error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: Check the transaction for errors or inconsistencies, then try again.\nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: "
 
       expect{@c.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, error_message
     end

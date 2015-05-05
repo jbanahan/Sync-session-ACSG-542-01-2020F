@@ -279,19 +279,17 @@ XML
     end
 
     def retry_error? error_elements
-      # We only really want to retry at this point if the error text only has a BL01001973 Could not create Document record!
-      # and a XL03000009 error.  This seems to indicate a random, transient error.
-      # All failures seem to have BL01001973 errors, but most seem to have other actual reasons listed for the error,
-      # the ones that don't seem to work fine if you just attempt to load them again later, hence the retry.
-      bl_count = 0
-      xl_count = 0
-
+      # We only really want to retry at this point if the error text has a Correction message like: 
+      # "Check the transaction for errors or inconsistencies, then try again."
+      should_retry = false
       error_elements.each do |el|
-        bl_count += 1 if el.text("errorno") == "BL01001973"
-        xl_count += 1 if el.text("errorno") == "XL03000009"
+        if el.text("correction") =~ /Check the transaction for errors or inconsistencies/i
+          should_retry = true
+          break
+        end
       end
 
-      return bl_count == 1 && xl_count == 1
+      return should_retry
     end
 
 end; end; end; end
