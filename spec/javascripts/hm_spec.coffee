@@ -193,5 +193,12 @@ describe 'HMApp', () ->
         $scope.saveLine(ln)
         expect(svc.saveLine).toHaveBeenCalledWith(ln)
         expect($scope.recentLines.length).toEqual 1
-        expect($scope.recentLines[0]).toEqual data.line        
-      
+        expect($scope.recentLines[0]).toEqual data.line
+
+    describe 'createPO', ->
+      it 'should create a new poLine', ->
+        $scope.missingPO = "Missing"
+        $scope.createPO()
+        expect($scope.poLine.po_number).toEqual "Missing"
+        expect($scope.poLine.currency).toEqual "USD"
+        expect($scope.missingPO).toEqual null

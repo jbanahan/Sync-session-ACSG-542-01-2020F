@@ -176,4 +176,8 @@ app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$
     ).error((d,s,h,c) ->
       $scope.errorMessage = d.errors[0]
     )
+
+  $scope.createPO = () ->
+    $scope.poLine = {po_number: $scope.missingPO, currency:"USD"}
+    $scope.missingPO = null
 ]
