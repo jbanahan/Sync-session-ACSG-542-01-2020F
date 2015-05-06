@@ -88,7 +88,7 @@ module OpenChain; class SqlProxyClient
     request query_name, query_params, context, swallow_error: false
   end
  
-  def request job_name, job_params, request_context, request_params = {}
+  def request job_name, job_params, request_context, request_params = {}, retry_count = 3
     request_params = {swallow_error: true}.merge request_params
     request_body = {'job_params' => job_params}
     request_body['context'] = request_context unless request_context.blank?

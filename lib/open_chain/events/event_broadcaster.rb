@@ -26,6 +26,8 @@ module OpenChain; module Events
         else
           @broadcasted_events ||= []
           @broadcasted_events << event
+          # Only hold onto the last 10 events to avoid huge memory outlays on large processor runs
+          @broadcasted_events.slice!(0) if @broadcasted_events.size > 10
         end
         
       rescue

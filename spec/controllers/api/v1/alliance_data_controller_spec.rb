@@ -89,7 +89,7 @@ describe Api::V1::AllianceDataController do
       results = {"entry" => {"data" => "data"}}
 
       OpenChain::CustomHandler::KewillEntryParser.should_receive(:delay).and_return OpenChain::CustomHandler::KewillEntryParser
-      OpenChain::CustomHandler::KewillEntryParser.should_receive(:parse_json).with(results.to_json)
+      OpenChain::CustomHandler::KewillEntryParser.should_receive(:parse).with(results.to_json, save_to_s3: true)
 
       post "receive_entry_data", results: results, context: {}
       expect(response.body).to eq ({"OK" => ""}.to_json)
