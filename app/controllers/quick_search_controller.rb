@@ -30,21 +30,17 @@ class QuickSearchController < ApplicationController
     return error_redirect("Parameter v is required.") if params[:v].blank?
     r = {module_type: cm.class_name, fields:{}, vals:[], search_term:ActiveSupport::Inflector.transliterate(params[:v].to_s.strip)}
     with_fields_to_use(cm,current_user) do |uids|
-      or_clause_array = []
-      
-      uids.each do |uid|
+      inner_queries = []
+      uids.each_with_index do |uid, x|
         mf = ModelField.find_by_uid(uid)
         r[:fields][mf.uid] = mf.label
         
         sc = SearchCriterion.new(model_field_uid:mf.uid.to_s, operator:'co', value: r[:search_term])
         value = sc.where_value
-        or_clause_array << ActiveRecord::Base.send(:sanitize_sql_array, ["(#{sc.where_clause(value)})", value])
+        inner_queries << cm.quicksearch_lambda.call(current_user, cm.klass).where(sc.where_clause(value), value).select("DISTINCT #{cm.table_name}.id, #{x} as sort_order").limit(10).to_sql
       end
 
-      results = cm.quicksearch_lambda.call(current_user, cm.klass)
-      results = results.where(or_clause_array.join(' OR ')).limit(10)
-
-      sql = results.to_sql
+      results = cm.klass.joins("INNER JOIN (#{inner_queries.join(" UNION ALL ")}) inner_query ON inner_query.id = #{cm.table_name}.id").order("inner_query.sort_order ASC")
       results.each do |obj|
         obj_hash = {
           id:obj.id,
