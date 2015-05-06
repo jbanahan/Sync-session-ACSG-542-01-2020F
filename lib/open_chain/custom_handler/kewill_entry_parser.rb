@@ -278,7 +278,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       pms_year = e[:pms_year]
       pms_month = e[:pms_month]
       pms_day = nil
-      if pms_year.nonzero? && pms_month.nonzero?
+      if pms_year.try(:nonzero?) && pms_month.try(:nonzero?)
         dates = KeyJsonItem.usc_periodic_dates(pms_year).first
         if dates
           #JSON keys are always strings
