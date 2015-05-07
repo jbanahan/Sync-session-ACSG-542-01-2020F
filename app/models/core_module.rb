@@ -490,9 +490,19 @@ class CoreModule
     enabled_lambda: lambda { MasterSetup.get.vendor_management_enabled? },
   )
 
+  DRAWBACK_CLAIM = new("DrawbackClaim", "Drawback Claim",
+    default_search_columns: [:dc_name, :dc_imp_name, :dc_exports_start_date, :dc_exports_end_date],
+    unique_id_field_name: :dc_name,
+    key_model_field_uids: [:dc_name],
+    children: [],
+    child_lambdas: {},
+    child_joins: {},
+    enabled_lambda: lambda { MasterSetup.get.drawback_enabled? }
+  )
+
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
-    SECURITY_FILING,SECURITY_FILING_LINE,COMPANY,PLANT,PLANT_PRODUCT_GROUP_ASSIGNMENT]
+    SECURITY_FILING,SECURITY_FILING_LINE,COMPANY,PLANT,PLANT_PRODUCT_GROUP_ASSIGNMENT,DRAWBACK_CLAIM]
 
   def self.add_virtual_identifier
     # Add in the virtual_identifier field that is needed for update_model_field_attribute support

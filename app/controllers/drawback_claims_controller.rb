@@ -1,11 +1,10 @@
 require 'open_chain/custom_handler/duty_calc/export_history_parser'
 require 'open_chain/custom_handler/duty_calc/claim_audit_parser'
 class DrawbackClaimsController < ApplicationController 
+
   def index
-    action_secure(current_user.view_drawback?, current_user, {:verb => "view", :lock_check => false, :module_name=>"drawback claims"}) do
-      @claims = secure.order("IFNULL(sent_to_customs_date,adddate(now(),INTERVAL 100 YEAR)) DESC, id DESC").paginate(:per_page => 20, :page => params[:page])
-      render :layout=>'one_col'
-    end
+    flash.keep
+    redirect_to advanced_search CoreModule::DRAWBACK_CLAIM, params[:force_search]
   end
   
   def show
@@ -24,7 +23,7 @@ class DrawbackClaimsController < ApplicationController
   def update
     claim = DrawbackClaim.find params[:id]
     action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
-      claim.update_attributes(params[:drawback_claim])
+      claim.update_model_field_attributes params[:drawback_claim]
       errors_to_flash claim
       if claim.errors.empty?
         add_flash :notices, "Drawback saved successfully."
@@ -39,7 +38,8 @@ class DrawbackClaimsController < ApplicationController
   end
   def create
     action_secure(current_user.edit_drawback?,current_user,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
-      d = DrawbackClaim.create(params[:drawback_claim])
+      d = DrawbackClaim.new
+      d.update_model_field_attributes params[:drawback_claim]
       errors_to_flash d
       if d.errors.full_messages.size == 0
         add_flash :notices, "Drawback saved successfully."

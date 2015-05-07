@@ -1,4 +1,5 @@
 class DrawbackClaim < ActiveRecord::Base
+  include UpdateModelFieldsSupport
 
   belongs_to :importer, :class_name=>"Company"
   
@@ -48,6 +49,11 @@ class DrawbackClaim < ActiveRecord::Base
 
   def can_attach?(user)
     can_edit? user
+  end
+
+  def self.search_where(user)
+    c = user.company.presence || Company.new
+    c.master? ? "1=1" : "(#{table_name}.importer_id = #{c.id} or #{table_name}.importer_id IN (select child_id from linked_companies where parent_id = #{c.id}))"
   end
 
   #find all duty calc export file lines for the importer and claim date range

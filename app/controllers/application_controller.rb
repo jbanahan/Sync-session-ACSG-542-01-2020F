@@ -105,6 +105,8 @@ class ApplicationController < ActionController::Base
       redirect_path = "products_path"
     when CoreModule::OFFICIAL_TARIFF
       redirect_path = "official_tariffs_path"
+    when CoreModule::DRAWBACK_CLAIM
+      redirect_path = "drawback_claims_path"
     end
 
     search_params = {}

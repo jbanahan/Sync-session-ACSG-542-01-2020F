@@ -3,30 +3,17 @@
 <button class='btn_link' link_to='<%=request.referrer%>' key_map='c'>Cancel</button>
 <%end-%>
 <%=form_for @drawback_claim, :html=>{:id=>'frm_sub'} do |f|-%>
-<table>
-  <%=field_row "Importer", f.collection_select(:importer_id,Company.importers.order("name ASC"), :id, :name_with_customer_number, :prompt=>true)%>
-  <%=field_row "Name", f.text_field(:name)%>
-  <%=field_row "Exports Start", f.text_field(:exports_start_date,:class=>'isdate')%>
-  <%=field_row "Exports End", f.text_field(:exports_end_date,:class=>'isdate')%>
-  <%=field_row "Claim Number", f.text_field(:entry_number)%>
-  <%=field_row "Total Pieces Claimed",f.text_field(:total_pieces_claimed)%>
-  <%=field_row "Total Pieces Exported",f.text_field(:total_pieces_exported)%>
-  <%=field_row "Planned Claim Amount",f.text_field(:planned_claim_amount)%>
-  <%=field_row "Total Export Value",f.text_field(:total_export_value)%>
-  <%=field_row "Total Duty Exported",f.text_field(:total_duty)%>
-  <%=field_row "Duty Claimed",f.text_field(:duty_claimed)%>
-  <%=field_row "HMF Claimed",f.text_field(:hmf_claimed)%>
-  <%=field_row "MPF Claimed",f.text_field(:mpf_claimed)%>
-  <%=field_row "Duty Check Amount",f.text_field(:duty_check_amount)%>
-  <%=field_row "Commission",f.text_field(:bill_amount)%>
-  <%=field_row "ABI Accepted",f.text_field(:abi_accepted_date,:class=>'isdate')%>
-  <%=field_row "Sent To Customs",f.text_field(:sent_to_customs_date,:class=>'isdate')%>
-  <%=field_row "Billed",f.text_field(:billed_date,:class=>'isdate')%>
-  <%=field_row "Duty Check Received",f.text_field(:duty_check_received_date,:class=>'isdate')%>
-  <%=field_row "HMF/MPF Check Number", f.text_field(:hmf_mpf_check_number)%>
-  <%=field_row "HMF/MPF Check Amount", f.text_field(:hmf_mpf_check_amount)%>
-  <%=field_row "HMF/MPF Check Received", f.text_field(:hmf_mpf_check_received_date,:class=>'isdate')%>
-</table>
+<div class="container">
+  <div class="row">
+    <div class="col-md-6">
+      <%= show_model_fields(f, :dc_imp_id, {dc_imp_id: {prompt: "Select an Importer", select_options: lambda {|value| options_from_collection_for_select(Company.importers.order("name ASC"), :id, :name_with_customer_number, value)}}}) %>
+      <%= show_model_fields(f, [:dc_name, :dc_exports_start_date, :dc_exports_end_date, :dc_entry_number, :dc_total_pieces_claimed, :dc_total_pieces_exported, :dc_planned_claim_amount, :dc_total_export_value, :dc_total_duty, :dc_duty_claimed]) %>
+    </div>
+    <div class="col-md-6">
+      <%= show_model_fields(f, [:dc_hmf_claimed, :dc_mpf_claimed, :dc_duty_check_amount, :dc_bill_amount, :dc_abi_accepted_date, :dc_sent_to_customs_date, :dc_billed_date, :dc_duty_check_received_date, :dc_hmf_mpf_check_number, :dc_hmf_mpf_check_amount, :dc_hmf_mpf_check_received_date]) %>
+    </div>
+  </div>
+</div>
 <%end-%>
 
 

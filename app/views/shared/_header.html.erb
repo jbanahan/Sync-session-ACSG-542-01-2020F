@@ -117,7 +117,7 @@
             <%=nav_item 'New', '/orders/new', current_user.edit_orders?%>
           <%end%>
           <%=nav_section 'shp-sec', 'Shipment', current_user.view_shipments? do%>
-            <%=nav_item 'Search', '/shipments?force_search=true'', current_user.view_shipments?'%>
+            <%=nav_item 'Search', '/shipments?force_search=true'%>
             <%=nav_item 'New', '/shipments/new', current_user.edit_shipments?%>
           <%end%>
           <%=nav_section 'so-sec', 'Sales Order', current_user.view_sales_orders? do%>
@@ -141,7 +141,8 @@
             <%=nav_item 'Search', '/broker_invoices?force_search=true'%>
           <%end%>
           <%=nav_section 'drw-sec', 'Drawback', current_user.view_drawback? do%>
-            <%=nav_item 'Claims', '/drawback_claims'%>
+            <%=nav_item 'Search Claims', '/drawback_claims?force_search=true'%>
+            <%=nav_item 'New Claim', '/drawback_claims/new', current_user.edit_drawback? %>
             <%=nav_item 'Uploads', '/drawback_upload_files'%>
           <%end%>
           <%=nav_section 'srv-sec', 'Survey', (!current_user.survey_responses.blank? || current_user.view_surveys?) do%>

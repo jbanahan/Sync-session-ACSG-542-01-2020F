@@ -12,18 +12,9 @@ describe DrawbackClaimsController do
       @dc_other = Factory(:drawback_claim,:sent_to_customs_date=>1.day.ago)
       sign_in_as @du
     end
-    it "should show claims based on DrawbackClaim.viewable" do
-      User.any_instance.stub(:view_drawback?).and_return(true)
-      DrawbackClaim.should_receive(:viewable).with(@du).and_return(DrawbackClaim.where("ID IN (?)",[@dc2,@dc_other]))
+    it "redirects to advanced search" do
       get :index
-      response.should be_success
-      assigns(:claims).to_a.should == [@dc2,@dc_other]
-    end
-    it "should reject if user cannot view drawback" do
-      User.any_instance.stub(:view_drawback?).and_return(false)
-      get :index
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response.location).to match "advanced_search"
     end
   end
   describe :show do
@@ -69,7 +60,7 @@ describe DrawbackClaimsController do
     before :each do
       @u = Factory(:user)
       @claim = Factory(:drawback_claim)
-      @h = {'id'=>@claim.id,'drawback_claim'=>{'name'=>'newname'}}
+      @h = {'id'=>@claim.id,'drawback_claim'=>{'dc_name'=>'newname'}}
       sign_in_as @u
     end
     it "should update claim" do
@@ -92,7 +83,7 @@ describe DrawbackClaimsController do
     before :each do
       @u = Factory(:user)
       @c = Factory(:company)
-      @h = {'drawback_claim'=>{'importer_id'=>@c.id,'name'=>'nm','hmf_claimed'=>'10.04'}}
+      @h = {'drawback_claim'=>{'dc_imp_id'=>@c.id,'dc_name'=>'nm','dc_hmf_claimed'=>'10.04'}}
       sign_in_as @u
     end
     it "should save new claim" do
