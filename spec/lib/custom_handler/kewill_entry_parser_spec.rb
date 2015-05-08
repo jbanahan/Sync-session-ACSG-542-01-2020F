@@ -700,39 +700,15 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       OpenChain::AllianceImagingClient.stub(:request_images)
     end
 
-    it "reads json, saves copy of json to s3, parses it" do
-      described_class.stub(:production?).and_return true
+    it "reads json, parses it, notifies listeners" do
       json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
-      now = Time.zone.now.strftime "%Y-%m/%d"
-      expected_key = "#{now}/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_entry/12345-2015-04-01-00-00.json"
       entry = Entry.new(broker_reference: "TESTING")
-      described_class.any_instance.should_receive(:process_entry).with(json[:entry], save_to_s3: true, key:expected_key, bucket: OpenChain::S3.integration_bucket_name).and_return entry
-      contents = nil
-      s3_bucket = nil
-      s3_key = nil
-      OpenChain::S3.should_receive(:upload_file) do |bucket, key, file|
-        s3_bucket = bucket
-        s3_key = key
-        contents = file.read
-      end
+      described_class.any_instance.should_receive(:process_entry).with(json[:entry], {}).and_return entry
 
       OpenChain::AllianceImagingClient.should_receive(:request_images).with "TESTING"
       entry.should_receive(:broadcast_event).with(:save)
 
-      described_class.parse json.to_json, save_to_s3: true
-
-      expect(contents).to eq json.to_json
-      expect(s3_bucket).to eq OpenChain::S3.integration_bucket_name
-      expect(s3_key).to eq expected_key
-    end
-
-    it "doesn't upload to s3 outside of production" do
-      json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
-      described_class.stub(:production?).and_return false
-      described_class.any_instance.should_receive(:process_entry).with(json[:entry], save_to_s3: true)
-      OpenChain::S3.should_not_receive(:upload_file)
-
-      described_class.parse json.to_json, save_to_s3: true
+      described_class.parse json.to_json
     end
 
     it "handles a hash instead of json" do
@@ -741,14 +717,32 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       described_class.parse json
     end
 
-    it 'does not upload if save_to_s3 is missing' do 
-      json = {'entry' => {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
-      described_class.any_instance.should_receive(:process_entry).with(json['entry'], {})
-      described_class.parse json.to_json
-    end
-
     it "returns if there is no entry wrapped" do
       described_class.parse({})
+    end
+  end
+
+  describe "save_to_s3" do
+    it "saves entry data to s3 and returns s3 bucket/key" do
+      json = {'entry' => {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
+
+      contents = nil
+      bucket = nil
+      key = nil
+      OpenChain::S3.should_receive(:upload_file) do |b, k, file|
+        bucket = b
+        key = k
+        contents = file.read
+      end
+
+      described_class.save_to_s3 json
+
+      expect(bucket).to eq OpenChain::S3.integration_bucket_name
+      expect(key).to eq "#{Time.zone.now.strftime("%Y-%m/%d")}/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_entry/12345-2015-04-01-00-00.json"
+    end
+
+    it "handles empty datasets" do
+      expect(described_class.save_to_s3({})).to be_nil
     end
   end
 end

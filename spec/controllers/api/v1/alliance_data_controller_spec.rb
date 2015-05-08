@@ -86,10 +86,21 @@ describe Api::V1::AllianceDataController do
 
   describe "receive_entry_data" do
     it "receives entry data" do
-      results = {"entry" => {"data" => "data"}}
+      results = {"entry" => {"file_no" => "1234"}}
 
+      OpenChain::CustomHandler::KewillEntryParser.should_receive(:save_to_s3).with(results).and_return bucket: "bucket", key: "key"
       OpenChain::CustomHandler::KewillEntryParser.should_receive(:delay).and_return OpenChain::CustomHandler::KewillEntryParser
-      OpenChain::CustomHandler::KewillEntryParser.should_receive(:parse).with(results.to_json, save_to_s3: true)
+      OpenChain::CustomHandler::KewillEntryParser.should_receive(:process_from_s3).with("bucket", "key")
+
+      post "receive_entry_data", results: results, context: {}
+      expect(response.body).to eq ({"OK" => ""}.to_json)
+    end
+
+    it "puts file # in error message if s3 load fails" do
+      results = {"entry" => {"file_no" => "1234"}}
+      OpenChain::CustomHandler::KewillEntryParser.should_receive(:save_to_s3).with(results).and_raise "Error!"
+
+      StandardError.any_instance.should_receive(:log_me).with ["Failed to store entry file data for file # 1234."]
 
       post "receive_entry_data", results: results, context: {}
       expect(response.body).to eq ({"OK" => ""}.to_json)

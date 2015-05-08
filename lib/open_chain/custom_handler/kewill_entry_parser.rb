@@ -1,4 +1,5 @@
 require 'open_chain/sql_proxy_client'
+require 'open_chain/s3'
 
 module OpenChain; module CustomHandler; class KewillEntryParser
   extend OpenChain::IntegrationClientParser
@@ -56,21 +57,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     outer = json_content.is_a?(String) ? ActiveSupport::JSON.decode(json_content) : json_content
     json = outer['entry']
     return nil if json.nil?
-
-    if production? && opts[:save_to_s3] == true
-      opts[:key] = s3_file_path(json) if opts[:key].blank?
-      opts[:bucket] = OpenChain::S3.integration_bucket_name if opts[:bucket].blank?
-    end
     
     entry = self.new.process_entry json, opts
-    # Only store off files that actually produced an entry update
-    begin
-      if entry && opts[:save_to_s3] == true && opts[:key] && opts[:bucket]
-        json_to_tempfile(outer) {|f| OpenChain::S3.upload_file(opts[:bucket], opts[:key], f) }
-      end
-    rescue => e
-      e.log_me ["Failed to store entry file data for entry #{entry.broker_reference}."]
-    end
 
     if entry
       OpenChain::AllianceImagingClient.request_images(entry.broker_reference) unless opts[:imaging] == false
@@ -78,6 +66,17 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     entry
+  end
+
+  def self.save_to_s3 entry_data
+    json = entry_data['entry']
+    return nil if json.nil?
+
+    key = s3_file_path(json)
+    bucket = OpenChain::S3.integration_bucket_name
+    json_to_tempfile(entry_data) {|f| OpenChain::S3.upload_file(bucket, key, f) }
+
+    {bucket: bucket, key: key}
   end
 
   def process_entry json, opts={}
@@ -147,7 +146,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           # The lock call here can potentially update us with new data, so we need to check again that another process isn't processing a newer file
           if !skip_file?(entry, extract_time)
             entry.expected_update_time = updated_at
-            # Populate the last exported from source field once we discontinue the Alliance feed
+            # TODO - Populate the last exported from source field once we discontinue the Alliance feed
             #entry.last_exported_from_source = extract_time
             return yield e, entry
           end
@@ -812,11 +811,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def tz
       self.class.tz
-    end
-
-    def self.production?
-      # Easily overridable for testing
-      Rails.env.production?
     end
 
 end; end; end;

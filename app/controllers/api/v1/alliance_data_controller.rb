@@ -34,7 +34,15 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbackController
 
   def receive_entry_data
     extract_results(params) do |results, context|
-      OpenChain::CustomHandler::KewillEntryParser.delay.parse results.to_json, save_to_s3: true
+      begin
+        s3_data = OpenChain::CustomHandler::KewillEntryParser.save_to_s3 results
+        OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 s3_data[:bucket], s3_data[:key]
+      rescue => e
+        e.log_me ["Failed to store entry file data for file # #{results.try(:[], 'entry').try(:[], 'file_no')}."]
+      end
+      
+      # Even if we had an error, don't bother reporting back to the post that there was one, since we're already
+      # recording it locally.
       render json: {"OK" => ""}
     end
   end
