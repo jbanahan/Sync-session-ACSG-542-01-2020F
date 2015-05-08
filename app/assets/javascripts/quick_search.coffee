@@ -8,7 +8,7 @@ root.OCQuickSearch =
     html = ''
     if qs.vals.length == 10
       html += "<div class='alert alert-warning' role='alert'>Only the first 10 results are shown.</div>"
-    html += OCQuickSearch.makeCard(qs.fields,obj,qs.search_term) for obj in qs.vals
+    html += OCQuickSearch.makeCard(qs.fields,obj,qs.search_term) for obj, idx in qs.vals
 
     html = '<div class="text-muted">No results found for this search.</div>' if html == ''
 

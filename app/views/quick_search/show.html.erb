@@ -1,6 +1,21 @@
 <%content_for :javascript do%>
 $(function() {
   $(".search-query ").val("<%=j raw(@value)%>");
+  $("[data-qs-activate]").click(function() {
+    var btn, activateTarget; 
+    btn = $(this)
+    activateTarget = btn.attr('data-qs-activate');
+
+    $("[data-qs-activate]").addClass('btn-default').removeClass('btn-primary');
+    btn.addClass('btn-primary').removeClass('btn-default');
+
+    if(activateTarget=="all") {
+      $("[data-qs-panel]").fadeIn();
+    } else {
+      $("[data-qs-panel]").fadeOut();
+      $("[data-qs-panel='"+activateTarget+"']").fadeIn();
+    }
+  });
 });
 <%end%>
 <div class="container">
@@ -9,20 +24,23 @@ $(function() {
       <h1 class='text-center'>Search Results</h1>
     </div>
   </div>
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary" data-qs-activate='all'>All</button>
+        <%@available_modules.each do |cm|%>
+          <button type="button" class="btn btn-default" data-qs-activate='qs-<%=cm.class_name%>'><%=cm.label%></button>
+        <%end%>
+      </div>
+    </div>
+  </div>
   <%@available_modules.each do |cm|%>
-    <div class="row">
+    <div class="row" data-qs-panel='qs-<%=cm.class_name%>'>
       <div class="col-md-12">
         <h2><%=cm.label%></h2>
-        <!-- <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title"><%=cm.label%></h3>
-            </div>
-            <div class="panel-body"> -->
-              <div id='modwrap_<%=cm.class_name%>'>
-                <div class='loader'>loading</div>
-              </div>
-            <!-- </div>
-        </div> -->
+        <div id='modwrap_<%=cm.class_name%>'>
+          <div class='loader'>loading</div>
+        </div>
       </div>
     </div>
     <script type="text/javascript">
