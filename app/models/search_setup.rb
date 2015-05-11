@@ -186,10 +186,10 @@ class SearchSetup < ActiveRecord::Base
     return messages.size == start_messages_count
   end
 
-  def downloadable? messages = []
+  def downloadable? messages = [], single_page_download = false
     start_messages_count = messages.size
 
-    if search_criterions.length == 0
+    if !single_page_download && search_criterions.length == 0
       messages << "You must add at least one Parameter to your search setup before downloading a search."
     end
 

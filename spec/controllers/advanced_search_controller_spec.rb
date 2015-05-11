@@ -414,7 +414,7 @@ describe AdvancedSearchController do
     it "should run file for XLS" do
       wb = mock('wb')
       wb.should_receive(:write)
-      XlsMaker.any_instance.should_receive(:make_from_search_query).with(instance_of(SearchQuery), per_page: 100).and_return(wb)
+      XlsMaker.any_instance.should_receive(:make_from_search_query).with(instance_of(SearchQuery), per_page: 100, single_page: true).and_return(wb)
       get :download, :id=>@ss.id, :format=>:xls
       response.should be_success
       response.headers['Content-Type'].should == "application/vnd.ms-excel"

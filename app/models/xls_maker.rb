@@ -22,7 +22,7 @@ class XlsMaker
     @column_widths = {}
     ss = search_query.search_setup
     errors = []
-    raise errors.first unless ss.downloadable?(errors)
+    raise errors.first unless ss.downloadable?(errors, search_query_opts[:single_page])
 
     max_results = ss.max_results
     cols = search_query.search_setup.search_columns.order('rank ASC')

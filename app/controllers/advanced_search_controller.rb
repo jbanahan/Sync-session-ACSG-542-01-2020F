@@ -127,7 +127,7 @@ class AdvancedSearchController < ApplicationController
         m = XlsMaker.new(:include_links=>ss.include_links?,:no_time=>ss.no_time?)
         sq = SearchQuery.new ss, current_user
         # Make sure the we enforce limiting results to a single page.
-        send_excel_workbook m.make_from_search_query(sq, per_page: results_per_page), "#{ss.name}.xls"
+        send_excel_workbook m.make_from_search_query(sq, per_page: results_per_page, single_page: true), "#{ss.name}.xls"
       }
       format.json {
         errors = []

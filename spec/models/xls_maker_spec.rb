@@ -54,8 +54,8 @@ describe XlsMaker do
       s.row(1)[4].should be_a Spreadsheet::Link
     end
     it "raises an error if the search is not downloadable" do
-      @sq.search_setup.should_receive(:downloadable?) {|e| e << "Error!"; false}
-      expect {XlsMaker.new.make_from_search_query @sq}.to raise_error "Error!"
+      @sq.search_setup.should_receive(:downloadable?).with(instance_of(Array), true) {|e| e << "Error!"; false}
+      expect {XlsMaker.new.make_from_search_query @sq, single_page: true}.to raise_error "Error!"
     end
 
     it "raises an error if the maximum number of results is exceeded" do

@@ -14,10 +14,10 @@ class CsvMaker
     generate results, columns, search_criterions, module_chain, user
   end
 
-  def make_from_search_query search_query
+  def make_from_search_query search_query, single_page = false
     ss = search_query.search_setup
     errors = []
-    raise errors.first unless ss.downloadable?(errors)
+    raise errors.first unless ss.downloadable?(errors, single_page)
     max_results = ss.max_results
 
     columns = search_query.search_setup.search_columns.order('rank ASC')

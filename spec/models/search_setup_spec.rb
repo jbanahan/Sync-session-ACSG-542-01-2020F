@@ -37,10 +37,15 @@ describe SearchSetup do
       expect(ss.downloadable?).to be_true
     end
 
-    it "is not downloadable if there are no search criterions" do
+    it "is not downloadable if there are no search criterions for multi-page searches" do
       errors = []
       expect(Factory(:search_setup).downloadable? errors).to be_false
       expect(errors).to eq ["You must add at least one Parameter to your search setup before downloading a search."]
+    end
+
+    it "is not downloadable if there are no search criterions for single page searches" do
+      errors = []
+      expect(Factory(:search_setup).downloadable? errors, true).to be_true
     end
   end
   describe :give_to do
