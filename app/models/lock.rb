@@ -131,13 +131,13 @@ class Lock
     # parsing data from untrusted sources and using it for key values (like in imported file spreadsheets, csv files, etc.)
     # We don't really care that the lock name has bad UTF-8 chars in it...let that get handled elsewhere
     # All we care about here is that the mutex lock is established.
-    if lock_name.encoding && lock_name.encoding.name == "UTF-8"
-      if !lock_name.valid_encoding?
-        lock_name = lock_name.chars.select(&:valid_encoding?).join
-      end
-    else
+    if lock_name.encoding && lock_name.encoding.name != "UTF-8"
       # If the lock isn't UTF-8, convert it to that (for the redis ruby client's sake).
       lock_name = lock_name.encode('UTF-8', invalid: :replace, replace: '')
+    end
+
+    if !lock_name.valid_encoding?
+      lock_name = lock_name.chars.select(&:valid_encoding?).join
     end
 
     lock_name

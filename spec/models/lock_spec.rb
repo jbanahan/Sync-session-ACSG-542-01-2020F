@@ -273,6 +273,21 @@ describe Lock do
       expect(locked_name).to eq "foo"
       expect(locked_name.encoding.name).to eq "UTF-8"
     end
+
+    it "fixes invalid encoding chars" do
+      # Value used will be "€foo", since \xA0 is not a valid UTF-8 char
+      lock_name = "€foo\xA0".force_encoding("UTF-8")
+
+      locked_name = nil
+      Lock.should_receive(:definitely_acquired?) do |name|
+        locked_name = name
+        true
+      end
+      locked = false
+      Lock.acquire(lock_name) { locked = true}
+      expect(locked).to be_true
+      expect(locked_name).to eq "€foo"
+    end
   end
 
   context :lock_with_retry do

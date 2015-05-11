@@ -26,6 +26,7 @@ class DataCrossReference < ActiveRecord::Base
   UA_DUTY_RATE ||= 'ua_duty_rate'
   ALLIANCE_CHECK_REPORT_CHECKSUM ||= 'al_check_checksum'
   ALLIANCE_INVOICE_REPORT_CHECKSUM ||= 'al_inv_checksum'
+  OUTBOUND_315_EVENT ||= '315'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
@@ -171,6 +172,14 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.create_rl_fabric_fingerprint! product_unique_identifier, fingerprint
     add_xref! RL_FABRIC_FINGERPRINT, product_unique_identifier, fingerprint
+  end
+
+  def self.find_315_milestone entry, event_code
+    find_unique(where(cross_reference_type: OUTBOUND_315_EVENT, key: make_compound_key(entry.source_system, entry.broker_reference, event_code)))
+  end
+
+  def self.create_315_milestone! entry, event_code, date
+    add_xref! OUTBOUND_315_EVENT, make_compound_key(entry.source_system, entry.broker_reference, event_code), date
   end
 
   def self.has_key? key, cross_reference_type

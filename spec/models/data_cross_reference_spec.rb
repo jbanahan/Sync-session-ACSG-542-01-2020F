@@ -178,4 +178,27 @@ describe DataCrossReference do
 
     end
   end
+
+  describe "find_315_milestone" do
+    it "finds a milestone value" do
+      e = Entry.new source_system: "source", broker_reference: "ref"
+      xref = DataCrossReference.add_xref! DataCrossReference::OUTBOUND_315_EVENT, DataCrossReference.make_compound_key(e.source_system, e.broker_reference, "code"), "value"
+      expect(DataCrossReference.find_315_milestone(e, 'code')).to eq "value"
+    end
+  end
+
+  describe "create_315_milestone!" do
+    it "creates a 315 milestone" do
+      e = Entry.new source_system: "source", broker_reference: "ref"
+      DataCrossReference.create_315_milestone! e, 'code', 'value'
+      expect(DataCrossReference.find_315_milestone(e, 'code')).to eq "value"
+    end
+
+    it "updates an existing milestone" do
+      e = Entry.new source_system: "source", broker_reference: "ref"
+      xref = DataCrossReference.create_315_milestone! e, 'code', 'value'
+      DataCrossReference.create_315_milestone! e, 'code', 'value2'
+      expect(xref.reload.value).to eq "value2"
+    end
+  end
 end
