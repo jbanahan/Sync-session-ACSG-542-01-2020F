@@ -11,7 +11,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         else
           updatedLines.push ln if qty && qty>0
       shipment.lines = updatedLines
-    setPortNames(shipment, 'dest_port', 'first_port_receipt', 'lading_port')
+    setPortNames(shipment, 'dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port')
     shipment
 
   setPortNames = (shipment, names...) ->
