@@ -180,47 +180,18 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
 
   ###*
   # Returns a function that takes a source object as a parameter.
-  # Slices that object on the provided attributes and assigns the slice to scope under the provided name.
+  # Copies that object and assigns the copy to scope under the provided name.
   #
-  # @param {string} objName what the object on scope will be called
-  # @param {string[]} attributes
+  # @param {string} objName
   # @return {Function}
   ###
-  assignSliceToScopeFn = (objName, attributes) ->
+  copyObjectToScopeAs = (objName) ->
     (source) ->
-      $scope[objName] = objectSlice source, attributes
+      $scope[objName] = angular.copy(source)
 
-  $scope.prepShipmentHeaderEditObject = assignSliceToScopeFn 'header', ['id',
-                                                                        'shp_ref',
-                                                                        'shp_importer_reference',
-                                                                        'shp_master_bill_of_lading',
-                                                                        'shp_house_bill_of_lading',
-                                                                        'shp_booking_number',
-                                                                        'shp_receipt_location',
-                                                                        'shp_dest_port_name',
-                                                                        'shp_freight_terms',
-                                                                        'shp_lcl',
-                                                                        'shp_shipment_type',
-                                                                        'shp_vessel',
-                                                                        'shp_voyage',
-                                                                        'shp_vessel_carrier_scac',
-                                                                        'shp_mode',
-                                                                        'shp_vessel_name',
-                                                                        'shp_vessel_nationality',
-                                                                        'shp_first_port_receipt_name',
-                                                                        'shp_lading_port_name',
-                                                                        'shp_last_foreign_port_name',
-                                                                        'shp_unlading_port_name',
-                                                                        'shp_marks_and_numbers',
-                                                                        'shp_number_of_packages',
-                                                                        'shp_number_of_packages_uom', 'shp_gross_weight']
+  $scope.prepShipmentHeaderEditObject = copyObjectToScopeAs 'header'
 
-  $scope.prepShipmentLineEditObject = assignSliceToScopeFn 'lineToEdit', ['id',
-                                                                         'shpln_shipped_qty',
-                                                                         'shpln_carton_qty',
-                                                                         'shpln_cbms',
-                                                                         'shpln_gross_kgs',
-                                                                         'shpln_container_uid']
+  $scope.prepShipmentLineEditObject = copyObjectToScopeAs 'lineToEdit'
 
   $scope.saveLine = (shipment,line) ->
     $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
@@ -232,32 +203,15 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
       $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
         $scope.loadLines($scope.shp)
 
-  $scope.prepBookingEditObject = assignSliceToScopeFn 'booking', ['id',
-                                                                 'shp_booking_cutoff_date',
-                                                                 'shp_booking_est_departure_date',
-                                                                 'shp_cargo_ready_date',
-                                                                 'shp_booking_est_arrival_date',
-                                                                 'shp_booking_shipment_type',
-                                                                 'shp_booking_mode']
+  $scope.prepBookingEditObject = copyObjectToScopeAs 'booking'
 
   $scope.prepPartiesEditObject = (shipment) ->
     loadParties() unless $scope.parties
     $scope.partiesEditObj = objectSlice shipment, ['id', 'shp_car_syscode', 'shp_imp_syscode']
 
-  $scope.prepTrackingEditObject = assignSliceToScopeFn 'tracking', ['id',
-                                                                   'shp_est_departure_date',
-                                                                   'shp_est_arrival_port_date',
-                                                                   'shp_est_delivery_date',
-                                                                   'shp_docs_received_date',
-                                                                   'shp_cargo_on_hand_date',
-                                                                   'shp_departure_date',
-                                                                   'shp_arrival_port_date',
-                                                                   'shp_delivered_date']
+  $scope.prepTrackingEditObject = copyObjectToScopeAs 'tracking'
 
-  $scope.editContainer = assignSliceToScopeFn 'containerToEdit', ['id',
-                                                                 'con_container_number',
-                                                                 'con_container_size',
-                                                                 'con_seal_number']
+  $scope.editContainer = copyObjectToScopeAs 'containerToEdit'
 
   $scope.saveContainer = (shipment,container) ->
     $scope.saveShipment({id: shipment.id, containers: [container]})
