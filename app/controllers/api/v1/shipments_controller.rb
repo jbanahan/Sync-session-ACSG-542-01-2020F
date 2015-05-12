@@ -163,7 +163,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_canceled_by_full_name,
       :shp_canceled_date,
       :shp_first_port_receipt_name,
-      :shp_first_port_receipt_id
+      :shp_first_port_receipt_id,
+      :shp_lading_port_name,
+      :shp_lading_port_id
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     line_fields_to_render = limit_fields([

@@ -44,3 +44,5 @@
 <input type="text" class="form-control" id="shp_vessel_nationality" ng-model="outerScope.header.shp_vessel_nationality"/>
 <label for="shp_first_port_receipt">First Port of Receipt</label>
 <angucomplete-alt id='shp_first_port_receipt' input-class='form-control' placeholder='port name' selected-object='outerScope.header.first_port_receipt' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_first_port_receipt_name}}'></angucomplete-alt>
+<label for="shp_lading_port">Foreign Port of Lading</label>
+<angucomplete-alt id='shp_lading_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.lading_port' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_lading_port_name}}'></angucomplete-alt>
