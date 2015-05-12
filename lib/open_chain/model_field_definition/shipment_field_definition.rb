@@ -76,7 +76,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         export_lambda: lambda {|obj| obj.carton_sets.inject(0) { |tot, cs| tot + (cs.carton_qty.nil? ? 0 : cs.carton_qty) }},
         qualified_field_name: "(SELECT SUM(carton_qty) FROM carton_sets WHERE carton_sets.shipment_id = shipments.id)"
       }],
-      [42,:shp_vessel_nationality, :vessel_nationality, 'Nationality of Ship', {data_type: :string}]
+      [42,:shp_vessel_nationality, :vessel_nationality, 'Nationality of Ship', {data_type: :string}],
+      [43,:shp_marks_and_numbers, :marks_and_numbers, 'Marks & Numbers', {data_type: :string}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")

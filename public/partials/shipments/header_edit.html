@@ -50,3 +50,5 @@
 <angucomplete-alt id='shp_last_foreign_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.last_foreign_port' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_last_foreign_port_name}}'></angucomplete-alt>
 <label for="shp_unlading_port">First US Port</label>
 <angucomplete-alt id='shp_unlading_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.unlading_port' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_unlading_port_name}}'></angucomplete-alt>
+<label for="shp_marks_and_numbers">Marks & Numbers</label>
+<input type="text" id="shp_marks_and_numbers" ng-model="outerScope.header.shp_marks_and_numbers" class="form-control" />
