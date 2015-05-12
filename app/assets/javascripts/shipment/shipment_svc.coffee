@@ -11,10 +11,17 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         else
           updatedLines.push ln if qty && qty>0
       shipment.lines = updatedLines
-    if shipment.dest_port && shipment.dest_port.title
-      shipment.shp_dest_port_name = shipment.dest_port.title
-      shipment.shp_dest_port_id = undefined
+    setPortNames(shipment, 'dest_port', 'first_port_receipt')
     shipment
+
+  setPortNames = (shipment, names...) ->
+    for name in names
+      setPortName shipment, name
+
+  setPortName = (shipment, portName) ->
+    if shipment[portName] && shipment[portName].title
+      shipment["shp_#{portName}_name"] = shipment[portName].title
+      shipment["shp_#{portName}_id"] = undefined
 
   currentShipment = null
   getShipmentSuccessHandler = (resp) ->
