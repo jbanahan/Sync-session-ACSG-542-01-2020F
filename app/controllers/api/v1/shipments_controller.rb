@@ -137,6 +137,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_vessel,
       :shp_voyage,
       :shp_vessel_carrier_scac,
+      :shp_vessel_nationality,
       :shp_booking_received_date,
       :shp_booking_confirmed_date,
       :shp_booking_cutoff_date,

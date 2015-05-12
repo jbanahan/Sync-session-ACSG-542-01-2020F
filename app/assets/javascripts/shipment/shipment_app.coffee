@@ -163,23 +163,6 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
         $scope.loadShipment(sId,true).then ->
           window.alert('Shipment no longer canceled.')
 
-  $scope.prepShipmentHeaderEditObject = (shipment) ->
-    $scope.header = {id: shipment.id}
-    $scope.header['shp_ref'] = shipment.shp_ref
-    $scope.header['shp_importer_reference'] = shipment.shp_importer_reference
-    $scope.header['shp_master_bill_of_lading'] = shipment.shp_master_bill_of_lading
-    $scope.header['shp_house_bill_of_lading'] = shipment.shp_house_bill_of_lading
-    $scope.header['shp_booking_number'] = shipment.shp_booking_number
-    $scope.header['shp_receipt_location'] = shipment.shp_receipt_location
-    $scope.header['shp_dest_port_name'] = shipment.shp_dest_port_name
-    $scope.header['shp_freight_terms'] = shipment.shp_freight_terms
-    $scope.header['shp_lcl'] = shipment.shp_lcl
-    $scope.header['shp_shipment_type'] = shipment.shp_shipment_type
-    $scope.header['shp_vessel'] = shipment.shp_vessel
-    $scope.header['shp_voyage'] = shipment.shp_voyage
-    $scope.header['shp_vessel_carrier_scac'] = shipment.shp_vessel_carrier_scac
-    $scope.header['shp_mode'] = shipment.shp_mode
-
   $scope.prepShipmentLineEditObject = (line) ->
     $scope.lineToEdit = {id: line.id}
     $scope.lineToEdit.shpln_shipped_qty = line.shpln_shipped_qty
@@ -187,6 +170,50 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
     $scope.lineToEdit.shpln_cbms = line.shpln_cbms
     $scope.lineToEdit.shpln_gross_kgs = line.shpln_gross_kgs
     $scope.lineToEdit.shpln_container_uid = line.shpln_container_uid
+  ###*
+  # Takes in a source object and a list of attributes and returns an object containing that subset of the source.
+  # In essence, Ruby's Hash#slice in JS
+  # The result will have every attribute in the list whether or not they are defined in the source
+  #
+  # @param {object} source
+  # @param {string[]} attributes
+  # @return {object}
+  ###
+  objectSlice = (source, attributes) ->
+    result = {}
+    for attr in attributes
+      result[attr] = source[attr]
+    result
+
+  ###*
+  # Returns a function that takes a source object as a parameter.
+  # Slices that object on the provided attributes and assigns the slice to scope under the provided name.
+  #
+  # @param {string} objName what the object on scope will be called
+  # @param {string[]} attributes
+  # @return {Function}
+  ###
+  assignSliceToScopeFn = (objName, attributes) ->
+    (source) ->
+      $scope[objName] = objectSlice source, attributes
+
+  $scope.prepShipmentHeaderEditObject = assignSliceToScopeFn 'header', ['id',
+                                                                        'shp_ref',
+                                                                        'shp_importer_reference',
+                                                                        'shp_master_bill_of_lading',
+                                                                        'shp_house_bill_of_lading',
+                                                                        'shp_booking_number',
+                                                                        'shp_receipt_location',
+                                                                        'shp_dest_port_name',
+                                                                        'shp_freight_terms',
+                                                                        'shp_lcl',
+                                                                        'shp_shipment_type',
+                                                                        'shp_vessel',
+                                                                        'shp_voyage',
+                                                                        'shp_vessel_carrier_scac',
+                                                                        'shp_mode',
+                                                                        'shp_vessel_name',
+                                                                        'shp_vessel_nationality']
 
   $scope.saveLine = (shipment,line) ->
     $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
