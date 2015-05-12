@@ -212,7 +212,8 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
                                                                         'shp_last_foreign_port_name',
                                                                         'shp_unlading_port_name',
                                                                         'shp_marks_and_numbers',
-                                                                        'shp_number_of_packages']
+                                                                        'shp_number_of_packages',
+                                                                        'shp_number_of_packages_uom']
 
   $scope.prepShipmentLineEditObject = assignSliceToScopeFn 'lineToEdit', ['id',
                                                                          'shpln_shipped_qty',
