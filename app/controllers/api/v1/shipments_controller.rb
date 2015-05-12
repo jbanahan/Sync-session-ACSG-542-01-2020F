@@ -172,7 +172,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_unlading_port_id,
       :shp_marks_and_numbers,
       :shp_number_of_packages,
-      :shp_number_of_packages_uom
+      :shp_number_of_packages_uom,
+      :shp_gross_weight
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     line_fields_to_render = limit_fields([
