@@ -77,7 +77,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         qualified_field_name: "(SELECT SUM(carton_qty) FROM carton_sets WHERE carton_sets.shipment_id = shipments.id)"
       }],
       [42,:shp_vessel_nationality, :vessel_nationality, 'Nationality of Ship', {data_type: :string}],
-      [43,:shp_marks_and_numbers, :marks_and_numbers, 'Marks & Numbers', {data_type: :string}]
+      [43,:shp_marks_and_numbers, :marks_and_numbers, 'Marks & Numbers', {data_type: :string}],
+      [44,:shp_number_of_packages, :number_of_packages, 'Number of Packages', {data_type: :integer}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
