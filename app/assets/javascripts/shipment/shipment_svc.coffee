@@ -34,6 +34,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     commentSvc.injectComments(currentShipment,'Shipment')
     resp
 
+  shipmentPost = (id, endpoint) ->
+    $http.post('/api/v1/shipments/'+id+'/'+endpoint, {id: id})
+
   return {
     getShipment: (shipmentId,forceReload) ->
       if !forceReload && currentShipment && parseInt(currentShipment.id) == parseInt(shipmentId)
@@ -68,21 +71,21 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest', {attachment_id: attachment.id, no_lines: 'true'}).then(getShipmentSuccessHandler)
 
     requestBooking: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/request_booking.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'request_booking.json')
 
     approveBooking: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/approve_booking.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'approve_booking.json')
 
     confirmBooking: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/confirm_booking.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'confirm_booking.json')
 
     reviseBooking: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/revise_booking.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'revise_booking.json')
 
     cancelShipment: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/cancel.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'cancel.json')
 
     uncancelShipment: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/uncancel.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id,'uncancel.json')
   }
 ]

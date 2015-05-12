@@ -163,13 +163,6 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
         $scope.loadShipment(sId,true).then ->
           window.alert('Shipment no longer canceled.')
 
-  $scope.prepShipmentLineEditObject = (line) ->
-    $scope.lineToEdit = {id: line.id}
-    $scope.lineToEdit.shpln_shipped_qty = line.shpln_shipped_qty
-    $scope.lineToEdit.shpln_carton_qty = line.shpln_carton_qty
-    $scope.lineToEdit.shpln_cbms = line.shpln_cbms
-    $scope.lineToEdit.shpln_gross_kgs = line.shpln_gross_kgs
-    $scope.lineToEdit.shpln_container_uid = line.shpln_container_uid
   ###*
   # Takes in a source object and a list of attributes and returns an object containing that subset of the source.
   # In essence, Ruby's Hash#slice in JS
@@ -179,7 +172,7 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
   # @param {string[]} attributes
   # @return {object}
   ###
-  objectSlice = (source, attributes) ->
+  objectSlice = (source={}, attributes=[]) ->
     result = {}
     for attr in attributes
       result[attr] = source[attr]
@@ -213,7 +206,18 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
                                                                         'shp_vessel_carrier_scac',
                                                                         'shp_mode',
                                                                         'shp_vessel_name',
-                                                                        'shp_vessel_nationality']
+                                                                        'shp_vessel_nationality',
+                                                                        'shp_first_port_receipt_name',
+                                                                        'shp_lading_port_name',
+                                                                        'shp_last_foreign_port_name',
+                                                                        'shp_unlading_port_name']
+
+  $scope.prepShipmentLineEditObject = assignSliceToScopeFn 'lineToEdit', ['id',
+                                                                         'shpln_shipped_qty',
+                                                                         'shpln_carton_qty',
+                                                                         'shpln_cbms',
+                                                                         'shpln_gross_kgs',
+                                                                         'shpln_container_uid']
 
   $scope.saveLine = (shipment,line) ->
     $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
@@ -225,38 +229,32 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
       $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
         $scope.loadLines($scope.shp)
 
-  $scope.prepBookingEditObject = (shipment) ->
-    $scope.booking = {id: shipment.id}
-    $scope.booking['shp_booking_cutoff_date'] = shipment.shp_booking_cutoff_date
-    $scope.booking['shp_booking_est_departure_date'] = shipment.shp_booking_est_departure_date
-    $scope.booking['shp_cargo_ready_date'] = shipment.shp_cargo_ready_date
-    $scope.booking['shp_booking_est_arrival_date'] = shipment.shp_booking_est_arrival_date
-    $scope.booking['shp_booking_shipment_type'] = shipment.shp_booking_shipment_type
-    $scope.booking['shp_booking_mode'] = shipment.shp_booking_mode
+  $scope.prepBookingEditObject = assignSliceToScopeFn 'booking', ['id',
+                                                                 'shp_booking_cutoff_date',
+                                                                 'shp_booking_est_departure_date',
+                                                                 'shp_cargo_ready_date',
+                                                                 'shp_booking_est_arrival_date',
+                                                                 'shp_booking_shipment_type',
+                                                                 'shp_booking_mode']
 
   $scope.prepPartiesEditObject = (shipment) ->
     loadParties() unless $scope.parties
-    $scope.partiesEditObj = {id: shipment.id}
-    $scope.partiesEditObj.shp_car_syscode = shipment.shp_car_syscode
-    $scope.partiesEditObj.shp_imp_syscode = shipment.shp_imp_syscode
+    $scope.partiesEditObj = objectSlice shipment, ['id', 'shp_car_syscode', 'shp_imp_syscode']
 
-  $scope.prepTrackingEditObject = (shipment) ->
-    $scope.tracking = {id: shipment.id}
-    $scope.tracking.shp_est_departure_date = shipment.shp_est_departure_date
-    $scope.tracking.shp_est_arrival_port_date = shipment.shp_est_arrival_port_date
-    $scope.tracking.shp_est_delivery_date = shipment.shp_est_delivery_date
-    $scope.tracking.shp_docs_received_date = shipment.shp_docs_received_date
-    $scope.tracking.shp_cargo_on_hand_date = shipment.shp_cargo_on_hand_date
-    $scope.tracking.shp_departure_date = shipment.shp_departure_date
-    $scope.tracking.shp_arrival_port_date = shipment.shp_arrival_port_date
-    $scope.tracking.shp_delivered_date = shipment.shp_delivered_date
+  $scope.prepTrackingEditObject = assignSliceToScopeFn 'tracking', ['id',
+                                                                   'shp_est_departure_date',
+                                                                   'shp_est_arrival_port_date',
+                                                                   'shp_est_delivery_date',
+                                                                   'shp_docs_received_date',
+                                                                   'shp_cargo_on_hand_date',
+                                                                   'shp_departure_date',
+                                                                   'shp_arrival_port_date',
+                                                                   'shp_delivered_date']
 
-  $scope.editContainer = (c) ->
-    container = (if c then c else {isNew: true})
-    $scope.containerToEdit = {id: container.id}
-    $scope.containerToEdit.con_container_number = container.con_container_number
-    $scope.containerToEdit.con_container_size = container.con_container_size
-    $scope.containerToEdit.con_seal_number = container.con_seal_number
+  $scope.editContainer = assignSliceToScopeFn 'containerToEdit', ['id',
+                                                                 'con_container_number',
+                                                                 'con_container_size',
+                                                                 'con_seal_number']
 
   $scope.saveContainer = (shipment,container) ->
     $scope.saveShipment({id: shipment.id, containers: [container]})
