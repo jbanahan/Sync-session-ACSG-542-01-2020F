@@ -61,7 +61,11 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     entry = self.new.process_entry json, opts
 
     if entry
-      OpenChain::AllianceImagingClient.request_images(entry.broker_reference) unless opts[:imaging] == false
+      # We're setting up a message delay of 5 minutes here because it seems this feed comes across sometimes faster than
+      # Kewill Imaging can store off the files locally.  The imaging request gets over to our imaging clients prior to the 
+      # image existing in Kewill Imaging and thus we don't get any files back.  So, use :delay_seconds in order to hold back
+      # for 5 minutes.
+      OpenChain::AllianceImagingClient.request_images(entry.broker_reference, delay_seconds: 300) unless opts[:imaging] == false
       entry.broadcast_event(:save)
     end
 

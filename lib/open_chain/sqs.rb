@@ -1,7 +1,7 @@
 class OpenChain::SQS
   #translate given object to json and add to queue
-  def self.send_json queue, obj
-    AWS::SQS.new(AWS_CREDENTIALS).queues[queue].send_message(obj.to_json)
+  def self.send_json queue, obj, message_options = []
+    AWS::SQS.new(AWS_CREDENTIALS).queues[queue].send_message(obj.to_json, message_options)
   end
 
   #retrieve all available messages yielding each to the given block after parsing JSON to hash

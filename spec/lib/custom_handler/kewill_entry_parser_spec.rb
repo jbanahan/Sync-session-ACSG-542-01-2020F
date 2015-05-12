@@ -705,7 +705,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       entry = Entry.new(broker_reference: "TESTING")
       described_class.any_instance.should_receive(:process_entry).with(json[:entry], {}).and_return entry
 
-      OpenChain::AllianceImagingClient.should_receive(:request_images).with "TESTING"
+      OpenChain::AllianceImagingClient.should_receive(:request_images).with "TESTING", delay_seconds: 300
       entry.should_receive(:broadcast_event).with(:save)
 
       described_class.parse json.to_json

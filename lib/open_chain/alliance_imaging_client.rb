@@ -19,8 +19,8 @@ class OpenChain::AllianceImagingClient
   end
   
   #not unit tested since it'll all be mocks
-  def self.request_images file_number
-    OpenChain::SQS.send_json "https://queue.amazonaws.com/468302385899/alliance-img-req-#{get_env}", {"file_number"=>file_number}
+  def self.request_images file_number, message_options = {}
+    OpenChain::SQS.send_json "https://queue.amazonaws.com/468302385899/alliance-img-req-#{get_env}", {"file_number"=>file_number}, message_options
   end
   
   #not unit tested since it'll all be mocks
