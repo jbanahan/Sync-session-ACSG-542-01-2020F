@@ -64,7 +64,7 @@ describe OpenChain::S3 do
       begin
         File.exist?(new_tempfile.path).should be_true
         IO.read(new_tempfile.path).should == @content
-        new_tempfile.path.should =~ /\/tmp\/.*/
+        new_tempfile.should be_a Tempfile
         File.basename(new_tempfile.path).should =~ /^s3_io.+\.txt$/
       ensure
         new_tempfile.close!
@@ -120,7 +120,7 @@ describe OpenChain::S3 do
       begin
         File.exist?(new_tempfile.path).should be_true
         IO.read(new_tempfile.path).should == @content
-        new_tempfile.path.should =~ /\/tmp\/.*/
+        new_tempfile.should be_a Tempfile
         File.basename(new_tempfile.path).should =~ /^test.+/
         File.extname(new_tempfile.path).should == ""
       ensure
