@@ -352,6 +352,8 @@ class User < ActiveRecord::Base
       return self.view_module?(CoreModule::COMPANY)
     when CoreModule::PLANT_PRODUCT_GROUP_ASSIGNMENT
       return self.view_module?(CoreModule::PLANT)
+    when CoreModule::DRAWBACK_CLAIM
+      return self.view_drawback?
     end
     return false
   end
