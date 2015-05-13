@@ -20,7 +20,8 @@ module OpenChain; module ModelFieldDefinition; module DrawbackClaimFieldDefiniti
       [17, :dc_duty_check_received_date, :duty_check_received_date, "Duty Check Received", {data_type: :date}],
       [18, :dc_hmf_mpf_check_number, :hmf_mpf_check_number, "HMF/MPF Check Number", {data_type: :string}],
       [19, :dc_hmf_mpf_check_amount, :hmf_mpf_check_amount, "HMF/MPF Check Amount", {data_type: :currency}],
-      [20, :dc_hmf_mpf_check_received_date, :hmf_mpf_check_received_date, "HMF/MPF Check Received", {data_type: :date}]
+      [20, :dc_hmf_mpf_check_received_date, :hmf_mpf_check_received_date, "HMF/MPF Check Received", {data_type: :date}],
+      [21, :dc_duty_claimed, :duty_claimed, "Duty Claimed", {data_type: :currency}]
     ]
     add_fields CoreModule::DRAWBACK_CLAIM, make_importer_arrays(100, "dc", "drawback_claims")
   end
