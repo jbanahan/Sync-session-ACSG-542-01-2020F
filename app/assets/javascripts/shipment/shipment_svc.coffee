@@ -11,10 +11,11 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         else
           updatedLines.push ln if qty && qty>0
       shipment.lines = updatedLines
-    setPortNames(shipment, 'dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port')
+    setPortNames(shipment)
     shipment
 
-  setPortNames = (shipment, names...) ->
+  setPortNames = (shipment) ->
+    names = ['dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
     for name in names
       setPortName shipment, name
 
@@ -40,11 +41,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
   return {
     getShipment: (shipmentId,forceReload) ->
       if !forceReload && currentShipment && parseInt(currentShipment.id) == parseInt(shipmentId)
-        deferred = $q.defer()
-        deferred.resolve {data: {shipment: currentShipment}}
-        return deferred.promise
+        $q.when {data: {shipment: currentShipment}}
       else
-        return $http.get('/api/v1/shipments/'+shipmentId+'.json?summary=true&no_lines=true&include=order_lines,attachments').then(getShipmentSuccessHandler)
+        $http.get('/api/v1/shipments/'+shipmentId+'.json?summary=true&no_lines=true&include=order_lines,attachments').then(getShipmentSuccessHandler)
 
     injectLines: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'.json?include=order_lines').then (resp) ->
@@ -52,11 +51,15 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
     saveShipment: (shipment) ->
       currentShipment = null
+      method = "post"
+      suffix = ""
       s = prepForSave shipment
+
       if shipment.id && shipment.id > 0
-        $http.put('/api/v1/shipments/'+s.id+'.json', {shipment: s, no_lines: 'true'}).then(getShipmentSuccessHandler)
-      else
-        $http.post('/api/v1/shipments',{shipment: s, no_lines: 'true'}).then(getShipmentSuccessHandler)
+        method = "put"
+        suffix = "/#{s.id}.json"
+
+      $http[method]("/api/v1/shipments#{suffix}",{shipment: s, no_lines: 'true'}).then(getShipmentSuccessHandler)
 
     getParties: ->
       $http.get('/api/v1/companies?roles=importer,carrier')
