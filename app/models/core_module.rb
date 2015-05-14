@@ -17,7 +17,8 @@ class CoreModule
       :key_model_field_uids, #the uids represented by this array of model_field_uids can be used to find a unique record in the database
       :view_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine view path for the module (may return null if no view path exists)
       :edit_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
-      :quicksearch_lambda # Scope for quick searching
+      :quicksearch_lambda, # Scope for quick searching
+      :quicksearch_fields # List of field / field definitions for quicksearching
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
 
   def initialize(class_name,label,opts={})
@@ -101,6 +102,8 @@ class CoreModule
     else
       @quicksearch_lambda = lambda {|user, scope| klass.search_secure(user, scope)}
     end
+
+    @quicksearch_fields = o[:quicksearch_fields]
   end
 
   #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
@@ -273,7 +276,8 @@ class CoreModule
     :child_joins => {SECURITY_FILING_LINE => "LEFT OUTER JOIN security_filing_lines ON security_filings.id = security_filing_lines.security_filing_id"},
     :default_search_columns => [:sf_transaction_number],
     :enabled_lambda => lambda {MasterSetup.get.security_filing_enabled?},
-    :key_model_field_uids => [:sf_transaction_number]
+    :key_model_field_uids => [:sf_transaction_number],
+    :quicksearch_fields => [:sf_transaction_number,:sf_entry_numbers,:sf_entry_reference_numbers,:sf_po_numbers,:sf_master_bill_of_lading,:sf_container_numbers,:sf_house_bills_of_lading, :sf_host_system_file_number]
   })
   ORDER_LINE = new("OrderLine","Order Line",{
     :show_field_prefix=>true,
@@ -294,7 +298,8 @@ class CoreModule
         o_line.nil? ? nil : o_line.order
       },
       :enabled_lambda => lambda { MasterSetup.get.order_enabled? },
-      :key_model_field_uids => [:ord_ord_num]
+      :key_model_field_uids => [:ord_ord_num],
+      :quicksearch_fields => [:ord_ord_num, :ord_cust_ord_no]
     })
   CONTAINER = new("Container", "Container", {
     show_field_prefix: false,
@@ -328,13 +333,14 @@ class CoreModule
     :unique_id_field_name=>:shp_ref,
     :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.shipment},
     :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
-    :key_model_field_uids => [:shp_ref]
+    :key_model_field_uids => [:shp_ref],
+    :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number]
     })
   SALE_LINE = new("SalesOrderLine","Sale Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:soln_line_number,
     :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line},
-    :enabled_lambda => lambda { MasterSetup.get.sale_enabled? },
+    :enabled_lambda => lambda { MasterSetup.get.sales_order_enabled? },
     :key_model_field_uids => [:soln_line_number]
     })
   SALE = new("SalesOrder","Sale",
@@ -345,7 +351,8 @@ class CoreModule
       :unique_id_field_name=>:sale_order_number,
       :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line.nil? ? nil : ps.sales_order_line.sales_order},
       :enabled_lambda => lambda { MasterSetup.get.sales_order_enabled? },
-      :key_model_field_uids => [:sale_order_number]
+      :key_model_field_uids => [:sale_order_number],
+      :quicksearch_fields => [:sale_order_number]
     })
   DELIVERY_LINE = new("DeliveryLine","Delivery Line",{
     :show_field_prefix=>true,
@@ -362,7 +369,8 @@ class CoreModule
     :unique_id_field_name=>:del_ref,
     :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line.nil? ? nil : ps.delivery_line.delivery},
     :enabled_lambda => lambda { MasterSetup.get.delivery_enabled? },
-    :key_model_field_uids => [:del_ref]
+    :key_model_field_uids => [:del_ref],
+    :quicksearch_fields => [:del_ref]
     })
   TARIFF = new("TariffRecord","Tariff",{
     :changed_at_parents_lambda=>lambda {|tr|
@@ -409,7 +417,8 @@ class CoreModule
         c==p.errors[:base].size
       },
       :unique_id_field_name=>:prod_uid,
-      :key_model_field_uids => [:prod_uid]
+      :key_model_field_uids => [:prod_uid],
+      :quicksearch_fields => [:prod_uid,:prod_name]
   })
   BROKER_INVOICE_LINE = new("BrokerInvoiceLine","Broker Invoice Line",{
     :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
@@ -424,7 +433,8 @@ class CoreModule
     :key_model_field_uids=>[:bi_brok_ref,:bi_suffix],
     :children => [BROKER_INVOICE_LINE],
     :child_lambdas => {BROKER_INVOICE_LINE => lambda {|i| i.broker_invoice_lines}},
-    :child_joins => {BROKER_INVOICE_LINE => "LEFT OUTER JOIN broker_invoice_lines on broker_invoices.id = broker_invoice_lines.broker_invoice_id"}
+    :child_joins => {BROKER_INVOICE_LINE => "LEFT OUTER JOIN broker_invoice_lines on broker_invoices.id = broker_invoice_lines.broker_invoice_id"},
+    :quicksearch_fields => [:bi_invoice_number, {model_field_uid: :bi_brok_ref, joins: [:entry]}]
   })
   COMMERCIAL_INVOICE_TARIFF = new("CommercialInvoiceTariff","Invoice Tariff",{
     :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
@@ -462,9 +472,10 @@ class CoreModule
     },
     :children => [COMMERCIAL_INVOICE],
     :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
-    :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"}
+    :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"},
+    :quicksearch_fields => [:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums,:ent_cargo_control_number,:ent_hbols,:ent_commercial_invoice_numbers]
   })
-  OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate])
+  OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate], :quicksearch_fields=> [:ot_hts_code,:ot_full_desc])
   PLANT_PRODUCT_GROUP_ASSIGNMENT = new('PlantProductGroupAssignment','Plant Product Group Assignment',default_search_columns:[:ppga_pg_name], show_field_prefix: true)
   PLANT = new("Plant","Plant", 
     default_search_columns: [:plant_name],
@@ -488,6 +499,7 @@ class CoreModule
     view_path_proc: Proc.new {|obj| vendor_path(obj)},
     quicksearch_lambda: lambda {|user, scope| scope.where(Company.search_where(user))},
     enabled_lambda: lambda { MasterSetup.get.vendor_management_enabled? },
+    quicksearch_fields: [:cmp_name]
   )
 
   DRAWBACK_CLAIM = new("DrawbackClaim", "Drawback Claim",
