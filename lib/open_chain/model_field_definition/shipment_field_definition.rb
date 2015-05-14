@@ -79,7 +79,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [42,:shp_vessel_nationality, :vessel_nationality, 'Nationality of Ship', {data_type: :string}],
       [43,:shp_marks_and_numbers, :marks_and_numbers, 'Marks & Numbers', {data_type: :string}],
       [44,:shp_number_of_packages, :number_of_packages, 'Number of Packages', {data_type: :integer}],
-      [45,:shp_number_of_packages_uom, :number_of_packages_uom, 'Number of Packages Unit of Measurement', {data_type: :string}],
+      [45,:shp_number_of_packages_uom, :number_of_packages_uom, 'Number of Packages UOM', {data_type: :string}],
       [46, :shp_gross_weight, :gross_weight, 'Gross Weight (KGs)', {data_type: :decimal}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
