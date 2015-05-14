@@ -512,6 +512,10 @@ class CoreModule
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
     SECURITY_FILING,SECURITY_FILING_LINE,COMPANY,PLANT,PLANT_PRODUCT_GROUP_ASSIGNMENT,DRAWBACK_CLAIM]
 
+  def self.all
+    self.constants.map{|c| self.const_get(c)}.select{|c| c.is_a? CoreModule} || []
+  end
+
   def self.add_virtual_identifier
     # Add in the virtual_identifier field that is needed for update_model_field_attribute support
     # This field is explained in the UpdateModelFieldsSupport module.
@@ -520,7 +524,7 @@ class CoreModule
 
     # This appears to have to be done outside the CoreModule constructors becuase of the circular reference
     # to CoreModule inside the core module classes (.ie Product, Entry, etc)
-    CORE_MODULES.each {|cm| cm.klass.class_eval{attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)}}
+    self.all.each {|cm| cm.klass.class_eval{attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)}}
   end
   private_class_method :add_virtual_identifier
 
@@ -543,7 +547,7 @@ class CoreModule
   set_default_module_chain COMPANY, [COMPANY, PLANT, PLANT_PRODUCT_GROUP_ASSIGNMENT]
 
   def self.find_by_class_name(c,case_insensitive=false)
-    CORE_MODULES.each do|m|
+    self.all.each do|m|
       if case_insensitive
         return m if m.class_name.downcase == c.downcase
       else
@@ -575,7 +579,7 @@ class CoreModule
 
   #make hash of arrays to work with FormOptionsHelper.grouped_options_for_select
   def self.grouped_options user, opts = {}
-    inner_opts = {:core_modules => CORE_MODULES, :filter=>lambda {|f| true}}.merge(opts)
+    inner_opts = {:core_modules => self.all, :filter=>lambda {|f| true}}.merge(opts)
     core_modules = inner_opts[:core_modules].select {|cm| user.view_module? cm}.sort {|x,y| x.label <=> y.label}
 
     r = {}
@@ -606,7 +610,7 @@ class CoreModule
   private
   def self.test_to_array
     r = []
-    CORE_MODULES.each {|c| r << c if yield c}
+    self.all.each {|c| r << c if yield c}
     r
   end
 
