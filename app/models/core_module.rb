@@ -500,6 +500,14 @@ class CoreModule
     enabled_lambda: lambda { MasterSetup.get.drawback_enabled? }
   )
 
+  BOOKING_LINE = new('BookingLine', 'Booking Line',
+   :show_field_prefix=>true,
+   :unique_id_field_name=>:bkln_line_number,
+   :object_from_piece_set_lambda => lambda {|ps| ps.booking_line},
+   :enabled_lambda => lambda { MasterSetup.get.booking_enabled? },
+   :key_model_field_uids => [:bkln_line_number]
+  )
+
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
     SECURITY_FILING,SECURITY_FILING_LINE,COMPANY,PLANT,PLANT_PRODUCT_GROUP_ASSIGNMENT,DRAWBACK_CLAIM]

@@ -1,29 +1,4 @@
-require 'open_chain/model_field_definition/broker_invoice_field_definition'
-require 'open_chain/model_field_definition/broker_invoice_line_field_definition'
-require 'open_chain/model_field_definition/carton_set_field_definition'
-require 'open_chain/model_field_definition/classification_field_definition'
-require 'open_chain/model_field_definition/commercial_invoice_field_definition'
-require 'open_chain/model_field_definition/commercial_invoice_line_field_definition'
-require 'open_chain/model_field_definition/commercial_invoice_tariff_field_definition'
-require 'open_chain/model_field_definition/company_field_definition'
-require 'open_chain/model_field_definition/container_field_definition'
-require 'open_chain/model_field_definition/delivery_field_definition'
-require 'open_chain/model_field_definition/delivery_line_field_definition'
-require 'open_chain/model_field_definition/entry_field_definition'
-require 'open_chain/model_field_definition/official_tariff_field_definition'
-require 'open_chain/model_field_definition/order_field_definition'
-require 'open_chain/model_field_definition/order_line_field_definition'
-require 'open_chain/model_field_definition/product_field_definition'
-require 'open_chain/model_field_definition/plant_field_definition'
-require 'open_chain/model_field_definition/plant_product_group_assignment_field_definition'
-require 'open_chain/model_field_definition/sale_field_definition'
-require 'open_chain/model_field_definition/sale_line_field_definition'
-require 'open_chain/model_field_definition/security_filing_field_definition'
-require 'open_chain/model_field_definition/security_filing_line_field_definition'
-require 'open_chain/model_field_definition/shipment_field_definition'
-require 'open_chain/model_field_definition/shipment_line_field_definition'
-require 'open_chain/model_field_definition/tariff_field_definition'
-require 'open_chain/model_field_definition/drawback_claim_field_definition'
+Dir[__dir__ + '/*.rb'].each {|file| require file } #Require all files in this directory
 
 module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::BrokerInvoiceFieldDefinition
@@ -52,6 +27,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentLineFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
   include OpenChain::ModelFieldDefinition::DrawbackClaimFieldDefinition
+  include OpenChain::ModelFieldDefinition::BookingLineFieldDefinition
 
   def add_field_definitions
     add_company_fields
@@ -80,5 +56,6 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_plant_fields
     add_plant_product_group_assignment_fields
     add_drawback_claim_fields
+    add_booking_line_fields
   end
 end; end; end
