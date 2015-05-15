@@ -232,6 +232,10 @@ class Shipment < ActiveRecord::Base
     return self.can_edit?(user)
   end
 
+  def can_add_remove_booking_lines?(user)
+    self.can_edit?(user)
+  end
+
   def can_comment?(user)
     return user.comment_shipments? && self.can_view?(user)
   end
