@@ -1,10 +1,12 @@
 require 'open_chain/field_logic'
 require 'open_chain/model_field_definition/full_model_field_definition'
+require 'open_chain/model_field_definition/model_field_definer'
 require 'open_chain/model_field_generator/full_model_field_generator'
 
 class ModelField
   extend OpenChain::ModelFieldGenerator::FullModelFieldGenerator
   extend OpenChain::ModelFieldDefinition::FullModelFieldDefinition
+  include OpenChain::ModelFieldDefinition
 
   # When web mode is true, the class assumes that there is a before filter calling ModelField.reload_if_stale at the beginning of every request.
   # This means the class won't call memchached on every call to ModelField.find_by_uid to see if the ModelFieldSetups are stale
@@ -641,6 +643,7 @@ class ModelField
       MODEL_FIELDS.clear
       DISABLED_MODEL_FIELDS.clear
       add_field_definitions
+      ModelFieldDefiner.add_all_fields!
       reset_custom_fields update_cache_time
     end
   end
