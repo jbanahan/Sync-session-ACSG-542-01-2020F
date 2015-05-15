@@ -65,7 +65,7 @@ class VendorPlantsController < ApplicationController
 
     OpenChain::WorkflowProcessor.async_process @plant.company
     
-    render json: {'ok'=>'ok'}
+    render json: {'product_group_id'=>pg.id,'plant_id'=>@plant.id}
   end
 
   def view_permission_filter

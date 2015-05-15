@@ -124,7 +124,7 @@ describe VendorPlantsController do
       expect{post :assign_product_group, id: plant.id, vendor_id: plant.company_id, product_group_id: pg.id}.
         to change(plant.plant_product_group_assignments.where(product_group_id:pg.id),:count).
           from(0).to(1)
-      expected_response = {'ok'=>'ok'}
+      expected_response = {'product_group_id'=>pg.id,'plant_id'=>plant.id}
       expect(JSON.parse(response.body)).to eq expected_response
     end
   end

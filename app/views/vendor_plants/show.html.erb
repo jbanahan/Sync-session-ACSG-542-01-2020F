@@ -55,21 +55,21 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                      <button type="button" class="btn btn-success" disabled='disabled'>Add</button>
+                      <button type="button" id='add-product-group' class="btn btn-success" disabled='disabled'>Add</button>
                     </div>
                   </div><!-- /.modal-content -->
                 </div><!-- /.modal-dialog -->
               </div><!-- /.modal -->
               <script type='text/javascript'>
                 $(document).ready(function() {
-                  $('#mod_assign_product_group .btn-success').click(function () {
+                  $('#add-product-group').click(function() {
                     pgId = $('#mod_assign_product_group select option:selected').val();
                     if(pgId) {
                       $.post('/vendors/'+vendor_id+'/vendor_plants/'+plant_id+'/assign_product_group.json',{product_group_id:pgId},function(data) {
                         $('#mod_assign_product_group').modal('hide');
                         window.alert('Product group added.');
                         $('#main-content').html("<div class='loader'></div>");
-                        location.reload();
+                        location.href = '/vendors/'+vendor_id+'/vendor_plants/'+data.plant_id+'/plant_product_group_assignments/'+data.product_group_id
                       });
                     } else {
                       window.alert('No product group selected');
@@ -85,7 +85,7 @@
                           html += "<option value='"+v.id+"'>"+v.name+"</option>";
                         });
                         html += "</select>";
-                        $('#mod_assign_product_group .btn-success').removeAttr('disabled');
+                        $('#add-product-group').removeAttr('disabled');
                         $('#mod_assign_product_group .modal-body').html(html);
                       });
                     }
