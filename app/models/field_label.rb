@@ -3,6 +3,8 @@
 #Everything else is handled internally.
 class FieldLabel < ActiveRecord::Base
 
+  after_destroy :clear_default_key
+
   validate :model_field_uid, :presence=>true, :uniqueness=>true, :length => {:minimum => 1}
   validate :label, :presence=>true, :length => {:minimum => 1}
 
@@ -14,8 +16,11 @@ class FieldLabel < ActiveRecord::Base
     f = FieldLabel.where(:model_field_uid=>mf_uid).first
     f = FieldLabel.new(:model_field_uid=>mf_uid) if f.nil?
     f.label = lbl
-    f.save!
-    ModelField.reload
+    # Don't reload the cache if the label hasn't changed at all
+    if f.changed?
+      f.save!
+      ModelField.reload
+    end
   end
 
   def self.label_text mf_uid
@@ -33,4 +38,9 @@ class FieldLabel < ActiveRecord::Base
   def self.clear_defaults
     DEFAULT_VALUES_CACHE.clear
   end
+
+  private
+    def clear_default_key
+      DEFAULT_VALUES_CACHE.delete self.model_field_uid.to_sym
+    end
 end

@@ -405,7 +405,7 @@ class ModelField
   end
 
   def self.add_model_fields(core_module, model_fields)
-    module_type = core_module.class_name.to_sym
+    module_type = module_type(core_module)
     MODEL_FIELDS[module_type] = Hash.new if MODEL_FIELDS[module_type].nil?
 
     model_fields.each do |mf|
@@ -417,6 +417,20 @@ class ModelField
         MODEL_FIELDS[module_type][mf.uid.to_sym] = mf
       end
     end
+  end
+
+  def self.module_type core_module
+    core_module.class_name.to_sym
+  end
+  private_class_method :module_type
+
+  def self.remove_model_field(core_module, uid)
+    fields = MODEL_FIELDS[module_type(core_module)]
+    if fields
+      fields.delete(uid.to_sym)
+    end
+
+    DISABLED_MODEL_FIELDS.delete uid.to_sym
   end
 
   def self.next_index_number(core_module)

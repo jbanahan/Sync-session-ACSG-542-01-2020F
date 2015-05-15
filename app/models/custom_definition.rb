@@ -13,6 +13,8 @@ class CustomDefinition < ActiveRecord::Base
   has_many   :milestone_definitions, :dependent => :destroy
 
   after_save :reset_cache
+  after_destroy :reset_cache
+  after_destroy :delete_field_label
   after_save :reset_field_label
   after_find :set_cache
 
@@ -107,7 +109,11 @@ class CustomDefinition < ActiveRecord::Base
       # so they can be pushed out to all the running processes.  There's only a single
       # process so, we don't need or want this.  (At the time of writing, this change shaved off ~2 minutes on
       # a full test suite run)
-      ModelField.add_update_custom_field self
+      if self.destroyed?
+        ModelField.remove_model_field(core_module, model_field_uid)
+      else
+        ModelField.add_update_custom_field self
+      end
     else
       # Reload and recache the whole model field data structure
       ModelField.reload true
@@ -117,7 +123,11 @@ class CustomDefinition < ActiveRecord::Base
   private
 
     def reset_field_label
-      FieldLabel.set_label "*cf_#{self.id}", self.label
+      FieldLabel.set_label model_field_uid, self.label
+    end
+
+    def delete_field_label
+      FieldLabel.where(model_field_uid: model_field_uid).destroy_all
     end
 
 end
