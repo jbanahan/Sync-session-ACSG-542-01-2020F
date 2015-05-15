@@ -1,6 +1,6 @@
 <%content_for :action_bar do%>
   <% if @plant.can_edit?(current_user) %>
-    <button class='btn_link' link_to='<%=edit_vendor_vendor_plant_path(@vendor,@plant)%>'>Edit</button>
+    <button class='form_to' form_id='frm_plant'>Save</button>
   <% end %>
   <button class='btn_link' link_to='<%=vendor_path(@vendor)%>'>Vendor</button>
 <%end%>
@@ -24,7 +24,10 @@
       <!-- Tab panes -->
       <div class="tab-content">
         <div class="tab-pane active" id="attributes">
-          <%= show_custom_fields @plant %>
+          <%=form_for [@vendor,@plant], url: vendor_vendor_plant_path(@vendor,@plant), html: {id:'frm_plant'} do |f| %>
+            <%=show_model_fields f, [:plant_name]%>
+            <%=show_custom_fields f %>
+          <%end%>
         </div>
         <div class="tab-pane" id="attachments">
           <div class="container-fluid">

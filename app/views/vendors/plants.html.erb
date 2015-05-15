@@ -36,7 +36,7 @@
         <tbody>
           <%-@company.plants_user_can_view(current_user).each do |plant|-%>
             <tr>
-              <td><%=link_to 'View', vendor_vendor_plant_path(@company,plant)%></td>
+              <td><%=link_to 'View', vendor_vendor_plant_path(@company,plant), class: 'btn btn-sm btn-default'%></td>
               <td><%=plant.name%></td>
             </tr>
           <%-end-%>
