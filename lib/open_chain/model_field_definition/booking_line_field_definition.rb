@@ -3,20 +3,19 @@ require_relative 'model_field_definer'
 module OpenChain
   module ModelFieldDefinition
     class BookingLineFieldDefiner < ModelFieldDefiner
-
-      PREFIX = 'bkln'
+      def prefix; 'bkln' end
 
       def fields
-        [[1,:bkln_quantity, :quantity, "Quantity Booked", {type: :decimal}],
-         [2,:bkln_order_number, :order_number, "Order", {
-               type: :string,
+        [default_field(:quantity, {description:"Quantity Booked", type: :decimal}),
+         default_field( :order_number, {
+               description: 'Order',
                qualified_field_name: 'select order_number from orders where orders.id = booking_line.order_id'
-           }],
-         [3,:bkln_order_line_number, :order_line_number, "Order Line", {
+           }),
+         default_field(:order_line_number, {description: "Order Line",
                type: :integer,
                qualified_field_name: 'select line_number from order_lines where order_lines.id = booking_line.order_line_id'
-           }]]
-        .concat make_product_arrays(100,PREFIX,"booking_lines")
+           })]
+        .concat make_product_arrays(100,prefix,"booking_lines")
       end
 
       def core_module
