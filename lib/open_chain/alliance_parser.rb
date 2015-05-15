@@ -8,7 +8,6 @@ module OpenChain
     extend OpenChain::IntegrationClientParser
     SOURCE_CODE = 'Alliance'
     DATE_MAP = {'00012'=>:arrival_date,
-      '00016'=>:entry_filed_date,
       '00019'=>:release_date,
       '99202'=>:first_release_date,
       '00052'=>:free_date,
@@ -414,8 +413,14 @@ module OpenChain
     # date
     def process_sd00 r
       d = r[9,12]
-      dp = DATE_MAP[r[4,5]]
+      field = r[4,5]
+      dp = DATE_MAP[field]
       @entry.attributes= {dp=>parse_date_time(d)} if dp
+
+      # special handling to not reparse the entry_filed_date if its already been set
+      if field == "00016" && @entry.entry_filed_date.blank?
+        @entry.entry_filed_date = parse_date_time(d)
+      end
     end
 
     # fees

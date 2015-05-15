@@ -693,6 +693,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       StandardError.any_instance.should_receive(:log_me)
       described_class.new.process_entry @e
     end
+
+    it "does not update entry filed date" do
+      e = Factory(:entry, broker_reference: @e['file_no'], source_system: "Alliance", entry_filed_date: Time.zone.now)
+      described_class.new.process_entry @e
+
+      expect(e.entry_filed_date.to_i).to eq(e.reload.entry_filed_date.to_i)
+    end
   end
 
   describe "parse" do
