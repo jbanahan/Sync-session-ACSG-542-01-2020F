@@ -5,6 +5,7 @@ module OpenChain; module ModelFieldDefinition
     include OpenChain::ModelFieldGenerator::FullModelFieldGenerator
 
     def add_fields(descriptor_array)
+      throw 'Core module is not defined!' unless core_module
       new_fields = descriptor_array.each_with_index.map do |m,i|
         options = {default_label: m[3]}.merge (m[4] || {})
 
@@ -19,6 +20,14 @@ module OpenChain; module ModelFieldDefinition
 
     def fields
       []
+    end
+
+    def default_field(identifier, options={})
+      throw 'Prefix is not defined; Default field needs a prefix' unless prefix
+
+      string_name = identifier.to_s
+      description = (options[:description] || string_name.titleize)
+      [0, :"#{prefix}_#{string_name}", identifier, description, {type: :string}.merge(options)]
     end
 
     def self.add_all_fields!
