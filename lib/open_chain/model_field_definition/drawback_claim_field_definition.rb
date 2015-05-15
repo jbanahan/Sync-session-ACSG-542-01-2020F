@@ -1,28 +1,33 @@
-module OpenChain; module ModelFieldDefinition; module DrawbackClaimFieldDefinition
-  def add_drawback_claim_fields
-    add_fields CoreModule::DRAWBACK_CLAIM, [
-      [1, :dc_name, :name, "Name",{data_type: :string}],
-      [2, :dc_exports_start_date, :exports_start_date, "Exports Start", {data_type: :date}],
-      [3, :dc_exports_end_date, :exports_end_date, "Exports End", {data_type: :date}],
-      [4, :dc_entry_number, :entry_number, "Claim Number", {data_type: :string}],
-      [5, :dc_total_pieces_claimed, :total_pieces_claimed, "Total Pieces Claimed", {data_type: :integer}],
-      [6, :dc_total_pieces_exported, :total_pieces_exported, "Total Pieces Exported", {data_type: :integer}],
-      [7, :dc_planned_claim_amount, :planned_claim_amount, "Planned Claim Amount", {data_type: :currency}],
-      [8, :dc_total_export_value, :total_export_value, "Total Export Value", {data_type: :currency}],
-      [9, :dc_total_duty, :total_duty, "Total Duty Exported", {data_type: :currency}],
-      [10, :dc_hmf_claimed, :hmf_claimed, "HMF Claimed", {data_type: :currency}],
-      [11, :dc_mpf_claimed, :mpf_claimed, "MPF Claimed", {data_type: :currency}],
-      [12, :dc_duty_check_amount, :duty_check_amount, "Duty Check Amount", {data_type: :currency}],
-      [13, :dc_bill_amount, :bill_amount, "Commission", {data_type: :currency}],
-      [14, :dc_abi_accepted_date, :abi_accepted_date, "ABI Accepted", {data_type: :date}],
-      [15, :dc_sent_to_customs_date, :sent_to_customs_date, "Sent To Customs", {data_type: :date}],
-      [16, :dc_billed_date, :billed_date, "Billed", {data_type: :date}],
-      [17, :dc_duty_check_received_date, :duty_check_received_date, "Duty Check Received", {data_type: :date}],
-      [18, :dc_hmf_mpf_check_number, :hmf_mpf_check_number, "HMF/MPF Check Number", {data_type: :string}],
-      [19, :dc_hmf_mpf_check_amount, :hmf_mpf_check_amount, "HMF/MPF Check Amount", {data_type: :currency}],
-      [20, :dc_hmf_mpf_check_received_date, :hmf_mpf_check_received_date, "HMF/MPF Check Received", {data_type: :date}],
-      [21, :dc_duty_claimed, :duty_claimed, "Duty Claimed", {data_type: :currency}]
-    ]
-    add_fields CoreModule::DRAWBACK_CLAIM, make_importer_arrays(100, "dc", "drawback_claims")
+module OpenChain; module ModelFieldDefinition
+  class DrawbackClaimFieldDefiner < ModelFieldDefiner
+    def prefix; 'dc'; end
+    def core_module; CoreModule::DRAWBACK_CLAIM; end
+
+    def fields
+       [field(:name),
+       field(:exports_start_date, {description: "Exports Start", data_type: :date}),
+       field(:exports_end_date, {description: "Exports End", data_type: :date}),
+       field(:entry_number, description: "Claim Number"),
+       field(:total_pieces_claimed, {data_type: :integer}),
+       field(:total_pieces_exported, {data_type: :integer}),
+       field(:planned_claim_amount, {data_type: :currency}),
+       field(:total_export_value, {data_type: :currency}),
+       field(:total_duty, {description: "Total Duty Exported", data_type: :currency}),
+       field(:hmf_claimed, {description: "HMF Claimed", data_type: :currency}),
+       field(:mpf_claimed, {description: "MPF Claimed", data_type: :currency}),
+       field(:duty_check_amount, {description:"Duty Check Amount", data_type: :currency}),
+       field(:bill_amount, {description:"Commission", data_type: :currency}),
+       field(:abi_accepted_date, {description:"ABI Accepted", data_type: :date}),
+       field(:sent_to_customs_date, {description:"Sent To Customs", data_type: :date}),
+       field(:billed_date, {description:"Billed", data_type: :date}),
+       field(:duty_check_received_date, {description:"Duty Check Received", data_type: :date}),
+       field(:hmf_mpf_check_number, {description:"HMF/MPF Check Number", data_type: :string}),
+       field(:hmf_mpf_check_amount, {description:"HMF/MPF Check Amount", data_type: :currency}),
+       field(:hmf_mpf_check_received_date, {description:"HMF/MPF Check Received", data_type: :date}),
+       field(:duty_claimed, {data_type: :currency})]
+      .concat make_importer_arrays(100, prefix, core_module.table_name)
+    end
+
   end
-end; end; end
+
+end; end

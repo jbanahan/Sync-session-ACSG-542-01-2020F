@@ -26,7 +26,6 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentLineFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
-  include OpenChain::ModelFieldDefinition::DrawbackClaimFieldDefinition
 
   def add_field_definitions
     add_company_fields
@@ -54,6 +53,5 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_delivery_line_fields
     add_plant_fields
     add_plant_product_group_assignment_fields
-    add_drawback_claim_fields
   end
 end; end; end
