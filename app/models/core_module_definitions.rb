@@ -64,10 +64,17 @@ module CoreModuleDefinitions
                                         :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
                                         :key_model_field_uids => [:shpln_line_number]
                                     })
+  BOOKING_LINE = CoreModule.new('BookingLine', 'Booking Line',
+                                :show_field_prefix=>true,
+                                :unique_id_field_name=>:bkln_line_number,
+                                :object_from_piece_set_lambda => lambda {|ps| ps.booking_line},
+                                :enabled_lambda => lambda { MasterSetup.get.booking_enabled? },
+                                :key_model_field_uids => [:bkln_line_number]
+  )
   SHIPMENT = CoreModule.new("Shipment","Shipment",
-                 {:children=>[SHIPMENT_LINE],
-                  :child_lambdas => {SHIPMENT_LINE => lambda {|p| p.shipment_lines}},
-                  :child_joins => {SHIPMENT_LINE => "LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id"},
+                 {:children=>[SHIPMENT_LINE, BOOKING_LINE],
+                  :child_lambdas => {SHIPMENT_LINE => lambda {|p| p.shipment_lines}, BOOKING_LINE => lambda {|p| p.booking_lines}},
+                  :child_joins => {SHIPMENT_LINE => "LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id", SHIPMENT_LINE => "LEFT OUTER JOIN booking_lines on shipments.id = booking_lines.shipment_id"},
                   :default_search_columns => [:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],
                   :unique_id_field_name=>:shp_ref,
                   :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.shipment},
@@ -242,13 +249,5 @@ module CoreModuleDefinitions
                        child_lambdas: {},
                        child_joins: {},
                        enabled_lambda: lambda { MasterSetup.get.drawback_enabled? }
-  )
-
-  BOOKING_LINE = CoreModule.new('BookingLine', 'Booking Line',
-                     :show_field_prefix=>true,
-                     :unique_id_field_name=>:bkln_line_number,
-                     :object_from_piece_set_lambda => lambda {|ps| ps.booking_line},
-                     :enabled_lambda => lambda { MasterSetup.get.booking_enabled? },
-                     :key_model_field_uids => [:bkln_line_number]
   )
 end

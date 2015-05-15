@@ -6,7 +6,8 @@ module OpenChain
       def prefix; 'bkln' end
 
       def fields
-        [default_field(:quantity, {description:"Quantity Booked", type: :decimal}),
+        [default_field(:line_number, {type: :integer}),
+         default_field(:quantity, {description:"Quantity Booked", type: :decimal}),
          default_field( :order_number, {
                description: 'Order',
                qualified_field_name: 'select order_number from orders where orders.id = booking_line.order_id'
@@ -15,7 +16,7 @@ module OpenChain
                type: :integer,
                qualified_field_name: 'select line_number from order_lines where order_lines.id = booking_line.order_line_id'
            })]
-        .concat make_product_arrays(100,prefix,"booking_lines")
+        .concat make_product_arrays(100,prefix,core_module.table_name)
       end
 
       def core_module

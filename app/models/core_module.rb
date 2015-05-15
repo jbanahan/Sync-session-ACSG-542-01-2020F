@@ -282,7 +282,7 @@ class CoreModule
   end
 
   set_default_module_chain ORDER, [ORDER,ORDER_LINE]
-  set_default_module_chain SHIPMENT, [SHIPMENT,SHIPMENT_LINE]
+  set_default_module_chain SHIPMENT, [SHIPMENT,SHIPMENT_LINE,BOOKING_LINE]
   set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
   set_default_module_chain SALE, [SALE,SALE_LINE]
   set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
