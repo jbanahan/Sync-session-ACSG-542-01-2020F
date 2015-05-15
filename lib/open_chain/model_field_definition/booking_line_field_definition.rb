@@ -6,13 +6,13 @@ module OpenChain
       def prefix; 'bkln' end
 
       def fields
-        [default_field(:line_number, {type: :integer}),
-         default_field(:quantity, {description:"Quantity Booked", type: :decimal}),
-         default_field( :order_number, {
+        [field(:line_number, {type: :integer}),
+         field(:quantity, {description:"Quantity Booked", type: :decimal}),
+         field( :order_number, {
                description: 'Order',
                qualified_field_name: 'select order_number from orders where orders.id = booking_line.order_id'
            }),
-         default_field(:order_line_number, {description: "Order Line",
+         field(:order_line_number, {description: "Order Line",
                type: :integer,
                qualified_field_name: 'select line_number from order_lines where order_lines.id = booking_line.order_line_id'
            })]

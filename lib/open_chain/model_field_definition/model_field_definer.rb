@@ -22,7 +22,7 @@ module OpenChain; module ModelFieldDefinition
       []
     end
 
-    def default_field(identifier, options={})
+    def field(identifier, options={})
       throw 'Prefix is not defined; Default field needs a prefix' unless prefix
 
       string_name = identifier.to_s
