@@ -163,7 +163,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_canceled_date
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
-    line_fields_to_render = limit_fields([
+    shipment_line_fields_to_render = limit_fields([
       :shpln_line_number,
       :shpln_shipped_qty,
       :shpln_puid,
@@ -176,6 +176,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shpln_carton_qty,
       :shpln_carton_set_uid
     ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
+
+    booking_line_fields_to_render = limit_fields([
+         :bkln_line_number, :bkln_quantity
+     ] + custom_field_keys(CoreModule::BOOKING_LINE))
 
     container_fields_to_render = ([
       :con_uid,
@@ -193,23 +197,15 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
     h = {id: s.id}
     headers_to_render.each {|uid| h[uid] = export_field(uid, s)}
-    if render_lines?
-      h['lines'] ||= []
-      s.shipment_lines.each do |sl|
-        slh = {id: sl.id}
-        line_fields_to_render.each {|uid| slh[uid] = export_field(uid, sl)}
-        if render_order_fields?
-          slh['order_lines'] = render_order_fields(sl)
-        end
-        h['lines'] << slh
-      end
+    if render_shipment_lines?
+      h['lines'] = render_lines(s.shipment_lines, shipment_line_fields_to_render, render_order_fields?)
     end
-    s.containers.each do |c|
-      h['containers'] ||= []
-      ch = {id: c.id}
-      container_fields_to_render.each {|uid| ch[uid] = export_field(uid, c)}
-      h['containers'] << ch
+    if render_booking_lines?
+      h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render, render_order_fields?)
     end
+
+    h['containers'] = render_lines(s.containers, container_fields_to_render)
+
     if render_carton_sets?
       h['carton_sets'] = render_carton_sets(s)
     end
@@ -251,8 +247,19 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_uncancel:shipment.can_uncancel?(current_user)
     }
   end
-  def render_lines?
-    params[:no_lines].blank?
+  def render_shipment_lines?
+    params[:shipping_lines] == true
+  end
+  def render_booking_lines?
+    params[:booking_lines] == true
+  end
+  def render_lines (lines, fields_to_render, with_order_lines=false)
+    lines.map do |sl|
+      rendered_line = {id: sl.id}
+      fields_to_render.each {|uid| rendered_line[uid] = export_field(uid, sl)}
+      rendered_line['order_lines'] = render_order_fields(sl) if with_order_lines
+      rendered_line
+    end
   end
   def render_carton_sets?
     params[:include] && params[:include].match(/carton_sets/)
@@ -268,11 +275,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :cs_net,
       :cs_gross
     ])
-    return shipment.carton_sets.collect do |cs|
-      ch = {id:cs.id}
-      fields.each {|uid| ch[uid] = export_field(uid, cs)}
-      ch
-    end
+    render_lines(shipment.carton_sets, fields)
   end
   def render_summary?
     params[:summary]
