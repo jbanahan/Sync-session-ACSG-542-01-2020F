@@ -19,11 +19,11 @@ describe Api::V1::ShipmentsController do
 
     it "should limit fields returned" do
       s1 = Factory(:shipment,reference:'123',mode:'Air',master_bill_of_lading:'MBOL')
-      get :index, fields:'shp_ref,shp_mode'
+      get :index, fields:'shp_ref,shp_mode', shipment_lines:true, booking_lines:true
       expect(response).to be_success
       j = JSON.parse(response.body)['results']
       j.first.delete 'permissions' #not testing permissions hash
-      expect(j).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air','lines'=>[]}]
+      expect(j).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air','lines'=>[],'booking_lines'=>[]}]
     end
   end
 
@@ -55,9 +55,10 @@ describe Api::V1::ShipmentsController do
 
     it "should render without lines" do
       sl = Factory(:shipment_line)
-      get :show, id: sl.shipment_id.to_s, no_lines: 'true'
+      get :show, id: sl.shipment_id.to_s
       j = JSON.parse response.body
       expect(j['shipment']['lines']).to be_nil
+      expect(j['shipment']['booking_lines']).to be_nil
       expect(j['shipment']['id']).to eq sl.shipment_id
     end
 
@@ -79,7 +80,7 @@ describe Api::V1::ShipmentsController do
 
     it "should convert numbers to numeric" do
       sl = Factory(:shipment_line,quantity:10)
-      get :show, id: sl.shipment_id
+      get :show, id: sl.shipment_id, shipment_lines: true
       j = JSON.parse response.body
       sln = j['shipment']['lines'].first
       expect(sln['shpln_shipped_qty']).to eq 10
@@ -95,7 +96,7 @@ describe Api::V1::ShipmentsController do
     end
     it "should render shipment lines" do
       sl = Factory(:shipment_line,line_number:5,quantity:10)
-      get :show, id: sl.shipment_id
+      get :show, id: sl.shipment_id, shipment_lines: true
       expect(response).to be_success
       j = JSON.parse response.body
       slj = j['shipment']['lines'].first
@@ -103,13 +104,23 @@ describe Api::V1::ShipmentsController do
       expect(slj['shpln_line_number']).to eq 5
       expect(slj['shpln_shipped_qty']).to eq 10.0
     end
+    it "should render booking lines" do
+      sl = Factory(:booking_line,line_number:5,quantity:10)
+      get :show, id: sl.shipment_id, booking_lines: true
+      expect(response).to be_success
+      j = JSON.parse response.body
+      slj = j['shipment']['booking_lines'].first
+      expect(slj['id']).to eq sl.id
+      expect(slj['bkln_line_number']).to eq 5
+      expect(slj['bkln_quantity']).to eq 10.0
+    end
     it "should render optional order lines" do
       ol = Factory(:order_line,quantity:20,currency:'USD')
       ol.order.update_attributes(customer_order_number:'C123',order_number:'123')
       sl = Factory(:shipment_line,quantity:10,product:ol.product)
       sl.linked_order_line_id = ol.id
       sl.save!
-      get :show, id: sl.shipment_id, include: 'order_lines'
+      get :show, id: sl.shipment_id, shipment_lines: true, include: 'order_lines'
       expect(response).to be_success
       j = JSON.parse response.body
       slj = j['shipment']['lines'].first
@@ -124,7 +135,7 @@ describe Api::V1::ShipmentsController do
       c = Factory(:container,entry:nil,shipment:Factory(:shipment),
         container_number:'CN1234')
       sl = Factory(:shipment_line,shipment:c.shipment,container:c)
-      get :show, id: sl.shipment_id
+      get :show, id: sl.shipment_id, shipment_lines: true
       expect(response).to be_success
       j = JSON.parse response.body
       slc = j['shipment']['containers'].first
@@ -134,7 +145,7 @@ describe Api::V1::ShipmentsController do
     it "should optionally render carton sets" do
       cs = Factory(:carton_set,starting_carton:1000)
       Factory(:shipment_line,shipment:cs.shipment,carton_set:cs)
-      get :show, id: cs.shipment_id, include: 'carton_sets'
+      get :show, id: cs.shipment_id, shipment_lines: true, include: 'carton_sets'
       expect(response).to be_success
       j = JSON.parse response.body
       slc = j['shipment']['carton_sets'].first
@@ -454,6 +465,16 @@ describe Api::V1::ShipmentsController do
       sl.reload
       expect(sl.quantity).to eq 24
     end
+
+    it "should update booking line" do
+      sl = Factory(:booking_line,shipment:@shipment,product:@product,quantity:100,line_number:1)
+      @s_hash['booking_lines'] = [{bkln_line_number:1,bkln_quantity:24}]
+      put :update, id: @shipment.id, shipment: @s_hash
+      expect(response).to be_success
+      sl.reload
+      expect(sl.quantity).to eq 24
+    end
+
     it "should not allow new lines if !can_add_remove_lines?" do
       Shipment.any_instance.stub(:can_add_remove_lines?).and_return false
       @s_hash['lines'] = [

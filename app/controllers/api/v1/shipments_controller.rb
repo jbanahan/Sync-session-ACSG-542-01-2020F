@@ -204,7 +204,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render, render_order_fields?)
     end
 
-    h['containers'] = render_lines(s.containers, container_fields_to_render)
+    h['containers'] = render_lines(s.containers, container_fields_to_render) if s.containers.any?
 
     if render_carton_sets?
       h['carton_sets'] = render_carton_sets(s)
@@ -248,10 +248,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     }
   end
   def render_shipment_lines?
-    params[:shipping_lines] == true
+    params[:shipment_lines].present? || action_name == 'create'
   end
   def render_booking_lines?
-    params[:booking_lines] == true
+    params[:booking_lines].present? || action_name == 'create'
   end
   def render_lines (lines, fields_to_render, with_order_lines=false)
     lines.map do |sl|
@@ -352,12 +352,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
           shipment.errors[:base] << "Order line #{o_line.id} does not have the same product as the shipment line provided (#{s_line.product.unique_identifier})" unless s_line.product == o_line.product
           s_line.linked_order_line_id = ln['linked_order_line_id']
         end
-        shipment.errors[:base] << "Product required for shipment lines." unless s_line.product
-        shipment.errors[:base] << "Product not found." if s_line.product && !s_line.product.can_view?(current_user)
-        # shipment.errors[:base] << "Line #{i+1} is missing #{ModelField.find_by_uid(:shpln_line_number).label}." if s_line.line_number.blank?
+        validate_product(s_line, shipment)
       end
     end
   end
+
+  def validate_product(s_line, shipment)
+    shipment.errors[:base] << "Product required for shipment lines." unless s_line.product
+    shipment.errors[:base] << "Product not found." if s_line.product && !s_line.product.can_view?(current_user)
+  end
+
   def load_containers shipment, h
     if h['containers']
       h['containers'].each_with_index do |ln,i|

@@ -37,7 +37,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         return $http.get('/api/v1/shipments/'+shipmentId+'.json?summary=true&no_lines=true&include=order_lines,attachments').then(getShipmentSuccessHandler)
 
     injectLines: (shipment) ->
-      $http.get('/api/v1/shipments/'+shipment.id+'.json?include=order_lines').then (resp) ->
+      $http.get('/api/v1/shipments/'+shipment.id+'.json?shipment_lines=true&include=order_lines').then (resp) ->
         shipment.lines = resp.data.shipment.lines
 
     saveShipment: (shipment) ->
