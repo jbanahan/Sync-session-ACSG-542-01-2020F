@@ -84,14 +84,14 @@ module CoreModuleDefinitions
     :key_model_field_uids => [:shp_ref],
     :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number]
     })
-  SALE_LINE = new("SalesOrderLine","Sale Line",{
+  SALE_LINE = CoreModule.new("SalesOrderLine","Sale Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:soln_line_number,
     :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line},
     :enabled_lambda => lambda { MasterSetup.get.sales_order_enabled? },
     :key_model_field_uids => [:soln_line_number]
     })
-  SALE = new("SalesOrder","Sale",
+  SALE = CoreModule.new("SalesOrder","Sale",
     {:children => [SALE_LINE],
       :child_lambdas => {SALE_LINE => lambda {|parent| parent.sales_order_lines}},
       :child_joins => {SALE_LINE => "LEFT OUTER JOIN sales_order_lines ON sales_orders.id = sales_order_lines.sales_order_id"},
@@ -102,14 +102,14 @@ module CoreModuleDefinitions
       :key_model_field_uids => [:sale_order_number],
       :quicksearch_fields => [:sale_order_number]
     })
-  DELIVERY_LINE = new("DeliveryLine","Delivery Line",{
+  DELIVERY_LINE = CoreModule.new("DeliveryLine","Delivery Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:delln_line_number,
     :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line},
     :enabled_lambda => lambda { MasterSetup.get.delivery_enabled? },
     :key_model_field_uids => [:delln_line_number]
     })
-  DELIVERY = new("Delivery","Delivery",
+  DELIVERY = CoreModule.new("Delivery","Delivery",
     {:children=>[DELIVERY_LINE],
     :child_lambdas => {DELIVERY_LINE => lambda {|p| p.delivery_lines}},
     :child_joins => {DELIVERY_LINE => "LEFT OUTER JOIN delivery_lines on deliveries.id = delivery_lines.delivery_id"},
