@@ -6,28 +6,23 @@ shipmentApp.config ['$httpProvider', ($httpProvider) ->
 shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRouterProvider) ->
   $urlRouterProvider.otherwise('/')
 
+  resolveShipmentId = {
+    shipmentId: ['$stateParams', ($stateParams) -> $stateParams.shipmentId ]
+  }
   $stateProvider.
     state('loading',{templateUrl: '/partials/loading.html'}).
     state('show',{
       url: '/:shipmentId/show'
       templateUrl: '/partials/shipments/show.html'
       controller: 'ShipmentShowCtrl'
-      resolve: {
-        shipmentId: ['$stateParams', ($stateParams) ->
-          $stateParams.shipmentId
-          ]
-        }
+      resolve: resolveShipmentId
       }).
     state('process_manifest',{
       abstract: true
       url: '/:shipmentId/process_manifest'
       templateUrl: '/partials/shipments/process_manifest/abstract.html'
       controller: 'ProcessManifestCtrl'
-      resolve: {
-        shipmentId: ['$stateParams', ($stateParams) ->
-          $stateParams.shipmentId
-          ]
-        }
+      resolve: resolveShipmentId
       }).
     state('process_manifest.main',{
       url: '/main'
@@ -41,11 +36,13 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
       url: '/:shipmentId/add_order'
       templateUrl: '/partials/shipments/add_order.html'
       controller: 'ShipmentAddOrderCtrl'
-      resolve: {
-        shipmentId: ['$stateParams', ($stateParams) ->
-          $stateParams.shipmentId
-          ]
-        }
+      resolve: resolveShipmentId
+    }).
+    state('book_order', {
+      url: '/:shipmentId/book_order'
+      templateUrl: '/partials/shipments/book_order.html'
+      controller: 'ShipmentAddOrderCtrl'
+      resolve: resolveShipmentId
     }).
     state('new',{
       url: '/new'
@@ -123,9 +120,16 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
       $scope.loadingFlag = null
       $scope.loadLines($scope.shp) if $scope.linesNeeded
 
-  $scope.loadLines = (shp) ->
+  $scope.loadShipmentLines = (shp) ->
     $scope.linesNeeded = true
-    shipmentSvc.injectLines shp unless shp.lines
+    shipmentSvc.injectShipmentLines shp unless shp.lines
+
+  $scope.loadBookingLines = (shp) ->
+    $scope.linesNeeded = true
+    shipmentSvc.injectBookingLines shp unless shp.booking_lines
+
+  $scope.loadLines = (shp) ->
+    shipmentSvc.injectBookingLines(shp).then(-> shipmentSvc.injectShipmentLines(shp))
 
   $scope.edit = ->
     $state.go('edit',{shipmentId: $scope.shp.id})
@@ -193,15 +197,25 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
 
   $scope.prepShipmentLineEditObject = copyObjectToScopeAs 'lineToEdit'
 
-  $scope.saveLine = (shipment,line) ->
+  $scope.saveShipmentLine = (shipment,line) ->
     $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
-      $scope.loadLines($scope.shp)
+      $scope.loadShipmentLines($scope.shp)
 
-  $scope.deleteLine = (shipment,line) ->
+  $scope.deleteShipmentLine = (shipment,line) ->
     if window.confirm("Are you sure you want to delete this line?")
       line._destroy = 'true'
       $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
-        $scope.loadLines($scope.shp)
+        $scope.loadShipmentLines($scope.shp)
+
+  $scope.saveBookingLine = (shipment,line) ->
+    $scope.saveShipment({id: shipment.id, booking_lines: [line]}).then ->
+      $scope.loadBookingLines($scope.shp)
+
+  $scope.deleteBookingLine = (shipment,line) ->
+    if window.confirm("Are you sure you want to delete this line?")
+      line._destroy = 'true'
+      $scope.saveShipment({id: shipment.id, booking_lines: [line]}).then ->
+        $scope.loadBookingLines($scope.shp)
 
   $scope.prepBookingEditObject = copyObjectToScopeAs 'booking'
 
@@ -227,6 +241,9 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
 
   $scope.showAddOrder = ->
     $state.go('add_order',{shipmentId: $scope.shp.id})
+
+  $scope.showBookOrder = ->
+    $state.go('book_order',{shipmentId: $scope.shp.id})
 
   $scope.saveShipment = (shipment) ->
     $scope.loadingFlag = 'loading'
@@ -299,8 +316,8 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
         ln.quantity_to_ship = qty + amountToChange
     order
       #create shipment lines for all lines on the given order
-  $scope.addOrderToShipment = (shp, ord, container_to_pack) ->
-    shp.lines = [] if shp.lines==undefined
+  $scope.addOrderToShipment = (shp, ord, collection_name) ->
+    shp[collection_name] = [] if shp[collection_name]==undefined
     return shp unless ord.order_lines
     for oln in ord.order_lines
       sl = {
@@ -310,8 +327,7 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
         shpln_shipped_qty: oln.quantity_to_ship,
         order_lines: [{ord_cust_ord_no: ord.ord_cust_ord_no,ordln_line_number: oln.ordln_line_number}]
       }
-      sl.shpln_container_uid = container_to_pack.id if container_to_pack
-      shp.lines.push sl
+      shp[collection_name].push sl
     shp
 
   $scope.totalToShip = (ord) ->
@@ -322,9 +338,9 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
       total = total + inc unless isNaN(inc)
     total
 
-  $scope.addOrderAndSave = (shp, ord, container_to_pack) ->
+  $scope.addOrderAndSave = (shp, ord, collection) ->
     $scope.loadingFlag = 'loading'
-    $scope.addOrderToShipment(shp,ord,container_to_pack)
+    $scope.addOrderToShipment(shp,ord,collection)
     shipmentSvc.saveShipment(shp).then (resp) ->
       shipmentSvc.getShipment(shp.id,true).then ->
         $state.go('show',{shipmentId: $scope.shp.id})

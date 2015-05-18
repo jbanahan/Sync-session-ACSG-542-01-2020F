@@ -130,7 +130,8 @@
         <div role="tabpanel">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a data-target="#line_summary" aria-controls="line_summary" role="tab" data-toggle="tab">Summary</a></li>
-            <li role="presentation"><a ng-click="loadLines(shp)" data-target="#line_detail" aria-controls="line_detail" role="tab" data-toggle="tab">Detail</a></li>
+            <li role="presentation"><a ng-click="loadShipmentLines(shp)" data-target="#line_detail" aria-controls="line_detail" role="tab" data-toggle="tab">Manifest Detail</a></li>
+            <li role="presentation"><a ng-click="loadBookingLines(shp)" data-target="#booking_detail" aria-controls="booking_detail" role="tab" data-toggle="tab">Booking Detail</a></li>
           </ul>
           <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="line_summary">
@@ -144,7 +145,7 @@
                   </div>
                   <div class="col-md-12" ng-show='shp.lines.length >= 0'>
                     <div class="panel" ng-show='shp.lines.length == 0'>
-                      <div class="panel-body">This shipment does't have any lines.</div>
+                      <div class="panel-body">This shipment doesn't have any lines.</div>
                     </div>
                     <table class='table table-striped' ng-show='shp.lines.length > 0'>
                       <thead>
@@ -226,12 +227,103 @@
                       </div>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" ng-click='saveLine(shp,lineToEdit)' data-dismiss="modal">Save changes</button>
+                        <button type="button" class="btn btn-primary" ng-click='saveShipmentLine(shp,lineToEdit)' data-dismiss="modal">Save changes</button>
                       </div>
                     </div>
                   </div>
                 </div>
               </div> <!--end lines section -->
+            </div>
+            <div role="tabpanel" class="tab-pane" id="booking_detail">
+              <div class="container-fluid">  <!--start lines section -->
+                <div class="row">
+                  <div class='col-md-12' ng-hide='shp.booking_lines.length >= 0'>
+                    <div class='loader'>Loading</div>
+                  </div>
+                  <div class="col-md-12" ng-show='shp.booking_lines.length >= 0'>
+                    <div class="panel" ng-show='shp.booking_lines.length == 0'>
+                      <div class="panel-body">This shipment doesn't have any lines.</div>
+                    </div>
+                    <table class='table table-striped' ng-show='shp.booking_lines.length > 0'>
+                      <thead>
+                      <tr>
+                        <th>Line #</th>
+                        <th>Product</th>
+                        <th>Order Number - Line</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMS)</th>
+                        <th>Gross Weight (KGS)</th>
+                        <th>Container</th>
+                        <th ng-show='shp.permissions.can_edit'></th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      <tr ng-repeat="ln in shp.booking_lines" ng-class="{'danger':ln._destroy}">
+                        <td>{{ln.bkln_line_number}}</td>
+                        <td>{{ln.bkln_puid}}</td>
+                        <td>
+                          <div ng-repeat='ol in ln.order_lines'>
+                            <a href='/orders/{{ol.order_id}}'>{{ol.ord_cust_ord_no}} - {{ol.ordln_line_number}}</a>
+                          </div>
+                        </td>
+                        <td>
+                          {{ln.bkln_quantity}}
+                        </td>
+                        <td>
+                          {{ln.bkln_carton_qty}}
+                        </td>
+                        <td>
+                          {{ln.bkln_cbms}}
+                        </td>
+                        <td>
+                          {{ln.bkln_gross_kgs}}
+                        </td>
+                        <td>
+                          {{ln.bkln_container_number}}
+                        </td>
+                        <td ng-show='shp.permissions.can_edit' class='text-right'>
+                          <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                          <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
+                        </td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="modal fade panel-modal" id='mod_edit_booking_line' tabindex="-1" role="dialog" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Edit Line</h4>
+                      </div>
+                      <div class="modal-body">
+                        <div class="form-group">
+                          <label for="bkln_quantity">Quantity</label>
+                          <input type="number" class='form-control' id='bkln_quantity' ng-model="lineToEdit.bkln_quantity">
+                        </div>
+                        <div class="form-group">
+                          <label for="bkln_carton_qty">Cartons</label>
+                          <input type="number" class='form-control' id='bkln_carton_qty' ng-model="lineToEdit.bkln_carton_qty">
+                        </div>
+                        <div class="form-group">
+                          <label for="bkln_cbms">CBMs</label>
+                          <input type="number" class='form-control' id='bkln_cbms' ng-model="lineToEdit.bkln_cbms">
+                        </div>
+                        <div class="form-group">
+                          <label for="bkln_gross_kgs">Gross KGS</label>
+                          <input type="number" class='form-control' id='bkln_gross_kgs' ng-model="lineToEdit.bkln_gross_kgs">
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" ng-click='saveBookingLine(shp,lineToEdit)' data-dismiss="modal">Save changes</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -245,6 +337,7 @@
     <button ng-show='shp.permissions.can_revise_booking' class='btn btn-default' ng-click='reviseBooking(shp)'>Revise Booking</button>
     <button ng-show='shp.permissions.can_cancel' class='btn btn-default' ng-click='cancelShipment(shp)'>Cancel Shipment</button>
     <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
+    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showBookOrder()' ng-show='shp && shp.id'>Book Order</button>
     <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showProcessManifest()' ng-show='shp && shp.attachments.length > 0'>Process Manifest</button>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>
   </div>

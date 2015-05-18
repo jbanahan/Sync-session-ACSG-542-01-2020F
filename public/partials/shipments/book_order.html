@@ -2,7 +2,7 @@
   <div class='container'>
     <div class="row">
       <div class="col-md-12">
-        <h1>Add Order To Shipment {{shp.shp_ref}}</h1>
+        <h1>Book Order To Shipment {{shp.shp_ref}}</h1>
       </div>
     </div>
     <div class="row">
@@ -86,6 +86,6 @@
   </div>
 </div>
 <div chain-action-bar>
-  <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder,"lines")' ng-show='shp && activeOrder'>Save</button>
+  <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder,"booking_lines")' ng-show='shp && activeOrder'>Save</button>
   <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
 </div>

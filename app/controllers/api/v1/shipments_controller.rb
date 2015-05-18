@@ -98,6 +98,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
+      {booking_lines: [:piece_sets,:product]},
       :containers,
       {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
@@ -192,7 +193,12 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
 
     booking_line_fields_to_render = limit_fields([
-         :bkln_line_number, :bkln_quantity
+         :bkln_line_number,
+         :bkln_quantity,
+         :bkln_puid,
+         :bkln_carton_qty,
+         :bkln_gross_kgs,
+         :bkln_carton_set_id
      ] + custom_field_keys(CoreModule::BOOKING_LINE))
 
     container_fields_to_render = ([

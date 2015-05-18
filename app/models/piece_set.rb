@@ -8,6 +8,7 @@ class PieceSet < ActiveRecord::Base
   belongs_to :commercial_invoice_line
   belongs_to :drawback_import_line
   belongs_to :security_filing_line
+  belongs_to :booking_line
 
   has_one :milestone_forecast_set, :dependent=>:destroy, :autosave=>true
 
@@ -24,7 +25,8 @@ class PieceSet < ActiveRecord::Base
       delivery_line_id:base.delivery_line_id,
       commercial_invoice_line_id:base.commercial_invoice_line_id,
       drawback_import_line_id:base.drawback_import_line_id,
-      security_filing_line_id:base.security_filing_line_id
+      security_filing_line_id:base.security_filing_line_id,
+      booking_line_id:base.booking_line_id
       )
     return if all.size < 2
     first = all.first
@@ -47,7 +49,9 @@ class PieceSet < ActiveRecord::Base
       :delivery_line_id,
       :commercial_invoice_line_id,
       :drawback_import_line_id,
-      :security_filing_line_id,]
+      :security_filing_line_id,
+      :booking_line_id
+    ]
     key_count = keys.inject(0) {|i,m| i + (!self.attributes[m.to_s].blank? ? 1 : 0)}
     if key_count <= 1
       return self.destroy
