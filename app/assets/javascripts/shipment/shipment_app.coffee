@@ -163,30 +163,35 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
         $scope.loadShipment(sId,true).then ->
           window.alert('Shipment no longer canceled.')
 
-  $scope.prepShipmentHeaderEditObject = (shipment) ->
-    $scope.header = {id: shipment.id}
-    $scope.header['shp_ref'] = shipment.shp_ref
-    $scope.header['shp_importer_reference'] = shipment.shp_importer_reference
-    $scope.header['shp_master_bill_of_lading'] = shipment.shp_master_bill_of_lading
-    $scope.header['shp_house_bill_of_lading'] = shipment.shp_house_bill_of_lading
-    $scope.header['shp_booking_number'] = shipment.shp_booking_number
-    $scope.header['shp_receipt_location'] = shipment.shp_receipt_location
-    $scope.header['shp_dest_port_name'] = shipment.shp_dest_port_name
-    $scope.header['shp_freight_terms'] = shipment.shp_freight_terms
-    $scope.header['shp_lcl'] = shipment.shp_lcl
-    $scope.header['shp_shipment_type'] = shipment.shp_shipment_type
-    $scope.header['shp_vessel'] = shipment.shp_vessel
-    $scope.header['shp_voyage'] = shipment.shp_voyage
-    $scope.header['shp_vessel_carrier_scac'] = shipment.shp_vessel_carrier_scac
-    $scope.header['shp_mode'] = shipment.shp_mode
+  ###*
+  # Takes in a source object and a list of attributes and returns an object containing that subset of the source.
+  # In essence, Ruby's Hash#slice in JS
+  # The result will have every attribute in the list whether or not they are defined in the source
+  #
+  # @param {object} source
+  # @param {string[]} attributes
+  # @return {object}
+  ###
+  objectSlice = (source={}, attributes=[]) ->
+    result = {}
+    for attr in attributes
+      result[attr] = source[attr]
+    result
 
-  $scope.prepShipmentLineEditObject = (line) ->
-    $scope.lineToEdit = {id: line.id}
-    $scope.lineToEdit.shpln_shipped_qty = line.shpln_shipped_qty
-    $scope.lineToEdit.shpln_carton_qty = line.shpln_carton_qty
-    $scope.lineToEdit.shpln_cbms = line.shpln_cbms
-    $scope.lineToEdit.shpln_gross_kgs = line.shpln_gross_kgs
-    $scope.lineToEdit.shpln_container_uid = line.shpln_container_uid
+  ###*
+  # Returns a function that takes a source object as a parameter.
+  # Copies that object and assigns the copy to scope under the provided name.
+  #
+  # @param {string} objName
+  # @return {Function}
+  ###
+  copyObjectToScopeAs = (objName) ->
+    (source) ->
+      $scope[objName] = angular.copy(source)
+
+  $scope.prepShipmentHeaderEditObject = copyObjectToScopeAs 'header'
+
+  $scope.prepShipmentLineEditObject = copyObjectToScopeAs 'lineToEdit'
 
   $scope.saveLine = (shipment,line) ->
     $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
@@ -198,38 +203,15 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
       $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
         $scope.loadLines($scope.shp)
 
-  $scope.prepBookingEditObject = (shipment) ->
-    $scope.booking = {id: shipment.id}
-    $scope.booking['shp_booking_cutoff_date'] = shipment.shp_booking_cutoff_date
-    $scope.booking['shp_booking_est_departure_date'] = shipment.shp_booking_est_departure_date
-    $scope.booking['shp_cargo_ready_date'] = shipment.shp_cargo_ready_date
-    $scope.booking['shp_booking_est_arrival_date'] = shipment.shp_booking_est_arrival_date
-    $scope.booking['shp_booking_shipment_type'] = shipment.shp_booking_shipment_type
-    $scope.booking['shp_booking_mode'] = shipment.shp_booking_mode
+  $scope.prepBookingEditObject = copyObjectToScopeAs 'booking'
 
   $scope.prepPartiesEditObject = (shipment) ->
     loadParties() unless $scope.parties
-    $scope.partiesEditObj = {id: shipment.id}
-    $scope.partiesEditObj.shp_car_syscode = shipment.shp_car_syscode
-    $scope.partiesEditObj.shp_imp_syscode = shipment.shp_imp_syscode
+    $scope.partiesEditObj = objectSlice shipment, ['id', 'shp_car_syscode', 'shp_imp_syscode']
 
-  $scope.prepTrackingEditObject = (shipment) ->
-    $scope.tracking = {id: shipment.id}
-    $scope.tracking.shp_est_departure_date = shipment.shp_est_departure_date
-    $scope.tracking.shp_est_arrival_port_date = shipment.shp_est_arrival_port_date
-    $scope.tracking.shp_est_delivery_date = shipment.shp_est_delivery_date
-    $scope.tracking.shp_docs_received_date = shipment.shp_docs_received_date
-    $scope.tracking.shp_cargo_on_hand_date = shipment.shp_cargo_on_hand_date
-    $scope.tracking.shp_departure_date = shipment.shp_departure_date
-    $scope.tracking.shp_arrival_port_date = shipment.shp_arrival_port_date
-    $scope.tracking.shp_delivered_date = shipment.shp_delivered_date
+  $scope.prepTrackingEditObject = copyObjectToScopeAs 'tracking'
 
-  $scope.editContainer = (c) ->
-    container = (if c then c else {isNew: true})
-    $scope.containerToEdit = {id: container.id}
-    $scope.containerToEdit.con_container_number = container.con_container_number
-    $scope.containerToEdit.con_container_size = container.con_container_size
-    $scope.containerToEdit.con_seal_number = container.con_seal_number
+  $scope.editContainer = copyObjectToScopeAs 'containerToEdit'
 
   $scope.saveContainer = (shipment,container) ->
     $scope.saveShipment({id: shipment.id, containers: [container]})

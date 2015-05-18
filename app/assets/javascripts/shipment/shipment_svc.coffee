@@ -11,10 +11,18 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         else
           updatedLines.push ln if qty && qty>0
       shipment.lines = updatedLines
-    if shipment.dest_port && shipment.dest_port.title
-      shipment.shp_dest_port_name = shipment.dest_port.title
-      shipment.shp_dest_port_id = undefined
+    setPortNames(shipment)
     shipment
+
+  setPortNames = (shipment) ->
+    names = ['dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
+    for name in names
+      setPortName shipment, name
+
+  setPortName = (shipment, portName) ->
+    if shipment[portName] && shipment[portName].title
+      shipment["shp_#{portName}_name"] = shipment[portName].title
+      shipment["shp_#{portName}_id"] = undefined
 
   currentShipment = null
   getShipmentSuccessHandler = (resp) ->
@@ -27,14 +35,15 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     commentSvc.injectComments(currentShipment,'Shipment')
     resp
 
+  shipmentPost = (id, endpoint) ->
+    $http.post('/api/v1/shipments/'+id+'/'+endpoint, {id: id})
+
   return {
     getShipment: (shipmentId,forceReload) ->
       if !forceReload && currentShipment && parseInt(currentShipment.id) == parseInt(shipmentId)
-        deferred = $q.defer()
-        deferred.resolve {data: {shipment: currentShipment}}
-        return deferred.promise
+        $q.when {data: {shipment: currentShipment}}
       else
-        return $http.get('/api/v1/shipments/'+shipmentId+'.json?summary=true&no_lines=true&include=order_lines,attachments').then(getShipmentSuccessHandler)
+        $http.get('/api/v1/shipments/'+shipmentId+'.json?summary=true&no_lines=true&include=order_lines,attachments').then(getShipmentSuccessHandler)
 
     injectLines: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'.json?include=order_lines').then (resp) ->
@@ -42,11 +51,15 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
     saveShipment: (shipment) ->
       currentShipment = null
+      method = "post"
+      suffix = ""
       s = prepForSave shipment
+
       if shipment.id && shipment.id > 0
-        $http.put('/api/v1/shipments/'+s.id+'.json', {shipment: s, no_lines: 'true'}).then(getShipmentSuccessHandler)
-      else
-        $http.post('/api/v1/shipments',{shipment: s, no_lines: 'true'}).then(getShipmentSuccessHandler)
+        method = "put"
+        suffix = "/#{s.id}.json"
+
+      $http[method]("/api/v1/shipments#{suffix}",{shipment: s, no_lines: 'true'}).then(getShipmentSuccessHandler)
 
     getParties: ->
       $http.get('/api/v1/companies?roles=importer,carrier')
@@ -61,21 +74,21 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest', {attachment_id: attachment.id, no_lines: 'true'}).then(getShipmentSuccessHandler)
 
     requestBooking: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/request_booking.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'request_booking.json')
 
     approveBooking: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/approve_booking.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'approve_booking.json')
 
     confirmBooking: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/confirm_booking.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'confirm_booking.json')
 
     reviseBooking: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/revise_booking.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'revise_booking.json')
 
     cancelShipment: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/cancel.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id, 'cancel.json')
 
     uncancelShipment: (shp) ->
-      $http.post('/api/v1/shipments/'+shp.id+'/uncancel.json',{id: shp.id}) #need some json content for API controller
+      shipmentPost(shp.id,'uncancel.json')
   }
 ]
