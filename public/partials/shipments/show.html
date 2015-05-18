@@ -186,7 +186,7 @@
                             {{ln.shpln_container_number}}
                           </td>
                           <td ng-show='shp.permissions.can_edit' class='text-right'>
-                            <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                            <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteShipmentLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
                             <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
                           </td>
                         </tr>
@@ -283,7 +283,7 @@
                           {{ln.bkln_container_number}}
                         </td>
                         <td ng-show='shp.permissions.can_edit' class='text-right'>
-                          <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                          <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
                           <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
                         </td>
                       </tr>

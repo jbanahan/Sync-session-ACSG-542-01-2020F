@@ -1,18 +1,21 @@
 angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',($http,$q,commentSvc) ->
   prepForSave = (shipment) ->
-    updatedLines = []
-    if shipment.lines
-      for ln in shipment.lines
-        qty = parseFloat(ln.shpln_shipped_qty)
-        if ln.id
-          if !qty || qty==0
-            ln._destroy = true
-          updatedLines.push ln
-        else
-          updatedLines.push ln if qty && qty>0
-      shipment.lines = updatedLines
+    shipment.lines = markZeroQuantityLinesForDestruction shipment.lines
+    shipment.booking_lines = markZeroQuantityLinesForDestruction shipment.booking_lines
     setPortNames(shipment)
     shipment
+
+  markZeroQuantityLinesForDestruction = (lines=[]) ->
+    updatedLines = []
+    for ln in lines
+      qty = parseFloat(ln.shpln_shipped_qty || ln.bkln_quantity)
+      if ln.id
+        if !qty || qty==0
+          ln._destroy = true
+        updatedLines.push ln
+      else
+        updatedLines.push ln if qty && qty>0
+    updatedLines
 
   setPortNames = (shipment) ->
     names = ['dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
