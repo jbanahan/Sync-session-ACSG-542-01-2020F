@@ -17,7 +17,8 @@ class CoreModule
       :key_model_field_uids, #the uids represented by this array of model_field_uids can be used to find a unique record in the database
       :view_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine view path for the module (may return null if no view path exists)
       :edit_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
-      :quicksearch_lambda # Scope for quick searching
+      :quicksearch_lambda, # Scope for quick searching
+      :quicksearch_fields # List of field / field definitions for quicksearching
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
 
   def initialize(class_name,label,opts={})
@@ -101,6 +102,8 @@ class CoreModule
     else
       @quicksearch_lambda = lambda {|user, scope| klass.search_secure(user, scope)}
     end
+
+    @quicksearch_fields = o[:quicksearch_fields]
   end
 
   #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail

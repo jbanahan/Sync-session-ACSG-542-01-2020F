@@ -11,8 +11,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "accepts entries linked to customer numbers with 315 setups" do
       e = Entry.new broker_reference: "ref", customer_number: "cust"
-      c = MilestoneNotificationConfig.new 
-      c.customer_number = "cust"
+      c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: ""
       c.save! 
 
       expect(described_class.new.accepts? :save, e).to be_true
@@ -24,21 +23,28 @@ describe OpenChain::CustomHandler::Generic315Generator do
     end
 
     it "doesn't accept entries without customer numbers" do 
-      c = MilestoneNotificationConfig.create!
+      c = MilestoneNotificationConfig.create! enabled: true, output_style: ""
       e = Entry.new broker_reference: "cust"
+      expect(described_class.new.accepts? :save, e).to be_false
+    end
+
+    it "doesn't accept entries linked to 315 setups that are disabled" do
+      e = Entry.new broker_reference: "ref", customer_number: "cust"
+      c = MilestoneNotificationConfig.new customer_number: "cust", enabled: false, output_style: ""
+      c.save! 
+
       expect(described_class.new.accepts? :save, e).to be_false
     end
   end
 
   describe "receive" do
     before :each do
-      @config = MilestoneNotificationConfig.new
-      @config.customer_number = "cust"
+      @config = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: ""
       @config.setup_json = [
         {model_field_uid: "ent_release_date"}
       ]
       @config.save!
-      @entry = Factory(:entry, source_system: "Alliance", customer_number: "cust", release_date: "2015-03-01 08:00")
+      @entry = Factory(:entry, source_system: "Alliance", customer_number: "cust", release_date: "2015-03-01 08:00", master_bills_of_lading: "A\nB", container_numbers: "E\nF")
     end
 
     it "generates and sends xml for 315 update" do
@@ -119,6 +125,28 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq (@entry.release_date - 1.day).to_date.iso8601
     end
+
+    it "sends distinct 315 files for each masterbill / container combination when output_format is 'mbol_container'" do
+      @config.output_style = MilestoneNotificationConfig::OUTPUT_STYLE_MBOL_CONTAINER_SPLIT
+      @config.save!
+
+      c = described_class.new
+      file_contents = []
+      c.should_receive(:ftp_file).exactly(4).times do |file|
+        file_contents << file.read
+      end
+      c.receive :save, @entry
+
+      expect(file_contents.size).to eq 4
+      expect(REXML::Document.new(file_contents[0]).root.text "MasterBills/MasterBill").to eq "A"
+      expect(REXML::Document.new(file_contents[0]).root.text "Containers/Container").to eq "E"
+      expect(REXML::Document.new(file_contents[1]).root.text "MasterBills/MasterBill").to eq "A"
+      expect(REXML::Document.new(file_contents[1]).root.text "Containers/Container").to eq "F"
+      expect(REXML::Document.new(file_contents[2]).root.text "MasterBills/MasterBill").to eq "B"
+      expect(REXML::Document.new(file_contents[2]).root.text "Containers/Container").to eq "E"
+      expect(REXML::Document.new(file_contents[3]).root.text "MasterBills/MasterBill").to eq "B"
+      expect(REXML::Document.new(file_contents[3]).root.text "Containers/Container").to eq "F"
+    end
   end
 
   describe "generate" do
@@ -130,7 +158,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "generates xml" do
       dt = Time.zone.parse "2015-01-01 12:30"
-      xml = described_class.new.generate @e, 'release_date', dt
+      xml = described_class.new.generate @e, 'release_date', dt, @e.master_bills_of_lading.split(/\n/), @e.container_numbers.split(/\n/)
       r = xml.root
 
       expect(r.name).to eq "VfiTrack315"
@@ -157,7 +185,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "zeros event time if date object is given" do
       d = Date.new 2015, 1, 1
-      xml = described_class.new.generate @e, 'release_date', d
+      xml = described_class.new.generate @e, 'release_date', d, [], []
       r = xml.root
       expect(r.text "Event/EventCode").to eq "release_date"
       expect(r.text "Event/EventDate").to eq "20150101"

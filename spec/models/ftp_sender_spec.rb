@@ -116,8 +116,6 @@ describe FtpSender do
 
           nil
         end
-        RuntimeError.any_instance.should_receive(:log_me).with ["This exception email is only a warning. This ftp send attempt will be automatically retried."]
-        
         sess = FtpSender.send_file @server, @username, @password, @file
         sess.username.should == @username
         sess.server.should == @server
@@ -130,6 +128,24 @@ describe FtpSender do
         
         FtpSession.first.id.should == sess.id
         @file.closed?.should be_true
+      end
+
+      it "sends a failure email on the 10th failure" do
+        s = FtpSession.create! username: 'test', retry_count: 10
+        opts = {'session_id' => s.id, 'attachment_id' => 100, 'remote_file_name'=>'test.txt'}
+        a = double("Attachment")
+        Attachment.should_receive(:find).with(100).and_return a
+        a.should_receive(:download_to_tempfile).and_yield @file
+        attachment = double("Attachment")
+        FtpSession.any_instance.stub(:attachment).and_return attachment
+
+        @ftp.should_receive(:connect).and_raise StandardError, "Error!"
+        @ftp.should_receive(:last_response).and_return "Error"
+
+
+        StandardError.any_instance.should_receive(:log_me).with ["Attempted and failed to send ftp Session id #{s.id} 10 times. No more attempts will be made."]
+        FtpSender.send_file 'server', 'user', 'password', nil, opts
+
       end
     end
     
@@ -417,7 +433,13 @@ describe FtpSender do
 
           @client.chdir "folder"
           @ftp.should_receive(:upload!).with("local", "folder/remote").and_raise e
-          expect{@client.send_file "local", "remote"}.to raise_error Net::SFTP::StatusException
+          begin
+            @client.send_file "local", "remote"
+            fail("Should have raise error.")
+          rescue => e
+            # Make sure we're clearing out the response object when handling the exception internally
+            expect(e.response).to be_nil
+          end
           @client.last_response.should eq "4 Error!"
         end
       end

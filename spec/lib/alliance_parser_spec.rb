@@ -954,6 +954,12 @@ describe OpenChain::AllianceParser do
     expect(OpenChain::AllianceParser.parse "bjsdfjsdfjkbashjkfsdj\ansdfasdjksd\nsdjfhasjkdfsa\sndfjshd").to be_false
   end
 
+  it "does not update entry filed date" do
+    e = Entry.create(:broker_reference=>@ref_num, :source_system=>OpenChain::AllianceParser::SOURCE_CODE, entry_filed_date: Time.zone.now)
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
+    expect(e.entry_filed_date.to_i).to eq e.reload.entry_filed_date.to_i
+  end
+
   describe 'process_past_days' do
     it "should delay processing" do
       OpenChain::AllianceParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::AllianceParser)

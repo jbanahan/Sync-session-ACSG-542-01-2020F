@@ -11,10 +11,7 @@ describe QuickSearchController do
 
   context :show do 
     it "should put appropriate modules into @available_modules" do
-      to_show = [CoreModule::ENTRY,CoreModule::PRODUCT]
-      described_class::FIELDS_BY_MODULE.keys.each do |cm|
-        cm.stub(:view?).and_return to_show.include?(cm)
-      end
+      described_class.any_instance.should_receive(:with_core_module_fields).with(@u).and_yield(CoreModule::ENTRY, []).and_yield(CoreModule::PRODUCT, [])
 
       get :show, v: 'Test'
 
@@ -39,7 +36,7 @@ describe QuickSearchController do
           'vals'=>[{'id'=>ent.id}]
         }
       }
-      described_class::FIELDS_BY_MODULE[CoreModule::ENTRY].each do |uid|
+      CoreModule::ENTRY.quicksearch_fields.each do |uid|
         mf = ModelField.find_by_uid(uid)
         expected_response['qs_result']['fields'][uid.to_s] = mf.label
         expected_response['qs_result']['vals'][0][uid.to_s] = mf.process_export(ent,nil,true)

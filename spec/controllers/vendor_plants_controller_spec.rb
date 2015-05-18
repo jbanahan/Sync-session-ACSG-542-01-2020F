@@ -22,20 +22,9 @@ describe VendorPlantsController do
   end
 
   describe :edit do
-    it "should not show if user cannot edit plant" do
-      Plant.any_instance.stub(:can_edit?).and_return false
-      p = Factory(:plant)
-      get :edit, vendor_id: p.company_id, id: p.id
-      expect(response).to be_redirect
-      expect(flash[:errors].first).to match(/edit/)
-    end
-
-    it "should show if vendor can edit plant" do
-      Plant.any_instance.stub(:can_edit?).and_return true
-      p = Factory(:plant)
-      get :edit, vendor_id: p.company_id, id: p.id
-      expect(response).to be_success
-      expect(assigns(:plant)).to eq p
+    it "should redirect to show" do
+      get :edit, vendor_id: 99, id: 5
+      expect(response).to redirect_to('/vendors/99/vendor_plants/5')
     end
   end
 
@@ -124,7 +113,7 @@ describe VendorPlantsController do
       expect{post :assign_product_group, id: plant.id, vendor_id: plant.company_id, product_group_id: pg.id}.
         to change(plant.plant_product_group_assignments.where(product_group_id:pg.id),:count).
           from(0).to(1)
-      expected_response = {'ok'=>'ok'}
+      expected_response = {'product_group_id'=>pg.id,'plant_id'=>plant.id}
       expect(JSON.parse(response.body)).to eq expected_response
     end
   end

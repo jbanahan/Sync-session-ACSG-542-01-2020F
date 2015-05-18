@@ -17,24 +17,31 @@ module OpenChain; module CustomHandler; class Generic315Generator
     user = User.integration
     if setup.search_criterions.length == 0 || (matches.length == 1 && matches[0] == true)
       setup.setup_json.each do |field|
-        process_field field.with_indifferent_access, user, entry
+        process_field field.with_indifferent_access, setup.output_style, user, entry
       end
     end
   end
 
-  def generate_and_send_315 entry, code, date
-    xml = generate entry, code, date
+  def generate_and_send_315 output_style, entry, code, date
+    # Our first customer using this feed requires sending distinct 315's for each combination of entry/mbol/container #
+    # I'm anticipating this not being a global requirement, so I'm still preserving the ability to send multiple
+    # mbols and containers per file.
+    split_entries = split_entry_data_identifiers output_style, entry
 
-    Tempfile.open(["#{entry.broker_reference}-#{code}-", ".xml"]) do |fout|
-      xml.write fout
-      fout.rewind
-      ftp_file fout
+    split_entries.each do |data|
+      xml = generate entry, code, date, [data[:master_bill]], [data[:container_number]]
+
+      Tempfile.open(["#{entry.broker_reference}-#{data[:master_bill]}-#{data[:container_number]}-#{code}-", ".xml"]) do |fout|
+        xml.write fout
+        fout.rewind
+        ftp_file fout
+      end
     end
 
     DataCrossReference.create_315_milestone! entry, code, xref_date_value(date)
   end
 
-  def generate entry, date_code, date
+  def generate entry, date_code, date, master_bills, container_numbers
     doc, root = build_xml_document "VfiTrack315"
     add_element root, "BrokerReference", v(:ent_brok_ref, entry)
     add_element root, "EntryNumber", v(:ent_entry_num, entry)
@@ -47,9 +54,9 @@ module OpenChain; module CustomHandler; class Generic315Generator
     add_element root, "PortOfEntry", v(:ent_entry_port_code, entry)
     add_element root, "PortOfLading", v(:ent_lading_port_code, entry)
 
-    add_collection_element root, "MasterBills", "MasterBill", v(:ent_mbols, entry)
+    add_collection_element root, "MasterBills", "MasterBill", master_bills
     add_collection_element root, "HouseBills", "HouseBill", v(:ent_hbols, entry)
-    add_collection_element root, "Containers", "Container", v(:ent_container_nums, entry)
+    add_collection_element root, "Containers", "Container", container_numbers
     add_collection_element root, "PoNumbers", "PoNumber", v(:ent_po_numbers, entry)
 
     event = add_element root, "Event"
@@ -73,7 +80,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
       ActiveSupport::TimeZone["UTC"]
     end
 
-    def process_field field, user, entry
+    def process_field field, output_style, user, entry
       mf = ModelField.find_by_uid field[:model_field_uid]
       value = mf.process_export entry, user, true
 
@@ -87,12 +94,34 @@ module OpenChain; module CustomHandler; class Generic315Generator
         # Now check to see if this updated_date has already been sent out
         xref = DataCrossReference.find_315_milestone entry, code
         if xref.nil? || xref != xref_date_value(updated_date)
-          generate_and_send_315 entry, code, updated_date
+          generate_and_send_315 output_style, entry, code, updated_date
         end
       end
     end
 
   private 
+
+    def split_entry_data_identifiers output_style, entry
+      # We need to send distinct combinations of the broker reference / container / master bill
+      # So if we have 2 containers and 2 master bills, then we end up sending 4 documents.
+      master_bills = v(:ent_mbols, entry).to_s.split(/\n\s*/)
+      containers = v(:ent_container_nums, entry).to_s.split(/\n\s*/)
+      values = []
+      if output_style == MilestoneNotificationConfig::OUTPUT_STYLE_MBOL_CONTAINER_SPLIT
+        master_bills.each do |mb|
+          if containers.length > 0
+            containers.each {|c| values << {master_bill: mb, container_number: c} }
+          else
+            values << {master_bill: mb, container_number: nil}
+          end
+        end
+        values = values.blank? ? [{master_bill: nil, container_number: nil}] : values
+      else
+        values << {master_bill: master_bills, container_numbers: containers}
+      end
+      values
+    end
+  
     def v uid, entry
       ModelField.find_by_uid(uid).process_export entry, user
     end
@@ -103,7 +132,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
 
     def add_collection_element parent, outer_el_name, inner_el_name, values
       el = add_element parent, outer_el_name
-      vals = values.to_s.split(/\n\s*/)
+      vals = values.respond_to?(:to_a) ? values.to_a : values.to_s.split(/\n\s*/)
       vals.each do |v|
         next if v.blank?
         add_element el, inner_el_name, v
@@ -113,7 +142,8 @@ module OpenChain; module CustomHandler; class Generic315Generator
 
     def setup_315 entry
       @cache ||= Hash.new do |h, k|
-        h[k] = MilestoneNotificationConfig.where(customer_number: k).first
+        config = MilestoneNotificationConfig.where(customer_number: k).first
+        h[k] = (config.try(:enabled?) ? config : nil)
       end
 
       @cache[entry.customer_number]

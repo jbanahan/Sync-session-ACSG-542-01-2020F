@@ -26,6 +26,7 @@ class FtpSender
       ftp_client = nil
       # Attempt to send 10 times total
       max_retry_count = 9
+      error = nil
       begin  
         if file.size > 0 || my_opts[:force_empty]
           store_sent_file = true
@@ -54,8 +55,9 @@ class FtpSender
           log << "File was empty, not sending."
         end
       rescue => e
+        # Just throw an error into the log, the retry/excepton logging occurs in the ensure block
         log << "ERROR: #{e.message}"
-        e.log_me ["This exception email is only a warning. This #{my_opts[:protocol]} send attempt will be automatically retried."]
+        error = e
       ensure
         session = find_ftp_session remote_name, (store_sent_file ? file : nil), my_opts
         session.assign_attributes(:username => username,
@@ -79,7 +81,7 @@ class FtpSender
             self.delay(run_at: calculate_retry_run_at(session.retry_count)).resend_file server, username, password, my_opts.to_json
           else
             # At this point, we've failed to send the file 10 times...just bail, sending an error email out to notify of the failure
-            OpenMailer.send_generic_exception(StandardError.new("Attempted and failed to send FTP Session id #{session.id} #{max_retry_count} times. No more attempts will be made."), [], [], []).deliver!
+            error.log_me ["Attempted and failed to send #{my_opts[:protocol]} Session id #{session.id} #{max_retry_count + 1} times. No more attempts will be made."]
           end
           
         end
@@ -306,6 +308,9 @@ class FtpSender
           # Status exceptions have an actual error code associated with them and the description which we can 
           # use to set the last response value (like with ftp codes)
           @last_response = "#{e.code} #{e.description}"
+          # If this is a status exception, we'll also need to strip out the Net::SFTP::Response object from it 
+          # since it contains a whole bunch of stuff that can't be serialized to a delayed job queue (procs, primarily)
+          e.instance_variable_set("@response", nil)
         else
           # There's a bug in Wing FTP server or the ssh/sftp gem code that results in a Disconnect exception being 
           # thrown when session.close is called inside the sftp#start method (this all works fine for standard sshd).  

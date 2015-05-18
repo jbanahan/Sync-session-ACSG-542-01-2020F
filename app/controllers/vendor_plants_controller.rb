@@ -1,7 +1,7 @@
 require 'open_chain/workflow_processor'
 class VendorPlantsController < ApplicationController
   around_filter :view_permission_filter, only: [:show,:unassigned_product_groups]
-  around_filter :edit_permission_filter, only: [:edit, :assign_product_group]
+  around_filter :edit_permission_filter, only: [:assign_product_group]
   def show
     @vendor = @plant.company
 
@@ -11,7 +11,7 @@ class VendorPlantsController < ApplicationController
   end
 
   def edit
-    @vendor = @plant.company
+    redirect_to vendor_vendor_plant_path(params[:vendor_id],params[:id])
   end
 
   def update
@@ -65,7 +65,7 @@ class VendorPlantsController < ApplicationController
 
     OpenChain::WorkflowProcessor.async_process @plant.company
     
-    render json: {'ok'=>'ok'}
+    render json: {'product_group_id'=>pg.id,'plant_id'=>@plant.id}
   end
 
   def view_permission_filter

@@ -19,7 +19,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     9 => {attribute: :first_it_date, datatype: :date, directive: :first},
     11 => {attribute: :eta_date, datatype: :date},
     12 => :arrival_date,
-    16 => :entry_filed_date,
+    16 => {attribute: :entry_filed_date, datatype: :datetime, directive: :ifnull},
     19 => :release_date,
     20 => :fda_release_date,
     24 => :trucker_called_date,
@@ -499,6 +499,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           val = earliest_date(in_val, entry.read_attribute(config[:attribute]))
         when :last
           val = latest_date(in_val, entry.read_attribute(config[:attribute]))
+        when :ifnull
+          # Only set the date field if the entry hasn't had the value already set
+          next unless entry.read_attribute(config[:attribute]).blank?
+          val = in_val
         else
           val = in_val
         end
