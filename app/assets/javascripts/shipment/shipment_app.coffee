@@ -317,16 +317,28 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
     order
       #create shipment lines for all lines on the given order
   $scope.addOrderToShipment = (shp, ord, collection_name) ->
-    shp[collection_name] = [] if shp[collection_name]==undefined
-    return shp unless ord.order_lines
-    for oln in ord.order_lines
-      sl = {
+    makeLineObj = (oln)->
+      if collection_name == 'booking_lines'
+        {
+        bkln_puid: oln.ordln_puid,
+        bkln_pname: oln.ordln_pname,
+        linked_order_line_id: oln.id,
+        bkln_quantity: oln.quantity_to_ship,
+        order_lines: [{ord_cust_ord_no: ord.ord_cust_ord_no,ordln_line_number: oln.ordln_line_number}]
+        }
+      else
+        {
         shpln_puid: oln.ordln_puid,
         shpln_pname: oln.ordln_pname,
         linked_order_line_id: oln.id,
         shpln_shipped_qty: oln.quantity_to_ship,
         order_lines: [{ord_cust_ord_no: ord.ord_cust_ord_no,ordln_line_number: oln.ordln_line_number}]
-      }
+        }
+
+    shp[collection_name] = [] if shp[collection_name]==undefined
+    return shp unless ord.order_lines
+    for oln in ord.order_lines
+      sl = makeLineObj oln
       shp[collection_name].push sl
     shp
 
