@@ -27,9 +27,17 @@ module OpenChain; module ModelFieldDefinition; module OfficialTariffFieldDefinit
           :export_lambda => lambda { |obj|
             obj.hts_code[0,2]
           },
-          :qualified_field_name => "LEFT(hts_code,2)"
+          :qualified_field_name => "LEFT(hts_code,2)",
+          read_only: true
         }
-      ]
+      ],
+      [21,:ot_wto6, :wto6, 'WTO 6 Digit HTS', {
+        data_type: :string,
+        import_lambda: lambda {|ot,d| "Ingored (read only)"},
+        export_lambda: lambda {|ot| ot.hts_code[0,6]},
+        qualified_field_name: 'LEFT(hts_code,6)',
+        read_only: true
+      }]
     ]
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
   end
