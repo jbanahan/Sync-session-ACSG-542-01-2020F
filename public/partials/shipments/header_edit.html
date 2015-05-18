@@ -40,3 +40,21 @@
   <option>Ocean - FCL</option>
   <option>Truck</option>
 </select>
+<label for="shp_vessel_nationality">Vessel Nationality</label>
+<input type="text" class="form-control" id="shp_vessel_nationality" ng-model="outerScope.header.shp_vessel_nationality"/>
+<label for="shp_first_port_receipt">First Port of Receipt</label>
+<angucomplete-alt id='shp_first_port_receipt' input-class='form-control' placeholder='port name' selected-object='outerScope.header.first_port_receipt' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_first_port_receipt_name}}'></angucomplete-alt>
+<label for="shp_lading_port">Foreign Port of Lading</label>
+<angucomplete-alt id='shp_lading_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.lading_port' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_lading_port_name}}'></angucomplete-alt>
+<label for="shp_last_foreign_port">Last Foreign Port</label>
+<angucomplete-alt id='shp_last_foreign_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.last_foreign_port' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_last_foreign_port_name}}'></angucomplete-alt>
+<label for="shp_unlading_port">First US Port</label>
+<angucomplete-alt id='shp_unlading_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.unlading_port' remote-url='/api/v1/ports/autocomplete?n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_unlading_port_name}}'></angucomplete-alt>
+<label for="shp_marks_and_numbers">Marks & Numbers</label>
+<input type="text" id="shp_marks_and_numbers" ng-model="outerScope.header.shp_marks_and_numbers" class="form-control" />
+<label for="shp_number_of_packages">Number of Packages</label>
+<input type="number" id="shp_number_of_packages" ng-model="outerScope.header.shp_number_of_packages" class="form-control" />
+<label for="shp_number_of_packages_uom">Unit of Measurement</label>
+<input type="text" id="shp_number_of_packages_uom" ng-model="outerScope.header.shp_number_of_packages_uom" placeholder="Pieces, Barrels, Pallets, etc..." class="form-control" />
+<label for="shp_gross_weight">Gross Weight (KGs)</label>
+<input type="text" id="shp_gross_weight" ng-model="outerScope.header.shp_gross_weight" class="form-control" />

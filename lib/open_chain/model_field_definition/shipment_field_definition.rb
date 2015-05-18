@@ -75,7 +75,12 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         import_lambda: lambda {|a,b| return "Total cartons is read only."},
         export_lambda: lambda {|obj| obj.carton_sets.inject(0) { |tot, cs| tot + (cs.carton_qty.nil? ? 0 : cs.carton_qty) }},
         qualified_field_name: "(SELECT SUM(carton_qty) FROM carton_sets WHERE carton_sets.shipment_id = shipments.id)"
-      }]
+      }],
+      [42,:shp_vessel_nationality, :vessel_nationality, 'Nationality of Ship', {data_type: :string}],
+      [43,:shp_marks_and_numbers, :marks_and_numbers, 'Marks & Numbers', {data_type: :string}],
+      [44,:shp_number_of_packages, :number_of_packages, 'Number of Packages', {data_type: :integer}],
+      [45,:shp_number_of_packages_uom, :number_of_packages_uom, 'Number of Packages UOM', {data_type: :string}],
+      [46, :shp_gross_weight, :gross_weight, 'Gross Weight (KGs)', {data_type: :decimal}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -85,5 +90,10 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_importer_arrays(500,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_comment_arrays(600,'shp','Shipment')
     add_fields CoreModule::SHIPMENT, make_port_arrays(700,'shp_dest_port','shipments','destination_port','Destination Port')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(800, 'shp_first_port_receipt','shipments','first_port_receipt','First Port of Receipt')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Foreign Port of Lading')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Foreign Port')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','First US Port')
+
   end
 end; end; end

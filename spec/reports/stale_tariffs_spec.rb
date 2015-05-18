@@ -30,7 +30,8 @@ describe OpenChain::Report::StaleTariffs do
   end
 
   it 'should generate a tempfile' do
-    OpenChain::Report::StaleTariffs.run_report(@u).path.should include '/tmp/'
+    report = OpenChain::Report::StaleTariffs.run_report(@u)
+    report.should be_a Tempfile
   end
 
   context 'with stale tariffs' do

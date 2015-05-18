@@ -138,6 +138,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_vessel,
       :shp_voyage,
       :shp_vessel_carrier_scac,
+      :shp_vessel_nationality,
       :shp_booking_received_date,
       :shp_booking_confirmed_date,
       :shp_booking_cutoff_date,
@@ -161,7 +162,19 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_booking_approved_date,
       :shp_booked_quantity,
       :shp_canceled_by_full_name,
-      :shp_canceled_date
+      :shp_canceled_date,
+      :shp_first_port_receipt_name,
+      :shp_first_port_receipt_id,
+      :shp_lading_port_name,
+      :shp_lading_port_id,
+      :shp_last_foreign_port_name,
+      :shp_last_foreign_port_id,
+      :shp_unlading_port_name,
+      :shp_unlading_port_id,
+      :shp_marks_and_numbers,
+      :shp_number_of_packages,
+      :shp_number_of_packages_uom,
+      :shp_gross_weight
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([
