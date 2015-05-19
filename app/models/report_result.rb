@@ -6,8 +6,7 @@ class ReportResult < ActiveRecord::Base
 
   belongs_to :run_by, :class_name=>"User"
   belongs_to :custom_report
-  has_attached_file :report_data,
-    :path => "#{MasterSetup.get.uuid}/report_result/:id/:filename"
+  has_attached_file :report_data, :path => ":master_setup_uuid/report_result/:id/:filename"
   before_create :sanitize
   before_post_process :no_post
 

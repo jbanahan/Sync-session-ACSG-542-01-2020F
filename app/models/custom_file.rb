@@ -17,7 +17,7 @@ class CustomFile < ActiveRecord::Base
   has_many :search_runs
   belongs_to :uploaded_by, :class_name=>'User'
   has_attached_file :attached,
-    :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/custom_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
+    :path => ":master_setup_uuid/custom_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
   before_create :sanitize
   before_post_process :no_post
 

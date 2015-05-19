@@ -1,9 +1,10 @@
+require 'open_chain/s3'
+
 class PowerOfAttorney < ActiveRecord::Base
   belongs_to :company
   belongs_to :user, :foreign_key => :uploaded_by, :class_name => "User"
 
-  has_attached_file :attachment,
-    :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/power_of_attorney/:id/:filename" #conditional on MasterSetup to allow migrations to run
+  has_attached_file :attachment, :path => ":master_setup_uuid/power_of_attorney/:id/:filename"
 
   validates_attachment_presence :attachment
   validates :user, :presence => true
