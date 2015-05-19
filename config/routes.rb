@@ -13,14 +13,16 @@ OpenChain::Application.routes.draw do
       resources :comments, only: [:create,:destroy]
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
-        post :process_tradecard_pack_manifest, on: :member
-        post :request_booking, on: :member
-        post :approve_booking, on: :member
-        post :confirm_booking, on: :member
-        post :revise_booking, on: :member
-        post :cancel, on: :member
-        post :uncancel, on: :member
-        get :available_orders, on: :member
+        member do
+          post :process_tradecard_pack_manifest
+          post :request_booking
+          post :approve_booking
+          post :confirm_booking
+          post :revise_booking
+          post :cancel
+          post :uncancel
+          get :available_orders
+        end
       end
       resources :fields, only: [:index]
       resources :companies, only: [:index] do

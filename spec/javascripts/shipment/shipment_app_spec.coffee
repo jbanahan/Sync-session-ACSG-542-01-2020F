@@ -12,7 +12,7 @@ describe 'ShipmentApp', ->
       inject ($rootScope,$controller,shipmentSvc,$q,$state) ->
         scope = $rootScope.$new()
         svc = shipmentSvc
-        ctrl = $controller('ProcessManifestCtrl', {$scope: scope, shpmentSvc: svc})
+        ctrl = $controller('ProcessManifestCtrl', {$scope: scope, shipmentSvc: svc})
         q = $q
         state = $state
 
@@ -37,7 +37,7 @@ describe 'ShipmentApp', ->
       inject ($rootScope,$controller,shipmentSvc,$q) ->
         scope = $rootScope.$new()
         svc = shipmentSvc
-        ctrl = $controller('ShipmentAddOrderCtrl', {$scope: scope, shpmentSvc: svc})
+        ctrl = $controller('ShipmentAddOrderCtrl', {$scope: scope, shipmentSvc: svc})
         q = $q
 
     describe 'totalToShip', ->
@@ -55,19 +55,21 @@ describe 'ShipmentApp', ->
         r = q.defer()
         spyOn(svc,'getAvailableOrders').andReturn(r.promise)
         scope.getAvailableOrders({id: 10})
-        r.resolve({data: {available_orders: [{id: 1},{id: 2}]}})
+        orders = [{id: 1}, {id: 2}]
+        r.resolve({data: {available_orders: orders}})
         scope.$apply()
-        expect(scope.availableOrders).toEqual [{id: 1},{id: 2}]
+        expect(scope.availableOrders).toEqual orders
 
     describe 'getOrder', ->
       it "should delegate to service", ->
         ord = {id: 1}
+        activeOrder = {id: 99, order_lines: []}
         r = q.defer()
         spyOn(svc,'getOrder').andReturn(r.promise)
         scope.getOrder(ord)
-        r.resolve({data: {order: {id: 99, order_lines: []}}})
+        r.resolve({data: {order: activeOrder}})
         scope.$apply()
-        expect(scope.activeOrder).toEqual {id: 99,order_lines: []}
+        expect(scope.activeOrder).toEqual activeOrder
         expect(svc.getOrder).toHaveBeenCalledWith 1
 
       it "should set quantity_to_ship to ordln_ordered_qty", ->
@@ -120,7 +122,7 @@ describe 'ShipmentApp', ->
           {shpln_puid: 'SKU1' ,shpln_pname: 'CHAIR', linked_order_line_id: 2, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '10'}],shpln_shipped_qty: 3}
           {shpln_puid: 'SKU2' ,shpln_pname: 'HAT', linked_order_line_id: 4, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '20'}],shpln_shipped_qty: 7}
           ]}
-        scope.addOrderToShipment shp, ord, null
+        scope.addOrderToShipment shp, ord, 'lines'
         expect(shp).toEqual expected
 
     describe 'addOrderAndSave', ->

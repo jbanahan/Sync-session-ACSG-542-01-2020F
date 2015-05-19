@@ -118,18 +118,16 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
     shipmentSvc.getShipment(id,forceReload).then (resp) ->
       $scope.shp = resp.data.shipment
       $scope.loadingFlag = null
-      $scope.loadLines($scope.shp) if $scope.linesNeeded
+      $scope.loadShipmentLines($scope.shp) if $scope.shipmentLinesNeeded
+      $scope.loadBookingLines($scope.shp) if $scope.bookingLinesNeeded
 
   $scope.loadShipmentLines = (shp) ->
-    $scope.linesNeeded = true
+    $scope.shipmentLinesNeeded = true
     shipmentSvc.injectShipmentLines shp unless shp.lines
 
   $scope.loadBookingLines = (shp) ->
-    $scope.linesNeeded = true
+    $scope.bookingLinesNeeded = true
     shipmentSvc.injectBookingLines shp unless shp.booking_lines
-
-  $scope.loadLines = (shp) ->
-    shipmentSvc.injectBookingLines(shp).then(-> shipmentSvc.injectShipmentLines(shp))
 
   $scope.edit = ->
     $state.go('edit',{shipmentId: $scope.shp.id})
@@ -197,24 +195,40 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
 
   $scope.prepShipmentLineEditObject = copyObjectToScopeAs 'lineToEdit'
 
+  ###*
+  # Generic function to save a line
+  #
+  # @param {number|string} id The shipment ID
+  # @param {object} line The shipment or booking line to save
+  # @param {string} attr_name Which attribute the line should be assigned to
+  ###
+  saveLine = (id,line,attr_name) ->
+    data = {}
+    data.id = id
+    data[attr_name] = [line]
+    $scope.saveShipment data
+
+  saveShipmentLine = (shipment,line) -> saveLine(shipment.id, line, 'lines')
+  saveBookingLine = (shipment,line) -> saveLine(shipment.id, line, 'booking_lines')
+
   $scope.saveShipmentLine = (shipment,line) ->
-    $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
+    saveShipmentLine(shipment,line).then ->
       $scope.loadShipmentLines($scope.shp)
 
   $scope.deleteShipmentLine = (shipment,line) ->
     if window.confirm("Are you sure you want to delete this line?")
       line._destroy = 'true'
-      $scope.saveShipment({id: shipment.id, lines: [line]}).then ->
+      saveShipmentLine(shipment,line).then ->
         $scope.loadShipmentLines($scope.shp)
 
   $scope.saveBookingLine = (shipment,line) ->
-    $scope.saveShipment({id: shipment.id, booking_lines: [line]}).then ->
+    saveBookingLine(shipment,line).then ->
       $scope.loadBookingLines($scope.shp)
 
   $scope.deleteBookingLine = (shipment,line) ->
     if window.confirm("Are you sure you want to delete this line?")
       line._destroy = 'true'
-      $scope.saveShipment({id: shipment.id, booking_lines: [line]}).then ->
+      saveBookingLine(shipment,line).then ->
         $scope.loadBookingLines($scope.shp)
 
   $scope.prepBookingEditObject = copyObjectToScopeAs 'booking'
@@ -249,11 +263,7 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
     $scope.notificationMessage = "Saving shipment."
-    shipmentSvc.saveShipment(shipment).then ((resp) ->
-      $scope.loadShipment(shipment.id,true)
-    ),((resp) ->
-      $scope.loadingFlag = null
-    )
+    shipmentSvc.saveShipment(shipment).finally -> $scope.loadingFlag = null
 
   if shipmentId
     $scope.loadShipment shipmentId
@@ -350,16 +360,15 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
       total = total + inc unless isNaN(inc)
     total
 
+  goToShow = -> $state.go('show',{shipmentId: $scope.shp.id})
+
   $scope.addOrderAndSave = (shp, ord, collection) ->
     $scope.loadingFlag = 'loading'
     $scope.addOrderToShipment(shp,ord,collection)
     shipmentSvc.saveShipment(shp).then (resp) ->
-      shipmentSvc.getShipment(shp.id,true).then ->
-        $state.go('show',{shipmentId: $scope.shp.id})
+      shipmentSvc.getShipment(shp.id,true).then goToShow
 
-  $scope.cancel = ->
-    $state.go('show',{shipmentId: $scope.shp.id})
-
+  $scope.cancel = goToShow
 
   if shipmentId
     $scope.loadShipment shipmentId
@@ -383,13 +392,9 @@ shipmentApp.controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','shipmentI
   $scope.process = (shipment, attachment) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
-    shipmentSvc.processTradecardPackManifest(shipment, attachment).then(((resp) ->
-      $scope.loadingFlag = null
+    shipmentSvc.processTradecardPackManifest(shipment, attachment).then((resp) ->
       $state.go('process_manifest.success',{shipment: shipment.id})
-    ),((resp) ->
-      $scope.loadingFlag = null
-      )
-    )
+    ).finally -> $scope.loadingFlag = null
 
   if shipmentId
     $scope.loadShipment shipmentId

@@ -38,8 +38,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     commentSvc.injectComments(currentShipment,'Shipment')
     resp
 
-  shipmentPost = (id, endpoint, options={}) ->
-    options.id = id
+  shipmentPost = (id, endpoint, options={id:id}) ->
     $http.post('/api/v1/shipments/'+id+'/'+endpoint, options)
 
   return {
