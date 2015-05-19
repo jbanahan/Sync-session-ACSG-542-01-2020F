@@ -4,8 +4,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
 
   describe :generate do
     it "should email report" do
-      c = Company.where(master:true).first
-      u = Factory(:user, username:'EU Fiber Content', email:'a@sample.com',company:c)
+      u = Factory(:master_user, username:'EU Fiber Content', email:'a@sample.com')
       mail = double('mail')
       mail.should_receive(:deliver!)
       d = described_class.new
@@ -15,6 +14,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       d.generate
     end
     it "should create user" do
+      master_company = Factory(:company, master:true)
       mail = double('mail')
       mail.should_receive(:deliver!)
       d = described_class.new
