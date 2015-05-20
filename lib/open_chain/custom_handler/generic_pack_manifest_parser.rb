@@ -1,6 +1,21 @@
 require 'open_chain/xl_client'
 
 module OpenChain; module CustomHandler; class GenericPackManifestParser
+  MARKS_COLUMN = 0
+  DESCRIPTION_COLUMN = 1
+  PO_COLUMN = 2
+  STYLE_NO_COLUMN = 3
+  SKU_COLUMN = 4
+  HTS_COLUMN = 5
+  CARTONS_COLUMN = 6
+  QUANTITY_COLUMN = 7
+  UNIT_TYPE_COLUMN = 8
+  CBMS_COLUMN = 9
+  GROSS_KGS_COLUMN = 10
+  COUNTRY_OF_ORIGIN_COLUMN = 11
+  EX_DATE_COLUMN = 12
+
+  HEADER_ROW = 27
 
   def self.process_attachment shipment, attachment, user
     parse shipment, attachment.attached.path, user
@@ -26,7 +41,7 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   private
   def validate_heading rows
     if rows.size < 2 || rows[1].size < 2 || rows[1][1].blank? || !rows[1][1].to_s == 'Packing Manifest'
-      raise "INVALID FORMAT: Cell B2 must contain 'Packing Manifest'."
+      # raise "INVALID FORMAT: Cell B2 must contain 'Packing Manifest'."
     end
   end
 
@@ -54,20 +69,16 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
 
   def add_lines shipment, rows
     max_line_number = 0
-    shipment.shipment_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
-    carton_detail_header_row = header_row_index(rows,'CARTON DETAIL')
-    return unless carton_detail_header_row
-    cursor = carton_detail_header_row+2
+    shipment.booking_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
+    # carton_detail_header_row = header_row_index(rows,'CARTON DETAIL')
+    # return unless carton_detail_header_row
+    cursor = HEADER_ROW+1
     container = nil
     while cursor < rows.size
       r = rows[cursor]
       cursor += 1
-      if r.size > 3 && !r[3].blank? && r[3].match(/^Equipment/)
-        equip_num = r[3].split(' ')[1]
-        container = shipment.containers.find {|con| con.container_number == equip_num}
-        next
-      end
-      if r.size==57 && !r[29].blank? && r[29].match(/\d/)
+      debugger
+      if r[SKU_COLUMN].present? && (r[SKU_COLUMN].match(/\d/) || r[SKU_COLUMN].is_a?(Numeric) )
         max_line_number += 1
         add_line shipment, r, container, max_line_number
         next
@@ -76,11 +87,11 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   end
 
   def add_line shipment, row, container, line_number
-    po = row[14]
-    sku = row[20]
-    qty = clean_number(row[29])
+    po = row[PO_COLUMN]
+    sku = row[SKU_COLUMN]
+    qty = clean_number(row[QUANTITY_COLUMN])
     ol = find_order_line shipment, po, sku
-    sl = shipment.shipment_lines.build(product:ol.product,quantity:qty)
+    sl = shipment.booking_lines.build(product:ol.product,quantity:qty)
     sl.container = container
     sl.linked_order_line_id = ol.id
     sl.line_number = line_number
