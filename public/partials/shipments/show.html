@@ -254,7 +254,6 @@
                         <th>Cartons</th>
                         <th>Volume (CBMS)</th>
                         <th>Gross Weight (KGS)</th>
-                        <th>Container</th>
                         <th ng-show='shp.permissions.can_edit'></th>
                       </tr>
                       </thead>
@@ -278,9 +277,6 @@
                         </td>
                         <td>
                           {{ln.bkln_gross_kgs}}
-                        </td>
-                        <td>
-                          {{ln.bkln_container_number}}
                         </td>
                         <td ng-show='shp.permissions.can_edit' class='text-right'>
                           <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>

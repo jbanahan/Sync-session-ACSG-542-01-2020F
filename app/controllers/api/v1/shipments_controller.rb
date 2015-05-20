@@ -198,6 +198,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
          :bkln_puid,
          :bkln_carton_qty,
          :bkln_gross_kgs,
+         :bkln_cbms,
          :bkln_carton_set_id
      ] + custom_field_keys(CoreModule::BOOKING_LINE))
 
