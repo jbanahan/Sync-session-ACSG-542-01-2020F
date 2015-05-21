@@ -13,27 +13,43 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   CBMS_COLUMN = 9
   GROSS_KGS_COLUMN = 10
 
-  HEADER_ROW = 27
+  PORT_OF_RECEIPT_COLUMN = 5
+  PORT_OF_LADING_COLUMN = 5
+  MODE_COLUMN = 7
+  TERMS_COLUMN = 7
+  READY_DATE_COLUMN = 10
+  SHIPMENT_TYPE_COLUMN = 10
+
+  FIRST_METADATA_ROW = 28
+  SECOND_METADATA_ROW = 30
+  HEADER_ROW = 34
+
+  DESTINATION_PORT_ROW = 32
+  DESTINATION_PORT_COLUMN = 1
 
   def self.process_attachment shipment, attachment, user
     parse shipment, attachment.attached.path, user
   end
   def self.parse shipment, path, user
-    self.new.run(shipment,OpenChain::XLClient.new(path),user)
+    self.new.run(shipment,OpenChain::XLClient.new(path).all_row_values,user)
   end
 
-  def run shipment, xl_client, user
-    process_rows shipment, xl_client.all_row_values, user
+  def run shipment, rows, user
+    validate_user_and_process_rows shipment, rows, user
   end
 
-  def process_rows shipment, rows, user
+  def validate_user_and_process_rows(shipment, rows, user)
     ActiveRecord::Base.transaction do
       raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
-      validate_heading rows
-      add_containers shipment, rows if mode(rows)=='OCEAN'
-      add_lines shipment, rows
-      shipment.save!
+      process_all_rows shipment, rows
     end
+  end
+
+  def process_all_rows(shipment, rows)
+    validate_heading rows
+    add_metadata shipment, rows
+    add_lines shipment, rows
+    shipment.save!
   end
 
   private
@@ -43,35 +59,33 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
     end
   end
 
-  def mode rows
-    rows.collect { |row|
-      (row.size >= 8 && row[4] == 'Method') ? row[11] : nil
-    }.compact.first
-  end
+  def add_metadata(shipment, rows)
+    row = rows[FIRST_METADATA_ROW]
+    port_receipt_name = row[PORT_OF_RECEIPT_COLUMN]
+    shipment.first_port_receipt = Port.find_by_name port_receipt_name
+    shipment.receipt_location = port_receipt_name
+    shipment.cargo_ready_date = row[READY_DATE_COLUMN]
 
-  def add_containers shipment, rows
-    equipment_header_row = header_row_index(rows,'EQUIPMENT SUMMARY')
-    return unless equipment_header_row
-    cursor = equipment_header_row+2
-    while cursor < rows.size
-      row = rows[cursor]
-      cursor += 1
-      next if !row[3].blank? && row[3].match(/Equipment/)
-      break if row.size < 4 || row[3].blank? || !row[3].match(/\d$/)
-      cnum = row[3]
-      if shipment.containers.find {|con| con.container_number == cnum}.nil?
-        shipment.containers.build(container_number:cnum)
-      end
-    end
+    # debugger
+
+    row = rows[SECOND_METADATA_ROW]
+    shipment.lading_port = Port.find_by_name row[PORT_OF_LADING_COLUMN]
+    shipment.freight_terms = row[TERMS_COLUMN]
+    shipment.shipment_type = row[SHIPMENT_TYPE_COLUMN]
+    shipment.booking_shipment_type = shipment.shipment_type
+    shipment.lcl = (shipment.shipment_type == 'CFS/CFS')
+
+    # debugger
+
+    destination_port_name = rows[DESTINATION_PORT_ROW][DESTINATION_PORT_COLUMN]
+    shipment.unlading_port = Port.find_by_name destination_port_name
+    shipment.destination_port = shipment.unlading_port
+
   end
 
   def add_lines shipment, rows
-    max_line_number = 0
-    shipment.booking_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
-    # carton_detail_header_row = header_row_index(rows,'CARTON DETAIL')
-    # return unless carton_detail_header_row
+    max_line_number = shipment.booking_lines.map(&:line_number).max || 0
     cursor = HEADER_ROW+1
-    container = nil
     while cursor < rows.size
       row = rows[cursor]
       cursor += 1
@@ -96,7 +110,6 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
         product:ol.product,
         quantity:quantity,
         line_number: line_number,
-        carton_set: find_or_build_carton_set(shipment, row),
         linked_order_line_id: ol.id,
         order_line_id: ol.id,
         order_id: ol.order.id,
@@ -128,26 +141,6 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
     ol = ord.order_lines.find {|ln| ln.sku == sku}
     raise "SKU #{sku} not found in order #{po} (ID: #{ord.id})." unless ol
     ol
-  end
-
-  def find_or_build_carton_set shipment, row
-    starting_carton = row[6]
-    return @last_carton_set if starting_carton.blank?
-    cs = shipment.carton_sets.to_a.find {|cs| cs.starting_carton == starting_carton} #don't hit DB since we haven't saved
-    if cs.nil?
-      weight_factor = (row[48]=='LB') ? 0.453592 : 1
-      dim_factor = (row[55]=='IN') ? 2.54 : 1
-      cs = shipment.carton_sets.build(starting_carton:starting_carton)
-      cs.carton_qty = clean_number row[37]
-      cs.net_net_kgs = convert_number row[42], weight_factor
-      cs.net_kgs = convert_number row[45], weight_factor
-      cs.gross_kgs = convert_number row[47], weight_factor
-      cs.length_cm = convert_number row[49], dim_factor
-      cs.width_cm = convert_number row[51], dim_factor
-      cs.height_cm = convert_number row[53], dim_factor
-      @last_carton_set = cs
-    end
-    cs
   end
 
   def header_row_index rows, name
