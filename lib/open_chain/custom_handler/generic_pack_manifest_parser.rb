@@ -30,33 +30,44 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   def self.process_attachment shipment, attachment, user
     parse shipment, attachment.attached.path, user
   end
+
   def self.parse shipment, path, user
-    self.new.run(shipment,OpenChain::XLClient.new(path).all_row_values,user)
+    self.new.run(shipment,OpenChain::XLClient.new(path),user)
   end
 
-  def run shipment, rows, user
+  def run shipment, xl_client, user
+    process_rows shipment, xl_client.all_row_values, user
+  end
+
+  def process_rows shipment, rows, user
     validate_user_and_process_rows shipment, rows, user
   end
 
-  def validate_user_and_process_rows(shipment, rows, user)
-    ActiveRecord::Base.transaction do
-      raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
-      process_all_rows shipment, rows
-    end
-  end
-
-  def process_all_rows(shipment, rows)
-    validate_heading rows
-    add_metadata shipment, rows
-    add_lines shipment, rows
+  def process_rows!(shipment, rows)
+    process_row_data shipment, rows
     shipment.save!
   end
 
   private
-  def validate_heading rows
-    if rows.size < 2 || rows[1].size < 2 || rows[1][1].blank? || !rows[1][1].to_s == 'Packing Manifest'
-      # raise "INVALID FORMAT: Cell B2 must contain 'Packing Manifest'."
+  def validate_user_and_process_rows(shipment, rows, user)
+    ActiveRecord::Base.transaction do
+      raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
+      process_rows! shipment, rows
     end
+  end
+
+  def process_row_data(shipment,rows)
+    validate_rows rows
+    add_rows_to_shipment shipment, rows
+  end
+
+  def add_rows_to_shipment(shipment, rows)
+    add_metadata shipment, rows
+    add_lines shipment, rows
+  end
+
+  def validate_rows rows
+  #   No validation in the generic parser
   end
 
   def add_metadata(shipment, rows)
@@ -66,16 +77,12 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
     shipment.receipt_location = port_receipt_name
     shipment.cargo_ready_date = row[READY_DATE_COLUMN]
 
-    # debugger
-
     row = rows[SECOND_METADATA_ROW]
     shipment.lading_port = Port.find_by_name row[PORT_OF_LADING_COLUMN]
     shipment.freight_terms = row[TERMS_COLUMN]
     shipment.shipment_type = row[SHIPMENT_TYPE_COLUMN]
     shipment.booking_shipment_type = shipment.shipment_type
     shipment.lcl = (shipment.shipment_type == 'CFS/CFS')
-
-    # debugger
 
     destination_port_name = rows[DESTINATION_PORT_ROW][DESTINATION_PORT_COLUMN]
     shipment.unlading_port = Port.find_by_name destination_port_name

@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::GenericPackManifestParser do
   end
 
     it 'parses it correctly' do
-      result = described_class.new.run shipment, FORM_ARRAY, user
+      result = described_class.new.process_rows shipment, FORM_ARRAY, user
       expect(result).to be_present
 
       expect(shipment.receipt_location).to be_present
