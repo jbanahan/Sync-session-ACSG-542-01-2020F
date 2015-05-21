@@ -47,6 +47,7 @@ describe OpenChain::CustomHandler::GenericPackManifestParser do
 
       expect(shipment.booking_lines.length).to eq 3
       shipment.booking_lines.each do |line|
+        expect(line).to be_persisted
         expect(line.shipment).to eq shipment
         expect(line.order).to be_present
         expect(line.order_line).to be_present
@@ -58,29 +59,29 @@ describe OpenChain::CustomHandler::GenericPackManifestParser do
         expect(line.quantity).to be_present
       end
 
-      line = shipment.booking_lines.first
+      line = shipment.booking_lines.first.reload
       expect(line.order.customer_order_number).to eq '1502377'
       expect(line.order_line.sku).to eq '32248678'
       expect(line.carton_qty).to eq 200
       expect(line.quantity).to eq 5000
-      expect(line.cbms).to eq 5.322
-      expect(line.gross_kgs).to eq 2142.200
+      expect(line.cbms).to be_within(0.01).of 5.322
+      expect(line.gross_kgs).to be_within(0.01).of 2142.200
 
-      line = shipment.booking_lines[1]
+      line = shipment.booking_lines[1].reload
       expect(line.order.customer_order_number).to eq '1502377'
       expect(line.order_line.sku).to eq '32248654'
       expect(line.carton_qty).to eq 145
       expect(line.quantity).to eq 3202
-      expect(line.cbms).to eq 3.456
-      expect(line.gross_kgs).to eq 1739.400
+      expect(line.cbms).to be_within(0.01).of 3.456
+      expect(line.gross_kgs).to be_within(0.01).of 1739.400
 
-      line = shipment.booking_lines[2]
+      line = shipment.booking_lines[2].reload
       expect(line.order.customer_order_number).to eq '1502396'
       expect(line.order_line.sku).to eq '32248838'
       expect(line.carton_qty).to eq 198
       expect(line.quantity).to eq 4676
-      expect(line.cbms).to eq 15.450
-      expect(line.gross_kgs).to eq 1920.000
+      expect(line.cbms).to be_within(0.01).of 15.450
+      expect(line.gross_kgs).to be_within(0.01).of 1920.000
     end
   end
 end

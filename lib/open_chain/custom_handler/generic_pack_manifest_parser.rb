@@ -84,17 +84,27 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   end
 
   def add_lines shipment, rows
-    max_line_number = shipment.booking_lines.map(&:line_number).max || 0
+    max_line_number = max_line_number(shipment)
+    marks = " "
+
     cursor = HEADER_ROW+1
     while cursor < rows.size
       row = rows[cursor]
       cursor += 1
+      marks += row[MARKS_COLUMN] + " " if row[MARKS_COLUMN].present?
       if row[SKU_COLUMN].present? && (row[SKU_COLUMN].is_a?(Numeric) || row[SKU_COLUMN].match(/\d/) )
         max_line_number += 1
         add_line shipment, row, max_line_number
         next
       end
     end
+    shipment.marks_and_numbers ||= ""
+    shipment.marks_and_numbers += marks
+  end
+
+  def max_line_number(shipment)
+    shipment.booking_lines.order('line_number DESC').limit(1).pluck(:line_number).first || 0
+    # shipment.booking_lines.map(&:line_number).max || 0
   end
 
   def add_line shipment, row, line_number
