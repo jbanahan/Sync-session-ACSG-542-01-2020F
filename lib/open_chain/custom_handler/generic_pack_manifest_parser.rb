@@ -7,13 +7,11 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   STYLE_NO_COLUMN = 3
   SKU_COLUMN = 4
   HTS_COLUMN = 5
-  CARTONS_COLUMN = 6
+  CARTON_QTY_COLUMN = 6
   QUANTITY_COLUMN = 7
   UNIT_TYPE_COLUMN = 8
   CBMS_COLUMN = 9
   GROSS_KGS_COLUMN = 10
-  COUNTRY_OF_ORIGIN_COLUMN = 11
-  EX_DATE_COLUMN = 12
 
   HEADER_ROW = 27
 
@@ -75,27 +73,37 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
     cursor = HEADER_ROW+1
     container = nil
     while cursor < rows.size
-      r = rows[cursor]
+      row = rows[cursor]
       cursor += 1
-      debugger
-      if r[SKU_COLUMN].present? && (r[SKU_COLUMN].match(/\d/) || r[SKU_COLUMN].is_a?(Numeric) )
+      if row[SKU_COLUMN].present? && (row[SKU_COLUMN].is_a?(Numeric) || row[SKU_COLUMN].match(/\d/) )
         max_line_number += 1
-        add_line shipment, r, container, max_line_number
+        add_line shipment, row, max_line_number
         next
       end
     end
   end
 
-  def add_line shipment, row, container, line_number
-    po = row[PO_COLUMN]
-    sku = row[SKU_COLUMN]
-    qty = clean_number(row[QUANTITY_COLUMN])
+  def add_line shipment, row, line_number
+    po = row[PO_COLUMN].round.to_s
+    sku = row[SKU_COLUMN].round.to_s
+    quantity = clean_number(row[QUANTITY_COLUMN])
+    cbms = row[CBMS_COLUMN]
+    gross_kgs = row[GROSS_KGS_COLUMN]
+    carton_quantity = row[CARTON_QTY_COLUMN]
+
     ol = find_order_line shipment, po, sku
-    sl = shipment.booking_lines.build(product:ol.product,quantity:qty)
-    sl.container = container
-    sl.linked_order_line_id = ol.id
-    sl.line_number = line_number
-    sl.carton_set = find_or_build_carton_set shipment, row
+    shipment.booking_lines.build(
+        product:ol.product,
+        quantity:quantity,
+        line_number: line_number,
+        carton_set: find_or_build_carton_set(shipment, row),
+        linked_order_line_id: ol.id,
+        order_line_id: ol.id,
+        order_id: ol.order.id,
+        cbms: cbms,
+        gross_kgs: gross_kgs,
+        carton_qty: carton_quantity
+    )
   end
 
   def clean_number num

@@ -2,6 +2,7 @@ class BookingLine < ActiveRecord::Base
   include LinesSupport
 
   belongs_to :shipment
+  belongs_to :carton_set
   belongs_to :order
   belongs_to :order_line
   belongs_to :product

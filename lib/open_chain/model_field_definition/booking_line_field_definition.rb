@@ -8,8 +8,8 @@ module OpenChain
       def fields
         [field(:line_number, {type: :integer}),
          field(:quantity, {description:"Quantity Booked", type: :decimal}),
-         field(:gross_kgs,{description: "Gross Weights (KGS)", type: :integer}),
-         field(:cbms, {description:"CBMS", type: :integer}),
+         field(:gross_kgs,{description: "Gross Weights (KGS)", type: :decimal}),
+         field(:cbms, {description:"CBMS", type: :decimal}),
          field(:carton_qty, { description: "Carton Quantity", type: :integer}),
          [12,:bkln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",
           {data_type: :integer,
