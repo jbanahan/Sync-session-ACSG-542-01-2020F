@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
 
   private
   def validate_user_and_process_rows(shipment, rows, user)
-    ActiveRecord::Base.transaction do
+    shipment.with_lock do
       raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
       process_rows! shipment, rows
     end
@@ -64,6 +64,12 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   def add_rows_to_shipment(shipment, rows)
     add_metadata shipment, rows
     add_lines shipment, rows
+  end
+
+  def within_lock(shipment)
+    Lock.acquire("Shipment-#{shipment.id}", temp_lock:true) do
+      return yield
+    end
   end
 
   def validate_rows rows
