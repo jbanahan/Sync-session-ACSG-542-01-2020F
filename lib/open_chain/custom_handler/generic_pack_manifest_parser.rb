@@ -1,31 +1,50 @@
 require 'open_chain/xl_client'
 
 module OpenChain; module CustomHandler; class GenericPackManifestParser
-  MARKS_COLUMN = 0
-  DESCRIPTION_COLUMN = 1
-  PO_COLUMN = 2
-  STYLE_NO_COLUMN = 3
-  SKU_COLUMN = 4
-  HTS_COLUMN = 5
-  CARTON_QTY_COLUMN = 6
-  QUANTITY_COLUMN = 7
-  UNIT_TYPE_COLUMN = 8
-  CBMS_COLUMN = 9
-  GROSS_KGS_COLUMN = 10
-
-  PORT_OF_RECEIPT_COLUMN = 5
-  PORT_OF_LADING_COLUMN = 5
-  MODE_COLUMN = 7
-  TERMS_COLUMN = 7
-  READY_DATE_COLUMN = 10
-  SHIPMENT_TYPE_COLUMN = 10
-
-  FIRST_METADATA_ROW = 28
-  SECOND_METADATA_ROW = 30
-  HEADER_ROW = 34
-
-  DESTINATION_PORT_ROW = 32
-  DESTINATION_PORT_COLUMN = 1
+  def file_layout
+    {
+        marks_column: 0,
+        description_column: 1,
+        po_column: 2,
+        style_no_column: 3,
+        sku_column:4,
+        hts_column: 5,
+        carton_qty_column: 6,
+        quantity_column: 7,
+        unit_type_column: 8,
+        cbms_column: 9,
+        gross_kgs_column: 10,
+        header_row: 34,
+        port_of_receipt: {
+            row: 28,
+            column: 5
+        },
+        port_of_lading: {
+            row: 30,
+            column: 5
+        },
+        destination_port: {
+            row: 32,
+            column:1
+        },
+        mode: {
+            row: 28,
+            column: 7
+        },
+        terms: {
+            row: 30,
+            column: 7
+        },
+        ready_date: {
+            row: 28,
+            column: 10
+        },
+        shipment_type: {
+            row: 30,
+            column:10
+        }
+    }
+  end
 
   def self.process_attachment shipment, attachment, user
     parse shipment, attachment.attached.path, user
@@ -77,20 +96,18 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   end
 
   def add_metadata(shipment, rows)
-    row = rows[FIRST_METADATA_ROW]
-    port_receipt_name = row[PORT_OF_RECEIPT_COLUMN]
+    port_receipt_name = rows[file_layout[:port_of_receipt][:row]][file_layout[:port_of_receipt][:column]]
     shipment.first_port_receipt = Port.find_by_name port_receipt_name
     shipment.receipt_location = port_receipt_name
-    shipment.cargo_ready_date = row[READY_DATE_COLUMN]
+    shipment.cargo_ready_date = rows[file_layout[:ready_date][:row]][file_layout[:ready_date][:column]]
 
-    row = rows[SECOND_METADATA_ROW]
-    shipment.lading_port = Port.find_by_name row[PORT_OF_LADING_COLUMN]
-    shipment.freight_terms = row[TERMS_COLUMN]
-    shipment.shipment_type = row[SHIPMENT_TYPE_COLUMN]
+    shipment.lading_port = Port.find_by_name rows[file_layout[:port_of_lading][:row]][file_layout[:port_of_lading][:column]]
+    shipment.freight_terms = rows[file_layout[:terms][:row]][file_layout[:terms][:column]]
+    shipment.shipment_type = rows[file_layout[:shipment_type][:row]][file_layout[:shipment_type][:column]]
     shipment.booking_shipment_type = shipment.shipment_type
     shipment.lcl = (shipment.shipment_type == 'CFS/CFS')
 
-    destination_port_name = rows[DESTINATION_PORT_ROW][DESTINATION_PORT_COLUMN]
+    destination_port_name = rows[file_layout[:destination_port][:row]][file_layout[:destination_port][:column]]
     shipment.unlading_port = Port.find_by_name destination_port_name
     shipment.destination_port = shipment.unlading_port
 
@@ -100,12 +117,12 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
     max_line_number = max_line_number(shipment)
     marks = " "
 
-    cursor = HEADER_ROW+1
+    cursor = file_layout[:header_row]+1
     while cursor < rows.size
       row = rows[cursor]
       cursor += 1
-      marks += row[MARKS_COLUMN] + " " if row[MARKS_COLUMN].present?
-      if row[SKU_COLUMN].present? && (row[SKU_COLUMN].is_a?(Numeric) || row[SKU_COLUMN].match(/\d/) )
+      marks += row[file_layout[:marks_column]] + " " if row[file_layout[:marks_column]].present?
+      if row[file_layout[:sku_column]].present? && (row[file_layout[:sku_column]].is_a?(Numeric) || row[file_layout[:sku_column]].match(/\d/) )
         max_line_number += 1
         add_line shipment, row, max_line_number
         next
@@ -120,12 +137,12 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   end
 
   def add_line shipment, row, line_number
-    po = row[PO_COLUMN].round.to_s
-    sku = row[SKU_COLUMN].round.to_s
-    quantity = clean_number(row[QUANTITY_COLUMN])
-    cbms = row[CBMS_COLUMN]
-    gross_kgs = row[GROSS_KGS_COLUMN]
-    carton_quantity = row[CARTON_QTY_COLUMN]
+    po = row[file_layout[:po_column]].round.to_s
+    sku = row[file_layout[:sku_column]].round.to_s
+    quantity = clean_number(row[file_layout[:quantity_column]])
+    cbms = row[file_layout[:cbms_column]]
+    gross_kgs = row[file_layout[:gross_kgs_column]]
+    carton_quantity = row[file_layout[:carton_qty_column]]
 
     ol = find_order_line shipment, po, sku
     shipment.booking_lines.build(
