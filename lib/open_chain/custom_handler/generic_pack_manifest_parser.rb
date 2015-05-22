@@ -110,8 +110,7 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   end
 
   def max_line_number(shipment)
-    shipment.booking_lines.order('line_number DESC').limit(1).pluck(:line_number).first || 0
-    # shipment.booking_lines.map(&:line_number).max || 0
+    shipment.booking_lines.maximum(:line_number) || 0
   end
 
   def add_line shipment, row, line_number
