@@ -1,6 +1,78 @@
 require 'open_chain/xl_client'
 
 module OpenChain; module CustomHandler; class GenericPackManifestParser
+
+  ##
+  # @param [Shipment] shipment
+  # @param [Attachment] attachment
+  # @param [User] user
+  def self.process_attachment(shipment, attachment, user)
+    parse shipment, attachment.attached.path, user
+  end
+
+  ##
+  # @param [Shipment] shipment
+  # @param [String] path
+  # @param [User] user
+  def self.parse(shipment, path, user)
+    self.new.run(shipment, OpenChain::XLClient.new(path), user)
+  end
+
+  ##
+  # @param [Shipment] shipment
+  # @param [XLClient] xl_client
+  # @param [User] user
+  def run(shipment, xl_client, user)
+    process_rows shipment, xl_client.all_row_values, user
+  end
+
+  ##
+  # Makes sure the user can edit the shipment, then reads the row data and adds lines
+  # @param [Shipment] shipment
+  # @param [Array<Array>] rows
+  # @param [User] user
+  def process_rows(shipment, rows, user)
+    validate_user_and_process_rows shipment, rows, user
+  end
+
+  ##
+  # Skips user permission check, reads rows and adds them to the shipment
+  # @param [Shipment] shipment
+  # @param [Array<Array>] rows
+  def process_rows!(shipment, rows)
+    process_row_data shipment, rows
+    shipment.save!
+  end
+
+  private
+  def validate_user_and_process_rows(shipment, rows, user)
+    shipment.with_lock do
+      raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
+      process_rows! shipment, rows
+    end
+  end
+
+  def process_row_data(shipment,rows)
+    validate_rows rows
+    add_rows_to_shipment shipment, rows
+  end
+
+  def add_rows_to_shipment(shipment, rows)
+    add_metadata shipment, rows
+    add_lines shipment, rows
+  end
+
+  def within_lock(shipment)
+    Lock.acquire("Shipment-#{shipment.id}", temp_lock:true) do
+      return yield
+    end
+  end
+
+  ##
+  # A hash pointing to where attributes are in the spreadsheet.
+  # Subclasses should override this method (or call super and modify the result) rather than hard-coding rows and columns.
+  #
+  # @return [Hash] the layout
   def file_layout
     {
         marks_column: 0,
@@ -46,55 +118,17 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
     }
   end
 
-  def self.process_attachment shipment, attachment, user
-    parse shipment, attachment.attached.path, user
+  ##
+  # Validation lives here. Does not return a value; throw an exception if the sheet is invalid
+  # @param [Array<Array>] rows
+  def validate_rows(rows)
+    #   No validation in the generic parser
   end
 
-  def self.parse shipment, path, user
-    self.new.run(shipment,OpenChain::XLClient.new(path),user)
-  end
-
-  def run shipment, xl_client, user
-    process_rows shipment, xl_client.all_row_values, user
-  end
-
-  def process_rows shipment, rows, user
-    validate_user_and_process_rows shipment, rows, user
-  end
-
-  def process_rows!(shipment, rows)
-    process_row_data shipment, rows
-    shipment.save!
-  end
-
-  private
-  def validate_user_and_process_rows(shipment, rows, user)
-    shipment.with_lock do
-      raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
-      process_rows! shipment, rows
-    end
-  end
-
-  def process_row_data(shipment,rows)
-    validate_rows rows
-    add_rows_to_shipment shipment, rows
-  end
-
-  def add_rows_to_shipment(shipment, rows)
-    add_metadata shipment, rows
-    add_lines shipment, rows
-  end
-
-  def within_lock(shipment)
-    Lock.acquire("Shipment-#{shipment.id}", temp_lock:true) do
-      return yield
-    end
-  end
-
-  def validate_rows rows
-  #   No validation in the generic parser
-  end
-
+  ##
+  # Gets shipment header info from the rows
+  # @param [Shipment] shipment
+  # @param [Array<Array>] rows
   def add_metadata(shipment, rows)
     port_receipt_name = rows[file_layout[:port_of_receipt][:row]][file_layout[:port_of_receipt][:column]]
     shipment.first_port_receipt = Port.find_by_name port_receipt_name
@@ -113,7 +147,11 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
 
   end
 
-  def add_lines shipment, rows
+  ##
+  # Creates booking lines from row data
+  # @param [Shipment] shipment
+  # @param [Array<Array>] rows
+  def add_lines(shipment, rows)
     max_line_number = max_line_number(shipment)
     marks = " "
 
@@ -122,7 +160,7 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
       row = rows[cursor]
       cursor += 1
       marks += row[file_layout[:marks_column]] + " " if row[file_layout[:marks_column]].present?
-      if row[file_layout[:sku_column]].present? && (row[file_layout[:sku_column]].is_a?(Numeric) || row[file_layout[:sku_column]].match(/\d/) )
+      if row[file_layout[:sku_column]].present? && (row[file_layout[:sku_column]].is_a?(Numeric) || row[file_layout[:sku_column]].match(/\d/))
         max_line_number += 1
         add_line shipment, row, max_line_number
         next
@@ -132,11 +170,18 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
     shipment.marks_and_numbers += marks
   end
 
+  ##
+  # @param [Shipment] shipment
   def max_line_number(shipment)
     shipment.booking_lines.maximum(:line_number) || 0
   end
 
-  def add_line shipment, row, line_number
+  ##
+  # Builds a booking_line for the +shipment+ from the +row+ data with the given +line_number+
+  # @param [Shipment] shipment
+  # @param [Array] row
+  # @param [Numeric] line_number
+  def add_line(shipment, row, line_number)
     po = row[file_layout[:po_column]].round.to_s
     sku = row[file_layout[:sku_column]].round.to_s
     quantity = clean_number(row[file_layout[:quantity_column]])
@@ -146,8 +191,8 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
 
     ol = find_order_line shipment, po, sku
     shipment.booking_lines.build(
-        product:ol.product,
-        quantity:quantity,
+        product: ol.product,
+        quantity: quantity,
         line_number: line_number,
         linked_order_line_id: ol.id,
         order_line_id: ol.id,
@@ -163,26 +208,26 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
     num.to_s.gsub(',','').strip
   end
 
-  def convert_number num, conversion
+  def convert_number(num, conversion)
     n = clean_number num
     return nil if n.nil?
     BigDecimal(n) * conversion
   end
 
-  def find_order_line shipment, po, sku
+  def find_order_line(shipment, po, sku)
     @order_cache ||= Hash.new
     ord = @order_cache[po]
     if ord.nil?
-      ord = Order.where(customer_order_number:po,importer_id:shipment.importer_id).includes(:order_lines).first
+      ord = Order.where(customer_order_number: po, importer_id: shipment.importer_id).includes(:order_lines).first
       raise "Order Number #{po} not found." unless ord
       @order_cache[po] = ord
     end
-    ol = ord.order_lines.find {|ln| ln.sku == sku}
+    ol = ord.order_lines.find_by_sku(sku)
     raise "SKU #{sku} not found in order #{po} (ID: #{ord.id})." unless ol
     ol
   end
 
-  def header_row_index rows, name
-    rows.index {|r| r.size > 1 && r[1]==name}
+  def header_row_index(rows, name)
+    rows.index { |r| r.size > 1 && r[1]==name }
   end
 end; end; end
