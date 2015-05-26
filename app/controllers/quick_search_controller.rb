@@ -126,7 +126,7 @@ class QuickSearchController < ApplicationController
     end
 
     def with_core_module_fields user
-      CoreModule::CORE_MODULES.each do |cm|
+      CoreModule.all.each do |cm|
         next unless cm.enabled? && cm.view?(user)
         fields = cm.quicksearch_fields
         next if fields.nil?

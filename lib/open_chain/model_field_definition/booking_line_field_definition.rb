@@ -21,15 +21,7 @@ module OpenChain
             sl.carton_set_id = cs.id
             "#{ModelField.find_by_uid(:bkln_carton_set_uid).label} set to #{cs.id}."
           }
-          }],
-         field(:order_number, {
-               description: 'Order',
-               qualified_field_name: 'select order_number from orders where orders.id = booking_line.order_id'
-           }),
-         field(:order_line_number, {description: "Order Line",
-               type: :integer,
-               qualified_field_name: 'select line_number from order_lines where order_lines.id = booking_line.order_line_id'
-           })]
+          }]]
         .concat make_product_arrays(100,prefix,core_module.table_name)
       end
 
