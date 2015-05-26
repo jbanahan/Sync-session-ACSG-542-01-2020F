@@ -16,9 +16,9 @@ module OpenChain; module CustomHandler; module Polo; class PoloEuFiberContentGen
   end
 
   def generate
-    c = Company.where(master:true).first
-    u = c.users.where(username:'EU Fiber Content').first
+    u = User.joins(:company).where(username:'EU Fiber Content', companies: {master: true}).first
     if u.nil?
+     c = Company.where(master:true).first
      u = c.users.build(username:'EU Fiber Content',first_name:'EU',last_name:'Fiber Content',product_view:true,email:'bug@vandegriftinc.com')
      u.password = Random.rand(999999999).to_s
      u.save!

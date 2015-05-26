@@ -56,17 +56,17 @@ describe MasterSetup do
 
   context :need_upgrade? do
     it "should require an upgrade if the target version from the DB is not the same as the current code version" do
-      MasterSetup.first.update_attributes :target_version => "UPDATE ME!!!"
+      MasterSetup.get.update_attributes :target_version => "UPDATE ME!!!"
       MasterSetup.need_upgrade?.should be_true
     end
 
     it "should not require an upgrade if the target version is same as current code version" do
-      MasterSetup.first.update_attributes :target_version => MasterSetup.current_code_version
+      MasterSetup.get.update_attributes :target_version => MasterSetup.current_code_version
       MasterSetup.need_upgrade?.should be_false
     end
 
     it "should not require an upgrade if the target version is blank" do
-      MasterSetup.first.update_attributes :target_version => nil
+      MasterSetup.get.update_attributes :target_version => nil
       MasterSetup.need_upgrade?.should be_false
     end
   end

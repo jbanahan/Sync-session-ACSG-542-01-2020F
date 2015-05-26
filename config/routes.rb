@@ -37,7 +37,8 @@ OpenChain::Application.routes.draw do
         post :google_oauth2, on: :collection
       end
       resources :products, only: [:index, :show, :create, :update] do
-        get 'by_uid/:uid' => "products#by_uid", on: :collection
+        # The optional param is for temporary backwards compatibility on the API
+        get 'by_uid(/:path_uid)' => "products#by_uid", on: :collection
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
       end
@@ -87,6 +88,7 @@ OpenChain::Application.routes.draw do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
         match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
         match 'users/:id/add_templates' => 'users#add_templates', via: :post
+        resources :milestone_notification_configs, only: [:index, :show, :create, :update, :destroy]
       end
     end
   end
@@ -678,6 +680,8 @@ OpenChain::Application.routes.draw do
   end
 
   resources :search_templates, only: [:index,:destroy]
+
+  resources :milestone_notification_configs, only: [:index]
 
   #Griddler inbound email processing
   mount_griddler

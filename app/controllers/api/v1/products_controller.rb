@@ -5,7 +5,10 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
   end
 
   def by_uid
-    product = base_relation.where(unique_identifier: params[:uid]).first
+    # path_uid is a route parameter that's defined solely for temporary backwards compatibility until all api sync clients
+    # running in other instances can be fixed to send the uid as a query param instead.
+    unique_identifier = params[:uid].presence || params[:path_uid]
+    product = base_relation.where(unique_identifier: unique_identifier).first
     render_obj product
   end
 

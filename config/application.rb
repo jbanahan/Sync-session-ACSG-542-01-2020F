@@ -84,6 +84,20 @@ module OpenChain
       :restricted_characters => /[\x00-\x1F\/\\:\*\?\"<>\|]/u
     }
 
+    # Add an interpolation so that you can use :master_setup_uuid in the Paperclip has_attached_file 'path'
+    # config variable.
+    #
+    # This is done this way primarily as a means to defer the instantiation of the master setup 
+    # object used for the Paperclip attachment path until the point when an attachment is actually
+    # saved vs. when a class containing it is loaded.  This has the most impact on testing so that creation
+    # of a MasterSetup occurs not at classloading (and thus can ensure the same master setup is used
+    # to describe the attachment path as is used potentially in a test case), but also resolves potential 
+    # problems in migrations that occur when loading a 
+    # MasterSetup instance during classloading (see original histories of classes w/ has_attached_file in them)
+    Paperclip.interpolates(:master_setup_uuid) do |attachment, style|
+      MasterSetup.get.uuid
+    end
+
     require 'open_chain/rack_request_inflater'
     config.middleware.insert_before ActionDispatch::ParamsParser, OpenChain::RackRequestInflater
   end

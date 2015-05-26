@@ -7,8 +7,7 @@ class ImportedFile < ActiveRecord::Base
   #hash of valid update modes. keys are valid database values, values are acceptable descriptions for the view layer
   UPDATE_MODES = {"any"=>"Add or Update","add"=>"Add Only","update"=>"Update Only"}
 
-  has_attached_file :attached,
-    :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/imported_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
+  has_attached_file :attached, :path => ":master_setup_uuid/imported_file/:id/:filename"
   before_create :sanitize
   before_post_process :no_post
   

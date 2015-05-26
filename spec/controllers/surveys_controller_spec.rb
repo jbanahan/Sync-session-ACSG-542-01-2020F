@@ -240,8 +240,7 @@ describe SurveysController do
       get :show_assign, :id=>@s.id
       response.should be_success
       assigns(:survey).should == @s
-      # A master comapny is created by the master setup initializer named "My Master", so just expect value here too
-      assigns(:visible_companies).should eq [@u.company, Company.where(master:true).first, @u.company.linked_companies.first]
+      assigns(:visible_companies).should eq [@u.company, @u.company.linked_companies.first]
     end
     it "should not show assignment if user cannot edit survey" do
       Survey.any_instance.stub(:can_edit?).and_return(false)

@@ -2,8 +2,7 @@ require 'open_chain/google_drive'
 require 'open_chain/s3'
 
 class Attachment < ActiveRecord::Base
-  has_attached_file :attached,
-    :path => "#{MasterSetup.get.uuid}/attachment/:id/:filename"
+  has_attached_file :attached, :path => ":master_setup_uuid/attachment/:id/:filename"
   before_create :sanitize
   before_post_process :no_post
   

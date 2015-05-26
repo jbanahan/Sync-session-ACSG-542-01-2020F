@@ -186,7 +186,7 @@ module OpenChain; module Api; class ApiClient
     end
 
     def encode_parameters parameters
-      parameters.map {|k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}"}.join("&")
+      parameters.map {|k, v| "#{CGI.escape(k.to_s)}=#{CGI.escape(v)}"}.join("&")
     end
 
     def make_errors_json errors

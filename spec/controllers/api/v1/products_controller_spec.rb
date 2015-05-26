@@ -66,6 +66,18 @@ describe Api::V1::ProductsController do
       allow_api_access @user
     end
 
+    it "find a product by unique identifier using old path" do
+      # This test should stick around to ensure backwards compatibility w/ the /products/by_uid/:uid route
+      # until all customer instances have been updated to 2015.233
+      get "by_uid", {format: 'json', mf_uids: "prod_uid", path_uid: @p.unique_identifier}
+      expect(response).to be_success
+      json = ActiveSupport::JSON.decode response.body
+      expect(json['product']).to eq({
+        'id' => @p.id,
+        'prod_uid' => @p.unique_identifier
+      })
+    end
+
     it "find a product by unique identifier" do
       get "by_uid", {uid: @p.unique_identifier, format: 'json', mf_uids: "prod_uid"}
       expect(response).to be_success

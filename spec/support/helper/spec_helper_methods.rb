@@ -38,7 +38,4 @@ module Helpers
     OpenChain::EventPublisher.stub(:publish).and_return nil
   end
 
-  def stub_paperclip
-    Paperclip::Attachment.class.any_instance.stub(:save).and_return true
-  end
 end

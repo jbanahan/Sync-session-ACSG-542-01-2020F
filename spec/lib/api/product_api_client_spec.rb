@@ -11,7 +11,7 @@ describe OpenChain::Api::ProductApiClient do
   describe "find_by_uid" do
     it "uses get with the correct path for find_by_uid" do
       @c.should_receive(:mf_uid_list_to_param).with([:uid]).and_return({'param'=>'value'})
-      @c.should_receive(:get).with("/products/by_uid/style", {'param'=>'value'}).and_return "json"
+      @c.should_receive(:get).with("/products/by_uid", {'param'=>'value', :uid => "style"}).and_return "json"
       expect(@c.find_by_uid("style", [:uid])).to eq "json"
     end
   end

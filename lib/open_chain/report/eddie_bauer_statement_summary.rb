@@ -44,7 +44,7 @@ module OpenChain
           monthly = ent.monthly_statement_number
           monthly = '' if monthly.blank?
           summary_hash[monthly] ||= {}
-          statement_hash = summary_hash[ent.monthly_statement_number]
+          statement_hash = summary_hash[monthly]
           ent.commercial_invoices.each do |ci|
             ci.commercial_invoice_lines.each do |cil|
               r = @detail_sheet.row(@detail_cursor)
