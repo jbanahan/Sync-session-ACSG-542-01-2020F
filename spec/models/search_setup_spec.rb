@@ -142,7 +142,7 @@ describe SearchSetup do
       r.countries << Factory(:country)
       ModelField.reload true
       u = Factory(:admin_user)
-      CoreModule::CORE_MODULES.each do |cm|
+      CoreModule.all.each do |cm|
         cm.klass.stub(:search_where).and_return("1=1")
 
         cm.model_fields.keys.in_groups_of(20,false) do |uids|

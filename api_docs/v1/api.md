@@ -489,6 +489,29 @@ order_id: 77 #db id of order
       *cf_50: 'VAL'
       }]
     }]
+  booking_lines: [{
+    bkln_line_number: 1 #sequential line number for this line on the booking
+    bkln_quantity: 1.23 #quantity shipped
+    bkln_puid: 'PARTNUM' #unique ID of product shipped
+    bkln_pname: 'CHAIR' #product name
+    #OPTIONAL with includes=order_lines parameter
+    order_lines: [{
+      id: 2
+      ord_ord_num: 'ORDER123'
+      ord_cust_ord_no: 'CORDER1234'
+      order_id: 77
+      allocated_quantity: 7
+      ordln_line_number: 1
+      ordln_puid: 'SKU123' #product unique identifier
+      ordln_pname: 'HAT' #product name
+      ordln_ppu: 1.25 #price per unit
+      ordln_currency: 'USD'
+      ordln_ordered_qty: 100.24
+      ordln_country_of_origin: 'CN'
+      ordln_hts: '1234567890' #hts code for country where order will be imported
+      *cf_50: 'VAL'
+      }]
+    }]
   containers: [{
     con_uid: 123 #database id of container
     con_container_number: 'ABCD12345'
@@ -539,7 +562,9 @@ _Request_
 
 Options
 
-`no_lines=true` - Do not include `lines` array
+`shipment_lines=true` - Include 'lines' array (shipment lines)
+
+`booking_lines=true` - Include 'booking_lines' array
 
 `summary=true` - Include summary of lines like
 ```

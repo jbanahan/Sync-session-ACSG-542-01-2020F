@@ -98,6 +98,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
+      {booking_lines: [:piece_sets,:product]},
       :containers,
       {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
@@ -107,6 +108,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     load_containers shp, h
     load_carton_sets shp, h
     load_lines shp, h
+    load_booking_lines shp, h
     raise StatusableError.new("You do not have permission to save this Shipment.",:forbidden) unless shp.can_edit?(current_user)
     shp.save if shp.errors.full_messages.blank?
     shp
@@ -176,7 +178,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_gross_weight
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
-    line_fields_to_render = limit_fields([
+    shipment_line_fields_to_render = limit_fields([
       :shpln_line_number,
       :shpln_shipped_qty,
       :shpln_puid,
@@ -189,6 +191,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shpln_carton_qty,
       :shpln_carton_set_uid
     ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
+
+    booking_line_fields_to_render = limit_fields([
+         :bkln_line_number,
+         :bkln_quantity,
+         :bkln_puid,
+         :bkln_carton_qty,
+         :bkln_gross_kgs,
+         :bkln_cbms,
+         :bkln_carton_set_id
+     ] + custom_field_keys(CoreModule::BOOKING_LINE))
 
     container_fields_to_render = ([
       :con_uid,
@@ -206,23 +218,15 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
     h = {id: s.id}
     headers_to_render.each {|uid| h[uid] = export_field(uid, s)}
-    if render_lines?
-      h['lines'] ||= []
-      s.shipment_lines.each do |sl|
-        slh = {id: sl.id}
-        line_fields_to_render.each {|uid| slh[uid] = export_field(uid, sl)}
-        if render_order_fields?
-          slh['order_lines'] = render_order_fields(sl)
-        end
-        h['lines'] << slh
-      end
+    if render_shipment_lines?
+      h['lines'] = render_lines(s.shipment_lines, shipment_line_fields_to_render, render_order_fields?)
     end
-    s.containers.each do |c|
-      h['containers'] ||= []
-      ch = {id: c.id}
-      container_fields_to_render.each {|uid| ch[uid] = export_field(uid, c)}
-      h['containers'] << ch
+    if render_booking_lines?
+      h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render, render_order_fields?)
     end
+
+    h['containers'] = render_lines(s.containers, container_fields_to_render) if s.containers.any?
+
     if render_carton_sets?
       h['carton_sets'] = render_carton_sets(s)
     end
@@ -264,8 +268,19 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_uncancel:shipment.can_uncancel?(current_user)
     }
   end
-  def render_lines?
-    params[:no_lines].blank?
+  def render_shipment_lines?
+    params[:shipment_lines].present? || action_name == 'create'
+  end
+  def render_booking_lines?
+    params[:booking_lines].present? || action_name == 'create'
+  end
+  def render_lines (lines, fields_to_render, with_order_lines=false)
+    lines.map do |sl|
+      rendered_line = {id: sl.id}
+      fields_to_render.each {|uid| rendered_line[uid] = export_field(uid, sl)}
+      rendered_line['order_lines'] = render_order_fields(sl) if with_order_lines
+      rendered_line
+    end
   end
   def render_carton_sets?
     params[:include] && params[:include].match(/carton_sets/)
@@ -281,11 +296,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :cs_net,
       :cs_gross
     ])
-    return shipment.carton_sets.collect do |cs|
-      ch = {id:cs.id}
-      fields.each {|uid| ch[uid] = export_field(uid, cs)}
-      ch
-    end
+    render_lines(shipment.carton_sets, fields)
   end
   def render_summary?
     params[:summary]
@@ -362,50 +373,75 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
           shipment.errors[:base] << "Order line #{o_line.id} does not have the same product as the shipment line provided (#{s_line.product.unique_identifier})" unless s_line.product == o_line.product
           s_line.linked_order_line_id = ln['linked_order_line_id']
         end
-        shipment.errors[:base] << "Product required for shipment lines." unless s_line.product
-        shipment.errors[:base] << "Product not found." if s_line.product && !s_line.product.can_view?(current_user)
-        # shipment.errors[:base] << "Line #{i+1} is missing #{ModelField.find_by_uid(:shpln_line_number).label}." if s_line.line_number.blank?
-      end
-    end
-  end
-  def load_containers shipment, h
-    if h['containers']
-      h['containers'].each_with_index do |ln,i|
-        con = shipment.containers.find {|obj| match_numbers? ln['id'], obj.id}
-        con = shipment.containers.build if con.nil?
-        if ln['_destroy']
-          if con.shipment_lines.empty?
-            con.mark_for_destruction
-            next
-          else
-            shipment.errors[:base] << "Cannot delete container linked to shipment lines."
-          end
-        end
-        import_fields ln, con, CoreModule::CONTAINER
+        validate_product(s_line, shipment)
       end
     end
   end
 
+  def load_booking_lines(shipment, h)
+    if h['booking_lines']
+      h['booking_lines'].each do |base_ln|
+        ln = base_ln.clone
+        if !ln['bkln_puid'].blank? && !ln['bkln_pname'].blank?
+          ln.delete 'bkln_pname' #dont' need to update for both
+        end
+        s_line = shipment.booking_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['bkln_line_number'], obj.line_number)}
+        if s_line.nil?
+          raise StatusableError.new("You cannot add lines to this shipment.",400) unless shipment.can_add_remove_booking_lines?(current_user)
+          s_line = shipment.booking_lines.build(line_number:ln['bkln_line_number'])
+        end
+        if ln['_destroy']
+          raise StatusableError.new("You cannot remove lines from this shipment.",400) unless shipment.can_add_remove_booking_lines?(current_user)
+          s_line.mark_for_destruction
+          next
+        end
+        import_fields ln, s_line, CoreModule::BOOKING_LINE
+        if ln['linked_order_line_id']
+          o_line = OrderLine.find_by_id ln['linked_order_line_id']
+          shipment.errors[:base] << "Order line #{ln['linked_order_line_id']} not found." unless o_line && o_line.can_view?(current_user)
+          s_line.product = o_line.product if s_line.product.nil?
+          shipment.errors[:base] << "Order line #{o_line.id} does not have the same product as the shipment line provided (#{s_line.product.unique_identifier})" unless s_line.product == o_line.product
+          s_line.linked_order_line_id = ln['linked_order_line_id']
+        end
+        validate_product(s_line, shipment)
+      end
+    end
+  end
+
+  def validate_product(s_line, shipment)
+    shipment.errors[:base] << "Product required for shipment lines." unless s_line.product
+    shipment.errors[:base] << "Product not found." if s_line.product && !s_line.product.can_view?(current_user)
+  end
+
+  def load_containers shipment, h
+    update_collection('containers', shipment, h, CoreModule::CONTAINER)
+  end
+
   def load_carton_sets shipment, h
-    if h['carton_sets']
-      h['carton_sets'].each do |ln|
-        cs = shipment.carton_sets.find {|obj| match_numbers? ln['id'], obj.id}
-        cs = shipment.carton_sets.build if cs.nil?
+    update_collection('carton_sets', shipment, h, CoreModule::CARTON_SET)
+  end
+
+  def update_collection(collection_name, shipment, h, core_module)
+    if h[collection_name]
+      collection = h[collection_name]
+      collection.each do |ln|
+        cs = shipment.send(collection_name).find { |obj| match_numbers? ln['id'], obj.id }
+        cs = shipment.send(collection_name).build if cs.nil?
         if ln['_destroy']
           if cs.shipment_lines.empty?
             cs.mark_for_destruction
             next
           else
-            shipment.errors[:base] << "Cannot delete carton set linked to shipment lines."
+            shipment.errors[:base] << "Cannot delete #{collection_name} linked to shipment lines."
           end
         end
-        import_fields ln, cs, CoreModule::CARTON_SET
+        import_fields ln, cs, core_module
       end
     end
   end
 
   def match_numbers? hash_val, number
-    return !hash_val.blank? && hash_val.to_s == number.to_s
+    hash_val.present? && hash_val.to_s == number.to_s
   end
 
   def freeze_custom_values s, include_order_lines

@@ -159,7 +159,7 @@ describe CoreModule do
     it "does not error for children of all core modules" do
       # This just validates that the core module setups are ok
       # The test passes as long as no errors are raised
-      CoreModule::CORE_MODULES.each do |cm|
+      CoreModule.all.each do |cm|
         cm.children.each {|child| cm.child_association_name(child)}
       end
     end

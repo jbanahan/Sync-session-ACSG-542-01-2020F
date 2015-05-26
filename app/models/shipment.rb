@@ -17,6 +17,7 @@ class Shipment < ActiveRecord::Base
   belongs_to :canceled_by, :class_name=>"User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
+  has_many   :booking_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :piece_sets, :through=>:shipment_lines
   has_many   :carton_sets, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -231,6 +232,10 @@ class Shipment < ActiveRecord::Base
   def can_add_remove_lines?(user)
     return false if self.booking_confirmed_date || self.booking_approved_date
     return self.can_edit?(user)
+  end
+
+  def can_add_remove_booking_lines?(user)
+    self.can_edit?(user)
   end
 
   def can_comment?(user)

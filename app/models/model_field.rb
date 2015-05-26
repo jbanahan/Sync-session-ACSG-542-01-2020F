@@ -1,10 +1,12 @@
 require 'open_chain/field_logic'
 require 'open_chain/model_field_definition/full_model_field_definition'
+require 'open_chain/model_field_definition/model_field_definer'
 require 'open_chain/model_field_generator/full_model_field_generator'
 
 class ModelField
   extend OpenChain::ModelFieldGenerator::FullModelFieldGenerator
   extend OpenChain::ModelFieldDefinition::FullModelFieldDefinition
+  include OpenChain::ModelFieldDefinition
 
   # When web mode is true, the class assumes that there is a before filter calling ModelField.reload_if_stale at the beginning of every request.
   # This means the class won't call memchached on every call to ModelField.find_by_uid to see if the ModelFieldSetups are stale
@@ -576,7 +578,7 @@ class ModelField
   end
 
   def self.reset_custom_fields(update_cache_time=false)
-    CoreModule::CORE_MODULES.each do |cm|
+    CoreModule.all.each do |cm|
       h = MODEL_FIELDS[cm.class_name.to_sym]
       h.each do |k,v|
         if !v.custom_id.nil?
@@ -584,27 +586,14 @@ class ModelField
           DISABLED_MODEL_FIELDS.delete v.uid
         end
       end
+      ModelField.add_custom_fields_if_needed(cm, cm.class_name.constantize)
     end
-    ModelField.add_custom_fields(CoreModule::ORDER,Order)
-    ModelField.add_custom_fields(CoreModule::ORDER_LINE,OrderLine)
     ModelField.create_and_insert_product_custom_fields(CoreModule::ORDER_LINE)
-    ModelField.add_custom_fields(CoreModule::PRODUCT,Product)
-    ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification)
-    ModelField.add_custom_fields(CoreModule::TARIFF,TariffRecord)
-    ModelField.add_custom_fields(CoreModule::CONTAINER,Container)
-    ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment)
-    ModelField.add_custom_fields(CoreModule::SHIPMENT_LINE,ShipmentLine)
-    ModelField.add_custom_fields(CoreModule::SALE,SalesOrder)
-    ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine)
-    ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery)
-    ModelField.add_custom_fields(CoreModule::ENTRY,Entry)
-    ModelField.add_custom_fields(CoreModule::BROKER_INVOICE,BrokerInvoice)
-    ModelField.add_custom_fields(CoreModule::BROKER_INVOICE_LINE,BrokerInvoiceLine)
-    ModelField.add_custom_fields(CoreModule::SECURITY_FILING,SecurityFiling)
-    ModelField.add_custom_fields(CoreModule::COMPANY,Company)
-    ModelField.add_custom_fields(CoreModule::PLANT,Plant)
-    ModelField.add_custom_fields(CoreModule::PLANT_PRODUCT_GROUP_ASSIGNMENT,PlantProductGroupAssignment)
     ModelField.update_last_loaded update_cache_time
+  end
+
+  def self.add_custom_fields_if_needed(core_module, base_class)
+    ModelField.add_custom_fields(core_module, base_class) if CustomDefinition.cached_find_by_module_type(base_class).any?
   end
 
   #load the public field cache, then yield, clearing the cache after the yield returns
@@ -668,6 +657,7 @@ class ModelField
       MODEL_FIELDS.clear
       DISABLED_MODEL_FIELDS.clear
       add_field_definitions
+      ModelFieldDefiner.add_all_fields!
       reset_custom_fields update_cache_time
     end
   end

@@ -53,10 +53,10 @@
       scope.outerScope = scope.$parent
       jqEl = $(el)
       jqEl.find('.chain-edit-btn').click ->
-        scope.$apply(scope.beforeEdit()) if scope.beforeEdit
+        scope.$apply(scope.beforeEdit) if scope.beforeEdit
         jqEl.find('.modal:first').modal('show')
       jqEl.find('.chain-save-btn').click ->
-        scope.$apply(scope.onSave()) if scope.onSave
+        scope.$apply(scope.onSave) if scope.onSave
         jqEl.find('.modal:first').modal('hide')
   }
 
