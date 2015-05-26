@@ -33,11 +33,9 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   end
 
   def parse_dom dom
-    ActiveRecord::Base.transaction do
-      r = dom.root
-      extract_date = parse_extract_date r
-      r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date}
-    end
+    r = dom.root
+    extract_date = parse_extract_date r
+    r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date}
   end
 
   private 
@@ -46,62 +44,62 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     cancel = REXML::XPath.first(order_root,'BEG/BEG01').text=='03'
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
-    ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
+    Lock.acquire(ord_num) do 
+      ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
     
-    update_lines = true
-    update_header = true
-    po_assigned_to_shipment = false
-    #skip orders already on shipments    
-    if ord && ord.piece_sets.where("shipment_line_id is not null").count > 0
-      update_header = @inner_opts[:force_header_updates]
-      update_lines = false
-      po_assigned_to_shipment = true
-    end
-
-    ord = Order.new(importer_id:@jill.id,order_number:ord_num) unless ord
-    return if ord.last_exported_from_source && ord.last_exported_from_source > extract_date
-
-    if update_header
-      update_order_header ord, extract_date, cust_ord, order_root 
-      agents = ord.available_agents
-      ord.agent = agents.first if agents.size == 1
-    end
-    
-    if update_lines
-      ord.order_lines.destroy_all
-      parse_lines ord, order_root
-    end
-
-    if update_header || update_lines
-      ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
-      ord.save! 
-      ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
-      ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
-      update_line_custom_values ord
-    end
-
-    if po_assigned_to_shipment
-      message = "Order ##{cust_ord} already assigned to a Shipment"
-      OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{message}", message).deliver!
-    elsif cancel && !ord.closed?
-      ord.close! @user
-    elsif !cancel && ord.closed?
-      ord.reopen! @user
-    end
-
-    fingerprint = generate_order_fingerprint ord
-    fp = DataCrossReference.find_jjill_order_fingerprint(ord)
-    if fp.blank?
-      ord.post_create_logic! @user
-    elsif fingerprint!=fp
-      ord.post_update_logic! @user
-      if !po_assigned_to_shipment && ord.approval_status == 'Accepted'
-        ord.unaccept! @user
+      update_lines = true
+      update_header = true
+      po_assigned_to_shipment = false
+      #skip orders already on shipments    
+      if ord && ord.piece_sets.where("shipment_line_id is not null").count > 0
+        update_header = @inner_opts[:force_header_updates]
+        update_lines = false
+        po_assigned_to_shipment = true
       end
-      DataCrossReference.create_jjill_order_fingerprint!(ord,fingerprint)
+
+      ord = Order.new(importer_id:@jill.id,order_number:ord_num) unless ord
+      return if ord.last_exported_from_source && ord.last_exported_from_source > extract_date
+
+      if update_header
+        update_order_header ord, extract_date, cust_ord, order_root 
+        agents = ord.available_agents
+        ord.agent = agents.first if agents.size == 1
+      end
+      
+      if update_lines
+        ord.order_lines.destroy_all
+        parse_lines ord, order_root
+      end
+
+      if update_header || update_lines
+        ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
+        ord.save! 
+        ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
+        ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
+        update_line_custom_values ord
+      end
+
+      if po_assigned_to_shipment
+        message = "Order ##{cust_ord} already assigned to a Shipment"
+        OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{message}", message).deliver!
+      elsif cancel && !ord.closed?
+        ord.close! @user
+      elsif !cancel && ord.closed?
+        ord.reopen! @user
+      end
+
+      fingerprint = generate_order_fingerprint ord
+      fp = DataCrossReference.find_jjill_order_fingerprint(ord)
+      if fp.blank?
+        ord.post_create_logic! @user
+      elsif fingerprint!=fp
+        ord.post_update_logic! @user
+        if !po_assigned_to_shipment && ord.approval_status == 'Accepted'
+          ord.unaccept! @user
+        end
+        DataCrossReference.create_jjill_order_fingerprint!(ord,fingerprint)
+      end
     end
-
-
   end
 
   def update_order_header ord, extract_date, cust_ord, order_root
