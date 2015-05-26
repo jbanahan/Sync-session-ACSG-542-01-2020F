@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
 
   private
   def validate_user_and_process_rows(shipment, rows, user)
-    shipment.with_lock do
+    within_lock(shipment) do
       raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
       process_rows! shipment, rows
     end
@@ -63,8 +63,10 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   end
 
   def within_lock(shipment)
-    Lock.acquire("Shipment-#{shipment.id}", temp_lock:true) do
-      return yield
+    Lock.acquire("Shipment-#{shipment.id}") do
+      Lock.with_lock_retry shipment do
+        return yield
+      end
     end
   end
 
