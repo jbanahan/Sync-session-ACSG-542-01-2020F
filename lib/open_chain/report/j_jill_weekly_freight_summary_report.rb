@@ -19,7 +19,8 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
       "PO Integrity" => po_integrity_qry,
       "Booking Exception" => booking_exception_qry,
       "Transit Time" => transit_time_qry,
-      "Value In Transit" => value_in_transit_qry
+      "Value In Transit" => value_in_transit_qry,
+      "Booking Integrity" => booking_integrity_qry
     }
     sheet_setup.each {|k,v| sheet_from_query wb, k, v}
     workbook_to_tempfile wb, 'JJillWeeklyFreightSummary-'
@@ -181,5 +182,24 @@ QRY
   GROUP BY shipments.id, orders.id, order_lines.price_per_unit
 QRY
     q
+  end
+  def booking_integrity_qry
+    <<QRY
+  SELECT
+  shipments.reference as 'SHP REF',
+  orders.customer_order_number as 'PO Number',
+  booking_lines.quantity as 'Booked Qty',
+  shipment_lines.quantity as 'Shipped Qty'
+  FROM shipments
+  LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
+  LEFT OUTER JOIN booking_lines on shipments.id = booking_lines.shipment_id
+  LEFT OUTER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
+  LEFT OUTER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
+  LEFT OUTER JOIN orders ON orders.id = order_lines.order_id
+  LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
+  WHERE
+  shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
+  GROUP BY shipments.id, order_lines.id
+QRY
   end
 end; end; end
