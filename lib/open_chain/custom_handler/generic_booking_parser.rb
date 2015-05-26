@@ -132,21 +132,26 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   # @param [Shipment] shipment
   # @param [Array<Array>] rows
   def add_metadata(shipment, rows)
-    port_receipt_name = rows[file_layout[:port_of_receipt][:row]][file_layout[:port_of_receipt][:column]]
+    port_receipt_name = value_from_named_location :port_of_receipt, rows
     shipment.first_port_receipt = Port.find_by_name port_receipt_name
     shipment.receipt_location = port_receipt_name
-    shipment.cargo_ready_date = rows[file_layout[:ready_date][:row]][file_layout[:ready_date][:column]]
+    shipment.cargo_ready_date = value_from_named_location :ready_date, rows
 
-    shipment.lading_port = Port.find_by_name rows[file_layout[:port_of_lading][:row]][file_layout[:port_of_lading][:column]]
-    shipment.freight_terms = rows[file_layout[:terms][:row]][file_layout[:terms][:column]]
-    shipment.shipment_type = rows[file_layout[:shipment_type][:row]][file_layout[:shipment_type][:column]]
+    shipment.lading_port = Port.find_by_name value_from_named_location :port_of_lading, rows
+    shipment.freight_terms = value_from_named_location :terms, rows
+    shipment.shipment_type = value_from_named_location :shipment_type, rows
     shipment.booking_shipment_type = shipment.shipment_type
     shipment.lcl = (shipment.shipment_type == 'CFS/CFS')
+    shipment.mode = value_from_named_location :mode, rows
 
-    destination_port_name = rows[file_layout[:destination_port][:row]][file_layout[:destination_port][:column]]
+    destination_port_name = value_from_named_location :destination_port, rows
     shipment.unlading_port = Port.find_by_name destination_port_name
     shipment.destination_port = shipment.unlading_port
 
+  end
+
+  def value_from_named_location(name, rows)
+    rows[file_layout[name][:row]][file_layout[name][:column]]
   end
 
   ##
