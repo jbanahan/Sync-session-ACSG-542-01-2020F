@@ -7,6 +7,14 @@ class BookingLine < ActiveRecord::Base
 
   validates_uniqueness_of :line_number, :scope => :shipment_id
 
+  def order
+    order_line.try(:order)
+  end
+
+  def order_line
+    order_lines.first
+  end
+
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment

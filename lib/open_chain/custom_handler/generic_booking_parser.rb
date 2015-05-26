@@ -1,6 +1,6 @@
 require 'open_chain/xl_client'
 
-module OpenChain; module CustomHandler; class GenericPackManifestParser
+module OpenChain; module CustomHandler; class GenericBookingParser
 
   ##
   # @param [Shipment] shipment
@@ -171,7 +171,9 @@ module OpenChain; module CustomHandler; class GenericPackManifestParser
   end
 
   ##
+  # The highest line number of all a shipment's booking lines
   # @param [Shipment] shipment
+  # @return [Numeric]
   def max_line_number(shipment)
     shipment.booking_lines.maximum(:line_number) || 0
   end

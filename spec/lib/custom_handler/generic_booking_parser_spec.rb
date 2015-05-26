@@ -1,7 +1,7 @@
 require 'spec_helper'
 require Rails.root.join('spec/fixtures/files/standard_booking_form')
 
-describe OpenChain::CustomHandler::GenericPackManifestParser do
+describe OpenChain::CustomHandler::GenericBookingParser do
 
   describe 'with real data' do
 
@@ -51,7 +51,6 @@ describe OpenChain::CustomHandler::GenericPackManifestParser do
         expect(line.shipment).to eq shipment
         expect(line.order).to be_present
         expect(line.order_line).to be_present
-        expect(line.order).to be_present
         expect(line.gross_kgs).to be_present
         expect(line.cbms).to be_present
         expect(line.carton_qty).to be_present
