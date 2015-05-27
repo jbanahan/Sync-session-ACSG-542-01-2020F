@@ -93,14 +93,6 @@ module OpenChain; module CustomHandler; class GenericBookingParser
             row: 28,
             column: 5
         },
-        port_of_lading: {
-            row: 30,
-            column: 5
-        },
-        destination_port: {
-            row: 32,
-            column:1
-        },
         mode: {
             row: 28,
             column: 7
@@ -132,22 +124,13 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   # @param [Shipment] shipment
   # @param [Array<Array>] rows
   def add_metadata(shipment, rows)
-    port_receipt_name = value_from_named_location :port_of_receipt, rows
-    shipment.first_port_receipt = Port.find_by_name port_receipt_name
-    shipment.receipt_location = port_receipt_name
+    shipment.receipt_location = value_from_named_location :port_of_receipt, rows
     shipment.cargo_ready_date = value_from_named_location :ready_date, rows
-
-    shipment.lading_port = Port.find_by_name value_from_named_location :port_of_lading, rows
     shipment.freight_terms = value_from_named_location :terms, rows
     shipment.shipment_type = value_from_named_location :shipment_type, rows
     shipment.booking_shipment_type = shipment.shipment_type
     shipment.lcl = (shipment.shipment_type == 'CFS/CFS')
     shipment.mode = value_from_named_location :mode, rows
-
-    destination_port_name = value_from_named_location :destination_port, rows
-    shipment.unlading_port = Port.find_by_name destination_port_name
-    shipment.destination_port = shipment.unlading_port
-
   end
 
   def value_from_named_location(name, rows)
