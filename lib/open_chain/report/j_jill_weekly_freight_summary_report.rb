@@ -188,6 +188,7 @@ QRY
   SELECT
   shipments.reference as 'SHP REF',
   orders.customer_order_number as 'PO Number',
+  order_lines.sku as 'SKU',
   booking_lines.quantity as 'Booked Qty',
   shipment_lines.quantity as 'Shipped Qty'
   FROM shipments
