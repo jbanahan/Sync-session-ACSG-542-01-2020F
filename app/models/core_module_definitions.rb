@@ -261,6 +261,4 @@ module CoreModuleDefinitions
      child_joins: {},
      enabled_lambda: lambda { MasterSetup.get.drawback_enabled? }
   )
-
-  CORE_MODULES = CoreModule.all
 end

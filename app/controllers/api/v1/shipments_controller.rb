@@ -98,7 +98,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
-      {booking_lines: [:piece_sets,:product]},
+      {booking_lines: [:order_line, :product]},
       :containers,
       {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
@@ -199,7 +199,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
          :bkln_carton_qty,
          :bkln_gross_kgs,
          :bkln_cbms,
-         :bkln_carton_set_id
+         :bkln_carton_set_id,
+         :bkln_order_and_line_number,
+         :bkln_order_id
      ] + custom_field_keys(CoreModule::BOOKING_LINE))
 
     container_fields_to_render = ([
@@ -222,7 +224,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       h['lines'] = render_lines(s.shipment_lines, shipment_line_fields_to_render, render_order_fields?)
     end
     if render_booking_lines?
-      h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render, render_order_fields?)
+      h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render)
     end
 
     h['containers'] = render_lines(s.containers, container_fields_to_render) if s.containers.any?
@@ -373,45 +375,33 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
           shipment.errors[:base] << "Order line #{o_line.id} does not have the same product as the shipment line provided (#{s_line.product.unique_identifier})" unless s_line.product == o_line.product
           s_line.linked_order_line_id = ln['linked_order_line_id']
         end
-        validate_product(s_line, shipment)
+        shipment.errors[:base] << "Product required for shipment lines." unless s_line.product
+        shipment.errors[:base] << "Product not found." if s_line.product && !s_line.product.can_view?(current_user)
       end
     end
   end
 
   def load_booking_lines(shipment, h)
     if h['booking_lines']
-      h['booking_lines'].each do |base_ln|
+      h['booking_lines'].each_with_index do |base_ln,i|
         ln = base_ln.clone
-        if !ln['bkln_puid'].blank? && !ln['bkln_pname'].blank?
-          ln.delete 'bkln_pname' #dont' need to update for both
-        end
         s_line = shipment.booking_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['bkln_line_number'], obj.line_number)}
         if s_line.nil?
           raise StatusableError.new("You cannot add lines to this shipment.",400) unless shipment.can_add_remove_booking_lines?(current_user)
-          s_line = shipment.booking_lines.build(line_number:ln['bkln_line_number'])
+          max_line_number = shipment.booking_lines.maximum(:line_number) || 0
+          s_line = shipment.booking_lines.build(line_number:max_line_number+(i+1))
         end
         if ln['_destroy']
           raise StatusableError.new("You cannot remove lines from this shipment.",400) unless shipment.can_add_remove_booking_lines?(current_user)
           s_line.mark_for_destruction
           next
         end
+        s_line.order_line_id = ln['bkln_order_line_id'] if ln['bkln_order_line_id']
         import_fields ln, s_line, CoreModule::BOOKING_LINE
-        if ln['linked_order_line_id']
-          o_line = OrderLine.find_by_id ln['linked_order_line_id']
-          shipment.errors[:base] << "Order line #{ln['linked_order_line_id']} not found." unless o_line && o_line.can_view?(current_user)
-          s_line.product = o_line.product if s_line.product.nil?
-          shipment.errors[:base] << "Order line #{o_line.id} does not have the same product as the shipment line provided (#{s_line.product.unique_identifier})" unless s_line.product == o_line.product
-          s_line.linked_order_line_id = ln['linked_order_line_id']
-        end
-        validate_product(s_line, shipment)
       end
     end
   end
 
-  def validate_product(s_line, shipment)
-    shipment.errors[:base] << "Product required for shipment lines." unless s_line.product
-    shipment.errors[:base] << "Product not found." if s_line.product && !s_line.product.can_view?(current_user)
-  end
 
   def load_containers shipment, h
     update_collection('containers', shipment, h, CoreModule::CONTAINER)

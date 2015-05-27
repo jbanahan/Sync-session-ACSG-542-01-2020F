@@ -2,14 +2,18 @@ module OpenChain
   module ModelFieldDefinition
     module BookingLineFieldDefinition
 
+      def core_module
+        CoreModule::BOOKING_LINE
+      end
+
       def add_booking_line_fields
-        add_fields CoreModule::BOOKING_LINE, [
+        add_fields core_module, [
          [1, :bkln_line_number, :line_number, "Line Number", {:data_type=>:integer}],
          [2, :bkln_quantity, :quantity, "Quantity Booked", {:data_type=>:decimal}],
          [3, :bkln_gross_kgs, :gross_kgs, "Gross Weights (KGS)", {:data_type=>:integer}],
          [4, :bkln_cbms, :cbms, "CBMS", {:data_type=>:integer}],
          [5, :bkln_carton_qty, :carton_qty, "Carton Quantity", {:data_type=>:integer}],
-         [6,:bkln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",
+         [6, :bkln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",
           {data_type: :integer,
            import_lambda: lambda {|sl,id|
              return "#{ModelField.find_by_uid(:bkln_carton_set_uid).label} was blank." if id.blank?
@@ -19,8 +23,60 @@ module OpenChain
              sl.carton_set_id = cs.id
              "#{ModelField.find_by_uid(:bkln_carton_set_uid).label} set to #{cs.id}."
            }
-          }]]
-          add_fields CoreModule::BOOKING_LINE, make_product_arrays(7,'bkln',CoreModule::BOOKING_LINE.table_name)
+          }],
+         [7, :bkln_order_and_line_number, :order_and_line_number,"Order and Line Number", {
+              data_type: :string,
+              read_only: true,
+              export_lambda: lambda { |bl| bl.customer_order_and_line_number }
+           }],
+         [8, :bkln_order_id, :order_id, "Order ID", {
+               data_type: :integer,
+               export_lambda: lambda{|bl| bl.order_line.try(:order).try(:id) || bl.order_id }
+           }],
+         [9,:bkln_puid, :unique_identifier,"Product Unique ID", {
+                        :import_lambda => lambda {|detail,data|
+                          return "Product not changed." if detail.product && detail.product.unique_identifier==data
+                          p = Product.where(:unique_identifier=>data).first
+                          return "Product not found with unique identifier #{data}" if p.nil?
+                          detail.product = p
+                          return "Product set to #{data}"
+                        },
+                        :export_lambda => lambda {|detail|
+                          product = detail.product || detail.order_line.try(:product)
+                          if product
+                            return product.unique_identifier
+                          else
+                            return nil
+                          end
+                        },
+                        :qualified_field_name => "(SELECT unique_identifier FROM products WHERE products.id = #{core_module.table_name}.product_id)"
+                    }],
+        [10,:bkln_pname, :name,"Product Name",{
+                              :import_lambda => lambda {|detail,data|
+                                "Product name cannot be set by import."
+                              },
+                              :export_lambda => lambda {|detail|
+                                product = detail.product || detail.order_line.try(:product)
+                                if product
+                                  return product.name
+                                else
+                                  return nil
+                                end
+                              },
+                              :qualified_field_name => "(SELECT name FROM products WHERE products.id = #{core_module.table_name}.product_id)",
+                              :history_ignore => true,
+                              :read_only => true
+                          }],
+        [11, :bkln_prod_id, :id,"Product Name", {user_accessible: false,
+                                                 history_ignore: true,
+                                                 :import_lambda => lambda {|detail, data, user|
+                                                   product_id = data.to_i
+                                                   if detail.product_id != product_id && !(prod = Product.where(id: product_id).first).nil?
+                                                     detail.product  = prod if prod.can_view?(user)
+                                                   end
+                                                   ""
+                                                 }
+                          }]]
        end
     end
   end

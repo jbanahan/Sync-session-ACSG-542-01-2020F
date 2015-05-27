@@ -264,6 +264,8 @@ class CoreModule
     self.constants.map{|c| self.const_get(c)}.select{|c| c.is_a? CoreModule} || []
   end
 
+  CORE_MODULES = CoreModule.all
+
   def self.add_virtual_identifier
     # Add in the virtual_identifier field that is needed for update_model_field_attribute support
     # This field is explained in the UpdateModelFieldsSupport module.

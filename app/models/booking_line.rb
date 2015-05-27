@@ -1,6 +1,4 @@
 class BookingLine < ActiveRecord::Base
-  include LinesSupport
-
   belongs_to :shipment
   belongs_to :carton_set
   belongs_to :product
@@ -9,7 +7,20 @@ class BookingLine < ActiveRecord::Base
 
   validates_uniqueness_of :line_number, :scope => :shipment_id
 
-  validates :order_line_takes_priority
+  after_save :order_line_takes_priority
+
+  def customer_order_number
+    this_order = self.order || self.order_line.try(:order)
+    this_order.try(:customer_order_number)
+  end
+
+  def customer_order_and_line_number
+    if self.order_line_id
+      "#{customer_order_number} - #{self.order_line.line_number}"
+    else
+      customer_order_number
+    end
+  end
 
   private
   def parent_obj #supporting method for LinesSupport
@@ -21,9 +32,8 @@ class BookingLine < ActiveRecord::Base
   end
 
   def order_line_takes_priority
-    if order_line && (product || order)
-      self.product = nil
-      self.order = nil
+    if order_line_id && (product_id || order_id)
+      self.update_attributes product_id: nil, order_id: nil
     end
   end
 
