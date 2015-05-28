@@ -85,12 +85,11 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
             data_type: :text,
             read_only: true,
             import_lambda: lambda {|obj,val| "Booked Orders is read only."},
-            export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:order_line).map(&:order).map(&:order_number).compact.uniq.sort.join("\n ")},
+            export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:customer_order_number).compact.uniq.sort.join("\n ")},
             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.order_number ORDER BY orders.order_number SEPARATOR '\n ')
           FROM booking_lines
-          INNER JOIN piece_sets ON piece_sets.booking_line_id = booking_lines.id
-          INNER JOIN order_lines ON piece_sets.order_line_id = order_lines.id
-          INNER JOIN orders ON orders.id = order_lines.order_id
+          INNER JOIN order_lines ON booking_lines.order_line_id = order_lines.id
+          INNER JOIN orders ON orders.id = order_lines.order_id OR orders.id = booking_lines.order_id
           WHERE booking_lines.shipment_id = shipments.id)"
         }],
       [48,:shp_shipped_orders,:shipped_orders,"Shipped Orders",{
@@ -109,7 +108,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              data_type: :text,
              read_only: true,
              import_lambda: lambda {|obj,val| "Shipped Products is read only."},
-             export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:product).map(&:unique_identifier).compact.uniq.sort.join("\n ")},
+             export_lambda: lambda {|obj| obj.shipment_lines.map(&:product_identifier).compact.uniq.sort.join("\n ")},
              qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT products.unique_identifier ORDER BY products.unique_identifier SEPARATOR '\n ')
           FROM shipment_lines
           INNER JOIN products ON products.id = shipment_lines.product_id
@@ -122,7 +121,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:order_line).map(&:product).map(&:unique_identifier).compact.uniq.sort.join("\n ")},
              qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT products.unique_identifier ORDER BY products.unique_identifier SEPARATOR '\n ')
           FROM booking_lines
-          INNER JOIN products ON products.id = booking_lines.product_id
+          INNER JOIN order_lines ON order_lines.id = booking_lines.order_line_id
+          INNER JOIN products ON products.id = booking_lines.product_id OR products.id = order_lines.product_id
           WHERE booking_lines.shipment_id = shipments.id)"
          }]
     ]

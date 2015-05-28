@@ -49,7 +49,9 @@ module OpenChain
                             return nil
                           end
                         },
-                        :qualified_field_name => "(SELECT unique_identifier FROM products WHERE products.id = #{core_module.table_name}.product_id)"
+                        :qualified_field_name => "(SELECT unique_identifier FROM products
+INNER JOIN order_lines ON order_lines.id = booking_lines.order_line_id
+WHERE products.id = booking_lines.product_id OR products.id = order_lines.product_id)"
                     }],
         [10,:bkln_pname, :name,"Product Name",{
                               :import_lambda => lambda {|detail,data|
@@ -63,7 +65,9 @@ module OpenChain
                                   return nil
                                 end
                               },
-                              :qualified_field_name => "(SELECT name FROM products WHERE products.id = #{core_module.table_name}.product_id)",
+                              :qualified_field_name => "(SELECT name FROM products
+INNER JOIN order_lines ON order_lines.id = booking_lines.order_line_id
+WHERE products.id = booking_lines.product_id OR products.id = order_lines.product_id)",
                               :history_ignore => true,
                               :read_only => true
                           }],

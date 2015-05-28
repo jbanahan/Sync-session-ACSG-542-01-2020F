@@ -22,6 +22,11 @@ class BookingLine < ActiveRecord::Base
     end
   end
 
+  def product_identifier
+    this_product = self.product || self.order_line.try(:product)
+    this_product.try(:unique_identifier)
+  end
+
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment
