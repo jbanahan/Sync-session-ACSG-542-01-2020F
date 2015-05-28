@@ -162,7 +162,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   end
 
   def row_is_a_line?(row)
-    row[file_layout[:quantity_column]].present? && (row[file_layout[:quantity_column]].is_a?(Numeric) || row[file_layout[:quantity_column]].match(/\d/)) && !row[file_layout[:total_column]].match(/total/i)
+    row[file_layout[:quantity_column]].present? && (row[file_layout[:quantity_column]].is_a?(Numeric) || row[file_layout[:quantity_column]].match(/\A[-+]?[0-9]*\.?[0-9]+\Z/)) && !row[file_layout[:total_column]].match(/total/i)
   end
 
   ##
