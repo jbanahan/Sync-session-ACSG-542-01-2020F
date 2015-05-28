@@ -88,6 +88,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
         unit_type_column: 8,
         cbms_column: 9,
         gross_kgs_column: 10,
+        total_column: 5,
         header_row: 34,
         port_of_receipt: {
             row: 28,
@@ -150,7 +151,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
       row = rows[cursor]
       cursor += 1
       marks += row[file_layout[:marks_column]] + " " if row[file_layout[:marks_column]].present?
-      if row[file_layout[:sku_column]].present? && (row[file_layout[:sku_column]].is_a?(Numeric) || row[file_layout[:sku_column]].match(/\d/))
+      if row_is_a_line?(row)
         max_line_number += 1
         add_line shipment, row, max_line_number
         next
@@ -158,6 +159,10 @@ module OpenChain; module CustomHandler; class GenericBookingParser
     end
     shipment.marks_and_numbers ||= ""
     shipment.marks_and_numbers += marks
+  end
+
+  def row_is_a_line?(row)
+    row[file_layout[:quantity_column]].present? && (row[file_layout[:quantity_column]].is_a?(Numeric) || row[file_layout[:quantity_column]].match(/\d/)) && !row[file_layout[:total_column]].match(/total/i)
   end
 
   ##
@@ -174,25 +179,47 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   # @param [Array] row
   # @param [Numeric] line_number
   def add_line(shipment, row, line_number)
-    po = row[file_layout[:po_column]].round.to_s
-    sku = row[file_layout[:sku_column]].round.to_s
+    po = rounded_string row[file_layout[:po_column]]
+    style = row[file_layout[:style_no_column]]
+    sku = rounded_string row[file_layout[:sku_column]]
     quantity = clean_number(row[file_layout[:quantity_column]])
     cbms = row[file_layout[:cbms_column]]
     gross_kgs = row[file_layout[:gross_kgs_column]]
     carton_quantity = row[file_layout[:carton_qty_column]]
 
-    ol = find_order_line shipment, po, sku
-    shipment.booking_lines.build(
-        product: ol.product,
-        quantity: quantity,
-        line_number: line_number,
-        linked_order_line_id: ol.id,
-        order_line_id: ol.id,
-        order_id: ol.order.id,
-        cbms: cbms,
-        gross_kgs: gross_kgs,
-        carton_qty: carton_quantity
-    )
+    if sku
+      raise "SKU #{sku} provided without order number" unless po
+      ol = find_order_line shipment, po, sku
+      shipment.booking_lines.build(
+          #product: ol.product,
+          quantity: quantity,
+          line_number: line_number,
+          order_line_id: ol.id,
+          #order_id: ol.order.id,
+          cbms: cbms,
+          gross_kgs: gross_kgs,
+          carton_qty: carton_quantity
+      )
+    else
+      product = Product.find_by_unique_identifier "#{shipment.importer.system_code}-#{style}"
+      order = Order.find_by_customer_order_number po
+      shipment.booking_lines.build(
+          product_id: product.try(:id),
+          quantity: quantity,
+          line_number: line_number,
+          # order_line_id: ol.id,
+          order_id: order.try(:id),
+          cbms: cbms,
+          gross_kgs: gross_kgs,
+          carton_qty: carton_quantity
+      )
+    end
+  end
+
+  def rounded_string(number)
+    if number
+      number.round.to_s
+    end
   end
 
   def clean_number num
