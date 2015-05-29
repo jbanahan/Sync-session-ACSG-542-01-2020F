@@ -27,7 +27,11 @@ module OpenChain
          [7, :bkln_order_and_line_number, :order_and_line_number,"Order and Line Number", {
               data_type: :string,
               read_only: true,
-              export_lambda: lambda { |bl| bl.customer_order_and_line_number }
+              export_lambda: lambda { |bl| bl.customer_order_and_line_number },
+              qualified_field_name: "(SELECT CONCAT_WS(' - ', orders.customer_order_number, order_lines.line_number) FROM booking_lines
+JOIN order_lines ON order_lines.id = order_line_id
+JOIN orders ON orders.id = order_lines.order_id
+WHERE orders.id = order_lines.order_id)"
            }],
          [8, :bkln_order_id, :order_id, "Order ID", {
                data_type: :integer,
@@ -49,9 +53,9 @@ module OpenChain
                             return nil
                           end
                         },
-                        :qualified_field_name => "(SELECT unique_identifier FROM products
-INNER JOIN order_lines ON order_lines.id = booking_lines.order_line_id
-WHERE products.id = booking_lines.product_id OR products.id = order_lines.product_id)"
+                        :qualified_field_name => "(SELECT products.unique_identifier FROM booking_lines
+JOIN order_lines ON order_lines.id = order_line_id
+JOIN products ON products.id = booking_lines.product_id OR products.id = order_lines.product_id)"
                     }],
         [10,:bkln_pname, :name,"Product Name",{
                               :import_lambda => lambda {|detail,data|
@@ -65,9 +69,9 @@ WHERE products.id = booking_lines.product_id OR products.id = order_lines.produc
                                   return nil
                                 end
                               },
-                              :qualified_field_name => "(SELECT name FROM products
-INNER JOIN order_lines ON order_lines.id = booking_lines.order_line_id
-WHERE products.id = booking_lines.product_id OR products.id = order_lines.product_id)",
+                              :qualified_field_name => "(SELECT products.name FROM booking_lines
+JOIN order_lines ON order_lines.id = order_line_id
+JOIN products ON products.id = booking_lines.product_id OR products.id = order_lines.product_id)",
                               :history_ignore => true,
                               :read_only => true
                           }],
