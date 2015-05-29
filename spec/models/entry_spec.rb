@@ -227,6 +227,18 @@ describe Entry do
       @entry.k84_month.should eq 1
       @entry.k84_due_date.to_date.should == Date.new(2013,1,25)
     end
+
+    it "uses k84 receive date for hand-carry entries, rather than cadex accept" do
+      @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "C", cadex_accept_date: Time.zone.now
+      @entry.k84_month.should eq 1
+      @entry.k84_due_date.to_date.should == Date.new(2013,1,25)
+    end
+
+    it "uses k84 receive date for entry addendums, rather than cadex accept" do
+      @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "H", cadex_accept_date: Time.zone.now
+      @entry.k84_month.should eq 1
+      @entry.k84_due_date.to_date.should == Date.new(2013,1,25)
+    end
   end
 
   describe "canadian?" do

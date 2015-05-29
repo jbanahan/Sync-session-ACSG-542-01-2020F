@@ -150,7 +150,7 @@ class Entry < ActiveRecord::Base
   def update_k84
     k84_basis = nil
 
-    if entry_number.to_s.starts_with?("119810") && entry_type.to_s.upcase == "V"
+    if entry_number.to_s.starts_with?("119810") && (["V", "H", "C"].include? entry_type.to_s.upcase)
       k84_basis = k84_receive_date
     else
       k84_basis = cadex_accept_date
