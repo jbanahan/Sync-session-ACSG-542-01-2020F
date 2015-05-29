@@ -21,7 +21,7 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
       "Transit Time" => transit_time_qry,
       "Value In Transit" => value_in_transit_qry,
       "Booking Integrity" => booking_integrity_qry,
-      "Order Fulfillment" => order_fulfillment_qry
+      # "Order Fulfillment" => order_fulfillment_qry
     }
     sheet_setup.each {|k,v| sheet_from_query wb, k, v}
     workbook_to_tempfile wb, 'JJillWeeklyFreightSummary-'
@@ -193,25 +193,25 @@ shipments.booking_mode as 'Booked Mode',
 shipments.booking_shipment_type as 'Booked Load',
 shipments.booking_carrier as 'Booked Carrier',
 shipments.booking_vessel as 'Booked Vessel',
-destination_ports.name as 'Booked Destination',
-shipments.booking_est_departure_date as 'Booked Origin ETD',
-shipments.booking_est_arrival_date as 'Booked Destination ETA',
+destination_port.name as 'Booked Destination',
+DATE_FORMAT(shipments.booking_est_departure_date,'%m/%d/%Y') as 'Booked Origin ETD',
+DATE_FORMAT(shipments.booking_est_arrival_date,'%m/%d/%Y') as 'Booked Destination ETA',
 shipments.house_bill_of_lading as 'Actual Shipment #',
 shipments.mode as 'Actual Mode',
 shipments.shipment_type as 'Actual Load',
 shipments.vessel_carrier_scac as 'Actual Carrier',
 shipments.vessel as 'Actual Vessel',
-destination_ports.name as 'Actual Destination',
-shipments.departure_date as 'Actual Departure',
-shipments.arrival_port_date as 'Actual Arrival',
+destination_port.name as 'Actual Destination',
+DATE_FORMAT(shipments.departure_date,'%m/%d/%Y') as 'Actual Departure',
+DATE_FORMAT(shipments.arrival_port_date,'%m/%d/%Y') as 'Actual Arrival',
 DATEDIFF(shipments.departure_date,shipments.booking_est_departure_date) as 'Departure Variance',
 DATEDIFF(shipments.arrival_port_date,shipments.booking_est_arrival_date) as 'Arrival Variance',
 shipments.delay_reason as 'Shipment Note'
 FROM
 shipments
-INNER JOIN ports AS 'destination_ports' ON ports.id = shipments.destination_port_id
+INNER JOIN ports as destination_port ON destination_port.id = shipments.destination_port_id
 WHERE
-DATEDIFF(now(),shipments.delivered_date) < 365
+DATEDIFF(now(),shipments.arrival_port_date) < 365
 QRY
   end
   def order_fulfillment_qry
