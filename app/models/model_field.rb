@@ -1,6 +1,5 @@
 require 'open_chain/field_logic'
 require 'open_chain/model_field_definition/full_model_field_definition'
-require 'open_chain/model_field_definition/model_field_definer'
 require 'open_chain/model_field_generator/full_model_field_generator'
 
 class ModelField
@@ -657,7 +656,6 @@ class ModelField
       MODEL_FIELDS.clear
       DISABLED_MODEL_FIELDS.clear
       add_field_definitions
-      ModelFieldDefiner.add_all_fields!
       reset_custom_fields update_cache_time
     end
   end
