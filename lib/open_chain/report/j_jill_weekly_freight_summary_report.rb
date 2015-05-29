@@ -21,7 +21,7 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
       "Transit Time" => transit_time_qry,
       "Value In Transit" => value_in_transit_qry,
       "Booking Integrity" => booking_integrity_qry,
-      # "Order Fulfillment" => order_fulfillment_qry
+      "Order Fulfillment" => order_fulfillment_qry
     }
     sheet_setup.each {|k,v| sheet_from_query wb, k, v}
     workbook_to_tempfile wb, 'JJillWeeklyFreightSummary-'
@@ -225,7 +225,7 @@ order_lines.sku as 'PO Qty',
 XXX as 'PO GAC',
 shipments.booking_number as 'Booking #',
 shipments.booking_mode as 'Book Mode',
-XXX as 'Booked Qty',
+SUM(booking_lines.quantity) as 'Booked Qty',
 shipments.booking_cutoff_date as 'Booking Cut Off',
 shipments.house_bill_of_lading as 'Shipment #',
 shipments.mode as 'Ship Mode',
@@ -239,10 +239,10 @@ XXX as 'Shipped Qty vs. Booked Qty',
 XXX as 'Shipped Qty vs. Ordered Qty'
 FROM shipments
 LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
-LEFT OUTER JOIN booking_lines on shipments.id = booking_lines.shipment_id
 LEFT OUTER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
 LEFT OUTER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
 LEFT OUTER JOIN orders ON orders.id = order_lines.order_id
+LEFT OUTER JOIN booking_lines on orders.id = booking_lines.order_id
 LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
 LEFT OUTER JOIN companies as factory ON factory.id = orders.factory_id
 WHERE
