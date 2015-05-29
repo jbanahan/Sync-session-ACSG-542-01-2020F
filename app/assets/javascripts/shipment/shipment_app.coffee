@@ -239,6 +239,8 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
 
   $scope.prepTrackingEditObject = copyObjectToScopeAs 'tracking'
 
+  $scope.prepDelayReasonObject = copyObjectToScopeAs 'delay'
+
   $scope.editContainer = copyObjectToScopeAs 'containerToEdit'
 
   $scope.saveContainer = (shipment,container) ->
@@ -263,7 +265,9 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
     $scope.notificationMessage = "Saving shipment."
-    shipmentSvc.saveShipment(shipment).finally -> $scope.loadingFlag = null
+    shipmentSvc.saveShipment(shipment).finally ->
+      $scope.loadShipment(shipment.id).finally ->
+        $scope.loadingFlag = null
 
   if shipmentId
     $scope.loadShipment shipmentId

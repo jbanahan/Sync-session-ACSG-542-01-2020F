@@ -36,6 +36,8 @@
       <div class="col-md-4">
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/tracking_view.html' edit-template='/partials/shipments/tracking_edit.html'
           panel-title='Tracking' panel-class='panel-primary' before-edit='prepTrackingEditObject(shp)' on-save='saveShipment(tracking)'></chain-view-edit>
+        <chain-view-edit edit-if="shp.permissions.can_edit" view-template="/partials/shipments/delay_reason_view.html" edit-template="/partials/shipments/delay_reason_edit.html"
+                         panel-title="Delay Reason Codes" panel-class="panel-primary" before-edit="prepDelayReasonObject(shp)" on-save='saveShipment(delay)'></chain-view-edit>
       </div>
     </div> <!-- end ship header -->
     <hr />

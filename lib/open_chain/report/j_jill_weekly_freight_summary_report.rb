@@ -206,7 +206,7 @@ DATE_FORMAT(shipments.departure_date,'%m/%d/%Y') as 'Actual Departure',
 DATE_FORMAT(shipments.arrival_port_date,'%m/%d/%Y') as 'Actual Arrival',
 DATEDIFF(shipments.departure_date,shipments.booking_est_departure_date) as 'Departure Variance',
 DATEDIFF(shipments.arrival_port_date,shipments.booking_est_arrival_date) as 'Arrival Variance',
-shipments.delay_reason as 'Shipment Note'
+shipments.delay_reason_codes as 'Shipment Note'
 FROM
 shipments
 INNER JOIN ports as destination_port ON destination_port.id = shipments.destination_port_id
