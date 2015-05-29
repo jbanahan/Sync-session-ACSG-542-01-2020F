@@ -45,9 +45,10 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
 
       described_class.new.products_to_send.to_a.should be_empty
     end
-    it "should not find a product that does not have a tariff record" do
+    it "should find a product that does not have a tariff record" do
+      @p.update_custom_value! @cd_msl_rec, 1.day.ago
       @p.classifications.first.tariff_records.destroy_all
-      described_class.new.products_to_send.to_a.should be_empty
+      expect(described_class.new.products_to_send).to include @p
     end
   end
   describe :outbound_file do
@@ -262,6 +263,19 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @tmp = @h.generate_outbound_sync_file Product.where("1=1")
       r = CSV.parse IO.read @tmp.path
       (9..53).each {|x| expect(r[1][x]).to be_nil}
+    end
+
+    it "sends a row with blank tariff information if no tariff records associated w/ classification " do
+      @t.destroy
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+
+      # Verify blanks in the tariff data are present
+      expect(r[1][0]).to eq @p.unique_identifier
+      expect(r[1][2]).to be_blank
+      expect(r[1][3]).to be_blank
+      expect(r[1][4]).to be_blank
+      expect(r[1][5]).to be_blank
     end
   end
   describe :send_file do
