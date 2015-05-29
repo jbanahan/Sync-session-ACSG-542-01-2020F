@@ -64,8 +64,8 @@ module OpenChain
               file << outbound_file_content(p, cl, nil, iso).to_csv
             end
           end
-          #sr = p.sync_records.find_or_initialize_by_trading_partner("MSLE")
-          #sr.update_attributes(:sent_at=>Time.now)
+          sr = p.sync_records.find_or_initialize_by_trading_partner("MSLE")
+          sr.update_attributes(:sent_at=>Time.now)
         end
         file.flush
         file
