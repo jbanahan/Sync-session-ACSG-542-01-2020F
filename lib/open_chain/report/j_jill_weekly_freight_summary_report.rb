@@ -197,7 +197,7 @@ destination_ports.name as 'Booked Destination',
 shipments.booking_est_departure_date as 'Booked Origin ETD',
 shipments.booking_est_arrival_date as 'Booked Destination ETA',
 shipments.house_bill_of_lading as 'Actual Shipment #',
-shipments.load as 'Actual Mode',
+shipments.mode as 'Actual Mode',
 shipments.shipment_type as 'Actual Load',
 shipments.vessel_carrier_scac as 'Actual Carrier',
 shipments.vessel as 'Actual Vessel',
@@ -216,22 +216,38 @@ QRY
   end
   def order_fulfillment_qry
     <<QRY
-  SELECT
-  shipments.reference as 'SHP REF',
-  orders.customer_order_number as 'PO Number',
-  order_lines.sku as 'SKU',
-  booking_lines.quantity as 'Booked Qty',
-  shipment_lines.quantity as 'Shipped Qty'
-  FROM shipments
-  LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
-  LEFT OUTER JOIN booking_lines on shipments.id = booking_lines.shipment_id
-  LEFT OUTER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
-  LEFT OUTER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
-  LEFT OUTER JOIN orders ON orders.id = order_lines.order_id
-  LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
-  WHERE
-  shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
-  GROUP BY shipments.id, order_lines.id
+SELECT
+shipments.receipt_location as 'Origin',
+vendor.name as 'Vendor',
+factory.name as 'Factory',
+orders.customer_order_number as 'PO Number',
+order_lines.sku as 'PO Qty',
+XXX as 'PO GAC',
+shipments.booking_number as 'Booking #',
+shipments.booking_mode as 'Book Mode',
+XXX as 'Booked Qty',
+shipments.booking_cutoff_date as 'Booking Cut Off',
+shipments.house_bill_of_lading as 'Shipment #',
+shipments.mode as 'Ship Mode',
+XXX as 'Shipped Qty',
+XXX as 'Shipment Cut Off',
+shipments.cargo_on_hand_date as 'FCR Date',
+XXX as 'FCR vs. Ship Cutoff',
+XXX as 'FCR vs. Book Cutoff',
+XXX as 'FCR vs. GAC',
+XXX as 'Shipped Qty vs. Booked Qty',
+XXX as 'Shipped Qty vs. Ordered Qty'
+FROM shipments
+LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
+LEFT OUTER JOIN booking_lines on shipments.id = booking_lines.shipment_id
+LEFT OUTER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
+LEFT OUTER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
+LEFT OUTER JOIN orders ON orders.id = order_lines.order_id
+LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
+LEFT OUTER JOIN companies as factory ON factory.id = orders.factory_id
+WHERE
+shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
+GROUP BY shipments.id, orders.id
 QRY
   end
 end; end; end
