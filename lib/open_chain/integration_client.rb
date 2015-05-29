@@ -122,7 +122,7 @@ module OpenChain
         OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
         if fname.to_s.match /-ack/
-          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE'
+          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
         else
           OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.delay.send_and_delete_ack_file_from_s3 bucket, remote_path, fname.to_s
         end
@@ -131,7 +131,7 @@ module OpenChain
       elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
         OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
       elsif command['path'].include?('/_efocus_ack/') && MasterSetup.get.custom_feature?("e-Focus Products")
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE
+        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, username: ['rbjork']
       elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
         if fname.to_s.match /^zym_ack/
           OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'ANN-ZYM'

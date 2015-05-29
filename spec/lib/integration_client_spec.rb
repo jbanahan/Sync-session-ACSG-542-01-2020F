@@ -180,7 +180,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
         p = double("parser")
         OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:delay).and_return p
-        p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => 'MSLE'}
+        p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => 'MSLE',:username => ['dlombardi','mgrapp','gtung']}
         cmd = {'request_type'=>'remote_file','path'=>'/_from_msl/a-ack.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
@@ -274,7 +274,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('e-Focus Products').and_return(true)
       p = double("parser")
       OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:delay).and_return p
-      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE}
+      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, :username => ['rbjork']}
       cmd = {'request_type'=>'remote_file','path'=>'/_efocus_ack/file.csv','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
