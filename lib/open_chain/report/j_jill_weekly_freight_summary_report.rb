@@ -187,25 +187,25 @@ QRY
   def booking_integrity_qry
 <<QRY
 SELECT
-shipments.receipt_location as 'Origin'
-shipments.booking_number as 'Booking #'
-shipments.booking_mode as 'Booked Mode'
-shipments.booking_shipment_type as 'Booked Load'
-shipments.booking_carrier as 'Booked Carrier'
-shipments.booking_vessel as 'Booked Vessel'
-destination_ports.name as 'Booked Destination'
-shipments.booking_est_departure_date as 'Booked Origin ETD'
-shipments.booking_est_arrival_date as 'Booked Destination ETA'
-shipments.house_bill_of_lading as 'Actual Shipment #'
-shipments.load as 'Actual Mode'
-shipments.shipment_type as 'Actual Load'
-shipments.vessel_carrier_scac as 'Actual Carrier'
-shipments.vessel as 'Actual Vessel'
-destination_ports.name as 'Actual Destination'
-shipments.departure_date as 'Actual Departure'
-shipments.arrival_port_date as 'Actual Arrival'
-DATEDIFF(shipments.departure_date,shipments.booking_est_departure_date) as 'Departure Variance'
-DATEDIFF(shipments.arrival_port_date,shipments.booking_est_arrival_date) as 'Arrival Variance'
+shipments.receipt_location as 'Origin',
+shipments.booking_number as 'Booking #',
+shipments.booking_mode as 'Booked Mode',
+shipments.booking_shipment_type as 'Booked Load',
+shipments.booking_carrier as 'Booked Carrier',
+shipments.booking_vessel as 'Booked Vessel',
+destination_ports.name as 'Booked Destination',
+shipments.booking_est_departure_date as 'Booked Origin ETD',
+shipments.booking_est_arrival_date as 'Booked Destination ETA',
+shipments.house_bill_of_lading as 'Actual Shipment #',
+shipments.load as 'Actual Mode',
+shipments.shipment_type as 'Actual Load',
+shipments.vessel_carrier_scac as 'Actual Carrier',
+shipments.vessel as 'Actual Vessel',
+destination_ports.name as 'Actual Destination',
+shipments.departure_date as 'Actual Departure',
+shipments.arrival_port_date as 'Actual Arrival',
+DATEDIFF(shipments.departure_date,shipments.booking_est_departure_date) as 'Departure Variance',
+DATEDIFF(shipments.arrival_port_date,shipments.booking_est_arrival_date) as 'Arrival Variance',
 shipments.delay_reason as 'Shipment Note'
 FROM
 shipments
