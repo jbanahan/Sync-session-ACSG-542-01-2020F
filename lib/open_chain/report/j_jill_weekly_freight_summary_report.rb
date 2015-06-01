@@ -2,6 +2,7 @@ require 'open_chain/report/report_helper'
 
 module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
   include OpenChain::Report::ReportHelper
+  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
 
   def self.permission? user
     (user.company.master? || user.company.system_code=='JJILL') &&
@@ -10,6 +11,10 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
 
   def self.run_report run_by, settings={}
     self.new.run run_by, settings
+  end
+
+  def initialize
+    @cdefs ||= self.class.prep_custom_definitions [:original_gac_date]
   end
 
   def run run_by, settings
