@@ -259,9 +259,9 @@ FROM(SELECT
   shipments.cargo_on_hand_date as 'FCR Date'
 FROM shipments
   LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
-  INNER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
-  INNER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
-  INNER JOIN orders ON orders.id = order_lines.order_id
+  LEFT OUTER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
+  LEFT OUTER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
+  LEFT OUTER JOIN orders ON orders.id = order_lines.order_id
   LEFT OUTER JOIN booking_lines on orders.id = booking_lines.order_id OR order_lines.id = booking_lines.order_line_id
   LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
   LEFT OUTER JOIN companies as factory ON factory.id = orders.factory_id
