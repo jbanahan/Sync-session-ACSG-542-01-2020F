@@ -211,43 +211,55 @@ FROM
 shipments
 INNER JOIN ports as destination_port ON destination_port.id = shipments.destination_port_id
 WHERE
+shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
+AND
 DATEDIFF(now(),shipments.arrival_port_date) < 365
 QRY
   end
   def order_fulfillment_qry
     <<QRY
 SELECT
-shipments.receipt_location as 'Origin',
-vendor.name as 'Vendor',
-factory.name as 'Factory',
-orders.customer_order_number as 'PO Number',
-order_lines.sku as 'PO Qty',
-XXX as 'PO GAC',
-shipments.booking_number as 'Booking #',
-shipments.booking_mode as 'Book Mode',
-SUM(booking_lines.quantity) as 'Booked Qty',
-shipments.booking_cutoff_date as 'Booking Cut Off',
-shipments.house_bill_of_lading as 'Shipment #',
-shipments.mode as 'Ship Mode',
-XXX as 'Shipped Qty',
-XXX as 'Shipment Cut Off',
-shipments.cargo_on_hand_date as 'FCR Date',
-XXX as 'FCR vs. Ship Cutoff',
-XXX as 'FCR vs. Book Cutoff',
-XXX as 'FCR vs. GAC',
-XXX as 'Shipped Qty vs. Booked Qty',
-XXX as 'Shipped Qty vs. Ordered Qty'
+  `Origin`,`Vendor`,`Factory`,`PO Number`,`PO Qty`,`PO GAC`,
+  `Booking #`,`Book Mode`,`Booked Qty`,`Booking Cut Off`,
+  `Shipment #`,`Ship Mode`,`Shipped Qty`, `Shipment Cut Off`, `FCR Date`,
+  DATEDIFF(`FCR Date`,`Shipment Cut Off`) as 'FCR vs. Ship Cutoff',
+  DATEDIFF(`FCR Date`,`Booking Cut Off`) as 'FCR vs. Book Cutoff',
+  DATEDIFF(`FCR Date`,`PO GAC`) as 'FCR vs. GAC',
+  `Shipped Qty` - `Booked Qty` as 'Shipped Qty vs. Booked Qty',
+  `Shipped Qty` - `PO Qty` as 'Shipped Qty vs. Ordered Qty'
+FROM(SELECT
+  shipments.receipt_location as 'Origin',
+  vendor.name as 'Vendor',
+  factory.name as 'Factory',
+  orders.customer_order_number as 'PO Number',
+  (SELECT SUM(quantity) FROM order_lines WHERE order_id = orders.id GROUP BY orders.id) as 'PO Qty',
+  NULL as 'PO GAC',
+  shipments.booking_number as 'Booking #',
+  shipments.booking_mode as 'Book Mode',
+  (SELECT SUM(quantity) FROM booking_lines WHERE order_id = orders.id OR (order_lines.order_id = orders.id AND order_lines.id = order_line_id) GROUP BY orders.id) as 'Booked Qty',
+  shipments.booking_cutoff_date as 'Booking Cut Off',
+  shipments.house_bill_of_lading as 'Shipment #',
+  shipments.mode as 'Ship Mode',
+  (SELECT SUM(shipment_lines.quantity) FROM shipment_lines
+  WHERE id IN (SELECT shipment_line_id from piece_sets
+    inner join order_lines
+  where order_lines.id = piece_sets.order_line_id and orders.id = order_lines.order_id group by order_lines.order_id)
+  ) AS `Shipped Qty`,
+  NULL as 'Shipment Cut Off',
+  shipments.cargo_on_hand_date as 'FCR Date'
 FROM shipments
-LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
-LEFT OUTER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
-LEFT OUTER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
-LEFT OUTER JOIN orders ON orders.id = order_lines.order_id
-LEFT OUTER JOIN booking_lines on orders.id = booking_lines.order_id
-LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
-LEFT OUTER JOIN companies as factory ON factory.id = orders.factory_id
+  LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
+  INNER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
+  INNER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
+  INNER JOIN orders ON orders.id = order_lines.order_id
+  LEFT OUTER JOIN booking_lines on orders.id = booking_lines.order_id OR order_lines.id = booking_lines.order_line_id
+  LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
+  LEFT OUTER JOIN companies as factory ON factory.id = orders.factory_id
 WHERE
-shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
-GROUP BY shipments.id, orders.id
+  shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
+AND
+  DATEDIFF(now(),shipments.arrival_port_date) < 365
+GROUP BY shipments.id, orders.id) as data
 QRY
   end
 end; end; end
