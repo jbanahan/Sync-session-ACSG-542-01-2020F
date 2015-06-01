@@ -178,7 +178,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_gross_weight,
       :shp_booking_vessel,
       :shp_booking_carrier,
-      :shp_delay_reason_codes
+      :shp_delay_reason_codes,
+      :shp_cutoff_date
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([

@@ -127,7 +127,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
          }],
       [51, :shp_booking_carrier, :booking_carrier, "Booking Carrier", {data_type: :string}],
       [52, :shp_booking_vessel, :booking_vessel, "Booking Vessel", {data_type: :string}],
-      [53, :shp_delay_reason_codes, :delay_reason_codes, "Delay Reason", {data_type: :string}]
+      [53, :shp_delay_reason_codes, :delay_reason_codes, "Delay Reason", {data_type: :string}],
+      [54, :shp_cutoff_date, :shipment_cutoff_date, "Shipment Cutoff Date", {data_type: :date}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
