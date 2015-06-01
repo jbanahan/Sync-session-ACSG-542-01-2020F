@@ -226,12 +226,12 @@ QRY
     <<QRY
 SELECT
   `Origin`,`Vendor`,`Factory`,`PO Number`,`PO Qty`,
-  DATE_FORMAT(`PO GAC`,'%d/%m/%Y') as 'PO GAC',
+  DATE_FORMAT(`PO GAC`,'%m/%d/%Y') as 'PO GAC',
   `Booking #`,`Book Mode`,`Booked Qty`,
-  DATE_FORMAT(`Booking Cut Off`,'%d/%m/%Y') as 'Booking Cut Off',
+  DATE_FORMAT(`Booking Cut Off`,'%m/%d/%Y') as 'Booking Cut Off',
   `Shipment #`,`Ship Mode`,`Shipped Qty`,
-  DATE_FORMAT(`Shipment Cut Off`,'%d/%m/%Y') as 'Shipment Cut Off',
-  DATE_FORMAT(`FCR Date`,'%d/%m/%Y') as 'FCR Date',
+  DATE_FORMAT(`Shipment Cut Off`,'%m/%d/%Y') as 'Shipment Cut Off',
+  DATE_FORMAT(`FCR Date`,'%m/%d/%Y') as 'FCR Date',
   DATEDIFF(`FCR Date`,`Shipment Cut Off`) as 'FCR vs. Ship Cutoff',
   DATEDIFF(`FCR Date`,`Booking Cut Off`) as 'FCR vs. Book Cutoff',
   DATEDIFF(`FCR Date`,`PO GAC`) as 'FCR vs. GAC',
@@ -255,7 +255,7 @@ FROM(SELECT
     inner join order_lines
   where order_lines.id = piece_sets.order_line_id and orders.id = order_lines.order_id group by order_lines.order_id)
   ) AS `Shipped Qty`,
-  DATE_FORMAT(shipments.shipment_cut_off_date,'%m/%d/%Y') as 'Shipment Cut Off',
+  shipments.shipment_cutoff_date as 'Shipment Cut Off',
   shipments.cargo_on_hand_date as 'FCR Date'
 FROM shipments
   LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
