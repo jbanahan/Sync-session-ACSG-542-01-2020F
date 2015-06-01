@@ -51,7 +51,7 @@ describe "BusinessRuleApp", () ->
         expect(svc.editBusinessRule).toHaveBeenCalledWith("5")
 
       it "should set model_fields and businessRule on success", () ->
-        myData = {model_fields: [1, 2, 3], business_rule: "business rule"}
+        myData = {model_fields: [1, 2, 3], business_validation_rule: "business rule"}
         spyOn(svc, 'editBusinessRule').andReturn {
           success: (c) -> c(myData)
         }
