@@ -76,6 +76,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         ord.save! 
         ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
         ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
+        ord.update_custom_value!(@cdefs[:original_gac_date],@original_gac_date) if @original_gac_date
         update_line_custom_values ord
       end
 
@@ -267,6 +268,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       when '001'
         order.first_expected_delivery_date = val
       when '002'
+        @original_gac_date = val unless order.ship_window_end
         order.ship_window_end = val
       when '037'
         order.ship_window_start = val
