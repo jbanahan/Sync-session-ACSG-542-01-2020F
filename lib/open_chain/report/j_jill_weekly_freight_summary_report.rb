@@ -1,4 +1,5 @@
 require 'open_chain/report/report_helper'
+require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 
 module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
   include OpenChain::Report::ReportHelper
@@ -224,9 +225,13 @@ QRY
   def order_fulfillment_qry
     <<QRY
 SELECT
-  `Origin`,`Vendor`,`Factory`,`PO Number`,`PO Qty`,`PO GAC`,
-  `Booking #`,`Book Mode`,`Booked Qty`,`Booking Cut Off`,
-  `Shipment #`,`Ship Mode`,`Shipped Qty`, `Shipment Cut Off`, `FCR Date`,
+  `Origin`,`Vendor`,`Factory`,`PO Number`,`PO Qty`,
+  DATE_FORMAT(`PO GAC`,'%d/%m/%Y') as 'PO GAC',
+  `Booking #`,`Book Mode`,`Booked Qty`,
+  DATE_FORMAT(`Booking Cut Off`,'%d/%m/%Y') as 'Booking Cut Off',
+  `Shipment #`,`Ship Mode`,`Shipped Qty`,
+  DATE_FORMAT(`Shipment Cut Off`,'%d/%m/%Y') as 'Shipment Cut Off',
+  DATE_FORMAT(`FCR Date`,'%d/%m/%Y') as 'FCR Date',
   DATEDIFF(`FCR Date`,`Shipment Cut Off`) as 'FCR vs. Ship Cutoff',
   DATEDIFF(`FCR Date`,`Booking Cut Off`) as 'FCR vs. Book Cutoff',
   DATEDIFF(`FCR Date`,`PO GAC`) as 'FCR vs. GAC',
@@ -238,7 +243,7 @@ FROM(SELECT
   factory.name as 'Factory',
   orders.customer_order_number as 'PO Number',
   (SELECT SUM(quantity) FROM order_lines WHERE order_id = orders.id GROUP BY orders.id) as 'PO Qty',
-  NULL as 'PO GAC',
+  gac.date_value as 'PO GAC',
   shipments.booking_number as 'Booking #',
   shipments.booking_mode as 'Book Mode',
   (SELECT SUM(quantity) FROM booking_lines WHERE order_id = orders.id OR (order_lines.order_id = orders.id AND order_lines.id = order_line_id) GROUP BY orders.id) as 'Booked Qty',
@@ -250,7 +255,7 @@ FROM(SELECT
     inner join order_lines
   where order_lines.id = piece_sets.order_line_id and orders.id = order_lines.order_id group by order_lines.order_id)
   ) AS `Shipped Qty`,
-  NULL as 'Shipment Cut Off',
+  DATE_FORMAT(shipments.shipment_cut_off_date,'%m/%d/%Y') as 'Shipment Cut Off',
   shipments.cargo_on_hand_date as 'FCR Date'
 FROM shipments
   LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
@@ -260,6 +265,7 @@ FROM shipments
   LEFT OUTER JOIN booking_lines on orders.id = booking_lines.order_id OR order_lines.id = booking_lines.order_line_id
   LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
   LEFT OUTER JOIN companies as factory ON factory.id = orders.factory_id
+  LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:original_gac_date].id} and gac.customizable_id = orders.id and gac.customizable_type = 'Order'
 WHERE
   shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 AND
