@@ -116,12 +116,31 @@ describe OpenChain::CustomHandler::GenericBookingParser do
   describe 'with invalid data' do
     describe 'when SKU is provided but not PO number' do
       let(:shipment) { FactoryGirl.build :shipment, importer_id:1 }
-      it 'raises an error' do
-        parser = described_class.new
-        file_layout = parser.send 'file_layout'
-        row_with_sku = Array.new(12)
-        row_with_sku[file_layout[:sku_column]] = 'THISISANSKU'
-        expect { parser.send 'add_line', shipment, row_with_sku, 1}.to raise_error
+
+      describe 'if the SKU exists on another order line' do
+        let!(:order) { FactoryGirl.create :order, importer_id:1 }
+        let!(:product) { Factory(:product) }
+        let!(:order_line) { FactoryGirl.create :order_line, product_id:product.id, order_id:order.id, sku: 'THISISANSKU' }
+
+        it 'associates that product with the line' do
+          parser = described_class.new
+          file_layout = parser.send 'file_layout'
+          row_with_sku = Array.new(12)
+          row_with_sku[file_layout[:sku_column]] = 'THISISANSKU'
+          parser.send 'add_line', shipment, row_with_sku, 1
+          expect(shipment.booking_lines.first.product_id).to eq product.id
+        end
+      end
+
+      describe 'if the SKU is not on any other orders' do
+        it 'leaves the product blank' do
+          parser = described_class.new
+          file_layout = parser.send 'file_layout'
+          row_with_sku = Array.new(12)
+          row_with_sku[file_layout[:sku_column]] = 'THISISANSKU'
+          parser.send 'add_line', shipment, row_with_sku, 1
+          expect(shipment.booking_lines.first.product_id).to be_nil
+        end
       end
     end
   end

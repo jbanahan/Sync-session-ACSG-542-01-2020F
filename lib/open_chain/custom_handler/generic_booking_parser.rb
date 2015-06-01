@@ -188,18 +188,28 @@ module OpenChain; module CustomHandler; class GenericBookingParser
     carton_quantity = row[file_layout[:carton_qty_column]]
 
     if sku
-      raise "SKU #{sku} provided without order number" unless po
-      ol = find_order_line shipment, po, sku
-      shipment.booking_lines.build(
-          #product: ol.product,
-          quantity: quantity,
-          line_number: line_number,
-          order_line_id: ol.id,
-          #order_id: ol.order.id,
-          cbms: cbms,
-          gross_kgs: gross_kgs,
-          carton_qty: carton_quantity
-      )
+      if po
+        ol = find_order_line shipment, po, sku
+        shipment.booking_lines.build(
+            quantity: quantity,
+            line_number: line_number,
+            order_line_id: ol.id,
+            cbms: cbms,
+            gross_kgs: gross_kgs,
+            carton_qty: carton_quantity
+        )
+      else
+        order_ids = Order.where(importer_id:shipment.importer_id).pluck(:id)
+        product_id = OrderLine.where(order_id:order_ids, sku:sku).limit(1).pluck(:product_id).first
+        shipment.booking_lines.build(
+            product_id: product_id,
+            quantity: quantity,
+            line_number: line_number,
+            cbms: cbms,
+            gross_kgs: gross_kgs,
+            carton_qty: carton_quantity
+        )
+      end
     else
       product = Product.find_by_unique_identifier "#{shipment.importer.system_code}-#{style}"
       order = Order.find_by_customer_order_number po
@@ -207,7 +217,6 @@ module OpenChain; module CustomHandler; class GenericBookingParser
           product_id: product.try(:id),
           quantity: quantity,
           line_number: line_number,
-          # order_line_id: ol.id,
           order_id: order.try(:id),
           cbms: cbms,
           gross_kgs: gross_kgs,
@@ -217,9 +226,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   end
 
   def rounded_string(number)
-    if number
-      number.round.to_s
-    end
+    number.respond_to?(:round) ? number.round.to_s : number
   end
 
   def clean_number num
