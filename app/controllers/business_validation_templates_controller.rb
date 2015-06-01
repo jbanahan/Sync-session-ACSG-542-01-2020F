@@ -89,7 +89,7 @@ class BusinessValidationTemplatesController < ApplicationController
   private
 
   def add_search_criterion_to_template(template, criterion)
-    criterion["model_field_uid"] = criterion.delete("uid")
+    criterion["model_field_uid"] = criterion.delete("mfid")
     criterion.delete("datatype")
     criterion.delete("label")
     sc = SearchCriterion.new(criterion)
@@ -99,12 +99,10 @@ class BusinessValidationTemplatesController < ApplicationController
 
   def make_business_template_hash
     bt = BusinessValidationTemplate.find(params[:id])
-    bt_json = JSON.parse(bt.to_json(include: [:search_criterions =>{:only => [:value, :model_field_uid, :operator]}]))
-    bt_json["business_validation_template"]["search_criterions"].each do |sc| 
-      sc["datatype"] = ModelField.find_by_uid(sc["model_field_uid"]).data_type.to_s
-      sc["label"] = ModelField.find_by_uid(sc["model_field_uid"]).label.to_s
-      sc["uid"] = sc.delete("model_field_uid")
-    end unless bt_json["business_validation_template"]["search_criterions"].blank?
+
+    bt_json = JSON.parse(bt.to_json)
+    bt_json["business_validation_template"]["search_criterions"] = bt.search_criterions.collect {|sc| sc.json(current_user)}
+    
     return bt_json
   end
 
@@ -113,7 +111,7 @@ class BusinessValidationTemplatesController < ApplicationController
     model_fields_list = []
     @model_fields.each do |model_field|
       model_fields_list << {
-          :field_name => model_field.field_name.to_s, :uid => model_field.uid.to_s, 
+          :field_name => model_field.field_name.to_s, :mfid => model_field.uid.to_s, 
           :label => model_field.label, :datatype => model_field.data_type.to_s
           }
     end

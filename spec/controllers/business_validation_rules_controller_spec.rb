@@ -8,8 +8,7 @@ describe BusinessValidationRulesController do
   describe :create do
     before :each do
       @bvr = Factory(:business_validation_rule)
-      @bvt = Factory(:business_validation_template)
-      @bvr.business_validation_template = @bvt; @bvr.save!
+      @bvt = @bvr.business_validation_template
     end
 
     it 'should require admin' do
@@ -54,8 +53,7 @@ describe BusinessValidationRulesController do
   describe :edit do
     before :each do
       @bvr = Factory(:business_validation_rule)
-      @bvt = Factory(:business_validation_template)
-      @bvr.business_validation_template = @bvt; @bvr.save!
+      @bvt = @bvr.business_validation_template
     end
 
     it 'should require admin' do
@@ -83,8 +81,7 @@ describe BusinessValidationRulesController do
   describe :update do
     before :each do
       @bvr = Factory(:business_validation_rule)
-      @bvt = Factory(:business_validation_template)
-      @bvr.business_validation_template = @bvt; @bvr.save!
+      @bvt = @bvr.business_validation_template
     end
 
     it "should update criterions when search_criterions_only is set" do
@@ -94,7 +91,7 @@ describe BusinessValidationRulesController do
           id: @bvr.id,
           business_validation_template_id: @bvt.id,
           search_criterions_only: true,
-          business_validation_rule: {search_criterions: [{"uid" => "ent_cust_name", 
+          business_validation_rule: {search_criterions: [{"mfid" => "ent_cust_name", 
               "datatype" => "string", "label" => "Customer Name", 
               "operator" => "eq", "value" => "Monica Lewinsky"}]}
       @bvr.search_criterions.length.should == 1
@@ -128,30 +125,32 @@ describe BusinessValidationRulesController do
   describe :edit_angular do
     before :each do
       @sc = Factory(:search_criterion)
-      @bvr = Factory(:business_validation_rule, search_criterions: [@sc])
-      @bvt = Factory(:business_validation_template, module_type: "Entry")
-      @bvr.business_validation_template = @bvt; @bvr.save!
+      # Use an actual concrete rule class rather than the base 'abstract' class to validate we're getting the correct data back
+      # since there's some handling required in these cases
+      @bvt = Factory(:business_validation_template)
+      @rule = ValidationRuleAttachmentTypes.new description: "DESC", fail_state: "FAIL", name: "NAME", rule_attributes_json: '{"test":"testing"}'
+      @rule.search_criterions << @sc
+      @rule.business_validation_template = @bvt
+      @rule.save!
     end
 
     it "should render the correct model_field and business_rule json" do
       u = Factory(:admin_user)
       sign_in_as u
-      get :edit_angular, id: @bvr.id
+      get :edit_angular, id: @rule.id
       r = JSON.parse(response.body)
       expect(r["model_fields"].length).to eq ModelField.find_by_core_module(CoreModule::ENTRY).size
-      rule = r["business_rule"]["business_validation_rule"]
-      rule.delete("updated_at")
-      rule.delete("created_at")
-      rule.should == {"business_validation_template_id"=>@bvt.id, 
-          "description"=>nil, "fail_state"=>nil, "id"=>@bvr.id, 
-          "name"=>nil, "rule_attributes_json"=>nil, 
-          "search_criterions"=>[{"model_field_uid"=>"prod_uid", "operator"=>"eq", "value"=>"x"}]}
+      rule = r["business_validation_rule"]
+      expect(rule).to eq({"business_validation_template_id"=>@bvt.id, 
+          "description"=>"DESC", "fail_state"=>"FAIL", "id"=>@rule.id, 
+          "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}', 
+          "search_criterions"=>[{"mfid"=>"prod_uid", "operator"=>"eq", "value"=>"x", "label" => "Unique Identifier", "datatype" => "string", "include_empty" => false}]})
     end
 
     it 'should require admin' do
       u = Factory(:user)
       sign_in_as u
-      get :edit_angular, id: @bvr.id
+      get :edit_angular, id: @rule.id
       expect(response).to be_redirect
     end
   end
@@ -159,8 +158,7 @@ describe BusinessValidationRulesController do
   describe :destroy do
     before :each do
       @bvr = Factory(:business_validation_rule)
-      @bvt = Factory(:business_validation_template)
-      @bvr.business_validation_template = @bvt; @bvr.save!
+      @bvt = @bvr.business_validation_template
     end
 
     it 'should require admin' do

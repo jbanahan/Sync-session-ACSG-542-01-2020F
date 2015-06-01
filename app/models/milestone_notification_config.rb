@@ -3,7 +3,8 @@ class MilestoneNotificationConfig < ActiveRecord::Base
   has_many :search_criterions, dependent: :destroy, autosave: true
 
   OUTPUT_STYLE_MBOL_CONTAINER_SPLIT ||= "mbol_container"
-  OUTPUT_STYLES ||= {OUTPUT_STYLE_MBOL_CONTAINER_SPLIT => "Split on MBOL/Container Numbers", "" => "Standard"}
+  OUTPUT_STYLE_STANDARD ||= "standard"
+  OUTPUT_STYLES ||= {OUTPUT_STYLE_MBOL_CONTAINER_SPLIT => "Split on MBOL/Container Numbers", OUTPUT_STYLE_STANDARD => "Standard - One 315 per Entry"}
   validates :output_style, inclusion: {in: OUTPUT_STYLES.keys}
 
   def setup_json

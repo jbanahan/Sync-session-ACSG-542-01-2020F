@@ -1,0 +1,13 @@
+<%content_for :action_bar do %>
+<button class="btn_link" link_to="<%=settings_path%>">Back</button> 
+<%end%>
+<div ng-app="MilestoneConfigApp">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <chain-panel panel-title='Errors' panel-message="eh.errorMessage" panel-type='panel-danger'></chain-panel>
+      </div>
+    </div>
+  </div>
+  <div ui-view></div>
+</div>

@@ -24,7 +24,7 @@ businessRuleApp.controller 'BusinessRuleController', ['$scope','businessRuleServ
   $scope.editBusinessRule = (id) ->
     businessRuleService.editBusinessRule(id).success((data) ->
         $scope.model_fields = data.model_fields
-        $scope.businessRule = data.business_rule
+        $scope.businessRule = data.business_validation_rule
       )
 
   $scope.updateBusinessRule = () ->

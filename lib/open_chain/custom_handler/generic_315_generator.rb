@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
   def accepts? event, entry
     # Just check if the customer has a 315 setup, at this point..if so, then accept.  We'll decide in receive if we're actually generating anythign
     # or not.
-    MasterSetup.get.system_code == 'www-vfitrack-net' && !entry.customer_number.blank? && !setup_315(entry).nil?
+    MasterSetup.get.custom_feature?("Entry 315") && !entry.customer_number.blank? && !setup_315(entry).nil?
   end
 
   def receive event, entry
@@ -29,9 +29,9 @@ module OpenChain; module CustomHandler; class Generic315Generator
     split_entries = split_entry_data_identifiers output_style, entry
 
     split_entries.each do |data|
-      xml = generate entry, code, date, [data[:master_bill]], [data[:container_number]]
+      xml = generate entry, code, date, data[:master_bills], data[:container_numbers]
 
-      Tempfile.open(["#{entry.broker_reference}-#{data[:master_bill]}-#{data[:container_number]}-#{code}-", ".xml"]) do |fout|
+      Tempfile.open(["#{entry.broker_reference}-#{data[:master_bills].first}-#{data[:container_numbers].first}-#{code}-", ".xml"]) do |fout|
         xml.write fout
         fout.rewind
         ftp_file fout
@@ -58,7 +58,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
     add_collection_element root, "HouseBills", "HouseBill", v(:ent_hbols, entry)
     add_collection_element root, "Containers", "Container", container_numbers
     add_collection_element root, "PoNumbers", "PoNumber", v(:ent_po_numbers, entry)
-
+    
     event = add_element root, "Event"
     add_element event, "EventCode", date_code
     add_element event, "EventDate", date.strftime("%Y%m%d")
@@ -110,14 +110,14 @@ module OpenChain; module CustomHandler; class Generic315Generator
       if output_style == MilestoneNotificationConfig::OUTPUT_STYLE_MBOL_CONTAINER_SPLIT
         master_bills.each do |mb|
           if containers.length > 0
-            containers.each {|c| values << {master_bill: mb, container_number: c} }
+            containers.each {|c| values << {master_bills: [mb], container_numbers: [c]} }
           else
-            values << {master_bill: mb, container_number: nil}
+            values << {master_bills: [mb], container_numbers: [nil]}
           end
         end
-        values = values.blank? ? [{master_bill: nil, container_number: nil}] : values
+        values = values.blank? ? [{master_bills: [nil], container_numbers: [nil]}] : values
       else
-        values << {master_bill: master_bills, container_numbers: containers}
+        values << {master_bills: master_bills, container_numbers: containers}
       end
       values
     end
@@ -156,7 +156,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
 
     def adjust_date_time value, timezone, no_time
       # If the value's already a date, there's nothing to do here...
-      if value.acts_like_time?
+      if value.respond_to?(:acts_like_time?) && value.acts_like_time?
         # Change to the specified timezone, then change to date if required
         # Using strftime here specifically so we also drop seconds (if they're there, since 
         # we're not sending out seconds in the 315, we don't want our comparison with what 

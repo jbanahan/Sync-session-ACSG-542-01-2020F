@@ -111,7 +111,7 @@ describe BusinessValidationTemplatesController do
       post :update,
           id: @t.id,
           search_criterions_only: true,
-          business_validation_template: {search_criterions: [{"uid" => "ent_cust_name", 
+          business_validation_template: {search_criterions: [{"mfid" => "ent_cust_name", 
               "datatype" => "string", "label" => "Customer Name", 
               "operator" => "eq", "value" => "Monica Lewinsky"}]}
       @t.search_criterions.length.should == 1
@@ -186,7 +186,7 @@ describe BusinessValidationTemplatesController do
       temp.should == {"description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", 
           "name"=>nil, "search_criterions"=>[{"operator"=>"eq", 
               "value"=>"x", "datatype"=>"string", 
-              "label"=>"Unique Identifier", "uid"=>"prod_uid"}]}
+              "label"=>"Unique Identifier", "mfid"=>"prod_uid", "datatype"=>"string", "include_empty" => false}]}
     end
   end
 

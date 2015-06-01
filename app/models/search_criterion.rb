@@ -13,6 +13,11 @@ class SearchCriterion < ActiveRecord::Base
   validates  :model_field_uid, :presence => true
   validates  :operator, :presence => true
 
+  def json current_user
+    mf = self.model_field
+    {:mfid=>self.model_field_uid,:label=>(mf.can_view?(current_user) ? mf.label : ModelField.disabled_label),:operator=>self.operator,:value=>self.value,:datatype=>self.model_field.data_type,:include_empty=>self.include_empty?}
+  end
+
   def core_module
     self.model_field.core_module
   end

@@ -3,35 +3,49 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::Generic315Generator do
 
   describe "accepts?" do
-    before :each do
+    context "with custom feature enabled" do
+      before :each do
+        ms = double
+        MasterSetup.stub(:get).and_return ms
+        ms.stub(:custom_feature?).with("Entry 315").and_return true
+      end
+
+      it "accepts entries linked to customer numbers with 315 setups" do
+        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard"
+        c.save! 
+
+        expect(described_class.new.accepts? :save, e).to be_true
+      end
+
+      it "doesn't accept entries without 315 setups" do
+        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        expect(described_class.new.accepts? :save, e).to be_false
+      end
+
+      it "doesn't accept entries without customer numbers" do 
+        c = MilestoneNotificationConfig.create! enabled: true, output_style: "standard"
+        e = Entry.new broker_reference: "cust"
+        expect(described_class.new.accepts? :save, e).to be_false
+      end
+
+      it "doesn't accept entries linked to 315 setups that are disabled" do
+        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: false, output_style: "standard"
+        c.save! 
+
+        expect(described_class.new.accepts? :save, e).to be_false
+      end
+    end
+    
+    it "doesn't accept entries if 'Entry 315' custom feature isn't enabled" do
+      e = Entry.new broker_reference: "ref", customer_number: "cust"
+      c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard"
+      c.save! 
+
       ms = double
       MasterSetup.stub(:get).and_return ms
-      ms.stub(:system_code).and_return "www-vfitrack-net"
-    end
-
-    it "accepts entries linked to customer numbers with 315 setups" do
-      e = Entry.new broker_reference: "ref", customer_number: "cust"
-      c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: ""
-      c.save! 
-
-      expect(described_class.new.accepts? :save, e).to be_true
-    end
-
-    it "doesn't accept entries without 315 setups" do
-      e = Entry.new broker_reference: "ref", customer_number: "cust"
-      expect(described_class.new.accepts? :save, e).to be_false
-    end
-
-    it "doesn't accept entries without customer numbers" do 
-      c = MilestoneNotificationConfig.create! enabled: true, output_style: ""
-      e = Entry.new broker_reference: "cust"
-      expect(described_class.new.accepts? :save, e).to be_false
-    end
-
-    it "doesn't accept entries linked to 315 setups that are disabled" do
-      e = Entry.new broker_reference: "ref", customer_number: "cust"
-      c = MilestoneNotificationConfig.new customer_number: "cust", enabled: false, output_style: ""
-      c.save! 
+      ms.stub(:custom_feature?).with("Entry 315").and_return false
 
       expect(described_class.new.accepts? :save, e).to be_false
     end
@@ -39,7 +53,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
   describe "receive" do
     before :each do
-      @config = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: ""
+      @config = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard"
       @config.setup_json = [
         {model_field_uid: "ent_release_date"}
       ]
@@ -55,9 +69,13 @@ describe OpenChain::CustomHandler::Generic315Generator do
       end
       c.receive :save, @entry
 
-      # for this case, all we care about is that data was created..the contents of the xml
-      # are tested in depth in the unit tests for the generate method.
+      # for this case, all we care about is that data was created with all masterbills / containers in a single doc
+      # ..the full contents of the xml are tested in depth in the unit tests for the generate method.
       expect(file_contents).not_to be_nil
+      r = REXML::Document.new(file_contents).root
+      
+      expect(REXML::XPath.each(r, "MasterBills/MasterBill").collect {|v| v.text}).to eq(["A", "B"])
+      expect(REXML::XPath.each(r, "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
       # Make sure we saved off the actual date that was sent in the xml so we don't bother resending
       # the same data at a later time.
       expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.iso8601

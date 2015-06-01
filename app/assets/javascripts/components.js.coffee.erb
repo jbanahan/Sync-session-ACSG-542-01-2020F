@@ -518,7 +518,7 @@
       $scope.addCriterion = (toAddId) ->
         toAdd = {value: ''}
         mf = findByMfid $scope.modelFields, toAddId
-        toAdd.uid = mf.uid
+        toAdd.mfid = mf.mfid
         toAdd.datatype = mf.datatype
         toAdd.label = mf.label
         toAdd.operator = $scope.operators[toAdd.datatype][0].operator
@@ -526,7 +526,7 @@
 
       findByMfid = (ary,uid) ->
         for m in ary
-          return m if m.uid==uid
+          return m if m.mfid==uid
         return null
 
       registrations = []

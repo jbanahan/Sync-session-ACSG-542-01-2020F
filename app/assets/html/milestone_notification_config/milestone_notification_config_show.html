@@ -1,0 +1,73 @@
+<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
+  <div class='container'>
+    <div class="row">
+      <div class="col-md-12 text-center">
+        <h1>315 Send Configuration</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-3">
+        <div class="form-group">
+          <label>315 Sending Enabled? <input type="checkbox" ng-model="config.enabled"></label>
+        </div>
+        <div class="form-group">
+          <label for="mnc_cust_no">Customer Number</label>
+          <input type="text" ng-model="config.customer_number" id="mnc_cust_no" class="form-control">
+        </div>
+        <div class='form-group'>
+          <label for="mnc_output_style">Output Style</label>
+          <select id="mnc_output_style" ng-model="config.output_style" class="form-control" ng-options="key as value for (key, value) in outputStyles" />
+        </div>
+      </div>
+      <div class="col-md-9">
+        <label>315 Output Filters (All filters must match entry for a 315 to be sent)</label>
+        <div chain-search-criteria bound-item="config" model-fields="modelFieldList" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12 text-center">
+        <h2>Event Codes To Send</h2>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>&nbsp;</th>
+              <th>Event Code</th>
+              <th>Only send Event Date<br>(No Time)?</th>
+              <th>Convert Event Date to Time Zone<br>(Blank = US Eastern)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="event in config.setup_json">
+              <td>
+                <button type="button" class="btn btn-danger" ng-click="removeEvent(event)">
+                  <span class="glyphicon glyphicon-remove"></span>
+                </button>
+              </td>
+              <td>
+                <select ng-model="event.model_field_uid" class="form-control" ng-options="mf.mfid as mf.label for mf in eventList" />
+              </td>
+              <td>
+                <input type="checkbox" ng-model="event.no_time">
+              </td>
+              <td>
+                <select ng-model="event.timezone" class="form-control" ng-options="z.name as z.label for z in timezones" />
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" class="text-center"><button type="button" class="btn btn-default" ng-click="newEvent()" >New Event</button></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <div class="row" style="margin-top: 3em">
+      <div class="col-md-1 col-md-offset-5">
+        <button type="button" class="btn btn-default" ng-click="saveConfig()">Save</button>
+      </div>
+      <div class="col-md-1">
+        <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
+      </div>
+    </div>
+</chain-loading-wrapper>

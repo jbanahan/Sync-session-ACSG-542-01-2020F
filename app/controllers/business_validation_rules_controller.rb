@@ -69,14 +69,14 @@ class BusinessValidationRulesController < ApplicationController
       model_fields_list = make_model_fields_hashes
       business_rule_hash = make_business_rule_hash
 
-      render json: {model_fields: model_fields_list, business_rule: business_rule_hash}
+      render json: {model_fields: model_fields_list, business_validation_rule: business_rule_hash[:business_validation_rule]}
     end
   end
 
   private
 
   def add_search_criterion_to_rule(rule, criterion)
-    criterion["model_field_uid"] = criterion.delete("uid")
+    criterion["model_field_uid"] = criterion.delete("mfid")
     criterion.delete("datatype")
     criterion.delete("label")
     sc = SearchCriterion.new(criterion)
@@ -86,16 +86,20 @@ class BusinessValidationRulesController < ApplicationController
 
   def make_business_rule_hash
     br = BusinessValidationRule.find(params[:id])
-    br_json = JSON.parse(br.to_json(include: [:search_criterions =>{:only => [:value, :model_field_uid, :operator]}]))
-
-    #remove the subclass key unless it somehow has no subclass (that should only happen in testing)
-    br_json = br_json[br_json.keys.first] unless br_json.keys.first == "business_validation_rule"
-
-    br_json["search_criterions"].each do |sc| 
-      sc["datatype"] = ModelField.find_by_uid(sc["model_field_uid"]).data_type.to_s
-      sc["label"] = ModelField.find_by_uid(sc["model_field_uid"]).label.to_s
-      sc["uid"] = sc.delete("model_field_uid")
-    end unless br_json["search_criterions"].blank?
+    # Hand created to avoid extraneous attributes and including the concrete validation rule's subclass name as the root
+    # attribute name instead of 'business_validation_rule'
+    br_json = {business_validation_rule: 
+      {
+        business_validation_template_id: br.business_validation_template_id,
+        description: br.description,
+        fail_state: br.fail_state,
+        id: br.id,
+        name: br.name,
+        rule_attributes_json: br.rule_attributes_json
+      }
+    }
+    
+    br_json[:business_validation_rule][:search_criterions] = br.search_criterions.collect {|sc| sc.json current_user}
     br_json
   end
 
@@ -104,7 +108,7 @@ class BusinessValidationRulesController < ApplicationController
     model_fields_list = []
     @model_fields.each do |model_field|
       model_fields_list << {
-          :field_name => model_field.field_name.to_s, :uid => model_field.uid.to_s, 
+          :field_name => model_field.field_name.to_s, :mfid => model_field.uid.to_s, 
           :label => model_field.label, :datatype => model_field.data_type.to_s
           }
     end
