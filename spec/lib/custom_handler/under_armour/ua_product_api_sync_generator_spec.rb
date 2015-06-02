@@ -5,10 +5,10 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
   describe "sync" do
     before :each do 
       @api_client = double("FakeProductApiClient")
-      @tariff = Factory(:tariff_record, line_number: 1, hts_1: "1234567890", classification: Factory(:classification, country: Factory(:country, iso_code: "US")))
+      @tariff = Factory(:tariff_record, line_number: 1, hts_1: "1234567890", classification: Factory(:classification, country: Factory(:country, iso_code: "US"), product: Factory(:product, name: "Description")))
       @product = @tariff.product
       @g = described_class.new api_client: @api_client
-      @cdefs = described_class.prep_custom_definitions([:plant_codes, :colors])
+      @cdefs = described_class.prep_custom_definitions([ :colors])
     end
 
 
@@ -17,8 +17,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
       @product.update_custom_value! @cdefs[:colors], "A\n   \nB\nA"
 
       # We're going to mock out the data for the remote calls
-      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
-      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-B", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
+      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99", "prod_imp_syscode"]).and_return({'product'=>nil})
+      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-B", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99", "prod_imp_syscode"]).and_return({'product'=>nil})
 
       # Capture and analyze the remote data later
       create_data = []
@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
       ca = Factory(:country, iso_code: 'CA')
       @tariff.classification.update_attributes! country: ca
 
-      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
+      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99","prod_imp_syscode"]).and_return({'product'=>nil})
       
       create_data = []
       @api_client.should_receive(:create).exactly(1).times do |data|
@@ -87,6 +87,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
         '*cf_43' => "#{@product.unique_identifier}-A",
         'classifications' => [{
           'class_cntry_iso' => "CA",
+          '*cf_99' => @product.name,
           'tariff_records' => [{
             'hts_line_number' => 1,
             'hts_hts_1' => @product.classifications.first.tariff_records.first.hts_1.hts_format

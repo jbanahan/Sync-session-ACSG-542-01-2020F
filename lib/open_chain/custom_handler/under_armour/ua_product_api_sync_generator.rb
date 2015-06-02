@@ -6,8 +6,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
 
   def initialize opts = {}
     super
-    defs = self.class.prep_custom_definitions([:plant_codes, :colors])
-    @plant_cd = defs[:plant_codes]
+    defs = self.class.prep_custom_definitions([:colors])
     @colors_cd = defs[:colors]
   end
 
@@ -30,6 +29,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
       product['prod_uid'] = unique_identifier
       product["prod_part_number"] = unique_identifier
       product['class_cntry_iso'] = row[2]
+      product['class_customs_description'] = row[6] if row[2] == "CA"
       tariff = {}
       product['tariff_records'] = [tariff]
       tariff['hts_line_number'] = row[3]
@@ -59,14 +59,15 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
       prod_uid: nil,
       class_cntry_iso: nil,
       hts_line_number: nil,
-      hts_hts_1: nil
+      hts_hts_1: nil,
+      class_customs_description: nil
     }
   end
 
   def query
     # We only want 1 row per product, we're handling exploading out the records in the query processing method
     qry = <<-QRY
-SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.hts_1, color.text_value
+SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.hts_1, color.text_value, products.name
 FROM products products
 INNER JOIN classifications c on products.id = c.product_id
 INNER JOIN tariff_records r on r.classification_id = c.id and line_number = 1
