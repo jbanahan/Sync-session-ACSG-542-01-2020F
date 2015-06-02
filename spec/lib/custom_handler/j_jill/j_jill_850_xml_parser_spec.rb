@@ -59,6 +59,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.season).to eq '1501'
       expect(o.get_custom_value(cdefs[:entry_port_name]).value).to eq 'Boston'
       expect(o.get_custom_value(cdefs[:ship_type]).value).to eq 'Boat'
+      expect(o.get_custom_value(cdefs[:original_gac_date]).date_value).to eq o.ship_window_end
       expect(o.product_category).to eq 'Other'
       
       st  = o.ship_to
@@ -141,6 +142,14 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       run_file
       o.reload
       expect(o.order_lines).to be_empty
+    end
+    it "should not change the original GAC custom field if it is already set" do
+      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',ship_window_end:Date.new(2014,12,25))
+      cdefs = described_class.prep_custom_definitions [:original_gac_date]
+      o.update_custom_value!(cdefs[:original_gac_date], o.ship_window_end)
+      run_file
+      o.reload
+      expect(o.get_custom_value(cdefs[:original_gac_date]).date_value).to eq Date.new(2014,12,25)
     end
     it "should not update order already on a shipment" do
       u = 3.days.ago

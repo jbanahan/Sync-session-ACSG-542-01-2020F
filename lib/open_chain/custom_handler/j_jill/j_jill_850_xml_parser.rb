@@ -76,6 +76,9 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         ord.save! 
         ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
         ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
+        if ord.ship_window_end && ord.get_custom_value(@cdefs[:original_gac_date]).value.blank?
+          ord.update_custom_value!(@cdefs[:original_gac_date],ord.ship_window_end)
+        end
         update_line_custom_values ord
       end
 

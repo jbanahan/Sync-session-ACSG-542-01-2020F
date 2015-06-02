@@ -1,7 +1,9 @@
 require 'open_chain/report/report_helper'
+require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 
 module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
   include OpenChain::Report::ReportHelper
+  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
 
   def self.permission? user
     (user.company.master? || user.company.system_code=='JJILL') &&
@@ -12,6 +14,10 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
     self.new.run run_by, settings
   end
 
+  def initialize
+    @cdefs ||= self.class.prep_custom_definitions [:original_gac_date]
+  end
+
   def run run_by, settings
     wb = Spreadsheet::Workbook.new
     sheet_setup = {
@@ -19,7 +25,9 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
       "PO Integrity" => po_integrity_qry,
       "Booking Exception" => booking_exception_qry,
       "Transit Time" => transit_time_qry,
-      "Value In Transit" => value_in_transit_qry
+      "Value In Transit" => value_in_transit_qry,
+      "Booking Integrity" => booking_integrity_qry,
+      "Order Fulfillment" => order_fulfillment_qry
     }
     sheet_setup.each {|k,v| sheet_from_query wb, k, v}
     workbook_to_tempfile wb, 'JJillWeeklyFreightSummary-'
@@ -181,5 +189,88 @@ QRY
   GROUP BY shipments.id, orders.id, order_lines.price_per_unit
 QRY
     q
+  end
+  def booking_integrity_qry
+<<QRY
+SELECT
+shipments.receipt_location as 'Origin',
+shipments.booking_number as 'Booking #',
+shipments.booking_mode as 'Booked Mode',
+shipments.booking_shipment_type as 'Booked Load',
+shipments.booking_carrier as 'Booked Carrier',
+shipments.booking_vessel as 'Booked Vessel',
+destination_port.name as 'Booked Destination',
+DATE_FORMAT(shipments.booking_est_departure_date,'%m/%d/%Y') as 'Booked Origin ETD',
+DATE_FORMAT(shipments.booking_est_arrival_date,'%m/%d/%Y') as 'Booked Destination ETA',
+shipments.house_bill_of_lading as 'Actual Shipment #',
+shipments.mode as 'Actual Mode',
+shipments.shipment_type as 'Actual Load',
+shipments.vessel_carrier_scac as 'Actual Carrier',
+shipments.vessel as 'Actual Vessel',
+destination_port.name as 'Actual Destination',
+DATE_FORMAT(shipments.departure_date,'%m/%d/%Y') as 'Actual Departure',
+DATE_FORMAT(shipments.arrival_port_date,'%m/%d/%Y') as 'Actual Arrival',
+DATEDIFF(shipments.departure_date,shipments.booking_est_departure_date) as 'Departure Variance',
+DATEDIFF(shipments.arrival_port_date,shipments.booking_est_arrival_date) as 'Arrival Variance',
+shipments.delay_reason_codes as 'Shipment Note'
+FROM
+shipments
+INNER JOIN ports as destination_port ON destination_port.id = shipments.destination_port_id
+WHERE
+shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
+AND
+DATEDIFF(now(),shipments.arrival_port_date) < 365
+QRY
+  end
+  def order_fulfillment_qry
+    <<QRY
+SELECT
+  `Origin`,`Vendor`,`Factory`,`PO Number`,`PO Qty`,
+  DATE_FORMAT(`PO GAC`,'%m/%d/%Y') as 'PO GAC',
+  `Booking #`,`Book Mode`,`Booked Qty`,
+  DATE_FORMAT(`Booking Cut Off`,'%m/%d/%Y') as 'Booking Cut Off',
+  `Shipment #`,`Ship Mode`,`Shipped Qty`,
+  DATE_FORMAT(`Shipment Cut Off`,'%m/%d/%Y') as 'Shipment Cut Off',
+  DATE_FORMAT(`FCR Date`,'%m/%d/%Y') as 'FCR Date',
+  DATEDIFF(`FCR Date`,`Shipment Cut Off`) as 'FCR vs. Ship Cutoff',
+  DATEDIFF(`FCR Date`,`Booking Cut Off`) as 'FCR vs. Book Cutoff',
+  DATEDIFF(`FCR Date`,`PO GAC`) as 'FCR vs. GAC',
+  `Shipped Qty` - `Booked Qty` as 'Shipped Qty vs. Booked Qty',
+  `Shipped Qty` - `PO Qty` as 'Shipped Qty vs. Ordered Qty'
+FROM(SELECT
+  shipments.receipt_location as 'Origin',
+  vendor.name as 'Vendor',
+  factory.name as 'Factory',
+  orders.customer_order_number as 'PO Number',
+  (SELECT SUM(quantity) FROM order_lines WHERE order_id = orders.id GROUP BY orders.id) as 'PO Qty',
+  gac.date_value as 'PO GAC',
+  shipments.booking_number as 'Booking #',
+  shipments.booking_mode as 'Book Mode',
+  (SELECT SUM(quantity) FROM booking_lines WHERE order_id = orders.id OR (order_lines.order_id = orders.id AND order_lines.id = order_line_id) GROUP BY orders.id) as 'Booked Qty',
+  shipments.booking_cutoff_date as 'Booking Cut Off',
+  shipments.house_bill_of_lading as 'Shipment #',
+  shipments.mode as 'Ship Mode',
+  (SELECT SUM(shipment_lines.quantity) FROM shipment_lines
+  WHERE id IN (SELECT shipment_line_id from piece_sets
+    inner join order_lines
+  where order_lines.id = piece_sets.order_line_id and orders.id = order_lines.order_id group by order_lines.order_id)
+  ) AS `Shipped Qty`,
+  shipments.shipment_cutoff_date as 'Shipment Cut Off',
+  shipments.cargo_on_hand_date as 'FCR Date'
+FROM shipments
+  LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
+  LEFT OUTER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
+  LEFT OUTER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
+  LEFT OUTER JOIN orders ON orders.id = order_lines.order_id
+  LEFT OUTER JOIN booking_lines on orders.id = booking_lines.order_id OR order_lines.id = booking_lines.order_line_id
+  LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
+  LEFT OUTER JOIN companies as factory ON factory.id = orders.factory_id
+  LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:original_gac_date].id} and gac.customizable_id = orders.id and gac.customizable_type = 'Order'
+WHERE
+  shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
+AND
+  DATEDIFF(now(),shipments.arrival_port_date) < 365
+GROUP BY shipments.id, orders.id) as data
+QRY
   end
 end; end; end

@@ -239,6 +239,8 @@ shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId',
 
   $scope.prepTrackingEditObject = copyObjectToScopeAs 'tracking'
 
+  $scope.prepDelayReasonObject = copyObjectToScopeAs 'delay'
+
   $scope.editContainer = copyObjectToScopeAs 'containerToEdit'
 
   $scope.saveContainer = (shipment,container) ->
@@ -332,11 +334,8 @@ shipmentApp.controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','shipment
     makeLineObj = (oln)->
       if collection_name == 'booking_lines'
         {
-        bkln_puid: oln.ordln_puid,
-        bkln_pname: oln.ordln_pname,
-        linked_order_line_id: oln.id,
+        bkln_order_line_id: oln.id,
         bkln_quantity: oln.quantity_to_ship,
-        order_lines: [{ord_cust_ord_no: ord.ord_cust_ord_no,ordln_line_number: oln.ordln_line_number}]
         }
       else
         {

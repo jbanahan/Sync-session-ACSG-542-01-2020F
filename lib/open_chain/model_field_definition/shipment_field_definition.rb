@@ -80,7 +80,55 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [43,:shp_marks_and_numbers, :marks_and_numbers, 'Marks & Numbers', {data_type: :string}],
       [44,:shp_number_of_packages, :number_of_packages, 'Number of Packages', {data_type: :integer}],
       [45,:shp_number_of_packages_uom, :number_of_packages_uom, 'Number of Packages UOM', {data_type: :string}],
-      [46, :shp_gross_weight, :gross_weight, 'Gross Weight (KGs)', {data_type: :decimal}]
+      [46, :shp_gross_weight, :gross_weight, 'Gross Weight (KGs)', {data_type: :decimal}],
+      [47,:shp_booked_orders,:booked_orders,"Booked Orders",{
+            data_type: :text,
+            read_only: true,
+            import_lambda: lambda {|obj,val| "Booked Orders is read only."},
+            export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:customer_order_number).compact.uniq.sort.join("\n ")},
+            qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.order_number ORDER BY orders.order_number SEPARATOR '\n ')
+          FROM booking_lines
+          INNER JOIN order_lines ON booking_lines.order_line_id = order_lines.id
+          INNER JOIN orders ON orders.id = order_lines.order_id OR orders.id = booking_lines.order_id
+          WHERE booking_lines.shipment_id = shipments.id)"
+        }],
+      [48,:shp_shipped_orders,:shipped_orders,"Shipped Orders",{
+             data_type: :text,
+             read_only: true,
+             import_lambda: lambda {|obj,val| "Shipped Orders is read only."},
+             export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:order).map(&:order_number).compact.uniq.sort.join("\n ")},
+             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.order_number ORDER BY orders.order_number SEPARATOR '\n ')
+          FROM shipment_lines
+          INNER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
+          INNER JOIN order_lines ON piece_sets.order_line_id = order_lines.id
+          INNER JOIN orders ON orders.id = order_lines.order_id
+          WHERE shipment_lines.shipment_id = shipments.id)"
+         }],
+      [49,:shp_shipped_products,:shipped_products,"Shipped Products",{
+             data_type: :text,
+             read_only: true,
+             import_lambda: lambda {|obj,val| "Shipped Products is read only."},
+             export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:product).map(&:unique_identifier).compact.uniq.sort.join("\n ")},
+             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT products.unique_identifier ORDER BY products.unique_identifier SEPARATOR '\n ')
+          FROM shipment_lines
+          INNER JOIN products ON products.id = shipment_lines.product_id
+          WHERE shipment_lines.shipment_id = shipments.id)"
+         }],
+      [50,:shp_booked_products,:booked_products,"Booked Products",{
+             data_type: :text,
+             read_only: true,
+             import_lambda: lambda {|obj,val| "Booked Products is read only."},
+             export_lambda: lambda {|obj| obj.booking_lines.map(&:product_identifier).compact.uniq.sort.join("\n ")},
+             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT products.unique_identifier ORDER BY products.unique_identifier SEPARATOR '\n ')
+          FROM booking_lines
+          INNER JOIN order_lines ON order_lines.id = booking_lines.order_line_id
+          INNER JOIN products ON products.id = booking_lines.product_id OR products.id = order_lines.product_id
+          WHERE booking_lines.shipment_id = shipments.id)"
+         }],
+      [51, :shp_booking_carrier, :booking_carrier, "Booking Carrier", {data_type: :string}],
+      [52, :shp_booking_vessel, :booking_vessel, "Booking Vessel", {data_type: :string}],
+      [53, :shp_delay_reason_codes, :delay_reason_codes, "Delay Reason", {data_type: :string}],
+      [54, :shp_cutoff_date, :shipment_cutoff_date, "Shipment Cutoff Date", {data_type: :date}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
