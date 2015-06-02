@@ -135,13 +135,13 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              data_type: :decimal,
              read_only: true,
              export_lambda: lambda {|obj| obj.dimensional_weight },
-             qualified_field_name: "(SELECT shipments.volume / 0.006)"
+             qualified_field_name: "(SELECT IFNULL(shipments.volume,0) / 0.006)"
          }],
       [58, :shp_chargeable_weight, :chargeable_weight, "Chargeable Weight", {
              data_type: :boolean,
              read_only: true,
              export_lambda: lambda { |obj| obj.chargeable_weight },
-             qualified_field_name: "(SELECT CASE WHEN shipments.gross_weight > (shipments.volume / 0.006) THEN shipments.gross_weight ELSE (shipments.volume / 0.006) END)"
+             qualified_field_name: "(SELECT CASE WHEN IFNULL(shipments.gross_weight,0) > (IFNULL(shipments.volume,0) / 0.006) THEN IFNULL(shipments.gross_weight,0) ELSE (IFNULL(shipments.volume,0) / 0.006) END)"
          }]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
