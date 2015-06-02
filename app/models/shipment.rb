@@ -249,7 +249,15 @@ class Shipment < ActiveRecord::Base
 	def locked?
 	  (!self.vendor.nil? && self.vendor.locked?) ||
 	  (!self.carrier.nil? && self.carrier.locked?)
-	end
+  end
+
+  def dimensional_weight
+    self.volume / 0.006
+  end
+
+  def chargeable_weight
+    dimensional_weight > self.gross_weight ? dimensional_weight : self.gross_weight
+  end
 
   def self.search_secure user, base_object
     base_object.where search_where user
