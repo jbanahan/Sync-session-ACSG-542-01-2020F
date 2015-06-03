@@ -2,19 +2,23 @@
 $(function() {
   $(".search-query ").val("<%=j raw(@value)%>");
   $("[data-qs-activate]").click(function() {
-    var btn, activateTarget; 
+    var btn, activateTarget, defaultModule;
     btn = $(this)
     activateTarget = btn.attr('data-qs-activate');
+
 
     $("[data-qs-activate]").addClass('btn-default').removeClass('btn-primary');
     btn.addClass('btn-primary').removeClass('btn-default');
 
     if(activateTarget=="all") {
+      defaultModule = "all";
       $("[data-qs-panel]").fadeIn();
     } else {
+      defaultModule = activateTarget.slice(3); // Slice off the 'qs-' prefix
       $("[data-qs-panel]").fadeOut();
       $("[data-qs-panel='"+activateTarget+"']").fadeIn();
     }
+    Chain.setStorageItem('defaultModule', defaultModule);
   });
 });
 <%end%>
