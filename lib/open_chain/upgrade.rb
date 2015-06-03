@@ -117,7 +117,9 @@ module OpenChain
       capture_and_log "git checkout #{@target}"
       log_me "Source checked out"
       log_me "Running bundle install"
-      capture_and_log "bundle install --without=development test"
+      # Use the frozen command to absolutely prevent updates to Gemfile.lock in production (.ie should a Gemfile 
+      # update get checked in sans Gemfile.lock update)
+      capture_and_log "bundle install --frozen --without=development test"
       log_me "Bundle complete, running migrations"
     end
 

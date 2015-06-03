@@ -1,4 +1,4 @@
-require 'zip/zip'
+require 'zip'
 module OpenChain
   module CustomHandler
     #responsible for loading zip files of Amscan product images from their CDs which are loaded to S3 as zip files
@@ -14,7 +14,7 @@ module OpenChain
       end
 
       def self.process_zip local_zip_path
-        Zip::ZipFile.foreach(local_zip_path) {|z| process_zip_entry z}
+        Zip::File.foreach(local_zip_path) {|z| process_zip_entry z}
       end
       
       def self.process_zip_entry zip_entry

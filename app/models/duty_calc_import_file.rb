@@ -1,4 +1,4 @@
-require 'zip/zipfilesystem'
+require 'zip/filesystem'
 require 'spreadsheet'
 class DutyCalcImportFile < ActiveRecord::Base
   has_many :duty_calc_import_file_lines, :dependent=>:destroy
@@ -31,7 +31,7 @@ class DutyCalcImportFile < ActiveRecord::Base
   #make zip of excel files
   def self.generate_excel_zip importer, user, file_path, max_lines_per_file=65000
     d = nil
-    Zip::ZipFile.open(file_path,Zip::ZipFile::CREATE) do |zipfile|
+    Zip::File.open(file_path,Zip::File::CREATE) do |zipfile|
       book = Spreadsheet::Workbook.new
       sheet = book.create_worksheet :name=>"SHEET1"
       row_count = 0

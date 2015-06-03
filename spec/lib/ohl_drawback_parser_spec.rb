@@ -45,7 +45,7 @@ describe OpenChain::OhlDrawbackParser do
     tr.duty_amount.should == 6253.63
     tr.classification_qty_1.should == 2700
     tr.classification_uom_1.should == "NO"
-    tr.entered_value.should == 1997
+    tr.entered_value.should == BigDecimal.new('35532')
     tr.duty_rate.should == BigDecimal('0.056')
   end
   it 'should map newer 31 column format' do

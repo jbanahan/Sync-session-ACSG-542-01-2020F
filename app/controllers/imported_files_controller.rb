@@ -10,7 +10,7 @@ class ImportedFilesController < ApplicationController
   end
   
   def index
-    @imported_files = ImportedFile.where(:user_id=>current_user.id).order("created_at DESC").paginate(:page=>20, :page=>params[:page])
+    @imported_files = ImportedFile.where(:user_id=>current_user.id).order("created_at DESC").paginate(:page=>params[:page])
   end
 
   def new

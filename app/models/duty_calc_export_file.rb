@@ -1,4 +1,4 @@
-require 'zip/zipfilesystem'
+require 'zip/filesystem'
 require 'spreadsheet'
 class DutyCalcExportFile < ActiveRecord::Base
   belongs_to :importer, :class_name=>"Company"
@@ -61,7 +61,7 @@ class DutyCalcExportFile < ActiveRecord::Base
   # Generates a single zip file (in a Tempfile) with one or more excel files in it.  The total content is all available export lines for this importer
   def self.generate_excel_zip importer, file_path, max_lines_per_file=65000, extra_where = nil, max_files = 3
     d = nil
-    Zip::ZipFile.open(file_path,Zip::ZipFile::CREATE) do |zipfile|
+    Zip::File.open(file_path,Zip::File::CREATE) do |zipfile|
       book = Spreadsheet::Workbook.new
       sheet = book.create_worksheet :name=>"SHEET1"
       row_count = 0

@@ -37,7 +37,7 @@ describe DutyCalcImportFile do
   describe :generate_excel_zip do
     it "should generate a single zipped excel file" do
       d, f = DutyCalcImportFile.generate_excel_zip @importer, @user, @zip_path
-      Zip::ZipFile.open(f.path) do |zipfile|
+      Zip::File.open(f.path) do |zipfile|
         zipfile.dir.entries("/").should have(1).item
         z_out = 'spec/support/tmp/x.xls'
         @to_del << z_out
@@ -54,7 +54,7 @@ describe DutyCalcImportFile do
     end
     it "should generate multiple when the number of lines is over the max_lines_per_file" do
       d, f = DutyCalcImportFile.generate_excel_zip @importer, @user, @zip_path, 1
-      Zip::ZipFile.open(f.path) do |zipfile|
+      Zip::File.open(f.path) do |zipfile|
         zipfile.dir.entries("/").should == ["File 1.xls","File 2.xls"]
       end
     end

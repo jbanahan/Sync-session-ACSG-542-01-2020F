@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'zip/zip'
 
 describe OpenChain::CustomHandler::AmscanZipLoader do
   before :each do 
@@ -19,7 +18,7 @@ describe OpenChain::CustomHandler::AmscanZipLoader do
   end
   describe "process zip" do
     it "should process zip entry for each file in zip" do
-      @h.should_receive(:process_zip_entry).with(instance_of(Zip::ZipEntry)).exactly(8).times
+      @h.should_receive(:process_zip_entry).with(instance_of(Zip::Entry)).exactly(8).times
       @h.process_zip 'spec/support/bin/amscan_sample.zip'
     end
   end
