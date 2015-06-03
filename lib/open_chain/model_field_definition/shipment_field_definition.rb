@@ -128,7 +128,21 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [51, :shp_booking_carrier, :booking_carrier, "Booking Carrier", {data_type: :string}],
       [52, :shp_booking_vessel, :booking_vessel, "Booking Vessel", {data_type: :string}],
       [53, :shp_delay_reason_codes, :delay_reason_codes, "Delay Reason", {data_type: :string}],
-      [54, :shp_cutoff_date, :shipment_cutoff_date, "Shipment Cutoff Date", {data_type: :date}]
+      [54, :shp_cutoff_date, :shipment_cutoff_date, "Shipment Cutoff Date", {data_type: :date}],
+      [55, :shp_fish_and_wildlife, :fish_and_wildlife, "Fish And Wildlife", {data_type: :boolean}],
+      [56, :shp_volume, :volume, "Volume", {data_type: :decimal}],
+      [57, :shp_dimensional_weight, :dimensional_weight, "Dimensional Weight", {
+             data_type: :decimal,
+             read_only: true,
+             export_lambda: lambda {|obj| obj.dimensional_weight },
+             qualified_field_name: "(SELECT IFNULL(shipments.volume,0) / 0.006)"
+         }],
+      [58, :shp_chargeable_weight, :chargeable_weight, "Chargeable Weight", {
+             data_type: :boolean,
+             read_only: true,
+             export_lambda: lambda { |obj| obj.chargeable_weight },
+             qualified_field_name: "(SELECT CASE WHEN IFNULL(shipments.gross_weight,0) > (IFNULL(shipments.volume,0) / 0.006) THEN IFNULL(shipments.gross_weight,0) ELSE (IFNULL(shipments.volume,0) / 0.006) END)"
+         }]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
