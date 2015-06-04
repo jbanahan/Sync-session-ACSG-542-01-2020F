@@ -212,10 +212,8 @@ class EntriesController < ApplicationController
   def bulk_request_entry_data
     if current_user.sys_admin?
       primary_keys = params[:pk].values
-      client = OpenChain::SqlProxyClient.new
-      Entry.find(primary_keys).each do |entry|
-        client.delay.request_entry_data entry.broker_reference
-      end
+      references = Entry.where(id: primary_keys).pluck(:broker_reference)
+      OpenChain::SqlProxyClient.new.delay.request_bulk_entry_data references
       add_flash :notices, "Updated entries have been requested.  Please allow 10 minutes for them to appear."
     end
 
