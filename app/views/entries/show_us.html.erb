@@ -6,6 +6,9 @@
   <%if current_user.company.master?-%>
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
+  <%if current_user.sys_admin?-%>
+    <button class='btn_link' link_to='<%=update_entry_entry_path(@entry)%>'>Update Entry</button>
+  <%end-%>
   <button id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
   <%if rule_state_field.can_view? current_user%>
     <button class='btn_link' link_to='<%=validation_results_entry_path(@entry)%>'>Business Rules</button>
@@ -150,6 +153,7 @@
         <td style="width:50%;">
           <table>
             <%= show_model_fields @entry, [:ent_pay_type,:ent_daily_statement_number,:ent_daily_statement_due_date,:ent_daily_statement_approved_date], table: true %>
+          </table>
         </td>
         <td style="width:50%;">
           <table>
