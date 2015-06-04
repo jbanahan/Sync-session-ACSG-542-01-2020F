@@ -200,7 +200,7 @@ class EntriesController < ApplicationController
     @e = Entry.find(params[:id])
   end
 
-  def update_entry
+  def request_entry_data
     if current_user.sys_admin?
       @entry = Entry.find params[:id]
       OpenChain::SqlProxyClient.new.delay.request_entry_data @entry.broker_reference
@@ -209,7 +209,7 @@ class EntriesController < ApplicationController
     redirect_to @entry
   end
 
-  def bulk_update
+  def bulk_request_entry_data
     if current_user.sys_admin?
       primary_keys = params[:pk].values
       client = OpenChain::SqlProxyClient.new

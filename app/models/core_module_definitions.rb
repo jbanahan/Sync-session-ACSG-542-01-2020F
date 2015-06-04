@@ -218,7 +218,7 @@ module CoreModuleDefinitions
        :bulk_actions_lambda => lambda {|current_user|
          bulk_actions = {}
          bulk_actions["Update Images"] = "bulk_get_images_entries_path" if current_user.company.master? && current_user.view_entries?
-         bulk_actions["Update Entries"] = "bulk_update_entries_path" if current_user.sys_admin?
+         bulk_actions["Update Entries"] = "bulk_request_entry_data_entries_path" if current_user.sys_admin?
          bulk_actions
        },
        :children => [COMMERCIAL_INVOICE],

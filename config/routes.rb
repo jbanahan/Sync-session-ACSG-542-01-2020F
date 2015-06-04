@@ -127,8 +127,8 @@ OpenChain::Application.routes.draw do
     resources :broker_invoices, :only=>[:create]
     get 'validation_results', on: :member
     get 'sync_records', on: :member
-    get 'update_entry', on: :member
-    post 'bulk_update', on: :collection
+    get 'request_entry_data', on: :member
+    post 'bulk_request_entry_data', on: :collection
   end
 
   resources :business_validation_templates do
