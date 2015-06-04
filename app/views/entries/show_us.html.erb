@@ -4,10 +4,10 @@
   <%pms[:mode]='simple'-%>
   <button class='btn_link' link_to='<%=entry_path(@entry,pms)%>'>Simple Mode</button>
   <%if current_user.company.master?-%>
-    <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
+    <%= button_to 'Update Images', get_images_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button' %>
   <%end-%>
   <%if current_user.sys_admin?-%>
-    <button class='btn_link' link_to='<%=request_entry_data_entry_path(@entry)%>'>Update Entry</button>
+    <%= button_to 'Update Entry', request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;' %>
   <%end-%>
   <button id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
   <%if rule_state_field.can_view? current_user%>
