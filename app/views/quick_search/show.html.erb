@@ -1,6 +1,7 @@
 <%content_for :javascript do%>
 $(function() {
   $(".search-query ").val("<%=j raw(@value)%>");
+  $('[data-qs-panel]').hide();
   $("[data-qs-activate]").click(function() {
     var btn, activateTarget, defaultModule;
     btn = $(this)
@@ -12,14 +13,34 @@ $(function() {
 
     if(activateTarget=="all") {
       defaultModule = "all";
+      searchAllModules();
       $("[data-qs-panel]").fadeIn();
     } else {
       defaultModule = activateTarget.slice(3); // Slice off the 'qs-' prefix
-      $("[data-qs-panel]").fadeOut();
+      searchByModule(defaultModule);
+      $("[data-qs-panel]:visible").fadeOut();
       $("[data-qs-panel='"+activateTarget+"']").fadeIn();
     }
     Chain.setStorageItem('defaultModule', defaultModule);
   });
+
+  moduleName = Chain.getStorageItem('defaultModule') || "all";
+  if(moduleName !== "all") {
+    $("[data-qs-activate='qs-" + moduleName + "']").click()
+    searchByModule(moduleName);
+  } else {
+    $("[data-qs-activate='all']").click()
+  }
+
+  function searchByModule(moduleName) {
+    OCQuickSearch.byModule(moduleName,'<%=@value%>');
+  }
+
+  function searchAllModules() {
+    <%@available_modules.each do |cm|%>
+    OCQuickSearch.byModule('<%=cm.class_name%>','<%=@value%>');
+    <%end%>
+  }
 });
 <%end%>
 <div class="container">
@@ -47,11 +68,6 @@ $(function() {
         </div>
       </div>
     </div>
-    <script type="text/javascript">
-      $(document).ready(function() {
-        OCQuickSearch.byModule('<%=cm.class_name%>','<%=@value%>');
-      });
-    </script>
   <%end%>
 </div>
 
