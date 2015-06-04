@@ -22,12 +22,14 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbackController
 
   def receive_updated_entry_numbers
     extract_results(params) do |results, context|
-      # There's really only going to be a single result returned here which is just a single has
-      # The key is the entry file number that was updated, and the value is the time it was updated.
-      results.each_pair do |k, v|
-        OpenChain::CustomHandler::KewillDataRequester.delay.request_entry_data k, v
+      run_in_thread do 
+        # Split the results into groups of 1000 (to avoid overflowing the max size of a delayed job handler column)
+        results.keys.in_groups_of(batch_size, false) do |keys|
+          sub_results = {}
+          keys.each {|k| sub_results[k] = results[k] }
+          OpenChain::CustomHandler::KewillDataRequester.delay.request_entry_batch_data sub_results
+        end
       end
-      
       render json: {"OK" => ""}
     end
   end
@@ -46,5 +48,26 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbackController
       render json: {"OK" => ""}
     end
   end
+
+  private 
+
+    def run_in_thread
+      # Run inline for testing
+      if Rails.env.test?
+        yield
+      else
+        Thread.new do
+          #need to wrap connection handling for safe threading per: http://bibwild.wordpress.com/2011/11/14/multi-threading-in-rails-activerecord-3-0-3-1/
+          ActiveRecord::Base.connection_pool.with_connection do
+            yield
+          end
+        end
+      end
+    end
+
+    def batch_size
+      # Method exists purely for mocking/test purposes
+      1000
+    end
 
 end; end; end

@@ -65,10 +65,11 @@ describe Api::V1::AllianceDataController do
 
   describe "receive_updated_entry_numbers" do
     it "receives data" do
-      results = {"1"=>201503010000, "2"=>201503020000}
+      results = {"1"=>201503010000, "2"=>201503020000, "3"=>201503030000, "4"=>201503040000}
       OpenChain::CustomHandler::KewillDataRequester.stub(:delay).and_return OpenChain::CustomHandler::KewillDataRequester
-      OpenChain::CustomHandler::KewillDataRequester.should_receive(:request_entry_data).with("1", "201503010000")
-      OpenChain::CustomHandler::KewillDataRequester.should_receive(:request_entry_data).with("2", "201503020000")
+      OpenChain::CustomHandler::KewillDataRequester.should_receive(:request_file_batch).with({"1"=>"201503010000", "2"=>"201503020000"})
+      OpenChain::CustomHandler::KewillDataRequester.should_receive(:request_file_batch).with({"3"=>"201503030000", "4"=>"201503040000"})
+      subject.should_receive(:batch_size).and_return 2
 
       post "receive_updated_entry_numbers", results: results, context: {}
       expect(response.body).to eq ({"OK" => ""}.to_json)

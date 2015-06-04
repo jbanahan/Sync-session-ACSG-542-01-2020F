@@ -119,4 +119,35 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       described_class.request_entry_data '12345', (existing_last_exported - 1.second), sql_proxy_client
     end
   end
+
+  describe "request_entry_batch_data" do
+    it "requests entry data for each value in the given json hash" do
+      described_class.stub(:delay).and_return described_class
+      described_class.should_receive(:request_entry_data).with("1", "123")
+
+      described_class.request_entry_batch_data({"1"=>"123"}.to_json)
+    end
+
+    it "requests entry data for each value in the given hash" do
+      described_class.stub(:delay).and_return described_class
+      described_class.should_receive(:request_entry_data).with("1", "123")
+
+      described_class.request_entry_batch_data({"1"=>"123"})
+    end
+
+    it "does not not request data if a job is already queued for this data" do
+      dj = Delayed::Job.new
+      dj.handler = "--- !ruby/object:Delayed::PerformableMethod
+object: !ruby/class 'OpenChain::CustomHandler::KewillDataRequester'
+method_name: :request_entry_data
+args:
+- '1'
+- 201506041052
+"
+      dj.save!
+      described_class.should_not_receive(:delay)
+      described_class.should_not_receive(:request_entry_batch_data)
+      described_class.request_entry_batch_data({"1"=>"123"})
+    end
+  end
 end

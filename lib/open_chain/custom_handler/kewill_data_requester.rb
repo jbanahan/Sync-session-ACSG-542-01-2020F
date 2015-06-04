@@ -83,4 +83,16 @@ module OpenChain; module CustomHandler; class KewillDataRequester
   def self.tz 
     ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
   end
+
+  def self.request_entry_batch_data json_request_data
+    request_data = json_request_data.is_a?(String) ? ActiveSupport::JSON.decode(json_request_data) : json_request_data
+    # the data being sent is just a large array w/ the key being the file number and the value being the update time of the file
+    request_data.each_pair do |file_no, update_time|
+      # Validate that this number hasn't already been queued in the DJ queue...method check done like this so we bomb if the method is
+      # refactored away without updating this method
+      if Delayed::Job.where("handler like ?", "%method_name: :#{self.method(:request_entry_data).name}%").where("handler like ?", "%'#{file_no}'%").count == 0
+         OpenChain::CustomHandler::KewillDataRequester.delay.request_entry_data file_no, update_time
+      end
+    end
+  end
 end; end; end
