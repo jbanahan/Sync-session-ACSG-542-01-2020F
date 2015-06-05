@@ -146,7 +146,7 @@ args:
 "
       dj.save!
       described_class.should_not_receive(:delay)
-      described_class.should_not_receive(:request_entry_batch_data)
+      described_class.should_not_receive(:request_entry_data)
       described_class.request_entry_batch_data({"1"=>"123"})
     end
   end
