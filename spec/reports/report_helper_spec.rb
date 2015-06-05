@@ -4,24 +4,39 @@ describe OpenChain::Report::ReportHelper do
 
   before :each do 
     @helper = Class.new do
-        include OpenChain::Report::ReportHelper
-
-        def run query, conversions = {}
-          wb = Spreadsheet::Workbook.new
-          s = wb.create_worksheet :name=>'x'
-          table_from_query s, query, conversions
-        end
-      end
+      include OpenChain::Report::ReportHelper
+    end
   end
   
   describe "table_from_query" do
+    before :each do 
+      @helper = Class.new do
+        include OpenChain::Report::ReportHelper
+
+        def run query, conversions = {}, opts = {}
+          wb = Spreadsheet::Workbook.new
+          s = wb.create_worksheet :name=>'x'
+          table_from_query s, query, conversions, opts
+        end
+      end
+    end
+
     it "runs a query, adds headers to sheet, passing control to write result sheet" do
       q = "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
       h = @helper.new
       # We can't really reliably determine result set, since there is no ActiveRecord base for it
       # so just detect it as something that responds to each, since that's how the method handles it anyway.
-      h.should_receive(:write_result_set_to_sheet).with(duck_type(:each), instance_of(Spreadsheet::Worksheet), ['EN','IDENT'], 1, {}).and_return 48
+      h.should_receive(:write_result_set_to_sheet).with(duck_type(:each), instance_of(Spreadsheet::Worksheet), ['EN','IDENT'], 1, {}, {}).and_return 48
       expect(h.run q).to eq 48
+    end
+
+    it "shifts off the leftmost X columns if query column offset is used" do
+      q = "SELECT 'test' as 'TEST', entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
+      h = @helper.new
+      # We can't really reliably determine result set, since there is no ActiveRecord base for it
+      # so just detect it as something that responds to each, since that's how the method handles it anyway.
+      h.should_receive(:write_result_set_to_sheet).with(duck_type(:each), instance_of(Spreadsheet::Worksheet), ['EN','IDENT'], 1, {}, {query_column_offset: 1}).and_return 48
+      expect(h.run q, {}, query_column_offset: 1).to eq 48
     end
   end
 
@@ -84,6 +99,51 @@ describe OpenChain::Report::ReportHelper do
       
       @helper.new.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Whatever', 'col_3'], 0, conversions
       @sheet.row(0).should == ['Col1', 'Col2', 'Col3']
+    end
+
+    it "offsets output columns if instructed" do
+      @helper.new.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, {}, query_column_offset: 1
+      @sheet.row(0).should == ['B', 'C']
+    end
+
+    it "sets conversions back into the result set if instructed" do
+      conversions = {}
+      conversions['Col1'] = lambda {|row, val|
+        expect(row).to eq ['A', 'B', 'C']
+        "Col1"
+      }
+
+      conversions['Col2'] = lambda {|row, val| 
+        expect(row).to eq ['Col1', 'B', 'C']
+        "Col2"
+      }
+
+      conversions['Col3'] = lambda {|row, val| 
+        expect(row).to eq ['Col1', 'Col2', 'C']
+        "Col3"
+      }
+
+      @helper.new.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, conversions, translations_modify_result_set: true
+      @sheet.row(0).should == ['Col1', 'Col2', 'Col3']
+    end
+
+    it "executes conversions even on skipped columns" do
+      conversions = {}
+      called = false
+      conversions['Col1'] = lambda {|row, val|
+        called = true
+        expect(row).to eq ['A', 'B', 'C']
+        "Col1"
+      }
+
+      conversions['Col2'] = lambda {|row, val|
+        called = true
+        expect(row).to eq ['Col1', 'B', 'C']
+        "Col2"
+      }
+
+      @helper.new.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, conversions, translations_modify_result_set: true, query_column_offset: 1
+      @sheet.row(0).should == ['Col2', 'C']
     end
   end
 

@@ -20,24 +20,35 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
 
   def run run_by, settings
     wb = Spreadsheet::Workbook.new
-    sheet_setup = {
-      "PO Acknowledgement" => po_ack_qry,
-      "PO Integrity" => po_integrity_qry,
-      "Booking Exception" => booking_exception_qry,
-      "Transit Time" => transit_time_qry,
-      "Value In Transit" => value_in_transit_qry,
-      "Booking Integrity" => booking_integrity_qry,
-      "Order Fulfillment" => order_fulfillment_qry
-    }
+
+    # Yes, this handles leap years correctly
+    start_date = Time.zone.now.in_time_zone("GMT").to_date - 1.year
+
+    sheet_setup = sheet_setups
     sheet_setup.each {|k,v| sheet_from_query wb, k, v}
     workbook_to_tempfile wb, 'JJillWeeklyFreightSummary-'
   end
 
   private
 
-  def sheet_from_query workbook, name, query
+  def sheet_setups
+    # Yes, this handles leap years correctly
+    start_date = Time.zone.now.in_time_zone("GMT").to_date - 1.year
+
+    sheet_setup = {
+      "PO Acknowledgement" => {query: po_ack_qry},
+      "PO Integrity" => {query: po_integrity_qry},
+      "Booking Exception" => {query: booking_exception_qry},
+      "Transit Time" => {query: transit_time_qry},
+      "Value In Transit" => {query: value_in_transit_qry},
+      "Booking Integrity" => {query: booking_integrity_qry(start_date)},
+      "Order Fulfillment" => order_fulfillment_setup(start_date)
+    }
+  end
+
+  def sheet_from_query workbook, name, setup
     s = workbook.create_worksheet :name=>name
-    table_from_query s, query
+    table_from_query s, setup[:query], setup[:conversions], query_column_offset: setup[:query_column_offset], translations_modify_result_set: setup[:translations_modify_result_set]
     s
   end
   def po_ack_qry
@@ -190,8 +201,10 @@ QRY
 QRY
     q
   end
-  def booking_integrity_qry
-<<QRY
+
+  def booking_integrity_qry start_date
+    # the q var is here primarily because my code formatter doesn't like not having it.
+    q = <<QRY
 SELECT
 shipments.receipt_location as 'Origin',
 shipments.booking_number as 'Booking #',
@@ -200,16 +213,16 @@ shipments.booking_shipment_type as 'Booked Load',
 shipments.booking_carrier as 'Booked Carrier',
 shipments.booking_vessel as 'Booked Vessel',
 destination_port.name as 'Booked Destination',
-DATE_FORMAT(shipments.booking_est_departure_date,'%m/%d/%Y') as 'Booked Origin ETD',
-DATE_FORMAT(shipments.booking_est_arrival_date,'%m/%d/%Y') as 'Booked Destination ETA',
+shipments.booking_est_departure_date as 'Booked Origin ETD',
+shipments.booking_est_arrival_date as 'Booked Destination ETA',
 shipments.house_bill_of_lading as 'Actual Shipment #',
 shipments.mode as 'Actual Mode',
 shipments.shipment_type as 'Actual Load',
 shipments.vessel_carrier_scac as 'Actual Carrier',
 shipments.vessel as 'Actual Vessel',
 destination_port.name as 'Actual Destination',
-DATE_FORMAT(shipments.departure_date,'%m/%d/%Y') as 'Actual Departure',
-DATE_FORMAT(shipments.arrival_port_date,'%m/%d/%Y') as 'Actual Arrival',
+shipments.departure_date as 'Actual Departure',
+shipments.arrival_port_date as 'Actual Arrival',
 DATEDIFF(shipments.departure_date,shipments.booking_est_departure_date) as 'Departure Variance',
 DATEDIFF(shipments.arrival_port_date,shipments.booking_est_arrival_date) as 'Arrival Variance',
 shipments.delay_reason_codes as 'Shipment Note'
@@ -218,59 +231,87 @@ shipments
 INNER JOIN ports as destination_port ON destination_port.id = shipments.destination_port_id
 WHERE
 shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
-AND
-DATEDIFF(now(),shipments.arrival_port_date) < 365
+AND shipments.arrival_port_date > '#{start_date}'
+ORDER BY shipments.arrival_port_date desc
+QRY
+    q
+  end
+
+  def order_fulfillment_setup start_date
+    setup = {}
+    setup[:query] = order_fulfillment_qry start_date
+    setup[:query_column_offset] = 2
+    setup[:translations_modify_result_set] = true
+    conversions = {}
+
+    # Order Quantity lookup
+    conversions[7] = lambda do |result_set_row, raw_column_value|
+      find_order_quantity result_set_row[0], result_set_row[1]
+    end
+
+    # Ship Qty vs. Booked Qty
+    conversions[21] = lambda do |result_set_row, raw_column_value|
+      quantity(result_set_row[15], result_set_row[11])
+    end
+
+    # Shipped Qty vs. Order Qty
+    conversions[22] = lambda do |result_set_row, raw_column_value|
+      quantity(result_set_row[15], result_set_row[7])
+    end
+
+    setup[:conversions] = conversions
+
+    setup
+  end
+
+  def order_fulfillment_qry start_date
+    q = <<QRY
+select s.id 'Shipment ID', o.id 'Order ID', s.receipt_location 'Origin', vend.name 'Vendor', fact.name 'Factory', o.customer_order_number 'PO Number', o.mode 'PO Mode','' as 'PO Qty',
+gac.date_value 'PO GAC', s.booking_number 'Booking #', s.booking_mode 'Booking Mode', 
+(select sum(bl.quantity) from booking_lines bl where bl.shipment_id = s.id and bl.order_id) 'Booked Qty',
+s.booking_cutoff_date 'Booking Cut Off', s.house_bill_of_lading 'Shipment #', s.mode 'Ship Mode', 
+sum(ps.quantity) "Shipped Qty", s.shipment_cutoff_date 'Shipment Cutoff', s.cargo_on_hand_date 'FCR Date',
+DATEDIFF(s.cargo_on_hand_date, s.shipment_cutoff_date) 'FCR vs. Ship Cutoff',
+DATEDIFF(s.cargo_on_hand_date, s.booking_cutoff_date) 'FCR vs. Book Cutoff',
+DATEDIFF(s.cargo_on_hand_date, gac.date_value) 'FCR vs. GAC',
+'' as "Shipped Qty vs. Booked Qty",
+'' as "Shipped Qty vs. Ordered Qty"
+from shipments s
+inner join shipment_lines sl on s.id = sl.shipment_id
+inner join piece_sets ps on sl.id = ps.shipment_line_id
+inner join order_lines ol on ps.order_line_id = ol.id
+inner join orders o on ol.order_id= o.id
+inner join companies imp on s.importer_id = imp.id and imp.system_code = 'JJILL' and imp.importer = true
+left outer join companies vend on o.vendor_id = vend.id
+left outer join companies fact on o.factory_id = fact.id
+LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:original_gac_date].id} and gac.customizable_id = o.id and gac.customizable_type = 'Order'
+where s.arrival_port_date > '#{start_date}'
+group by s.id, o.id
+order by s.arrival_port_date desc
 QRY
   end
-  def order_fulfillment_qry
-    <<QRY
-SELECT
-  `Origin`,`Vendor`,`Factory`,`PO Number`,`PO Qty`,
-  DATE_FORMAT(`PO GAC`,'%m/%d/%Y') as 'PO GAC',
-  `Booking #`,`Book Mode`,`Booked Qty`,
-  DATE_FORMAT(`Booking Cut Off`,'%m/%d/%Y') as 'Booking Cut Off',
-  `Shipment #`,`Ship Mode`,`Shipped Qty`,
-  DATE_FORMAT(`Shipment Cut Off`,'%m/%d/%Y') as 'Shipment Cut Off',
-  DATE_FORMAT(`FCR Date`,'%m/%d/%Y') as 'FCR Date',
-  DATEDIFF(`FCR Date`,`Shipment Cut Off`) as 'FCR vs. Ship Cutoff',
-  DATEDIFF(`FCR Date`,`Booking Cut Off`) as 'FCR vs. Book Cutoff',
-  DATEDIFF(`FCR Date`,`PO GAC`) as 'FCR vs. GAC',
-  `Shipped Qty` - `Booked Qty` as 'Shipped Qty vs. Booked Qty',
-  `Shipped Qty` - `PO Qty` as 'Shipped Qty vs. Ordered Qty'
-FROM(SELECT
-  shipments.receipt_location as 'Origin',
-  vendor.name as 'Vendor',
-  factory.name as 'Factory',
-  orders.customer_order_number as 'PO Number',
-  (SELECT SUM(quantity) FROM order_lines WHERE order_id = orders.id GROUP BY orders.id) as 'PO Qty',
-  gac.date_value as 'PO GAC',
-  shipments.booking_number as 'Booking #',
-  shipments.booking_mode as 'Book Mode',
-  (SELECT SUM(quantity) FROM booking_lines WHERE order_id = orders.id OR (order_lines.order_id = orders.id AND order_lines.id = order_line_id) GROUP BY orders.id) as 'Booked Qty',
-  shipments.booking_cutoff_date as 'Booking Cut Off',
-  shipments.house_bill_of_lading as 'Shipment #',
-  shipments.mode as 'Ship Mode',
-  (SELECT SUM(shipment_lines.quantity) FROM shipment_lines
-  WHERE id IN (SELECT shipment_line_id from piece_sets
-    inner join order_lines
-  where order_lines.id = piece_sets.order_line_id and orders.id = order_lines.order_id group by order_lines.order_id)
-  ) AS `Shipped Qty`,
-  shipments.shipment_cutoff_date as 'Shipment Cut Off',
-  shipments.cargo_on_hand_date as 'FCR Date'
-FROM shipments
-  LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
-  LEFT OUTER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
-  LEFT OUTER JOIN order_lines ON order_lines.id = piece_sets.order_line_id
-  LEFT OUTER JOIN orders ON orders.id = order_lines.order_id
-  LEFT OUTER JOIN booking_lines on orders.id = booking_lines.order_id OR order_lines.id = booking_lines.order_line_id
-  LEFT OUTER JOIN companies as vendor ON vendor.id = orders.vendor_id
-  LEFT OUTER JOIN companies as factory ON factory.id = orders.factory_id
-  LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:original_gac_date].id} and gac.customizable_id = orders.id and gac.customizable_type = 'Order'
-WHERE
-  shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
-AND
-  DATEDIFF(now(),shipments.arrival_port_date) < 365
-GROUP BY shipments.id, orders.id) as data
+
+  def find_order_quantity shipment_id, order_id
+    qry = <<QRY
+SELECT sum(ol.quantity)
+FROM order_lines ol
+INNER JOIN (
+  SELECT DISTINCT ps.order_line_id
+  FROM piece_sets ps
+  INNER JOIN order_lines inner_ol ON ps.order_line_id = inner_ol.id
+  INNER JOIN shipment_lines sl on ps.shipment_line_id = sl.id
+  WHERE inner_ol.order_id = #{order_id} AND sl.shipment_id = #{shipment_id}) l ON l.order_line_id = ol.id
 QRY
+    result = ActiveRecord::Base.connection.execute qry
+
+    qty = result.first.first
+    qty ? qty : 0
+  end
+
+  def quantity qty1, qty2
+    qty1 = qty1.presence || 0
+    qty2 = qty2.presence || 0
+
+    BigDecimal.new(qty1 - qty2)
   end
 end; end; end
