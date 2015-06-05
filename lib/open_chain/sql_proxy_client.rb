@@ -73,7 +73,7 @@ module OpenChain; class SqlProxyClient
     request 'entry_data', {file_no: file_no.to_i}, {}
   end
 
-  def request_bulk_entry_data file_nos
+  def bulk_request_entry_data file_nos
     file_nos.each {|num| request_entry_data num }
   end
 

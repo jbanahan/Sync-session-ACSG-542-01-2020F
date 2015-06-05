@@ -74,7 +74,7 @@ describe EntriesController do
       request.env["HTTP_REFERER"] = nil
       entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
       OpenChain::AllianceImagingClient.should_receive(:request_images).with('123456')
-      get :get_images, 'id'=>entry.id
+      post :get_images, 'id'=>entry.id
       expect(response).to redirect_to(entry)
       flash[:errors].should be_blank
       flash[:notices].first.should == "Updated images for file 123456 have been requested.  Please allow 10 minutes for them to appear."
@@ -82,7 +82,7 @@ describe EntriesController do
     it "should not request images for non-alliance entries" do
       entry = Factory(:entry,:source_system=>'Fenix',:broker_reference=>'123456')
       OpenChain::AllianceImagingClient.should_not_receive(:request_images)
-      get :get_images, 'id'=>entry.id
+      post :get_images, 'id'=>entry.id
       response.should be_redirect
       flash[:errors].first.should == "Images cannot be requested for entries that are not from Alliance."
     end
@@ -114,6 +114,81 @@ describe EntriesController do
       flash[:notices].first.should == "Updated images have been requested.  Please allow 10 minutes for them to appear."
     end
 
+  end
+
+  describe 'request data methods' do
+    before :all do
+      @entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
+    end
+    describe 'as a sysadmin' do
+      before :all do
+        @sys_admin_user = Factory(:sys_admin_user,entry_view:true)
+        @proxy = OpenChain::SqlProxyClient.new
+      end
+
+      before :each do
+        sign_in_as @sys_admin_user
+      end
+
+      describe 'request_entry_data' do
+        it "should request data" do
+          #make sure we're not relying on the referrer
+          request.env["HTTP_REFERER"] = nil
+          OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
+          @proxy.should_receive(:request_entry_data).with('123456')
+          post :request_entry_data, 'id'=>@entry.id
+          expect(response).to redirect_to(@entry)
+          flash[:errors].should be_blank
+          flash[:notices].first.should == "Updated entry has been requested.  Please allow 10 minutes for it to appear."
+        end
+      end
+
+      describe 'bulk_request_entry_data' do
+
+        it "should handle bulk image requests with a referer" do
+          request.env["HTTP_REFERER"] = "blah"
+          OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
+          @proxy.should_receive(:bulk_request_entry_data).with(['123456'])
+          post :bulk_request_entry_data, {'pk'=>{"0"=>@entry.id}}
+
+          response.should redirect_to("blah")
+          flash[:errors].should be_blank
+          flash[:notices].first.should == "Updated entries have been requested.  Please allow 10 minutes for them to appear."
+        end
+
+        it "should handle bulk image requests without a referer" do
+          request.env["HTTP_REFERER"] = nil
+          OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
+          @proxy.should_receive(:bulk_request_entry_data).with(['123456'])
+          post :bulk_request_entry_data, {'pk'=>{"0"=>@entry.id}}
+
+          response.should redirect_to("/")
+          flash[:errors].should be_blank
+          flash[:notices].first.should == "Updated entries have been requested.  Please allow 10 minutes for them to appear."
+        end
+      end
+    end
+    describe 'as non-sysadmin' do
+      describe 'request_entry_data' do
+        it 'should do nothing' do
+          OpenChain::SqlProxyClient.should_not_receive(:new)
+          post :request_entry_data, 'id'=>@entry.id
+          expect(response).to redirect_to(@entry)
+          expect(flash[:errors]).to be_blank
+          expect(flash[:notices]).to be_blank
+        end
+      end
+      describe 'bulk_request_entry_data' do
+        it 'should do nothing' do
+          request.env["HTTP_REFERER"] = nil
+          OpenChain::SqlProxyClient.should_not_receive(:new)
+          post :bulk_request_entry_data, {'pk'=>{"0"=>@entry.id}}
+          expect(response).to redirect_to("/")
+          expect(flash[:errors]).to be_blank
+          expect(flash[:notices]).to be_blank
+        end
+      end
+    end
   end
 
   describe "show" do
