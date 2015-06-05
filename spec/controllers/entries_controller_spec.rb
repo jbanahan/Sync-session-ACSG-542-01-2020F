@@ -117,17 +117,12 @@ describe EntriesController do
   end
 
   describe 'request data methods' do
-    before :all do
-      @entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
-    end
+    let(:entry) { Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456') }
     describe 'as a sysadmin' do
-      before :all do
-        @sys_admin_user = Factory(:sys_admin_user,entry_view:true)
-        @proxy = OpenChain::SqlProxyClient.new
-      end
-
       before :each do
-        sign_in_as @sys_admin_user
+        sys_admin_user = Factory(:sys_admin_user,entry_view:true)
+        @proxy = OpenChain::SqlProxyClient.new
+        sign_in_as sys_admin_user
       end
 
       describe 'request_entry_data' do
@@ -136,8 +131,8 @@ describe EntriesController do
           request.env["HTTP_REFERER"] = nil
           OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
           @proxy.should_receive(:request_entry_data).with('123456')
-          post :request_entry_data, 'id'=>@entry.id
-          expect(response).to redirect_to(@entry)
+          post :request_entry_data, 'id'=>entry.id
+          expect(response).to redirect_to(entry)
           flash[:errors].should be_blank
           flash[:notices].first.should == "Updated entry has been requested.  Please allow 10 minutes for it to appear."
         end
@@ -149,7 +144,7 @@ describe EntriesController do
           request.env["HTTP_REFERER"] = "blah"
           OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
           @proxy.should_receive(:bulk_request_entry_data).with(['123456'])
-          post :bulk_request_entry_data, {'pk'=>{"0"=>@entry.id}}
+          post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
 
           response.should redirect_to("blah")
           flash[:errors].should be_blank
@@ -160,7 +155,7 @@ describe EntriesController do
           request.env["HTTP_REFERER"] = nil
           OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
           @proxy.should_receive(:bulk_request_entry_data).with(['123456'])
-          post :bulk_request_entry_data, {'pk'=>{"0"=>@entry.id}}
+          post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
 
           response.should redirect_to("/")
           flash[:errors].should be_blank
@@ -172,8 +167,8 @@ describe EntriesController do
       describe 'request_entry_data' do
         it 'should do nothing' do
           OpenChain::SqlProxyClient.should_not_receive(:new)
-          post :request_entry_data, 'id'=>@entry.id
-          expect(response).to redirect_to(@entry)
+          post :request_entry_data, 'id'=>entry.id
+          expect(response).to redirect_to(entry)
           expect(flash[:errors]).to be_blank
           expect(flash[:notices]).to be_blank
         end
@@ -182,7 +177,7 @@ describe EntriesController do
         it 'should do nothing' do
           request.env["HTTP_REFERER"] = nil
           OpenChain::SqlProxyClient.should_not_receive(:new)
-          post :bulk_request_entry_data, {'pk'=>{"0"=>@entry.id}}
+          post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
           expect(response).to redirect_to("/")
           expect(flash[:errors]).to be_blank
           expect(flash[:notices]).to be_blank
