@@ -171,7 +171,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
     before :each do 
       @e = Entry.new broker_reference: "ref", entry_number: "ent", customer_number: "cust", transport_mode_code: 10, fcl_lcl: "LCL", carrier_code: "SCAC",
             vessel: "ves", voyage: "voy", entry_port_code: "e_p", lading_port_code: "l_p", master_bills_of_lading: "A\nB", house_bills_of_lading: "C\nD", container_numbers: "E\nF",
-            po_numbers: "G\nH"
+            po_numbers: "G\nH", cargo_control_number: "CCN"
     end
 
     it "generates xml" do
@@ -190,6 +190,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       expect(r.text "VoyageNumber").to eq @e.voyage
       expect(r.text "PortOfEntry").to eq @e.entry_port_code
       expect(r.text "PortOfLading").to eq @e.lading_port_code
+      expect(r.text "CargoControlNumber").to eq @e.cargo_control_number
 
       expect(REXML::XPath.each(r, "MasterBills/MasterBill").collect {|v| v.text}).to eq(["A", "B"])
       expect(REXML::XPath.each(r, "HouseBills/HouseBill").collect {|v| v.text}).to eq(["C", "D"])

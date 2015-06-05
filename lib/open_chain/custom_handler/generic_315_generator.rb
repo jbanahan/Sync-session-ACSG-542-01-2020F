@@ -53,6 +53,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
     add_element root, "VoyageNumber", v(:ent_voyage, entry)
     add_element root, "PortOfEntry", v(:ent_entry_port_code, entry)
     add_element root, "PortOfLading", v(:ent_lading_port_code, entry)
+    add_element root, "CargoControlNumber", v(:ent_cargo_control_number, entry)
 
     add_collection_element root, "MasterBills", "MasterBill", master_bills
     add_collection_element root, "HouseBills", "HouseBill", v(:ent_hbols, entry)
