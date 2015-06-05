@@ -123,10 +123,12 @@ OpenChain::Application.routes.draw do
   resources :entries, :only => [:index,:show] do
     get 'reprocess', :on=>:collection
     post 'bulk_get_images', :on=>:collection
-    get 'get_images', :on=>:member
+    post 'get_images', :on=>:member
     resources :broker_invoices, :only=>[:create]
     get 'validation_results', on: :member
     get 'sync_records', on: :member
+    post 'request_entry_data', on: :member
+    post 'bulk_request_entry_data', on: :collection
   end
 
   resources :business_validation_templates do

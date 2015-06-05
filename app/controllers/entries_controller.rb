@@ -1,5 +1,6 @@
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/activity_summary'
+require 'open_chain/sql_proxy_client'
 class EntriesController < ApplicationController
   include EntriesHelper
   include ValidationResultsHelper
@@ -197,6 +198,27 @@ class EntriesController < ApplicationController
 
   def sync_records
     @e = Entry.find(params[:id])
+  end
+
+  def request_entry_data
+    @entry = Entry.find params[:id]
+    if current_user.sys_admin?
+      OpenChain::SqlProxyClient.new.delay.request_entry_data @entry.broker_reference
+      add_flash :notices, "Updated entry has been requested.  Please allow 10 minutes for it to appear."
+    end
+    redirect_to @entry
+  end
+
+  def bulk_request_entry_data
+    if current_user.sys_admin?
+      primary_keys = params[:pk].values
+      references = Entry.where(id: primary_keys).pluck(:broker_reference)
+      OpenChain::SqlProxyClient.new.delay.bulk_request_entry_data references
+      add_flash :notices, "Updated entries have been requested.  Please allow 10 minutes for them to appear."
+    end
+
+    # Redirect back to main page if referrer is blank (this can be removed once we set referrer to never be nil)
+    redirect_to request.referrer || "/"
   end
   
   private
