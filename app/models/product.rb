@@ -1,3 +1,4 @@
+require 'jsonpath'
 class Product < ActiveRecord::Base
   include CoreObjectSupport
   include StatusableSupport
@@ -71,6 +72,14 @@ class Product < ActiveRecord::Base
     return user.attach_products? && self.can_view?(user)
   end
 
+  # have any new tariff numbers been added at the 6 digit level for any country since the given time?
+  def wto6_changed_after? time_to_compare
+    h = self.entity_snapshots.order('created_at desc').where('created_at <= ?',time_to_compare).limit(1).first
+    return false if h.nil?
+    old_list = get_wto6_list_from_entity_snapshot(h)
+    new_list = get_wto6_list_from_current_data
+    return (new_list - old_list).size > 0
+  end
 
   # is this product either a parent or child for a bill of materials
   def on_bill_of_materials?
@@ -169,5 +178,27 @@ class Product < ActiveRecord::Base
   
   def company_permission? user
     self.importer_id==user.company_id || self.vendor_id == user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer) || user.company.linked_companies.include?(self.vendor)
+  end
+
+  def get_wto6_list_from_entity_snapshot es
+    r = []
+    json = es.snapshot
+    (1..3).each {|i| r += JsonPath.on(json,"$..hts_hts_#{i}") }
+    r.delete_if {|h| h.blank?}
+    Set.new(r.collect {|h| h.gsub(/\./,'')[0,6]}).to_a
+  end
+  def get_wto6_list_from_current_data
+    r = Set.new
+    self.classifications.each do |cls|
+      cls.tariff_records.each do |tr|
+        [tr.hts_1,tr.hts_2,tr.hts_3].each do |hts|
+          if hts && hts.length >= 6
+            r << hts[0,6]
+          end
+        end
+      end
+      r
+    end
+    r.to_a
   end
 end

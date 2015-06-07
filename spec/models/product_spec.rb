@@ -1,6 +1,43 @@
 require 'spec_helper'
 
 describe Product do
+  describe :wto6_changed_after? do
+    before :each do
+      @u = Factory(:user)
+      @tr = Factory(:tariff_record,hts_1:'1234567890',hts_2:'9876543210',hts_3:'5555550000')
+      @p = @tr.product
+      @snapshot = @p.create_snapshot(@u)
+      @snapshot.update_attributes(created_at:1.month.ago)
+    end
+    it "should return true if first 6 changed" do
+      @tr.update_attributes(hts_1:'6666660000')
+      @p.reload
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_true
+    end
+    it "should return true if record added with new wto6" do
+      tr = Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
+      @p.reload
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_true
+    end
+    it "should return false if record added with same wto6" do
+      tr = Factory(:tariff_record,hts_1:'1234560000',classification:Factory(:classification,product:@p))
+      @p.reload
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_false
+    end
+    it "should return false if no history before date" do
+      expect(@p.wto6_changed_after?(1.year.ago)).to be_false
+    end
+    it "should return false if record removed" do
+      @tr.destroy
+      @p.reload
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_false
+    end
+    it "should return false if last 4 changed" do
+      @tr.update_attributes(hts_1:'1234560000')
+      @p.reload
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_false
+    end
+  end
   describe :validate_tariff_numbers do
     it "should pass" do
       ot = Factory(:official_tariff)

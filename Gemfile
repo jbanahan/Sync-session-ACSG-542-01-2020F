@@ -58,6 +58,8 @@ gem 'redis-semaphore', '~> 0.2'
 gem 'redis-namespace', '~> 1.5'
 gem 'connection_pool', '~> 2.1'
 
+gem 'jsonpath', '~> 0.5.6'
+
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
