@@ -33,7 +33,7 @@ class SchedulableJob < ActiveRecord::Base
       end
       k = Kernel
       components.each {|c| k = k.const_get(c)}
-      run_opts = opts_hash
+      run_opts = {'last_start_time'=>self.last_start_time}.merge(opts_hash)
       log.info "Running schedule for #{k.to_s} with options #{run_opts}" if log
 
       raise "No 'run_schedulable' method exists on '#{self.run_class}' class." unless k.respond_to?(:run_schedulable)

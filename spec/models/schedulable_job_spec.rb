@@ -16,19 +16,19 @@ describe SchedulableJob do
       def self.run_schedulable; end
     end
     it "should submit job" do
-      TestSchedulable.should_receive(:run_schedulable).with({})
+      TestSchedulable.should_receive(:run_schedulable).with({'last_start_time'=>nil})
       sj = SchedulableJob.new(:run_class=>"TestSchedulable")
       sj.run
     end
     it "should submit options" do
       opts = {:a=>"b"}.to_json
-      TestSchedulable.should_receive(:run_schedulable).with('a'=>'b')
+      TestSchedulable.should_receive(:run_schedulable).with('last_start_time'=>nil,'a'=>'b')
       sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts)
       sj.run
     end
     it "should email when successful" do
       opts = {:a=>"b"}.to_json
-      TestSchedulable.should_receive(:run_schedulable).with('a'=>'b')
+      TestSchedulable.should_receive(:run_schedulable).with("last_start_time"=>nil,'a'=>'b')
       sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts, success_email: "success1@email.com,success2@email.com")
       sj.run
 
@@ -67,7 +67,7 @@ describe SchedulableJob do
       expect(m.body.raw_source).to include "No &#x27;run_schedulable&#x27; method exists on &#x27;TestSchedulable&#x27; class."
     end
     it "should log an error if no error email is configured" do
-      opts = {'a'=>"b"}
+      opts = {'last_start_time'=>nil,'a'=>"b"}
       e = StandardError.new "Message"
       TestSchedulable.stub(:run_schedulable).and_raise(e)
 
