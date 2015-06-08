@@ -339,7 +339,7 @@ class ReportsController < ApplicationController
     end
   end
   def run_monthly_entry_summation
-    run_report "J Jill Weekly Freight Summary", OpenChain::Report::MonthlyEntrySummation, {start_date: params[:start_date], end_date: params[:end_date]}, []
+    run_report "Monthly Entry Summation", OpenChain::Report::MonthlyEntrySummation, params.slice(:start_date, :end_date, :customer_number), []
   end
 
   private

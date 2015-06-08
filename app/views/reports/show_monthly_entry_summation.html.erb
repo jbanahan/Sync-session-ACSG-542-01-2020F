@@ -8,8 +8,11 @@ $(function() {
     if($("input[name='end_date']").val().length < 10) {
       r = false;
     }
+    if($("input[name='customer_number']").val().length < 1) {
+      r = false;
+    }
     if(!r) {
-      window.alert("You must enter both dates.");
+      window.alert("You must enter both dates and the customer number.");
       return false;
     }
   });
@@ -29,4 +32,8 @@ $(function() {
     <label for="end_date" class="control-label"> and prior to </label>
     <%=text_field_tag :end_date,"", :class=>'form-control isdate'%>
   </div>
+  <p>
+    <label for="customer_number" class="control-label">Customer Number</label>
+    <%= text_field_tag :customer_number, "", class: 'form-control' %>
+  </p>
 <%end%>
