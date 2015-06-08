@@ -331,6 +331,17 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_monthly_entry_summation
+    if OpenChain::Report::MonthlyEntrySummation.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+  def run_monthly_entry_summation
+    run_report "J Jill Weekly Freight Summary", OpenChain::Report::MonthlyEntrySummation, {start_date: params[:start_date], end_date: params[:end_date]}, []
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

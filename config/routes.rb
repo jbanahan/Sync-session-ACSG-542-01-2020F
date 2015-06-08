@@ -380,6 +380,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_j_jill_weekly_freight_summary" => "reports#run_j_jill_weekly_freight_summary", :via=>:post
   get "/reports/show_pvh_container_log" => "reports#show_pvh_container_log"
   post "/reports/run_pvh_container_log" => "reports#run_pvh_container_log"
+  get "reports/show_monthly_entry_summation" => "reports#show_monthly_entry_summation"
+  post "reports/run_monthly_entry_summation" => "reports#run_monthly_entry_summation"
 
 
   resources :report_results, :only => [:index,:show] do
