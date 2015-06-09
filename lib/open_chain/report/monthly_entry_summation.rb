@@ -27,12 +27,12 @@ module OpenChain
         q = <<QRY
 SELECT
   DATE_FORMAT(convert_tz(entries.release_date, 'UTC', '#{timezone}'),'%Y-%m') AS `Year / Month`,
-  (SELECT COUNT(DISTINCT container_number) FROM containers JOIN entries AS entry ON entry_id = entry.id WHERE DATE_FORMAT(convert_tz(entry.release_date, 'UTC', '#{timezone}'),'%Y-%m') = `Year / Month`) AS `Total Containers`,
+  (SELECT COUNT(DISTINCT container_number) FROM containers JOIN entries AS entry ON entry_id = entry.id WHERE DATE_FORMAT(convert_tz(entry.release_date, 'UTC', '#{timezone}'),'%Y-%m') = `Year / Month` AND entry.customer_number = '#{customer_number}') AS `Total Containers`,
   SUM(entries.total_invoiced_value) AS `Total Invoice Value`,
   SUM(entries.total_duty + entries.total_duty_direct) AS `Total Duty`,
   SUM(entries.total_fees) AS `Total Fees`,
-  (SELECT SUM(charge_amount) FROM broker_invoices JOIN broker_invoice_lines ON broker_invoice_id = broker_invoices.id JOIN entries AS entry ON broker_invoices.entry_id = entry.id WHERE DATE_FORMAT(convert_tz(entry.release_date, 'UTC', '#{timezone}'),'%Y-%m') = `Year / Month` AND charge_type = 'F' ) AS `Total Freight`,
-  (SELECT SUM(charge_amount) FROM broker_invoices JOIN broker_invoice_lines ON broker_invoice_id = broker_invoices.id JOIN entries AS entry ON broker_invoices.entry_id = entry.id WHERE DATE_FORMAT(convert_tz(entry.release_date, 'UTC', '#{timezone}'),'%Y-%m') = `Year / Month` AND charge_type NOT IN ('F','D')) AS `Total Brokerage Fees`
+  (SELECT SUM(charge_amount) FROM broker_invoices JOIN broker_invoice_lines ON broker_invoice_id = broker_invoices.id JOIN entries AS entry ON broker_invoices.entry_id = entry.id WHERE DATE_FORMAT(convert_tz(entry.release_date, 'UTC', '#{timezone}'),'%Y-%m') = `Year / Month` AND entry.customer_number = '#{customer_number}') AND charge_type = 'F' ) AS `Total Freight`,
+  (SELECT SUM(charge_amount) FROM broker_invoices JOIN broker_invoice_lines ON broker_invoice_id = broker_invoices.id JOIN entries AS entry ON broker_invoices.entry_id = entry.id WHERE DATE_FORMAT(convert_tz(entry.release_date, 'UTC', '#{timezone}'),'%Y-%m') = `Year / Month` AND entry.customer_number = '#{customer_number}') AND charge_type NOT IN ('F','D')) AS `Total Brokerage Fees`
 FROM entries
 WHERE convert_tz(entries.release_date, 'UTC', '#{timezone}') BETWEEN '#{start_date}' AND '#{end_date}'
   AND entries.customer_number = '#{customer_number}'
