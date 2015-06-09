@@ -41,6 +41,7 @@ OpenChain::Application.routes.draw do
         get 'by_uid(/:path_uid)' => "products#by_uid", on: :collection
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
+        get 'autocomplete', on: :collection
       end
 
       resources :plants, only: [] do

@@ -12,7 +12,36 @@
             <div class="col-md-3"><button ng-click="sbc.chooseBookingType('container')">Book by Container</button></div>
         </div>
     </div>
-    <div class='container' data-container-id="product">Product</div>
+    <div class='container' data-container-id="product">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Book By Product</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <angucomplete-alt id='product_autocomplete' input-class='form-control' placeholder='Product' selected-object='sbc.onProductSelected' remote-url='/api/v1/products/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
+            </div>
+            <div class="col-md-10">
+                <table>
+                    <tr>
+                        <td>Product</td>
+                        <td>Quantity</td>
+                        <td>Cartons</td>
+                        <td>Volume (CBMs)</td>
+                        <td>Gross Weight (KGs)</td>
+                    </tr>
+                    <tr ng-repeat="line in sbc.lines">
+                        <td>{{line.bkln_pname}}</td>
+                        <td><input class="form-control" ng-model="line.bkln_quantity"></td>
+                        <td><input class="form-control" ng-model="line.bkln_carton_qty"></td>
+                        <td><input class="form-control" ng-model="line.bkln_cbms"></td>
+                        <td><input class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
     <div class='container' data-container-id="order">Order</div>
     <div class='container' data-container-id="sku">Order Line</div>
     <div class='container' data-container-id="container">Container</div>
