@@ -167,6 +167,34 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(l.order_lines.to_a).to eq [ol2]
       expect(l.line_number).to eq 2
     end
+    it "should add lines when PACKAGE DETAIL header is used" do
+      c = Factory(:company)
+      p = Factory(:product)
+      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
+      ol2 = Factory(:order_line,quantity:100,product:p,sku:'sk55555',order:o)
+      @s.update_attributes(importer_id:c.id)
+      row_seed = {
+        82=>subtitle_row('PACKAGE DETAIL'),
+        84=>['','','','Equipment#: WHATEVER'],
+        85=>['','','','','Range'],
+        86=>detail_line({po:'ordnum',sku:'sk12345',item_qty:'8'}),
+        87=>detail_line({po:'ordnum',sku:'sk55555',item_qty:'5'})
+      }
+      rows = init_mock_array 90, row_seed
+      expect{described_class.new.process_rows(@s,rows,@u)}.to change(ShipmentLine,:count).from(0).to(2)
+      @s.reload
+      f = @s.shipment_lines.first
+      expect(f.product).to eq p
+      expect(f.quantity).to eq 8
+      expect(f.order_lines.to_a).to eq [ol]
+      expect(f.line_number).to eq 1
+      l = @s.shipment_lines.last
+      expect(l.product).to eq p
+      expect(l.quantity).to eq 5
+      expect(l.order_lines.to_a).to eq [ol2]
+      expect(l.line_number).to eq 2
+    end
     it "should handle commas in quantity" do
       c = Factory(:company)
       p = Factory(:product)

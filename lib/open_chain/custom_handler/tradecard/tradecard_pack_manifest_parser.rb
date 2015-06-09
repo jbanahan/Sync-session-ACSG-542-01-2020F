@@ -55,7 +55,8 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   def add_lines shipment, rows
     max_line_number = 0
     shipment.shipment_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
-    carton_detail_header_row = header_row_index(rows,'CARTON DETAIL')
+    carton_detail_header_row = header_row_index(rows,'CARTON DETAIL', 'PACKAGE DETAIL')
+
     return unless carton_detail_header_row
     cursor = carton_detail_header_row+2
     container = nil
@@ -131,7 +132,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     cs
   end
 
-  def header_row_index rows, name
-    rows.index {|r| r.size > 1 && r[1]==name}
+  def header_row_index rows, *names
+    rows.index {|r| r.size > 1 && names.include?(r[1].to_s.upcase)}
   end
 end; end; end; end
