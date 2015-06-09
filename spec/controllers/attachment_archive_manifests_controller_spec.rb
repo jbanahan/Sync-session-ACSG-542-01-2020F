@@ -52,7 +52,7 @@ describe AttachmentArchiveManifestsController do
       get :download, :company_id=>@u.company.id, :id=>@m.id
       response.status.should == 204
     end
-    it "should respond with 200 and attachment if done" do
+    it "should respond with 200 and attachment if done", paperclip: true do
       @m.make_manifest!
       get :download, :company_id=>@u.company.id, :id=>@m.id
       response.location.should match /s3.*attachment/

@@ -39,6 +39,16 @@ Spork.prefork do
       CustomDefinition.skip_reload_trigger = true
       stub_event_publisher
       Time.zone = ActiveSupport::TimeZone["UTC"]
+      # What the following does is totally prevent any specs from accidentally saving to S3 via
+      # the paperclip gem.  This shaves off a fair bit of runtime on the specs as well as not having
+      # to rely on the AWS services in the test cases.
+      # If you need to use paperclip's S3 saving, append "paperclip: true" to the spec declaration
+      # .ie -> it "requires paperclip", paperclip: true do
+      
+      # In Rspec 2.99/3.0 "example" below needs to be changed to "ex"
+      unless example.metadata[:paperclip] 
+        stub_paperclip
+      end
     end
     
     # Clears out the deliveries array before every test..which is only done automatically

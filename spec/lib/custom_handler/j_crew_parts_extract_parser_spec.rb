@@ -236,7 +236,7 @@ FILE
     	@custom_file.delete if @custom_file
     end
 
-    it "should use a custom file to retrieve data from S3, process it, create a new temp file, and ftp the temp file" do
+    it "should use a custom file to retrieve data from S3, process it, create a new temp file, and ftp the temp file", paperclip: true do
     	p = OpenChain::CustomHandler::JCrewPartsExtractParser.new(@custom_file)
     	output = nil
     	# Underneath the covers, we generate a new instance of the 
