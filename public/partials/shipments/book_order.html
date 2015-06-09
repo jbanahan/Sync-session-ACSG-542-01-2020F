@@ -23,7 +23,7 @@
                 <angucomplete-alt id='product_autocomplete' input-class='form-control' placeholder='Product' selected-object='sbc.onProductSelected' remote-url='/api/v1/products/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
             </div>
             <div class="col-md-10">
-                <table>
+                <table class="table">
                     <tr>
                         <td>Product</td>
                         <td>Quantity</td>
@@ -47,6 +47,6 @@
     <div class='container' data-container-id="container">Container</div>
 </chain-loading-wrapper>
 <div chain-action-bar>
-    <!--<button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder,"booking_lines")' ng-show='shp && activeOrder'>Save</button>-->
-    <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
+    <button class='btn btn-default' ng-click='sbc.saveLines()' ng-show='sbc.lines.length > 0'>Save</button>
+    <button class='btn btn-default' ng-click='sbc.cancel()'>Cancel</button>
 </div>
