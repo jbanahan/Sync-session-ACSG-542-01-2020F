@@ -380,6 +380,18 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq @cil.quantity.to_s
       end
 
+      it "skips commercial invoice lines with no duty" do
+        # Keep the part number / etc the same, that way we don't have to make any expectation adjustments
+        cil2 =  Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>"1234-1", :quantity=> BigDecimal.new("100"))
+        tariff_line = cil2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("0"))
+
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+        expect(@xml_files).to have(1).item
+        d = REXML::Document.new @xml_files[0][:contents]
+        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq 1
+        expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq "10.0"
+      end
+
       context "multiple invoices same entry mm/gl split" do
         it "should know if an entry has been sent already during the same generation and send FFI format for second" do
           # create a second broker invoice for the same entry, and make sure it's output in FFI format
@@ -652,18 +664,39 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/AMOUNT")).to eq @broker_invoice_line3.charge_amount.abs.to_s
       end
 
-      it "generates FF invoices for RL Canada stock transfers" do
-        # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
-        # behavior for stock transfers
-        make_sap_po
-        @entry.update_attributes! vendor_names: "Ralph Lauren Corp"
+      context "ff send esceptions" do
+        before :each do
+          # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
+          # behavior for stock transfers
+          make_sap_po
+        end
 
-        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+        it "generates FF invoices for RL Canada stock transfers" do
+          # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
+          # behavior for stock transfers
+          make_sap_po
+          @entry.update_attributes! vendor_names: "Ralph Lauren Corp"
 
-        # A single ExportJob should have been created
-        job = ExportJob.all.first
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+          @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+
+          # A single ExportJob should have been created
+          job = ExportJob.all.first
+          job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+        end
+
+        it "generates FF invoices when every line is duty free" do
+          # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
+          # behavior for stock transfers
+          make_sap_po
+          [@tariff_line, @tariff_line2].each {|l| l.update_column :duty_amount, 0}
+
+          @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+
+          job = ExportJob.all.first
+          job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+        end
       end
+
     end
 
     context :multiple_invoices_same_entry do

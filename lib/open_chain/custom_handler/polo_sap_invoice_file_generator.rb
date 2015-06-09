@@ -422,6 +422,9 @@ module OpenChain
               tradecard_invoice = find_tradecard_invoice inv.invoice_number
 
               inv.commercial_invoice_lines.each do |line|
+                # Don't report commerical invoice lines having zero duty 
+                next unless line.commercial_invoice_tariffs.inject(BigDecimal.new("0")) {|sum, line| sum += line.duty_amount.to_i} > 0
+
                 # First things first, lets make sure we have a po_number and an SAP line number
                 # either directly from the invoice part number or by looking up the data from the PO
                 po_number, sap_line_number = find_po_sap_line_number @config[:tax_id], line
@@ -948,7 +951,17 @@ module OpenChain
                 # and we can't resend the full invoice line set again (otherwise the duty will get added twice in RL's system).
                 # So we fall back to sending via the FFI interface.
                 if !previously_invoiced?(entry)
-                  output_format = :mmgl
+
+                  # RL only wants us to use the MM format when at least one line on the file has duty
+                  duty_free = entry.commercial_invoices.find do |i|
+                    i.commercial_invoice_lines.find do |l|
+                      l.commercial_invoice_tariffs.find do |t|
+                        t.duty_amount.to_f > 0
+                      end
+                    end
+                  end.nil?
+
+                  output_format = :mmgl unless duty_free
                 end
               end
             end
