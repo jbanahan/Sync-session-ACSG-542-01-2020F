@@ -41,7 +41,7 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
     state('book_order', {
       url: '/:shipmentId/book_order'
       templateUrl: '/partials/shipments/book_order.html'
-      controller: 'ShipmentAddOrderCtrl'
+      controller: 'ShipmentBookingCtrl as sbc'
       resolve: resolveShipmentId
     }).
     state('new',{
