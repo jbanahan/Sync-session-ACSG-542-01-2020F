@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', (shipmentSvc, $state) ->
+angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','$state',(shipmentSvc, $state) ->
   new class ShipmentBookingCtrl
     lines: []
 
@@ -15,9 +15,19 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', (shipmentSvc, $s
           bkln_pname: product.name
           bkln_puid: product.unique_identifier
 
+    loadAvailableOrders: =>
+      shipment = {id:$state.params.shipmentId}
+      shipmentSvc.getAvailableOrders(shipment).then (resp) =>
+        @availableOrders = resp.data.available_orders
+
+    getOrder: (id)=>
+      shipmentSvc.getOrder(id).then (resp) =>
+        @activeOrder = resp.data.order
+
     saveLines: =>
       shipmentSvc.saveBookingLines(@lines).then @cancel
 
     cancel: =>
       @lines.splice 0, @lines.length
-      $state.go('show', {shipmentId: shipmentSvc.currentShipmentId()})
+      $state.go('show', {shipmentId: $state.params.shipmentId})
+]

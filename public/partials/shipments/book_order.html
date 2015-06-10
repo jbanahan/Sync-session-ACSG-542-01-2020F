@@ -25,11 +25,11 @@
             <div class="col-md-10">
                 <table class="table">
                     <tr>
-                        <td>Product</td>
-                        <td>Quantity</td>
-                        <td>Cartons</td>
-                        <td>Volume (CBMs)</td>
-                        <td>Gross Weight (KGs)</td>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMs)</th>
+                        <th>Gross Weight (KGs)</th>
                     </tr>
                     <tr ng-repeat="line in sbc.lines">
                         <td>{{line.bkln_pname}}</td>
@@ -43,7 +43,65 @@
         </div>
     </div>
     <div class='container' data-container-id="order">Order</div>
-    <div class='container' data-container-id="sku">Order Line</div>
+    <div class='container' ng-init="sbc.loadAvailableOrders()" data-container-id="sku">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Book Order To Shipment {{shp.shp_ref}}</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-2">
+                <input type='text' ng-model='orderFilter' placeholder='Search orders' class='form-control input-sm'/>
+                <div class='text-right'><small><a href='' ng-click='orderFilter=null'>clear</a></small></div>
+                <br />
+                <div ng-show='sbc.availableOrders.length == 0'>No orders found</div>
+                <div class="btn-group btn-group-vertical" style="width:100%" data-toggle="buttons">
+                    <label class="btn btn-md btn-default"
+                           ng-repeat="ord in sbc.availableOrders | filter:orderFilter"
+                           ng-class="{active:ord.id==sbc.activeOrder.id}"
+                           ng-click="sbc.getOrder(ord.id);"><input type="radio"/>{{ord.ord_cust_ord_no}}</label>
+                </div>
+            </div>
+            <div class="col-xs-10">
+                <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
+                    <div ng-show='sbc.activeOrder'>
+                        <h2 style='margin-top:0'>Order: {{sbc.activeOrder.ord_cust_ord_no}}</h2>
+                        <table class='table table-striped'>
+                            <thead>
+                            <tr>
+                                <th>Line #</th>
+                                <th>Part #</th>
+                                <th>SKU</th>
+                                <th>
+                                    <div class='btn-group'>
+                                        <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
+                                        <ul class='dropdown-menu' role='menu'>
+                                            <li><a ng-click='clearQuantityToShip(sbc.activeOrder)'>Clear</a></li>
+                                            <li><a ng-click='resetQuantityToShip(sbc.activeOrder)'>Reset</a></li>
+                                            <li><a data-toggle='modal' data-target='#prorateModal'>Prorate</a></li>
+                                        </ul>
+                                    </div>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat='line in sbc.activeOrder.order_lines'>
+                                <td>{{line.ordln_line_number}}</td>
+                                <td>{{line.ordln_puid}}</td>
+                                <td>{{line.ordln_sku}}</td>
+                                <td><input type='number' ng-model='line.quantity_to_ship' class='form-control'/></td>
+                            </tr>
+                            <tr>
+                                <td colspan='3' class='text-right'>Total:</td>
+                                <td>{{totalToShip(sbc.activeOrder)}}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </chain-loading-wrapper>
+            </div>
+        </div>
+    </div>
     <div class='container' data-container-id="container">Container</div>
 </chain-loading-wrapper>
 <div chain-action-bar>
