@@ -11,6 +11,11 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
     save c, params[:milestone_notification_config]
   end
 
+  def new
+    c = MilestoneNotificationConfig.new
+    render json: config_json_with_model_fields(c)
+  end
+
   def create
     c = MilestoneNotificationConfig.new
     save c, params[:milestone_notification_config]

@@ -9,7 +9,7 @@ class MilestoneNotificationConfig < ActiveRecord::Base
 
   def setup_json
     if setup.blank?
-      {}
+      []
     else
       ActiveSupport::JSON.decode(self.setup)
     end

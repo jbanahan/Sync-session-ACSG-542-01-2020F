@@ -32,3 +32,7 @@
       </tbody>
     </table>
 </chain-loading-wrapper>
+<div chain-action-bar>
+  <button class="btn btn-default btn_link" link_to="<%=Rails.application.routes.url_helpers.settings_path%>">Back</button> 
+  <button class='btn btn-default' ng-click='newConfig()'>New</button>
+</div>

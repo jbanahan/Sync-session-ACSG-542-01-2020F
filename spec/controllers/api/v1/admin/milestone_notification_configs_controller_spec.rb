@@ -191,7 +191,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
             customer_number: "ABC",
             enabled: nil,
             output_style: 'standard',
-            setup_json: {},
+            setup_json: [],
             search_criterions: []
           }
         }.with_indifferent_access
@@ -212,6 +212,60 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
           }
         }.with_indifferent_access
       )
+    end
+  end
+
+  describe "new" do
+
+    def timezones
+      subject.send(:timezones)
+    end
+
+    def event_list
+      subject.send(:event_list)
+    end
+
+    def model_fields
+      subject.send(:model_field_list)
+    end
+
+    it "sends blank milestone config setup info" do
+      get :new
+
+      expect(response).to be_success
+      c = JSON.parse response.body
+
+      expect(c['config']['milestone_notification_config']).to eq({
+        id: nil,
+        customer_number: nil,
+        enabled: nil,
+        output_style: nil,
+        setup_json: [],
+        search_criterions: []
+        }.with_indifferent_access
+      )
+
+      mf_list = c['model_field_list']
+      expect(mf_list.size).to eq CoreModule::ENTRY.model_fields(@user).size
+      expect(mf_list.first['field_name']).to be_a String
+      expect(mf_list.first['mfid']).to be_a String
+      expect(mf_list.first['label']).to be_a String
+      expect(mf_list.first['datatype']).to be_a String
+
+      event_list = c['event_list']
+      expect(event_list.size).to eq CoreModule::ENTRY.model_fields(@user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}.size
+      expect(event_list.first['field_name']).to be_a String
+      expect(event_list.first['mfid']).to be_a String
+      expect(event_list.first['label']).to be_a String
+      expect(event_list.first['datatype']).to be_a String
+
+      expect(c["output_styles"]).to eq MilestoneNotificationConfig::OUTPUT_STYLES
+
+      timezones = c["timezones"]
+      # Plus one is because we're inserting a blank value 
+      expect(timezones.size).to eq ActiveSupport::TimeZone.all.size + 1
+      expect(timezones.first['name']).to be_a String
+      expect(timezones.first['label']).to be_a String
     end
   end
 end

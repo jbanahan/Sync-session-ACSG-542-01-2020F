@@ -22,6 +22,16 @@ MilestoneConfigApp.config ['$stateProvider','$urlRouterProvider',($stateProvider
           $stateParams.configId
         ]
       }
+    }).
+    state('new', {
+      url: '/new'
+      templateUrl: '<%=asset_path("milestone_notification_config/milestone_notification_config_show.html")%>'
+      controller: 'MilestoneShowController',
+      resolve: {
+        milestoneId: ['$stateParams', ($stateParams) -> 
+          null
+        ]
+      }
     })
 ]
 
@@ -35,7 +45,10 @@ angular.module('MilestoneConfigApp').factory 'milestoneSvc', ['$http', ($http) -
 
   return {
     getMilestoneUpdateConfig: (configId) -> 
-      $http.get(milestonePath('/' + configId)).then(milestoneHandler)
+      if configId
+        $http.get(milestonePath('/' + configId)).then(milestoneHandler)
+      else
+        $http.get(milestonePath('/new')).then(milestoneHandler)
 
     getMilestoneUpdateConfigs: () ->
       $http.get(milestonePath(''))
@@ -66,6 +79,9 @@ MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneS
 
   $scope.showConfig = (config) ->
     $state.go('show', {configId: config.id})
+
+  $scope.newConfig = ()->
+    $state.go('new')
 
   $scope.outputStyle = (fmt) ->
     $scope.outputStyles[fmt]

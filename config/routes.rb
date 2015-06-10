@@ -88,7 +88,7 @@ OpenChain::Application.routes.draw do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
         match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
         match 'users/:id/add_templates' => 'users#add_templates', via: :post
-        resources :milestone_notification_configs, only: [:index, :show, :create, :update, :destroy]
+        resources :milestone_notification_configs, only: [:index, :show, :new, :create, :update, :destroy]
       end
     end
   end
