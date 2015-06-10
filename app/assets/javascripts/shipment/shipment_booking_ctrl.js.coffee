@@ -15,6 +15,12 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
           bkln_pname: product.name
           bkln_puid: product.unique_identifier
 
+
+    removeLine: (line) =>
+      oldLine = (@lines.filter (ln) -> ln == line)[0]
+      idx = @lines.indexOf oldLine
+      @lines.splice idx,1
+
     loadAvailableOrders: =>
       shipment = {id:$state.params.shipmentId}
       shipmentSvc.getAvailableOrders(shipment).then (resp) =>
