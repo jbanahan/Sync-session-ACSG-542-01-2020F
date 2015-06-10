@@ -22,6 +22,10 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
           bkln_order_id: order.id
           bkln_order_number: order.name
 
+    onContainerSelected: (size) =>
+      @lines.push
+        bkln_container_size: size
+
     removeLine: (line) =>
       oldLine = (@lines.filter (ln) -> ln == line)[0]
       idx = @lines.indexOf oldLine

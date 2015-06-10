@@ -8,7 +8,7 @@
         <div class="row">
             <div class="col-md-3"><button ng-click="sbc.chooseBookingType('product')">Book by Product</button></div>
             <div class="col-md-3"><button ng-click="sbc.chooseBookingType('order')">Book by Order</button></div>
-            <div class="col-md-3"><button ng-click="sbc.chooseBookingType('sku')">Book by Order Line(SKU)</button></div>
+            <div class="col-md-3"><button ng-click="sbc.chooseBookingType('sku'); sbc.loadAvailableOrders();">Book by Order Line(SKU)</button></div>
             <div class="col-md-3"><button ng-click="sbc.chooseBookingType('container')">Book by Container</button></div>
         </div>
     </div>
@@ -23,20 +23,21 @@
                 <angucomplete-alt id='product_autocomplete' input-class='form-control' placeholder='Product' selected-object='sbc.onProductSelected' remote-url='/api/v1/products/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
             </div>
             <div class="col-md-10">
-                <table class="table">
+                <table class="table table-striped">
                     <tr>
                         <th>Product</th>
                         <th>Quantity</th>
                         <th>Cartons</th>
                         <th>Volume (CBMs)</th>
                         <th>Gross Weight (KGs)</th>
+                        <th></th>
                     </tr>
                     <tr ng-repeat="line in sbc.lines">
                         <td>{{line.bkln_pname}}</td>
-                        <td><input class="form-control" ng-model="line.bkln_quantity"></td>
-                        <td><input class="form-control" ng-model="line.bkln_carton_qty"></td>
-                        <td><input class="form-control" ng-model="line.bkln_cbms"></td>
-                        <td><input class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_quantity"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_cbms"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_gross_kgs"></td>
                         <td><button class="btn btn-xs btn-danger" title="Delete Line" ng-click="sbc.removeLine(line)"><i class="fa fa-trash"></i></button></td>
                     </tr>
                 </table>
@@ -54,26 +55,28 @@
                 <angucomplete-alt id='order_autocomplete' input-class='form-control' placeholder='Order' selected-object='sbc.onOrderSelected' remote-url='/api/v1/orders/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
             </div>
             <div class="col-md-10">
-                <table class="table">
+                <table class="table table-striped">
                     <tr>
                         <th>Order</th>
                         <th>Quantity</th>
                         <th>Cartons</th>
                         <th>Volume (CBMs)</th>
                         <th>Gross Weight (KGs)</th>
+                        <th></th>
                     </tr>
                     <tr ng-repeat="line in sbc.lines">
                         <td>{{line.bkln_order_number}}</td>
-                        <td><input class="form-control" ng-model="line.bkln_quantity"></td>
-                        <td><input class="form-control" ng-model="line.bkln_carton_qty"></td>
-                        <td><input class="form-control" ng-model="line.bkln_cbms"></td>
-                        <td><input class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_quantity"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_cbms"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                        <td><button class="btn btn-xs btn-danger" title="Delete Line" ng-click="sbc.removeLine(line)"><i class="fa fa-trash"></i></button></td>
                     </tr>
                 </table>
             </div>
         </div>
     </div>
-    <div class='container' ng-init="sbc.loadAvailableOrders()" data-container-id="sku">
+    <div class='container' ng-init="" data-container-id="sku">
         <div class="row">
             <div class="col-md-12">
                 <h1>Book Order To Shipment {{shp.shp_ref}}</h1>
@@ -102,16 +105,11 @@
                                 <th>Line #</th>
                                 <th>Part #</th>
                                 <th>SKU</th>
-                                <th>
-                                    <div class='btn-group'>
-                                        <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
-                                        <ul class='dropdown-menu' role='menu'>
-                                            <li><a ng-click='clearQuantityToShip(sbc.activeOrder)'>Clear</a></li>
-                                            <li><a ng-click='resetQuantityToShip(sbc.activeOrder)'>Reset</a></li>
-                                            <li><a data-toggle='modal' data-target='#prorateModal'>Prorate</a></li>
-                                        </ul>
-                                    </div>
-                                </th>
+                                <th>Quantity</th>
+                                <th>Cartons</th>
+                                <th>Volume (CBMs)</th>
+                                <th>Gross Weight (KGs)</th>
+                                <th></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -119,11 +117,10 @@
                                 <td>{{line.ordln_line_number}}</td>
                                 <td>{{line.ordln_puid}}</td>
                                 <td>{{line.ordln_sku}}</td>
-                                <td><input type='number' ng-model='line.quantity_to_ship' class='form-control'/></td>
-                            </tr>
-                            <tr>
-                                <td colspan='3' class='text-right'>Total:</td>
-                                <td>{{totalToShip(sbc.activeOrder)}}</td>
+                                <td><input type='number' ng-model='line.bkln_quantity' class='form-control'/></td>
+                                <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
+                                <td><input type="number" class="form-control" ng-model="line.bkln_cbms"></td>
+                                <td><input type='number' class="form-control" ng-model="line.bkln_gross_kgs"></td>
                             </tr>
                             </tbody>
                         </table>
@@ -132,7 +129,42 @@
             </div>
         </div>
     </div>
-    <div class='container' data-container-id="container">Container</div>
+    <div class='container' data-container-id="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Book By Order</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <div class="btn-group btn-group-vertical" style="width:100%">
+                    <a role="button" class="btn btn-md btn-default"
+                           ng-repeat="value in ['Small','Medium','Large']"
+                           ng-click="sbc.onContainerSelected(value);">{{value}}</a>
+                </div>
+            </div>
+            <div class="col-md-10">
+                <table class="table table-striped">
+                    <tr>
+                        <th>Container Size</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMs)</th>
+                        <th>Gross Weight (KGs)</th>
+                        <th></th>
+                    </tr>
+                    <tr ng-repeat="line in sbc.lines">
+                        <td>{{line.bkln_container_size}}</td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_quantity"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_cbms"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                        <td><button class="btn btn-xs btn-danger" title="Delete Line" ng-click="sbc.removeLine(line)"><i class="fa fa-trash"></i></button></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
 </chain-loading-wrapper>
 <div chain-action-bar>
     <button class='btn btn-default' ng-click='sbc.saveLines()' ng-show='sbc.lines.length > 0'>Save</button>
