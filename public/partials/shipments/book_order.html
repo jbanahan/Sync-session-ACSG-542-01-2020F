@@ -13,24 +13,24 @@
         </div>
     </div>
     <div class='container' data-container-id="product">
-        <div class="row">
+        <div class="row booking-header-row">
             <div class="col-md-12">
                 <h1>Book By Product</h1>
             </div>
         </div>
         <div class="row">
             <div class="col-md-2">
-                <angucomplete-alt id='product_autocomplete' input-class='form-control' placeholder='Product' selected-object='sbc.onProductSelected' remote-url='/api/v1/products/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
+                <angucomplete-alt id='product_autocomplete' input-class='form-control' placeholder='Search for Products...' clear-selected="true" selected-object='sbc.onProductSelected' remote-url='/api/v1/products/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
             </div>
             <div class="col-md-10">
-                <table class="table table-striped">
+                <table class="table booking-table">
                     <tr>
                         <th>Product</th>
                         <th>Quantity</th>
                         <th>Cartons</th>
                         <th>Volume (CBMs)</th>
                         <th>Gross Weight (KGs)</th>
-                        <th></th>
+                        <th class="short-column"></th>
                     </tr>
                     <tr ng-repeat="line in sbc.lines">
                         <td>{{line.bkln_pname}}</td>
@@ -45,24 +45,24 @@
         </div>
     </div>
     <div class='container' data-container-id="order">
-        <div class="row">
+        <div class="row booking-header-row">
             <div class="col-md-12">
                 <h1>Book By Order</h1>
             </div>
         </div>
         <div class="row">
             <div class="col-md-2">
-                <angucomplete-alt id='order_autocomplete' input-class='form-control' placeholder='Order' selected-object='sbc.onOrderSelected' remote-url='/api/v1/orders/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
+                <angucomplete-alt id='order_autocomplete' input-class='form-control' placeholder='Search for Orders...' clear-selected="true" selected-object='sbc.onOrderSelected' remote-url='/api/v1/orders/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
             </div>
             <div class="col-md-10">
-                <table class="table table-striped">
+                <table class="table booking-table">
                     <tr>
                         <th>Order</th>
                         <th>Quantity</th>
                         <th>Cartons</th>
                         <th>Volume (CBMs)</th>
                         <th>Gross Weight (KGs)</th>
-                        <th></th>
+                        <th class="short-column"></th>
                     </tr>
                     <tr ng-repeat="line in sbc.lines">
                         <td>{{line.bkln_order_number}}</td>
@@ -77,9 +77,9 @@
         </div>
     </div>
     <div class='container' ng-init="" data-container-id="sku">
-        <div class="row">
+        <div class="row booking-header-row">
             <div class="col-md-12">
-                <h1>Book Order To Shipment {{shp.shp_ref}}</h1>
+                <h1>Book by Order Line (SKU)</h1>
             </div>
         </div>
         <div class="row">
@@ -88,28 +88,27 @@
                 <div class='text-right'><small><a href='' ng-click='orderFilter=null'>clear</a></small></div>
                 <br />
                 <div ng-show='sbc.availableOrders.length == 0'>No orders found</div>
-                <div class="btn-group btn-group-vertical" style="width:100%" data-toggle="buttons">
+                <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
                     <label class="btn btn-md btn-default"
                            ng-repeat="ord in sbc.availableOrders | filter:orderFilter"
                            ng-class="{active:ord.id==sbc.activeOrder.id}"
-                           ng-click="sbc.getOrder(ord.id);"><input type="radio"/>{{ord.ord_cust_ord_no}}</label>
+                           ng-click="sbc.getOrder(ord.id);"><input type="radio" autocomplete="off"/>{{ord.ord_cust_ord_no}}</label>
                 </div>
             </div>
             <div class="col-xs-10">
                 <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
                     <div ng-show='sbc.activeOrder'>
                         <h2 style='margin-top:0'>Order: {{sbc.activeOrder.ord_cust_ord_no}}</h2>
-                        <table class='table table-striped'>
+                        <table class='table booking-table'>
                             <thead>
                             <tr>
-                                <th>Line #</th>
-                                <th>Part #</th>
+                                <th class="short-column">Line</th>
+                                <th class="short-column">Part</th>
                                 <th>SKU</th>
                                 <th>Quantity</th>
                                 <th>Cartons</th>
                                 <th>Volume (CBMs)</th>
                                 <th>Gross Weight (KGs)</th>
-                                <th></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -117,10 +116,10 @@
                                 <td>{{line.ordln_line_number}}</td>
                                 <td>{{line.ordln_puid}}</td>
                                 <td>{{line.ordln_sku}}</td>
-                                <td><input type='number' ng-model='line.bkln_quantity' class='form-control'/></td>
-                                <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
-                                <td><input type="number" class="form-control" ng-model="line.bkln_cbms"></td>
-                                <td><input type='number' class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                                <td><input ng-model='line.ordln_ordered_qty' class='form-control'/></td>
+                                <td><input class="form-control" ng-model="line.bkln_carton_qty"></td>
+                                <td><input class="form-control" ng-model="line.bkln_cbms"></td>
+                                <td><input class="form-control" ng-model="line.bkln_gross_kgs"></td>
                             </tr>
                             </tbody>
                         </table>
@@ -130,28 +129,28 @@
         </div>
     </div>
     <div class='container' data-container-id="container">
-        <div class="row">
+        <div class="row booking-header-row">
             <div class="col-md-12">
-                <h1>Book By Order</h1>
+                <h1>Book By Container</h1>
             </div>
         </div>
         <div class="row">
             <div class="col-md-2">
-                <div class="btn-group btn-group-vertical" style="width:100%">
+                <div class="btn-group-vertical" style="width:100%">
                     <a role="button" class="btn btn-md btn-default"
                            ng-repeat="value in ['Small','Medium','Large']"
                            ng-click="sbc.onContainerSelected(value);">{{value}}</a>
                 </div>
             </div>
             <div class="col-md-10">
-                <table class="table table-striped">
+                <table class="table booking-table">
                     <tr>
                         <th>Container Size</th>
                         <th>Quantity</th>
                         <th>Cartons</th>
                         <th>Volume (CBMs)</th>
                         <th>Gross Weight (KGs)</th>
-                        <th></th>
+                        <th class="short-column"></th>
                     </tr>
                     <tr ng-repeat="line in sbc.lines">
                         <td>{{line.bkln_container_size}}</td>
