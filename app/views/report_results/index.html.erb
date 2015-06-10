@@ -28,23 +28,23 @@
   <%end%>
   <%if current_user.company.master? && !LinkableAttachment.where("1=1").empty? %>
     <tr class='hover'><td><%=link_to "Attachments Not Matched", reports_show_attachments_not_matched_path%></td>
-    <td>Shows all uploaded attachments not matched to items.</td</tr>
+    <td>Shows all uploaded attachments not matched to items.</td></tr>
   <%end%>
   <%if current_user.company.master? && (!LinkedAttachment.where("attachable_type = \"Product\"").empty? || !Attachment.where("attachable_type = \"Product\"").empty?)%>
     <tr class='hover'><td><%=link_to "Products Without Attachments", reports_show_products_without_attachments_path%></td>
-    <td>Shows all products without attachments.</td</tr>
+    <td>Shows all products without attachments.</td></tr>
   <%end%>
   <%if current_user.company.master? && SyncRecord.count > 0-%>
     <tr class='hover'><td><%=link_to "Product Sync Problems", reports_show_product_sync_problems_path%></td>
-    <td>Shows all products out of sync with remote systems.</td</tr>
+    <td>Shows all products out of sync with remote systems.</td></tr>
   <%end-%>
   <%if OpenChain::Report::DrawbackExportsWithoutImports.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Drawback Exports Without Imports", reports_show_drawback_exports_without_imports_path%></td>
-    <td>Shows all drawback exports without matching imports by part number. Export Date must be greater than import date for lines to match.</td</tr>
+    <td>Shows all drawback exports without matching imports by part number. Export Date must be greater than import date for lines to match.</td></tr>
   <%end-%>
   <%if OpenChain::Report::DasBillingSummary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "DAS Canada Billing Summary", reports_show_das_billing_summary_path%></td>
-    <td>DAS Billing Summary report.</td</tr>
+    <td>DAS Billing Summary report.</td></tr>
   <%end-%>
   <%if OpenChain::Report::EddieBauerStatementSummary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Eddie Bauer Statment Summary", reports_show_eddie_bauer_statement_summary_path%></td>
@@ -56,15 +56,15 @@
   <%end-%>
   <%if OpenChain::Report::FootLockerBillingSummary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Foot Locker US Billing Summary", reports_show_foot_locker_billing_summary_path%></td>
-    <td>Foot Locker US Billing Summary report.</td</tr>
+    <td>Foot Locker US Billing Summary report.</td></tr>
   <%end-%>
   <%if OpenChain::Report::FootLockerCaBillingSummary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Foot Locker CA Billing Summary", reports_show_foot_locker_ca_billing_summary_path%></td>
-    <td>Foot Locker CA Billing Summary report.</td</tr>
+    <td>Foot Locker CA Billing Summary report.</td></tr>
   <%end-%>
   <%if OpenChain::Report::JJillWeeklyFreightSummaryReport.permission? current_user-%>
     <tr class='hover'><td><%=link_to "J Jill Weekly Freight Summary", reports_show_j_jill_weekly_freight_summary_path%></td>
-    <td>J Jill Weekly Freight Summary report.</td</tr>
+    <td>J Jill Weekly Freight Summary report.</td></tr>
   <%end-%>
   <%if OpenChain::Report::MarcJacobsFreightBudget.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Marc Jacobs Freight Budget", reports_show_marc_jacobs_freight_budget_path%></td>
@@ -97,6 +97,10 @@
   <%if OpenChain::Report::PvhContainerLogReport.permission? current_user-%>
     <tr class='hover'><td><%=link_to "PVH Container Log", reports_show_pvh_container_log_path%></td>
     <td>List PVH Container information relative to arrival dates.</td></tr>
+  <%end-%>
+  <%if OpenChain::Report::MonthlyEntrySummation.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Monthly Entry Summation", reports_show_monthly_entry_summation_path%></td>
+    <td>Sums entry data by month.</td></tr>
   <%end-%>
   </table>
 <% end -%>
