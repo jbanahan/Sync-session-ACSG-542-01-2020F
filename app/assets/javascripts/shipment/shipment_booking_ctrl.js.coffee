@@ -15,6 +15,12 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
           bkln_pname: product.name
           bkln_puid: product.unique_identifier
 
+    onOrderSelected: (order) =>
+      if order
+        order = order.originalObject
+        @lines.push
+          bkln_order_id: order.id
+          bkln_order_number: order.name
 
     removeLine: (line) =>
       oldLine = (@lines.filter (ln) -> ln == line)[0]
@@ -31,7 +37,7 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
         @activeOrder = resp.data.order
 
     saveLines: =>
-      shipmentSvc.saveBookingLines(@lines).then @cancel
+      shipmentSvc.saveBookingLines(@lines, $state.params.shipmentId).then @cancel
 
     cancel: =>
       @lines.splice 0, @lines.length

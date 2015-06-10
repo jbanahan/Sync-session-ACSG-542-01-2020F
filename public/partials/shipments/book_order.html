@@ -43,7 +43,36 @@
             </div>
         </div>
     </div>
-    <div class='container' data-container-id="order">Order</div>
+    <div class='container' data-container-id="order">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Book By Order</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <angucomplete-alt id='order_autocomplete' input-class='form-control' placeholder='Order' selected-object='sbc.onOrderSelected' remote-url='/api/v1/orders/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
+            </div>
+            <div class="col-md-10">
+                <table class="table">
+                    <tr>
+                        <th>Order</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMs)</th>
+                        <th>Gross Weight (KGs)</th>
+                    </tr>
+                    <tr ng-repeat="line in sbc.lines">
+                        <td>{{line.bkln_order_number}}</td>
+                        <td><input class="form-control" ng-model="line.bkln_quantity"></td>
+                        <td><input class="form-control" ng-model="line.bkln_carton_qty"></td>
+                        <td><input class="form-control" ng-model="line.bkln_cbms"></td>
+                        <td><input class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
     <div class='container' ng-init="sbc.loadAvailableOrders()" data-container-id="sku">
         <div class="row">
             <div class="col-md-12">

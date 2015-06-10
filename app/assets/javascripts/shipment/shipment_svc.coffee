@@ -68,8 +68,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
       $http[method]("/api/v1/shipments#{suffix}",{shipment: s}).then(getShipmentSuccessHandler)
 
-    saveBookingLines: (lines) ->
-      shipmentId = currentShipment.id
+    saveBookingLines: (lines, shipmentId) ->
       $http.put("/api/v1/shipments/#{shipmentId}.json", {shipment:{id:shipmentId, booking_lines:lines}}).then getShipmentSuccessHandler
 
     getParties: ->
