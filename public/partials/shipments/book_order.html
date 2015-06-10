@@ -20,7 +20,7 @@
         </div>
         <div class="row">
             <div class="col-md-2">
-                <angucomplete-alt id='product_autocomplete' input-class='form-control' placeholder='Search for Products...' clear-selected="true" selected-object='sbc.onProductSelected' remote-url='/api/v1/products/autocomplete?n=' title-field='name' minlength='1' initial-value=''></angucomplete-alt>
+                <angucomplete-alt id='product_autocomplete' input-class='form-control' placeholder='Search for Products...' clear-selected="true" selected-object='sbc.onProductSelected' remote-url='/api/v1/products/autocomplete?n=' title-field='unique_identifier' minlength='1' initial-value=''></angucomplete-alt>
             </div>
             <div class="col-md-10">
                 <table class="table booking-table">
@@ -33,7 +33,7 @@
                         <th class="short-column"></th>
                     </tr>
                     <tr ng-repeat="line in sbc.lines">
-                        <td>{{line.bkln_pname}}</td>
+                        <td>{{line.bkln_puid}}</td>
                         <td><input type='number' class="form-control" ng-model="line.bkln_quantity"></td>
                         <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
                         <td><input type='number' class="form-control" ng-model="line.bkln_cbms"></td>
@@ -112,14 +112,14 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <tr ng-repeat='line in sbc.activeOrder.order_lines'>
+                            <tr ng-repeat='line in sbc.lines'>
                                 <td>{{line.ordln_line_number}}</td>
                                 <td>{{line.ordln_puid}}</td>
                                 <td>{{line.ordln_sku}}</td>
-                                <td><input ng-model='line.ordln_ordered_qty' class='form-control'/></td>
-                                <td><input class="form-control" ng-model="line.bkln_carton_qty"></td>
-                                <td><input class="form-control" ng-model="line.bkln_cbms"></td>
-                                <td><input class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                                <td><input type="number" ng-model='line.bkln_quantity' class='form-control'/></td>
+                                <td><input type="number" class="form-control" ng-model="line.bkln_carton_qty"></td>
+                                <td><input type="number" class="form-control" ng-model="line.bkln_cbms"></td>
+                                <td><input type="number" class="form-control" ng-model="line.bkln_gross_kgs"></td>
                             </tr>
                             </tbody>
                         </table>
@@ -138,7 +138,7 @@
             <div class="col-md-2">
                 <div class="btn-group-vertical" style="width:100%">
                     <a role="button" class="btn btn-md btn-default"
-                           ng-repeat="value in ['Small','Medium','Large']"
+                           ng-repeat="value in ['20','40','40HC','45HC']"
                            ng-click="sbc.onContainerSelected(value);">{{value}}</a>
                 </div>
             </div>

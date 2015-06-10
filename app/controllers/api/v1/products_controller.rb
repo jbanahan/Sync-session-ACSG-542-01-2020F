@@ -6,7 +6,7 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
 
   def autocomplete
     p = Product.order(:name)
-    p = p.where('name like ?',"%#{params[:n]}%") unless params[:n].blank?
+    p = p.where('unique_identifier like ?',"%#{params[:n]}%") unless params[:n].blank?
     render json: p.collect {|product| {name:product.name, unique_identifier:product.unique_identifier, id:product.id}}
   end
 
