@@ -36,13 +36,13 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
       shipmentSvc.getAvailableOrders(shipment).then (resp) =>
         @availableOrders = resp.data.available_orders
 
-    getOrder: (id )=>
+    getOrder: (id) =>
       shipmentSvc.getOrder(id).then (resp) =>
         @activeOrder = resp.data.order
         @lines = @activeOrder.order_lines.map (line) ->
           ordln_line_number: line.ordln_line_number
           ordln_puid: line.ordln_puid
-          ordln_skh: line.ordln_sku
+          ordln_sku: line.ordln_sku
           bkln_order_line_id: line.id
           bkln_quantity: parseInt line.ordln_ordered_qty
 
