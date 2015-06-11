@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# This simple curl script is intended to be run via cron job on the delayed job server.
+# This simple curl script is intended to be run via cron job on the job scheduler server 
+# (Presently named 'VFI Track Job Runner').  The sole purpose of that server is to run this script.
+#
 # The requests it makes are what intitiate and drive/enable the scheduling backend.
 # In other words, if this script doesn't run, then no scheduled jobs or reports run.
 #
@@ -23,3 +25,4 @@ curl --header "Content-Type: application/json" -d '{}' --header "Accept: applica
 curl --header "Content-Type: application/json" -d '{}' --header "Accept: application/json" --header "Authorization: Token token=\"integration:Ds5+V+ezZg+S0Sij5cUNUCFys3I\"" https://ll.vfitrack.net/api/v1/schedulable_jobs/run_jobs
 curl --header "Content-Type: application/json" -d '{}' --header "Accept: application/json" --header "Authorization: Token token=\"integration:+1SIkxZoICiY99UeAfoHpfXGThE\"" https://rhee.vfitrack.net/api/v1/schedulable_jobs/run_jobs
 curl --header "Content-Type: application/json" -d '{}' --header "Accept: application/json" --header "Authorization: Token token=\"integration:3KZYaYECZd+K5eqBcI39gUQTfYs\"" https://bdemo.vfitrack.net/api/v1/schedulable_jobs/run_jobs
+curl --header "Content-Type: application/json" -d '{}' --header "Accept: application/json" --header "Authorization: Token token=\"integration:lGAxgyHObwydaXBphtTvXa8gZtk\"" https://hm.vfitrack.net/api/v1/schedulable_jobs/run_jobs
