@@ -1,12 +1,18 @@
 <chain-loading-wrapper loading-flag='{{loadingFlag}}'>
     <div class='container' ng-init="sbc.chooseBookingType('chooseBooking')" data-container-id="chooseBooking">
-        <div class="row">
+        <div class="row booking-header-row">
             <div class="col-md-12">
                 <h1>Choose Type of Booking</h1>
             </div>
         </div>
         <div class="row">
-            <div class="col-md-3"><button ng-click="sbc.chooseBookingType('product')">Book by Product</button></div>
+            <div class="col-md-3">
+                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('product')">
+                    <span class="top">Book by <strong>Product</strong></span>
+                    <hr>
+                    <span class="bottom">Choose this if...</span>
+                </button>
+            </div>
             <div class="col-md-3"><button ng-click="sbc.chooseBookingType('order')">Book by Order</button></div>
             <div class="col-md-3"><button ng-click="sbc.chooseBookingType('sku'); sbc.loadAvailableOrders();">Book by Order Line(SKU)</button></div>
             <div class="col-md-3"><button ng-click="sbc.chooseBookingType('container')">Book by Container</button></div>

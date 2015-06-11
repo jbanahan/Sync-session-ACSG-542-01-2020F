@@ -6,6 +6,26 @@
   margin-bottom: 40px;
 }
 
+.choose-booking-btn {
+  border-width: 4px;
+  padding: {
+    top: 20px;
+    bottom:20px;
+  }
+  .top {
+    font-size: 30px;
+  }
+
+  hr {
+    border-width: 5px;
+  }
+
+  &:hover {
+    background-color: #3e8acc;
+    color: white;
+  }
+}
+
 .booking-table {
 
   th {
