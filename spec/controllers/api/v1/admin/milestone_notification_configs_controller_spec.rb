@@ -84,7 +84,8 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
                 output_style: "standard",
                 enabled: true,
                 setup_json: [
-                  {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}
+                  {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
+                  {model_field_uid: "", timezone: "timezone", no_time: true}
                 ],
                 search_criterions: [
                   {mfid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false}
@@ -117,7 +118,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     end
   end
 
-  describe "updated" do
+  describe "update" do
     before :each do
       @config = MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard"
 
@@ -126,7 +127,8 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
                  output_style: "mbol_container",
                  enabled: false,
                  setup_json: [
-                   {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}
+                   {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
+                   {model_field_uid: "", timezone: "timezone", no_time: true}
                  ],
                  search_criterions: [
                    {mfid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false}

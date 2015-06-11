@@ -47,8 +47,11 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
         j = []
         setup.each do |event|
           uid = event['model_field_uid']
+          # uid could be blank if the user added a row, but then didn't fill anything in...skip it if that happened.
+          next if uid.blank?
+
           mf = uid ? ModelField.find_by_uid(uid) : nil
-          raise "Missing event_code for #{c.customer_number}.  No event model field for #{uid} found." unless mf
+          raise "Missing event_code for #{c.customer_number}.  No event model field for event code '#{uid}' found." unless mf
 
           conf = {model_field_uid: mf.uid.to_s, no_time: event["no_time"], timezone: event["timezone"]}
           j << conf

@@ -78,9 +78,11 @@ MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneS
   )
 
   $scope.showConfig = (config) ->
+    $scope.errorHandler.clear()
     $state.go('show', {configId: config.id})
 
   $scope.newConfig = ()->
+    $scope.errorHandler.clear()
     $state.go('new')
 
   $scope.outputStyle = (fmt) ->
@@ -91,6 +93,9 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
 
   $scope.loadingFlag = "loading"
   $scope.errorHandler = chainErrorHandler
+  $scope.errorHandler.responseErrorHandler = (rejection) ->
+    $scope.loadingFlag = null
+
   milestoneSvc.getMilestoneUpdateConfig(milestoneId).then( (resp) ->
     $scope.config = resp.config.milestone_notification_config
     $scope.modelFieldList = resp.model_field_list
@@ -103,6 +108,7 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
   $scope.saveConfig = () ->
     $scope.loadingFlag = "loading"
     milestoneSvc.saveMilestoneUpdate($scope.config).then( (resp) ->
+      $scope.errorHandler.clear()
       $scope.showIndex()
     )
 
