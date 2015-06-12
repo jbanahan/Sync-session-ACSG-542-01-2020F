@@ -97,11 +97,30 @@ describe OpenChain::SqlProxyClient do
       start = Time.zone.now
       end_t = start + 1.hour
 
-      request_body = {'job_params' => {start_date: start.strftime("%Y%m%d").to_i, end_time: end_t.strftime("%Y%m%d%H%M").to_i}, 'context'=>{results_as_array: true}}
-
+      request_body = {'job_params' => {start_date: start.strftime("%Y%m%d").to_i, end_date: end_t.strftime("%Y%m%d").to_i, end_time: end_t.strftime("%Y%m%d%H%M").to_i}, 'context'=>{results_as_array: true}}
       @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/file_tracking", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
 
       @c.request_file_tracking_info start, end_t
+    end
+  end
+
+  describe "request_updated_entry_numbers" do
+    it "requests updated entry data for given time period" do
+      start = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
+      end_t = start + 1.hour
+
+      request_body = {'job_params' => {start_date: start.strftime("%Y%m%d%H%M"), end_date: end_t.strftime("%Y%m%d%H%M")}}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/updated_entries", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @c.request_updated_entry_numbers start, end_t, ""
+    end
+
+    it "adds customer numbers to request if present" do
+      start = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
+      end_t = start + 1.hour
+
+      request_body = {'job_params' => {start_date: start.strftime("%Y%m%d%H%M"), end_date: end_t.strftime("%Y%m%d%H%M"), customer_numbers: "CUST1, CUST2"}}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/job/updated_entries", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @c.request_updated_entry_numbers start, end_t, "CUST1, CUST2"
     end
   end
 end

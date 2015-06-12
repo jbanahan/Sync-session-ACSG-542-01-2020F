@@ -27,8 +27,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       KeyJsonItem.updated_entry_data('last_request').create! json_data: "{\"last_request\":\"#{original_request}\"}"
 
       sql_proxy_client = double("SqlProxyClient")
-      sql_proxy_client.should_receive(:request_updated_entry_numbers).with(ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(original_request), instance_of(ActiveSupport::TimeWithZone))
-
+      sql_proxy_client.should_receive(:request_updated_entry_numbers).with(ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(original_request), instance_of(ActiveSupport::TimeWithZone), nil)
       described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client})
 
       # Check that a json key value was updated
@@ -49,6 +48,12 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       expect(key).not_to be_nil
       expect(key.data).to be_blank
     end
+
+    it "passes through customer_numbers opt if non-blank" do
+      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client.should_receive(:request_updated_entry_numbers).with(instance_of(ActiveSupport::TimeWithZone), instance_of(ActiveSupport::TimeWithZone), "TESTING")
+      described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client, "customer_numbers" => "TESTING"})
+    end
   end
 
   describe "request_since_hours_ago" do
@@ -56,9 +61,17 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       now = Time.zone.now
       Time.zone.should_receive(:now).and_return now
       sql_proxy_client = double("SqlProxyClient")
-      sql_proxy_client.should_receive(:request_updated_entry_numbers).with(now - 1.hour, now)
+      sql_proxy_client.should_receive(:request_updated_entry_numbers).with(now - 1.hour, now, nil)
 
       described_class.request_update_after_hours_ago 1, 'sql_proxy_client' => sql_proxy_client
+    end
+
+    it "requests data using given hours ago value, passing customer_number" do
+      now = Time.zone.now
+      Time.zone.should_receive(:now).and_return now
+      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client.should_receive(:request_updated_entry_numbers).with(now - 1.hour, now, "TEST, TESTING")
+      described_class.request_update_after_hours_ago 1, 'sql_proxy_client' => sql_proxy_client, 'customer_numbers' => "TEST, TESTING"
     end
   end
 

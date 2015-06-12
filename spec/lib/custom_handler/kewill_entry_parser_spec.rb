@@ -731,6 +731,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
   describe "save_to_s3" do
     it "saves entry data to s3 and returns s3 bucket/key" do
+      ms = double
+      MasterSetup.should_receive(:get).and_return ms
+      ms.should_receive(:system_code).and_return "system-code"
       json = {'entry' => {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
 
       contents = nil
@@ -745,7 +748,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       described_class.save_to_s3 json
 
       expect(bucket).to eq OpenChain::S3.integration_bucket_name
-      expect(key).to eq "#{Time.zone.now.strftime("%Y-%m/%d")}/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_entry/12345-2015-04-01-00-00.json"
+      expect(key).to eq "#{Time.zone.now.strftime("%Y-%m/%d")}/home/ubuntu/ftproot/chainroot/system-code/_kewill_entry/12345-2015-04-01-00-00.json"
     end
 
     it "handles empty datasets" do

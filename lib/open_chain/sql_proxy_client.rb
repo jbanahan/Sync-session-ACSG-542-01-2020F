@@ -66,7 +66,7 @@ module OpenChain; class SqlProxyClient
   end
 
   def request_file_tracking_info start_date, end_time
-    request 'file_tracking', {:start_date => start_date.strftime("%Y%m%d").to_i, :end_time => end_time.strftime("%Y%m%d%H%M").to_i}, {results_as_array: true}, swallow_error: false
+    request 'file_tracking', {:start_date => start_date.strftime("%Y%m%d").to_i, :end_date => end_time.strftime("%Y%m%d").to_i, :end_time => end_time.strftime("%Y%m%d%H%M").to_i}, {results_as_array: true}, swallow_error: false
   end
 
   def request_entry_data file_no
@@ -80,11 +80,13 @@ module OpenChain; class SqlProxyClient
   # Requests sql proxy return a list of entry numbers that were updated 
   # during the timeframe specified by the parameters.  Which are expected 
   # to be Time objects.
-  def request_updated_entry_numbers updated_since, updated_before
+  def request_updated_entry_numbers updated_since, updated_before, customer_numbers = nil
     updated_since = updated_since.in_time_zone("Eastern Time (US & Canada)").strftime "%Y%m%d%H%M"
     updated_before = updated_before.in_time_zone("Eastern Time (US & Canada)").strftime "%Y%m%d%H%M"
+    params = {start_date: updated_since, end_date: updated_before}
+    params[:customer_numbers] = customer_numbers unless customer_numbers.blank?
 
-    request 'updated_entries', {start_date: updated_since, end_date: updated_before}, {}
+    request 'updated_entries', params, {}
   end
 
   def report_query query_name, query_params = {}, context = {}

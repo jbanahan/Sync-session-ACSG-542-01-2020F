@@ -47,8 +47,11 @@ module OpenChain; module CustomHandler; class KewillEntryParser
   }
 
   def self.integration_folder
-      "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_entry"
-    end
+    # This parser is actually used across multiple deployment instances (hm and www.vfitrack.net)
+    # and we could conceivable use it for more as well, so make sure the integration folder we're storing
+    # to is tied to the system code as well
+    "/home/ubuntu/ftproot/chainroot/#{MasterSetup.get.system_code}/_kewill_entry"
+  end
 
   def self.parse json_content, opts={}
     # This is the method that's called by the controller, we'll want to save off the json data it sends
