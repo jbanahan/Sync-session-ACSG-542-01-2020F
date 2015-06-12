@@ -7,25 +7,6 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
       $("[data-container-id='#{panelName}'").show()
       return false
 
-    onProductSelected: (product) =>
-      if product
-        product = product.originalObject
-        @lines.push
-          bkln_prod_id: product.id
-          bkln_pname: product.name
-          bkln_puid: product.unique_identifier
-
-    onOrderSelected: (order) =>
-      if order
-        order = order.originalObject
-        @lines.push
-          bkln_order_id: order.id
-          bkln_order_number: order.name
-
-    onContainerSelected: (size) =>
-      @lines.push
-        bkln_container_size: size
-
     addLine: =>
       @lines.push {}
       $timeout -> $('angucomplete-alt input:visible').last().focus()

@@ -14,51 +14,6 @@ describe 'ShipmentBookingCtrl', ->
 
   afterEach -> ctrl.resetLines()
 
-  describe 'onProductSelected', ->
-    describe 'when product is null', ->
-      it 'does nothing', ->
-        ctrl.onProductSelected(null);
-        expect(ctrl.lines).toEqual([])
-
-    describe 'when the product is real', ->
-      it 'adds a line based on the product', ->
-        product =
-          originalObject:
-            id:1
-            name: 'name'
-            unique_identifier: 'uid'
-
-        ctrl.onProductSelected(product);
-
-        expect(ctrl.lines[0]).toEqual
-          bkln_prod_id: 1
-          bkln_pname: 'name'
-          bkln_puid: 'uid'
-
-  describe 'onOrderSelected', ->
-    describe 'when order is null', ->
-      it 'does nothing', ->
-        ctrl.onOrderSelected(null);
-        expect(ctrl.lines).toEqual([])
-
-    describe 'when the product is real', ->
-      it 'adds a line based on the product', ->
-        order =
-          originalObject:
-            id:1
-            name: 'name'
-
-        ctrl.onOrderSelected(order);
-
-        expect(ctrl.lines[0]).toEqual
-          bkln_order_id: 1
-          bkln_order_number: 'name'
-
-  describe 'onContainerSelected', ->
-    it 'adds a line with the container size', ->
-      ctrl.onContainerSelected('BIG')
-      expect(ctrl.lines[0]).toEqual {bkln_container_size: 'BIG'}
-
   describe 'removeLine', ->
     it 'removes the given line', ->
       line1 = {bkln_quantity:100, bkln_cbms:100}
@@ -130,3 +85,50 @@ describe 'ShipmentBookingCtrl', ->
       ctrl.saveLines()
 
       expect(svc.saveBookingLines).toHaveBeenCalledWith([line1, line2], 1)
+
+    it 'flattens product info into the line', ->
+      state.params.shipmentId = 1
+      line =
+        bkln_quantity:100
+        bkln_cbms:100
+        product:
+          originalObject:
+            id:1
+            name:'name'
+            unique_identifier:'uid'
+
+      flat_line =
+        bkln_quantity: 100
+        bkln_cbms: 100
+        bkln_prod_id: 1
+        bkln_pname:'name'
+        bkln_puid:'uid'
+
+      ctrl.lines.push line
+
+      spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
+      ctrl.saveLines()
+
+      expect(svc.saveBookingLines).toHaveBeenCalledWith([flat_line], 1)
+
+    it 'flattens order info into the line', ->
+      state.params.shipmentId = 1
+      line =
+        bkln_quantity:100
+        bkln_cbms:100
+        order:
+          originalObject:
+            id:1
+            name:'name'
+
+      flat_line =
+        bkln_quantity: 100
+        bkln_cbms: 100
+        bkln_order_id: 1
+
+      ctrl.lines.push line
+
+      spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
+      ctrl.saveLines()
+
+      expect(svc.saveBookingLines).toHaveBeenCalledWith([flat_line], 1)
