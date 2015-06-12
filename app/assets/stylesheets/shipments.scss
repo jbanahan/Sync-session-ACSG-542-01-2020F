@@ -8,10 +8,18 @@
 
 .choose-booking-btn {
   border-width: 4px;
+  width:100%;
+  white-space: normal;
+
   padding: {
     top: 20px;
     bottom:20px;
   }
+
+  strong.sku {
+    font-size: 26px;
+  }
+
   .top {
     font-size: 30px;
   }
@@ -30,7 +38,7 @@
 
   th {
     background-color: #f7f7f7;
-    min-width: 180px;
+    min-width: 205px;
     &.short-column {
       min-width: 55px;
     }

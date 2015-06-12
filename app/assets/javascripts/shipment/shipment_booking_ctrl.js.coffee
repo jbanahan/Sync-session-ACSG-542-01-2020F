@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','$state',(shipmentSvc, $state) ->
+angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','$state','$timeout',(shipmentSvc, $state, $timeout) ->
   new class ShipmentBookingCtrl
     lines: []
 
@@ -26,6 +26,11 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
       @lines.push
         bkln_container_size: size
 
+    addLine: =>
+      @lines.push {}
+      $timeout -> $('angucomplete-alt input:visible').last().focus()
+      return true
+
     removeLine: (line) =>
       oldLine = (@lines.filter (ln) -> ln == line)[0]
       idx = @lines.indexOf oldLine
@@ -47,7 +52,24 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
           bkln_quantity: parseInt line.ordln_ordered_qty
 
     saveLines: =>
+      flattenProducts = (lines) ->
+        lines.forEach (line) ->
+          if line.product
+            product = line.product.originalObject
+            line.bkln_prod_id = product.id
+            line.bkln_pname = product.name
+            line.bkln_puid = product.unique_identifier
+            delete line.product
+
+      flattenOrders = (lines) ->
+        lines.forEach (line) ->
+          if line.order
+            line.bkln_order_id = line.order.originalObject.id
+            delete line.order
+
       linesToSave = @lines.filter (line) -> if line.bkln_order_line_id and line.bkln_quantity == 0 then false else true
+      flattenProducts linesToSave
+      flattenOrders linesToSave
       shipmentSvc.saveBookingLines(linesToSave, $state.params.shipmentId).then @cancel
 
     cancel: =>
