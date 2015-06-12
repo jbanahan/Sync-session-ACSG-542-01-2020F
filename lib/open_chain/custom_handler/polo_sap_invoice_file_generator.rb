@@ -739,13 +739,22 @@ module OpenChain
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", @config[:unallocated_profit_center], broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
             end
 
-            # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
-            brokerage_gl_account = raw_profit_center.blank? ? "23101900" : "52111200"
-
             broker_invoice.broker_invoice_lines.each do |line|
               # Duty is included at the "header" level so skip it at the invoice line level
               next if line.duty_charge_type?
-              gl_account = line.hst_gst_charge_code? ? "14311000" : brokerage_gl_account
+
+              if line.hst_gst_charge_code?
+                gl_account = "14311000"
+              elsif line.charge_code == "22"
+                # 22 is the Brokerage charge code.  RL stated they only wanted us to send this account for the $55 brokerage
+                # fee - which is all we currently bill for under the 22 code. So rather than tie the code to a billing amount that 
+                # will probably change at some point in the future, I'm using the code.
+                gl_account = "52111300"
+              else
+                # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
+                gl_account = raw_profit_center.blank? ? "23101900" : "52111200"
+              end
+
               local_profit_center = (line.hst_gst_charge_code? ? @config[:unallocated_profit_center] : profit_center)
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, gl_account, local_profit_center, line.charge_amount, line.charge_description, :brokerage, broker_invoice.entry.entry_number)
             end
