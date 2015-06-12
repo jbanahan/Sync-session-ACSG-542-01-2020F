@@ -1,6 +1,6 @@
 angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','$state','$timeout',(shipmentSvc, $state, $timeout) ->
   new class ShipmentBookingCtrl
-    lines: []
+    lines: [{}]
 
     chooseBookingType: (panelName) ->
       $('[data-container-id]').hide()
