@@ -380,6 +380,18 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq @cil.quantity.to_s
       end
 
+      it "skips commercial invoice lines with no duty" do
+        # Keep the part number / etc the same, that way we don't have to make any expectation adjustments
+        cil2 =  Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>"1234-1", :quantity=> BigDecimal.new("100"))
+        tariff_line = cil2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("0"))
+
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+        expect(@xml_files).to have(1).item
+        d = REXML::Document.new @xml_files[0][:contents]
+        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq 1
+        expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq "10.0"
+      end
+
       context "multiple invoices same entry mm/gl split" do
         it "should know if an entry has been sent already during the same generation and send FFI format for second" do
           # create a second broker invoice for the same entry, and make sure it's output in FFI format
@@ -441,13 +453,18 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
     context :FFI_Invoices do
 
+      before :each do
+        # Make line 2 a brokerage fee
+        @broker_invoice_line2.update_attributes! charge_code: "22"
+      end
+
       it "should generate an FFI invoice for non-deployed brands" do
         # By virtue of not setting up the entry/invoice line PO# as an SAP PO and not setting up a brand x-ref
         # we'll get an FFI format output
         # This also means we'll be using the 199.. profit center for everything
 
         # Make the first charge an HST charge (verify the correct g/l account is used for that)
-        @broker_invoice_line1.update_attributes(:charge_code=>"250", :charge_description=>"123456789012345678901234567890123456789012345678901")
+        @broker_invoice_line1.update_attributes!(:charge_code=>"250", :charge_description=>"123456789012345678901234567890123456789012345678901")
         time = Time.zone.now
 
         @gen.generate_and_send_invoices :rl_canada, time, [@broker_invoice]
@@ -481,7 +498,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23109000", nil, @entry.total_duty, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "Duty"]
         rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @entry.total_gst, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "GST"]
         rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @broker_invoice_line1.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line1.charge_description[0, 50]]
-        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line2.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "52111300", nil, @broker_invoice_line2.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
         rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line3.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line3.charge_description[0, 50]]
 
         sheet.row(1).should == rows[0]
@@ -571,6 +588,9 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/PROFITCENTER")).to eq "19999999"
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[4]/PROFITCENTER")).to eq "19999999"
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[5]/PROFITCENTER")).to eq "19999999"
+
+        # This should also result in the charge for the 3rd line being allotted to the non-deployed brand GL Account (since there's no profit center to assign it to)
+        expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[5]/GLVENDORCUSTOMER")).to eq "23101900"
       end
 
       it "should generate an FFI invoice for SAP PO's that have already had an invoice sent" do
@@ -593,11 +613,13 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/INVOICINGPARTY')).to eq "100023825"
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/AMOUNT')).to eq BigDecimal.new("8.00").to_s
 
-        # Since this is an SAP PO, we should be using the actual SAP profit center from the xref
+        # Since this is an SAP PO, we should be using the actual SAP profit center from the xref (and use the gl account indicating
+        # a deployed brand)
         expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData')).to have(3).items
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[1]/AMOUNT")).to eq @broker_invoice_line1.charge_amount.to_s
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[2]/AMOUNT")).to eq @broker_invoice_line2.charge_amount.to_s
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/AMOUNT")).to eq @broker_invoice_line3.charge_amount.to_s
+        expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/GLVENDORCUSTOMER")).to eq "52111200"
       end
 
       it "should skip GST/Duty lines for entries previously invoiced using the FFI interface" do
@@ -652,18 +674,39 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/AMOUNT")).to eq @broker_invoice_line3.charge_amount.abs.to_s
       end
 
-      it "generates FF invoices for RL Canada stock transfers" do
-        # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
-        # behavior for stock transfers
-        make_sap_po
-        @entry.update_attributes! vendor_names: "Ralph Lauren Corp"
+      context "ff send exceptions" do
+        before :each do
+          # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
+          # behavior for stock transfers
+          make_sap_po
+        end
 
-        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+        it "generates FF invoices for RL Canada stock transfers" do
+          # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
+          # behavior for stock transfers
+          make_sap_po
+          @entry.update_attributes! vendor_names: "Ralph Lauren Corp"
 
-        # A single ExportJob should have been created
-        job = ExportJob.all.first
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+          @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+
+          # A single ExportJob should have been created
+          job = ExportJob.all.first
+          job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+        end
+
+        it "generates FF invoices when every line is duty free" do
+          # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
+          # behavior for stock transfers
+          make_sap_po
+          [@tariff_line, @tariff_line2].each {|l| l.update_column :duty_amount, 0}
+
+          @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+
+          job = ExportJob.all.first
+          job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+        end
       end
+
     end
 
     context :multiple_invoices_same_entry do

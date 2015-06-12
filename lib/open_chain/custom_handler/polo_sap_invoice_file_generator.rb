@@ -422,6 +422,9 @@ module OpenChain
               tradecard_invoice = find_tradecard_invoice inv.invoice_number
 
               inv.commercial_invoice_lines.each do |line|
+                # Don't report commerical invoice lines having zero duty 
+                next unless line.commercial_invoice_tariffs.inject(BigDecimal.new("0")) {|sum, line| sum += line.duty_amount.to_i} > 0
+
                 # First things first, lets make sure we have a po_number and an SAP line number
                 # either directly from the invoice part number or by looking up the data from the PO
                 po_number, sap_line_number = find_po_sap_line_number @config[:tax_id], line
@@ -736,13 +739,22 @@ module OpenChain
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", @config[:unallocated_profit_center], broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
             end
 
-            # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
-            brokerage_gl_account = raw_profit_center.blank? ? "23101900" : "52111200"
-
             broker_invoice.broker_invoice_lines.each do |line|
               # Duty is included at the "header" level so skip it at the invoice line level
               next if line.duty_charge_type?
-              gl_account = line.hst_gst_charge_code? ? "14311000" : brokerage_gl_account
+
+              if line.hst_gst_charge_code?
+                gl_account = "14311000"
+              elsif line.charge_code == "22"
+                # 22 is the Brokerage charge code.  RL stated they only wanted us to send this account for the $55 brokerage
+                # fee - which is all we currently bill for under the 22 code. So rather than tie the code to a billing amount that 
+                # will probably change at some point in the future, I'm using the code.
+                gl_account = "52111300"
+              else
+                # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
+                gl_account = raw_profit_center.blank? ? "23101900" : "52111200"
+              end
+
               local_profit_center = (line.hst_gst_charge_code? ? @config[:unallocated_profit_center] : profit_center)
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, gl_account, local_profit_center, line.charge_amount, line.charge_description, :brokerage, broker_invoice.entry.entry_number)
             end
@@ -948,7 +960,17 @@ module OpenChain
                 # and we can't resend the full invoice line set again (otherwise the duty will get added twice in RL's system).
                 # So we fall back to sending via the FFI interface.
                 if !previously_invoiced?(entry)
-                  output_format = :mmgl
+
+                  # RL only wants us to use the MM format when at least one line on the file has duty
+                  duty_free = entry.commercial_invoices.find do |i|
+                    i.commercial_invoice_lines.find do |l|
+                      l.commercial_invoice_tariffs.find do |t|
+                        t.duty_amount.to_f > 0
+                      end
+                    end
+                  end.nil?
+
+                  output_format = :mmgl unless duty_free
                 end
               end
             end
