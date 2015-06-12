@@ -2,8 +2,6 @@ require 'open_chain/json_http_client'
 
 module OpenChain; class SqlProxyClient
 
-  PROXY_CONFIG ||= YAML.load_file Rails.root.join('config', 'sql_proxy.yml')
-
   def initialize json_client = OpenChain::JsonHttpClient.new
     @json_client = json_client
   end
@@ -100,12 +98,18 @@ module OpenChain; class SqlProxyClient
     request_body['context'] = request_context unless request_context.blank?
 
     begin
-      config = PROXY_CONFIG[Rails.env]
+      config = self.class.proxy_config[Rails.env]
       @json_client.post "#{config['url']}/job/#{job_name}", request_body, {}, config['auth_token']
     rescue => e
       raise e if request_params[:swallow_error] === false
       e.log_me ["Failed to initiate sql_proxy query for #{job_name} with params #{request_body.to_json}."]
     end
+  end
+
+  def self.proxy_config
+    @@proxy_config ||= YAML.load_file Rails.root.join('config', 'sql_proxy.yml')
+    raise "No SQL Proxy client configuration file found." unless @@proxy_config
+    @@proxy_config
   end
 
 end; end
