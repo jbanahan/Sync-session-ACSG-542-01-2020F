@@ -41,22 +41,21 @@ class DelayedJobManager
     return File.new('tmp/stop.txt').mtime < File.new('tmp/restart.txt').mtime
   end
 
-  # generate errors if delayed job backlog is too deep
-  def self.monitor_backlog max_messages=30
+  # generate errors if delayed job backlog contains too many messages older than 10 minutes
+  def self.monitor_backlog max_messages=20
     return if @@dont_send_until > 0.seconds.ago
     begin
-      c = Delayed::Job.count
-      oldest = Delayed::Job.find(:first, :order => 'created_at ASC')
-      raise "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: #{c} Items" if c > max_messages and oldest and oldest.created_at < 15.minutes.ago 
-    rescue
+      c = Delayed::Job.where("run_at < '#{10.minutes.ago}'").count
+      raise "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: #{c} Items" if c > max_messages
+    rescue => e
       @@dont_send_until = 30.minutes.from_now
-      $!.log_me [], [], true #don't delay the send since we know that the queue is backed up
+      e.log_me [], [], true #don't delay the send since we know that the queue is backed up
     end
   end
   
   # Reports on any errored delayed job (by raising and logging an exception)
   # Returns true if any error was reported, false otherwise
-  def self.report_delayed_job_error min_reporting_age_minutes = 15
+  def self.report_delayed_job_error min_reporting_age_minutes = 15 #****CHANGE THIS TO 10?
 
     # Don't bother sending emails for anything we've reported on less than 15 minutes ago
     # This lock is not a 100% foolproof way to prevent multiple instances from reporting
