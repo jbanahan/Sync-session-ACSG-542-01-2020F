@@ -28,11 +28,9 @@ describe DelayedJobManager do
       "word".delay({run_at: 15.minutes.ago}).size
       "word".delay({run_at: 15.minutes.ago}).size
       DelayedJobManager.monitor_backlog 2
-      email1 = ActionMailer::Base.deliveries.last
+      ActionMailer::Base.deliveries.clear
       DelayedJobManager.monitor_backlog 2 #this one shouldn't do anything because it hasn't been 30 minutes
-      email2 = ActionMailer::Base.deliveries.last
-      expect(email1).not_to be_nil
-      expect(email1).to eq(email2)
+      expect(ActionMailer::Base.deliveries.size).to eq 0
     end
   end
  
