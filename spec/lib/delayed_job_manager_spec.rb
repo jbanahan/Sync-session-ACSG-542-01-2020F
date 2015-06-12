@@ -6,30 +6,33 @@ describe DelayedJobManager do
     before :each do
       DelayedJobManager.reset_backlog_monitor
     end
-    it 'should send message if too many items in queue and oldest job is more than 15 minutes old' do
-      oldest = double(:delayed_job)
-      oldest.stub!(:created_at).and_return(16.minutes.ago)
-      Delayed::Job.should_receive(:find).and_return(oldest)
-      Delayed::Job.should_receive(:count).and_return(11)
-      RuntimeError.any_instance.should_receive(:log_me)
-      DelayedJobManager.monitor_backlog 10
+    it 'should send message if too many items older than 10 minutes are in the queue' do   
+      "word".delay({run_at: 15.minutes.ago}).size
+      "word".delay({run_at: 15.minutes.ago}).size
+      "word".delay({run_at: 15.minutes.ago}).size
+      DelayedJobManager.monitor_backlog 2
+      email = ActionMailer::Base.deliveries.last
+      expect(email).not_to be_nil
+      expect(email.subject).to include "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: 3 Items" 
     end
-    it 'does not send message if too many items in queue and oldest job is not older of 15 minutes ago' do
-      oldest = double(:delayed_job)
-      oldest.stub!(:created_at).and_return(14.minutes.ago)
-      Delayed::Job.should_receive(:find).and_return(oldest)
-      Delayed::Job.should_receive(:count).and_return(11)
-      RuntimeError.any_instance.should_not_receive(:log_me)
-      DelayedJobManager.monitor_backlog 10
+    it 'does not send message if number of items in the queue less than 10 minutes old is at or below the limit' do
+      "word".delay({run_at: 5.minutes.ago}).size
+      "word".delay({run_at: 15.minutes.ago}).size
+      "word".delay({run_at: 15.minutes.ago}).size
+      DelayedJobManager.monitor_backlog 2
+      email = ActionMailer::Base.deliveries.last
+      expect(email).to be_nil
     end
     it 'should not send 2 messages in 30 minutes' do
-      oldest = double(:delayed_job)
-      oldest.stub!(:created_at).and_return(16.minutes.ago)
-      Delayed::Job.should_receive(:find).and_return(oldest)
-      Delayed::Job.should_receive(:count).once.and_return(11)
-      RuntimeError.any_instance.should_receive(:log_me)
-      DelayedJobManager.monitor_backlog 10
-      DelayedJobManager.monitor_backlog 10 #this one shouldn't do anything because it hasn't been 30 minutes
+      "word".delay({run_at: 15.minutes.ago}).size
+      "word".delay({run_at: 15.minutes.ago}).size
+      "word".delay({run_at: 15.minutes.ago}).size
+      DelayedJobManager.monitor_backlog 2
+      email1 = ActionMailer::Base.deliveries.last
+      DelayedJobManager.monitor_backlog 2 #this one shouldn't do anything because it hasn't been 30 minutes
+      email2 = ActionMailer::Base.deliveries.last
+      expect(email1).not_to be_nil
+      expect(email1).to eq(email2)
     end
   end
  
