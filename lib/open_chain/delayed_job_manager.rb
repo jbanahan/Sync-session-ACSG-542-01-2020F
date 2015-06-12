@@ -55,7 +55,7 @@ class DelayedJobManager
   
   # Reports on any errored delayed job (by raising and logging an exception)
   # Returns true if any error was reported, false otherwise
-  def self.report_delayed_job_error min_reporting_age_minutes = 15 #****CHANGE THIS TO 10?
+  def self.report_delayed_job_error min_reporting_age_minutes = 15
 
     # Don't bother sending emails for anything we've reported on less than 15 minutes ago
     # This lock is not a 100% foolproof way to prevent multiple instances from reporting
