@@ -5,6 +5,7 @@ db/structure.sql
 db/development_structure.sql
 config/database.yml
 config/dj_count.txt
+config/sql_proxy.yml
 spec/support/tmp/*
 spec/tmp/*
 .project
