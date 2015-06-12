@@ -41,16 +41,15 @@ class DelayedJobManager
     return File.new('tmp/stop.txt').mtime < File.new('tmp/restart.txt').mtime
   end
 
-  # generate errors if delayed job backlog is too deep
-  def self.monitor_backlog max_messages=30
+  # generate errors if delayed job backlog contains too many messages older than 10 minutes
+  def self.monitor_backlog max_messages=20
     return if @@dont_send_until > 0.seconds.ago
     begin
-      c = Delayed::Job.count
-      oldest = Delayed::Job.find(:first, :order => 'created_at ASC')
-      raise "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: #{c} Items" if c > max_messages and oldest and oldest.created_at < 15.minutes.ago 
-    rescue
+      c = Delayed::Job.where("run_at < '#{10.minutes.ago}'").count
+      raise "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: #{c} Items" if c > max_messages
+    rescue => e
       @@dont_send_until = 30.minutes.from_now
-      $!.log_me [], [], true #don't delay the send since we know that the queue is backed up
+      e.log_me [], [], true #don't delay the send since we know that the queue is backed up
     end
   end
   
