@@ -332,9 +332,9 @@
     <button ng-show='shp.permissions.can_confirm_booking' class='btn btn-default' ng-click='confirmBooking(shp)'>Confirm Booking</button>
     <button ng-show='shp.permissions.can_revise_booking' class='btn btn-default' ng-click='reviseBooking(shp)'>Revise Booking</button>
     <button ng-show='shp.permissions.can_cancel' class='btn btn-default' ng-click='cancelShipment(shp)'>Cancel Shipment</button>
-    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
-    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showBookOrder()' ng-show='shp && shp.id'>Book Order</button>
-    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showProcessManifest()' ng-show='shp && shp.attachments.length > 0'>Process Manifest</button>
+    <button ng-show='shp.permissions.can_add_remove_lines && shp && shp.id' class='btn btn-default' ng-click='showAddOrder()'>Add Order</button>
+    <button ng-show='shp.permissions.can_add_remove_lines && shp && shp.id' class='btn btn-default' ng-click='showBookOrder()'>Book Now</button>
+    <button ng-show='shp.permissions.can_add_remove_lines && shp && shp.attachments.length > 0' class='btn btn-default' ng-click='showProcessManifest()'>Process Manifest</button>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>
   </div>
 </chain-loading-wrapper>
