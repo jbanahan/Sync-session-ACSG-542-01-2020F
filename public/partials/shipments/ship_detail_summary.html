@@ -2,10 +2,7 @@
   <div class="row">
     <div class="col-md-6">
       <div class="panel panel-default">
-        <div class="panel-body text-center bg-primary">
-          <h3>{{shipment.summary.piece_count}}</h3>
-          Pieces
-        </div>
+        <booking-shipping-comparison name="Pieces" num-shipped="shipment.summary.piece_count" num-booked="shipment.summary.booked_piece_count" ></booking-shipping-comparison>
       </div>
     </div>
     <div class="col-md-6">

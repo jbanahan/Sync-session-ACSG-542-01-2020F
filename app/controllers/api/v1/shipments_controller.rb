@@ -312,19 +312,37 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     params[:summary]
   end
   def render_summary shipment
+    booked_piece_count = 0
     piece_count = 0
+    booked_order_ids = Set.new
     order_ids = Set.new
+    booked_product_ids = Set.new
     product_ids = Set.new
     shipment.shipment_lines.each do |sl|
       piece_count += sl.quantity unless sl.quantity.nil?
       sl.order_lines.each {|ol| order_ids << ol.order_id}
       product_ids << sl.product_id
     end
+    shipment.booking_lines.each do |bl|
+      booked_piece_count += bl.quantity unless bl.quantity.nil?
+      if bl.order_line_id.present?
+        booked_order_ids << bl.order_line.order_id
+        booked_product_ids << bl.order_line.product_id
+      else
+        booked_order_ids << bl.order_id
+        booked_product_ids << bl.product_id
+      end
+
+    end
     {
       line_count: number_with_delimiter(shipment.shipment_lines.count),
+      booked_line_count: number_with_delimiter(shipment.booking_lines.where('order_line_id IS NOT NULL').count),
       piece_count: number_with_delimiter(number_with_precision(piece_count, strip_insignificant_zeros:true)),
+      booked_piece_count: number_with_delimiter(number_with_precision(booked_piece_count, strip_insignificant_zeros:true)),
       order_count: number_with_delimiter(order_ids.to_a.compact.size),
-      product_count: number_with_delimiter(product_ids.to_a.compact.size)
+      booked_order_count: number_with_delimiter(booked_order_ids.to_a.compact.size),
+      product_count: number_with_delimiter(product_ids.to_a.compact.size),
+      booked_product_count: number_with_delimiter(booked_product_ids.to_a.compact.size)
     }
   end
   def render_order_fields?
