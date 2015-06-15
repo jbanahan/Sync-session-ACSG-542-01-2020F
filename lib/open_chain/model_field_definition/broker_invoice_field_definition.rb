@@ -80,7 +80,11 @@ module OpenChain; module ModelFieldDefinition; module BrokerInvoiceFieldDefiniti
       make_broker_invoice_entry_field(65,:bi_ent_cadex_accept_date, :cadex_accept_date, "CADEX Accept Date", :datetime, lambda {|entry| entry.cadex_accept_date}),
       make_broker_invoice_entry_field(66,:bi_ent_cadex_sent_date, :cadex_sent_date, "CADEX Sent Date", :datetime, lambda {|entry| entry.cadex_sent_date}),
       make_broker_invoice_entry_field(67,:bi_ent_k84_month, :k84_month, "K84 Month", :integer, lambda {|entry| entry.k84_month}),
-      make_broker_invoice_entry_field(68,:bi_ent_exam_ordered_date, :exam_ordered_date, "Exam Ordered Date", :datetime, lambda {|entry| entry.exam_ordered_date})
+      make_broker_invoice_entry_field(68,:bi_ent_exam_ordered_date, :exam_ordered_date, "Exam Ordered Date", :datetime, lambda {|entry| entry.exam_ordered_date}),
+      make_broker_invoice_entry_field(69,:bi_ent_fda_transmit_date, :fda_transmit_date, "FDA Transmit Date", :datetime, lambda {|entry| entry.fda_transmit_date}),
+      make_broker_invoice_entry_field(70,:bi_ent_entry_filed_date, :entry_filed_date, "Entry Filed Date", :datetime, lambda {|entry| entry.entry_filed_date}),
+      make_broker_invoice_entry_field(71,:bi_ent_trucker_called_date, :trucker_called_date, "Trucker Called Date", :datetime, lambda {|entry| entry.trucker_called_date})
+
     ]
   end
 end; end; end;
