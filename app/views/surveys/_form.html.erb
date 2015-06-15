@@ -12,7 +12,7 @@
         attachment_info.push([<%=a.id%>, "<%=a.attached_file_name.html_safe%>"]);
       <% end %>
 
-    OCSurvey.addQuestion(<%=q.id%>,"<%=q.content.gsub("\n",'\n').gsub("\r","")%>","<%=q.choices.gsub("\n",'\n').gsub("\r",'')%>",attachment_info,<%=q.warning?%>, <%=q.require_comment?%>, <%=q.require_attachment?%>, "<%=q.attachment_required_for_choices%>", "<%=q.comment_required_for_choices%>");
+    OCSurvey.addQuestion(<%=q.id%>,"<%=q.content.gsub(/\r?\n/,'\n')%>","<%=q.choices.gsub(/\r?\n/,'\n')%>",attachment_info,<%=q.warning?%>, <%=q.require_comment?%>, <%=q.require_attachment?%>, "<%=q.attachment_required_for_choices.to_s.gsub(/\r?\n/,'\n')%>", "<%=q.comment_required_for_choices.to_s.gsub(/\r?\n/,'\n')%>");
     <%end%>
     <%if @survey.questions.empty?%>
     OCSurvey.addQuestion(null,"Your first question goes here...","");
