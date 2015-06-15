@@ -7,28 +7,19 @@
     </div>
     <div class="col-md-6">
       <div class="panel panel-default">
-        <div class="panel-body text-center bg-primary">
-          <h3>{{shipment.summary.line_count}}</h3>
-          Lines
-        </div>
+        <booking-shipping-comparison name="Lines" num-shipped="shipment.summary.line_count" num-booked="shipment.summary.booked_line_count"></booking-shipping-comparison>
       </div>
     </div>
   </div>
   <div class="row">
     <div class="col-md-6">
       <div class="panel panel-default">
-        <div class="panel-body text-center bg-primary">
-          <h3>{{shipment.summary.order_count}}</h3>
-          Orders
-        </div>
+        <booking-shipping-comparison name="Orders" num-shipped="shipment.summary.order_count" num-booked="shipment.summary.booked_order_count"></booking-shipping-comparison>
       </div>
     </div>
     <div class="col-md-6">
       <div class="panel panel-default">
-        <div class="panel-body text-center bg-primary">
-          <h3>{{shipment.summary.product_count}}</h3>
-          Products
-        </div>
+        <booking-shipping-comparison name="Products" num-shipped="shipment.summary.product_count" num-booked="shipment.summary.booked_product_count"></booking-shipping-comparison>
       </div>
     </div>
   </div>
