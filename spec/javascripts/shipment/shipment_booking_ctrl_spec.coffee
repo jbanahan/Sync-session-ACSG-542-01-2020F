@@ -20,7 +20,7 @@ describe 'ShipmentBookingCtrl', ->
       line2 = {bkln_order_id:6, bkln_quantity:50, bkln_gross_kgs:100}
       line3 = {bkln_order_line_id:4, bkln_quantity:50, bkln_carton_qty:5}
 
-      ctrl.lines.push line1, line2, line3
+      ctrl.lines = [line1, line2, line3]
 
       ctrl.removeLine line2
 
@@ -79,7 +79,7 @@ describe 'ShipmentBookingCtrl', ->
       line1 = {bkln_quantity:100, bkln_cbms:100}
       line2 = {bkln_order_id:6, bkln_quantity:50, bkln_gross_kgs:100}
       line3 = {bkln_order_line_id:4, bkln_quantity:0, bkln_carton_qty:5}
-      ctrl.lines.push line1, line2, line3
+      ctrl.lines = [line1, line2, line3]
 
       spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
       ctrl.saveLines()
@@ -104,7 +104,7 @@ describe 'ShipmentBookingCtrl', ->
         bkln_pname:'name'
         bkln_puid:'uid'
 
-      ctrl.lines.push line
+      ctrl.lines = [line]
 
       spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
       ctrl.saveLines()
@@ -126,7 +126,7 @@ describe 'ShipmentBookingCtrl', ->
         bkln_cbms: 100
         bkln_order_id: 1
 
-      ctrl.lines.push line
+      ctrl.lines = [line]
 
       spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
       ctrl.saveLines()

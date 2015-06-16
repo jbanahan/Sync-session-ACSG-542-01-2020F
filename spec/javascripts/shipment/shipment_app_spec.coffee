@@ -27,17 +27,18 @@ describe 'ShipmentApp', ->
         expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment)
 
   describe 'ShipmentAddOrderCtrl', ->
-    ctrl = svc = scope = q = null
+    ctrl = svc = state = scope = q = null
 
     beforeEach ->
       module ($provide) ->
         $provide.value('shipmentId',null)
         null #must return null not the provider
 
-      inject ($rootScope,$controller,shipmentSvc,$q) ->
+      inject ($rootScope,$controller,shipmentSvc,$q, $state) ->
         scope = $rootScope.$new()
+        state = $state
         svc = shipmentSvc
-        ctrl = $controller('ShipmentAddOrderCtrl', {$scope: scope, shipmentSvc: svc})
+        ctrl = $controller('ShipmentAddOrderCtrl', {$scope: scope, shipmentSvc: svc, $state:state})
         q = $q
 
     describe 'totalToShip', ->
@@ -50,15 +51,24 @@ describe 'ShipmentApp', ->
         ]}
         expect(scope.totalToShip(o)).toEqual 12
 
-    describe 'getAvailableOrders', ->
+    describe 'loadShipment', ->
       it 'should delegate to service and set orders', ->
-        r = q.defer()
-        spyOn(svc,'getAvailableOrders').andReturn(r.promise)
-        scope.getAvailableOrders({id: 10})
-        orders = [{id: 1}, {id: 2}]
-        r.resolve({data: {available_orders: orders}})
+        available_orders = [{id: 1}, {id: 2}]
+        booked_orders = [{id: 3}, {id: 4}]
+        spyOn(svc,'getShipment').andReturn(q.when({data: {shipment: {id: 10}}}))
+        spyOn(svc,'getAvailableOrders').andReturn(q.when({data: {available_orders: available_orders}}))
+        spyOn(svc,'getBookedOrders').andReturn(q.when({data: {booked_orders: booked_orders, lines_available:true}}))
+
+        ctrl.loadShipment(10)
         scope.$apply()
-        expect(scope.availableOrders).toEqual orders
+
+        expect(scope.availableOrders).toEqual available_orders
+        expect(scope.bookedOrders).toEqual booked_orders
+        expect(scope.linesAvailable).toEqual true
+
+        expect(svc.getShipment).toHaveBeenCalledWith 10
+        expect(svc.getAvailableOrders).toHaveBeenCalledWith id:10
+        expect(svc.getBookedOrders).toHaveBeenCalledWith id:10
 
     describe 'getOrder', ->
       it "should delegate to service", ->

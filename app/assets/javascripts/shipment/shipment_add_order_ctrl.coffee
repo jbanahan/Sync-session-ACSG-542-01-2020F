@@ -16,7 +16,7 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
       $scope.linesAvailable = resp.data.lines_available
 
 
-  loadShipment = (id) ->
+  @loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id).then (resp) ->
       $scope.shp = resp.data.shipment
@@ -91,6 +91,6 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
 
   $scope.cancel = goToShow
 
-  if $state.params.shipmentId
-    loadShipment $state.params.shipmentId
+  @loadShipment $state.params.shipmentId if $state.params.shipmentId
+
 ]
