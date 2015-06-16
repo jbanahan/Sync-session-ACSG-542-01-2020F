@@ -22,6 +22,7 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
     $scope.loadingFlag = 'loading'
     shipmentSvc.getBookedOrders(shipment).then (resp) ->
       $scope.bookedOrders = resp.data.booked_orders
+      $scope.linesAvailable = resp.data.lines_available
       $scope.loadingFlag = null
 
   loadShipment = (id) ->
@@ -38,6 +39,14 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
     $scope.activeOrder = null
     shipmentSvc.getOrder(order.id).then (resp) ->
       $scope.activeOrder = resp.data.order
+      $scope.resetQuantityToShip $scope.activeOrder
+      $scope.orderLoadingFlag = null
+
+  $scope.importBooking = ->
+    $scope.orderLoadingFlag = 'loading'
+    $scope.activeOrder = null
+    shipmentSvc.getAvailableLines({id: $state.params.shipmentId}).then (resp) ->
+      $scope.activeOrder = {order_lines: resp.data.lines}
       $scope.resetQuantityToShip $scope.activeOrder
       $scope.orderLoadingFlag = null
 
@@ -75,7 +84,7 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
         shpln_pname: oln.ordln_pname,
         linked_order_line_id: oln.id,
         shpln_shipped_qty: oln.quantity_to_ship,
-        order_lines: [{ord_cust_ord_no: ord.ord_cust_ord_no,ordln_line_number: oln.ordln_line_number}]
+        order_lines: [{ord_cust_ord_no: ord.ord_cust_ord_no || oln.linked_cust_ord_no,ordln_line_number: oln.linked_line_number || oln.ordln_line_number}]
         }
 
     shp[collection_name] = [] if shp[collection_name]==undefined

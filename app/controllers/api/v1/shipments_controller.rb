@@ -52,6 +52,15 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {booked_orders:r, lines_available: lines_available}
   end
 
+  def available_lines # makes a fake order based on booking lines.
+    s = Shipment.find params[:id]
+    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    lines = s.booking_lines.where('order_line_id IS NOT NULL').map do |line|
+      {id: line.order_line_id, ordln_line_number: line.line_number, ordln_puid: line.product_identifier, ordln_sku: line.order_line.sku, ordln_ordered_qty: line.quantity, linked_line_number: line.order_line.line_number, linked_cust_ord_no: line.customer_order_number}
+    end
+    render json: {lines: lines}
+  end
+
   def process_tradecard_pack_manifest
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)

@@ -23,6 +23,7 @@ OpenChain::Application.routes.draw do
           post :uncancel
           get :available_orders
           get :booked_orders
+          get :available_lines
         end
       end
       resources :fields, only: [:index]
