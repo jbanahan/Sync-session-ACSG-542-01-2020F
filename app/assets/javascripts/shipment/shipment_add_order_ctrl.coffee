@@ -12,18 +12,26 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
 
   $scope.prorate = {sign: 'Add', amount: 0}
 
+  getAvailableOrders = (shipment) ->
+    $scope.loadingFlag = 'loading'
+    shipmentSvc.getAvailableOrders(shipment).then (resp) ->
+      $scope.availableOrders = resp.data.available_orders
+      $scope.loadingFlag = null
+
+  getBookedOrders = (shipment) ->
+    $scope.loadingFlag = 'loading'
+    shipmentSvc.getBookedOrders(shipment).then (resp) ->
+      $scope.bookedOrders = resp.data.booked_orders
+      $scope.loadingFlag = null
+
   loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id).then (resp) ->
       $scope.shp = resp.data.shipment
       $scope.loadingFlag = null
-      $scope.getAvailableOrders($scope.shp)
+      getAvailableOrders($scope.shp)
+      getBookedOrders($scope.shp)
 
-  $scope.getAvailableOrders = (shipment) ->
-    $scope.loadingFlag = 'loading'
-    shipmentSvc.getAvailableOrders(shipment).then (resp) ->
-      $scope.availableOrders = resp.data.available_orders
-      $scope.loadingFlag = null
 
   $scope.getOrder = (order) ->
     $scope.orderLoadingFlag = 'loading'

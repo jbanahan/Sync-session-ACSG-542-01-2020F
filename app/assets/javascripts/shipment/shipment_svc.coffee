@@ -77,6 +77,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     getAvailableOrders: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')
 
+    getBookedOrders: (shipment) ->
+      $http.get('/api/v1/shipments/'+shipment.id+'/booked_orders.json')
+
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
 

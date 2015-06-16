@@ -7,15 +7,24 @@
     </div>
     <div class="row">
       <div class="col-xs-2">
+        <p><button class="btn btn-md btn-default" style="width:100%">Import Booking</button></p>
+        <p style="text-align: center;">Booked Orders</p>
+        <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
+          <label class="btn btn-md btn-default"
+                 ng-repeat="ord in bookedOrders"
+                 ng-class="{active:ord.id==activeOrder.id}"
+                 ng-click="getOrder(ord)"><input type="radio">{{ord.ord_cust_ord_no}}</label>
+        </div>
+        <p style="text-align: center;">All Orders</p>
         <input type='text' ng-model='orderFilter' placeholder='Search orders' class='form-control input-sm'/>
         <div class='text-right'><small><a href='' ng-click='orderFilter=null'>clear</a></small></div>
         <br />
         <div ng-show='availableOrders.length == 0'>No orders found</div>
-        <div class="btn-group btn-group-vertical" style="width:100%" data-toggle="buttons">
+        <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
           <label class="btn btn-md btn-default"
               ng-repeat="ord in availableOrders | filter:orderFilter"
               ng-class="{active:ord.id==activeOrder.id}"
-          ng-click="getOrder(ord)"><input type="radio"></input>{{ord.ord_cust_ord_no}}</label>
+          ng-click="getOrder(ord)"><input type="radio">{{ord.ord_cust_ord_no}}</label>
         </div>
       </div>
       <div class="col-xs-10">

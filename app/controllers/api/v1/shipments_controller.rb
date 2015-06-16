@@ -37,6 +37,21 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {available_orders:r}
   end
 
+  def booked_orders
+    s = Shipment.find params[:id]
+    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    ord_fields = [:ord_ord_num,:ord_cust_ord_no]
+    r = []
+    lines_available = s.booking_lines.where('order_line_id IS NOT NULL').any?
+    order_ids = s.booking_lines.where('order_id IS NOT NULL').uniq.pluck(:order_id) # select distinct order_id from booking_lines where...
+    Order.where(id: order_ids).each do |order|
+      hsh = {id:order.id}
+      ord_fields.each {|uid| hsh[uid] = export_field(uid, order)}
+      r << hsh
+    end
+    render json: {booked_orders:r, lines_available: lines_available}
+  end
+
   def process_tradecard_pack_manifest
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
