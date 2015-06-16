@@ -277,6 +277,20 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       expect(r[1][4]).to be_blank
       expect(r[1][5]).to be_blank
     end
+
+    it "sends a row with blank tariff information if no tariff records associated w/ classification for taiwan" do
+      @t.destroy
+      @c.update_attributes! country: Country.where(iso_code: "TW").first
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+
+      # Verify blanks in the tariff data are present
+      expect(r[1][0]).to eq @p.unique_identifier
+      expect(r[1][2]).to be_blank
+      expect(r[1][3]).to be_blank
+      expect(r[1][4]).to be_blank
+      expect(r[1][5]).to be_blank
+    end
   end
   describe :send_file do
     it 'should send file' do
