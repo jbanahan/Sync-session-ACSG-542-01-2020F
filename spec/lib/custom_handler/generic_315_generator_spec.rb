@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       expect(REXML::XPath.each(r, "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
       # Make sure we saved off the actual date that was sent in the xml so we don't bother resending
       # the same data at a later time.
-      expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.iso8601
+      expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.in_time_zone("Eastern Time (US & Canada)").iso8601
     end
 
     it "accepts if all search creatrions match" do
@@ -98,7 +98,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
     end
 
     it "does not send 315 if milestone date is same as previous send" do
-      DataCrossReference.create_315_milestone! @entry, 'release_date', @entry.release_date.iso8601
+      DataCrossReference.create_315_milestone! @entry, 'release_date', @entry.release_date.in_time_zone("Eastern Time (US & Canada)").iso8601
       c = described_class.new
       c.should_not_receive(:ftp_file)
       c.receive :save, @entry
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "converts to different timezone if instructed" do
       @config.setup_json = [
-        {model_field_uid: "ent_release_date", timezone: "Eastern Time (US & Canada)"}
+        {model_field_uid: "ent_release_date", timezone: "Hawaii"}
       ]
       @config.save!
       c = described_class.new
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       c.receive :save, @entry
 
-      expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.in_time_zone("Eastern Time (US & Canada)").iso8601
+      expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.in_time_zone("Hawaii").iso8601
     end
 
     it "removes time" do

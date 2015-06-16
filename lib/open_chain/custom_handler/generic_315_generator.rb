@@ -33,6 +33,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
 
       Tempfile.open(["#{entry.broker_reference}-#{data[:master_bills].first}-#{data[:container_numbers].first}-#{code}-", ".xml"]) do |fout|
         xml.write fout
+        fout.flush
         fout.rewind
         ftp_file fout
       end
@@ -72,13 +73,14 @@ module OpenChain; module CustomHandler; class Generic315Generator
     doc
   end
 
-  protected
-    def ftp_credentials
-      connect_vfitrack_net 'to_ecs/315'
-    end
+  def ftp_credentials
+    connect_vfitrack_net 'to_ecs/315'
+  end
 
+  protected
+    
     def default_timezone
-      ActiveSupport::TimeZone["UTC"]
+      ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     end
 
     def process_field field, output_style, user, entry
