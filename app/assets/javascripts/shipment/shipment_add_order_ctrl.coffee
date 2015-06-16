@@ -1,37 +1,27 @@
-angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler',($scope,shipmentSvc,$state,chainErrorHandler) ->
-  maxVal = (ary,attr,min) ->
-    r = min
-    for x in ary
-      pX = (if x[attr] then parseInt(x[attr]) else min)
-      r = pX if pX > r
-    r
+angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','$q','$state','chainErrorHandler',($scope,shipmentSvc,$q,$state,chainErrorHandler) ->
   $scope.shp = null
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->
     $scope.notificationMessage = null
 
-  $scope.prorate = {sign: 'Add', amount: 0}
+  $scope.proration = {sign: 'Add', amount: 0}
 
   getAvailableOrders = (shipment) ->
-    $scope.loadingFlag = 'loading'
     shipmentSvc.getAvailableOrders(shipment).then (resp) ->
       $scope.availableOrders = resp.data.available_orders
-      $scope.loadingFlag = null
 
   getBookedOrders = (shipment) ->
-    $scope.loadingFlag = 'loading'
     shipmentSvc.getBookedOrders(shipment).then (resp) ->
       $scope.bookedOrders = resp.data.booked_orders
       $scope.linesAvailable = resp.data.lines_available
-      $scope.loadingFlag = null
+
 
   loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id).then (resp) ->
       $scope.shp = resp.data.shipment
-      $scope.loadingFlag = null
-      getAvailableOrders($scope.shp)
-      getBookedOrders($scope.shp)
+      $q.all([getAvailableOrders($scope.shp),
+      getBookedOrders($scope.shp)]).then -> $scope.loadingFlag = null
 
 
   $scope.getOrder = (order) ->
@@ -71,27 +61,16 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
         ln.quantity_to_ship = qty + amountToChange
     order
   #create shipment lines for all lines on the given order
-  $scope.addOrderToShipment = (shp, ord, collection_name) ->
-    makeLineObj = (oln)->
-      if collection_name == 'booking_lines'
-        {
-        bkln_order_line_id: oln.id,
-        bkln_quantity: oln.quantity_to_ship,
-        }
-      else
-        {
+  $scope.addOrderToShipment = (shp, ord) ->
+    shp.lines = [] if shp.lines==undefined
+    return shp unless ord.order_lines
+    for oln in ord.order_lines
+      shp.lines.push
         shpln_puid: oln.ordln_puid,
         shpln_pname: oln.ordln_pname,
         linked_order_line_id: oln.id,
         shpln_shipped_qty: oln.quantity_to_ship,
         order_lines: [{ord_cust_ord_no: ord.ord_cust_ord_no || oln.linked_cust_ord_no,ordln_line_number: oln.linked_line_number || oln.ordln_line_number}]
-        }
-
-    shp[collection_name] = [] if shp[collection_name]==undefined
-    return shp unless ord.order_lines
-    for oln in ord.order_lines
-      sl = makeLineObj oln
-      shp[collection_name].push sl
     shp
 
   $scope.totalToShip = (ord) ->
