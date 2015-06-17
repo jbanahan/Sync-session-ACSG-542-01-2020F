@@ -33,7 +33,7 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
           bkln_quantity: parseInt line.ordln_ordered_qty
 
     saveButtonEnabled: =>
-      Object.keys(@lines[0]).filter((key)-> key != '$$hashKey').length > 0
+      @lines[0] && Object.keys(@lines[0]).filter((key)-> key != '$$hashKey').length > 0
 
     saveLines: =>
       flattenProducts = (lines) ->
