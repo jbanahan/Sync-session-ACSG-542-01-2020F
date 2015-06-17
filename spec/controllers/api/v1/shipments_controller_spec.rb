@@ -553,4 +553,60 @@ describe Api::V1::ShipmentsController do
       expect(r[1]['id']).to eq 100
     end
   end
+  describe "booked orders" do
+    before :each do
+      Shipment.any_instance.stub(:can_view?).and_return true
+      @shipment = Factory(:shipment)
+      @o1 = Factory :order,order_number:'ONUM',customer_order_number:'CNUM'
+      @o2 = Factory :order,order_number:'ONUM2',customer_order_number:'CNUM2'
+
+      Factory :booking_line, shipment_id:@shipment.id, order_id:@o1.id
+      Factory :booking_line, shipment_id:@shipment.id, order_id:@o2.id
+    end
+
+    it "returns orders that have been booked at the order_id level" do
+      get :booked_orders, id:@shipment.id
+      expect(response).to be_success
+      result = JSON.parse(response.body)['booked_orders']
+      lines_result = JSON.parse(response.body)['lines_available']
+      expect(result.size).to eq 2
+      expect(result[0]['id']).to eq @o1.id
+      expect(result[0]['ord_ord_num']).to eq @o1.order_number
+      expect(result[0]['ord_cust_ord_no']).to eq @o1.customer_order_number
+      expect(result[1]['id']).to eq @o2.id
+      expect(result[1]['ord_ord_num']).to eq @o2.order_number
+      expect(result[1]['ord_cust_ord_no']).to eq @o2.customer_order_number
+      expect(lines_result).to be false
+    end
+
+    it "lines_available is true if any lines are booked at the order_line_id level" do
+      Factory :booking_line, shipment_id:@shipment.id, order_line_id:99, product_id:nil
+      
+      get :booked_orders, id:@shipment.id
+      expect(response).to be_success
+      result = JSON.parse(response.body)['lines_available']
+      expect(result).to be true
+    end
+  end
+  describe "available_lines" do
+    it "returns booking_lines with an order_line_id, in a format that mocks the linked order_line" do
+      Shipment.any_instance.stub(:can_view?).and_return true
+      shipment = Factory(:shipment)
+      order = Factory :order, order_number:'ONUM',customer_order_number:'CNUM'
+      prod1 = Factory :product
+      oline1 = Factory :order_line, order_id:order.id, line_number:1, sku:'SKU', product_id:prod1.id
+      bline1 = Factory :booking_line, shipment_id:shipment.id, order_line_id:oline1.id, product_id:nil, line_number:5
+
+      get :available_lines, id:shipment.id
+      expect(response).to be_success
+      result = JSON.parse(response.body)['lines']
+      expect(result[0]['id']).to eq oline1.id
+      expect(result[0]['ordln_line_number']).to eq bline1.line_number
+      expect(result[0]['ordln_puid']).to eq bline1.product_identifier
+      expect(result[0]['ordln_sku']).to eq oline1.sku
+      expect(result[0]['ordln_ordered_qty']).to eq bline1.quantity
+      expect(result[0]['linked_line_number']).to eq oline1.line_number
+      expect(result[0]['linked_cust_ord_no']).to eq order.customer_order_number
+    end
+  end
 end

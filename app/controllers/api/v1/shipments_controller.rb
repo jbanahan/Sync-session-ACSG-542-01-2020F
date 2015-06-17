@@ -41,22 +41,28 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     s = Shipment.find params[:id]
     raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
     ord_fields = [:ord_ord_num,:ord_cust_ord_no]
-    r = []
+    result = []
     lines_available = s.booking_lines.where('order_line_id IS NOT NULL').any?
     order_ids = s.booking_lines.where('order_id IS NOT NULL').uniq.pluck(:order_id) # select distinct order_id from booking_lines where...
     Order.where(id: order_ids).each do |order|
       hsh = {id:order.id}
       ord_fields.each {|uid| hsh[uid] = export_field(uid, order)}
-      r << hsh
+      result << hsh
     end
-    render json: {booked_orders:r, lines_available: lines_available}
+    render json: {booked_orders:result, lines_available: lines_available}
   end
 
   def available_lines # makes a fake order based on booking lines.
     s = Shipment.find params[:id]
     raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
     lines = s.booking_lines.where('order_line_id IS NOT NULL').map do |line|
-      {id: line.order_line_id, ordln_line_number: line.line_number, ordln_puid: line.product_identifier, ordln_sku: line.order_line.sku, ordln_ordered_qty: line.quantity, linked_line_number: line.order_line.line_number, linked_cust_ord_no: line.customer_order_number}
+      {id: line.order_line_id,
+       ordln_line_number: line.line_number,
+       ordln_puid: line.product_identifier,
+       ordln_sku: line.order_line.sku,
+       ordln_ordered_qty: line.quantity,
+       linked_line_number: line.order_line.line_number,
+       linked_cust_ord_no: line.customer_order_number}
     end
     render json: {lines: lines}
   end
