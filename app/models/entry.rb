@@ -115,6 +115,13 @@ class Entry < ActiveRecord::Base
     split_newline_values self.house_bills_of_lading
   end
 
+  def purge
+    iso = Country.find(import_country_id).iso_code
+    EntryPurge.create!(broker_reference: broker_reference,
+                       country_iso: iso,
+                       source_system: source_system)
+  end
+
   private
   def split_newline_values values
     values.blank? ? [] : values.split(/\r?\n */)

@@ -222,14 +222,7 @@ class EntriesController < ApplicationController
   end
 
   def purge
-    e = Entry.find(params[:id])
-    iso = Country.find(e.import_country_id).iso_code
-    EntryPurge.create!(broker_reference: e.broker_reference,
-                       country_iso: iso,
-                       source_system: e.source_system)
-    p = EntryPurge.last
-    p.date_purged = p.created_at
-    p.save
+    Entry.find(params[:id]).purge
     render nothing: true
   end
   
