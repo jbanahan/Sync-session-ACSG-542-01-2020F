@@ -223,7 +223,7 @@ class EntriesController < ApplicationController
 
   def purge
     Entry.find(params[:id]).purge
-    render nothing: true
+    redirect_to entries_path
   end
   
   private

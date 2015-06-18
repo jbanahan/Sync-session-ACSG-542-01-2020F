@@ -8,6 +8,8 @@
   <%end-%>
   <%if current_user.sys_admin?-%>
     <%= button_to 'Update Entry', request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;' %>
+    
+    <%= button_to 'Purge', "/entries/#{@entry.id}/purge", method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;' %>
   <%end-%>
   <button id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
   <%if rule_state_field.can_view? current_user%>
