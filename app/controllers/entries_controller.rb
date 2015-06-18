@@ -220,6 +220,18 @@ class EntriesController < ApplicationController
     # Redirect back to main page if referrer is blank (this can be removed once we set referrer to never be nil)
     redirect_to request.referrer || "/"
   end
+
+  def purge
+    e = Entry.find(params[:id])
+    iso = Country.find(e.import_country_id).iso_code
+    EntryPurge.create!(broker_reference: e.broker_reference,
+                       country_iso: iso,
+                       source_system: e.source_system)
+    p = EntryPurge.last
+    p.date_purged = p.created_at
+    p.save
+    render nothing: true
+  end
   
   private
   def build_bi_company_filter_clause companies

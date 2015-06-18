@@ -120,6 +120,7 @@ OpenChain::Application.routes.draw do
   match "/entries/bi" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
+  match "/entries/:id/purge" => "entries#purge", :via => :post
   resources :entries, :only => [:index,:show] do
     get 'reprocess', :on=>:collection
     post 'bulk_get_images', :on=>:collection

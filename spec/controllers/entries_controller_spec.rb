@@ -353,25 +353,32 @@ describe EntriesController do
   end
 
   describe "purge legacy record" do
-    let(:entry) { Factory.create(:entry, broker_reference: "1234567", import_country_id: 1, source_system: "SomeSystem") }
+    before(:each) do 
+      c = Factory.create(:country)
+      @entry = Factory.create(:entry, 
+                                broker_reference: "1234567", 
+                                import_country_id: c.id, 
+                                source_system: "SomeSystem")
+    end
 
     it 'should copy fields from current entry to entry_purge table' do
-      get :purge, id: entry.id
-      purge = EntryPurge.last
-      expect(purge.broker_reference).to eq "1234567"
-      expect(purge.source_sytem).to eq "SomeSystem"
+      get :purge, id: @entry.id
+      purged = EntryPurge.last
+      expect(purged.broker_reference).to eq "1234567"
+      expect(purged.source_system).to eq "SomeSystem"
     end
 
     it 'should give the purge record the country iso corresponding to the entry\'s import_country_id' do
-      get :purge, id: entry.id
-      purge = EntryPurge.last
-      expect(purge.country_iso).to eq "US"
+      get :purge, id: @entry.id
+      purged = EntryPurge.last
+      c = Country.last
+      expect(purged.country_iso).to eq(c.iso_code)
     end
 
     it 'should give the purge record a date_purged equal to it\'s created_at timestamp' do
-      get :purge, id: entry.id
-      purge = EntryPurge.last
-      expect(purge.date_purged).to eq(purge.created_at)
+      get :purge, id: @entry.id
+      purged = EntryPurge.last
+      expect(purged.date_purged).to eq(purged.created_at)
     end
   end
 
