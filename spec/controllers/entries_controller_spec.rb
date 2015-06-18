@@ -351,4 +351,28 @@ describe EntriesController do
       flash[:errors].should eq ["You do not have permission to view this entry."]
     end
   end
+
+  describe "purge legacy record" do
+    let(:entry) { Factory.create(:entry, broker_reference: "1234567", import_country_id: 1, source_system: "SomeSystem") }
+
+    it 'should copy fields from current entry to entry_purge table' do
+      get :purge, id: entry.id
+      purge = EntryPurge.last
+      expect(purge.broker_reference).to eq "1234567"
+      expect(purge.source_sytem).to eq "SomeSystem"
+    end
+
+    it 'should give the purge record the country iso corresponding to the entry\'s import_country_id' do
+      get :purge, id: entry.id
+      purge = EntryPurge.last
+      expect(purge.country_iso).to eq "US"
+    end
+
+    it 'should give the purge record a date_purged equal to it\'s created_at timestamp' do
+      get :purge, id: entry.id
+      purge = EntryPurge.last
+      expect(purge.date_purged).to eq(purge.created_at)
+    end
+  end
+
 end
