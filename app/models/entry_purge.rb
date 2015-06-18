@@ -1,3 +1,3 @@
 class EntryPurge < ActiveRecord::Base
-  attr_accessible :broker_reference, :country, :date_purged, :iso, :source_system
+  attr_accessible :broker_reference, :country_iso, :date_purged, :source_system
 end
