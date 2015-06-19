@@ -117,9 +117,12 @@ class Entry < ActiveRecord::Base
 
   def purge
     iso = Country.find(import_country_id).iso_code
-    EntryPurge.create!(broker_reference: broker_reference,
-                       country_iso: iso,
-                       source_system: source_system)
+    ActiveRecord::Base.transaction do
+      EntryPurge.create!(broker_reference: broker_reference,
+                         country_iso: iso,
+                         source_system: source_system)
+      self.destroy
+    end
   end
 
   private
