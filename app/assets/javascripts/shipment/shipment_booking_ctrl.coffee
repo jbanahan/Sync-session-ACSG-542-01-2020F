@@ -2,7 +2,7 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
   new class ShipmentBookingCtrl
     constructor: ->
       shipmentSvc.getShipment($state.params.shipmentId).then (resp) =>
-        @bookingTypes = resp.data.shipment.permissions.booking_types_allowed
+        @bookingTypes = resp.data.shipment.permissions.enabled_booking_types
 
     lines: [{}]
 
@@ -11,7 +11,7 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
       $("[data-container-id='#{panelName}'").show()
       return false
 
-    isAllowed: (name) =>
+    isEnabled: (name) =>
       name in @bookingTypes
 
     addLine: =>

@@ -306,7 +306,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_add_remove_lines:shipment.can_add_remove_lines?(current_user),
       can_cancel:shipment.can_cancel?(current_user),
       can_uncancel:shipment.can_uncancel?(current_user),
-      booking_types_allowed:['product','order','order_line','container']
+      enabled_booking_types:['product','order','order_line','container']
     }
   end
   def render_shipment_lines?
