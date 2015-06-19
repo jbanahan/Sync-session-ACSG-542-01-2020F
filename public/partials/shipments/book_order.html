@@ -6,28 +6,28 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-3">
+            <div ng-if="sbc.isAllowed('product')" class="col-md-3">
                 <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('product')">
                     <span class="top">Book by <strong>Product</strong></span>
                     <hr>
                     <span class="bottom">Choose this if you do not have a purchase order number</span>
                 </button>
             </div>
-            <div class="col-md-3">
+            <div ng-if="sbc.isAllowed('order')" class="col-md-3">
                 <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('order')">
                     <span class="top">Book by<br><strong>Order</strong></span>
                     <hr>
                     <span class="bottom">Choose this if you do not want to include order details</span>
                 </button>
             </div>
-            <div class="col-md-3">
+            <div ng-if="sbc.isAllowed('order_line')" class="col-md-3">
                 <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('sku'); sbc.loadAvailableOrders();">
                     <span class="top">Book by<br><strong class="sku">Order Line (SKU)</strong></span>
                     <hr>
                     <span class="bottom">Choose this if you want to provide full shipment details</span>
                 </button>
             </div>
-            <div class="col-md-3">
+            <div ng-if="sbc.isAllowed('container')" class="col-md-3">
                 <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('container')">
                     <span class="top">Book by <strong>Container</strong></span>
                     <hr>

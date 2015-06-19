@@ -1,11 +1,18 @@
 angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','$state','$timeout',(shipmentSvc, $state, $timeout) ->
   new class ShipmentBookingCtrl
+    constructor: ->
+      shipmentSvc.getShipment($state.params.shipmentId).then (resp) =>
+        @bookingTypes = resp.data.shipment.permissions.booking_types_allowed
+
     lines: [{}]
 
     chooseBookingType: (panelName) ->
       $('[data-container-id]').hide()
       $("[data-container-id='#{panelName}'").show()
       return false
+
+    isAllowed: (name) =>
+      name in @bookingTypes
 
     addLine: =>
       @lines.push {}
