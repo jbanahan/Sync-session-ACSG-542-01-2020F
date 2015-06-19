@@ -239,7 +239,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
          :bkln_cbms,
          :bkln_carton_set_id,
          :bkln_order_and_line_number,
-         :bkln_order_id
+         :bkln_order_id,
+         :bkln_container_size
      ] + custom_field_keys(CoreModule::BOOKING_LINE))
 
     container_fields_to_render = ([

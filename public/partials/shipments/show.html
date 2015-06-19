@@ -252,10 +252,11 @@
                         <th>Line #</th>
                         <th>Product</th>
                         <th>Order Number - Line</th>
+                        <th>Container<br>Size</th>
                         <th>Quantity</th>
                         <th>Cartons</th>
-                        <th>Volume (CBMS)</th>
-                        <th>Gross Weight (KGS)</th>
+                        <th>Volume<br>(CBMS)</th>
+                        <th>Gross Weight<br>(KGS)</th>
                         <th ng-show='shp.permissions.can_edit'></th>
                       </tr>
                       </thead>
@@ -265,6 +266,9 @@
                         <td>{{ln.bkln_puid}}</td>
                         <td>
                           <a ng-href='/orders/{{ln.bkln_order_id}}'>{{ln.bkln_order_and_line_number}}</a>
+                        </td>
+                        <td>
+                          {{ln.bkln_container_size}}
                         </td>
                         <td>
                           {{ln.bkln_quantity}}
