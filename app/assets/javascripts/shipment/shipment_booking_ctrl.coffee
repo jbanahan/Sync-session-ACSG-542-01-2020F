@@ -5,6 +5,7 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
         @bookingTypes = resp.data.shipment.permissions.enabled_booking_types
 
     lines: [{}]
+    bookingTypes:[]
 
     chooseBookingType: (panelName) ->
       $('[data-container-id]').hide()

@@ -273,4 +273,8 @@ class Shipment < ActiveRecord::Base
     a << "shipments.importer_id = #{cid}"
     "(#{a.join(" OR ")})"
   end
+
+  def enabled_booking_types
+    ['product','order','order_line','container']
+  end
 end
