@@ -115,13 +115,14 @@ class Entry < ActiveRecord::Base
     split_newline_values self.house_bills_of_lading
   end
 
-  def purge
-    iso = Country.find(import_country_id).iso_code
+  def purge!
+    iso = self.import_country.try(:iso_code)
     ActiveRecord::Base.transaction do
       EntryPurge.create!(broker_reference: broker_reference,
                          country_iso: iso,
-                         source_system: source_system)
-      self.destroy
+                         source_system: source_system,
+                         date_purged: Time.zone.now)
+      raise "Entry could not be deleted, #{self.errors.full_messages}" unless self.destroy
     end
   end
 

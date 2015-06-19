@@ -223,7 +223,7 @@ class EntriesController < ApplicationController
 
   def purge
     sys_admin_secure do
-      Entry.find(params[:id]).purge
+      Entry.find(params[:id]).purge!
       flash[:notice] = "Entry purged"
       redirect_to entries_path
     end

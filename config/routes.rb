@@ -120,7 +120,6 @@ OpenChain::Application.routes.draw do
   match "/entries/bi" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
-  match "/entries/:id/purge" => "entries#purge", :via => :post
   resources :entries, :only => [:index,:show] do
     get 'reprocess', :on=>:collection
     post 'bulk_get_images', :on=>:collection
@@ -130,6 +129,7 @@ OpenChain::Application.routes.draw do
     get 'sync_records', on: :member
     post 'request_entry_data', on: :member
     post 'bulk_request_entry_data', on: :collection
+    post 'purge', on: :member
   end
 
   resources :business_validation_templates do
