@@ -352,7 +352,7 @@ describe EntriesController do
     end
   end
 
-  describe "purge legacy record" do
+  describe "purge legacy entry" do
     before(:each) do 
       c = Factory.create(:country)
       @entry = Factory.create(:entry, 
@@ -361,25 +361,54 @@ describe EntriesController do
                                 source_system: "SomeSystem")
     end
 
-    it 'should copy fields from current entry to entry_purge table' do
-      get :purge, id: @entry.id
-      purged = EntryPurge.last
-      expect(purged.broker_reference).to eq "1234567"
-      expect(purged.source_system).to eq "SomeSystem"
+    context "as a sysadmin" do
+      before :each do
+        sys_admin_user = Factory(:sys_admin_user,entry_view:true)
+        @proxy = OpenChain::SqlProxyClient.new
+        sign_in_as sys_admin_user
+      end
+
+      it 'should copy fields from current entry to entry_purge table' do
+        get :purge, id: @entry
+        purged = EntryPurge.last
+        expect(purged.broker_reference).to eq "1234567"
+        expect(purged.source_system).to eq "SomeSystem"
+      end
+
+      it 'should give the purge record the country iso corresponding to the entry\'s import_country_id' do
+        get :purge, id: @entry
+        purged = EntryPurge.last
+        c = Country.last
+        expect(purged.country_iso).to eq(c.iso_code)
+      end
+
+      it 'should give the purge record a date_purged equal to it\'s created_at timestamp' do
+        get :purge, id: @entry
+        purged = EntryPurge.last
+        expect(purged.date_purged).to eq(purged.created_at)
+      end
+
+      it 'should delete the purged entry' do
+        get :purge, id: @entry
+        expect(Entry.find_by_id(@entry)).to be_nil
+      end
+
+      it 'should display a confirmation and redirect' do
+        get :purge, id: @entry
+        expect(flash[:notice]).to match(/purged/)
+        expect(response).to redirect_to entries_path
+      end  
     end
 
-    it 'should give the purge record the country iso corresponding to the entry\'s import_country_id' do
-      get :purge, id: @entry.id
-      purged = EntryPurge.last
-      c = Country.last
-      expect(purged.country_iso).to eq(c.iso_code)
+    context "as a non-sysadmin" do
+      it 'should do nothing' do
+        get :purge, id: @entry
+        expect(EntryPurge.count).to eq 0
+        expect(Entry.find_by_id @entry).to_not be_nil
+        expect(flash[:notice]).to be_blank
+      end
     end
-
-    it 'should give the purge record a date_purged equal to it\'s created_at timestamp' do
-      get :purge, id: @entry.id
-      purged = EntryPurge.last
-      expect(purged.date_purged).to eq(purged.created_at)
-    end
+    
   end
 
 end
