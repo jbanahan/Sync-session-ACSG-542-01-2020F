@@ -69,4 +69,10 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
     cancel: =>
       @lines.splice 0, @lines.length
       $state.go('show', {shipmentId: $state.params.shipmentId})
+
+    init: =>
+      if @bookingTypes.length == 1
+        @chooseBookingType(@bookingTypes[0])
+      else
+        @chooseBookingType('chooseBooking')
 ]
