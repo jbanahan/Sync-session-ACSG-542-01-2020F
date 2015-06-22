@@ -168,7 +168,8 @@ describe CustomValue do
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = t
       CustomValue.batch_write! [cv], true
-      expect(@p.get_custom_value(@cd).value).to eq t
+      g = @p.get_custom_value(@cd).value
+      expect(g).to be_same_second_as t
     end
 
 
@@ -199,7 +200,7 @@ describe CustomValue do
       p = Factory(:product)
       p.update_custom_value!(cd,t)
       p.reload
-      expect(p.get_custom_value(cd).value).to eq t
+      expect(p.get_custom_value(cd).value).to be_same_second_as t
     end
   end
 end

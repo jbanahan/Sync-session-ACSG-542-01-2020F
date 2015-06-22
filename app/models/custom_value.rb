@@ -2,7 +2,7 @@ class CustomValue < ActiveRecord::Base
   include TouchesParentsChangedAt
 
   BATCH_INSERT_POSITIONS = ['string_value','date_value','decimal_value',
-    'integer_value','boolean_value','text_value']
+    'integer_value','boolean_value','text_value','datetime_value']
 
   belongs_to :custom_definition
   belongs_to :customizable, polymorphic: true, inverse_of: :custom_values
@@ -33,11 +33,11 @@ class CustomValue < ActiveRecord::Base
         deletes[cust_def_id] << {id: customizable_id, type: cv.customizable.class.name}
         # Sometimes we don't want to create the custom value if the field doesn't have any value in it (to lessen the length of the edit page for instance)
         if !opts[:skip_insert_nil_values] || !cv.value.nil?
-          vals = Array.new(9,"null")
+          vals = Array.new(10,"null")
           vals[BATCH_INSERT_POSITIONS.index(cv.sql_field_name)] = v
-          vals[6] = ActiveRecord::Base.sanitize cv.customizable.class.name
-          vals[7] = customizable_id
-          vals[8] = cust_def_id
+          vals[7] = ActiveRecord::Base.sanitize cv.customizable.class.name
+          vals[8] = customizable_id
+          vals[9] = cust_def_id
           inserts << "(#{ vals.join(',') }, now(), now())"
         end
         to_touch << cv.customizable if touch_parent && !to_touch.include?(cv.customizable)
