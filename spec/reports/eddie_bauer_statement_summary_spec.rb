@@ -92,7 +92,7 @@ describe OpenChain::Report::EddieBauerStatementSummary do
         :importer=>@imp,:release_date=>1.hour.from_now)
       options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year, :customer_number=>@imp.alliance_customer_number}
       ent = described_class.new(@user,options)
-      ent.find_entries(@imp).to_a.should == [@ent,find_even_though_paid]
+      ent.find_entries(@imp).map(&:id).sort.should == [@ent,find_even_though_paid].map(&:id).sort
     end
   end
   it "should total lines if multiple tariff records (and use higher duty rate)" do
