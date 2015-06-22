@@ -38,10 +38,13 @@
 
   th {
     background-color: #f7f7f7;
-    min-width: 205px;
     &.short-column {
       min-width: 55px;
     }
+  }
+
+  .disabled {
+    background-color: #eee;
   }
 
   tbody>tr>td {
@@ -56,7 +59,7 @@
     padding-left: 25px;
   }
 
-  td:last-child {
+  td:last-child, th:last-child {
     padding-right: 25px;
   }
 }

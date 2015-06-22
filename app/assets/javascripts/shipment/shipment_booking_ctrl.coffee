@@ -41,7 +41,8 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
           bkln_quantity: parseInt line.ordln_ordered_qty
 
     saveButtonEnabled: =>
-      @lines[0] && Object.keys(@lines[0]).filter((key)-> key != '$$hashKey').length > 0
+      enabledLines = @lines.filter (line) -> !line._disabled
+      enabledLines.length > 0 && Object.keys(enabledLines[0]).filter((key)-> key != '$$hashKey').length > 0
 
     saveLines: =>
       flattenProducts = (lines) ->
@@ -59,7 +60,7 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
             line.bkln_order_id = line.order.originalObject.id
             delete line.order
 
-      linesToSave = @lines.filter (line) -> if line.bkln_order_line_id and line.bkln_quantity == 0 then false else true
+      linesToSave = @lines.filter (line) -> !line._disabled
       flattenProducts linesToSave
       flattenOrders linesToSave
       shipmentId = $state.params.shipmentId
