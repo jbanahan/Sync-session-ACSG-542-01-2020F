@@ -6,9 +6,9 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-xs-2">
+      <div ng-hide="activeOrder" class="col-xs-2 col-xs-offset-5" style="text-align: center">
         <p><button ng-show="!!linesAvailable" ng-click="importBooking()" class="btn btn-md btn-default" style="width:100%">Import Booking</button></p>
-        <p style="text-align: center;">Booked Orders</p>
+        <p ng-show="bookedOrders.length > 0">Booked Orders</p>
         <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
           <label class="btn btn-md btn-default"
                  ng-repeat="ord in bookedOrders"
@@ -27,42 +27,40 @@
           ng-click="getOrder(ord)"><input type="radio">{{ord.ord_cust_ord_no}}</label>
         </div>
       </div>
-      <div class="col-xs-10">
+      <div ng-show='activeOrder' class="col-xs-12">
         <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
-          <div ng-show='activeOrder'>
-            <h2 style='margin-top:0'>Order: {{activeOrder.ord_cust_ord_no}}</h2>
-            <table class='table table-striped'>
-              <thead>
-                <tr>
-                  <th>Line #</th>
-                  <th>Part #</th>
-                  <th>SKU</th>
-                  <th>
-                    <div class='btn-group'>
-                      <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
-                      <ul class='dropdown-menu' role='menu'>
-                        <li><a ng-click='clearQuantityToShip(activeOrder)'>Clear</a></li>
-                        <li><a ng-click='resetQuantityToShip(activeOrder)'>Reset</a></li>
-                        <li><a data-toggle='modal' data-target='#prorateModal'>Prorate</a></li>
-                      </ul>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat='line in activeOrder.order_lines'>
-                  <td>{{line.ordln_line_number}}</td>
-                  <td>{{line.ordln_puid}}</td>
-                  <td>{{line.ordln_sku}}</td>
-                  <td><input type='number' ng-model='line.quantity_to_ship' class='form-control'/></td>
-                </tr>
-                <tr>
-                  <td colspan='3' class='text-right'>Total:</td>
-                  <td>{{totalToShip(activeOrder)}}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <h2>Order: {{activeOrder.ord_cust_ord_no}}</h2>
+          <table class='table table-striped'>
+            <thead>
+              <tr>
+                <th>Line #</th>
+                <th>Part #</th>
+                <th>SKU</th>
+                <th>
+                  <div class='btn-group'>
+                    <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li><a ng-click='clearQuantityToShip(activeOrder)'>Clear</a></li>
+                      <li><a ng-click='resetQuantityToShip(activeOrder)'>Reset</a></li>
+                      <li><a data-toggle='modal' data-target='#prorateModal'>Prorate</a></li>
+                    </ul>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat='line in activeOrder.order_lines'>
+                <td>{{line.linked_cust_ord_no ? line.linked_cust_ord_no + " - " + line.linked_line_number : line.ordln_line_number}}</td>
+                <td>{{line.ordln_puid}}</td>
+                <td>{{line.ordln_sku}}</td>
+                <td><input type='number' ng-model='line.quantity_to_ship' class='form-control'/></td>
+              </tr>
+              <tr>
+                <td colspan='3' class='text-right'>Total:</td>
+                <td>{{totalToShip(activeOrder)}}</td>
+              </tr>
+            </tbody>
+          </table>
         </chain-loading-wrapper>
       </div>
     </div>
