@@ -132,7 +132,6 @@ end
 Factory.define :booking_line do |s|
   s.sequence(:line_number)
   s.quantity 1
-  s.association :product
   s.association :shipment
 end
 Factory.define :carton_set do |f|

@@ -69,12 +69,23 @@ describe Api::V1::ShipmentsController do
       sl1.linked_order_line_id = ol1.id
       sl2 = Factory(:shipment_line,shipment:sl1.shipment,quantity:25,product:ol2.product)
       sl2.linked_order_line_id = ol2.id
-      [sl1,sl2].each {|s| s.update_attributes(updated_at:Time.now)}
+      bl1 = Factory(:booking_line,shipment:sl1.shipment,quantity:600,product:ol1.product,order:ol1.order)
+      bl2 = Factory(:booking_line,shipment:sl1.shipment,quantity:50,order_line:ol1)
+      [sl1,sl2,bl1,bl2].each {|s| s.update_attributes(updated_at:Time.now)}
 
       get :show, id: sl1.shipment_id.to_s, summary: 'true'
       j = JSON.parse response.body
       expect(j['shipment']['id']).to eq sl1.shipment_id
-      expected_summary = {'line_count'=>'2','piece_count'=>'1,125','order_count'=>'1','product_count'=>'2'}
+      expected_summary = {
+          'booked_line_count'=>'1',
+          'booked_piece_count'=>'650',
+          'booked_order_count'=>'1',
+          'booked_product_count'=>'1',
+          'line_count'=>'2',
+          'piece_count'=>'1,125',
+          'order_count'=>'1',
+          'product_count'=>'2'
+      }
       expect(j['shipment']['summary']).to eq expected_summary
     end
 
@@ -580,7 +591,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "lines_available is true if any lines are booked at the order_line_id level" do
-      Factory :booking_line, shipment_id:@shipment.id, order_line_id:99, product_id:nil
+      Factory :booking_line, shipment_id:@shipment.id, order_line_id:99
       
       get :booked_orders, id:@shipment.id
       expect(response).to be_success
@@ -595,7 +606,7 @@ describe Api::V1::ShipmentsController do
       order = Factory :order, order_number:'ONUM',customer_order_number:'CNUM'
       prod1 = Factory :product
       oline1 = Factory :order_line, order_id:order.id, line_number:1, sku:'SKU', product_id:prod1.id
-      bline1 = Factory :booking_line, shipment_id:shipment.id, order_line_id:oline1.id, product_id:nil, line_number:5
+      bline1 = Factory :booking_line, shipment_id:shipment.id, order_line_id:oline1.id, line_number:5
 
       get :available_lines, id:shipment.id
       expect(response).to be_success
