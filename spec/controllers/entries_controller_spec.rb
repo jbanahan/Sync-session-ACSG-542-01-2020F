@@ -351,4 +351,57 @@ describe EntriesController do
       flash[:errors].should eq ["You do not have permission to view this entry."]
     end
   end
+
+  describe "purge" do
+    before(:each) do 
+      c = Factory.create(:country)
+      @entry = Factory.create(:entry, 
+                                broker_reference: "1234567", 
+                                import_country_id: c.id, 
+                                source_system: "SomeSystem")
+    end
+
+    context "as a sysadmin" do
+      before :each do
+        sys_admin_user = Factory(:sys_admin_user,entry_view:true)
+        sign_in_as sys_admin_user
+      end
+
+      it 'should copy fields from current entry to entry_purge table along with the iso' do
+        get :purge, id: @entry
+        purged = EntryPurge.last
+        c = Country.last
+        expect(purged.broker_reference).to eq "1234567"
+        expect(purged.source_system).to eq "SomeSystem"
+        expect(purged.country_iso).to eq(c.iso_code)
+      end
+
+      it 'should delete the purged entry' do
+        get :purge, id: @entry
+        expect(Entry.find_by_id(@entry)).to be_nil
+      end
+
+      it 'should display a confirmation and redirect' do
+        get :purge, id: @entry
+        expect(flash[:notice]).to match(/purged/)
+        expect(response).to redirect_to entries_path
+      end  
+    end
+
+    context "as a non-sysadmin" do
+      it 'should do nothing' do
+        get :purge, id: @entry
+        expect(EntryPurge.count).to eq 0
+        expect(Entry.find_by_id @entry).to_not be_nil
+        expect(flash[:notice]).to be_blank
+      end
+
+      it 'should display an error message and reload the page' do
+        get :purge, id: @entry
+        expect(flash[:errors]).to be_present
+      end
+    end
+    
+  end
+
 end

@@ -129,6 +129,7 @@ OpenChain::Application.routes.draw do
     get 'sync_records', on: :member
     post 'request_entry_data', on: :member
     post 'bulk_request_entry_data', on: :collection
+    post 'purge', on: :member
   end
 
   resources :business_validation_templates do

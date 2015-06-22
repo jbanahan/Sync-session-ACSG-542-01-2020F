@@ -220,6 +220,14 @@ class EntriesController < ApplicationController
     # Redirect back to main page if referrer is blank (this can be removed once we set referrer to never be nil)
     redirect_to request.referrer || "/"
   end
+
+  def purge
+    sys_admin_secure do
+      Entry.find(params[:id]).purge!
+      flash[:notice] = "Entry purged"
+      redirect_to entries_path
+    end
+  end
   
   private
   def build_bi_company_filter_clause companies
