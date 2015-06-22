@@ -275,6 +275,7 @@ class Shipment < ActiveRecord::Base
   end
 
   def enabled_booking_types
-    ['product','order','order_line','container']
+    # ['product','order','order_line','container']
+    self.importer.enabled_booking_types_array || []
   end
 end
