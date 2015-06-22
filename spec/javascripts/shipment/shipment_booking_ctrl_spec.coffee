@@ -7,8 +7,9 @@ describe 'ShipmentBookingCtrl', ->
     rootScope = $rootScope
     svc = shipmentSvc
     state = $state
-    ctrl = $controller('ShipmentBookingCtrl', {$state: state, shipmentSvc: svc})
     q = $q
+    spyOn(svc,'getShipment').andReturn(q.reject())
+    ctrl = $controller('ShipmentBookingCtrl', {$state: state, shipmentSvc: svc})
 
     ctrl.resetLines = () -> ctrl.lines.splice(0, ctrl.lines.length)
 
@@ -74,11 +75,11 @@ describe 'ShipmentBookingCtrl', ->
         bkln_quantity: parseInt line.ordln_ordered_qty
 
   describe 'saveLines', ->
-    it 'does not save lines with an order line id and zero quantity', ->
+    it 'does not save lines with the disabled flag set', ->
       state.params.shipmentId = 1
       line1 = {bkln_quantity:100, bkln_cbms:100}
       line2 = {bkln_order_id:6, bkln_quantity:50, bkln_gross_kgs:100}
-      line3 = {bkln_order_line_id:4, bkln_quantity:0, bkln_carton_qty:5}
+      line3 = {bkln_order_line_id:4, bkln_quantity:0, bkln_carton_qty:5, _disabled:true}
       ctrl.lines = [line1, line2, line3]
 
       spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
