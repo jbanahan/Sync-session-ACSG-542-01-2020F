@@ -162,6 +162,15 @@ describe CustomValue do
       CustomValue.batch_write! [cv], true
       @p.get_custom_value(@cd).value.should == 'aaaa'
     end
+    it "should handle datetime" do
+      t = 2.minutes.ago
+      @cd.update_attributes(data_type:'datetime')
+      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv.value = t
+      CustomValue.batch_write! [cv], true
+      expect(@p.get_custom_value(@cd).value).to eq t
+    end
+
 
     it "should skip nil values" do
       @cd.update_attributes(:data_type=>'text')
@@ -174,12 +183,23 @@ describe CustomValue do
 
   describe "sql_field_name" do
     it "should handle data types" do
-      {"string"=>"string_value","boolean"=>"boolean_value","text"=>"text_value","date"=>"date_value","decimal"=>"decimal_value","integer"=>"integer_value"}.each do |k,v|
+      {"string"=>"string_value","boolean"=>"boolean_value","text"=>"text_value","date"=>"date_value","decimal"=>"decimal_value","integer"=>"integer_value","datetime"=>"datetime_value"}.each do |k,v|
         CustomValue.new(:custom_definition=>CustomDefinition.new(:data_type=>k)).sql_field_name.should == v
       end
     end
     it "should error if no custom definition" do
       lambda {CustomValue.new.sql_field_name}.should raise_error "Cannot get sql field name without a custom definition"
+    end
+  end
+
+  describe "value" do
+    it "should round trip a datetime" do
+      t = 2.minutes.ago
+      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"datetime")
+      p = Factory(:product)
+      p.update_custom_value!(cd,t)
+      p.reload
+      expect(p.get_custom_value(cd).value).to eq t
     end
   end
 end

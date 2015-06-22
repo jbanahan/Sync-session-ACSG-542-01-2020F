@@ -456,7 +456,7 @@ class ModelField
       fields_to_add << ModelField.new(index, "#{uid_prefix}username", core_module, "#{uid_prefix}username", {
         custom_id: custom_definition.id,
         label_override: "#{custom_definition.label} (Username)",
-        qualified_field_name: "(SELECT IFNULL(users.username,\"\") FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
+        qualified_field_name: "(SELECT users.username FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
         definition: custom_definition.definition,
         import_lambda: lambda {|obj,data|
           user_id = nil
@@ -503,13 +503,13 @@ class ModelField
         user_field: true
       })
       fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
-        :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+        :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
         :definition => custom_definition.definition, :default_label => "#{custom_definition.label}",
         :read_only => true
       })
     else
       fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
-        :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+        :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
         :definition => custom_definition.definition, :default_label => "#{custom_definition.label}"
       })
     end
@@ -555,7 +555,7 @@ class ModelField
     mf = ModelField.new(index,uid,core_module,uid,{
       custom_id: custom_definition.id,
       label_override: custom_definition.label.to_s,
-      qualified_field_name: "(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM products INNER JOIN custom_values ON custom_values.customizable_id = products.id AND custom_values.customizable_type = 'Product' and custom_values.custom_definition_id = #{custom_definition.id} WHERE products.id = #{core_module.table_name}.product_id)",
+      qualified_field_name: "(SELECT #{custom_definition.data_column} FROM products INNER JOIN custom_values ON custom_values.customizable_id = products.id AND custom_values.customizable_type = 'Product' and custom_values.custom_definition_id = #{custom_definition.id} WHERE products.id = #{core_module.table_name}.product_id)",
       definition: custom_definition.definition,
       default_label: custom_definition.label.to_s,
       read_only: true,

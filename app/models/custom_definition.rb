@@ -86,7 +86,8 @@ class CustomDefinition < ActiveRecord::Base
     :date => "Date",
     :boolean => "Checkbox",
     :decimal => "Decimal",
-    :integer => "Integer"
+    :integer => "Integer",
+    :datetime => "Date/Time"
   }
 
   def set_cache

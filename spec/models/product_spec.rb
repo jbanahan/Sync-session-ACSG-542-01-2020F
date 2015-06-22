@@ -37,6 +37,12 @@ describe Product do
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_false
     end
+    it "should return true if change happened in same day" do
+      @snapshot.update_attributes(created_at:5.minutes.ago)
+      tr = Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
+      @p.reload
+      expect(@p.wto6_changed_after?(3.minutes.ago)).to be_true
+    end
   end
   describe :validate_tariff_numbers do
     it "should pass" do

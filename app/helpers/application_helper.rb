@@ -88,24 +88,6 @@ module ApplicationHelper
     select_tag name, grouped_options_for_select(CoreModule.grouped_options(User.current, inner_opts),selected,"Select a Field"), opts
   end
 
-  #builds a text field to back a field represented with a model_field_uid in the ModelField constants.
-  #will write a select box if the field's validators include a .one_of validation
-  def model_text_field form_object, field_name, model_field_uid, opts={}
-    inner_opts = opts_for_model_text_field model_field_uid, opts
-    mf = ModelField.find_by_uid(model_field_uid)
-    if mf.read_only? || !mf.can_edit?(current_user)
-      return content_tag(:span,mf.process_export(form_object.object,current_user))
-    end
-    one_of_array = mf.field_validator_rule.try(:one_of_array)
-    if one_of_array&& one_of_array.size > 0
-      inner_opts.delete :size
-      inner_opts.delete "size"
-      return form_object.select(field_name,one_of_array,{:include_blank=>true},inner_opts)
-    else
-      return form_object.text_field(field_name,inner_opts)
-    end
-  end
-
   def model_text_field_tag field_name, model_field_uid, value, opts={}
     inner_opts = opts_for_model_text_field model_field_uid, opts
 
@@ -524,7 +506,9 @@ module ApplicationHelper
     inner_opts[:class] = ["form-control"]
     inner_opts[:class].push *val_class(mf)
     inner_opts[:class] = merge_css_attributes inner_opts[:class], opts[:class]
-
+    if mf.data_type == :datetime
+      inner_opts[:type] = 'datetime-local'
+    end
     inner_opts
   end
 
@@ -540,8 +524,6 @@ module ApplicationHelper
     when :integer
       r << "integer"
     when :date
-      r << "isdate"
-    when :datetime
       r << "isdate"
     when :fixnum
       r << "decimal"
@@ -560,8 +542,6 @@ module ApplicationHelper
   def data_type_class model_field
     case model_field.data_type
     when :date
-      return "isdate"
-    when :datetime
       return "isdate"
     when :integer
       return "integer"
