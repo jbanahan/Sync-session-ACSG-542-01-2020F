@@ -86,13 +86,13 @@ describe OpenChain::Report::EddieBauerStatementSummary do
   context "previous_month mode" do
     it "should return entries from month / year specified regardless of paid status" do
       find_even_though_paid = Factory(:entry,:importer=>@imp,
-        :monthly_statement_paid_date=>Time.now,:release_date=>3.months.ago)
+        :monthly_statement_paid_date=>Time.now,:release_date=>3.months.ago + 1.minute)
       @ent.update_attributes(:release_date=>3.months.ago)
       dont_find_even_though_unpaid_because_different_month = Factory(:entry,
         :importer=>@imp,:release_date=>1.hour.from_now)
       options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year, :customer_number=>@imp.alliance_customer_number}
       ent = described_class.new(@user,options)
-      ent.find_entries(@imp).map(&:id).sort.should == [@ent,find_even_though_paid].map(&:id).sort
+      ent.find_entries(@imp).map(&:id).should == [@ent,find_even_though_paid].map(&:id)
     end
   end
   it "should total lines if multiple tariff records (and use higher duty rate)" do
