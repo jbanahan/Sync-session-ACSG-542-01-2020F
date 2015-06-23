@@ -15,6 +15,8 @@ class Shipment < ActiveRecord::Base
   belongs_to :booking_confirmed_by, :class_name=>"User"
   belongs_to :booking_approved_by, :class_name=>"User"
   belongs_to :canceled_by, :class_name=>"User"
+  belongs_to :cancel_requested_by, :class_name=>"User"
+  belongs_to :cancel_approved_by, :class_name=>"User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :booking_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -171,6 +173,25 @@ class Shipment < ActiveRecord::Base
     self.uncancel_shipment! user, true
   end
 
+  def can_request_cancel? user, ignore_shipment_state=false
+    unless ignore_shipment_state
+      return false if self.canceled_date
+    end
+    return false unless self.can_view?(user)
+    return false unless self.vendor == user.company || user.company.master?
+    return true
+  end
+  def request_cancel! user, async_snapshot = false
+    self.cancel_requested_date = 0.seconds.ago
+    self.cancel_requested_by = user
+    self.save!
+    OpenChain::EventPublisher.publish :shipment_cancel_request, self
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+  def async_request_cancel! user
+    self.request_cancel! user, true
+  end
+
   #private support methods for can cancel
   def can_cancel_as_vendor? user
     (!self.booking_received_date) && user.company==self.vendor
@@ -220,7 +241,7 @@ class Shipment < ActiveRecord::Base
     return true if user.company.master?
     imp = self.importer
     return false unless imp && (imp==user.company || imp.linked_company?(user.company))
-	  return (user.company == self.vendor || user.company == self.carrier || user.company = self.importer || (self.vendor && self.vendor.linked_companies.include?(user.company)))
+	  return (user.company == self.vendor || user.company == self.carrier || user.company == self.importer || (self.vendor && self.vendor.linked_companies.include?(user.company)))
 	end
 
 	def can_edit?(user)

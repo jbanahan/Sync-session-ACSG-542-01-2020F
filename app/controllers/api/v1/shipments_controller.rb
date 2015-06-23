@@ -305,6 +305,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_confirm_booking:shipment.can_confirm_booking?(current_user),
       can_revise_booking:shipment.can_revise_booking?(current_user),
       can_add_remove_lines:shipment.can_add_remove_lines?(current_user),
+      can_request_cancel:shipment.can_request_cancel?(current_user),
       can_cancel:shipment.can_cancel?(current_user),
       can_uncancel:shipment.can_uncancel?(current_user),
       enabled_booking_types:shipment.enabled_booking_types
