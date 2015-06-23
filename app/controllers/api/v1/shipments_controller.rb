@@ -220,7 +220,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_fish_and_wildlife,
       :shp_volume,
       :shp_dimensional_weight,
-      :shp_chargeable_weight
+      :shp_chargeable_weight,
+      :shp_cancel_requested_by_full_name,
+      :shp_cancel_requested_at
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([

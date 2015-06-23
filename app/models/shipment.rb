@@ -175,7 +175,7 @@ class Shipment < ActiveRecord::Base
 
   def can_request_cancel? user, ignore_shipment_state=false
     unless ignore_shipment_state
-      return false if self.canceled_date
+      return false if self.canceled_date || self.cancel_requested_at
     end
     return false unless self.can_view?(user)
     return false unless self.vendor == user.company || user.company.master?

@@ -19,6 +19,7 @@ OpenChain::Application.routes.draw do
           post :approve_booking
           post :confirm_booking
           post :revise_booking
+          post :request_cancel
           post :cancel
           post :uncancel
           get :available_orders
