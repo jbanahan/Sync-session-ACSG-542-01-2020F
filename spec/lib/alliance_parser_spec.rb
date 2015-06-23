@@ -960,6 +960,18 @@ describe OpenChain::AllianceParser do
     expect(e.entry_filed_date.to_i).to eq e.reload.entry_filed_date.to_i
   end
 
+  it "skips purged entries" do
+    EntryPurge.create! broker_reference: @ref_num, source_system: OpenChain::AllianceParser::SOURCE_CODE, date_purged: Time.zone.parse("2010-03-01 00:00")
+    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}").to be_false
+    expect(Entry.where(broker_reference: @ref_num, source_system: OpenChain::AllianceParser::SOURCE_CODE).first).to be_nil
+  end
+
+  it "makes new entries for file numbers purged in the past" do
+    EntryPurge.create! broker_reference: @ref_num, source_system: OpenChain::AllianceParser::SOURCE_CODE, date_purged: Time.zone.parse("2010-01-01 00:00")
+    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}").to be_true
+    expect(Entry.where(broker_reference: @ref_num, source_system: OpenChain::AllianceParser::SOURCE_CODE).first).not_to be_nil
+  end
+
   describe 'process_past_days' do
     it "should delay processing" do
       OpenChain::AllianceParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::AllianceParser)
@@ -978,7 +990,6 @@ describe OpenChain::AllianceParser do
       OpenChain::AllianceParser.process_day d
     end
   end
-
   describe "process_alliance_query_details" do
 
     before :each do

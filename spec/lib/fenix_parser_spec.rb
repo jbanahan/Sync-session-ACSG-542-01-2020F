@@ -579,6 +579,18 @@ describe OpenChain::FenixParser do
     expect(ent.release_date.strftime("%m/%d/%Y")).to eq @release_date[0, 10]
   end
 
+  it "skips purged entres" do
+    EntryPurge.create! source_system: 'Fenix', broker_reference: @file_number, date_purged: Time.zone.parse("2015-01-01 00:00")
+    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2013052958483.1369859062.csv'}
+    expect(Entry.find_by_broker_reference @file_number).to be_nil
+  end
+
+  it "creates new entries if purged before current source system export date" do
+    EntryPurge.create! source_system: 'Fenix', broker_reference: @file_number, date_purged: Time.zone.parse("2015-01-01 00:00")
+    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2015052958483.1369859062.csv'}
+    expect(Entry.find_by_broker_reference @file_number).not_to be_nil
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call

@@ -309,6 +309,10 @@ module OpenChain
     def find_and_process_entry entry_information
       entry = nil
       Lock.acquire(Lock::ALLIANCE_PARSER, times: 3) do
+        # Make sure the entry has not been purged. We want to allow for re-using file numbers, so we'll assume that any data exported from the source system AFTER the purge record was created
+        # means that the data is for a totally new entry and not for the one that was purged
+        break if Entry.purged?(SOURCE_CODE, entry_information[:broker_reference], entry_information[:last_exported_from_source])
+
         entry = Entry.where(broker_reference: entry_information[:broker_reference], source_system: SOURCE_CODE).first_or_create! last_exported_from_source: entry_information[:last_exported_from_source]
 
         if skip_file? entry, entry_information[:last_exported_from_source]

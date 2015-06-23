@@ -275,4 +275,25 @@ describe Entry do
     end
 
   end
+
+  describe "purged?" do
+    context "with existing purge record" do
+       before :each do
+        EntryPurge.create! source_system: "Source", broker_reference: "12345", date_purged: Time.zone.parse("2015-04-01 00:00")
+      end
+
+      it "reports purged if an entry purge record exists with a purge date after the given time" do
+        expect(Entry.purged? 'Source', '12345', Time.zone.parse("2015-03-31 00:00")).to be_true
+      end
+
+      it "reports not purged if an entry purge record exists with a purge date prior the given system export time" do
+        expect(Entry.purged? 'Source', '12345', Time.zone.parse("2015-04-01 10:00")).to be_false
+      end
+    end
+
+    it "reports not purged if no purge record exists" do
+      expect(Entry.purged? 'Source', '12345', Time.zone.parse("2015-03-31 00:00")).to be_false
+    end
+   
+  end
 end

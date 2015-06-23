@@ -141,6 +141,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       file_no, updated_at, extract_time = self.class.entry_info e
 
       Lock.acquire(Lock::ALLIANCE_PARSER) do
+        # Make sure the entry has not been purged. We want to allow for re-using file numbers, so we'll assume that any data exported from the source system AFTER the purge record was created
+        # means that the data is for a totally new entry and not for the one that was purged
+        break if Entry.purged? SOURCE_SYSTEM, file_no, extract_time
+
         entry = Entry.where(broker_reference: file_no, source_system: SOURCE_SYSTEM).first_or_create! expected_update_time: updated_at, last_exported_from_source: extract_time
         if skip_file? entry, extract_time
           entry = nil

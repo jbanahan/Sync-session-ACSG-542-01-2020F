@@ -126,6 +126,10 @@ class Entry < ActiveRecord::Base
     end
   end
 
+  def self.purged? source_system, broker_reference, source_system_export_date
+    EntryPurge.where(source_system: source_system, broker_reference: broker_reference).where("date_purged > ?", source_system_export_date).exists?
+  end
+
   private
   def split_newline_values values
     values.blank? ? [] : values.split(/\r?\n */)

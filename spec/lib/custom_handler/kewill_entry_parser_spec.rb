@@ -700,6 +700,18 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       expect(e.entry_filed_date.to_i).to eq(e.reload.entry_filed_date.to_i)
     end
+
+    it "skips purged entries" do
+      EntryPurge.create source_system: "Alliance", broker_reference: @e['file_no'], date_purged: Time.zone.parse("2015-05-01 00:00")
+      expect(subject.process_entry @e).to be_nil
+      expect(Entry.where(broker_reference: @e['file_no']).first).to be_nil
+    end
+
+    it "creates entries if they were purged in the past" do
+      EntryPurge.create source_system: "Alliance", broker_reference: @e['file_no'], date_purged: Time.zone.parse("2015-01-01 00:00")
+      expect(subject.process_entry @e).not_to be_nil
+      expect(Entry.where(broker_reference: @e['file_no']).first).not_to be_nil
+    end
   end
 
   describe "parse" do

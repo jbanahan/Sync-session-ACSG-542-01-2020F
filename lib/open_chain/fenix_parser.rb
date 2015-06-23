@@ -529,6 +529,8 @@ module OpenChain
       importer = nil
       shell_entry = nil
       Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
+        break if Entry.purged? SOURCE_CODE, file_number, source_system_export_date
+
         entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
 
         # Because the Fenix shell records created by the imaging client only have an entry number in them,
@@ -555,7 +557,7 @@ module OpenChain
 
       # The is a bit of an optimization..there's no point waiting on the 
       # lock if we're just going to abort because we're looking at old data
-      if shell_entry || process_file?(entry, source_system_export_date)
+      if shell_entry || (entry && process_file?(entry, source_system_export_date))
 
         # Once we've got the entry we're looking for we'll lock it for updates so we don't have
         # a really course grained lock in place while we're updating some values in the entry to prep 
