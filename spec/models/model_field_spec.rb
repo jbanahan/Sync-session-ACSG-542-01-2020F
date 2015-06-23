@@ -327,6 +327,14 @@ describe ModelField do
       expect(result.error?).to be_false
     end
 
+    it "does process import if read_only and bypass_read_only==true" do
+      s = Shipment.new
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", read_only: true)
+      mf.stub(:can_edit?).and_return true
+      mf.process_import s, "MY Value", User.new, bypass_read_only: true
+      expect(s.reference).to eq "MY Value"
+    end
+
     it "does not allow import for user that cannot edit the field" do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", import_lambda: lambda {|obj, data| raise "ERROR!!!"})
       u = User.new

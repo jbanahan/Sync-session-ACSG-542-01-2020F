@@ -10,7 +10,7 @@ module OpenChain; class Wto6ChangeResetter
     cd = mf_cd.process_export(product,nil,true)
     if cd && product.wto6_changed_after?(cd)
       fields_to_reset.each do |uid| 
-        ModelField.find_by_uid(uid).process_import(product,nil,User.integration)
+        ModelField.find_by_uid(uid).process_import(product,nil,User.integration,bypass_read_only:true)
       end
       product.save!
       product.create_snapshot(User.integration)

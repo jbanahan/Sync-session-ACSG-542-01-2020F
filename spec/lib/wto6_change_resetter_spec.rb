@@ -13,6 +13,22 @@ describe OpenChain::Wto6ChangeResetter do
       @p.reload
       expect(@p.name).to be_blank
     end
+    it "should reset read_only field" do
+      cd = Factory(:custom_definition,module_type:'Product',data_type:'string')
+      FieldValidatorRule.create!(module_type:'Product',model_field_uid:"*cf_#{cd.id}",read_only:true)
+      ModelField.reload
+
+      @p.update_custom_value!(cd,'abc')
+      @p.should_receive(:wto6_changed_after?).with(@cr).and_return(true)
+
+      expect(@p.get_custom_value(cd).value).to eq 'abc' #double check that value was set properly
+
+      #do the work
+      described_class.reset_fields_if_changed(@p,'prod_created_at',["*cf_#{cd.id}"])
+
+      @p.reload
+      expect(@p.get_custom_value(cd).value).to be_nil
+    end
     it "should not reset fields if not changed" do
       @p.should_receive(:wto6_changed_after?).with(@cr).and_return(false)
       described_class.reset_fields_if_changed(@p,'prod_created_at',['prod_name'])

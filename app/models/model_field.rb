@@ -262,7 +262,7 @@ class ModelField
     # be bypassed (snapshot restoration, being one).  This switch allows this.
     opts = {bypass_user_check: false}.merge opts
     v = nil
-    if self.read_only?
+    if !opts[:bypass_read_only] && self.read_only?
       v = "Value ignored. #{self.label} is read only."
     else
       if opts[:bypass_user_check] || can_edit?(user)
