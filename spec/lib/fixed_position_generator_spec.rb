@@ -30,22 +30,35 @@ describe OpenChain::FixedPositionGenerator do
   end
   describe :num do
     it "should include implied decimals on fixnum" do
-      expect(@f.num(5,6,2)).to eq '000500'
+      expect(@f.num(5,6,2)).to eq '  5.00'
     end
     it "should include decimals on bigdecimal" do
-      expect(@f.num(BigDecimal('523.23'),6,2)).to eq '052323'
+      expect(@f.num(BigDecimal('523.23'),6,2)).to eq '523.23'
     end
     it "should include right side decimals on bigdecimal" do
-      expect(@f.num(BigDecimal('523.2'),6,2)).to eq '052320'
+      expect(@f.num(BigDecimal('523.2'),6,2)).to eq '523.20'
     end
     it "should truncate too many decimals" do
-      expect(@f.num(BigDecimal('523.27'),5,1)).to eq '05233'
+      expect(@f.num(BigDecimal('523.27'),5,1)).to eq '523.3'
     end
     it "should round with round_mode" do
-      expect(@f.num(BigDecimal('523.27'),5,1,round_mode:BigDecimal::ROUND_FLOOR)).to eq '05232'
+      expect(@f.num(BigDecimal('523.27'),5,1,round_mode:BigDecimal::ROUND_FLOOR)).to eq '523.2'
     end
     it "should raise exception on truncate regardless of exception_on_truncate flag" do
-      expect{@f.num(5000,3,2)}.to raise_error StandardError, "Number 500000 (2 implied decimals) doesn't fit in 3 character field"
+      expect{@f.num(5000,3,2)}.to raise_error StandardError, "Number 5000.00 doesn't fit in 3 character field"
+    end
+    it "raises exception on truncate with implied decimal readout" do
+      expect{@f.num(5000,3,2, numeric_strip_decimals: true)}.to raise_error StandardError, "Number 500000 (2 implied decimals) doesn't fit in 3 character field"
+    end
+    it "accepts a different pad char as an option" do
+      expect(@f.num(1, 6, 2, numeric_pad_char: '*')).to eq '**1.00'
+    end
+    it "uses a default constructor supplied pad char" do
+      c = described_class.new numeric_pad_char: '*'
+      expect(c.num(1, 6, 2)).to eq '**1.00'
+    end
+    it "accepts instruction to left justify" do
+      expect(@f.num(5,6,2, numeric_left_align: true)).to eq '5.00  '
     end
   end
   describe :date do

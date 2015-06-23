@@ -1,12 +1,15 @@
 module OpenChain; class FixedPositionGenerator
+  include ActionView::Helpers::NumberHelper # in Rails 4.x this should change to ActiveSupport::NumberHelper
+
   def initialize opts={}
     @opts = {
-      exception_on_truncate:false,pad_char:' ',
+      exception_on_truncate:false,
+      pad_char:' ',
       line_break_replace_char:' ',
       date_format:'%Y%m%d',
-      output_timezone: nil
-    }
-    @opts.merge! opts
+      output_timezone: nil,
+      numeric_pad_char: ' '
+    }.merge! opts
   end
 
   def str s, len, right_justify = false, force_truncate = false
@@ -23,32 +26,47 @@ module OpenChain; class FixedPositionGenerator
     end
   end
 
-  #makes a 0 padded, right justified value with implied decimals
-  # .num(5,6,2) # 000500
-  # Opts can include :round_mode for BigDecimal conversions
+  # makes a padded, right justified value with decimals
+  # .num(5,6,2) -> '  5.00'
+  # This method always raises an exception on truncation since truncating numbers is really misleading
   #
-  # This always raises an exception on truncation since truncating numbers is really misleading
+  # Opts can include:
+  # :round_mode - The BigDecimal::ROUND_* mode to use for rounding to the provided precision
+  # :numeric_strip_decimals - if true, removes decimal place period from output (can be provided globally via constructor opts too)
+  # :numeric_pad_char - if present, uses the value defined as the pad char (can be provided globally via constructor opts too)
+  # :numeric_left_align - if true, number will be left aligned (can be provided globally via constructor opts too)
+  #
   def num number, width, decimal_positions=0, opts={}
-    inner_opts = {round_mode:BigDecimal::ROUND_HALF_UP}
-    inner_opts.merge! opts
+    inner_opts = @opts.merge({round_mode: BigDecimal::ROUND_HALF_UP}).merge opts
+
     s = ''
     if number.nil?
       s = ''
-    elsif has_decimal?(number)
-      n_str = number.to_s
-      n_dec = n_str.split('.').last
-      if(n_dec.size > decimal_positions)
-        n_str = BigDecimal(n_str).round(decimal_positions,inner_opts[:round_mode]).to_s
-        n_dec = decimal_positions < 1 ? '' : n_str.split('.').last
-      end
-      n_dec << '0' while n_dec.size < decimal_positions
-      s = "#{n_str.split('.').first}#{n_dec}"      
     else
-      decimal_holder = Array.new(decimal_positions,'0').join('')
-      s = "#{number}#{decimal_holder}"
+      # Round first since number_with_precision doesn't allow for specifiying the rounding mode
+      value = BigDecimal(number.to_s).round(decimal_positions, inner_opts[:round_mode])
+      # The value should already be rounded, so there should be no additional rounding being done 
+      # by the number_with_precision call here, instead precision is here for display purposes only
+      # Only use en locale so we don't end up with different decimal point value if somehow our default locale 
+      # is changed (ie 1.00 -> 1,00)
+
+      if value.zero? && inner_opts[:numeric_no_pad_zero]
+        precision_opts = {precision: 0, locale: :en}
+      else
+        precision_opts = {precision: decimal_positions, locale: :en}
+      end
+
+      
+      precision_opts[:strip_insignificant_zeros] = true if opts[:numeric_strip_trailing_zeros] == true
+
+      s = number_with_precision(value, precision_opts)
+
+      s.gsub! '.', '' if inner_opts[:numeric_strip_decimals]
     end
-    r = s.rjust(width,'0')
-    raise "Number #{r} (#{decimal_positions} implied decimals) doesn't fit in #{width} character field" if r.size > width
+
+    r = inner_opts[:numeric_left_align] ? s.ljust(width, inner_opts[:numeric_pad_char]) : s.rjust(width, inner_opts[:numeric_pad_char])
+
+    raise "Number #{r}#{inner_opts[:numeric_strip_decimals] ? " (#{decimal_positions} implied decimals) " : " "}doesn't fit in #{width} character field" if r.size > width
     r
   end
 

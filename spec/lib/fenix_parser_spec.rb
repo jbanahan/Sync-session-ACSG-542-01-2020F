@@ -33,6 +33,7 @@ describe OpenChain::FenixParser do
     @invoice_number = '12345'
     @invoice_date = '04/16/2012'
     @vendor_name = 'MR Vendor'
+    @vendor_number = "12345"
     @release_type = '1251'
     @employee_name = 'MIKE'
     @activity_employee_name = 'DAVE'
@@ -64,6 +65,7 @@ describe OpenChain::FenixParser do
     @gst_rate_code = '5'
     @gst_amount = BigDecimal("5.05")
     @sima_amount = BigDecimal("8.20")
+    @sima_code = "1"
     @excise_amount = BigDecimal("2.22")
     @excise_rate_code = '3'
     @adjusted_vcc = BigDecimal("1.05") + @line_value
@@ -89,7 +91,7 @@ describe OpenChain::FenixParser do
     @special_authority = "123-456"
     @entry_lambda = lambda { |new_style = true, multi_line = true|
       data = new_style ? "B3L," : ""
-      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"#{@tariff_desc}\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,#{@special_authority}, 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" #{@b3_line_number} \",\" #{@subheader_number} \",\"#{@file_logged_date}\",\" \",\"\",\"#{@carrier_name}\",\"#{@consignee_name}\",\"PURCHASER\",\"SHIPPER\",\"EXPORTER\",\"MFID/VENDOR CODE   \",\"#{@customer_reference}\", 1 ,        #{@adjusted_vcc},,#{@importer_number},#{@importer_name},#{@number_of_pieces},#{@gross_weight},,,#{@adjustments_per_piece}"
+      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"#{@tariff_desc}\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,#{@special_authority}, #{@sima_code} , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" #{@b3_line_number} \",\" #{@subheader_number} \",\"#{@file_logged_date}\",\" \",\"\",\"#{@carrier_name}\",\"#{@consignee_name}\",\"PURCHASER\",\"SHIPPER\",\"EXPORTER\",\"#{@vendor_number}\",\"#{@customer_reference}\", 1 ,        #{@adjusted_vcc},,#{@importer_number},#{@importer_name},#{@number_of_pieces},#{@gross_weight},,,#{@adjustments_per_piece}"
       if new_style && multi_line
         @additional_container_numbers.each do |container|
           data += "\r\nCON,#{@barcode},#{container}"
@@ -183,6 +185,7 @@ describe OpenChain::FenixParser do
     ci.invoice_number.should == @invoice_number
     ci.invoice_date.should == Date.strptime(@invoice_date,@mdy)
     ci.vendor_name.should == @vendor_name
+    ci.mfid.should == @vendor_number
     ci.currency.should == @currency
     ci.exchange_rate.should == @exchange_rate
     ci.invoice_value.should == @invoice_value
@@ -215,6 +218,7 @@ describe OpenChain::FenixParser do
     tar.gst_rate_code.should == @gst_rate_code
     tar.gst_amount.should == @gst_amount
     tar.sima_amount.should == @sima_amount
+    tar.sima_code.should == @sima_code
     tar.excise_rate_code.should == @excise_rate_code
     tar.excise_amount.should == @excise_amount
     tar.duty_rate.should == (@duty_rate / 100).round(3)

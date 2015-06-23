@@ -266,6 +266,7 @@ module OpenChain
       ci.vendor_name = str_val(line[11])
       ci.currency = str_val(line[43])
       ci.exchange_rate = dec_val(line[44])
+      ci.mfid = str_val(line[102])
       accumulate_string :vendor_names, ci.vendor_name
       accumulate_string :invoice_number, ci.invoice_number
     end
@@ -374,6 +375,7 @@ module OpenChain
       t.gst_amount = dec_val(line[49])
       @total_gst += t.gst_amount if t.gst_amount
       t.sima_amount = dec_val(line[50])
+      t.sima_code = str_val(line[35])
       t.excise_rate_code = str_val(line[51])
       t.excise_amount = dec_val(line[52])
       t.tariff_description = line[24]

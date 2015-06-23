@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
   def initialize env=Rails.env, opts={}
     inner_opts = {'customer_numbers'=>['EDDIEFTZ']}.merge opts
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
-      date_format:'%m/%d/%Y', output_timezone: ActiveSupport::TimeZone["UTC"]
+      date_format:'%m/%d/%Y', output_timezone: ActiveSupport::TimeZone["UTC"], numeric_pad_char: '0', numeric_strip_decimals: true
     )
     @env = env
     @customer_numbers = inner_opts['customer_numbers']
