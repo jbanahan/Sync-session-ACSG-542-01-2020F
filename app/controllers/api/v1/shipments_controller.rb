@@ -111,6 +111,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {'ok'=>'ok'}
   end
 
+  def request_cancel
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to request a booking.",:forbidden) unless s.can_request_cancel?(current_user)
+    s.async_request_cancel! current_user
+    render json: {'ok'=>'ok'}
+  end
+
   def cancel
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to cancel this booking.",:forbidden) unless s.can_cancel?(current_user)

@@ -182,7 +182,7 @@ class Shipment < ActiveRecord::Base
     return true
   end
   def request_cancel! user, async_snapshot = false
-    self.cancel_requested_date = 0.seconds.ago
+    self.cancel_requested_at = 0.seconds.ago
     self.cancel_requested_by = user
     self.save!
     OpenChain::EventPublisher.publish :shipment_cancel_request, self

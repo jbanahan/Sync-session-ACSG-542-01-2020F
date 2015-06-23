@@ -56,6 +56,14 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
         $scope.loadShipment(sId,true).then ->
           window.alert('Booking opened for revision.')
 
+  $scope.requestCancel = (shipment) ->
+    if window.confirm("Are you sure you want to request to cancel this shipment?")
+      $scope.loadingFlag = 'loading'
+      sId = shipment.id
+      shipmentSvc.requestCancel(shipment).then (resp) ->
+        $scope.loadShipment(sId,true).then ->
+          window.alert('Request sent.')
+
   $scope.cancelShipment = (shipment) ->
     if window.confirm("Are you sure you want to cancel this shipment?")
       $scope.loadingFlag = 'loading'

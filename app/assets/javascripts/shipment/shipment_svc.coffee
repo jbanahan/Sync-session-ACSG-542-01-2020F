@@ -101,6 +101,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     reviseBooking: (shp) ->
       shipmentPost(shp.id, 'revise_booking.json')
 
+    requestCancel: (shp) ->
+      shipmentPost(shp.id, 'request_cancel.json')
+
     cancelShipment: (shp) ->
       shipmentPost(shp.id, 'cancel.json')
 
