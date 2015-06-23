@@ -20,8 +20,10 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id).then (resp) ->
       $scope.shp = resp.data.shipment
-      $q.all([getAvailableOrders($scope.shp),
-      getBookedOrders($scope.shp)]).then -> $scope.loadingFlag = null
+      $q.all([
+        getAvailableOrders($scope.shp),
+        getBookedOrders($scope.shp)
+      ]).then -> $scope.loadingFlag = null
 
 
   $scope.getOrder = (order) ->
@@ -64,7 +66,8 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
   $scope.addOrderToShipment = (shp, ord) ->
     shp.lines = [] if shp.lines==undefined
     return shp unless ord.order_lines
-    for oln in ord.order_lines
+    linesToAdd = ord.order_lines.filter((line) -> !line._disabled)
+    for oln in linesToAdd
       shp.lines.push
         shpln_puid: oln.ordln_puid,
         shpln_pname: oln.ordln_pname,
@@ -78,7 +81,7 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
     total = 0
     for ln in ord.order_lines
       inc = parseInt(ln.quantity_to_ship)
-      total = total + inc unless isNaN(inc)
+      total = total + inc unless isNaN(inc) or ln._disabled
     total
 
   goToShow = -> $state.go('show',{shipmentId: $scope.shp.id})
