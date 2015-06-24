@@ -309,6 +309,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_view:shipment.can_view?(current_user),
       can_attach:shipment.can_attach?(current_user),
       can_comment:shipment.can_comment?(current_user),
+      can_book:shipment.can_book?,
       can_request_booking:shipment.can_request_booking?(current_user),
       can_approve_booking:shipment.can_approve_booking?(current_user),
       can_confirm_booking:shipment.can_confirm_booking?(current_user),

@@ -267,6 +267,10 @@ class Shipment < ActiveRecord::Base
     return user.attach_shipments? && self.can_view?(user)
   end
 
+  def can_book?
+    self.booking_received_date.nil?
+  end
+
 	def locked?
 	  (!self.vendor.nil? && self.vendor.locked?) ||
 	  (!self.carrier.nil? && self.carrier.locked?)
