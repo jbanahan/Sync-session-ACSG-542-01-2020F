@@ -44,7 +44,7 @@
 </div>
 <div ng-show="outerScope.shp.shp_cancel_requested_at" class="form-group">
   <label for="shp_cancel_requested_at" class="control-label">Cancel Requested Date</label>
-  <p class="form-control-static" id="shp_cancel_requested_at">{{Date.parse(outerScope.shp.shp_cancel_requested_at).toDateString()}}</p>
+  <p class="form-control-static" id="shp_cancel_requested_at">{{outerScope.shp.shp_cancel_requested_at | amDateFormat: 'YYYY-MM-DD'}}</p>
 </div>
 <div ng-show="outerScope.shp.shp_cancel_requested_by_full_name" class="form-group">
   <label for="shp_cancel_requested_by_full_name" class="control-label">Cancel Requested By</label>
