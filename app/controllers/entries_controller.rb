@@ -1,9 +1,12 @@
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/activity_summary'
 require 'open_chain/sql_proxy_client'
+
 class EntriesController < ApplicationController
   include EntriesHelper
   include ValidationResultsHelper
+  include OpenChain::ValidationResultsSupport
+  
   def root_class
     Entry 
   end
@@ -83,39 +86,7 @@ class EntriesController < ApplicationController
   end
 
   def validation_results
-    e = Entry.find params[:id]
-    respond_to do |format|
-    format.html {
-      action_secure(e.can_view?(current_user) && current_user.view_business_validation_results?,e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
-        @entry = e
-      }
-    }
-    format.json {
-      
-      r = {
-        object_number:e.entry_number,
-        state:e.business_rules_state,
-        object_updated_at:e.updated_at,
-        single_object:"Entry",
-        bv_results:[]
-      }
-      e.business_validation_results.each do |bvr|
-        return render_json_error "You do not have permission to view this object", 401 unless bvr.can_view?(current_user)
-        h = {
-          id:bvr.id,
-          state:bvr.state,
-          template:{name:bvr.business_validation_template.name},
-          updated_at:bvr.updated_at,
-          rule_results:[]
-        }
-        bvr.business_validation_rule_results.each do |rr|
-          h[:rule_results] << business_validation_rule_result_json(rr)
-        end
-        r[:bv_results] << h
-      end
-      render json: {business_validation_result:r}
-    }
-    end
+    generic_validation_results(Entry.find params[:id])
   end
 
   #request that the images be reloaded from alliance for the given entry

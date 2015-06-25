@@ -24,17 +24,17 @@ describe EntriesController do
 
   describe 'validation_results' do 
     before :each do
-      @ent = Factory(:entry,entry_number:'123456')
+      @ent = Factory(:entry, broker_reference:'123456')
       @rule_result = Factory(:business_validation_rule_result)
       @bvr = @rule_result.business_validation_result
       @bvr.state = 'Fail'
       @bvr.validatable = @ent
       @bvr.save!
     end
-    it "should render page" do
+   it "should render page" do
       get :validation_results, id: @ent.id
       expect(response).to be_success
-      expect(assigns(:entry)).to eq @ent
+      expect(assigns(:validation_object)).to eq @ent
     end
     it "should render json" do
       @bvr.business_validation_template.update_attributes(name:'myname')
@@ -48,7 +48,7 @@ describe EntriesController do
       get :validation_results, id: @ent.id, format: :json
       expect(response).to be_success
       h = JSON.parse(response.body)['business_validation_result']
-      expect(h['object_number']).to eq @ent.entry_number
+      expect(h['object_number']).to eq @ent.broker_reference
       expect(h['single_object']).to eq "Entry"
       expect(h['state']).to eq @bvr.state
       bv_results = h['bv_results']
