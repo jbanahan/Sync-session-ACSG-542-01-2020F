@@ -21,7 +21,7 @@ module OpenChain
     def update_master_setup! req_host
       uuid = UUIDTools::UUID.timestamp_create.to_s
       MasterSetup.get.update_attributes(
-        system_code:req_host,
+        system_code:req_host.split(".")[0], # system code should equal the machine name of the system (.ie www from www.vfitrack.net)
         uuid:uuid,
         request_host:req_host,
         ftp_polling_active:false,

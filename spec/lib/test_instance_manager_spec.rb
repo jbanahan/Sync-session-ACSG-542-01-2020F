@@ -30,7 +30,7 @@ describe OpenChain::TestInstanceManager do
       described_class.new.update_master_setup! 'new.request.host'
     end
     it "should change system code" do
-      MasterSetup.get.system_code.should == 'new.request.host' 
+      MasterSetup.get.system_code.should == 'new' 
     end
     it "should change UUID" do
       MasterSetup.get.uuid.size.should == 36
