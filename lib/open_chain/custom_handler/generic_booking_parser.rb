@@ -162,7 +162,20 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   end
 
   def row_is_a_line?(row)
-    row[file_layout[:quantity_column]].present? && (row[file_layout[:quantity_column]].is_a?(Numeric) || row[file_layout[:quantity_column]].match(/\A[-+]?[0-9]*\.?[0-9]+\Z/)) && !row[file_layout[:total_column]].match(/total/i)
+    numeric_fields = [:quantity_column, :carton_qty_column, :cbms_column, :gross_kgs_column]
+    text_fields = [:po_column, :sku_column, :style_no_column]
+
+    is_not_total(row) && (
+      text_fields.any? { |field| row[file_layout[field]].present? } ||
+      numeric_fields.any? { |field| is_number? row[file_layout[field]] } )
+  end
+
+  def is_number?(value)
+    value.present? && (value.is_a?(Numeric) || value.match(/\A[-+]?[0-9]*\.?[0-9]+\Z/))
+  end
+
+  def is_not_total(row)
+    !(row[file_layout[:total_column]] && row[file_layout[:total_column]].match(/total/i))
   end
 
   ##
