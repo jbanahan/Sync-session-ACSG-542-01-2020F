@@ -71,4 +71,8 @@ class DrawbackClaimsController < ApplicationController
   def secure
     DrawbackClaim.viewable(current_user) 
   end
+
+  def validation_results
+    generic_validation_results(DrawbackClaim.find params[:id])
+  end
 end

@@ -643,6 +643,7 @@ OpenChain::Application.routes.draw do
   end
   resources :drawback_claims do
     post 'process_report', on: :member
+    get 'validation_results', on: :member
   end
 
   resources :error_log_entries, :only => [:index, :show]

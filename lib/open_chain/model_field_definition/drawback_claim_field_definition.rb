@@ -21,7 +21,25 @@ module OpenChain; module ModelFieldDefinition; module DrawbackClaimFieldDefiniti
       [18, :dc_hmf_mpf_check_number, :hmf_mpf_check_number, "HMF/MPF Check Number", {data_type: :string}],
       [19, :dc_hmf_mpf_check_amount, :hmf_mpf_check_amount, "HMF/MPF Check Amount", {data_type: :currency}],
       [20, :dc_hmf_mpf_check_received_date, :hmf_mpf_check_received_date, "HMF/MPF Check Received", {data_type: :date}],
-      [21, :dc_duty_claimed, :duty_claimed, "Duty Claimed", {data_type: :currency}]
+      [21, :dc_duty_claimed, :duty_claimed, "Duty Claimed", {data_type: :currency}],
+      [22, :dc_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
+        :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.business_rules_state },
+        :qualified_field_name=> "(select state
+          from business_validation_results bvr
+          where bvr.validatable_type = 'Entry' and bvr.validatable_id = drawback_claims.id
+          order by (
+          case bvr.state
+              when 'Fail' then 0
+              when 'Review' then 1
+              when 'Pass' then 2
+              when 'Skipped' then 3
+              else 4
+          end
+          )
+          limit 1)",
+        :can_view_lambda=>lambda {|u| u.company.master?}
+      }]
     ]
     add_fields CoreModule::DRAWBACK_CLAIM, make_importer_arrays(100, "dc", "drawback_claims")
   end
