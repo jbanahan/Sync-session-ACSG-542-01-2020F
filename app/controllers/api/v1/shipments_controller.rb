@@ -37,6 +37,36 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {available_orders:r}
   end
 
+  def booked_orders
+    s = Shipment.find params[:id]
+    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    ord_fields = [:ord_ord_num,:ord_cust_ord_no]
+    result = []
+    lines_available = s.booking_lines.where('order_line_id IS NOT NULL').any?
+    order_ids = s.booking_lines.where('order_id IS NOT NULL').uniq.pluck(:order_id) # select distinct order_id from booking_lines where...
+    Order.where(id: order_ids).each do |order|
+      hsh = {id:order.id}
+      ord_fields.each {|uid| hsh[uid] = export_field(uid, order)}
+      result << hsh
+    end
+    render json: {booked_orders:result, lines_available: lines_available}
+  end
+
+  def available_lines # makes a fake order based on booking lines.
+    s = Shipment.find params[:id]
+    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    lines = s.booking_lines.where('order_line_id IS NOT NULL').map do |line|
+      {id: line.order_line_id,
+       ordln_line_number: line.line_number,
+       ordln_puid: line.product_identifier,
+       ordln_sku: line.order_line.sku,
+       ordln_ordered_qty: line.quantity,
+       linked_line_number: line.order_line.line_number,
+       linked_cust_ord_no: line.customer_order_number}
+    end
+    render json: {lines: lines}
+  end
+
   def process_tradecard_pack_manifest
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
@@ -78,6 +108,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to revise this booking.",:forbidden) unless s.can_revise_booking?(current_user)
     s.async_revise_booking! current_user
+    render json: {'ok'=>'ok'}
+  end
+
+  def request_cancel
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to request a booking.",:forbidden) unless s.can_request_cancel?(current_user)
+    s.async_request_cancel! current_user
     render json: {'ok'=>'ok'}
   end
 
@@ -183,7 +220,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_fish_and_wildlife,
       :shp_volume,
       :shp_dimensional_weight,
-      :shp_chargeable_weight
+      :shp_chargeable_weight,
+      :shp_cancel_requested_by_full_name,
+      :shp_cancel_requested_at
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([
@@ -209,7 +248,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
          :bkln_cbms,
          :bkln_carton_set_id,
          :bkln_order_and_line_number,
-         :bkln_order_id
+         :bkln_order_id,
+         :bkln_container_size
      ] + custom_field_keys(CoreModule::BOOKING_LINE))
 
     container_fields_to_render = ([
@@ -269,13 +309,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_view:shipment.can_view?(current_user),
       can_attach:shipment.can_attach?(current_user),
       can_comment:shipment.can_comment?(current_user),
+      can_book:shipment.can_book?,
       can_request_booking:shipment.can_request_booking?(current_user),
       can_approve_booking:shipment.can_approve_booking?(current_user),
       can_confirm_booking:shipment.can_confirm_booking?(current_user),
       can_revise_booking:shipment.can_revise_booking?(current_user),
       can_add_remove_lines:shipment.can_add_remove_lines?(current_user),
+      can_request_cancel:shipment.can_request_cancel?(current_user),
       can_cancel:shipment.can_cancel?(current_user),
-      can_uncancel:shipment.can_uncancel?(current_user)
+      can_uncancel:shipment.can_uncancel?(current_user),
+      enabled_booking_types:shipment.enabled_booking_types
     }
   end
   def render_shipment_lines?
@@ -312,19 +355,37 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     params[:summary]
   end
   def render_summary shipment
+    booked_piece_count = 0
     piece_count = 0
+    booked_order_ids = Set.new
     order_ids = Set.new
+    booked_product_ids = Set.new
     product_ids = Set.new
     shipment.shipment_lines.each do |sl|
       piece_count += sl.quantity unless sl.quantity.nil?
       sl.order_lines.each {|ol| order_ids << ol.order_id}
       product_ids << sl.product_id
     end
+    shipment.booking_lines.each do |bl|
+      booked_piece_count += bl.quantity unless bl.quantity.nil?
+      if bl.order_line_id.present?
+        booked_order_ids << bl.order_line.order_id
+        booked_product_ids << bl.order_line.product_id
+      else
+        booked_order_ids << bl.order_id
+        booked_product_ids << bl.product_id
+      end
+
+    end
     {
       line_count: number_with_delimiter(shipment.shipment_lines.count),
+      booked_line_count: number_with_delimiter(shipment.booking_lines.where('order_line_id IS NOT NULL').count),
       piece_count: number_with_delimiter(number_with_precision(piece_count, strip_insignificant_zeros:true)),
+      booked_piece_count: number_with_delimiter(number_with_precision(booked_piece_count, strip_insignificant_zeros:true)),
       order_count: number_with_delimiter(order_ids.to_a.compact.size),
-      product_count: number_with_delimiter(product_ids.to_a.compact.size)
+      booked_order_count: number_with_delimiter(booked_order_ids.to_a.compact.size),
+      product_count: number_with_delimiter(product_ids.to_a.compact.size),
+      booked_product_count: number_with_delimiter(booked_product_ids.to_a.compact.size)
     }
   end
   def render_order_fields?

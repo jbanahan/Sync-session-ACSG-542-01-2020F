@@ -68,11 +68,20 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
       $http[method]("/api/v1/shipments#{suffix}",{shipment: s}).then(getShipmentSuccessHandler)
 
+    saveBookingLines: (lines, shipmentId) ->
+      $http.put("/api/v1/shipments/#{shipmentId}.json", {shipment:{id:shipmentId, booking_lines:lines}, summary:true}).then getShipmentSuccessHandler
+
     getParties: ->
       $http.get('/api/v1/companies?roles=importer,carrier')
 
     getAvailableOrders: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')
+
+    getBookedOrders: (shipment) ->
+      $http.get('/api/v1/shipments/'+shipment.id+'/booked_orders.json')
+
+    getAvailableLines: (shipment) ->
+      $http.get('/api/v1/shipments/'+shipment.id+'/available_lines.json')
 
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
@@ -91,6 +100,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
     reviseBooking: (shp) ->
       shipmentPost(shp.id, 'revise_booking.json')
+
+    requestCancel: (shp) ->
+      shipmentPost(shp.id, 'request_cancel.json')
 
     cancelShipment: (shp) ->
       shipmentPost(shp.id, 'cancel.json')

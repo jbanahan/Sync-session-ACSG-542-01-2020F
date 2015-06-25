@@ -34,3 +34,19 @@
   <label for="shp_delivered_date" class="control-label">Delivered Date</label>
   <p class="form-control-static" id="shp_delivered_date">{{outerScope.shp.shp_delivered_date}}</p>
 </div>
+<div ng-show="outerScope.shp.shp_canceled_date" class="form-group">
+  <label for="shp_canceled_date" class="control-label">Canceled Date</label>
+  <p class="form-control-static" id="shp_canceled_date">{{outerScope.shp.shp_canceled_date}}</p>
+</div>
+<div ng-show="outerScope.shp.shp_canceled_by_full_name" class="form-group">
+  <label for="shp_canceled_by_full_name" class="control-label">Canceled By</label>
+  <p class="form-control-static" id="shp_canceled_by_full_name">{{outerScope.shp.shp_canceled_by_full_name}}</p>
+</div>
+<div ng-show="outerScope.shp.shp_cancel_requested_at" class="form-group">
+  <label for="shp_cancel_requested_at" class="control-label">Cancel Requested Date</label>
+  <p class="form-control-static" id="shp_cancel_requested_at">{{outerScope.shp.shp_cancel_requested_at | amDateFormat: 'YYYY-MM-DD'}}</p>
+</div>
+<div ng-show="outerScope.shp.shp_cancel_requested_by_full_name" class="form-group">
+  <label for="shp_cancel_requested_by_full_name" class="control-label">Cancel Requested By</label>
+  <p class="form-control-static" id="shp_cancel_requested_by_full_name">{{outerScope.shp.shp_cancel_requested_by_full_name}}</p>
+</div>

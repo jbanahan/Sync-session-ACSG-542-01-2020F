@@ -84,7 +84,8 @@ JOIN products ON products.id = booking_lines.product_id OR products.id = order_l
                                                    end
                                                    ""
                                                  }
-                          }]]
+                          }],
+        [12, :bkln_container_size, :container_size, "Container Size", {data_type: :string}]]
        end
     end
   end

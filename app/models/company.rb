@@ -315,6 +315,10 @@ class Company < ActiveRecord::Base
     n
   end
 
+  def enabled_booking_types_array
+    types = self.enabled_booking_types || ""
+    types.split(',').map(&:strip)
+  end
 
 	private
 

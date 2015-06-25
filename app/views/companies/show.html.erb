@@ -66,7 +66,7 @@ $(function() {
   <%end%>
   <div class="row">
     <div class="col-md-12">
-      <%= show_model_fields @company, [:cmp_name, :cmp_sys_code, :cmp_agent, :cmp_broker, :cmp_carrier, :cmp_customer, :cmp_factory, :cmp_importer, :cmp_vendor, :cmp_created_at, :cmp_updated_at, :cmp_alliance, :cmp_fenix, :cmp_order_view_template ] %>
+      <%= show_model_fields @company, [:cmp_name, :cmp_sys_code, :cmp_enabled_booking_types, :cmp_agent, :cmp_broker, :cmp_carrier, :cmp_customer, :cmp_factory, :cmp_importer, :cmp_vendor, :cmp_created_at, :cmp_updated_at, :cmp_alliance, :cmp_fenix, :cmp_order_view_template ] %>
       <%= show_custom_fields @company %>
     </div>
   </div>

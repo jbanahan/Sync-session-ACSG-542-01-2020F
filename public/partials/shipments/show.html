@@ -252,10 +252,11 @@
                         <th>Line #</th>
                         <th>Product</th>
                         <th>Order Number - Line</th>
+                        <th>Container<br>Size</th>
                         <th>Quantity</th>
                         <th>Cartons</th>
-                        <th>Volume (CBMS)</th>
-                        <th>Gross Weight (KGS)</th>
+                        <th>Volume<br>(CBMS)</th>
+                        <th>Gross Weight<br>(KGS)</th>
                         <th ng-show='shp.permissions.can_edit'></th>
                       </tr>
                       </thead>
@@ -265,6 +266,9 @@
                         <td>{{ln.bkln_puid}}</td>
                         <td>
                           <a ng-href='/orders/{{ln.bkln_order_id}}'>{{ln.bkln_order_and_line_number}}</a>
+                        </td>
+                        <td>
+                          {{ln.bkln_container_size}}
                         </td>
                         <td>
                           {{ln.bkln_quantity}}
@@ -278,9 +282,11 @@
                         <td>
                           {{ln.bkln_gross_kgs}}
                         </td>
-                        <td ng-show='shp.permissions.can_edit' class='text-right'>
-                          <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
-                          <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
+                        <td class='text-right'>
+                          <span ng-show='shp.permissions.can_book'>
+                            <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                            <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
+                          </span>
                         </td>
                       </tr>
                       </tbody>
@@ -331,10 +337,12 @@
     <button ng-show='shp.permissions.can_approve_booking' class='btn btn-default' ng-click='approveBooking(shp)'>Approve Booking</button>
     <button ng-show='shp.permissions.can_confirm_booking' class='btn btn-default' ng-click='confirmBooking(shp)'>Confirm Booking</button>
     <button ng-show='shp.permissions.can_revise_booking' class='btn btn-default' ng-click='reviseBooking(shp)'>Revise Booking</button>
+    <button ng-show='shp.permissions.can_request_cancel' class='btn btn-default' ng-click='requestCancel(shp)'>Request Cancel</button>
     <button ng-show='shp.permissions.can_cancel' class='btn btn-default' ng-click='cancelShipment(shp)'>Cancel Shipment</button>
-    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showAddOrder()' ng-show='shp && shp.id'>Add Order</button>
-    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showBookOrder()' ng-show='shp && shp.id'>Book Order</button>
-    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showProcessManifest()' ng-show='shp && shp.attachments.length > 0'>Process Manifest</button>
+    <button ng-show='shp.permissions.can_uncancel' class='btn btn-default' ng-click='uncancelShipment(shp)'>Uncancel Shipment</button>
+    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showAddOrder()'>Build Manifest</button>
+    <button ng-show='shp.permissions.can_book && shp.permissions.can_add_remove_lines && shp.permissions.enabled_booking_types.length > 0' class='btn btn-default' ng-click='showBookOrder()'>Book Now</button>
+    <button ng-show='shp.permissions.can_add_remove_lines && shp.attachments.length > 0' class='btn btn-default' ng-click='showProcessManifest()'>Process Manifest</button>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>
   </div>
 </chain-loading-wrapper>

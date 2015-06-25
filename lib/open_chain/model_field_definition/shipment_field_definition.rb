@@ -142,7 +142,17 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              read_only: true,
              export_lambda: lambda { |obj| obj.chargeable_weight },
              qualified_field_name: "(SELECT CASE WHEN IFNULL(shipments.gross_weight,0) > (IFNULL(shipments.volume,0) / 0.006) THEN IFNULL(shipments.gross_weight,0) ELSE (IFNULL(shipments.volume,0) / 0.006) END)"
-         }]
+         }],
+      [59,:shp_cancel_requested_by_full_name,:username,"Cancel Requested By", {
+             :import_lambda => lambda {|a,b| return "Cancel Requested By cannot be set by import, ignored."},
+             :export_lambda => lambda {|obj|
+               u = obj.cancel_requested_by
+               u.blank? ? "" : u.full_name
+             },
+             :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.cancel_requested_by_id)",
+             :data_type=>:string
+         }],
+      [60,:shp_cancel_requested_at,:cancel_requested_at,"Cancel Requested At",{data_type: :datetime, read_only: true}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
