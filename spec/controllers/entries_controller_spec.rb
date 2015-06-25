@@ -120,17 +120,18 @@ describe EntriesController do
     let(:entry) { Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456') }
     describe 'as a sysadmin' do
       before :each do
-        sys_admin_user = Factory(:sys_admin_user,entry_view:true)
+        @sys_admin_user = Factory(:sys_admin_user,entry_view:true)
         @proxy = OpenChain::SqlProxyClient.new
-        sign_in_as sys_admin_user
+        sign_in_as @sys_admin_user
       end
 
       describe 'request_entry_data' do
         it "should request data" do
           #make sure we're not relying on the referrer
           request.env["HTTP_REFERER"] = nil
-          OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
-          @proxy.should_receive(:request_entry_data).with('123456')
+          OpenChain::SqlProxyClient.stub(:delay).and_return(OpenChain::SqlProxyClient)
+          OpenChain::SqlProxyClient.any_instance.should_receive(:request_entry_data).with("123456")
+
           post :request_entry_data, 'id'=>entry.id
           expect(response).to redirect_to(entry)
           flash[:errors].should be_blank
@@ -142,8 +143,9 @@ describe EntriesController do
 
         it "should handle bulk image requests with a referer" do
           request.env["HTTP_REFERER"] = "blah"
-          OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
-          @proxy.should_receive(:bulk_request_entry_data).with(['123456'])
+          OpenChain::SqlProxyClient.stub(:delay).and_return(OpenChain::SqlProxyClient)
+          OpenChain::SqlProxyClient.any_instance.should_receive(:request_entry_data).with("123456")
+
           post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
 
           response.should redirect_to("blah")
@@ -153,13 +155,30 @@ describe EntriesController do
 
         it "should handle bulk image requests without a referer" do
           request.env["HTTP_REFERER"] = nil
-          OpenChain::SqlProxyClient.any_instance.stub(:delay).and_return(@proxy)
-          @proxy.should_receive(:bulk_request_entry_data).with(['123456'])
+          OpenChain::SqlProxyClient.stub(:delay).and_return(OpenChain::SqlProxyClient)
+          OpenChain::SqlProxyClient.any_instance.should_receive(:request_entry_data).with("123456")
           post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
 
           response.should redirect_to("/")
           flash[:errors].should be_blank
           flash[:notices].first.should == "Updated entries have been requested.  Please allow 10 minutes for them to appear."
+        end
+
+        context "with a search run id" do
+          before :each do
+            # If we use a blank search setup, then the results will be all entries, so do so
+            @search_setup = Factory(:search_setup, module_type: "Entry", user: @sys_admin_user)
+            @sr = @search_setup.search_runs.create!
+            entry # initiallize the let value above
+          end
+
+          it "sends a search run id to the bulk request method" do
+            OpenChain::SqlProxyClient.stub(:delay).and_return(OpenChain::SqlProxyClient)
+            OpenChain::SqlProxyClient.any_instance.should_receive(:request_entry_data).with("123456")
+            post :bulk_request_entry_data, {'sr_id' => @sr.id}
+            flash[:errors].should be_blank
+            flash[:notices].first.should == "Updated entries have been requested.  Please allow 10 minutes for them to appear."
+          end
         end
       end
     end
