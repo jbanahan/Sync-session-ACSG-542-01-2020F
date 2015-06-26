@@ -101,7 +101,7 @@ OpenChain::Application.routes.draw do
       end
 
       resources :addresses, only: [:create] do
-        get :autocomplete
+        get :autocomplete, on: :collection
       end
     end
   end

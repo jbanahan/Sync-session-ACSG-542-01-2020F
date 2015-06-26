@@ -1,4 +1,4 @@
-module Api; module V1; class AddressController < ApiController
+module Api; module V1; class AddressesController < ApiController
 
   def autocomplete
     result = Address.where('name LIKE %?%',params[:n]).where(in_address_book:true)
