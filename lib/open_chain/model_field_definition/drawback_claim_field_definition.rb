@@ -27,7 +27,7 @@ module OpenChain; module ModelFieldDefinition; module DrawbackClaimFieldDefiniti
         :export_lambda=>lambda {|obj| obj.business_rules_state },
         :qualified_field_name=> "(select state
           from business_validation_results bvr
-          where bvr.validatable_type = 'Entry' and bvr.validatable_id = drawback_claims.id
+          where bvr.validatable_type = 'DrawbackClaim' and bvr.validatable_id = drawback_claims.id
           order by (
           case bvr.state
               when 'Fail' then 0

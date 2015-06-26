@@ -1,4 +1,4 @@
-module OpenChain; module ValidationResultsSupport
+module OpenChain; module BusinessRuleValidationResultsSupport
 
     def generic_validation_results obj
         cm = CoreModule.find_by_object(obj)

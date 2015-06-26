@@ -5,7 +5,7 @@ require 'open_chain/sql_proxy_client'
 class EntriesController < ApplicationController
   include EntriesHelper
   include ValidationResultsHelper
-  include OpenChain::ValidationResultsSupport
+  include OpenChain::BusinessRuleValidationResultsSupport
   
   def root_class
     Entry 
