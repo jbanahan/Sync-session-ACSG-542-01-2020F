@@ -18,10 +18,10 @@ shipmentApp.directive 'bookingShippingComparison', ->
     name: '@'
   }
   templateUrl: '/partials/shipments/booking_shipping_comparison.html'
-  controller: ($scope) ->
-    $scope.percentValue = ->
-      if $scope.numBooked
-        Math.floor((($scope.numShipped || 0) / $scope.numBooked) * 100)
+  link: (scope) ->
+    scope.percentValue = ->
+      if scope.numBooked
+        Math.floor(((scope.numShipped || 0) / scope.numBooked) * 100)
       else
         100
 
