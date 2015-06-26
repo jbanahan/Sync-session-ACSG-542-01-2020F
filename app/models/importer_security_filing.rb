@@ -1,16 +1,3 @@
-module ISFSupport
-  def self.included(base)
-    base.instance_eval do
-      belongs_to :manufacturer_address, class_name: 'Address'
-      belongs_to :seller_address, class_name: 'Address'
-      belongs_to :buyer_address, class_name: 'Address'
-      belongs_to :ship_to_address, class_name: 'Address'
-      belongs_to :container_stuffing_address, class_name: 'Address'
-      belongs_to :consolidator_address, class_name: 'Address'
-    end
-  end
-end
-
 class ImporterSecurityFiling
   include ActiveModel::Validations
   attr_accessor :manufacturer_address, :seller_address, :buyer_address,
@@ -22,7 +9,11 @@ class ImporterSecurityFiling
             :importer_of_record, :consignee_numbers, :country_of_origin, :hts_number, presence: true
 
   def self.from_shipment(shipment)
-    assert(shipment.is_a? Shipment)
+    raise 'Not a shipment!' unless shipment.is_a? Shipment
+    country_of_origin_query = OrderLine.joins(:piece_sets)
+                                  .where(piece_sets: {shipment_line_id: shipment.shipment_lines.pluck(:id)})
+                                  .uniq.pluck(:country_of_origin)
+
     new_filing = new
     new_filing.manufacturer_address = shipment.manufacturer_address
     new_filing.seller_address = shipment.seller_address
@@ -31,7 +22,7 @@ class ImporterSecurityFiling
     new_filing.container_stuffing_address = shipment.container_stuffing_address
     new_filing.consolidator_address = shipment.consolidator_address
     new_filing.importer_of_record = shipment.importer
-    new_filing.country_of_origin = shipment.shipment_lines.flat_map(&:order_lines).map(&:country_of_origin)
+    new_filing.country_of_origin = country_of_origin_query
     new_filing
   end
 end
