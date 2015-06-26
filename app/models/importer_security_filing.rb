@@ -14,6 +14,10 @@ class ImporterSecurityFiling
                                   .where(piece_sets: {shipment_line_id: shipment.shipment_lines.pluck(:id)})
                                   .uniq.pluck(:country_of_origin)
 
+    all_product_ids = ShipmentLine.where(shipment_id: shipment.id).uniq.pluck(:product_id)
+    all_classification_ids = Classification.where(product_id: all_product_ids).pluck(:id)
+    hts_numbers = TariffRecord.where(classification_id: all_classification_ids).uniq.pluck(:hts_1)
+
     new_filing = new
     new_filing.manufacturer_address = shipment.manufacturer_address
     new_filing.seller_address = shipment.seller_address
@@ -23,6 +27,7 @@ class ImporterSecurityFiling
     new_filing.consolidator_address = shipment.consolidator_address
     new_filing.importer_of_record = shipment.importer
     new_filing.country_of_origin = country_of_origin_query
+    new_filing.hts_number = hts_numbers
     new_filing
   end
 end
