@@ -18,7 +18,8 @@ class CoreModule
       :view_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine view path for the module (may return null if no view path exists)
       :edit_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
       :quicksearch_lambda, # Scope for quick searching
-      :quicksearch_fields # List of field / field definitions for quicksearching
+      :quicksearch_fields, # List of field / field definitions for quicksearching
+      :quicksearch_sort_by # Field used to sort quicksearch results
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
 
   def initialize(class_name,label,opts={})
@@ -104,6 +105,7 @@ class CoreModule
     end
 
     @quicksearch_fields = o[:quicksearch_fields]
+    @quicksearch_sort_by = o[:quicksearch_sort_by]
   end
 
   #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
