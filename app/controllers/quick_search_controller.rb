@@ -53,6 +53,7 @@ class QuickSearchController < ApplicationController
         results = build_relations(cm, current_user, [or_clause_array], secondary_additional_core_modules, r[:vals]).limit(10 - r[:vals].length)
         parse_query_results results, r, cm, current_user, uids
       end
+      sort_vals r, cm
       
     end
 
@@ -60,6 +61,13 @@ class QuickSearchController < ApplicationController
   end
 
   private
+
+  def sort_vals r, core_module
+      sort_by = core_module.quicksearch_sort_by
+      key = sort_by ? sort_by : :created_at
+      r[:vals].sort!{ |a, b| b[key] <=> a[key] }
+  end
+
     def with_fields_to_use core_module, user
       @@custom_def_reset ||= nil
       @@qs_field_cache ||= {}
@@ -88,8 +96,11 @@ class QuickSearchController < ApplicationController
       results.each do |obj|
         obj_hash = {
           id:obj.id,
-          view_url: instance_exec(obj, &core_module.view_path_proc)
+          view_url: instance_exec(obj, &core_module.view_path_proc),
+          created_at: obj.created_at
         }
+        sort_by = core_module.quicksearch_sort_by
+        obj_hash[sort_by] = ModelField.find_by_uid(sort_by).process_export(obj, user) if sort_by
         uids.each {|uid| obj_hash[uid] = ModelField.find_by_uid(uid).process_export(obj,user)}
         r[:vals] << obj_hash
       end
