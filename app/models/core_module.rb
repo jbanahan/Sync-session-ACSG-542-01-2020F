@@ -105,7 +105,7 @@ class CoreModule
     end
 
     @quicksearch_fields = o[:quicksearch_fields]
-    @quicksearch_sort_by = o[:quicksearch_sort_by]
+    @quicksearch_sort_by = o[:quicksearch_sort_by] ? o[:quicksearch_sort_by] : "#{@table_name}.created_at"
   end
 
   #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail

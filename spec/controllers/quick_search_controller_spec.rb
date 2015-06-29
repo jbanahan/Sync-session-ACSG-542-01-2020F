@@ -26,7 +26,7 @@ describe QuickSearchController do
   context :by_module do
     it "should return result for core module" do
       cd_1 = Factory(:custom_definition, :module_type=>"Entry", :quick_searchable => true, :label=>'cfield')
-      ent = Factory(:entry,:entry_number=>'12345678901', :file_logged_date => DateTime.now)
+      ent = Factory(:entry,:entry_number=>'12345678901')
       ent.update_custom_value! cd_1, "Test"
 
       expected_response = {
@@ -44,8 +44,6 @@ describe QuickSearchController do
       expected_response['qs_result']['fields']["*cf_#{cd_1.id}"] = 'cfield'
       expected_response['qs_result']['vals'][0]["*cf_#{cd_1.id}"] = 'Test'
       expected_response['qs_result']['vals'][0]['view_url'] = "/entries/#{ent.id}"
-      expected_response['qs_result']['vals'][0]['created_at'] = ent.created_at.to_json.delete("\"")
-      expected_response['qs_result']['vals'][0]['ent_file_logged_date'] = ent.file_logged_date.to_json.delete("\"")
       expected_response['qs_result']['search_term'] = '123'
       
       get :by_module, module_type:'Entry', v: '123'
@@ -54,9 +52,11 @@ describe QuickSearchController do
       expect(j).to eq expected_response
     end
 
-    it "should return results ordered with @quicksearch_sort_by if available" do
+    it "@quicksearch_sort_by orders results when given a ModelField UID" do
       cm = CoreModule::ENTRY
+      old_quicksearch = cm.quicksearch_sort_by
       cm.instance_variable_set(:@quicksearch_sort_by, :ent_file_logged_date)
+      
       Factory(:entry, :broker_reference => "123_second", :file_logged_date => DateTime.now - 1)
       Factory(:entry, :broker_reference => "123_last", :file_logged_date => DateTime.now - 2)
       Factory(:entry, :broker_reference => "123_first", :file_logged_date => DateTime.now)
@@ -64,13 +64,21 @@ describe QuickSearchController do
       get :by_module, module_type:'Entry', v: '123'
       expect(response).to be_success
       j = JSON.parse response.body
+      
       expect(j["qs_result"]["vals"].first["ent_brok_ref"]).to eq "123_first"
       expect(j["qs_result"]["vals"].second["ent_brok_ref"]).to eq "123_second"
       expect(j["qs_result"]["vals"].third["ent_brok_ref"]).to eq "123_last"
-      cm.remove_instance_variable(:@quicksearch_sort_by)
+      
+      cm.instance_variable_set(:@quicksearch_sort_by, old_quicksearch)
     end
 
-    it "should return results ordered by created_at if @quicksearch_sort_by is nil" do
+
+
+    it "@quicksearch_sort_by orders results when given a table attribute" do
+      cm = CoreModule::ENTRY
+      old_quicksearch = cm.quicksearch_sort_by
+      cm.instance_variable_set(:@quicksearch_sort_by, "entries.created_at")
+      
       Factory(:entry, :broker_reference => "123_second", :created_at => DateTime.now - 1)
       Factory(:entry, :broker_reference => "123_last", :created_at => DateTime.now - 2)
       Factory(:entry, :broker_reference => "123_first", :created_at => DateTime.now)
@@ -78,9 +86,12 @@ describe QuickSearchController do
       get :by_module, module_type:'Entry', v: '123'
       expect(response).to be_success
       j = JSON.parse response.body
+      
       expect(j["qs_result"]["vals"].first["ent_brok_ref"]).to eq "123_first"
       expect(j["qs_result"]["vals"].second["ent_brok_ref"]).to eq "123_second"
       expect(j["qs_result"]["vals"].third["ent_brok_ref"]).to eq "123_last"
+      
+      cm.instance_variable_set(:@quicksearch_sort_by, old_quicksearch)
     end
 
     it "should return a result for Vendor" do
@@ -94,7 +105,7 @@ describe QuickSearchController do
           'fields' => {
             "cmp_name" => "Name"
           },
-          'vals' => [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name, "created_at" => vendor.created_at.to_json.delete("\"")}],
+          'vals' => [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name}],
           'search_term' => "Co"
         }
       })
@@ -118,8 +129,7 @@ describe QuickSearchController do
             "bi_invoice_number" => "Invoice Number",
             "bi_brok_ref" => "Broker Reference"
           },
-          'vals' => [{'id' => broker_invoice.id, 'view_url' => "/broker_invoices/#{broker_invoice.id}", 'created_at' => broker_invoice.created_at.to_json.delete("\""), 
-                      "bi_brok_ref" => "REFERENCE", "bi_invoice_number" => "INV#"}],
+          'vals' => [{'id' => broker_invoice.id, 'view_url' => "/broker_invoices/#{broker_invoice.id}", "bi_brok_ref" => "REFERENCE", "bi_invoice_number" => "INV#"}],
           'search_term' => "INV#"
         }
       })
