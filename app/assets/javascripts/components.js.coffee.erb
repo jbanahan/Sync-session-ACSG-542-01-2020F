@@ -1022,3 +1022,11 @@
     ]
   }
 ]
+
+@components.directive 'chainAddressAutocomplete', ->
+    restrict: 'E'
+    scope:
+        initialValue: '='
+        selectedObject: '='
+        placeholder: '@'
+    template: '<angucomplete-alt input-class="form-control" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/components/address_book_autocomplete_results.html" selected-object="selectedObject" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name"></angucomplete-alt>'
