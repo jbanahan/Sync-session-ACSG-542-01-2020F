@@ -1,8 +1,10 @@
 angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','$state','$timeout',(shipmentSvc, $state, $timeout) ->
   new class ShipmentBookingCtrl
     constructor: ->
-      shipmentSvc.getShipment($state.params.shipmentId).then (resp) =>
+      @loadingFlag = 'loading'
+      shipmentSvc.getShipment($state.params.shipmentId).then((resp) =>
         @bookingTypes = resp.data.shipment.permissions.enabled_booking_types
+      ).finally => @loadingFlag = null
 
     lines: [{}]
     bookingTypes:[]
