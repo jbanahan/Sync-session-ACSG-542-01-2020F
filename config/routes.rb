@@ -103,6 +103,8 @@ OpenChain::Application.routes.draw do
       resources :addresses, only: [:create] do
         get :autocomplete, on: :collection
       end
+
+      resources :countries, only: [:index]
     end
   end
 
