@@ -1029,4 +1029,27 @@
         initialValue: '='
         selectedObject: '='
         placeholder: '@'
-    template: '<angucomplete-alt input-class="form-control" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/components/address_book_autocomplete_results.html" selected-object="selectedObject" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name"></angucomplete-alt>'
+    template: '<angucomplete-alt input-class="form-control" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/components/address_book_autocomplete_results.html" selected-object="selectedObject" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name" pause="500"></angucomplete-alt>'
+
+@components.directive 'addAddressModal', ->
+    restrict: 'E'
+    scope: {}
+    templateUrl:'/partials/components/add_address_modal.html'
+    controllerAs:'ctrl'
+    controller:['$http', ($http)->
+        @countries = []
+        @address = {}
+
+        @createAddress = =>
+            console.log @address
+#            @address = {}
+            return
+
+        initCountries = =>
+            $http.get('/api/v1/countries').then (resp) =>
+                @countries = resp.data
+
+        initCountries()
+        return
+
+    ]

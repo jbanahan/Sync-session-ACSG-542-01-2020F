@@ -7,6 +7,7 @@
 </div>
 <chain-loading-wrapper loading-flag='{{loadingFlag}}'>
   <div class='container'>
+    <chain-address-autocomplete placeholder="placeholder" selected-object="shp.newAddress" initial-value=""></chain-address-autocomplete>
     <div ng-show='shp.shp_canceled_date' class="row">
       <div class="col-md-12">
         <div class="panel panel-danger">
@@ -123,6 +124,7 @@
         </div>
       </div>
     </div> <!-- end container section-->
+    <add-address-modal></add-address-modal>
     <hr />
     <div class="panel panel-primary">
       <div class="panel-heading">
