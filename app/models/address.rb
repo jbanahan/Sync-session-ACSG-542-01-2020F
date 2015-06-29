@@ -21,7 +21,11 @@ class Address < ActiveRecord::Base
 
 	def self.find_shipping
 		return self.where(["shipping = ?",true])
-	end
+  end
+
+  def full_address
+    "#{self.line_1} #{self.line_2} #{self.line_3}, #{self.city} #{self.state} #{self.postal_code}, #{self.country.try(:iso_code)}"
+  end
 
   private
     def set_hash_key
