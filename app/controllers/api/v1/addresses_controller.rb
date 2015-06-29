@@ -6,7 +6,8 @@ module Api; module V1; class AddressesController < ApiController
   end
 
   def create
-
+    address = Address.create! params[:address]
+    render json: address
   end
 
 end; end; end
