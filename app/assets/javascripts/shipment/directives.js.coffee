@@ -36,9 +36,13 @@ shipmentApp.directive 'addressBookAutocomplete',['addressModalSvc',(addressModal
     placeholder: '@'
   template: '<angucomplete-alt input-class="form-control" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/shipments/address_modal/address_book_autocomplete_results.html" selected-object="selectedObject" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name" pause="500"></angucomplete-alt>'
   link:(scope, element, attributes) ->
-    addressModalSvc.responders[attributes.selectedObject] = (address) ->
+    selectedObject = attributes.selectedObject
+    addressModalSvc.responders[selectedObject] = (address) ->
       element.find('input').val(address.name)
       scope.selectedObject = address
+
+    scope.$on('$destroy', -> delete addressModalSvc.responders[selectedObject])
+
 ]
 
 shipmentApp.directive 'addAddressModal', ['$http', 'addressModalSvc', ($http, addressModalSvc) ->
