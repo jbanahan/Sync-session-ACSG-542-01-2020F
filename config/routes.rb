@@ -15,6 +15,7 @@ OpenChain::Application.routes.draw do
       resources :shipments, only: [:index,:show,:create,:update] do
         member do
           post :process_tradecard_pack_manifest
+          post :process_booking_worksheet
           post :request_booking
           post :approve_booking
           post :confirm_booking

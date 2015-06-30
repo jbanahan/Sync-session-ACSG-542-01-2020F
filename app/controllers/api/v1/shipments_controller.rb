@@ -68,19 +68,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def process_tradecard_pack_manifest
-    s = Shipment.find params[:id]
-    raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
-    att = s.attachments.find_by_id(params[:attachment_id])
-    raise StatusableError.new("Attachment not linked to Shipment.",400) unless att
-    aj = s.attachment_process_jobs.where(attachment_id:att.id,
-          job_name:'Tradecard Pack Manifest').first_or_create!(user_id:current_user.id)
-    if aj.start_at
-      raise StatusableError.new("This manifest has already been submitted for processing.",400)
-    else
-      aj.update_attributes(start_at:Time.now)
-      aj.process
-      render_show CoreModule::SHIPMENT
-    end
+    attachment_job('Tradecard Pack Manifest')
+  end
+
+  def process_booking_worksheet
+    attachment_job('Booking Worksheet')
   end
 
   def request_booking
@@ -528,5 +520,21 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       }
     end
     s
+  end
+
+  def attachment_job(job_name)
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
+    att = s.attachments.find_by_id(params[:attachment_id])
+    raise StatusableError.new("Attachment not linked to Shipment.",400) unless att
+    aj = s.attachment_process_jobs.where(attachment_id:att.id,
+                                         job_name: job_name).first_or_create!(user_id:current_user.id)
+    if aj.start_at
+      raise StatusableError.new("This manifest has already been submitted for processing.",400)
+    else
+      aj.update_attributes(start_at:Time.now)
+      aj.process
+      render_show CoreModule::SHIPMENT
+    end
   end
 end; end; end
