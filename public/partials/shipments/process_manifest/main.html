@@ -1,11 +1,17 @@
 <div class='container'>
   <div class="row">
-    <h1>Pack Manifest For Shipment: {{shp.shp_ref}}</h1>
-    <label for='attSel'>Select Manifest To Process</label>
-    <select class='form-control' id='attSel' ng-model='manifestAttachment' ng-options='att.name for att in shp.attachments'></select>
+    <h1>Process Worksheet For Shipment: {{shp.shp_ref}}</h1>
+    <div class="col-xs-6">
+      <label for='attSel'>Select Worksheet To Process</label>
+      <select class='form-control' id='attSel' ng-model='manifestAttachment' ng-options='att.name for att in shp.attachments'></select>
+    </div>
+    <div class="col-xs-6">
+      <label for="typeSelect">Select Worksheet Type</label>
+      <select class="form-control" id="typeSelect" ng-model="attachmentType" ng-options="type for type in ['Booking Worksheet','Tradecard Manifest']"></select>
+    </div>
   </div>
 </div>
 <div chain-action-bar>
   <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
-  <button class='btn btn-default' ng-click='process(shp,manifestAttachment)' ng-show='shp && manifestAttachment'>Submit</button>
+  <button class='btn btn-default' ng-click='process(shp,manifestAttachment)' ng-show='shp && manifestAttachment && attachmentType'>Submit</button>
 </div>
