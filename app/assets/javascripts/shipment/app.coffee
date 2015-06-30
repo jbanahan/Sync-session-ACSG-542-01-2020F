@@ -42,9 +42,6 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
       templateUrl: '/partials/shipments/book_order.html'
       controller: 'ShipmentBookingCtrl'
       controllerAs:'sbc'
-      onEnter: ['$controller',($controller) ->
-        $controller(this.controller).init()
-      ]
     }).
     state('new',{
       url: '/new'

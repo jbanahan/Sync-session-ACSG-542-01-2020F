@@ -21,7 +21,7 @@
                 </button>
             </div>
             <div ng-if="sbc.isEnabled('order_line')" class="col-md-3">
-                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('sku'); sbc.loadAvailableOrders();">
+                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('order_line'); sbc.loadAvailableOrders();">
                     <span class="top">Book by<br><strong class="sku">Order Line (SKU)</strong></span>
                     <hr>
                     <span class="bottom">Choose this if you want to provide full shipment details</span>
@@ -102,7 +102,7 @@
             </div>
         </div>
     </div>
-    <div class='container' ng-init="" data-container-id="sku">
+    <div class='container' data-container-id="order_line">
         <div class="row booking-header-row">
             <div class="col-md-12">
                 <h1>Book by Order Line (SKU)</h1>
