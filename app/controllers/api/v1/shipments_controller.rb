@@ -214,7 +214,19 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_dimensional_weight,
       :shp_chargeable_weight,
       :shp_cancel_requested_by_full_name,
-      :shp_cancel_requested_at
+      :shp_cancel_requested_at,
+      :shp_manufacturer_address_name,
+      :shp_buyer_address_name,
+      :shp_seller_address_name,
+      :shp_ship_to_address_name,
+      :shp_container_stuffing_address_name,
+      :shp_consolidator_address_name,
+      :shp_manufacturer_address_full_address,
+      :shp_buyer_address_full_address,
+      :shp_seller_address_full_address,
+      :shp_ship_to_address_full_address,
+      :shp_container_stuffing_address_full_address,
+      :shp_consolidator_address_full_address
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([

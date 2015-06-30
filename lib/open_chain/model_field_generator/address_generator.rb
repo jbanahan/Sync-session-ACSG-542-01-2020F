@@ -41,7 +41,7 @@ module OpenChain; module ModelFieldGenerator; module AddressGenerator
        export_lambda: lambda{|obj| obj.send("#{address_name}_address").try(:name) },
        qualified_field_name: "(SELECT name FROM addresses WHERE addresses.id = #{table_name}.#{address_name}_address_id)"
     }],
-    [rank_start+2, :"#{uid_prefix}_#{address_name}_full_address", :"#{address_name}_address", "#{address_name.titleize} Address", {
+    [rank_start+2, :"#{uid_prefix}_#{address_name}_address_full_address", :"#{address_name}_address", "#{address_name.titleize} Address", {
        data_type: :string,
        read_only:true,
        export_lambda: lambda {|obj| obj.send("#{address_name}_address").try(:full_address)},
