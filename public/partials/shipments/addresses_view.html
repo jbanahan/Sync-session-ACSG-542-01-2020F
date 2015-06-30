@@ -1,0 +1,32 @@
+<div class="form-group">
+    <p data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">{{outerScope.shp.shp_manufacturer_address_name}}</p>
+    <div class="collapse" id="collapseExample">
+        <div class="well"> {{outerScope.shp.shp_manufacturer_address_full_address}}</div>
+    </div>
+</div>
+
+<div class="panel-group" id="address-accordion">
+<div class="panel panel-default">
+    <div onclick="rotateChevron(this)" class="panel-heading" role="tab" id="headerOne">
+        <h4 class="panel-title" data-toggle="collapse" data-parent="#address-accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+            {{outerScope.shp.shp_manufacturer_address_name}} <i class="fa fa-chevron-down pull-right"></i>
+        </h4>
+    </div>
+    <div id="collapseOne" role="tabpanel" class="panel-collapse collapse" aria-labelledby="headerOne">
+        <div class="panel-body">
+            {{outerScope.shp.shp_manufacturer_address_full_address}}
+        </div>
+    </div>
+</div>
+</div>
+
+<script type="text/javascript">
+    function rotateChevron(target) {
+        var chevron = $(target).find('i.fa-chevron-down');
+        if (chevron.hasClass('turnup')) {
+            chevron.removeClass('turnup').addClass('turndown')
+        } else {
+            chevron.removeClass('turndown').addClass('turnup');
+        }
+    }
+</script>
