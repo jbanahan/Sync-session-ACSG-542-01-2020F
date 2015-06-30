@@ -19,7 +19,7 @@ class CoreModule
       :edit_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
       :quicksearch_lambda, # Scope for quick searching
       :quicksearch_fields, # List of field / field definitions for quicksearching
-      :quicksearch_sort_by # Field used to sort quicksearch results
+      :quicksearch_sort_by_mf # Field used to sort quicksearch results
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
 
   def initialize(class_name,label,opts={})
@@ -105,7 +105,16 @@ class CoreModule
     end
 
     @quicksearch_fields = o[:quicksearch_fields]
-    @quicksearch_sort_by = o[:quicksearch_sort_by] ? o[:quicksearch_sort_by] : "#{@table_name}.created_at"
+    @quicksearch_sort_by_mf = o[:quicksearch_sort_by_mf]
+  
+  end
+
+  def quicksearch_sort_by_qfn  #qfn = qualified field name. Getter avoids circular dependency during init
+    unless @quicksearch_sort_by_qfn
+      qsbmf = ModelField.find_by_uid(quicksearch_sort_by_mf)
+      @quicksearch_sort_by_qfn = qsbmf.blank? ? "#{@table_name}.created_at" : qsbmf.qualified_field_name
+    end
+    @quicksearch_sort_by_qfn
   end
 
   #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail

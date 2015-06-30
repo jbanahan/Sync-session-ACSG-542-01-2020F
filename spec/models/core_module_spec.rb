@@ -191,4 +191,16 @@ describe CoreModule do
       expect(yielded_vals[4]).to eq [CoreModule::TARIFF, t2]
     end
   end
+
+  describe "quicksearch_sort_by_qfn" do
+    it "returns a qualified field name corresponding to @quicksearch_sort_by_mf, if it isn't nil" do
+      CoreModule::ENTRY.should_receive(:quicksearch_sort_by_mf).at_least(1).times.and_return "ent_file_logged_date"
+      expect(CoreModule::ENTRY.quicksearch_sort_by_qfn).to eq "entries.file_logged_date"
+    end
+
+    it "returns the 'created_at' qualified field name if @quicksearch_sort_by_mf is nil" do
+      CoreModule::ENTRY.should_receive(:quicksearch_sort_by_mf).at_least(1).times.and_return nil
+      expect(CoreModule::ENTRY.quicksearch_sort_by_qfn).to eq "entries.created_at"
+    end
+  end
 end
