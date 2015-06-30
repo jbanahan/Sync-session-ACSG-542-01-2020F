@@ -52,15 +52,12 @@ describe QuickSearchController do
       expect(j).to eq expected_response
     end
 
-    it "@quicksearch_sort_by orders results when given a ModelField UID" do
-      cm = CoreModule::ENTRY
-      old_quicksearch = cm.quicksearch_sort_by
-      cm.instance_variable_set(:@quicksearch_sort_by, :ent_file_logged_date)
-      
+    it "sorts results by qualified field name specified in Core Module" do
       Factory(:entry, :broker_reference => "123_second", :file_logged_date => DateTime.now - 1)
       Factory(:entry, :broker_reference => "123_last", :file_logged_date => DateTime.now - 2)
       Factory(:entry, :broker_reference => "123_first", :file_logged_date => DateTime.now)
-
+      CoreModule::ENTRY.should_receive(:quicksearch_sort_by_qfn).at_least(1).times.and_return "entries.file_logged_date"
+      
       get :by_module, module_type:'Entry', v: '123'
       expect(response).to be_success
       j = JSON.parse response.body
@@ -68,30 +65,6 @@ describe QuickSearchController do
       expect(j["qs_result"]["vals"].first["ent_brok_ref"]).to eq "123_first"
       expect(j["qs_result"]["vals"].second["ent_brok_ref"]).to eq "123_second"
       expect(j["qs_result"]["vals"].third["ent_brok_ref"]).to eq "123_last"
-      
-      cm.instance_variable_set(:@quicksearch_sort_by, old_quicksearch)
-    end
-
-
-
-    it "@quicksearch_sort_by orders results when given a table attribute" do
-      cm = CoreModule::ENTRY
-      old_quicksearch = cm.quicksearch_sort_by
-      cm.instance_variable_set(:@quicksearch_sort_by, "entries.created_at")
-      
-      Factory(:entry, :broker_reference => "123_second", :created_at => DateTime.now - 1)
-      Factory(:entry, :broker_reference => "123_last", :created_at => DateTime.now - 2)
-      Factory(:entry, :broker_reference => "123_first", :created_at => DateTime.now)
-
-      get :by_module, module_type:'Entry', v: '123'
-      expect(response).to be_success
-      j = JSON.parse response.body
-      
-      expect(j["qs_result"]["vals"].first["ent_brok_ref"]).to eq "123_first"
-      expect(j["qs_result"]["vals"].second["ent_brok_ref"]).to eq "123_second"
-      expect(j["qs_result"]["vals"].third["ent_brok_ref"]).to eq "123_last"
-      
-      cm.instance_variable_set(:@quicksearch_sort_by, old_quicksearch)
     end
 
     it "should return a result for Vendor" do

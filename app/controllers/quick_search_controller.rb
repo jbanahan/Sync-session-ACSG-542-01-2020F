@@ -97,9 +97,6 @@ class QuickSearchController < ApplicationController
     end
 
     def build_relations core_module, user, clause_array, additional_parent_core_modules_required = nil, previous_results = nil
-      sort_by = core_module.quicksearch_sort_by
-      sort_by_value = sort_by.is_a?(Symbol) ? ModelField.find_by_uid(sort_by).qualified_field_name : sort_by
-      
       relation = core_module.quicksearch_lambda.call(user, core_module.klass).where(clause_array.join(' OR '))
       if additional_parent_core_modules_required
         joins = additional_parent_core_modules_required.compact.uniq
@@ -117,7 +114,8 @@ class QuickSearchController < ApplicationController
         relation = relation.where("#{core_module.table_name}.id NOT IN (" + previous_results.collect {|r| r[:id]}.join(",") + ")")
       end
 
-      relation.order("#{sort_by_value} DESC")
+      sort_by = core_module.quicksearch_sort_by_qfn
+      relation.order("#{sort_by} DESC")
     end
 
     def field_definition qs
