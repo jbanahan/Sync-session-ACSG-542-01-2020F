@@ -191,4 +191,16 @@ describe CoreModule do
       expect(yielded_vals[4]).to eq [CoreModule::TARIFF, t2]
     end
   end
+
+  describe "quicksearch_sort_by" do
+    it "uses created_at field by default" do
+      expect(CoreModule.new("Entry", "Entry").quicksearch_sort_by).to eq "entries.created_at"
+    end
+
+    it "uses model field sort by provided in constructor" do
+      expect(CoreModule.new("Entry", "Entry", quicksearch_sort_by_mf: :ent_file_logged_date).quicksearch_sort_by).to eq "entries.file_logged_date"
+    end
+  end
+
 end
+

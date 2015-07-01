@@ -114,7 +114,8 @@ class QuickSearchController < ApplicationController
         relation = relation.where("#{core_module.table_name}.id NOT IN (" + previous_results.collect {|r| r[:id]}.join(",") + ")")
       end
 
-      relation
+      sort_by = core_module.quicksearch_sort_by
+      relation.order("#{sort_by} DESC")
     end
 
     def field_definition qs
