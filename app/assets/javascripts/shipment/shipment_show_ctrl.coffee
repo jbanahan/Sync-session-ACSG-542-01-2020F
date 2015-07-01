@@ -36,9 +36,6 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
     $scope.bookingLinesNeeded = true
     shipmentSvc.injectBookingLines shp unless shp.booking_lines
 
-  $scope.edit = ->
-    $state.go('edit',{shipmentId: $scope.shp.id})
-
   $scope.requestBooking = (shipment) ->
     bookingAction(shipment,shipment.shp_booking_received_date,shipmentSvc.requestBooking,'requested')
 
