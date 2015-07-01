@@ -13,10 +13,10 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
   $scope.cancel = ->
     $state.go('show',{shipmentId: $scope.shp.id})
 
-  $scope.process = (shipment, attachment) ->
+  $scope.process = (shipment, attachment, attachmentType) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
-    handler = if $scope.attachmentType == 'Booking Worksheet' then shipmentSvc.processBookingWorksheet else shipmentSvc.processTradecardPackManifest
+    handler = if attachmentType == 'Booking Worksheet' then shipmentSvc.processBookingWorksheet else shipmentSvc.processTradecardPackManifest
     handler(shipment, attachment).then((resp) ->
       $state.go('process_manifest.success',{shipment: shipment.id})
     ).finally -> $scope.loadingFlag = null
