@@ -18,7 +18,7 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
     $scope.eh.clear()
     handler = if attachmentType == 'Booking Worksheet' then shipmentSvc.processBookingWorksheet else shipmentSvc.processTradecardPackManifest
     handler(shipment, attachment).then((resp) ->
-      $state.go('process_manifest.success',{shipment: shipment.id})
+      $state.go('process_manifest.success')
     ).finally -> $scope.loadingFlag = null
 
   if $state.params.shipmentId
