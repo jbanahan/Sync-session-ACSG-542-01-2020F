@@ -192,15 +192,26 @@ describe CoreModule do
     end
   end
 
-  describe "quicksearch_sort_by_qfn" do
-    it "returns a qualified field name corresponding to @quicksearch_sort_by_mf, if it isn't nil" do
-      CoreModule::ENTRY.should_receive(:quicksearch_sort_by_mf).at_least(1).times.and_return "ent_file_logged_date"
+  describe "quicksearch_sort_by_qfn" do    
+    before(:each) do 
+      @old_sort_mf = CoreModule::ENTRY.instance_variable_get(:@quicksearch_sort_by_mf)
+      @old_sort_qfn = CoreModule::ENTRY.instance_variable_get(:@quicksearch_sort_by_qfn)
+      CoreModule::ENTRY.instance_variable_set(:@quicksearch_sort_by_qfn, nil)
+    end
+    after(:each) do
+      CoreModule::ENTRY.instance_variable_set(:@quicksearch_sort_by_mf, @old_sort_mf)
+      CoreModule::ENTRY.instance_variable_set(:@quicksearch_sort_by_qfn, @old_sort_qfn)
+    end
+    
+    it "returns a qualified field name corresponding to @quicksearch_sort_by_mf when it's not nil" do
+      CoreModule::ENTRY.instance_variable_set(:@quicksearch_sort_by_mf, :ent_file_logged_date)
       expect(CoreModule::ENTRY.quicksearch_sort_by_qfn).to eq "entries.file_logged_date"
     end
-
-    it "returns the 'created_at' qualified field name if @quicksearch_sort_by_mf is nil" do
-      CoreModule::ENTRY.should_receive(:quicksearch_sort_by_mf).at_least(1).times.and_return nil
+    
+    it "returns the 'created_at' qualified field name when @quicksearch_sort_by_mf is nil" do
+      CoreModule::ENTRY.instance_variable_set(:@quicksearch_sort_by_mf, nil)
       expect(CoreModule::ENTRY.quicksearch_sort_by_qfn).to eq "entries.created_at"
     end
   end
+
 end

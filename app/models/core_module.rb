@@ -18,8 +18,7 @@ class CoreModule
       :view_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine view path for the module (may return null if no view path exists)
       :edit_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
       :quicksearch_lambda, # Scope for quick searching
-      :quicksearch_fields, # List of field / field definitions for quicksearching
-      :quicksearch_sort_by_mf # Field used to sort quicksearch results
+      :quicksearch_fields # List of field / field definitions for quicksearching
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
 
   def initialize(class_name,label,opts={})
@@ -111,7 +110,7 @@ class CoreModule
 
   def quicksearch_sort_by_qfn  #qfn = qualified field name. Getter avoids circular dependency during init
     unless @quicksearch_sort_by_qfn
-      qsbmf = ModelField.find_by_uid(quicksearch_sort_by_mf)
+      qsbmf = ModelField.find_by_uid(@quicksearch_sort_by_mf ? @quicksearch_sort_by_mf : :nil)
       @quicksearch_sort_by_qfn = qsbmf.blank? ? "#{@table_name}.created_at" : qsbmf.qualified_field_name
     end
     @quicksearch_sort_by_qfn
