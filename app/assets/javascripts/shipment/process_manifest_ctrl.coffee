@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
+angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler',($scope,shipmentSvc,$state,chainErrorHandler) ->
   $scope.shp = null
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->
@@ -11,15 +11,16 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
       $scope.loadingFlag = null
 
   $scope.cancel = ->
-    $state.go('edit',{shipmentId: $scope.shp.id})
+    $state.go('show',{shipmentId: $scope.shp.id})
 
-  $scope.process = (shipment, attachment) ->
+  $scope.process = (shipment, attachment, attachmentType) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
-    shipmentSvc.processTradecardPackManifest(shipment, attachment).then((resp) ->
-      $state.go('process_manifest.success',{shipment: shipment.id})
+    handler = if attachmentType == 'Booking Worksheet' then shipmentSvc.processBookingWorksheet else shipmentSvc.processTradecardPackManifest
+    handler(shipment, attachment).then((resp) ->
+      $state.go('process_manifest.success')
     ).finally -> $scope.loadingFlag = null
 
-  if shipmentId
-    $scope.loadShipment shipmentId
+  if $state.params.shipmentId
+    $scope.loadShipment $state.params.shipmentId
 ]

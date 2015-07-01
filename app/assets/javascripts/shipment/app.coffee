@@ -6,23 +6,18 @@ shipmentApp.config ['$httpProvider', ($httpProvider) ->
 shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRouterProvider) ->
   $urlRouterProvider.otherwise('/')
 
-  resolveShipmentId = {
-    shipmentId: ['$stateParams', ($stateParams) -> $stateParams.shipmentId ]
-  }
   $stateProvider.
     state('loading',{templateUrl: '/partials/loading.html'}).
     state('show',{
       url: '/:shipmentId/show'
       templateUrl: '/partials/shipments/show.html'
       controller: 'ShipmentShowCtrl'
-      resolve: resolveShipmentId
       }).
     state('process_manifest',{
       abstract: true
       url: '/:shipmentId/process_manifest'
       templateUrl: '/partials/shipments/process_manifest/abstract.html'
       controller: 'ProcessManifestCtrl'
-      resolve: resolveShipmentId
       }).
     state('process_manifest.main',{
       url: '/main'

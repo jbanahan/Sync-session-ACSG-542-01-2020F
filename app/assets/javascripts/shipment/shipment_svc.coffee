@@ -29,7 +29,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
   currentShipment = null
   getShipmentSuccessHandler = (resp) ->
-    currentShipment = resp.data.shipment
+    currentShipment = angular.extend({}, currentShipment, resp.data.shipment) # merge changes instead of replacing, or else you lose extras: summary, lines, etc.
     if currentShipment.shp_dest_port_id > 0
       currentShipment.dest_port = {
         id: currentShipment.shp_dest_port_id
@@ -88,6 +88,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
     processTradecardPackManifest: (shp, attachment) ->
       shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id}).then(getShipmentSuccessHandler)
+
+    processBookingWorksheet: (shp, attachment) ->
+      shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id}).then(getShipmentSuccessHandler)
 
     requestBooking: (shp) ->
       shipmentPost(shp.id, 'request_booking.json')

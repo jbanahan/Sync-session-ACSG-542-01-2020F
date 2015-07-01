@@ -1,7 +1,11 @@
 require 'open_chain/custom_handler/tradecard/tradecard_pack_manifest_parser'
+require 'open_chain/custom_handler/generic_booking_parser'
 
 class AttachmentProcessJob < ActiveRecord::Base
-  JOB_TYPES ||= {'Tradecard Pack Manifest'=>OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser}
+  JOB_TYPES ||= {
+      'Tradecard Pack Manifest'=>OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser,
+      'Booking Worksheet'=>OpenChain::CustomHandler::GenericBookingParser
+  }
   belongs_to :attachment, inverse_of: :attachment_process_jobs
   belongs_to :user
   belongs_to :attachable, polymorphic: true, inverse_of: :attachment_process_jobs

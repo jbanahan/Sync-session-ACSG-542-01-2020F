@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
+angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler',($scope,shipmentSvc,$state,chainErrorHandler) ->
   loadParties = ->
     $scope.parties = undefined
     shipmentSvc.getParties().success((data) ->
@@ -35,9 +35,6 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
   $scope.loadBookingLines = (shp) ->
     $scope.bookingLinesNeeded = true
     shipmentSvc.injectBookingLines shp unless shp.booking_lines
-
-  $scope.edit = ->
-    $state.go('edit',{shipmentId: $scope.shp.id})
 
   $scope.requestBooking = (shipment) ->
     bookingAction(shipment,shipment.shp_booking_received_date,shipmentSvc.requestBooking,'requested')
@@ -184,7 +181,7 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       $scope.loadShipment(shipment.id).finally ->
         $scope.loadingFlag = null
 
-  if shipmentId
-    $scope.loadShipment shipmentId
+  if $state.params.shipmentId
+    $scope.loadShipment $state.params.shipmentId
 
 ]
