@@ -1,20 +1,10 @@
 <div class="panel-group" id="address-accordion">
-<div class="panel panel-default">
-    <div class="panel-heading" role="tab" id="headerOne" onclick="rotateChevron(this)" data-toggle="collapse" data-parent="#address-accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-        Manufacturer
-        <h4 class="panel-title">
-            {{outerScope.shp.shp_manufacturer_address_name}} <i class="fa fa-chevron-down pull-right"></i>
-        </h4>
-    </div>
-    <div id="collapseOne" role="tabpanel" class="panel-collapse collapse" aria-labelledby="headerOne">
-        <div class="panel-body">
-            {{outerScope.shp.shp_manufacturer_address_full_address}}
-        </div>
-    </div>
-</div>
     <address-expander title="Manufacturer" address-name="outerScope.shp.shp_manufacturer_address_name" full-address="outerScope.shp.shp_manufacturer_address_full_address"></address-expander>
-    <address-expander title="Buyer" address-name="'Test'" full-address="'400 West Nowhere Ave'"></address-expander>
-    <address-expander title="Seller" address-name="''" full-address="''"></address-expander>
+    <address-expander title="Buyer" address-name="outerScope.shp.shp_buyer_address_name" full-address="outerScope.shp.shp_buyer_address_full_address"></address-expander>
+    <address-expander title="Seller" address-name="outerScope.shp.shp_seller_address_name" full-address="outerScope.shp.shp_seller_address_full_address"></address-expander>
+    <address-expander title="Ship To" address-name="outerScope.shp.shp_ship_to_address_name" full-address="outerScope.shp.shp_ship_to_address_full_address"></address-expander>
+    <address-expander title="Container Stuffing" address-name="outerScope.shp.shp_container_stuffing_address_name" full-address="outerScope.shp.shp_container_stuffing_address_full_address"></address-expander>
+    <address-expander title="Consolidator" address-name="outerScope.shp.shp_consolidator_address_name" full-address="outerScope.shp.shp_consolidator_address_full_address"></address-expander>
 </div>
 
 <script type="text/javascript">
