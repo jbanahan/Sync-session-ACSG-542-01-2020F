@@ -342,6 +342,17 @@ class ReportsController < ApplicationController
     run_report "Monthly Entry Summation", OpenChain::Report::MonthlyEntrySummation, params.slice(:start_date, :end_date, :customer_number), []
   end
 
+  def show_container_cost_breakdown
+    if OpenChain::Report::EntryContainerCostBreakdown.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+  def run_container_cost_breakdown
+    run_report "Container Cost Breakdown", OpenChain::Report::EntryContainerCostBreakdown, params.slice(:start_date, :end_date, :customer_number), []
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

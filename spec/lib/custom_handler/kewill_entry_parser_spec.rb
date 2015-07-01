@@ -64,7 +64,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'type_liquidation' => "liq_type",
         'liquidation_type_desc' => 'liq type desc',
         'action_liquidation' => 'action_liquidation',
+        'liquidation_action_desc' => 'liquidation_desc',
         'extend_suspend_liq' => 'extend_suspend_liq',
+        'extension_suspension_desc' => 'extension_desc',
         'no_extend_suspend_liquidation' => '2',
         'duty_amt_liquidated' => 123.45,
         'fee_amt_liquidated' => 234.56,
@@ -172,6 +174,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "visa_uom" => "VISAUOM",
                 "uscs_line_no" => 1,
                 "value_foreign" => 99999,
+                "container_no" => "CONT1",
                 'fees' => [
                   {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
                   {'customs_fee_code'=>501, 'amt_fee'=>345},
@@ -261,6 +264,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "visa_uom" => "VISAUOM",
                 "uscs_line_no" => 1,
                 "value_foreign" => 99999,
+                "container_no" => "NOTACONTAINER",
                 'tariffs' => [
                   {
                     'tariff_no' => '1234567890',
@@ -297,6 +301,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.broker_reference).to eq "12345"
       expect(entry.entry_number).to eq "316123456"
       expect(entry.source_system).to eq "Alliance"
+      expect(entry.last_exported_from_source).to eq "2015-03-12 17:26:20"
+      expect(entry.expected_update_time).to eq "2015-02-12 11:00"
       expect(entry.release_cert_message).to eq "CERT MESSAGE"
       expect(entry.fda_message).to eq "FDA MESSAGE"
       expect(entry.customer_number).to eq "TEST"
@@ -514,6 +520,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.cvd_duty_amount).to eq 3.45
       expect(line.cvd_case_value).to eq 4.56
       expect(line.cvd_case_percent).to eq 5.67
+      expect(line.container).to eq entry.containers.first
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
@@ -535,6 +542,10 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       tariff = line.commercial_invoice_tariffs.second
       expect(tariff.tariff_description).to eq "REPLACEMENT DESC"
 
+      # If we didn't get a matching container record, then we want to make sure the line level linkage
+      # is nil
+      line = entry.commercial_invoices.second.commercial_invoice_lines.first
+      expect(line.container).to be_nil
 
       expect(entry.mfids).to eq "MANFU\n MANFU2"
       expect(entry.export_country_codes).to eq "VN\n MX"
@@ -564,7 +575,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.liquidation_type_code).to be_nil
       expect(entry.liquidation_type).to be_nil
       expect(entry.liquidation_action_code).to be_nil
+      expect(entry.liquidation_action_description).to be_nil
       expect(entry.liquidation_extension_code).to be_nil
+      expect(entry.liquidation_extension_description).to be_nil
       expect(entry.liquidation_extension_count).to be_nil
       expect(entry.liquidation_duty).to be_nil
       expect(entry.liquidation_fees).to be_nil
@@ -583,7 +596,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.liquidation_type_code).to eq "liq_type"
       expect(entry.liquidation_type).to eq "liq type desc"
       expect(entry.liquidation_action_code).to eq "action_liquidation"
+      expect(entry.liquidation_action_description).to eq "liquidation_desc"
       expect(entry.liquidation_extension_code).to eq "extend_suspend_liq"
+      expect(entry.liquidation_extension_description).to eq "extension_desc"
       expect(entry.liquidation_extension_count).to eq 2
       expect(entry.liquidation_duty).to eq BigDecimal.new("123.45")
       expect(entry.liquidation_fees).to eq BigDecimal.new('234.56')
@@ -591,7 +606,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.liquidation_ada).to eq BigDecimal.new('456.78')
       expect(entry.liquidation_cvd).to eq BigDecimal.new('567.89')
       expect(entry.liquidation_total).to eq BigDecimal.new("1728.35")
-
     end
 
     it "handles single statement numbers as daily statements" do
@@ -678,13 +692,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "does not update data with a newer last exported from source date" do
       e = Factory(:entry, broker_reference: @e['file_no'], source_system: "Alliance", last_exported_from_source: Time.zone.now)
-      expect(described_class.new.process_entry @e).to be_nil
-    end
-
-    it "does not update data with a newer expected update date source date" do
-      # This only needs to be in place until we discontinue the Alliance feed, at which point the extract_time value from this feed
-      # should be stored in the last exported from source field.
-      e = Factory(:entry, broker_reference: @e['file_no'], source_system: "Alliance", expected_update_time: Time.zone.now)
       expect(described_class.new.process_entry @e).to be_nil
     end
 
