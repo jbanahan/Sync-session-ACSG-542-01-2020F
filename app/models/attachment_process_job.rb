@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/tradecard/tradecard_pack_manifest_parser'
+require 'open_chain/custom_handler/generic_booking_parser'
 
 class AttachmentProcessJob < ActiveRecord::Base
   JOB_TYPES ||= {
