@@ -56,7 +56,7 @@ describe QuickSearchController do
       Factory(:entry, :broker_reference => "123_second", :file_logged_date => DateTime.now - 1)
       Factory(:entry, :broker_reference => "123_last", :file_logged_date => DateTime.now - 2)
       Factory(:entry, :broker_reference => "123_first", :file_logged_date => DateTime.now)
-      CoreModule::ENTRY.should_receive(:quicksearch_sort_by_qfn).at_least(1).times.and_return "entries.file_logged_date"
+      CoreModule::ENTRY.should_receive(:quicksearch_sort_by).at_least(1).times.and_return "entries.file_logged_date"
       
       get :by_module, module_type:'Entry', v: '123'
       expect(response).to be_success

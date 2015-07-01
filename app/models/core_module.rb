@@ -108,7 +108,7 @@ class CoreModule
   
   end
 
-  def quicksearch_sort_by_qfn  #qfn = qualified field name. Getter avoids circular dependency during init
+  def quicksearch_sort_by  #returns qualified field name. Getter avoids circular dependency during init
     unless @quicksearch_sort_by_qfn
       qsbmf = ModelField.find_by_uid(@quicksearch_sort_by_mf ? @quicksearch_sort_by_mf : :nil)
       @quicksearch_sort_by_qfn = qsbmf.blank? ? "#{@table_name}.created_at" : qsbmf.qualified_field_name
