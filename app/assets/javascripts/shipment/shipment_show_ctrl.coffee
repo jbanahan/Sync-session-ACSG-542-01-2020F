@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
+angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler',($scope,shipmentSvc,$state,chainErrorHandler) ->
   loadParties = ->
     $scope.parties = undefined
     shipmentSvc.getParties().success((data) ->
@@ -184,7 +184,7 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       $scope.loadShipment(shipment.id).finally ->
         $scope.loadingFlag = null
 
-  if shipmentId
-    $scope.loadShipment shipmentId
+  if $state.params.shipmentId
+    $scope.loadShipment $state.params.shipmentId
 
 ]
