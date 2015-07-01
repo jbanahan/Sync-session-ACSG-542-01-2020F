@@ -81,3 +81,33 @@ shipmentApp.service 'addressModalSvc', ->
   @onAddressCreated = (address)->
     @responders[@currentResponder](address)
   return
+
+shipmentApp.directive 'addressExpander', ->
+  restrict:'E'
+  replace:true
+  scope:
+    title:'@'
+    addressName:'='
+    fullAddress:'='
+  link: (scope, elem, attrs) ->
+    scope.rotateChevron = (event) ->
+      chevron = $(event.target).find("i.fa-chevron-down")
+      if chevron.hasClass("turnup")
+        chevron.removeClass("turnup").addClass("turndown")
+      else
+        chevron.removeClass("turndown").addClass("turnup")
+      return true
+    scope.notEmptyString = (thing) -> thing && thing.length > 0
+  template: '<div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="headerOne" ng-click="rotateChevron($event)" data-toggle="collapse" data-parent="#address-accordion" href="#collapse-{{title}}" aria-expanded="false" aria-controls="collapseOne">
+        <span>{{title}}</span>
+        <h4 class="panel-title">
+            {{addressName}} <i ng-if="notEmptyString(fullAddress)" class="fa fa-chevron-down pull-right"></i>
+        </h4>
+    </div>
+    <div ng-if="notEmptyString(fullAddress)" id="collapse-{{title}}" role="tabpanel" class="panel-collapse collapse" aria-labelledby="headerOne">
+        <div class="panel-body">
+            {{fullAddress}}
+        </div>
+    </div>
+</div>'
