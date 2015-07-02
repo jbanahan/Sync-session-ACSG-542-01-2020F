@@ -288,7 +288,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         # We're only currently tracking pms days since 2007, if we don't have a date after that time..then error
         # so that we can set up the schedule
         if pms_day.nil? && pms_year > 2006
-          StandardError.new("No Periodic Monthly Statement Dates found for #{pms_year} and #{pms_month}.  This data must be set up immediately.").log_me
+          StandardError.new("File ##{entry.broker_reference} / Division ##{entry.division_number}: No Periodic Monthly Statement Dates found for #{pms_year} and #{pms_month}.  This data must be set up immediately.").log_me
         end
       end
 
