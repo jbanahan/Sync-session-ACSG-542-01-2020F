@@ -1,24 +1,24 @@
 <div class="form-group">
     <label for="shp_manufacturer_address">Manufacturer</label>
-    <address-book-autocomplete id="shp_manufacturer_address" selected-object="shp.manufacturer_address" initial-value=""></address-book-autocomplete>
-</div>
-<div class="form-group">
-    <label for="shp_seller_address">Seller</label>
-    <address-book-autocomplete id="shp_seller_address" selected-object="shp.seller_address" initial-value=""></address-book-autocomplete>
+    <address-book-autocomplete id="shp_manufacturer_address" selected-object="shp.manufacturer_address" initial-value="outerScope.shp.shp_manufacturer_address_name"></address-book-autocomplete>
 </div>
 <div class="form-group">
     <label for="shp_buyer_address">Buyer</label>
-    <address-book-autocomplete id="shp_buyer_address" selected-object="shp.buyer_address" initial-value=""></address-book-autocomplete>
+    <address-book-autocomplete id="shp_buyer_address" selected-object="shp.buyer_address" initial-value="outerScope.shp.shp_manufacturer_address_name"></address-book-autocomplete>
+</div>
+<div class="form-group">
+    <label for="shp_seller_address">Seller</label>
+    <address-book-autocomplete id="shp_seller_address" selected-object="shp.seller_address" initial-value="outerScope.shp.shp_manufacturer_address_name"></address-book-autocomplete>
 </div>
 <div class="form-group">
     <label for="shp_ship_to_address">Ship-To</label>
-    <address-book-autocomplete id="shp_ship_to_address" selected-object="shp.ship_to_address" initial-value=""></address-book-autocomplete>
+    <address-book-autocomplete id="shp_ship_to_address" selected-object="shp.ship_to_address" initial-value="outerScope.shp.shp_manufacturer_address_name"></address-book-autocomplete>
 </div>
 <div class="form-group">
     <label for="shp_container_stuffing_address">Container Stuffing Location</label>
-    <address-book-autocomplete id="shp_container_stuffing_address" selected-object="shp.container_stuffing_address" initial-value=""></address-book-autocomplete>
+    <address-book-autocomplete id="shp_container_stuffing_address" selected-object="shp.container_stuffing_address" initial-value="outerScope.shp.shp_manufacturer_address_name"></address-book-autocomplete>
 </div>
 <div class="form-group">
     <label for="shp_consolidator_address">Consolidator</label>
-    <address-book-autocomplete id="shp_consolidator_address" selected-object="shp.consolidator_address" initial-value=""></address-book-autocomplete>
+    <address-book-autocomplete id="shp_consolidator_address" selected-object="shp.consolidator_address" initial-value="outerScope.shp.shp_manufacturer_address_name"></address-book-autocomplete>
 </div>
