@@ -32,15 +32,17 @@ shipmentApp.directive 'addressBookAutocomplete',['addressModalSvc',(addressModal
   restrict: 'E'
   scope:
     initialValue: '='
-    selectedObject: '='
-  template: '<angucomplete-alt input-class="form-control" placeholder="Search Address Book" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/shipments/address_modal/address_book_autocomplete_results.html" selected-object="selectedObject" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name" description-field="full_address" pause="500"></angucomplete-alt>'
+    addressIdAttribute: '='
+  template: '<angucomplete-alt input-class="form-control" placeholder="Search Address Book" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/shipments/address_modal/address_book_autocomplete_results.html" selected-object="onAddressSelected" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name" description-field="full_address" pause="500"></angucomplete-alt>'
   link:(scope, element, attributes) ->
-    selectedObject = attributes.selectedObject
-    addressModalSvc.responders[selectedObject] = (address) ->
+    addressIdAttribute = attributes.addressIdAttribute
+    addressModalSvc.responders[addressIdAttribute] = (address) ->
       element.find('input').val(address.name)
-      scope.selectedObject = address
+      scope.addressIdAttribute = address.id
 
-    scope.$on('$destroy', -> delete addressModalSvc.responders[selectedObject])
+    scope.$on('$destroy', -> delete addressModalSvc.responders[addressIdAttribute])
+
+    scope.onAddressSelected = (address) -> scope.addressIdAttribute = address.originalObject.id if address
 
 ]
 
@@ -71,7 +73,7 @@ shipmentApp.directive 'addAddressModal', ['$http', 'addressModalSvc', ($http, ad
       if event
         parent = $(event.relatedTarget).parents('address-book-autocomplete')
         if parent && parent.attr
-          model = parent.attr('selected-object')
+          model = parent.attr('address-id-attribute')
           addressModalSvc.currentResponder = model
     )
 ]
@@ -98,14 +100,15 @@ shipmentApp.directive 'addressExpander', ->
         chevron.removeClass("turndown").addClass("turnup")
       return true
     scope.notEmptyString = (thing) -> thing && thing.length > 0
+    scope.formattedTitle = attrs.title.replace(/\s/g, '_')
   template: '<div class="panel panel-default">
-    <div class="panel-heading" role="tab" id="headerOne" ng-click="rotateChevron($event)" data-toggle="collapse" data-parent="#address-accordion" href="#collapse-{{title}}" aria-expanded="false" aria-controls="collapseOne">
+    <div class="panel-heading" role="tab" id="header-{{formattedTitle}}" ng-click="rotateChevron($event)" data-toggle="collapse" data-parent="#address-accordion" href="#collapse-{{formattedTitle}}" aria-expanded="false" aria-controls="collapseOne">
         <span ng-style="{color: notEmptyString(addressName) ? \'#a6a6a6\' : \'inherit\' }">{{title}}</span>
         <h4 class="panel-title">
             {{addressName}} <i ng-if="notEmptyString(fullAddress)" class="fa fa-chevron-down pull-right"></i>
         </h4>
     </div>
-    <div ng-if="notEmptyString(fullAddress)" id="collapse-{{title}}" role="tabpanel" class="panel-collapse collapse" aria-labelledby="headerOne">
+    <div ng-if="notEmptyString(fullAddress)" id="collapse-{{formattedTitle}}" role="tabpanel" class="panel-collapse collapse" aria-labelledby="header-{{formattedTitle}}">
         <div class="panel-body">
             {{fullAddress}}
         </div>
