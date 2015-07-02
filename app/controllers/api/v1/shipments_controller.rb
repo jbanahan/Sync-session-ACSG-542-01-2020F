@@ -124,6 +124,17 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {'ok'=>'ok'}
   end
 
+  def send_isf
+    shipment = Shipment.find params[:id]
+    new_isf = shipment.make_isf
+    if new_isf.valid?
+      shipment.isf_sent_at = 0.seconds.ago
+      shipment.isf_sent_by = current_user
+    else
+      raise 'Invalid ISF! Make sure all required fields are filled in: ' + new_isf.errors.messages.keys.map(&:to_s).map(&:titleize).join(', ')
+    end
+  end
+
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},

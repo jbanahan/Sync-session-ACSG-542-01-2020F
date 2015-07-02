@@ -23,6 +23,7 @@ OpenChain::Application.routes.draw do
           post :request_cancel
           post :cancel
           post :uncancel
+          post :send_isf
           get :available_orders
           get :booked_orders
           get :available_lines

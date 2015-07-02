@@ -112,5 +112,8 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
     uncancelShipment: (shp) ->
       shipmentPost(shp.id,'uncancel.json')
+
+    sendISF: (shp) ->
+      shipmentPost(shp.id,'send_isf.json')
   }
 ]

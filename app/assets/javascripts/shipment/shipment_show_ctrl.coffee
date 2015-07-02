@@ -173,6 +173,9 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
   $scope.showBookOrder = ->
     $state.go('book_order',{shipmentId: $scope.shp.id})
 
+  $scope.sendISF = (shipment) ->
+    shipmentSvc.sendISF(shipment)
+
   $scope.saveShipment = (shipment) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
