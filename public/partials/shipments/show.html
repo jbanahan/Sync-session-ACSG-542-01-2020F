@@ -32,8 +32,6 @@
           panel-title='Booking' panel-class='panel-primary' before-edit='prepBookingEditObject(shp)' on-save='saveShipment(booking)'></chain-view-edit>
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/parties_view.html' edit-template='/partials/shipments/parties_edit.html'
           panel-title='Parties' panel-class='panel-primary' before-edit='prepPartiesEditObject(shp)' on-save='saveShipment(partiesEditObj)'></chain-view-edit>
-        <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/addresses_view.html' edit-template='/partials/shipments/addresses_edit.html'
-         panel-title='Addresses' panel-class='panel-primary' before-edit='prepAddressesEditObject(shp)' on-save='saveShipment(addressesEditObj)'></chain-view-edit>
       </div>
       <div class="col-md-4">
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/tracking_view.html' edit-template='/partials/shipments/tracking_edit.html'
