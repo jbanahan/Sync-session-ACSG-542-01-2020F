@@ -43,13 +43,13 @@ describe ResultCache do
       ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
       p1 = Factory(:product)
       p2 = Factory(:product)
-      5.times do |i| 
-        Factory(:classification,:product=>p1)
-        Factory(:classification,:product=>p2)
+      3.times do |i| 
+        Factory(:classification,:product=>p1) 
       end
+      Factory(:classification,:product=>p2)
       rc = ResultCache.new(:result_cacheable=>ss,:page=>1,:per_page=>2,:object_ids=>[p1.id].to_json)
       rc.next(p1.id).should==p2.id
-      rc.page.should == 3
+      rc.page.should == 2
     end
   end
   describe :previous do
