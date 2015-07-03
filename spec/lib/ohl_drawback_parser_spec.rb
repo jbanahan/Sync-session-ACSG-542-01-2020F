@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::OhlDrawbackParser do
   before :all do 
+    @companies = Company.all
     {'CN'=>'CHINA','TW'=>'TAIWAN','KH'=>'CAMBODIA','VN'=>'VIET NAM','US'=>'UNITED STATES'}.each do |k,v|
       Factory(:country, :name=>v, :iso_code=>k)
     end
@@ -12,6 +13,7 @@ describe OpenChain::OhlDrawbackParser do
   after :all do
     Country.scoped.destroy_all
     Entry.scoped.destroy_all
+    Company.where("NOT companies.ID IN (?)",@companies.collect {|c| c.id}).destroy_all
   end
   it 'should create entries based on sample, skipping Mode = "-1"' do
     entries = Entry.all
