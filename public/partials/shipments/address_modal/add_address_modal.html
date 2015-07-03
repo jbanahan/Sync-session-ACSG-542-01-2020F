@@ -8,12 +8,12 @@
             <div class="modal-body">
                 <form name="new_address_form">
                     <div class="form-group">
-                        <label for="address_name">Name</label>
+                        <label for="address_name">Name*</label>
                         <input type="text" class='form-control' id='address_name' ng-model="ctrl.address.name" required>
                     </div>
                     <div class="form-group">
-                        <label for="address_line_1">Line 1</label>
-                        <input type="text" class='form-control' id='address_line_1' ng-model="ctrl.address.line_1">
+                        <label for="address_line_1">Line 1*</label>
+                        <input type="text" class='form-control' id='address_line_1' ng-model="ctrl.address.line_1" required>
                     </div>
                     <div class="form-group">
                         <label for="address_line_2">Line 2</label>
@@ -24,21 +24,21 @@
                         <input type="text" class='form-control' id='address_line_3' ng-model="ctrl.address.line_3">
                     </div>
                     <div class="form-group">
-                        <label for="address_city">City</label>
-                        <input type="text" class='form-control' id='address_city' ng-model="ctrl.address.city">
+                        <label for="address_city">City*</label>
+                        <input type="text" class='form-control' id='address_city' ng-model="ctrl.address.city" required>
                     </div>
                     <div class="form-group">
-                        <label for="address_state">State</label>
-                        <input type="text" class='form-control' id='address_state' ng-model="ctrl.address.state">
+                        <label for="address_state">State*</label>
+                        <input type="text" class='form-control' id='address_state' ng-model="ctrl.address.state" required>
                     </div>
                     <div class="form-group">
-                        <label for="address_postal_code">Postal Code</label>
-                        <input type="text" class='form-control' id='address_postal_code' ng-model="ctrl.address.postal_code">
+                        <label for="address_postal_code">Postal Code*</label>
+                        <input type="text" class='form-control' id='address_postal_code' ng-model="ctrl.address.postal_code" required>
                     </div>
                     <div class="form-group">
                         <div class="form-inline">
-                            <label for="address_country">Country</label>
-                            <select id="address_country" ng-model="ctrl.address.country_id" ng-options="country.id as country.name for country in ctrl.countries"></select>
+                            <label for="address_country">Country*</label>
+                            <select id="address_country" ng-model="ctrl.address.country_id" ng-options="country.id as country.name for country in ctrl.countries" required></select>
                             <div class="checkbox">
                                 <label for="address_in_address_book">Add to Address Book? <input id="address_in_address_book" type="checkbox" ng-model="ctrl.address.in_address_book"></label>
                             </div>
