@@ -80,7 +80,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
   end
 
   def parse_and_set_fiber_content product
-    init_custom_values
+    init_custom_definitions
     result = nil
     failed = true
     status_message = nil
@@ -172,7 +172,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       fiber
     end
 
-    def init_custom_values
+    def init_custom_definitions
       # Shortcut to avoid typing out 45 custom def fields here
       if @cdefs.nil?
         cdefs = []

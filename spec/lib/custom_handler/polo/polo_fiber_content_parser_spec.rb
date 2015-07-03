@@ -290,11 +290,14 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
   describe "parse_and_set_fiber_content" do
 
+    before :all do
+      @custom_defs = described_class.new.send(:init_custom_definitions)
+    end
+    after :all do
+      CustomDefinition.scoped.destroy_all
+      @custom_defs = nil
+    end
     before :each do
-      # We're having to basically recreate 45 custom fields here, making this test extremely slow.  A possible workaround
-      # is to pull in the rspec_around_all gem and open a db transaction at the beginning, loading the custom fields, and
-      # then using savepoints for each spec that are rolled back after each run.  That would take some experimentation 
-      # that I don't really have time to explore at the moment.
       @prod = Factory(:product)
       @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_type_1, :fabric_1, :fabric_percent_1, :fabric_type_2, :fabric_2, :fabric_percent_2, :msl_fiber_failure, :msl_fiber_status]
       
