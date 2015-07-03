@@ -85,14 +85,14 @@ describe ResultCache do
       ss.sort_criterions.create!(:model_field_uid=>:prod_uid)
       ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
       p1 = Factory(:product)
+      Factory(:classification,:product=>p1)
       p2 = Factory(:product)
-      5.times do |i| 
-        Factory(:classification,:product=>p1)
+      3.times do |i| 
         Factory(:classification,:product=>p2)
       end
-      rc = ResultCache.new(:result_cacheable=>ss,:page=>5,:per_page=>2,:object_ids=>[p2.id].to_json)
+      rc = ResultCache.new(:result_cacheable=>ss,:page=>2,:per_page=>2,:object_ids=>[p2.id].to_json)
       rc.previous(p2.id).should == p1.id
-      rc.page.should == 3
+      rc.page.should == 1
     end
   end
 end
