@@ -67,7 +67,7 @@ end
 Factory.define :drawback_user, :parent=>:user do |f|
   f.drawback_view true
   f.drawback_edit true
-  f.after_create {|u| u.company.update_attributes(:drawback=>true)}
+  f.after_create {|u| u.company.update_attributes(:drawback=>true, :master=>true)}
 end
 Factory.define :country do |c|
   c.iso_code {Factory.next :iso}
