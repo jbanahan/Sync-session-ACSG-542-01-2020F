@@ -72,7 +72,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       $http.put("/api/v1/shipments/#{shipmentId}.json", {shipment:{id:shipmentId, booking_lines:lines}, summary:true}).then getShipmentSuccessHandler
 
     getParties: ->
-      $http.get('/api/v1/companies?roles=importer,carrier')
+      $http.get('/api/v1/companies?roles=importer,carrier&isf=true')
 
     getAvailableOrders: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')

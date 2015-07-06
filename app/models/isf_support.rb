@@ -20,6 +20,7 @@ module ISFSupport
     validate_parties_irs_numbers
     validate_importer_alliance_number
     validate_bill_numbers
+    validate_isf_lines
   end
 
   def validate_isf_address_fields
