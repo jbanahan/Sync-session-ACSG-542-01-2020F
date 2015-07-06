@@ -333,6 +333,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_request_cancel:shipment.can_request_cancel?(current_user),
       can_cancel:shipment.can_cancel?(current_user),
       can_uncancel:shipment.can_uncancel?(current_user),
+      can_send_isf:shipment.can_approve_booking?(current_user, true),
       enabled_booking_types:shipment.enabled_booking_types
     }
   end
