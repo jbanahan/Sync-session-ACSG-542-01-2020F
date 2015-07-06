@@ -18,6 +18,7 @@ class Shipment < ActiveRecord::Base
   belongs_to :canceled_by, :class_name=>"User"
   belongs_to :cancel_requested_by, :class_name=>"User"
   belongs_to :cancel_approved_by, :class_name=>"User"
+  belongs_to :consignee, :class_name=>"Company"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :booking_lines, dependent: :destroy, inverse_of: :shipment, autosave: true

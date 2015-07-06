@@ -30,6 +30,16 @@ class ShipmentLine < ActiveRecord::Base
     (self.shipment && self.shipment.locked?) || !self.commercial_invoice_lines.blank?
   end
 
+  def country_of_origin
+    order_lines.pluck(:country_of_origin).first
+  end
+
+  def us_hts_number
+    # TODO: This needs to be real
+    # product.us_hts_number
+    true
+  end
+
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment
