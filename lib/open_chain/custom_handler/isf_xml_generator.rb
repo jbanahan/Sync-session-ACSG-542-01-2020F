@@ -17,14 +17,16 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
     raise 'Shipment is missing information required for ISF!' unless @shipment.valid_isf?
     @edi_lines = Set.new
 
-    @edi_lines.merge @shipment.shipment_lines.map do |line|
-      EdiLine.new(
-        order_number:line.order_lines.first.order.customer_order_number,
-        hts_number: line.us_hts_number,
-        country_of_origin: line.country_of_origin,
-        container_number: line.container.container_number
-      )
-    end
+    @edi_lines.merge(
+      @shipment.shipment_lines.map do |line|
+        EdiLine.new(
+          line.order_lines.first.order.customer_order_number,
+          line.us_hts_number,
+          line.country_of_origin,
+          line.container.try(:container_number)
+        )
+      end
+    )
   end
 
   def generate_and_send!
