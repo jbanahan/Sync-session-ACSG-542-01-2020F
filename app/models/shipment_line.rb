@@ -31,13 +31,11 @@ class ShipmentLine < ActiveRecord::Base
   end
 
   def country_of_origin
-    order_lines.pluck(:country_of_origin).first
+    order_lines.limit(1).pluck(:country_of_origin).first
   end
 
   def us_hts_number
-    # TODO: This needs to be real
-    # product.us_hts_number
-    true
+    Classification.where(product_id: product_id, country_id: Country::USA.id).joins(:tariff_records).limit(1).pluck(:hts_1).first
   end
 
   private

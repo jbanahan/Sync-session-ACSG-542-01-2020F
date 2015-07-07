@@ -64,6 +64,8 @@ class Country < ActiveRecord::Base
     'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
 
   @@skip_reload = false
+
+  USA = find_by_iso_code 'US'
   
   attr_accessible :import_location, :classification_rank
   after_save :update_model_fields
