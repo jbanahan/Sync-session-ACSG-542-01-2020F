@@ -174,7 +174,11 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
     $state.go('book_order',{shipmentId: $scope.shp.id})
 
   $scope.sendISF = (shipment) ->
-    shipmentSvc.sendISF(shipment)
+    if $scope.shp.shp_isf_sent_at
+      if window.confirm("An ISF has already been sent. Are you sure you want to send it again?")
+        shipmentSvc.sendISF(shipment)
+    else
+      shipmentSvc.sendISF(shipment)
 
   $scope.saveShipment = (shipment) ->
     $scope.loadingFlag = 'loading'
