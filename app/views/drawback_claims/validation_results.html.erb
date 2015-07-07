@@ -1,0 +1,10 @@
+<%content_for :javascript do%>
+  $('document').ready(function() {
+    $('div[ng-controller]').scope().loadObject('drawback_claims', <%=@validation_object.id%>);
+  });
+<%end%>
+<%content_for :action_bar do%>
+  <button class='btn_link' link_to='<%=drawback_claim_path(@validation_object)%>'>Drawback Claim</button>
+<%end%>
+
+<%= render 'shared/validation_results' %>
