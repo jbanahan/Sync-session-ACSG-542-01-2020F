@@ -23,10 +23,6 @@ module ISFSupport
     validate_isf_lines
   end
 
-  def make_isf
-    ImporterSecurityFiling.from_shipment(self)
-  end
-
   private
 
   def validate_isf_address_fields
