@@ -17,8 +17,8 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
     raise 'Shipment is missing information required for ISF!' unless @shipment.valid_isf?
     @edi_lines = Set.new
 
-    @shipment.shipment_lines.each do |line|
-      @edi_lines << EdiLine.new(
+    @edi_lines.merge @shipment.shipment_lines.map do |line|
+      EdiLine.new(
         order_number:line.order_lines.first.order.customer_order_number,
         hts_number: line.us_hts_number,
         country_of_origin: line.country_of_origin,
@@ -28,14 +28,17 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
   end
 
   def generate_and_send!
-    document = generate
+    secrets = HashWithIndifferentAccess.new(YAML.load(File.read(Rails.root.join('config','secrets.yml'))))
+    options = secrets[Rails.env]['isf_xml_generator']
+
+    document = generate(options)
     send! document
   end
 
   private
 
   def send!(file)
-    Tempfile.open(["#{@shipment.reference}-ISF-#{Time.now.iso8601}", ".xml"]) do |fout|
+    Tempfile.open(["#{@shipment.reference}-ISF-", ".xml"]) do |fout|
       file.write fout
       fout.flush
       fout.rewind
@@ -118,6 +121,6 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
 
   def ftp_credentials
     # TODO: get real credentials
-    connect_vfitrack_net 'to_ecs/315'
+    connect_vfitrack_net 'to_ecs/isf'
   end
 end; end; end
