@@ -1,13 +1,19 @@
 require 'spec_helper'
 
 describe OpenChain::OhlDrawbackParser do
-  before :each do 
+  before :all do 
+    @companies = Company.all
     {'CN'=>'CHINA','TW'=>'TAIWAN','KH'=>'CAMBODIA','VN'=>'VIET NAM','US'=>'UNITED STATES'}.each do |k,v|
       Factory(:country, :name=>v, :iso_code=>k)
     end
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @sample_path = 'spec/support/bin/ohl_drawback_sample.xls'
     OpenChain::OhlDrawbackParser.parse @sample_path
+  end
+  after :all do
+    Country.scoped.destroy_all
+    Entry.scoped.destroy_all
+    Company.destroy_all
   end
   it 'should create entries based on sample, skipping Mode = "-1"' do
     entries = Entry.all

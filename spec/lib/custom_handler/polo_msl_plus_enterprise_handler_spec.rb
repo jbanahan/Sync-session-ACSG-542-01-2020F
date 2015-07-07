@@ -5,6 +5,13 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     File.delete @tmp if @tmp && File.exists?(@tmp)
   end
   describe :products_to_send do
+    before :all do
+      @custom_defs = described_class.new.send(:init_outbound_custom_definitions)
+    end
+    after :all do
+      CustomDefinition.scoped.destroy_all
+      @custom_defs = nil
+    end
     before :each do
       cdefs = described_class.prep_custom_definitions [:msl_receive_date,:csm_numbers]
       @cd_msl_rec = cdefs[:msl_receive_date]
@@ -13,6 +20,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       ['US','IT','CA','TW'].each {|iso| @countries[iso] = Factory(:country,:iso_code=>iso)}
       t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['IT']))
       @p = t.product
+      described_class.any_instance.should_receive(:init_outbound_custom_definitions).and_call_original
     end
     it "should find product with MSL+ Receive Date having non-US, CA tariffs" do
       @p.update_custom_value! @cd_msl_rec, 1.day.ago
