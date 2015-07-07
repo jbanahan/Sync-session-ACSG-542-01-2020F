@@ -1,3 +1,5 @@
+require 'open_chain/custom_handler/isf_xml_generator'
+
 module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControllerBase
   include ActionView::Helpers::NumberHelper
 
@@ -126,12 +128,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def send_isf
     shipment = Shipment.find params[:id]
-    new_isf = shipment.make_isf
-    if new_isf.valid?
-      shipment.isf_sent_at = 0.seconds.ago
-      shipment.isf_sent_by = current_user
+    if shipment.valid_isf?
+      ISFXMLGenerator.delay.generate_and_send(shipment.id, !shipment.isf_sent_at)
+      shipment.mark_isf_sent!(current_user)
     else
-      raise 'Invalid ISF! Make sure all required fields are filled in: ' + new_isf.errors.messages.keys.map(&:to_s).map(&:titleize).join(', ')
+      raise 'Invalid ISF! ' + shipment.errors.full_messages.join('. ')
     end
   end
 
@@ -237,7 +238,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_seller_address_full_address,
       :shp_ship_to_address_full_address,
       :shp_container_stuffing_address_full_address,
-      :shp_consolidator_address_full_address
+      :shp_consolidator_address_full_address,
+      :shp_isf_sent_at,
+      :shp_est_load_date
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([

@@ -37,7 +37,7 @@ module ISFSupport
       required_fields = [:name, :line_1, :city, :state, :postal_code, :country_id]
       errors[address_symbol] << "can't be blank" unless address
       address && required_fields.each do |field|
-        errors[address_symbol] << "#{field.to_s.titleize} can't be blank" unless address[field].present?
+        errors[address_symbol] << "#{field.to_s.gsub('_',' ')} can't be blank" unless address[field].present?
       end
     end
   end

@@ -7,19 +7,20 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
 
   EdiLine = Struct.new('EdiLine',:order_number, :hts_number, :country_of_origin, :container_number)
 
-  def self.generate_and_send_for_shipment_id(shipment_id)
-    new(shipment_id).generate_and_send!
+  def self.generate_and_send(shipment_id, first_time)
+    new(shipment_id, first_time).generate_and_send!
   end
 
-  def initialize(shipment_id)
+  def initialize(shipment_id, first_time)
     @shipment = Shipment.find(shipment_id)
+    @first_time = first_time
     raise 'Shipment is missing information required for ISF!' unless @shipment.valid_isf?
     @edi_lines = Set.new
 
     @shipment.shipment_lines.each do |line|
       @edi_lines << EdiLine.new(
         order_number:line.order_lines.first.order.customer_order_number,
-        hts_number: line.product.classifications.where(country_id:Country.where(iso_code:'US').pluck(:id)).tariff_records.first.hts_code,
+        hts_number: line.us_hts_number,
         country_of_origin: line.country_of_origin,
         container_number: line.container.container_number
       )
@@ -49,10 +50,10 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
     add_element root, 'PASSWORD', options[:isf_password]
     add_element root, 'DATE_CREATED', Time.now.in_time_zone('US/Eastern').iso8601
     add_element root, 'EDI_TXN_IDENTIFIER', @shipment.id
-    add_element root, 'ACTION_CD', @shipment.isf_sent_at ? 'R' : 'A'
+    add_element root, 'ACTION_CD', @first_time ? 'A' : 'R'
     add_element root, 'IMPORTER_ACCT_CD', @shipment.importer.alliance_customer_number
     add_element root, 'OWNER_ACCT_CD', options[:isf_cust_acct]
-    add_element root, 'EST_LOAD_DATE'
+    add_element root, 'EST_LOAD_DATE', @shipment.est_load_date.in_time_zone('US/Eastern').iso8601
     add_element root, 'BOOKING_NBR', @shipment.booking_number
 
     if @shipment.house_bill_of_lading.present?

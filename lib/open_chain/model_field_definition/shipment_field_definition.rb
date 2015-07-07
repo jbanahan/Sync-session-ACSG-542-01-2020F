@@ -153,32 +153,17 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              :data_type=>:string
          }],
       [60,:shp_cancel_requested_at,:cancel_requested_at,"Cancel Requested At",{data_type: :datetime, read_only: true}],
-      # [61,:shp_manufacturer_address_id, :manufacturer_address_id, "Manufacturer Address Id",{data_type: :integer}],
-      # [62,:shp_manufacturer_address_name, :manufacturer_address_name, "Manufacturer Address Name",{
-      #        data_type: :string,
-      #        read_only:true,
-      #        export_lambda: lambda{|obj| obj.manufacturer_address.try(:name) },
-      #        qualified_field_name: "(SELECT name FROM addresses WHERE addresses.id = shipments.manufacturer_address_id)"
-      #    }],
-      # [63, :shp_manufacturer_full_address, :manufacturer_address, "Manufacturer Address", {
-      #        data_type: :string,
-      #        read_only:true,
-      #        export_lambda: lambda {|obj| obj.manufacturer_address.try(:full_address)},
-      #        qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(line_1, ''), IFNULL(line_2, ''), IFNULL(line_3, ''), IFNULL(city, ''), IFNULL(state, ''), IFNULL(postal_code, '')) FROM addresses where addresses.id = shipments.manufacturer_address_id)"
-      #    }],
-      # [64,:shp_buyer_address_id, :buyer_address_id, "Buyer Address Id",{data_type: :integer}],
-      # [62,:shp_buyer_address_name, :buyer_address_name, "Buyer Address Name",{
-      #        data_type: :string,
-      #        read_only:true,
-      #        export_lambda: lambda{|obj| obj.manufacturer_address.try(:name) },
-      #        qualified_field_name: "(SELECT name FROM addresses WHERE addresses.id = shipments.buyer_address_id)"
-      #    }],
-      # [66, :shp_buyer_full_address, :buyer_address, "Buyer Address", {
-      #        data_type: :string,
-      #        read_only:true,
-      #        export_lambda: lambda {|obj| obj.buyer_address.try(:full_address)},
-      #        qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(line_1, ''), IFNULL(line_2, ''), IFNULL(line_3, ''), IFNULL(city, ''), IFNULL(state, ''), IFNULL(postal_code, '')) FROM addresses where addresses.id = shipments.buyer_address_id)"
-      #    }],
+      [61,:shp_isf_sent_by_full_name,:username,"ISf Sent By", {
+             :import_lambda => lambda {|a,b| return "ISF Sent By cannot be set by import, ignored."},
+             :export_lambda => lambda {|obj|
+               u = obj.isf_sent_by
+               u.blank? ? "" : u.full_name
+             },
+             :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.isf_sent_by_id)",
+             :data_type=>:string
+         }],
+      [62,:shp_isf_sent_at,:isf_sent_at,"ISF Sent At",{data_type: :datetime, read_only: true}],
+      [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :datetime}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
