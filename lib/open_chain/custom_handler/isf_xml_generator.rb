@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
   include OpenChain::XmlBuilder
   include OpenChain::FtpFileSupport
 
-  EdiLine = Struct.new('EdiLine',:order_number, :hts_number, :country_of_origin, :container_number)
+  EdiLine ||= Struct.new('EdiLine',:order_number, :hts_number, :country_of_origin, :container_number)
 
   def self.generate_and_send(shipment_id, first_time)
     new(shipment_id, first_time).generate_and_send!
