@@ -94,9 +94,11 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
     add_address_entity root, @shipment.ship_to_address, 'ST'
     add_address_entity root, @shipment.container_stuffing_address, 'LG'
     add_address_entity root, @shipment.consolidator_address, 'CS'
+    add_address_entity root, @shipment.manufacturer_address, 'MF', 1 if @shipment.manufacturer_address
 
     @edi_lines.each do |line|
       line_element = add_element root, 'EdiLine'
+      add_element line_element, 'MFG_SUPPLIER_CD', 1 if @shipment.manufacturer_address
       add_element line_element, 'PO_NBR', line.order_number
       add_element line_element, 'TARIFF_CD', line.hts_number
       add_element line_element, 'ORIGIN_COUNTRY_CD', line.country_of_origin
@@ -120,7 +122,6 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
   end
 
   def ftp_credentials
-    # TODO: get real credentials
     connect_vfitrack_net 'to_ecs/isf'
   end
 end; end; end
