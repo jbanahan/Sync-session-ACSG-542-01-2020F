@@ -35,7 +35,7 @@ class ShipmentLine < ActiveRecord::Base
   end
 
   def us_hts_number
-    Classification.where(product_id: product_id, country_id: Country::USA.id).joins(:tariff_records).limit(1).pluck(:hts_1).first
+    Classification.joins(:country).where(product_id: product_id, countries: {iso_code: 'US'}).joins(:tariff_records).limit(1).pluck(:hts_1).first
   end
 
   private
