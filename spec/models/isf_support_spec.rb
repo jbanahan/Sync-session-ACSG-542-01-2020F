@@ -16,7 +16,8 @@ describe ISFSupport do
                             consolidator_address: Factory(:full_address),
                             house_bill_of_lading:'this is a bill'
         )
-        Factory(:shipment_line, shipment:@shipment)
+        Factory(:shipment_line, shipment:@shipment, manufacturer_address:Factory(:full_address))
+        Factory(:shipment_line, shipment:@shipment, manufacturer_address:Factory(:full_address))
         ShipmentLine.any_instance.stub(:country_of_origin).and_return('Greenland')
         ShipmentLine.any_instance.stub(:us_hts_number).and_return('123456789')
       end
@@ -73,6 +74,20 @@ describe ISFSupport do
           expect(@shipment.errors[:base]).to include("Shipment must have either a Master or House Bill of Lading number")
         end
 
+      end
+
+      describe 'when one of the shipment lines is missing a manufacturer address' do
+        before :each do
+          @shipment = Factory :shipment
+          Factory :shipment_line, shipment:@shipment, manufacturer_address:Factory(:full_address)
+          Factory :shipment_line, shipment:@shipment, manufacturer_address:Factory(:full_address)
+          Factory :shipment_line, shipment:@shipment, manufacturer_address_id:nil
+          @shipment.validate_isf!
+        end
+
+        it 'is invalid' do
+          expect(@shipment.errors[:base]).to include("All shipment lines must have a Manufacturer Address")
+        end
       end
     end
   end
