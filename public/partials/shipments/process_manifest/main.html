@@ -6,10 +6,17 @@
       <select class='form-control' id='attSel' ng-model='manifestAttachment' ng-options='att.name for att in shp.attachments'></select>
     </div>
     <div class="col-xs-6">
-      <label for="typeSelect">Select Worksheet Type</label>
-      <select class="form-control" id="typeSelect" ng-model="attachmentType" ng-options="type for type in ['Booking Worksheet','Tradecard Manifest']"></select>
+      <div class="form-group">
+        <label for="typeSelect">Select Worksheet Type</label>
+        <select class="form-control" id="typeSelect" ng-model="attachmentType" ng-options="type for type in ['Booking Worksheet','Tradecard Manifest']"></select>
+      </div>
+      <div class="form-group" ng-show="attachmentType === 'Tradecard Manifest'">
+        <label for="mfgAddress">Select Manufacturer Address</label>
+        <address-book-autocomplete id="mfgAddress" address-id-attribute="shp.manufacturerId"></address-book-autocomplete>
+      </div>
     </div>
   </div>
+  <add-address-modal></add-address-modal>
 </div>
 <div chain-action-bar>
   <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
