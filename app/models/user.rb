@@ -201,6 +201,11 @@ class User < ActiveRecord::Base
     nil
   end
 
+  # Clobber Clearance's normalize_email to prevent it from stripping out spaces from emails.
+  def self.normalize_email email
+    email.to_s.strip
+  end
+
   # override default clearance email authentication
   def email_optional?
     true
@@ -633,7 +638,7 @@ class User < ActiveRecord::Base
   def valid_email
     regex = /\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i  #http://stackoverflow.com/a/22994329
     rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| !!(e =~ regex) } 
-    error_message = rejected.count > 1 ? "The following emails are invalid: #{rejected.join(', ')}" : "The email is invalid."
+    error_message = rejected.count > 1 ? "The following emails are invalid: #{rejected.join(', ')}" : "Invalid email address"
     errors.add(:email, error_message) unless rejected.empty?
   end
 end

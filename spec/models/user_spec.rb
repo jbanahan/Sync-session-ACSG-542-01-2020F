@@ -642,7 +642,7 @@ describe User do
       list = "abc@example.net, nbc123@vandegriftinc.com; cbs_1@britishcompany.co.uk"
       u.update_attributes(email: list)
       u.reload
-      expect(u.email).to eq(list.delete(" "))
+      expect(u.email).to eq list
       expect(u.errors.messages[:email]).to be_nil
     end
 
@@ -651,7 +651,7 @@ describe User do
       list = "abc@example.*et, nbc123grifter.com; 1@2.3.com, cbs@somewhere.org"
       u.update_attributes(email: list)
       u.reload
-      expect(u.email).to eq("default@vandegriftinc.com")
+      expect(u.email).to eq "default@vandegriftinc.com"
       expect(u.errors.messages[:email]).to eq ["The following emails are invalid: abc@example.*et, nbc123grifter.com, 1@2.3.com"]
     end
   
@@ -660,8 +660,8 @@ describe User do
       addr = "abc@example.*et"
       u.update_attributes(email: addr)
       u.reload
-      expect(u.email).to eq("default@vandegriftinc.com")
-      expect(u.errors.messages[:email]).to eq ["The email is invalid."]
+      expect(u.email).to eq "default@vandegriftinc.com"
+      expect(u.errors.messages[:email]).to eq ["Invalid email address"]
     end
 
   end
