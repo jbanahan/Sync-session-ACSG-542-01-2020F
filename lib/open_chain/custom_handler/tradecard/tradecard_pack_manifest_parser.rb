@@ -2,23 +2,23 @@ require 'open_chain/xl_client'
 
 module OpenChain; module CustomHandler; module Tradecard; class TradecardPackManifestParser
 
-  def self.process_attachment shipment, attachment, user
-    parse shipment, attachment.attached.path, user
+  def self.process_attachment shipment, attachment, user, manufacturer_address_id
+    parse shipment, attachment.attached.path, user, manufacturer_address_id
   end
-  def self.parse shipment, path, user
-    self.new.run(shipment,OpenChain::XLClient.new(path),user)
-  end
-
-  def run shipment, xl_client, user
-    process_rows shipment, xl_client.all_row_values, user
+  def self.parse shipment, path, user, manufacturer_address_id
+    self.new.run(shipment,OpenChain::XLClient.new(path),user, manufacturer_address_id)
   end
 
-  def process_rows shipment, rows, user
+  def run shipment, xl_client, user, manufacturer_address_id
+    process_rows shipment, xl_client.all_row_values, user, manufacturer_address_id
+  end
+
+  def process_rows shipment, rows, user, manufacturer_address_id
     ActiveRecord::Base.transaction do
       raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
       validate_heading rows
       add_containers shipment, rows if mode(rows)=='OCEAN'
-      add_lines shipment, rows
+      add_lines shipment, rows, manufacturer_address_id
       shipment.save!
     end
   end
@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     end
   end
 
-  def add_lines shipment, rows
+  def add_lines shipment, rows, manufacturer_address_id
     max_line_number = 0
     shipment.shipment_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
     carton_detail_header_row = header_row_index(rows,'CARTON DETAIL', 'PACKAGE DETAIL')
@@ -70,18 +70,18 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
       end
       if r.size==57 && !r[29].blank? && r[29].match(/\d/)
         max_line_number += 1
-        add_line shipment, r, container, max_line_number
+        add_line shipment, r, container, max_line_number, manufacturer_address_id
         next
       end
     end
   end
 
-  def add_line shipment, row, container, line_number
+  def add_line shipment, row, container, line_number, manufacturer_address_id
     po = row[14]
     sku = row[20]
     qty = clean_number(row[29])
     ol = find_order_line shipment, po, sku
-    sl = shipment.shipment_lines.build(product:ol.product,quantity:qty)
+    sl = shipment.shipment_lines.build(product:ol.product,quantity:qty, manufacturer_address_id:manufacturer_address_id)
     sl.container = container
     sl.linked_order_line_id = ol.id
     sl.line_number = line_number

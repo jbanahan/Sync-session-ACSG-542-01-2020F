@@ -86,8 +86,8 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
 
-    processTradecardPackManifest: (shp, attachment) ->
-      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id}).then(getShipmentSuccessHandler)
+    processTradecardPackManifest: (shp, attachment, manufacturerAddressId) ->
+      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId}).then(getShipmentSuccessHandler)
 
     processBookingWorksheet: (shp, attachment) ->
       shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id}).then(getShipmentSuccessHandler)

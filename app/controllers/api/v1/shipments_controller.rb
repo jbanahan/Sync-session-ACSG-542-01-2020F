@@ -555,7 +555,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     att = s.attachments.find_by_id(params[:attachment_id])
     raise StatusableError.new("Attachment not linked to Shipment.",400) unless att
     aj = s.attachment_process_jobs.where(attachment_id:att.id,
-                                         job_name: job_name).first_or_create!(user_id:current_user.id)
+                                         job_name: job_name).first_or_create!(user_id:current_user.id, manufacturer_address_id:params[:manufacturer_address_id])
     if aj.start_at
       raise StatusableError.new("This manifest has already been submitted for processing.",400)
     else
