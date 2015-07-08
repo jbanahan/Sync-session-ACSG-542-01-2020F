@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
+  subject {OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator.new('spec/fixtures/files/vfitrack-passphraseless.gpg.key')}
 
   describe "find_entries" do
     context "with siemens tax ids" do
@@ -47,13 +48,17 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       e.update_attributes! importer: Factory(:importer, fenix_customer_number: "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789"
 
       file_data = nil
-      described_class.any_instance.should_receive(:ftp_file) do |file|
-        file_data = file.read
-        true
+
+      # capture the data that supposedly would be encrypted (we'll test the encryption later)
+      described_class.any_instance.should_receive(:encrypt_file) do |f, &blk|
+        file_data = f.read
+        blk.call f
       end
 
-      described_class.run_schedulable
-      # All that we care about here is ultimately 1 line of something was ftp'ed...
+      described_class.any_instance.should_receive(:ftp_file).and_return true
+
+      described_class.run_schedulable({'public_key' => 'spec/fixtures/files/vfitrack.gpg.key'})
+      # All that we care about here is ultimately 1 line of something was encrypted
       # the rest is tested below.
       expect(file_data.lines.size).to eq 1
     end
@@ -316,18 +321,32 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         end
         
         it "writes entry data to a file and sends it" do
-          file = nil
+          encrypted_file = nil
           filename = nil
           subject.should_receive(:ftp_file) do |ftp_file|
-            file = ftp_file.read
+            encrypted_file = ftp_file.read
             filename = ftp_file.original_filename
             true
           end
 
           subject.generate_and_send [@entry]
 
-          expect(file.lines("\r\n").length).to eq 2
-          expect(filename).to eq "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat"
+
+          # decrypt the file then make sure it's formatted the way we expect
+          gpg = OpenChain::GPG.new 'spec/fixtures/files/vfitrack-passphraseless.gpg.key', 'spec/fixtures/files/vfitrack-passphraseless.gpg.private.key'
+
+          decrypted_file = nil
+          Tempfile.open("decrypt") do |f|
+            Tempfile.open("encrypted", encoding: "ascii-8bit") do |en|
+              en << encrypted_file
+              en.flush
+              gpg.decrypt_file en, f
+            end
+
+            decrypted_file = f.read
+          end
+          expect(decrypted_file.lines("\r\n").length).to eq 2
+          expect(filename).to eq "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat.gpg"
           sr = @entry.sync_records.first
           expect(sr.trading_partner).to eq "Siemens Billing"
           expect(sr.sent_at).not_to be_nil

@@ -1,3 +1,5 @@
+require 'open_chain/gpg'
+
 module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGenerator < OpenChain::FixedPositionGenerator
   include OpenChain::FtpFileSupport
 
@@ -8,12 +10,15 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
                                   :sequence_number, :sima_code, :subheader_number, :sima_value, :uom, :gst_rate_code, :gst_amount, :excise_rate_code, :excise_amount,
                                   :value_for_tax, :duty, :entered_value, :special_authority, :description, :value_for_duty_code, :customs_line_number
 
-  def self.run_schedulable
-    c = self.new
+  def self.run_schedulable opts = {}
+    c = opts.size > 0 ? self.new(opts['public_key']) : self.new
     c.generate_and_send c.find_entries
   end
 
-  def initialize
+  def initialize public_key_path = "config/siemens.asc"
+    raise "Siemens public key must be provided" unless File.exist?(public_key_path)
+    @gpg = OpenChain::GPG.new public_key_path
+
     super({output_timezone: "Eastern Time (US & Canada)"})
   end
 
@@ -34,7 +39,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     extension = ".dat"
 
     # Ensure only a single process can run this at a time.
-    Lock.acquire_for_class(self.class) do 
+    Lock.acquire_for_class(self.class, yield_in_transaction: false) do 
       Tempfile.open(["#{filename}_", "#{extension}"], external_encoding: "Windows-1252") do |outfile|
         # Add the original_filename method, both the ftp and the mailer will utilize this method to name the file when sending
         Attachment.add_original_filename_method outfile
@@ -46,35 +51,39 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
         outfile.flush
         outfile.rewind
 
-        completed = false
-        error = nil
-        begin
-          send_time = Time.zone.now
-          confirmed = send_time + 1.minute
+        encrypt_file(outfile) do |encrypted_file|
+          Attachment.add_original_filename_method encrypted_file
+          encrypted_file.original_filename = filename+extension+".gpg"
 
-          # I'm a little uncomfortable putting the entry sync record creations and counter in the same transaction
-          # as the ftp (since it's possible the ftp could take a bit), but we really do need to our best to ensure that
-          # the ftp and marking entries as sent either all get committed or all get rolled back.  Since  we're sending 
-          # to our local connect ftp server on the same network segment the transfer should be very quick so the transaction
-          # shouldn't span too much clock time.
-          Entry.transaction do 
-            entries.each do |e|
-              e.sync_records.create! trading_partner: sync_code, sent_at: send_time, confirmed_at: confirmed
+          completed = false
+          error = nil
+          begin
+            send_time = Time.zone.now
+            confirmed = send_time + 1.minute
+
+            # I'm a little uncomfortable putting the entry sync record creations and counter in the same transaction
+            # as the ftp (since it's possible the ftp could take a bit), but we really do need to our best to ensure that
+            # the ftp and marking entries as sent either all get committed or all get rolled back.  Since  we're sending 
+            # to our local connect ftp server on the same network segment the transfer should be very quick so the transaction
+            # shouldn't span too much clock time.
+            Entry.transaction do 
+              entries.each do |e|
+                e.sync_records.create! trading_partner: sync_code, sent_at: send_time, confirmed_at: confirmed
+              end
+
+              counter_item.update_attributes! json_data: {counter: counter}.to_json
+
+              # At this point, since we're in a transaction, the only issue we could run into is if the ftp was successful, but then saving the ftp session
+              # data off had an error - which would mean we sent the file but then the sync records and counter would get rolled back.  
+              # The chances of that happening are so miniscule that I'm not going to bother handling that condition.
+              ftp_file encrypted_file
+              
+              completed = true
             end
-
-            counter_item.update_attributes! json_data: {counter: counter}.to_json
-
-            # At this point, since we're in a transaction, the only issue we could run into is if the ftp was successful, but then saving the ftp session
-            # data off had an error - which would mean we sent the file but then the sync records and counter would get rolled back.  
-            # The chances of that happening are so miniscule that I'm not going to bother handling that condition.
-
-            ftp_file outfile
-
-            completed = true
-          end
-        ensure
-          if !completed
-            OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error", "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", outfile).deliver!
+          ensure
+            if !completed
+              OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error", "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", outfile).deliver!
+            end
           end
         end
       end
@@ -308,6 +317,15 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
     def b3_line_key line
       line.customs_line_number
+    end
+
+    def encrypt_file source_file
+      Tempfile.open(["siemens_billing", ".dat"], encoding: "ascii-8bit") do |f|
+        @gpg.encrypt_file source_file, f
+
+        yield f
+      end
+
     end
 
 end; end; end; end;
