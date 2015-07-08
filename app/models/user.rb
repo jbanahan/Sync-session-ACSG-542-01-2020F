@@ -52,6 +52,7 @@ class User < ActiveRecord::Base
 
   validates  :company, :presence => true
   validates  :username, presence: true, uniqueness: { case_sensitive: false }
+  validate :valid_email
 
   before_save :should_update_timestaps?
   after_save :reset_timestamp_flag
@@ -627,5 +628,12 @@ class User < ActiveRecord::Base
   def remove_from_group_cache group
     group_cache(false).try(:delete, group.system_code)
     nil
+  end
+
+  def valid_email
+    regex = /\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i  #http://stackoverflow.com/a/22994329
+    rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| !!(e =~ regex) } 
+    error_message = rejected.count > 1 ? "The following emails are invalid: #{rejected.join(', ')}" : "The email is invalid."
+    errors.add(:email, error_message) unless rejected.empty?
   end
 end
