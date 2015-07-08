@@ -1,7 +1,6 @@
 module ISFSupport
   def self.included(base)
     base.instance_eval do
-      belongs_to :manufacturer_address, class_name: 'Address'
       belongs_to :seller_address, class_name: 'Address'
       belongs_to :buyer_address, class_name: 'Address'
       belongs_to :ship_to_address, class_name: 'Address'
@@ -53,5 +52,6 @@ module ISFSupport
 
   def validate_isf_lines
     errors[:base] << "All shipment lines must have a Country of Origin and HTS Number" unless shipment_lines.all? {|line| line.us_hts_number && line.country_of_origin }
+    errors[:base] << "All shipment lines must have a Manufacturer Address" unless shipment_lines.all? {|line| line.manufacturer_address_id }
   end
 end

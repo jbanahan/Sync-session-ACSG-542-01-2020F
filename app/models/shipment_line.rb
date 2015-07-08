@@ -6,6 +6,7 @@ class ShipmentLine < ActiveRecord::Base
   belongs_to :container, inverse_of: :shipment_lines
   belongs_to :carton_set, inverse_of: :shipment_lines
   belongs_to :canceled_order_line, class_name: 'OrderLine'
+  belongs_to :manufacturer_address, class_name: 'Address'
 
   validates_uniqueness_of :line_number, :scope => :shipment_id
 

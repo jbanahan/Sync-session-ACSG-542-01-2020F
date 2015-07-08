@@ -177,7 +177,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Foreign Port of Lading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Foreign Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','First US Port')
-    add_fields CoreModule::SHIPMENT, make_address_arrays(1200,'shp','shipments','manufacturer')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1205,'shp','shipments','buyer')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1210,'shp','shipments','seller')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1215,'shp','shipments','ship_to')
