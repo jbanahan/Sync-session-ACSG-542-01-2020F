@@ -383,7 +383,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_pvh_container_log" => "reports#run_pvh_container_log"
   get "reports/show_monthly_entry_summation" => "reports#show_monthly_entry_summation"
   post "reports/run_monthly_entry_summation" => "reports#run_monthly_entry_summation"
-
+  get "/reports/show_container_cost_breakdown" => "reports#show_container_cost_breakdown"
+  post "/reports/run_container_cost_breakdown" => "reports#run_container_cost_breakdown"
 
   resources :report_results, :only => [:index,:show] do
     get 'download', :on => :member

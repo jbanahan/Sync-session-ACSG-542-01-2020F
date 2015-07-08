@@ -3,6 +3,8 @@ class CommercialInvoiceLine < ActiveRecord::Base
   has_one :entry, :through => :commercial_invoice
   has_many :commercial_invoice_tariffs, :dependent=>:destroy, :autosave=>true
   has_many :change_records, :as => :recordable
+  belongs_to :container
+  
   include CustomFieldSupport
   include LinesSupport
 

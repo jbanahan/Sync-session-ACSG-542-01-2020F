@@ -22,8 +22,8 @@ $(function() {
   <button class="form_to" form_id="frm_run">Run Report</button>
   <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
 <%end%>
-<h2>Entry Monthly Summation</h2>
-<%=form_tag reports_run_monthly_entry_summation_path, :id=>'frm_run', class: "form-inline", role: "form" do -%>
+<h2>Container Cost Breakdown</h2>
+<%=form_tag reports_run_container_cost_breakdown_path, :id=>'frm_run', class: "form-inline", role: "form" do -%>
   <div class="form-group">
     <label for="start_date" class="control-label">Release Date on or after </label>
     <%=text_field_tag :start_date,"", :class=>'form-control isdate'%> 

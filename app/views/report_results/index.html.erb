@@ -102,6 +102,10 @@
     <tr class='hover'><td><%=link_to "Monthly Entry Summation", reports_show_monthly_entry_summation_path%></td>
     <td>Sums entry data by month.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::EntryContainerCostBreakdown.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Container Cost Breakdown", reports_show_container_cost_breakdown_path%></td>
+    <td>Basic Container-based Landed Cost report.</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

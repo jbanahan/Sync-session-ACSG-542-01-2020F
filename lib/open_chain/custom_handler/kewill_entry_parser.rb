@@ -98,8 +98,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         process_liquidation e, entry
         process_notes e, entry
         process_bill_numbers e, entry
-        process_commercial_invoices e, entry
+        #Process containers before commercial invoices since invoice lines can link to containers
         process_containers e, entry
+        process_commercial_invoices e, entry
         process_broker_invoices e, entry
         process_totals e, entry
 
@@ -157,27 +158,16 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           # The lock call here can potentially update us with new data, so we need to check again that another process isn't processing a newer file
           if !skip_file?(entry, extract_time)
             entry.expected_update_time = updated_at
-            # TODO - Populate the last exported from source field once we discontinue the Alliance feed
-            #entry.last_exported_from_source = extract_time
+            entry.last_exported_from_source = extract_time
             return yield e, entry
           end
         end
       end
     end
 
-    def skip_file? entry, expected_update_time
-      # Skip if the expected update time on the entry is newer than the one from the json data
-      # ALSO skip if the last exported from source value is newer than the file.
-      # For now, the alliance flat file data is exactly the same data as the data from here (potentially better)
-      # so don't ovewrite it with this data for the moment.
-      if entry
-        ex = entry.expected_update_time
-        last_export = entry.last_exported_from_source
-
-        (ex && ex > expected_update_time) || (last_export && last_export > expected_update_time)
-      else
-        false
-      end
+    def skip_file? entry, last_exported_from_source
+       # Skip if the last exported from source value is newer than the file's value
+      entry && entry.last_exported_from_source && entry.last_exported_from_source > last_exported_from_source
     end
 
     def self.entry_info e
@@ -298,7 +288,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         # We're only currently tracking pms days since 2007, if we don't have a date after that time..then error
         # so that we can set up the schedule
         if pms_day.nil? && pms_year > 2006
-          StandardError.new("No Periodic Monthly Statement Dates found for #{pms_year} and #{pms_month}.  This data must be set up immediately.").log_me
+          StandardError.new("File ##{entry.broker_reference} / Division ##{entry.division_number}: No Periodic Monthly Statement Dates found for #{pms_year} and #{pms_month}.  This data must be set up immediately.").log_me
         end
       end
 
@@ -324,9 +314,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         entry.liquidation_type_code = e[:type_liquidation].to_s.rjust(2, '0')
         entry.liquidation_type = e[:liquidation_type_desc]
         entry.liquidation_action_code = e[:action_liquidation].to_s.rjust(2, '0')
-        #entry.liquidation_action_description = ??? 
+        entry.liquidation_action_description = e[:liquidation_action_desc]
         entry.liquidation_extension_code = e[:extend_suspend_liq].to_s.rjust(2, '0')
-        #entry.liquidation_extension_description = ???
+        entry.liquidation_extension_description = e[:extension_suspension_desc]
         entry.liquidation_extension_count = parse_decimal(e[:no_extend_suspend_liquidation], decimal_places: 0, decimal_offset: 0).to_i
         entry.liquidation_duty = parse_decimal e[:duty_amt_liquidated]
         entry.liquidation_fees = parse_decimal e[:fee_amt_liquidated]
@@ -546,7 +536,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         set_invoice_header_data i, invoice
         Array.wrap(i[:lines]).each do |l|
           line = invoice.commercial_invoice_lines.build
-          set_invoice_line_data l, line
+          set_invoice_line_data l, line, entry
 
           Array.wrap(l[:tariffs]).each do |t|
             tariff = line.commercial_invoice_tariffs.build
@@ -580,7 +570,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       inv.mfid = mid
     end
 
-    def set_invoice_line_data l, line
+    def set_invoice_line_data l, line, entry
       line.line_number = l[:ci_line_no].to_i / 10
       line.mid = l[:mid]
       line.part_number = l[:part_no]
@@ -642,6 +632,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           line.cvd_case_percent = parse_decimal p[:duty_percent]
         end
       end
+
+      if !l[:container_no].blank?
+        container_number = l[:container_no].strip
+        container = entry.containers.find {|c| c.container_number == container_number}
+        line.container = container if container
+      end
+      nil
     end
 
     def set_invoice_tariff_data t, tariff

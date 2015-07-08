@@ -159,9 +159,13 @@ class XlsMaker
   end
 
   def self.create_workbook sheet_name, headers = []
-    wb = new_workbook
-    create_sheet wb, sheet_name, headers
+    wb, * = create_workbook_and_sheet sheet_name, headers
     wb
+  end
+
+  def self.create_workbook_and_sheet sheet_name, headers = []
+    wb = new_workbook
+    [wb, create_sheet(wb, sheet_name, headers)]
   end
 
   def self.new_workbook 
