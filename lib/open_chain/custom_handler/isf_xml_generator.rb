@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
     @shipment = Shipment.find(shipment_id)
     @first_time = first_time
     raise 'Shipment is missing information required for ISF!' unless @shipment.valid_isf?
-    @address_ids = @shipment.shipment_lines.map(&:manufacturer_address_id).uniq
+    @address_ids = ShipmentLine.where(shipment_id:@shipment.id).uniq.pluck(:manufacturer_address_id)
 
     @edi_lines = Set.new(
       @shipment.shipment_lines.map do |line|
