@@ -198,6 +198,7 @@
                     </table>
                   </div>
                 </div>
+                <add-address-modal></add-address-modal>
                 <div class="modal fade panel-modal" id='mod_edit_line' tabindex="-1" role="dialog" aria-hidden="true">
                   <div class="modal-dialog">
                     <div class="modal-content">
@@ -239,24 +240,23 @@
                 <div class="modal fade panel-modal" id='mod_shpln_parties' tabindex="-1" role="dialog" aria-hidden="true">
                   <div class="modal-dialog">
                     <div class="modal-content">
-                      <div class="modal-header"><h2 class="modal-title">Parties</h2></div>
+                      <div class="modal-header"><h2 class="modal-title">Parties for Line {{partyLine.shpln_line_number}}</h2></div>
                       <div class="modal-body">
                         <address-expander ng-show="!edit" title="Manufacturer"
                                           address-name="partyLine.shpln_manufacturer_address_name"
                                           full-address="partyLine.shpln_manufacturer_address_full_address">
                                 </address-expander>
                         <label ng-show="edit" for="modal_mfg_edit">Manufacturer</label>
-                        <address-book-autocomplete ng-show="edit" id="modal_mfg_edit" address-id-attribute="partyLine.shpln_manufacturer_address_id"></address-book-autocomplete>
+                        <address-book-autocomplete ng-show="edit" id="modal_mfg_edit" initial-value="partyLine.shpln_manufacturer_address_name" address-id-attribute="partyLine.shpln_manufacturer_address_id"></address-book-autocomplete>
                       </div>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default pull-left" ng-click="edit = !edit" ><i class="fa fa-{{edit ? 'unlock-alt' : 'lock'}}"></i></button>
                         <button type="button" class="btn btn-primary" ng-click='edit = false; saveShipmentLine(shp,partyLine)' ng-show="edit" data-dismiss="modal">Save</button>
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-default" ng-click="edit = false;" data-dismiss="modal">Close</button>
                       </div>
                     </div>
                   </div>
                 </div>
-                <add-address-modal></add-address-modal>
               </div> <!--end lines section -->
             </div>
             <div role="tabpanel" class="tab-pane" id="booking_detail">
