@@ -33,7 +33,7 @@ shipmentApp.directive 'addressBookAutocomplete',['addressModalSvc',(addressModal
   scope:
     initialValue: '='
     addressIdAttribute: '='
-  template: '<angucomplete-alt input-class="form-control" placeholder="Search Address Book" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/shipments/address_modal/address_book_autocomplete_results.html" selected-object="onAddressSelected" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name" description-field="full_address" pause="500"></angucomplete-alt>'
+  template: '<angucomplete-alt input-class="form-control" placeholder="Search Address Book" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/shipments/address_modal/address_book_autocomplete_results.html" selected-object="onAddressSelected" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name" description-field="full_address" pause="500" minlength="1"></angucomplete-alt>'
   link:(scope, element, attributes) ->
     addressIdAttribute = attributes.addressIdAttribute
     addressModalSvc.responders[addressIdAttribute] = (address) ->

@@ -254,7 +254,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shpln_cbms,
       :shpln_gross_kgs,
       :shpln_carton_qty,
-      :shpln_carton_set_uid
+      :shpln_carton_set_uid,
+      :shpln_manufacturer_address_name,
+      :shpln_manufacturer_address_full_address
     ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
 
     booking_line_fields_to_render = limit_fields([

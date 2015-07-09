@@ -145,6 +145,8 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
 
   $scope.prepBookingEditObject = copyObjectToScopeAs 'booking'
 
+  $scope.prepPartiesModal = copyObjectToScopeAs 'partyLine'
+
   $scope.prepPartiesEditObject = (shipment) ->
     loadParties() unless $scope.parties
     $scope.partiesEditObj = objectSlice shipment, ['id', 'shp_car_syscode', 'shp_imp_syscode']
