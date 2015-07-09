@@ -180,7 +180,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     e.ship_mode = entry.transport_mode_code
     e.direct_shipment_date = entry.direct_shipment_date
     e.port_exit = entry.us_exit_port_code
-    e.accounting_date = entry.k84_receive_date
+    e.accounting_date = entry.k84_receive_date.presence || entry.cadex_accept_date
     e.importer_tax_id = entry.importer_tax_id
     e.customer_number = entry.customer_number
     e.customer_name = entry.customer_name
@@ -277,6 +277,10 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     e
   end
 
+  def ftp_credentials
+    connect_vfitrack_net('to_ecs/siemens/billing')
+  end
+
   private
     
     def country_code country_code, state_code
@@ -284,7 +288,12 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     end
 
     def sequence_number entry, line_counter
-      "70" + entry.entry_number[-8..-1] + num(line_counter, 6, 0, numeric_pad_char: '0')
+      if entry.entry_number[-8] == "0"
+        transaction_number = "7" + entry.entry_number[-9..-1]
+      else
+        transaction_number = "70" + entry.entry_number[-8..-1]
+      end
+      transaction_number + num(line_counter, 6, 0, numeric_pad_char: '0')
     end
 
     def sum_line_value entry, value_to_sum

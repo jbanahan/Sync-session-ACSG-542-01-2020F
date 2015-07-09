@@ -26,5 +26,6 @@ config/api_client.yml
 config/pepsi.pem
 config/google_oauth2_api_login.json
 config/slack_client.yml
+config/siemens.asc
 .idea
 dump.rdb

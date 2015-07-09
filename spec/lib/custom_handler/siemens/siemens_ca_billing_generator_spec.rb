@@ -187,6 +187,15 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l.description).to eq "Description"
         expect(l.value_for_duty_code).to eq "11"
       end
+
+      it "uses last 9 digits of entry number when 8th digit from the end is a zero" do
+        @entry.entry_number = "1204567890"
+        data = subject.generate_entry_data @entry
+        expect(data).not_to be_nil
+
+        l = data.commercial_invoice_lines.first
+        expect(l.sequence_number).to eq "7204567890000001"
+      end
     end
 
     describe "write_entry_data" do
@@ -236,7 +245,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l[365..369]).to eq "    0"
         expect(l[370..380]).to eq "1.50".rjust(11)
         expect(l[381..388]).to eq "20150501"
-        expect(l[389..392]).to eq "4567"
+        expect(l[389..392]).to eq "4567" 
         expect(l[393..395]).to eq "UOM"
         expect(l[396..403]).to eq "20150601"
         expect(l[404..418]).to eq "TAXID".ljust(15)
