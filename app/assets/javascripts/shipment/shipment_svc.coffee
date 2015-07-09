@@ -30,14 +30,13 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
   currentShipment = null
   getShipmentSuccessHandler = (resp) ->
     currentShipment = angular.extend({}, currentShipment, resp.data.shipment) # merge changes instead of replacing, or else you lose extras: summary, lines, etc.
-    angular.extend(currentShipment.summary, resp.data.summary)
     if currentShipment.shp_dest_port_id > 0
       currentShipment.dest_port = {
         id: currentShipment.shp_dest_port_id
         name: currentShipment.shp_dest_port_name
       }
     commentSvc.injectComments(currentShipment,'Shipment')
-    resp
+    $q.when(resp)
 
   shipmentPost = (id, endpoint, options={id:id}) ->
     $http.post('/api/v1/shipments/'+id+'/'+endpoint, options)

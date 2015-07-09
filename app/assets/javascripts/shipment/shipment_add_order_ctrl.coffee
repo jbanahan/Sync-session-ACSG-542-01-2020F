@@ -73,6 +73,7 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
         shpln_pname: oln.ordln_pname,
         linked_order_line_id: oln.id,
         shpln_shipped_qty: oln.quantity_to_ship,
+        shpln_manufacturer_address_id: ord.manufacturerAddressId,
         order_lines: [{ord_cust_ord_no: ord.ord_cust_ord_no || oln.linked_cust_ord_no,ordln_line_number: oln.linked_line_number || oln.ordln_line_number}]
     shp
 

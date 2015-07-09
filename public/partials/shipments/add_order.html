@@ -29,8 +29,18 @@
       </div>
       <div ng-show='activeOrder' class="col-xs-12">
         <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
-          <h2>Order: {{activeOrder.ord_cust_ord_no}}</h2>
-          <table class='table booking-table'>
+          <div class="row">
+            <div class="col-xs-8">
+              <h2>Order: {{activeOrder.ord_cust_ord_no}}</h2>
+            </div>
+            <div class="col-xs-4">
+              <label for="mfg-address-select">Choose Manufacturer</label>
+              <address-book-autocomplete id="mfg-address-select" address-id-attribute="activeOrder.manufacturerAddressId"></address-book-autocomplete>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12">
+              <table class='table booking-table'>
             <thead>
               <tr>
                 <th>Line #</th>
@@ -63,6 +73,8 @@
               </tr>
             </tbody>
           </table>
+            </div>
+          </div>
         </chain-loading-wrapper>
       </div>
     </div>
@@ -94,6 +106,7 @@
     </div>
   </div>
 </div>
+<add-address-modal></add-address-modal>
 <div chain-action-bar>
   <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder)' ng-show='shp && activeOrder'>Save</button>
   <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
