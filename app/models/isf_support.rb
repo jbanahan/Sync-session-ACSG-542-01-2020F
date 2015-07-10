@@ -20,6 +20,7 @@ module ISFSupport
     validate_importer_alliance_number
     validate_bill_numbers
     validate_isf_lines
+    validate_shipment_line_parties
   end
 
   private
@@ -30,9 +31,11 @@ module ISFSupport
      :consolidator_address].each do |address_symbol|
       address = self.send(address_symbol)
       required_fields = [:name, :line_1, :city, :state, :postal_code, :country_id]
-      errors[address_symbol] << "can't be blank" unless address
-      address && required_fields.each do |field|
-        errors[address_symbol] << "#{field.to_s.gsub('_',' ')} can't be blank" unless address[field].present?
+      if address
+        missing_fields = required_fields.select{ |field| address[field].blank? }.map {|field| field.to_s.titleize}
+        errors[address_symbol] << "is missing required fields: #{missing_fields.join(', ')}" if missing_fields.any?
+      else
+        errors[address_symbol] << "must be present"
       end
     end
   end
@@ -52,6 +55,18 @@ module ISFSupport
 
   def validate_isf_lines
     errors[:base] << "All shipment lines must have a Country of Origin and HTS Number" unless shipment_lines.all? {|line| line.us_hts_number && line.country_of_origin }
-    errors[:base] << "All shipment lines must have a Manufacturer Address" unless shipment_lines.all? {|line| line.manufacturer_address_id }
+  end
+
+  def validate_shipment_line_parties
+    required_fields = [:name, :line_1, :city, :state, :postal_code, :country_id]
+    shipment_lines.each do |line|
+      address = line.manufacturer_address
+      if address
+        missing_fields = required_fields.select{ |field| address[field].blank? }.map {|field| field.to_s.titleize}
+        errors[:base] << "Shipment Line #{line.line_number} Manufacturer address is missing required fields: #{missing_fields.join(', ')}"  if missing_fields.any?
+      else
+        errors[:base] << "Shipment Line #{line.line_number} Manufacturer address is missing"
+      end
+    end
   end
 end

@@ -132,7 +132,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       ISFXMLGenerator.delay.generate_and_send(shipment.id, !shipment.isf_sent_at)
       shipment.mark_isf_sent!(current_user)
     else
-      raise 'Invalid ISF! ' + shipment.errors.full_messages.join('. ')
+      raise 'Invalid ISF! <ul><li>' + shipment.errors.full_messages.join('</li><li>') + '</li></ul>'
     end
   end
 
