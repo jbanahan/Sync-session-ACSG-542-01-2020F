@@ -106,6 +106,10 @@
     <tr class='hover'><td><%=link_to "Container Cost Breakdown", reports_show_container_cost_breakdown_path%></td>
     <td>Basic Container-based Landed Cost report.</td></tr>
   <%end-%>
+  <%if current_user.view_drawback?%>
+    <tr class='hover'><td><%=link_to "Drawback Audit Report", reports_show_drawback_audit_report_path%></td>
+    <td>Shows all drawback claims.</td></tr>
+  <%end%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>
