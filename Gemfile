@@ -67,6 +67,8 @@ group :development,:test do
   gem 'byebug'
   gem 'jasmine-rails'
   gem 'rspec_junit_formatter', '0.2.2' #circle ci formatting
+  gem 'minitest'
+  gem 'test-unit'
   # gem 'rack-mini-profiler'
   gem 'minitest'
   gem 'test-unit'
