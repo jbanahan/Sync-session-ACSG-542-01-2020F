@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem "rails", "3.2.21"
+gem "rails", "3.2.22"
 gem 'mysql2', '0.3.18'
 gem 'sqlite3'
 # AWS-SDK API completely changed in version 2.  Staying below 2 for now, will require some work to translate code to new version.  
