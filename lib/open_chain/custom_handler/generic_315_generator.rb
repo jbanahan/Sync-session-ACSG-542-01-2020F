@@ -60,16 +60,9 @@ module OpenChain; module CustomHandler; class Generic315Generator
     add_collection_element root, "HouseBills", "HouseBill", v(:ent_hbols, entry)
     add_collection_element root, "Containers", "Container", container_numbers
     add_collection_element root, "PoNumbers", "PoNumber", v(:ent_po_numbers, entry)
-    
-    event = add_element root, "Event"
+    event = add_date_elements root, "Event", date, element_prefix: "Event"
     add_element event, "EventCode", date_code
-    add_element event, "EventDate", date.strftime("%Y%m%d")
-    if date.respond_to?(:acts_like_time?) && date.acts_like_time?
-      add_element event, "EventTime", date.strftime("%H%M")
-    else
-      add_element event, "EventTime", "0000"
-    end
-
+    
     doc
   end
 
@@ -131,16 +124,6 @@ module OpenChain; module CustomHandler; class Generic315Generator
 
     def user
       @user ||= User.integration
-    end
-
-    def add_collection_element parent, outer_el_name, inner_el_name, values
-      el = add_element parent, outer_el_name
-      vals = values.respond_to?(:to_a) ? values.to_a : values.to_s.split(/\n\s*/)
-      vals.each do |v|
-        next if v.blank?
-        add_element el, inner_el_name, v
-      end
-      el
     end
 
     def setup_315 entry
