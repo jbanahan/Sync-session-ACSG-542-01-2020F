@@ -177,7 +177,7 @@ module OpenChain
         capture_and_log "git fetch", config_path.to_s
         instance_config = config_path.join(instance_name)
         if instance_config.exist?
-          FileUtils.cp_r instance_config.to_s, Rails.root
+          FileUtils.cp_r instance_config.to_s, Rails.root.join("..")
           configs_updated = true
         end
       end
