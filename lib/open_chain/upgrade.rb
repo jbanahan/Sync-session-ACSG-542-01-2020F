@@ -1,4 +1,5 @@
 require 'open3'
+require 'fileutils'
 
 module OpenChain
   class Upgrade
@@ -116,6 +117,7 @@ module OpenChain
       log_me "Fetch complete, checking out #{@target}"
       capture_and_log "git checkout #{@target}"
       log_me "Source checked out"
+      update_configurations
       log_me "Running bundle install"
       # Use the frozen command to absolutely prevent updates to Gemfile.lock in production (.ie should a Gemfile 
       # update get checked in sans Gemfile.lock update)
@@ -153,8 +155,8 @@ module OpenChain
       log_me "Migration complete"
     end
 
-    def capture_and_log command
-      stdout, stderr, status = Open3.capture3 command
+    def capture_and_log command, command_dir = nil
+      stdout, stderr, status = command_dir.blank ? Open3.capture3(command) : Open3.capture3(command, chdir: command_dir)
       log_me stdout unless stdout.blank?
       log_me stderr unless stderr.blank?
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
@@ -164,7 +166,25 @@ module OpenChain
       capture_and_log "rake assets:precompile"
       log_me "Precompile complete"
     end
-    
+
+    def update_configurations
+      instance_name = Rails.root.basename.to_s
+      log_me "Updating configuration files for #{instance_name}"
+      config_path = Rails.root.join("..", "vfitrack-configurations")
+      configs_updated = false
+      
+      if config_path.exist?
+        capture_and_log "git fetch", config_path.to_s
+        instance_config = config_path.join(instance_name)
+        if instance_config.exist?
+          FileUtils.cp_r instance_config.to_s, Rails.root
+          configs_updated = true
+        end
+      end
+      raise UpgradeFailure.new("No configuration repository directory found.") if Rails.env.production? && !configs_updated
+      configs_updated
+    end
+
     def log_me txt
       @log.info txt
       @upgrade_log.update_attributes(:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
