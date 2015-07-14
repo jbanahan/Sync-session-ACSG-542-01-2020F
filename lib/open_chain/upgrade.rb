@@ -155,8 +155,8 @@ module OpenChain
       log_me "Migration complete"
     end
 
-    def capture_and_log command, command_dir = nil
-      stdout, stderr, status = command_dir.blank ? Open3.capture3(command) : Open3.capture3(command, chdir: command_dir)
+    def capture_and_log command, command_dir = ""
+      stdout, stderr, status = command_dir.blank? ? Open3.capture3(command) : Open3.capture3(command, chdir: command_dir)
       log_me stdout unless stdout.blank?
       log_me stderr unless stderr.blank?
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
