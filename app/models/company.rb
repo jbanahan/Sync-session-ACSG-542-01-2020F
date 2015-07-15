@@ -22,7 +22,7 @@ class Company < ActiveRecord::Base
 	has_many	:products, :through => :divisions, :dependent => :destroy
 	has_many  :histories, :dependent => :destroy
   has_many  :power_of_attorneys, :dependent => :destroy
-  has_many  :drawback_claims
+  has_many  :drawback_claims, :foreign_key => "importer_id"
   has_many  :charge_categories, :dependent => :destroy
   has_many  :attachment_archives
   has_many  :attachment_archive_manifests, :dependent=>:destroy
