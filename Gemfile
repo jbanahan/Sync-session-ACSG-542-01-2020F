@@ -59,6 +59,9 @@ gem 'connection_pool', '~> 2.1'
 
 gem 'jsonpath', '~> 0.5.6'
 
+# Rails 3 requires test unit even in production (for some reason).  I believe in 4 this can be dropped to just the test group
+gem 'test-unit'
+
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
@@ -69,7 +72,6 @@ group :development,:test do
   gem 'rspec_junit_formatter', '0.2.2' #circle ci formatting
   # gem 'rack-mini-profiler'
   gem 'minitest'
-  gem 'test-unit'
 end
 
 group :test do
