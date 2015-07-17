@@ -163,7 +163,10 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              :data_type=>:string
          }],
       [62,:shp_isf_sent_at,:isf_sent_at,"ISF Sent At",{data_type: :datetime, read_only: true}],
-      [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :datetime}]
+      [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :datetime}],
+      [64, :shp_confirmed_on_board_origin_date, :confirmed_on_board_origin_date, 'Confirmed On Board Origin Date', {data_type: :date}],
+      [65, :shp_eta_last_foreign_port_date, :eta_last_foreign_port_date, 'ETA Last Foreign Port Date', {data_type: :date}],
+      [66, :shp_departure_last_foreign_port_date, :departure_last_foreign_port_date, 'Departure Last Foreign Port Date', {data_type: :date}],
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -177,6 +180,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Foreign Port of Lading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Foreign Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','First US Port')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(1110, 'shp_final_dest_port','shipments','final_dest_port','Final Destination')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1205,'shp','shipments','buyer')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1210,'shp','shipments','seller')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1215,'shp','shipments','ship_to')
