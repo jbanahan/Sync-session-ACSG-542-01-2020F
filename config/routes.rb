@@ -27,7 +27,6 @@ OpenChain::Application.routes.draw do
           get :available_orders
           get :booked_orders
           get :available_lines
-          get :download
         end
       end
       resources :fields, only: [:index]
@@ -439,6 +438,7 @@ OpenChain::Application.routes.draw do
       get 'history'
       get 'make_invoice'
       put 'generate_invoice'
+      get :download
     end
     resources :shipment_lines do
       post :create_multiple, :on => :collection

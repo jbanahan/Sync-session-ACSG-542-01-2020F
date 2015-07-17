@@ -14,8 +14,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       sheet = XlsMaker.create_sheet(@workbook, container.container_number)
       add_headers(sheet, container)
       2.times {add_row(sheet)}
-      container_lines = ShipmentLine.where(shipment_id: shipment.id, container_id: container.id).to_a
-      add_container_headers
+      container_lines = ShipmentLine.where(shipment_id: @shipment.id, container_id: container.id).to_a
+      add_container_header_data(sheet, container)
       add_lines_to_sheet(container_lines, sheet)
     end
     file_for @workbook
@@ -38,12 +38,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   end
 
   def add_container_header_data(sheet, container)
-    XlsMaker.set_cell_value(sheet,0,9,"Container Number")
-    XlsMaker.set_cell_value(sheet,1,9,container.container_number)
-    XlsMaker.set_cell_value(sheet,0,10,"Container Size")
-    XlsMaker.set_cell_value(sheet,1,10,container.container_size)
-    XlsMaker.set_cell_value(sheet,0,11,"Seal Number")
-    XlsMaker.set_cell_value(sheet,1,11,container.seal_number)
+    XlsMaker.insert_body_row(sheet,0,9,["Container Number","Container Size","Seal Number"])
+    XlsMaker.insert_body_row(sheet,1,9,[container.container_number,container.container_size,container.seal_number])
   end
 
   def add_first_header_rows(sheet)

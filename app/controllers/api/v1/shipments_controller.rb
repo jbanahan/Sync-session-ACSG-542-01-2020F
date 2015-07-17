@@ -136,10 +136,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     end
   end
 
-  def download
-    send_file OpenChain::CustomHandler::ShipmentDownloadGenerator.new(params[:id], current_user).generate
-  end
-
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
