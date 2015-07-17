@@ -27,6 +27,7 @@ OpenChain::Application.routes.draw do
           get :available_orders
           get :booked_orders
           get :available_lines
+          get :download
         end
       end
       resources :fields, only: [:index]

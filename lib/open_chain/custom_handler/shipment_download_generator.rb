@@ -5,6 +5,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     @user = user
     @workbook = XlsMaker.new_workbook
     @next_row = 0
+
+    raise "You can't download this shipment!" unless @shipment.can_view? @user
   end
 
   def generate
@@ -16,7 +18,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       add_container_headers
       add_lines_to_sheet(container_lines, sheet)
     end
-    @workbook
+    file_for @workbook
   end
 
   private
@@ -111,6 +113,12 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     ]
 
     add_row(sheet, values)
+  end
+
+  def file_for(workbook)
+    file = Tempfile.new([@shipment.reference, '.xls'])
+    workbook.write file.path
+    file
   end
 
   def add_row(sheet, data=[])
