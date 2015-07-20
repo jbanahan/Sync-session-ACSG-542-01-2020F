@@ -180,8 +180,10 @@ module OpenChain
           FileUtils.cp_r instance_config.to_s, Rails.root.join("..")
           configs_updated = true
         end
+      else
+        log_me "No configuration repository found for #{instance_name}.  Skipping config updates."
       end
-      raise UpgradeFailure.new("No configuration repository directory found.") if Rails.env.production? && !configs_updated
+
       configs_updated
     end
 
