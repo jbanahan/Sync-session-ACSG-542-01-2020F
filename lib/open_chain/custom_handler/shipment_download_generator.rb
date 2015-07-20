@@ -4,13 +4,14 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     @shipment = Shipment.find(shipment_id)
     @user = user
     @workbook = XlsMaker.new_workbook
-    @next_row = 0
 
     raise "You can't download this shipment!" unless @shipment.can_view? @user
+    raise "This shipment has no containers!" unless @shipment.containers.count > 0
   end
 
   def generate
     @shipment.containers.each do |container|
+      @next_row = 0
       sheet = XlsMaker.create_sheet(@workbook, container.container_number)
       add_headers(sheet, container)
       2.times {add_row(sheet)}
@@ -62,7 +63,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       :shp_confirmed_on_board_origin_date,
       :shp_eta_last_foreign_port_date,
       :shp_departure_last_foreign_port_date,
-      :shp_est_arrival_date
+      :shp_est_arrival_port_date
     ]
 
     add_header_rows(fields_to_add, sheet)
@@ -72,15 +73,15 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     fields = [
       :con_container_number,
       :ord_cust_ord_no,
-      # Item style number?
-      :shln_manufacturer_address_name,
-      :shln_carton_qty,
-      :shln_shipped_qty,
-      :shln_cbms,
-      #latest ship date?
+      :nil, # Item style number?
+      :shpln_manufacturer_address_name,
+      :shpln_carton_qty,
+      :shpln_shipped_qty,
+      :shpln_cbms,
+      :nil, #latest ship date?
       :shp_freight_terms,
       :shp_shipment_type,
-      #PO delivery date?
+      :nil, #PO delivery date?
       :shp_booking_received_date,
       :shp_cargo_on_hand_date,
       :shp_docs_received_date
@@ -93,19 +94,19 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   def add_line_to_sheet(line, fields, sheet)
     values = [
       line.container.container_number,
-      line.order_lines.first.order_number,
+      line.order_lines.first.order.customer_order_number,
       #Item style number?
       fields[3].process_export(line, @user),
       fields[4].process_export(line, @user),
       fields[5].process_export(line, @user),
       fields[6].process_export(line, @user),
       #latest ship date?
-      fields[8].process_export(line.shipment, @user),
-      fields[9].process_export(line.shipment, @user),
+      fields[8].process_export(@shipment, @user),
+      fields[9].process_export(@shipment, @user),
       #PO delivery date?
-      fields[11].process_export(line.shipment, @user),
-      fields[12].process_export(line.shipment, @user),
-      fields[13].process_export(line.shipment, @user)
+      fields[11].process_export(@shipment, @user),
+      fields[12].process_export(@shipment, @user),
+      fields[13].process_export(@shipment, @user)
     ]
 
     add_row(sheet, values)
