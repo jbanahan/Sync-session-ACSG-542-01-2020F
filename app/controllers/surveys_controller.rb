@@ -76,38 +76,51 @@ class SurveysController < ApplicationController
     end
   end
   def update
-    #inject false warnings where not submitted
-    if params[:survey] && params[:survey][:questions_attributes]
-      params[:survey][:questions_attributes].each do |k,v|
-        v[:warning]="" unless v[:warning]
-        v[:require_comment]="" unless v[:require_comment]
-        v[:require_attachment]="" unless v[:require_attachment]
+    begin
+      #inject false warnings where not submitted
+      if params[:survey] && params[:survey][:questions_attributes]
+        params[:survey][:questions_attributes].each do |k,v|
+          v[:warning]="" unless v[:warning]
+          v[:require_comment]="" unless v[:require_comment]
+          v[:require_attachment]="" unless v[:require_attachment]
+        end
       end
+      s = Survey.find params[:id]
+      if !s.can_edit? current_user
+        add_flash :errors, "You cannot edit this survey."
+        return
+      elsif s.locked?
+        add_flash :errors, "You cannot edit a survey that has already been sent."
+        return
+      end
+      s.update_attributes(params[:survey])
+      errors_to_flash s unless s.errors.empty?
+    rescue => e
+      add_flash :errors, e.inspect.delete("<>#")
+      # e.log_me
+    ensure
+      redirect_path = (defined? s) && s ? edit_survey_path(s) : nil
+      render :json => {flash: {errors: flash[:errors]}, redirect: redirect_path}
     end
-    s = Survey.find params[:id]
-    if !s.can_edit? current_user
-      add_flash :errors, "You cannot edit this survey."
-      return
-    elsif s.locked?
-      add_flash :errors, "You cannot edit a survey that has already been sent."
-      return
-    end
-    s.update_attributes(params[:survey])
-    errors_to_flash s unless s.errors.empty?
-    render :json => {flash: {errors: flash[:errors]}, redirect: edit_survey_path(s)}
   end
   def create
-    if !current_user.edit_surveys?
-      add_flash :errors, "You do not have permission to edit surveys."
-      render :json => {flash: {errors: flash[:errors]}}
-      return
+    begin
+      if !current_user.edit_surveys?
+        add_flash :errors, "You do not have permission to edit surveys."
+        return
+      end
+      s = Survey.new(params[:survey])
+      s.company_id = current_user.company_id
+      s.created_by = current_user
+      s.save
+      errors_to_flash s unless s.errors.empty?
+    rescue => e
+      add_flash :errors, e.inspect.delete("<>#")
+      # e.log_me
+    ensure
+      redirect_path = (defined? s) && s ? edit_survey_path(s) : nil
+      render :json => {flash: {errors: flash[:errors]}, redirect: redirect_path}
     end
-    s = Survey.new(params[:survey])
-    s.company_id = current_user.company_id
-    s.created_by = current_user
-    s.save
-    errors_to_flash s unless s.errors.empty?
-    render :json => {flash: {errors: flash[:errors]}, redirect: edit_survey_path(s)}
   end
   def destroy
     s = Survey.find params[:id]

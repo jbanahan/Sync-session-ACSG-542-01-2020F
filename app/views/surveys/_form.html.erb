@@ -38,7 +38,6 @@
       evt.preventDefault();
       OCSurvey.copyQuestion($(this).attr('qid'));
     });
-
     $("#questions").sortable({handle:'.question_handle',axis:'y'});
     $("#questions").on('change','textarea.q_area',function(event) {
       var t, val, mid, errorBox;
@@ -74,8 +73,8 @@
       $.ajax({
         type: 'post',
         url: $target.attr('action'),
-        data: $target.serialize(),
-        success: function(r){ 
+        data: $target.serialize()}
+      ).done(function(r) {
           if (!r.flash.errors) {
               alert('Survey saved.');
               window.location.replace(r.redirect);
@@ -86,13 +85,7 @@
               var panel = Chain.makeErrorPanel(formatErrors(r.flash.errors));
               $('.container').first().prepend(panel);
             }
-          },
-        error: function(r) {
-            var panel = Chain.makeErrorPanel("There was a problem with the server. Please wait a minute, and try again.");
-            $('.panel-danger').remove()
-            $('.container').first().prepend(panel);
-          }
-      });
+        });    
     });
     $("#frm_svy").submit(function() {
       ChainSurveys.applyRankToQuestions();
