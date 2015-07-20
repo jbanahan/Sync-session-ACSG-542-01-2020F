@@ -102,21 +102,16 @@ class SurveysController < ApplicationController
   end
   def create
     if !current_user.edit_surveys?
-      error_redirect "You do not have permission to edit surveys."
+      add_flash :errors, "You do not have permission to edit surveys."
+      render :json => {flash: {errors: flash[:errors]}}
       return
     end
     s = Survey.new(params[:survey])
     s.company_id = current_user.company_id
     s.created_by = current_user
     s.save
-    if s.errors.empty?
-      add_flash :notices, "Survey saved."
-      redirect_to edit_survey_path(s)
-    else
-      errors_to_flash s, :now=>true
-      @survey = s
-      render 'new'
-    end
+    errors_to_flash s unless s.errors.empty?
+    render :json => {flash: {errors: flash[:errors]}, redirect: edit_survey_path(s)}
   end
   def destroy
     s = Survey.find params[:id]

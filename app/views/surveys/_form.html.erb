@@ -1,11 +1,5 @@
 <% content_for :javascript do%>
   $(function() {
-    $('#frm_svy').submit(function(){
-      if ($('#survey-name').val().length == 0){
-        alert("Please name your survey before saving.");
-        return false;
-      }
-    });
     <%@survey.questions.each do |q|%>
       attachment_info = [];
       <% q.attachments.each do |a| %>
@@ -44,6 +38,7 @@
       evt.preventDefault();
       OCSurvey.copyQuestion($(this).attr('qid'));
     });
+
     $("#questions").sortable({handle:'.question_handle',axis:'y'});
     $("#questions").on('change','textarea.q_area',function(event) {
       var t, val, mid, errorBox;
@@ -56,6 +51,48 @@
       } else {
         errorBox.html('').hide();
       }
+    });
+    function checkSurveyName(){
+      if ($('#survey-name').val().length == 0){
+        alert("Please name your survey before saving.");
+        return false;
+      }
+      return true;
+    };
+    $("#frm_svy").on('submit', function(e){
+      var $target = $(e.target);
+      var formatErrors = function(err) {
+        var len = err.length
+        var out = "";
+        for (var i = 0; i < len; i++)
+          out += err[i] + '</br> ';
+        return out;
+      }
+      e.preventDefault();
+      if (!checkSurveyName())
+        return;
+      $.ajax({
+        type: 'post',
+        url: $target.attr('action'),
+        data: $target.serialize(),
+        success: function(r){ 
+          if (!r.flash.errors) {
+              alert('Survey saved.');
+              window.location.replace(r.redirect);
+            }
+          else {
+              $('.panel-danger').remove()
+              window.mine = Chain.makeErrorPanel(formatErrors(r.flash.errors));
+              var panel = Chain.makeErrorPanel(formatErrors(r.flash.errors));
+              $('.container').first().prepend(panel);
+            }
+          },
+        error: function(r) {
+            var panel = Chain.makeErrorPanel("There was a problem with the server. Please wait a minute, and try again.");
+            $('.panel-danger').remove()
+            $('.container').first().prepend(panel);
+          }
+      });
     });
     $("#frm_svy").submit(function() {
       ChainSurveys.applyRankToQuestions();
