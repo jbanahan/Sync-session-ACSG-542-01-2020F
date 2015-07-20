@@ -86,19 +86,15 @@ class SurveysController < ApplicationController
     end
     s = Survey.find params[:id]
     if !s.can_edit? current_user
-      error_redirect "You cannot edit this survey."
+      add_flash :errors, "You cannot edit this survey."
       return
     elsif s.locked?
-      error_redirect "You cannot edit a survey that has already been sent."
+      add_flash :errors, "You cannot edit a survey that has already been sent."
       return
     end
     s.update_attributes(params[:survey])
-    if s.errors.empty?
-      add_flash :notices, "Survey saved."
-    else
-      errors_to_flash s
-    end
-    redirect_to edit_survey_path(s)
+    errors_to_flash s unless s.errors.empty?
+    render :json => {flash: {errors: flash[:errors]}, redirect: edit_survey_path(s)}
   end
   def create
     if !current_user.edit_surveys?
