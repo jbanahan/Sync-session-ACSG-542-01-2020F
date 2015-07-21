@@ -60,32 +60,28 @@
     };
     $("#frm_svy").on('submit', function(e){
       var $target = $(e.target);
-      var formatErrors = function(err) {
-        var len = err.length
-        var out = "";
-        for (var i = 0; i < len; i++)
-          out += err[i] + '</br> ';
-        return out;
-      }
       e.preventDefault();
       if (!checkSurveyName())
         return;
       $.ajax({
         type: 'post',
         url: $target.attr('action'),
-        data: $target.serialize()}
-      ).done(function(r) {
-          if (!r.flash.errors) {
-              alert('Survey saved.');
-              window.location.replace(r.redirect);
-            }
+        data: $target.serialize(),
+        success: function(r){
+          if (!r.flash.errors)
+            window.location.replace(r.redirect);
           else {
-              $('.panel-danger').remove()
-              window.mine = Chain.makeErrorPanel(formatErrors(r.flash.errors));
-              var panel = Chain.makeErrorPanel(formatErrors(r.flash.errors));
-              $('.container').first().prepend(panel);
+              $('.panel-danger').remove();
+              var panel = Chain.makeErrorPanel(r.flash.errors);
+              $('#form-container').prepend(panel);
             }
-        });    
+          },
+        error: function(r) {
+            var panel = Chain.makeErrorPanel("There was a problem with the server. Please wait a minute, and try again.");
+            $('.panel-danger').remove()
+            $('#form-container').prepend(panel);
+          }
+      });
     });
     $("#frm_svy").submit(function() {
       ChainSurveys.applyRankToQuestions();
@@ -108,7 +104,7 @@
   <button class='btn_link' link_to='<%=surveys_path%>'>Back</button>
 <% end %>
 
-<div class="container">
+<div class="container" id="form-container">
   <div class="row">
     <div class="col-md-12">
       <%=form_for @survey, :html=>{ :id=>'frm_svy', :multipart=>true } do |f|%>

@@ -96,8 +96,8 @@ class SurveysController < ApplicationController
       s.update_attributes(params[:survey])
       errors_to_flash s unless s.errors.empty?
     rescue => e
-      add_flash :errors, e.inspect.delete("<>#")
-      # e.log_me
+      add_flash :errors, e.message
+      e.log_me
     ensure
       redirect_path = (defined? s) && s ? edit_survey_path(s) : nil
       render :json => {flash: {errors: flash[:errors]}, redirect: redirect_path}
@@ -115,8 +115,8 @@ class SurveysController < ApplicationController
       s.save
       errors_to_flash s unless s.errors.empty?
     rescue => e
-      add_flash :errors, e.inspect.delete("<>#")
-      # e.log_me
+      add_flash :errors, e.message
+      e.log_me
     ensure
       redirect_path = (defined? s) && s ? edit_survey_path(s) : nil
       render :json => {flash: {errors: flash[:errors]}, redirect: redirect_path}
