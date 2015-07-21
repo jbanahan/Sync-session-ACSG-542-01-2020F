@@ -89,7 +89,7 @@ class UserSessionsController < ApplicationController
       if params[:remember_me] && !Rails.application.config.disable_remember_me
         # We don't use SSL in development, so make sure we don't use secure cookies there, otherwise,
         # remember me won't work.
-        cookies.permanent[:remember_me] = {value: "", secure: !Rails.env.development?, httponly: true}
+        cookies.permanent[:remember_me] = {value: "", secure: Rails.application.config.use_secure_cookies, httponly: true}
       else
         cookies.delete(:remember_me)
       end
