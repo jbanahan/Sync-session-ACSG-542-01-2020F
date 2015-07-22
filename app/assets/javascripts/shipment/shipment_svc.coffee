@@ -18,7 +18,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     updatedLines
 
   setPortNames = (shipment) ->
-    names = ['dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
+    names = ['dest_port', 'final_dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
     for name in names
       setPortName shipment, name
 
