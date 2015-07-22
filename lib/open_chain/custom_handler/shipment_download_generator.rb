@@ -1,12 +1,14 @@
 module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
-  def initialize(shipment_id, user)
-    @shipment = Shipment.find(shipment_id)
+  def initialize(shipment, user)
+    @shipment = shipment
     @user = user
     @workbook = XlsMaker.new_workbook
+    @custom_defintions = self.class.prep_custom_definitions [:prod_part_number]
 
     raise "You can't download this shipment!" unless @shipment.can_view? @user
-    raise "This shipment has no containers!" unless @shipment.containers.count > 0
+    raise "This shipment has no containers!" unless @shipment.containers.any?
   end
 
   def generate
