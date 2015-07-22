@@ -81,33 +81,34 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       :shpln_carton_qty,
       :shpln_shipped_qty,
       :shpln_cbms,
-      :nil, #latest ship date?
+      :ord_window_end,
       :shp_freight_terms,
       :shp_shipment_type,
-      :nil, #PO delivery date?
+      :ord_first_exp_del,
       :shp_booking_received_date,
       :shp_cargo_on_hand_date,
       :shp_docs_received_date
     ].map {|uid| ModelField.find_by_uid(uid) }.insert(2, @custom_defintions[:prod_part_number].model_field)
-    add_header_row(sheet, fields.map(&:label))
 
+    add_header_row(sheet, fields.map(&:base_label))
     lines.each { |line| add_line_to_sheet(line, fields, sheet) }
     add_totals_to_sheet(lines, sheet)
   end
 
   def add_line_to_sheet(line, fields, sheet)
+    order = line.order_lines.first.order
     values = [
       fields[0].process_export(line.container, @user),
-      fields[1].process_export(line.order_lines.first.order, @user),
+      fields[1].process_export(order, @user),
       fields[2].process_export(line.order_lines.first.product, @user),
       fields[3].process_export(line, @user),
       fields[4].process_export(line, @user),
       fields[5].process_export(line, @user),
       fields[6].process_export(line, @user),
-      #latest ship date?
+      fields[7].process_export(order, @user),
       fields[8].process_export(@shipment, @user),
       fields[9].process_export(@shipment, @user),
-      #PO delivery date?
+      fields[7].process_export(order, @user),
       fields[11].process_export(@shipment, @user),
       fields[12].process_export(@shipment, @user),
       fields[13].process_export(@shipment, @user)
