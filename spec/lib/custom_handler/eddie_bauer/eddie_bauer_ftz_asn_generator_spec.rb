@@ -2,14 +2,16 @@ require "spec_helper"
 require 'digest/md5'
 
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
+  
   describe "run_schedulable" do
     it "should ftp file" do
       described_class.any_instance.should_receive(:find_entries).and_return(['ents'])
-      described_class.any_instance.should_receive(:generate_file).with(['ents']).and_return('x')
+      described_class.any_instance.should_receive(:generate_file).with(['ents']).and_yield('x', [], [])
       described_class.any_instance.should_receive(:ftp_file).with('x')
       described_class.run_schedulable
     end
   end
+
   describe "ftp_credentials" do
     it "should generate base credentials" do
       exp = {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/test/to_eb/ftz_asn"}
@@ -28,37 +30,138 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       expect(described_class.new.ftp_credentials[:folder]).to eq "/test/to_eb/ftz_asn"
     end
   end
+
+  describe "run_for_entries" do
+    before :each do
+      @entries = []
+      @file = "file data"
+      @entry = Factory(:entry)
+      @sync_record = SyncRecord.new syncable: @entry, trading_partner: "partner"
+    end
+    it "generates file and saves yielded sync records and ftps yield file" do
+      
+      subject.should_receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
+      subject.should_receive(:ftp_file).with @file
+
+      subject.run_for_entries @entries
+
+      expect(@sync_record).to be_persisted
+    end
+
+    it "rolls back all sync records saved if ftp fails" do
+      subject.should_receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
+      subject.should_receive(:ftp_file).with(@file).and_raise StandardError, "Error"
+
+      expect {subject.run_for_entries @entries}.to raise_error StandardError, "<ul><li>Error</li></ul>"
+      expect(@sync_record).not_to be_persisted
+    end
+
+    it "combines errors together into one mega error" do
+      subject.should_receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [StandardError.new("Error 1"), StandardError.new("Error 2")])
+      subject.should_receive(:ftp_file).with(@file)
+
+
+      expect {subject.run_for_entries @entries}.to raise_error StandardError, "<ul><li>Error 1</li><li>Error 2</li></ul>"
+      expect(@sync_record).to be_persisted
+    end
+  end
+
   describe "generate_file" do
+
     before(:each) do
-      @ent = Factory(:entry,updated_at:1.minute.ago)
-      @g = described_class.new
-      @g.should_receive(:generate_data_for_entry).with(@ent).and_return 'abc'
+      @ent = Factory(:entry, updated_at:1.minute.ago, broker_reference: "broker-ref")
     end
+
     context :changed do
-      it "should link methods to find and generate" do
-        tmp  = @g.generate_file [@ent]
-        tmp.flush
-        expect(IO.read(tmp.path)).to eq 'abc'
+      before :each do
+        subject.should_receive(:generate_data_for_entry).with(@ent).and_return 'abc'
       end
-      it "should write sync_records" do
-        expect{@g.generate_file([@ent])}.to change(SyncRecord.where(trading_partner:'EBFTZASN'),:count).from(0).to(1)
-        expect(SyncRecord.first.ignore_updates_before).to be_nil
+
+      it "should generate and yeild file data for new entry data" do
+        subject.generate_file([@ent]) do |file, sync_records, errors|
+          file.rewind
+          expect(file.read).to eq "abc"
+
+          expect(sync_records.size).to eq 1
+          sr = sync_records.first
+          expect(sr).not_to be_persisted
+          expect(sr.syncable).to eq @ent
+          expect(sr.trading_partner).to eq described_class::SYNC_CODE
+          expect(sr.sent_at).to be_within(1.minute).of Time.zone.now
+          expect(sr.fingerprint).to eq Digest::MD5.hexdigest("abc")
+
+          expect(errors.size).to eq 0
+        end
       end
     end
-    context "hasn't changed" do
+
+    context "existing sync record" do
+
       before :each do
-        @sr = @ent.sync_records.create!(trading_partner:'EBFTZASN',fingerprint:Digest::MD5.hexdigest('abc'))
+        subject.should_receive(:generate_data_for_entry).with(@ent).and_return 'abc'
+        @sr = @ent.sync_records.create!(trading_partner:'EBFTZASN', fingerprint:Digest::MD5.hexdigest('abc'), sent_at: Time.zone.now - 1.day)
       end
-      it "should write ignore_updates_before" do
-        @g.generate_file([@ent])
-        @sr.reload
-        expect(@sr.ignore_updates_before).to be > 2.minutes.ago
-        expect(@sr.sent_at).to be_nil #don't change sent at if we didn't send
+
+      it "writes a blank file and updates sync record's ignore_updates_before attribute" do
+        sent_at = @sr.sent_at
+
+        subject.generate_file([@ent]) do |file, sync_records, errors|
+          file.rewind
+          expect(file.read).to be_blank
+
+          expect(sync_records.size).to eq 1
+          sr = sync_records.first
+          expect(sr).to be_changed
+          expect(sr.ignore_updates_before).to be_within(2.minutes).of Time.zone.now
+          expect(sr.sent_at.to_i).to eq sent_at.to_i
+
+          expect(errors.size).to eq 0
+        end
       end
-      it "should not write data if matches fingerprint" do
-        tmp  = @g.generate_file [@ent]
-        tmp.flush
-        expect(IO.read(tmp.path)).to be_blank
+
+      it "should write data if sync record is set to be resent" do
+        @sr.update_attributes! sent_at: nil
+
+        subject.generate_file([@ent]) do |file, sync_records, errors|
+          file.rewind
+          expect(file.read).to eq "abc"
+          expect(sync_records.size).to eq 1
+          expect(sync_records.first.sent_at).to be_within(1.minute).of Time.zone.now
+        end
+      end
+
+      it "writes data if fingerprint differs from before" do
+        @sr.update_attributes! fingerprint: "notanmd5hash"
+
+        subject.generate_file([@ent]) do |file, sync_records, errors|
+          file.rewind
+          expect(file.read).to eq "abc"
+          expect(sync_records.size).to eq 1
+          expect(sync_records.first.sent_at).to be_within(1.minute).of Time.zone.now
+        end
+      end
+    end
+
+    context "error handling" do
+
+      before :each do 
+        @ent2 = Factory(:entry)
+      end
+
+      it 'handles errors raised for a specific dataset generation without blowing up the whole run' do
+        subject.should_receive(:generate_data_for_entry).with(@ent).and_raise "An Error"
+        subject.should_receive(:generate_data_for_entry).with(@ent2).and_return "data"
+
+        subject.generate_file([@ent, @ent2]) do |file, sync_records, errors|
+          file.rewind
+          expect(file.read).to eq "data"
+          expect(sync_records.size).to eq 1
+          expect(sync_records.first.syncable).to eq @ent2
+          expect(sync_records.first.sent_at).to be_within(1.minute).of Time.zone.now
+
+          expect(errors.size).to eq 1
+          expect(errors.first.message).to eq "File ##{@ent.broker_reference}: An Error"
+        end
       end
     end
   end

@@ -54,7 +54,7 @@ class SchedulableJob < ActiveRecord::Base
       else
         OpenMailer.send_simple_html(self.failure_email,"[VFI Track] Scheduled Job Failed",
             "Scheduled job for #{k.to_s} with options #{run_opts} has failed. The error message is below:<br><br>
-            #{e.message}").deliver!
+            #{e.message}".html_safe).deliver!
       end
     end
   end

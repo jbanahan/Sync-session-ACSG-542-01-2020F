@@ -164,4 +164,43 @@ describe ReportsController do
     end
   end
 
+  describe "Drawback audit report" do
+    before(:each) do
+      @u = Factory(:drawback_user)
+      @u.company.drawback_claims << Factory(:drawback_claim)
+      @dc = @u.company.drawback_claims
+    end
+
+    context "show" do
+      it "should render page for drawback user" do
+        sign_in_as @u
+        get :show_drawback_audit_report
+        expect(assigns(:claims).count).to eq 1
+        expect(response).to be_success
+      end
+
+      it "should not render page for non-drawback user" do
+        get :show_drawback_audit_report
+        expect(response).to_not be_success
+      end
+    end
+
+    context "run" do
+      it "should run report for drawback user" do
+        sign_in_as @u
+        ReportResult.should_receive(:run_report!).with("Drawback Audit Report", @u, OpenChain::Report::DrawbackAuditReport, {:settings=>{:drawback_claim_id=>@dc.first.id.to_s}, :friendly_settings=>[]})
+        get :run_drawback_audit_report, {drawback_claim_id: @dc.first.id}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
+      end
+
+      it "should not execute report for non-drawback user" do
+        ReportResult.should_not_receive(:run_report!).with("Drawback Audit Report", @u, OpenChain::Report::DrawbackAuditReport, {:settings=>{:drawback_claim_id=>@dc.first.id.to_s}, :friendly_settings=>[]})
+        get :run_drawback_audit_report, {drawback_claim_id: @dc.first.id}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "You do not have permission to view this report"
+      end
+    end
+  end
+
 end

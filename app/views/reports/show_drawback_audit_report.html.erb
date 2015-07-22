@@ -1,0 +1,12 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+
+<h2>Drawback Audit Report</h2>
+<p>Select the Drawback Claim Number<span id="month_instructions" style="display: none;">, Month and Year to run this report for</span>. Click the Run Report button to continue.</p>
+<%=form_tag reports_run_drawback_audit_report_path, :id=>'frm_run' do -%>
+  <table>
+    <%=field_row "Drawback Claims", select_tag(:drawback_claim_id, options_from_collection_for_select(@claims.order('created_at DESC'), 'id', 'name'), class: 'form-control')%>
+  </table>
+<%end%>

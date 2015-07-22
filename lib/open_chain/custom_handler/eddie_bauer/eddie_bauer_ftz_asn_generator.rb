@@ -19,11 +19,31 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
       
   def self.run_schedulable opts={'customer_numbers'=>['EDDIEFTZ']}
     g = self.new Rails.env, opts
-    g.run_for_entries(g.find_entries,g)
+    g.run_for_entries(g.find_entries)
   end
-  def run_for_entries entries, instance=self.new
-    instance.ftp_file instance.generate_file entries
+
+  def run_for_entries entries
+    generate_file(entries) do |file, sync_records, errors|
+      begin
+        ActiveRecord::Base.transaction do
+          sync_records.each {|sr| sr.save!}
+
+          ftp_file file
+        end
+      rescue => e
+        errors << e
+      end
+
+      # This is a major hack to get all errors to go out via the scheduled job failure email handler.
+      # I'm relying on the schedulable job's run method to use the exception's message attribute
+      # to get the email's message
+      if errors.length > 0
+        message = ("<ul>" + errors.map {|e| "<li>#{e.message}</li>"}.join + "</ul>").html_safe
+        raise StandardError, message
+      end
+    end
   end
+
   def initialize env=Rails.env, opts={}
     inner_opts = {'customer_numbers'=>['EDDIEFTZ']}.merge opts
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
@@ -40,30 +60,40 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
   end
 
   def generate_file entries
-    t = Tempfile.new(['EDDIEFTZASN','.txt'])
-    has_data = false
-    entries.each_with_index do |ent,i|
-      Entry.transaction do
-        data = self.generate_data_for_entry(ent)
-        new_fingerprint = Digest::MD5.hexdigest(data)
-        sr = ent.sync_records.first_or_create!(trading_partner:SYNC_CODE)
-        if new_fingerprint != sr.fingerprint
-          t << "\r\n" if has_data
-          t << data
-          has_data = true
-          sr.sent_at = 0.seconds.ago
-          sr.fingerprint = new_fingerprint
-          sr.save!
-        else
-          sr = ent.sync_records.first_or_create!(trading_partner:SYNC_CODE)
-          sr.ignore_updates_before = ent.updated_at
-          sr.save!
+    Tempfile.open(['EDDIEFTZASN','.txt']) do |t|
+      sync_records = []
+      errors = []
+      entries.each_with_index do |ent,i|
+        begin
+          data = generate_data_for_entry(ent)
+          new_fingerprint = Digest::MD5.hexdigest(data)
+          sr = ent.sync_records.first_or_initialize trading_partner: SYNC_CODE
+
+          # We ignore the fingerprint if the sent_at is blank (which will happen on sync records built just now or ones marked to be resent)
+          if sr.sent_at.nil? || new_fingerprint != sr.fingerprint
+            t << "\r\n" if t.size > 0
+            t << data
+            sr.sent_at = Time.zone.now
+            sr.fingerprint = new_fingerprint
+          else
+            sr.ignore_updates_before = ent.updated_at
+          end
+          sync_records << sr
+        rescue => e
+          # We're copying our error into a new one so that we can prepend the Entry # to the message so we know exactly which entry the 
+          # error occurred on.
+          new_error = e.class.new("File ##{ent.broker_reference}: #{e.message}")
+          new_error.set_backtrace e.backtrace
+          errors << new_error
         end
       end
+
+      t.flush
+      yield t, sync_records, errors
     end
-    t.flush
-    t
+    nil
   end
+  
   # find entries that have passed business rules and need sync
   def find_entries
     passed_rules = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Pass')

@@ -314,6 +314,25 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_drawback_audit_report
+    if OpenChain::Report::DrawbackAuditReport.permission?(current_user)
+      @claims = DrawbackClaim.where(importer_id: current_user.company.id)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_drawback_audit_report
+    if OpenChain::Report::DrawbackAuditReport.permission?(current_user)
+      settings = {drawback_claim_id: params[:drawback_claim_id]}
+      run_report "Drawback Audit Report", OpenChain::Report::DrawbackAuditReport, settings, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+
   def show_pvh_container_log
     if OpenChain::Report::PvhContainerLogReport.permission?(current_user)
       render
