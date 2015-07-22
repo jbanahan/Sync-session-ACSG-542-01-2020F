@@ -81,12 +81,12 @@ describe ISFSupport do
           @shipment = Factory :shipment
           Factory :shipment_line, shipment:@shipment, manufacturer_address:Factory(:full_address)
           Factory :shipment_line, shipment:@shipment, manufacturer_address:Factory(:full_address)
-          Factory :shipment_line, shipment:@shipment, manufacturer_address_id:nil
+          @no_address_line = Factory :shipment_line, shipment:@shipment, manufacturer_address_id:nil
           @shipment.validate_isf!
         end
 
         it 'is invalid' do
-          expect(@shipment.errors[:base]).to include("All shipment lines must have a Manufacturer Address")
+          expect(@shipment.errors[:base]).to include("Shipment Line #{@no_address_line.line_number} Manufacturer address is missing")
         end
       end
     end

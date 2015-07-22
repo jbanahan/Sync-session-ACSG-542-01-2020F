@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       att.should_receive(:attached).and_return atchd
       path = 'xyz'
       atchd.should_receive(:path).and_return path
-      described_class.should_receive(:parse).with(s,path,u).and_return 'x'
+      described_class.should_receive(:parse).with(s,path,u,nil).and_return 'x'
       expect(described_class.process_attachment(s, att, u)).to eq 'x'
     end
   end
@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       OpenChain::XLClient.should_receive(:new).with(path).and_return x      
       t = double('x')
       described_class.should_receive(:new).and_return t
-      t.should_receive(:run).with(s,x,u)
+      t.should_receive(:run).with(s,x,u,nil)
       described_class.parse s, path, u
     end
   end
@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       r = double('rows')
       x.should_receive(:all_row_values).and_return r
       d = described_class.new
-      d.should_receive(:process_rows).with(s,r,u)
+      d.should_receive(:process_rows).with(s,r,u,nil)
       d.run(s,x,u)
     end
   end
