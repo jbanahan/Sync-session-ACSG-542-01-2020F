@@ -13,36 +13,38 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
 
   def generate
     @shipment.containers.each do |container|
-      @next_row = 0
-      sheet = XlsMaker.create_sheet(@workbook, container.container_number)
+      sheet = new_sheet(container)
       add_headers(sheet, container)
-      2.times {add_row(sheet)}
-      container_lines = ShipmentLine.where(shipment_id: @shipment.id, container_id: container.id).to_a
-      add_container_header_data(sheet, container)
-      add_lines_to_sheet(container_lines, sheet)
+      add_lines_to_sheet(container.shipment_lines, sheet)
     end
     file_for @workbook
   end
 
   private
 
+  def new_sheet(container)
+    @next_row = 0
+    XlsMaker.create_sheet(@workbook, container.container_number)
+  end
+
   def add_headers(sheet, container)
     add_first_header_rows(sheet)
     add_container_header_data(sheet, container)
     add_second_header_rows(sheet)
+    2.times { add_row(sheet) }
   end
 
   def add_header_rows(uids, sheet)
     fields = uids.map { |uid| ModelField.find_by_uid uid }
     labels = fields.map(&:label)
     values = fields.map{ |field| field.process_export(@shipment, @user) }
-    add_row(sheet, labels)
+    add_header_row(sheet, labels)
     add_row(sheet, values)
   end
 
   def add_container_header_data(sheet, container)
-    XlsMaker.insert_body_row(sheet,0,9,["Container Number","Container Size","Seal Number"])
-    XlsMaker.insert_body_row(sheet,1,9,[container.container_number,container.container_size,container.seal_number])
+    XlsMaker.insert_body_row(sheet,0,7,["Container Number","Container Size","Seal Number"])
+    XlsMaker.insert_body_row(sheet,1,7,[container.container_number,container.container_size,container.seal_number])
   end
 
   def add_first_header_rows(sheet)
@@ -75,7 +77,6 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     fields = [
       :con_container_number,
       :ord_cust_ord_no,
-      :nil, # Item style number?
       :shpln_manufacturer_address_name,
       :shpln_carton_qty,
       :shpln_shipped_qty,
@@ -87,17 +88,18 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       :shp_booking_received_date,
       :shp_cargo_on_hand_date,
       :shp_docs_received_date
-    ].map {|uid| ModelField.find_by_uid(uid) }
-    add_row(sheet, fields.map(&:label))
+    ].map {|uid| ModelField.find_by_uid(uid) }.insert(2, @custom_defintions[:prod_part_number].model_field)
+    add_header_row(sheet, fields.map(&:label))
 
     lines.each { |line| add_line_to_sheet(line, fields, sheet) }
+    add_totals_to_sheet(lines, sheet)
   end
 
   def add_line_to_sheet(line, fields, sheet)
     values = [
-      line.container.container_number,
-      line.order_lines.first.order.customer_order_number,
-      #Item style number?
+      fields[0].process_export(line.container, @user),
+      fields[1].process_export(line.order_lines.first.order, @user),
+      fields[2].process_export(line.order_lines.first.product, @user),
       fields[3].process_export(line, @user),
       fields[4].process_export(line, @user),
       fields[5].process_export(line, @user),
@@ -114,10 +116,27 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     add_row(sheet, values)
   end
 
+  def add_totals_to_sheet(lines, sheet)
+    carton_qty_total = lines.sum {|line| line.carton_qty || 0}
+    pieces_total = lines.sum {|line| line.quantity || 0}
+    cbms_total = lines.sum {|line| line.cbms || 0}
+    insert_row(sheet, @next_row, 4, [carton_qty_total, pieces_total, cbms_total])
+  end
+
+
   def file_for(workbook)
     file = Tempfile.new([@shipment.reference, '.xls'])
     workbook.write file.path
     file
+  end
+
+  def add_header_row(sheet, data=[])
+    XlsMaker.add_header_row(sheet, @next_row, data)
+    @next_row += 1
+  end
+
+  def insert_row(sheet, row, column, data=[])
+    XlsMaker.insert_body_row(sheet, row, column, data)
   end
 
   def add_row(sheet, data=[])
