@@ -45,7 +45,7 @@ module OpenChain; module ModelFieldGenerator; module AddressGenerator
        data_type: :string,
        read_only:true,
        export_lambda: lambda {|obj| obj.send("#{address_name}_address").try(:full_address)},
-       qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(line_1, ''), IFNULL(line_2, ''), IFNULL(line_3, '')^',', IFNULL(city, ''), IFNULL(state, ''), IFNULL(postal_code, '')^',', IFNULL(iso_code,'')) FROM addresses INNER JOIN countries ON addresses.country_id = countries.id where addresses.id = shipments.buyer_address_id)"
+       qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(line_1, ''), IFNULL(line_2, ''), IFNULL(line_3, '')^',', IFNULL(city, ''), IFNULL(state, ''), IFNULL(postal_code, '')^',', IFNULL(iso_code,'')) FROM addresses INNER JOIN countries ON addresses.country_id = countries.id where addresses.id = #{table_name}.#{address_name}_address_id)"
      }]]
   end
 

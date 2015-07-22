@@ -25,7 +25,7 @@ describe AttachmentProcessJob do
       @tpm = OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser
     end
     it "should delegate to process_attachment method based on job name" do
-      @tpm.should_receive(:process_attachment).with(@s,@a,@u)
+      @tpm.should_receive(:process_attachment).with(@s,@a,@u,nil)
       @j.process
       @j.reload
       expect(@j.finish_at).to be > 1.minute.ago
