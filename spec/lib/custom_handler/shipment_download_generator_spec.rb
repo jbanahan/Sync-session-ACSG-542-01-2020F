@@ -43,9 +43,11 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
       @order = Factory(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
 
       product = Factory(:product)
-      line = Factory(:shipment_line, shipment:@shipment, product:product, container:@container1, carton_qty:20, quantity:100, cbms:2.4, manufacturer_address:Factory(:full_address))
-      order_line = Factory(:order_line, order:@order, quantity:100, product:product, country_of_origin:'GN')
-      PieceSet.create(order_line:order_line, quantity:100, shipment_line:line)
+      3.times do
+        line = Factory(:shipment_line, shipment:@shipment, product:product, container:@container1, carton_qty:rand(20), quantity:rand(100), cbms:rand(5.0), manufacturer_address:Factory(:full_address))
+        order_line = Factory(:order_line, order:@order, quantity:line.quantity, product:product, country_of_origin:'GN')
+        PieceSet.create(order_line:order_line, quantity:line.quantity, shipment_line:line)
+      end
     end
 
     it 'creates a sheet for each container' do
@@ -60,16 +62,17 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
       expect(sheet.rows[2].to_a).to eq ["Confirmed On Board Origin Date", "Departure Date", "ETA Last Foreign Port Date", "Departure Last Foreign Port Date", "Est Arrival Date"]
       expect(sheet.rows[3].to_a).to eq [@shipment.confirmed_on_board_origin_date, @shipment.departure_date, @shipment.eta_last_foreign_port_date, @shipment.departure_last_foreign_port_date, @shipment.est_arrival_port_date]
 
-      line1 = @shipment.shipment_lines.first
       expect(sheet.row(6).to_a).to eq ["Container Number", "Customer Order Number", "Part Number", "Manufacturer Address Name", "Cartons", "Quantity Shipped", "Volume (CBMS)", "Ship Window End Date", "Freight Terms", "Shipment Type", "First Expected Delivery Date", "Booking Received Date", "Cargo On Hand Date", "Docs Received Date"]
-      row = sheet.row(7).to_a
-      expect(row.first(7)).to eq [@container1.container_number, @order.customer_order_number, nil, "MYaddr", line1.carton_qty, line1.quantity, line1.cbms]
-      expect(row[7].to_date).to eq @order.ship_window_end.to_date
-      expect(row[8..9]).to eq [@shipment.freight_terms, @shipment.shipment_type]
-      expect(row[10].to_date).to eq @order.first_expected_delivery_date.to_date
-      expect(row[11].to_date).to eq @shipment.booking_received_date.to_date
-      expect(row[12].to_date).to eq @shipment.cargo_on_hand_date.to_date
-      expect(row[13].to_date).to eq @shipment.docs_received_date.to_date
+      @shipment.shipment_lines.each_with_index do |line, idx|
+        row = sheet.row(7 + idx).to_a
+        expect(row.first(7)).to eq [@container1.container_number, @order.customer_order_number, nil, "MYaddr", line.carton_qty, line.quantity, line.cbms]
+        expect(row[7].to_date).to eq @order.ship_window_end.to_date
+        expect(row[8..9]).to eq [@shipment.freight_terms, @shipment.shipment_type]
+        expect(row[10].to_date).to eq @order.first_expected_delivery_date.to_date
+        expect(row[11].to_date).to eq @shipment.booking_received_date.to_date
+        expect(row[12].to_date).to eq @shipment.cargo_on_hand_date.to_date
+        expect(row[13].to_date).to eq @shipment.docs_received_date.to_date
+      end
     end
   end
 end
