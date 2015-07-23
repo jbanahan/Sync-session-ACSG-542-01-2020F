@@ -9,28 +9,32 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     @column_widths = []
 
     raise "You can't download this shipment!" unless @shipment.can_view? @user
-    raise "This shipment has no containers!" unless @shipment.containers.any?
   end
 
   def generate
-    @shipment.containers.each do |container|
-      sheet = new_sheet(container)
-      add_headers(sheet, container)
-      add_lines_to_sheet(container.shipment_lines, sheet)
+    if @shipment.containers.any?
+      @shipment.containers.each do |container|
+        sheet = new_sheet(container)
+        add_headers(sheet, container)
+        add_lines_to_sheet(container.shipment_lines, sheet)
+      end
+    else
+      add_headers(new_sheet)
     end
     file_for @workbook
   end
 
   private
 
-  def new_sheet(container)
+  def new_sheet(container=nil)
     @next_row = 0
-    XlsMaker.create_sheet(@workbook, container.container_number)
+    sheet_name = container.try(:container_number) || 'Details'
+    XlsMaker.create_sheet(@workbook, sheet_name)
   end
 
-  def add_headers(sheet, container)
+  def add_headers(sheet, container=nil)
     add_first_header_rows(sheet)
-    add_container_header_data(sheet, container)
+    add_container_header_data(sheet, container) if container
     add_second_header_rows(sheet)
     2.times { add_row(sheet) }
   end
@@ -64,11 +68,11 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
 
   def add_second_header_rows(sheet)
     fields_to_add = [
-      :shp_departure_date,
-      :shp_confirmed_on_board_origin_date,
-      :shp_eta_last_foreign_port_date,
-      :shp_departure_last_foreign_port_date,
-      :shp_est_arrival_port_date
+        :shp_confirmed_on_board_origin_date,
+        :shp_departure_date,
+        :shp_eta_last_foreign_port_date,
+        :shp_departure_last_foreign_port_date,
+        :shp_est_arrival_port_date
     ]
 
     add_header_rows(fields_to_add, sheet)
