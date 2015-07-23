@@ -152,8 +152,7 @@ class XlsMaker
   end
 
   def self.calc_column_width sheet, col, column_widths, width
-    current_width = column_widths[col] || sheet.column(col).width
-    if current_width < width
+    if column_widths[col].nil? || column_widths[col] < width
       sheet.column(col).width = width
       column_widths[col] = width
     end
