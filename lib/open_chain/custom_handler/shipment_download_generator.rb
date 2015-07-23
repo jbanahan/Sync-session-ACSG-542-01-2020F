@@ -108,7 +108,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       fields[7].process_export(order, @user),
       fields[8].process_export(@shipment, @user),
       fields[9].process_export(@shipment, @user),
-      fields[7].process_export(order, @user),
+      fields[10].process_export(order, @user),
       fields[11].process_export(@shipment, @user),
       fields[12].process_export(@shipment, @user),
       fields[13].process_export(@shipment, @user)
