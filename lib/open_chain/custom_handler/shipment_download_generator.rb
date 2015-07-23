@@ -43,8 +43,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   end
 
   def add_container_header_data(sheet, container)
-    XlsMaker.insert_body_row(sheet,0,7,["Container Number","Container Size","Seal Number"])
-    XlsMaker.insert_body_row(sheet,1,7,[container.container_number,container.container_size,container.seal_number])
+    insert_row(sheet,0,7,["Container Number","Container Size","Seal Number"])
+    insert_row(sheet,1,7,[container.container_number,container.container_size,container.seal_number])
   end
 
   def add_first_header_rows(sheet)
