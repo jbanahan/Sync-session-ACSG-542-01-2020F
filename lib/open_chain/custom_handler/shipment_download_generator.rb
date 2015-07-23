@@ -6,6 +6,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     @user = user
     @workbook = XlsMaker.new_workbook
     @custom_defintions = self.class.prep_custom_definitions [:prod_part_number]
+    @column_widths = []
 
     raise "You can't download this shipment!" unless @shipment.can_view? @user
     raise "This shipment has no containers!" unless @shipment.containers.any?
@@ -132,16 +133,16 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   end
 
   def add_header_row(sheet, data=[])
-    XlsMaker.add_header_row(sheet, @next_row, data)
+    XlsMaker.add_header_row(sheet, @next_row, data, @column_widths)
     @next_row += 1
   end
 
   def insert_row(sheet, row, column, data=[])
-    XlsMaker.insert_body_row(sheet, row, column, data)
+    XlsMaker.insert_body_row(sheet, row, column, data, @column_widths)
   end
 
   def add_row(sheet, data=[])
-    XlsMaker.add_body_row(sheet,@next_row,data)
+    XlsMaker.add_body_row(sheet,@next_row,data, @column_widths)
     @next_row += 1
   end
 
