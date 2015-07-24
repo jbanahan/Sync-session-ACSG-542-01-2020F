@@ -132,8 +132,13 @@ root.Chain =
       window.location = baseUrl+'?page='+$(this).val()
 
   # generates html string for  a bootstrap error panel
-  makeErrorPanel: (message) ->
-    "<div class='container'><div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>"+message+"</div></div></div>"
+  makeErrorPanel: (messages) -> 
+    inner = messages
+    if $.isArray(messages) and messages.length > 1
+      inner = "<ul>"
+      messages.forEach (msg) -> inner += "<li>" + msg + "</li>"
+      inner += "</ul>"
+    "<div class='container'><div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>#{inner}</div></div></div>"
 
   setStorageItem: (name, value) ->
     if (typeof(Storage) == undefined)

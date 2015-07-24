@@ -141,26 +141,22 @@ describe SurveysController do
       Survey.any_instance.stub(:can_edit?).and_return(true)
       Survey.any_instance.should_receive(:locked?).and_return(true)
       post :update, :id=>@s.id
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response.body).to eq ({flash: {errors: ["You cannot edit a survey that has already been sent."]}, redirect: edit_survey_path(@s)}.to_json)
     end
     it "should reject if user cannot edit" do
       Survey.any_instance.stub(:can_edit?).and_return(false)
       post :update, :id=>@s.id
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response.body).to eq ({flash: {errors: ["You cannot edit this survey."]}, redirect: edit_survey_path(@s)}.to_json)
     end
     it "should pass if user has edit_survey permission" do
       post :update, {:id=>@s.id, :survey=>{:name=>'abcdef'}}
-      response.should redirect_to edit_survey_path(@s)
-      flash[:notices].first.should == "Survey saved."
-      Survey.find(@s.id).name.should == 'abcdef'
+      expect(response.body).to eq ({flash: {errors: nil}, redirect: edit_survey_path(@s)}.to_json)
+      expect(Survey.find(@s.id).name).to eq 'abcdef'
     end
     it "should clear warnings" do
       q = @s.questions.create!(:content=>"ABC def 123",:choices=>"a\nb",:warning=>true, :require_comment => true, :require_attachment => true)
       post :update, {:id=>@s.id, :survey=>{:name=>'abcdef',:questions_attributes=>{q.id=>{:id=>q.id,:content=>"ABC def 123"}}}}
-      response.should redirect_to edit_survey_path(@s)
-      flash[:notices].first.should == "Survey saved."
+      expect(response.body).to eq ({flash: {errors: nil}, redirect: edit_survey_path(@s)}.to_json)
       q = Question.find(q.id)
       expect(q.warning).to be_false
       expect(q.require_comment).to be_false
@@ -171,8 +167,7 @@ describe SurveysController do
       q.save!
       q.attachments.create!(attached_file_name:"attachment1.jpg")
       post :update, {id: @s.id, survey: {name: 'survey name', questions_attributes: {q.id => {id: q.id, content: "Sample content"}}}}
-      response.should redirect_to edit_survey_path(@s)
-      flash[:notices].first.should == "Survey saved."
+      expect(response.body).to eq ({flash: {errors: nil}, redirect: edit_survey_path(@s)}.to_json)
       Question.find(q.id).should_not be_warning
     end
   end
@@ -180,22 +175,21 @@ describe SurveysController do
     it "should reject if user does not have edit_survey permission" do
       @u.update_attributes(:survey_edit=>false)
       post :create, {:survey=>{:name=>'abc'}} 
-      response.should be_redirect
-      flash[:errors].should have(1).message
-      Survey.count.should == 0
+      expect(response.body).to eq ({flash: {errors: ["You do not have permission to edit surveys."]}, redirect: nil}.to_json)
+      expect(Survey.count).to eq 0
     end
     it "should pass if user has edit_survey permission" do
       post :create, {:survey=>{:name=>'abc'}} 
-      response.should redirect_to edit_survey_path(Survey.first)
-      flash[:notices].should have(1).message
-      Survey.first.name.should == 'abc'
-      Survey.first.company_id.should == @u.company_id
+      expect(response.body).to eq ({flash: {errors: nil}, redirect: edit_survey_path(Survey.first)}.to_json)
+      expect(Survey.first.name).to eq 'abc'
+      expect(Survey.first.company_id).to eq @u.company_id
     end
     it "should set company_id based on current_user not parameter" do
       post :create, {:survey=>{:name=>'abc',:company_id => (@u.company_id+1)}} 
-      response.should redirect_to edit_survey_path(Survey.first)
-      flash[:notices].should have(1).message
-      Survey.first.company_id.should == @u.company_id
+      parsed_response = JSON.parse response.body
+      expect(parsed_response["redirect"]).to eq edit_survey_path(Survey.first)
+      expect(parsed_response["flash"]["errors"]).to be_nil
+      expect(Survey.first.company_id).to eq @u.company_id
     end
     it "should set created_by to current_user" do
       post :create, {:survey=>{:name=>'abc'}}
