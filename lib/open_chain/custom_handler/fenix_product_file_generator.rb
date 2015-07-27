@@ -88,6 +88,8 @@ module OpenChain
             line += force_fixed(p.get_custom_value(@cdefs[:prod_country_of_origin]).value.to_s, 3)
           end
 
+          #Because Canada doesn't like these chars in electronic b3's, replace any of the following chars w/ spaces: ! ' : | + ? 
+          line = line.gsub(/[!':|+?]/, " ") 
           line += "\r\n"
         end
 
