@@ -16,7 +16,7 @@ module OpenChain
       entry = commercial_invoice_line.entry
       po_search = SearchCriterion.new(:model_field_uid=>"*cf_#{po_custom_def.id}",:operator=>"eq",:value=>commercial_invoice_line.po_number)
       received_date_search = SearchCriterion.new(:model_field_uid=>"*cf_#{delivery_custom_def.id}",:operator=>'gt',:value=>entry.arrival_date-1.day)
-      received_date_search.apply po_search.apply ShipmentLine.select("shipment_lines.*").joins(:shipment).joins(:product).where("products.unique_identifier = ?",commercial_invoice_line.part_number).
+      received_date_search.apply po_search.apply ShipmentLine.select("shipment_lines.*").joins(:shipment).joins(:product).where("products.unique_identifier = ?","JCREW-#{commercial_invoice_line.part_number}").
         where("shipments.importer_id = ? OR shipments.importer_id IN (SELECT parent_id FROM linked_companies WHERE child_id = ?)",entry.importer_id,entry.importer_id).
         where("shipments.reference = ?",entry.entry_number)
     end
