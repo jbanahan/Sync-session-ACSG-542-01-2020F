@@ -1,4 +1,4 @@
-app = angular.module('CoreObjectValidationResultsApp',['ChainComponents'])
+app = angular.module('CoreObjectValidationResultsApp',['ChainComponents', 'angularMoment'])
 
 app.factory 'coreObjectValidationResultsSvc', ['$http',($http) ->
   {
