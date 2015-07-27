@@ -366,16 +366,16 @@ class User < ActiveRecord::Base
 
   #permissions
   def view_business_validation_results?
-    self.company.master?
+    self.company.master? || (self.company.importer? && self.company.show_business_rules?)
   end
   def edit_business_validation_results?
-    self.company.master?
+    self.view_business_validation_results?
   end
   def view_business_validation_rule_results?
-    self.company.master?
+    self.view_business_validation_results?
   end
   def edit_business_validation_rule_results?
-    self.company.master?
+    self.view_business_validation_results?
   end
   def view_official_tariffs?
     self.company.master?

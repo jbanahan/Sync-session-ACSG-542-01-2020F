@@ -164,9 +164,16 @@ describe User do
         expect(u.edit_business_validation_results?).to be_true
       end
       it "should not allow non-master users" do
-        u = Factory(:user)
+        u = Factory(:importer_user)
         expect(u.view_business_validation_results?).to be_false
         expect(u.edit_business_validation_results?).to be_false
+      end
+      it "allows importer user if company has business rules viewing allowed" do
+        u = Factory(:importer_user)
+        u.company.update_attributes! show_business_rules: true
+
+        expect(u.view_business_validation_results?).to be_true
+        expect(u.edit_business_validation_results?).to be_true
       end
     end
     context "business_validation_rule_results" do
@@ -176,9 +183,16 @@ describe User do
         expect(u.edit_business_validation_rule_results?).to be_true
       end
       it "shouldn't allow non master users" do
-        u = Factory(:user)
+        u = Factory(:importer_user)
         expect(u.view_business_validation_rule_results?).to be_false
         expect(u.edit_business_validation_rule_results?).to be_false
+      end
+      it "allows importer user if company has business rules viewing allowed" do
+        u = Factory(:importer_user)
+        u.company.update_attributes! show_business_rules: true
+
+        expect(u.view_business_validation_rule_results?).to be_true
+        expect(u.edit_business_validation_rule_results?).to be_true
       end
     end
     context "projects" do

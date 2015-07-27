@@ -208,7 +208,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           end
           )
           limit 1)",
-        :can_view_lambda=>lambda {|u| u.company.master?}
+        :can_view_lambda=>lambda {|u| u.view_business_validation_results? }
       }],
       [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}],
       [139,:ent_exam_ordered_date,:exam_ordered_date,"Exam Ordered Date",{:data_type=>:datetime}],

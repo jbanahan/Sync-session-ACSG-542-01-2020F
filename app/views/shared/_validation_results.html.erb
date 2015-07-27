@@ -53,7 +53,7 @@
             </select>
             <textarea ng-model='ruleResultToEdit.note' class='form-control'></textarea>
             <div ng-show='ruleResultToEdit.overridden_at' class='text-right text-muted'>
-              Last Edited By {{ruleResultToEdit.overridden_by.full_name}} @ {{ruleResultToEdit.overridden_at}}
+              Last Edited By {{ruleResultToEdit.overridden_by.full_name}} <span am-time-ago='ruleResultToEdit.overridden_at' title="{{ruleResultToEdit.overridden_at | amDateFormat:' MMMM Do YYYY, h:mm a'}}"></span>
             </div>
           </div>
           <div class='panel-footer text-right'>
