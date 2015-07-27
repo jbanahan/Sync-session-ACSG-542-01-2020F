@@ -8,9 +8,9 @@ describe OpenChain::JCrewDrawbackProcessor do
       @cd_del = Factory(:custom_definition,:label=>"Delivery Date",:module_type=>"Shipment",:data_type=>"date")
       @cd_size = Factory(:custom_definition,:label=>"Size",:module_type=>"ShipmentLine",:data_type=>"string")
       @cd_color = Factory(:custom_definition,:label=>"Color",:module_type=>"ShipmentLine",:data_type=>"string")
-      @product = Factory(:product)
+      @product = Factory(:product,unique_identifier:'JCREW-12345',name:'12345')
       @importer = Factory(:company,:importer=>true,:alliance_customer_number=>"JCREW")
-      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345',:country_origin_code=>'CN')
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>'12345',:po_number=>'12345',:country_origin_code=>'CN')
       @c_line.entry.update_attributes(
         :entry_number=>"12345678901",
         :arrival_date=>0.days.ago,
@@ -52,7 +52,7 @@ describe OpenChain::JCrewDrawbackProcessor do
       d.box_37_duty.should == @entry.total_duty
       d.box_40_duty.should == @entry.total_duty_direct
       d.country_of_origin_code.should == @c_line.country_origin_code
-      d.part_number.should == "#{@product.unique_identifier}#{@s_line.get_custom_value(@cd_color).value}#{@s_line.get_custom_value(@cd_size).value}"
+      d.part_number.should == "#{@product.name}#{@s_line.get_custom_value(@cd_color).value}#{@s_line.get_custom_value(@cd_size).value}"
       d.hts_code.should == @c_tar.hts_code
       d.description.should == @entry.merchandise_description 
       d.unit_of_measure.should == "EA" #hard code to eaches
