@@ -184,9 +184,7 @@ describe BusinessValidationTemplatesController do
       temp.delete("updated_at")
       temp.delete("created_at")
       temp.should == {"description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", 
-          "name"=>nil, "search_criterions"=>[{"operator"=>"eq", 
-              "value"=>"x", "datatype"=>"string", 
-              "label"=>"Unique Identifier", "mfid"=>"prod_uid", "datatype"=>"string", "include_empty" => false}]}
+          "name"=>nil, "search_criterions"=>[{"operator"=>"eq", "value"=>"x", "datatype"=>"string", "label"=>"Unique Identifier", "mfid"=>"prod_uid", "include_empty" => false}]}
     end
   end
 

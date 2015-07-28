@@ -1,4 +1,5 @@
 class DrawbackClaim < ActiveRecord::Base
+  include CoreObjectSupport
   include UpdateModelFieldsSupport
 
   belongs_to :importer, :class_name=>"Company"
@@ -6,7 +7,6 @@ class DrawbackClaim < ActiveRecord::Base
   validates_presence_of :importer_id
   validates_presence_of :name
 
-  has_many  :attachments, as: :attachable, dependent: :destroy
   has_many :drawback_export_histories, inverse_of: :drawback_claim, dependent: :destroy
   has_many :drawback_claim_audits, inverse_of: :drawback_claim, dependent: :destroy
   

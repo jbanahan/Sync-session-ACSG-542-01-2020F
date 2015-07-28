@@ -101,6 +101,11 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
 
       expect(received).to eq expected
     end
+    it "does not yield if model field is nil" do
+      received = []
+      base_object.for_model_fields([nil]) {|mf| received << mf}
+      expect(received).to be_blank
+    end
   end
 
   describe :skip_field? do

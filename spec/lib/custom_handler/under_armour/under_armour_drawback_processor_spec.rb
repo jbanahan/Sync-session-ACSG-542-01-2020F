@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     before :each do
       @color = '888'
       @importer = Factory(:company,:importer=>true)
-      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>"#{@product.unique_identifier}-#{@color}",:po_number=>'12345',:quantity=>10)
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>"#{@product.unique_identifier}-#{@color}",:po_number=>'12345')
       @entry = @c_line.commercial_invoice.entry
       @entry.update_attributes(:arrival_date=>0.days.ago,:importer_id=>@importer.id)
       @c_tar = @c_line.commercial_invoice_tariffs.create!(

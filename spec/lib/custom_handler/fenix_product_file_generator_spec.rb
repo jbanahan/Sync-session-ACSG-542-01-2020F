@@ -129,6 +129,24 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read.lines.length).to eq 1
       expect(read[71, 10]).to eq @c.tariff_records.first.hts_1.ljust(10)
     end
+
+    it "cleanses forbidden characters" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
+      desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
+
+      @p.update_custom_value! coo_def, "CN"
+      @c.update_custom_value! desc_def, "Random Product !"
+      @t = @h.make_file [@p]
+      read = IO.read(@t.path)
+      expect(read[0, 15]).to eq "N".ljust(15)
+      expect(read[15, 9]).to eq @code.ljust(9)
+      expect(read[31, 40]).to eq "myuid".ljust(40)
+      expect(read[71, 20]).to eq "1234567890".ljust(20)
+      expect(read[135, 50]).to eq "Random Product".ljust(50)
+      expect(read[359, 3]).to eq "CN "
+      expect(read).to end_with "\r\n"
+    end
   end
 
   describe "ftp file" do

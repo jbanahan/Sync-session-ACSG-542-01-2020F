@@ -1,4 +1,5 @@
 <%
+  rule_state_field = ModelField.find_by_uid(:dc_rule_state)
   include_process_actions = !@claim.attachments.empty? &&
   (@claim.drawback_claim_audits.count == 0 || @claim.drawback_export_histories.count == 0)
 
@@ -9,8 +10,11 @@
     <%if include_process_actions %>
       <button data-toggle='modal' data-target='#process_actions_modal'>Process Reports</button>
     <%end%>
+    <%if rule_state_field.can_view? current_user%>
+      <button class='btn_link' link_to='<%=validation_results_drawback_claim_path(@claim)%>'>Business Rules</button>
+    <%end-%>
   <%end-%>
-<%end-%>
+<%end%>
 <h2>Drawback Claim: <%=@claim.name%></h2>
 
 

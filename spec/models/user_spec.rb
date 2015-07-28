@@ -164,9 +164,16 @@ describe User do
         expect(u.edit_business_validation_results?).to be_true
       end
       it "should not allow non-master users" do
-        u = Factory(:user)
+        u = Factory(:importer_user)
         expect(u.view_business_validation_results?).to be_false
         expect(u.edit_business_validation_results?).to be_false
+      end
+      it "allows importer user if company has business rules viewing allowed" do
+        u = Factory(:importer_user)
+        u.company.update_attributes! show_business_rules: true
+
+        expect(u.view_business_validation_results?).to be_true
+        expect(u.edit_business_validation_results?).to be_true
       end
     end
     context "business_validation_rule_results" do
@@ -176,9 +183,16 @@ describe User do
         expect(u.edit_business_validation_rule_results?).to be_true
       end
       it "shouldn't allow non master users" do
-        u = Factory(:user)
+        u = Factory(:importer_user)
         expect(u.view_business_validation_rule_results?).to be_false
         expect(u.edit_business_validation_rule_results?).to be_false
+      end
+      it "allows importer user if company has business rules viewing allowed" do
+        u = Factory(:importer_user)
+        u.company.update_attributes! show_business_rules: true
+
+        expect(u.view_business_validation_rule_results?).to be_true
+        expect(u.edit_business_validation_rule_results?).to be_true
       end
     end
     context "projects" do
@@ -634,5 +648,35 @@ describe User do
       u3.company = c
       expect{ u3.save! }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Username has already been taken")
     end
+  end
+
+  describe "email validation" do
+    it "should update email field if all members of semicolon/comma-separated list match regex pattern" do
+      u = Factory(:user, email: "default@vandegriftinc.com")
+      list = "abc@example.net, nbc123@vandegriftinc.com; cbs_1@britishcompany.co.uk"
+      u.update_attributes(email: list)
+      u.reload
+      expect(u.email).to eq list
+      expect(u.errors.messages[:email]).to be_nil
+    end
+
+    it "should not update email field if any member of semicolon/comma-separated list fails to match regex pattern" do
+      u = Factory(:user, email: "default@vandegriftinc.com")
+      list = "abc@example.*et, nbc123grifter.com; 1@2.3.com, cbs@somewhere.org"
+      u.update_attributes(email: list)
+      u.reload
+      expect(u.email).to eq "default@vandegriftinc.com"
+      expect(u.errors.messages[:email]).to eq ["The following emails are invalid: abc@example.*et, nbc123grifter.com, 1@2.3.com"]
+    end
+  
+    it "should have a different error for one invalid email" do
+      u = Factory(:user, email: "default@vandegriftinc.com")
+      addr = "abc@example.*et"
+      u.update_attributes(email: addr)
+      u.reload
+      expect(u.email).to eq "default@vandegriftinc.com"
+      expect(u.errors.messages[:email]).to eq ["Invalid email address"]
+    end
+
   end
 end

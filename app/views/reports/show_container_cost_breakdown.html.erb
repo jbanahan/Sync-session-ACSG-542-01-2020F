@@ -1,0 +1,39 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    var r = true;
+    if($("input[name='start_date']").val().length < 10) {
+      r = false;
+    }
+    if($("input[name='end_date']").val().length < 10) {
+      r = false;
+    }
+    if($("input[name='customer_number']").val().length < 1) {
+      r = false;
+    }
+    if(!r) {
+      window.alert("You must enter both dates and the customer number.");
+      return false;
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Container Cost Breakdown</h2>
+<%=form_tag reports_run_container_cost_breakdown_path, :id=>'frm_run', class: "form-inline", role: "form" do -%>
+  <div class="form-group">
+    <label for="start_date" class="control-label">Release Date on or after </label>
+    <%=text_field_tag :start_date,"", :class=>'form-control isdate'%> 
+  </div>
+  <div class="form-group">
+    <label for="end_date" class="control-label"> and prior to </label>
+    <%=text_field_tag :end_date,"", :class=>'form-control isdate'%>
+  </div>
+  <p>
+    <label for="customer_number" class="control-label">Customer Number</label>
+    <%= text_field_tag :customer_number, "", class: 'form-control' %>
+  </p>
+<%end%>

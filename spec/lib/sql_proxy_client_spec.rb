@@ -125,4 +125,44 @@ describe OpenChain::SqlProxyClient do
       @c.request_updated_entry_numbers start, end_t, "CUST1, CUST2"
     end
   end
+
+  describe "bulk_request_entry_data" do
+    before :each do
+      @entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
+    end
+
+    it "uses primary key values to request entry data" do
+      OpenChain::SqlProxyClient.any_instance.should_receive(:request_entry_data).with "123456"
+      described_class.bulk_request_entry_data nil, [@entry.id]
+    end
+
+    it "skips non-alliance entries" do
+      @entry.update_attributes! source_system: "Not Alliance"
+      OpenChain::SqlProxyClient.any_instance.should_not_receive(:request_entry_data).with "123456"
+      described_class.bulk_request_entry_data nil, [@entry.id]
+    end
+
+    context "with a search run" do
+      before :each do
+        @search_setup = Factory(:search_setup, module_type: "Entry", user: Factory(:sys_admin_user))  #sys admin so we don't have to bother w/ permissions
+        @sr = @search_setup.search_runs.create!
+      end
+
+       it "uses search run id to request entry data" do
+        entry2 = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'987654')
+        OpenChain::SqlProxyClient.any_instance.should_receive(:request_entry_data).with "123456"
+        OpenChain::SqlProxyClient.any_instance.should_receive(:request_entry_data).with "987654"
+
+        described_class.bulk_request_entry_data @sr.id, nil
+      end
+
+      it "skips non-alliance entries" do
+        entry2 = Factory(:entry,:source_system=>'Not Alliance',:broker_reference=>'987654')
+        OpenChain::SqlProxyClient.any_instance.should_receive(:request_entry_data).with "123456"
+        OpenChain::SqlProxyClient.any_instance.should_not_receive(:request_entry_data).with "987654"
+        described_class.bulk_request_entry_data @sr.id, nil
+      end
+
+    end
+  end
 end

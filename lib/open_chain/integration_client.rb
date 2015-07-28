@@ -1,6 +1,5 @@
 require 'aws-sdk'
 require 'open_chain/s3'
-require 'open_chain/alliance_parser'
 require 'open_chain/fenix_parser'
 require 'open_chain/custom_handler/ack_file_handler'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
@@ -107,7 +106,7 @@ module OpenChain
       status_msg = 'success'
       response_type = 'remote_file'
       if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
-        OpenChain::AllianceParser.delay.process_from_s3 bucket, remote_path 
+        # Just no-op if we get alliance files...the kewill_entry_parser feed handles these now.
       elsif command['path'].include?('_alliance_day_end_invoices/') && MasterSetup.get.custom_feature?('alliance')
         OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
        elsif command['path'].include?('_alliance_day_end_checks/') && MasterSetup.get.custom_feature?('alliance')

@@ -1,9 +1,13 @@
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/activity_summary'
 require 'open_chain/sql_proxy_client'
+require 'open_chain/business_rule_validation_results_support'
+
 class EntriesController < ApplicationController
   include EntriesHelper
   include ValidationResultsHelper
+  include OpenChain::BusinessRuleValidationResultsSupport
+  
   def root_class
     Entry 
   end
@@ -83,39 +87,7 @@ class EntriesController < ApplicationController
   end
 
   def validation_results
-    e = Entry.find params[:id]
-    respond_to do |format|
-    format.html {
-      action_secure(e.can_view?(current_user) && current_user.view_business_validation_results?,e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
-        @entry = e
-      }
-    }
-    format.json {
-      
-      r = {
-        object_number:e.entry_number,
-        state:e.business_rules_state,
-        object_updated_at:e.updated_at,
-        single_object:"Entry",
-        bv_results:[]
-      }
-      e.business_validation_results.each do |bvr|
-        return render_json_error "You do not have permission to view this object", 401 unless bvr.can_view?(current_user)
-        h = {
-          id:bvr.id,
-          state:bvr.state,
-          template:{name:bvr.business_validation_template.name},
-          updated_at:bvr.updated_at,
-          rule_results:[]
-        }
-        bvr.business_validation_rule_results.each do |rr|
-          h[:rule_results] << business_validation_rule_result_json(rr)
-        end
-        r[:bv_results] << h
-      end
-      render json: {business_validation_result:r}
-    }
-    end
+    generic_validation_results(Entry.find params[:id])
   end
 
   #request that the images be reloaded from alliance for the given entry
@@ -203,7 +175,7 @@ class EntriesController < ApplicationController
   def request_entry_data
     @entry = Entry.find params[:id]
     if current_user.sys_admin?
-      OpenChain::SqlProxyClient.new.delay.request_entry_data @entry.broker_reference
+      OpenChain::SqlProxyClient.delay.bulk_request_entry_data nil, [@entry.id]
       add_flash :notices, "Updated entry has been requested.  Please allow 10 minutes for it to appear."
     end
     redirect_to @entry
@@ -211,9 +183,7 @@ class EntriesController < ApplicationController
 
   def bulk_request_entry_data
     if current_user.sys_admin?
-      primary_keys = params[:pk].values
-      references = Entry.where(id: primary_keys).pluck(:broker_reference)
-      OpenChain::SqlProxyClient.new.delay.bulk_request_entry_data references
+      OpenChain::SqlProxyClient.delay.bulk_request_entry_data params[:sr_id], params[:pk]
       add_flash :notices, "Updated entries have been requested.  Please allow 10 minutes for them to appear."
     end
 

@@ -54,6 +54,23 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       sql_proxy_client.should_receive(:request_updated_entry_numbers).with(instance_of(ActiveSupport::TimeWithZone), instance_of(ActiveSupport::TimeWithZone), "TESTING")
       described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client, "customer_numbers" => "TESTING"})
     end
+
+    it "offsets request time by X seconds if requested" do
+      original_request = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-01 00:00"
+      now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now
+
+      KeyJsonItem.updated_entry_data('last_request').create! json_data: "{\"last_request\":\"#{original_request.strftime("%Y-%m-%d %H:%M")}\"}"
+      ActiveSupport::TimeZone["Eastern Time (US & Canada)"].stub(:now).and_return now
+
+      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client.should_receive(:request_updated_entry_numbers).with(original_request - 2.minutes, now - 2.minutes, nil)
+      described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client, 'offset' => '120'})
+
+      # Check that a json key value was updated to the actual runtime (not the offset time)
+      key = KeyJsonItem.updated_entry_data('last_request').first
+      expect(key).not_to be_nil
+      expect(key.data['last_request']).to eq now.strftime("%Y-%m-%d %H:%M")
+    end
   end
 
   describe "request_since_hours_ago" do

@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       end
 
       @entry = Factory(:entry, master_bills_of_lading: "MB1\nMB2", house_bills_of_lading: "HB1\nHB2", broker_reference: "REF", entry_number: "NUM", entry_type: "TYPE", export_date: Date.new(2014, 11, 1), 
-        release_date: Date.new(2014, 11, 2), entry_filed_date: Date.new(2014, 11, 3), entry_port_code: "CD", vessel: "VESS", voyage: "VOY", carrier_code: "CAR", unlading_port_code: "UNL", 
+        release_date: Date.new(2014, 11, 2), entry_filed_date: Date.new(2014, 11, 3), vessel: "VESS", voyage: "VOY", carrier_code: "CAR", unlading_port_code: "UNL", 
         entry_port_code: "EPC", lading_port_code: "LPC", total_invoiced_value: "666.66", hmf: "123.45", mpf: "234.56", cotton_fee: "345.67", total_duty: "456.78", arrival_date: Date.new(2014, 11, 4))
 
       @invoice = Factory(:broker_invoice, invoice_number: "INV1", invoice_date: Date.new(2014, 11, 1), invoice_total: "100.99", entry: @entry)

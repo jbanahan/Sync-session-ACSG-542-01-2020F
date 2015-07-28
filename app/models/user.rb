@@ -52,6 +52,7 @@ class User < ActiveRecord::Base
 
   validates  :company, :presence => true
   validates  :username, presence: true, uniqueness: { case_sensitive: false }
+  validate :valid_email
 
   before_save :should_update_timestaps?
   after_save :reset_timestamp_flag
@@ -198,6 +199,11 @@ class User < ActiveRecord::Base
       end
     end
     nil
+  end
+
+  # Clobber Clearance's normalize_email to prevent it from stripping out spaces from emails.
+  def self.normalize_email email
+    email.to_s.strip
   end
 
   # override default clearance email authentication
@@ -360,16 +366,16 @@ class User < ActiveRecord::Base
 
   #permissions
   def view_business_validation_results?
-    self.company.master?
+    self.company.master? || (self.company.importer? && self.company.show_business_rules?)
   end
   def edit_business_validation_results?
-    self.company.master?
+    self.view_business_validation_results?
   end
   def view_business_validation_rule_results?
-    self.company.master?
+    self.view_business_validation_results?
   end
   def edit_business_validation_rule_results?
-    self.company.master?
+    self.view_business_validation_results?
   end
   def view_official_tariffs?
     self.company.master?
@@ -627,5 +633,12 @@ class User < ActiveRecord::Base
   def remove_from_group_cache group
     group_cache(false).try(:delete, group.system_code)
     nil
+  end
+
+  def valid_email
+    regex = /\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i  #http://stackoverflow.com/a/22994329
+    rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| !!(e =~ regex) } 
+    error_message = rejected.count > 1 ? "The following emails are invalid: #{rejected.join(', ')}" : "Invalid email address"
+    errors.add(:email, error_message) unless rejected.empty?
   end
 end

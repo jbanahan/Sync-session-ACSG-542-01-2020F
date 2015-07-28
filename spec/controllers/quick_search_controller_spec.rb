@@ -52,6 +52,21 @@ describe QuickSearchController do
       expect(j).to eq expected_response
     end
 
+    it "sorts results by qualified field name specified in Core Module" do
+      Factory(:entry, :broker_reference => "123_second", :file_logged_date => DateTime.now - 1)
+      Factory(:entry, :broker_reference => "123_last", :file_logged_date => DateTime.now - 2)
+      Factory(:entry, :broker_reference => "123_first", :file_logged_date => DateTime.now)
+      CoreModule::ENTRY.should_receive(:quicksearch_sort_by).at_least(1).times.and_return "entries.file_logged_date"
+      
+      get :by_module, module_type:'Entry', v: '123'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      
+      expect(j["qs_result"]["vals"].first["ent_brok_ref"]).to eq "123_first"
+      expect(j["qs_result"]["vals"].second["ent_brok_ref"]).to eq "123_second"
+      expect(j["qs_result"]["vals"].third["ent_brok_ref"]).to eq "123_last"
+    end
+
     it "should return a result for Vendor" do
       vendor = Factory(:company, :name=>'Company', vendor: true, system_code: "CODE")
       get :by_module, module_type: "Company", v: 'Co'

@@ -31,7 +31,16 @@ module OpenChain; module CustomHandler; class KewillDataRequester
     end
 
     now = time_zone.now
-    sql_proxy_client(opts).request_updated_entry_numbers last_request, now, customer_numbers_from_opts(opts)
+
+    # Apply the offset window, if present, to adjust the request start/end times by X seconds.
+    # This is implemented to workaround data that is being written out while the data request is being done.
+    # Alliance/Kewill Customs can take quite a while to write out entry data, and if we request to pull
+    # the data while it's writing it out then we run the chance of missing pieces of it.  Thus, 
+    # our "real-time" feed should only request data that was written a couple minutes ago.
+    # Clearly, they're not using database transactions in that system - or if they are, aren't wrapping
+    # the full data structure update in one.
+    start_time, end_time = apply_offset(last_request, now, opts)
+    sql_proxy_client(opts).request_updated_entry_numbers start_time, end_time, customer_numbers_from_opts(opts)
 
     # Only save the data once we're pretty sure the query to the sql proxy system was successful
     # This allows us to have the next run just re-request all the data if the query failed
@@ -44,6 +53,16 @@ module OpenChain; module CustomHandler; class KewillDataRequester
     opts['customer_numbers'].blank? ? nil : opts['customer_numbers']
   end
   private_class_method :customer_numbers_from_opts
+
+  def self.apply_offset start_time, end_time, opts
+    offset = opts['offset'].to_i
+    if offset != 0
+      start_time = (start_time - offset.seconds)
+      end_time = (end_time - offset.seconds)
+    end
+    [start_time, end_time]
+  end
+  private_class_method :apply_offset
 
   def self.sql_proxy_client opts
     (opts['sql_proxy_client'] ? opts['sql_proxy_client'] : OpenChain::SqlProxyClient.new)

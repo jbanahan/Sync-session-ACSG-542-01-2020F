@@ -64,7 +64,7 @@ describe SchedulableJob do
       m = OpenMailer.deliveries.pop
       expect(m.to.first).to eq "me@there.com"
       expect(m.subject).to include "Failed"
-      expect(m.body.raw_source).to include "No &#x27;run_schedulable&#x27; method exists on &#x27;TestSchedulable&#x27; class."
+      expect(m.body.raw_source).to include "No 'run_schedulable' method exists on 'TestSchedulable' class."
     end
     it "should log an error if no error email is configured" do
       opts = {'last_start_time'=>nil,'a'=>"b"}

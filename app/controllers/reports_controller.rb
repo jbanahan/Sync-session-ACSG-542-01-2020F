@@ -314,6 +314,25 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_drawback_audit_report
+    if OpenChain::Report::DrawbackAuditReport.permission?(current_user)
+      @claims = DrawbackClaim.where(importer_id: current_user.company.id)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_drawback_audit_report
+    if OpenChain::Report::DrawbackAuditReport.permission?(current_user)
+      settings = {drawback_claim_id: params[:drawback_claim_id]}
+      run_report "Drawback Audit Report", OpenChain::Report::DrawbackAuditReport, settings, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+
   def show_pvh_container_log
     if OpenChain::Report::PvhContainerLogReport.permission?(current_user)
       render
@@ -340,6 +359,17 @@ class ReportsController < ApplicationController
   end
   def run_monthly_entry_summation
     run_report "Monthly Entry Summation", OpenChain::Report::MonthlyEntrySummation, params.slice(:start_date, :end_date, :customer_number), []
+  end
+
+  def show_container_cost_breakdown
+    if OpenChain::Report::EntryContainerCostBreakdown.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+  def run_container_cost_breakdown
+    run_report "Container Cost Breakdown", OpenChain::Report::EntryContainerCostBreakdown, params.slice(:start_date, :end_date, :customer_number), []
   end
 
   private

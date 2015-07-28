@@ -36,7 +36,11 @@ module OpenChain
         s.shipment_lines.destroy_all
         rows.each do |r|
           next if r[8].blank?
-          sl = s.shipment_lines.create!(:product_id=>Product.find_or_create_by_unique_identifier(r[8]).id,:quantity=>r[12])
+          raise "Style must be 5 numbers, but was '#{r[8]}'" unless r[8].match(/^\d{5}$/)
+          # sl = s.shipment_lines.create!(:product_id=>Product.find_or_create_by_unique_identifier(r[8]).id,:quantity=>r[12])
+          p = Product.where(unique_identifier:"JCREW-#{r[8]}").first_or_create!(name:r[8],importer_id:s.importer_id)
+          sl = s.shipment_lines.create!(:product_id=>p.id,:quantity=>r[12])
+
           sl.update_custom_value! custom_def_hash['po'], r[7]
           sl.update_custom_value! custom_def_hash['cl'], r[9]
           sl.update_custom_value! custom_def_hash['sz'], (r[11].blank? ? r[10] : "#{r[10]}/#{r[11]}")

@@ -323,5 +323,15 @@ describe XlsMaker do
       expect(XlsMaker.excel_url("/page.html?a=1&b=2")).to eq "http://localhost/redirect.html?page=#{CGI.escape("/page.html?a=1&b=2")}"
     end
   end
+
+  describe "create_workbook_and_sheet" do
+    it "creates and returns a workbook and sheet object" do
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test", ["Header", "Header 2"]
+      expect(wb.worksheet(0)).to eq sheet
+      expect(sheet.name).to eq "Test"
+      expect(sheet.row(0)).to eq ["Header", "Header 2"]
+      expect(sheet.row(0).format 0).to eq XlsMaker::HEADER_FORMAT
+    end
+  end
 end
 

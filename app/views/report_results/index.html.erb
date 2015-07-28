@@ -47,11 +47,11 @@
     <td>DAS Billing Summary report.</td></tr>
   <%end-%>
   <%if OpenChain::Report::EddieBauerStatementSummary.permission? current_user-%>
-    <tr class='hover'><td><%=link_to "Eddie Bauer Statment Summary", reports_show_eddie_bauer_statement_summary_path%></td>
+    <tr class='hover'><td><%=link_to "Eddie Bauer Statement Summary", reports_show_eddie_bauer_statement_summary_path%></td>
     <td>Eddie Bauer custom A/P Due Customs Report</td></tr>
   <%end-%>
   <%if OpenChain::Report::EddieBauerCaStatementSummary.permission? current_user-%>
-    <tr class='hover'><td><%=link_to "Eddie Bauer CA Statment Summary", reports_show_eddie_bauer_ca_statement_summary_path%></td>
+    <tr class='hover'><td><%=link_to "Eddie Bauer CA Statement Summary", reports_show_eddie_bauer_ca_statement_summary_path%></td>
     <td>Eddie Bauer CA custom A/P Due Customs Report</td></tr>
   <%end-%>
   <%if OpenChain::Report::FootLockerBillingSummary.permission? current_user-%>
@@ -102,6 +102,14 @@
     <tr class='hover'><td><%=link_to "Monthly Entry Summation", reports_show_monthly_entry_summation_path%></td>
     <td>Sums entry data by month.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::EntryContainerCostBreakdown.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Container Cost Breakdown", reports_show_container_cost_breakdown_path%></td>
+    <td>Basic Container-based Landed Cost report.</td></tr>
+  <%end-%>
+  <%if current_user.view_drawback?%>
+    <tr class='hover'><td><%=link_to "Drawback Audit Report", reports_show_drawback_audit_report_path%></td>
+    <td>Shows all drawback claims.</td></tr>
+  <%end%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

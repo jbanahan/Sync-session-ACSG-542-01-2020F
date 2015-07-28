@@ -548,7 +548,7 @@ class ApplicationController < ActionController::Base
     # Angular will pick up this cookie value and add it to every ajax request, which allows us to then
     # utilize the rails forgery protection.
     if protect_against_forgery?
-      cookies['XSRF-TOKEN'] = {value: form_authenticity_token, secure: !Rails.env.development?}
+      cookies['XSRF-TOKEN'] = {value: form_authenticity_token, secure: Rails.application.config.use_secure_cookies}
     end
   end
 

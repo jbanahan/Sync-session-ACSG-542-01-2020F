@@ -46,10 +46,8 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
         can_edit_lambda: admin_edit_lambda(),
         can_view_lambda: admin_edit_lambda()
       }],
-      [16,:cmp_enabled_booking_types,:enabled_booking_types,'Enabled Booking Types',{
-        data_type: :string,
-        can_edit_lambda: admin_edit_lambda()
-      }]
+      [16, :comp_show_buiness_rules, :show_business_rules, "Show Business Rules", {datatype: :boolean, can_edit_lambda: admin_edit_lambda(), can_view_lambda: admin_edit_lambda()}],
+      [17,:cmp_enabled_booking_types,:enabled_booking_types,'Enabled Booking Types',{data_type: :string, can_edit_lambda: admin_edit_lambda()}]
     ]
     add_fields CoreModule::COMPANY, make_attachment_arrays(100,'cmp',CoreModule::COMPANY)
   end

@@ -1,14 +1,14 @@
 source 'https://rubygems.org'
 
-gem 'rails', '3.2.21'
-gem 'mysql2', '0.3.13'
+gem "rails", "3.2.22"
+gem 'mysql2', '0.3.18'
 gem 'sqlite3'
-# AWS-SDK prior to 1.15 has a timeout bug in Ruby 2 on s3_object.write
-gem 'aws-sdk', '1.17.0'
+# AWS-SDK API completely changed in version 2.  Staying below 2 for now, will require some work to translate code to new version.  
+gem 'aws-sdk', '< 2'
 gem 'will_paginate', '3.0.4'
 gem 'paperclip', '3.5.1'
 gem 'uuidtools', '2.1.4'
-gem 'spreadsheet', '0.8.8'
+gem 'spreadsheet', '~> 1.0'
 gem 'exception_notification', '4.0.0'
 gem 'rufus-scheduler', '2.0.24'
 gem 'delayed_job_active_record', '0.4.4'
@@ -17,10 +17,9 @@ gem 'delayed_job', '3.0.5'
 gem 'daemons', '1.1.9'
 gem 'dalli', '2.6.4'
 gem 'postmark-rails', '0.5.2'
-# rubyzip API changed in 1.0, need to pin to version prior to 1.0 until we fix files referencing 'zip/zip'
-gem 'rubyzip', '< 1.0.0'
+gem 'rubyzip', '~> 1.1'
 gem 'jquery-rails', '2.3.0'
-gem 'newrelic_rpm', '~> 3.8.0.218'
+gem 'newrelic_rpm', '~> 3.12.1.298'
 
 #text processing/encoding stuff
 gem 'RedCloth', '4.2.9'
@@ -44,7 +43,7 @@ gem 'sucker_punch', '~> 1.0'
 gem 'turbo-sprockets-rails3', '~> 0.3'
 
 #inbound email processing
-gem 'griddler', '~> 1.0'
+gem 'griddler', '~> 1.1'
 gem 'griddler-postmark', '~> 1.0'
 
 # Standard ruby logger uses mutexes for writing / rotation which we don't need and
@@ -60,6 +59,9 @@ gem 'connection_pool', '~> 2.1'
 
 gem 'jsonpath', '~> 0.5.6'
 
+# Rails 3 requires test unit even in production (for some reason).  I believe in 4 this can be dropped to just the test group
+gem 'test-unit'
+
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
@@ -69,6 +71,7 @@ group :development,:test do
   gem 'jasmine-rails'
   gem 'rspec_junit_formatter', '0.2.2' #circle ci formatting
   # gem 'rack-mini-profiler'
+  gem 'minitest'
 end
 
 group :test do

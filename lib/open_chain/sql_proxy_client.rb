@@ -1,4 +1,5 @@
 require 'open_chain/json_http_client'
+require 'open_chain/field_logic'
 
 module OpenChain; class SqlProxyClient
 
@@ -71,8 +72,11 @@ module OpenChain; class SqlProxyClient
     request 'entry_data', {file_no: file_no.to_i}, {}
   end
 
-  def bulk_request_entry_data file_nos
-    file_nos.each {|num| request_entry_data num }
+  def self.bulk_request_entry_data search_run_id, primary_keys
+    c = self.new
+    OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::ENTRY,search_run_id,primary_keys) do |good_count, entry|
+      c.request_entry_data entry.broker_reference if entry.source_system == "Alliance"
+    end
   end
 
   # Requests sql proxy return a list of entry numbers that were updated 

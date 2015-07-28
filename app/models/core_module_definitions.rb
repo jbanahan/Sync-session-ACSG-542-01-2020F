@@ -224,7 +224,8 @@ module CoreModuleDefinitions
        :children => [COMMERCIAL_INVOICE],
        :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
        :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"},
-       :quicksearch_fields => [:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums,:ent_cargo_control_number,:ent_hbols,:ent_commercial_invoice_numbers]
+       :quicksearch_fields => [:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums,:ent_cargo_control_number,:ent_hbols,:ent_commercial_invoice_numbers],
+       :quicksearch_sort_by_mf => :ent_file_logged_date
    })
   OFFICIAL_TARIFF = CoreModule.new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate], :quicksearch_fields=> [:ot_hts_code,:ot_full_desc])
   PLANT_PRODUCT_GROUP_ASSIGNMENT = CoreModule.new('PlantProductGroupAssignment','Plant Product Group Assignment',default_search_columns:[:ppga_pg_name], show_field_prefix: true)

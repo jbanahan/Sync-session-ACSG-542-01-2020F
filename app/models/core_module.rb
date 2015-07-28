@@ -104,6 +104,16 @@ class CoreModule
     end
 
     @quicksearch_fields = o[:quicksearch_fields]
+    @quicksearch_sort_by_mf = o[:quicksearch_sort_by_mf]
+  
+  end
+
+  def quicksearch_sort_by  #returns qualified field name. Getter avoids circular dependency during init
+    unless @quicksearch_sort_by_qfn
+      qsbmf = ModelField.find_by_uid(@quicksearch_sort_by_mf ? @quicksearch_sort_by_mf : :nil)
+      @quicksearch_sort_by_qfn = qsbmf.blank? ? "#{@table_name}.created_at" : qsbmf.qualified_field_name
+    end
+    @quicksearch_sort_by_qfn
   end
 
   #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail

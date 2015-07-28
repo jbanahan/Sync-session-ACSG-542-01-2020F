@@ -49,16 +49,14 @@ module OpenChain; module ModelFieldDefinition; module ShipmentLineFieldDefinitio
           i + (ppu*qty)}},
         import_lambda: lambda {|o,d| "Linked fields are read only."},
         qualified_field_name: "(SELECT SUM(order_lines.price_per_unit * shipment_lines.quantity) FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id WHERE piece_sets.shipment_line_id = shipment_lines.id)",
-        history_ignore:true,
-        read_only:true
+        history_ignore:true
         }],
       [11,:shpln_cust_ord_no,:customer_order_number,"Order(s)",{data_type: :text,
         read_only: true,
         export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.customer_order_number}.uniq.compact.sort.join(',') },
         import_lambda: lambda {|o,d| "Linked fields are read only."},
         qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id WHERE shipment_lines.id = piece_sets.shipment_line_id)",
-        history_ignore:true,
-        read_only:true
+        history_ignore:true
         }],
       [12,:shpln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",{data_type: :integer,
         import_lambda: lambda {|sl,id|

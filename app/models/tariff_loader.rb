@@ -1,4 +1,4 @@
-require 'zip/zip'
+require 'zip'
 
 class TariffLoader
   
@@ -173,7 +173,7 @@ class TariffLoader
     # [1] = if a zip file, a tempfile reference to the extracted file.
     file_to_process = []
     if file_path.downcase.end_with? "zip"
-      Zip::ZipFile.open(file_path) do |zip_file| 
+      Zip::File.open(file_path) do |zip_file| 
         zip_file.each do |file|
             parser = get_parser(file.name)
             # Strip the extension from the file name for the first arg to the Tempfile constructor

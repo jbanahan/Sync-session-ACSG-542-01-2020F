@@ -232,8 +232,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
     it 'should send data to Alliance parser if custom feature enabled and path contains _alliance' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
-      OpenChain::AllianceParser.should_receive(:delay).and_return OpenChain::AllianceParser
-      OpenChain::AllianceParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+      # This path is a no-op now.
+      OpenChain::AllianceParser.should_not_receive(:delay)
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
     end

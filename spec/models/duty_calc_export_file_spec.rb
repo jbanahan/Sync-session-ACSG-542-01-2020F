@@ -1,6 +1,3 @@
-require 'fileutils'
-require 'zip/zipfilesystem'
-require 'spreadsheet'
 require 'spec_helper'
 
 describe DutyCalcExportFile do
@@ -35,7 +32,7 @@ describe DutyCalcExportFile do
     it "should cap at max files" do
       2.times {DutyCalcExportFileLine.create!(importer_id:@importer.id,export_date:Date.new(2013,9,10))} #makes 4 total because of before each
       d, f = DutyCalcExportFile.generate_excel_zip @importer, @zip_path, 1, nil, 2
-      Zip::ZipFile.open(f.path) do |zipfile|
+      Zip::File.open(f.path) do |zipfile|
         zipfile.dir.entries("/").should have(2).items
       end
       #should have 2 files not included because past the max size
@@ -43,7 +40,7 @@ describe DutyCalcExportFile do
     end
     it "should generate a single zipped excel file" do
       d, f = DutyCalcExportFile.generate_excel_zip @importer, @zip_path
-      Zip::ZipFile.open(f.path) do |zipfile|
+      Zip::File.open(f.path) do |zipfile|
         zipfile.dir.entries("/").should have(1).item
         z_out = 'spec/support/tmp/x.xls'
         @to_del << z_out
@@ -59,7 +56,7 @@ describe DutyCalcExportFile do
     end
     it "should generate multiple when the number of lines is over the max_lines_per_file" do
       d, f = DutyCalcExportFile.generate_excel_zip @importer, @zip_path, 1
-      Zip::ZipFile.open(f.path) do |zipfile|
+      Zip::File.open(f.path) do |zipfile|
         zipfile.dir.entries("/").should == ["File 1.xls","File 2.xls"]
       end
     end

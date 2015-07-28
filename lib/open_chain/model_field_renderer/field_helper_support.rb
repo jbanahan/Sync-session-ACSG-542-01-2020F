@@ -41,7 +41,8 @@ module OpenChain; module ModelFieldRenderer; module FieldHelperSupport
   def for_model_fields model_field_uids
     to_get = model_field_uids.respond_to?(:each) ? model_field_uids : [model_field_uids]
     to_get.each do |mf_uid|
-      yield get_model_field(mf_uid)
+      mf = get_model_field(mf_uid)
+      yield mf unless mf.nil?
     end
   end
 

@@ -1,6 +1,9 @@
 require 'open_chain/custom_handler/duty_calc/export_history_parser'
 require 'open_chain/custom_handler/duty_calc/claim_audit_parser'
-class DrawbackClaimsController < ApplicationController 
+require 'open_chain/business_rule_validation_results_support'
+
+class DrawbackClaimsController < ApplicationController
+  include OpenChain::BusinessRuleValidationResultsSupport
 
   def index
     flash.keep
@@ -70,5 +73,9 @@ class DrawbackClaimsController < ApplicationController
 
   def secure
     DrawbackClaim.viewable(current_user) 
+  end
+
+  def validation_results
+    generic_validation_results(DrawbackClaim.find params[:id])
   end
 end

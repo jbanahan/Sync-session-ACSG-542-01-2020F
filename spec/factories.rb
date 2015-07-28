@@ -356,7 +356,7 @@ Factory.define :business_validation_rule_result do |f|
   }
 end
 Factory.define :container do |f|
-  f.sequence :container_number
+  f.container_number {Factory.next :alpha_numeric} 
   f.association :entry
 end
 Factory.define :event_subscription do |f|
