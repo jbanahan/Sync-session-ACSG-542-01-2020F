@@ -58,6 +58,11 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @p.classifications.first.tariff_records.destroy_all
       expect(described_class.new.products_to_send).to include @p
     end
+    it "finds a record that does not have a classfiication" do
+      @p.classifications.destroy_all
+      @p.update_custom_value! @cd_msl_rec, 1.day.ago
+      expect(described_class.new.products_to_send).to include @p
+    end
   end
   describe :outbound_file do
     before :all do
@@ -294,6 +299,21 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
 
       # Verify blanks in the tariff data are present
       expect(r[1][0]).to eq @p.unique_identifier
+      expect(r[1][2]).to be_blank
+      expect(r[1][3]).to be_blank
+      expect(r[1][4]).to be_blank
+      expect(r[1][5]).to be_blank
+    end
+
+    it "sends a row with blank country information if no classifications are present" do
+      @c.destroy
+
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+
+      # Verify blanks in the tariff data are present, and country is defaulted to CN
+      expect(r[1][0]).to eq @p.unique_identifier
+      expect(r[1][1]).to eq "CN"
       expect(r[1][2]).to be_blank
       expect(r[1][3]).to be_blank
       expect(r[1][4]).to be_blank

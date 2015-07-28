@@ -27,7 +27,7 @@ module OpenChain
         cd_msl_rec = @out_cdefs[:msl_receive_date]
         cd_csm_num = @out_cdefs[:csm_numbers]
         Product.select("distinct products.*").need_sync("MSLE").
-          joins("INNER JOIN classifications c ON c.product_id = products.id AND c.country_id NOT IN (#{dont_send_countries.join(",")})").
+          joins("LEFT OUTER JOIN classifications c ON c.product_id = products.id AND c.country_id NOT IN (#{dont_send_countries.join(",")})").
           joins("LEFT OUTER JOIN custom_values rd ON products.id = rd.customizable_id AND rd.customizable_type = 'Product' AND rd.custom_definition_id = #{cd_msl_rec.id}").
           joins("LEFT OUTER JOIN custom_values csm ON products.id = csm.customizable_id AND csm.customizable_type = 'Product' AND csm.custom_definition_id = #{cd_csm_num.id}").
           where("TRIM(csm.text_value) != '' OR rd.date_value IS NOT NULL")
@@ -50,20 +50,25 @@ module OpenChain
         dont_send_countries = dont_send_classification_countries
         init_outbound_custom_definitions
         products.each do |p|
+          line_count = 0
           classifications = p.classifications.includes(:country, :tariff_records).where("not classifications.country_id IN (?)",dont_send_countries)
           classifications.each do |cl|
             iso = cl.country.iso_code
-            tariff_count = 0
             cl.tariff_records.order("line_number ASC").each do |tr|
-              file << outbound_file_content(p, cl, tr, iso).to_csv
-              tariff_count += 1
+              file << outbound_file_content(p, tr, iso).to_csv
+              line_count += 1
             end
 
             # Send blank tariff data if we haven't sent anything for this classification country
-            if tariff_count == 0
-              file << outbound_file_content(p, cl, nil, iso).to_csv
+            if line_count == 0
+              file << outbound_file_content(p, nil, iso).to_csv
             end
           end
+
+          if line_count == 0
+            file << outbound_file_content(p, nil, nil).to_csv
+          end
+
           sr = p.sync_records.find_or_initialize_by_trading_partner("MSLE")
           sr.update_attributes(:sent_at=>Time.now)
         end
@@ -205,11 +210,14 @@ module OpenChain
           @in_defs
         end
 
-        def outbound_file_content p, cl, tr, iso
-          # Be careful in here, the tariff record (tr) CAN be nil now
+        def outbound_file_content p, tr, iso
+          # Be careful in here, the tariff record (tr) and ISO CAN be nil now
           p.freeze_custom_values
 
-          file = [p.unique_identifier, iso, mp1_value(tr,iso), hts_value(tr.try(:hts_1), iso), hts_value(tr.try(:hts_2), iso), hts_value(tr.try(:hts_3), iso)]
+          # RL wants the MSL system to receive product level data, BUT the MSL system can't receive data if it doesn't have a country code, SO 
+          # we're defaulting to CN when there is no classification for the product.
+
+          file = [p.unique_identifier, (iso.presence || "CN"), mp1_value(tr,iso), hts_value(tr.try(:hts_1), iso), hts_value(tr.try(:hts_2), iso), hts_value(tr.try(:hts_3), iso)]
           file.push *get_custom_values(p, :length_cm, :width_cm, :height_cm)
 
           # RL wants to prevent certain divisions from sending fiber content values at this time.
