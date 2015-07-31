@@ -262,7 +262,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "visa_no" => 123,
                 "visa_qty" => 199,
                 "visa_uom" => "VISAUOM",
-                "uscs_line_no" => 1,
+                "uscs_line_no" => 2,
                 "value_foreign" => 99999,
                 "container_no" => "NOTACONTAINER",
                 'tariffs' => [
@@ -521,6 +521,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.cvd_case_value).to eq 4.56
       expect(line.cvd_case_percent).to eq 5.67
       expect(line.container).to eq entry.containers.first
+      expect(line.fda_review_date).to be_nil
+      expect(line.fda_hold_date).to be_nil
+      expect(line.fda_release_date).to be_nil
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
@@ -562,6 +565,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.total_add).to eq BigDecimal.new("1.23")
       expect(entry.total_packages).to eq BigDecimal.new("67")
       expect(entry.total_packages_uom).to eq "PCS"
+      expect(entry.fda_pending_release_line_count).to eq 0
   
       expect(entry.importer).not_to be_nil
       expect(entry.importer.name).to eq entry.customer_name
@@ -718,6 +722,150 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       EntryPurge.create source_system: "Alliance", broker_reference: @e['file_no'], date_purged: Time.zone.parse("2015-01-01 00:00")
       expect(subject.process_entry @e).not_to be_nil
       expect(Entry.where(broker_reference: @e['file_no']).first).not_to be_nil
+    end
+
+    it "parses fda review/hold/release information for multiple lines from notes" do
+      @e['notes'] << {'note' => "07/23/15 13:44 AG FDA 01 FDA REVIEW", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507201247}
+      @e['notes'] << {'note' => "07/20/15 09:13 AG FDA 02 FDA HOLD", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "FDA DETAINED USCS Ln 001 THRU 002", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "07/17/15 17:07 AG FDA 05 FDA RELEASE", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+      @e['notes'] << {'note' => "FDA RELEASED USCS Ln 001 THRU 002", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+
+      @e['commercial_invoices'].first['lines'].first['tariffs'].first['fda'] = 'Y'
+      @e['commercial_invoices'].second['lines'].first['tariffs'].first['fda'] = 'Y'
+
+      entry = subject.process_entry @e
+      expect(entry.fda_pending_release_line_count).to eq 0
+
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      # Values are 4 hours ahead due to timezone translation
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to eq Time.zone.parse("2015-07-21 16:47")
+      expect(line.fda_release_date).to eq Time.zone.parse("2015-07-22 16:47")
+
+      line = entry.commercial_invoices.second.commercial_invoice_lines.first
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to eq Time.zone.parse("2015-07-21 16:47")
+      expect(line.fda_release_date).to eq Time.zone.parse("2015-07-22 16:47")
+    end
+
+    it "parses fda review hold information one line at a time" do
+      @e['notes'] << {'note' => "07/23/15 13:44 AG FDA 01 FDA REVIEW", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507201247}
+      @e['notes'] << {'note' => "07/20/15 09:13 AG FDA 02 FDA HOLD", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "FDA DETAINED USCS Ln 001", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "FDA DETAINED USCS Ln 002    000", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "07/17/15 17:07 AG FDA 05 FDA RELEASE", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+      @e['notes'] << {'note' => "FDA RELEASED USCS Ln 001 THRU 001", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+
+      @e['commercial_invoices'].first['lines'].first['tariffs'].first['fda'] = 'Y'
+      @e['commercial_invoices'].second['lines'].first['tariffs'].first['fda'] = 'Y'
+
+      entry = subject.process_entry @e
+
+      # Because no release was given for the second line the pending release line count should be 1
+      expect(entry.fda_pending_release_line_count).to eq 1
+
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      # Values are 4 hours ahead due to timezone translation
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to eq Time.zone.parse("2015-07-21 16:47")
+      expect(line.fda_release_date).to eq Time.zone.parse("2015-07-22 16:47")
+
+      line = entry.commercial_invoices.second.commercial_invoice_lines.first
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to eq Time.zone.parse("2015-07-21 16:47")
+      expect(line.fda_release_date).to be_nil
+    end
+
+    it "parses review / may proceed messages" do
+      @e['notes'] << {'note' => "07/23/15 13:44 AG FDA 01 FDA REVIEW", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507201247}
+      @e['notes'] << {'note' => "07/17/15 17:07 AG FDA 06 FDA MAY PROCEED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+      @e['notes'] << {'note' => "FDA MAY PROCEED USCS Ln 001 THRU 002", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+
+      @e['commercial_invoices'].first['lines'].first['tariffs'].first['fda'] = 'Y'
+      @e['commercial_invoices'].second['lines'].first['tariffs'].first['fda'] = 'Y'
+
+      entry = subject.process_entry @e
+
+      # Because no release was given for the second line the pending release line count should be 1
+      expect(entry.fda_pending_release_line_count).to eq 0
+
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      # Values are 4 hours ahead due to timezone translation
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to be_nil
+      expect(line.fda_release_date).to eq Time.zone.parse("2015-07-22 16:47")
+
+      line = entry.commercial_invoices.second.commercial_invoice_lines.first
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to be_nil
+      expect(line.fda_release_date).to eq Time.zone.parse("2015-07-22 16:47")
+    end
+
+    it "skips messages that are not modified by customs" do
+      # Normally, the following line would set the review date on the lines, but since it's not modified by CUSTOMS, we skip it.
+      @e['notes'] << {'note' => "07/23/15 13:44 AG FDA 01 FDA REVIEW", 'modified_by'=>"SOME PERSON", 'date_updated' => 201507201247}
+
+      @e['commercial_invoices'].first['lines'].first['tariffs'].first['fda'] = 'Y'
+      @e['commercial_invoices'].second['lines'].first['tariffs'].first['fda'] = 'Y'
+
+      entry = subject.process_entry @e
+
+      expect(entry.fda_pending_release_line_count).to eq 0
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.fda_review_date).to be_nil
+      expect(entry.commercial_invoices.second.commercial_invoice_lines.first.fda_review_date).to be_nil
+    end
+
+    it "skips lines that are not marked as FDA lines" do
+      # Customs sends ranges on the FDA note records and sometimes the line numbers in that range are not FDA records
+      # These lines should not get FDA records set on them then.
+      @e['notes'] << {'note' => "07/23/15 13:44 AG FDA 01 FDA REVIEW", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507201247}
+      @e['notes'] << {'note' => "07/20/15 09:13 AG FDA 02 FDA HOLD", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "FDA DETAINED USCS Ln 001 THRU 002", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "07/17/15 17:07 AG FDA 05 FDA RELEASE", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+      @e['notes'] << {'note' => "FDA RELEASED USCS Ln 001 THRU 002", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+
+      @e['commercial_invoices'].first['lines'].first['tariffs'].first['fda'] = 'Y'
+
+      entry = subject.process_entry @e
+      expect(entry.fda_pending_release_line_count).to eq 0
+
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      # Values are 4 hours ahead due to timezone translation
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to eq Time.zone.parse("2015-07-21 16:47")
+      expect(line.fda_release_date).to eq Time.zone.parse("2015-07-22 16:47")
+
+      line = entry.commercial_invoices.second.commercial_invoice_lines.first
+      expect(line.fda_review_date).to be_nil
+      expect(line.fda_hold_date).to be_nil
+      expect(line.fda_release_date).to be_nil
+    end
+
+    it "handles FDA line level messages that are not preceeded by header level ones" do
+      @e['notes'] << {'note' => "07/23/15 13:44 AG FDA 01 FDA REVIEW", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507201247}
+      @e['notes'] << {'note' => "FDA DETAINED USCS Ln 001", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "FDA EXAM USCS Ln 002    000", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507211247}
+      @e['notes'] << {'note' => "FDA RELEASED USCS Ln 001 THRU 001", 'modified_by'=>"CUSTOMS", 'date_updated' => 201507221247}
+
+      @e['commercial_invoices'].first['lines'].first['tariffs'].first['fda'] = 'Y'
+      @e['commercial_invoices'].second['lines'].first['tariffs'].first['fda'] = 'Y'
+
+      entry = subject.process_entry @e
+
+      # Because no release was given for the second line the pending release line count should be 1
+      expect(entry.fda_pending_release_line_count).to eq 1
+
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      # Values are 4 hours ahead due to timezone translation
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to eq Time.zone.parse("2015-07-21 16:47")
+      expect(line.fda_release_date).to eq Time.zone.parse("2015-07-22 16:47")
+
+      line = entry.commercial_invoices.second.commercial_invoice_lines.first
+      expect(line.fda_review_date).to eq Time.zone.parse("2015-07-20 16:47")
+      expect(line.fda_hold_date).to eq Time.zone.parse("2015-07-21 16:47")
+      expect(line.fda_release_date).to be_nil
     end
   end
 

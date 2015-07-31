@@ -262,14 +262,16 @@ module ApplicationHelper
     output
   end
   def show_model_fields(obj, model_field_uids, opts = {})
-
     core_object, form_object = get_core_and_form_objects(obj)
-
     opts = {:form=>form_object, :table=>false, :show_prefix=>false, :never_hide=>false, :display_read_only=>true}.merge(opts)
 
     output = ""
     for_model_fields(model_field_uids) do |mf|
-      output << show_model_field(core_object, form_object, mf, opts)
+      if block_given?
+        output << show_model_field(core_object, form_object, mf, opts, &Proc.new)
+      else
+        output << show_model_field(core_object, form_object, mf, opts)
+      end
     end
 
     if output.blank?
