@@ -322,4 +322,58 @@ order by importer_id, monthly_statement_due_date desc"
       }
     end
   end
+
+  module DutyDetail
+   
+    def self.create_linked_digests(current_user, company)
+      company.linked_companies.map{|co| create_digest(current_user, co)}
+    end
+
+    def self.create_digest(current_user, company)
+      build_digest(get_entries(current_user, company))
+    end
+
+    def self.build_digest(entries)
+      co = nil
+        entries.each do |ent|
+          co ||= {company_name: ent.company_name, company_report: {date_hsh: {}, company_total_duty: 0, company_total_fees: 0, company_total_duty_and_fees: 0, company_entry_count: 0} }
+          company_ptr = co[:company_report]
+          date_ptr = company_ptr[:date_hsh][ent.duty_due_date] ||= {port_hsh: {}, date_total_duty: 0, date_total_fees: 0, date_total_duty_and_fees: 0, date_entry_count: 0}
+          port_ptr = date_ptr[:port_hsh][ent.port_name] ||= {port_total_duty: 0, port_total_fees: 0, port_total_duty_and_fees: 0, port_entry_count: 0, entries: []}
+
+          port_ptr[:port_total_duty] += ent.total_duty
+          port_ptr[:port_total_fees] += ent.total_fees
+          port_ptr[:port_total_duty_and_fees] += ent.total_duty_and_fees
+          port_ptr[:port_entry_count] += 1
+          port_ptr[:entries] << {ent_entry_number: ent.entry_number, ent_entry_type: ent.entry_type, ent_port_name: ent.port_name, ent_release_date: ent.release_date, 
+                                 ent_customer_references: ent.customer_references, ent_duty_due_date: ent.duty_due_date, ent_total_fees: ent.total_fees, 
+                                 ent_total_duty: ent.total_duty, ent_total_duty_and_fees: ent.total_duty_and_fees}
+
+          date_ptr[:date_total_duty] += ent.total_duty
+          date_ptr[:date_total_fees] += ent.total_fees
+          date_ptr[:date_total_duty_and_fees] += ent.total_duty_and_fees
+          date_ptr[:date_entry_count] += 1
+
+          company_ptr[:company_total_duty] += ent.total_duty
+          company_ptr[:company_total_fees] += ent.total_fees
+          company_ptr[:company_total_duty_and_fees] += ent.total_duty_and_fees
+          company_ptr[:company_entry_count] += 1
+        end
+      co ? co : []
+    end
+    
+    def self.get_entries(current_user, company)
+      if current_user.view_entries? && company.can_view?(current_user)
+        Entry.search_secure(current_user, Entry.select("companies.name AS company_name, duty_due_date, ports.name AS port_name, entry_number, "\
+                                                       "entry_type, customer_references, release_date, total_duty, total_fees, (total_duty + total_fees) AS total_duty_and_fees")
+                                               .joins(:us_entry_port)
+                                               .joins(:importer)
+                                               .where("release_date IS NOT NULL")
+                                               .where("duty_due_date >= ?", Date.today)
+                                               .where(monthly_statement_due_date: nil))
+                                              
+      else []
+      end
+    end
+  end
 end; end

@@ -413,4 +413,145 @@ describe OpenChain::ActivitySummary do
       expect(qry.all).to have(1).item
     end
   end
+
+  describe OpenChain::ActivitySummary::DutyDetail do
+    before(:each) do
+          @date1 = Date.today + 10
+          @date2 = Date.today + 15
+          date3 = Date.today - 10
+          @release_date = @date1.to_datetime
+         
+          @company = Factory(:company, name: 'Acme', master: true)
+          @user = Factory(:user, company: @company)
+          port1 = Factory(:port, schedule_d_code: '1234', name: 'Boston')
+          port2 = Factory(:port, schedule_d_code: '4321', name: 'New York')
+          Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '12345678912', release_date: @release_date, duty_due_date: @date1, total_duty: 100, total_fees: 200)
+          Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '21987654321', release_date: @release_date, duty_due_date: @date1, total_duty: 200, total_fees: 250)
+          Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '53471126928', release_date: @release_date, duty_due_date: @date2, total_duty: 300, total_fees: 350)
+          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '14215923867', release_date: @release_date, duty_due_date: @date2, total_duty: 400, total_fees: 450)
+          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '59172148623', release_date: @release_date, duty_due_date: @date2, total_duty: 500, total_fees: 550)
+          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '95711284263', release_date: nil, duty_due_date: @date2, total_duty: 600, total_fees: 650)
+          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '36248211759', release_date: @release_date, duty_due_date: date3, total_duty: 700, total_fees: 750)
+          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '63422811579', release_date: @release_date, duty_due_date: @date1, monthly_statement_due_date: @date2, total_duty: 800, total_fees: 850)
+
+        end
+
+      describe :create_linked_digests do
+        it "should populate an array with digests of an importer's linked companies" do
+          @company.stub(:linked_companies) {[Company.new(name: 'RiteChoys'), Company.new(name: 'Super Pow'), Company.new(name: 'Walshop')]}
+          described_class::DutyDetail.should_receive(:create_digest) { |u, c| {company_name: c.name} }.exactly(3).times
+          expect(described_class::DutyDetail.create_linked_digests(@user, @company)).to eq [{company_name: "RiteChoys"}, {company_name: "Super Pow"}, {company_name: "Walshop"}]   
+        end
+      end
+
+      describe :create_digest do
+        it "should delegate to build and get_entries" do
+          u = double('user')
+          c = double('company')
+          e = double('entries')
+          described_class::DutyDetail.should_receive(:get_entries).with(u, c).and_return e
+          described_class::DutyDetail.should_receive(:build_digest).with(e).and_return 'abc'
+          expect(described_class::DutyDetail.create_digest(u, c)).to eq 'abc'
+        end
+      end
+
+      describe :build_digest do
+        it "should return empty if entries are empty" do
+          @company.stub(:view_vendors?).with(@user) {true}
+          @user.stub(:view_entries?) {true}
+
+          entries = []
+          expect(described_class::DutyDetail.build_digest(entries)).to be_empty
+        end
+        
+        it "should return digest for multiple dates, ports" do
+          @company.stub(:view_vendors?) {true}
+          @user.stub(:view_entries?) {true}
+          
+          entries = described_class::DutyDetail.get_entries @user, @company
+          digest = {:company_name=>"Acme",
+                    :company_report=>{:date_hsh=>{@date1=>{:port_hsh=>{"Boston"=>{:port_total_duty=>300, 
+                                                                                  :port_total_fees=>450, 
+                                                                                  :port_total_duty_and_fees=>750, 
+                                                                                  :port_entry_count=> 2,                                                                                  
+                                                                                  :entries=>[{ent_entry_number: "12345678912", ent_entry_type: nil, ent_port_name: "Boston", 
+                                                                                              ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date1, 
+                                                                                              ent_total_fees: 200, ent_total_duty: 100, ent_total_duty_and_fees: 300}, 
+                                                                                             {ent_entry_number: "21987654321", ent_entry_type: nil, ent_port_name: "Boston", 
+                                                                                              ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date1, 
+                                                                                              ent_total_fees: 250, ent_total_duty: 200, ent_total_duty_and_fees: 450}]}}, 
+                                                          :date_total_duty=>300, 
+                                                          :date_total_fees=>450, 
+                                                          :date_total_duty_and_fees=>750,
+                                                          :date_entry_count=>2}, 
+                                                 @date2=>{:port_hsh=>{"Boston"=>{:port_total_duty=>300, 
+                                                                                 :port_total_fees=>350, 
+                                                                                 :port_total_duty_and_fees=>650,
+                                                                                 :port_entry_count=> 1,                                                                                 
+                                                                                 :entries=>[{ent_entry_number: "53471126928", ent_entry_type: nil, ent_port_name: "Boston", 
+                                                                                             ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2, 
+                                                                                             ent_total_fees: 350, ent_total_duty: 300, ent_total_duty_and_fees: 650}]}, 
+                                                                       "New York"=>{:port_total_duty=>900,
+                                                                                    :port_total_fees=>1000,
+                                                                                    :port_total_duty_and_fees=>1900,
+                                                                                    :port_entry_count=>2,                                                                                    
+                                                                                    :entries=>[{ent_entry_number: "14215923867", ent_entry_type: nil, ent_port_name: "New York", 
+                                                                                                ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2, 
+                                                                                                ent_total_fees: 450, ent_total_duty: 400, ent_total_duty_and_fees: 850}, 
+                                                                                               {ent_entry_number: "59172148623", ent_entry_type: nil, ent_port_name: "New York", 
+                                                                                                ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2, 
+                                                                                                ent_total_fees: 550, ent_total_duty: 500, ent_total_duty_and_fees: 1050}]}}, 
+                                                          :date_total_duty=>1200, 
+                                                          :date_total_fees=>1350, 
+                                                          :date_total_duty_and_fees=>2550,
+                                                          :date_entry_count=> 3}}, 
+                                     :company_entry_count=> 5,
+                                     :company_total_duty=>1500, 
+                                     :company_total_fees=>1800, 
+                                     :company_total_duty_and_fees=>3300}}      
+          expect(described_class::DutyDetail.build_digest(entries)).to eq digest
+        end
+      end
+
+      describe :get_entries do
+
+        it "should return empty if user cannot view entries" do
+          @company.stub(:can_view?).with(anything()).and_return(true)
+          
+          @user.stub(:view_entries?).and_return(false)
+          expect(described_class::DutyDetail.get_entries(@user, @company)).to be_empty
+        end
+        
+        it "should return empty if user does not have permission to companies provided" do
+          @user.stub(:view_entries?) {true}
+          
+          @company.stub(:can_view?).with(anything()).and_return(false)
+          expect(described_class::DutyDetail.get_entries(@user, @company)).to be_empty
+        end
+        
+        it "should not return unreleased entries" do
+          @company.stub(:can_view?).with(anything()).and_return(true)
+          @user.stub(:view_entries?).and_return(true)
+          
+          expect(described_class::DutyDetail.get_entries(@user, @company).where("release_date IS NULL")).to be_empty
+        end
+        
+        it "should not return where duty_due_date is before today" do
+          @company.stub(:can_view?).with(anything()).and_return(true)
+          @user.stub(:view_entries?).and_return(true)
+
+          expect(described_class::DutyDetail.get_entries(@user, @company).where("duty_due_date < ?", Date.today)).to be_empty
+        end
+        
+        it "should not return items on monthly statement" do
+          @company.stub(:can_view?).with(anything()).and_return(true)
+          @user.stub(:view_entries?).and_return(true)
+
+          expect(described_class::DutyDetail.get_entries(@user, @company).where("monthly_statement_due_date IS NOT NULL")).to be_empty 
+        end
+
+      end
+
+    end
+
 end
