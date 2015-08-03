@@ -423,4 +423,46 @@ describe EntriesController do
     
   end
 
+  describe "us_duty_detail" do
+
+    before(:each) do
+      @company = Factory(:company)
+      @user = Factory(:user, company: @company)
+      sign_in_as @user
+    end
+
+    it "should not allow users without permission to view entries" do
+      Company.any_instance.stub(:can_view?).with(anything()).and_return(true)
+
+      Entry.stub(:can_view_importer?).with(anything(), anything()).and_return(false)
+      get :us_duty_detail, importer_id: @company.id
+      response.should be_redirect
+      flash[:errors].should have(1).message
+    end
+
+    it "should not allow users without permission to company" do
+      Entry.stub(:can_view_importer?).with(anything(), anything()).and_return(true)
+
+      Company.any_instance.stub(:can_view?).with(anything()).and_return(false)
+      get :us_duty_detail, importer_id: @company.id
+      response.should be_redirect
+      flash[:errors].should have(1).message
+    end
+
+    it "should render page" do
+      Entry.stub(:can_view_importer?).with(anything(), anything()).and_return(true)
+      Company.any_instance.stub(:can_view?).with(anything()).and_return(true)
+
+      single_company_report = double('report')
+      linked_company_reports = double('linked_reports')
+      OpenChain::ActivitySummary::DutyDetail.should_receive(:create_digest).with(@user, @company).and_return single_company_report
+      OpenChain::ActivitySummary::DutyDetail.should_receive(:create_linked_digests).with(@user, @company).and_return linked_company_reports
+      get :us_duty_detail, importer_id: @company.id
+      expect(response).to be_success
+      expect(assigns(:single_report)).to eq single_company_report
+      expect(assigns(:linked_reports)).to eq linked_company_reports
+    end
+
+  end
+
 end
