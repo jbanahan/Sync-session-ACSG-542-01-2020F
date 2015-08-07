@@ -1,0 +1,40 @@
+<style>
+  .number-val {
+    font-family: monospace;
+  }
+  .totals {
+    font-weight: bold;
+  }
+  tr.heading-row td {
+    /*padding-top: 10px !important;*/
+    border-top: 1px solid black !important;
+    font-style: italic;
+  }
+</style>
+<div class="container">
+    <h1>Statement Duty Forecast</h1>
+    <h3>For Shipments with a Scheduled Pay Date between <%=Date.today.strftime('%m/%d/%Y')%> and <%=(Date.today + 7).strftime('%m/%d/%Y')%></h3>
+    <table class="table table-striped table-condensed">
+        <thead>
+            <tr>
+                <th>Importer</th>
+                <th>Pay Date</th>
+                <th>Port of Entry</th>
+                
+                <th>Entry Number</th>
+                <th>Entry Type</th>
+                <th>Release Date</th>
+                <th>References</th>
+                <th>Total Duty</th>
+                <th>Total Fees</th>
+                <th>Total Duty &amp; Fees</th>
+            </tr>
+        </thead>
+        <tbody>
+            <%= render partial: "duty_detail_table", locals: {report: @single_report} %>        
+            <% @linked_reports.each do |rep|%>
+                <%= render partial: "duty_detail_table", locals: {report: rep} %>
+            <% end %>    
+        </tbody>
+    </table>
+</div>
