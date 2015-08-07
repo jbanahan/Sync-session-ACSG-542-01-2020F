@@ -105,6 +105,8 @@ class CoreModule
 
     @quicksearch_fields = o[:quicksearch_fields]
     @quicksearch_sort_by_mf = o[:quicksearch_sort_by_mf]
+
+    @available_addresses_lambda = o[:available_addresses_lambda]
   
   end
 
@@ -266,6 +268,11 @@ class CoreModule
     raise ArgumentError, "Failed to find association for #{child_class} in #{klass}." if name.nil?
 
     name
+  end
+
+  #get all addresses associated with object
+  def available_addresses obj
+    @available_addresses_lambda ? @available_addresses_lambda.call(obj) : []
   end
 
   include CoreModuleDefinitions

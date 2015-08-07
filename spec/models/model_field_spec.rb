@@ -1154,4 +1154,96 @@ describe ModelField do
       expect(search_result.to_a).to eq [comp]
     end
   end
+
+  context :address_custom_definition do
+    before :each do
+      @cd = CustomDefinition.create!(is_address: true, label:'Business', module_type:'Company', data_type: :integer)
+      @ad = Factory(:address,name:'MyName',line_1:'234 Market St',line_2:nil,line_3:'5th Floor',city:'Philadelphia',state:'PA',postal_code:'19106',country:Factory(:country,iso_code:'US'))
+      @ad.company.update_custom_value!(@cd,@ad.id)
+    end
+
+    it "should add name field" do
+      mf = ModelField.find_by_uid("*af_#{@cd.id}_name")
+      expect(mf.label).to eq "#{@cd.label} (Name)"
+
+      expect(mf).to be_read_only
+      expect(mf).to be_address_field
+      expect(mf.process_export(@ad.company,nil,true)).to eq @ad.name
+
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.name)
+      Factory(:address,name:'Not Me') #don't find this one
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [@ad.company]
+    end
+
+    it "should add street field" do
+      mf = ModelField.find_by_uid("*af_#{@cd.id}_street")
+      expect(mf.label).to eq "#{@cd.label} (Street)"
+
+      expect(mf).to be_read_only
+      expect(mf).to be_address_field
+      expect(mf.process_export(@ad.company,nil,true)).to eq '234 Market St 5th Floor'
+
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'co',value:'Market')
+      Factory(:address,line_1:'Not Me') #don't find this one
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [@ad.company]
+    end
+    
+    it "should add city field" do
+      mf = ModelField.find_by_uid("*af_#{@cd.id}_city")
+      expect(mf.label).to eq "#{@cd.label} (City)"
+
+      expect(mf).to be_read_only
+      expect(mf).to be_address_field
+      expect(mf.process_export(@ad.company,nil,true)).to eq @ad.city
+
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.city)
+      Factory(:address,city:'Not Me') #don't find this one
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [@ad.company]
+    end
+    
+    it "should add state field" do
+      mf = ModelField.find_by_uid("*af_#{@cd.id}_state")
+      expect(mf.label).to eq "#{@cd.label} (State)"
+
+      expect(mf).to be_read_only
+      expect(mf).to be_address_field
+      expect(mf.process_export(@ad.company,nil,true)).to eq @ad.state
+
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.state)
+      Factory(:address,state:'Not Me') #don't find this one
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [@ad.company]
+    end
+    
+    it "should add postal code field" do
+      mf = ModelField.find_by_uid("*af_#{@cd.id}_postal_code")
+      expect(mf.label).to eq "#{@cd.label} (Postal Code)"
+
+      expect(mf).to be_read_only
+      expect(mf).to be_address_field
+      expect(mf.process_export(@ad.company,nil,true)).to eq @ad.postal_code
+
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.postal_code)
+      Factory(:address,postal_code:'Not Me') #don't find this one
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [@ad.company]
+    end
+
+    it "should add country iso field" do
+      mf = ModelField.find_by_uid("*af_#{@cd.id}_iso_code")
+      expect(mf.label).to eq "#{@cd.label} (Country ISO)"
+
+      expect(mf).to be_read_only
+      expect(mf).to be_address_field
+      expect(mf.process_export(@ad.company,nil,true)).to eq @ad.country.iso_code
+
+      sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.country.iso_code)
+      Factory(:address,country:Factory(:country,iso_code:'XY')) #don't find this one
+      search_result = sc.apply(Company.scoped)
+      expect(search_result.to_a).to eq [@ad.company]
+    end
+  end
 end

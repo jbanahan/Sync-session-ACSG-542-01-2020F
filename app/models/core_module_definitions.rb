@@ -237,6 +237,7 @@ module CoreModuleDefinitions
     children: [PLANT_PRODUCT_GROUP_ASSIGNMENT],
     child_lambdas: {PLANT_PRODUCT_GROUP_ASSIGNMENT => lambda {|p| p.plant_product_group_assignments}},
     child_joins: {PLANT_PRODUCT_GROUP_ASSIGNMENT => "LEFT OUTER JOIN plant_product_group_assignments ON plants.id = plant_product_group_assignments.plant_id"},
+    available_addresses_lambda: lambda {|plant| plant.company ? plant.company.addresses.order(:name, :city, :line_1) : [] }
   )
   # NOTE: Since we're setting up VENDOR as a full-blown core module based search, it means other variants of Company itself cannot have one, unless further changes are made
   # to the searching classes in quicksearch_controller, api_core_module_base, application_controller, search_query, search_query_controller_helper (possibly others).
@@ -251,7 +252,8 @@ module CoreModuleDefinitions
     view_path_proc: Proc.new {|obj| vendor_path(obj)},
     quicksearch_lambda: lambda {|user, scope| scope.where(Company.search_where(user))},
     enabled_lambda: lambda { MasterSetup.get.vendor_management_enabled? },
-    quicksearch_fields: [:cmp_name]
+    quicksearch_fields: [:cmp_name],
+    available_addresses_lambda: lambda {|company| company.addresses.order(:name, :city, :line_1) }
   )
 
   DRAWBACK_CLAIM = CoreModule.new("DrawbackClaim", "Drawback Claim",

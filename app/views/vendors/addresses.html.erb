@@ -12,9 +12,47 @@
             <%=ad.city.blank? ? '' : "#{ad.city},"%> <%=ad.state%> <%=ad.postal_code%><br />
             <%=ad.country.try(:name).try(:titleize)%>
           </div>
+          <div class='text-right'>
+            <%=button_to 'Delete', company_address_path(@company,ad), method: :delete, confirm: 'Are you sure?', class: 'btn btn-xs btn-danger'%>
+          </div>
         <%end%>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-12">
+      <hr />
+      <h4>Add New</h4>
+      <%= form_for(@company.addresses.build) do |f| %>
+
+        <%= f.hidden_field :company_id %>
+        <div class='form-group'>
+          <%= f.label :name %><br />
+          <%= f.text_field :name, class: 'form-control' %>
+        </div>
+        <div class='form-group'>
+          Address<br />
+          <%= f.text_field :line_1, class: 'form-control' %><br />
+          <%= f.text_field :line_2, class: 'form-control' %><br />
+          <%= f.text_field :line_3, class: 'form-control' %>
+        </div>
+        <div class='form-group'>
+          <%= f.label :city %>
+          <%= f.text_field :city, class: 'form-control' %>
+        </div>
+        <div class='form-group'>
+          <%= f.label :state %>
+          <%= f.text_field :state, class: 'form-control' %>
+        </div>
+        <div class='form-group'>
+          <%= f.label :postal_code %>
+          <%= f.text_field :postal_code, class: 'form-control' %>
+        </div>
+        <div class='form-group'>
+          <%= f.label :country %>
+          <%= f.collection_select :country_id, Country.order(:name), :id, :name, options ={:prompt => "-Select a country"}, class: 'form-control' %> 
+        </div>
+        <div class="actions">
+          <%= f.submit :class=>'btn' %>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>
