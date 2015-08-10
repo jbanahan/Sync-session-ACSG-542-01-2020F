@@ -30,18 +30,31 @@ describe OpenChain::SlackClient do
       expected = {channel:'c',  text:'txt', as_user: true}
       @fake_client.should_receive(:chat_postMessage).with(expected)
       c = described_class.new('abc')
-      c.send_message('c','txt')
+      c.send_message!('c','txt')
     end
     it "should do nothing if no @slack_token" do
       @fake_client.should_not_receive(:chat_postMessage)
       c = described_class.new
-      c.send_message('c','txt')
+      c.send_message!('c','txt')
     end
     it "should prefix DEV MESSAGE: if not Rails.env.production?" do
       expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
       @fake_client.should_receive(:chat_postMessage).with(expected)
       c = described_class.new('abc')
-      c.send_message('c','txt')
+      c.send_message!('c','txt')
+    end
+
+    it "should not raise error for non-bang version" do
+      expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
+      @fake_client.should_receive(:chat_postMessage).with(expected).and_raise('hello')
+      c = described_class.new('abc')
+      expect {c.send_message('c','txt')}.to_not raise_error /hello/
+    end
+    it "should raise error for bang version" do
+      expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
+      @fake_client.should_receive(:chat_postMessage).with(expected).and_raise('hello')
+      c = described_class.new('abc')
+      expect {c.send_message!('c','txt')}.to raise_error
     end
   end
 end
