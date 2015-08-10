@@ -69,6 +69,38 @@
           </tbody>
         </table>
       </div>
+    </div>  
+    <div class="row">
+      <div class="col-md-6">
+        <div class="row">
+          <%-unless hsh['unpaid_duty'].blank?-%>
+            <div class="col-md-12 activity-pane">
+              <h3 class="text-center activity-title">Unpaid Duty</h3>
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Total Duty</th>
+                    <th>Total Fees</th>
+                    <th>Total Duty and Fees</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%-hsh['unpaid_duty'].each do |summary|-%>
+                    <tr>
+                      <td><%=summary['name'].upcase%></td>
+                      <td class="numeric"><%=number_to_currency summary['total_duty']%></td>
+                      <td class="numeric"><%=number_to_currency summary['total_fees']%></td>
+                      <td class="numeric"><%=number_to_currency summary['total_duty_and_fees']%></td>
+                    </tr>
+                  <%-end-%>
+                  <tr><td colspan="4"><a href="/entries/importer/<%=@imp.id%>/activity_summary/us/duty_detail">Detail <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td></tr>
+                </tbody>
+              </table>
+            </div>
+          <%-end-%>
+        </div>
+      </div>
     </div>
     <div class="row">
       <div class="col-md-6">
