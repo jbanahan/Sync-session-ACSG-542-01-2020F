@@ -29,7 +29,7 @@ describe OpenChain::SlackClient do
       Rails.env.stub(:production?).and_return true
       @fake_client.should_not_receive(:chat_postMessage)
       c = described_class.new ''
-      expect{c.send_message!('c','txt')}.to raise_error "SlackClient initialization failed: No slack_token set. (Try setting the up the slack_client.yml file)"
+      expect{c.send_message!('c','txt')}.to raise_error "SlackClient initialization failed: No slack_token set. (Try setting up the slack_client.yml file)"
     end
     it "should prefix DEV MESSAGE: if not Rails.env.production?" do
       expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}

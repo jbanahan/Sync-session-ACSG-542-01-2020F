@@ -175,9 +175,14 @@ module OpenChain
       configs_updated = false
       
       if config_path.exist?
-        capture_and_log "git fetch", config_path.to_s
+        # Using git pull instead of git fetch for two reasons..
+        # 1) Want the actual output message "Already up-to-date" in the logs if it's already up to date.
+        # 2) We do want the current branch updated, not just the refs, otherwise the actualy directory won't
+        #    have the data that's been updated (unless we check out, but why do two commands when one suffices)
+        capture_and_log "git pull", config_path.to_s
         instance_config = config_path.join(instance_name)
         if instance_config.exist?
+          log_me "Copying all configuration files for #{instance_name}"
           FileUtils.cp_r instance_config.to_s, Rails.root.join("..")
           configs_updated = true
         end
