@@ -335,7 +335,78 @@ describe OpenChain::ActivitySummary do
         bh[3]['4w'].should == 9
         bh[3]['open'].should == 1
       end
+      it "should create unpaid duty breakouts" do
+        date = Date.today + 10
+        release_date = date.to_datetime
+        company = Factory(:company, name: 'Acme')
+        company.update_attributes(linked_companies: [company])
+        Factory(:entry, importer_id: company.id, release_date: release_date, duty_due_date: date, total_duty: 100, total_fees: 200)
+        Factory(:entry, importer_id: company.id, release_date: release_date, duty_due_date: date, total_duty: 200, total_fees: 250)
+        
+        h = described_class::USEntrySummaryGenerator.new.generate_hash company.id, Time.parse('2013-12-27 16:00:00 UTC')
+        unpaid_duty = h['unpaid_duty']
+        expect(unpaid_duty[0]['name']).to eq 'Acme'
+        expect(unpaid_duty[0]['total_duty']).to eq 300
+        expect(unpaid_duty[0]['total_fees']).to eq 450
+        expect(unpaid_duty[0]['total_duty_and_fees']).to eq 750
+        expect(unpaid_duty[1]['name']).to eq 'Acme'
+        expect(unpaid_duty[1]['total_duty']).to eq 300
+        expect(unpaid_duty[1]['total_fees']).to eq 450
+        expect(unpaid_duty[1]['total_duty_and_fees']).to eq 750
+      end
     end
+
+    describe :generate_unpaid_duty_section do
+      it "should delegate to #single_company_unpaid_duty and #linked_companies_unpaid_duty, producing joined/flattened list" do
+        c = double('company').as_null_object
+        single_total = [double('single_total').as_null_object]
+        linked_total_1 = [double('linked_total_1').as_null_object]
+        linked_total_2 = [double('linked_total_2').as_null_object]
+        linked_total_3 = [double('linked_total_3').as_null_object]
+
+        described_class::USEntrySummaryGenerator.any_instance.should_receive(:single_company_unpaid_duty).with(c).and_return single_total
+        described_class::USEntrySummaryGenerator.any_instance.should_receive(:linked_companies_unpaid_duty).with(c).and_return [linked_total_1, linked_total_2, linked_total_3]
+        expect(described_class::USEntrySummaryGenerator.new.generate_unpaid_duty_section(c)).to eq [single_total[0], linked_total_1[0], linked_total_2[0], linked_total_3[0]]
+      end
+    end
+
+    describe :linked_companies_unpaid_duty do
+      it "should populate an array with the totals of an importer's linked companies" do
+        company = Factory(:company, name: 'Acme')
+        company.stub(:linked_companies) {[Company.new(name: 'RiteChoys'), Company.new(name: 'Super Pow'), Company.new(name: 'Walshop')]}
+        described_class::USEntrySummaryGenerator.any_instance.should_receive(:single_company_unpaid_duty) {|c| [company_name: c.name]}.exactly(3).times
+        expect(described_class::USEntrySummaryGenerator.new.linked_companies_unpaid_duty company).to eq [[{company_name: "RiteChoys"}], [{company_name: "Super Pow"}], [{company_name: "Walshop"}]]
+      end
+    end
+
+    describe :single_company_unpaid_duty do
+      before(:each) do
+        @date1 = Date.today + 10
+        @date2 = Date.today + 15
+        @date3 = Date.today - 10
+        @release_date = @date1.to_datetime
+        @company = Factory(:company, name: 'Acme')     
+      end
+
+      it "should not include unreleased entries in totals" do
+        Factory(:entry, importer_id: @company.id, release_date: nil, duty_due_date: @date2, total_duty: 600, total_fees: 650)
+        h = described_class::USEntrySummaryGenerator.new.single_company_unpaid_duty @company
+        expect(h).to be_empty
+      end
+
+      it "should not include in totals entries with duty_due_date before today" do
+        Factory(:entry, importer_id: @company.id, release_date: @release_date, duty_due_date: @date3, total_duty: 700, total_fees: 750)
+        h = described_class::USEntrySummaryGenerator.new.single_company_unpaid_duty @company 
+        expect(h).to be_empty
+      end
+    
+      it "should not include in totals entries on monthly statement" do
+        Factory(:entry, importer_id: @company.id, release_date: @release_date, duty_due_date: @date1, monthly_statement_due_date: @date2, total_duty: 800, total_fees: 850)
+        h = described_class::USEntrySummaryGenerator.new.single_company_unpaid_duty @company
+        expect(h).to be_empty
+      end
+    end
+
   end
 
   describe "create_by_release_range_query" do
@@ -421,7 +492,7 @@ describe OpenChain::ActivitySummary do
           date3 = Date.today - 10
           @release_date = @date1.to_datetime
          
-          @company = Factory(:company, name: 'Acme', master: true)
+          @company = Factory(:company, name: 'Acme')
           @user = Factory(:user, company: @company)
           port1 = Factory(:port, schedule_d_code: '1234', name: 'Boston')
           port2 = Factory(:port, schedule_d_code: '4321', name: 'New York')
