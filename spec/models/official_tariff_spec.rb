@@ -21,6 +21,30 @@ describe OfficialTariff do
       t.lacey_act?.should == false
     end
   end
+  describe :taric do
+    it "should return nil if country is nil" do
+      t = Factory(:official_tariff, hts_code: "ABCD")
+      
+      expect(t.taric).to be nil
+    end
+
+    it "should return nil if country is not in the EU" do
+      c = Factory(:country)
+      t = Factory(:official_tariff, country: c, hts_code: "ABCD")
+      c.stub(:european_union?).and_return false
+      
+      expect(t.taric).to be nil
+    end
+
+    it "should return a string if country is in the EU" do
+      c = Factory(:country)
+      t = Factory(:official_tariff, country: c, hts_code: "ABCD")
+      c.stub(:european_union?).and_return true
+
+      expect(t.taric).to be_instance_of String
+    end
+  end
+
   describe :update_use_count do
     before :each do
       OpenChain::StatClient.stub(:wall_time).and_yield

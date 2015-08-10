@@ -75,6 +75,11 @@ class OfficialTariff < ActiveRecord::Base
     r
   end
 
+  def taric
+    return nil if self.country.nil? || !self.country.european_union?
+    return "http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Taric=#{hts_code}&LangDescr=en"
+  end
+
   #address for external link to certain countries' binding ruling databases
   def binding_ruling_url
     return nil if self.country.nil? || self.hts_code.nil?
@@ -120,6 +125,8 @@ class OfficialTariff < ActiveRecord::Base
     end
     br = binding_ruling_url
     otr["binding_ruling_url"] = br unless br.nil?
+    tr = taric
+    otr["taric"] = tr unless tr.nil?
     result
   end
 
