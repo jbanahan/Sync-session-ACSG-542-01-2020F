@@ -3,24 +3,17 @@ require 'spec_helper'
 describe OpenChain::SlackClient do
   before :each do
     @fake_client = double('Slack::Web::Client')
-    Slack::Web::Client.stub(:new).and_return(@fake_client)
+    OpenChain::SlackClient.stub(:slack_client).and_return @fake_client
   end
   describe :initalize do
-    it "should get bot-api token from ENV['VFITRACK_SLACK_TOKEN']" do
-      old_token = ENV['VFITRACK_SLACK_TOKEN']
-      begin
-        ENV['VFITRACK_SLACK_TOKEN'] = 'abc'
-        expect(described_class.new.slack_token).to eq 'abc'
-      ensure
-        ENV['VFITRACK_SLACK_TOKEN'] = old_token
-      end
+    it "should get bot-api token from default location" do
+      File.should_receive(:exist?).with("config/slack_client.yml").and_return true
+      YAML.should_receive(:load_file).with("config/slack_client.yml").and_return({"VFITRACK_SLACK_TOKEN"=>"abc"})
+      expect(described_class.new.slack_token).to eq 'abc'
     end
-    it "should raise exception if no token and Rails.env.production?" do
-      Rails.env.stub(:production?).and_return true
-      expect {described_class.new(nil)}.to raise_error /slack_token/
-    end
-    it "should not raise error if not production" do
-      expect {described_class.new(nil)}.to_not raise_error
+
+    it "uses provided token" do
+      expect(described_class.new("token").slack_token).to eq 'token'
     end
   end
 
@@ -32,10 +25,11 @@ describe OpenChain::SlackClient do
       c = described_class.new('abc')
       c.send_message!('c','txt')
     end
-    it "should do nothing if no @slack_token" do
+    it "raises an error if no @slack_token" do
+      Rails.env.stub(:production?).and_return true
       @fake_client.should_not_receive(:chat_postMessage)
-      c = described_class.new
-      c.send_message!('c','txt')
+      c = described_class.new ''
+      expect{c.send_message!('c','txt')}.to raise_error "SlackClient initialization failed: No slack_token set. (Try setting the up the slack_client.yml file)"
     end
     it "should prefix DEV MESSAGE: if not Rails.env.production?" do
       expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
