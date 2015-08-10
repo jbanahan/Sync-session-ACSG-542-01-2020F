@@ -62,6 +62,9 @@ gem 'jsonpath', '~> 0.5.6'
 # Rails 3 requires test unit even in production (for some reason).  I believe in 4 this can be dropped to just the test group
 gem 'test-unit'
 
+# Slack.com integration
+gem 'slack-ruby-client', '~> 0.2.1'
+
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
