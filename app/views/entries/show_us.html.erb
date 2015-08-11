@@ -6,9 +6,10 @@
   <%if current_user.company.master?-%>
     <%= button_to 'Update Images', get_images_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button' %>
   <%end-%>
-  <%if current_user.sys_admin?-%>
+  <%if current_user.company.master? || current_user.sys_admin?-%>
     <%= button_to 'Update Entry', request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;' %>
-    
+  <%end-%>
+  <%if current_user.sys_admin?-%>    
     <%= button_to 'Purge', purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;' %>
   <%end-%>
   <button id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
