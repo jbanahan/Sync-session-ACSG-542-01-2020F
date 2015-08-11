@@ -533,8 +533,8 @@ root.Chain =
           h += htsDataRow("Export Regulations:",o.export_regulations)
           if o.binding_ruling_url
             h += htsDataRow("Binding Rulings:","<a href='"+o.binding_ruling_url+"' target='rulings'>Click Here</a>")      
-          if o.taric
-            h += htsDataRow("TARIC:","<a href='"+o.taric+"' target='_blank'>Click Here</a>")
+          if o.taric_url
+            h += htsDataRow("TARIC:","<a href='"+o.taric_url+"' target='_blank'>Click Here</a>")
           if o.official_quota!=undefined
             h += htsDataRow("Quota Category",o.official_quota.category)
             h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor)

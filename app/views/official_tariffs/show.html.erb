@@ -16,8 +16,8 @@
     <% if !b_ruling.nil?%>
       <%=field_row "Binding Rulings", link_to("Click Here",b_ruling,:target=>"rulings")%>
     <%end%>
-    <%if @official_tariff.taric%>
-      <%=field_row "TARIC", link_to("Click Here", @official_tariff.taric, target: "_blank")%>
+    <%if @official_tariff.taric_url%>
+      <%=field_row "TARIC", link_to("Click Here", @official_tariff.taric_url, target: "_blank")%>
     <%end%>
     <%if @official_tariff.official_quota%>
       <%oq = @official_tariff.official_quota%>
