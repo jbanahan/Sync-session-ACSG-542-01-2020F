@@ -587,7 +587,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.related_parties = l[:related_parties].to_s.upcase == "Y"
       line.vendor_name = l[:mid_name]
       line.volume = parse_decimal l[:volume]
-      line.contract_amount = parse_decimal l[:contract]
+      # Contract is sent with decimal places, so don't do the offset stuff when parsing
+      line.contract_amount = parse_decimal l[:contract], no_offset: true
       line.department = l[:department] unless l[:department].to_s == "0"
       line.store_name = l[:store_no]
       line.product_line = l[:product_line]
@@ -753,21 +754,27 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       importer
     end
 
-    def parse_decimal str, decimal_places: 2, decimal_offset: 2, rounding_mode: BigDecimal::ROUND_HALF_UP
+    def parse_decimal str, decimal_places: 2, decimal_offset: 2, rounding_mode: BigDecimal::ROUND_HALF_UP, no_offset: false
       return BigDecimal.new("0") if str.blank? || str == 0
 
-      str = str.to_s.rjust(decimal_offset, '0')
+      str = str.to_s
 
-      # The decimal places is what the value will be rounding to when returned
-      # The decimal offset is used because all of the numeric values in Alliance are
-      # stored and sent without decimal places "12345" instead of "123.45" so that 
-      # they don't have to worry about decimal rounding and integer arithmetic can be done on everything.
-      # This also means that we need to know the scale of the number before parsing it.
-      unless str.include?(".") || decimal_offset <= 0
-        begin
-          str = str.insert(-(decimal_offset+1), '.')
-        rescue IndexError
-          str = "0"
+      # if no_offset is passed, we're going to treat the incoming value like a standard numeric string, not the 
+      # missing decimal garbage that Alliance normally sends.
+      unless no_offset
+        str = str.rjust(decimal_offset, '0')
+
+        # The decimal places is what the value will be rounding to when returned
+        # The decimal offset is used because all of the numeric values in Alliance are
+        # stored and sent without decimal places "12345" instead of "123.45" so that 
+        # they don't have to worry about decimal rounding and integer arithmetic can be done on everything.
+        # This also means that we need to know the scale of the number before parsing it.
+        unless str.include?(".") || decimal_offset <= 0
+          begin
+            str = str.insert(-(decimal_offset+1), '.')
+          rescue IndexError
+            str = "0"
+          end
         end
       end
 

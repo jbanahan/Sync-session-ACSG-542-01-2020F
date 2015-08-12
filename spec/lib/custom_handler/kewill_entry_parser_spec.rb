@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 'related_parties' => "Y",
                 'mid_name' => "MANFU NAME",
                 'volume' => 1299,
-                'contract' => 12312,
+                'contract' => 123.12,
                 'department' => "DEPT",
                 "store_no" => "STORE",
                 'product_line' => "PRODUCT",
@@ -544,6 +544,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       tariff = line.commercial_invoice_tariffs.second
       expect(tariff.tariff_description).to eq "REPLACEMENT DESC"
+
+      # There's a couple different scenarios to check out in the second invoice
+      ci = entry.commercial_invoices.second
+      line = ci.commercial_invoice_lines.first
+      # This used to parse as 99.99 because it assumed missing decimal points meant there was an implied decimal point, 
+      # which was wrong and has since been fixed.
+      expect(line.contract_amount).to eq BigDecimal.new("9999.00")
 
       # If we didn't get a matching container record, then we want to make sure the line level linkage
       # is nil
