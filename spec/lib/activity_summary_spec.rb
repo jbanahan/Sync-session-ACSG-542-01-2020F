@@ -358,11 +358,11 @@ describe OpenChain::ActivitySummary do
 
     describe :generate_unpaid_duty_section do
       it "should delegate to #single_company_unpaid_duty and #linked_companies_unpaid_duty, producing joined/flattened list" do
-        c = double('company').as_null_object
-        single_total = [double('single_total').as_null_object]
-        linked_total_1 = [double('linked_total_1').as_null_object]
-        linked_total_2 = [double('linked_total_2').as_null_object]
-        linked_total_3 = [double('linked_total_3').as_null_object]
+        c = double('company')
+        single_total = [double('single_total')]
+        linked_total_1 = [double('linked_total_1')]
+        linked_total_2 = [double('linked_total_2')]
+        linked_total_3 = [double('linked_total_3')]
 
         described_class::USEntrySummaryGenerator.any_instance.should_receive(:single_company_unpaid_duty).with(c, Date.today).and_return single_total
         described_class::USEntrySummaryGenerator.any_instance.should_receive(:linked_companies_unpaid_duty).with(c, Date.today).and_return [linked_total_1, linked_total_2, linked_total_3]
