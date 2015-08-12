@@ -285,7 +285,7 @@ order by importer_id, k84_due_date desc"
     end
 
     def linked_companies_unpaid_duty importer, base_date_utc
-      importer.linked_companies.map{ |co| single_company_unpaid_duty(co, base_date_utc)}
+      importer.linked_companies.select{|co| co.importer?}.map{ |co| single_company_unpaid_duty(co, base_date_utc)}
     end
 
     def single_company_unpaid_duty importer, base_date_utc
@@ -348,7 +348,7 @@ order by importer_id, monthly_statement_due_date desc"
   module DutyDetail
    
     def self.create_linked_digests(current_user, company)
-      company.linked_companies.map{|co| create_digest(current_user, co)}
+      company.linked_companies.select{|co| co.importer?}.map{|co| create_digest(current_user, co)}
     end
 
     def self.create_digest(current_user, company)

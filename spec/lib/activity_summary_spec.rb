@@ -338,7 +338,7 @@ describe OpenChain::ActivitySummary do
       it "should create unpaid duty breakouts" do
         date = Date.today + 10
         release_date = date.to_datetime
-        company = Factory(:company, name: 'Acme')
+        company = Factory(:company, name: 'Acme', importer: true)
         company.update_attributes(linked_companies: [company])
         Factory(:entry, importer_id: company.id, release_date: release_date, duty_due_date: date, total_duty: 100, total_fees: 200)
         Factory(:entry, importer_id: company.id, release_date: release_date, duty_due_date: date, total_duty: 200, total_fees: 250)
@@ -373,7 +373,7 @@ describe OpenChain::ActivitySummary do
     describe :linked_companies_unpaid_duty do
       it "should populate an array with the totals of an importer's linked companies" do
         company = Factory(:company, name: 'Acme')
-        company.stub(:linked_companies) {[Company.new(name: 'RiteChoys'), Company.new(name: 'Super Pow'), Company.new(name: 'Walshop')]}
+        company.stub(:linked_companies) {[Company.new(name: 'RiteChoys', importer: true), Company.new(name: 'Super Pow', importer: true), Company.new(name: 'Walshop', importer: true)]}
         described_class::USEntrySummaryGenerator.any_instance.should_receive(:single_company_unpaid_duty) {|c, date| [company_name: c.name]}.exactly(3).times
         expect(described_class::USEntrySummaryGenerator.new.linked_companies_unpaid_duty company, Date.today).to eq [[{company_name: "RiteChoys"}], [{company_name: "Super Pow"}], [{company_name: "Walshop"}]]
       end
@@ -509,7 +509,7 @@ describe OpenChain::ActivitySummary do
 
       describe :create_linked_digests do
         it "should populate an array with digests of an importer's linked companies" do
-          @company.stub(:linked_companies) {[Company.new(name: 'RiteChoys'), Company.new(name: 'Super Pow'), Company.new(name: 'Walshop')]}
+          @company.stub(:linked_companies) {[Company.new(name: 'RiteChoys', importer: true), Company.new(name: 'Super Pow', importer: true), Company.new(name: 'Walshop', importer: true)]}
           described_class::DutyDetail.should_receive(:create_digest) { |u, c| {company_name: c.name} }.exactly(3).times
           expect(described_class::DutyDetail.create_linked_digests(@user, @company)).to eq [{company_name: "RiteChoys"}, {company_name: "Super Pow"}, {company_name: "Walshop"}]   
         end
