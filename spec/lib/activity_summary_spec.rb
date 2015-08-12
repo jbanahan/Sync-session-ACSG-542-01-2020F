@@ -381,7 +381,7 @@ describe OpenChain::ActivitySummary do
 
     describe :single_company_unpaid_duty do
       before(:each) do
-        @date1 = Date.today + 10
+        @date1 = Date.today
         @date2 = Date.today + 15
         @date3 = Date.today - 10
         @release_date = @date1.to_datetime
@@ -487,7 +487,7 @@ describe OpenChain::ActivitySummary do
 
   describe OpenChain::ActivitySummary::DutyDetail do
     before(:each) do
-          @date1 = Date.today + 10
+          @date1 = Date.today
           @date2 = Date.today + 15
           date3 = Date.today - 10
           @release_date = @date1.to_datetime

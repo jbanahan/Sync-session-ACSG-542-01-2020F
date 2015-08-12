@@ -391,7 +391,7 @@ order by importer_id, monthly_statement_due_date desc"
                                                .joins(:us_entry_port)
                                                .joins(:importer)
                                                .where("release_date IS NOT NULL")
-                                               .where("duty_due_date >= ?", Time.zone.now.in_time_zone(current_user.time_zone))
+                                               .where("duty_due_date >= ?", Time.zone.now.in_time_zone(current_user.time_zone).to_date)
                                                .where(monthly_statement_due_date: nil))
                                               
       else []
