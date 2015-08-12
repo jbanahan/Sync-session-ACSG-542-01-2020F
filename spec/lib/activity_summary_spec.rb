@@ -587,7 +587,7 @@ describe OpenChain::ActivitySummary do
       describe :get_entries do
 
         it "should return empty if user cannot view entries" do
-          @company.stub(:can_view?).with(anything()).and_return(true)
+          @company.stub(:can_view?).with(@user).and_return(true)
           
           @user.stub(:view_entries?).and_return(false)
           expect(described_class::DutyDetail.get_entries(@user, @company)).to be_empty
@@ -596,26 +596,26 @@ describe OpenChain::ActivitySummary do
         it "should return empty if user does not have permission to companies provided" do
           @user.stub(:view_entries?) {true}
           
-          @company.stub(:can_view?).with(anything()).and_return(false)
+          @company.stub(:can_view?).with(@user).and_return(false)
           expect(described_class::DutyDetail.get_entries(@user, @company)).to be_empty
         end
         
         it "should not return unreleased entries" do
-          @company.stub(:can_view?).with(anything()).and_return(true)
+          @company.stub(:can_view?).with(@user).and_return(true)
           @user.stub(:view_entries?).and_return(true)
           
           expect(described_class::DutyDetail.get_entries(@user, @company).where("release_date IS NULL")).to be_empty
         end
         
         it "should not return where duty_due_date is before today" do
-          @company.stub(:can_view?).with(anything()).and_return(true)
+          @company.stub(:can_view?).with(@user).and_return(true)
           @user.stub(:view_entries?).and_return(true)
 
           expect(described_class::DutyDetail.get_entries(@user, @company).where("duty_due_date < ?", Date.today)).to be_empty
         end
         
         it "should not return items on monthly statement" do
-          @company.stub(:can_view?).with(anything()).and_return(true)
+          @company.stub(:can_view?).with(@user).and_return(true)
           @user.stub(:view_entries?).and_return(true)
 
           expect(described_class::DutyDetail.get_entries(@user, @company).where("monthly_statement_due_date IS NOT NULL")).to be_empty 

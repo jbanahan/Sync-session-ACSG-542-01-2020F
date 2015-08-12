@@ -432,26 +432,26 @@ describe EntriesController do
     end
 
     it "should not allow users without permission to view entries" do
-      Company.any_instance.stub(:can_view?).with(anything()).and_return(true)
+      Company.any_instance.stub(:can_view?).with(@user).and_return(true)
 
-      Entry.stub(:can_view_importer?).with(anything(), anything()).and_return(false)
+      Entry.stub(:can_view_importer?).with(instance_of(Company), @user).and_return(false)
       get :us_duty_detail, importer_id: @company.id
       response.should be_redirect
       flash[:errors].should have(1).message
     end
 
     it "should not allow users without permission to company" do
-      Entry.stub(:can_view_importer?).with(anything(), anything()).and_return(true)
+      Entry.stub(:can_view_importer?).with(instance_of(Company), @user).and_return(true)
 
-      Company.any_instance.stub(:can_view?).with(anything()).and_return(false)
+      Company.any_instance.stub(:can_view?).with(@user).and_return(false)
       get :us_duty_detail, importer_id: @company.id
       response.should be_redirect
       flash[:errors].should have(1).message
     end
 
     it "should render page" do
-      Entry.stub(:can_view_importer?).with(anything(), anything()).and_return(true)
-      Company.any_instance.stub(:can_view?).with(anything()).and_return(true)
+      Entry.stub(:can_view_importer?).with(instance_of(Company), @user).and_return(true)
+      Company.any_instance.stub(:can_view?).with(@user).and_return(true)
 
       single_company_report = double('report')
       linked_company_reports = double('linked_reports')
