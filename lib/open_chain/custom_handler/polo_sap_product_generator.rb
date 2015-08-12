@@ -37,19 +37,42 @@ module OpenChain
         {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/sap_#{@env==:qa ? 'qa' : 'prod'}"}
       end
 
+      def sync
+        @previous_style = nil
+        @previous_iso = nil
+        super
+      end
+
       def preprocess_row row, opts = {}
-        row.each do |key, val|
-          row[key] = convert_to_ascii(val)
+        # We need to prevent sending multiple tariff lines for the same product (.ie only send a single line for sets).
+        # The query results are ordered so that we can just skip any styles/country iso that we've seen immediately prior to this one.
+        # So, just track the previous style/iso and if it matches the previous...skip it.
+        result = nil
+        current_style = nil
+        current_iso = nil
+        begin
+          converted = {}
+          row.each do |key, val|
+            converted[key] = convert_to_ascii(val)
+          end
+
+          current_style = converted[0]
+          current_iso = converted[2]
+
+          if @previous_style != current_style || @previous_iso != current_iso
+            result = [converted]
+          end
+        rescue ArgumentError, Encoding::UndefinedConversionError => e
+          # In cases of errors, we're just sending out error emails to ourselves at this point since
+          # we don't really think we'll encounter this very often.
+
+          # The product generator trims off the id, so the first value in the row is the unique_identifier.
+          e.log_me ["Invalid character data found in product with unique_identifier '#{row[0]}'."]
         end
 
-        [row]
-      rescue ArgumentError, Encoding::UndefinedConversionError => e
-        # In cases of errors, we're just sending out error emails to ourselves at this point since
-        # we don't really think we'll encounter this very often.
-
-        # The product generator trims off the id, so the first value in the row is the unique_identifier.
-        e.log_me ["Invalid character data found in product with unique_identifier '#{row[0]}'."]
-        return nil
+        @previous_style = current_style
+        @previous_iso = current_iso
+        result
       end
 
       def convert_to_ascii value
@@ -104,7 +127,7 @@ module OpenChain
         q = "SELECT products.id,
 products.unique_identifier, 
 #{cd_s 6},
-(select iso_code from countries where countries.id = classifications.country_id) as 'Classification - Country ISO Code',
+countries.iso_code as 'Classification - Country ISO Code',
 tariff_records.hts_1 as 'Tariff - HTS Code 1',
 #{cd_s 130, boolean_y_n: true},
 #{cd_s 22},
@@ -134,11 +157,13 @@ tariff_records.hts_1 as 'Tariff - HTS Code 1',
 #{cd_s 141}
 FROM products 
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
-INNER JOIN classifications on classifications.product_id = products.id AND classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN (
+INNER JOIN classifications on classifications.product_id = products.id
+INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
 #{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
-  ))
+  )
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
-INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id"
+INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id
+ORDER BY products.updated_at, products.unique_identifier, countries.iso_code, tariff_records.line_number"
 
         q
       end
@@ -148,8 +173,9 @@ INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id"
 SELECT DISTINCT products.id
 FROM products
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
-INNER JOIN classifications on classifications.product_id = products.id AND classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN (
-#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}))
+INNER JOIN classifications on classifications.product_id = products.id 
+INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
+#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')})
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
 QRY
         if @custom_where.blank?
