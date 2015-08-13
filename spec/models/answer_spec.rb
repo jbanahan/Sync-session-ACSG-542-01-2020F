@@ -98,4 +98,12 @@ describe Answer do
     a.save!
     SurveyResponse.find(a.survey_response_id).updated_at.should > 1.second.ago
   end
+
+  describe "attachment_added" do
+    it "updates updated_at when an attachment is added" do
+      a = Factory(:answer, updated_at: 5.days.ago)
+      a.attachment_added nil
+      expect(a.updated_at).to be_within(5.seconds).of(Time.zone.now)
+    end
+  end
 end

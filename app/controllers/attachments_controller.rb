@@ -23,6 +23,7 @@ class AttachmentsController < ApplicationController
         att.save
         OpenChain::WorkflowProcessor.async_process(attachable)
         attachable.log_update(current_user) if attachable.respond_to?(:log_update)
+        attachable.attachment_added(att) if attachable.respond_to?(:attachment_added)
         respond_to do |format|
           format.html {redirect_to redirect_location(attachable)}
           format.json {render json: Attachment.attachments_as_json(attachable)}

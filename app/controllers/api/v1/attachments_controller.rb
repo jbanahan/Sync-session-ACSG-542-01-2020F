@@ -64,6 +64,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
 
       OpenChain::WorkflowProcessor.async_process(attachable)
       attachable.log_update(current_user) if attachable.respond_to?(:log_update)
+      attachable.attachment_added(attachment) if attachable.respond_to?(:attachment_added)
       render json: Attachment.attachment_json(attachment)
     else
       raise ActiveRecord::RecordNotFound
