@@ -40,6 +40,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'uc_city' => "Fakesville",
         'mot' => 10,
         'carrier' => "Carrier",
+        'carrier_name' => "Carrier Name",
         'company_no' => 2,
         'division_no' => 9,
         'recon_nafta' => "Y",
@@ -325,6 +326,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.consignee_state).to eq "PA"
       expect(entry.transport_mode_code).to eq "10"
       expect(entry.carrier_code).to eq "Carrier"
+      expect(entry.carrier_name).to eq "Carrier Name"
       expect(entry.company_number).to eq "02"
       expect(entry.division_number).to eq "0009"
       expect(entry.recon_flags).to eq "NAFTA VALUE CLASS 9802"

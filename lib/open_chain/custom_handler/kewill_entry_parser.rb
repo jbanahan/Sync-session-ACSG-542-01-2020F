@@ -238,6 +238,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.consignee_state = e[:uc_state]
       entry.transport_mode_code = e[:mot].to_s.rjust(2, '0')
       entry.carrier_code = e[:carrier]
+      entry.carrier_name = e[:carrier_name]
       entry.company_number = e[:company_no].to_s.rjust(2, '0')
       entry.division_number = e[:division_no].to_s.rjust(4, '0')
 
