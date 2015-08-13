@@ -1,4 +1,6 @@
 require 'open_chain/gpg'
+require 'open_chain/fixed_position_generator'
+require 'open_chain/ftp_file_support'
 
 module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGenerator < OpenChain::FixedPositionGenerator
   include OpenChain::FtpFileSupport
