@@ -1,5 +1,5 @@
 class OpenMailer < ActionMailer::Base
-  include AbstractController::Callbacks
+  include AbstractController::Callbacks # This can be removed when migrating to rails 4
 
   after_filter :modify_email_for_development
 
@@ -12,6 +12,7 @@ EOS
 
   default :from => "do-not-reply@vfitrack.net"
   LINK_PROTOCOL ||= Rails.env.production? ? "https" : "http"
+  BUG_EMAIL = "bug@vandegriftinc.com"
 
   #send a simple plain text email
   def send_simple_text to, subject, body
@@ -111,7 +112,7 @@ EOS
 
   def send_new_system_init(password)
     @pwd = password
-    mail(:to => "bug@vandegriftinc.com", :subject => "New System Initialization") do |format|
+    mail(:to => BUG_EMAIL, :subject => "New System Initialization") do |format|
       format.text
     end
   end
