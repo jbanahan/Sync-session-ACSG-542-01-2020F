@@ -3,6 +3,8 @@ class Group < ActiveRecord::Base
 
   has_many :workflow_tasks, inverse_of: :group
 
+  validates :system_code, :name, presence: true
+
   scope :visible_to_user, lambda {|u| 
     if u.company.master?
       Group.scoped
