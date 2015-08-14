@@ -289,14 +289,13 @@ order by importer_id, k84_due_date desc"
     end
 
     def single_company_unpaid_duty importer, base_date_utc
-      Entry.select("companies.name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, "\
+      Entry.select("customer_number, customer_name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, "\
                    "Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees")
-                  .joins(:importer)
                   .where("entries.importer_id = #{importer.id}")
                   .where("release_date IS NOT NULL")
-                  .where("duty_due_date >= ?", (base_date_utc + 7.days).to_date)
+                  .where("duty_due_date >= ?", base_date_utc)
                   .where(monthly_statement_due_date: nil)
-                  .group("companies.name")
+                  .group("customer_number")
     end
 
     private 
@@ -348,7 +347,7 @@ order by importer_id, monthly_statement_due_date desc"
   module DutyDetail
    
     def self.create_linked_digests(current_user, company)
-      company.linked_companies.select{|co| co.importer?}.map{|co| create_digest(current_user, co)}
+      company.linked_companies.select{|co| co.importer?}.map{|co| create_digest(current_user, co)}.compact
     end
 
     def self.create_digest(current_user, company)
@@ -367,7 +366,7 @@ order by importer_id, monthly_statement_due_date desc"
           port_ptr[:port_total_fees] += ent.total_fees
           port_ptr[:port_total_duty_and_fees] += ent.total_duty_and_fees
           port_ptr[:port_entry_count] += 1
-          port_ptr[:entries] << {ent_entry_number: ent.entry_number, ent_entry_type: ent.entry_type, ent_port_name: ent.port_name, ent_release_date: ent.release_date, 
+          port_ptr[:entries] << {ent_id: ent.entry_id, ent_entry_number: ent.entry_number, ent_entry_type: ent.entry_type, ent_port_name: ent.port_name, ent_release_date: ent.release_date, 
                                  ent_customer_references: ent.customer_references, ent_duty_due_date: ent.duty_due_date, ent_total_fees: ent.total_fees, 
                                  ent_total_duty: ent.total_duty, ent_total_duty_and_fees: ent.total_duty_and_fees}
 
@@ -381,15 +380,16 @@ order by importer_id, monthly_statement_due_date desc"
           company_ptr[:company_total_duty_and_fees] += ent.total_duty_and_fees
           company_ptr[:company_entry_count] += 1
         end
-      co ? co : []
+      co
     end
     
     def self.get_entries(current_user, company)
       if current_user.view_entries? && company.can_view?(current_user)
-        Entry.search_secure(current_user, Entry.select("companies.name AS company_name, duty_due_date, ports.name AS port_name, entry_number, "\
+        Entry.search_secure(current_user, Entry.select("companies.name AS company_name, duty_due_date, ports.name AS port_name, entries.id AS entry_id, entry_number, "\
                                                        "entry_type, customer_references, release_date, total_duty, total_fees, (total_duty + total_fees) AS total_duty_and_fees")
                                                .joins(:us_entry_port)
                                                .joins(:importer)
+                                               .where("importer_id = ? ", company.id)
                                                .where("release_date IS NOT NULL")
                                                .where("duty_due_date >= ?", Time.zone.now.in_time_zone(current_user.time_zone).to_date)
                                                .where(monthly_statement_due_date: nil))

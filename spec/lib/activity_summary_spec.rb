@@ -340,16 +340,16 @@ describe OpenChain::ActivitySummary do
         release_date = date.to_datetime
         company = Factory(:company, name: 'Acme', importer: true)
         company.update_attributes(linked_companies: [company])
-        Factory(:entry, importer_id: company.id, release_date: release_date, duty_due_date: date, total_duty: 100, total_fees: 200)
-        Factory(:entry, importer_id: company.id, release_date: release_date, duty_due_date: date, total_duty: 200, total_fees: 250)
+        Factory(:entry, importer_id: company.id, customer_name: company.name, release_date: release_date, duty_due_date: date, total_duty: 100, total_fees: 200)
+        Factory(:entry, importer_id: company.id, customer_name: company.name, release_date: release_date, duty_due_date: date, total_duty: 200, total_fees: 250)
         
         h = described_class::USEntrySummaryGenerator.new.generate_hash company.id, Time.parse('2013-12-27 16:00:00 UTC')
         unpaid_duty = h['unpaid_duty']
-        expect(unpaid_duty[0]['name']).to eq 'Acme'
+        expect(unpaid_duty[0]['customer_name']).to eq 'Acme'
         expect(unpaid_duty[0]['total_duty']).to eq 300
         expect(unpaid_duty[0]['total_fees']).to eq 450
         expect(unpaid_duty[0]['total_duty_and_fees']).to eq 750
-        expect(unpaid_duty[1]['name']).to eq 'Acme'
+        expect(unpaid_duty[1]['customer_name']).to eq 'Acme'
         expect(unpaid_duty[1]['total_duty']).to eq 300
         expect(unpaid_duty[1]['total_fees']).to eq 450
         expect(unpaid_duty[1]['total_duty_and_fees']).to eq 750
@@ -492,19 +492,24 @@ describe OpenChain::ActivitySummary do
           date3 = Date.today - 10
           @release_date = @date1.to_datetime
          
-          @company = Factory(:company, name: 'Acme')
+          @company = Factory(:company, name: 'Acme', master: true)
+          @non_master_company = Factory(:company, name: "Emca")
           @user = Factory(:user, company: @company)
           port1 = Factory(:port, schedule_d_code: '1234', name: 'Boston')
           port2 = Factory(:port, schedule_d_code: '4321', name: 'New York')
-          Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '12345678912', release_date: @release_date, duty_due_date: @date1, total_duty: 100, total_fees: 200)
-          Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '21987654321', release_date: @release_date, duty_due_date: @date1, total_duty: 200, total_fees: 250)
-          Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '53471126928', release_date: @release_date, duty_due_date: @date2, total_duty: 300, total_fees: 350)
-          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '14215923867', release_date: @release_date, duty_due_date: @date2, total_duty: 400, total_fees: 450)
-          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '59172148623', release_date: @release_date, duty_due_date: @date2, total_duty: 500, total_fees: 550)
-          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '95711284263', release_date: nil, duty_due_date: @date2, total_duty: 600, total_fees: 650)
-          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '36248211759', release_date: @release_date, duty_due_date: date3, total_duty: 700, total_fees: 750)
-          Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '63422811579', release_date: @release_date, duty_due_date: @date1, monthly_statement_due_date: @date2, total_duty: 800, total_fees: 850)
-
+          
+          #included in totals
+          @ent1 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '12345678912', release_date: @release_date, duty_due_date: @date1, total_duty: 100, total_fees: 200)
+          @ent2 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '21987654321', release_date: @release_date, duty_due_date: @date1, total_duty: 200, total_fees: 250)
+          @ent3 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '53471126928', release_date: @release_date, duty_due_date: @date2, total_duty: 300, total_fees: 350)
+          @ent4 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '14215923867', release_date: @release_date, duty_due_date: @date2, total_duty: 400, total_fees: 450)
+          @ent5 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '59172148623', release_date: @release_date, duty_due_date: @date2, total_duty: 500, total_fees: 550)
+          
+          #excluded from totals
+          @ent6 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '95711284263', release_date: nil, duty_due_date: @date2, total_duty: 600, total_fees: 650)
+          @ent7 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '36248211759', release_date: @release_date, duty_due_date: date3, total_duty: 700, total_fees: 750)
+          @ent8 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '63422811579', release_date: @release_date, duty_due_date: @date1, monthly_statement_due_date: @date2, total_duty: 800, total_fees: 850)
+          @ent9 = Factory(:entry, importer_id: @non_master_company.id, entry_port_code: port1.schedule_d_code, entry_number: '23821946175', release_date: @release_date, duty_due_date: @date1, total_duty: 900, total_fees: 950)
         end
 
       describe :create_linked_digests do
@@ -532,7 +537,7 @@ describe OpenChain::ActivitySummary do
           @user.stub(:view_entries?) {true}
 
           entries = []
-          expect(described_class::DutyDetail.build_digest(entries)).to be_empty
+          expect(described_class::DutyDetail.build_digest(entries)).to be nil
         end
         
         it "should return digest for multiple dates, ports" do
@@ -545,10 +550,10 @@ describe OpenChain::ActivitySummary do
                                                                                   :port_total_fees=>450, 
                                                                                   :port_total_duty_and_fees=>750, 
                                                                                   :port_entry_count=> 2,                                                                                  
-                                                                                  :entries=>[{ent_entry_number: "12345678912", ent_entry_type: nil, ent_port_name: "Boston", 
+                                                                                  :entries=>[{ent_id: @ent1.id, ent_entry_number: "12345678912", ent_entry_type: nil, ent_port_name: "Boston", 
                                                                                               ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date1, 
                                                                                               ent_total_fees: 200, ent_total_duty: 100, ent_total_duty_and_fees: 300}, 
-                                                                                             {ent_entry_number: "21987654321", ent_entry_type: nil, ent_port_name: "Boston", 
+                                                                                             {ent_id: @ent2.id, ent_entry_number: "21987654321", ent_entry_type: nil, ent_port_name: "Boston", 
                                                                                               ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date1, 
                                                                                               ent_total_fees: 250, ent_total_duty: 200, ent_total_duty_and_fees: 450}]}}, 
                                                           :date_total_duty=>300, 
@@ -559,17 +564,17 @@ describe OpenChain::ActivitySummary do
                                                                                  :port_total_fees=>350, 
                                                                                  :port_total_duty_and_fees=>650,
                                                                                  :port_entry_count=> 1,                                                                                 
-                                                                                 :entries=>[{ent_entry_number: "53471126928", ent_entry_type: nil, ent_port_name: "Boston", 
+                                                                                 :entries=>[{ent_id: @ent3.id, ent_entry_number: "53471126928", ent_entry_type: nil, ent_port_name: "Boston", 
                                                                                              ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2, 
                                                                                              ent_total_fees: 350, ent_total_duty: 300, ent_total_duty_and_fees: 650}]}, 
                                                                        "New York"=>{:port_total_duty=>900,
                                                                                     :port_total_fees=>1000,
                                                                                     :port_total_duty_and_fees=>1900,
                                                                                     :port_entry_count=>2,                                                                                    
-                                                                                    :entries=>[{ent_entry_number: "14215923867", ent_entry_type: nil, ent_port_name: "New York", 
+                                                                                    :entries=>[{ent_id: @ent4.id, ent_entry_number: "14215923867", ent_entry_type: nil, ent_port_name: "New York", 
                                                                                                 ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2, 
                                                                                                 ent_total_fees: 450, ent_total_duty: 400, ent_total_duty_and_fees: 850}, 
-                                                                                               {ent_entry_number: "59172148623", ent_entry_type: nil, ent_port_name: "New York", 
+                                                                                               {ent_id: @ent5.id, ent_entry_number: "59172148623", ent_entry_type: nil, ent_port_name: "New York", 
                                                                                                 ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2, 
                                                                                                 ent_total_fees: 550, ent_total_duty: 500, ent_total_duty_and_fees: 1050}]}}, 
                                                           :date_total_duty=>1200, 
@@ -585,6 +590,13 @@ describe OpenChain::ActivitySummary do
       end
 
       describe :get_entries do
+
+        it "should return results only for specified company" do
+          @company.stub(:can_view?).with(@user).and_return(true)
+          @user.stub(:view_entries?).and_return(true)
+
+          expect(described_class::DutyDetail.get_entries(@user, @company).where("importer_id = ? ", @non_master_company.id)).to be_empty
+        end
 
         it "should return empty if user cannot view entries" do
           @company.stub(:can_view?).with(@user).and_return(true)
