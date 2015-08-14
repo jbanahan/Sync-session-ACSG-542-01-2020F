@@ -88,7 +88,7 @@
                 <tbody>
                   <%-hsh['unpaid_duty'].each do |summary|-%>
                     <tr>
-                      <td><%=summary['name'].upcase%></td>
+                      <td><%=summary['customer_name'].upcase%></td>
                       <td class="numeric"><%=number_to_currency summary['total_duty']%></td>
                       <td class="numeric"><%=number_to_currency summary['total_fees']%></td>
                       <td class="numeric"><%=number_to_currency summary['total_duty_and_fees']%></td>
