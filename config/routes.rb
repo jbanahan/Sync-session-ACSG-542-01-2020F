@@ -701,4 +701,7 @@ OpenChain::Application.routes.draw do
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
 
   root :to => "home#index"
+
+  resources :groups, except: [:show]
+
 end
