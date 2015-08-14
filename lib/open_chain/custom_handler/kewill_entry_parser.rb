@@ -202,14 +202,15 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.fda_pending_release_line_count = 0
 
       # Clear dates
-      DATE_MAP.values.each do |v|
+      attributes = {}
+      DATE_MAP.keys.each do |v|
         c = get_date_config v
         next unless c 
-        # Don't clear anything w/ a first/last directive, since we want to retain
-        # those dates
+        # Don't clear anything w/ a first/last/ifnull directive, since we want to retain those original dates
         next unless c[:directive] == :none
-        entry.assign_attributes c[:attribute], nil
+        attributes[c[:attribute]] = nil
       end
+      entry.assign_attributes attributes
     end
 
     def process_entry_header e, entry

@@ -876,6 +876,32 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.fda_hold_date).to eq Time.zone.parse("2015-07-21 16:47")
       expect(line.fda_release_date).to be_nil
     end
+
+    it "clears date values that are no longer sent in updated data" do
+      # basically, this just checks that if a date value has been removed from the Kewill data
+      # that it gets cleared from VFI Track.
+      entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance")
+      standard_dates = [:export_date, :docs_received_date, :file_logged_date, :eta_date, :arrival_date, :release_date, :fda_release_date, :trucker_called_date, :delivery_order_pickup_date, 
+        :freight_pickup_date, :last_billed_date, :invoice_paid_date, :duty_due_date, :liquidation_date, :daily_statement_due_date, :free_date, :edi_received_date, :fda_transmit_date, :daily_statement_approved_date, 
+        :final_delivery_date, :worksheet_date, :available_date, :isf_sent_date, :isf_accepted_date, :fda_review_date, :first_release_date, :first_entry_sent_date, :monthly_statement_received_date, :monthly_statement_paid_date]
+      first_last_dates = [:first_it_date, :entry_filed_date]
+
+      values = {}
+      (standard_dates + first_last_dates).each {|k| values[k] = Date.today}
+      entry.update_attributes! values
+      @e['dates'] = []
+
+      # Make sure all the dates that should have cleared out did and the ones that didn't did not.
+      entry = subject.process_entry @e
+
+      attributes = entry.attributes
+      # These values should not be cleared by the fact that there was no json in the data we sent to the process_entry method
+      first_last_dates.each {|d| expect(attributes[d.to_s]).not_to be_nil, "expected #{d.to_s} not to be nil, got '#{attributes[d.to_s]}'"}
+      
+      # These values all should have been cleared and reparsed from the dates in the json - and since there are no dates in the json we 
+      # sent in the test, they should all be nil
+      standard_dates.each {|d| expect(attributes[d.to_s]).to be_nil, "expected #{d.to_s} to be nil, got '#{attributes[d.to_s]}'"}
+    end
   end
 
   describe "parse" do
