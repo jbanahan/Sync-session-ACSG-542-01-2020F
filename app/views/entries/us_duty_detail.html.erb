@@ -13,7 +13,7 @@
 </style>
 <div class="container">
     <h1>Statement Duty Forecast</h1>
-    <h3>For Shipments with a Scheduled Pay Date between <%=Time.zone.now.in_time_zone(current_user.time_zone).strftime('%m/%d/%Y')%> and <%=(Time.zone.now.in_time_zone(current_user.time_zone) + 7.days).strftime('%m/%d/%Y')%></h3>
+    <h3>Released Shipments with future Scheduled Pay Dates</h3>
     <table class="table table-striped table-condensed">
         <thead>
             <tr>
@@ -31,9 +31,60 @@
             </tr>
         </thead>
         <tbody>
-            <%= render partial: "duty_detail_table", locals: {report: @single_report} %>        
-            <% @linked_reports.each do |rep|%>
-                <%= render partial: "duty_detail_table", locals: {report: rep} %>
+            <% @reports.each do |rep| %>                
+                <tr class='heading-row'><td colspan="11" id="company-name"><%= rep[:company_name].upcase %></td></tr>
+                <% rep[:company_report][:date_hsh].each do |date, by_date| %>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td colspan = "10"><%= date.strftime('%-m/%d/%Y') %></td>
+                </tr>
+                    <% by_date[:port_hsh].each do |port, by_port| %>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td colspan = "9"><%= port %></td>
+                        </tr>
+                        <% by_port[:entries].each do |ent|%>
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td><a href="<%=entry_path(ent[:ent_id])%>"><%= ent[:ent_entry_number] %></a></td>
+                                <td><%= ent[:ent_entry_type] %></td>
+                                <td><%= ent[:ent_release_date].strftime('%a %m/%d') if ent[:ent_release_date] %></td>
+                                <td>
+                                    <% ent[:ent_customer_references].split("\n").each do |ref| %>
+                                    <%= ref %></br>
+                                    <% end if ent[:ent_customer_references]%>
+                                </td>
+                                <td class='number-val text-right'><%= number_with_precision(ent[:ent_total_duty], precision: 2) %></td>
+                                <td class='number-val text-right'><%= number_with_precision(ent[:ent_total_fees], precision: 2) %></td>
+                                <td class='number-val text-right'><%= number_with_precision(ent[:ent_total_duty_and_fees], precision: 2) %></td>
+                            </tr>
+                        <% end %>
+                        <tr class="totals">
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td colspan="5">Totals for <%= port %></td>
+                            <td class='number-val text-right'><%= number_with_precision(by_port[:port_total_duty], precision: 2) %></td>
+                            <td class='number-val text-right'><%= number_with_precision(by_port[:port_total_fees], precision: 2) %></td>
+                            <td class='number-val text-right'><%= number_with_precision(by_port[:port_total_duty_and_fees], precision: 2) %></td>
+                        </tr>
+                    <% end %>
+                    <tr class= "totals">
+                        <td>&nbsp;</td>
+                        <td colspan="6"><%= "Totals for " + date.strftime('%-m/%d/%Y') %></td>
+                        <td class='number-val text-right'><%= number_with_precision(by_date[:date_total_duty], precision: 2) %></td>
+                        <td class='number-val text-right'><%= number_with_precision(by_date[:date_total_fees], precision: 2) %></td>
+                        <td class='number-val text-right'><%= number_with_precision(by_date[:date_total_duty_and_fees], precision: 2) %></td>
+                    </tr>
+                <% end %>
+                <tr class= "totals">
+                    <td colspan="7"><%= "Totals for #{rep[:company_name].upcase}" %>&nbsp;</td>
+                    <td class='number-val text-right'><%= number_with_precision(rep[:company_report][:company_total_duty], precision: 2) %></td>
+                    <td class='number-val text-right'><%= number_with_precision(rep[:company_report][:company_total_fees], precision: 2) %></td>
+                    <td class='number-val text-right'><%= number_with_precision(rep[:company_report][:company_total_duty_and_fees], precision: 2) %></td>
+                </tr>
             <% end %>    
         </tbody>
     </table>
