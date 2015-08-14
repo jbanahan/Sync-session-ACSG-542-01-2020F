@@ -454,13 +454,12 @@ describe EntriesController do
       Company.any_instance.stub(:can_view?).with(@user).and_return(true)
 
       single_company_report = double('report')
-      linked_company_reports = double('linked_reports')
+      linked_company_reports = [double('linked report 1'), double('linked report 2'), double('linked report 3')]
       OpenChain::ActivitySummary::DutyDetail.should_receive(:create_digest).with(@user, @company).and_return single_company_report
       OpenChain::ActivitySummary::DutyDetail.should_receive(:create_linked_digests).with(@user, @company).and_return linked_company_reports
       get :us_duty_detail, importer_id: @company.id
       expect(response).to be_success
-      expect(assigns(:single_report)).to eq single_company_report
-      expect(assigns(:linked_reports)).to eq linked_company_reports
+      expect(assigns(:reports)).to eq [single_company_report].concat(linked_company_reports)
     end
 
   end

@@ -205,8 +205,9 @@ class EntriesController < ApplicationController
       error_redirect "You do not have permission to view this report."
       return
     end
-    @single_report = OpenChain::ActivitySummary::DutyDetail.create_digest(current_user, @imp)
-    @linked_reports = OpenChain::ActivitySummary::DutyDetail.create_linked_digests(current_user, @imp)
+    
+    @reports = [OpenChain::ActivitySummary::DutyDetail.create_digest(current_user, @imp)]
+    @reports.push(*OpenChain::ActivitySummary::DutyDetail.create_linked_digests(current_user, @imp))
   end
 
   private
