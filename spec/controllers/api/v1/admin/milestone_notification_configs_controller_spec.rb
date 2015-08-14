@@ -118,6 +118,34 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     end
   end
 
+  describe "copy" do
+    it "copies existing config to new one" do
+      c = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", enabled: "true", setup: '[{"model_field_uid":"ent_release_date","no_time":null,"timezone":null}]'
+      c.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "eq", value: "val"
+
+      get :copy, id: c.id
+
+      expect(response).to be_success
+      conf = JSON.parse(response.body)
+
+      # This uses the exact same code to display the json as the show adn create methods, so just test the differences
+      # that should come w/ the create (.ie blank id, no cust no, disabled..)
+      expect(conf['config']['milestone_notification_config']['id']).to eq 0
+      expect(conf['config']['milestone_notification_config']['customer_number']).to eq ""
+      expect(conf['config']['milestone_notification_config']['enabled']).to eq false
+      expect(conf['config']['milestone_notification_config']['setup_json'].length).to eq 1
+      expect(conf['config']['milestone_notification_config']['search_criterions'].length).to eq 1
+    end
+
+    it "rejects non-admin users" do
+      allow_api_access Factory(:user)
+
+      get :copy, id: 1
+      expect(response.status).to eq 403
+      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+    end
+  end
+
   describe "update" do
     before :each do
       @config = MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard"

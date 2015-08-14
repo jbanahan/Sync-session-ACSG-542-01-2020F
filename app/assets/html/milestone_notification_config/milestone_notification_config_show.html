@@ -73,5 +73,7 @@
 </chain-loading-wrapper>
 <div chain-action-bar>
   <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
+  <button class="btn btn-default" ng-show="config.id > 0" ng-click="copyConfig()">Copy</button>
   <button class="btn btn-default" ng-click="saveConfig()">Save</button>
+
 </div>

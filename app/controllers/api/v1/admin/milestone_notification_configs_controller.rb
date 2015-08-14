@@ -32,6 +32,11 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
     render json: {}
   end
 
+  def copy
+    c = MilestoneNotificationConfig.find params[:id]
+    render json: config_json_with_model_fields(c, true)
+  end
+
   private
     def save c, config
       c.customer_number = config[:customer_number]
@@ -66,12 +71,12 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
       render json: config_json_with_model_fields(c)
     end
 
-    def config_json_with_model_fields config
-      json = config_json(config)
+    def config_json_with_model_fields config, copy = false
+      json = config_json(config, copy)
       {config: json, model_field_list: model_field_list, event_list: event_list, output_styles: output_styles, timezones: timezones}
     end
 
-    def config_json config
+    def config_json config, copy = false
       c = config.as_json(
         only: [:id, :customer_number, :enabled, :output_style],
         methods: [:setup_json]
@@ -82,6 +87,13 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
         setup['event_code'] = field.uid.to_s.sub /^[^_]+_/, "" # Just trim the leading segement of the front of the uids and use as the event code
       end
       c[:milestone_notification_config][:search_criterions] = config.search_criterions.collect {|sc| sc.json(current_user)}
+
+      if copy
+        c[:milestone_notification_config][:customer_number] = ""
+        c[:milestone_notification_config][:enabled] = false
+        c[:milestone_notification_config][:id] = 0
+      end
+
       c
     end
 
@@ -90,6 +102,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
       model_fields = CoreModule::ENTRY.model_fields(current_user)
       fields = []
       model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: mf.label(true), datatype: mf.data_type.to_s} }
+      fields = fields.sort {|x, y| x[:label] <=> y[:label]}
       fields
     end
 
@@ -97,6 +110,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
       model_fields = CoreModule::ENTRY.model_fields(current_user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}
       fields = []
       model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: "#{mf.label} (#{mf.field_name}) - #{mf.data_type.to_s == "datetime" ? "Datetime" : "Date"}", datatype: mf.data_type.to_s} }
+      fields = fields.sort {|x, y| x[:label] <=> y[:label]}
       fields
     end
 

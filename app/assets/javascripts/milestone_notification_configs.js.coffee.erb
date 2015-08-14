@@ -14,24 +14,14 @@ MilestoneConfigApp.config ['$stateProvider','$urlRouterProvider',($stateProvider
       controller: 'MilestoneIndexController'
     }).
     state('show', {
-      url: '/:configId/show'
+      url: '/:configId/:action'
       templateUrl: '<%=asset_path("milestone_notification_config/milestone_notification_config_show.html")%>'
-      controller: 'MilestoneShowController',
-      resolve: {
-        milestoneId: ['$stateParams', ($stateParams) -> 
-          $stateParams.configId
-        ]
-      }
+      controller: 'MilestoneShowController'
     }).
     state('new', {
       url: '/new'
       templateUrl: '<%=asset_path("milestone_notification_config/milestone_notification_config_show.html")%>'
-      controller: 'MilestoneShowController',
-      resolve: {
-        milestoneId: ['$stateParams', ($stateParams) -> 
-          null
-        ]
-      }
+      controller: 'MilestoneShowController'
     })
 ]
 
@@ -60,6 +50,9 @@ angular.module('MilestoneConfigApp').factory 'milestoneSvc', ['$http', ($http) -
       else
         $http.post(milestonePath(''), config_param).then(milestoneHandler)
 
+    copyMilestoneUpdateConfig: (configId) ->
+      $http.get(milestonePath('/' + configId + '/copy')).then(milestoneHandler)
+
   }
 ]
 
@@ -79,7 +72,7 @@ MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneS
 
   $scope.showConfig = (config) ->
     $scope.errorHandler.clear()
-    $state.go('show', {configId: config.id})
+    $state.go('show', {configId: config.id, action: "show"})
 
   $scope.newConfig = ()->
     $scope.errorHandler.clear()
@@ -89,21 +82,25 @@ MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneS
     $scope.outputStyles[fmt]
 ]
 
-MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSvc', 'milestoneId', '$state', 'chainErrorHandler', ($scope, milestoneSvc, milestoneId, $state, chainErrorHandler) -> 
+MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSvc', '$state', 'chainErrorHandler', ($scope, milestoneSvc, $state, chainErrorHandler) -> 
 
   $scope.loadingFlag = "loading"
   $scope.errorHandler = chainErrorHandler
   $scope.errorHandler.responseErrorHandler = (rejection) ->
     $scope.loadingFlag = null
 
-  milestoneSvc.getMilestoneUpdateConfig(milestoneId).then( (resp) ->
+  responseHandler = (resp) ->
     $scope.config = resp.config.milestone_notification_config
     $scope.modelFieldList = resp.model_field_list
     $scope.eventList = resp.event_list
     $scope.outputStyles = resp.output_styles
     $scope.timezones = resp.timezones
     $scope.loadingFlag = null
-  )
+
+  if $state.params.action == "copy"
+    milestoneSvc.copyMilestoneUpdateConfig($state.params.configId).then(responseHandler)
+  else
+    milestoneSvc.getMilestoneUpdateConfig($state.params.configId).then(responseHandler)
   
   $scope.saveConfig = () ->
     $scope.loadingFlag = "loading"
@@ -121,6 +118,11 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
 
   $scope.newEvent = () ->
     $scope.config.setup_json.push {}
+
+  $scope.copyConfig = () ->
+    id = $scope.config.id
+    $scope.config = null
+    $state.go('show', {configId: id, action: "copy"})
 
   $scope.removeEvent = (event) ->
     $scope.config.setup_json = $scope.config.setup_json.filter (s) ->
