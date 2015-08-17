@@ -57,33 +57,33 @@
                                     <%= ref %></br>
                                     <% end if ent[:ent_customer_references]%>
                                 </td>
-                                <td class='number-val text-right'><%= number_with_precision(ent[:ent_total_duty], precision: 2) %></td>
-                                <td class='number-val text-right'><%= number_with_precision(ent[:ent_total_fees], precision: 2) %></td>
-                                <td class='number-val text-right'><%= number_with_precision(ent[:ent_total_duty_and_fees], precision: 2) %></td>
+                                <td class='number-val text-right'><%= number_to_currency(ent[:ent_total_duty]) %></td>
+                                <td class='number-val text-right'><%= number_to_currency(ent[:ent_total_fees]) %></td>
+                                <td class='number-val text-right'><%= number_to_currency(ent[:ent_total_duty_and_fees]) %></td>
                             </tr>
                         <% end %>
                         <tr class="totals">
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
                             <td colspan="5">Totals for <%= port %></td>
-                            <td class='number-val text-right'><%= number_with_precision(by_port[:port_total_duty], precision: 2) %></td>
-                            <td class='number-val text-right'><%= number_with_precision(by_port[:port_total_fees], precision: 2) %></td>
-                            <td class='number-val text-right'><%= number_with_precision(by_port[:port_total_duty_and_fees], precision: 2) %></td>
+                            <td class='number-val text-right'><%= number_to_currency(by_port[:port_total_duty]) %></td>
+                            <td class='number-val text-right'><%= number_to_currency(by_port[:port_total_fees]) %></td>
+                            <td class='number-val text-right'><%= number_to_currency(by_port[:port_total_duty_and_fees]) %></td>
                         </tr>
                     <% end %>
                     <tr class= "totals">
                         <td>&nbsp;</td>
                         <td colspan="6"><%= "Totals for " + date.strftime('%-m/%d/%Y') %></td>
-                        <td class='number-val text-right'><%= number_with_precision(by_date[:date_total_duty], precision: 2) %></td>
-                        <td class='number-val text-right'><%= number_with_precision(by_date[:date_total_fees], precision: 2) %></td>
-                        <td class='number-val text-right'><%= number_with_precision(by_date[:date_total_duty_and_fees], precision: 2) %></td>
+                        <td class='number-val text-right'><%= number_to_currency(by_date[:date_total_duty]) %></td>
+                        <td class='number-val text-right'><%= number_to_currency(by_date[:date_total_fees]) %></td>
+                        <td class='number-val text-right'><%= number_to_currency(by_date[:date_total_duty_and_fees]) %></td>
                     </tr>
                 <% end %>
                 <tr class= "totals">
                     <td colspan="7"><%= "Totals for #{rep[:company_name].upcase}" %>&nbsp;</td>
-                    <td class='number-val text-right'><%= number_with_precision(rep[:company_report][:company_total_duty], precision: 2) %></td>
-                    <td class='number-val text-right'><%= number_with_precision(rep[:company_report][:company_total_fees], precision: 2) %></td>
-                    <td class='number-val text-right'><%= number_with_precision(rep[:company_report][:company_total_duty_and_fees], precision: 2) %></td>
+                    <td class='number-val text-right'><%= number_to_currency(rep[:company_report][:company_total_duty]) %></td>
+                    <td class='number-val text-right'><%= number_to_currency(rep[:company_report][:company_total_fees]) %></td>
+                    <td class='number-val text-right'><%= number_to_currency(rep[:company_report][:company_total_duty_and_fees]) %></td>
                 </tr>
             <% end %>    
         </tbody>
