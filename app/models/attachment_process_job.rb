@@ -16,7 +16,7 @@ class AttachmentProcessJob < ActiveRecord::Base
   validates :attachable, presence: true
 
   def process
-    JOB_TYPES[self.job_name].process_attachment self.attachable, self.attachment, self.user
+    JOB_TYPES[self.job_name].process_attachment self.attachable, self.attachment, self.user, self.manufacturer_address_id
     self.finish_at = Time.now
     self.save!
   end

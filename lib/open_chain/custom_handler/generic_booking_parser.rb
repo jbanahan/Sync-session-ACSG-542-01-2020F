@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   # @param [Shipment] shipment
   # @param [Attachment] attachment
   # @param [User] user
-  def self.process_attachment(shipment, attachment, user)
+  def self.process_attachment(shipment, attachment, user, *rest)
     parse shipment, attachment.attached.path, user
   end
 

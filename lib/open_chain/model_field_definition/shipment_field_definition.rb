@@ -152,7 +152,18 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.cancel_requested_by_id)",
              :data_type=>:string
          }],
-      [60,:shp_cancel_requested_at,:cancel_requested_at,"Cancel Requested At",{data_type: :datetime, read_only: true}]
+      [60,:shp_cancel_requested_at,:cancel_requested_at,"Cancel Requested At",{data_type: :datetime, read_only: true}],
+      [61,:shp_isf_sent_by_full_name,:username,"ISf Sent By", {
+             :import_lambda => lambda {|a,b| return "ISF Sent By cannot be set by import, ignored."},
+             :export_lambda => lambda {|obj|
+               u = obj.isf_sent_by
+               u.blank? ? "" : u.full_name
+             },
+             :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.isf_sent_by_id)",
+             :data_type=>:string
+         }],
+      [62,:shp_isf_sent_at,:isf_sent_at,"ISF Sent At",{data_type: :datetime, read_only: true}],
+      [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :datetime}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -166,6 +177,11 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Foreign Port of Lading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Foreign Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','First US Port')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1205,'shp','shipments','buyer')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1210,'shp','shipments','seller')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1215,'shp','shipments','ship_to')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1220,'shp','shipments','container_stuffing')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1225,'shp','shipments','consolidator')
 
   end
 end; end; end

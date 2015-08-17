@@ -14,7 +14,6 @@ spec/tmp/*
 *.swp
 coverage/*
 coverage.data
-coverage/*
 .rvmrc*
 .ruby-gemset
 .ruby-version
@@ -25,5 +24,6 @@ config/google_auth.json
 config/api_client.yml
 config/pepsi.pem
 config/google_oauth2_api_login.json
+config/secrets.yml
 .idea
 dump.rdb

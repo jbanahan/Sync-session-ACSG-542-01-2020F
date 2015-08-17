@@ -21,12 +21,21 @@ end
 Factory.define :importer, parent: :company do |c|
   c.importer true
 end
+Factory.define :consignee, parent: :company do |c|
+  c.consignee true
+end
 Factory.define :part_number_correlation do |c|
 end
 Factory.define :address do |a|
   a.name "MYaddr"
   a.association :country
   a.association :company
+end
+Factory.define :full_address, parent: :address do |a|
+  a.line_1 '99 Fake Street'
+  a.city 'Fakesville'
+  a.state 'PA'
+  a.postal_code '19191'
 end
 Factory.define :user do |f|
   f.sequence(:username) { |n| "foo#{n}" }

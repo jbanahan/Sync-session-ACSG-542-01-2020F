@@ -32,6 +32,7 @@
           panel-title='Booking' panel-class='panel-primary' before-edit='prepBookingEditObject(shp)' on-save='saveShipment(booking)'></chain-view-edit>
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/parties_view.html' edit-template='/partials/shipments/parties_edit.html'
           panel-title='Parties' panel-class='panel-primary' before-edit='prepPartiesEditObject(shp)' on-save='saveShipment(partiesEditObj)'></chain-view-edit>
+        <add-address-modal></add-address-modal>
       </div>
       <div class="col-md-4">
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/tracking_view.html' edit-template='/partials/shipments/tracking_edit.html'
@@ -190,12 +191,14 @@
                           <td ng-show='shp.permissions.can_edit' class='text-right'>
                             <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteShipmentLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
                             <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
+                            <button class='btn btn-xs btn-default' title='Show Parties' ng-click='prepPartiesModal(ln)' data-toggle='modal' data-target='#mod_shpln_parties'><i class='fa fa-user'></i></button>
                           </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                 </div>
+                <add-address-modal></add-address-modal>
                 <div class="modal fade panel-modal" id='mod_edit_line' tabindex="-1" role="dialog" aria-hidden="true">
                   <div class="modal-dialog">
                     <div class="modal-content">
@@ -230,6 +233,26 @@
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary" ng-click='saveShipmentLine(shp,lineToEdit)' data-dismiss="modal">Save changes</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal fade panel-modal" id='mod_shpln_parties' tabindex="-1" role="dialog" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header"><h2 class="modal-title">Parties for Line {{partyLine.shpln_line_number}}</h2></div>
+                      <div class="modal-body">
+                        <address-expander ng-show="!edit" title="Manufacturer"
+                                          address-name="partyLine.shpln_manufacturer_address_name"
+                                          full-address="partyLine.shpln_manufacturer_address_full_address">
+                                </address-expander>
+                        <label ng-show="edit" for="modal_mfg_edit">Manufacturer</label>
+                        <address-book-autocomplete ng-show="edit" id="modal_mfg_edit" initial-value="partyLine.shpln_manufacturer_address_name" address-id-attribute="partyLine.shpln_manufacturer_address_id"></address-book-autocomplete>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default pull-left" ng-click="edit = !edit" ><i class="fa fa-{{edit ? 'unlock-alt' : 'lock'}}"></i></button>
+                        <button type="button" class="btn btn-primary" ng-click='edit = false; saveShipmentLine(shp,partyLine)' ng-show="edit" data-dismiss="modal">Save</button>
+                        <button type="button" class="btn btn-default" ng-click="edit = false;" data-dismiss="modal">Close</button>
                       </div>
                     </div>
                   </div>
@@ -343,6 +366,7 @@
     <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showAddOrder()'>Build Manifest</button>
     <button ng-show='shp.permissions.can_book && shp.permissions.can_add_remove_lines && shp.permissions.enabled_booking_types.length > 0' class='btn btn-default' ng-click='showBookOrder()'>Book Now</button>
     <button ng-show='shp.permissions.can_add_remove_lines && shp.attachments.length > 0' class='btn btn-default' ng-click='showProcessManifest()'>Process Worksheet</button>
+    <button ng-show='shp.permissions.can_send_isf' class='btn btn-default' ng-click='sendISF(shp)'>Send ISF</button>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>
   </div>
 </chain-loading-wrapper>

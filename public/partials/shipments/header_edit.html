@@ -61,9 +61,9 @@
 <label for="shp_volume">Volume (CBMs)</label>
 <input type="text" id="shp_volume" ng-model="outerScope.header.shp_volume" class="form-control" />
 <label for="shp_dimensional_weight" class="control-label">Dimensional Weight</label>
-<p class="form-control-static" id="shp_dimensional_weight">{{((outerScope.header.shp_volume || 0) / 0.006) + ' kg' }}</p>
+<p class="form-control-static" id="shp_dimensional_weight">{{dimWeight = ((outerScope.header.shp_volume || 0) / 0.006).toFixed(2); dimWeight + ' kg' }}</p>
 <label for="shp_chargeable_weight" class="control-label">Chargable Weight</label>
-<p class="form-control-static" id="shp_chargeable_weight">{{(outerScope.header.shp_gross_weight > ((outerScope.header.shp_volume || 0) / 0.006) ? outerScope.header.shp_gross_weight : ((outerScope.header.shp_volume || 0) / 0.006)) + ' kg' }}</p>
+<p class="form-control-static" id="shp_chargeable_weight">{{(outerScope.header.shp_gross_weight > dimWeight ? outerScope.header.shp_gross_weight : dimWeight) + ' kg' }}</p>
 <label for="shp_fish_and_wildlife"> Fish And Wildlife</label>
 <div>
   <input type="checkbox" id="shp_fish_and_wildlife" ng-model="outerScope.header.shp_fish_and_wildlife">

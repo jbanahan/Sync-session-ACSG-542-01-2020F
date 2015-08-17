@@ -145,6 +145,8 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
 
   $scope.prepBookingEditObject = copyObjectToScopeAs 'booking'
 
+  $scope.prepPartiesModal = copyObjectToScopeAs 'partyLine'
+
   $scope.prepPartiesEditObject = (shipment) ->
     loadParties() unless $scope.parties
     $scope.partiesEditObj = objectSlice shipment, ['id', 'shp_car_syscode', 'shp_imp_syscode']
@@ -172,6 +174,18 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
 
   $scope.showBookOrder = ->
     $state.go('book_order',{shipmentId: $scope.shp.id})
+
+  $scope.sendISF = (shipment) ->
+    actuallySend = ->
+      $scope.loadingFlag = 'loading'
+      $scope.eh.clear()
+      shipmentSvc.sendISF(shipment).finally -> $scope.loadingFlag = null
+
+    if $scope.shp.shp_isf_sent_at
+      if window.confirm("An ISF has already been sent. Are you sure you want to send it again?")
+        actuallySend()
+    else
+      actuallySend()
 
   $scope.saveShipment = (shipment) ->
     $scope.loadingFlag = 'loading'

@@ -34,7 +34,9 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
   end
   def role_array role_string
     sym = role_string.to_sym
-    r = query_base.where(sym=>true).to_a
+    r = query_base.where(sym=>true)
+    r = r.where('irs_number IS NOT NULL').where('alliance_customer_number IS NOT NULL') if params[:isf] && role_string == 'importer'
+    r = r.to_a
     r << current_user.company if current_user.company.read_attribute(sym) && !r.include?(current_user.company)
     r
   end

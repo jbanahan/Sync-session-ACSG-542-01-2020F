@@ -1,5 +1,6 @@
 class Shipment < ActiveRecord::Base
   include CoreObjectSupport
+  include ISFSupport
 	belongs_to	:carrier, :class_name => "Company"
 	belongs_to  :vendor,  :class_name => "Company"
 	belongs_to	:ship_from,	:class_name => "Address"
@@ -17,6 +18,8 @@ class Shipment < ActiveRecord::Base
   belongs_to :canceled_by, :class_name=>"User"
   belongs_to :cancel_requested_by, :class_name=>"User"
   belongs_to :cancel_approved_by, :class_name=>"User"
+  belongs_to :consignee, :class_name=>"Company"
+  belongs_to :isf_sent_by, :class_name => "User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :booking_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -277,7 +280,7 @@ class Shipment < ActiveRecord::Base
   end
 
   def dimensional_weight
-    self.volume / 0.006 if self.volume
+    (self.volume / 0.006).round(2) if self.volume
   end
 
   def chargeable_weight
@@ -302,5 +305,12 @@ class Shipment < ActiveRecord::Base
   def enabled_booking_types
     # ['product','order','order_line','container']
     self.importer.try(:enabled_booking_types_array) || []
+  end
+
+  def mark_isf_sent!(user, async_snapshot=false)
+    self.isf_sent_at = 0.seconds.ago
+    self.isf_sent_by = user
+    save!
+    self.create_snapshot_with_async_option async_snapshot, user
   end
 end

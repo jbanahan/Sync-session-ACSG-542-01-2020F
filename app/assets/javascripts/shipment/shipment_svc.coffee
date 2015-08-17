@@ -36,7 +36,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         name: currentShipment.shp_dest_port_name
       }
     commentSvc.injectComments(currentShipment,'Shipment')
-    resp
+    $q.when(resp)
 
   shipmentPost = (id, endpoint, options={id:id}) ->
     $http.post('/api/v1/shipments/'+id+'/'+endpoint, options)
@@ -72,7 +72,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       $http.put("/api/v1/shipments/#{shipmentId}.json", {shipment:{id:shipmentId, booking_lines:lines}, summary:true}).then getShipmentSuccessHandler
 
     getParties: ->
-      $http.get('/api/v1/companies?roles=importer,carrier')
+      $http.get('/api/v1/companies?roles=importer,carrier&isf=true')
 
     getAvailableOrders: (shipment) ->
       $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')
@@ -86,8 +86,8 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
 
-    processTradecardPackManifest: (shp, attachment) ->
-      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id}).then(getShipmentSuccessHandler)
+    processTradecardPackManifest: (shp, attachment, manufacturerAddressId) ->
+      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId}).then(getShipmentSuccessHandler)
 
     processBookingWorksheet: (shp, attachment) ->
       shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id}).then(getShipmentSuccessHandler)
@@ -112,5 +112,8 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
     uncancelShipment: (shp) ->
       shipmentPost(shp.id,'uncancel.json')
+
+    sendISF: (shp) ->
+      shipmentPost(shp.id,'send_isf.json')
   }
 ]

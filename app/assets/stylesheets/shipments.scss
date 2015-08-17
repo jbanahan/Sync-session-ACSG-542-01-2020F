@@ -96,3 +96,34 @@ booking-shipping-comparison {
     margin-top: -10px;
   }
 }
+
+.turnup {
+  animation-name: rotate180;
+  animation-duration: 500ms;
+  animation-fill-mode: forwards;
+}
+
+.turndown {
+  animation-name: negative180;
+  animation-duration: 500ms;
+  animation-fill-mode: forwards;
+}
+
+@keyframes rotate180 {
+  0% {transform: rotate(0deg)}
+  100% {transform: rotate(180deg)}
+}
+
+@keyframes negative180 {
+  0% {transform: rotate(180deg)}
+  100% {transform: rotate(0deg)}
+}
+
+.angucomplete-description {
+  color: #a6a6a6;
+  font-size: 12px;
+}
+
+#mod_new_address {
+  z-index: 2000;
+}

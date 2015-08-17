@@ -1,3 +1,5 @@
+require 'open_chain/custom_handler/isf_xml_generator'
+
 module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControllerBase
   include ActionView::Helpers::NumberHelper
 
@@ -124,6 +126,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {'ok'=>'ok'}
   end
 
+  def send_isf
+    shipment = Shipment.find params[:id]
+    if shipment.valid_isf?
+      ISFXMLGenerator.delay.generate_and_send(shipment.id, !shipment.isf_sent_at)
+      shipment.mark_isf_sent!(current_user)
+    else
+      raise 'Invalid ISF! <ul><li>' + shipment.errors.full_messages.join('</li><li>') + '</li></ul>'
+    end
+  end
+
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
@@ -214,7 +226,21 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_dimensional_weight,
       :shp_chargeable_weight,
       :shp_cancel_requested_by_full_name,
-      :shp_cancel_requested_at
+      :shp_cancel_requested_at,
+      :shp_manufacturer_address_name,
+      :shp_buyer_address_name,
+      :shp_seller_address_name,
+      :shp_ship_to_address_name,
+      :shp_container_stuffing_address_name,
+      :shp_consolidator_address_name,
+      :shp_manufacturer_address_full_address,
+      :shp_buyer_address_full_address,
+      :shp_seller_address_full_address,
+      :shp_ship_to_address_full_address,
+      :shp_container_stuffing_address_full_address,
+      :shp_consolidator_address_full_address,
+      :shp_isf_sent_at,
+      :shp_est_load_date
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([
@@ -228,7 +254,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shpln_cbms,
       :shpln_gross_kgs,
       :shpln_carton_qty,
-      :shpln_carton_set_uid
+      :shpln_carton_set_uid,
+      :shpln_manufacturer_address_name,
+      :shpln_manufacturer_address_full_address
     ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
 
     booking_line_fields_to_render = limit_fields([
@@ -310,6 +338,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_request_cancel:shipment.can_request_cancel?(current_user),
       can_cancel:shipment.can_cancel?(current_user),
       can_uncancel:shipment.can_uncancel?(current_user),
+      can_send_isf:shipment.can_approve_booking?(current_user, true),
       enabled_booking_types:shipment.enabled_booking_types
     }
   end
@@ -528,7 +557,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     att = s.attachments.find_by_id(params[:attachment_id])
     raise StatusableError.new("Attachment not linked to Shipment.",400) unless att
     aj = s.attachment_process_jobs.where(attachment_id:att.id,
-                                         job_name: job_name).first_or_create!(user_id:current_user.id)
+                                         job_name: job_name).first_or_create!(user_id:current_user.id, manufacturer_address_id:params[:manufacturer_address_id])
     if aj.start_at
       raise StatusableError.new("This manifest has already been submitted for processing.",400)
     else

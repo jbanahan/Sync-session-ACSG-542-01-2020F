@@ -6,6 +6,7 @@ class ShipmentLine < ActiveRecord::Base
   belongs_to :container, inverse_of: :shipment_lines
   belongs_to :carton_set, inverse_of: :shipment_lines
   belongs_to :canceled_order_line, class_name: 'OrderLine'
+  belongs_to :manufacturer_address, class_name: 'Address'
 
   validates_uniqueness_of :line_number, :scope => :shipment_id
 
@@ -28,6 +29,14 @@ class ShipmentLine < ActiveRecord::Base
   # override the locked? method from LinesSupport to lock lines included on Commercial Invoices
   def locked?
     (self.shipment && self.shipment.locked?) || !self.commercial_invoice_lines.blank?
+  end
+
+  def country_of_origin
+    order_lines.limit(1).pluck(:country_of_origin).first
+  end
+
+  def us_hts_number
+    Classification.joins(:country).where(product_id: product_id, countries: {iso_code: 'US'}).joins(:tariff_records).order('tariff_records.line_number ASC').limit(1).pluck(:hts_1).first
   end
 
   private
