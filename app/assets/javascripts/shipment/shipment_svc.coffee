@@ -18,7 +18,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     updatedLines
 
   setPortNames = (shipment) ->
-    names = ['dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
+    names = ['dest_port', 'final_dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
     for name in names
       setPortName shipment, name
 
@@ -39,7 +39,10 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     $q.when(resp)
 
   shipmentPost = (id, endpoint, options={id:id}) ->
-    $http.post('/api/v1/shipments/'+id+'/'+endpoint, options)
+    $http.post("/api/v1/shipments/#{id}/#{endpoint}", options)
+
+  shipmentGet = (id, endpoint) ->
+    $http.get("/api/v1/shipments/#{id}/#{endpoint}")
 
   return {
     getShipment: (shipmentId,forceReload) ->
@@ -75,13 +78,13 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       $http.get('/api/v1/companies?roles=importer,carrier&isf=true')
 
     getAvailableOrders: (shipment) ->
-      $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')
+      shipmentGet(shipment.id, 'available_orders.json')
 
     getBookedOrders: (shipment) ->
-      $http.get('/api/v1/shipments/'+shipment.id+'/booked_orders.json')
+      shipmentGet(shipment.id, 'booked_orders.json')
 
     getAvailableLines: (shipment) ->
-      $http.get('/api/v1/shipments/'+shipment.id+'/available_lines.json')
+      shipmentGet(shipment.id, 'available_lines.json')
 
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)

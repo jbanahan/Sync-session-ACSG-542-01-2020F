@@ -10,6 +10,7 @@ class Shipment < ActiveRecord::Base
   belongs_to :unlading_port, :class_name=>"Port"
   belongs_to :entry_port, :class_name=>"Port"
   belongs_to :destination_port, :class_name=>"Port"
+  belongs_to :final_dest_port, :class_name=>"Port"
   belongs_to :first_port_receipt, :class_name => "Port"
   belongs_to :last_foreign_port, :class_name => "Port"
   belongs_to :booking_requested_by, :class_name=>"User"

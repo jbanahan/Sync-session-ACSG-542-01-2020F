@@ -240,7 +240,12 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_container_stuffing_address_full_address,
       :shp_consolidator_address_full_address,
       :shp_isf_sent_at,
-      :shp_est_load_date
+      :shp_est_load_date,
+      :shp_eta_last_foreign_port_date,
+      :shp_departure_last_foreign_port_date,
+      :shp_final_dest_port_id,
+      :shp_final_dest_port_name,
+      :shp_confirmed_on_board_origin_date
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([
