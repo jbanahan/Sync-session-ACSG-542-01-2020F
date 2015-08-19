@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe Group do
   describe :visible_to_user do
     before :each do
@@ -25,6 +27,19 @@ describe Group do
       g2.users << u2
       u.company.linked_companies << u2.company
       expect(Group.visible_to_user(u).to_a).to eq [g2]
+    end
+    it "should validate presence of name" do
+      g = Group.new(name: "")
+      g.save
+      expect(g.errors.messages.count).to eq 1
+      expect(g.errors.messages[:name]).to include "can't be blank"
+    end
+    it "should validate uniqueness of system_code, if it exists" do
+      Factory(:group, system_code: "ABCDE")
+      g = Group.new(name: "g2", system_code: "ABCDE")
+      g.save
+      expect(g.errors.messages.count).to eq 1
+      expect(g.errors.messages[:system_code]).to include "has already been taken"
     end
   end
 end
