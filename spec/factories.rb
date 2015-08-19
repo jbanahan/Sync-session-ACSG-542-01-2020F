@@ -37,6 +37,9 @@ Factory.define :full_address, parent: :address do |a|
   a.state 'PA'
   a.postal_code '19191'
 end
+Factory.define :blank_address, class: Address do |a|
+  a.association :company
+end
 Factory.define :user do |f|
   f.sequence(:username) { |n| "foo#{n}" }
   f.password "foobar"

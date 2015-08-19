@@ -35,6 +35,9 @@ class ShipmentsController < ApplicationController
 
   def download
     s = Shipment.find(params[:id])
-    send_file OpenChain::CustomHandler::ShipmentDownloadGenerator.new(s, current_user).generate, type: 'application/vnd.ms-excel', x_sendfile: true, filename: "#{s.reference}.xls"
+
+    action_secure(s.can_edit?(current_user),s,{:verb => "download",:module_name=>"shipment"}) {
+      send_excel_workbook OpenChain::CustomHandler::ShipmentDownloadGenerator.new.generate(s, current_user), "#{s.reference}.xls"
+    }
   end
 end

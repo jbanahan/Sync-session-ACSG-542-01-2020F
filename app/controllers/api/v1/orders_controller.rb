@@ -10,12 +10,6 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     render_show CoreModule::ORDER
   end
 
-  def autocomplete
-    p = Order.order(:order_number)
-    p = p.where('order_number like ?',"%#{params[:n]}%") unless params[:n].blank?
-    render json: p.collect {|order| {name:order.order_number, id:order.id}}
-  end
-
   def obj_to_json_hash o
     headers_to_render = limit_fields([
       :ord_ord_num,

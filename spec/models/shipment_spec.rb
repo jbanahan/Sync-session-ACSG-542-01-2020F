@@ -532,4 +532,27 @@ describe Shipment do
       s.linkable_attachments.first.should == linkable
     end
   end
+
+  describe "available_products" do
+    before :each do
+      @imp = Factory(:importer)
+      @product = Factory(:product, importer: @imp)
+      @product2 = Factory(:product)
+      @shipment = Factory(:shipment, importer: @imp)
+
+    end
+
+    it "limits available products to those sharing importers with the shipment and user's importer company" do
+      user = Factory(:user, company: @imp)
+      products = @shipment.available_products(user).all
+      expect(products.size).to eq 1
+    end
+
+    it "limits available products to those sharing importers with the shipment and user's linked companies" do
+      user = Factory(:user, company: Factory(:importer))
+      user.company.linked_companies << @imp
+      products = @shipment.available_products(user).all
+      expect(products.size).to eq 1
+    end
+  end
 end

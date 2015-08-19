@@ -34,7 +34,7 @@ module OpenChain; module ModelFieldGenerator; module AddressGenerator
   end
 
   def make_address_arrays(rank_start,uid_prefix,table_name,address_name)
-    [[rank_start,:"#{uid_prefix}_#{address_name}_address_id", :"#{address_name}_address_id", "#{address_name.titleize} Address Id",{data_type: :integer}],
+    [[rank_start,:"#{uid_prefix}_#{address_name}_address_id", :"#{address_name}_address_id", "#{address_name.titleize} Address Id",{data_type: :integer, user_accessible: false}],
     [rank_start+1,:"#{uid_prefix}_#{address_name}_address_name", :"#{address_name}_address_name", "#{address_name.titleize} Address Name",{
        data_type: :string,
        read_only:true,

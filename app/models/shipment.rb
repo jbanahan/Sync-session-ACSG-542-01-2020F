@@ -230,6 +230,12 @@ class Shipment < ActiveRecord::Base
     r = r.where(vendor_id:self.vendor_id) if self.vendor_id
     r
   end
+
+  def available_products user
+    return Product.where("1=0") if self.importer_id.blank? #can't find anything without an importer
+    p = Product.search_secure(user, Product).where(importer_id: self.importer_id)
+  end
+
   #get unique linked commercial invoices
   def commercial_invoices
     CommercialInvoice.

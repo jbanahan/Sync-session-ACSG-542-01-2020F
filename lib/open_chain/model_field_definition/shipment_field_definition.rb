@@ -181,11 +181,11 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Foreign Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','First US Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1110, 'shp_final_dest_port','shipments','final_dest_port','Final Destination')
-    add_fields CoreModule::SHIPMENT, make_address_arrays(1205,'shp','shipments','buyer')
-    add_fields CoreModule::SHIPMENT, make_address_arrays(1210,'shp','shipments','seller')
-    add_fields CoreModule::SHIPMENT, make_address_arrays(1215,'shp','shipments','ship_to')
-    add_fields CoreModule::SHIPMENT, make_address_arrays(1220,'shp','shipments','container_stuffing')
-    add_fields CoreModule::SHIPMENT, make_address_arrays(1225,'shp','shipments','consolidator')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1200,'shp','shipments','buyer')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1250,'shp','shipments','seller')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1300,'shp','shipments','ship_to')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1350,'shp','shipments','container_stuffing')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1400,'shp','shipments','consolidator')
 
   end
 end; end; end

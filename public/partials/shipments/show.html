@@ -25,14 +25,14 @@
     <div class="row"> <!-- start ship header -->
       <div class="col-md-4">
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/header_view.html' edit-template='/partials/shipments/header_edit.html'
-          panel-title='Shipment' panel-class='panel-primary' before-edit='prepShipmentHeaderEditObject(shp)' on-save='saveShipment(header)'></chain-view-edit>
+          panel-title='Shipment' panel-class='panel-primary' before-edit='prepShipmentHeaderEdit(shp)' on-save='saveShipment(header)'></chain-view-edit>
       </div>
       <div class="col-md-4">
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/booking_view.html' edit-template='/partials/shipments/booking_edit.html'
           panel-title='Booking' panel-class='panel-primary' before-edit='prepBookingEditObject(shp)' on-save='saveShipment(booking)'></chain-view-edit>
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/parties_view.html' edit-template='/partials/shipments/parties_edit.html'
           panel-title='Parties' panel-class='panel-primary' before-edit='prepPartiesEditObject(shp)' on-save='saveShipment(partiesEditObj)'></chain-view-edit>
-        <add-address-modal></add-address-modal>
+        <add-address-modal shipment-id="shp.id"></add-address-modal>
       </div>
       <div class="col-md-4">
         <chain-view-edit edit-if='shp.permissions.can_edit' view-template='/partials/shipments/tracking_view.html' edit-template='/partials/shipments/tracking_edit.html'
@@ -198,7 +198,6 @@
                     </table>
                   </div>
                 </div>
-                <add-address-modal></add-address-modal>
                 <div class="modal fade panel-modal" id='mod_edit_line' tabindex="-1" role="dialog" aria-hidden="true">
                   <div class="modal-dialog">
                     <div class="modal-content">

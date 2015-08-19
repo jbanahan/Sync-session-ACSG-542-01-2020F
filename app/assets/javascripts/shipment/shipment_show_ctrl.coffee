@@ -1,8 +1,14 @@
 angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler',($scope,shipmentSvc,$state,chainErrorHandler) ->
-  loadParties = ->
-    $scope.parties = undefined
-    shipmentSvc.getParties().success((data) ->
-      $scope.parties = data
+  loadCarriers = (importerId) ->
+    $scope.carriers = undefined
+    shipmentSvc.getCarriers(importerId).success((data) ->
+      $scope.carriers = data.carriers
+    )
+
+  loadImporters = ->
+    $scope.importers = undefined
+    shipmentSvc.getImporters().success((data) ->
+      $scope.importers = data.importers
     )
 
   bookingAction = (shipment, redoCheckField, actionMethod, namePastTense) ->
@@ -103,7 +109,21 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
     (source) ->
       $scope[objName] = angular.copy(source)
 
-  $scope.prepShipmentHeaderEditObject = copyObjectToScopeAs 'header'
+  portSelectedCallback = (port) ->
+    (item) ->
+      if item
+        $scope.header[port + '_id'] = item.originalObject.id
+        # Remove this attribute so we don't have port names in the save requests sent, only ids
+        delete $scope.header[port + '_name']
+
+  $scope.prepShipmentHeaderEdit = (shipment) ->
+    $scope.header = angular.copy(shipment)
+    $scope.header.destPortSelected = portSelectedCallback('shp_dest_port')
+    $scope.header.finalDestPortSelected = portSelectedCallback('shp_final_dest_port')
+    $scope.header.firstPortReceiptSelected = portSelectedCallback('shp_first_port_receipt')
+    $scope.header.ladingPortSelected = portSelectedCallback('shp_lading_port')
+    $scope.header.lastForeignPortSelected = portSelectedCallback('shp_last_foreign_port')
+    $scope.header.unladingPortSelected = portSelectedCallback('shp_unlading_port')
 
   $scope.prepShipmentLineEditObject = copyObjectToScopeAs 'lineToEdit'
 
@@ -148,8 +168,10 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
   $scope.prepPartiesModal = copyObjectToScopeAs 'partyLine'
 
   $scope.prepPartiesEditObject = (shipment) ->
-    loadParties() unless $scope.parties
-    $scope.partiesEditObj = objectSlice shipment, ['id', 'shp_car_syscode', 'shp_imp_syscode']
+    loadCarriers(shipment.shp_imp_id) unless $scope.carriers
+    $scope.partiesEditObj =
+      id: shipment.id
+      shp_car_syscode: shipment.shp_car_syscode
 
   $scope.prepTrackingEditObject = copyObjectToScopeAs 'tracking'
 

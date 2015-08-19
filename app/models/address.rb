@@ -24,7 +24,29 @@ class Address < ActiveRecord::Base
   end
 
   def full_address
-    "#{self.line_1} #{self.line_2} #{self.line_3}, #{self.city} #{self.state} #{self.postal_code}, #{self.country.try(:iso_code)}"
+    address_lines = self.line_1.to_s
+    address_lines += (" " + self.line_2) unless self.line_2.blank?
+    address_lines += (" " + self.line_3) unless self.line_3.blank?
+    address_lines.strip!
+
+    city_state_zip = self.city.to_s
+    city_state_zip += (" " + self.state) unless self.state.blank?
+    city_state_zip += (" " + self.postal_code) unless self.postal_code.blank?
+    city_state_zip.strip!
+
+    a = address_lines
+    if city_state_zip.length > 0
+      a += ", " if a.length > 0
+      a += city_state_zip
+    end
+
+    iso = self.country.try(:iso_code).to_s.strip
+    unless iso.blank?
+      a += ", " if a.length > 0
+      a += iso
+    end
+
+    a
   end
 
   private

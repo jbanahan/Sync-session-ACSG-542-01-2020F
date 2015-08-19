@@ -34,9 +34,9 @@
                     <div class="form-group">
                         <div class="form-inline">
                             <label for="address_country">Country*</label>
-                            <select id="address_country" ng-model="ctrl.address.country_id" ng-options="country.id as country.name for country in ctrl.countries" required></select>
+                            <select id="address_country" class="form-control" ng-model="ctrl.address.country_id" ng-options="country.id as country.name for country in ctrl.countries" required></select>
                             <div class="checkbox">
-                                <label for="address_in_address_book">Add to Address Book? <input id="address_in_address_book" type="checkbox" ng-model="ctrl.address.in_address_book"></label>
+                                <label for="address_in_address_book">Save to Address Book? <input id="address_in_address_book" type="checkbox" ng-model="ctrl.address.in_address_book"></label>
                             </div>
                         </div>
                     </div>

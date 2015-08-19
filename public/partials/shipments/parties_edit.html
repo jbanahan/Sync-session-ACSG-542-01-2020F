@@ -1,31 +1,29 @@
-<div ng-hide='outerScope.parties' class='loader'>Parties loading</div>
-<div ng-show='outerScope.parties'>
-  <div class="form-group">
+<div ng-hide='outerScope.carriers' class='loader'>Parties loading</div>
+<address-expander title="Importer" address-name="outerScope.shp.shp_imp_name"></address-expander>
+
+<div class="form-group">
     <label for='shp_car_syscode'>Carrier</label>
-    <select id='shp_car_syscode' ng-model='outerScope.partiesEditObj.shp_car_syscode' ng-options='c.system_code as c.name for c in outerScope.parties.carriers' class='form-control'></select>
+    <select id='shp_car_syscode' ng-model='outerScope.partiesEditObj.shp_car_syscode' ng-options='c.system_code as c.name for c in outerScope.carriers' class='form-control'>
+      <option value="">Select a carrier</option>
+    </select>
   </div>
-  <div class="form-group">
-    <label for='shp_imp_syscode'>Importer</label>
-    <select id='shp_imp_syscode' ng-model='outerScope.partiesEditObj.shp_imp_syscode' ng-options='c.system_code as c.name for c in outerScope.parties.importers' class='form-control'></select>
-  </div>
-</div>
 <div class="form-group">
   <label for="shp_buyer_address">Buyer</label>
-  <address-book-autocomplete id="shp_buyer_address" address-id-attribute="outerScope.partiesEditObj.shp_buyer_address_id" initial-value="outerScope.shp.shp_buyer_address_name"></address-book-autocomplete>
+  <address-book-autocomplete id="shp_buyer_address" shipment-id="outerScope.partiesEditObj.id" address-id-attribute="outerScope.partiesEditObj.shp_buyer_address_id" initial-value="outerScope.shp.shp_buyer_address_name"></address-book-autocomplete>
 </div>
 <div class="form-group">
   <label for="shp_seller_address">Seller</label>
-  <address-book-autocomplete id="shp_seller_address" address-id-attribute="outerScope.partiesEditObj.shp_seller_address_id" initial-value="outerScope.shp.shp_seller_address_name"></address-book-autocomplete>
+  <address-book-autocomplete id="shp_seller_address" shipment-id="outerScope.partiesEditObj.id" address-id-attribute="outerScope.partiesEditObj.shp_seller_address_id" initial-value="outerScope.shp.shp_seller_address_name"></address-book-autocomplete>
 </div>
 <div class="form-group">
   <label for="shp_ship_to_address">Ship-To</label>
-  <address-book-autocomplete id="shp_ship_to_address" address-id-attribute="outerScope.partiesEditObj.shp_ship_to_address_id" initial-value="outerScope.shp.shp_ship_to_address_name"></address-book-autocomplete>
+  <address-book-autocomplete id="shp_ship_to_address" shipment-id="outerScope.partiesEditObj.id" address-id-attribute="outerScope.partiesEditObj.shp_ship_to_address_id" initial-value="outerScope.shp.shp_ship_to_address_name"></address-book-autocomplete>
 </div>
 <div class="form-group">
   <label for="shp_container_stuffing_address">Container Stuffing Location</label>
-  <address-book-autocomplete id="shp_container_stuffing_address" address-id-attribute="outerScope.partiesEditObj.shp_container_stuffing_address_id" initial-value="outerScope.shp.shp_continer_stuffing_address_name"></address-book-autocomplete>
+  <address-book-autocomplete id="shp_container_stuffing_address" shipment-id="outerScope.partiesEditObj.id" address-id-attribute="outerScope.partiesEditObj.shp_container_stuffing_address_id" initial-value="outerScope.shp.shp_continer_stuffing_address_name"></address-book-autocomplete>
 </div>
 <div class="form-group">
   <label for="shp_consolidator_address">Consolidator</label>
-  <address-book-autocomplete id="shp_consolidator_address" address-id-attribute="outerScope.partiesEditObj.shp_consolidator_address_id" initial-value="outerScope.shp.shp_consolidator_address_name"></address-book-autocomplete>
+  <address-book-autocomplete id="shp_consolidator_address" shipment-id="outerScope.partiesEditObj.id" address-id-attribute="outerScope.partiesEditObj.shp_consolidator_address_id" initial-value="outerScope.shp.shp_consolidator_address_name"></address-book-autocomplete>
 </div>

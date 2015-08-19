@@ -1,8 +1,15 @@
 module Api; module V1; class AddressesController < ApiController
 
   def autocomplete
-    result = Address.where('name like ?',"%#{params[:n]}%").where(in_address_book:true)
-    render json: result.map {|address| {name:address.name, full_address:address.full_address, id:address.id} }
+    json = []
+    if !params[:n].blank?
+      result = Address.where('addresses.name like ?',"%#{params[:n]}%").where(in_address_book:true).joins(:company).where(Company.secure_search(current_user))
+      result = result.order(:name)
+      result = result.limit(10)
+      json = result.map {|address| {name:address.name, full_address:address.full_address, id:address.id} }
+    end
+    
+    render json: json
   end
 
   def create

@@ -8,6 +8,7 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
 
     lines: [{}]
     bookingTypes:[]
+    shipmentId: $state.params.shipmentId
 
     chooseBookingType: (panelName) ->
       $('[data-container-id]').hide()
@@ -28,7 +29,7 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
       @lines.splice idx,1
 
     loadAvailableOrders: =>
-      shipment = {id:$state.params.shipmentId}
+      shipment = {id:@shipmentId}
       shipmentSvc.getAvailableOrders(shipment).then (resp) =>
         @availableOrders = resp.data.available_orders
 
@@ -65,12 +66,11 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
       linesToSave = @lines.filter (line) -> !line._disabled
       flattenProducts linesToSave
       flattenOrders linesToSave
-      shipmentId = $state.params.shipmentId
-      shipmentSvc.saveBookingLines(linesToSave, shipmentId).then @cancel
+      shipmentSvc.saveBookingLines(linesToSave, @shipmentId).then @cancel
 
     cancel: =>
       @lines.splice 0, @lines.length
-      $state.go('show', {shipmentId: $state.params.shipmentId})
+      $state.go('show', {shipmentId: @shipmentId})
 
     init: =>
       if @bookingTypes.length == 1

@@ -1,48 +1,46 @@
 module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
-  def initialize(shipment, user)
-    @shipment = shipment
-    @user = user
-    @workbook = XlsMaker.new_workbook
+  def initialize
     @custom_defintions = self.class.prep_custom_definitions [:prod_part_number]
-    @column_widths = []
-
-    raise "You can't download this shipment!" unless @shipment.can_view? @user
   end
 
-  def generate
-    if @shipment.containers.any?
-      @shipment.containers.each do |container|
-        sheet = new_sheet(container)
-        add_headers(sheet, container)
-        add_lines_to_sheet(container.shipment_lines, sheet)
+  def generate shipment, user
+    workbook = XlsMaker.new_workbook
+
+    if shipment.containers.any?
+      shipment.containers.each do |container|
+        sheet = new_sheet(workbook, container)
+        add_headers(sheet, shipment, user, container)
+        add_lines_to_sheet(shipment, user, container.shipment_lines, sheet)
       end
     else
-      add_headers(new_sheet)
+      add_headers(new_sheet(workbook), shipment, user)
     end
-    file_for @workbook
+
+    workbook
   end
 
   private
 
-  def new_sheet(container=nil)
+  def new_sheet(workbook, container=nil)
     @next_row = 0
+    @column_widths = []
     sheet_name = container.try(:container_number) || 'Details'
-    XlsMaker.create_sheet(@workbook, sheet_name)
+    XlsMaker.create_sheet(workbook, sheet_name)
   end
 
-  def add_headers(sheet, container=nil)
-    add_first_header_rows(sheet)
+  def add_headers(sheet, shipment, user, container=nil)
+    add_first_header_rows(shipment, user, sheet)
     add_container_header_data(sheet, container) if container
-    add_second_header_rows(sheet)
+    add_second_header_rows(shipment, user, sheet)
     2.times { add_row(sheet) }
   end
 
-  def add_header_rows(uids, sheet)
+  def add_header_rows(shipment, user, uids, sheet)
     fields = uids.map { |uid| ModelField.find_by_uid uid }
     labels = fields.map(&:label)
-    values = fields.map{ |field| field.process_export(@shipment, @user) }
+    values = fields.map{ |field| field.process_export(shipment, user) }
     add_header_row(sheet, labels)
     add_row(sheet, values)
   end
@@ -52,7 +50,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     insert_row(sheet,1,7,[container.container_number,container.container_size,container.seal_number])
   end
 
-  def add_first_header_rows(sheet)
+  def add_first_header_rows(shipment, user, sheet)
     fields_to_add = [
       :shp_receipt_location,
       :shp_dest_port_name,
@@ -63,10 +61,10 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       :shp_voyage
     ]
 
-    add_header_rows(fields_to_add, sheet)
+    add_header_rows(shipment, user, fields_to_add, sheet)
   end
 
-  def add_second_header_rows(sheet)
+  def add_second_header_rows(shipment, user, sheet)
     fields_to_add = [
         :shp_confirmed_on_board_origin_date,
         :shp_departure_date,
@@ -75,10 +73,10 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
         :shp_est_arrival_port_date
     ]
 
-    add_header_rows(fields_to_add, sheet)
+    add_header_rows(shipment, user, fields_to_add, sheet)
   end
 
-  def add_lines_to_sheet(lines, sheet)
+  def add_lines_to_sheet(shipment, user, lines, sheet)
     fields = [
       :con_container_number,
       :ord_cust_ord_no,
@@ -96,27 +94,27 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     ].map {|uid| ModelField.find_by_uid(uid) }.insert(2, @custom_defintions[:prod_part_number].model_field)
 
     add_header_row(sheet, fields.map(&:base_label))
-    lines.each { |line| add_line_to_sheet(line, fields, sheet) }
+    lines.each { |line| add_line_to_sheet(shipment, user, line, fields, sheet) }
     add_totals_to_sheet(lines, sheet)
   end
 
-  def add_line_to_sheet(line, fields, sheet)
+  def add_line_to_sheet(shipment, user, line, fields, sheet)
     order = line.order_lines.first.order
     values = [
-      fields[0].process_export(line.container, @user),
-      fields[1].process_export(order, @user),
-      fields[2].process_export(line.order_lines.first.product, @user),
-      fields[3].process_export(line, @user),
-      fields[4].process_export(line, @user),
-      fields[5].process_export(line, @user),
-      fields[6].process_export(line, @user),
-      fields[7].process_export(order, @user),
-      fields[8].process_export(@shipment, @user),
-      fields[9].process_export(@shipment, @user),
-      fields[10].process_export(order, @user),
-      fields[11].process_export(@shipment, @user),
-      fields[12].process_export(@shipment, @user),
-      fields[13].process_export(@shipment, @user)
+      fields[0].process_export(line.container, user),
+      fields[1].process_export(order, user),
+      fields[2].process_export(line.order_lines.first.product, user),
+      fields[3].process_export(line, user),
+      fields[4].process_export(line, user),
+      fields[5].process_export(line, user),
+      fields[6].process_export(line, user),
+      fields[7].process_export(order, user),
+      fields[8].process_export(shipment, user),
+      fields[9].process_export(shipment, user),
+      fields[10].process_export(order, user),
+      fields[11].process_export(shipment, user),
+      fields[12].process_export(shipment, user),
+      fields[13].process_export(shipment, user)
     ]
 
     add_row(sheet, values)
@@ -127,13 +125,6 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     pieces_total = lines.sum {|line| line.quantity || 0}
     cbms_total = lines.sum {|line| line.cbms || 0}
     insert_row(sheet, @next_row, 4, [carton_qty_total, pieces_total, cbms_total])
-  end
-
-
-  def file_for(workbook)
-    file = Tempfile.new([@shipment.reference, '.xls'])
-    workbook.write file.path
-    file
   end
 
   def add_header_row(sheet, data=[])

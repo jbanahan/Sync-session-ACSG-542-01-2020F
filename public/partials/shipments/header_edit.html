@@ -11,9 +11,9 @@
 <label for="shp_receipt_location">Receipt Location</label>
 <input type="text" id="shp_receipt_location" ng-model="outerScope.header.shp_receipt_location" class="form-control" />
 <label for="shp_dest_port">Destination Port</label>
-<angucomplete-alt id='shp_dest_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.dest_port' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_dest_port_name}}'></angucomplete-alt>
+<angucomplete-alt id='shp_dest_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.destPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_dest_port_name}}'></angucomplete-alt>
 <label for="shp_final_dest_port">Final Destination Port</label>
-<angucomplete-alt id='shp_final_dest_port' input-class='form-control' placeholder='port name' selected-object='outerScope.header.final_dest_port' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_final_dest_port_name}}'></angucomplete-alt>
+<angucomplete-alt id='shp_final_dest_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.finalDestPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_final_dest_port_name}}'></angucomplete-alt>
 <label for="shp_freight_terms">Freight Terms</label>
 <input type="text" id="shp_freight_terms" ng-model="outerScope.header.shp_freight_terms" class="form-control" />
 <label for="shp_lcl">LCL</label>
@@ -45,17 +45,17 @@
 <label for="shp_vessel_nationality">Vessel Nationality</label>
 <input type="text" class="form-control" id="shp_vessel_nationality" ng-model="outerScope.header.shp_vessel_nationality"/>
 <label for="shp_first_port_receipt">First Port of Receipt</label>
-<angucomplete-alt id='shp_first_port_receipt' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.first_port_receipt' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_first_port_receipt_name}}'></angucomplete-alt>
+<angucomplete-alt id='shp_first_port_receipt' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.firstPortReceiptSelected' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_first_port_receipt_name}}'></angucomplete-alt>
 <label for="shp_lading_port">Foreign Port of Lading</label>
-<angucomplete-alt id='shp_lading_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.lading_port' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_lading_port_name}}'></angucomplete-alt>
+<angucomplete-alt id='shp_lading_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.ladingPortSelected' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_lading_port_name}}'></angucomplete-alt>
 <label for="shp_eta_last_foreign_port_date">ETA Last Foreign Port</label>
 <input type="date" id="shp_eta_last_foreign_port_date" ng-model="outerScope.header.shp_eta_last_foreign_port_date" class="form-control" />
 <label for="shp_last_foreign_port">Last Foreign Port</label>
-<angucomplete-alt id='shp_last_foreign_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.last_foreign_port' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_last_foreign_port_name}}'></angucomplete-alt>
+<angucomplete-alt id='shp_last_foreign_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.lastForeignPortSelected' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_last_foreign_port_name}}'></angucomplete-alt>
 <label for="shp_departure_last_foreign_port_date">Departure Last Foreign Port Date</label>
 <input type="date" id="shp_departure_last_foreign_port_date" ng-model="outerScope.header.shp_departure_last_foreign_port_date" class="form-control" />
 <label for="shp_unlading_port">First US Port</label>
-<angucomplete-alt id='shp_unlading_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.unlading_port' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='1' initial-value='{{outerScope.header.shp_unlading_port_name}}'></angucomplete-alt>
+<angucomplete-alt id='shp_unlading_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.unladingPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_unlading_port_name}}'></angucomplete-alt>
 <label for="shp_marks_and_numbers">Marks & Numbers</label>
 <input type="text" id="shp_marks_and_numbers" ng-model="outerScope.header.shp_marks_and_numbers" class="form-control" />
 <label for="shp_number_of_packages">Number of Packages</label>

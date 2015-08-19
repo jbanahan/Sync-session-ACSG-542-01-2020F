@@ -168,6 +168,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_car_syscode,
       :shp_imp_name,
       :shp_imp_syscode,
+      :shp_imp_id,
       :shp_master_bill_of_lading,
       :shp_house_bill_of_lading,
       :shp_booking_number,
@@ -245,7 +246,12 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_departure_last_foreign_port_date,
       :shp_final_dest_port_id,
       :shp_final_dest_port_name,
-      :shp_confirmed_on_board_origin_date
+      :shp_confirmed_on_board_origin_date,
+      :shp_buyer_address_id,
+      :shp_seller_address_id,
+      :shp_ship_to_address_id,
+      :shp_container_stuffing_address_id,
+      :shp_consolidator_address_id
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     shipment_line_fields_to_render = limit_fields([
@@ -327,6 +333,64 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     s = freeze_custom_values s, render_order_fields?
     s
   end
+
+  def autocomplete_order
+    results = []
+    if !params[:n].blank?
+      s = Shipment.find params[:id]
+      raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+
+      orders = s.available_orders current_user
+      results = orders.where('customer_order_number like ?',"%#{params[:n]}%").
+                  limit(10).
+                  collect {|order| {order_number:order.customer_order_number, id:order.id}}
+    end
+
+    render json: results
+  end
+
+  def autocomplete_product
+    results = []
+    if !params[:n].blank?
+      s = Shipment.find params[:id]
+      raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+
+      products = s.available_products current_user
+      results = products.where("unique_identifier LIKE ? ", "%#{params[:n]}%").
+                  limit(10).
+                  collect {|product| { unique_identifier:product.unique_identifier, id:product.id }}
+    end
+
+    render json: results
+  end
+
+  def autocomplete_address
+    json = []
+    if !params[:n].blank?
+      s = Shipment.find params[:id]
+      raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+
+      result = Address.where('addresses.name like ?',"%#{params[:n]}%").where(in_address_book:true).joins(:company).where(Company.secure_search(current_user)).where(companies: {id: s.importer_id})
+      result = result.order(:name)
+      result = result.limit(10)
+      json = result.map {|address| {name:address.name, full_address:address.full_address, id:address.id} }
+    end
+    
+    render json: json
+  end
+
+  def create_address
+    s = Shipment.find params[:id]
+    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+
+    address = Address.new params[:address]
+    address.company = s.importer
+
+    address.save!
+
+    render json: address
+  end
+
   private
   def render_permissions shipment
     {

@@ -620,4 +620,134 @@ describe Api::V1::ShipmentsController do
       expect(result[0]['linked_cust_ord_no']).to eq order.customer_order_number
     end
   end
+
+  describe "autocomplete_orders" do
+    before :each do
+      @order_1 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNUM")
+      @order_2 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNO#")
+      @s = Factory(:shipment, importer: @u.company, vendor: @u.company)
+    end
+
+    it "autocompletes order numbers that are available to utilize" do
+      # Just return all orders...all we care about is that Shipment.available_orders is used
+      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+
+      get :autocomplete_order, id: @s.id, n: "CNUM"
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      expect(r.first).to eq( {"order_number"=>@order_1.customer_order_number, "id"=>@order_1.id} )
+    end
+
+    it "returns blank if no autcomplete text is sent" do
+       Shipment.any_instance.should_not_receive(:available_orders)
+
+       get :autocomplete_order, id: @s.id, n: " "
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 0
+    end
+  end
+
+  describe "autocomplete_products" do
+    before :each do
+      @product1 = Factory(:product, importer: @u.company, unique_identifier: "Prod1")
+      @product2 = Factory(:product, importer: @u.company, unique_identifier: "Prod2")
+      @s = Factory(:shipment, importer: @u.company, vendor: @u.company)
+    end
+
+    it "autocompletes products that are available to utilize" do
+      # Just return all orders...all we care about is that Shipment.available_orders is used
+      Shipment.any_instance.should_receive(:available_products).with(@u).and_return Product.scoped
+
+      get :autocomplete_product, id: @s.id, n: "Prod1"
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      expect(r.first).to eq( {"unique_identifier"=>@product1.unique_identifier, "id"=>@product1.id} )
+    end
+
+    it "returns blank if no autcomplete text is sent" do
+      Shipment.any_instance.should_not_receive(:available_products)
+
+      get :autocomplete_product, id: @s.id, n: " "
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 0
+    end
+  end
+
+  describe "autocomplete_address" do
+    before :each do 
+      @u = Factory(:user, shipment_edit:true,shipment_view:true,order_view:true,product_view:true)
+      @importer = Factory(:importer)
+      @s = Factory(:shipment, importer: @importer)
+      @u.company.linked_companies << @importer
+      Shipment.any_instance.stub(:can_view?).with(@u).and_return true
+      allow_api_access @u
+    end
+
+    it "returns address matching by name linked to the importer" do
+      address = Factory(:full_address, name: "Company 1", company: @importer, in_address_book: true)
+
+      get :autocomplete_address, id: @s.id, n: "ny"
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      expect(r.first).to eq( {"name"=>address.name, "full_address" => address.full_address, "id"=>address.id} )
+    end
+
+    it "does not return address linked to companies user can't view" do
+      @u.company.linked_companies.delete_all
+
+      address = Factory(:full_address, name: "Company 1", company: @importer, in_address_book: true)
+
+      get :autocomplete_address, id: @s.id, n: "ny"
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 0
+    end
+
+    it "does not return address not saved to address book" do
+      address = Factory(:full_address, name: "Company 1", company: @importer, in_address_book: false)
+      get :autocomplete_address, id: @s.id, n: "ny"
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 0
+    end
+  end
+
+  describe "create_address" do
+    before :each do 
+      @importer = Factory(:importer)
+      @s = Factory(:shipment, importer: @importer)
+    end
+
+    it "creates an address associated with the importer" do
+      c = Factory(:country)
+      address = {name: "Address", line_1: "Line 1", city: "City", state: "ST", postal_code: "1234N", country_id: c.id, in_address_book: true}
+
+      post :create_address, id: @s.id, address: address
+      expect(response).to be_success
+
+      r = JSON.parse(response.body)["address"]
+      expect(r).not_to be_nil
+      expect(r['name']).to eq "Address"
+      expect(r["line_1"]).to eq "Line 1"
+      expect(r["city"]).to eq "City"
+      expect(r["state"]).to eq "ST"
+      expect(r["postal_code"]).to eq "1234N"
+      expect(r["country_id"]).to eq c.id
+      expect(r["in_address_book"]).to eq true
+      expect(r["company_id"]).to eq @importer.id
+    end
+
+    it "fails if user can't view" do
+      Shipment.any_instance.should_receive(:can_view?).and_return false
+
+      post :create_address, id: @s.id, address: {}
+      expect(response.status).to eq 404
+    end
+  end
 end

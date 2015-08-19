@@ -27,6 +27,10 @@ OpenChain::Application.routes.draw do
           get :available_orders
           get :booked_orders
           get :available_lines
+          get :autocomplete_order
+          get :autocomplete_product
+          get :autocomplete_address
+          post :create_address
         end
       end
       resources :fields, only: [:index]
@@ -34,11 +38,7 @@ OpenChain::Application.routes.draw do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
       end
-      resources :orders, only: [:index,:show] do
-        collection do
-          get :autocomplete
-        end
-      end
+      resources :orders, only: [:index,:show]
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
@@ -50,7 +50,6 @@ OpenChain::Application.routes.draw do
         get 'by_uid(/:path_uid)' => "products#by_uid", on: :collection
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
-        get 'autocomplete', on: :collection
       end
 
       resources :plants, only: [] do

@@ -33,7 +33,8 @@ shipmentApp.directive 'addressBookAutocomplete',['addressModalSvc',(addressModal
   scope:
     initialValue: '='
     addressIdAttribute: '='
-  template: '<angucomplete-alt input-class="form-control" placeholder="Search Address Book" remote-url="/api/v1/addresses/autocomplete?n=" template-url="/partials/shipments/address_modal/address_book_autocomplete_results.html" selected-object="onAddressSelected" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name" description-field="full_address" pause="500" minlength="1"></angucomplete-alt>'
+    shipmentId: '='
+  template: '<angucomplete-alt input-class="form-control" placeholder="Search Address Book" remote-url="/api/v1/shipments/{{shipmentId}}/autocomplete_address?n=" template-url="/partials/shipments/address_modal/address_book_autocomplete_results.html" selected-object="onAddressSelected" initial-value="{{initialValue}}" placeholder="{{placeholder}}" title-field="name" description-field="full_address" pause="500" minlength="2"></angucomplete-alt>'
   link:(scope, element, attributes) ->
     addressIdAttribute = attributes.addressIdAttribute
     addressModalSvc.responders[addressIdAttribute] = (address) ->
@@ -48,16 +49,16 @@ shipmentApp.directive 'addressBookAutocomplete',['addressModalSvc',(addressModal
 
 shipmentApp.directive 'addAddressModal', ['$http', 'addressModalSvc', ($http, addressModalSvc) ->
   restrict: 'E'
-  scope: {}
+  scope: 
+    shipmentId: '='
   templateUrl:'/partials/shipments/address_modal/add_address_modal.html'
   controllerAs:'ctrl'
-  controller:->
+  controller: ['$scope',($scope) ->
     @countries = []
     @address = {}
 
     @createAddress = =>
-      console.log @address
-      $http.post('/api/v1/addresses',{address: @address}).then (resp) =>
+      $http.post('/api/v1/shipments/' + $scope.shipmentId + '/create_address',{address: @address}).then (resp) =>
         addressModalSvc.onAddressCreated(resp.data.address)
         @address = {}
       return
@@ -68,6 +69,7 @@ shipmentApp.directive 'addAddressModal', ['$http', 'addressModalSvc', ($http, ad
 
     initCountries()
     return
+  ]
   link: (scope, element, attrs) ->
     element.on('show.bs.modal', (event) ->
       if event

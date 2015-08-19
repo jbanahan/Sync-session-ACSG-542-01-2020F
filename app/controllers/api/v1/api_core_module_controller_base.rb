@@ -106,7 +106,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     end
 
     user = current_user
-    field_list = field_list.delete_if {|uid| mf = ModelField.find_by_uid(uid); !mf.user_accessible? || !mf.can_view?(user)}
+    field_list = field_list.delete_if {|uid| !ModelField.find_by_uid(uid).can_view?(user) }
 
     # Change back to symbols
     field_list.map {|f| f.to_sym}
