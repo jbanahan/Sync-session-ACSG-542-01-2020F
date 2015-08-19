@@ -6,7 +6,7 @@ class GroupsController < ApplicationController
       if group.save
         
         User.transaction do
-          new_members = params[:members_list].blank? ? [] : params[:members_list].split(",").map{|x| User.find(x.to_i)}
+          new_members = User.where(id: params[:members_list].split(","))
           group.users.concat(new_members)
         end
 
@@ -15,7 +15,7 @@ class GroupsController < ApplicationController
         return
       else
         errors_to_flash group, :now => true
-        render :new
+        redirect_to new_group_path(group)
       end
     }
   end
@@ -23,7 +23,6 @@ class GroupsController < ApplicationController
   def update
     admin_secure("Only a system administrator can perform this action.") {
       group = Group.find(params[:id])
-      form_list = params[:members_list].blank? ? [] : params[:members_list].split(",").map{|x| x.to_i}
       group.name = params[:group][:name]
       group.description = params[:group][:description]
       unless group.save
@@ -33,10 +32,9 @@ class GroupsController < ApplicationController
       end
 
       Group.transaction do 
+        new_members = User.where(id: params[:members_list].split(","))
         group.users.delete_all
-        form_list.each do |uid|
-          group.users << User.find(uid)
-        end
+        group.users.concat(new_members)
       end
 
       add_flash :notice, "Group updated"
@@ -49,7 +47,7 @@ class GroupsController < ApplicationController
       group = Group.find params[:id]
       unless group.users.empty?
         add_flash :errors, "Only empty groups can be deleted."
-        render :edit
+        redirect_to edit_group_path(group)
         return
       end
       group.destroy
@@ -67,8 +65,8 @@ class GroupsController < ApplicationController
   def edit
     admin_secure("Only a system administrator can view this page.") {
       @group = Group.find(params[:id])
-      users = User.all
-      @new_members, @new_non_members = users.partition{|u| u.groups.include? @group }
+      @new_members = User.select("users.id, users.username").joins("INNER JOIN user_group_memberships m on users.id = m.user_id and m.group_id = #{@group.id}").all
+      @new_non_members = User.select("users.id, users.username").joins("LEFT OUTER JOIN user_group_memberships m on users.id = m.user_id and m.group_id = #{@group.id}").where("m.id IS NULL").all
     }
   end
 

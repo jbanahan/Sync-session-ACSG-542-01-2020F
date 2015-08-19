@@ -3,7 +3,8 @@ class Group < ActiveRecord::Base
 
   has_many :workflow_tasks, inverse_of: :group
 
-  validates :system_code, :name, presence: true
+  validates :name, presence: true
+  validates :system_code, uniqueness: true, if: "!system_code.nil?"
 
   scope :visible_to_user, lambda {|u| 
     if u.company.master?

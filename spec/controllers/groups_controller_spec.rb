@@ -16,13 +16,12 @@ describe GroupsController do
 
     context "with valid attributes" do
       it "should save the new group to the db" do
-        post :create, group: {name: "admin", system_code: "ABCDE"}, members_list: "#{@jim.id},#{@mary.id},#{@rob.id}"
+        post :create, group: {name: "admin"}, members_list: "#{@jim.id},#{@mary.id},#{@rob.id}"
         group = Group.first
         
         expect(group).not_to be_nil
         expect(group.name).to eq "admin"
-        expect(group.system_code).to eq "ABCDE"
-        expect(group.users).to eq [@jim, @mary, @rob]
+        expect(group.users.sort).to eq [@jim, @mary, @rob].sort
         expect(response).to redirect_to groups_path
         expect(flash[:notice]).to include("Group created")
       end
@@ -30,7 +29,7 @@ describe GroupsController do
       it "shouldn't allow use by non-admin" do
         @user.stub(:admin?).and_return false
 
-        post :create, group: {name: "admin", system_code: "ABCDE"}
+        post :create, group: {name: "admin"}
         group = Group.first
         
         expect(group).to be nil
@@ -40,13 +39,23 @@ describe GroupsController do
     end
 
     context "with invalid attributes" do
-      it "shouldn't save new group to the db, re-renders the template" do
-        post :create, group: {name: "admin", system_code: ""}
+      it "should prevent group without a name from being saved" do
+        post :create, group: {name: ""}
         group = Group.last
         expect(group).to be nil
-        expect(response).to render_template :new
+        expect(response).to redirect_to new_group_path(group)
         expect(flash[:errors][0]).to match(/can't be blank/)
       end
+
+      it "should prevent group with a duplicate system code from being saved" do
+        Factory(:group, name: "admin", system_code: "ABCDE")
+        post :create, group: {name: "payroll", system_code: "ABCDE"}
+
+        expect(Group.count).to eq 1
+        expect(response).to redirect_to new_group_path
+        expect(flash[:errors][0]).to match(/has already been taken/)
+      end
+
     end
 
   end
@@ -76,8 +85,8 @@ describe GroupsController do
       #No change for these
       expect(name).to eq "test_group"
       expect(description).to eq "group for testing"
-      expect(members).to eq [@jim, @mary, @rob, @alice]
-      expect(non_members).to eq [@user, @burt, @kate, @tom]
+      expect(members.sort).to eq [@jim, @mary, @rob, @alice].sort
+      expect(non_members.sort).to eq [@user, @burt, @kate, @tom].sort
       
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to include("Only a system administrator can perform this action.")
@@ -96,8 +105,8 @@ describe GroupsController do
 
       expect(name).to eq "new name"
       expect(description).to eq "new description"
-      expect(members).to eq [@jim, @rob, @burt, @kate]
-      expect(non_members).to eq [@user, @mary, @alice, @tom]
+      expect(members.sort).to eq [@jim, @rob, @burt, @kate].sort
+      expect(non_members.sort).to eq [@user, @mary, @alice, @tom].sort
       expect(response).to redirect_to edit_group_path(@g)
       expect(flash[:notice]).to include("Group updated")
     end
@@ -109,7 +118,7 @@ describe GroupsController do
       non_members = users.select{ |u| u.groups == [] }
       
       expect(members).to be_empty
-      expect(non_members).to eq [@user, @jim, @mary, @rob, @alice, @burt, @kate, @tom]
+      expect(non_members.sort).to eq [@user, @jim, @mary, @rob, @alice, @burt, @kate, @tom].sort
       expect(response).to redirect_to edit_group_path(@g)
       expect(flash[:notice]).to include("Group updated")
     end
@@ -140,7 +149,7 @@ describe GroupsController do
       delete :destroy, id: @g
 
       expect(Group.count).to eq 1
-      expect(response).to render_template :edit
+      expect(response).to redirect_to edit_group_path(@g)
       expect(flash[:errors]).to include("Only empty groups can be deleted.")
     end
 
@@ -201,8 +210,8 @@ describe GroupsController do
 
       get :edit, id: @g
       expect(assigns(:group)).to eq @g
-      expect(assigns(:new_members)).to eq [jim, mary, rob, alice]
-      expect(assigns(:new_non_members)).to eq [@user, burt, kate, tom]
+      expect(assigns(:new_members).sort).to eq [jim, mary, rob, alice].sort
+      expect(assigns(:new_non_members).sort).to eq [@user, burt, kate, tom].sort
       expect(response).to render_template :edit
     end
   end
@@ -226,7 +235,7 @@ describe GroupsController do
 
       expect(assigns(:group)).to be_instance_of Group
       expect(assigns(:new_members)).to be_empty
-      expect(assigns(:new_non_members)).to eq [@user, burt, kate, tom]
+      expect(assigns(:new_non_members).sort).to eq [@user, burt, kate, tom].sort
       expect(response).to render_template :new
     end
 
