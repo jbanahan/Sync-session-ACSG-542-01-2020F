@@ -183,7 +183,7 @@ describe SurveyResponse do
     
     context "assigned to a group" do
       before :each do
-        @group = Group.create! system_code: "g"
+        @group = Factory(:group)
         @u.groups << @group
         @u2 = Factory(:user, groups: [@group])
 
@@ -250,7 +250,7 @@ describe SurveyResponse do
   describe "assigned_to_user?" do
     before :each do
       @survey = Factory(:question).survey
-      @group = Group.create! system_code: "G"
+      @group = Factory(:group)
       @u = Factory(:user)
     end
 
@@ -279,7 +279,7 @@ describe SurveyResponse do
   describe "responder_name" do
     before :each do
       @survey = Factory(:question).survey
-      @group = Group.create! system_code: "G", name: "Group"
+      @group = Factory(:group)
       @u = Factory(:user)
     end
 

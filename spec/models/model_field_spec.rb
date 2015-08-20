@@ -120,21 +120,21 @@ describe ModelField do
     it "allows viewing when user is in FieldValidatorRule view group" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
       user = Factory(:user)
-      user.groups << Group.create!(system_code: "GROUP")
+      user.groups << Factory(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_true
     end
 
     it "allows viewing when user is in FieldValidatorRule edit group" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
       user = Factory(:user)
-      user.groups << Group.create!(system_code: "GROUP")
+      user.groups << Factory(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_true
     end
 
     it "prevents viewing if user is in view group but lambda blocks access" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
       user = Factory(:user)
-      user.groups << Group.create!(system_code: "GROUP")
+      user.groups << Factory(:group, system_code: "GROUP")
       expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(user)).to be_false
     end
 
@@ -163,7 +163,7 @@ describe ModelField do
     it "it allows edit if user is in edit group" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
       user = Factory(:user)
-      user.groups << Group.create!(system_code: "GROUP")
+      user.groups << Factory(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_true
     end
 
@@ -176,14 +176,14 @@ describe ModelField do
     it "allows edit if user is in view group when no edit groups exist" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
       user = Factory(:user)
-      user.groups << Group.create!(system_code: "GROUP")
+      user.groups << Factory(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_true
     end
 
     it "disallows edit if user is in view group when edit groups exist" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP", can_edit_groups: "GROUP2"
       user = Factory(:user)
-      user.groups << Group.create!(system_code: "GROUP")
+      user.groups << Factory(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_false
     end
   end

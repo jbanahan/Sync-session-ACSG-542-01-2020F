@@ -618,7 +618,7 @@ EMAIL
 
     context 'with user group' do
       before :each do
-        @group = Group.create! system_code: "g1"
+        @group = Factory(:group)
         @user1 = Factory(:user)
         @user2 = Factory(:user)
         @user1.groups << @group

@@ -15,7 +15,7 @@ describe SurveyResponsesController do
       assigns(:respond_mode).should be_true
     end
     it 'should be respond mode if current_user is in survey group and not submitted' do
-      group = Group.create! system_code: "g1"
+      group = Factory(:group)
       @u.groups << group
       sr = Factory(:survey_response, group: group)
 
@@ -59,7 +59,7 @@ describe SurveyResponsesController do
       SurveyResponse.find(sr.id).response_opened_date.should > 2.minutes.ago
     end
     it "should mark response_opened_date if current_user is in response group and response_opened_date.nil?" do
-      group = Group.create! system_code: "g1"
+      group = Factory(:group)
       @u.groups << group
 
       sr = Factory(:survey_response, group: group)
@@ -224,7 +224,7 @@ describe SurveyResponsesController do
       end
        it "should update submitted date if flag set and user is in survey response user group" do
         group_user = Factory(:user)
-        group = Group.create! system_code: "g1"
+        group = Factory(:group)
         group_user.groups << group
         @sr.update_attributes! group: group
         sign_in_as group_user
@@ -301,7 +301,7 @@ describe SurveyResponsesController do
     it 'should only show survey responses assigned to current_user' do
       to_find = Factory(:survey_response,:user=>@u)
       dont_find = Factory(:survey_response)
-      group = Group.create! system_code: "g"
+      group = Factory(:group)
       @u.groups << group
       group_find = Factory(:survey_response, group: group)
 

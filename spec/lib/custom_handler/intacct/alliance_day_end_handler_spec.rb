@@ -132,7 +132,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "uses users in accounting group if no user is given" do
-      g = Group.create! system_code: 'intacct-accounting'
+      g = Factory(:group, system_code: 'intacct-accounting')
       user = Factory(:user)
       user.groups << g
 
@@ -163,7 +163,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     it "allows only people in accounting group to view" do
       ms = MasterSetup.new system_code: 'www-vfitrack-net'
       MasterSetup.stub(:get).and_return ms
-      g = Group.create! system_code: 'intacct-accounting'
+      g = Factory(:group, system_code: 'intacct-accounting')
       user = Factory(:user)
       user.groups << g
       expect(described_class.can_view?(user)).to be_true
@@ -173,7 +173,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     it "disallows access from other systems" do
       ms = MasterSetup.new system_code: 'other'
       MasterSetup.stub(:get).and_return ms
-      g = Group.create! system_code: 'intacct-accounting'
+      g = Factory(:group, system_code: 'intacct-accounting')
       user = Factory(:user)
       user.groups << g
       expect(described_class.can_view?(user)).to be_false

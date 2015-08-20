@@ -24,7 +24,7 @@ describe AnswersController do
       @answer.choice.should == 'abc'
     end
     it 'should allow survey group user to save choice' do
-      group = Group.create! system_code: "g"
+      group = Factory(:group)
       @answer.survey_response.group = group
       @answer.survey_response.save!
       @u.groups << group
