@@ -31,6 +31,13 @@ class Answer < ActiveRecord::Base
     self.survey_response.log_update user
   end
 
+  def attachment_added attachment
+    # updating the updated at time on the answer when an attachment is added to it will
+    # mean the timestamp displayed on the screen is updated whenever someone attacheds a file
+    # to the answer...which is good.
+    self.touch
+  end
+
   # Number of hours since last update
   def hours_since_last_update
     return 0 unless self.updated_at

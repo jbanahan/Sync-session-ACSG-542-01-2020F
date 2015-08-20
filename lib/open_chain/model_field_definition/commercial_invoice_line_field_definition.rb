@@ -71,7 +71,10 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
       [46,:cil_value_foreign,:value_foreign,'Value (Foreign)',{data_type: :decimal, currency: :other}],
       [47,:cil_currency,:currency,'Currency',{data_type: :string}],
       [48,:cil_store_name, :store_name, "Store Name",{data_type: :string}],
-      [49,:cil_subheader_number, :subheader_number, "Subheader Number", {datatype: :integer}]
+      [49,:cil_subheader_number, :subheader_number, "Subheader Number", {datatype: :integer}],
+      [50, :cil_fda_review_date, :fda_review_date, "FDA Review Date", {datatype: :datetime}],
+      [51, :cil_fda_hold_date, :fda_hold_date, "FDA Hold Date", {datatype: :datetime}],
+      [52, :cil_fda_release_date, :fda_release_date, "FDA Release Date", {datatype: :datetime}]
     ]
   end
 end; end; end

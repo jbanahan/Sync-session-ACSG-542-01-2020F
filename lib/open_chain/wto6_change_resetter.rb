@@ -1,6 +1,7 @@
 module OpenChain; class Wto6ChangeResetter
   def self.run_schedulable opts
-    Product.where('updated_at >= ?',opts['last_started_at']).each do |p|
+    prods = Product.where('updated_at >= ?',opts['last_start_time'])
+    prods.each do |p|
       reset_fields_if_changed(p,opts['change_date_field'],opts['fields_to_reset'])
     end
   end

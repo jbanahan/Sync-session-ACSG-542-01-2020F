@@ -12,7 +12,7 @@ class AddressesController < ApplicationController
 		action_secure(@company.can_edit?(current_user),@company,{:verb=>"create",:module_name=>"address"}) {
 		  @address.save
   		errors_to_flash @address
-  		redirect_to company_path(@company)
+  		redirect_to request.referrer
     }
 	end
 	
@@ -30,7 +30,7 @@ class AddressesController < ApplicationController
     action_secure(@company.can_edit?(current_user),@company,{:verb=>"delete",:module_name=>"address"}) {
       @ad.destroy
       errors_to_flash @ad
-      redirect_to company_path(@company)
+      redirect_to request.referrer
     }
 	end
 

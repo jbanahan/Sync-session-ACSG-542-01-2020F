@@ -58,9 +58,13 @@ gem 'redis-namespace', '~> 1.5'
 gem 'connection_pool', '~> 2.1'
 
 gem 'jsonpath', '~> 0.5.6'
+gem 'rgpg'
 
 # Rails 3 requires test unit even in production (for some reason).  I believe in 4 this can be dropped to just the test group
 gem 'test-unit'
+
+# Slack.com integration
+gem 'slack-ruby-client', '~> 0.2.1'
 
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'

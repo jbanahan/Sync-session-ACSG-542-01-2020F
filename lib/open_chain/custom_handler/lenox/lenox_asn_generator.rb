@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     @lenox = Company.find_by_system_code 'LENOX'
     @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
-      date_format:'%Y%m%d'
+      date_format:'%Y%m%d', numeric_pad_char: '0', numeric_strip_decimals: true
     )
     @env = inner_opts['env']
   end

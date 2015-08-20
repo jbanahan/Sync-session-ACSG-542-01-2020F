@@ -72,6 +72,7 @@ class ModelField
     end
     @user_accessible = o[:user_accessible]
     @user_field = o[:user_field]
+    @address_field = o[:address_field]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -116,6 +117,10 @@ class ModelField
 
   def user_field?
     @user_field
+  end
+
+  def address_field?
+    @address_field
   end
 
   # returns true if the given user should be allowed to view this field
@@ -451,62 +456,11 @@ class ModelField
   def self.create_and_insert_custom_field  custom_definition, core_module, index, model_hash
     fld = custom_definition.model_field_uid.to_sym
     fields_to_add = []
-    if(custom_definition.data_type.to_sym==:integer && custom_definition.is_user?)
-      uid_prefix = "*uf_#{custom_definition.id}_"
-      fields_to_add << ModelField.new(index, "#{uid_prefix}username", core_module, "#{uid_prefix}username", {
-        custom_id: custom_definition.id,
-        label_override: "#{custom_definition.label} (Username)",
-        qualified_field_name: "(SELECT users.username FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
-        definition: custom_definition.definition,
-        import_lambda: lambda {|obj,data|
-          user_id = nil
-          u = User.find_by_username data
-          user_id = u.id if u
-          obj.get_custom_value(custom_definition).value = user_id
-          return "#{custom_definition.label} set to #{u.nil? ? 'BLANK' : u.username}"
-        },
-        export_lambda: lambda {|obj|
-          r = ""
-          cv = obj.get_custom_value(custom_definition)
-          user_id = cv.value
-          if user_id
-            u = User.find_by_id user_id
-            r = u.username if u
-          end
-          return r
-        },
-        data_type: :string,
-        field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
-        user_field: true
-      })
-      fields_to_add << ModelField.new(index, "#{uid_prefix}fullname", core_module, "#{uid_prefix}fullname", {
-        custom_id: custom_definition.id,
-        label_override: "#{custom_definition.label} (Name)",
-        qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
-        definition: custom_definition.definition,
-        import_lambda: lambda {|obj,data|
-          return "#{custom_definition.label} cannot be imported by full name, try the username field."
-        },
-        export_lambda: lambda {|obj|
-          r = ""
-          cv = obj.get_custom_value(custom_definition)
-          user_id = cv.value
-          if user_id
-            u = User.find_by_id user_id
-            r = u.full_name if u
-          end
-          return r
-        },
-        data_type: :string,
-        field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
-        read_only: true,
-        user_field: true
-      })
-      fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
-        :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
-        :definition => custom_definition.definition, :default_label => "#{custom_definition.label}",
-        :read_only => true
-      })
+    is_integer = custom_definition.data_type.to_sym==:integer
+    if(is_integer && custom_definition.is_user?)
+      fields_to_add.push(*build_user_fields(custom_definition, core_module, index))
+    elsif(is_integer && custom_definition.is_address?)
+      fields_to_add.push(*build_address_fields(custom_definition, core_module, index))
     else
       fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
         :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
@@ -516,6 +470,215 @@ class ModelField
     add_model_fields core_module, fields_to_add
   end
   private_class_method :create_and_insert_custom_field
+
+  def self.build_address_fields custom_definition, core_module, index
+    fields_to_add = []
+    uid_prefix = "*af_#{custom_definition.id}_"
+
+    #name
+    fields_to_add << ModelField.new(index, "#{uid_prefix}name", core_module, "#{uid_prefix}name", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (Name)",
+      qualified_field_name: "(SELECT addresses.name FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      read_only: true,
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      address_field: true,
+      export_lambda: lambda {|obj|
+        r = ""
+        id = obj.get_custom_value(custom_definition).value
+        if id
+          a = Address.find_by_id(id)
+          r = a.name if a
+        end
+        return r
+      }
+    })
+
+    #city
+    fields_to_add << ModelField.new(index + 1, "#{uid_prefix}city", core_module, "#{uid_prefix}city", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (City)",
+      qualified_field_name: "(SELECT addresses.city FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      read_only: true,
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      address_field: true,
+      export_lambda: lambda {|obj|
+        r = ""
+        id = obj.get_custom_value(custom_definition).value
+        if id
+          a = Address.find_by_id(id)
+          r = a.city if a
+        end
+        return r
+      }
+    })
+
+    #state
+    fields_to_add << ModelField.new(index + 2, "#{uid_prefix}state", core_module, "#{uid_prefix}state", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (State)",
+      qualified_field_name: "(SELECT addresses.state FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      read_only: true,
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      address_field: true,
+      export_lambda: lambda {|obj|
+        r = ""
+        id = obj.get_custom_value(custom_definition).value
+        if id
+          a = Address.find_by_id(id)
+          r = a.state if a
+        end
+        return r
+      }
+    })
+
+    #postal code
+    fields_to_add << ModelField.new(index + 2, "#{uid_prefix}postal_code", core_module, "#{uid_prefix}postal_code", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (Postal Code)",
+      qualified_field_name: "(SELECT addresses.postal_code FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      read_only: true,
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      address_field: true,
+      export_lambda: lambda {|obj|
+        r = ""
+        id = obj.get_custom_value(custom_definition).value
+        if id
+          a = Address.find_by_id(id)
+          r = a.postal_code if a
+        end
+        return r
+      }
+    })
+
+    #country iso code
+    fields_to_add << ModelField.new(index + 3, "#{uid_prefix}iso_code", core_module, "#{uid_prefix}iso_code", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (Country ISO)",
+      qualified_field_name: "(SELECT countries.iso_code FROM addresses INNER JOIN countries ON addresses.country_id = countries.id WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      read_only: true,
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      address_field: true,
+      export_lambda: lambda {|obj|
+        r = ""
+        id = obj.get_custom_value(custom_definition).value
+        if id
+          a = Address.find_by_id(id)
+          if a
+            c = a.country
+            r = c.iso_code if c
+          end
+        end
+        return r
+      }
+    })
+
+    #add the street field, concatenating lines 1 -3
+    fields_to_add << ModelField.new(index + 4, "#{uid_prefix}street", core_module, "#{uid_prefix}street", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (Street)",
+      qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(addresses.line_1, ''), IFNULL(addresses.line_2, ''), IFNULL(addresses.line_3, '')) FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      read_only: true,
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      address_field: true,
+      export_lambda: lambda {|obj|
+        r = ""
+        id = obj.get_custom_value(custom_definition).value
+        if id
+          a = Address.find_by_id(id)
+          if a
+            ary = []
+            [a.line_1,a.line_2,a.line_3].each {|ln| ary << ln unless ln.blank?}
+            r = ary.join(' ').strip
+          end
+        end
+        return r
+      }
+    })
+
+    #add the base field
+    fld = custom_definition.model_field_uid.to_sym
+    fields_to_add << ModelField.new(index + 5,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
+      :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+      :definition => custom_definition.definition, :default_label => "#{custom_definition.label} Unique ID", address_field: true
+    })
+    fields_to_add
+  end
+  private_class_method :build_address_fields
+
+  def self.build_user_fields custom_definition, core_module, index
+    fields_to_add = []
+    fld = custom_definition.model_field_uid.to_sym
+    uid_prefix = "*uf_#{custom_definition.id}_"
+    fields_to_add << ModelField.new(index, "#{uid_prefix}username", core_module, "#{uid_prefix}username", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (Username)",
+      qualified_field_name: "(SELECT users.username FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      import_lambda: lambda {|obj,data|
+        user_id = nil
+        u = User.find_by_username data
+        user_id = u.id if u
+        obj.get_custom_value(custom_definition).value = user_id
+        return "#{custom_definition.label} set to #{u.nil? ? 'BLANK' : u.username}"
+      },
+      export_lambda: lambda {|obj|
+        r = ""
+        cv = obj.get_custom_value(custom_definition)
+        user_id = cv.value
+        if user_id
+          u = User.find_by_id user_id
+          r = u.username if u
+        end
+        return r
+      },
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      user_field: true
+    })
+    fields_to_add << ModelField.new(index, "#{uid_prefix}fullname", core_module, "#{uid_prefix}fullname", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (Name)",
+      qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      import_lambda: lambda {|obj,data|
+        return "#{custom_definition.label} cannot be imported by full name, try the username field."
+      },
+      export_lambda: lambda {|obj|
+        r = ""
+        cv = obj.get_custom_value(custom_definition)
+        user_id = cv.value
+        if user_id
+          u = User.find_by_id user_id
+          r = u.full_name if u
+        end
+        return r
+      },
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      read_only: true,
+      user_field: true
+    })
+    fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
+      :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+      :definition => custom_definition.definition, :default_label => "#{custom_definition.label}",
+      :read_only => true
+    })
+    fields_to_add
+  end
+  private_class_method :build_user_fields
 
   #called by the testing optimization in CustomDefinition.reset_cache
   def self.add_update_custom_field custom_definition

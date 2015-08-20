@@ -22,6 +22,9 @@ class KeyJsonItem < ActiveRecord::Base
   KEWILL_ENTRY_DATA ||= 'kc_entry'
   # US CUSTOMS PERIODIC MONTHLY DATES (logical key is the year, data is month => day)
   PERIODIC_MONTHLY_DATES ||= 'usc_periodic_dates'
+  # Siemens Billing File Counter
+  SIEMENS_BILLING_FILE_COUNTER ||= 'siemens_billing'
+
 
   # turn the object into a json string and store it in the json_data field
   def data= d
@@ -38,4 +41,5 @@ class KeyJsonItem < ActiveRecord::Base
   scope :polo_fiber_report, lambda {|logical_key| where(:key_scope=>RL_FIBER_REPORT).where(:logical_key=>logical_key)}
   scope :updated_entry_data, lambda {|logical_key| where(:key_scope=>KEWILL_ENTRY_DATA).where(:logical_key=>logical_key)}
   scope :usc_periodic_dates, lambda {|logical_key| where(:key_scope=>PERIODIC_MONTHLY_DATES).where(:logical_key=>logical_key)}
+  scope :siemens_billing, lambda {|logical_key| where(:key_scope=>SIEMENS_BILLING_FILE_COUNTER).where(:logical_key=>logical_key)}
 end

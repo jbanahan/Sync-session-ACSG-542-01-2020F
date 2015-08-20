@@ -1,0 +1,8 @@
+<%content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <button id='btn_delete'>Delete</button>
+<%end%>
+
+<%= render partial: "new_edit", locals: {field_disabled: true, action_type: :update} %>
+
+<%= form_tag(group_path(@group), method: :delete, :id => "group-delete-form")%>

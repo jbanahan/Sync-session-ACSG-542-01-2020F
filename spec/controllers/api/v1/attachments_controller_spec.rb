@@ -191,6 +191,19 @@ describe Api::V1::AttachmentsController do
       expect(u).to eq @user
     end
 
+    it "calls attachment_added if attachable responds to it" do
+      attachment = nil
+      @attachable.class.any_instance.stub(:attachment_added) do |att|
+        attachment = att
+      end
+
+      @attachable.class.any_instance.should_receive(:can_attach?).and_return true
+      post :create, attachable_type: "Product", attachable_id: @attachable.id, file: @file, type: "Testing"
+      expect(response).to be_success
+
+      expect(attachment).not_to be_nil
+    end
+
     it "errors if user can't attach" do
       @attachable.class.any_instance.should_receive(:can_attach?).and_return false
       post :create, attachable_type: "Product", attachable_id: @attachable.id, file: @file, type: "Testing"

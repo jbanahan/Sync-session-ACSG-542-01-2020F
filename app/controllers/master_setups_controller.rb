@@ -1,3 +1,4 @@
+require 'open_chain/slack_client'
 class MasterSetupsController < ApplicationController
   def perf
     t = Time.now
@@ -58,8 +59,11 @@ class MasterSetupsController < ApplicationController
       if params[:name].blank?
         add_flash :errors, "You must specify a version name for the upgrade."
       else
-        MasterSetup.get.update_attributes(:target_version=>params[:name])
+        m = MasterSetup.get
+        old_version = m.target_version
+        m.update_attributes(:target_version=>params[:name])
         add_flash :notices, "Upgrade to version #{params[:name]} initiated."
+        OpenChain::SlackClient.new.send_message('it-dev',"#{current_user.username} has initiatied upgrade of `#{m.system_code}` from `#{old_version}` to `#{m.target_version}`.")
       end
       redirect_to edit_master_setup_path MasterSetup.get 
     }

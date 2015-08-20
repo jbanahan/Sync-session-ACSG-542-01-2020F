@@ -75,6 +75,30 @@ module ApplicationHelper
     format_for_output(mf, val).html_safe
   end
 
+   # Given a model field and a value, render an output formatted, html-safe representation of the value
+  def format_for_output model_field, val
+    if val
+      if model_field.currency
+        case model_field.currency
+        when :usd
+          val = number_to_currency val
+        else
+          val = number_to_currency val, {:format=>"%n",:negative_format=>"-%n"}
+        end
+      elsif model_field.data_type == :decimal
+        # Using precision 5 since that'll cover pretty much every decimal field in the system.
+        val = number_with_precision val, :precision => 5, :strip_insignificant_zeros => true
+      elsif model_field.custom_definition && model_field.custom_definition.is_user?
+        u = User.find_by_id(val)
+        val = u.full_name if u
+      elsif model_field.custom_definition && model_field.custom_definition.is_address?
+        a = Address.find_by_id(val)
+        val = a.full_address if a
+      end
+    end
+    html_escape val
+  end
+
   #build a select box with all model_fields grouped by module.
   def select_model_fields_tag(name,selected,opts={})
     opts[:class] ||= ''
@@ -198,6 +222,10 @@ module ApplicationHelper
     cm = CoreModule.find_by_object(customizable)
     custom_fields = cm.model_fields(User.current) {|mf| mf.custom?}.values
     custom_fields = CustomValue.sort_by_rank_and_label(custom_fields) unless custom_fields.blank?
+
+    #don't show extra address fields
+    custom_fields.delete_if {|cf| cf.uid.to_s.match(/\^*af_/)}
+
     show_model_fields (form ? form : customizable), custom_fields, opts
   end
 
@@ -262,14 +290,16 @@ module ApplicationHelper
     output
   end
   def show_model_fields(obj, model_field_uids, opts = {})
-
     core_object, form_object = get_core_and_form_objects(obj)
-
     opts = {:form=>form_object, :table=>false, :show_prefix=>false, :never_hide=>false, :display_read_only=>true}.merge(opts)
 
     output = ""
     for_model_fields(model_field_uids) do |mf|
-      output << show_model_field(core_object, form_object, mf, opts)
+      if block_given?
+        output << show_model_field(core_object, form_object, mf, opts, &Proc.new)
+      else
+        output << show_model_field(core_object, form_object, mf, opts)
+      end
     end
 
     if output.blank?
@@ -328,7 +358,15 @@ module ApplicationHelper
     when :text
       html_attributes[:rows] = 5 unless html_attributes[:rows]
       field = model_text_area_tag(form_field_name, model_field, c_val, html_attributes)
-    else
+    when :integer
+      if model_field.custom_definition && model_field.custom_definition.is_address?
+        available_addresses = model_field.core_module.available_addresses(core_object)
+        selected_value = core_object.get_custom_value(model_field.custom_definition).value
+        field = select_tag(form_field_name,options_from_collection_for_select(available_addresses,"id","full_address",selected_value),include_blank: true, class:'form-control')
+      end
+    end
+
+    if field.nil?
       if html_attributes[:select_options]
         field = model_select_field_tag(form_field_name, model_field, c_val, html_attributes)
       else
@@ -478,33 +516,12 @@ module ApplicationHelper
     show_field ? render_lambda.call(field_label(mf,show_prefix),  field_value(object,mf),false,mf) : ""
   end
 
-   # Given a model field and a value, render an output formatted, html-safe representation of the value
-  def format_for_output model_field, val
-    if val
-      if model_field.currency
-        case model_field.currency
-        when :usd
-          val = number_to_currency val
-        else
-          val = number_to_currency val, {:format=>"%n",:negative_format=>"-%n"}
-        end
-      elsif model_field.data_type == :decimal
-        # Using precision 5 since that'll cover pretty much every decimal field in the system.
-        val = number_with_precision val, :precision => 5, :strip_insignificant_zeros => true
-      elsif model_field.custom_definition && model_field.custom_definition.is_user?
-        u = User.find_by_id(val)
-        val = u.full_name if u
-      end
-    end
-    html_escape val
-  end
-
   def opts_for_model_text_field model_field_uid, opts
 
     mf = get_model_field(model_field_uid)
     inner_opts = {mf_id: mf.uid.to_s}.merge opts
     inner_opts[:class] = ["form-control"]
-    inner_opts[:class].push *val_class(mf)
+    inner_opts[:class].push(*val_class(mf))
     inner_opts[:class] = merge_css_attributes inner_opts[:class], opts[:class]
     if mf.data_type == :datetime
       inner_opts[:type] = 'datetime-local'

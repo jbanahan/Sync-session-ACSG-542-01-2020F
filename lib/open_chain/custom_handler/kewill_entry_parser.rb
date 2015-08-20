@@ -102,6 +102,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         process_containers e, entry
         process_commercial_invoices e, entry
         process_broker_invoices e, entry
+        process_fda_dates e, entry
         process_totals e, entry
 
         if opts[:key] && opts[:bucket]
@@ -198,16 +199,18 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.total_add = 0
       entry.total_cvd = 0
       entry.total_packages = 0
+      entry.fda_pending_release_line_count = 0
 
       # Clear dates
-      DATE_MAP.values.each do |v|
+      attributes = {}
+      DATE_MAP.keys.each do |v|
         c = get_date_config v
         next unless c 
-        # Don't clear anything w/ a first/last directive, since we want to retain
-        # those dates
+        # Don't clear anything w/ a first/last/ifnull directive, since we want to retain those original dates
         next unless c[:directive] == :none
-        entry.assign_attributes c[:attribute], nil
+        attributes[c[:attribute]] = nil
       end
+      entry.assign_attributes attributes
     end
 
     def process_entry_header e, entry
@@ -236,6 +239,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.consignee_state = e[:uc_state]
       entry.transport_mode_code = e[:mot].to_s.rjust(2, '0')
       entry.carrier_code = e[:carrier]
+      entry.carrier_name = e[:carrier_name]
       entry.company_number = e[:company_no].to_s.rjust(2, '0')
       entry.division_number = e[:division_no].to_s.rjust(4, '0')
 
@@ -438,6 +442,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.total_add = value if value.nonzero?
         end
       end
+
+      entry.fda_pending_release_line_count = pending_fda_release_line_count entry
       nil
     end
 
@@ -583,7 +589,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.related_parties = l[:related_parties].to_s.upcase == "Y"
       line.vendor_name = l[:mid_name]
       line.volume = parse_decimal l[:volume]
-      line.contract_amount = parse_decimal l[:contract]
+      # Contract is sent with decimal places, so don't do the offset stuff when parsing
+      line.contract_amount = parse_decimal l[:contract], no_offset: true
       line.department = l[:department] unless l[:department].to_s == "0"
       line.store_name = l[:store_no]
       line.product_line = l[:product_line]
@@ -749,21 +756,27 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       importer
     end
 
-    def parse_decimal str, decimal_places: 2, decimal_offset: 2, rounding_mode: BigDecimal::ROUND_HALF_UP
+    def parse_decimal str, decimal_places: 2, decimal_offset: 2, rounding_mode: BigDecimal::ROUND_HALF_UP, no_offset: false
       return BigDecimal.new("0") if str.blank? || str == 0
 
-      str = str.to_s.rjust(decimal_offset, '0')
+      str = str.to_s
 
-      # The decimal places is what the value will be rounding to when returned
-      # The decimal offset is used because all of the numeric values in Alliance are
-      # stored and sent without decimal places "12345" instead of "123.45" so that 
-      # they don't have to worry about decimal rounding and integer arithmetic can be done on everything.
-      # This also means that we need to know the scale of the number before parsing it.
-      unless str.include?(".") || decimal_offset <= 0
-        begin
-          str = str.insert(-(decimal_offset+1), '.')
-        rescue IndexError
-          str = "0"
+      # if no_offset is passed, we're going to treat the incoming value like a standard numeric string, not the 
+      # missing decimal garbage that Alliance normally sends.
+      unless no_offset
+        str = str.rjust(decimal_offset, '0')
+
+        # The decimal places is what the value will be rounding to when returned
+        # The decimal offset is used because all of the numeric values in Alliance are
+        # stored and sent without decimal places "12345" instead of "123.45" so that 
+        # they don't have to worry about decimal rounding and integer arithmetic can be done on everything.
+        # This also means that we need to know the scale of the number before parsing it.
+        unless str.include?(".") || decimal_offset <= 0
+          begin
+            str = str.insert(-(decimal_offset+1), '.')
+          rescue IndexError
+            str = "0"
+          end
         end
       end
 
@@ -823,6 +836,148 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def tz
       self.class.tz
+    end
+
+    # We need to have all the invoice information already set in the entry at this point
+    def process_fda_dates entry_json, entry
+      fda_statuses = parse_fda_notes entry_json
+
+      entry.commercial_invoices.each do |inv|
+        inv.commercial_invoice_lines.each do |line|
+          fda_line_dates = fda_statuses[line.customs_line_number.to_i]
+          if fda_line_dates
+            line.fda_review_date = fda_line_dates[:review]
+            line.fda_hold_date = fda_line_dates[:hold]
+            line.fda_release_date = fda_line_dates[:release]
+          end
+        end
+      end
+    end
+
+    # The inputs should be the notes from the json, not the active record objects
+    # The return from this is a hash w/ a key of the Customs Line Number => {:review_date, :hold_date, :release_date}
+    def parse_fda_notes entry_json
+      fda_line_numbers = Set.new
+      Array.wrap(entry_json[:commercial_invoices]).each do |inv|
+        Array.wrap(inv[:lines]).each do |line|
+          line_no = line[:uscs_line_no]
+
+          Array.wrap(line[:tariffs]).each do |t|
+            if t[:fda] == "Y"
+              fda_line_numbers << line_no
+              break
+            end
+          end
+        end
+      end
+
+      fda_statuses = {}
+      fda_line_numbers.map {|line| {line => {review: nil, hold: nil, release: nil}}}.each {|hash| key = hash.keys.first; fda_statuses[key] = hash[key]}
+
+      Array.wrap(entry_json[:notes]).each do |n|
+        next unless n[:modified_by].try(:upcase) == "CUSTOMS"
+
+        # FDA notes have 3 distinct variants:
+        # 1) A "header" level note indicating the status of the file.  In general, this is followed by a line level
+        #    message providing a more fine-grained detail about the individual line's status.  FDA Review does not provide
+        #    individual line level details...once a review is received, all lines are considered under review.
+        #
+        #    Examples: "07/23/15 13:44 AG FDA 01 FDA REVIEW", "07/20/15 09:13 AG FDA 02 FDA HOLD", "07/17/15 17:07 AG FDA 05 FDA RELEASE"
+        #
+        # 2) A "line" level note indicating which particular 7501 customs line number status has been updated.  These lines indicate
+        #    a single line or a range of lines that have status updates.  In general they follow and pertain to a header level
+        #    note preceeding the line level, but sometimes line level notes are "floating" unrelated to any header - releases 
+        #    a sometimes mixed in without any header messages.
+        #
+        #    Examples: "FDA MAY PROCEED USCS Ln 001 THRU 002", "FDA EXAM, NOTIFY USCS Ln 003  000", "FDA RELEASED USCS Ln 001 THRU 003"
+        #
+        # 3) An 'fda' level note indicating which FDA line's status has change.  We don't care about these, we only track at the 
+        #    7501 level.
+        # 
+        #    Example: "Start Tar Pos 1 End Tar Pos 1 OGA Ln 001 THRU 001"
+
+        # Scan for a header level note...the only one we care about is FDA Review, as that's the only one that doesn't
+        # have follow up line level notes.
+        result = n[:note].scan /(\d{2}\/\d{2}\/\d{2} \d{1,2}:\d{2})\s+AG\s+FDA\s+(\d{1,2})\s+(.*)\s+/i
+        if result.length > 0 && result[0][1].to_i == 1
+          status = result[0][1].to_i
+          set_fda_dates fda_statuses, fda_line_numbers, :review, n[:date_updated]
+        else 
+          # Look for the FDA line specific statuses here..
+          # This looks for a status message that has a leading status message, followed by "USCS Ln"
+          # then some digits (the starting line number), then an optional THRU followed by another line number.
+
+          # We'll need to match on the actual message to determine if we need to set the hold or release date...
+          # Here's the full list of statuses along w/ their status numbers (not found in the Notes, unfortunately).
+          # 
+          # 01        FDA EXAM                                                        
+          # 02        FDA EXAM, NOTIFY                                                
+          # 05        FDA EXAM, DO NOT DEVAN                                          
+          # 06        FDA EXAM, REDELIVER                                             
+          # 07        FDA MAY PROCEED                                                 
+          # 08        FDA RELEASED                                                    
+          # 09        FDA RELEASED W/COMMENT                                          
+          # 10        FDA DETAINED                                                    
+          # 11        FDA CANCEL DETENTION                                            
+          # 12        FDA REFUSED                                                     
+          # 13        FDA PARTIAL RELEASE/REFUSE                                      
+          # 14        FDA CANCEL REFUSAL
+          # 14        FDA DOCUMENTS REQUIRED
+
+          # FDA MAY PROCEED, FDA RELEASED, FDA RELEASED W/COMMENT are considered release date notifications
+          # All others are considered hold dates
+
+          result = n[:note].scan /(.*) USCS Ln (\d+)\s*(?:THRU\s+(\d+))?/i
+          if result.length > 0
+            # We really don't need to care about the actual line level status message since we're only tracking
+            # if the line is review/hold/released.
+            # All we care about here is the line numbers involved.
+            message = result[0][0]
+            lines_start = result[0][1].to_i
+            lines_end = result[0][2].to_i
+
+            if lines_start > 0
+              lines_end = lines_start if lines_end < lines_start
+
+              date_field = nil
+              case result[0][0]
+              when /\s*(?:(?:FDA MAY PROCEED)|(?:FDA RELEASED))/i
+                date_field = :release
+              else
+                date_field = :hold
+              end
+
+              if date_field
+                set_fda_dates fda_statuses, (lines_start .. lines_end).to_a, date_field, n[:date_updated]
+              end
+            end
+          end
+        end
+      end
+
+      fda_statuses
+    end
+
+    def set_fda_dates statuses, line_numbers, date_key, date
+      date = parse_numeric_datetime date
+      line_numbers.each do |num|
+        # Just because we get an FDA status about a customs line, doesn't mean that it's actually an FDA line.
+        # Sometimes we get a message like Ln 002 THRU 010 and lines 7 and 8 aren't FDA lines.  We don't want to
+        # record fda dates against those lines.
+        statuses[num][date_key] = date if statuses[num]
+      end
+    end
+
+    def pending_fda_release_line_count entry
+      count = 0
+      entry.commercial_invoices.each do |inv|
+        inv.commercial_invoice_lines.each do |invoice_line|
+          # If either review or hold date is set and there is no release date, then we're considering the line pending release
+          count += 1 if (invoice_line.fda_review_date || invoice_line.fda_hold_date) && invoice_line.fda_release_date.nil?
+        end
+      end
+
+      count
     end
 
 end; end; end;

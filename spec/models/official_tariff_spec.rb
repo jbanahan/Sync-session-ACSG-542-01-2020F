@@ -21,6 +21,30 @@ describe OfficialTariff do
       t.lacey_act?.should == false
     end
   end
+  describe :taric_url do
+    it "should return nil if country is nil" do
+      t = Factory(:official_tariff, hts_code: "ABCD")
+      
+      expect(t.taric_url).to be nil
+    end
+
+    it "should return nil if country is not in the EU" do
+      c = Factory(:country)
+      t = Factory(:official_tariff, country: c, hts_code: "ABCD")
+      c.stub(:european_union?).and_return false
+      
+      expect(t.taric_url).to be nil
+    end
+
+    it "should return a url if country is in the EU" do
+      c = Factory(:country)
+      t = Factory(:official_tariff, country: c, hts_code: "ABCD")
+      c.stub(:european_union?).and_return true
+
+      expect(t.taric_url).to eq "http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Taric=ABCD&LangDescr=en"
+    end
+  end
+
   describe :update_use_count do
     before :each do
       OpenChain::StatClient.stub(:wall_time).and_yield

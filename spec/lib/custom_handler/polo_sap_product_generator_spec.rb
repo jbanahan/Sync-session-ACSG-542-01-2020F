@@ -151,6 +151,37 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       a.should have(1).item
       a.collect {|x| x[0]}.should == ["Test  Test"]
     end
+
+    it "skips tariff lines for product/classification combos already sent" do
+      eu = Factory(:country,:iso_code=>'IT')
+      # Create multiple products to ensure the checks against the previous style/iso are done correctly
+      p = Factory(:product, unique_identifier: "ZZZ")
+      p.update_custom_value! @sap_brand_cd, true
+      # Set the line numbers different from the natural id order to ensure we're sorting on line number
+      Factory(:tariff_record,:hts_1=>'1234567890', line_number: "2", classification: Factory(:classification,:country_id=>@us.id,:product=>p))
+      Factory(:tariff_record,:hts_1=>'9876543210', line_number: "1", classification: p.classifications.first)
+      # Create an IT classification to ensure we're ording correctly on country iso and that we're taking the country code into account when
+      # checking for multiple tariff lines
+      Factory(:tariff_record,:hts_1=>'1234567890', line_number: "1", classification: Factory(:classification,:country_id=>eu.id,:product=>p))
+
+      p2 = Factory(:product, unique_identifier: "AAA")
+      p2.update_custom_value! @sap_brand_cd, true
+      Factory(:tariff_record,:hts_1=>'1234567890', line_number: "2", classification: Factory(:classification,:country_id=>@us.id,:product=>p2))
+      
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
+      a = CSV.parse(IO.read(@tmp.path),:headers=>true)
+      expect(a.length).to eq 3
+
+      expect(a[0][0]).to eq "AAA"
+
+      expect(a[1][0]).to eq "ZZZ"
+      expect(a[1][2]).to eq "IT"
+      expect(a[1][3]).to eq "1234.56.7890"
+
+      expect(a[2][0]).to eq "ZZZ"
+      expect(a[2][2]).to eq "US"
+      expect(a[2][3]).to eq "9876.54.3210"
+    end
   end
 
   describe :ftp_credentials do
