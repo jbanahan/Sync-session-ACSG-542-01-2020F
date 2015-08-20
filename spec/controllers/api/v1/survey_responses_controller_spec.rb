@@ -18,7 +18,7 @@ describe Api::V1::SurveyResponsesController do
 
     it "returns list of surveys assign to a user's group" do
       s = Factory(:survey_response, subtitle: "sub")
-      g = Group.create! system_code: "Group"
+      g = Factory(:group)
       s.update_attributes! user: nil, group: g
 
       user = Factory(:user, survey_view: true)

@@ -4,7 +4,7 @@ class Group < ActiveRecord::Base
   has_many :workflow_tasks, inverse_of: :group
 
   validates :name, presence: true
-  validates :system_code, uniqueness: true, if: "!system_code.nil?"
+  validates :system_code, uniqueness: true, unless: Proc.new {|g| g.system_code.blank? }
 
   scope :visible_to_user, lambda {|u| 
     if u.company.master?

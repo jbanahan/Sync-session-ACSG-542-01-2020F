@@ -27,7 +27,7 @@ describe UsersController do
 
     it "updates a user's info without password" do
       @u = Factory(:user, password: "blah")
-      group = Group.create! system_code: "Testing"
+      group = Factory(:group)
       # Verify the password doesn't change if we don't include it in the params
       pwd = @u.encrypted_password
       params = {company_id: @u.company.id, id: @u.id, user: {username: 'testing', group_ids: [group.id]}}
@@ -43,7 +43,7 @@ describe UsersController do
 
     it "updates a user's password" do
       @u = Factory(:user, password: "blah")
-      group = Group.create! system_code: "Testing"
+      group = Factory(:group)
       # Verify the password doesn't change if we don't include it in the params
       pwd = @u.encrypted_password
       params = {company_id: @u.company.id, id: @u.id, user: {username: 'testing', password: "testing", password_confirmation: "testing"}}

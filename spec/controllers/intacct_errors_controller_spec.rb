@@ -3,7 +3,7 @@ require 'spec_helper'
 describe IntacctErrorsController do
   before :each do
     MasterSetup.any_instance.stub(:system_code).and_return "www-vfitrack-net"
-    g = Group.create! system_code: 'intacct-accounting'
+    g = Factory(:group, system_code: 'intacct-accounting')
     @user = Factory(:user, username: "jhulford")
     @user.groups << g
     sign_in_as @user
