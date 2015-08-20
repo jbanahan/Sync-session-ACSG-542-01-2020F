@@ -54,10 +54,17 @@ module OpenChain
       while !(match_start = (copy_name =~ /\s*\(From [^)]+?\)\s*\z/)).nil? && match_start >= 0
         copy_name = copy_name[0, match_start]
       end
-
+      
       ss = deep_copy copy_name +" (From #{self.user.full_name})", copy_schedules
       ss.user = other_user
       ss.save
+      if self.is_a? SearchSetup
+        path = Rails.application.routes.url_helpers.advanced_search_url(ss, host: MasterSetup.get.request_host, protocol: (Rails.env.production? ? "https" : "http"))
+      else path = Rails.application.routes.url_helpers.custom_report_url(ss, host: MasterSetup.get.request_host, protocol: (Rails.env.production? ? "https" : "http"))
+      end
+      other_user.messages.create!(subject: "New Report from #{self.user.username}",
+                                  body: "#{self.user.username} has sent you a report titled #{self.name}. "\
+                                         "Click <a href='#{path}'>here</a> to view it.")
     end
   end
 end
