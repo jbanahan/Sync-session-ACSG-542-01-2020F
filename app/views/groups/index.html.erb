@@ -1,0 +1,22 @@
+<% content_for :javascript do %>
+$(function() {
+    $("#btn_new").click(function(evt) {
+      evt.preventDefault();
+      $("#group-new-form").submit();
+    })
+});
+<%end%>
+
+<%content_for :action_bar do %>
+<button id='btn_new'>New</button>
+<%end%>
+
+<table class='detail_table'>
+  <thead><th>Groups</th></thead>
+  <tbody>
+    <%@groups.each do |g|%>
+        <tr class='hover'><td><%=link_to g.name, edit_group_path(g)%></td></tr>
+    <%end%>
+  </tbody>
+</table>
+<%= form_tag(new_group_path, method: :get, :id => "group-new-form")%> 
