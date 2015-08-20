@@ -127,12 +127,22 @@ describe 'ShipmentService', ->
         svc.uncancelShipment(shp)
         http.flush()
 
-    describe 'getParties', ->
+    describe 'getImporters', ->
       it 'should query companies api', ->
         resp = {'importers': [{id: 1}]}
-        http.expectGET('/api/v1/companies?roles=importer,carrier').respond resp
+        http.expectGET('/api/v1/companies?roles=importer').respond resp
         d = null
-        svc.getParties().success (data) ->
+        svc.getImporters().success (data) ->
+          d = data
+        http.flush()
+        expect(d).toEqual resp
+
+    describe 'getCarriers', ->
+      it 'should query companies api', ->
+        resp = {'carriers': [{id: 1}]}
+        http.expectGET('/api/v1/companies?roles=carrier&linked_with=1').respond resp
+        d = null
+        svc.getCarriers(1).success (data) ->
           d = data
         http.flush()
         expect(d).toEqual resp

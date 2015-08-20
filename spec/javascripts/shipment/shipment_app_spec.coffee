@@ -19,12 +19,22 @@ describe 'ShipmentApp', ->
     describe 'process', ->
       it 'should delegate to service and redirect', ->
         attachment = {id: 2}
-        shipment = {id: 1}
+        shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processTradecardPackManifest').andReturn(r.promise)
-        scope.process(shipment,attachment)
+        scope.process(shipment,attachment, 'Tradecard')
         r.resolve({data: {id: 1}})
-        expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment)
+        expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment, 2)
+
+    describe 'process', ->
+      it 'should delegate to booking worksheet service and redirect', ->
+        attachment = {id: 2}
+        shipment = {id: 1, manufacturerId: 2}
+        r = q.defer()
+        spyOn(svc,'processBookingWorksheet').andReturn(r.promise)
+        scope.process(shipment,attachment, 'Booking Worksheet')
+        r.resolve({data: {id: 1}})
+        expect(svc.processBookingWorksheet).toHaveBeenCalledWith(shipment,attachment, 2)
 
   describe 'ShipmentAddOrderCtrl', ->
     ctrl = svc = state = scope = q = null

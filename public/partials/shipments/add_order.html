@@ -35,7 +35,7 @@
             </div>
             <div class="col-xs-4">
               <label for="mfg-address-select">Choose Manufacturer</label>
-              <address-book-autocomplete id="mfg-address-select" address-id-attribute="activeOrder.manufacturerAddressId"></address-book-autocomplete>
+              <address-book-autocomplete id="mfg-address-select" shipment-id="shp.id" address-id-attribute="activeOrder.manufacturerAddressId"></address-book-autocomplete>
             </div>
           </div>
           <div class="row">
@@ -106,7 +106,7 @@
     </div>
   </div>
 </div>
-<add-address-modal></add-address-modal>
+<add-address-modal shipment-id="shp.id"></add-address-modal>
 <div chain-action-bar>
   <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder)' ng-show='shp && activeOrder'>Save</button>
   <button class='btn btn-default' ng-click='cancel()'>Cancel</button>

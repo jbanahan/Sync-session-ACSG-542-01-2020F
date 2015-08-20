@@ -189,7 +189,7 @@
                             {{ln.shpln_container_number}}
                           </td>
                           <td ng-show='shp.permissions.can_edit' class='text-right'>
-                            <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteShipmentLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                            <button ng-show='shp.permissions.can_add_remove_shipment_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteShipmentLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
                             <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
                             <button class='btn btn-xs btn-default' title='Show Parties' ng-click='prepPartiesModal(ln)' data-toggle='modal' data-target='#mod_shpln_parties'><i class='fa fa-user'></i></button>
                           </td>
@@ -306,7 +306,7 @@
                         </td>
                         <td class='text-right'>
                           <span ng-show='shp.permissions.can_book'>
-                            <button ng-show='shp.permissions.can_add_remove_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                            <button ng-show='shp.permissions.can_add_remove_booking_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
                             <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
                           </span>
                         </td>
@@ -362,9 +362,9 @@
     <button ng-show='shp.permissions.can_request_cancel' class='btn btn-default' ng-click='requestCancel(shp)'>Request Cancel</button>
     <button ng-show='shp.permissions.can_cancel' class='btn btn-default' ng-click='cancelShipment(shp)'>Cancel Shipment</button>
     <button ng-show='shp.permissions.can_uncancel' class='btn btn-default' ng-click='uncancelShipment(shp)'>Uncancel Shipment</button>
-    <button ng-show='shp.permissions.can_add_remove_lines' class='btn btn-default' ng-click='showAddOrder()'>Build Manifest</button>
-    <button ng-show='shp.permissions.can_book && shp.permissions.can_add_remove_lines && shp.permissions.enabled_booking_types.length > 0' class='btn btn-default' ng-click='showBookOrder()'>Book Now</button>
-    <button ng-show='shp.permissions.can_add_remove_lines && shp.attachments.length > 0' class='btn btn-default' ng-click='showProcessManifest()'>Process Worksheet</button>
+    <button ng-show='shp.permissions.can_add_remove_shipment_lines' class='btn btn-default' ng-click='showAddOrder()'>Build Manifest</button>
+    <button ng-show='shp.permissions.can_book && shp.permissions.can_add_remove_booking_lines && shp.permissions.enabled_booking_types.length > 0' class='btn btn-default' ng-click='showBookOrder()'>Book Now</button>
+    <button ng-show='(shp.permissions.can_add_remove_booking_lines || shp.permissions.can_add_remove_shipment__lines) && shp.attachments.length > 0' class='btn btn-default' ng-click='showProcessManifest()'>Process Worksheet</button>
     <button ng-show='shp.permissions.can_send_isf' class='btn btn-default' ng-click='sendISF(shp)'>Send ISF</button>
     <a class='btn btn-default' href="/shipments/{{shp.id}}/download">Download</a>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>

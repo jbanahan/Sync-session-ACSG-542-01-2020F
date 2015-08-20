@@ -260,13 +260,13 @@ class Shipment < ActiveRecord::Base
 	end
 
   # can the user currently add lines to this shipment
-  def can_add_remove_lines?(user)
-    return false if self.booking_confirmed_date || self.booking_approved_date
+  def can_add_remove_shipment_lines?(user)
     return self.can_edit?(user)
   end
 
   def can_add_remove_booking_lines?(user)
-    self.can_edit?(user)
+    return false if self.booking_approved_date
+    return self.can_edit?(user)
   end
 
   def can_comment?(user)

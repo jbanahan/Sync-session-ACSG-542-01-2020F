@@ -487,7 +487,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "should not allow new lines if !can_add_remove_lines?" do
-      Shipment.any_instance.stub(:can_add_remove_lines?).and_return false
+      Shipment.any_instance.stub(:can_add_remove_shipment_lines?).and_return false
       @s_hash['lines'] = [
         { 'shpln_shipped_qty'=>'104',
           'shpln_puid'=>@product.unique_identifier
@@ -497,7 +497,7 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
     end
     it "should not allow lines to be deleted if !can_add_remove_lines?" do
-      Shipment.any_instance.stub(:can_add_remove_lines?).and_return false
+      Shipment.any_instance.stub(:can_add_remove_shipment_lines?).and_return false
       sl = Factory(:shipment_line,shipment:@shipment)
       @s_hash['lines'] = [
         { 'id'=>sl.id,

@@ -421,30 +421,46 @@ describe Shipment do
     end
   end
 
-  describe :can_add_remove_lines? do
+  describe :can_add_remove_booking_lines? do
     it "should allow adding lines if user can edit" do
       u = double('user')
       s = Shipment.new
       s.should_receive(:can_edit?).with(u).and_return true
-      expect(s.can_add_remove_lines?(u)).to be_true
+      expect(s.can_add_remove_booking_lines?(u)).to be_true
     end
     it "should not allow adding lines if user cannot edit" do
       u = double('user')
       s = Shipment.new
       s.should_receive(:can_edit?).with(u).and_return false
-      expect(s.can_add_remove_lines?(u)).to be_false
+      expect(s.can_add_remove_booking_lines?(u)).to be_false
     end
     it "should not allow adding lines if booking is approved" do
       u = double('user')
       s = Shipment.new(booking_approved_date:Time.now)
       s.stub(:can_edit?).and_return true #make sure we're not testing the wrong thing
-      expect(s.can_add_remove_lines?(u)).to be_false
+      expect(s.can_add_remove_booking_lines?(u)).to be_false
     end
-    it "should not allow adding lines if booking is confirmed" do
+    it "should allow adding lines if booking is confirmed" do
       u = double('user')
       s = Shipment.new(booking_confirmed_date:Time.now)
       s.stub(:can_edit?).and_return true #make sure we're not testing the wrong thing
-      expect(s.can_add_remove_lines?(u)).to be_false
+      expect(s.can_add_remove_booking_lines?(u)).to be_true
+    end
+  end
+
+  describe :can_add_remove_shipment_lines? do
+    it "allows adding lines if user can edit" do
+      u = double('user')
+      s = Shipment.new
+      s.should_receive(:can_edit?).with(u).and_return true
+      expect(s.can_add_remove_shipment_lines?(u)).to be_true
+    end
+
+    it "disallows adding lines if user cannot edit" do
+      u = double('user')
+      s = Shipment.new
+      s.should_receive(:can_edit?).with(u).and_return false
+      expect(s.can_add_remove_shipment_lines?(u)).to be_false
     end
   end
 

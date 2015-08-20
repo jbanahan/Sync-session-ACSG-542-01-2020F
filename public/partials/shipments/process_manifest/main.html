@@ -8,15 +8,19 @@
     <div class="col-xs-6">
       <div class="form-group">
         <label for="typeSelect">Select Worksheet Type</label>
-        <select class="form-control" id="typeSelect" ng-model="attachmentType" ng-options="type for type in ['Booking Worksheet','Tradecard Manifest']"></select>
+        <select class="form-control" id="typeSelect" ng-model="attachmentType">
+          <option value="">Select a worksheet type...</option>
+          <option value="Booking Worksheet" ng-show="shp.permissions.can_add_remove_booking_lines">Booking Worksheet</option>
+          <option value="Tradecard Manifest" ng-show="shp.permissions.can_add_remove_shipment_lines">Tradecard Manifest</option>
+        </select>
       </div>
       <div class="form-group" ng-show="attachmentType === 'Tradecard Manifest'">
         <label for="mfgAddress">Select Manufacturer Address</label>
-        <address-book-autocomplete id="mfgAddress" address-id-attribute="shp.manufacturerId"></address-book-autocomplete>
+        <address-book-autocomplete id="mfgAddress" shipment-id="shp.id" address-id-attribute="shp.manufacturerId"></address-book-autocomplete>
       </div>
     </div>
   </div>
-  <add-address-modal></add-address-modal>
+  <add-address-modal shipment-id="shp.id"></add-address-modal>
 </div>
 <div chain-action-bar>
   <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
