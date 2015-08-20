@@ -26,6 +26,13 @@ class CustomReport < ActiveRecord::Base
   scope :for_user, lambda {|u| where(:user_id => u)}
   attr_reader :preview_run
 
+  # Stupid hack because rails protects the type attribute by default (not 100% sure why - default polymorhpism column name?)...
+  # Hindsight being what it is, we should have used a different attribute name to determine the report's type
+  # like say, report_type.
+  def self.attributes_protected_by_default
+    ["id"]
+  end
+
   def column_fields_available user
     #expects subclass to implement static version of this method
     fields = self.class.column_fields_available user
