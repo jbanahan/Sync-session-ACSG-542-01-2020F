@@ -396,7 +396,7 @@ var OpenChain = (function() {
 })();
 var OCSurvey = (function() {
   return {
-    addQuestion: function(id,content,choices,attachments,warning, require_comment, require_attachment, comment_required_for_choices, attachment_required_for_choices) {
+    addQuestion: function(id,content,choices,attachments,warning, require_comment, require_attachment, attachment_required_for_choices, comment_required_for_choices) {
       var mid = id ? id : new Date().getTime();
       var h = "<div class='question_box' id='q-"+mid+"' style='display:none;'>";
 
