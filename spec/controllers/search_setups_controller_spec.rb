@@ -3,6 +3,7 @@ require 'spec_helper'
 describe SearchSetupsController do 
 
   before(:each) do
+    MasterSetup.create(request_host:"localhost:3000")
     @u = Factory(:user, :time_zone=>"Hawaii")
 
     sign_in_as @u
