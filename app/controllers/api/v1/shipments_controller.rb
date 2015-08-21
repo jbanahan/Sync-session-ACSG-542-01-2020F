@@ -469,8 +469,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
     end
     {
-      line_count: number_with_delimiter(shipment.shipment_lines.count),
-      booked_line_count: number_with_delimiter(shipment.booking_lines.where('order_line_id IS NOT NULL').count),
+      line_count: number_with_delimiter(shipment.shipment_lines.size),
+      booked_line_count: number_with_delimiter(shipment.booking_lines.size),
       piece_count: number_with_delimiter(number_with_precision(piece_count, strip_insignificant_zeros:true)),
       booked_piece_count: number_with_delimiter(number_with_precision(booked_piece_count, strip_insignificant_zeros:true)),
       order_count: number_with_delimiter(order_ids.to_a.compact.size),
