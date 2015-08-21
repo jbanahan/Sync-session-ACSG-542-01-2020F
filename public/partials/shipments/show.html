@@ -133,8 +133,8 @@
         <div role="tabpanel">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a data-target="#line_summary" aria-controls="line_summary" role="tab" data-toggle="tab">Summary</a></li>
-            <li role="presentation"><a ng-click="loadShipmentLines(shp)" data-target="#line_detail" aria-controls="line_detail" role="tab" data-toggle="tab">Manifest Detail</a></li>
-            <li role="presentation"><a ng-click="loadBookingLines(shp)" data-target="#booking_detail" aria-controls="booking_detail" role="tab" data-toggle="tab">Booking Detail</a></li>
+            <li role="presentation"><a ng-click="shipmentLinesSelected(shp)" data-target="#line_detail" aria-controls="line_detail" role="tab" data-toggle="tab">Manifest Detail</a></li>
+            <li role="presentation"><a ng-click="bookingLinesSelected(shp)" data-target="#booking_detail" aria-controls="booking_detail" role="tab" data-toggle="tab">Booking Detail</a></li>
           </ul>
           <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="line_summary">
@@ -266,7 +266,7 @@
                   </div>
                   <div class="col-md-12" ng-show='shp.booking_lines.length >= 0'>
                     <div class="panel" ng-show='shp.booking_lines.length == 0'>
-                      <div class="panel-body">This shipment doesn't have any lines.</div>
+                      <div class="panel-body">This shipment doesn't have any booking lines.</div>
                     </div>
                     <table class='table table-striped' ng-show='shp.booking_lines.length > 0'>
                       <thead>
@@ -364,7 +364,7 @@
     <button ng-show='shp.permissions.can_uncancel' class='btn btn-default' ng-click='uncancelShipment(shp)'>Uncancel Shipment</button>
     <button ng-show='shp.permissions.can_add_remove_shipment_lines' class='btn btn-default' ng-click='showAddOrder()'>Build Manifest</button>
     <button ng-show='shp.permissions.can_book && shp.permissions.can_add_remove_booking_lines && shp.permissions.enabled_booking_types.length > 0' class='btn btn-default' ng-click='showBookOrder()'>Book Now</button>
-    <button ng-show='(shp.permissions.can_add_remove_booking_lines || shp.permissions.can_add_remove_shipment__lines) && shp.attachments.length > 0' class='btn btn-default' ng-click='showProcessManifest()'>Process Worksheet</button>
+    <button ng-show='(shp.permissions.can_add_remove_booking_lines || shp.permissions.can_add_remove_shipment_lines) && shp.attachments.length > 0' class='btn btn-default' ng-click='showProcessManifest()'>Process Worksheet</button>
     <button ng-show='shp.permissions.can_send_isf' class='btn btn-default' ng-click='sendISF(shp)'>Send ISF</button>
     <a class='btn btn-default' href="/shipments/{{shp.id}}/download">Download</a>
     <chain-ship-request-booking-button shipment='shp'></chain-ship-request-booking-button>

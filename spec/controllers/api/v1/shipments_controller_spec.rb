@@ -77,7 +77,7 @@ describe Api::V1::ShipmentsController do
       j = JSON.parse response.body
       expect(j['shipment']['id']).to eq sl1.shipment_id
       expected_summary = {
-          'booked_line_count'=>'1',
+          'booked_line_count'=>'2',
           'booked_piece_count'=>'650',
           'booked_order_count'=>'1',
           'booked_product_count'=>'1',
@@ -162,6 +162,17 @@ describe Api::V1::ShipmentsController do
       slc = j['shipment']['carton_sets'].first
       expect(slc['cs_starting_carton']).to eq 1000
       expect(j['shipment']['lines'][0]['shpln_carton_set_uid']).to eq cs.id
+    end
+    it "should render comments" do
+      s = Factory(:shipment,reference:'123',mode:'Air',importer_reference:'DEF')
+      s.comments.create! user: @u, subject: "Subject", body: "Comment Body"
+      get :show, id: s.id, include: "comments"
+
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['shipment']['comments'].size).to eq 1
+      expect(j['shipment']['comments'].first['subject']).to eq "Subject"
+      expect(j['shipment']['comments'].first['body']).to eq "Comment Body"
     end
   end
   describe "request booking" do
@@ -747,6 +758,83 @@ describe Api::V1::ShipmentsController do
       Shipment.any_instance.should_receive(:can_view?).and_return false
 
       post :create_address, id: @s.id, address: {}
+      expect(response.status).to eq 404
+    end
+  end
+
+  describe "shipment_lines" do
+    before :each do
+      @line1 = Factory(:shipment_line)
+      @shipment = @line1.shipment
+      @line2 = Factory(:shipment_line, shipment: @shipment)
+    end
+
+    it "returns shell shipment with only shipment lines" do
+      get :shipment_lines, id: @shipment.id
+      expect(response).to be_success
+
+      r = JSON.parse(response.body)
+      expect(r['shipment']['lines'].length).to eq 2
+      expect(r['shipment']['lines'].first['id']).to eq @line1.id
+      expect(r['shipment']['lines'].first['shpln_line_number']).to eq @line1.line_number
+      expect(r['shipment']['lines'].first['order_lines']).to be_nil
+
+      expect(r['shipment']['lines'].second['id']).to eq @line2.id
+      expect(r['shipment']['lines'].second['shpln_line_number']).to eq @line2.line_number
+    end
+
+    it "returns order information if requested" do
+      ol1 = Factory(:order_line)
+      @line1.update_attributes! product: ol1.product
+
+      PieceSet.create! order_line: ol1, shipment_line: @line1, quantity: 1100
+
+      get :shipment_lines, id: @shipment.id, include: "order_lines"
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r['shipment']['lines'].length).to eq 2
+      expect(r['shipment']['lines'].first['order_lines'].length).to eq 1
+      ol = r['shipment']['lines'].first['order_lines'].first
+      expect(ol['allocated_quantity']).to eq "1100.0"
+      expect(ol['order_id']).to eq ol1.order_id
+      expect(ol['ord_ord_num']).to eq ol1.order.order_number.to_s
+      expect(ol['ordln_puid']).to eq ol1.product.unique_identifier
+
+      expect(r['shipment']['lines'].second['order_lines'].length).to eq 0
+    end
+
+    it "fails if user can't access the shipment" do
+      Shipment.any_instance.should_receive(:can_view?).and_return false
+      get :shipment_lines, id: @shipment.id, include: "order_lines"
+      expect(response.status).to eq 404
+    end
+  end
+
+  describe "booking_lines" do
+    before :each do
+      @line1 = Factory(:booking_line)
+      @shipment = @line1.shipment
+      @line2 = Factory(:booking_line, shipment: @shipment)
+    end
+
+    it "returns shell shipment with only shipment lines" do
+      get :booking_lines, id: @shipment.id
+      expect(response).to be_success
+
+      r = JSON.parse(response.body)
+
+      expect(r['shipment']['booking_lines'].length).to eq 2
+      expect(r['shipment']['booking_lines'].first['id']).to eq @line1.id
+      expect(r['shipment']['booking_lines'].first['bkln_line_number']).to eq @line1.line_number
+      expect(r['shipment']['booking_lines'].first['order_lines']).to be_nil
+
+      expect(r['shipment']['booking_lines'].second['id']).to eq @line2.id
+      expect(r['shipment']['booking_lines'].second['bkln_line_number']).to eq @line2.line_number
+    end
+
+    it "fails if user can't access the shipment" do
+      Shipment.any_instance.should_receive(:can_view?).and_return false
+      get :booking_lines, id: @shipment.id
       expect(response.status).to eq 404
     end
   end

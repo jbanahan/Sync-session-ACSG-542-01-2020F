@@ -19,28 +19,40 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       $scope.loadingFlag = 'loading'
       sId = shipment.id
       actionMethod(shipment).then (resp) ->
-        $scope.loadShipment(sId,true).then ->
+        $scope.loadShipment(sId).then ->
           window.alert('Booking '+namePastTense+'.')
 
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->
     $scope.notificationMessage = null
   $scope.shp = null
-  $scope.loadShipment = (id,forceReload) ->
+  $scope.loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
-    shipmentSvc.getShipment(id,forceReload).then (resp) ->
+    shipmentSvc.getShipment(id, $scope.shipmentLinesNeeded, $scope.bookingLinesNeeded).then (resp) ->
       $scope.shp = resp.data.shipment
       $scope.loadingFlag = null
-      $scope.loadShipmentLines($scope.shp) if $scope.shipmentLinesNeeded
-      $scope.loadBookingLines($scope.shp) if $scope.bookingLinesNeeded
+
+  $scope.shipmentLinesSelected = (shp) ->
+    # Only load shipment lines on tab selection the first time
+    # we load the screen, every other time after that they'll be reloaded
+    # shipment load calls, line reloads, etc
+    unless $scope.shipmentLinesNeeded?
+      $scope.loadShipmentLines(shp)
 
   $scope.loadShipmentLines = (shp) ->
     $scope.shipmentLinesNeeded = true
-    shipmentSvc.injectShipmentLines shp unless shp.lines
+    shipmentSvc.injectShipmentLines(shp)
+
+  $scope.bookingLinesSelected = (shp) ->
+    # Only load booking lines on tab selection the first time
+    # we load the screen, every other time after that they'll be reloaded
+    # shipment load calls, line reloads, etc
+    unless $scope.bookingLinesNeeded?
+      $scope.loadBookingLines(shp)
 
   $scope.loadBookingLines = (shp) ->
     $scope.bookingLinesNeeded = true
-    shipmentSvc.injectBookingLines shp unless shp.booking_lines
+    shipmentSvc.injectBookingLines(shp)
 
   $scope.requestBooking = (shipment) ->
     bookingAction(shipment,shipment.shp_booking_received_date,shipmentSvc.requestBooking,'requested')
@@ -56,7 +68,7 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       $scope.loadingFlag = 'loading'
       sId = shipment.id
       shipmentSvc.reviseBooking(shipment).then (resp) ->
-        $scope.loadShipment(sId,true).then ->
+        $scope.loadShipment(sId).then ->
           window.alert('Booking opened for revision.')
 
   $scope.requestCancel = (shipment) ->
@@ -64,7 +76,7 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       $scope.loadingFlag = 'loading'
       sId = shipment.id
       shipmentSvc.requestCancel(shipment).then (resp) ->
-        $scope.loadShipment(sId,true).then ->
+        $scope.loadShipment(sId).then ->
           window.alert('Request sent.')
 
   $scope.cancelShipment = (shipment) ->
@@ -72,7 +84,7 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       $scope.loadingFlag = 'loading'
       sId = shipment.id
       shipmentSvc.cancelShipment(shipment).then (resp) ->
-        $scope.loadShipment(sId,true).then ->
+        $scope.loadShipment(sId).then ->
           window.alert('Shipment canceled.')
 
   $scope.uncancelShipment = (shipment) ->
@@ -80,7 +92,7 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       $scope.loadingFlag = 'loading'
       sId = shipment.id
       shipmentSvc.uncancelShipment(shipment).then (resp) ->
-        $scope.loadShipment(sId,true).then ->
+        $scope.loadShipment(sId).then ->
           window.alert('Shipment no longer canceled.')
 
   ###*

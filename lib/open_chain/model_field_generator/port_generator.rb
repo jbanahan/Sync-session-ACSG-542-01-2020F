@@ -5,9 +5,7 @@ module OpenChain; module ModelFieldGenerator; module PortGenerator
     r << [r_count,"#{uid_prefix}_id".to_sym, "#{join_field}_id".to_sym, "#{name_prefix} ID",{
         data_type: :integer,
         history_ignore: true,
-        export_lambda: lambda {|obj|
-          obj.try(join_field.to_sym).try(:name).to_s
-        }
+        user_accessible: false
       }]
     r << [r_count,"#{uid_prefix}_name".to_sym, :name, "#{name_prefix} Name",{
         import_lambda: lambda {|obj,data|

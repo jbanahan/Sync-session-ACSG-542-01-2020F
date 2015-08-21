@@ -31,6 +31,8 @@ OpenChain::Application.routes.draw do
           get :autocomplete_product
           get :autocomplete_address
           post :create_address
+          get :shipment_lines
+          get :booking_lines
         end
       end
       resources :fields, only: [:index]

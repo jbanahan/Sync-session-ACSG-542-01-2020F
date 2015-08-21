@@ -116,8 +116,9 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   # This method should be avoided unless for some reason you cannot use
   # update_model_field_attributes on your core_object
   def import_fields base_hash, obj, core_module
-    fields = core_module.model_fields {|mf| mf.user_accessible? && base_hash.has_key?(mf.uid.to_s)}
-
+    # We want to allow access even to fields that aren't user)accessible via the search here for scenarios
+    # where we're setting id values via autocomplete boxes (ports, address ids, etc)
+    fields = core_module.every_model_field {|mf| base_hash.has_key?(mf.uid.to_s) }
     user = current_user
     fields.each_pair do |uid, mf|
       uid = mf.uid.to_s

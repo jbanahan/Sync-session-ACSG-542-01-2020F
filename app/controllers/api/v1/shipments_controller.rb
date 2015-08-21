@@ -27,8 +27,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def available_orders
-    s = Shipment.find params[:id]
-    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    s = get_shipment
     ord_fields = [:ord_ord_num,:ord_cust_ord_no,:ord_mode,:ord_imp_name,:ord_ord_date,:ord_ven_name]
     r = []
     s.available_orders(current_user).order('customer_order_number').each do |ord|
@@ -40,8 +39,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def booked_orders
-    s = Shipment.find params[:id]
-    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    s = get_shipment
     ord_fields = [:ord_ord_num,:ord_cust_ord_no]
     result = []
     lines_available = s.booking_lines.where('order_line_id IS NOT NULL').any?
@@ -55,8 +53,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def available_lines # makes a fake order based on booking lines.
-    s = Shipment.find params[:id]
-    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    s = get_shipment
     lines = s.booking_lines.where('order_line_id IS NOT NULL').map do |line|
       {id: line.order_line_id,
        ordln_line_number: line.line_number,
@@ -254,35 +251,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_consolidator_address_id
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
-    shipment_line_fields_to_render = limit_fields([
-      :shpln_line_number,
-      :shpln_shipped_qty,
-      :shpln_puid,
-      :shpln_pname,
-      :shpln_container_uid,
-      :shpln_container_number,
-      :shpln_container_size,
-      :shpln_cbms,
-      :shpln_gross_kgs,
-      :shpln_carton_qty,
-      :shpln_carton_set_uid,
-      :shpln_manufacturer_address_name,
-      :shpln_manufacturer_address_full_address
-    ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
-
-    booking_line_fields_to_render = limit_fields([
-         :bkln_line_number,
-         :bkln_quantity,
-         :bkln_puid,
-         :bkln_carton_qty,
-         :bkln_gross_kgs,
-         :bkln_cbms,
-         :bkln_carton_set_id,
-         :bkln_order_and_line_number,
-         :bkln_order_id,
-         :bkln_container_size
-     ] + custom_field_keys(CoreModule::BOOKING_LINE))
-
     container_fields_to_render = ([
       :con_uid,
       :con_container_number,
@@ -317,8 +285,27 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     if render_summary?
       h['summary'] = render_summary(s)
     end
+    if render_comments?
+      h['comments'] = render_comments(s, current_user)
+    end
     h['permissions'] = render_permissions(s)
     h
+  end
+
+  def shipment_lines
+    s = get_shipment
+    h = {id: s.id}
+    h['lines'] = render_lines(s.shipment_lines, shipment_line_fields_to_render, render_order_fields?)
+
+    render json: {'shipment' => h}
+  end
+
+  def booking_lines
+    s = get_shipment
+    h = {id: s.id}
+    h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render)
+
+    render json: {'shipment' => h}
   end
 
   #override api_controller method to pre-load lines
@@ -337,8 +324,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def autocomplete_order
     results = []
     if !params[:n].blank?
-      s = Shipment.find params[:id]
-      raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+      s = get_shipment
 
       orders = s.available_orders current_user
       results = orders.where('customer_order_number like ?',"%#{params[:n]}%").
@@ -352,8 +338,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def autocomplete_product
     results = []
     if !params[:n].blank?
-      s = Shipment.find params[:id]
-      raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+      s = get_shipment
 
       products = s.available_products current_user
       results = products.where("unique_identifier LIKE ? ", "%#{params[:n]}%").
@@ -367,8 +352,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def autocomplete_address
     json = []
     if !params[:n].blank?
-      s = Shipment.find params[:id]
-      raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+      s = get_shipment
 
       result = Address.where('addresses.name like ?',"%#{params[:n]}%").where(in_address_book:true).joins(:company).where(Company.secure_search(current_user)).where(companies: {id: s.importer_id})
       result = result.order(:name)
@@ -380,8 +364,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def create_address
-    s = Shipment.find params[:id]
-    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    s = get_shipment
 
     address = Address.new params[:address]
     address.company = s.importer
@@ -392,6 +375,45 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   private
+  def get_shipment 
+    s = Shipment.find params[:id]
+    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    s
+  end
+
+  def booking_line_fields_to_render
+    limit_fields([
+         :bkln_line_number,
+         :bkln_quantity,
+         :bkln_puid,
+         :bkln_carton_qty,
+         :bkln_gross_kgs,
+         :bkln_cbms,
+         :bkln_carton_set_id,
+         :bkln_order_and_line_number,
+         :bkln_order_id,
+         :bkln_container_size
+     ] + custom_field_keys(CoreModule::BOOKING_LINE))
+  end
+
+  def shipment_line_fields_to_render
+    limit_fields([
+      :shpln_line_number,
+      :shpln_shipped_qty,
+      :shpln_puid,
+      :shpln_pname,
+      :shpln_container_uid,
+      :shpln_container_number,
+      :shpln_container_size,
+      :shpln_cbms,
+      :shpln_gross_kgs,
+      :shpln_carton_qty,
+      :shpln_carton_set_uid,
+      :shpln_manufacturer_address_name,
+      :shpln_manufacturer_address_full_address
+    ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
+  end
+
   def render_permissions shipment
     {
       can_edit:shipment.can_edit?(current_user),
@@ -635,5 +657,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       aj.process
       render_show CoreModule::SHIPMENT
     end
+  end
+
+  def render_comments?
+    params[:include].present? && params[:include].match(/comments/)
+  end
+
+  def render_comments s, user
+    s.comments.map {|c| c.comment_json(user) }
   end
 end; end; end
