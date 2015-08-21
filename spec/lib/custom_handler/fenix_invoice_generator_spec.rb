@@ -266,6 +266,18 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       h = contents[1]
       h[61..72].should == "0".ljust(12)
     end
+
+    it "strips newlines from values" do
+      @i.invoice_number = "Invoice\r1\n2"
+      @i.save
+
+      @f = @generator.generate_file @i.id
+      @f.rewind
+      contents = @f.read.split("\r\n")
+      expect(contents.length).to eq 3
+      h = contents[0]
+      expect(h[1..25]).to eq "Invoice 1 2".ljust(25)
+    end
   end
 
   context :ftp_credentials do

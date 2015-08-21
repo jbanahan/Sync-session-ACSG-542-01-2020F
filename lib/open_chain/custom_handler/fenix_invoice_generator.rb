@@ -263,6 +263,9 @@ module OpenChain; module CustomHandler
         # be transliterated
         value = ActiveSupport::Inflector.transliterate(value)
 
+        # Strip any newlines...these are never valid
+        value = value.gsub(/\r|\n/, " ")
+
         max_len = field[:length]
         if value.length > max_len
           value = value[0..(max_len - 1)]
