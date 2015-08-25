@@ -58,6 +58,10 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
     end
     it "should not validate materials that contain ERROR" do
       described_class.valid_material?('this material has an ERROR').should be_false
+      described_class.valid_material?('ERROR this material has says yoda').should be_false
+    end
+    it "should validate materials where ERROR is part of another word" do
+      described_class.valid_material?('this material is a TERROR').should be_true
     end
     it "should pass anything else" do
       described_class.valid_material?('this material has no bad words').should be_true
