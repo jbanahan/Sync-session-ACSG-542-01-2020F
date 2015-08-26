@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       sql_proxy_client = double("SqlProxyClient")
       sql_proxy_client.should_receive(:request_entry_data).with("12345")
 
-      described_class.request_entry_data '12345', Time.zone.now, sql_proxy_client
+      described_class.request_entry_data '12345', Time.zone.now, nil, sql_proxy_client
     end
 
     it "requests entry data if expected_update_time is in past" do
@@ -118,7 +118,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       sql_proxy_client = double("SqlProxyClient")
       sql_proxy_client.should_receive(:request_entry_data).with("12345")
 
-      described_class.request_entry_data '12345', Time.zone.now, sql_proxy_client
+      described_class.request_entry_data '12345', Time.zone.now, nil, sql_proxy_client
     end
 
     it "requests entry data if alliance source system export date is in past" do
@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       sql_proxy_client = double("SqlProxyClient")
       sql_proxy_client.should_receive(:request_entry_data).with("12345")
 
-      described_class.request_entry_data '12345', Time.zone.now, sql_proxy_client
+      described_class.request_entry_data '12345', Time.zone.now, nil, sql_proxy_client
     end
 
     it "does not request data if expected update time is newer than from request" do
@@ -136,7 +136,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       sql_proxy_client = double("SqlProxyClient")
       sql_proxy_client.should_not_receive(:request_entry_data)
 
-      described_class.request_entry_data '12345', (existing_expected - 1.second), sql_proxy_client
+      described_class.request_entry_data '12345', (existing_expected - 1.second), nil, sql_proxy_client
     end
 
     it "does not request data if last_exported_from_source is newer than from request" do
@@ -146,24 +146,61 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       sql_proxy_client = double("SqlProxyClient")
       sql_proxy_client.should_not_receive(:request_entry_data)
 
-      described_class.request_entry_data '12345', (existing_last_exported - 1.second), sql_proxy_client
+      described_class.request_entry_data '12345', (existing_last_exported - 1.second), nil, sql_proxy_client
+    end
+
+    it "does not request data if invoice count is same as the remote" do
+      existing_expected = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
+      entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
+      Factory(:broker_invoice, entry: entry)
+
+      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client.should_not_receive(:request_entry_data)
+
+      described_class.request_entry_data '12345', (existing_expected - 1.second), 1, sql_proxy_client
+    end
+
+    it "requests data if invoice count is less than the remote count" do
+      existing_expected = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
+      entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
+
+      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client.should_receive(:request_entry_data).with("12345")
+
+      described_class.request_entry_data '12345', (existing_expected - 1.second), 1, sql_proxy_client
     end
   end
 
   describe "request_entry_batch_data" do
-    it "requests entry data for each value in the given json hash" do
+    it "requests entry data using old style data" do
       described_class.stub(:delay).and_return described_class
-      described_class.should_receive(:request_entry_data).with("1", "123")
+      described_class.should_receive(:request_entry_data).with("1", "123", nil)
 
       described_class.request_entry_batch_data({"1"=>"123"}.to_json)
     end
 
+    it "requests entry data using new data format" do
+      described_class.stub(:delay).and_return described_class
+      described_class.should_receive(:request_entry_data).with("1", "123", 2)
+
+      described_class.request_entry_batch_data({"1"=> {'date' => '123', 'inv' => 2}}.to_json)
+    end
+
+    it "requests entry data using new data format with no invoices" do
+      described_class.stub(:delay).and_return described_class
+      described_class.should_receive(:request_entry_data).with("1", "123", nil)
+
+      described_class.request_entry_batch_data({"1"=> {'date' => '123'}}.to_json)
+    end
+
     it "requests entry data for each value in the given hash" do
       described_class.stub(:delay).and_return described_class
-      described_class.should_receive(:request_entry_data).with("1", "123")
+      described_class.should_receive(:request_entry_data).with("1", "123", nil)
+      described_class.should_receive(:request_entry_data).with("2", "234", 1)
 
-      described_class.request_entry_batch_data({"1"=>"123"})
+      described_class.request_entry_batch_data({"1"=>"123", "2"=>{"date" => "234", "inv"=>1}})
     end
+    
 
     it "does not not request data if a job is already queued for this data" do
       dj = Delayed::Job.new

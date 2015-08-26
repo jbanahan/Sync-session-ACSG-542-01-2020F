@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; class KewillDataRequester
   # prior to the given time.  
   #
   # Basically, this is the handler for the data returned by the request made in the run_schedulable method.
-  def self.request_entry_data broker_reference, expected_update_time, sql_proxy_client = OpenChain::SqlProxyClient.new
+  def self.request_entry_data broker_reference, expected_update_time, invoice_count, sql_proxy_client = OpenChain::SqlProxyClient.new
     # Before we actual do a sql proxy request, verify that in the intervening time between this job being queued 
     # and now that the entry hasn't been updated.
     time_zone = tz
@@ -85,10 +85,9 @@ module OpenChain; module CustomHandler; class KewillDataRequester
       expected_update_time = time_zone.parse expected_update_time.to_s
     end
 
-    # Just check for the id, if we get it back, it means the data hasn't been updated since being queued and we should make the request.
-
-    # Pluck doesn't support multiple columns in Rails 3 - change to pluck when we go to 4
-    e = Entry.where(broker_reference: broker_reference, source_system: OpenChain::AllianceParser::SOURCE_CODE).select([:expected_update_time, :last_exported_from_source]).first
+    e = Entry.where(broker_reference: broker_reference, source_system: OpenChain::AllianceParser::SOURCE_CODE).select([:expected_update_time, :last_exported_from_source]).
+          joins("LEFT OUTER JOIN broker_invoices ON broker_invoices.entry_id = entries.id").
+          select("count(broker_invoices.id) 'invoice_count'").first
 
     # If we didn't get any results, it means the entry hasn't come over yet...in that case, we should request the data
     if e.nil?
@@ -96,6 +95,12 @@ module OpenChain; module CustomHandler; class KewillDataRequester
     else
       send = (e.expected_update_time.nil? || e.expected_update_time.in_time_zone(time_zone) < expected_update_time) && 
                 (e.last_exported_from_source.nil? || e.last_exported_from_source.in_time_zone(time_zone) < expected_update_time)
+    end
+
+    # If the remote end shows it has more invoices than the local, then we should update the entry data, regardless of the 
+    # expected update time involved...if the remote end doesn't have any invoices then it's pointless doing this check.
+    if !send && e && invoice_count
+      send = e.invoice_count.to_i < invoice_count
     end
 
     if send
@@ -111,11 +116,20 @@ module OpenChain; module CustomHandler; class KewillDataRequester
   def self.request_entry_batch_data json_request_data
     request_data = json_request_data.is_a?(String) ? ActiveSupport::JSON.decode(json_request_data) : json_request_data
     # the data being sent is just a large array w/ the key being the file number and the value being the update time of the file
-    request_data.each_pair do |file_no, update_time|
+    request_data.each_pair do |file_no, file_data|
+      invoice_count = nil
+      update_time = nil
+      if file_data.is_a? Hash
+        invoice_count = file_data['inv']
+        update_time = file_data['date']
+      else
+        update_time = file_data
+      end
+
       # Validate that this number hasn't already been queued in the DJ queue...method check done like this so we bomb if the method is
       # refactored away without updating this method
       if Delayed::Job.where("handler like ?", "%method_name: :#{self.method(:request_entry_data).name}%").where("handler like ?", "%'#{file_no}'%").count == 0
-         OpenChain::CustomHandler::KewillDataRequester.delay.request_entry_data file_no, update_time
+         OpenChain::CustomHandler::KewillDataRequester.delay.request_entry_data file_no, update_time, invoice_count
       end
     end
   end

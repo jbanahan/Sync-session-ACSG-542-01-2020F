@@ -39,7 +39,11 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbackController
       run_in_thread do
         begin
           s3_data = OpenChain::CustomHandler::KewillEntryParser.save_to_s3 results
-          OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 s3_data[:bucket], s3_data[:key]
+          # the data may be nil if a request was made for a file that didn't exist or soemthing like that...the save_to_s3
+          # figures all that out and we can rely on its return value to determine if we need to proc anything or not
+          if s3_data
+            OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 s3_data[:bucket], s3_data[:key]
+          end
         rescue => e
           e.log_me ["Failed to store entry file data for file # #{results.try(:[], 'entry').try(:[], 'file_no')}."]
         end
