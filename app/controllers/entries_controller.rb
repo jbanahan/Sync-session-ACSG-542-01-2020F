@@ -199,6 +199,18 @@ class EntriesController < ApplicationController
     end
   end
   
+  def us_duty_detail
+    @imp = Company.find params[:importer_id]
+    unless Entry.can_view_importer?(@imp, current_user) && @imp.can_view?(current_user)
+      error_redirect "You do not have permission to view this report."
+      return
+    end
+    
+    @reports = [OpenChain::ActivitySummary::DutyDetail.create_digest(current_user, @imp)]
+    @reports.push(*OpenChain::ActivitySummary::DutyDetail.create_linked_digests(current_user, @imp))
+    @reports.compact!
+  end
+
   private
   def build_bi_company_filter_clause companies
     r = "(1=1)"
@@ -229,6 +241,5 @@ class EntriesController < ApplicationController
     @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first
     render layout: false
   end
-
 
 end

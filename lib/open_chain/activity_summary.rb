@@ -269,12 +269,33 @@ order by importer_id, k84_due_date desc"
       b_utc = base_date_utc base_date
       h = generate_common_hash company_id, b_utc
       h['pms'] = generate_pms_section company_id, b_utc
+      h['unpaid_duty'] = generate_unpaid_duty_section Company.find(company_id), base_date
       h
     end
 
     def country_id
       @country_id ||= Country.find_by_iso_code('US').id
       @country_id
+    end
+
+    def generate_unpaid_duty_section importer, base_date_utc
+      out = [single_company_unpaid_duty(importer, base_date_utc)]
+      linked_companies_unpaid_duty(importer, base_date_utc).each {|co| out << co}
+      out.flatten
+    end
+
+    def linked_companies_unpaid_duty importer, base_date_utc
+      importer.linked_companies.select{|co| co.importer?}.map{ |co| single_company_unpaid_duty(co, base_date_utc)}
+    end
+
+    def single_company_unpaid_duty importer, base_date_utc
+      Entry.select("customer_number, customer_name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, "\
+                   "Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees")
+                  .where("entries.importer_id = #{importer.id}")
+                  .where("release_date IS NOT NULL")
+                  .where("duty_due_date >= ?", base_date_utc)
+                  .where(monthly_statement_due_date: nil)
+                  .group("customer_number")
     end
 
     private 
@@ -320,6 +341,61 @@ order by importer_id, monthly_statement_due_date desc"
         'invoiced'=>result_row[4],
         'units'=>result_row[5]
       }
+    end
+  end
+
+  module DutyDetail
+   
+    def self.create_linked_digests(current_user, company)
+      company.linked_companies.select{|co| co.importer?}.map{|co| create_digest(current_user, co)}.compact
+    end
+
+    def self.create_digest(current_user, company)
+      build_digest(get_entries(current_user, company))
+    end
+
+    def self.build_digest(entries)
+      co = nil
+        entries.each do |ent|
+          co ||= {company_name: ent.company_name, company_report: {date_hsh: {}, company_total_duty: 0, company_total_fees: 0, company_total_duty_and_fees: 0, company_entry_count: 0} }
+          company_ptr = co[:company_report]
+          date_ptr = company_ptr[:date_hsh][ent.duty_due_date] ||= {port_hsh: {}, date_total_duty: 0, date_total_fees: 0, date_total_duty_and_fees: 0, date_entry_count: 0}
+          port_ptr = date_ptr[:port_hsh][ent.port_name] ||= {port_total_duty: 0, port_total_fees: 0, port_total_duty_and_fees: 0, port_entry_count: 0, entries: []}
+
+          port_ptr[:port_total_duty] += ent.total_duty
+          port_ptr[:port_total_fees] += ent.total_fees
+          port_ptr[:port_total_duty_and_fees] += ent.total_duty_and_fees
+          port_ptr[:port_entry_count] += 1
+          port_ptr[:entries] << {ent_id: ent.entry_id, ent_entry_number: ent.entry_number, ent_entry_type: ent.entry_type, ent_port_name: ent.port_name, ent_release_date: ent.release_date, 
+                                 ent_customer_references: ent.customer_references, ent_duty_due_date: ent.duty_due_date, ent_total_fees: ent.total_fees, 
+                                 ent_total_duty: ent.total_duty, ent_total_duty_and_fees: ent.total_duty_and_fees}
+
+          date_ptr[:date_total_duty] += ent.total_duty
+          date_ptr[:date_total_fees] += ent.total_fees
+          date_ptr[:date_total_duty_and_fees] += ent.total_duty_and_fees
+          date_ptr[:date_entry_count] += 1
+
+          company_ptr[:company_total_duty] += ent.total_duty
+          company_ptr[:company_total_fees] += ent.total_fees
+          company_ptr[:company_total_duty_and_fees] += ent.total_duty_and_fees
+          company_ptr[:company_entry_count] += 1
+        end
+      co
+    end
+    
+    def self.get_entries(current_user, company)
+      if current_user.view_entries? && company.can_view?(current_user)
+        Entry.search_secure(current_user, Entry.select("companies.name AS company_name, duty_due_date, ports.name AS port_name, entries.id AS entry_id, entry_number, "\
+                                                       "entry_type, customer_references, release_date, total_duty, total_fees, (total_duty + total_fees) AS total_duty_and_fees")
+                                               .joins(:us_entry_port)
+                                               .joins(:importer)
+                                               .where("importer_id = ? ", company.id)
+                                               .where("release_date IS NOT NULL")
+                                               .where("duty_due_date >= ?", Time.zone.now.in_time_zone(current_user.time_zone).to_date)
+                                               .where(monthly_statement_due_date: nil)
+                                               .order("duty_due_date"))                                        
+      else []
+      end
     end
   end
 end; end
