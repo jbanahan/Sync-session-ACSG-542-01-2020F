@@ -208,6 +208,7 @@ class EntriesController < ApplicationController
     
     @reports = [OpenChain::ActivitySummary::DutyDetail.create_digest(current_user, @imp)]
     @reports.push(*OpenChain::ActivitySummary::DutyDetail.create_linked_digests(current_user, @imp))
+    @reports.compact!
   end
 
   private
