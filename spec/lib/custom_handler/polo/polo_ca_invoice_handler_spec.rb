@@ -183,6 +183,17 @@ describe OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler do
       @g.parse s3_path
     end
 
+    it "should send to fenix nd invoice generator if instructed" do
+      inv = Factory(:commercial_invoice, :invoice_number=>"INV Number", :importer=>@importer)
+      s3_path = default_setup @g
+      ms = double("MasterSetup")
+      ms.stub(:custom_feature?).with("Fenix ND Invoices").and_return true
+      MasterSetup.stub(:get).and_return ms
+
+      OpenChain::CustomHandler::Polo::PoloCaFenixNdInvoiceGenerator.should_receive(:generate).with inv.id
+      @g.parse s3_path
+    end
+
     it "should handle not finding invoice line starting position prior to row 25" do
       s3_path = "/path/to/file.xls"
       default_rows = {
