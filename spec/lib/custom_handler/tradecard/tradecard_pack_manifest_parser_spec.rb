@@ -167,6 +167,29 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(l.order_lines.to_a).to eq [ol2]
       expect(l.line_number).to eq 2
     end
+
+    it "should add lines even if order# / sku is a numeric value" do
+      c = Factory(:company)
+      p = Factory(:product)
+      o = Factory(:order,importer:c,customer_order_number:'123')
+      ol = Factory(:order_line,quantity:100,product:p,sku:'12345',order:o)
+      @s.update_attributes(importer_id:c.id)
+      row_seed = {
+        82=>subtitle_row('CARTON DETAIL'),
+        84=>['','','','Equipment#: WHATEVER'],
+        85=>['','','','','Range'],
+        86=>detail_line({po:123.0,sku:12345,item_qty:'8'})
+      }
+      rows = init_mock_array 90, row_seed
+      expect{described_class.new.process_rows(@s,rows,@u)}.to change(ShipmentLine,:count).from(0).to(1)
+      @s.reload
+      f = @s.shipment_lines.first
+      expect(f.product).to eq p
+      expect(f.quantity).to eq 8
+      expect(f.order_lines.to_a).to eq [ol]
+      expect(f.line_number).to eq 1
+    end
+
     it "should add lines when PACKAGE DETAIL header is used" do
       c = Factory(:company)
       p = Factory(:product)
