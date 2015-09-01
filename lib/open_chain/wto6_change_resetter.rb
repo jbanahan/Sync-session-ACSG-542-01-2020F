@@ -1,9 +1,16 @@
+require 'open_chain/stat_client'
+
 module OpenChain; class Wto6ChangeResetter
   def self.run_schedulable opts
-    prods = Product.where('updated_at >= ?',opts['last_start_time'])
-    prods.each do |p|
-      reset_fields_if_changed(p,opts['change_date_field'],opts['fields_to_reset'])
+    OpenChain::StatClient.wall_time('wto6') do 
+      products_to_check(opts).each do |p|
+        reset_fields_if_changed(p,opts['change_date_field'],opts['fields_to_reset'])
+      end
     end
+  end
+
+  def self.products_to_check opts
+    prods = opts['run_all'] ? Product.where("1=1") : Product.where('updated_at >= ?',opts['last_start_time'])
   end
 
   def self.reset_fields_if_changed product, change_date_field, fields_to_reset
