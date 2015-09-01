@@ -1,3 +1,6 @@
+require 'open_chain/custom_handler/fenix_invoice_generator'
+require 'open_chain/custom_handler/fenix_nd_invoice_generator'
+
 module OpenChain; module CustomHandler
   class FenixCommercialInvoiceSpreadsheetHandler
 
@@ -45,8 +48,13 @@ module OpenChain; module CustomHandler
         end
       end
 
+      use_nd = MasterSetup.get.custom_feature? "Fenix ND Invoices"
       invoices_to_send.each do |invoice|
-        OpenChain::CustomHandler::FenixInvoiceGenerator.generate invoice.id
+        if use_nd
+          OpenChain::CustomHandler::FenixNdInvoiceGenerator.generate invoice.id
+        else
+          OpenChain::CustomHandler::FenixInvoiceGenerator.generate invoice.id
+        end
       end
 
       errors

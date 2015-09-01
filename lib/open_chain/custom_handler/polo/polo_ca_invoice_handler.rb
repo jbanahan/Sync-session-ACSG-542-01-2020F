@@ -1,6 +1,7 @@
 require 'open_chain/xl_client'
 require 'digest/sha1'
 require 'open_chain/custom_handler/polo/polo_ca_fenix_invoice_generator'
+require 'open_chain/custom_handler/polo/polo_ca_fenix_nd_invoice_generator'
 
 module OpenChain; module CustomHandler; module Polo
   class PoloCaInvoiceHandler
@@ -48,7 +49,12 @@ module OpenChain; module CustomHandler; module Polo
       invoice.save!
 
       unless suppress_fenix_send
-        OpenChain::CustomHandler::Polo::PoloCaFenixInvoiceGenerator.generate invoice.id
+        if MasterSetup.get.custom_feature? "Fenix ND Invoices"
+          OpenChain::CustomHandler::Polo::PoloCaFenixNdInvoiceGenerator.generate invoice.id
+        else
+          OpenChain::CustomHandler::Polo::PoloCaFenixInvoiceGenerator.generate invoice.id
+        end
+        
       end
     end
 

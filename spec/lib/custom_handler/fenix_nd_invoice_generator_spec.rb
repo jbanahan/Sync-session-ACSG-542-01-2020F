@@ -2,14 +2,14 @@
 
 require 'spec_helper'
 
-describe OpenChain::CustomHandler::FenixInvoiceGenerator do
+describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
 
   def make_address 
     Address.new :line_1 => "123 Fake St.", :line_2 => "Suite 123", :city => "Fakesville", :state => "PA", :postal_code => "12345"
   end
 
   before :each do
-    importer = Factory(:company, :importer=>true, :name=>"Importer", :name_2=>"Division of Importer, Inc.", :addresses=>[make_address])
+    importer = Factory(:company, :importer=>true, :name=>"Importer", :name_2=>"Division of Importer, Inc.", :addresses=>[make_address], fenix_customer_number: "TAXID")
     vendor = Factory(:company, :vendor=>true, :name=>"Vendor", :addresses=>[make_address])
     consignee = Factory(:company, :consignee=>true, :name=>"Consignee", :addresses=>[make_address])
 
@@ -17,20 +17,18 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
                     :currency => "CAD", :total_quantity => 10, :total_quantity_uom => "CTNS", :gross_weight => 100, :invoice_value=>100.10,
                     :importer => importer, :vendor => vendor, :consignee => consignee)
 
+    @entry = Factory(:entry, source_system: "Fenix", importer: importer, customer_number: "CUSTNO")
+
     @line_1 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "ABC", :country_origin_code=>"CN", :quantity=>100, :unit_price=>1, :po_number => "PO NUMBER")
     @line_1.commercial_invoice_tariffs.create :hts_code => "1234567890", :tariff_description=>"Stuff", :tariff_provision => "1"
 
     @line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "DEF", :country_origin_code=>"TW", :quantity=>1, :unit_price=>0.1, :po_number => "PO NUMBER", :customer_reference => "CUSTREF")
     @line_2.commercial_invoice_tariffs.create :hts_code => "09876543210", :tariff_description=>"More Stuff", :tariff_provision => "2"
 
-    @generator = OpenChain::CustomHandler::FenixInvoiceGenerator.new
+    @generator = OpenChain::CustomHandler::FenixNdInvoiceGenerator.new
   end
 
   context :generate_file do
-
-    after :each do
-      @f.close! if @f
-    end
 
     def verify_company_fields l, i, c
       ranges = [(i..i+49), (i+50..i+99), (i+100..i+149), (i+150..i+199), (i+200..i+249), (i+250..i+299), (i+300..i+349), (i+350..i+399)]
@@ -46,11 +44,20 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       l[ranges[6]].should == a.postal_code.to_s.ljust(50)
     end
 
+    def generate
+      contents, code = nil
+      @generator.generate_file(@i.id) do |file, company_code|
+        contents = file.read.split("\r\n")
+        code = company_code
+      end
+      [contents, code]
+    end
+
     it "should generate an invoice file" do
       # Tests all the default header / detail mappings
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
+      
+      expect(code).to eq "CUSTNO"
       contents.length.should == 3
       h = contents[0]
       h[0].should == "H"
@@ -93,15 +100,11 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       # Default output handles missing data in Invoice Number, Cartons, Units, Value, HTS Code, tariff treatment
       @i.update_attributes! invoice_number: nil, total_quantity_uom: nil, invoice_value: nil, gross_weight: nil
       @i.vendor = nil
-      @i.importer = nil
       @i.consignee = nil
       @i.save!
       @line_1.commercial_invoice_tariffs.first.update_attributes! hts_code: nil, tariff_provision: nil
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
-      contents.length.should == 3
+      contents, code = generate
       h = contents[0]
 
       h[1..25].should == "VFI-#{@i.id}".ljust(25)
@@ -124,9 +127,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       @i.update_attributes! invoice_value: nil
       @line_2.update_attributes! quantity: nil
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       contents.length.should == 3
       h = contents[0]
 
@@ -140,9 +141,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       @i.update_attributes! invoice_value: nil
       @line_2.update_attributes! unit_price: nil
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       contents.length.should == 3
       h = contents[0]
 
@@ -160,9 +159,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       l1 = Factory(:commercial_invoice_line, :commercial_invoice => i)
       l1.commercial_invoice_tariffs << CommercialInvoiceTariff.new
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       contents.length.should == 3
     end
 
@@ -187,9 +184,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       @generator.should_receive(:invoice_header_map).and_return map
       @generator.should_receive(:invoice_detail_map).and_return detail_map
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       contents.length.should == 3
 
       contents[0][1..25].should == @generator.fenix_customer_code(@i).ljust(25)
@@ -212,16 +207,14 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       # which ends up being about 20 seconds of time in total
       CommercialInvoice.should_receive(:find).with(@i.id).and_return @i
 
-      expect{@generator.generate_file(@i.id)}.to raise_error "Invoice # #{@i.invoice_number} generated a Fenix invoice file containing 1000 lines.  Invoice's over 999 lines are not supported and must have detail lines consolidated or the invoice must be split into multiple pieces."
+      expect{generate}.to raise_error "Invoice # #{@i.invoice_number} generated a Fenix invoice file containing 1000 lines.  Invoice's over 999 lines are not supported and must have detail lines consolidated or the invoice must be split into multiple pieces."
     end
 
     it "should transliterate non-ASCII encoding values" do
       @i.invoice_number = "Glósóli"
       @i.save
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       contents.length.should == 3
       h = contents[0]
       h[1..25].should == "Glosoli".ljust(25)
@@ -231,9 +224,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       @i.invoice_number = "℗"
       @i.save
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       contents.length.should == 3
       h = contents[0]
       h[1..25].should == "?".ljust(25)
@@ -243,9 +234,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       @i.invoice_number = "123456789012345678901234567890"
       @i.save
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       contents.length.should == 3
       h = contents[0]
       h[1..25].should == "1234567890123456789012345"
@@ -259,9 +248,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       @i.commercial_invoice_lines.create
       @i.commercial_invoice_lines.first.commercial_invoice_tariffs.create :hts_code => nil
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       contents.length.should == 2
       h = contents[1]
       h[61..72].should == "0".ljust(12)
@@ -271,12 +258,15 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       @i.invoice_number = "Invoice\r1\n2"
       @i.save
 
-      @f = @generator.generate_file @i.id
-      @f.rewind
-      contents = @f.read.split("\r\n")
+      contents, code = generate
       expect(contents.length).to eq 3
       h = contents[0]
       expect(h[1..25]).to eq "Invoice 1 2".ljust(25)
+    end
+
+    it "errors if no importer customer code can be found" do
+      @entry.destroy
+      expect{ generate }.to raise_error "No customer code found for importer TAXID."
     end
   end
 
@@ -284,26 +274,16 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
 
     it "should use the correct ftp credentials" do
       c = @generator.ftp_credentials
-      c[:server].should == "ftp2.vandegriftinc.com"
-      c[:username].should == "VFITRack"
-      c[:password].should == "RL2VFftp"
-      c[:folder].should == "to_ecs/fenix_invoices"
+      expect(c).to eq server: "connect.vfitrack.net", username: "www-vfitrack-net", password: "phU^`kN:@T27w.$", folder:nil, protocol: "sftp", port: 2222
     end
   end
 
   context :generate_and_send do
-
     it "should generate and ftp the file" do
       file = double("tempfile")
-      @generator.should_receive(:generate_file).with(@i.id).and_return file
-      @generator.should_receive(:ftp_file).with(file)
+      @generator.should_receive(:generate_file).with(@i.id).and_yield file, "code"
+      @generator.should_receive(:ftp_file).with(file, folder: "to_ecs/fenix_invoices/code")
 
-      @generator.generate_and_send @i.id
-    end
-
-    it "should not attempt to send a nil file" do
-      @generator.should_receive(:generate_file).with(@i.id).and_return nil
-      @generator.should_not_receive(:ftp_file)
       @generator.generate_and_send @i.id
     end
   end

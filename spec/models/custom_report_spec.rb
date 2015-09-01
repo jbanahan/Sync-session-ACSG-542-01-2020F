@@ -5,6 +5,7 @@ describe CustomReport do
 
   describe :give_to do
     before :each do
+      MasterSetup.create(request_host:"localhost:3000")
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")
       @u2 = Factory(:user)
       @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true)
@@ -17,6 +18,13 @@ describe CustomReport do
       d.class.should == CustomReportEntryInvoiceBreakdown
       @s.reload
       @s.name.should == "ABC" #we shouldn't modify the original object
+    end
+    it "should create a notification for recipient" do
+      @s.give_to @u2
+      expect(@u2.messages.count).to eq 1
+      msg = @u2.messages.first
+      expect(msg.subject).to eq "New Report from #{@u.username}"
+      expect(msg.body).to eq "#{@u.username} has sent you a report titled #{@s.name}. Click <a href=\'#{Rails.application.routes.url_helpers.custom_report_url(CustomReport.last.id, host: MasterSetup.get.request_host, protocol: 'http')}\'>here</a> to view it."
     end
   end
   describe :deep_copy do

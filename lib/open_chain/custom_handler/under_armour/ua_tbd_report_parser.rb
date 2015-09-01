@@ -75,8 +75,8 @@ module OpenChain; module CustomHandler; module UnderArmour
     end
 
     def self.valid_style? style
-      return false if style.match /^9999999/
-      style.match /^\d[\da-zA-Z]{6}-[\da-zA-Z]{3}$/
+      return false if style.match(/^9999999/)
+      style.match(/^\d[\da-zA-Z]{6}-[\da-zA-Z]{3}$/)
     end
 
     def self.valid_plant? plant_code
@@ -86,7 +86,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     end
 
     def self.valid_material? material
-      !material.match(/DELETE/) && !material.match(/ERROR/)
+      !material.match(/DELETE/) && !material.match(/( ERROR|^ERROR)/)
     end
 
     def self.valid_row? r

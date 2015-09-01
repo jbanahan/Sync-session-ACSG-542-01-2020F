@@ -11,6 +11,7 @@ module OpenChain
         @additional_where = options['additional_where']
         @suppress_country = options['suppress_country']
         @suppress_description = (options['suppress_description'].to_s == "true")
+        @output_subdirectory = (options['output_subdirectory'].presence || '')
 
         custom_defintions = []
         custom_defintions << :prod_part_number if @use_part_number
@@ -64,7 +65,8 @@ module OpenChain
       end
 
       def ftp_file f
-        FtpSender.send_file('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',f,{:folder=>'to_ecs/fenix_products',:remote_file_name=>File.basename(f.path)})
+        folder = "to_ecs/fenix_products/#{@output_subdirectory}"
+        FtpSender.send_file('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',f,{:folder=>folder, :remote_file_name=>File.basename(f.path)})
         f.unlink
       end
 

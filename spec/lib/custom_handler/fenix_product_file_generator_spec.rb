@@ -154,8 +154,17 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       t = mock("tempfile")
       t.should_receive(:path).and_return('/tmp/a.txt')
       t.should_receive(:unlink)
-      FtpSender.should_receive(:send_file,).with('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',t,{:folder=>'to_ecs/fenix_products',:remote_file_name=>'a.txt'})
+      FtpSender.should_receive(:send_file,).with('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',t,{:folder=>'to_ecs/fenix_products/',:remote_file_name=>'a.txt'})
       @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      @h.ftp_file t
+    end
+
+    it "uses the given output directory when sending" do
+      t = mock("tempfile")
+      t.should_receive(:path).and_return('/tmp/a.txt')
+      t.should_receive(:unlink)
+      FtpSender.should_receive(:send_file,).with('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',t,{:folder=>'to_ecs/fenix_products/subdir',:remote_file_name=>'a.txt'})
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, {'output_subdirectory' => "subdir"})
       @h.ftp_file t
     end
   end

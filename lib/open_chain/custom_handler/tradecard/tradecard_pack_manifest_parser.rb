@@ -43,8 +43,8 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     while cursor < rows.size
       row = rows[cursor]
       cursor += 1
-      next if !row[3].blank? && row[3].match(/Equipment/)
-      break if row.size < 4 || row[3].blank? || !row[3].match(/\d$/)
+      next if !row[3].blank? && row[3].to_s.match(/Equipment/)
+      break if row.size < 4 || row[3].blank? || !row[3].to_s.match(/\d$/)
       cnum = row[3]
       if shipment.containers.find {|con| con.container_number == cnum}.nil?
         shipment.containers.build(container_number:cnum)
@@ -63,12 +63,12 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     while cursor < rows.size
       r = rows[cursor]
       cursor += 1
-      if r.size > 3 && !r[3].blank? && r[3].match(/^Equipment/)
-        equip_num = r[3].split(' ')[1]
+      if r.size > 3 && !r[3].blank? && r[3].to_s.match(/^Equipment/)
+        equip_num = r[3].to_s.split(' ')[1]
         container = shipment.containers.find {|con| con.container_number == equip_num}
         next
       end
-      if r.size==57 && !r[29].blank? && r[29].match(/\d/)
+      if r.size==57 && !r[29].blank? && r[29].to_s.match(/\d/)
         max_line_number += 1
         add_line shipment, r, container, max_line_number, manufacturer_address_id
         next
@@ -77,8 +77,8 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   end
 
   def add_line shipment, row, container, line_number, manufacturer_address_id
-    po = row[14]
-    sku = row[20]
+    po = OpenChain::XLClient.string_value row[14]
+    sku = OpenChain::XLClient.string_value row[20]
     qty = clean_number(row[29])
     ol = find_order_line shipment, po, sku
     sl = shipment.shipment_lines.build(product:ol.product,quantity:qty, manufacturer_address_id:manufacturer_address_id)
@@ -115,10 +115,14 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   def find_or_build_carton_set shipment, row
     starting_carton = row[6]
     return @last_carton_set if starting_carton.blank?
+
+    # Regardless of what was sent in the Excel, make this an int to ensure we re-use values we've seen before
+    starting_carton = starting_carton.to_i
+
     cs = shipment.carton_sets.to_a.find {|cs| cs.starting_carton == starting_carton} #don't hit DB since we haven't saved
     if cs.nil?
-      weight_factor = (row[48]=='LB') ? 0.453592 : 1
-      dim_factor = (row[55]=='IN') ? 2.54 : 1
+      weight_factor = (row[48].to_s.strip == 'LB') ? 0.453592 : 1
+      dim_factor = (row[55].to_s.strip =='IN') ? 2.54 : 1
       cs = shipment.carton_sets.build(starting_carton:starting_carton)
       cs.carton_qty = clean_number row[37]
       cs.net_net_kgs = convert_number row[42], weight_factor

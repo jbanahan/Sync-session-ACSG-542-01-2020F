@@ -240,6 +240,24 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       t.tariff_provision.should eq "1"
 
     end
+
+    it "sends files to Fenix ND generator if master setup says to" do
+      ms = double("MasterSetup")
+      ms.stub(:custom_feature?).with("Fenix ND Invoices").and_return true
+      MasterSetup.stub(:get).and_return ms
+
+      # Using dots in hts numbers here to ensure they're stripped, make sure we
+      # also test the alternate date formats here too
+      file_contents = [
+        ["Column", "Heading"],
+        [@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"]
+      ]
+      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
+
+      OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate).exactly(1).times
+
+      @h.parse "file.xlsx"
+    end
   end
 
   describe "file_reader" do
