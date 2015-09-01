@@ -1,6 +1,74 @@
 require 'spec_helper'
 
 describe Product do
+  describe :classifications_by_region do
+    before :each do
+      @product = Product.new
+    end
+    it "should include all classifications even if they are not in a region" do
+      region = Factory(:region)
+      
+      country_in_region = Factory(:country)
+      region.countries << country_in_region
+      country_not_in_region = Factory(:country)
+      
+      classification_in_region = @product.classifications.build
+      classification_in_region.country = country_in_region
+
+      classification_not_in_region = @product.classifications.build
+      classification_not_in_region.country = country_not_in_region
+
+      expected = {nil => [classification_not_in_region], region => [classification_in_region]}
+
+      expect(@product.classifications_by_region).to eq expected
+
+    end
+    it "should work with no regions" do
+      country_1 = Factory(:country)
+      country_2 = Factory(:country)
+
+      expected_array = [country_1,country_2].collect do |cntry| 
+        cls = @product.classifications.build
+        cls.country = cntry
+        cls
+      end
+
+      expected = {nil => expected_array}
+
+      expect(@product.classifications_by_region).to eq expected
+    end
+    it "should include classifications multiple times if they are in multiple regions" do
+      region_1 = Factory(:region)
+      region_2 = Factory(:region)
+
+      country = Factory(:country)
+
+      [region_1,region_2].each {|r| r.countries << country}
+
+      cls = @product.classifications.build
+      cls.country = country
+
+      expected = {nil => [], region_1=>[cls], region_2=>[cls]}
+
+      expect(@product.classifications_by_region).to eq expected
+    end
+    it "should include regions with no classifications" do
+      region_1 = Factory(:region)
+      empty_region = Factory(:region)
+
+      country = Factory(:country)
+
+      region_1.countries << country
+
+      cls = @product.classifications.build
+      cls.country = country
+
+      expected = {nil => [], region_1=>[cls], empty_region=>[]}
+
+      expect(@product.classifications_by_region).to eq expected
+    end
+  end
+
   describe :wto6_changed_after? do
     before :each do
       @u = Factory(:user)

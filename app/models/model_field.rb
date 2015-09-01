@@ -739,6 +739,12 @@ class ModelField
     CACHE.set "ModelField:last_loaded", @@last_loaded if update_global_cache
   end
 
+  def self.last_loaded
+    @@last_loaded ||= CACHE.get("ModelField:last_loaded")
+    @@last_loaded ||= Time.now
+    @@last_loaded
+  end
+
   def self.reset_custom_fields(update_cache_time=false)
     CoreModule.all.each do |cm|
       h = MODEL_FIELDS[cm.class_name.to_sym]

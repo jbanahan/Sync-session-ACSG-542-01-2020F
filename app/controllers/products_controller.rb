@@ -37,6 +37,18 @@ class ProductsController < ApplicationController
     }
   end
 
+  def show_beta
+    p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
+    freeze_custom_values p
+    action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
+      @product = p
+      @state_button_path = 'products'
+      @state_button_object_id = @product.id
+      p.load_custom_values #caches all custom values
+      @json_product = json_product_for_classification @product
+    }
+  end
+
   # GET /products/new
   # GET /products/new.xml
   def new

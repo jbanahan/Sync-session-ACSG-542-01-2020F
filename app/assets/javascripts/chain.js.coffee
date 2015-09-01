@@ -115,7 +115,7 @@ root.Chain =
         return r
 
   # add pagination widget to target
-  # currently, baseUrl cannot have other querystring parameters, but this 
+  # currently, baseUrl cannot have other querystring parameters, but this
   # can be added pretty easily if needed in the future
   addPagination: (target,baseUrl,currentPage,totalPages) ->
     t = $(target)
@@ -132,7 +132,7 @@ root.Chain =
       window.location = baseUrl+'?page='+$(this).val()
 
   # generates html string for  a bootstrap error panel
-  makeErrorPanel: (messages) -> 
+  makeErrorPanel: (messages) ->
     inner = messages
     if $.isArray(messages) and messages.length > 1
       inner = "<ul>"
@@ -342,7 +342,7 @@ root.Chain =
         window.location = '/products/'+product.id+'/edit'
     modal.find("form").submit ->
 
-      # If every field is blank, don't submit since there's nothing for the server to do here (plus it crashes if you submit a bulk classification with no data), 
+      # If every field is blank, don't submit since there's nothing for the server to do here (plus it crashes if you submit a bulk classification with no data),
       # just close the classify popup instead.
       fields = $("input.hts_field")
       field_count = fields.length
@@ -393,7 +393,7 @@ root.Chain =
     # If pollingSeconds is <=0, no ongoing polling is done.
     initialize : (user_id, pollingSeconds) ->
       @url = '/messages/message_count?user_id='+user_id
-      $(document).ready () => 
+      $(document).ready () =>
         @getMessageCount(@url)
         if pollingSeconds > 0
           @startPolling(pollingSeconds)
@@ -416,7 +416,7 @@ root.Chain =
 
       $('#notification-center').on 'click', '.show-time-btn', (evt) ->
         t = $(this)
-        if(t.html()==t.attr('title')) 
+        if(t.html()==t.attr('title'))
           t.html("<span class='glyphicon glyphicon-time'></span>")
         else
           t.html(t.attr('title'))
@@ -438,7 +438,7 @@ root.Chain =
       $('#notification-center').on 'hide.bs.collapse', '.panel-collapse', (event) ->
         t = event.target
         id = $(t).attr('message-id')
-        $('#message-panel-'+id+' .message-read-icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right') 
+        $('#message-panel-'+id+' .message-read-icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right')
 
       $('#notification-center').on 'click', '.notification-mark-all-read', (event) ->
         $.ajax {
@@ -458,7 +458,7 @@ root.Chain =
     startPolling : (pollingSeconds) ->
       # If there's an interval registration, we're already polling
       unless @intervalRegistration? || pollingSeconds <= 0
-        @intervalRegistration = setInterval( () => 
+        @intervalRegistration = setInterval( () =>
           @getMessageCount @url
         , pollingSeconds * 1000)
 
@@ -495,7 +495,7 @@ root.Chain =
         width:'400'
         height:'500'
         buttons:
-          "Close": () -> 
+          "Close": () ->
             $("#mod_tariff_popup").dialog('close')
         
       )
@@ -504,7 +504,7 @@ root.Chain =
     c.html("Loading tariff information...")
     mod.dialog('open')
     url = '/official_tariffs/find?hts='+htsNumber
-    if (country_id) 
+    if (country_id)
       url += "&cid="+country_id
     else if (country_iso)
       url += "&ciso="+country_iso
@@ -523,7 +523,7 @@ root.Chain =
 
       success: (data) ->
         h = "No data was found for tariff "+htsNumber
-        if data != null
+        if data && data.official_tariff
           h = ""
           o = data.official_tariff
           h = "<table class='tbl_hts_popup'><tbody>"
@@ -547,7 +547,7 @@ root.Chain =
           h += htsDataRow("Import Regulations:",o.import_regulations)
           h += htsDataRow("Export Regulations:",o.export_regulations)
           if o.binding_ruling_url
-            h += htsDataRow("Binding Rulings:","<a href='"+o.binding_ruling_url+"' target='rulings'>Click Here</a>")      
+            h += htsDataRow("Binding Rulings:","<a href='"+o.binding_ruling_url+"' target='rulings'>Click Here</a>")
           if o.taric_url
             h += htsDataRow("TARIC:","<a href='"+o.taric_url+"' target='_blank'>Click Here</a>")
           if o.official_quota!=undefined
@@ -645,7 +645,7 @@ $(document).ready () ->
       btn.removeClass('btn-default').addClass('btn-primary')
     else
       btn.addClass('btn-default').removeClass('btn-primary')
-    if(e.keyCode == 13) 
+    if(e.keyCode == 13)
       targetTableSelector = $(e.target).attr('data-infinite-table-filter')
       Chain.processInfiniteSelectReset(targetTableSelector)
 

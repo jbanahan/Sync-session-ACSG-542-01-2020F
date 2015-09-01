@@ -56,6 +56,10 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
 
+      resources :model_fields, only: [:index] do
+        get :cache_key, on: :collection
+      end
+
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
 
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
@@ -471,6 +475,7 @@ OpenChain::Application.routes.draw do
       post 'show_bulk_instant_classify'
     end
     member do
+      get 'show_beta'
       get 'history'
       get :next_item
       get :previous_item

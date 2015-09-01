@@ -31,12 +31,36 @@ class Product < ActiveRecord::Base
   accepts_nested_attributes_for :classifications, :allow_destroy => true
   reject_nested_model_field_attributes_if :missing_classification_country?
 
+  dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
+
+
   def locked?
     !self.vendor.nil? && self.vendor.locked?
   end
-  
 
-  dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
+  # returns a hash of arrays with a key of region and an array of all classifications for that region as value
+  # * if a country is in multiple regions, then it will be included multiple times
+  # * if a country is not in any regions, then it will be included with a nil key
+  def classifications_by_region
+    r = {}
+
+    used_classifications = Set.new
+    all_classifications = self.classifications.collect {|c| c} #holding this in memory so we don't do a .to_a and hit the database
+
+    Region.includes(:countries).each do |reg|
+      r[reg] = matched = []
+      self.classifications.each do |cls|
+        if reg.countries.include?(cls.country)
+          matched << cls
+          used_classifications << cls
+        end
+      end
+    end
+
+    r[nil] = (all_classifications - used_classifications.to_a)
+
+    return r
+  end
 
   #are there any classifications written to the database
   def saved_classifications_exist?
@@ -135,9 +159,10 @@ class Product < ActiveRecord::Base
     end
   end
 
-	def self.search_secure user, base_object
+  def self.search_secure user, base_object
     base_object.where(search_where(user))
   end
+
   # where clause for search secure
   def self.search_where user
     if user.company.master
