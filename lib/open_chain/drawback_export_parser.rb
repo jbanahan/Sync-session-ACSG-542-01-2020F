@@ -1,5 +1,22 @@
+require 'zip'
+require 'open_chain/s3'
+
 module OpenChain
   class DrawbackExportParser
+    
+    def self.parse_file file, importer
+      case File.extname(file).downcase
+      when /zip/
+        parse_zip_file(file, importer)
+      when /(xls)|(xlsx)/
+        parse_local_xls(file, importer)
+      when /(csv)|(txt)/
+        parse_csv_file(file.path, importer)
+      else
+        raise ArgumentError, "File extension not recognized"
+      end
+    end
+
     def self.parse_csv_file file_path, importer
       count = 0
       f = File.new(file_path)
@@ -25,6 +42,30 @@ module OpenChain
           d.save! unless d.nil?
         end
         count += 1
+      end
+    end
+
+    def self.parse_zip_file file, importer
+      Zip::File.open(file.path) do |zipfile|
+        zipfile.each do |entry|
+          filename = entry.name
+          basename = File.basename(filename)
+
+          tempfile = Tempfile.new(basename)
+          begin
+            tempfile.binmode
+            tempfile.write entry.get_input_stream.read
+            parse_file(tempfile, importer)
+          ensure
+            tempfile.close
+          end
+        end
+      end
+    end
+
+    def self.parse_local_xls file, importer
+      OpenChain::S3.with_s3_tempfile(file) do |s3_obj| 
+        parse_xlsx_file("#{MasterSetup.get.uuid}\/temp\/#{File.basename(file)}", "importer")
       end
     end
 
