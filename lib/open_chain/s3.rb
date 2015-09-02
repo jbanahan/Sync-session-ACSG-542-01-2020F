@@ -18,7 +18,23 @@ module OpenChain
       s3_action_with_retries do
         s3_obj = s3_file bucket, key
         s3_obj.write Pathname.new(file.path)
+        s3_obj
       end
+    end
+
+    # Uploads the given local_file to a temp location in S3 
+    def self.with_s3_tempfile local_file, bucket: bucket_name, tmp_s3_path: "#{MasterSetup.get.uuid}/temp"
+      key = tmp_s3_path + "/" + File.basename(local_file.path)
+
+      uploaded = false
+      begin
+        s3_object = upload_file(bucket, key, local_file)
+        uploaded = true
+        yield s3_object
+      ensure
+        delete(bucket, key) if uploaded
+      end
+      nil
     end
 
     # Retrieves the data specified by the bucket/key descriptor.
@@ -61,7 +77,7 @@ module OpenChain
 
     def self.s3_action_with_retries total_attempts = 3, retry_lambda = nil
       begin
-        yield
+        return yield
       rescue 
         total_attempts -= 1
         if total_attempts > 0

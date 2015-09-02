@@ -297,4 +297,37 @@ describe OpenChain::S3 do
       expect(@tempfile.closed?).to be_true
     end
   end
+
+  describe "with_s3_tempfile" do
+    # Excessive stubbing below due to preventing s3 uploads...upload tests themselves are in specs for upload_file, to 
+    # which this method defers for uploading (likewise for delete)
+    before :each do
+      ms = double "MasterSetup"
+      MasterSetup.stub(:get).and_return ms
+      ms.stub(:uuid).and_return "uuid"
+    end
+
+    it "yields an s3_file uploaded to s3" do
+      fake_file = double("File")
+      fake_file.stub(:path).and_return "/path/to/file.txt"
+
+      s3_obj = double("S3Object")
+      OpenChain::S3.should_receive(:upload_file).with("chain-io-test", "uuid/temp/file.txt", fake_file).and_return s3_obj
+      OpenChain::S3.should_receive(:delete).with("chain-io-test", "uuid/temp/file.txt")
+
+      my_obj = nil
+      OpenChain::S3.with_s3_tempfile(fake_file) {|obj| my_obj = obj}
+      expect(my_obj).to eq my_obj
+    end
+
+    it "cleans up even if yielded block raises an error" do 
+      fake_file = double("File")
+      fake_file.stub(:path).and_return "/path/to/file.txt"
+
+      OpenChain::S3.should_receive(:upload_file)
+      OpenChain::S3.should_receive(:delete)
+
+      expect {OpenChain::S3.with_s3_tempfile(fake_file) {|obj| raise "Error"} }.to raise_error "Error"
+    end
+  end
 end
