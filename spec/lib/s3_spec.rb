@@ -317,7 +317,7 @@ describe OpenChain::S3 do
 
       my_obj = nil
       OpenChain::S3.with_s3_tempfile(fake_file) {|obj| my_obj = obj}
-      expect(my_obj).to eq my_obj
+      expect(my_obj).to eq s3_obj
     end
 
     it "cleans up even if yielded block raises an error" do 
