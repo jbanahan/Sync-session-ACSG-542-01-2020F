@@ -109,7 +109,7 @@ $(function() {
                     var valueFormatter = function(obj,fld) {
                       var subFormatters = {
                         "datetime": function(v) {
-                          return new Date(v);
+                          return new Date(v).toLocaleString();
                         },
                         "string": function(v) {
                           return v;
@@ -130,7 +130,7 @@ $(function() {
                       html += "<div class='model_field_box'><div class='row bootstrap-hover'><div class='col-md-4'><strong>"+fld.label+":</strong></div><div class='col-md-8'>"+val+"</div></div></div>";
                     }
                     return html;
-                  }
+                  };
                 }
                 var domainerDAO = new DomainDAOChain();
                 var domainer = new Domainer(new DomainDataAccessSetup(domainerDAO, domainerDAO, new DomainExpirationCheckerLocal()));
