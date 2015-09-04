@@ -34,6 +34,12 @@ module OpenChain
         entry_lines = []
         current_file_number = ""
         CSV.parse(file_content) do |line|
+
+          if line[0] == "T"
+            opts[:timestamp] = parse_timestamp line
+            next
+          end
+
           # The "supporting" lines in the new format all have less than 10 file positions 
           # So, don't skip the line if we're proc'ing one of those.
           supporting_line_type = SUPPORTING_LINE_TYPES.include?(line[0])
@@ -104,7 +110,7 @@ module OpenChain
         # with valid entry numbers shortly
         return nil unless valid_entry_number? info[:entry_number]
 
-        find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path)) do |entry|
+        find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path, opts[:timestamp])) do |entry|
           # Entry is only yieled here if we need to process one (ie. it's not outdated)
           # This whole block is also already inside a transaction, so no need to bother with opening another one
           @entry = entry
@@ -180,6 +186,11 @@ module OpenChain
     end
 
     private
+
+    def self.parse_timestamp line
+      time_zone.parse(line[1].to_s+line[2].to_s.rjust(6, "0"))
+    end
+    private_class_method :parse_timestamp
 
     def entry_information line
       {
@@ -466,6 +477,10 @@ module OpenChain
     end
 
     def time_zone
+      self.class.time_zone
+    end
+
+    def self.time_zone
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     end
 
@@ -661,7 +676,9 @@ module OpenChain
       entry.last_exported_from_source.nil? || (entry.last_exported_from_source <= source_system_export_date)
     end
 
-    def find_source_system_export_time file_path
+    def find_source_system_export_time file_path, timestamp
+      # For the new B3 records coming from Fenix ND there's a T record at the top of the file that gives us the export timestamp...use that instead
+      return timestamp unless timestamp.nil?
       return if file_path.blank?
 
       export_time = nil

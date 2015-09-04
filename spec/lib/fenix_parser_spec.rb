@@ -89,8 +89,11 @@ describe OpenChain::FenixParser do
     @b3_line_number = 25
     @subheader_number = 3
     @special_authority = "123-456"
-    @entry_lambda = lambda { |new_style = true, multi_line = true|
-      data = new_style ? "B3L," : ""
+    @timestamp = ["T", "20150904", "201516"]
+    @entry_lambda = lambda { |new_style = true, multi_line = true, time_stamp = false|
+      data = ""
+      data += (@timestamp.join(", ") + "\r\n") if time_stamp
+      data += new_style ? "B3L," : ""
       data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"#{@tariff_desc}\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,#{@special_authority}, #{@sima_code} , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" #{@b3_line_number} \",\" #{@subheader_number} \",\"#{@file_logged_date}\",\" \",\"\",\"#{@carrier_name}\",\"#{@consignee_name}\",\"PURCHASER\",\"SHIPPER\",\"EXPORTER\",\"#{@vendor_number}\",\"#{@customer_reference}\", 1 ,        #{@adjusted_vcc},,#{@importer_number},#{@importer_name},#{@number_of_pieces},#{@gross_weight},,,#{@adjustments_per_piece}"
       if new_style && multi_line
         @additional_container_numbers.each do |container|
@@ -593,6 +596,12 @@ describe OpenChain::FenixParser do
     EntryPurge.create! source_system: 'Fenix', broker_reference: @file_number, date_purged: Time.zone.parse("2015-01-01 00:00")
     OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2015052958483.1369859062.csv'}
     expect(Entry.find_by_broker_reference @file_number).not_to be_nil
+  end
+
+  it "uses timestamp record if given" do
+    OpenChain::FenixParser.parse @entry_lambda.call(true, true, true)
+    e = Entry.find_by_broker_reference @file_number
+    expect(e.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
   end
 
   context 'importer company' do

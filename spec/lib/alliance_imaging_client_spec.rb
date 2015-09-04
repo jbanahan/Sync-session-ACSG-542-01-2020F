@@ -496,7 +496,7 @@ ERR
 
       OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
       e.reload
-      expect(entry.attachments.size).to eq 1
+      expect(e.attachments.size).to eq 1
     end
 
     it "replaces previous versions of B3 attachment" do
