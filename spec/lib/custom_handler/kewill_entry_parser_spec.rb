@@ -256,7 +256,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 'related_parties' => "Y",
                 'mid_name' => "MANFU2 NAME",
                 'volume' => 1299,
-                'contract' => 9999,
+                'contract' => "$9,999.00",
                 'department' => "DEPT2",
                 "store_no" => "STORE2",
                 'product_line' => "PRODUCT2",

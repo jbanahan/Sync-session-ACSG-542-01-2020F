@@ -759,7 +759,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def parse_decimal str, decimal_places: 2, decimal_offset: 2, rounding_mode: BigDecimal::ROUND_HALF_UP, no_offset: false
       return BigDecimal.new("0") if str.blank? || str == 0
 
-      str = str.to_s
+      # Strip anything that's not a number or decimal point...some numeric fields are technical string fields in alliance
+      # (.ie contract amount) and all sorts of garbage is added to them sometimes.
+      str = str.to_s.gsub(/[^\d\.]/, "")
 
       # if no_offset is passed, we're going to treat the incoming value like a standard numeric string, not the 
       # missing decimal garbage that Alliance normally sends.
