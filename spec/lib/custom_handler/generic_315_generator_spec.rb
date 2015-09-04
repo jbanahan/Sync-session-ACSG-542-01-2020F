@@ -64,8 +64,10 @@ describe OpenChain::CustomHandler::Generic315Generator do
     it "generates and sends xml for 315 update" do
       c = described_class.new
       file_contents = nil
-      c.should_receive(:ftp_file) do |file|
+      ftp_opts = nil
+      c.should_receive(:ftp_file) do |file, opts|
         file_contents = file.read
+        ftp_opts = opts
       end
       c.receive :save, @entry
 
@@ -79,6 +81,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       # Make sure we saved off the actual date that was sent in the xml so we don't bother resending
       # the same data at a later time.
       expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.in_time_zone("Eastern Time (US & Canada)").iso8601
+      expect(ftp_opts).to eq folder: "to_ecs/315/CUST"
     end
 
     it "accepts if all search creatrions match" do

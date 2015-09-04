@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
         xml.write fout
         fout.flush
         fout.rewind
-        ftp_file fout
+        ftp_file fout, folder: ftp_folder(entry.customer_number)
       end
     end
 
@@ -74,7 +74,11 @@ module OpenChain; module CustomHandler; class Generic315Generator
   end
 
   def ftp_credentials
-    connect_vfitrack_net 'to_ecs/315'
+    connect_vfitrack_net nil
+  end
+
+  def ftp_folder customer_number
+    "to_ecs/315/#{customer_number.to_s.upcase}"
   end
 
   protected
