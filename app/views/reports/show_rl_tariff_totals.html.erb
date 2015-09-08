@@ -1,0 +1,19 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+
+<h2>Ralph Lauren Tariff Totals</h2>
+<p>Select the date range and click the Run Report button to continue.</p>
+
+<form class="form-inline" action="<%= reports_run_rl_tariff_totals_path %>" method="POST" role="form" id="frm_run">
+  <input name="authenticity_token" value="<%= form_authenticity_token %>" type="hidden">
+  <div class="form-group">
+    <div class="col-md-2"><label class="control-label" for="start_date">Start date:</label></div>
+    <div class="col-md-3"><%=text_field_tag :start_date,"", :class=>'form-control isdate'%></div>
+  </div>
+  <div class="form-group">
+    <div class="col-md-2"><label class="control-label" for="end_date">End date:</label></div>
+    <div class="col-md-3"><%=text_field_tag :end_date, "", :class=>'form-control isdate' %></div>
+  </div> 
+</form>

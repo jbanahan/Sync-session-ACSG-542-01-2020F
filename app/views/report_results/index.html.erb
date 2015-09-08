@@ -110,6 +110,10 @@
     <tr class='hover'><td><%=link_to "Drawback Audit Report", reports_show_drawback_audit_report_path%></td>
     <td>Shows all drawback claims.</td></tr>
   <%end%>
+  <%if OpenChain::Report::RlTariffTotals.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Ralph Lauren Tariff Totals", reports_show_rl_tariff_totals_path%></td>
+    <td>Show Ralph Lauren tariff totals over a specified time span.</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>
