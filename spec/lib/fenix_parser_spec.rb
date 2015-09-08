@@ -80,6 +80,18 @@ describe OpenChain::FenixParser do
       '5' => [Time.new(2013,4,4,10,0)],
       '105' => [Time.new(2014,9,3,12,2), Time.new(2014,9,3,7,57)]
     }
+    @new_activities = {
+      'DOGIVEN' => [Time.new(2015,4,1,10,0), Time.new(2015,4,1,18,0)],
+      'DOCREQ' => [Time.new(2015,4,2,10,0), Time.new(2015,4,2,18,0)],
+      'ETA' => [Date.new(2015,4,2), Date.new(2015,4,3)],
+      'RNSCUSREL' => [Time.new(2015,9,8,12,2), Time.new(2015,9,9,12,2)],
+      'CADXTRAN' => [Time.new(2015,9,10,12,2), Time.new(2015,9,11,12,2)],
+      'CADXACCP' => [Time.new(2015,9,12,12,2), Time.new(2015,9,13,12,2)],
+      'ACSREFF' => [Time.new(2015,4,4,10,0), Time.new(2015,4,4,18,0)],
+      'CADK84REC' => [Time.new(2015,4,4,10,0)],
+      'B3P' => [Time.new(2015,9,3,12,2), Time.new(2015,9,3,7,57)]
+    }
+    @use_new_activities = false
     @additional_bols = ["123456", "9876542321"]
     @duty_rate = BigDecimal.new "5.55"
     @customer_reference = "REFERENCE #"
@@ -104,7 +116,9 @@ describe OpenChain::FenixParser do
           data += "\r\nCCN,#{@barcode},#{ccn}"
         end
         
-        @activities.each do |activity_number, date_times|
+        activities = @use_new_activities ? @new_activities : @activities
+
+        activities.each do |activity_number, date_times|
           date_times.each do |date|
             time_segment = (date.is_a?(Date) ? "" : date.strftime('%H%M'))
             user = (activity_number == "5" ? @activity_employee_name : "USERID")
@@ -363,7 +377,8 @@ describe OpenChain::FenixParser do
     ci_line.state_origin_code.should == 'IN'
     ci_line.state_export_code.should == 'NJ'
   end
-  it 'should 0 pad exit code to 4 chars' do # port ' 708  ' should be '0708'
+  it 'should 0 pad exit code to 4 chars' do 
+    # port ' 708  ' should be '0708'
     @exit_port_code = ' 444 '
     OpenChain::FenixParser.parse @entry_lambda.call
     Entry.find_by_broker_reference(@file_number).us_exit_port_code.should == '0444'
@@ -602,6 +617,24 @@ describe OpenChain::FenixParser do
     OpenChain::FenixParser.parse @entry_lambda.call(true, true, true)
     e = Entry.find_by_broker_reference @file_number
     expect(e.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
+  end
+
+  it "parses new activity record identifiers" do
+    @use_new_activities = true
+
+    OpenChain::FenixParser.parse @entry_lambda.call
+    e = Entry.find_by_broker_reference @file_number
+
+    tz = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
+    expect(e.first_do_issued_date).to eq tz.parse(@new_activities['DOGIVEN'][0].to_s).in_time_zone(Time.zone)
+    expect(e.docs_received_date).to eq tz.parse(@new_activities['DOCREQ'][0].to_s).to_date
+    expect(e.eta_date).to eq Date.new(2015,4,3)
+    expect(e.release_date).to eq tz.parse(@new_activities['RNSCUSREL'][1].to_s).in_time_zone(Time.zone)
+    expect(e.cadex_sent_date).to eq tz.parse(@new_activities['CADXTRAN'][1].to_s).in_time_zone(Time.zone)
+    expect(e.cadex_accept_date).to eq tz.parse(@new_activities['CADXACCP'][1].to_s).in_time_zone(Time.zone)
+    expect(e.exam_ordered_date).to eq tz.parse(@new_activities['ACSREFF'][1].to_s).in_time_zone(Time.zone)
+    expect(e.k84_receive_date).to eq tz.parse(@new_activities['CADK84REC'][0].to_s).to_date
+    expect(e.b3_print_date).to eq tz.parse(@new_activities['B3P'][1].to_s).in_time_zone(Time.zone)
   end
 
   context 'importer company' do

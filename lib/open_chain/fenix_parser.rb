@@ -18,7 +18,16 @@ module OpenChain
       '1274' => :cadex_accept_date=,
       '1276' => :exam_ordered_date=,
       '1280' => :k84_receive_date=,
-      '105'=> :b3_print_date=
+      '105'=> :b3_print_date=,
+      'DOGIVEN' => :do_issued_date_first,
+      'DOCREQ' => :docs_received_date_first,
+      'ETA' => :eta_date=,
+      'RNSCUSREL' => :release_date=,
+      'CADXTRAN' => :cadex_sent_date=,
+      'CADXACCP' => :cadex_accept_date=,
+      'ACSREFF' => :exam_ordered_date=,
+      'CADK84REC' => :k84_receive_date=,
+      'B3P' => :b3_print_date=
     }
 
     SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON', 'BL']
@@ -405,7 +414,7 @@ module OpenChain
       # We're not capturing the date from Event 5, but we need to pull the employee code from it
       if !line[5].blank?
         case line[2].strip
-        when "5"
+        when "5", "SHPCR"
           # Capture the employee name that opened the file (Event 5 is File Opened)
           entry.employee_name = line[5]
         end
