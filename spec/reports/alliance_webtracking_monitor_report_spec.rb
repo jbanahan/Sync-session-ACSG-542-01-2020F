@@ -64,7 +64,7 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
       start_date = (now.in_time_zone("Eastern Time (US & Canada)") - 7.days).to_date
       end_time = (now - 1.hour)
 
-      OpenChain::SqlProxyClient.should_receive(:request_file_tracking_info).with start_date, end_time
+      OpenChain::KewillSqlProxyClient.should_receive(:request_file_tracking_info).with start_date, end_time
       ActiveSupport::TimeZone.any_instance.stub(:now).and_return now
 
       described_class.run_schedulable
@@ -75,7 +75,7 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
       start_date = (now.in_time_zone("Eastern Time (US & Canada)") - 2.days).to_date
       end_time = (now - 1.hour)
 
-      OpenChain::SqlProxyClient.should_receive(:request_file_tracking_info).with start_date, end_time
+      OpenChain::KewillSqlProxyClient.should_receive(:request_file_tracking_info).with start_date, end_time
       ActiveSupport::TimeZone.any_instance.stub(:now).and_return now
 
       described_class.run_schedulable({'days_ago' => '2'})

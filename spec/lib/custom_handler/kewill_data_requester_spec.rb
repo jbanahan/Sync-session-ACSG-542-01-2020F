@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
   describe "request_updated_since_last_run" do
     it "requests updated entry data via sql proxy client" do
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
 
       start_date = nil
       end_date = nil
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       original_request = "2015-03-01 00:00"
       KeyJsonItem.updated_entry_data('last_request').create! json_data: "{\"last_request\":\"#{original_request}\"}"
 
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_updated_entry_numbers).with(ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(original_request), instance_of(ActiveSupport::TimeWithZone), nil)
       described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client})
 
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
     end
 
     it "does not update key store value if error occurs" do
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_updated_entry_numbers).and_raise "Error"
       expect {
         described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client})
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
     end
 
     it "passes through customer_numbers opt if non-blank" do
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_updated_entry_numbers).with(instance_of(ActiveSupport::TimeWithZone), instance_of(ActiveSupport::TimeWithZone), "TESTING")
       described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client, "customer_numbers" => "TESTING"})
     end
@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       KeyJsonItem.updated_entry_data('last_request').create! json_data: "{\"last_request\":\"#{original_request.strftime("%Y-%m-%d %H:%M")}\"}"
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"].stub(:now).and_return now
 
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_updated_entry_numbers).with(original_request - 2.minutes, now - 2.minutes, nil)
       described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client, 'offset' => '120'})
 
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
     it "requests data using given hours ago value" do
       now = Time.zone.now
       Time.zone.should_receive(:now).and_return now
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_updated_entry_numbers).with(now - 1.hour, now, nil)
 
       described_class.request_update_after_hours_ago 1, 'sql_proxy_client' => sql_proxy_client
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
     it "requests data using given hours ago value, passing customer_number" do
       now = Time.zone.now
       Time.zone.should_receive(:now).and_return now
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_updated_entry_numbers).with(now - 1.hour, now, "TEST, TESTING")
       described_class.request_update_after_hours_ago 1, 'sql_proxy_client' => sql_proxy_client, 'customer_numbers' => "TEST, TESTING"
     end
@@ -107,7 +107,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
   describe "request_entry_data" do
     it "requests entry data if entry doesn't exist yet" do
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_entry_data).with("12345")
 
       described_class.request_entry_data '12345', Time.zone.now, nil, sql_proxy_client
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
     it "requests entry data if expected_update_time is in past" do
       entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: 1.day.ago)
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_entry_data).with("12345")
 
       described_class.request_entry_data '12345', Time.zone.now, nil, sql_proxy_client
@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
     it "requests entry data if alliance source system export date is in past" do
       entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", last_exported_from_source: 1.day.ago)
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_entry_data).with("12345")
 
       described_class.request_entry_data '12345', Time.zone.now, nil, sql_proxy_client
@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       existing_expected = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
       entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
 
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_not_receive(:request_entry_data)
 
       described_class.request_entry_data '12345', (existing_expected - 1.second), nil, sql_proxy_client
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       existing_last_exported = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
       entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", last_exported_from_source: existing_last_exported)
 
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_not_receive(:request_entry_data)
 
       described_class.request_entry_data '12345', (existing_last_exported - 1.second), nil, sql_proxy_client
@@ -154,7 +154,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
       Factory(:broker_invoice, entry: entry)
 
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_not_receive(:request_entry_data)
 
       described_class.request_entry_data '12345', (existing_expected - 1.second), 1, sql_proxy_client
@@ -164,7 +164,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       existing_expected = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
       entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
 
-      sql_proxy_client = double("SqlProxyClient")
+      sql_proxy_client = double("KewillSqlProxyClient")
       sql_proxy_client.should_receive(:request_entry_data).with("12345")
 
       described_class.request_entry_data '12345', (existing_expected - 1.second), 1, sql_proxy_client

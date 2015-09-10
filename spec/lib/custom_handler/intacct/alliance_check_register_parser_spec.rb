@@ -150,7 +150,7 @@ FILE
         check_number: "987", vendor_number: "VEND", invoice_number: "123", invoice_suffix: "", customer_number: "CUST",
         vendor_reference: "VEND_REF", check_amount: BigDecimal.new("100.00"), check_date: Date.new(2014, 11, 1), bank_number: "1"
       }
-      @sql_proxy_client = double("OpenChain::SqlProxyClient")
+      @sql_proxy_client = double("OpenChain::KewillSqlProxyClient")
       @sql_proxy_client.stub(:delay).and_return @sql_proxy_client
     end
     it "creates a check and export object" do

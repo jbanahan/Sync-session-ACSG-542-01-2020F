@@ -99,7 +99,7 @@ FILE
   describe "create_and_request_invoice" do
 
     before :each do
-      @client = double("OpenChain::SqlProxyClient")
+      @client = double("OpenChain::KewillSqlProxyClient")
       @client.stub(:delay).and_return @client
       @invoice_data = inv_data = {
         ar_total: BigDecimal.new("123.45"), 

@@ -1,4 +1,4 @@
-require 'open_chain/sql_proxy_client'
+require 'open_chain/kewill_sql_proxy_client'
 
 module OpenChain; module CustomHandler; class KewillDataRequester
 
@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; class KewillDataRequester
   private_class_method :apply_offset
 
   def self.sql_proxy_client opts
-    (opts['sql_proxy_client'] ? opts['sql_proxy_client'] : OpenChain::SqlProxyClient.new)
+    (opts['sql_proxy_client'] ? opts['sql_proxy_client'] : OpenChain::KewillSqlProxyClient.new)
   end
   private_class_method :sql_proxy_client
 

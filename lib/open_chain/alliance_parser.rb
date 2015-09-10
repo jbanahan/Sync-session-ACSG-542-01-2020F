@@ -1,7 +1,7 @@
 require 'bigdecimal'
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/integration_client_parser'
-require 'open_chain/sql_proxy_client'
+require 'open_chain/kewill_sql_proxy_client'
 
 module OpenChain
   class AllianceParser
@@ -162,7 +162,7 @@ module OpenChain
 
         if @entry
           OpenChain::AllianceImagingClient.request_images @entry.broker_reference if inner_opts[:imaging]
-          OpenChain::SqlProxyClient.delay.request_alliance_entry_details(@entry.broker_reference, @entry.last_exported_from_source)
+          OpenChain::KewillSqlProxyClient.delay.request_alliance_entry_details(@entry.broker_reference, @entry.last_exported_from_source)
 
           # This needs to go outside the lock/transaction so the listeners on the event all don't have to run inside the transaction
           @entry.broadcast_event(:save) if @entry

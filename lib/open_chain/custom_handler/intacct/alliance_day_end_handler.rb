@@ -3,6 +3,7 @@ require 'open_chain/custom_handler/intacct/alliance_check_register_parser'
 require 'open_chain/custom_handler/intacct/alliance_day_end_ar_ap_parser'
 require 'open_chain/custom_handler/intacct/intacct_invoice_details_parser'
 require 'open_chain/custom_handler/intacct/intacct_data_pusher'
+require 'open_chain/kewill_sql_proxy_client'
 require 'spreadsheet'
 
 module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHandler
@@ -55,7 +56,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       message = "The day end files could not be processed.  A separate report containing the errors will be mailed to you."
       send_messages_to_users users, subject, message
     else
-      proxy_client = OpenChain::SqlProxyClient
+      proxy_client = OpenChain::KewillSqlProxyClient
       check_results = create_checks(check_info, check_parser, proxy_client)
 
       check_sum = BigDecimal.new "0"

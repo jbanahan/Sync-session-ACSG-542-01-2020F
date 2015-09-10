@@ -1,6 +1,6 @@
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/activity_summary'
-require 'open_chain/sql_proxy_client'
+require 'open_chain/kewill_sql_proxy_client'
 require 'open_chain/business_rule_validation_results_support'
 
 class EntriesController < ApplicationController
@@ -175,7 +175,7 @@ class EntriesController < ApplicationController
   def request_entry_data
     @entry = Entry.find params[:id]
     if current_user.sys_admin?
-      OpenChain::SqlProxyClient.delay.bulk_request_entry_data nil, [@entry.id]
+      OpenChain::KewillSqlProxyClient.delay.bulk_request_entry_data nil, [@entry.id]
       add_flash :notices, "Updated entry has been requested.  Please allow 10 minutes for it to appear."
     end
     redirect_to @entry
@@ -183,7 +183,7 @@ class EntriesController < ApplicationController
 
   def bulk_request_entry_data
     if current_user.sys_admin?
-      OpenChain::SqlProxyClient.delay.bulk_request_entry_data params[:sr_id], params[:pk]
+      OpenChain::KewillSqlProxyClient.delay.bulk_request_entry_data params[:sr_id], params[:pk]
       add_flash :notices, "Updated entries have been requested.  Please allow 10 minutes for them to appear."
     end
 
