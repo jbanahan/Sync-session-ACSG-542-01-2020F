@@ -761,7 +761,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
       # Strip anything that's not a number or decimal point...some numeric fields are technical string fields in alliance
       # (.ie contract amount) and all sorts of garbage is added to them sometimes.
-      str = str.to_s.gsub(/[^\d\.]/, "")
+      str = str.to_s.gsub(/[^-\d\.]/, "")
 
       # if no_offset is passed, we're going to treat the incoming value like a standard numeric string, not the 
       # missing decimal garbage that Alliance normally sends.

@@ -133,8 +133,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
             'file_no'=>12345, 'suffix'=>"A", 'cust_ref'=>"broker_inv_ref", 'invoice_date'=>20150401, 'total_amount'=>100.99, 'bill_to_cust'=>'CUST1',
             'name'=>'Customer 1', 'address_1' => '123 Fake St.', 'address_2' => 'Ste 22', 'city' => "Fakesville", 'state'=>'PA', 'zip' => 12345, 'country' => 'US',
             'lines' => [
-              {'charge' => '1', 'description' => 'DUTY', 'amount'=>100.00, 'vendor'=>'VEND', 'vendor_name' => 'VENDOR NAME', 'vendor_ref'=>'VENDOR', 'charge_type'=>'D'},
-              {'charge' => '100', 'description' => 'OUTLAY', 'amount'=>0.99, 'vendor'=>'', 'vendor_ref'=>'', 'charge_type'=>'O'}
+              {'charge' => '1', 'description' => 'DUTY', 'amount'=>-10000, 'vendor'=>'VEND', 'vendor_name' => 'VENDOR NAME', 'vendor_ref'=>'VENDOR', 'charge_type'=>'D'},
+              {'charge' => '100', 'description' => 'OUTLAY', 'amount'=>99, 'vendor'=>'', 'vendor_ref'=>'', 'charge_type'=>'O'}
             ]
           }
         ],
@@ -453,7 +453,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       l = bi.broker_invoice_lines.first
       expect(l.charge_code).to eq "0001"
       expect(l.charge_description).to eq "DUTY"
-      expect(l.charge_amount).to eq 100.00
+      expect(l.charge_amount).to eq -100.00
       expect(l.vendor_name).to eq "VENDOR NAME"
       expect(l.vendor_reference).to eq "VENDOR"
       expect(l.charge_type).to eq "D"
