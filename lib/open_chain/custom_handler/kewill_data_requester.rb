@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; class KewillDataRequester
   # prior to the given time.  
   #
   # Basically, this is the handler for the data returned by the request made in the run_schedulable method.
-  def self.request_entry_data broker_reference, expected_update_time, invoice_count, sql_proxy_client = OpenChain::SqlProxyClient.new
+  def self.request_entry_data broker_reference, expected_update_time, invoice_count, sql_proxy_client = OpenChain::KewillSqlProxyClient.new
     # Before we actual do a sql proxy request, verify that in the intervening time between this job being queued 
     # and now that the entry hasn't been updated.
     time_zone = tz
