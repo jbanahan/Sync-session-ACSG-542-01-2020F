@@ -6,11 +6,11 @@ module OpenChain
     
     def self.parse_file file, importer
       case File.extname(file).downcase
-      when /zip/
+      when ".zip"
         parse_zip_file(file, importer)
-      when /(xls)|(xlsx)/
+      when ".xls", ".xlsx"
         parse_local_xls(file, importer)
-      when /(csv)|(txt)/
+      when ".csv", ".txt"
         parse_csv_file(file.path, importer)
       else
         raise ArgumentError, "File extension not recognized"
@@ -49,15 +49,13 @@ module OpenChain
       Zip::File.open(file.path) do |zipfile|
         zipfile.each do |entry|
           filename = entry.name
-          basename = File.basename(filename)
+          base = File.basename(filename, ".*")
+          extension = File.extname(filename)
 
-          tempfile = Tempfile.new(basename)
-          begin
+          Tempfile.open([base, extension]) do |tempfile|
             tempfile.binmode
             tempfile.write entry.get_input_stream.read
             parse_file(tempfile, importer)
-          ensure
-            tempfile.close
           end
         end
       end
@@ -65,7 +63,7 @@ module OpenChain
 
     def self.parse_local_xls file, importer
       OpenChain::S3.with_s3_tempfile(file) do |s3_obj| 
-        parse_xlsx_file("#{MasterSetup.get.uuid}\/temp\/#{File.basename(file)}", "importer")
+        parse_xlsx_file(s3_obj.key, importer)
       end
     end
 
