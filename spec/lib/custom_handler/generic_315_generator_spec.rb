@@ -75,9 +75,8 @@ describe OpenChain::CustomHandler::Generic315Generator do
       # ..the full contents of the xml are tested in depth in the unit tests for the generate method.
       expect(file_contents).not_to be_nil
       r = REXML::Document.new(file_contents).root
-      
-      expect(REXML::XPath.each(r, "MasterBills/MasterBill").collect {|v| v.text}).to eq(["A", "B"])
-      expect(REXML::XPath.each(r, "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
+      expect(REXML::XPath.each(r, "VfiTrack315/MasterBills/MasterBill").collect {|v| v.text}).to eq(["A", "B"])
+      expect(REXML::XPath.each(r, "VfiTrack315/Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
       # Make sure we saved off the actual date that was sent in the xml so we don't bother resending
       # the same data at a later time.
       expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.in_time_zone("Eastern Time (US & Canada)").iso8601
@@ -147,26 +146,55 @@ describe OpenChain::CustomHandler::Generic315Generator do
       expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq (@entry.release_date - 1.day).to_date.iso8601
     end
 
-    it "sends distinct 315 files for each masterbill / container combination when output_format is 'mbol_container'" do
+    it "sends distinct VfiTrack315 elements for each masterbill / container combination when output_format is 'mbol_container'" do
       @config.output_style = MilestoneNotificationConfig::OUTPUT_STYLE_MBOL_CONTAINER_SPLIT
       @config.save!
 
       c = described_class.new
-      file_contents = []
-      c.should_receive(:ftp_file).exactly(4).times do |file|
-        file_contents << file.read
+      file_contents = nil
+      c.should_receive(:ftp_file).exactly(1).times do |file|
+        file_contents = file.read
       end
       c.receive :save, @entry
 
-      expect(file_contents.size).to eq 4
-      expect(REXML::Document.new(file_contents[0]).root.text "MasterBills/MasterBill").to eq "A"
-      expect(REXML::Document.new(file_contents[0]).root.text "Containers/Container").to eq "E"
-      expect(REXML::Document.new(file_contents[1]).root.text "MasterBills/MasterBill").to eq "A"
-      expect(REXML::Document.new(file_contents[1]).root.text "Containers/Container").to eq "F"
-      expect(REXML::Document.new(file_contents[2]).root.text "MasterBills/MasterBill").to eq "B"
-      expect(REXML::Document.new(file_contents[2]).root.text "Containers/Container").to eq "E"
-      expect(REXML::Document.new(file_contents[3]).root.text "MasterBills/MasterBill").to eq "B"
-      expect(REXML::Document.new(file_contents[3]).root.text "Containers/Container").to eq "F"
+      expect(file_contents).not_to be_nil
+      r = REXML::Document.new(file_contents).root
+
+      docs = REXML::XPath.each(r, "VfiTrack315").collect {|v| v }
+
+      expect(docs.size).to eq 4
+
+      expect(docs[0].text "MasterBills/MasterBill").to eq "A"
+      expect(docs[0].text "Containers/Container").to eq "E"
+      expect(docs[1].text "MasterBills/MasterBill").to eq "A"
+      expect(docs[1].text "Containers/Container").to eq "F"
+      expect(docs[2].text "MasterBills/MasterBill").to eq "B"
+      expect(docs[2].text "Containers/Container").to eq "E"
+      expect(docs[3].text "MasterBills/MasterBill").to eq "B"
+      expect(docs[3].text "Containers/Container").to eq "F"
+    end
+
+    it "sends distinct VfiTrack315 elements for each masterbill when output_format is 'mbol'" do
+      @config.output_style = MilestoneNotificationConfig::OUTPUT_STYLE_MBOL
+      @config.save!
+
+      c = described_class.new
+      file_contents = nil
+      c.should_receive(:ftp_file).exactly(1).times do |file|
+        file_contents = file.read
+      end
+      c.receive :save, @entry
+
+      expect(file_contents).not_to be_nil
+      r = REXML::Document.new(file_contents).root
+
+      docs = REXML::XPath.each(r, "VfiTrack315").collect {|v| v }
+
+      expect(docs.size).to eq 2
+      expect(docs[0].text "MasterBills/MasterBill").to eq "A"
+      expect(REXML::XPath.each(docs[0], "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
+      expect(docs[1].text "MasterBills/MasterBill").to eq "B"
+      expect(REXML::XPath.each(docs[1], "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
     end
   end
 
@@ -179,8 +207,10 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "generates xml" do
       dt = Time.zone.parse "2015-01-01 12:30"
-      xml = described_class.new.generate @e, 'release_date', dt, @e.master_bills_of_lading.split(/\n/), @e.container_numbers.split(/\n/)
-      r = xml.root
+      doc = REXML::Document.new("<root></root>")
+
+      described_class.new.generate doc.root, @e, 'release_date', dt, @e.master_bills_of_lading.split(/\n/), @e.container_numbers.split(/\n/)
+      r = doc.root.elements[1]
 
       expect(r.name).to eq "VfiTrack315"
       expect(r.text "BrokerReference").to eq @e.broker_reference
@@ -207,8 +237,9 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "zeros event time if date object is given" do
       d = Date.new 2015, 1, 1
-      xml = described_class.new.generate @e, 'release_date', d, [], []
-      r = xml.root
+      doc = REXML::Document.new("<root></root>")
+      described_class.new.generate doc.root, @e, 'release_date', d, [], []
+      r = doc.root.elements[1]
       expect(r.text "Event/EventCode").to eq "release_date"
       expect(r.text "Event/EventDate").to eq "20150101"
       expect(r.text "Event/EventTime").to eq "0000"

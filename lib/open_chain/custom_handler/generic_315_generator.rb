@@ -5,6 +5,8 @@ module OpenChain; module CustomHandler; class Generic315Generator
   include OpenChain::XmlBuilder
   include OpenChain::FtpFileSupport
 
+  MilestoneUpdate = Struct.new(:code, :date)
+
   def accepts? event, entry
     # Just check if the customer has a 315 setup, at this point..if so, then accept.  We'll decide in receive if we're actually generating anythign
     # or not.
@@ -15,35 +17,56 @@ module OpenChain; module CustomHandler; class Generic315Generator
     setup = setup_315(entry)
     matches = setup.search_criterions.collect {|sc| sc.test? entry}.uniq.compact
     user = User.integration
+    milestones = []
     if setup.search_criterions.length == 0 || (matches.length == 1 && matches[0] == true)
       setup.setup_json.each do |field|
-        process_field field.with_indifferent_access, setup.output_style, user, entry
+        milestones << process_field(field.with_indifferent_access, user, entry)
       end
     end
+    milestones.compact!
+
+    if milestones.size > 0
+      generate_and_send_315s setup.output_style, entry, milestones
+    end
+    
+    entry
   end
 
-  def generate_and_send_315 output_style, entry, code, date
+  def generate_and_send_315s output_style, entry, milestones
     # Our first customer using this feed requires sending distinct 315's for each combination of entry/mbol/container #
     # I'm anticipating this not being a global requirement, so I'm still preserving the ability to send multiple
     # mbols and containers per file.
     split_entries = split_entry_data_identifiers output_style, entry
-
+    doc, root = build_xml_document "VfiTrack315s"
+    counter = 0
     split_entries.each do |data|
-      xml = generate entry, code, date, data[:master_bills], data[:container_numbers]
-
-      Tempfile.open(["#{entry.broker_reference}-#{data[:master_bills].first}-#{data[:container_numbers].first}-#{code}-", ".xml"]) do |fout|
-        xml.write fout
-        fout.flush
-        fout.rewind
-        ftp_file fout, folder: ftp_folder(entry.customer_number)
+      milestones.each do |milestone|
+        generate root, entry, milestone.code, milestone.date, data[:master_bills], data[:container_numbers]
+        counter += 1
       end
     end
 
-    DataCrossReference.create_315_milestone! entry, code, xref_date_value(date)
+    if counter > 0
+      Tempfile.open(["315-#{entry.broker_reference}", ".xml"]) do |fout|
+        # The FTP send and milestone updates all need to be done in one transaction to ensure all or nothing 
+        ActiveRecord::Base.transaction do 
+          doc.write fout
+          fout.flush
+          fout.rewind
+          ftp_file fout, folder: ftp_folder(entry.customer_number)
+
+          milestones.each do |milestone|
+            DataCrossReference.create_315_milestone! entry, milestone.code, xref_date_value(milestone.date)
+          end
+        end
+      end
+    end
+   
+    nil
   end
 
-  def generate entry, date_code, date, master_bills, container_numbers
-    doc, root = build_xml_document "VfiTrack315"
+  def generate parent, entry, date_code, date, master_bills, container_numbers
+    root = add_element parent, "VfiTrack315"
     add_element root, "BrokerReference", v(:ent_brok_ref, entry)
     add_element root, "EntryNumber", v(:ent_entry_num, entry)
     add_element root, "CustomerNumber", v(:ent_cust_num, entry)
@@ -70,7 +93,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
       add_element event, "EventTime", "0000"
     end
 
-    doc
+    nil
   end
 
   def ftp_credentials
@@ -87,7 +110,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     end
 
-    def process_field field, output_style, user, entry
+    def process_field field, user, entry
       mf = ModelField.find_by_uid field[:model_field_uid]
       value = mf.process_export entry, user, true
 
@@ -101,9 +124,10 @@ module OpenChain; module CustomHandler; class Generic315Generator
         # Now check to see if this updated_date has already been sent out
         xref = DataCrossReference.find_315_milestone entry, code
         if xref.nil? || xref != xref_date_value(updated_date)
-          generate_and_send_315 output_style, entry, code, updated_date
+          return MilestoneUpdate.new(code, updated_date)
         end
       end
+      nil
     end
 
   private 
@@ -123,6 +147,8 @@ module OpenChain; module CustomHandler; class Generic315Generator
           end
         end
         values = values.blank? ? [{master_bills: [nil], container_numbers: [nil]}] : values
+      elsif output_style == MilestoneNotificationConfig::OUTPUT_STYLE_MBOL
+        values = master_bills.map {|mb| {master_bills: [mb], container_numbers: containers}}
       else
         values << {master_bills: master_bills, container_numbers: containers}
       end
