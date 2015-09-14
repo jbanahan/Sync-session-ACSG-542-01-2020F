@@ -23,13 +23,13 @@ module OpenChain; class SqlProxyClient
   end
 
   def self.proxy_config
-    @@proxy_config ||= begin
+    @proxy_config ||= begin
       YAML.load_file self.proxy_config_file
     rescue Errno::ENOENT
       # do nothing...if the load raises we'll report a nicer error
     end
-    raise "No SQL Proxy client configuration file found at '#{self.proxy_config_file}'." unless @@proxy_config
-    @@proxy_config
+    raise "No SQL Proxy client configuration file found at '#{self.proxy_config_file}'." unless @proxy_config
+    @proxy_config
   end
 
 end; end

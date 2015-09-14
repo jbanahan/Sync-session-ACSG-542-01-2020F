@@ -7,7 +7,7 @@ describe OpenChain::SqlProxyClient do
 
   after :each do
     # Needed otherwise the config is memoized and never loaded again during the tests
-    described_class.remove_class_variable(:@@proxy_config)
+    described_class.remove_instance_variable(:@proxy_config)
   end
 
   describe "request" do
