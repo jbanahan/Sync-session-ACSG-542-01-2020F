@@ -1,7 +1,7 @@
 require 'digest/md5'
 
 module Api; module V1; class ModelFieldsController < Api::V1::ApiController
-  API_MODULES = [CoreModule::PRODUCT, CoreModule::ORDER, CoreModule::ENTRY]
+  API_MODULES = [CoreModule::PRODUCT, CoreModule::ORDER, CoreModule::ENTRY, CoreModule::OFFICIAL_TARIFF]
   def index
     h = {}
     h['recordTypes'] = []
@@ -13,7 +13,8 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
       h['recordTypes'] << {'uid'=>cm_class_name,label:cm.label}
       ModelField.find_by_core_module(cm).each do |mf|
         next unless mf.can_view?(current_user)
-        h['fields'] << {'uid'=>mf.uid, 'label'=>mf.label, 'data_type'=>mf.data_type, 'record_type_uid'=>cm_class_name}
+        mf_h = {'uid'=>mf.uid, 'label'=>mf.label, 'data_type'=>mf.data_type, 'record_type_uid'=>cm_class_name, 'read_only' => mf.read_only?}
+        h['fields'] << mf_h
       end
     end
     render json: h

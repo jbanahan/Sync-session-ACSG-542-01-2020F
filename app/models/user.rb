@@ -379,7 +379,7 @@ class User < ActiveRecord::Base
     self.view_business_validation_results?
   end
   def view_official_tariffs?
-    self.company.master?
+    self.view_products? || self.company.master?
   end
   def view_attachment_archives?
     self.company.master? && self.view_entries?

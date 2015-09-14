@@ -40,6 +40,26 @@ describe Api::V1::ProductsController do
         json = ActiveSupport::JSON.decode response.body
         expect(json['errors']).to eq ['Not Found']
       end
+
+      it "includes permissions" do
+        Product.any_instance.stub(:can_view?).and_return true
+        Product.any_instance.stub(:can_edit?).and_return true
+        Product.any_instance.stub(:can_classify?).and_return false
+        Product.any_instance.stub(:can_comment?).and_return false
+        Product.any_instance.stub(:can_attach?).and_return true
+
+        expected_permissions = {
+          'can_view'=>true,
+          'can_edit'=>true,
+          'can_classify'=>false,
+          'can_comment'=>false,
+          'can_attach'=>true
+        }
+
+        expect(get :show, id: @p.id).to be_success
+
+        expect(JSON.parse(response.body)['product']['permissions']).to eq expected_permissions
+      end
     end
 
     context "invalid token" do

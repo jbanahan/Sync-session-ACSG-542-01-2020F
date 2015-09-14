@@ -39,6 +39,10 @@ OpenChain::Application.routes.draw do
         post :login, on: :collection
         post :google_oauth2, on: :collection
       end
+
+      resources :official_tariffs, only: [] do
+        get 'find/:iso/:hts' => 'official_tariffs#find', on: :collection, constraints: {hts: /[\d\.]+/}
+      end
       resources :products, only: [:index, :show, :create, :update] do
         # The optional param is for temporary backwards compatibility on the API
         get 'by_uid(/:path_uid)' => "products#by_uid", on: :collection
@@ -60,6 +64,17 @@ OpenChain::Application.routes.draw do
         get :cache_key, on: :collection
       end
 
+      resources :survey_responses, only: [:index, :show] do
+        member do
+          post :checkout
+          post :cancel_checkout
+          post :checkin
+          post :submit
+        end
+      end
+
+      match "/setup_data" => "setup_data#index", via: :get
+
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
 
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
@@ -76,14 +91,6 @@ OpenChain::Application.routes.draw do
       match "/workflow/:id/assign" => "workflow#assign", via: :put
       match "/workflow/:core_module/:id/my_instance_open_task_count" => "workflow#my_instance_open_task_count", via: :get
 
-      resources :survey_responses, only: [:index, :show] do
-        member do
-          post :checkout
-          post :cancel_checkout
-          post :checkin
-          post :submit
-        end
-      end
 
       match "/:attachable_type/:attachable_id/attachments/:id" => "attachments#show", via: [:get], as: :attachable_attachment
       match "/:attachable_type/:attachable_id/attachments" => "attachments#index", via: [:get], as: :attachable_attachments

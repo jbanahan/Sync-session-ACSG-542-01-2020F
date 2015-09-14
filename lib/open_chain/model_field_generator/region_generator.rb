@@ -24,6 +24,7 @@ module OpenChain; module ModelFieldGenerator; module RegionGenerator
           },
           :data_type => :integer,
           :history_ignore => true,
+          :read_only => true,
           :qualified_field_name => "(
 select count(*) from classifications
 inner join countries_regions on countries_regions.region_id = #{r.id} and countries_regions.country_id = classifications.country_id

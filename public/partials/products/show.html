@@ -1,0 +1,81 @@
+<style type="text/css">
+  .classification-flag {
+    width: 2em;
+  }
+</style>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <chain-panel panel-title='Errors' panel-message="eh.errorMessage" panel-type='panel-danger'></chain-panel>
+    </div>
+  </div>
+</div>
+<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
+  <div class="container">
+    <div class="row">
+      <div class="container">
+        <div class="col-xs-12 text-center">
+          <h1 class="text-danger">DEMO DATA DO NOT USE</h1>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12 text-center">
+        <h1 style='margin: 0 0 1em 0;'>
+          {{product.prod_uid}}
+        </h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <chain-view-edit edit-if='product.permissions.can_edit' view-template='/partials/products/attr_view.html' edit-template='/partials/products/attr_edit.html'
+          panel-title='Attributes' panel-class='panel-primary'></chain-view-edit>
+      </div>
+      <div class="col-md-6">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-xs-12">
+              <div class='region-box panel panel-primary'>
+                <div class="panel-heading">        
+                    <h3 class="panel-title">Classifications</h3>
+                </div>
+                <table class='table table-condensed table-striped' ng-repeat='reg in regions track by reg.id'>
+                  <thead>
+                    <tr>
+                      <th colspan="4"><strong>{{reg.name}}</strong></td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat='ctry in reg.countries track by ctry.iso_code'>
+                      <td style='width:1px;'>
+                        <!-- TODO buy license for flags http://icondrawer.com/free.php -->
+                        <img class='classification-flag' ng-src="/images/flags/{{ctry.iso_code.toLowerCase()}}.png" title="Flag of {{ctry.name}}" />
+                      </td>
+                      <td>
+                        {{ctry.name}}
+                      </td>
+                      <td>
+                        <span ng-repeat='tr in classificationByISO(ctry.iso_code,product).tariff_records track by tr.id'>
+                          <br ng-if='!$first'>
+                          <tariff-link hts="{{tr.hts_hts_1}}" iso="{{ctry.iso_code}}"></tariff-link>
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-xs btn-link" title="View Plant">
+                          <i class="fa fa-external-link"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="panel-footer text-right">
+                  <button class='btn btn-default btn-xs'><i class="fa fa-plus"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</chain-loading-wrapper>

@@ -45,6 +45,13 @@ describe Api::V1::ModelFieldsController do
       duty_due = h['fields'].find {|fld| fld['uid']=='ent_duty_due_date'}
       expect(duty_due).to be_nil
     end
+    it "should get read_only flag" do
+      expect(get :index).to be_success
+
+      h = JSON.parse(response.body)
+      changed_at = h['fields'].find {|fld| fld['uid']=='prod_changed_at'}
+      expect(changed_at['read_only']).to be_true
+    end
     it "should return cache key" do
       mfload = 10.minutes.ago
       company_updated_at = 1.hour.ago

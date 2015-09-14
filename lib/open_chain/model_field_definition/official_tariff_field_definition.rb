@@ -37,6 +37,18 @@ module OpenChain; module ModelFieldDefinition; module OfficialTariffFieldDefinit
         export_lambda: lambda {|ot| ot.hts_code[0,6]},
         qualified_field_name: 'LEFT(hts_code,6)',
         read_only: true
+      }],
+      [22,:ot_binding_ruling_url, :brl,"Binding Ruling URL",{data_type: :string,
+        read_only: true,
+        export_lambda: lambda { |obj| 
+          obj.binding_ruling_url
+        }
+      }],
+      [23,:ot_taric_url, :trl,"TARIC URL", {data_type: :string,
+        read_only: true,
+        export_lambda: lambda { |obj|
+          obj.taric_url
+        }
       }]
     ]
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")

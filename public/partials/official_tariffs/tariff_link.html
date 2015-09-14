@@ -1,0 +1,29 @@
+<button class='btn-link btn-xs' ng-click='showDetail()'>{{hts}}</button>
+<div class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">{{iso}}: {{hts}}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger" ng-show='errorMessage'>
+          {{errorMessage}}
+        </div>
+        <chain-loading-wrapper loading-flag='{{loadingFlag()}}'>
+          <div ng-repeat='fld in fields track by fld.uid'>
+            <div class="form-group" ng-if="officialTariff[fld.uid]">
+              <label class="control-label" for="{{fld.uid}}">{{fld.label}}</label>
+              <p class="form-control-static" id='{{fld.uid}}'>{{officialTariff[fld.uid]}}</p>
+            </div>
+          </div>
+        </chain-loading-wrapper>
+      </div>
+      <div class="modal-footer">
+        <a ng-show='officialTariff.ot_taric_url' class='btn btn-default' href='{{officialTariff.ot_binding_ruling_url}}' target='_new'>TARIC</a>
+        <a ng-show='officialTariff.ot_binding_ruling_url' class='btn btn-default' href='{{officialTariff.ot_binding_ruling_url}}' target='_new'>Binding Rulings</a>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

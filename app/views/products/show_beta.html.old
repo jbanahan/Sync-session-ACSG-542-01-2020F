@@ -1,0 +1,336 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_classify").click(function() {
+    var p = <%=@json_product.html_safe%>;
+    Chain.showQuickClassify(p.product,"<%=product_path(@product)%>");  
+  });
+});
+<%end%>
+<%content_for :action_bar do %>
+  <% if @product.can_classify?(current_user) && !@product.locked?%>
+    <button id='btn_classify'>Classify</button>
+  <%end%>
+<%end%>
+<style type="text/css">
+  .down-reveal {
+    -webkit-transition: max-height 0.8s; 
+    -moz-transition: max-height 0.8s; 
+    -ms-transition: max-height 0.8s; 
+    -o-transition: max-height 0.8s;
+  }
+  #product-attributes.compact {
+    max-height: 200px;
+    overflow: hidden;
+  }
+  #toggle-product-attributes {
+    margin-top: 10px;
+  }
+  .classification-flag {
+    width: 2em;
+  }
+  .tariff-record {
+    border: 1px solid #ccc;
+    padding: .5em;
+  }
+  .region-box .progress {
+    border-radius: 0px 0px;
+    margin-bottom: 0px;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    height: 5px;
+    background-color: transparent;
+  }
+  .region-box .progress .progress-bar{
+    background-color: #999;
+  }
+</style>
+<script type="text/javascript">
+  $(document).ready(function() {
+    "use strict";
+    var setupProductAttributes = function() {
+      var tpaButton = $("#toggle-product-attributes");
+      tpaButton.on("click",function() {
+        var pa = $("#product-attributes");
+        pa.toggleClass('compact');
+        $(this).html(pa.hasClass('compact') ? 'more' : 'less');
+      });
+    };
+
+    setupProductAttributes();
+
+  });
+</script>
+<div class="container">
+  <div class="row">
+    <div class="container">
+      <div class="col-xs-12 text-center">
+        <h1 class="text-danger">DEMO DATA DO NOT USE</h1>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-12 text-center">
+      <h1 style='margin: 0 0 1em 0;'>
+        <%=ModelField.find_by_uid(:prod_uid).process_export(@product,current_user)%>
+      </h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <div><!--product attributes partial-->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Attributes</h3>
+          </div>
+          <script type='text/javascript'>
+                function DomainDAOChain() {
+                  this.makeDictionary = function(worker) {
+                    $.ajax({
+                      url: '/api/v1/model_fields',
+                      headers: {Accept: "application/json", "ContentType": "application/json"},
+                      success: function(data) {
+                        var dict = new DomainDictionary();
+                        var recordTypes = {}; // hold to reference for field loop
+                        data.recordTypes.forEach(function(rtr) {
+                          dict.registerRecordType(rtr);
+                          recordTypes[rtr.uid] = rtr;
+                        });
+                        data.fields.forEach(function(fld) {
+                          fld.recordType = recordTypes[fld.record_type_uid];
+                          dict.registerField(fld);
+                        });
+                        worker(dict);
+                      }
+                    });
+                  };
+                }
+                function DomainChainFieldFormatter() {
+                  this.html = function(obj,fld) {
+                    var valueFormatter = function(obj,fld) {
+                      var subFormatters = {
+                        "datetime": function(v) {
+                          return new Date(v).toLocaleString();
+                        },
+                        "string": function(v) {
+                          return v;
+                        }
+                      };
+
+                      var v = obj[fld.uid];
+                      if(!v || v.length === 0) {
+                        return "";
+                      }
+
+                      sf = subFormatters[fld.data_type] ? subFormatters[fld.data_type] : subFormatters.string;
+                      return sf(v);
+                    };
+                    var html = "";
+                    var val = valueFormatter(obj,fld);
+                    if(val && val.length > 0) {
+                      html += "<div class='model_field_box'><div class='row bootstrap-hover'><div class='col-md-4'><strong>"+fld.label+":</strong></div><div class='col-md-8'>"+val+"</div></div></div>";
+                    }
+                    return html;
+                  };
+                }
+                var domainerDAO = new DomainDAOChain();
+                var domainer = new Domainer(new DomainDataAccessSetup(domainerDAO, domainerDAO, new DomainExpirationCheckerLocal()));
+                $(document).ready(function() {
+                  var worker = function(dict) {
+                    $.ajax({
+                      url: '/api/v1/products/<%=@product.id%>',
+                      headers: {Accept: "application/json", "ContentType": "application/json"},
+                      success: function(data) {
+                        var fldFormatter = new DomainChainFieldFormatter();
+                        var prod = data.product;
+                        html = "<div>";
+                        dict.fieldsByRecordType(dict.recordTypes.Product).forEach(function(fld) {
+                          html += fldFormatter.html(prod,fld);
+                        });
+                        html += "</div>";
+                        $('#product-attributes').html(html);
+                      }
+                    });
+                  };
+                  domainer.withDictionary(worker);
+                });
+              </script>
+          <div class="panel-body">
+            <div id='product-attributes' class='compact'>
+              <div class='loader'>Loading attributes</div>
+            </div>
+            <button class='btn btn-default btn-block' id='toggle-product-attributes'>more</button>
+          </div>
+        </div>
+      </div> <!--end product attributes partial -->
+
+      <div> <!--make this the attachments partial -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Attachments</h3>
+          </div>
+          <%img = @product.attachments.find {|a| a.attached_file_name.downcase.match /\.(png|jpg|gif|svg)$/} %>
+          <%if img %>
+            <div class="panel-body">
+              <%=attachment_icon(img, width: '100%')%>
+            </div>
+          <%end%>
+          <table class="table">
+            <tr></tr>
+          </table>
+          <div class="panel-footer text-right">
+            <button class='btn btn-default btn-xs'><i class="fa fa-plus"></i></button>
+          </div>
+        </div>
+      </div> <!--end attachments partial-->
+
+      <div> <!--comments partial -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Comments</h3>
+          </div>
+          <table class="table table-condensed table-striped">
+            <%@product.comments.order(:created_at=>:desc).each do |comm|%>
+              <tr>
+                <td><%=comm.subject%></td>
+                <td><%=comm.user.full_name%></td>
+                <td class='text-right'>
+                  <button class="btn btn-xs btn-link" title="View Plant">
+                    <i class="fa fa-external-link"></i>
+                  </button>
+                </td>
+              </tr>
+            <%end%>
+          </table>
+          <div class="panel-footer text-right">
+            <button class='btn btn-default btn-xs'><i class="fa fa-plus"></i></button>
+          </div>
+        </div>
+      </div> <!-- end comments partial -->
+
+      <div> <!--history partial -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">History</h3>    
+          </div>
+          <table class='table table-condensed table-striped'>
+            <%@product.entity_snapshots.limit(5).order('created_at desc').each do |es| %>
+              <tr>
+                <td>
+                  <%=es.created_at%>
+                </td>
+                <td>
+                  <%=es.user.try(:full_name)%>
+                </td>
+                <td class='text-right'>
+                  <button class="btn btn-xs btn-link" title="View History">
+                    <i class="fa fa-external-link"></i>
+                  </button>
+                </td>
+              </tr>
+            <%end%>
+          </table>
+          <div class="panel-footer text-right">
+            <button class='btn btn-default btn-xs'><i class="fa fa-plus"></i></button>
+          </div>
+        </div>
+        
+        
+      </div> <!-- end history partial -->
+    </div>
+    <div class="col-md-6">
+      <div> <!-- begin origins partial -->
+        <div><!-- begin country of origin partial -->
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Countries of Origin</h3>
+            </div>
+            <table class="table table-condensed table-striped">
+              <tr>
+                <td style="width:1px">
+                  <img class='classification-flag' src="/images/flags/es.png" alt="Flag of Spain" />
+                </td>
+                <td>
+                  Spain
+                </td>
+              </tr>
+            </table>
+            <div class="panel-footer text-right">
+              <button class='btn btn-default btn-xs'><i class="fa fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Plants</h3>
+            </div>
+            <table class="table table-condensed table-striped">
+              <tr>
+                <td>Zapatos Inc</td>
+                <td>Malaga, ES</td>
+                <td class='text-right'>
+                  <button class="btn btn-xs btn-link" title="View Plant">
+                    <i class="fa fa-external-link"></i>
+                  </button>
+                </td>
+              </tr>
+            </table>
+            <div class="panel-footer text-right">
+              <button class='btn btn-default btn-xs'><i class="fa fa-plus"></i></button>
+            </div>
+          </div>
+        </div>
+      </div> <!-- end origins partial -->
+
+      <div>  <!--begin classifications partial -->
+        <% mf_hts1 = ModelField.find_by_uid(:hts_hts_1)%>
+        <%@product.classifications_by_region.each do |reg,cl_array| %>
+          <%next if cl_array.empty?%>
+          <%percent_complete = "0%"%>
+          <%max_countries = 0%>
+          <%region_label = 'Classifications'%>
+          <%if reg && reg.countries.count > 0%>
+            <%region_label << ": #{reg.name}"%>
+            <%max_countries = reg.countries.count%>
+          <%else%>
+            <%max_countries = Country.where(import_location:true).where('countries.id NOT IN (SELECT country_id FROM countries_regions)').count%>
+          <%end%>
+          <%percent_complete = "#{((BigDecimal(cl_array.size,2)/BigDecimal(max_countries,2))*100).round(0).truncate(0)}%"%>
+          <div class='region-box panel panel-default'>
+            <div class="panel-heading">        
+                <h3 class="panel-title"><%=region_label%></h3>
+            </div>
+            <div class="progress"  title="<%=percent_complete%> Complete">
+              <div class="progress-bar" role="progressbar" aria-valuenow="<%=cl_array.size%>" aria-valuemin="0" aria-valuemax="<%=max_countries%>" style="width: <%=percent_complete%>;">
+                <span class="sr-only"> <%=percent_complete%> Complete</span>  
+              </div>
+            </div>
+            <table class='table table-condensed table-striped'>
+              <%cl_array.each do |cl|%>
+                <tr>
+                  <td style='width:1px;'>
+                    <!-- TODO buy license for flags http://icondrawer.com/free.php -->
+                    <img class='classification-flag' src="/images/flags/<%=cl.country.iso_code.downcase%>.png" alt="Flag of <%=cl.country.name%>" />
+                  </td>
+                  <td>
+                    <%=cl.country.name.titleize%>
+                  </td>
+                  <td>
+                    <%=cl.tariff_records.collect {|tr| show_tariff_hts_model_field(tr, :hts_hts_1, cl.country_id).html_safe}.compact.join('<br />').html_safe%>
+                    <%= show_custom_fields cl %>
+                  </td>
+                  <td>
+                    <button class="btn btn-xs btn-link" title="View Plant">
+                      <i class="fa fa-external-link"></i>
+                    </button>
+                  </td>
+                </tr>
+              <%end%>
+            </table>
+            <div class="panel-footer text-right">
+              <button class='btn btn-default btn-xs'><i class="fa fa-plus"></i></button>
+            </div>
+          </div>
+        <%end%>
+      </div> <!--end clasifications partial -->
+    </div>
+  </div>
+</div>

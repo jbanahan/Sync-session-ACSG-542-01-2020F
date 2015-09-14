@@ -156,6 +156,9 @@ describe User do
       it "should not allow non master company user" do
         Factory(:user).should_not be_view_official_tariffs
       end
+      it "should allow if user can view products" do
+        expect(Factory(:user,product_view:true).view_official_tariffs?).to be_true
+      end
     end
     context "business_validation_results" do
       it "should allow master users" do
