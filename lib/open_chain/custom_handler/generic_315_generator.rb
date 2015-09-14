@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
     end
 
     if counter > 0
-      Tempfile.open(["315-#{entry.broker_reference}", ".xml"]) do |fout|
+      Tempfile.open(["315-#{entry.broker_reference}-", ".xml"]) do |fout|
         # The FTP send and milestone updates all need to be done in one transaction to ensure all or nothing 
         ActiveRecord::Base.transaction do 
           doc.write fout
