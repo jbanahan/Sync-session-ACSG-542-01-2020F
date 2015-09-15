@@ -51,4 +51,16 @@ describe 'ProductSvc', ->
 
         expect(prod).toEqual resp
 
+    describe 'saveProduct', ->
+      it 'should save existing product', ->
+        base = {id: 1, prod_uid: 'abc'}
+        resp = {product: {id: 1}}
+        http.expectPUT('/api/v1/products/1.json',{product: base}).respond resp
+        prod = null
+        svc.saveProduct(base).then (data) ->
+          prod = data.data
+        http.flush()
+        expect(prod).toEqual resp
+
+      it 'should save new product'
       

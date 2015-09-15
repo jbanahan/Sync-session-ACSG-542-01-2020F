@@ -6,10 +6,11 @@ module OpenChain; module ModelFieldDefinition; module ClassificationFieldDefinit
         :export_lambda => lambda {|obj| obj.tariff_records.size },
         :qualified_field_name => "(select count(id) from tariff_records tr where tr.classification_id = classifications.id)",
         :data_type => :integer,
-        :history_ignore=>true
+        :history_ignore=>true,
+        :read_only=>true
       }],
-      [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}]
+      [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true,:read_only=>true}]
     ]
-    add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications")
+    add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications",'country',true)
   end
 end; end; end

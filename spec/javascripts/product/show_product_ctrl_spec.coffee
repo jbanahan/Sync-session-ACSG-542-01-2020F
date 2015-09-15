@@ -42,6 +42,24 @@ describe 'ShowProductCtrl', ->
       expect(scope.regions).toEqual(setupData.regions)
       expect(scope.import_countries).toEqual(setupData.import_countries)
 
+  describe 'save', ->
+    it "should save product", ->
+      startProd = {id: 1}
+      finishProd = {id: 1, other: 'x'}
+      prodResp = $q.defer()
+      spyOn(productSvc,'saveProduct').andReturn(prodResp.promise)
+
+      scope.save(startProd)
+
+      expect(scope.loadingFlag).toEqual("loading")
+
+      prodResp.resolve({data: {product: finishProd}})
+
+      scope.$apply()
+
+      expect(scope.loadingFlag).toBeNull()
+      expect(scope.product).toEqual(finishProd)
+
   describe 'classificationByISO', ->
     product = null
     beforeEach ->

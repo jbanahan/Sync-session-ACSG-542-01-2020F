@@ -1,7 +1,8 @@
 require 'digest/md5'
 
 module Api; module V1; class ModelFieldsController < Api::V1::ApiController
-  API_MODULES = [CoreModule::PRODUCT, CoreModule::ORDER, CoreModule::ENTRY, CoreModule::OFFICIAL_TARIFF]
+  API_MODULES = [CoreModule::PRODUCT, CoreModule::CLASSIFICATION, CoreModule::TARIFF, CoreModule::ORDER, CoreModule::ENTRY, CoreModule::OFFICIAL_TARIFF]
+
   def index
     h = {}
     h['recordTypes'] = []

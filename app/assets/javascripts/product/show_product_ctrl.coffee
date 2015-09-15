@@ -18,6 +18,14 @@ angular.module('ProductApp').controller 'ShowProductCtrl', ['$scope','productSvc
       $scope.regions = sd.regions
       $scope.import_countries = sd.import_countries
 
+  $scope.save = (product) ->
+    $scope.loadingFlag = "loading"
+    productSvc.saveProduct(product).then (resp) ->
+        $scope.product = resp.data.product
+        $scope.loadingFlag = null
+
+  $scope.prepProductEditObject = (product) ->
+    $scope.productEditObject = angular.copy(product)
 
   # view helper methods
   $scope.classificationByISO = (iso,product) ->
@@ -29,7 +37,7 @@ angular.module('ProductApp').controller 'ShowProductCtrl', ['$scope','productSvc
     return null
 
   $scope.classificationsWithoutRegion = (regions,product) ->
-    
+    return [] unless product && regions && product.classifications && product.classifications.length > 0
     assigned_iso_arrays = regions.map (r) ->
       r.countries.map (c) ->
         c.iso_code.toLowerCase()

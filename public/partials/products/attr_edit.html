@@ -1,7 +1,6 @@
-<div ng-repeat='fld in outerScope.$parent.dictionary.fieldsByRecordType(outerScope.$parent.dictionary.recordTypes.Product) track by fld.uid'>
-  <div class="form-group" ng-if="!fld.read_only">
-    {{fld.read}}
+<div ng-repeat='fld in outerScope.$parent.dictionary.fieldsByRecordType(outerScope.$parent.dictionary.recordTypes.Product) | chainSkipReadOnlyFields | productEditFields track by fld.uid'>
+  <div class="form-group">
     <label class="control-label" for="{{fld.uid}}">{{fld.label}}</label>
-    <input class='form-control' ng-model='outerScope.$parent.product[fld.uid]' type='text'>
+    <input class='form-control' ng-model='outerScope.$parent.productEditObject[fld.uid]' type='text'>
   </div>
 </div>

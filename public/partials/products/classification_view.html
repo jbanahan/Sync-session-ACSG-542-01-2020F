@@ -1,0 +1,44 @@
+<table class='table table-condensed table-striped' ng-repeat='reg in outerScope.regions track by reg.id'>
+  <thead>
+    <tr>
+      <th colspan="3"><strong>{{reg.name}}</strong></td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat='ctry in reg.countries track by ctry.iso_code'>
+      <td style='width:1px;'>
+        <chain-flag iso_code="{{ctry.iso_code}}" img_class="classification-flag"></chain-flag>
+      </td>
+      <td>
+        {{ctry.name}}
+      </td>
+      <td class='text-right'>
+        <div ng-repeat='tr in outerScope.classificationByISO(ctry.iso_code,outerScope.product).tariff_records track by tr.id'>
+          <tariff-link hts="{{tr.hts_hts_1}}" iso="{{ctry.iso_code}}"></tariff-link>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class='table table-condensed table-striped' ng-if='outerScope.classificationsWithoutRegion(outerScope.regions,outerScope.product).length>0'>
+  <thead>
+    <tr>
+      <th colspan="3">&nbsp;</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat='cls in outerScope.classificationsWithoutRegion(outerScope.regions,outerScope.product) track by cls.class_cntry_iso'>
+      <td style='width:1px;'>
+        <chain-flag iso_code="{{cls.class_cntry_iso}}" img_class="classification-flag"></chain-flag>
+      </td>
+      <td>
+        {{cls.class_cntry_name}}
+      </td>
+      <td class='text-right'>
+        <div ng-repeat='tr in cls.tariff_records track by tr.hts_line_number'>
+          <tariff-link hts="{{tr.hts_hts_1}}" iso="{{cls.class_cntry_iso}}"></tariff-link>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>

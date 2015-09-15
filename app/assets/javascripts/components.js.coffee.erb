@@ -47,6 +47,7 @@
       editIf: '='
       beforeEdit: '&'
       onSave: '&'
+      modalClass: '@'
     }
     templateUrl: '/partials/components/chain_view_edit.html'
     link: (scope,el,attrs) ->
@@ -54,10 +55,10 @@
       jqEl = $(el)
       jqEl.find('.chain-edit-btn').click ->
         scope.$apply(scope.beforeEdit) if scope.beforeEdit
-        jqEl.find('.modal:first').modal('show')
+        jqEl.find('[chain-view-edit-modal]:first').modal('show')
       jqEl.find('.chain-save-btn').click ->
         scope.$apply(scope.onSave) if scope.onSave
-        jqEl.find('.modal:first').modal('hide')
+        jqEl.find('[chain-view-edit-modal]:first').modal('hide')
   }
 
 # Transcludes it's content in a wrapper that hides the content and replaces it with a loading message
@@ -92,6 +93,14 @@
   (input,tVal,fVal) ->
     if input then tVal else fVal
 
+@components.filter 'chainSkipReadOnlyFields', [ ->
+  (fields) ->
+    return [] unless fields && fields.length > 0
+    $.grep(fields,(fld) ->
+      return (if fld.read_only==true then null else fld)
+    )
+]
+
 @components.directive 'chainTextileView', [ ->
   {
     restrict: 'AE'
@@ -106,6 +115,7 @@
         $(el).html('')
     }
 ]
+
 
 @components.directive 'chainTextileEdit', [ ->
   {
@@ -492,6 +502,20 @@
 
           )
       )
+  }
+]
+
+# TODO buy license for flags http://icondrawer.com/free.php -->
+@components.directive 'chainFlag', [ ->
+  {
+    restrict: 'E'
+    scope: {
+      isoCode: "@"
+      imgClass: "@"
+    }
+    template:'<img ng-show="isoCode && isoCode.length == 2" class="{{imgClass}}" ng-src="/images/flags/{{isoCode.toLowerCase()}}.png" title="Flag of {{isoCode}}" />'
+    link: (scope,el,attrs) ->
+        'placeholder'
   }
 ]
 
