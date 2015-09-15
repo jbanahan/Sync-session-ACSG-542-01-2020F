@@ -29,7 +29,8 @@ class FileImportResult < ActiveRecord::Base
   end 
 
   def create_excel_report(include_all, name)
-    wb = XlsMaker.create_workbook(name, ["Record Number", "Status", "Messages"])
+    file_import_cm_uid = imported_file.core_module.unique_id_field.uid.to_s
+    wb = XlsMaker.create_workbook(name, ["Record Number", file_import_cm_uid, "Status", "Messages"])
     sheet = wb.worksheet 0
     row_number = 1
     self.change_records.each do |cr|
@@ -37,6 +38,7 @@ class FileImportResult < ActiveRecord::Base
       messages = self.collected_messages(cr, !include_all)
       column_number = -1
       sheet[row_number, column_number+=1] = cr.record_sequence_number.to_s
+      sheet[row_number, column_number+=1] = cr.unique_identifier
       sheet[row_number, column_number+=1] = cr.failed? ? "Error" : "Success"
       sheet[row_number, column_number+=1] = messages[0]
       sheet.row(row_number).height = 12 * messages[1]
