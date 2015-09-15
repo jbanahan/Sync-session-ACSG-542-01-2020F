@@ -156,6 +156,19 @@ class Lock
     end
   end
 
+  def self.clear_lock lock_name
+    # use this only if you need to forcibly clear a lock (say from the command line).  
+    # There appears to be some sort of race condition from time to 
+    # time in redis-semaphore where a lock is not cleared.
+    lock_name = clean_lock_name(lock_name)
+
+    get_connection_pool.with(timeout: 30) do |redis|
+      semaphore = Redis::Semaphore.new(lock_name, redis: redis)
+      semaphore.unlock
+      sempahore.release_stale_locks!
+    end
+  end
+
   # if true, the lock is already acquired
   def self.definitely_acquired?(name)
     !!Thread.current[:definitely_acquired_locks] and Thread.current[:definitely_acquired_locks].has_key?(name)

@@ -12,10 +12,12 @@ module OpenChain; class GPG
 
   def encrypt_file(input_file_path, output_file_path)
     Rgpg::GpgHelper.encrypt_file @public_key_path, get_file_path(input_file_path), get_file_path(output_file_path)
+    nil
   end
 
   def decrypt_file(input_file_path, output_file_path, passphrase = nil)
     Rgpg::GpgHelper.decrypt_file(@public_key_path, @private_key_path, get_file_path(input_file_path), get_file_path(output_file_path), passphrase)
+    nil
   end
 
   private
