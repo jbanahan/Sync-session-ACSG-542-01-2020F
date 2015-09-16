@@ -461,6 +461,13 @@ root.Chain =
         clearInterval(reg)
 
   bindBaseKeys : () ->
+    $(document).keyup (e) ->
+      if e.keyCode is 27
+        if $("#notification-center").is(":visible")
+          $("#notification-center button.close").click()
+        if $('.sidebar-offcanvas').hasClass 'active'
+          $('[data-toggle="offcanvas"]').click()   
+
     $(document).on 'keyup', null, '/', () ->
       $(".search-query:visible:first").focus()
     $(document).on 'keyup', null, "m", () ->
