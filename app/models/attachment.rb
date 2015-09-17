@@ -123,9 +123,11 @@ end
     json
   end
 
-  def self.add_original_filename_method attached_object
+  def self.add_original_filename_method attached_object, filename = nil
     def attached_object.original_filename=(fn); @fn = fn; end
     def attached_object.original_filename; @fn; end
+
+    attached_object.original_filename = filename unless filename.blank?
     nil
   end
 

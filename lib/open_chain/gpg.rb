@@ -5,6 +5,8 @@ require 'rgpg'
 # and to insulate from any shifting of the GPG implementation we may need to do.
 module OpenChain; class GPG
 
+  attr_reader :public_key_path, :private_key_path
+
   def initialize(public_key_path, private_key_path = nil)
     @public_key_path = public_key_path
     @private_key_path = private_key_path

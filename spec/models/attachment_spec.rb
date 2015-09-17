@@ -84,6 +84,12 @@ describe Attachment do
       a.original_filename = "file.txt"
       a.original_filename.should == "file.txt"
     end
+
+    it "sets a default value if given" do
+      a = "test"
+      Attachment.add_original_filename_method a, "filename.txt"
+      expect(a.original_filename).to eq "filename.txt"
+    end
   end
 
   describe "get_santized_filename" do

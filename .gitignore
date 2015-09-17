@@ -28,5 +28,6 @@ config/google_oauth2_api_login.json
 config/slack_client.yml
 config/siemens.asc
 config/fenix_sql_proxy.yml
+config/vfi-canada.asc
 .idea
 dump.rdb

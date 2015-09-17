@@ -308,6 +308,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/some/invalid/path','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {'response_type'=>'error','message'=>"Can't figure out what to do for path #{cmd['path']}"}
     end
+
+    it "handles Siemens .dat.pgp files" do
+      p = double("OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler")
+      OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.any_instance.should_receive(:delay).and_return p
+      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_siemens_decrypt/file.dat.pgp','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+    end
   end
 
   it 'should return error if bad request type' do
