@@ -189,14 +189,56 @@ describe ReportsController do
       it "should run report for drawback user" do
         sign_in_as @u
         ReportResult.should_receive(:run_report!).with("Drawback Audit Report", @u, OpenChain::Report::DrawbackAuditReport, {:settings=>{:drawback_claim_id=>@dc.first.id.to_s}, :friendly_settings=>[]})
-        get :run_drawback_audit_report, {drawback_claim_id: @dc.first.id}
+        put :run_drawback_audit_report, {drawback_claim_id: @dc.first.id}
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
       end
 
       it "should not execute report for non-drawback user" do
         ReportResult.should_not_receive(:run_report!).with("Drawback Audit Report", @u, OpenChain::Report::DrawbackAuditReport, {:settings=>{:drawback_claim_id=>@dc.first.id.to_s}, :friendly_settings=>[]})
-        get :run_drawback_audit_report, {drawback_claim_id: @dc.first.id}
+        put :run_drawback_audit_report, {drawback_claim_id: @dc.first.id}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "You do not have permission to view this report"
+      end
+    end
+  end
+
+  describe "RL Monthly Tariff Totals" do
+    context "show" do
+      it "should render page for Polo user" do
+        MasterSetup.create(system_code: 'polo')
+        @u = Factory(:master_user, product_view: true, time_zone: "Hawaii")
+        sign_in_as @u
+
+        get :show_rl_tariff_totals
+        expect(response).to be_success
+      end
+
+      it "should not render page for non-Polo user" do
+        get :show_rl_tariff_totals
+        expect(response).to_not be_success
+      end
+    end
+
+    context "run" do
+      before(:each) do
+        @start_date = Date.today.to_s
+        @end_date = (Date.today + 1).to_s
+      end
+
+      it "should run report for RL user" do
+        MasterSetup.create(system_code: 'polo')
+        @u = Factory(:master_user, product_view: true)
+        sign_in_as @u
+        ReportResult.should_receive(:run_report!).with("Ralph Lauren Monthly Tariff Totals", @u, OpenChain::Report::RlTariffTotals, {:settings=>{time_zone: @u.time_zone, start_date: @start_date, end_date: @end_date}, :friendly_settings=>[]})
+        post :run_rl_tariff_totals, {start_date: @start_date, end_date: @end_date}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
+      end
+
+      it "should not run report for non-RL user" do
+        ReportResult.should_not_receive(:run_report!).with("Ralph Lauren Monthly Tariff Totals", @u, OpenChain::Report::RlTariffTotals, {:settings=>{time_zone: @u.time_zone, start_date: @start_date, end_date: @end_date}, :friendly_settings=>[]})
+        post :run_rl_tariff_totals, {start_date: @start_date, end_date: @end_date}
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq "You do not have permission to view this report"
       end

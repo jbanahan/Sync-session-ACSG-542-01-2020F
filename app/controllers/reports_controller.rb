@@ -332,6 +332,22 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_rl_tariff_totals
+    if OpenChain::Report::RlTariffTotals.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_rl_tariff_totals
+    if OpenChain::Report::RlTariffTotals.permission?(current_user)
+      settings = {time_zone: current_user.time_zone, start_date: params[:start_date], end_date: params[:end_date]}
+      run_report "Ralph Lauren Monthly Tariff Totals", OpenChain::Report::RlTariffTotals, settings, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
 
   def show_pvh_container_log
     if OpenChain::Report::PvhContainerLogReport.permission?(current_user)
