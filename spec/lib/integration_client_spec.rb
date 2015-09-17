@@ -312,7 +312,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     it "handles Siemens .dat.pgp files" do
       p = double("OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler")
       OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.any_instance.should_receive(:delay).and_return p
-      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', original_filename: 'file.dat.pgp'
       cmd = {'request_type'=>'remote_file','path'=>'/_siemens_decrypt/file.dat.pgp','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end

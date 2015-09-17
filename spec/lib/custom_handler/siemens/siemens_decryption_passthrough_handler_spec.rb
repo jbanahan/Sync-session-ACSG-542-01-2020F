@@ -24,6 +24,13 @@ describe OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler 
       expect(subject.filetype).to eq :vendor
     end
 
+    it "passes original_filename to super" do
+      # Just expect this method as a way to know the super version of process_from_s3 was invoked
+      OpenChain::S3.should_receive(:download_to_tempfile).with "bucket", "s3/path/to/file.txt", original_filename: 'VENDOR.txt'
+      subject.process_from_s3 "bucket", "s3/path/to/file.txt", original_filename: 'VENDOR.txt'
+      expect(subject.filetype).to eq :vendor
+    end
+
     it "figures out the product filetype and calls super" do
       # Just expect this method as a way to know the super version of process_from_s3 was invoked
       OpenChain::S3.should_receive(:download_to_tempfile).with "bucket", "CAXPR.txt", instance_of(Hash)

@@ -164,7 +164,8 @@ module OpenChain
       elsif command['path'].include?('/_test_from_msl') && MasterSetup.get.custom_feature?('MSL+')
         #prevent errors; don't do anything else
       elsif command['path'].include?('/_siemens_decrypt/') && File.basename(command['path']).to_s.upcase.ends_with?(".DAT.PGP")
-        OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path
+        # Need to send the original filename without the added timestamp in it that our file monitoring process adds.
+        OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path, original_filename: File.basename(command['path'])
       else
         response_type = 'error'
         status_msg = "Can't figure out what to do for path #{command['path']}"

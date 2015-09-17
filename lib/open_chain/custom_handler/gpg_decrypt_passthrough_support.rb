@@ -5,8 +5,9 @@ module OpenChain; module CustomHandler; module GpgDecryptPassthroughSupport
   include OpenChain::IntegrationClientParser
   include OpenChain::FtpFileSupport
 
-  def process_from_s3 bucket, remote_path
-    OpenChain::S3.download_to_tempfile(bucket, remote_path, original_filename: File.basename(remote_path)) do |infile|
+  def process_from_s3 bucket, remote_path, original_filename: nil
+    filename = original_filename.presence || File.basename(remote_path)
+    OpenChain::S3.download_to_tempfile(bucket, remote_path, original_filename: filename) do |infile|
       decrypt_file_to_tempfile(infile) do |decrypted|
         ftp_file(decrypted)
       end

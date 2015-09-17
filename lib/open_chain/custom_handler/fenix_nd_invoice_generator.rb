@@ -215,7 +215,7 @@ module OpenChain; module CustomHandler
     end
 
     def self.generate invoice_id
-      FenixInvoiceGenerator.new.generate_and_send invoice_id
+      self.new.generate_and_send invoice_id
     end
 
     # If no header level invoice_value is set, sums the values from the line level.  If any line

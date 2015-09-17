@@ -287,4 +287,12 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @generator.generate_and_send @i.id
     end
   end
+
+  describe "generate" do
+    it "invokes the generate_and_send instance method" do
+      described_class.any_instance.should_receive(:generate_and_send).with 1
+
+      described_class.generate 1
+    end
+  end
 end

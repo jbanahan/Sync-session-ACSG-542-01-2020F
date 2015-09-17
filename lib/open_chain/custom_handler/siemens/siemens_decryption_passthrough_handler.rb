@@ -7,9 +7,9 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensDecryptionP
 
   attr_reader :filetype
 
-  def process_from_s3 bucket, remote_path
+  def process_from_s3 bucket, remote_path, original_filename: nil
     # Siemens tosses some other types of files we don't care about in this folder...just skip them.
-    filetype = get_filetype(remote_path)
+    filetype = get_filetype(remote_path, original_filename)
     return nil unless filetype
     
     @filetype = filetype
@@ -37,8 +37,8 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensDecryptionP
   end
 
   private 
-    def get_filetype remote_path
-      filename = File.basename(remote_path).to_s.upcase
+    def get_filetype remote_path, original_filename = nil
+      filename = File.basename(original_filename.presence || remote_path).to_s.upcase
 
       if filename.starts_with?("CAXPR")
         file_type = :product
