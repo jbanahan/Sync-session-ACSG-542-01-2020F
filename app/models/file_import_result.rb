@@ -29,7 +29,7 @@ class FileImportResult < ActiveRecord::Base
   end 
 
   def create_excel_report(include_all, name)
-    file_import_cm_uid = imported_file.core_module.unique_id_field.uid.to_s
+    file_import_cm_uid = imported_file.core_module.unique_id_field.label
     wb = XlsMaker.create_workbook(name, ["Record Number", file_import_cm_uid, "Status", "Messages"])
     sheet = wb.worksheet 0
     row_number = 1
