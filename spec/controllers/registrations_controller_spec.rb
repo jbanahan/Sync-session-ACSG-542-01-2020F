@@ -28,7 +28,7 @@ describe RegistrationsController do
       post :send_email, email: @email, fname: @fname, lname: @lname, company: @company, cust_no: @cust_no, contact: @contact
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ["jdavis@vandegriftinc.com"]
+      expect(mail.to).to eq ["support@vandegriftinc.com"]
       expect(mail.subject).to eq "Registration Request"
       expect(mail.body).to include @email_body
       thanks = "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +

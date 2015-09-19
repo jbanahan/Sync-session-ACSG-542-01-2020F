@@ -23,7 +23,7 @@ class RegistrationsController < ApplicationController
     add_flash :errors, "Email is invalid" unless regex =~ params[:email] || params[:email].blank?
 
     unless flash[:errors]
-        OpenMailer.send_simple_text("jdavis@vandegriftinc.com", "Registration Request", email_body).deliver!
+        OpenMailer.send_simple_text("support@vandegriftinc.com", "Registration Request", email_body).deliver!
         render json: {flash: {notice: [thanks]}}
       else 
         render json: {flash: {errors: flash[:errors]}} 
