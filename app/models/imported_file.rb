@@ -337,7 +337,9 @@ class ImportedFile < ActiveRecord::Base
       @fr.update_attributes(:expected_rows=>(count - @imported_file.starting_row - 1))
     end
     def process_row row_number, object, messages, failed=false
-      cr = ChangeRecord.create(:record_sequence_number=>row_number,:recordable=>object,:failed=>failed,:file_import_result_id=>@fr.id)
+      key_model_field_value, messages = messages.partition{ |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
+      cr = ChangeRecord.create(:unique_identifier=>key_model_field_value[0], :record_sequence_number=>row_number,:recordable=>object,
+                               :failed=>failed,:file_import_result_id=>@fr.id)
       unless messages.blank?
         msg_sql = []
         messages.each {|m| msg_sql << "(#{cr.id}, '#{m.gsub(/\\/, '\&\&').gsub(/'/, "''")}')" }
