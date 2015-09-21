@@ -44,7 +44,7 @@ class DrawbackClaim < ActiveRecord::Base
   end
 
   def can_comment? user
-    user.comment_drawback? && self.can_view?(user)
+    self.can_view?(user)
   end
 
   def can_edit? user

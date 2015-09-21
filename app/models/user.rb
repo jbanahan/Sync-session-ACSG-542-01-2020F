@@ -404,9 +404,6 @@ class User < ActiveRecord::Base
   def edit_drawback?
     self.drawback_edit? && MasterSetup.get.drawback_enabled?
   end
-  def comment_drawback?
-    self.view_drawback?
-  end
   def view_commercial_invoices?
     self.commercial_invoice_view? && MasterSetup.get.entry_enabled?
   end

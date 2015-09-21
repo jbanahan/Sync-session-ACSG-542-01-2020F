@@ -152,23 +152,12 @@ describe DrawbackClaim do
     end
 
     it "should allow user with permissions to comment" do
-      @u.stub(:comment_drawback?).and_return true
       @d.stub(:can_view?).with(@u).and_return true
-
       expect(@d.can_comment?(@u)).to be_true
     end
 
-    it "should not allow user without commenting privileges to comment" do
-      @u.stub(:comment_drawback?).and_return false
-      @d.stub(:can_view?).with(@u).and_return true
-
-      expect(@d.can_comment?(@u)).to be_false
-    end
-
     it "should not allow user without permission to view this drawback to comment" do
-      @u.stub(:comment_drawback?).and_return true
       @d.stub(:can_view?).with(@u).and_return false
-
       expect(@d.can_comment?(@u)).to be_false
     end
   end
