@@ -2,16 +2,7 @@ class RegistrationsController < ApplicationController
   skip_before_filter :require_user
   
   def send_email
-    system_code = MasterSetup.get.system_code
-    email_body =
-        "REGISTRATION REQUEST\n\n" +
-        "Email: #{params[:email]}\n" +
-        "First Name: #{params[:fname]}\n" +
-        "Last Name: #{params[:lname]}\n" +
-        "Company: #{params[:company]}\n" +
-        "Customer Number: #{params[:cust_no]}\n" +
-        "Contact: #{params[:contact]}\n" +
-        "System Code: #{system_code}"
+    sys_code = MasterSetup.get.system_code
 
     thanks = "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +
              "If you have any questions, please contact your Vandegrift account representative or support@vandegriftinc.com."
@@ -23,7 +14,8 @@ class RegistrationsController < ApplicationController
     add_flash :errors, "Email is invalid" unless regex =~ params[:email] || params[:email].blank?
 
     unless flash[:errors]
-        OpenMailer.send_simple_text("support@vandegriftinc.com", "Registration Request", email_body).deliver!
+        fields = params.dup.merge(system_code: sys_code)
+        OpenMailer.send_registration_request(fields).deliver!
         render json: {flash: {notice: [thanks]}}
       else 
         render json: {flash: {errors: flash[:errors]}} 

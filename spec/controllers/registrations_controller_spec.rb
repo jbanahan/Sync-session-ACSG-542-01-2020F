@@ -10,29 +10,17 @@ describe RegistrationsController do
       @company = "Acme"
       @cust_no = "123456789"
       @contact = "Jane Smith"
-
-      @email_body =
-                    "REGISTRATION REQUEST\n\n" +
-                    "Email: #{@email}\n" +
-                    "First Name: #{@fname}\n" +
-                    "Last Name: #{@lname}\n" +
-                    "Company: #{@company}\n" +
-                    "Customer Number: #{@cust_no}\n" +
-                    "Contact: #{@contact}\n" +
-                    "System Code: #{@system_code}"
   end
 
   describe :send_email do
     it "emails Vandegrift with the registration form data and the server's system_code" do
       
       post :send_email, email: @email, fname: @fname, lname: @lname, company: @company, cust_no: @cust_no, contact: @contact
-
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ["support@vandegriftinc.com"]
-      expect(mail.subject).to eq "Registration Request"
-      expect(mail.body).to include @email_body
       thanks = "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +
                "If you have any questions, please contact your Vandegrift account representative or support@vandegriftinc.com."
+      
+      expect(mail.subject).to eq "Registration Request"
       expect(response.body).to eq ({flash: {notice: [thanks]}}.to_json)
     end
     

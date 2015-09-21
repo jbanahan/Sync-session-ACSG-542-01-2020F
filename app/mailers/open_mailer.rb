@@ -92,6 +92,13 @@ EOS
     end
   end
   
+  def send_registration_request(params)
+    @email, @fname, @lname, @company, @cust_no, @contact, @system_code = 
+      params.values_at(:email, :fname, :lname, :company, :cust_no, :contact, :system_code)
+
+    mail(:to => "support@vandegriftinc.com", :subject => "Registration Request")
+  end
+
   def send_feedback(current_user,params,request)
     @user = current_user
     @params = params
