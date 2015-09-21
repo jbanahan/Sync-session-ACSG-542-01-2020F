@@ -92,6 +92,12 @@ OpenChain::Application.routes.draw do
           get :copy, on: :member
         end
       end
+
+      resources :fenix_postbacks, only: [] do
+        collection do 
+          post :receive_lvs_results
+        end
+      end
     end
   end
 

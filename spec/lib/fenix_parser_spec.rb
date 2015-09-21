@@ -637,6 +637,15 @@ describe OpenChain::FenixParser do
     expect(e.b3_print_date).to eq tz.parse(@new_activities['B3P'][1].to_s).in_time_zone(Time.zone)
   end
 
+  it 'requests LVS child data if entry type is F' do
+    c = double("OpenChain::FenixSqlProxyClient")
+    OpenChain::FenixSqlProxyClient.any_instance.should_receive(:delay).and_return c
+    c.should_receive(:request_lvs_child_transactions).with(@barcode)
+
+    @entry_type = "F"
+    OpenChain::FenixParser.parse @entry_lambda.call
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
@@ -936,6 +945,73 @@ describe OpenChain::FenixParser do
       entry.cadex_sent_date.should eq @time_zone.parse '20131002'
       entry.cadex_accept_date.should eq @time_zone.parse '20131003'
       entry.k84_receive_date.should eq Date.parse '20131004'
+    end
+  end
+
+  describe "parse_lvs_query_results" do
+    before :each do 
+      @child1 = Factory(:entry, source_system: "Fenix", entry_number: "12345")
+      @summary = Factory(:entry, source_system: "Fenix", entry_number: "SUMMARY", release_date: "2015-01-01 10:00", cadex_sent_date: "2015-01-01 08:00", cadex_accept_date: "2015-01-01 09:00", k84_receive_date: "2015-01-01 12:00")
+    end
+
+    it "reads a result set and updates or creates child entries with summary entry dates" do
+      rs = [{"summary" => "SUMMARY", "child" => "12345"}, {"summary" => "SUMMARY", "child" => "56789"}]
+
+      described_class.parse_lvs_query_results rs
+
+      @child1.reload
+
+      expect(@child1.release_date).to eq @summary.release_date
+      expect(@child1.cadex_sent_date).to eq @summary.cadex_sent_date
+      expect(@child1.cadex_accept_date).to eq @summary.cadex_accept_date
+      expect(@child1.k84_receive_date).to eq @summary.k84_receive_date
+
+      # Entry Type / Country are only set when created
+      expect(@child1.entry_type).to be_nil
+      expect(@child1.import_country).to be_nil
+
+      # Second entry does not exist, it should have been created
+      child2 = Entry.where(source_system: "Fenix", entry_number: "56789").first
+      expect(child2).not_to be_nil
+      expect(child2.import_country.try(:iso_code)).to eq "CA"
+      expect(child2.entry_type).to eq "LV"
+
+      expect(child2.release_date).to eq @summary.release_date
+      expect(child2.cadex_sent_date).to eq @summary.cadex_sent_date
+      expect(child2.cadex_accept_date).to eq @summary.cadex_accept_date
+      expect(child2.k84_receive_date).to eq @summary.k84_receive_date
+    end
+
+    it "skips if the summary entry isn't found" do
+      rs = [{"summary" => "NONEXIST", "child" => "12345"}, {"summary" => "NONEXIST", "child" => "56789"}]
+      described_class.parse_lvs_query_results rs
+      @child1.reload
+      expect(@child1.release_date).to be_nil
+      expect(Entry.where(source_system: "Fenix", entry_number: "56789").first).to be_nil
+    end
+
+    it "handles json instead of a results hash" do
+      rs = [{"summary" => "SUMMARY", "child" => "12345"}].to_json
+
+      described_class.parse_lvs_query_results rs
+
+      @child1.reload
+
+      expect(@child1.release_date).to eq @summary.release_date
+      expect(@child1.cadex_sent_date).to eq @summary.cadex_sent_date
+      expect(@child1.cadex_accept_date).to eq @summary.cadex_accept_date
+      expect(@child1.k84_receive_date).to eq @summary.k84_receive_date
+    end
+
+    it "caches entry look ups" do
+      relation = double("relation")
+      Entry.should_receive(:where).with(entry_number: "SUMMARY", source_system:"Fenix").and_return relation
+      relation.should_receive(:first).and_return @summary
+
+      described_class.any_instance.should_receive(:update_lvs_dates).exactly(2).times
+
+      rs = [{"summary" => "SUMMARY", "child" => "12345"}, {"summary" => "SUMMARY", "child" => "56789"}]
+      described_class.parse_lvs_query_results rs
     end
   end
 end

@@ -1,4 +1,6 @@
-module Api; module V1; class SqlProxyPostbackController < ApiController
+require 'api/v1/admin/admin_api_controller'
+
+module Api; module V1; class SqlProxyPostbackController < Api::V1::Admin::AdminApiController
 
   before_filter :require_admin
 

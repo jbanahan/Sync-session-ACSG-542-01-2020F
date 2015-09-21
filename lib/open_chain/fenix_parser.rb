@@ -1,4 +1,6 @@
 require 'open_chain/integration_client_parser'
+require 'open_chain/fenix_sql_proxy_client'
+
 module OpenChain
   class FenixParser
     extend OpenChain::IntegrationClientParser
@@ -35,6 +37,31 @@ module OpenChain
 
     def self.integration_folder
       ["//opt/wftpserver/ftproot/www-vfitrack-net/_fenix", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_fenix"]
+    end
+
+    def self.parse_lvs_query_results result_set
+      results = result_set.is_a?(String) ? ActiveSupport::JSON.decode(result_set) : result_set
+
+      # In almost all cases, the same summary entry will be used...there's no point in
+      # looking them up every time, so just look up on cache misses
+      entry_cache = Hash.new do |h, k|
+        h[k] = Entry.where(entry_number: k, source_system: SOURCE_CODE).first
+      end
+      # This is another optimization...no use looking up the CA country every time when we
+      # can do it once and provide it to the method
+      canada = Country.find_by_iso_code('CA')
+
+      parser = self.new
+      results.each do |result|
+        child_entry = result['child']
+
+        # For whatever reason, the transaction number in Fenix ND has a space at the end of it in the database
+        parent_entry = entry_cache[result['summary'].to_s.strip]
+
+        if parent_entry
+          parser.update_lvs_dates parent_entry, result['child'].to_s.strip, canada
+        end
+      end
     end
 
     # take the text from a Fenix CSV output file and create entries
@@ -189,9 +216,31 @@ module OpenChain
           #write time to process without reprocessing hooks
           @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
 
+          # F type entries are LVS Summaries...when we get one of these we then want to request a full listing of any of the "child" LVS
+          # transaction numbers so we can pull the summary level dates down into the child entries.
+          if @entry.entry_type.to_s.upcase.strip == "F"
+            OpenChain::FenixSqlProxyClient.new.delay.request_lvs_child_transactions @entry.entry_number
+          end
+
         end
         nil
       end
+    end
+
+    def update_lvs_dates parent_entry, child_transaction, import_country = nil
+      child_entry = nil
+      Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do
+        # Individual B3 lines will come through for these entries, at that point, they'll set the importer and other information
+        # LV is the fenix entry type for Low-Value entries.
+        child_entry = Entry.where(:entry_number => child_transaction, :source_system => SOURCE_CODE).first_or_create! :import_country => import_country, entry_type: "LV"
+      end
+
+      child_entry.release_date = parent_entry.release_date
+      child_entry.cadex_sent_date = parent_entry.cadex_sent_date
+      child_entry.cadex_accept_date = parent_entry.cadex_accept_date
+      child_entry.k84_receive_date = parent_entry.k84_receive_date
+
+      child_entry.save!
     end
 
     private

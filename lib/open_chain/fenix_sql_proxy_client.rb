@@ -21,4 +21,10 @@ module OpenChain; class FenixSqlProxyClient < SqlProxyClient
     request 'fenix_documents_for_transaction', {transaction_number: transaction_number}, {}, {swallow_error: false}
   end
 
+  def request_lvs_child_transactions transaction_number
+    return if transaction_number.to_s.blank? 
+
+    request 'lvs_child_transactions', {transaction_number: transaction_number.to_s}, {}, {swallow_error: false}
+  end
+
 end; end
