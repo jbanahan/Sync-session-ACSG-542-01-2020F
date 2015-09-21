@@ -47,7 +47,7 @@ describe FileImportResult do
 
     it "should use the uid of the cm of the imported file as its second column header" do
       output = @fir.create_excel_report(true, "Some name")
-      expect(output.worksheets.first.rows[0][1]).to eq "prod_uid"
+      expect(output.worksheets.first.rows[0][1]).to eq "Unique Identifier"
     end
 
     it "should record the change_record's uid in the second column" do
