@@ -88,18 +88,11 @@
               <% if Rails.configuration.use_google_auth %>
                 <span> or </span>
 
-                <a href="/auth/google_oauth2"
-                   style="background: #da4835; padding-top: 7px; padding-bottom: 10px; border-bottom-left-radius: 5px; border-top-left-radius: 5px;
-                          border-top-right-radius: 5px; border-bottom-right-radius: 5px; text-decoration: none">
+                <a href="/auth/google_oauth2">
 
                   <span>
-                    <%= image_tag "google_plus_small.png",
-                                  style: "height: 33px; border-bottom-left-radius: 5px; border-top-left-radius: 5px;
-                                          padding-right: 5px; border-right: thin solid white;" %>
-                  </span>
-
-                  <span style="color: white; padding-right: 10px; font-weight: 700; margin-left: 3px;">
-                    Sign in with Google+
+                    <%= image_tag "btn_google_signin_light_normal_web.png",
+                                  size: "169x42" %>
                   </span>
 
                 </a>

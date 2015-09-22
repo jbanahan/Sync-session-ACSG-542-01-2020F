@@ -146,7 +146,8 @@ class User < ActiveRecord::Base
         user.oauth_expires_at = Time.at(auth_info.credentials.expires_at)
         user.save!
       else
-        errors << "Google email account #{auth_info[:info][:email]} has not been set up in VFI Track."
+        errors << "Google email account #{auth_info[:info][:email]} has not been set up in VFI Track." + 
+                  " If you would like to request an account, please click the 'Need an account?' link below."
       end
     end
 
