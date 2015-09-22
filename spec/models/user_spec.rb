@@ -289,6 +289,11 @@ describe User do
         u.view_drawback?.should be_false
         u.edit_drawback?.should be_false
       end
+      it "should delegate to #view_drawback? when #comment_drawback? is called" do
+        u = Factory(:user)
+        u.should_receive :view_drawback?
+        u.comment_drawback?
+      end
     end
     context "broker invoice" do
       context "with company permission" do
