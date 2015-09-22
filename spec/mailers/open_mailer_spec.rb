@@ -105,6 +105,28 @@ describe OpenMailer do
     end
   end
 
+  describe :send_registration_request do
+    it "should send email with registration details to support address" do
+      fields = { email: "john_doe@acme.com", fname: "John", lname: "Doe", company: "Acme", 
+                  cust_no: "123456789", contact: "Jane Smith", system_code: "HAL9000"}
+
+      msg =  "REGISTRATION REQUEST\n\n" +
+             "Email: #{fields[:email]}\n" +
+             "First Name: #{fields[:fname]}\n" +
+             "Last Name: #{fields[:lname]}\n" +
+             "Company: #{fields[:company]}\n" +
+             "Customer Number: #{fields[:cust_no]}\n" +
+             "Contact: #{fields[:contact]}\n" +
+             "System Code: #{fields[:system_code]}"
+
+      OpenMailer.send_registration_request(fields).deliver!
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["support@vandegriftinc.com"]
+      expect(mail.subject).to eq "Registration Request"
+      expect(mail.body).to include msg
+    end
+  end
+
   context :send_simple_html do 
     describe "in development environment" do
       it "should send an email to User 1's email" do
