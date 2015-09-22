@@ -289,11 +289,6 @@ describe User do
         u.view_drawback?.should be_false
         u.edit_drawback?.should be_false
       end
-      it "should delegate to #view_drawback? when #comment_drawback? is called" do
-        u = Factory(:user)
-        u.should_receive :view_drawback?
-        u.comment_drawback?
-      end
     end
     context "broker invoice" do
       context "with company permission" do
@@ -620,7 +615,7 @@ describe User do
         creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
         auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
 
-        expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: nil, errors: ["Google email account susan@rice.com has not been set up in VFI Track."]})
+        expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: nil, errors: ["Google email account susan@rice.com has not been set up in VFI Track. If you would like to request an account, please click the 'Need an account?' link below."]})
       end
     end
 
