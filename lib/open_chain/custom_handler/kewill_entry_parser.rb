@@ -1,5 +1,7 @@
 require 'open_chain/sql_proxy_client'
 require 'open_chain/s3'
+require 'open_chain/integration_client_parser'
+require 'open_chain/alliance_imaging_client'
 
 module OpenChain; module CustomHandler; class KewillEntryParser
   extend OpenChain::IntegrationClientParser
