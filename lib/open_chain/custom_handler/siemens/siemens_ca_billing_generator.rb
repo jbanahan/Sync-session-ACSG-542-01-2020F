@@ -81,7 +81,10 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
   def generate_file_data_to_tempfile entries, filename
     # Ensure only a single process can run this at a time.
     Lock.acquire_for_class(self.class, yield_in_transaction: false) do 
-      Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"], external_encoding: "Windows-1252") do |outfile|
+      Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"]) do |outfile|
+        # We're encoding the file data directly when writing to the file stream...so make sure 
+        # the IO doesn't do any extra encoding translations.
+        outfile.binmode
         # Add the original_filename method, both the ftp and the mailer will utilize this method to name the file when sending
         Attachment.add_original_filename_method outfile, filename
 
@@ -167,11 +170,15 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
       s << num(0, 14, 2) # 579-592 (Total)
     end
 
+    # Use windows newlines since the source files we're emulating were done like that.
+    s << "\r\n"
     s.flush
     s.rewind
 
-    # Use windows newlines since the source files we're emulating were done like that.
-    io.write s.read + "\r\n"
+    # Handle the encoding directly here and just replace non-windows charset chars w/ ?.  
+    # These are only going to be in descriptions or something like that anyway, so it's not going
+    # to be a big deal if they're not showing 100% correct.
+    io.write s.read.encode("WINDOWS-1252", invalid: :replace, undef: :replace, replace: "?")
     io.flush
     nil
   end
