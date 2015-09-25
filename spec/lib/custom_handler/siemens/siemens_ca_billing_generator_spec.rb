@@ -8,7 +8,8 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       before :each do 
         @tax_ids = ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001", 
         "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001", 
-        "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002"]
+        "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002", "807150586RM0001",
+        "807150586RM0002"]
 
         @entries = []
         @tax_ids.each do |id|
@@ -17,17 +18,24 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       end
 
       it "finds siemens entries that do not have sync records" do
-        expect(subject.find_entries.size).to eq @entries.size
+        entries = subject.find_entries
+        expect(entries.size).to eq @entries.size
+        expect(entries).to include(*@entries)
       end
 
       it "excludes entries with sync records" do
         @entries.first.sync_records.create! trading_partner: "Siemens Billing"
-        expect(subject.find_entries.size).to eq (@entries.size - 1)
+        expect(subject.find_entries).not_to include(@entries.first)
       end
 
       it "excludes entries without k84 receive dates" do
         @entries.first.update_attributes! k84_receive_date: nil
-        expect(subject.find_entries.size).to eq (@entries.size - 1)
+        expect(subject.find_entries).not_to include(@entries.first)
+      end
+
+      it "does not find entries w/ k84 receive dates prior to 9/25/2015" do
+        @entries.first.update_attributes! k84_receive_date: '2015-09-24'
+        expect(subject.find_entries).not_to include(@entries.first)
       end
     end
 
