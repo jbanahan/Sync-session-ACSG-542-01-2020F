@@ -131,7 +131,21 @@ module OpenChain; module CustomHandler; class GenericBookingParser
     shipment.shipment_type = value_from_named_location :shipment_type, rows
     shipment.booking_shipment_type = shipment.shipment_type
     shipment.lcl = (shipment.shipment_type == 'CFS/CFS')
-    shipment.mode = value_from_named_location :mode, rows
+    mode = value_from_named_location :mode, rows
+    if mode.to_s.upcase == "OCEAN"
+      # Careful w/ these values....they need to match the values the front-end is 
+      # displaying w/ it's dropdowns.
+      shipment.mode = case shipment.shipment_type.to_s.upcase
+                      when "CY/CY", "CY/CFS"
+                       "Ocean - FCL"
+                      when "CFS/CY", "CFS/CFS"
+                        "Ocean - LCL"
+                      else
+                        nil
+                      end
+      shipment.booking_mode = shipment.mode
+    end
+
   end
 
   def value_from_named_location(name, rows)

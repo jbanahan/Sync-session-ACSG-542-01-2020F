@@ -279,7 +279,7 @@
                         <th>Cartons</th>
                         <th>Volume<br>(CBMS)</th>
                         <th>Gross Weight<br>(KGS)</th>
-                        <th ng-show='shp.permissions.can_edit'></th>
+                        <th></th>
                       </tr>
                       </thead>
                       <tbody>
@@ -312,6 +312,10 @@
                         </td>
                       </tr>
                       </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colspan="9" style="text-align:center; padding-top: 10px"><button ng-show='shp.permissions.can_add_remove_booking_lines && $parent.shp.booking_lines && $parent.shp.booking_lines.length > 0' class="btn btn-xs btn-danger" title="Delete All Lines" ng-click="deleteAllBookingLines($parent.shp)"><i class="fa fa-trash"></i> Delete All Lines</button></td>
+                        </tr>
                     </table>
                   </div>
                 </div>

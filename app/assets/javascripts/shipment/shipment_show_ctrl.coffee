@@ -175,6 +175,13 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       saveBookingLine(shipment,line).then ->
         $scope.loadBookingLines($scope.shp)
 
+  $scope.deleteAllBookingLines = (shipment) -> 
+    if window.confirm("Are you sure you want to delete all booking lines from this shipment?")
+      for line in shipment.booking_lines
+        line._destroy = 'true'
+
+      $scope.saveShipment({id: shipment.id, booking_lines: shipment.booking_lines})
+
   $scope.prepBookingEditObject = copyObjectToScopeAs 'booking'
 
   $scope.prepPartiesModal = copyObjectToScopeAs 'partyLine'

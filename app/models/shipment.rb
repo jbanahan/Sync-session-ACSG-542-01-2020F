@@ -108,12 +108,13 @@ class Shipment < ActiveRecord::Base
     return false
   end
   def revise_booking! user, async_snapshot = false
+    # Booking data gets revised all the time apparently before its actually on-boarded, so while we clear 
+    # the approval/confirmation info, we don't want to clear the initial receipt/request info.
     self.booking_approved_by = nil
     self.booking_approved_date = nil
     self.booking_confirmed_by = nil
     self.booking_confirmed_date = nil
-    self.booking_received_date = nil
-    self.booking_requested_by = nil
+    self.booking_revised_date = Time.zone.now.to_date
     self.save!
     self.create_snapshot_with_async_option async_snapshot, user
   end
@@ -243,8 +244,17 @@ class Shipment < ActiveRecord::Base
       where("shipment_lines.shipment_id = ?",self.id).uniq
   end
 	def self.modes
+    # These are deprecated old modes...don't reference for the new screen
 	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']
 	end
+
+  def ocean?
+    ['OCEAN - LCL', 'OCEAN - FCL'].include? self.mode.to_s.upcase
+  end
+
+  def air?
+    'AIR' == self.mode.to_s.upcase
+  end
 
 	def can_view?(user)
     return false unless user.view_shipments?
@@ -265,7 +275,9 @@ class Shipment < ActiveRecord::Base
   end
 
   def can_add_remove_booking_lines?(user)
-    return false if self.booking_approved_date
+    # At any point up till there are actual manifest/shipment lines users w/ edit ability 
+    # can remove shipment lines.
+    return false if self.shipment_lines.length > 0
     return self.can_edit?(user)
   end
 

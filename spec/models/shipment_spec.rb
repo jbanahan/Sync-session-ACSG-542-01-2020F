@@ -434,17 +434,31 @@ describe Shipment do
       s.should_receive(:can_edit?).with(u).and_return false
       expect(s.can_add_remove_booking_lines?(u)).to be_false
     end
-    it "should not allow adding lines if booking is approved" do
-      u = double('user')
-      s = Shipment.new(booking_approved_date:Time.now)
-      s.stub(:can_edit?).and_return true #make sure we're not testing the wrong thing
-      expect(s.can_add_remove_booking_lines?(u)).to be_false
-    end
-    it "should allow adding lines if booking is confirmed" do
-      u = double('user')
-      s = Shipment.new(booking_confirmed_date:Time.now)
-      s.stub(:can_edit?).and_return true #make sure we're not testing the wrong thing
-      expect(s.can_add_remove_booking_lines?(u)).to be_true
+    
+    context "editable shipment" do
+      let(:shipment) do
+        s = Shipment.new
+        # stub can edit to make sure we're allowing anyone/anything to edit
+        s.stub(:can_edit?).and_return true
+        s
+      end
+
+      let(:user) { double("user") }
+
+      it "should allow adding booking lines if booking is approved" do
+        s = shipment.tap {|s| s.booking_approved_date = Time.now }
+        expect(s.can_add_remove_booking_lines? user).to be_true
+      end
+
+      it "should allow adding lines if booking is confirmed" do
+        s = shipment.tap {|s| s.booking_confirmed_date = Time.now }
+        expect(s.can_add_remove_booking_lines? user).to be_true
+      end
+
+      it "disallows adding lines if shipment has actual shipment lines on it" do
+        s = shipment.tap {|s| s.shipment_lines.build }
+        expect(s.can_add_remove_booking_lines?(user)).to be_false
+      end
     end
   end
 

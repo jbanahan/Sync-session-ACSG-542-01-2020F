@@ -15,7 +15,9 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
         add_lines_to_sheet(shipment, user, container.shipment_lines, sheet)
       end
     else
-      add_headers(new_sheet(workbook), shipment, user)
+      sheet = new_sheet(workbook)
+      add_headers(sheet, shipment, user)
+      add_lines_to_sheet(shipment, user, shipment.shipment_lines, sheet) if shipment.shipment_lines.size > 0
     end
 
     workbook
@@ -80,6 +82,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     fields = [
       :con_container_number,
       :ord_cust_ord_no,
+      [@custom_defintions[:prod_part_number], unique_identifier_lambda],
       :shpln_manufacturer_address_name,
       :shpln_carton_qty,
       :shpln_shipped_qty,
@@ -91,9 +94,9 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       :shp_booking_received_date,
       :shp_cargo_on_hand_date,
       :shp_docs_received_date
-    ].map {|uid| ModelField.find_by_uid(uid) }.insert(2, @custom_defintions[:prod_part_number].model_field)
+    ]
 
-    add_header_row(sheet, fields.map(&:base_label))
+    add_header_row(sheet, fields.map {|f| field_label(f) })
     lines.each { |line| add_line_to_sheet(shipment, user, line, fields, sheet) }
     add_totals_to_sheet(lines, sheet)
   end
@@ -101,20 +104,20 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   def add_line_to_sheet(shipment, user, line, fields, sheet)
     order = line.order_lines.first.order
     values = [
-      fields[0].process_export(line.container, user),
-      fields[1].process_export(order, user),
-      fields[2].process_export(line.order_lines.first.product, user),
-      fields[3].process_export(line, user),
-      fields[4].process_export(line, user),
-      fields[5].process_export(line, user),
-      fields[6].process_export(line, user),
-      fields[7].process_export(order, user),
-      fields[8].process_export(shipment, user),
-      fields[9].process_export(shipment, user),
-      fields[10].process_export(order, user),
-      fields[11].process_export(shipment, user),
-      fields[12].process_export(shipment, user),
-      fields[13].process_export(shipment, user)
+      field_value(fields[0], line.container, user),
+      field_value(fields[1], order, user),
+      field_value(fields[2], line.order_lines.first.product, user),
+      field_value(fields[3], line, user),
+      field_value(fields[4], line, user),
+      field_value(fields[5], line, user),
+      field_value(fields[6], line, user),
+      field_value(fields[7], order, user),
+      field_value(fields[8], shipment, user),
+      field_value(fields[9], shipment, user),
+      field_value(fields[10], order, user),
+      field_value(fields[11], shipment, user),
+      field_value(fields[12], shipment, user),
+      field_value(fields[13], shipment, user)
     ]
 
     add_row(sheet, values)
@@ -139,6 +142,49 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   def add_row(sheet, data=[])
     XlsMaker.add_body_row(sheet,@next_row,data, @column_widths)
     @next_row += 1
+  end
+
+  def field_value field, object, user
+    value = nil
+    Array.wrap(field).each do |f|
+      if f.respond_to?(:call)
+        v = f.call(object, user)
+      else
+        v = mf(f).process_export object, user
+      end
+
+      if !v.blank?
+        value = v
+        break
+      end
+    end
+    value
+  end
+
+  def field_label field
+    # Always just use the first model field value given
+    f = field.respond_to?(:first) ? field.first : field
+    mf(f).label(false)
+  end
+
+  def mf field
+    field.respond_to?(:model_field) ? field.model_field : ModelField.find_by_uid(field)
+  end
+
+  def unique_identifier_lambda
+    lambda do |prod, user|
+      mf = ModelField.find_by_uid(:prod_uid)
+      value = mf.process_export(prod, user)
+
+      if !value.blank? && !prod.importer.system_code.blank?
+        syscode = prod.importer.system_code
+
+        # strip the system code from the front of the product if it's there
+        value = value.sub /^#{syscode}-/i, ""
+      end
+
+      value
+    end
   end
 
 end; end; end
