@@ -99,6 +99,7 @@ class Shipment < ActiveRecord::Base
   end
 
   def can_revise_booking? user
+    return false if self.shipment_lines.try(:size) > 0
     return false unless self.booking_approved_date || self.booking_confirmed_date
     if !self.booking_confirmed_date
       return true if self.can_approve_booking?(user,true) || self.can_request_booking?(user,true)

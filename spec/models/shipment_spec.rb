@@ -404,11 +404,18 @@ describe Shipment do
       s.stub(:can_confirm_booking?).and_return true #make sure we're not testing the wrong thing
       expect(s.can_revise_booking?(u)).to be_false
     end
+    it "does not allow revising bookings with shipment lines" do
+      u = double('u')
+      s = Shipment.new(booking_approved_date:Time.now)
+      s.shipment_lines.build
+      expect(s.can_revise_booking?(u)).to be_false
+    end
   end
   describe "revise booking" do
     it "should remove received, requested, approved and confirmed date and 'by' fields" do
       u = Factory(:user)
-      s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:Time.now,booking_approved_date:Time.now,booking_confirmed_date:Time.now)
+      original_receive= Time.zone.now
+      s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:original_receive,booking_approved_date:Time.now,booking_confirmed_date:Time.now)
       s.should_receive(:create_snapshot_with_async_option).with(false,u)
       s.revise_booking! u
       s.reload
@@ -416,8 +423,9 @@ describe Shipment do
       expect(s.booking_approved_date).to be_nil
       expect(s.booking_confirmed_by).to be_nil
       expect(s.booking_confirmed_date).to be_nil
-      expect(s.booking_received_date).to be_nil
-      expect(s.booking_requested_by).to be_nil
+      expect(s.booking_received_date).to eq original_receive.to_date
+      expect(s.booking_requested_by).to eq u
+      expect(s.booking_revised_date).to eq Time.zone.now.to_date
     end
   end
 

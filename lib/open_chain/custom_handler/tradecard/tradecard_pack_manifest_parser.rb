@@ -177,7 +177,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     volume = BigDecimal(0)
 
     carton_sets = Set.new
-    lines_added.each do |line|
+    Array.wrap(lines_added).each do |line|
       cs = line.carton_set
       next if cs.nil? || carton_sets.include?(cs)
 
