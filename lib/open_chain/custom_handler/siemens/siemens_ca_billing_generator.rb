@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
     generate_file_data_to_tempfile(entries, filename) do |outfile|
       encrypt_file(outfile) do |encrypted_file|
-        Attachment.add_original_filename_method encrypted_file, filename+".gpg"
+        Attachment.add_original_filename_method encrypted_file, filename+".pgp"
         completed = false
         error = nil
         begin
@@ -343,7 +343,8 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     end
 
     def encrypt_file source_file
-      Tempfile.open(["siemens_billing", ".dat"], encoding: "ascii-8bit") do |f|
+      Tempfile.open(["siemens_billing", ".dat"]) do |f|
+        f.binmode
         @gpg.encrypt_file source_file, f
 
         yield f

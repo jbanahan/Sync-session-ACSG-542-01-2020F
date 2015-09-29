@@ -354,7 +354,8 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
           decrypted_file = nil
           Tempfile.open("decrypt") do |f|
-            Tempfile.open("encrypted", encoding: "ascii-8bit") do |en|
+            Tempfile.open("encrypted") do |en|
+              en.binmode
               en << encrypted_file
               en.flush
               gpg.decrypt_file en, f
@@ -363,7 +364,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
             decrypted_file = f.read
           end
           expect(decrypted_file.lines("\r\n").length).to eq 2
-          expect(filename).to eq "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat.gpg"
+          expect(filename).to eq "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat.pgp"
           sr = @entry.sync_records.first
           expect(sr.trading_partner).to eq "Siemens Billing"
           expect(sr.sent_at).not_to be_nil
