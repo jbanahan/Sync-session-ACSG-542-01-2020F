@@ -149,6 +149,21 @@ describe OpenMailer do
         m.to.first.should == User.first.email
         expect(OpenMailer.deliveries.last.header['X-ORIGINAL-TO'].value).to eq 'example@example.com, you@there.com'
       end
+
+      it "explodes groups into component email addresses" do
+        group = Factory(:group, system_code: "GROUP")
+        user1 = Factory(:user, email: "me@there.com")
+        user2 = Factory(:user, email: "you@there.com")
+
+        group.users << user1
+        group.users << user2
+
+        OpenMailer.send_simple_html(group, "Subject","").deliver!
+
+        m = OpenMailer.deliveries.last
+        expect(m.to.first).to eq user1.email
+        expect(m.to.second).to eq user2.email
+      end
     end
 
     it "should send html email with an attachment" do

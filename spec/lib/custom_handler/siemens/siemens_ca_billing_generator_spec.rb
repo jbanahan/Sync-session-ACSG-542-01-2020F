@@ -48,6 +48,9 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
   describe "run_schedulable" do
     before :each do
       KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}'
+      @user = Factory(:user, email: "me@there.com")
+      group = Group.use_system_group("canada-accounting")
+      group.users << @user
     end
 
     it "should find entries and generate and send them" do
@@ -69,6 +72,11 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       # All that we care about here is ultimately 1 line of something was encrypted
       # the rest is tested below.
       expect(file_data.lines.size).to eq 1
+
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      # Ensure the email was the report and not an error
+      mail = ActionMailer::Base.deliveries.first
+      expect(mail.to).to eq [@user.email]
     end
   end
 
@@ -213,7 +221,8 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
       it "writes out formatted entry data to an IO source" do
         io = StringIO.new
-        subject.write_entry_data io, @ed
+        report = StringIO.new
+        subject.write_entry_data io, report, @ed
 
         io.rewind
         lines = io.readlines("\r\n")
@@ -327,6 +336,14 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l[556..566]).to eq "0.00".rjust(11)
         expect(l[567..577]).to eq "0.00".rjust(11)
         expect(l[578..591]).to eq "0.00".rjust(14)
+
+        report.rewind
+        csv_lines = CSV.parse(report.read)
+        expect(csv_lines.length).to eq 3
+
+        expect(csv_lines.first).to eq ["K84 Date", "File #", "Transaction #", "B3 Subheader #", "B3 Line #", "Line Number", "Duty", "Sima", "Excise", "GST", "GST Rate Code", "Total"]
+        expect(csv_lines.second).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "1", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
+        expect(csv_lines.third).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "2", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
       end
     end
 
@@ -335,6 +352,9 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         before :each do
           @counter = KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}'
           @entry.save!
+          @user = Factory(:user, email: "me@there.com")
+          group = Group.use_system_group("canada-accounting")
+          group.users << @user
         end
         
         it "writes entry data to a file and sends it" do
@@ -371,7 +391,10 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           expect(sr.confirmed_at).not_to be_nil
 
           expect(@counter.reload.data).to eq({"counter" => 1})
-          expect(ActionMailer::Base.deliveries.length).to eq 0
+          expect(ActionMailer::Base.deliveries.length).to eq 1
+          # Ensure the email was the report and not an error
+          mail = ActionMailer::Base.deliveries.first
+          expect(mail.to).to eq [@user.email]
         end
 
         it "sends an email if the ftp file couldn't be sent" do

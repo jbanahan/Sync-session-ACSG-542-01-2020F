@@ -49,7 +49,7 @@ EOS
       
     end
 
-    m = mail(:to=>to,:subject=>subject) do |format|
+    m = mail(to: explode_group_email_list(to, "TO"), subject: subject) do |format|
       format.html
     end
 
@@ -455,11 +455,9 @@ EOS
     end
 
     def explode_group_email_list list, list_type
-      list = (list.respond_to?(:each) ? list : [list])
-
       new_list = []
       group_codes = []
-      list.each do |email_address|
+      Array.wrap(list).each do |email_address|
         if email_address.is_a? Group
           group_codes << email_address.system_code
           emails = email_address.users.map(&:email).find_all {|em| !em.blank?}
@@ -471,7 +469,7 @@ EOS
       # Track the groups being sent to under the covers to easily back-trace actual emails to distinct
       # groups
       headers["X-ORIGINAL-GROUP-#{list_type}"] = group_codes.join(", ") unless group_codes.blank?
-      new_list.blank? ? nil : new_list
+      new_list.blank? ? nil : new_list.flatten
     end
 
     def large_attachment? file

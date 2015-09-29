@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
       where(companies: {fenix_customer_number: siemens_tax_ids}).
       # Prior to 9/25/2015 this process was done through the old fenix system, so we need to ignore everything done through there.
       where("sync_records.id IS NULL").where("k84_receive_date IS NOT NULL AND k84_receive_date > '2015-09-24'").
-      includes(commercial_invoices: [:commercial_invoice_lines]).
+      includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]]).
       order("entries.k84_receive_date ASC").all
   end
 
@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     sent = false
     filename = "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}#{counter}.dat"
 
-    generate_file_data_to_tempfile(entries, filename) do |outfile|
+    generate_file_data_to_tempfiles(entries, filename) do |outfile, report|
       encrypt_file(outfile) do |encrypted_file|
         Attachment.add_original_filename_method encrypted_file, filename+".pgp"
         completed = false
@@ -69,7 +69,10 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
             completed = true
           end
         ensure
-          if !completed
+          if completed
+            now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now
+            OpenMailer.send_simple_html(Group.use_system_group("canada-accounting", "VFI Canada Accounting"), "Siemens Billing Report #{now.strftime("%Y-%m-%d")}", "Attached is the duty data that was sent to Siemens on #{now.strftime("%Y-%m-%d")}.", report).deliver!
+          else
             OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error", "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", outfile).deliver!
           end
         end
@@ -77,32 +80,41 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     end
   end
 
-
-  def generate_file_data_to_tempfile entries, filename
+  def generate_file_data_to_tempfiles entries, filename
     # Ensure only a single process can run this at a time.
     Lock.acquire_for_class(self.class, yield_in_transaction: false) do 
-      Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"]) do |outfile|
+      Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"]) do |billing_file|
         # We're encoding the file data directly when writing to the file stream...so make sure 
         # the IO doesn't do any extra encoding translations.
-        outfile.binmode
+        billing_file.binmode
         # Add the original_filename method, both the ftp and the mailer will utilize this method to name the file when sending
-        Attachment.add_original_filename_method outfile, filename
+        Attachment.add_original_filename_method billing_file, filename
 
-        entries.each do |e|
-          write_entry_data outfile, generate_entry_data(e)
+        Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"]) do |billing_report|
+          write_report_headers billing_report
+          Attachment.add_original_filename_method billing_report, "siemens-billing-#{Time.zone.now.strftime("%Y-%m-%d")}.csv"
+          
+          entries.each do |e|
+            write_entry_data billing_file, billing_report, generate_entry_data(e)
+          end
+          billing_file.flush
+          billing_file.rewind
+
+          billing_report.flush
+          billing_report.rewind
+
+          yield billing_file, billing_report
         end
-        outfile.flush
-        outfile.rewind
-
-        yield outfile
       end
     end
   end
 
-  def write_entry_data io, entry
+  def write_entry_data billing_file, billing_report, entry
     # Keep in mind these are the struct classes above, not actual entry/invoice/line classes
+    
     entry.commercial_invoice_lines.each_with_index do |line, x|
-      write_entry_data_line io, entry, line, x == 0
+      write_entry_data_line billing_file, entry, line, x == 0
+      write_report_data billing_report, entry, line
     end
     nil
   end 
@@ -178,9 +190,49 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     # Handle the encoding directly here and just replace non-windows charset chars w/ ?.  
     # These are only going to be in descriptions or something like that anyway, so it's not going
     # to be a big deal if they're not showing 100% correct.
-    io.write s.read.encode("WINDOWS-1252", invalid: :replace, undef: :replace, replace: "?")
+    io.write encode(s.read)
     io.flush
     nil
+  end
+
+  def write_report_headers io
+    headers = []
+    headers << "K84 Date"
+    headers << "File #"
+    headers << "Transaction #"
+    headers << "B3 Subheader #"
+    headers << "B3 Line #"
+    headers << "Line Number"
+    headers << "Duty"
+    headers << "Sima"
+    headers << "Excise"
+    headers << "GST"
+    headers << "GST Rate Code"
+    headers << "Total"
+
+    io.write headers.to_csv
+  end
+
+  def write_report_data io, entry, line
+    columns = []
+    columns << entry.accounting_date.strftime("%Y-%m-%d")
+    columns << entry.broker_reference
+    columns << entry.entry_number
+    columns << line.subheader_number
+    columns << line.customs_line_number
+    columns << line.line_number
+    columns << line.duty
+    columns << line.sima_value
+    columns << line.excise_amount
+    columns << line.gst_amount
+    columns << line.gst_rate_code
+    columns << (line.duty + line.sima_value + line.excise_amount + line.gst_amount)
+
+    io.write encode(columns.to_csv)
+  end
+
+  def encode str
+    str.to_s.encode("WINDOWS-1252", invalid: :replace, undef: :replace, replace: "?")
   end
 
   def generate_entry_data entry
