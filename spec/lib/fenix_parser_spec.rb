@@ -80,15 +80,17 @@ describe OpenChain::FenixParser do
       '5' => [Time.new(2013,4,4,10,0)],
       '105' => [Time.new(2014,9,3,12,2), Time.new(2014,9,3,7,57)]
     }
+    # Note the values stored as dates are sent in such a manner that if they're improperly handled 
+    # in the parser will show the incorrect date value (.ie they'll be rolled forward a day when they shouldn't)
     @new_activities = {
       'DOGIVEN' => [Time.new(2015,4,1,10,0), Time.new(2015,4,1,18,0)],
-      'DOCREQ' => [Time.new(2015,4,2,10,0), Time.new(2015,4,2,18,0)],
+      'DOCREQ' => [Time.new(2015,4,2,23,0), Time.new(2015,4,2,23,0)],
       'ETA' => [Date.new(2015,4,2), Date.new(2015,4,3)],
       'RNSCUSREL' => [Time.new(2015,9,8,12,2), Time.new(2015,9,9,12,2)],
       'CADXTRAN' => [Time.new(2015,9,10,12,2), Time.new(2015,9,11,12,2)],
       'CADXACCP' => [Time.new(2015,9,12,12,2), Time.new(2015,9,13,12,2)],
       'ACSREFF' => [Time.new(2015,4,4,10,0), Time.new(2015,4,4,18,0)],
-      'CADK84REC' => [Time.new(2015,4,4,10,0)],
+      'CADK84REC' => [Time.new(2015,4,4,23,59)],
       'B3P' => [Time.new(2015,9,3,12,2), Time.new(2015,9,3,7,57)]
     }
     @use_new_activities = false

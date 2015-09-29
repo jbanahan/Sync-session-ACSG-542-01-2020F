@@ -22,13 +22,13 @@ module OpenChain
       '1280' => :k84_receive_date=,
       '105'=> :b3_print_date=,
       'DOGIVEN' => :do_issued_date_first,
-      'DOCREQ' => :docs_received_date_first,
-      'ETA' => :eta_date=,
+      'DOCREQ' => {datatype: :date, setter: :docs_received_date_first},
+      'ETA' => {datatype: :date, setter: :eta_date=},
       'RNSCUSREL' => :release_date=,
       'CADXTRAN' => :cadex_sent_date=,
       'CADXACCP' => :cadex_accept_date=,
       'ACSREFF' => :exam_ordered_date=,
-      'CADK84REC' => :k84_receive_date=,
+      'CADK84REC' => {datatype: :date, setter: :k84_receive_date=},
       'B3P' => :b3_print_date=
     }
 
@@ -451,12 +451,17 @@ module OpenChain
     end
 
     def process_activity_line entry, line, accumulated_dates
-      if !line[2].nil? && !line[3].nil? && ACTIVITY_DATE_MAP[line[2].strip]
-        time = (line[4].blank? ? time_zone.parse(line[3]).to_date : time_zone.parse("#{line[3]}#{line[4]}")) rescue nil
+      data = date_map_data line[2].strip
+      if !line[2].nil? && !line[3].nil? && data
+        if line[4].blank? || data[:datatype] == :date
+          time = time_zone.parse(line[3]).to_date rescue nil
+        else
+          time = time_zone.parse("#{line[3]}#{line[4]}") rescue nil
+        end
 
         # This assumes we're using a hash with a default return value of an empty array
         if time
-          accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << time
+          accumulated_dates[data[:setter]] << time
         end
       end
 
@@ -471,6 +476,14 @@ module OpenChain
 
       nil
       rescue
+    end
+
+    def date_map_data date_key
+      values = ACTIVITY_DATE_MAP[date_key]
+      if values && !values.is_a?(Hash)
+        values = {datatype: :datetime, setter: values}
+      end
+      values
     end
 
     def process_cargo_control_line line
