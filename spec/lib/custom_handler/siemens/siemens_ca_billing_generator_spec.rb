@@ -339,11 +339,10 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
         report.rewind
         csv_lines = CSV.parse(report.read)
-        expect(csv_lines.length).to eq 3
+        expect(csv_lines.length).to eq 2
 
-        expect(csv_lines.first).to eq ["K84 Date", "File #", "Transaction #", "B3 Subheader #", "B3 Line #", "Line Number", "Duty", "Sima", "Excise", "GST", "GST Rate Code", "Total"]
-        expect(csv_lines.second).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "1", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
-        expect(csv_lines.third).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "2", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
+        expect(csv_lines.first).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "1", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
+        expect(csv_lines.second).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "2", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
       end
     end
 
