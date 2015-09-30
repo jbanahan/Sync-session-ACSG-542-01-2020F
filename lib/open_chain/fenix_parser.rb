@@ -146,7 +146,9 @@ module OpenChain
         # with valid entry numbers shortly
         return nil unless valid_entry_number? info[:entry_number]
 
-        find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path, opts[:timestamp])) do |entry|
+        fenix_nd_entry = !opts[:timestamp].nil?
+
+        find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path, opts[:timestamp]), fenix_nd_entry) do |entry|
           # Entry is only yieled here if we need to process one (ie. it's not outdated)
           # This whole block is also already inside a transaction, so no need to bother with opening another one
           @entry = entry
@@ -619,7 +621,7 @@ module OpenChain
       c
     end
 
-    def find_and_process_entry file_number, entry_number, tax_id, importer_name, source_system_export_date
+    def find_and_process_entry file_number, entry_number, tax_id, importer_name, source_system_export_date, fenix_nd_entry = false
       # Make sure we aquire a cross process lock to prevent multiple job queues from executing this 
       # at the same time (prevents duplicate entries from being created).
       entry = nil
@@ -649,6 +651,10 @@ module OpenChain
           # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
           # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
           entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer.id, :last_exported_from_source=>source_system_export_date) 
+        end
+
+        if fenix_nd_entry
+          validate_no_transaction_reuse entry
         end
       end
 
@@ -791,6 +797,10 @@ module OpenChain
         r = "0#{r}"
       end
       r
+    end
+
+    def validate_no_transaction_reuse entry
+      raise "File # #{entry.broker_reference} cannot be reused in Fenix ND.  Please check if this is the correct file number that should be used for this entry." if entry.release_date && entry.release_date < time_zone.parse("2015-09-18")
     end
   end
 end

@@ -662,6 +662,16 @@ describe OpenChain::FenixParser do
     expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error "File # / Invoice # #{@file_number} / #{@invoice_number} was missing an exchange rate.  Exchange rate must be present for commercial invoices where the currency is not CAD."
   end
 
+  it "raises an error if Fenix ND entry attempts to update an old entry" do
+    Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
+    expect{OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.to raise_error "File # #{@file_number} cannot be reused in Fenix ND.  Please check if this is the correct file number that should be used for this entry."
+  end
+
+  it "doesn't raise an error if Fenix ND entry attempts to update an entry released after 9/18" do
+    Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-18 00:01"))
+    expect{OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.not_to raise_error
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
