@@ -334,7 +334,16 @@ module OpenChain
       ci.invoice_date = parse_date(line[18])
       ci.vendor_name = str_val(line[11])
       ci.currency = str_val(line[43])
+      # Fenix ND sometimes doesn't send the exchange rate when the currency is Canadian
       ci.exchange_rate = dec_val(line[44])
+      if ci.exchange_rate.blank?
+        if ci.currency == "CAD"
+          ci.exchange_rate = 1
+        else
+          raise "File # / Invoice # #{@entry.broker_reference} / #{ci.invoice_number} was missing an exchange rate.  Exchange rate must be present for commercial invoices where the currency is not CAD."
+        end
+      end
+
       ci.mfid = str_val(line[102])
       accumulate_string :vendor_names, ci.vendor_name
       accumulate_string :invoice_number, ci.invoice_number

@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
       # Prior to 9/25/2015 this process was done through the old fenix system, so we need to ignore everything done through there.
       where("sync_records.id IS NULL").where("k84_receive_date IS NOT NULL AND k84_receive_date > '2015-09-24'").
       includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]]).
-      order("entries.k84_receive_date ASC").all
+      order("entries.k84_receive_date ASC")
   end
 
   def generate_and_send entries

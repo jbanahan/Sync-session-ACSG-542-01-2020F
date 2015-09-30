@@ -648,6 +648,20 @@ describe OpenChain::FenixParser do
     OpenChain::FenixParser.parse @entry_lambda.call
   end
 
+  it "sets exchnage rate to 1 if missing and currency is CAD" do
+    @currency = 'CAD'
+    @exchange_rate = ""
+    OpenChain::FenixParser.parse @entry_lambda.call
+    e = Entry.find_by_broker_reference @file_number
+
+    expect(e.commercial_invoices.first.exchange_rate).to eq BigDecimal(1)
+  end
+
+  it "raises an error if non-CAD currency exchange rate is missing" do
+    @exchange_rate = ""
+    expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error "File # / Invoice # #{@file_number} / #{@invoice_number} was missing an exchange rate.  Exchange rate must be present for commercial invoices where the currency is not CAD."
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
