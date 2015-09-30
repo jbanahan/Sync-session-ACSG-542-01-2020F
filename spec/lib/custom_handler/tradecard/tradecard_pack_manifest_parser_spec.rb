@@ -447,10 +447,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         expect(cs.shipment_lines.first).to eq @s.shipment_lines.first
         expect(@s.shipment_lines.count).to eq 2
 
-        expect(@s.gross_weight).to eq BigDecimal(14)
+        expect(@s.gross_weight).to eq BigDecimal(42)
         expect(@s.number_of_packages).to eq 6
         expect(@s.number_of_packages_uom).to eq "CARTONS"
-        expect(@s.volume).to eq BigDecimal(2)
+        expect(@s.volume).to eq BigDecimal(6)
       end
       it "adds shipment totals to existing amounts" do
         @s.gross_weight = BigDecimal(10)
@@ -468,10 +468,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         described_class.new.process_rows(@s,rows,@u)
         @s.reload
 
-        expect(@s.gross_weight).to eq BigDecimal(24)
+        expect(@s.gross_weight).to eq BigDecimal(52)
         expect(@s.number_of_packages).to eq 26
         expect(@s.number_of_packages_uom).to eq "CTNS"
-        expect(@s.volume).to eq BigDecimal(12)
+        expect(@s.volume).to eq BigDecimal(16)
       end
       it "does not update number of packags unless package uom is CARTONS or CTNS" do
         @s.number_of_packages = 20

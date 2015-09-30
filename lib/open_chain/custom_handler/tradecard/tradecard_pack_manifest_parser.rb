@@ -181,18 +181,14 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
       cs = line.carton_set
       next if cs.nil? || carton_sets.include?(cs)
 
-      gross_weight += cs.gross_kgs.presence || BigDecimal(0)
       total_package_count += cs.carton_qty.presence || 0
-
-      if cs.length_cm && cs.width_cm && cs.height_cm
-
-        volume += (cs.length_cm * cs.width_cm * cs.height_cm) / BigDecimal(1000000)
-      end
+      gross_weight += cs.total_gross_kgs
+      volume += cs.total_volume_cbms
 
       carton_sets << cs
     end
     
-    shipment.volume = (shipment.volume.presence || BigDecimal(0)) + volume.round(2, BigDecimal::ROUND_HALF_UP)
+    shipment.volume = (shipment.volume.presence || BigDecimal(0)) + volume
     shipment.gross_weight = (shipment.gross_weight.presence || BigDecimal(0)) + gross_weight
     # Only add packages to total if the uom is blank or cartons
     if shipment.number_of_packages_uom.blank? || shipment.number_of_packages_uom =~ /(CTN|CARTON)/i
