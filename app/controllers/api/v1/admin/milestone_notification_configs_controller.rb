@@ -1,7 +1,7 @@
 module Api; module V1; module Admin; class MilestoneNotificationConfigsController < Api::V1::Admin::AdminApiController
 
   def index 
-    configs = MilestoneNotificationConfig.order(:customer_number).all.collect {|c| config_json(c)}
+    configs = MilestoneNotificationConfig.order(:customer_number, :testing).all.collect {|c| config_json(c)}
     render json: {configs: configs, output_styles: output_styles}
   end
 
@@ -42,6 +42,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
       c.customer_number = config[:customer_number]
       c.output_style = config[:output_style]
       c.enabled = config[:enabled].to_s.to_boolean
+      c.testing = config[:testing].to_s.to_boolean
       
       config[:search_criterions].each do |sc|
         c.search_criterions.build model_field_uid: sc[:mfid], operator: sc[:operator], value: sc[:value], include_empty: sc[:include_empty]
@@ -78,7 +79,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
 
     def config_json config, copy = false
       c = config.as_json(
-        only: [:id, :customer_number, :enabled, :output_style],
+        only: [:id, :customer_number, :enabled, :output_style, :testing],
         methods: [:setup_json]
       ).with_indifferent_access
       c[:milestone_notification_config][:setup_json].each do |setup|

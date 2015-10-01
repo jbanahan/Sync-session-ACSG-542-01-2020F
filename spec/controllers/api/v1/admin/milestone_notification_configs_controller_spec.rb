@@ -36,6 +36,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
         customer_number: "CUST",
         enabled: true,
         output_style: "standard",
+        testing: nil,
         setup_json: [
           {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true, label: "Broker Reference", event_code: "brok_ref"}
         ],
@@ -83,6 +84,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
                 customer_number: "CUST",
                 output_style: "standard",
                 enabled: true,
+                testing: false,
                 setup_json: [
                   {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
                   {model_field_uid: "", timezone: "timezone", no_time: true}
@@ -99,6 +101,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       config = MilestoneNotificationConfig.first
       expect(config.customer_number).to eq "CUST"
       expect(config.enabled).to be_true
+      expect(config.testing).to be_false
       expect(config.output_style).to eq "standard"
       expect(config.setup_json).to eq (
         [{"model_field_uid" => "ent_brok_ref", "timezone" => "timezone", "no_time" => true}]
@@ -154,6 +157,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
                  customer_number: "CUST",
                  output_style: "mbol_container",
                  enabled: false,
+                 testing: true,
                  setup_json: [
                    {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
                    {model_field_uid: "", timezone: "timezone", no_time: true}
@@ -173,6 +177,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(@config.customer_number).to eq "CUST"
       expect(@config.enabled).to be_false
       expect(@config.output_style).to eq "mbol_container"
+      expect(@config.testing).to be_true
       expect(@config.setup_json).to eq (
         [{"model_field_uid" => "ent_brok_ref", "timezone" => "timezone", "no_time" => true}]
       )
@@ -204,9 +209,9 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
   describe "index" do
     it "lists all configs" do
-      config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
+      config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", testing: false, setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
       config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false
-      config2 = MilestoneNotificationConfig.create! customer_number: "ABC",output_style: "standard"
+      config2 = MilestoneNotificationConfig.create! customer_number: "ABC",output_style: "standard", testing: true
 
       get :index
 
@@ -222,7 +227,8 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
             enabled: nil,
             output_style: 'standard',
             setup_json: [],
-            search_criterions: []
+            search_criterions: [],
+            testing: true
           }
         }.with_indifferent_access
       )
@@ -233,6 +239,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
             customer_number: "CUST",
             enabled: nil,
             output_style: 'standard',
+            testing: false,
             setup_json: [
               {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true, label: "Broker Reference", event_code: "brok_ref"}
             ],
@@ -271,7 +278,8 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
         enabled: nil,
         output_style: nil,
         setup_json: [],
-        search_criterions: []
+        search_criterions: [],
+        testing: nil
         }.with_indifferent_access
       )
 

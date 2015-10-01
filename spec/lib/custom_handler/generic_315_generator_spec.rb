@@ -36,6 +36,24 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
         expect(described_class.new.accepts? :save, e).to be_false
       end
+
+      it "accepts if multiple configs are setup" do
+        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: false
+        c1 = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true
+        c.save! 
+        c1.save!
+
+        expect(described_class.new.accepts? :save, e).to be_true
+      end
+
+      it "accepts if configs are all testing" do
+        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true
+        c.save!
+
+        expect(described_class.new.accepts? :save, e).to be_true
+      end
     end
     
     it "doesn't accept entries if 'Entry 315' custom feature isn't enabled" do
@@ -195,6 +213,35 @@ describe OpenChain::CustomHandler::Generic315Generator do
       expect(REXML::XPath.each(docs[0], "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
       expect(docs[1].text "MasterBills/MasterBill").to eq "B"
       expect(REXML::XPath.each(docs[1], "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
+    end
+
+    it "sends milestones for each config that is enabled" do
+      config2 = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true
+      config2.setup_json = [
+        {model_field_uid: "ent_file_logged_date"}
+      ]
+      config2.save!
+
+      @entry.update_attributes! file_logged_date: Time.zone.now
+
+      file_contents = []
+      subject.should_receive(:ftp_file).exactly(2).times do |file|
+        file_contents << file.read
+      end
+      subject.receive :save, @entry
+
+      expect(file_contents.size).to eq 2
+
+      # The first file is going to be the first config..
+      r = REXML::Document.new(file_contents.first).root
+      expect(r.text "VfiTrack315/Event/EventCode").to eq "release_date"
+
+      # The second should be the file logged testing config
+      r = REXML::Document.new(file_contents.second).root
+      expect(r.text "VfiTrack315/Event/EventCode").to eq "file_logged_date"
+
+      # Testing configs should not set cross reference values
+      expect(DataCrossReference.find_315_milestone @entry, 'file_logged_date').to be_nil
     end
   end
 

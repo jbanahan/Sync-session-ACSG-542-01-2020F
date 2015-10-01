@@ -10,29 +10,33 @@ module OpenChain; module CustomHandler; class Generic315Generator
   def accepts? event, entry
     # Just check if the customer has a 315 setup, at this point..if so, then accept.  We'll decide in receive if we're actually generating anythign
     # or not.
-    MasterSetup.get.custom_feature?("Entry 315") && !entry.customer_number.blank? && !setup_315(entry).nil?
+    MasterSetup.get.custom_feature?("Entry 315") && !entry.customer_number.blank? && setup_315(entry).size > 0
   end
 
   def receive event, entry
-    setup = setup_315(entry)
-    matches = setup.search_criterions.collect {|sc| sc.test? entry}.uniq.compact
-    user = User.integration
-    milestones = []
-    if setup.search_criterions.length == 0 || (matches.length == 1 && matches[0] == true)
-      setup.setup_json.each do |field|
-        milestones << process_field(field.with_indifferent_access, user, entry)
+    setups = setup_315(entry)
+
+    setups.each do |setup|
+      matches = setup.search_criterions.collect {|sc| sc.test? entry}.uniq.compact
+      user = User.integration
+      milestones = []
+      if setup.search_criterions.length == 0 || (matches.length == 1 && matches[0] == true)
+        setup.setup_json.each do |field|
+          milestones << process_field(field.with_indifferent_access, user, entry)
+        end
+      end
+      milestones.compact!
+
+      if milestones.size > 0
+        generate_and_send_315s setup.output_style, entry, milestones, setup.testing?
       end
     end
-    milestones.compact!
-
-    if milestones.size > 0
-      generate_and_send_315s setup.output_style, entry, milestones
-    end
+    
     
     entry
   end
 
-  def generate_and_send_315s output_style, entry, milestones
+  def generate_and_send_315s output_style, entry, milestones, prevent_milestone_recording = false
     # Our first customer using this feed requires sending distinct 315's for each combination of entry/mbol/container #
     # I'm anticipating this not being a global requirement, so I'm still preserving the ability to send multiple
     # mbols and containers per file.
@@ -55,8 +59,10 @@ module OpenChain; module CustomHandler; class Generic315Generator
           fout.rewind
           ftp_file fout, folder: ftp_folder(entry.customer_number)
 
-          milestones.each do |milestone|
-            DataCrossReference.create_315_milestone! entry, milestone.code, xref_date_value(milestone.date)
+          unless prevent_milestone_recording
+            milestones.each do |milestone|
+              DataCrossReference.create_315_milestone! entry, milestone.code, xref_date_value(milestone.date)
+            end
           end
         end
       end
@@ -175,8 +181,9 @@ module OpenChain; module CustomHandler; class Generic315Generator
 
     def setup_315 entry
       @cache ||= Hash.new do |h, k|
-        config = MilestoneNotificationConfig.where(customer_number: k).first
-        h[k] = (config.try(:enabled?) ? config : nil)
+        # Since we can now potentially have multiple configs per customer (since you can have different statuses on the setups),
+        # we need to collect all of them that are enabled.
+        h[k] = MilestoneNotificationConfig.where(customer_number: k, enabled: true).order(:id).all
       end
 
       @cache[entry.customer_number]
