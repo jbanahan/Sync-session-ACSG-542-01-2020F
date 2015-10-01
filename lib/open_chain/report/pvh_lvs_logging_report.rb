@@ -74,9 +74,9 @@ module OpenChain
             hst_bc.charge_amount AS 'HST (BC)',
             'Canada' AS 'Country of Final Destination',
             (SELECT GROUP_CONCAT(cit.tariff_description SEPARATOR '; ')
-             FROM entries as e INNER JOIN commercial_invoices AS ci ON e.id = ci.entry_id
-             INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id
-             INNER JOIN commercial_invoice_tariffs as cit ON cil.id = cit.commercial_invoice_line_id) AS "Description",
+             FROM commercial_invoices AS ci INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id
+             INNER JOIN commercial_invoice_tariffs as cit ON cil.id = cit.commercial_invoice_line_id
+             WHERE ci.entry_id = e.id) AS "Description",
             '' AS Contact,
             '' AS 'Bill Code',
             '' AS Paid
@@ -90,9 +90,10 @@ module OpenChain
             LEFT OUTER JOIN broker_invoice_lines hst_bc ON hst_bc.broker_invoice_id = bi.id AND hst_bc.charge_code = '250'
           WHERE e.importer_tax_id = '833231749RM0001' AND
                 e.entry_type = '#{type}' AND
-                bi.invoice_date > '#{start_date_time}' AND
-                bi.invoice_date < '#{end_date_time}'
-          GROUP BY bi.id; 
+                bi.invoice_date >= '#{start_date_time}' AND
+                bi.invoice_date <= '#{end_date_time}'
+          GROUP BY bi.id
+          ORDER BY bi.invoice_date;
         SQL
       end
 
