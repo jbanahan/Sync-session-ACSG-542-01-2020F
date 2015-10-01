@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
     entry
   end
 
-  def generate_and_send_315s output_style, entry, milestones, prevent_milestone_recording = false
+  def generate_and_send_315s output_style, entry, milestones, testing = false
     # Our first customer using this feed requires sending distinct 315's for each combination of entry/mbol/container #
     # I'm anticipating this not being a global requirement, so I'm still preserving the ability to send multiple
     # mbols and containers per file.
@@ -57,9 +57,9 @@ module OpenChain; module CustomHandler; class Generic315Generator
           doc.write fout
           fout.flush
           fout.rewind
-          ftp_file fout, folder: ftp_folder(entry.customer_number)
+          ftp_file fout, folder: ftp_folder(entry.customer_number, testing)
 
-          unless prevent_milestone_recording
+          unless testing
             milestones.each do |milestone|
               DataCrossReference.create_315_milestone! entry, milestone.code, xref_date_value(milestone.date)
             end
@@ -106,8 +106,13 @@ module OpenChain; module CustomHandler; class Generic315Generator
     connect_vfitrack_net nil
   end
 
-  def ftp_folder customer_number
-    "to_ecs/315/#{customer_number.to_s.upcase}"
+  def ftp_folder customer_number, testing = false
+    if testing
+      "to_ecs/315_test/#{customer_number.to_s.upcase}"
+    else
+      "to_ecs/315/#{customer_number.to_s.upcase}"
+    end
+    
   end
 
   protected

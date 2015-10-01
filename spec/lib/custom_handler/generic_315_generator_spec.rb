@@ -101,6 +101,18 @@ describe OpenChain::CustomHandler::Generic315Generator do
       expect(ftp_opts).to eq folder: "to_ecs/315/CUST"
     end
 
+    it "generates and sends xml for 315 update for testing" do
+      @config.testing = true
+      @config.save!
+      
+      ftp_opts = nil
+      subject.should_receive(:ftp_file) do |file, opts|
+        ftp_opts = opts
+      end
+      subject.receive :save, @entry
+      expect(ftp_opts).to eq folder: "to_ecs/315_test/CUST"
+    end
+
     it "accepts if all search creatrions match" do
       @config.search_criterions.create! model_field_uid: "ent_release_date", operator: "notnull"
       c = described_class.new
