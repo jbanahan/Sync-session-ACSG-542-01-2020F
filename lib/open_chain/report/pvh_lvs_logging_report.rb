@@ -9,8 +9,8 @@ module OpenChain
       end
 
       def get_local_time
-        start_date_time = (ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now - 7.days).beginning_of_day
-        end_date_time = (ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now - 1.days).end_of_day
+        start_date_time = (ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now - 8.days).beginning_of_day
+        end_date_time = (ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now - 2.days).end_of_day
         [start_date_time, end_date_time]
       end
 
@@ -64,12 +64,12 @@ module OpenChain
             e.entry_filed_date AS 'Entry Date',
             e.entered_value AS 'Entered Value',
             e.total_duty AS 'B3 Duties',
-            e.broker_reference AS 'Broker Invoice',
-            e.broker_invoice_total AS 'Broker Fees',
+            bi.invoice_number AS 'Broker Invoice',
+            broker_fees.charge_amount AS 'Broker Fees',
             gst_ab.charge_amount AS 'GST (AB)',
             gst_mb.charge_amount AS 'GST (MB)',
             gst_pq.charge_amount AS 'GST (PQ)',
-            gst_imports.charge_amount AS 'GST On Imports',
+            e.total_gst AS 'GST On Imports',
             hst_on.charge_amount AS 'HST (ON)',
             hst_bc.charge_amount AS 'HST (BC)',
             'Canada' AS 'Country of Final Destination',
@@ -85,7 +85,7 @@ module OpenChain
             LEFT OUTER JOIN broker_invoice_lines gst_ab ON gst_ab.broker_invoice_id = bi.id AND gst_ab.charge_code = '251'
             LEFT OUTER JOIN broker_invoice_lines gst_mb ON gst_mb.broker_invoice_id = bi.id AND gst_mb.charge_code = '254'
             LEFT OUTER JOIN broker_invoice_lines gst_pq ON gst_pq.broker_invoice_id = bi.id AND gst_pq.charge_code = '256'
-            LEFT OUTER JOIN broker_invoice_lines gst_imports ON gst_imports.broker_invoice_id = bi.id AND gst_imports.charge_code = '2'
+            LEFT OUTER JOIN broker_invoice_lines broker_fees ON broker_fees.broker_invoice_id = bi.id AND broker_fees.charge_code = '22'
             LEFT OUTER JOIN broker_invoice_lines hst_on ON hst_on.broker_invoice_id = bi.id AND hst_on.charge_code = '255'
             LEFT OUTER JOIN broker_invoice_lines hst_bc ON hst_bc.broker_invoice_id = bi.id AND hst_bc.charge_code = '250'
           WHERE e.importer_tax_id = '833231749RM0001' AND
