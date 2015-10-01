@@ -21,8 +21,12 @@ module OpenChain; module CustomHandler; class Generic315Generator
       user = User.integration
       milestones = []
       if setup.search_criterions.length == 0 || (matches.length == 1 && matches[0] == true)
-        setup.setup_json.each do |field|
-          milestones << process_field(field.with_indifferent_access, user, entry)
+        # Prevent any other 315 processes for this entry from running, otherwise, it's possible
+        # for race conditions between backend processes to produce multiple 315's for the same entry/event
+        Lock.acquire("315-#{entry.broker_reference}") do
+          setup.setup_json.each do |field|
+            milestones << process_field(field.with_indifferent_access, user, entry)
+          end
         end
       end
       milestones.compact!

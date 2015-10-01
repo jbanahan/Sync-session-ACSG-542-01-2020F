@@ -76,10 +76,11 @@ describe OpenChain::CustomHandler::Generic315Generator do
         {model_field_uid: "ent_release_date"}
       ]
       @config.save!
-      @entry = Factory(:entry, source_system: "Alliance", customer_number: "cust", release_date: "2015-03-01 08:00", master_bills_of_lading: "A\nB", container_numbers: "E\nF")
+      @entry = Factory(:entry, source_system: "Alliance", customer_number: "cust", broker_reference: "123", release_date: "2015-03-01 08:00", master_bills_of_lading: "A\nB", container_numbers: "E\nF")
     end
 
     it "generates and sends xml for 315 update" do
+      Lock.should_receive(:acquire).with("315-123").and_yield 
       c = described_class.new
       file_contents = nil
       ftp_opts = nil
@@ -104,7 +105,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
     it "generates and sends xml for 315 update for testing" do
       @config.testing = true
       @config.save!
-      
+
       ftp_opts = nil
       subject.should_receive(:ftp_file) do |file, opts|
         ftp_opts = opts
