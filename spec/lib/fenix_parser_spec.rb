@@ -27,7 +27,7 @@ describe OpenChain::FenixParser do
     @across_sent_date = '01/27/2012,09:24am'
     @pars_ack_date = '01/28/2012,11:15am'
     @pars_rej_date = '01/08/2012,11:15am'
-    @release_date = '01/09/2012,11:19am'
+    @release_date = '09/20/2015,11:19am'
     @cadex_sent_date = '01/10/2012,12:15pm'
     @cadex_accept_date = '01/11/2012,01:13pm'
     @invoice_number = '12345'
@@ -103,8 +103,10 @@ describe OpenChain::FenixParser do
     @b3_line_number = 25
     @subheader_number = 3
     @special_authority = "123-456"
+
+    # Timestamp is also the indicator to the parser that the file is from Fenix ND...which should be what we default to now
     @timestamp = ["T", "20150904", "201516"]
-    @entry_lambda = lambda { |new_style = true, multi_line = true, time_stamp = false|
+    @entry_lambda = lambda { |new_style = true, multi_line = true, time_stamp = true|
       data = ""
       data += (@timestamp.join(", ") + "\r\n") if time_stamp
       data += new_style ? "B3L," : ""
@@ -155,7 +157,7 @@ describe OpenChain::FenixParser do
     ent.import_country.should == Country.find_by_iso_code('CA')
     ent.entry_number.should == @barcode
     ent.importer_tax_id.should == @importer_tax_id
-    ent.last_exported_from_source.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+    ent.last_exported_from_source.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20150904201516")
 
     ent.ship_terms.should == @ship_terms.upcase
     ent.direct_shipment_date.should == Date.strptime(@direct_shipment_date, @mdy)
@@ -220,7 +222,7 @@ describe OpenChain::FenixParser do
     line.value.should == @line_value
     line.line_number.should == 1 
     line.customer_reference.should == @customer_reference
-    line.adjustments_amount.should == (@adjusted_vcc - @line_value) + @adjustments_per_piece
+    line.adjustments_amount.should == BigDecimal(".25")
     line.customs_line_number.should == @b3_line_number
     line.subheader_number.should == @subheader_number
 
@@ -439,25 +441,25 @@ describe OpenChain::FenixParser do
   end
 
   it "should skip files with older system export times than current entry" do
-    export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+    export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
 
     Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
     # Add a second to the time and make sure the entry has a value to match (.ie it was updated)
-    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2013052958483.1369859062.csv'}
+    @timestamp[2] = (@timestamp[2].to_i + 1).to_s
+    OpenChain::FenixParser.parse @entry_lambda.call
     entries = Entry.where(:broker_reference=>@file_number)
     entries.should have(1).entries
     # Verify the updated last exported date was used
-    entries[0].last_exported_from_source.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58483).seconds
+    entries[0].last_exported_from_source.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
   end
 
   it "should process files with same system export times as current entry" do
     # We want to make sure we do reprocess entries with the same export dates, this allows us to run larger
     # reprocess processes to get older data, but then only reprocess the most up to date file.
-    export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+    export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
     entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
     
-    # Add a second to the time and make sure the entry has a value to match (.ie it was updated)
-    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2013052958482.1369859062.csv'}
+    OpenChain::FenixParser.parse @entry_lambda.call
     entries = Entry.where(:broker_reference=>@file_number)
     entries.should have(1).entries
    
@@ -604,21 +606,21 @@ describe OpenChain::FenixParser do
   end
 
   it "skips purged entres" do
-    EntryPurge.create! source_system: 'Fenix', broker_reference: @file_number, date_purged: Time.zone.parse("2015-01-01 00:00")
-    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2013052958483.1369859062.csv'}
+    EntryPurge.create! source_system: 'Fenix', broker_reference: @file_number, date_purged: (ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2]) + 1.day)
+    OpenChain::FenixParser.parse @entry_lambda.call
     expect(Entry.find_by_broker_reference @file_number).to be_nil
   end
 
   it "creates new entries if purged before current source system export date" do
     EntryPurge.create! source_system: 'Fenix', broker_reference: @file_number, date_purged: Time.zone.parse("2015-01-01 00:00")
-    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2015052958483.1369859062.csv'}
+    OpenChain::FenixParser.parse @entry_lambda.call
     expect(Entry.find_by_broker_reference @file_number).not_to be_nil
   end
 
-  it "uses timestamp record if given" do
-    OpenChain::FenixParser.parse @entry_lambda.call(true, true, true)
-    e = Entry.find_by_broker_reference @file_number
-    expect(e.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
+  it "uses old timestamp from filename if no timestamp record" do
+    OpenChain::FenixParser.parse @entry_lambda.call(true, false, false), {:key=>'b3_detail_rns_114401_2013052958483.1369859062.csv'}
+    e = Entry.where(:broker_reference=>@file_number).first
+    expect(e.last_exported_from_source).to eq (ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58483).seconds)
   end
 
   it "parses new activity record identifiers" do
@@ -670,6 +672,13 @@ describe OpenChain::FenixParser do
   it "doesn't raise an error if Fenix ND entry attempts to update an entry released after 9/18" do
     Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-18 00:01"))
     expect{OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.not_to raise_error
+  end
+
+  it "parses old style assists" do
+    OpenChain::FenixParser.parse @entry_lambda.call(true, false, false)
+    e = Entry.find_by_broker_reference @file_number
+    line = e.commercial_invoices.first.commercial_invoice_lines.first
+    expect(line.adjustments_amount).to eq (@adjusted_vcc - @line_value + @adjustments_per_piece)
   end
 
   context 'importer company' do

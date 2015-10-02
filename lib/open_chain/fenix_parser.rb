@@ -168,7 +168,7 @@ module OpenChain
               process_bill_of_lading_line line
             else 
               process_invoice line
-              process_invoice_line line
+              process_invoice_line line, fenix_nd_entry
             end
           end
 
@@ -351,7 +351,7 @@ module OpenChain
       accumulate_string :invoice_number, ci.invoice_number
     end
 
-    def process_invoice_line line
+    def process_invoice_line line, fenix_nd = true
       inv = @commercial_invoices[line[15]]
       #inv will be blank if there was no invoice information on the line
       return if inv.nil?
@@ -392,12 +392,16 @@ module OpenChain
       accumulate_string :org_state, org[1]
       accumulate_string :customer_references, inv_ln.customer_reference
 
-      total_value_with_adjustments = dec_val(line[105])
+      if fenix_nd
+        inv_ln.adjustments_amount = dec_val(line[113])
+      else
+        total_value_with_adjustments = dec_val(line[105])
 
-      if total_value_with_adjustments
-        adjustments_per_piece = dec_val(line[113])
-        total_value_with_adjustments += adjustments_per_piece if adjustments_per_piece
-        inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0")) 
+        if total_value_with_adjustments
+          adjustments_per_piece = dec_val(line[113])
+          total_value_with_adjustments += adjustments_per_piece if adjustments_per_piece
+          inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0")) 
+        end
       end
 
       t = inv_ln.commercial_invoice_tariffs.build
