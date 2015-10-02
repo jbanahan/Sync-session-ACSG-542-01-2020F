@@ -7,6 +7,8 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 %>
     $("#frm_user").submit(function() {
       $("#user_group_ids option").prop('selected','selected');
+      $("#assigned_search_setup_ids option").prop('selected','selected');
+      $("#assigned_custom_report_ids option").prop('selected','selected');
     });
     $("#btn_cancel").click(function() {window.location = '<%=cancel_redirect%>'});
     $(".check_all").click(function(evt) {
@@ -39,18 +41,25 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     }));
 
     }
-    $("#btn_assign_groups").click(function(evt) {
-      evt.preventDefault();
-      var selectedItems = $("#available_groups option:selected").toArray();
-      $("#user_group_ids").append(selectedItems);
-      sortSelect("#user_group_ids");
-    })
-    $("#btn_remove_groups").click(function(evt) {
-      evt.preventDefault();
-      var selectedItems = $("#user_group_ids option:selected").toArray();
-      $("#available_groups").append(selectedItems);
-      sortSelect("#available_groups");
-    })
+    
+    function setupTransferButton(button, sourceList, destinationList) {
+      $(button).click(function(evt) {
+        evt.preventDefault();
+        var selectedItems = $(sourceList + " option:selected").toArray();
+        $(destinationList).append(selectedItems);
+        sortSelect(destinationList);
+      })
+    }
+
+    setupTransferButton("#btn_assign_groups", "#available_groups", "#user_group_ids");
+    setupTransferButton("#btn_remove_groups", "#user_group_ids", "#available_groups");
+
+    setupTransferButton("#btn_assign_search_setups", "#available_search_setups", "#assigned_search_setup_ids");
+    setupTransferButton("#btn_remove_search_setups", "#assigned_search_setup_ids", "#available_search_setups");
+
+    setupTransferButton("#btn_assign_custom_reports", "#available_custom_reports", "#assigned_custom_report_ids");
+    setupTransferButton("#btn_remove_custom_reports", "#assigned_custom_report_ids", "#available_custom_reports");
+    
   });
 <%end%>
 <%content_for :action_bar do %>
@@ -62,6 +71,8 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <% if @user.id -%>
     <button id="btn_reports">Reports</button>
     <button class="btn_link btn btn-default" link_to="<%=event_subscriptions_company_user_path(@user.company,@user)%>">Subscriptions</button>
+    <button class="btn_link btn btn-default" link_to="<%=new_company_user_path(@user.company, copy: @user.id)%>">Copy</button>
+
   <% end -%>
 
 <%end%>
@@ -169,6 +180,63 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
             </div>
           </div>
         </div>
+      <% end %>
+
+      <% if !@available_search_setups.blank? || !@assigned_search_setups.blank? %>
+        <h2>Searches</h2>
+        <div class="row">
+          <div class="col-md-5">
+            <div class="form-group">
+              <label>Available Searches</label>
+              <%= select_tag(:available_search_setups, options_from_collection_for_select(@available_search_setups, :id, :name), {include_blank: false, class: "form-control", size: 5, multiple: true, id: "available_search_setups"}) %>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div style="display: table; margin-top: 2.5em; width: 100%;">
+              <div style="display: table-cell; text-align: center;">
+                <div style="display: inline-block;">
+                  <button class="form-control btn btn-default" id="btn_assign_search_setups"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
+                  <button class="form-control btn btn-default" style="margin-top: 1em;" id="btn_remove_search_setups"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="form-group">
+              <label>Assigned Searches</label>
+              <%= select_tag(:assigned_search_setup_ids, options_from_collection_for_select(@assigned_search_setups, :id, :name), include_blank: false, class: "form-control", size: 5, multiple: true) %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <% if !@available_custom_reports.blank? || !@assigned_custom_reports.blank? %>
+        <h2>Custom Reports</h2>
+        <div class="row">
+          <div class="col-md-5">
+            <div class="form-group">
+              <label>Available Reports</label>
+              <%= select_tag(:available_custom_reports, options_from_collection_for_select(@available_custom_reports, :id, :name), {include_blank: false, class: "form-control", size: 5, multiple: true, id: "available_custom_reports"}) %>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div style="display: table; margin-top: 2.5em; width: 100%;">
+              <div style="display: table-cell; text-align: center;">
+                <div style="display: inline-block;">
+                  <button class="form-control btn btn-default" id="btn_assign_custom_reports"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
+                  <button class="form-control btn btn-default" style="margin-top: 1em;" id="btn_remove_custom_reports"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="form-group">
+              <label>Assigned Reports</label>
+              <%= select_tag(:assigned_custom_report_ids, options_from_collection_for_select(@assigned_custom_reports, :id, :name), include_blank: false, class: "form-control", size: 5, multiple: true) %>
+            </div>
+          </div>
+        </div>
+
       <% end %>
     <% end %>
   <% end %>
