@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
     add_element root, 'ACTION_CD', @first_time ? 'A' : 'R'
     add_element root, 'IMPORTER_ACCT_CD', @shipment.importer.alliance_customer_number
     add_element root, 'OWNER_ACCT_CD', options[:isf_cust_acct]
-    add_element root, 'EST_LOAD_DATE', @shipment.est_load_date ? @shipment.est_load_date.in_time_zone('US/Eastern').iso8601 : nil
+    add_element root, 'EST_LOAD_DATE', @shipment.est_load_date ? @shipment.est_load_date.iso8601 : nil
     add_element root, 'BOOKING_NBR', @shipment.booking_number
 
     if @shipment.house_bill_of_lading.present?
