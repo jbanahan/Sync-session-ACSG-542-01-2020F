@@ -21,6 +21,7 @@ class Shipment < ActiveRecord::Base
   belongs_to :cancel_approved_by, :class_name=>"User"
   belongs_to :consignee, :class_name=>"Company"
   belongs_to :isf_sent_by, :class_name => "User"
+  belongs_to :booking_revised_by, :class_name => "User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :booking_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -116,6 +117,7 @@ class Shipment < ActiveRecord::Base
     self.booking_confirmed_by = nil
     self.booking_confirmed_date = nil
     self.booking_revised_date = Time.zone.now.to_date
+    self.booking_revised_by = user
     self.save!
     self.create_snapshot_with_async_option async_snapshot, user
   end

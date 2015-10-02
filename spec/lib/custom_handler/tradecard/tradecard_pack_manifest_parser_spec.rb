@@ -504,6 +504,36 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         expect(cs.width_cm).to eq 2.54
         expect(cs.height_cm).to eq 2.54
       end
+      it "should convert Meters to CM" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10',dim_unit:'MR',length:'1',width:'1',height:'1'}),
+        }
+        rows = init_mock_array 90, row_seed
+        expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(1)
+        @s.reload
+        cs = @s.carton_sets.first
+        expect(cs.length_cm).to eq 100
+        expect(cs.width_cm).to eq 100
+        expect(cs.height_cm).to eq 100
+      end
+      it "should convert Feet to CM" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10',dim_unit:'FT',length:'1',width:'1',height:'1'}),
+        }
+        rows = init_mock_array 90, row_seed
+        expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(1)
+        @s.reload
+        cs = @s.carton_sets.first
+        expect(cs.length_cm).to eq 30.48
+        expect(cs.width_cm).to eq 30.48
+        expect(cs.height_cm).to eq 30.48
+      end
       it "should convert LB to KG" do
         row_seed = {
           82=>subtitle_row('CARTON DETAIL'),

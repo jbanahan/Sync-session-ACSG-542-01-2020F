@@ -130,7 +130,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     cs = shipment.carton_sets.to_a.find {|cs| cs.starting_carton == starting_carton} #don't hit DB since we haven't saved
     if cs.nil?
       weight_factor = (row[48].to_s.strip == 'LB') ? BigDecimal("0.453592") : 1
-      dim_factor = (row[55].to_s.strip =='IN') ? BigDecimal("2.54") : 1
+      dim_factor = dimension_coversion_factor(row[55].to_s.strip)
       cs = shipment.carton_sets.build(starting_carton:starting_carton)
       cs.carton_qty = clean_number row[37]
       cs.net_net_kgs = convert_number row[42], weight_factor
@@ -194,6 +194,19 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     if shipment.number_of_packages_uom.blank? || shipment.number_of_packages_uom =~ /(CTN|CARTON)/i
       shipment.number_of_packages = (shipment.number_of_packages.presence || 0) + total_package_count
       shipment.number_of_packages_uom = "CARTONS" if shipment.number_of_packages_uom.blank?
+    end
+  end
+
+  def dimension_coversion_factor uom
+    case uom
+    when "IN"
+      BigDecimal("2.54")
+    when "MR"
+      BigDecimal(100)
+    when "FT"
+      BigDecimal("30.48")
+    else
+      BigDecimal(1)
     end
   end
 end; end; end; end

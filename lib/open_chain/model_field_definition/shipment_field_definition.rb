@@ -167,6 +167,16 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [64, :shp_confirmed_on_board_origin_date, :confirmed_on_board_origin_date, 'Confirmed On Board Origin Date', {data_type: :date}],
       [65, :shp_eta_last_foreign_port_date, :eta_last_foreign_port_date, 'ETA Last Foreign Port Date', {data_type: :date}],
       [66, :shp_departure_last_foreign_port_date, :departure_last_foreign_port_date, 'Departure Last Foreign Port Date', {data_type: :date}],
+      [67, :shp_booking_revised_date, :booking_revised_date, 'Booking Revised Date', {data_type: :date, read_only: true}],
+      [68, :shp_booking_revised_by_full_name,:username,"Booking Revised By", {
+        :export_lambda => lambda {|obj|
+          u = obj.booking_revised_by
+          u.blank? ? "" : u.full_name
+        },
+        :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.booking_revised_by_id)",
+        :data_type=>:string,
+        :read_only=>true
+      }],
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
