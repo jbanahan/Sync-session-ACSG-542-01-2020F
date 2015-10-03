@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
                                   :value_for_tax, :duty, :entered_value, :special_authority, :description, :value_for_duty_code, :customs_line_number
 
   def self.run_schedulable opts = {}
-    c = opts.size > 0 ? self.new(opts['public_key']) : self.new
+    c = opts['public_key'].blank? ? self.new : self.new(opts['public_key'])
     c.generate_and_send c.find_entries
   end
 
