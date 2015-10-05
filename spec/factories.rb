@@ -173,6 +173,10 @@ Factory.define :search_setup do |s|
   s.module_type  'Product'
   s.association :user
 end
+Factory.define :custom_report do |s|
+  s.name  'custom report name'
+  s.association :user
+end
 Factory.define :search_schedule do |s|
   s.association :search_setup
 end
