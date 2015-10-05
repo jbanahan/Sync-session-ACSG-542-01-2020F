@@ -30,6 +30,15 @@ class UsersController < ApplicationController
       admin_secure("Only administrators can create users.") {
         @company = Company.find(params[:company_id])
         @user = @company.users.build
+        copied_user_id = params[:copy]
+
+        if copied_user_id
+          copied_user = User.find(copied_user_id)
+          add_copied_permissions_to_user(copied_user, @user)
+          add_user_groups_to_page copied_user
+          add_user_search_setups_to_page copied_user
+          add_user_custom_reports_to_page copied_user
+        end
       }
     end
 
@@ -49,7 +58,7 @@ class UsersController < ApplicationController
         # on attribute assignment since they're not accessible
         password = params[:user].delete :password
         password_confirmation = params[:user].delete :password_confirmation
-
+        
         @user = User.new(params[:user])
         set_admin_params(@user,params)
         set_debug_expiration(@user)
@@ -57,11 +66,28 @@ class UsersController < ApplicationController
         @user.password = password
         @company = @user.company
 
+
         valid = false
         User.transaction do
           valid = @user.save && @user.update_user_password(password, password_confirmation)
           # Rollback is swallowed by the transaction block
           raise ActiveRecord::Rollback, "Bad user create." unless valid
+        end
+
+        search_setups = params[:assigned_search_setup_ids]
+        if search_setups && @user.id
+          search_setups.each do |ss_id| 
+            ss = SearchSetup.find(ss_id.to_i)
+            ss.simple_give_to @user
+          end
+        end
+
+        custom_reports = params[:assigned_custom_report_ids]
+        if custom_reports && @user.id
+          custom_reports.each do |cr_id|
+            cr = CustomReport.find(cr_id.to_i)
+            cr.simple_give_to @user
+          end
         end
 
         if valid
@@ -276,6 +302,7 @@ class UsersController < ApplicationController
     error_redirect "You do not have permission to view this page." unless @user.can_edit?(current_user)
   end
 
+
   private
   def parse_bulk_csv data
     rval = []
@@ -325,5 +352,37 @@ class UsersController < ApplicationController
         @available_groups << g
       end
     end
+  end
+
+  def add_user_search_setups_to_page user
+    @assigned_search_setups = []
+    @available_search_setups = []
+    SearchSetup.order("name").all.each { |ss| @available_search_setups << ss if ss.user == user }
+  end
+
+  def add_user_custom_reports_to_page user
+    @assigned_custom_reports = []
+    @available_custom_reports = []
+    CustomReport.order("name").all.each { |cr| @available_custom_reports << cr if cr.user == user }
+  end
+
+  def add_copied_permissions_to_user source_user, destination_user
+    attribs = source_user.attributes
+                         .symbolize_keys
+                         .extract!(:order_view, :order_edit, :order_delete, :order_comment, :order_attach, 
+                                   :shipment_view, :shipment_edit, :shipment_delete, :shipment_comment, :shipment_attach, 
+                                   :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_comment, :sales_order_attach, 
+                                   :delivery_view, :delivery_edit, :delivery_delete, :delivery_comment, :delivery_attach, 
+                                   :product_view, :product_edit, :product_delete, :product_comment, :product_attach, 
+                                   :classification_edit, 
+                                   :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach, 
+                                   :entry_attach, :entry_comment, :entry_edit, :entry_view, 
+                                   :broker_invoice_edit, :broker_invoice_view, 
+                                   :commercial_invoice_edit, :commercial_invoice_view, 
+                                   :drawback_edit, :drawback_view, 
+                                   :survey_edit, :survey_view, 
+                                   :project_edit, :project_view, 
+                                   :vendor_attach, :vendor_comment, :vendor_edit, :vendor_view)
+    destination_user.update_attributes(attribs)
   end
 end
