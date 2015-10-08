@@ -57,7 +57,6 @@ describe OpenMailer do
       m.subject.should == "[VFI Track] Ack File Processing Error"
       m.attachments.should have(1).item
 
-
       @tempfile.close!
     end
   end
@@ -84,7 +83,7 @@ describe OpenMailer do
     after :each do
       @tempfile.close!
     end
-    it 'should attach file from s3' do
+    it "should attach file from s3" do
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path).deliver
       
       mail = ActionMailer::Base.deliveries.pop
@@ -97,7 +96,7 @@ describe OpenMailer do
       pa.read.should == @s3_content
       
     end
-    it 'should take attachment_name parameter' do
+    it "should take attachment_name parameter" do
       alt_name = 'x.y'
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path,alt_name).deliver
       mail = ActionMailer::Base.deliveries.pop
@@ -240,7 +239,7 @@ describe OpenMailer do
           pa.should_not be_nil
           pa.read.should == File.read(f2)
           expect(pa.content_type).to match /application\/octet-stream/
-
+          
           ea = EmailAttachment.all.first
           ea.should be_nil
         end
@@ -630,7 +629,7 @@ EMAIL
     end
     
     context 'with a non-blank subtitle' do
-      it 'appends a line including the label to the body of the email and the subject' do
+      it "appends a line including the label to the body of the email and the subject" do
         @survey_response.update_attributes! subtitle: "test subtitle"
         m = OpenMailer.send_survey_invite(@survey_response)
         expect(m.body.raw_source).to match(/To view the survey labeled &#x27;test subtitle,&#x27; follow this link:/)
@@ -638,7 +637,7 @@ EMAIL
     end
 
     context 'with a blank subtitle' do
-      it 'does not add a blank subtitle line to the normal body or subject' do
+      it "does not add a blank subtitle line to the normal body or subject" do
         m = OpenMailer.send_survey_invite(@survey_response)
         expect(m.subject).to eq "test subject"
         expect(m.body.raw_source).to match(/To view the survey, follow this link:/)
@@ -666,4 +665,30 @@ EMAIL
       end
     end
   end
+
+  describe :log_email do
+
+    it "saves outgoing e-mail fields and attachments" do   
+            
+      sub = "what it's about"
+      to = "john@doe.com"
+      body = "Lorem ipsum dolor sit amet, consectetur adipisicing elit."
+      OpenMailer.any_instance.stub(:blank_attachment?).and_return false
+
+      Tempfile.open(['tempfile_a', '.txt']) do |file1|
+        Tempfile.open(['tempfile_b', '.txt']) do |file2|
+          OpenMailer.send_simple_html to, sub, body, [file1, file2]
+          email = SentEmail.last
+          
+          expect(email.email_subject).to eq sub
+          expect(email.email_to).to include to
+          expect(email.email_body).to include body
+          expect(File.basename(email.attachments.first.attached_file_name, '.*')).to include 'tempfile_a'
+          expect(File.basename(email.attachments.last.attached_file_name, '.*')).to include 'tempfile_b'
+        end
+      end
+    end
+
+  end
+
 end
