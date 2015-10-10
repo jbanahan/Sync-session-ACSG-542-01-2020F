@@ -415,3 +415,9 @@ Factory.define :plant_product_group_assignment do |f|
   f.association :plant
   f.association :product_group
 end
+
+Factory.define :sent_email do |f|
+  f.sequence(:email_subject) { |n| "subject#{n}" }
+  f.sequence(:email_to) { |n| "recipient#{n}" }
+  f.sequence(:email_from) { |n| "sender#{n}" }
+end
