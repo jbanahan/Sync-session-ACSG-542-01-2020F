@@ -1,0 +1,19 @@
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th><%=sortable_search_heading 'to'%></th>
+    <th><%=sortable_search_heading 'from'%></th>
+    <th><%=sortable_search_heading 'subject'%></th>
+    <th><%=sortable_search_heading 'date'%></th>
+  </thead>
+
+<% @sent_emails.each do |sent_email| %>
+  <tr class='hover'>
+    <td><%= link_to sent_email.email_to, sent_email %></td>
+    <td><%= sent_email.email_from %></td>
+    <td><%= sent_email.email_subject %></td>
+    <td><%= sent_email.email_date %></td>
+  </tr>
+<% end %>
+</table>
+<%= will_paginate @sent_email %>  
