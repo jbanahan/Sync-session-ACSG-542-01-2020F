@@ -21,6 +21,9 @@ end
 Factory.define :importer, parent: :company do |c|
   c.importer true
 end
+Factory.define :master_company, parent: :company do |c|
+  c.master true
+end
 Factory.define :part_number_correlation do |c|
 end
 Factory.define :address do |a|
@@ -36,7 +39,7 @@ Factory.define :user do |f|
   f.api_auth_token "auth_token"
 end
 Factory.define :master_user, :parent=>:user do |f|
-  f.after_create {|u| u.company.update_attributes(:master=>true)}
+  f.association :vendor, :factory => :master_company
 end
 Factory.define :admin_user, :parent=>:master_user do |f|
   f.after_create do |u|

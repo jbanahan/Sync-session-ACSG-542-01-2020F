@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'rexml/document'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser do
   

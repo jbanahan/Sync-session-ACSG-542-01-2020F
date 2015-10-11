@@ -86,7 +86,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ppga_pc_approved_by: {label: 'PC Approved By', data_type: :integer, module_type: 'PlantProductGroupAssignment'},
     ppga_pc_approved_date: {label: 'PC Approved Date', data_type: :date, module_type: 'PlantProductGroupAssignment'},
     ppga_pc_approved_by_executive: {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'PlantProductGroupAssignment'},
-    ppga_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :date, module_type: 'PlantProductGroupAssignment'}
+    ppga_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :date, module_type: 'PlantProductGroupAssignment'},
+    prod_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Product'},
+    ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'}
   }
 
   def self.included(base)
