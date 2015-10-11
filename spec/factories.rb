@@ -39,7 +39,7 @@ Factory.define :user do |f|
   f.api_auth_token "auth_token"
 end
 Factory.define :master_user, :parent=>:user do |f|
-  f.association :vendor, :factory => :master_company
+  f.association :company, :factory => :master_company
 end
 Factory.define :admin_user, :parent=>:master_user do |f|
   f.after_create do |u|
