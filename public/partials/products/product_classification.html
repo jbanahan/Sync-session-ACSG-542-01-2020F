@@ -1,66 +1,101 @@
-<style type="text/css">
-  .classification-selector-box {
-    width: 4em;
-    height: 4em;
-    background-repeat: no-repeat;
-    background-size: 100%;
-    cursor: pointer;
-  }
-  .classification-edit-flag {
-    width: 100%;
-  }
-  .classification-selector-box .classification-passed {
-    color: #333;
-    font-size: 150%;
-  }
-</style>
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-xs-2">
-      <div ng-repeat="ctry in importCountries track by ctry.iso_code">
-        <div class='classification-selector-box' ng-click='activateClassification(ctry,product)' style="background-image:url('/images/flags/{{ctry.iso_code.toLowerCase()}}.png')" title='{{ctry.name}}'>
-          <i class="fa fa-check classification-passed" ng-show='productSvc.classificationByISO(ctry.iso_code,product).tariff_records[0].hts_hts_1.length>1'></i>
-          <span ng-show='ctry.iso_code==activeClassification.class_cntry_iso' class='pull-right'><i class="fa fa-asterisk"></i></span>
+<chain-loading-wrapper loading-flag='{{product.autoClassifying ? "loading" : ""}}'>
+  <style type="text/css">
+    .classification-selector-box {
+      width: 4em;
+      height: 4em;
+      background-repeat: no-repeat;
+      background-size: 100%;
+      cursor: pointer;
+    }
+    .classification-edit-flag {
+      width: 100%;
+    }
+    .classification-selector-box .classification-passed {
+      color: #333;
+      font-size: 150%;
+    }
+  </style>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-2">
+        <div ng-repeat="ctry in importCountries track by ctry.iso_code">
+          <div class='classification-selector-box' ng-click='activateClassification(ctry,product)' style="background-image:url('/images/flags/{{ctry.iso_code.toLowerCase()}}.png')" title='{{ctry.name}}'>
+            <i class="fa fa-check classification-passed" ng-show='productSvc.classificationByISO(ctry.iso_code,product).tariff_records[0].hts_hts_1.length>1'></i>
+            <span ng-show='ctry.iso_code==activeClassification.class_cntry_iso' class='pull-right'><i class="fa fa-asterisk"></i></span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-xs-10">
-      <div class="container-fluid" ng-show='activeClassification'>
-        <div class="row">
-          <div class="col-xs-12">
-            <h3>{{activeClassification.class_cntry_name}}</h3>
-          </div>
+      <div class="col-xs-10">
+        <div class="alert alert-info" ng-hide='activeClassification'>
+          <p>Click a flag on the left to edit that country.</p>
+          <p>Hover your mouse over the flag to see the country name.</p>
         </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="panel panel-default">
+        <div class="container-fluid" ng-show='activeClassification'>
+          <div class="row">
+            <div class="col-xs-12">
+              <h3>{{activeClassification.class_cntry_name}}</h3>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Attributes</h3>
+                  </div>
+                  <div class="panel-body">
+                    <div class="form-group" ng-repeat='fld in dictionary | productClassificationEditFields | chainSkipReadOnlyFields track by fld.uid'>
+                      <label class="control-label">{{fld.label}}</label>
+                      <chain-field-input model='activeClassification' field='fld' input-class='form-control'></chain-field-input>
+                    </div>
+                  </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="panel" ng-class="{'panel-default': !tr._destroy, 'panel-danger': tr._destroy}" ng-repeat="tr in activeClassification.tariff_records track by tr.hts_line_number">
                 <div class="panel-heading">
-                  <h3 class="panel-title">Attributes</h3>
+                  <h3 class='panel-title'>Component {{tr.hts_line_number}}</h3>
                 </div>
-                <div class="panel-body">
-                  <div class="form-group" ng-repeat='fld in dictionary.fieldsByRecordType(dictionary.recordTypes.Classification) | chainSkipReadOnlyFields track by fld.uid'>
+                <div class="panel-body component-body">
+                  <div class="alert alert-danger" ng-show='tr._destroy'>
+                      Will be deleted on save.
+                  </div>
+                  <div class="form-group">
+                    <label class="control-label">{{dictionary.fields.hts_hts_1.label}}</label>
+                    <chain-hts-input model='tr' field='dictionary.fields.hts_hts_1' country-iso='{{activeClassification.class_cntry_iso}}' input-class='form-control'></chain-hts-input>
+                  </div>
+                  <div ng-if='tr.autoClassifications && tr.autoClassifications.length > 0'>
+                    <table>
+                      <tr ng-repeat='ac in tr.autoClassifications track by ac.code'>
+                        <td style='width:5%; vertical-align:top;'>
+                          <button class='btn btn-sm btn-link' ng-click='tr.hts_hts_1 = ac.code'><i class='fa' ng-class="{'fa-circle-o':!sameHts(tr.hts_hts_1,ac.code), 'fa-check-circle':sameHts(tr.hts_hts_1,ac.code)}"></i></button>
+                        </td>
+                        <td>
+                          <div>
+                            <tariff-link hts='{{ac.code}}' iso='{{activeClassification.class_cntry_iso}}'></tariff-link>
+                          </div>
+                          <div style='padding-left:1em; margin-bottom: 5px;'>
+                          {{ac.desc}}
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                  <div class="form-group" ng-repeat='fld in dictionary | productComponentEditFields:activeClassification.class_cntry_iso | chainSkipReadOnlyFields track by fld.uid'>
                     <label class="control-label">{{fld.label}}</label>
-                    <input class='form-control' type='text' ng-model='activeClassification[fld.uid]' />
+                    <chain-field-input model='tr' field='fld' input-class='form-control'></chain-field-input>
                   </div>
                 </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="panel panel-default" ng-repeat="tr in activeClassification.tariff_records track by tr.hts_line_number">
-              <div class="panel-heading">
-                <h3 class='panel-title'>Component {{tr.hts_line_number}}</h3>
-              </div>
-              <div class="panel-body component-body">
-                <div class="form-group" ng-repeat='fld in dictionary | productComponentEditFields:activeClassification.class_cntry_iso | chainSkipReadOnlyFields track by fld.uid'>
-                  <label class="control-label">{{fld.label}}</label>
-                  <input class='form-control' type='text' ng-model='tr[fld.uid]' />
+                <div class="panel-footer text-right">
+                  <button class='btn btn-xs btn-default' ng-click='autoClassify(product,tr)' ng-show="canAutoClassify(tr)" title='Auto-Classify'><i class='fa fa-magic'></i></button>
+                  <button class='btn btn-xs btn-danger' ng-show="!tr._destroy" ng-click="tr._destroy = true"><i class='fa fa-trash'></i></button>
+                  <button class='btn btn-xs btn-default' ng-show="tr._destroy" ng-click="tr._destroy = null"><i class='fa fa-undo'></i></button>
                 </div>
               </div>
+              <button class='btn btn-block btn-default text-center' ng-click='addTariff(activeClassification)' title='Add Component'><i class='fa fa-plus'></i></button>
             </div>
-            <button class='btn btn-block btn-default text-center' ng-click='addTariff(activeClassification)' title='Add Component'><i class='fa fa-plus'></i></button>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
+</chain-loading-wrapper>

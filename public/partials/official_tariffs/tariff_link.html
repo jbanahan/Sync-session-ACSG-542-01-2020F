@@ -1,12 +1,12 @@
 <button class='btn-link btn-xs' ng-click='showDetail()'>{{hts}}</button>
 <div class="modal fade">
-  <div class="modal-dialog">
+  <div class="modal-dialog" ng-if='modalActivated'>
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header text-left">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">{{iso}}: {{hts}}</h4>
       </div>
-      <div class="modal-body">
+      <div class="modal-body text-left">
         <div class="alert alert-danger" ng-show='errorMessage'>
           {{errorMessage}}
         </div>

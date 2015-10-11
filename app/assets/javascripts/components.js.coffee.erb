@@ -54,10 +54,14 @@
       scope.outerScope = scope.$parent
       jqEl = $(el)
       jqEl.find('.chain-edit-btn').click ->
-        scope.$apply(scope.beforeEdit) if scope.beforeEdit
+        scope.$apply ->
+          scope.beforeEdit() if scope.beforeEdit
+          scope.$broadcast('chain:view-edit:open')
         jqEl.find('[chain-view-edit-modal]:first').modal('show')
       jqEl.find('.chain-save-btn').click ->
-        scope.$apply(scope.onSave) if scope.onSave
+        scope.$apply ->
+          scope.onSave() if scope.onSave
+          scope.$broadcast('chain:view-edit:save')
         jqEl.find('[chain-view-edit-modal]:first').modal('hide')
   }
 
@@ -422,6 +426,144 @@
     }
 ]
 
+@components.directive 'chainFieldView', ['$compile', ($compile) ->
+  {
+    restrict: 'E'
+    scope: {
+      model: '='
+      field: '='
+    }
+    template: ""
+    link: (scope, el, attrs) ->
+      getHtml = (scope) ->
+        if !scope.field or !scope.model
+          return ''
+        val = scope.model[scope.field.uid]
+        return '' unless val && val.length > 0
+
+        if scope.field.data_type == 'date'
+          return moment(val).format('YYYY-MM-DD')
+
+        if scope.field.data_type == 'datetime'
+          return moment(val).format('YYYY-MM-DD HH:mm ZZ')
+
+        if scope.field.data_type == 'text'
+          return $compile(angular.element('<pre>'+val+'</pre>'))(scope)
+
+        return val
+
+      html = getHtml(scope)
+      $(el).html(html)
+  }
+]
+
+@components.directive 'chainFieldInput', ['$compile','fieldValidatorSvc', ($compile,fieldValidatorSvc) ->
+  {
+    restrict: 'E'
+    scope: {
+      model: '='
+      field: '='
+      inputClass: '@'
+    }
+    template: "<input type='text' ng-model='model[field.uid]' class='{{inputClass}}' />"
+    link: (scope, el, attrs) ->
+      jqEl = $(el)
+      inp = jqEl.find('input')
+      realInput = inp
+      if scope.field.select_options
+        inp.remove()
+        sel = $compile(angular.element('<select ng-model="model[field.uid]" class="{{inputClass}}"></select>'))(scope)
+        jqEl.append(sel)
+        realInput = sel
+        sel.append("<option value=''></option>")
+        sel.append("<option value='"+opt[0]+"'>"+opt[1]+"</option>") for opt in scope.field.select_options
+      else if scope.field.autocomplete
+        url = scope.field.autocomplete.url
+        unless inp.is(':data(autocomplete)')
+          jqEl.append('<span class="ui-front"></span>')
+          jqEl.find('span.ui-front').append(inp)
+          inp.autocomplete({
+            source:(req,add) ->
+              $.getJSON(url+req.term, (data) ->
+                r = []
+                v = null
+                for h in data
+                  v = (if scope.field.autocomplete.field then h[scope.field.autocomplete.field] else h)
+                  r.push(v)
+                add(r)
+              )
+            select: (event,ui) ->
+              scope.$apply ->
+               scope.model[scope.field.uid] = ui.item.label
+
+          })
+      else if scope.field.data_type=='text'
+        inp.remove()
+        ta = $compile(angular.element('<textarea ng-model="model[field.uid]" class="{{inputClass}}"></textarea>'))(scope)
+        realInput = ta
+        jqEl.append(ta)
+      else if scope.field.data_type=='boolean'
+        inp.remove()
+        cb = $compile(angular.element('<div><input type="checkbox" ng-model="model[field.uid]"></div>'))(scope)
+        realInput = ta
+        jqEl.append(cb)
+      else
+        inputTypes = {
+          number: 'number'
+          integer: 'number'
+          decimal: 'number'
+          date: 'date'
+          datetime: 'datetime-local'
+        }
+        updatedInputType = inputTypes[scope.field.data_type]
+        if updatedInputType
+          inp.attr('type',updatedInputType)
+
+      if scope.field.remote_validate
+        realInput.on 'blur', ->
+          scope.$apply ->
+            parent = realInput.parent()
+            errorBlock = parent.find('.chain-field-input-errmsgs')[0]
+            fieldValidatorSvc.validate(scope.field,scope.model[scope.field.uid]).then (resp) ->
+              if resp.errors.length > 0
+                parent.addClass('has-error')
+                if !errorBlock
+                  errorBlock = $compile(angular.element('<div class="text-danger text-right chain-field-input-errmsgs"></div>'))(scope)
+                  realInput.after(errorBlock)
+                $(errorBlock).html(resp.errors.join(' '))
+              else
+                parent.removeClass('has-error')
+                $(errorBlock).html('') if errorBlock
+  }
+]
+
+@components.directive 'chainHtsInput', ->
+  {
+    restrict: 'E'
+    scope: {
+      model: '='
+      field: '='
+      countryIso: '@'
+      inputClass: '@'
+    }
+    template: "<span class='ui-front'><input type='text' ng-model='model[field.uid]' class='{{inputClass}}' /></span>"
+    link: (scope, el, attrs) ->
+      jqEl = $(el)
+      inp = jqEl.find('input')
+      unless inp.is(':data(autocomplete)')
+        inp.autocomplete({
+          source:(req,add) ->
+            $.getJSON('/official_tariffs/auto_complete?country_iso='+scope.countryIso+'&hts='+req.term, (data) ->
+              r = []
+              v = null
+              r.push(h) for h in data
+              add(r)
+            )
+          select: (event,ui) ->
+            scope.$apply ->
+              scope.model[scope.field.uid] = ui.item.label
+        })
+  }
 
 @components.service 'userListCache', ['$http',($http) ->
   {

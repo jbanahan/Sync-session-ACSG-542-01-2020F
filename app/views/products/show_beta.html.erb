@@ -1,3 +1,7 @@
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=products_path%>' key_map='b'>Search</button>
+  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h'>History</button>
+<% end %>
 <div ng-app="ProductApp" product-id="<%=@product.id%>">
   <div ui-view></div>
 </div> <!-- end app -->

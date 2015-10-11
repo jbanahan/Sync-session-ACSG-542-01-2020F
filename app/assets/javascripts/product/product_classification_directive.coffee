@@ -1,25 +1,4 @@
-@pa = angular.module('ProductApp')
-@pa.filter('productComponentEditFields', ->
-  (dictionary,country_iso) ->
-    return [] unless dictionary
-    r = []
-    #always show hts_1 as first field
-    r.push(dictionary.fields.hts_hts_1)
-    fields = dictionary.fieldsByRecordType(dictionary.recordTypes.TariffRecord)
-    otherFields = $.grep(fields, (fld) ->
-      # don't show legacy hts 2 & 3 fields (or schedule b equivalents)
-      for regex in [/hts_[23]$/,/[23]_schedb$/,/^hts_hts_1$/,/hts_line_number/,/hts_view_sequence/]
-        return null if fld.uid.match(regex)
-
-      # only return schedule b for US
-      return null if !country_iso || country_iso.toLowerCase()!='us' && fld.uid=='hts_hts_1_schedb'
-
-      # don't show hts_hts_1 since we're hard coding it to be first in the list
-      return fld
-    )
-    r.concat otherFields
-)
-@pa.directive 'productClassification', [ 'productSvc', (productSvc) ->
+@pa = angular.module('ProductApp').directive 'productClassification', [ 'productSvc', (productSvc) ->
   {
     restrict: 'E'
     scope: {
@@ -48,5 +27,23 @@
           product.classifications.push(cls)
 
         scope.activeClassification=cls
+
+      scope.canAutoClassify = (tr) ->
+        tr.hts_line_number && tr.hts_hts_1 && tr.hts_hts_1.replace(/[^\d]/g,'').length >= 6
+
+      scope.autoClassify = (p,tr) ->
+        productSvc.autoClassify(p,tr)
+
+      scope.sameHts = (hts1,hts2) ->
+        if hts1 == hts2
+          return true
+        if hts1 && hts2 && hts1.replace(/[^\d]/g,'')==hts2.replace(/[^\d]/g,'')
+          return true
+
+        return false
+
+
+      scope.$on 'chain:view-edit:open', ->
+        scope.activeClassification = null
   }
 ]

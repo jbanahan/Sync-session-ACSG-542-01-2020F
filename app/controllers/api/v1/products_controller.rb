@@ -70,6 +70,9 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
 
     h = to_entity_hash(obj, product_fields + class_fields + tariff_fields)
     h[:permissions] = render_permissions(obj)
+    if render_attachments?
+      render_attachments(obj,h)
+    end
     return h
   end
 

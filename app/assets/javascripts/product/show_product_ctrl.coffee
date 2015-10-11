@@ -21,8 +21,10 @@ angular.module('ProductApp').controller 'ShowProductCtrl', ['$scope','productSvc
   $scope.save = (product) ->
     $scope.loadingFlag = "loading"
     productSvc.saveProduct(product).then (resp) ->
-        $scope.product = resp.data.product
-        $scope.loadingFlag = null
+      $scope.productEditObject = null
+      $scope.load(resp.data.product.id)
+        # $scope.product = resp.data.product
+        # $scope.loadingFlag = null
 
   $scope.prepProductEditObject = (product) ->
     $scope.productEditObject = angular.copy(product)

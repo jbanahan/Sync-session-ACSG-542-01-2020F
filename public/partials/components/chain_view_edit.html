@@ -1,6 +1,9 @@
 <div class="panel {{panelClass}}">
   <div class="panel-heading">
-    <h3 class="panel-title">{{panelTitle}}</h3>
+    <h3 class="panel-title">
+      {{panelTitle}}
+      <button class='btn btn-xs btn-primary chain-edit-btn pull-right' ng-show='editIf'><i class='fa fa-edit'></i></button>
+    </h3>
   </div>
   <div class="panel-body" ng-include='viewTemplate'></div>
   <div class='panel-footer text-right' ng-show='editIf'>

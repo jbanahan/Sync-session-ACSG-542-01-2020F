@@ -1,6 +1,6 @@
 angular.module('ChainComponents').factory 'officialTariffSvc', ['$http','$q',($http,$q) ->
   return {
-    getTariff: (iso_code, hts_code) ->
+    getTariff: (isoCode, htsCode) ->
       deferred = $q.defer()
 
       success = (resp) ->
@@ -9,8 +9,22 @@ angular.module('ChainComponents').factory 'officialTariffSvc', ['$http','$q',($h
       err = (resp) ->
         deferred.resolve(null)
 
-      $http.get('/api/v1/official_tariffs/find/'+iso_code+'/'+hts_code).then(success,err)
+      $http.get('/api/v1/official_tariffs/find/'+isoCode+'/'+htsCode).then(success,err)
 
       deferred.promise
+
+    autoClassify: (htsCode) ->
+      deferred = $q.defer()
+
+      $http.get('/official_tariffs/auto_classify/'+htsCode.replace(/[^\d]/g,'')).then (resp) ->
+        rawData = resp.data
+        returnObj = {}
+        for c in rawData
+          returnObj[c.iso] = c
+
+        deferred.resolve(returnObj)
+
+      deferred.promise
+        
   }
 ]

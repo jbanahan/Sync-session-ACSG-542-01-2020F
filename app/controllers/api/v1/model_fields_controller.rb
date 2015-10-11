@@ -4,6 +4,7 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
   API_MODULES = [CoreModule::PRODUCT, CoreModule::CLASSIFICATION, CoreModule::TARIFF, CoreModule::ORDER, CoreModule::ENTRY, CoreModule::OFFICIAL_TARIFF]
 
   def index
+    validator_rules = Hash[FieldValidatorRule.all.map{|fvr| [fvr.model_field_uid.to_sym, fvr]}]
     h = {}
     h['recordTypes'] = []
     h['fields'] = []
@@ -13,8 +14,20 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
       cm_class_name = cm.class_name
       h['recordTypes'] << {'uid'=>cm_class_name,label:cm.label}
       ModelField.find_by_core_module(cm).each do |mf|
-        next unless mf.can_view?(current_user)
-        mf_h = {'uid'=>mf.uid, 'label'=>mf.label, 'data_type'=>mf.data_type, 'record_type_uid'=>cm_class_name, 'read_only' => mf.read_only?}
+        next if !mf.can_view?(current_user) || !mf.user_accessible
+        mf_h = {'uid'=>mf.uid, 'label'=>mf.label(false), 'data_type'=>mf.data_type, 'record_type_uid'=>cm_class_name, 'read_only' => mf.read_only?}
+        select_opts = mf.select_options
+        mf_h['select_options'] = select_opts
+        mf_h['autocomplete'] = mf.autocomplete unless mf.autocomplete.blank?
+        fvr = validator_rules[mf.uid.to_sym]
+        if fvr
+          mf_h['remote_validate'] = true
+          if fvr.one_of_array.length > 0
+            #clobber the hard coded options with the customer configured ones if they both exist.
+            #This is on purpose - BSG 2015-09-16
+            mf_h['select_options'] = fvr.one_of_array.collect {|a| [a,a]} #api expects 2 dimensional array
+          end
+        end
         h['fields'] << mf_h
       end
     end

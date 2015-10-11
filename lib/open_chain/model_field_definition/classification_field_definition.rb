@@ -11,6 +11,6 @@ module OpenChain; module ModelFieldDefinition; module ClassificationFieldDefinit
       }],
       [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true,:read_only=>true}]
     ]
-    add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications",'country',true)
+    add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications")
   end
 end; end; end

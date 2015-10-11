@@ -23,7 +23,8 @@ class ModelField
               :import_lambda, :export_lambda,
               :custom_id, :data_type, :core_module,
               :join_statement, :join_alias, :qualified_field_name, :uid,
-              :public, :public_searchable, :definition, :disabled, :field_validator_rule, :user_accessible
+              :public, :public_searchable, :definition, :disabled, :field_validator_rule, 
+              :user_accessible, :autocomplete
 
   def initialize(rank, uid, core_module, field_name, options={})
     o = {entity_type_field: false, history_ignore: false, read_only: false, user_accessible: true}.merge(options)
@@ -73,6 +74,8 @@ class ModelField
     @user_accessible = o[:user_accessible]
     @user_field = o[:user_field]
     @address_field = o[:address_field]
+    @select_options_lambda = o[:select_options_lambda]
+    @autocomplete = o[:autocomplete]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -121,6 +124,11 @@ class ModelField
 
   def address_field?
     @address_field
+  end
+
+  def select_options
+    return nil unless @select_options_lambda
+    @select_options_lambda.call()
   end
 
   # returns true if the given user should be allowed to view this field

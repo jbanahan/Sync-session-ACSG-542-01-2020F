@@ -35,6 +35,20 @@ describe Api::V1::ModelFieldsController do
       expect(prod_uid['data_type']).to eq 'string'
       expect(prod_uid['record_type_uid']).to eq 'Product'
     end
+    it "should not get prefixes on labels" do
+      expect(get :index).to be_success
+
+      h = JSON.parse(response.body)
+      fld = h['fields'].find {|fld| fld['uid']=='class_comp_cnt'}
+      expect(fld['label']).to eq "Component Count"
+    end
+    it "should not get model fields that are not user accessible" do
+      expect(get :index).to be_success
+
+      h = JSON.parse(response.body)
+      div_id = h['fields'].find {|fld| fld['uid']=='prod_div_id'}
+      expect(div_id).to be_nil      
+    end
     it "should not get model fields that the current user can't see" do
       CoreModule::ENTRY.stub(:view?).and_return(true)
       Company.any_instance.stub(:broker?).and_return(false)
@@ -52,6 +66,36 @@ describe Api::V1::ModelFieldsController do
       changed_at = h['fields'].find {|fld| fld['uid']=='prod_changed_at'}
       expect(changed_at['read_only']).to be_true
     end
+    it "should get autocomplete info" do
+      expect(get :index).to be_success
+      h = JSON.parse(response.body)
+      div_name = h['fields'].find {|fld| fld['uid']=='prod_div_name'}
+      expected_auto_complete = {'url'=>'/api/v1/divisions/autocomplete'}
+      expect(div_name['autocomplete']).to eq expected_auto_complete
+    end
+
+    it "should flag remote validate" do
+      FieldValidatorRule.create!(model_field_uid:'prod_name',module_type:'Product',one_of:"a\nx\nc")
+      expect(get :index).to be_success
+
+      h = JSON.parse(response.body)
+      mf = h['fields'].find {|fld| fld['uid']=='prod_name'}
+      expect(mf['remote_validate']).to be_true
+
+      mf = h['fields'].find {|fld| fld['uid']=='prod_uid'}
+      expect(mf['remote_validate']).to be_false
+
+    end
+    
+    it "should get choices array" do
+      FieldValidatorRule.create!(model_field_uid:'prod_name',module_type:'Product',one_of:"a\nx\nc")
+
+      expect(get :index).to be_success
+
+      h = JSON.parse(response.body)
+      mf = h['fields'].find {|fld| fld['uid']=='prod_name'}
+      expect(mf['select_options']).to eq [['a','a'],['x','x'],['c','c']]
+    end
     it "should return cache key" do
       mfload = 10.minutes.ago
       company_updated_at = 1.hour.ago
@@ -67,6 +111,15 @@ describe Api::V1::ModelFieldsController do
 
       h = JSON.parse(response.body)
       expect(h['cache_key']).to eq expected_cache
+    end
+    it "should get select_options" do
+      EntityType.create!(module_type:'Product',name:'PT')
+
+      expect(get :index).to be_success
+
+      h = JSON.parse(response.body)
+      fld = h['fields'].find {|fld| fld['uid']=='prod_ent_type'}
+      expect(fld['select_options']).to eq [['PT','PT']]
     end
   end
 

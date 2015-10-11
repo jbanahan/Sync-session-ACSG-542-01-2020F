@@ -30,6 +30,7 @@ com.directive 'chainComment', ['commentSvc',(commentSvc) ->
       parentObject: '='
       moduleType: '@'
     }
+    templateUrl: "/partials/comments/chain_comment.html"
     link: (scope, element, attrs) ->
       scope.deleteComment = (c) ->
         c.deleting = true
@@ -40,33 +41,5 @@ com.directive 'chainComment', ['commentSvc',(commentSvc) ->
         c.commentable_id = scope.parentObject.id
         commentSvc.addComment(c, scope.parentObject.comments).then (resp) ->
           scope.commentToAdd = {}
-    template: "<div ng-repeat='c in parentObject.comments'>
-      <div class='panel panel-info'>
-        <div class='panel-heading'>
-          <div><div class='pull-right'><abbr am-time-ago='c.created_at' title='{{c.created_at}}'></abbr> {{c.user.full_name}}</div>{{c.subject}}</div>
-        </div>
-        <div class='panel-body'>
-           {{c.body}}
-        </div>
-        <div class='panel-footer text-right' ng-if='c.permissions.can_delete'>
-          <button class='btn btn-sm btn-danger' ng-click='c.deleteCheck=true' ng-hide='c.deleteCheck' title='Delete'><i class='fa fa-trash'></i></button>
-          <div ng-show='c.deleteCheck && !c.deleting'>
-            Are you sure you want to delete this? <button class='btn btn-sm btn-danger' ng-click='deleteComment(c)'>Yes</button>&nbsp;<button class='btn btn-sm btn-default' ng-click='c.deleteCheck=false'>No</button>
-          </div>
-          <div ng-show='deleting'>Deleting...</div>
-        </div>
-      </div>
-      </div>
-      <div class='panel panel-success'>
-        <div class='panel-heading'>
-          <input type='text' class='form-control' placeholder='Subject' ng-model='commentToAdd.subject' />
-        </div>
-        <div class='panel-body'>
-           <textarea ng-model='commentToAdd.body' class='form-control'></textarea>
-        </div>
-        <div class='panel-footer text-right'>
-          <button class='btn btn-sm btn-success' ng-click='addComment(commentToAdd)' ng-disabled='!(commentToAdd.body.length > 0)'><i class='fa fa-plus'></i></button>
-        </div>
-      </div>"
   }
 ]

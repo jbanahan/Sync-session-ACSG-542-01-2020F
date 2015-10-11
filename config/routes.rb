@@ -76,6 +76,7 @@ OpenChain::Application.routes.draw do
       match "/setup_data" => "setup_data#index", via: :get
 
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
+      match "/divisions/autocomplete" => "divisions#autocomplete", via: :get
 
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
       match "/intacct_data/receive_check_result" => "intacct_data#receive_check_result", :via => :post

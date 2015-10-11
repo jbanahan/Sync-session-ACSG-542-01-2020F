@@ -1,4 +1,50 @@
-<table class='table table-condensed table-striped' ng-repeat='reg in outerScope.regions track by reg.id'>
+<div class='text-right'>
+  <button class='btn btn-xs btn-default' ng-show='!detailMode' ng-click='detailMode=true'><i class='fa fa-eye'></i></button>
+  <button class='btn btn-xs btn-default' ng-show='detailMode' ng-click='detailMode=false'><i class='fa fa-eye-slash'></i></button>
+</div>
+<table ng-if='detailMode' class='table table-condensed table-striped' ng-repeat='reg in outerScope.regions track by reg.id'>
+  <thead>
+    <tr>
+      <th colspan="3"><strong>{{reg.name}}</strong></td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat='ctry in reg.countries track by ctry.iso_code' ng-if='detailMode'>
+      <td style='width:1px;'>
+        <chain-flag iso_code="{{ctry.iso_code}}" img_class="classification-flag"></chain-flag>
+      </td>
+      <td>
+        <div class="row">
+          <div class="col-xs-12">
+            {{ctry.name}}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div ng-repeat='tr in outerScope.classificationByISO(ctry.iso_code,outerScope.product).tariff_records track by tr.id'>
+              <tariff-link hts="{{tr.hts_hts_1}}" iso="{{ctry.iso_code}}"></tariff-link>
+            </div>
+            <div class="form-group" ng-repeat='fld in outerScope.dictionary | productComponentEditFields:cntry.iso_code track by fld.uid'>
+              <label class="control-label">{{fld.label}}</label>
+              <p><chain-field-view model='tr' field='fld'></chain-field-view></p>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div ng-repeat='fld in outerScope.dictionary | productClassificationViewFields track by fld.uid'>
+              <div class="form-group" ng-if='outerScope.classificationByISO(ctry.iso_code,outerScope.product)[fld.uid]'>
+                <label class="control-label">{{fld.label}}</label>
+                <p class='{{fld.uid}}'>
+                  <chain-field-view model='outerScope.classificationByISO(ctry.iso_code,outerScope.product)' field='fld'></chain-field-view>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table ng-if='!detailMode' class='table table-condensed table-striped' ng-repeat='reg in outerScope.regions track by reg.id'>
   <thead>
     <tr>
       <th colspan="3"><strong>{{reg.name}}</strong></td>
@@ -18,15 +64,17 @@
         </div>
       </td>
     </tr>
+    
   </tbody>
 </table>
+
 <table class='table table-condensed table-striped' ng-if='outerScope.classificationsWithoutRegion(outerScope.regions,outerScope.product).length>0'>
   <thead>
     <tr>
-      <th colspan="3">&nbsp;</td>
+      <th colspan="3">&nbsp;</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody ng-if='!detailMode'>
     <tr ng-repeat='cls in outerScope.classificationsWithoutRegion(outerScope.regions,outerScope.product) track by cls.class_cntry_iso'>
       <td style='width:1px;'>
         <chain-flag iso_code="{{cls.class_cntry_iso}}" img_class="classification-flag"></chain-flag>
@@ -37,6 +85,43 @@
       <td class='text-right'>
         <div ng-repeat='tr in cls.tariff_records track by tr.hts_line_number'>
           <tariff-link hts="{{tr.hts_hts_1}}" iso="{{cls.class_cntry_iso}}"></tariff-link>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+  <tbody ng-if='detailMode'>
+    <tr ng-repeat='cls in outerScope.classificationsWithoutRegion(outerScope.regions,outerScope.product) track by cls.class_cntry_iso'>
+      <td style='width:1px;'>
+        <chain-flag iso_code="{{cls.class_cntry_iso}}" img_class="classification-flag"></chain-flag>
+      </td>
+      <td>
+        <div class="row">
+          <div class="col-xs-12">
+            {{cls.class_cntry_name}}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div ng-repeat='tr in cls.tariff_records track by tr.id'>
+              <tariff-link hts="{{tr.hts_hts_1}}" iso="{{cls.class_cntry_iso}}"></tariff-link>
+            </div>
+            <div ng-repeat='fld in outerScope.dictionary | productComponentEditFields:cls.class_cntry_iso track by fld.uid'>
+              <div class="form-group" ng-if='tr[fld.uid]'>
+                <label class="control-label">{{fld.label}}</label>
+                <p><chain-field-view model='tr' field='fld'></chain-field-view></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div ng-repeat='fld in outerScope.dictionary | productClassificationViewFields track by fld.uid'>
+              <div class="form-group" ng-if='cls[fld.uid]'>
+                <label class="control-label">{{fld.label}}</label>
+                <p class='{{fld.uid}}'>
+                  <chain-field-view model='cls' field='fld'></chain-field-view>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </td>
     </tr>

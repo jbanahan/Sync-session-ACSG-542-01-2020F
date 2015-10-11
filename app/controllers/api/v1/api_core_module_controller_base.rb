@@ -165,7 +165,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     else
       # Preload the custom values for the object, but don't freeze them....if we freeze them before saving, then the snapshot that's done
       # later potentially won't store off some of the custom values
-      CoreModule.walk_object_heirarchy(obj) {|cm, o| o.custom_values.to_a if o.respond_to?(:custom_values)}
+      CoreModule.walk_object_heirarchy(obj) {|core_mod, o| o.custom_values.to_a if o.respond_to?(:custom_values)}
       if obj.update_model_field_attributes obj_hash
         raise StatusableError.new("You do not have permission to save this #{cm.label}.", :forbidden) unless obj.can_edit?(current_user)
         obj.update_attributes(last_updated_by: current_user) if obj.respond_to?(:last_updated_by)

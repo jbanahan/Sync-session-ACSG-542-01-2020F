@@ -37,6 +37,10 @@
                     <li>Attachments</li>
                     <li>Comments</li>
                     <li>History (it is still logged but there is no screen to view it)</li>
+                    <li>You cannot delete components from a classification</li>
+                    <li>HTS numbers do not autocomplete</li>
+                    <li>Autoclassify not implemented</li>
+                    <li>Date formats are ugly</li>
                   </ul>
                   <p><strong>Note:</strong><br />
                   The HTS 2 &amp; HTS 3 fields are going away in the next version.  All data will be migrated to use rows.</p>
@@ -53,7 +57,7 @@
     <div class="row">
       <div class="col-xs-12 text-center">
         <h1 style='margin: 0 0 1em 0;'>
-          {{product.prod_uid}}
+          {{product.prod_uid}} - {{product.prod_name}}
         </h1>
       </div>
     </div>
@@ -63,12 +67,14 @@
           panel-title='Attributes' panel-class='panel-primary' 
           before-edit='prepProductEditObject(product)' 
           on-save='save(productEditObject)'></chain-view-edit>
+        <div chain-attachment-panel attachments='product.attachments' attachable='product' attachable-type='Product' attachable-id='{{product.id}}' can-attach='product.permissions.can_attach'></div>
       </div>
       <div class="col-md-6">
         <chain-view-edit edit-if='product.permissions.can_classify' view-template='/partials/products/classification_view.html' edit-template='/partials/products/classification_edit.html'
           panel-title='Classifications' panel-class='panel-primary' modal-class='modal-max-width'
           before-edit='prepProductEditObject(product)'
           on-save='save(productEditObject)'></chain-view-edit>
+        <chain-comment parent-object='product' module-type='Product'></chain-comment>
       </div>
     </div>
   </div>

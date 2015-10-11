@@ -24,8 +24,11 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
           et = detail.entity_type
           et.nil? ? "" : et.name
         },
+        :select_options_lambda => lambda {
+          EntityType.where(module_type:'Product').order(:name).pluck(:name).collect {|nm| [nm,nm]}
+        },
         :qualified_field_name => "(SELECT name from entity_types where entity_types.id = products.entity_type_id)",
-        :data_type=>:integer
+        :data_type=>:string
       }],
       [3,:prod_name,:name,"Name",{:data_type=>:string}],
       [4,:prod_uom,:unit_of_measure,"Unit of Measure",{:data_type=>:string}],
