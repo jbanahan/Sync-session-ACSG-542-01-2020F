@@ -162,6 +162,32 @@ describe OpenChain::IntegrationClientCommandProcessor do
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
     end
+    context :lumber_liquidators do
+      before :each do
+        MasterSetup.get.update_attributes(custom_features:'Lumber SAP')
+      end
+      it "should send data to LL PO parser" do
+        cmd = {'request_type'=>'remote_file','path'=>'/_sap_po_xml/x.xml','remote_path'=>'12345'}
+        k = OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser
+        k.should_receive(:delay).and_return k
+        k.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq @success_hash
+      end
+      it "should send data to LL Article parser" do
+        cmd = {'request_type'=>'remote_file','path'=>'/_sap_article_xml/x.xml','remote_path'=>'12345'}
+        k = OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser
+        k.should_receive(:delay).and_return k
+        k.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq @success_hash
+      end
+      it "should send data to LL Vendor parser" do
+        cmd = {'request_type'=>'remote_file','path'=>'/_sap_vendor_xml/x.xml','remote_path'=>'12345'}
+        k = OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser
+        k.should_receive(:delay).and_return k
+        k.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq @success_hash
+      end
+    end
     context :msl_plus_enterprise do
       it "should send data to MSL+ Enterprise custom handler if feature enabled and path contains _from_msl but not test and file name does not include -ack" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
