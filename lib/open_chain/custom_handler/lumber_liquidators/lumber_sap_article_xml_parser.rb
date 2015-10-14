@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def self.parse_dom dom, opts={}
-    self.new(opts).parse_dom dom
+    self.new.parse_dom dom
   end
 
   def initialize
