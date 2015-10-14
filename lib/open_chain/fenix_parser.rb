@@ -804,7 +804,7 @@ module OpenChain
     end
 
     def validate_no_transaction_reuse entry
-      raise "File # #{entry.broker_reference} cannot be reused in Fenix ND.  Please check if this is the correct file number that should be used for this entry." if entry.release_date && entry.release_date < time_zone.parse("2015-09-18")
+      raise "Transaction # #{entry.entry_number} cannot be reused in Fenix ND.  Please check if this is the correct file number that should be used for this entry." if entry.release_date && entry.release_date < time_zone.parse("2015-09-18")
     end
   end
 end

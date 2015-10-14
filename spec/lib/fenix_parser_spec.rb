@@ -665,8 +665,8 @@ describe OpenChain::FenixParser do
   end
 
   it "raises an error if Fenix ND entry attempts to update an old entry" do
-    Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
-    expect{OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.to raise_error "File # #{@file_number} cannot be reused in Fenix ND.  Please check if this is the correct file number that should be used for this entry."
+    Factory(:entry,:broker_reference=>@file_number, entry_number: @barcode, :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
+    expect{OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.to raise_error "Transaction # #{@barcode} cannot be reused in Fenix ND.  Please check if this is the correct file number that should be used for this entry."
   end
 
   it "doesn't raise an error if Fenix ND entry attempts to update an entry released after 9/18" do
