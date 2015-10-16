@@ -28,8 +28,8 @@ module OpenChain
         start_date_time, end_date_time = query_time
         wb = XlsMaker.create_workbook 'LVS Logging'
         XlsMaker.create_sheet wb, 'HVS Logging'
-        table_from_query wb.worksheet(0), query(:lvs, start_date_time, end_date_time), {7 => date_conversion_lambda, 8 => date_conversion_lambda} 
-        table_from_query wb.worksheet(1), query(:hvs, start_date_time, end_date_time)
+        table_from_query wb.worksheet(0), query(:lvs, start_date_time, end_date_time), {'Entry Date' => date_conversion_lambda} 
+        table_from_query wb.worksheet(1), query(:hvs, start_date_time, end_date_time), {'Entry Date' => date_conversion_lambda} 
         wb
       end
 
@@ -55,7 +55,8 @@ module OpenChain
         <<-SQL
           SELECT e.cargo_control_number AS 'Cargo Control Number',
             e.po_numbers AS 'PO #',
-            '' AS Division, '' AS CO,
+            '' AS Division, 
+            '' AS CO,
             e.vendor_names AS Vendor,
             e.origin_country_codes AS 'Factory Country',
             e.total_units AS Units,
