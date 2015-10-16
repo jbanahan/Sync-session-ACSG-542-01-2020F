@@ -29,7 +29,10 @@ OpenChain::Application.routes.draw do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
       end
-      resources :orders, only: [:index,:show]
+      resources :orders, only: [:index,:show] do
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
+      end
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
