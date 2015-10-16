@@ -28,6 +28,8 @@ module OpenChain; module Events
         case event.object_class
         when Entry.name
           handler = EntryEvents::EntryEventHandler.new
+        when SecurityFiling.name
+          handler = IsfEvents::IsfEventHandler.new
         end
 
         handler

@@ -36,6 +36,13 @@ describe OpenChain::Events::EventProcessor do
       handler.class.name.should == OpenChain::Events::EntryEvents::EntryEventHandler.name
     end
 
+    it "returns IsfEvent handler for SecurityFiling events" do
+      event = double("Event")
+      event.stub(:object_class).and_return SecurityFiling.name
+      handler = @proc.handler event
+      expect(handler.class.name).to eq OpenChain::Events::IsfEvents::IsfEventHandler.name
+    end
+
     it "should return nil for event classes it doesn't know about" do
       event = double("Event")
       event.stub(:object_class).and_return "You don't know me"

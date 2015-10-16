@@ -90,6 +90,7 @@ OpenChain::Application.routes.draw do
         match 'users/:id/add_templates' => 'users#add_templates', via: :post
         resources :milestone_notification_configs, only: [:index, :show, :new, :create, :update, :destroy] do
           get :copy, on: :member
+          get :model_fields, on: :collection
         end
       end
 

@@ -175,12 +175,23 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.find_315_milestone entry, event_code
-    find_unique(where(cross_reference_type: OUTBOUND_315_EVENT, key: make_compound_key(entry.source_system, entry.broker_reference, event_code)))
+    find_unique(where(cross_reference_type: OUTBOUND_315_EVENT, key: milestone_key(entry, event_code)))
   end
 
   def self.create_315_milestone! entry, event_code, date
-    add_xref! OUTBOUND_315_EVENT, make_compound_key(entry.source_system, entry.broker_reference, event_code), date
+    add_xref! OUTBOUND_315_EVENT, milestone_key(entry, event_code), date
   end
+
+  def self.milestone_key obj, event_code
+    if obj.is_a?(Entry)
+      make_compound_key(obj.source_system, obj.broker_reference, event_code)
+    elsif obj.is_a?(SecurityFiling)
+      make_compound_key(obj.host_system, obj.host_system_file_number, event_code)
+    else
+      raise "Unknown Model type encountered: #{obj.class}.  Unabled to generate 315 cross reference key."
+    end
+  end
+  private_class_method :milestone_key
 
   def self.has_key? key, cross_reference_type
     DataCrossReference.where(key: key, cross_reference_type: cross_reference_type).exists?

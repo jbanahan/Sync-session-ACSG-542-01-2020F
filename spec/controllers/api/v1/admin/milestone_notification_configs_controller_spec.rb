@@ -21,7 +21,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     end
 
     it "returns a config" do
-      config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", enabled: true, setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
+      config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", enabled: true, module_type: "Entry", setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
       config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false
 
       get :show, id: config.id
@@ -37,6 +37,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
         enabled: true,
         output_style: "standard",
         testing: nil,
+        module_type: "Entry",
         setup_json: [
           {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true, label: "Broker Reference", event_code: "brok_ref"}
         ],
@@ -67,6 +68,9 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(timezones.size).to eq ActiveSupport::TimeZone.all.size + 1
       expect(timezones.first['name']).to be_a String
       expect(timezones.first['label']).to be_a String
+
+      module_list = c['module_types']
+      expect(module_list).to eq({"Entry"=>"Entry", "SecurityFiling"=>"ISF"})
     end
 
     it "rejects non-admin users" do
@@ -85,6 +89,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
                 output_style: "standard",
                 enabled: true,
                 testing: false,
+                module_type: "Entry",
                 setup_json: [
                   {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
                   {model_field_uid: "", timezone: "timezone", no_time: true}
@@ -95,7 +100,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
               }
             }
     end
-    it "creates a milestone config" do
+    it "creates an entry milestone config" do
       post :create, @c
 
       config = MilestoneNotificationConfig.first
@@ -112,6 +117,14 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(config.search_criterions.first.include_empty?).to be_false
     end
 
+    it "creates an isf milestone config" do
+      @c[:milestone_notification_config][:module_type] = "SecurityFiling"
+      post :create, @c
+
+      config = MilestoneNotificationConfig.first
+      expect(config).not_to be_nil
+    end
+
     it "rejects non-admin users" do
       allow_api_access Factory(:user)
 
@@ -119,11 +132,16 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(response.status).to eq 403
       expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
     end
+
+    it "errors on configs for non-entry, non-isf modules" do
+      @c[:milestone_notification_config][:module_type] = "NotAModule"
+      expect {post :create, @c}.to raise_error "Validation failed: Module type is not valid."
+    end
   end
 
   describe "copy" do
     it "copies existing config to new one" do
-      c = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", enabled: "true", setup: '[{"model_field_uid":"ent_release_date","no_time":null,"timezone":null}]'
+      c = MilestoneNotificationConfig.create! customer_number: "CUST", module_type: "SecurityFiling", output_style: "standard", enabled: "true", setup: '[{"model_field_uid":"ent_release_date","no_time":null,"timezone":null}]'
       c.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "eq", value: "val"
 
       get :copy, id: c.id
@@ -151,13 +169,14 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
   describe "update" do
     before :each do
-      @config = MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard"
+      @config = MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard", module_type:"Entry"
 
       @c =  {milestone_notification_config: {
                  customer_number: "CUST",
                  output_style: "mbol_container",
                  enabled: false,
                  testing: true,
+                 module_type: "Entry",
                  setup_json: [
                    {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
                    {model_field_uid: "", timezone: "timezone", no_time: true}
@@ -198,7 +217,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
   describe "destroy" do
     it "removes a config" do
-      @config = MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard"
+      @config = MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard", module_type: "Entry"
 
       delete :destroy, id: @config.id
       expect(response).to be_success
@@ -209,9 +228,9 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
   describe "index" do
     it "lists all configs" do
-      config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", testing: false, setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
+      config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", testing: false, module_type:"Entry", setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
       config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false
-      config2 = MilestoneNotificationConfig.create! customer_number: "ABC",output_style: "standard", testing: true
+      config2 = MilestoneNotificationConfig.create! customer_number: "ABC",output_style: "standard", testing: true, module_type: "Entry"
 
       get :index
 
@@ -226,6 +245,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
             customer_number: "ABC",
             enabled: nil,
             output_style: 'standard',
+            module_type: "Entry",
             setup_json: [],
             search_criterions: [],
             testing: true
@@ -240,6 +260,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
             enabled: nil,
             output_style: 'standard',
             testing: false,
+            module_type:"Entry",
             setup_json: [
               {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true, label: "Broker Reference", event_code: "brok_ref"}
             ],
@@ -277,11 +298,33 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
         customer_number: nil,
         enabled: nil,
         output_style: nil,
+        module_type: nil,
         setup_json: [],
         search_criterions: [],
         testing: nil
         }.with_indifferent_access
       )
+
+      # event and model field lists must be 0 until a module type is known
+      expect(c['model_field_list']).to eq []
+      expect(c['event_list']).to eq []
+
+      expect(c["output_styles"]).to eq MilestoneNotificationConfig::OUTPUT_STYLES
+
+      timezones = c["timezones"]
+      # Plus one is because we're inserting a blank value 
+      expect(timezones.size).to eq ActiveSupport::TimeZone.all.size + 1
+      expect(timezones.first['name']).to be_a String
+      expect(timezones.first['label']).to be_a String
+    end
+  end
+
+  describe "model_fields" do
+
+    it 'returns valid model fields for Entry module' do
+      get :model_fields, {module_type: "Entry"}
+      expect(response).to be_success
+      c = JSON.parse response.body
 
       mf_list = c['model_field_list']
       expect(mf_list.size).to eq CoreModule::ENTRY.model_fields(@user).size
@@ -296,14 +339,17 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(event_list.first['mfid']).to be_a String
       expect(event_list.first['label']).to be_a String
       expect(event_list.first['datatype']).to be_a String
+    end
 
-      expect(c["output_styles"]).to eq MilestoneNotificationConfig::OUTPUT_STYLES
+    it 'returns valid model fields for SecurityFiling module' do
+      get :model_fields, {module_type: "SecurityFiling"}
+      expect(response).to be_success
+      c = JSON.parse response.body
 
-      timezones = c["timezones"]
-      # Plus one is because we're inserting a blank value 
-      expect(timezones.size).to eq ActiveSupport::TimeZone.all.size + 1
-      expect(timezones.first['name']).to be_a String
-      expect(timezones.first['label']).to be_a String
+      mf_list = c['model_field_list']
+      expect(mf_list.size).to eq CoreModule::SECURITY_FILING.model_fields(@user).size
+      event_list = c['event_list']
+      expect(event_list.size).to eq CoreModule::SECURITY_FILING.model_fields(@user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}.size
     end
   end
 end

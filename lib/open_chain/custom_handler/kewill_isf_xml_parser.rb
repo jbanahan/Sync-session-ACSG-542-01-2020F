@@ -47,6 +47,7 @@ module OpenChain
               sf.update_column(:time_to_process, ((Time.now - start_time) * 1000).to_i)
             end
           end
+          sf.broadcast_event(:save)
         end
       end
 
@@ -73,7 +74,19 @@ module OpenChain
         @sf.lading_port_code = et r, 'PORT_LADING_CD'
         @sf.unlading_port_code = et r, 'PORT_UNLADING_CD'
         @sf.entry_port_code = et r, 'PORT_ENTRY_CD'
+        previous_status = sf.status_code
         @sf.status_code = et r, 'STATUS_CD'
+        # If the ISF status has changed, I'm going to assume that the last event date listed is going to be the most
+        # accurate way of determinng the time to record the change as - since the last event listed is going to be the 
+        # one that caused the status change or at the very least will be more accurate than using the current time in the parser
+        if previous_status != @sf.status_code
+          if @sf.ams_match_date.nil? && @sf.status_code == "ACCMATCH"
+            @sf.ams_match_date = @sf.last_event
+          elsif @sf.delete_accepted_date.nil? && @sf.status_code == "DEL_ACCEPT"
+            @sf.delete_accepted_date = @sf.last_event
+          end
+        end
+
         @sf.late_filing = (et(r,'IS_SUBMIT_LATE')=='Y')
         @sf.status_description = STATUS_XREF[@sf.status_code]
         process_bills_of_lading r

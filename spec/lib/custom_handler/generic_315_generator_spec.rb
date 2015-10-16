@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       it "accepts entries linked to customer numbers with 315 setups" do
         e = Entry.new broker_reference: "ref", customer_number: "cust"
-        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard"
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"
         c.save! 
 
         expect(described_class.new.accepts? :save, e).to be_true
@@ -24,14 +24,22 @@ describe OpenChain::CustomHandler::Generic315Generator do
       end
 
       it "doesn't accept entries without customer numbers" do 
-        c = MilestoneNotificationConfig.create! enabled: true, output_style: "standard"
+        c = MilestoneNotificationConfig.create! enabled: true, output_style: "standard", module_type: "Entry"
         e = Entry.new broker_reference: "cust"
+        expect(described_class.new.accepts? :save, e).to be_false
+      end
+
+      it "doesn't find 315 setups for other modules" do
+        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Something Else"
+        c.save! 
+
         expect(described_class.new.accepts? :save, e).to be_false
       end
 
       it "doesn't accept entries linked to 315 setups that are disabled" do
         e = Entry.new broker_reference: "ref", customer_number: "cust"
-        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: false, output_style: "standard"
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: false, output_style: "standard", module_type: "Entry"
         c.save! 
 
         expect(described_class.new.accepts? :save, e).to be_false
@@ -39,8 +47,8 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       it "accepts if multiple configs are setup" do
         e = Entry.new broker_reference: "ref", customer_number: "cust"
-        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: false
-        c1 = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: false, module_type: "Entry"
+        c1 = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true, module_type: "Entry"
         c.save! 
         c1.save!
 
@@ -49,7 +57,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       it "accepts if configs are all testing" do
         e = Entry.new broker_reference: "ref", customer_number: "cust"
-        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true, module_type: "Entry"
         c.save!
 
         expect(described_class.new.accepts? :save, e).to be_true
@@ -58,7 +66,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
     
     it "doesn't accept entries if 'Entry 315' custom feature isn't enabled" do
       e = Entry.new broker_reference: "ref", customer_number: "cust"
-      c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard"
+      c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"
       c.save! 
 
       ms = double
@@ -71,7 +79,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
   describe "receive" do
     before :each do
-      @config = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard"
+      @config = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"
       @config.setup_json = [
         {model_field_uid: "ent_release_date"}
       ]
@@ -229,7 +237,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
     end
 
     it "sends milestones for each config that is enabled" do
-      config2 = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true
+      config2 = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true, module_type: "Entry"
       config2.setup_json = [
         {model_field_uid: "ent_file_logged_date"}
       ]
@@ -258,51 +266,4 @@ describe OpenChain::CustomHandler::Generic315Generator do
     end
   end
 
-  describe "generate" do
-    before :each do 
-      @e = Entry.new broker_reference: "ref", entry_number: "ent", customer_number: "cust", transport_mode_code: 10, fcl_lcl: "LCL", carrier_code: "SCAC",
-            vessel: "ves", voyage: "voy", entry_port_code: "e_p", lading_port_code: "l_p", master_bills_of_lading: "A\nB", house_bills_of_lading: "C\nD", container_numbers: "E\nF",
-            po_numbers: "G\nH", cargo_control_number: "CCN"
-    end
-
-    it "generates xml" do
-      dt = Time.zone.parse "2015-01-01 12:30"
-      doc = REXML::Document.new("<root></root>")
-
-      described_class.new.generate doc.root, @e, 'release_date', dt, @e.master_bills_of_lading.split(/\n/), @e.container_numbers.split(/\n/)
-      r = doc.root.elements[1]
-
-      expect(r.name).to eq "VfiTrack315"
-      expect(r.text "BrokerReference").to eq @e.broker_reference
-      expect(r.text "EntryNumber").to eq @e.entry_number
-      expect(r.text "CustomerNumber").to eq @e.customer_number
-      expect(r.text "ShipMode").to eq @e.transport_mode_code.to_s
-      expect(r.text "ServiceType").to eq @e.fcl_lcl
-      expect(r.text "CarrierCode").to eq @e.carrier_code
-      expect(r.text "Vessel").to eq @e.vessel
-      expect(r.text "VoyageNumber").to eq @e.voyage
-      expect(r.text "PortOfEntry").to eq @e.entry_port_code
-      expect(r.text "PortOfLading").to eq @e.lading_port_code
-      expect(r.text "CargoControlNumber").to eq @e.cargo_control_number
-
-      expect(REXML::XPath.each(r, "MasterBills/MasterBill").collect {|v| v.text}).to eq(["A", "B"])
-      expect(REXML::XPath.each(r, "HouseBills/HouseBill").collect {|v| v.text}).to eq(["C", "D"])
-      expect(REXML::XPath.each(r, "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
-      expect(REXML::XPath.each(r, "PoNumbers/PoNumber").collect {|v| v.text}).to eq(["G", "H"])
-
-      expect(r.text "Event/EventCode").to eq "release_date"
-      expect(r.text "Event/EventDate").to eq "20150101"
-      expect(r.text "Event/EventTime").to eq "1230"
-    end
-
-    it "zeros event time if date object is given" do
-      d = Date.new 2015, 1, 1
-      doc = REXML::Document.new("<root></root>")
-      described_class.new.generate doc.root, @e, 'release_date', d, [], []
-      r = doc.root.elements[1]
-      expect(r.text "Event/EventCode").to eq "release_date"
-      expect(r.text "Event/EventDate").to eq "20150101"
-      expect(r.text "Event/EventTime").to eq "0000"
-    end
-  end
 end

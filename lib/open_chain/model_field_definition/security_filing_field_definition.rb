@@ -34,7 +34,9 @@ module OpenChain; module ModelFieldDefinition; module SecurityFilingFieldDefinit
       [31,:sf_cbp_updated_at,:cbp_updated_at, "Last CBP Message Date",{:data_type => :datetime}],
       [32,:sf_status_description,:status_description, "Status Description", {:data_type => :string}],
       [33,:sf_last_event, :last_event, "Last Event Date", {:data_type => :datetime}],
-      [34,:sf_manufacturer_names, :manufacturer_names, "Manufacturer Names", {:data_type => :text}]
+      [34,:sf_manufacturer_names, :manufacturer_names, "Manufacturer Names", {:data_type => :text}],
+      [35,:sf_ams_match_date,:ams_match_date, "AMS Match Date",{:data_type=> :datetime}],
+      [36,:sf_delete_accepted_date,:delete_accepted_date, "Delete Accepted Date",{:data_type=> :datetime}]
     ]
   end
 end; end; end
