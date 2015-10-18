@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module DutyCalc;
 
         raise "DrawbackClaim #{claim.id} already has DrawbackExportHistory records." unless claim.drawback_export_histories.empty?
 
-        self.new.parse_excel OpenChain::XLClient.new_from_attachable(att)
+        self.new(throttle_speed:0.25).parse_excel OpenChain::XLClient.new_from_attachable(att), claim
 
         msg = "Processing successful for file #{attachment_name} on claim #{claim.name}."
       rescue
@@ -35,25 +35,28 @@ module OpenChain; module CustomHandler; module DutyCalc;
     end
 
     def initialize opts={}
-      @inner_opts = {group_size:1000}.merge opts
+      @inner_opts = {group_size:1000, throttle_speed:0}.merge opts
       @claim_cache = Hash.new
     end
 
-    def parse_excel xl_client
+    def parse_excel xl_client, claim
       rp = Class.new do
-        def initialize xlc
+        def initialize xlc, opts
           @xlc = xlc
+          @inner_opts = opts
         end
         def parse
           @xlc.all_row_values(0) do |r|
             yield r
+            ts = @inner_opts[:throttle_speed] if @inner_opts[:throttle_speed]
+            sleep ts if ts > 0
           end
         end
       end
-      self.parse(rp.new(xl_client))
+      self.parse(rp.new(xl_client,@inner_opts),claim)
     end
 
-    def parse_csv data
+    def parse_csv data, claim
       rp = Class.new do 
         def initialize d
           @data = d
@@ -64,10 +67,10 @@ module OpenChain; module CustomHandler; module DutyCalc;
           end
         end
       end
-      self.parse(rp.new(data))
+      self.parse(rp.new(data),claim)
     end
 
-    def parse row_parser
+    def parse row_parser, claim
       ActiveRecord::Base.transaction do 
         rows = []
         row = 0
@@ -78,24 +81,26 @@ module OpenChain; module CustomHandler; module DutyCalc;
           next if row == 1
           next unless r.size == 11 && r[10] && r[10].to_s.match(/[0-9]/)
           if rows.size == @inner_opts[:group_size]
-            process_rows rows
+            process_rows rows, claim
             rows = []
           end
           rows << r
         end
-        process_rows(rows) if rows.size > 0
+        process_rows(rows,claim) if rows.size > 0
       end
     end
 
     private 
-    def process_rows rows
+    def process_rows rows, claim
+      claim_entry_number = claim.entry_number.strip.gsub(/-/,'')
       histories = rows.collect do |r|
-        h = DrawbackExportHistory.new(
+        raise "Claim number in row (#{r[7]}) doesn't match claim (#{claim.entry_number})." unless claim_entry_number == r[7].strip.gsub(/-/,'')
+        DrawbackExportHistory.new(
           part_number:r[0],
           export_ref_1:r[1],
           export_date:make_export_date(r),
           quantity:r[5],
-          drawback_claim_id: find_claim_id(r[7]),
+          drawback_claim_id: claim.id,
           claim_amount_per_unit: r[9],
           claim_amount: r[10]
         )
@@ -108,17 +113,6 @@ module OpenChain; module CustomHandler; module DutyCalc;
       return s if s.respond_to?(:acts_like_date?) || s.respond_to?(:acts_like_time?)
       sd = s.split('/')
       Date.new(sd.last.to_i,sd.first.to_i,sd[1].to_i)
-    end
-    def find_claim_id claim_number
-      r = @claim_cache[claim_number]
-      if r.nil?
-        dc = DrawbackClaim.find_by_entry_number claim_number
-        if dc
-          @claim_cache[claim_number] = dc.id
-          r = dc.id
-        end
-      end
-      r
     end
   end
 end; end; end
