@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
-  describe :process_excel_from_attachment do
+  describe :process_from_attachment do
     before :each do
       @u = Factory(:user)
     end
@@ -10,35 +10,66 @@ describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
         described_class.any_instance.should_not_receive(:parse_excel)
       end
       it "must be attached to a DrawbackClaim" do
-        att = Factory(:attachment,attachable:Factory(:order))
-        expect{described_class.process_excel_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+        att = Factory(:attachment,attachable:Factory(:order),attached_file_name:'hello.xlsx')
+        expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
         expect(@u.messages.first.body).to match /is not attached to a DrawbackClaim/
       end
       it "must be a user who can edit the claim" do
-        att = Factory(:attachment,attachable:Factory(:drawback_claim))
+        att = Factory(:attachment,attachable:Factory(:drawback_claim),attached_file_name:'hello.xlsx')
         DrawbackClaim.any_instance.stub(:can_edit?).and_return false
-        expect{described_class.process_excel_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+        expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
         expect(@u.messages.first.body).to match /cannot edit DrawbackClaim/
       end
       it "must not have existing export history lines for the claim" do
         DrawbackClaim.any_instance.stub(:can_edit?).and_return true
-        att = Factory(:attachment,attachable:Factory(:drawback_claim))
+        att = Factory(:attachment,attachable:Factory(:drawback_claim),attached_file_name:'hello.xlsx')
         att.attachable.drawback_export_histories.create!
-        expect{described_class.process_excel_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+        expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
         expect(@u.messages.first.body).to match /already has DrawbackExportHistory records/
       end
     end
     it "should call parse_excel" do
       DrawbackClaim.any_instance.stub(:can_edit?).and_return true
       claim = Factory(:drawback_claim)
-      att = Factory(:attachment,attachable:claim)
+      att = Factory(:attachment,attachable:claim,attached_file_name:'something.xlsx')
       x = double(:xl_client)
       p = double(:export_history_parser)
       OpenChain::XLClient.should_receive(:new_from_attachable).with(att).and_return(x)
       described_class.should_receive(:new).and_return(p)
       p.should_receive(:parse_excel).with(x,claim)
-      expect{described_class.process_excel_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+      expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
       expect(@u.messages.first.body).to match /success/
+    end
+    it "should call parse CSV" do
+      DrawbackClaim.any_instance.stub(:can_edit?).and_return true
+      claim = Factory(:drawback_claim)
+      att = Factory(:attachment,attachable:claim,attached_file_name:'something.csv')
+      p = double(:export_history_parser)
+      described_class.should_receive(:new).and_return(p)
+      p.should_receive(:parse_csv_from_attachment).with(att,claim)
+      expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+      expect(@u.messages.first.body).to match /success/
+    end
+    it "should fail if not xlsx or csv" do
+      DrawbackClaim.any_instance.stub(:can_edit?).and_return true
+      claim = Factory(:drawback_claim)
+      att = Factory(:attachment,attachable:claim,attached_file_name:'something.txt')
+      expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+      expect(@u.messages.first.body).to match /Invalid file format/
+    end
+  end
+  describe :parse_csv_from_attachment do
+    it "should download attachment" do
+      claim = double('claim')
+      att = Factory(:attachment)
+      tmp = double('tempfile')
+      tmp.should_receive(:path).and_return('x')
+      att.should_receive(:download_to_tempfile).and_yield(tmp)
+      IO.should_receive(:read).with('x').and_return('y')
+      p = described_class.new
+      p.should_receive(:parse_csv).with('y',claim)
+
+      p.parse_csv_from_attachment(att,claim)
     end
   end
   describe :parse_excel do

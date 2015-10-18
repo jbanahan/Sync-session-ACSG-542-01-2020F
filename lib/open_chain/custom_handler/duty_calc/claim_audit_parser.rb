@@ -4,7 +4,7 @@ module OpenChain; module CustomHandler; module DutyCalc
   class ClaimAuditParser
     # processes the given attachment which must be attached to a claim with no
     # existing claim audit records
-    def self.process_excel_from_attachment attachment_id, user_id
+    def self.process_from_attachment attachment_id, user_id
       attachment_name = "UNKNOWN"
       msg = ""
       has_error = false  
@@ -14,14 +14,20 @@ module OpenChain; module CustomHandler; module DutyCalc
         attachment_name = att.attached_file_name
         claim = att.attachable
 
+        raise "Invalid file format for #{attachment_name}." unless (attachment_name.downcase.match(/xlsx$/) || attachment_name.downcase.match(/csv$/)) 
+
         raise "Attachment with ID #{att.id} is not attached to a DrawbackClaim." unless claim.is_a?(DrawbackClaim)
 
         raise "User #{u.id} cannot edit DrawbackClaim #{claim.id}" unless claim.can_edit?(u)
 
         raise "DrawbackClaim #{claim.id} already has DrawbackClaimAudit records." unless claim.drawback_claim_audits.empty?
 
-        self.new.parse_excel OpenChain::XLClient.new_from_attachable(att), claim
-
+        p = self.new
+        if attachment_name.downcase.match(/xlsx$/)
+          p.parse_excel OpenChain::XLClient.new_from_attachable(att), claim
+        else
+          p.parse_csv_from_attachment att, claim
+        end
         msg = "Processing successful for file #{attachment_name} on claim #{claim.name}."
       rescue
         has_error = true
@@ -50,6 +56,13 @@ module OpenChain; module CustomHandler; module DutyCalc
       end
       self.parse(rp.new(xl_client),claim)
     end
+
+    def parse_csv_from_attachment attachment, claim
+      attachment.download_to_tempfile do |f|
+        parse_csv IO.read(f.path), claim
+      end
+    end
+
     def parse_csv data, claim
       rp = Class.new do 
         def initialize d
