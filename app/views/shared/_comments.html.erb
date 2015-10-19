@@ -42,7 +42,7 @@ function sendComment() {
 <% end %>
 <% if (!commentable.respond_to?('can_comment?') || commentable.can_comment?(current_user)) %>
   <%content_for :action_bar do%>
-    <button id='btn_comment_add'>Add Comment</button>
+    <button id='btn_comment_add' title='Add Comment'><i class='fa fa-sticky-note'></i></button>
   <% end %>
 <%end%>
 <% unless commentable.comments.empty? %>

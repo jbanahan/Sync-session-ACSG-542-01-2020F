@@ -1,5 +1,6 @@
+require 'open_chain/business_rule_validation_results_support'
 class OrdersController < ApplicationController
-  include ValidationResultsHelper
+  include OpenChain::BusinessRuleValidationResultsSupport
 	
 	def root_class
 		Order
@@ -148,38 +149,7 @@ class OrdersController < ApplicationController
   end
 
   def validation_results
-    o = Order.find params[:id]
-    respond_to do |format|
-    format.html {
-      action_secure(o.can_view_business_validation_results?(current_user),o,{:lock_check=>false,:verb=>"view",:module_name=>"order"}) {
-        @order = o
-      }
-    }
-    format.json {
-      r = {
-        object_number:o.order_number,
-        state:o.business_rules_state,
-        object_updated_at:o.updated_at,
-        single_object:"Order",
-        bv_results:[]
-      }
-      o.business_validation_results.each do |bvr|
-        return render_json_error "You do not have permission to view this object", 401 unless bvr.can_view?(current_user)
-        h = {
-          id:bvr.id,
-          state:bvr.state,
-          template:{name:bvr.business_validation_template.name},
-          updated_at:bvr.updated_at,
-          rule_results:[]
-        }
-        bvr.business_validation_rule_results.each do |rr|
-          h[:rule_results] << business_validation_rule_result_json(rr)
-        end
-        r[:bv_results] << h
-      end
-      render json: {business_validation_result:r}
-    }
-    end
+    generic_validation_results(Order.find params[:id])
   end
 
   private

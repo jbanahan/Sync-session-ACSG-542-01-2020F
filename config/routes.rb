@@ -523,6 +523,7 @@ OpenChain::Application.routes.draw do
       get 'plants'
       get 'products'
       get 'survey_responses'
+      get 'validation_results'
     end
     collection do
       get 'matching_vendors'

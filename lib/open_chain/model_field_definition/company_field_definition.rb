@@ -46,7 +46,25 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
         can_edit_lambda: admin_edit_lambda(),
         can_view_lambda: admin_edit_lambda()
       }],
-      [16, :comp_show_buiness_rules, :show_business_rules, "Show Business Rules", {datatype: :boolean, can_edit_lambda: admin_edit_lambda(), can_view_lambda: admin_edit_lambda()}]
+      [16, :comp_show_buiness_rules, :show_business_rules, "Show Business Rules", {datatype: :boolean, can_edit_lambda: admin_edit_lambda(), can_view_lambda: admin_edit_lambda()}],
+      [17,:comp_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
+        :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.business_rules_state },
+        :qualified_field_name=> "(select state
+          from business_validation_results bvr
+          where bvr.validatable_type = 'Company' and bvr.validatable_id = entries.id
+          order by (
+          case bvr.state
+              when 'Fail' then 0
+              when 'Review' then 1
+              when 'Pass' then 2
+              when 'Skipped' then 3
+              else 4
+          end
+          )
+          limit 1)",
+        :can_view_lambda=>lambda {|u| u.view_business_validation_results? }
+      }],
     ]
     add_fields CoreModule::COMPANY, make_attachment_arrays(100,'cmp',CoreModule::COMPANY)
   end

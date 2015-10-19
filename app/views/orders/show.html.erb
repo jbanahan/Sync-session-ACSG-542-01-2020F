@@ -70,9 +70,7 @@
       <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
     <% end %>
   <% end %>
-  <% if @order.can_view_business_validation_results?(current_user) %>
-  <button class='btn_link' link_to='<%=validation_results_order_path(@order)%>'>Business Rules</button>
-  <% end %>
+  <%=business_rules_button rule_state_field, validation_results_order_path(@order)%>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
