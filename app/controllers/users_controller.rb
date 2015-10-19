@@ -25,6 +25,10 @@ class UsersController < ApplicationController
       redirect_to edit_company_user_path @user.company, @user
     end
 
+    def me
+      redirect_to edit_company_user_path current_user.company, current_user
+    end
+
     # GET /users/new
     def new
       admin_secure("Only administrators can create users.") {
