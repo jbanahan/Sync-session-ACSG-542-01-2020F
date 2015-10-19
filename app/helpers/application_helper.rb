@@ -16,6 +16,18 @@ module ApplicationHelper
   }
 
 
+  # create button to business rules page
+  def business_rules_button rule_state_field, path
+    if rule_state_field.can_view?(User.current)
+      return content_tag(:button,class: 'btn_link', link_to: path, title:'Business Rules') do
+        content_tag(:i,'',class:'fa fa-medkit')
+      end
+    else
+      return ''
+    end
+
+  end
+
   #create a visual
   def section_box title, html_options={}, &block
     inner_opts = {}.merge html_options

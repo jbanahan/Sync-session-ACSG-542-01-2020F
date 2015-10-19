@@ -10,9 +10,7 @@
     <%if include_process_actions %>
       <button data-toggle='modal' data-target='#process_actions_modal'>Process Reports</button>
     <%end%>
-    <%if rule_state_field.can_view? current_user%>
-      <button class='btn_link' link_to='<%=validation_results_drawback_claim_path(@claim)%>'>Business Rules</button>
-    <%end-%>
+    <%=business_rules_button rule_state_field, validation_results_drawback_claim_path(@claim)%>
   <%end-%>
 <%end%>
 <h2>Drawback Claim: <%=@claim.name%></h2>

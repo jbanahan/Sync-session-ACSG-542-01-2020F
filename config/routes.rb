@@ -272,6 +272,7 @@ OpenChain::Application.routes.draw do
   match "/enable_run_as" => "users#enable_run_as"
   match "/disable_run_as" => "users#disable_run_as"
   match "/users/set_homepage" => "users#set_homepage", :via => :post
+  match "/me" => "users#me", via: :get
 
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
@@ -524,6 +525,7 @@ OpenChain::Application.routes.draw do
       get 'plants'
       get 'products'
       get 'survey_responses'
+      get 'validation_results'
     end
     collection do
       get 'matching_vendors'

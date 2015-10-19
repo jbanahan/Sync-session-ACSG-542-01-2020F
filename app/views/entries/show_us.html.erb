@@ -2,19 +2,17 @@
 <%content_for :action_bar do -%>
   <%pms = params.clone-%>
   <%pms[:mode]='simple'-%>
-  <button class='btn_link' link_to='<%=entry_path(@entry,pms)%>'>Simple Mode</button>
+  <button title='Simple Mode' class='btn_link' link_to='<%=entry_path(@entry,pms)%>'><i class='fa fa-search-minus'></i></button>
   <%if current_user.company.master?-%>
-    <%= button_to 'Update Images', get_images_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button' %>
-    <%= button_to 'Update Entry', request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;' %>
+    <%= link_to raw("<i class='fa fa-file-image-o'></i>"), get_images_entry_path(@entry), title:'Update Images', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+    <%= link_to raw("<i class='fa fa-refresh'></i>"), request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Update Entry' %>
   <%end-%>
   <%if current_user.sys_admin?-%>    
-    <%= button_to 'Purge', purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;' %>
+    <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Purge' %>
   <%end-%>
-  <button id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
-  <%if rule_state_field.can_view? current_user%>
-    <button class='btn_link' link_to='<%=validation_results_entry_path(@entry)%>'>Business Rules</button>
-  <%end%>
-  <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>'>Sync Records</button>
+  <button title='Download' id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>"><i class='fa fa-download'></i></button>
+  <%=business_rules_button rule_state_field, validation_results_entry_path(@entry)%>
+  <button class="btn_link" title='Sync Records' link_to='<%=sync_records_entry_path(@entry)%>'><i class='fa fa-exchange'></i></button>
 <%end-%>
 <% cache [current_user.company,current_user,@entry] do-%>
   <style>
@@ -40,7 +38,7 @@
   }
   </style>
   <%show_broker_invoices = current_user.view_broker_invoices? && !@entry.broker_invoices.blank?%>
-  <%=render partial: 'business_rules', locals:{entry:@entry}%>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:rule_state_field}%>
   <a name='ent_header'></a>
   <div class='quick_jump'>
     <a href='#c_invoices'>Commercial Invoices</a>
