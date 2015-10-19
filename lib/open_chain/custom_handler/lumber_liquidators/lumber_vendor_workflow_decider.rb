@@ -20,37 +20,45 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVe
   end
 
   def self.skip? company
-    !company.vendor?
+    ###################
+    # Disabling during remediation project - 2015-10-16
+    ###################
+    return true
+    # !company.vendor?
   end
 
   def self.do_workflow! vendor, workflow_inst, user
-    # if vendor is locked, clear incomplete tasks and return
-    if vendor.locked?
-      workflow_inst.workflow_tasks.where(passed_at:nil).destroy_all
-      return nil
-    end
+    ###################
+    # Disabling during remediation project - 2015-10-16
+    ###################
 
-    tasks_to_keep = []
+    # # if vendor is locked, clear incomplete tasks and return
+    # if vendor.locked?
+    #   workflow_inst.workflow_tasks.where(passed_at:nil).destroy_all
+    #   return nil
+    # end
 
-    groups = prep_groups ['MERCH','LEGAL','SAPV','PRODUCTCOMP','EXPRODUCTCOMP','TRADECOMP','QUALITY']
-    company_cdefs = prep_custom_definitions(custom_definition_keys_by_module_type('Company'))
-    vendor_agreement_attachment_type = vendor.attachments.where('attachment_type REGEXP "Vendor Agreement"').pluck(:attachment_type).first
+    # tasks_to_keep = []
 
-    tasks_to_keep += CompanyTests.create_company_tests vendor, workflow_inst, company_cdefs, groups, vendor_agreement_attachment_type
+    # groups = prep_groups ['MERCH','LEGAL','SAPV','PRODUCTCOMP','EXPRODUCTCOMP','TRADECOMP','QUALITY']
+    # company_cdefs = prep_custom_definitions(custom_definition_keys_by_module_type('Company'))
+    # vendor_agreement_attachment_type = vendor.attachments.where('attachment_type REGEXP "Vendor Agreement"').pluck(:attachment_type).first
 
-    plant_cdefs = nil
-    plant_cdefs = prep_custom_definitions(custom_definition_keys_by_module_type('Plant'))
-    ppga_cdefs = nil
-    vendor.plants.each do |plant|
-      tasks_to_keep += PlantTests.create_plant_tests(vendor,workflow_inst,plant,plant_cdefs,groups)
+    # tasks_to_keep += CompanyTests.create_company_tests vendor, workflow_inst, company_cdefs, groups, vendor_agreement_attachment_type
 
-      ppga_cdefs ||= prep_custom_definitions(custom_definition_keys_by_module_type('PlantProductGroupAssignment'))
-      plant.plant_product_group_assignments.each do |ppga|
-        tasks_to_keep += ProductGroupTests.create_product_group_assignment_tests(workflow_inst,ppga,ppga_cdefs,groups)
-      end
-    end
+    # plant_cdefs = nil
+    # plant_cdefs = prep_custom_definitions(custom_definition_keys_by_module_type('Plant'))
+    # ppga_cdefs = nil
+    # vendor.plants.each do |plant|
+    #   tasks_to_keep += PlantTests.create_plant_tests(vendor,workflow_inst,plant,plant_cdefs,groups)
 
-    workflow_inst.destroy_stale_tasks(tasks_to_keep, tasks_to_keep.compact.collect{ |t| t.task_type_code}.uniq.compact)
+    #   ppga_cdefs ||= prep_custom_definitions(custom_definition_keys_by_module_type('PlantProductGroupAssignment'))
+    #   plant.plant_product_group_assignments.each do |ppga|
+    #     tasks_to_keep += ProductGroupTests.create_product_group_assignment_tests(workflow_inst,ppga,ppga_cdefs,groups)
+    #   end
+    # end
+
+    # workflow_inst.destroy_stale_tasks(tasks_to_keep, tasks_to_keep.compact.collect{ |t| t.task_type_code}.uniq.compact)
 
     return nil
   end

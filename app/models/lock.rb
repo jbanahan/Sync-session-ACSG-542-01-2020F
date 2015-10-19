@@ -165,7 +165,7 @@ class Lock
     get_connection_pool.with(timeout: 30) do |redis|
       semaphore = Redis::Semaphore.new(lock_name, redis: redis)
       semaphore.unlock
-      sempahore.release_stale_locks!
+      semaphore.release_stale_locks!
     end
   end
 

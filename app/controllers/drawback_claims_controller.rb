@@ -64,7 +64,7 @@ class DrawbackClaimsController < ApplicationController
       if parser.nil?
         add_flash :errors, "Invalid parser type #{params[:process_type]}"
       else
-        parser.delay.process_excel_from_attachment params[:attachment_id], current_user.id
+        parser.delay.process_from_attachment params[:attachment_id], current_user.id
         add_flash :notices, "Report is being processed.  You'll receive a system message when it is complete."
       end
       redirect_to claim

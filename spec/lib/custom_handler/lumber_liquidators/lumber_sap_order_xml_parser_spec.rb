@@ -87,11 +87,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       expect(Order.count).to eq 0
     end
-    it "should ignore ZSTK orders" do
-      td = @test_data.gsub(/<BSART>.*<\/BSART>/,'<BSART>ZSTK</BSART>')
+
+    it "should allow zero costs for missing NETWR element" do
+      td = @test_data.gsub(/<NETWR.*\/NETWR>/,'').gsub(/<SUMME.*\/SUMME>/,'')
       dom = REXML::Document.new(td)
 
-      expect{described_class.new.parse_dom(dom)}.to_not change(Order,:count)
+      expect{described_class.new.parse_dom(dom)}.to change(Order,:count).from(0).to(1)
+
+      o = Order.first
+      # all prices should be nil
+      expect(o.order_lines.collect {|ln| ln.price_per_unit}.compact).to eq []
     end
+
+
   end
 end

@@ -115,14 +115,14 @@ describe DrawbackClaimsController do
     it "should process export history" do
       eh = double(:export_history_parser)
       OpenChain::CustomHandler::DutyCalc::ExportHistoryParser.should_receive(:delay).and_return(eh)
-      eh.should_receive(:process_excel_from_attachment).with(@att.id.to_s,@u.id)
+      eh.should_receive(:process_from_attachment).with(@att.id.to_s,@u.id)
       post :process_report, id:@claim.id, attachment_id:@att.id, process_type:'exphist'
       expect(response).to redirect_to @claim
     end
     it "should process claim audit" do
       ca = double(:claim_audit_parser)
       OpenChain::CustomHandler::DutyCalc::ClaimAuditParser.should_receive(:delay).and_return(ca)
-      ca.should_receive(:process_excel_from_attachment).with(@att.id.to_s,@u.id)
+      ca.should_receive(:process_from_attachment).with(@att.id.to_s,@u.id)
       post :process_report, id:@claim.id, attachment_id:@att.id, process_type:'audrpt'
       expect(response).to redirect_to @claim
     end

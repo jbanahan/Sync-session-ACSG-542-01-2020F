@@ -31,7 +31,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     # order header info
     order_header = REXML::XPath.first(base,'E1EDK01')
     order_type = et(order_header,'BSART')
-    return if order_type=='ZSTK' #ignore stock orders
     order_number = et(order_header,'BELNR')
     vendor_system_code = et(order_header,'RECIPNT_NO')
 
@@ -66,21 +65,30 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def validate_line_totals order, base_el
-    expected = BigDecimal(REXML::XPath.first(base_el,'E1EDS01/SUMME').text)
-    actual = order.order_lines.inject(BigDecimal('0.00')) {|mem,ln| mem + BigDecimal(ln.quantity * ln.price_per_unit).round(2)}
+    expected_el = REXML::XPath.first(base_el,'E1EDS01/SUMME')
+    return true if expected_el.nil?
+    expected = BigDecimal(expected_el.text)
+    actual = order.order_lines.inject(BigDecimal('0.00')) {|mem,ln| mem + BigDecimal(ln.quantity * (ln.price_per_unit.blank? ? 0 : ln.price_per_unit)).round(2)}
     raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
   end
 
   def process_line order, line_el
     line_number = et(line_el,'POSEX').to_i
-    extended_cost = BigDecimal(et(line_el,'NETWR'))
 
     ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
     ol = order.order_lines.build(line_number:line_number) unless ol
 
     ol.product = find_product(line_el)
     ol.quantity = BigDecimal(et(line_el,'MENGE'))
-    ol.price_per_unit = extended_cost / ol.quantity
+
+    # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
+    price_per_unit = nil
+    extended_cost_text = et(line_el,'NETWR')
+    if !extended_cost_text.blank?
+      extended_cost = BigDecimal(extended_cost_text)
+      price_per_unit = extended_cost / ol.quantity
+    end
+    ol.price_per_unit = price_per_unit 
   end
   private :process_line
 

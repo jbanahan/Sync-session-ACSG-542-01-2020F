@@ -4,7 +4,7 @@ module OpenChain; module CustomHandler; module DutyCalc
   class ClaimAuditParser
     # processes the given attachment which must be attached to a claim with no
     # existing claim audit records
-    def self.process_excel_from_attachment attachment_id, user_id
+    def self.process_from_attachment attachment_id, user_id
       attachment_name = "UNKNOWN"
       msg = ""
       has_error = false  
@@ -14,14 +14,20 @@ module OpenChain; module CustomHandler; module DutyCalc
         attachment_name = att.attached_file_name
         claim = att.attachable
 
+        raise "Invalid file format for #{attachment_name}." unless (attachment_name.downcase.match(/xlsx$/) || attachment_name.downcase.match(/csv$/)) 
+
         raise "Attachment with ID #{att.id} is not attached to a DrawbackClaim." unless claim.is_a?(DrawbackClaim)
 
         raise "User #{u.id} cannot edit DrawbackClaim #{claim.id}" unless claim.can_edit?(u)
 
         raise "DrawbackClaim #{claim.id} already has DrawbackClaimAudit records." unless claim.drawback_claim_audits.empty?
 
-        self.new.parse_excel OpenChain::XLClient.new_from_attachable(att), claim.entry_number
-
+        p = self.new
+        if attachment_name.downcase.match(/xlsx$/)
+          p.parse_excel OpenChain::XLClient.new_from_attachable(att), claim
+        else
+          p.parse_csv_from_attachment att, claim
+        end
         msg = "Processing successful for file #{attachment_name} on claim #{claim.name}."
       rescue
         has_error = true
@@ -35,10 +41,9 @@ module OpenChain; module CustomHandler; module DutyCalc
 
     def initialize opts={}
       @inner_opts = {group_size:2000}.merge opts
-      @claim_cache = Hash.new
     end
 
-    def parse_excel xl_client, claim_number
+    def parse_excel xl_client, claim
       rp = Class.new do
         def initialize xlc
           @xlc = xlc
@@ -49,9 +54,16 @@ module OpenChain; module CustomHandler; module DutyCalc
           end
         end
       end
-      self.parse(rp.new(xl_client),claim_number)
+      self.parse(rp.new(xl_client),claim)
     end
-    def parse_csv data, claim_number
+
+    def parse_csv_from_attachment attachment, claim
+      attachment.download_to_tempfile do |f|
+        parse_csv IO.read(f.path), claim
+      end
+    end
+
+    def parse_csv data, claim
       rp = Class.new do 
         def initialize d
           @data = d
@@ -62,10 +74,10 @@ module OpenChain; module CustomHandler; module DutyCalc
           end
         end
       end
-      self.parse(rp.new(data),claim_number)
+      self.parse(rp.new(data),claim)
     end
 
-    def parse row_parser, claim_number
+    def parse row_parser, claim
       ActiveRecord::Base.transaction do 
         rows = []
         row = 0
@@ -76,20 +88,20 @@ module OpenChain; module CustomHandler; module DutyCalc
           next if row == 1
           next unless r.size == 11 && !r[10].blank?
           if rows.size == @inner_opts[:group_size]
-            process_rows rows, claim_number
+            process_rows rows, claim
             rows = []
           end
           rows << r
         end
-        process_rows(rows,claim_number) if rows.size > 0
+        process_rows(rows,claim) if rows.size > 0
       end
     end
 
     private 
-    def process_rows rows, claim_number
+    def process_rows rows, claim
       audits = rows.collect do |r|
-        h = DrawbackClaimAudit.new(
-          drawback_claim_id:find_claim_id(claim_number),
+        DrawbackClaimAudit.new(
+          drawback_claim_id:claim.id,
           export_date:make_date(r,0,"export date"),
           import_date:make_date(r,5,"import date"),
           import_part_number:r[2],
@@ -108,17 +120,6 @@ module OpenChain; module CustomHandler; module DutyCalc
       return s if s.respond_to?(:acts_like_date?) || s.respond_to?(:acts_like_time?)
       sd = s.split('/')
       Date.new(sd.last.to_i,sd.first.to_i,sd[1].to_i)
-    end
-    def find_claim_id claim_number
-      r = @claim_cache[claim_number]
-      if r.nil?
-        dc = DrawbackClaim.find_by_entry_number claim_number
-        if dc
-          @claim_cache[claim_number] = dc.id
-          r = dc.id
-        end
-      end
-      r
     end
   end
 end; end; end

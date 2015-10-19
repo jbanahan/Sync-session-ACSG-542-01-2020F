@@ -16,6 +16,8 @@ class OrdersController < ApplicationController
       o = Order.find(params[:id])
       action_secure(o.can_view?(current_user),o,{:lock_check => false, :verb => "view", :module_name=>"order"}) {
         @order = o
+        @state_button_path = 'orders'
+        @state_button_object_id = @order.id
         @products = Product.where(["vendor_id = ?",@order.vendor])
         respond_to do |format|
             format.html {
