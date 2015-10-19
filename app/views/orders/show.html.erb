@@ -94,7 +94,11 @@
   <% end %>
   <div class="row">
     <div class="col-md-6">
-      <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_imp_name, :ord_ven_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_fob_point] %>
+      <% if @order.vendor %>
+        <%vendor_name_fld = ModelField.find_by_uid(:ord_ven_name)%>
+        <%=field_bootstrap vendor_name_fld.label, link_to(vendor_name_fld.process_export(@order, User.current), vendor_path(@order.vendor)) %>
+      <% end %>
+      <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_imp_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_fob_point] %>
     </div>
     <div class="col-md-6">
       <%= show_model_fields @order, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
