@@ -658,7 +658,10 @@ module OpenChain
         end
 
         if fenix_nd_entry
-          validate_no_transaction_reuse entry
+          if !validate_no_transaction_reuse(entry, file_number)
+            # Set the entry to nil if the transaction is being reused...we don't want to update any data in it.
+            entry = nil
+          end
         end
       end
 
@@ -803,8 +806,17 @@ module OpenChain
       r
     end
 
-    def validate_no_transaction_reuse entry
-      raise "Transaction # #{entry.entry_number} cannot be reused in Fenix ND.  Please check if this is the correct file number that should be used for this entry." if entry.release_date && entry.release_date < time_zone.parse("2015-09-18")
+    def validate_no_transaction_reuse entry, new_file_number
+      if entry.release_date && entry.release_date < time_zone.parse("2015-09-18")
+        subject = "Transaction # #{entry.entry_number} cannot be reused in Fenix ND"
+        message = "Transaction # #{entry.entry_number} / File # #{new_file_number} has been used previously in old Fenix as File # #{entry.broker_reference}. Please correct this Fenix ND file and resend to VFI Track."
+        m = OpenMailer.send_simple_html(Group.use_system_group("fenix_admin", "Fenix Admin"), subject, message)
+        m.deliver! if Array.wrap(m.to).length > 0
+
+        false
+      else
+        true
+      end
     end
   end
 end

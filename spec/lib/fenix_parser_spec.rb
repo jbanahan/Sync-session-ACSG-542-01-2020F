@@ -664,9 +664,23 @@ describe OpenChain::FenixParser do
     expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error "File # / Invoice # #{@file_number} / #{@invoice_number} was missing an exchange rate.  Exchange rate must be present for commercial invoices where the currency is not CAD."
   end
 
-  it "raises an error if Fenix ND entry attempts to update an old entry" do
-    Factory(:entry,:broker_reference=>@file_number, entry_number: @barcode, :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
-    expect{OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.to raise_error "Transaction # #{@barcode} cannot be reused in Fenix ND.  Please check if this is the correct file number that should be used for this entry."
+
+  context "with fenix admin group" do
+    let (:group) {Group.create! system_code: "fenix_admin", name: "Fenix Admin"}
+    let (:user) {u = Factory(:user); group.users << u; group.save!; u}
+    
+    it "raises an error if Fenix ND entry attempts to update an old entry" do
+      user
+      entry = Factory(:entry,:entry_number=>@barcode, broker_reference: "REFERENCE", :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
+      OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)
+      # verify the entry wasn't updated
+      entry.reload
+      expect(entry.broker_reference).to eq "REFERENCE"
+      m = ActionMailer::Base.deliveries.first
+      expect(m).not_to be_nil
+      expect(m.subject).to eq "Transaction # #{@barcode} cannot be reused in Fenix ND"
+      expect(m.body).to include "Transaction # #{entry.entry_number} / File # #{@file_number} has been used previously in old Fenix as File # #{entry.broker_reference}. Please correct this Fenix ND file and resend to VFI Track."
+    end
   end
 
   it "doesn't raise an error if Fenix ND entry attempts to update an entry released after 9/18" do
