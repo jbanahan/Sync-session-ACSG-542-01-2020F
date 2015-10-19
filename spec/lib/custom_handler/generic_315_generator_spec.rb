@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       it "doesn't find 315 setups for other modules" do
         e = Entry.new broker_reference: "ref", customer_number: "cust"
-        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Something Else"
+        c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "SecurityFiling"
         c.save! 
 
         expect(described_class.new.accepts? :save, e).to be_false
