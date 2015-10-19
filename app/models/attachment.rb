@@ -27,8 +27,26 @@ class Attachment < ActiveRecord::Base
     if self.is_private?
       return user.company.master? && self.attachable.can_view?(user)
     else
-      return self.attachable.can_view?(user)
+      return self.attachable.can_view?(user) && can_view_attachment_type?(user)
     end
+  end
+
+  def can_view_attachment_type? user
+    view = false
+    if self.attachable.is_a?(Entry)
+      # Billing Invoice = Alliance Billing
+      # Invoice = Fenix
+      # Archive Packet = These will have the invoices in them as well, so they need to have access restrictions.
+      if ["BILLING INVOICE", "INVOICE", ARCHIVE_PACKET_ATTACHMENT_TYPE.upcase].include?(self.attachment_type.to_s.upcase)
+        view = BrokerInvoice.can_view? user, self.attachable
+      else
+        view = true
+      end
+    else
+      view = true
+    end
+
+    view
   end
   
   #unique name suitable for putting on archive disks
