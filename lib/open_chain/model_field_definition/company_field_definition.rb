@@ -52,7 +52,7 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
         :export_lambda=>lambda {|obj| obj.business_rules_state },
         :qualified_field_name=> "(select state
           from business_validation_results bvr
-          where bvr.validatable_type = 'Company' and bvr.validatable_id = entries.id
+          where bvr.validatable_type = 'Company' and bvr.validatable_id = companies.id
           order by (
           case bvr.state
               when 'Fail' then 0
