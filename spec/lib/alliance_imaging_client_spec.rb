@@ -499,6 +499,17 @@ ERR
       expect(e.attachments.size).to eq 1
     end
 
+    it "adds attachment to an existing entry even if the name and type are the same" do
+      @message["doc_desc"] = "Type"
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e.attachments.create! attachment_type: "Type", attached_file_name: "11981001795105 _B3_01092015 14.24.42 PM.pdf", source_system_timestamp: "2015-09-04T04:30:35-10:00"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+      e.reload
+      expect(e.attachments.size).to eq 2
+      expect(e.attachments.map {|a| a.attached_file_name }.uniq).to eq ["11981001795105 _B3_01092015 14.24.42 PM.pdf"]
+    end
+
     it "replaces previous versions of B3 attachment" do
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T04:30:35-10:00"
@@ -544,6 +555,22 @@ ERR
       e.reload
       expect(e.attachments.size).to eq 1
       expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
+    end
+
+    it 'replaces previous versions of billing invoices' do
+      @message['doc_desc'] = "Invoice"
+      @message['file_name'] = "invoice 123.pdf"
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      a1 = e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 123.pdf"
+      e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 345.pdf"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      e.reload
+      expect(e.attachments.size).to eq 2
+      expect(e.attachments.map {|a| a.attached_file_name}.sort).to eq ["invoice 123.pdf", "invoice 345.pdf"]
+      #make sure the new file referenced by message was the one that got created, and the existing one got removed
+      expect(e.attachments).not_to include a1
     end
 
   end

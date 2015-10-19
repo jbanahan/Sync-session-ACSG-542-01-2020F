@@ -142,27 +142,40 @@ class OpenChain::AllianceImagingClient
           att.is_private = true
         end
 
-        delete_other_file_versions = ["B3", "B3 RECAP", "RNS"].include? att.attachment_type.to_s.upcase
+        delete_other_file_algorithm = nil
+        case att.attachment_type.to_s.upcase
+        when "B3", "B3 RECAP", "RNS"
+          delete_other_file_algorithm = :attachment_type
+        when "INVOICE"
+          delete_other_file_algorithm = :attachment_type_and_filename
+        end
 
         # Before we save this attachment, make sure there's no other attachments that are actually newer than this one...
         # Which could happen since sqs messages are NOT guaranteed to be read back in the order they were placed (they virtually always
         # will be though)
         can_save = true
-        if delete_other_file_versions
-          other_attachments = att.attachable.attachments.where(:attachment_type=>att.attachment_type).where("source_system_timestamp > ?", att.source_system_timestamp).count
+        if delete_other_file_algorithm
+          other_attachments = other_attachments_query(att, delete_other_file_algorithm).where("source_system_timestamp > ?", att.source_system_timestamp).count
           can_save = other_attachments == 0
         end
 
         if can_save
           att.save!
 
-          if delete_other_file_versions
+          if delete_other_file_algorithm
             # Since we now know this attachment is the "latest" and greatest we can delete any others that are of this type
-            att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
+            other_attachments_query(att, delete_other_file_algorithm).where("NOT attachments.id = ?", att.id).destroy_all
           end
         end
       end
     end
+  end
+
+  def self.other_attachments_query attachment, replacement_algorithm
+    rel = attachment.attachable.attachments.where(:attachment_type=>attachment.attachment_type)
+    rel = rel.where(attached_file_name: attachment.attached_file_name) if replacement_algorithm == :attachment_type_and_filename
+
+    rel
   end
 
   def self.send_entry_stitch_request entry_id
