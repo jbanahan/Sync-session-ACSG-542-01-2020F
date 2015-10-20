@@ -116,5 +116,57 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
       # Verify the sync record was made for the product
       expect(@p.sync_records.first.trading_partner).to eq @g.sync_code
     end
+
+    it "only sends products with an updated HTS, and only for affected classifications" do
+      #new hts, shares classification with @t
+      t2 = Factory(:tariff_record, line_number: 2, hts_1: "0987654321", classification: @c, product: @p) 
+      key_t2 = @p.id.to_s + @c.country.iso_code
+      fingerprint_t2 = Digest::SHA1.base64digest ["1234567890", "new hts"].join('/')
+      DataCrossReference.create_lenox_hts_fingerprint!(key_t2, fingerprint_t2)
+
+      #unchanged hts, different classification
+      t3 = Factory(:tariff_record, line_number: 3, hts_1: "1234567890", classification: Factory(:classification, product: @p)) 
+      key_t3 = t3.product.id.to_s + t3.classification.country.iso_code
+      fingerprint_t3 = Digest::SHA1.base64digest '1234567890'
+      DataCrossReference.create_lenox_hts_fingerprint!(key_t3, fingerprint_t3)
+      
+      #unchanged HTS, different product
+      t4 = Factory(:tariff_record, line_number: 4, hts_1: "2468101214", classification: Factory(:classification, product: Factory(:product, importer: @t.product.importer))) 
+      t4.product.update_custom_value! @cust_defs[:prod_part_number], "PARTNO_2"
+      t4.product.update_custom_value! @cust_defs[:prod_fda_product_code], "FDA_2"
+      key_t4 = t4.product.id.to_s + t4.classification.country.iso_code
+      fingerprint_t4 = Digest::SHA1.base64digest '2468101214'
+      DataCrossReference.create_lenox_hts_fingerprint!(key_t4, fingerprint_t4)
+
+      @temp = @g.sync_fixed_position
+      lines = IO.readlines @temp.path
+
+      expect(lines.length).to eq 3
+      verify_line lines[0], part: "PARTNO", iso: @c.country.iso_code, hts: "MULTI", line: 0, fda: "FDA"
+      verify_line lines[1], part: "PARTNO", iso: @c.country.iso_code, hts: "1234567890", line: 1, fda: "FDA"
+      verify_line lines[2], part: "PARTNO", iso: @c.country.iso_code, hts: "0987654321", line: 2, fda: "FDA"  
+    end
   end
+
+  describe :fingerprint_filter do
+    #fingerprint_filter rows, prod_id, country_iso, new_fingerprint
+    before(:each) do
+      @lpg = described_class.new
+      @prod_id = 1
+      @country_iso = 'US'
+      @old_fingerprint = DataCrossReference.create_lenox_hts_fingerprint!(@prod_id.to_s + @country_iso, 'old_fingerprint_hash')
+      @rows = [[*1..5], [*6..10]]
+    end
+
+    it "returns an empty array if the fingerprint matches" do
+      rows = @lpg.fingerprint_filter @rows, @prod_id, @country_iso, 'old_fingerprint_hash'
+      expect(rows).to be_empty
+    end
+
+    it "returns the rows if the fingerprint doesn't match" do
+      rows = @lpg.fingerprint_filter @rows, @prod_id, @country_iso, 'new_fingerprint_hash'
+      expect(rows).to eq @rows
+    end
+  end
+
 end
