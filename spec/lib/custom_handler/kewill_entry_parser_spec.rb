@@ -714,6 +714,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       described_class.new.process_entry @e
     end
 
+    it "does not log an error if periodic data is missing and the entry does not have a filed date value" do
+      @e['dates'].reject! {|v| v['date_no'] == 16 }
+
+      StandardError.any_instance.should_not_receive(:log_me)
+      described_class.new.process_entry @e
+    end
+
     it "does not update entry filed date" do
       e = Factory(:entry, broker_reference: @e['file_no'], source_system: "Alliance", entry_filed_date: Time.zone.now)
       described_class.new.process_entry @e
