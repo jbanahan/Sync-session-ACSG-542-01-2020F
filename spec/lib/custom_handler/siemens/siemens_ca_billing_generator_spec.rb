@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
         @entries = []
         @tax_ids.each do |id|
-          @entries << Factory(:entry, importer: Factory(:importer, fenix_customer_number: id), entry_number: id, k84_receive_date: Time.zone.now)
+          @entries << Factory(:entry, importer: Factory(:importer, fenix_customer_number: id), entry_number: id, k84_receive_date: Time.zone.now, entry_type: "AB")
         end
       end
 
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
     it "should find entries and generate and send them" do
       t = Factory(:commercial_invoice_tariff)
       e = t.commercial_invoice_line.entry
-      e.update_attributes! importer: Factory(:importer, fenix_customer_number: "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789"
+      e.update_attributes! importer: Factory(:importer, fenix_customer_number: "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789", entry_type: "AB"
 
       file_data = nil
 

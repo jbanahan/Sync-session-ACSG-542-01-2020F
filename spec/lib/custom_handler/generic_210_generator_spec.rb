@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Generic210Generator do
                         customer_number: "BT", bill_to_name: "BTN", bill_to_address_1: "BADD1", bill_to_address_2: "BADD2", bill_to_city: "BCITY", bill_to_state: "BST", bill_to_zip: "BZIP", bill_to_country: Factory(:country),
                         entry: Factory(:entry, broker_reference: "REF", entry_number: "ENT", customer_number: "CUST", carrier_code: "CARR",
                           lading_port_code: "LAD", unlading_port_code: "UNL", merchandise_description: "DESC", total_packages: 10, gross_weight: 10,
-                          arrival_date: Date.new(2015, 2, 1), export_date: Date.new(2015, 3, 1), ult_consignee_name: "CONS", ult_consignee_code: "UC", consignee_address_1: "UADD1",
+                          arrival_date: Time.zone.parse("2015-01-01 12:00"), export_date: Date.new(2015, 3, 1), ult_consignee_name: "CONS", ult_consignee_code: "UC", consignee_address_1: "UADD1",
                           consignee_address_2: "UADD2", consignee_city: "UCITY", consignee_state: "UST", master_bills_of_lading: "A\nB", house_bills_of_lading: "C\nD", container_numbers: "E\nF",
                           po_numbers: "G\nH")
 
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::Generic210Generator do
       expect(xml.text "DescriptionOfGoods").to eq "DESC"
       expect(xml.text "PieceCount").to eq "10"
       expect(xml.text "GrossWeight").to eq "10"
-      expect(xml.text "ArrivalDate/Date").to eq "20150201"
+      expect(xml.text "ArrivalDate/Date").to eq "20150101"
       expect(xml.text "ArrivalDate/Time").to eq "0000"
       expect(xml.text "ExportDate/Date").to eq "20150301"
       expect(xml.text "ExportDate/Time").to eq "0000"
