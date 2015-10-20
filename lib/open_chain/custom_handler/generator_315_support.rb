@@ -63,14 +63,8 @@ module OpenChain; module CustomHandler; module Generator315Support
     add_collection_element root, "Containers", "Container", data.container_numbers
     add_collection_element root, "PoNumbers", "PoNumber", data.po_numbers
     
-    event = add_element root, "Event"
+    event = add_date_elements root, "Event", data.event_date, element_prefix: "Event"
     add_element event, "EventCode", data.event_code
-    add_element event, "EventDate", data.event_date.strftime("%Y%m%d")
-    if data.event_date.respond_to?(:acts_like_time?) && data.event_date.acts_like_time?
-      add_element event, "EventTime", data.event_date.strftime("%H%M")
-    else
-      add_element event, "EventTime", "0000"
-    end
 
     nil
   end
