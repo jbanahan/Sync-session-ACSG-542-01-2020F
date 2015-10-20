@@ -37,6 +37,11 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         @entries.first.update_attributes! k84_receive_date: '2015-09-24'
         expect(subject.find_entries).not_to include(@entries.first)
       end
+
+      it "excludes F type summary entries" do
+        @entries.first.update_attributes! entry_type: "F"
+        expect(subject.find_entries).not_to include(@entries.first)
+      end
     end
 
     it "only returns siemens entries" do

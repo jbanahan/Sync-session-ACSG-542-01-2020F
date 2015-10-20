@@ -29,6 +29,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     Entry.joins("LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = '#{sync_code}'").
       joins(:importer).
       where(companies: {fenix_customer_number: siemens_tax_ids}).
+      where("entry_type <> 'F'").
       # Prior to 9/25/2015 this process was done through the old fenix system, so we need to ignore everything done through there.
       where("sync_records.id IS NULL").where("k84_receive_date IS NOT NULL AND k84_receive_date > '2015-09-24'").
       includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]]).
