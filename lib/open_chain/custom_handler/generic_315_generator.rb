@@ -73,6 +73,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
       d.po_numbers = v(:ent_po_numbers, entry)
       d.event_code = milestone.code
       d.event_date = milestone.date
+      d.datasource = "entry"
 
       d
     end

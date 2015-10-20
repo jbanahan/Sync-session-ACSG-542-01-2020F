@@ -69,6 +69,7 @@ module OpenChain; module CustomHandler; class Isf315Generator
       d.po_numbers = v(:sf_po_numbers, isf)
       d.event_code = milestone.code
       d.event_date = milestone.date
+      d.datasource = "isf"
 
       d
     end

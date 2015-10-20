@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Generator315Support
 
   Data315 ||= Struct.new(:broker_reference, :entry_number, :ship_mode, :service_type, :carrier_code, :vessel, 
                           :voyage_number, :port_of_entry, :port_of_lading, :cargo_control_number, :master_bills, :house_bills, :container_numbers,
-                          :po_numbers, :event_code, :event_date)
+                          :po_numbers, :event_code, :event_date, :datasource)
                           
   MilestoneUpdate ||= Struct.new(:code, :date)
 
@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Generator315Support
     end
 
     if counter > 0
-      Tempfile.open(["315-#{data_315s.first.broker_reference}-", ".xml"]) do |fout|
+      Tempfile.open(["315-#{data_315s.first.datasource}-#{data_315s.first.broker_reference}-", ".xml"]) do |fout|
         # The FTP send and milestone updates all need to be done in one transaction to ensure all or nothing 
         ActiveRecord::Base.transaction do 
           doc.write fout

@@ -164,6 +164,7 @@ describe OpenChain::CustomHandler::Isf315Generator do
       expect(d.po_numbers).to eq "P\nO"
       expect(d.event_code).to eq "code"
       expect(d.event_date).to eq t.iso8601
+      expect(d.datasource).to eq "isf"
 
       expect(DataCrossReference.find_315_milestone(isf, "code")).to eq t.iso8601
     end
