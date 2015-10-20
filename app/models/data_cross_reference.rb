@@ -6,6 +6,7 @@ class DataCrossReference < ActiveRecord::Base
 
   JJILL_ORDER_FINGERPRINT ||= 'jjill_order'
   LENOX_ITEM_MASTER_HASH ||= 'lenox_itm'
+  LENOX_HTS_FINGERPRINT ||= 'lenox_hts_fingerprint'
   RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'
   RL_PO_TO_BRAND ||= 'po_to_brand'
   UA_PLANT_TO_ISO ||= 'uap2i'
@@ -121,6 +122,16 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.create_lenox_item_master_hash! part_number, hash
     add_xref! LENOX_ITEM_MASTER_HASH, part_number, hash
+  end
+
+  #id_iso is the concatentation of a product id and a classification country's ISO
+  def self.find_lenox_hts_fingerprint id_iso
+    find_unique where(cross_reference_type: LENOX_HTS_FINGERPRINT, key: id_iso) 
+  end
+
+  #fingerprint is a hash of the HTS numbers for all tariff records under a product/classification
+  def self.create_lenox_hts_fingerprint!(id_iso, fingerprint)
+    add_xref! LENOX_HTS_FINGERPRINT, id_iso, fingerprint
   end
 
   def self.find_jjill_order_fingerprint order
