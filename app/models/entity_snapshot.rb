@@ -72,8 +72,8 @@ class EntitySnapshot < ActiveRecord::Base
     rec = self.recordable
     mod = CoreModule.find_by_object(rec)
     
-    key_base = mod.logical_key(rec)
-    raise "key_base couldn't be found for rec (id: #{rec.id})" if key_base.blank?
+    key_base = rec.id
+    raise "key_base couldn't be found for record because it hasn't been saved to database. #{rec.to_s}" unless key_base
     key_base = key_base.to_s.strip.gsub(/\W/,'_').downcase
 
     class_name = mod.class_name.underscore

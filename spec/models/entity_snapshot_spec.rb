@@ -275,12 +275,11 @@ describe EntitySnapshot do
   end
 
   describe :expected_s3_path do
-    it "should call CoreModule#logical_key and trim and downcase and underscore whitespaces" do
-      ent = Entry.new
-      CoreModule::ENTRY.should_receive(:logical_key).with(ent).and_return(' Some Key ')
+    it "should be core module / recordable.id" do
+      ent = Factory(:entry)
       es = EntitySnapshot.new
       es.recordable = ent
-      expect(es.expected_s3_path).to eq 'entry/some_key.json'
+      expect(es.expected_s3_path).to eq "entry/#{ent.id}.json"
     end
   end
 end
