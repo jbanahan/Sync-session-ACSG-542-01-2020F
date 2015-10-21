@@ -65,8 +65,8 @@ module OpenChain; module CustomHandler; class Generic210Generator
     add_element root, "PieceCount", v(:ent_total_packages, entry)
     add_element root, "GrossWeight", v(:ent_gross_weight, entry)
 
-    add_date_elements root, "ArrivalDate", (entry.arrival_date ? entry.arrival_date.in_time_zone(timezone).to_date : nil)
-    add_date_elements root, "ExportDate", (entry.export_date ? entry.export_date : nil)
+    add_date_elements root, (entry.arrival_date ? entry.arrival_date.in_time_zone(timezone).to_date : nil), child_element_name: "ArrivalDate"
+    add_date_elements root, (entry.export_date ? entry.export_date : nil), child_element_name: "ExportDate"
 
     add_entity_address_info root, "Consignee", name: v(:ent_ult_con_name, entry), id: v(:ent_ult_con_code, entry), address_1: v(:ent_consignee_address_1, entry), 
                               address_2: v(:ent_consignee_address_2, entry), city: v(:ent_consignee_city, entry), state: v(:ent_consignee_state, entry)
@@ -93,7 +93,7 @@ module OpenChain; module CustomHandler; class Generic210Generator
       add_element inv, "Number", v(:bi_invoice_number, broker_invoice)
       add_element inv, "Total", number_with_precision(v(:bi_invoice_total, broker_invoice), precision: 2)
       add_element inv, "Currency", v(:bi_currency, broker_invoice)
-      add_date_elements inv, "InvoiceDate", v(:bi_invoice_date, broker_invoice)
+      add_date_elements inv, v(:bi_invoice_date, broker_invoice), child_element_name: "InvoiceDate"
 
       line_num = 0
       lines.each do |line|

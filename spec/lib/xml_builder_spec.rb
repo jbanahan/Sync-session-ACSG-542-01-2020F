@@ -83,31 +83,44 @@ describe OpenChain::XmlBuilder do
     end
 
     it "adds date and time elements to parent" do
-      date_el = @builder.add_date_elements @root, "MyDate", Date.new(2015, 1, 1)
-      expect(date_el.name).to eq "MyDate"
+      date_el = @builder.add_date_elements @root, Date.new(2015, 1, 1)
+      expect(date_el.name).to eq @root.name
       expect(date_el.text "Date").to eq "20150101"
       expect(date_el.text "Time").to eq "0000"
     end
 
     it "adds datetime to parent" do
-      date_el = @builder.add_date_elements @root, "MyDate", DateTime.new(2015, 1, 1, 12, 15)
-      expect(date_el.name).to eq "MyDate"
+      date_el = @builder.add_date_elements @root, DateTime.new(2015, 1, 1, 12, 15)
       expect(date_el.text "Date").to eq "20150101"
       expect(date_el.text "Time").to eq "1215"
     end
 
     it "adds date and time elements to parent, prefixing children" do
-      date_el = @builder.add_date_elements @root, "MyDate", Date.new(2015, 1, 1), element_prefix: "Some"
-      expect(date_el.name).to eq "MyDate"
+      date_el = @builder.add_date_elements @root, Date.new(2015, 1, 1), element_prefix: "Some"
       expect(date_el.text "SomeDate").to eq "20150101"
       expect(date_el.text "SomeTime").to eq "0000"
     end
 
     it "accepts custom date/time formats" do
-      date_el = @builder.add_date_elements @root, "MyDate", DateTime.new(2015, 1, 1, 12, 15), date_format: "%Y-%m-%d", time_format: "%H:%M"
-      expect(date_el.name).to eq "MyDate"
+      date_el = @builder.add_date_elements @root, DateTime.new(2015, 1, 1, 12, 15), date_format: "%Y-%m-%d", time_format: "%H:%M"
       expect(date_el.text "Date").to eq "2015-01-01"
       expect(date_el.text "Time").to eq "12:15"
+    end
+
+    it "adds date and time elements to parent creating child element" do
+      date_el = @builder.add_date_elements @root, Date.new(2015, 1, 1), child_element_name: "MyDate"
+      expect(date_el.name).to eq "MyDate"
+      expect(date_el.text "Date").to eq "20150101"
+      expect(date_el.text "Time").to eq "0000"
+    end
+
+    it "reuses child element if it already exists" do
+      child = @builder.add_element @root, "Child"
+
+      date_el = @builder.add_date_elements @root, Date.new(2015, 1, 1), child_element_name: "Child"
+      expect(date_el).to eq child
+      expect(date_el.text "Date").to eq "20150101"
+      expect(date_el.text "Time").to eq "0000"
     end
   end
 

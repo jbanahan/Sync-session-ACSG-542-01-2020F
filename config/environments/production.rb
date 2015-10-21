@@ -68,4 +68,7 @@ OpenChain::Application.configure do
   ENV['PATH'] = "#{ENV['PATH']}:/usr/local/ruby/bin"
 
   config.broadcast_model_events = true
+  # If false, file sending is disabled.  This prevents any accidental sending of ftp files in testing/production via 
+  # the use of a no-op ftp client.  No connection is attempted to any server.
+  config.enable_ftp = true
 end

@@ -50,9 +50,18 @@ module OpenChain; module XmlBuilder
   # Because EDI splits date and time into multiple segments, for ease of translation
   # we'll split them in XML as well when we intend to translate XML docs to EDI.
   # If not translating..just use an iso8601'ized date/time.
-  def add_date_elements parent, entity_name, date, element_prefix: "", date_format: "%Y%m%d", time_format: "%H%M"
+  def add_date_elements parent, date, element_prefix: "", date_format: "%Y%m%d", time_format: "%H%M", child_element_name: nil
     return unless date
-    entity = add_element parent, entity_name
+
+    if child_element_name
+      # See if the child element name exists already under the given parent element, otherwise create it
+      entity = parent.get_elements(child_element_name).first
+      if entity.nil?
+        entity = add_element parent, child_element_name
+      end
+    else
+      entity = parent
+    end
 
     add_element entity, "#{element_prefix}Date", date.strftime(date_format)
     if date.respond_to?(:acts_like_time?) && date.acts_like_time?

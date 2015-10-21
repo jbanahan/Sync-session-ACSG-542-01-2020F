@@ -63,8 +63,9 @@ module OpenChain; module CustomHandler; module Generator315Support
     add_collection_element root, "Containers", "Container", data.container_numbers
     add_collection_element root, "PoNumbers", "PoNumber", data.po_numbers
     
-    event = add_date_elements root, "Event", data.event_date, element_prefix: "Event"
+    event = add_element root, "Event"
     add_element event, "EventCode", data.event_code
+    add_date_elements event, data.event_date, element_prefix: "Event"
 
     nil
   end
