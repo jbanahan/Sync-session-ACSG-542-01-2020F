@@ -24,7 +24,7 @@ describe CustomFile do
     after :each do
       @f.delete
     end
-    it 'should attach file', paperclip: true do
+    it 'should attach file', paperclip: true, s3: true do
       @f.attached = @t
       @f.save!
       @f.reload
