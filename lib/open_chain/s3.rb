@@ -37,6 +37,20 @@ module OpenChain
       nil
     end
 
+    # Find out if a bucket exists in the S3 environment
+    def self.bucket_exists? bucket_name
+      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket_name].exists?
+    end
+
+    # Create a new bucket
+    #
+    # if :versioning option evaluates to true, then versioning will be turned on before the object is returned
+    def self.create_bucket! bucket_name, opts={}
+      b = AWS::S3.new(AWS_CREDENTIALS).buckets.create(bucket_name)
+      b.enable_versioning if opts[:versioning]
+      return b
+    end
+
     # Retrieves the data specified by the bucket/key descriptor.
     # If the IO parameter is defined, the object is expected to be an IO-like object
     # (answering to write, flush and rewind) and all data is streamed directly to 

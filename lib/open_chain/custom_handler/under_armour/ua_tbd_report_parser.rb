@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     def process user 
       begin
         raise "User does not have permission to process this file." unless can_view?(user)
-        tmp = OpenChain::S3.download_to_tempfile OpenChain::S3::BUCKETS[:production], @custom_file.attached.path
+        tmp = OpenChain::S3.download_to_tempfile OpenChain::S3.bucket_name(:production), @custom_file.attached.path
         last_style = nil
         collected_rows = []
         CSV.foreach(tmp.path,col_sep:"\t",encoding:"UTF-16LE:UTF-8",quote_char:"\0") do |r|

@@ -214,4 +214,32 @@ describe EntitySnapshot do
 
   end
 
+  describe :bucket_name do
+    it "should append env.system_code.snapshots.vfitrack.net" do
+      env = Rails.env
+      MasterSetup.get.update_attributes(system_code:'syscode')
+      expect(EntitySnapshot.bucket_name).to eq "#{env}.syscode.snapshots.vfitrack.net"
+    end
+    it "should raise error if longer than 63 characters (AWS limit)" do
+      MasterSetup.get.update_attributes(system_code:'123456789012345678901234567890123456789012345678901234567890')
+      expect{EntitySnapshot.bucket_name}.to raise_error(/Bucket name too long/)
+    end
+  end
+  describe :create_bucket_if_needed do
+    before :each do
+      @bn = 'bucketname'
+      EntitySnapshot.stub(:bucket_name).and_return(@bn)
+    end
+    it "should find existing bucket" do
+      OpenChain::S3.should_receive(:bucket_exists?).with(@bn).and_return true
+      OpenChain::S3.should_not_receive(:create_bucket!)
+      described_class.create_bucket_if_needed!
+    end
+    it "should create bucket with versioning turned on" do
+      OpenChain::S3.should_receive(:bucket_exists?).with(@bn).and_return false
+      OpenChain::S3.should_receive(:create_bucket!).with(@bn,versioning: true)
+      described_class.create_bucket_if_needed!
+    end
+  end
+
 end

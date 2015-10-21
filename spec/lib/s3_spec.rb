@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'open_chain/s3'
 
-describe OpenChain::S3 do
+describe OpenChain::S3, s3: true do
   before(:all) do
     @bucket = OpenChain::S3.bucket_name 'test'
   end
@@ -19,6 +19,50 @@ describe OpenChain::S3 do
       OpenChain::S3.bucket_name('test').should == 'chain-io-test'
     end
   end
+  
+  describe :bucket_exists? do
+    before :each do
+      @s3_double = double('s3')
+      AWS::S3.should_receive(:new).with(AWS_CREDENTIALS).and_return(@s3_double)
+      @bucket_double = double('bucket')
+      @bucket_name = 'abc'
+      @bucket_hash = {@bucket_name => @bucket_double}
+      @s3_double.stub(:buckets).and_return(@bucket_hash)
+    end
+    it "should find existing bucket" do
+      @bucket_double.should_receive(:exists?).and_return true
+      expect(described_class.bucket_exists?(@bucket_name)).to be_true
+    end
+    it "should return false if no bucket" do
+      @bucket_double.should_receive(:exists?).and_return false
+      expect(described_class.bucket_exists?(@bucket_name)).to be_false
+    end
+  end
+
+  describe :create_bucket do
+    it "should create bucket" do
+      bucket_name = 'abc'
+      s3_double = double('s3')
+      AWS::S3.should_receive(:new).with(AWS_CREDENTIALS).and_return(s3_double)
+      new_bucket_double = double('newbucket')
+      buckets_double = double('buckets')
+      buckets_double.should_receive(:create).with(bucket_name).and_return(new_bucket_double)
+      s3_double.should_receive(:buckets).and_return(buckets_double)
+      expect(described_class.create_bucket!(bucket_name)).to eq new_bucket_double
+    end
+    it "should enable versioning based on option" do
+      bucket_name = 'abc'
+      s3_double = double('s3')
+      AWS::S3.should_receive(:new).with(AWS_CREDENTIALS).and_return(s3_double)
+      new_bucket_double = double('newbucket')
+      new_bucket_double.should_receive(:enable_versioning)
+      buckets_double = double('buckets')
+      buckets_double.should_receive(:create).with(bucket_name).and_return(new_bucket_double)
+      s3_double.should_receive(:buckets).and_return(buckets_double)
+      expect(described_class.create_bucket!(bucket_name, versioning: true)).to eq new_bucket_double
+    end
+  end
+
   describe 'IO' do
     before(:each) do
       @original_tempfile = Tempfile.new('abc')
@@ -224,7 +268,7 @@ describe OpenChain::S3 do
       (expires_at - Time.now.to_i).should <= 60
     end
 
-    it "should return a url for the specified bucket / key, allow expires_in to be set, and accept options" do
+    it "should return a url for the specified bucket / key, allow expires_in to be set, and accept options", s3: true do
       url = OpenChain::S3.url_for "bucket", "path/to/file.txt", 10.minutes, {:response_content_type => "application/pdf"}
       url.should match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/
 
@@ -238,16 +282,16 @@ describe OpenChain::S3 do
   end
 
   describe "parse_full_s3_path" do
-    it "splits a path string into bucket and key values" do
+    it "splits a path string into bucket and key values", s3: true do
       expect(OpenChain::S3.parse_full_s3_path "/bucket/path/to/file.pdf").to eq ["bucket", "path/to/file.pdf"]
     end
 
-    it "handles missing leading slashes" do
+    it "handles missing leading slashes", s3: true do
       expect(OpenChain::S3.parse_full_s3_path "bucket/path/to/file.pdf").to eq ["bucket", "path/to/file.pdf"]
     end
   end
 
-  describe "download_to_tempfile" do
+  describe "download_to_tempfile", s3: true do
     before :each do
       @tempfile = Tempfile.new ['temp', '.txt']
       @tempfile << "Contents"
@@ -259,7 +303,7 @@ describe OpenChain::S3 do
       @tempfile.close! unless @tempfile.closed?
     end
 
-    it "downloads S3 path to tempfile" do
+    it "downloads S3 path to tempfile", s3: true do
       OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
       OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
       file = OpenChain::S3.download_to_tempfile 'bucket', 'path'
@@ -267,7 +311,7 @@ describe OpenChain::S3 do
       expect(file.respond_to? :original_filename).to be_false
     end
 
-    it "downloads s3 path to tempfile and adds original_filename method" do
+    it "downloads s3 path to tempfile and adds original_filename method", s3: true do
       OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
       OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
       file = OpenChain::S3.download_to_tempfile 'bucket', 'path', original_filename: 'file.txt'
@@ -275,7 +319,7 @@ describe OpenChain::S3 do
       expect(file.original_filename).to eq "file.txt"
     end
 
-    it "yields downloaded file" do
+    it "yields downloaded file", s3: true do
       OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
       OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
       OpenChain::S3.download_to_tempfile('bucket', 'path', original_filename: 'file.txt') do |f|
@@ -285,7 +329,7 @@ describe OpenChain::S3 do
       expect(@tempfile.closed?).to be_true
     end
 
-    it "ensures exceptions in block still closes file" do
+    it "ensures exceptions in block still closes file", s3: true do
       OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
       OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
       expect {

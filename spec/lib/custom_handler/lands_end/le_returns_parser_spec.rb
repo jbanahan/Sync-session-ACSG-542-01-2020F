@@ -264,6 +264,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
 
   describe "download_and_parse" do
     it "downloads from s3 and calls parse on the yielded filepath" do
+      OpenChain::S3.stub(:bucket_name).and_return('buckname')
       s3 = double("S3Object")
       OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.bucket_name(:production), "path").and_yield s3
       s3.stub(:path).and_return "s3/path/file.csv"

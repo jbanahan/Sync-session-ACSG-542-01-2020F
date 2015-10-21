@@ -1,3 +1,4 @@
+require 'open_chain/s3'
 class EntitySnapshot < ActiveRecord::Base
   belongs_to :recordable, :polymorphic=>true
   belongs_to :user
@@ -7,6 +8,19 @@ class EntitySnapshot < ActiveRecord::Base
 
   validates :recordable, :presence => true
   validates :user, :presence => true
+
+  #bucket name for storing entity snapshots
+  def self.bucket_name env=Rails.env
+    r = "#{env}.#{MasterSetup.get.system_code}.snapshots.vfitrack.net"
+    raise "Bucket name too long: #{r}" if r.length > 63
+    return r
+  end
+
+  #find or create the bucket for this system's EntitySnapshots
+  def self.create_bucket_if_needed!
+    return if OpenChain::S3.bucket_exists?(bucket_name)
+    OpenChain::S3.create_bucket!(bucket_name,versioning: true)
+  end
 
   def self.create_from_entity entity, user=User.current, imported_file=nil
     cm = CoreModule.find_by_class_name entity.class.to_s
