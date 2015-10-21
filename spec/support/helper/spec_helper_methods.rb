@@ -19,6 +19,56 @@ module Helpers
     Paperclip::Attachment.any_instance.stub(:save).and_return true
     Paperclip::Attachment.any_instance.stub(:destroy).and_return true
   end
+
+  # Stub out the S3 methods
+  def stub_s3
+    #hold the old S3 class for later
+    @old_stub_s3_class = OpenChain::S3
+    
+    # First, completely undefine the class
+    OpenChain.send(:remove_const,:S3)
+
+    mock_s3 = Class.new do
+      def self.parse_full_s3_path path
+        # We're expecting the path to be like "/bucket/path/to/file.pdf"
+        # The first path segment of the file is the bucket, everything after that is the path to the actual file
+        split_path = path.split("/")
+        
+        # If the path started with a / the first index is blank
+        split_path.shift if split_path[0].strip.length == 0
+
+        [split_path[0], split_path[1..-1].join("/")]
+      end
+      def self.bucket_name name = Rails.env
+        h = {:production=>"prodname", :development=>'devname', :test=>'testname'}
+        h[name]
+      end
+      def self.integration_bucket_name
+        "mock_bucket_name"
+      end
+      def self.method_missing(sym, *args, &block)
+        raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
+      end
+      def method_missing(sym, *args, &block)
+        raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
+      end
+      def self.upload_data bucket, path, data
+        @@version_id ||= 0
+        @@version_id += 1
+        s3obj = Struct.new(:bucket, :key).new(bucket,path)
+        vers = Struct.new(:version_id).new(@@version_id.to_s)
+        return [s3obj,vers]
+      end
+    end
+
+    # set the new constant in the module
+    OpenChain.const_set(:S3,mock_s3)
+  end
+
+  def unstub_s3
+    OpenChain.send(:remove_const,:S3)
+    OpenChain.const_set(:S3,@old_stub_s3_class)
+  end
   
   def allow_api_access user
     use_json

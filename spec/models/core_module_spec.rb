@@ -33,6 +33,16 @@ describe CoreModule do
       p.errors[:base].first.should == "Tariff number #{ot.hts_code}X is invalid for #{ot.country.iso_code}"
     end
   end
+  describe :logical_key do
+    it "should use logical key lambda" do
+      ent = Entry.new(source_system:'SS',broker_reference:'123')
+      expect(CoreModule::ENTRY.logical_key(ent)).to eq 'SS_123'
+    end
+    it "should fallback to unique_id_field" do
+      ord = Order.new(order_number:'ORDNUM')
+      expect(CoreModule::ORDER.logical_key(ord)).to eq CoreModule::ORDER.unique_id_field.process_export(ord,nil,true)
+    end
+  end
   describe 'key_columns' do
     it 'should return for entry' do
       uids = CoreModule::ENTRY.key_model_field_uids

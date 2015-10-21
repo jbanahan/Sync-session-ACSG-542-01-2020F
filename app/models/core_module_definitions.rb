@@ -203,9 +203,9 @@ module CoreModuleDefinitions
   })
   COMMERCIAL_INVOICE = CoreModule.new("CommercialInvoice","Invoice",{
       :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
-      :unique_id_field_name => :invoice_number,
+      :unique_id_field_name => :ci_invoice_number,
       :show_field_prefix=>true,
-      :key_model_field_uids=>[:invoice_number],
+      :key_model_field_uids=>[:ci_invoice_number],
       :children => [COMMERCIAL_INVOICE_LINE],
       :child_lambdas => {COMMERCIAL_INVOICE_LINE=> lambda {|i| i.commercial_invoice_lines}},
       :child_joins => {COMMERCIAL_INVOICE_LINE => "LEFT OUTER JOIN commercial_invoice_lines on commercial_invoices.id = commercial_invoice_lines.commercial_invoice_id"}
@@ -225,10 +225,15 @@ module CoreModuleDefinitions
        :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
        :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"},
        :quicksearch_fields => [:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums,:ent_cargo_control_number,:ent_hbols,:ent_commercial_invoice_numbers],
-       :quicksearch_sort_by_mf => :ent_file_logged_date
+       :quicksearch_sort_by_mf => :ent_file_logged_date,
+       :logical_key_lambda => lambda {|obj| "#{obj.source_system}_#{obj.broker_reference}"}
    })
   OFFICIAL_TARIFF = CoreModule.new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate], :quicksearch_fields=> [:ot_hts_code,:ot_full_desc])
-  PLANT_PRODUCT_GROUP_ASSIGNMENT = CoreModule.new('PlantProductGroupAssignment','Plant Product Group Assignment',default_search_columns:[:ppga_pg_name], show_field_prefix: true)
+  PLANT_PRODUCT_GROUP_ASSIGNMENT = CoreModule.new('PlantProductGroupAssignment','Plant Product Group Assignment',
+    unique_id_field_name: :ppga_pg_name,
+    default_search_columns:[:ppga_pg_name], 
+    key_model_field_uids: [:ppga_pg_name],
+    show_field_prefix: true)
   PLANT = CoreModule.new("Plant","Plant",
     default_search_columns: [:plant_name],
     unique_id_field_name: :plant_name,

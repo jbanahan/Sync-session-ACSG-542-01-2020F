@@ -14,12 +14,23 @@ module OpenChain
       [split_path[0], split_path[1..-1].join("/")]
     end
 
-    def self.upload_file bucket, key, file
+    # returns S3Object, ObjectVersion
+    def self.upload_data bucket, key, data
       s3_action_with_retries do
         s3_obj = s3_file bucket, key
-        s3_obj.write Pathname.new(file.path)
-        s3_obj
+        out = s3_obj.write data
+        if out.respond_to?(:object)
+          return [out.object, out]
+        else
+          return [out, nil]
+        end
       end
+    end
+
+    # returns S3Object, ObjectVersion
+    def self.upload_file bucket, key, file
+      data = Pathname.new(file.path)
+      return upload_data bucket, key, data
     end
 
     # Uploads the given local_file to a temp location in S3 
@@ -35,6 +46,20 @@ module OpenChain
         delete(bucket, key) if uploaded
       end
       nil
+    end
+
+    # Find out if a bucket exists in the S3 environment
+    def self.bucket_exists? bucket_name
+      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket_name].exists?
+    end
+
+    # Create a new bucket
+    #
+    # if :versioning option evaluates to true, then versioning will be turned on before the object is returned
+    def self.create_bucket! bucket_name, opts={}
+      b = AWS::S3.new(AWS_CREDENTIALS).buckets.create(bucket_name)
+      b.enable_versioning if opts[:versioning]
+      return b
     end
 
     # Retrieves the data specified by the bucket/key descriptor.

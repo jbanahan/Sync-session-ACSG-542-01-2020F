@@ -116,6 +116,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       @tmp = double('tmp')
       @tmp.stub(:path).and_return('mypath')
       OpenChain::S3.stub(:download_to_tempfile).and_return(@tmp)
+      OpenChain::S3.stub(:bucket_name).and_return('buckname')
       described_class.any_instance.stub(:can_view?).and_return true
     end
     it "should group styles and pass to parse_rows" do

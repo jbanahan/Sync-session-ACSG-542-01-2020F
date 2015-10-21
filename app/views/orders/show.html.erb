@@ -1,3 +1,4 @@
+<%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
 <% content_for :javascript do %>
   $("window").ready(function() {
     $("[data-toggle='popover']").popover({html:true});

@@ -70,13 +70,13 @@ describe OpenChain::DrawbackExportParser do
 
   describe "parse_local_xls" do
     it "should delegate to S3.with_s3_temp_file and parse_xlsx_file" do
-      master_setup = double("master setup")
-      master_setup.stub(:uuid).and_return('abcdefg')
-      MasterSetup.stub(:get).and_return(master_setup)
       
+      mock_s3_obj = double('s3_obj')
+      mock_s3_obj.stub(:key).and_return("abcdefg/temp/test_sheet_1.xls")
+
       described_class.should_receive(:parse_xlsx_file).with("abcdefg/temp/test_sheet_1.xls", "importer")
       File.open("spec/fixtures/files/test_sheet_1.xls", "r") do |xls_file|
-        OpenChain::S3.should_receive(:with_s3_tempfile).with(xls_file).and_call_original
+        OpenChain::S3.should_receive(:with_s3_tempfile).with(xls_file).and_yield(mock_s3_obj)
         described_class.parse_local_xls(xls_file, "importer")
       end
     end
