@@ -72,10 +72,9 @@ class EntitySnapshot < ActiveRecord::Base
     rec = self.recordable
     mod = CoreModule.find_by_object(rec)
     
-    key_base = nil
-    key_base = mod.logical_key(rec) if mod.respond_to?(:logical_key)
+    key_base = mod.logical_key(rec)
     raise "key_base couldn't be found for rec (id: #{rec.id})" if key_base.blank?
-    key_base = key_base.strip.gsub(/\W/,'_').downcase
+    key_base = key_base.to_s.strip.gsub(/\W/,'_').downcase
 
     class_name = mod.class_name.underscore
 
@@ -84,7 +83,7 @@ class EntitySnapshot < ActiveRecord::Base
   end
 
   def write_s3 json
-    path = expected_s3_path self.recordable
+    path = expected_s3_path
     bucket = self.class.bucket_name
     s3obj, ver = OpenChain::S3.upload_data(bucket, path, json)
     self.bucket = s3obj.bucket
