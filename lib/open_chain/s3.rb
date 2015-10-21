@@ -18,7 +18,12 @@ module OpenChain
     def self.upload_data bucket, key, data
       s3_action_with_retries do
         s3_obj = s3_file bucket, key
-        return s3_obj.write data
+        out = s3_obj.write data
+        if out.respond_to?(:object)
+          return [out.object, out]
+        else
+          return [out, nil]
+        end
       end
     end
 
