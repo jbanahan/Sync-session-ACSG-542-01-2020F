@@ -242,4 +242,45 @@ describe EntitySnapshot do
     end
   end
 
+  describe :create_from_entity do
+    it "should write S3 file at logical path" do
+      expected_path = '/my/path'
+      expected_bucket = 'bucket'
+      expected_version = 'ABC123'
+      expected_json = '{"a":"b"}'
+      ent = Factory(:entry)
+      u = Factory(:user)
+      CoreModule::ENTRY.stub(:entity_json).and_return(expected_json)
+
+      described_class.any_instance.should_receive(:expected_s3_path).with(ent).and_return(expected_path)
+      described_class.should_receive(:bucket_name).and_return(expected_bucket)
+
+      s3_obj = double('S3Obj')
+      s3_obj.stub(:bucket).and_return expected_bucket
+      s3_obj.stub(:key).and_return expected_path
+
+      version_obj = double('ObjectVersion')
+      version_obj.stub(:version_id).and_return(expected_version)
+      
+      OpenChain::S3.should_receive(:upload_data).
+        with(expected_bucket,expected_path,expected_json).
+        and_return([s3_obj,version_obj])
+
+      es = EntitySnapshot.create_from_entity(ent,u)
+      expect(es.bucket).to eq expected_bucket
+      expect(es.doc_path).to eq expected_path
+      expect(es.version).to eq expected_version
+      expect(es.compared_at).to be_nil
+    end
+  end
+
+  describe :expected_s3_path do
+    it "should call CoreModule#logical_key and trim and downcase and underscore whitespaces" do
+      ent = Entry.new
+      CoreModule::ENTRY.should_receive(:logical_key).with(ent).and_return(' Some Key ')
+      es = EntitySnapshot.new
+      es.recordable = ent
+      expect(es.expected_s3_path).to eq 'entry/some_key.json'
+    end
+  end
 end

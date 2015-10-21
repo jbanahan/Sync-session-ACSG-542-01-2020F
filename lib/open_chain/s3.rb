@@ -14,12 +14,18 @@ module OpenChain
       [split_path[0], split_path[1..-1].join("/")]
     end
 
-    def self.upload_file bucket, key, file
+    # returns S3Object, ObjectVersion
+    def self.upload_data bucket, key, data
       s3_action_with_retries do
         s3_obj = s3_file bucket, key
-        s3_obj.write Pathname.new(file.path)
-        s3_obj
+        return s3_obj.write data
       end
+    end
+
+    # returns S3Object, ObjectVersion
+    def self.upload_file bucket, key, file
+      data = Pathname.new(file.path)
+      return upload_data bucket, key, data
     end
 
     # Uploads the given local_file to a temp location in S3 

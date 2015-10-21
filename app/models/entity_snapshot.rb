@@ -9,23 +9,15 @@ class EntitySnapshot < ActiveRecord::Base
   validates :recordable, :presence => true
   validates :user, :presence => true
 
-  #bucket name for storing entity snapshots
-  def self.bucket_name env=Rails.env
-    r = "#{env}.#{MasterSetup.get.system_code}.snapshots.vfitrack.net"
-    raise "Bucket name too long: #{r}" if r.length > 63
-    return r
-  end
-
-  #find or create the bucket for this system's EntitySnapshots
-  def self.create_bucket_if_needed!
-    return if OpenChain::S3.bucket_exists?(bucket_name)
-    OpenChain::S3.create_bucket!(bucket_name,versioning: true)
-  end
-
+  # This is the main method for creating snapshots
   def self.create_from_entity entity, user=User.current, imported_file=nil
     cm = CoreModule.find_by_class_name entity.class.to_s
     raise "CoreModule could not be found for class #{entity.class.to_s}." if cm.nil?
-    EntitySnapshot.create(:recordable=>entity,:user=>user,:snapshot=>cm.entity_json(entity),:imported_file=>imported_file)
+    json = cm.entity_json(entity)
+    es = EntitySnapshot.new(:recordable=>entity,:user=>user,:snapshot=>json,:imported_file=>imported_file)
+    es.write_s3 json
+    es.save
+    es
   end
 
   def snapshot_json
@@ -57,6 +49,54 @@ class EntitySnapshot < ActiveRecord::Base
     old_json = older_snapshot.snapshot_json
     diff_json old_json, my_json
   end
+
+
+  ###################################
+  # S3 Handling Stuff
+  ###################################
+  
+  #bucket name for storing entity snapshots
+  def self.bucket_name env=Rails.env
+    r = "#{env}.#{MasterSetup.get.system_code}.snapshots.vfitrack.net"
+    raise "Bucket name too long: #{r}" if r.length > 63
+    return r
+  end
+
+  #find or create the bucket for this system's EntitySnapshots
+  def self.create_bucket_if_needed!
+    return if OpenChain::S3.bucket_exists?(bucket_name)
+    OpenChain::S3.create_bucket!(bucket_name,versioning: true)
+  end
+
+  def expected_s3_path
+    rec = self.recordable
+    mod = CoreModule.find_by_object(rec)
+    
+    key_base = nil
+    key_base = mod.logical_key(rec) if mod.respond_to?(:logical_key)
+    raise "key_base couldn't be found for rec (id: #{rec.id})" if key_base.blank?
+    key_base = key_base.strip.gsub(/\W/,'_').downcase
+
+    class_name = mod.class_name.underscore
+
+    return "#{class_name}/#{key_base}.json"
+
+  end
+
+  def write_s3 json
+    path = expected_s3_path self.recordable
+    bucket = self.class.bucket_name
+    s3obj, ver = OpenChain::S3.upload_data(bucket, path, json)
+    self.bucket = s3obj.bucket
+    self.doc_path = s3obj.key
+    self.version = ver.version_id
+  end
+
+  ##################################
+  # End S3 handling stuff
+  ##################################
+
+
 
   private
 
