@@ -1,5 +1,10 @@
 require 'open_chain/entity_compare/comparator_registry'
 module OpenChain; module EntityCompare; class EntityComparator
+  
+  def self.process_by_id entity_snapshot_id
+    process EntitySnapshot.find entity_snapshot_id
+  end
+
   def self.process entity_snapshot
     rec = entity_snapshot.recordable
     rec_id = entity_snapshot.recordable_id

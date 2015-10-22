@@ -1,4 +1,5 @@
 require 'open_chain/s3'
+require 'open_chain/entity_compare/entity_comparator'
 class EntitySnapshot < ActiveRecord::Base
   belongs_to :recordable, :polymorphic=>true
   belongs_to :user
@@ -17,6 +18,7 @@ class EntitySnapshot < ActiveRecord::Base
     es = EntitySnapshot.new(:recordable=>entity,:user=>user,:snapshot=>json,:imported_file=>imported_file)
     es.write_s3 json
     es.save
+    OpenChain::EntityCompare::EntityComparator.delay.process_by_id(es.id)
     es
   end
 

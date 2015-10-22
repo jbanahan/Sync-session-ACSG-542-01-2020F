@@ -18,6 +18,14 @@ describe OpenChain::EntityCompare::EntityComparator do
 
     end
   end
+  describe :process_by_id do
+    it "should find EntitySnapshot and process" do
+      es = EntitySnapshot.create!(recordable: @ord, user:@u, bucket: 'b', doc_path: 'd', version: 'v')
+      described_class.should_receive(:process).with(instance_of(EntitySnapshot))
+
+      described_class.process_by_id es.id
+    end
+  end
   describe :process do
     before :each do
       @comparator.stub(:delay).and_return(@comparator)

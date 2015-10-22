@@ -272,6 +272,16 @@ describe EntitySnapshot do
       expect(es.version).to eq expected_version
       expect(es.compared_at).to be_nil
     end
+
+    it "should call EntityCompare.process with snapshot" do
+      described_class.any_instance.stub(:write_s3)
+      OpenChain::EntityCompare::EntityComparator.should_receive(:delay).and_return(OpenChain::EntityCompare::EntityComparator)
+      OpenChain::EntityCompare::EntityComparator.should_receive(:process_by_id)
+
+      ent = Factory(:entry)
+      u = Factory(:user)
+      es = EntitySnapshot.create_from_entity(ent,u)
+    end
   end
 
   describe :expected_s3_path do
