@@ -27,6 +27,16 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
   end
 
+  # call create_result for all templates with matching module types
+  # for the given object
+  def self.create_results_for_object! obj
+    cm = CoreModule.find_by_object(obj)
+    return if cm.nil?
+    BusinessValidationTemplate.where(module_type:cm.class_name).each do |bvt|
+      bvt.create_result!(obj,true)
+    end
+  end
+
   #run create
   def create_results! run_validation = false
     cm = CoreModule.find_by_class_name(self.module_type)

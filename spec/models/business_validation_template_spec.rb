@@ -111,6 +111,22 @@ describe BusinessValidationTemplate do
     end
   end
 
+  describe :create_results_for_object! do
+    it "should create results" do
+      expect(BusinessValidationTemplate.count).to eq 0
+      bvt1 = described_class.create!(module_type:'Order')
+      bvt2 = described_class.create!(module_type:'Order')
+      bvt_ignore = described_class.create!(module_type:'Entry')
+
+      ord = Factory(:order)
+
+      expect{described_class.create_results_for_object!(ord)}.to change(BusinessValidationResult,:count).from(0).to(2)
+      [bvt1,bvt2].each do |b|
+        b.reload
+        expect(b.business_validation_results.first.validatable).to eq ord
+      end
+    end
+  end
   describe "run_schedulable" do
     it "implements schedulable job interface" do
       BusinessValidationTemplate.should_receive(:create_all!).with true

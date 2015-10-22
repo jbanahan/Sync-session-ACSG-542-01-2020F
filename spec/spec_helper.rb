@@ -52,6 +52,9 @@ Spork.prefork do
       unless example.metadata[:s3] 
         stub_s3
       end
+
+      #clear ComparatorRegistry
+      OpenChain::EntityCompare::ComparatorRegistry.clear
     end
     
     # Clears out the deliveries array before every test..which is only done automatically
