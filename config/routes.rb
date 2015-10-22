@@ -398,6 +398,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_drawback_audit_report" => "reports#run_drawback_audit_report", :via=>:post
   match "/reports/show_rl_tariff_totals" =>"reports#show_rl_tariff_totals", :via=>:get
   match "/reports/run_rl_tariff_totals" =>"reports#run_rl_tariff_totals", :via=>:post
+  match "/reports/show_pvh_billing_summary" => "reports#show_pvh_billing_summary", :via => :get
+  match "/reports/run_pvh_billing_summary" => "reports#run_pvh_billing_summary", :via => :post
   get "/reports/show_pvh_container_log" => "reports#show_pvh_container_log"
   post "/reports/run_pvh_container_log" => "reports#run_pvh_container_log"
   get "reports/show_monthly_entry_summation" => "reports#show_monthly_entry_summation"
