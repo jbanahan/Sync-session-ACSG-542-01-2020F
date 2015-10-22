@@ -35,7 +35,6 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
         rows << [row[0], row[1], component_tariff.hts_1, (counter += 1).to_s.rjust(3, "0"), row[4]]
       end
     else
-      hts_list = []
       c.tariff_records.order("line_number ASC").each do |t|
         # HTS codes in chapter 98 are all special case tariffs, Lenox only wants 
         # this code as it's the one used to determine the duty rate
@@ -54,10 +53,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
             rows << [row[0], row[1], t.hts_3, (counter += 1).to_s.rjust(3, "0"), row[4]]
           end
         end
-        hts_list << [t.hts_1, t.hts_2, t.hts_3].join("")
       end
-      fingerprint = Digest::SHA1.base64digest hts_list.flatten.join("/")
-      rows = fingerprint_filter rows, opts[:product_id], row[1], fingerprint
     end
     
     if rows.length == 1
@@ -70,17 +66,26 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
       rows = rows.insert(0, [row[0], row[1], "MULTI", "000", row[4]])
     end
 
+    fingerprint = Digest::SHA1.base64digest rows.flatten.join("/")
+    rows = fingerprint_filter rows, opts[:product_id], row[1], fingerprint
+    @buffered_ids[opts[:product_id]] = fingerprint if rows.empty?
     rows
   end
 
   def fingerprint_filter rows, prod_id, country_iso, new_fingerprint
-    old_fingerprint = DataCrossReference.find_lenox_hts_fingerprint(prod_id.to_s + country_iso)
+    old_fingerprint = DataCrossReference.find_lenox_hts_fingerprint(prod_id, country_iso)
     if new_fingerprint == old_fingerprint
       []
     else
-      DataCrossReference.create_lenox_hts_fingerprint!(prod_id.to_s + country_iso, new_fingerprint)
+      DataCrossReference.create_lenox_hts_fingerprint!(prod_id, country_iso, new_fingerprint)
       rows
     end
+  end
+
+  def sync
+    @buffered_ids = {}
+    super
+    write_sync_records @buffered_ids
   end
 
   def sync_code

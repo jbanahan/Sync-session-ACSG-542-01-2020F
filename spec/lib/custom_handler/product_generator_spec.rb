@@ -315,4 +315,40 @@ describe OpenChain::CustomHandler::ProductGenerator do
       subselect.should == "NULL as `#{cd.label}`"
     end
   end
+
+  describe :write_sync_records do
+    it "replaces old sync records, incorporates values of #autoconfirm and #has_fingerprint into record insertions" do
+      inst = @base.new
+      inst.stub(:sync_code).and_return('SYNC_CODE')
+      prod_1 = Factory(:product)
+      prod_2 = Factory(:product)
+      prod_3 = Factory(:product)
+      SyncRecord.create!(syncable: prod_1, trading_partner: inst.sync_code, fingerprint: "finger_1_old", created_at: DateTime.now-2.day)
+      SyncRecord.create!(syncable: prod_2, trading_partner: inst.sync_code, fingerprint: "finger_2_old", created_at: DateTime.now-2.day)
+      SyncRecord.create!(syncable: prod_3, trading_partner: inst.sync_code, fingerprint: "finger_3_old", created_at: DateTime.now-2.day)
+      inst.stub(:trim_fingerprint)
+      inst.stub(:autoconfirm).and_return(true)
+      
+      inst.write_sync_records({prod_1.id => "finger_1_new", prod_2.id => "finger_2_new"}) #replaces 2 out of 3
+      sync_1 = SyncRecord.where(syncable_id: prod_1.id).first
+      sync_2 = SyncRecord.where(syncable_id: prod_2.id).first
+      sync_3 = SyncRecord.where(syncable_id: prod_3.id).first
+      
+      expect(sync_1.fingerprint).to eq "finger_1_new"
+      expect(sync_1.trading_partner).to eq inst.sync_code
+      expect(sync_1.created_at).to be > (DateTime.now - 1.day)
+      expect(sync_1.confirmed_at).to_not be_nil
+      expect(sync_1.sent_at).to_not be_nil
+
+      expect(sync_2.fingerprint).to eq "finger_2_new"
+      expect(sync_2.trading_partner).to eq inst.sync_code
+      expect(sync_2.created_at).to be > (DateTime.now - 1.day)
+      expect(sync_2.confirmed_at).to_not be_nil
+      expect(sync_2.sent_at).to_not be_nil
+
+      expect(sync_3.fingerprint).to eq "finger_3_old"
+      expect(sync_3.trading_partner).to eq inst.sync_code
+      expect(sync_3.created_at).to be < (DateTime.now - 1.day)
+    end
+  end
 end

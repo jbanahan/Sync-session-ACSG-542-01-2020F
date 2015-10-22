@@ -125,13 +125,13 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   #id_iso is the concatentation of a product id and a classification country's ISO
-  def self.find_lenox_hts_fingerprint id_iso
-    find_unique where(cross_reference_type: LENOX_HTS_FINGERPRINT, key: id_iso) 
+  def self.find_lenox_hts_fingerprint prod_id, country_iso
+    find_unique where(cross_reference_type: LENOX_HTS_FINGERPRINT, key: make_compound_key(prod_id, country_iso))
   end
 
   #fingerprint is a hash of the HTS numbers for all tariff records under a product/classification
-  def self.create_lenox_hts_fingerprint!(id_iso, fingerprint)
-    add_xref! LENOX_HTS_FINGERPRINT, id_iso, fingerprint
+  def self.create_lenox_hts_fingerprint!(prod_id, country_iso, fingerprint)
+    add_xref! LENOX_HTS_FINGERPRINT, make_compound_key(prod_id, country_iso), fingerprint
   end
 
   def self.find_jjill_order_fingerprint order

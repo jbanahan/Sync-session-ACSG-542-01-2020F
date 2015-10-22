@@ -64,12 +64,12 @@ describe DataCrossReference do
   end
   context :lenox_hts_fingerprint do
     it "should find" do
-      described_class.create! key: '1US', value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT
-      expect(described_class.find_lenox_hts_fingerprint('1US')).to eq '9801001010'
+      described_class.create! key: described_class.make_compound_key(1, 'US'), value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT
+      expect(described_class.find_lenox_hts_fingerprint(1, 'US')).to eq '9801001010'
     end
     it "should create" do
-      described_class.create_lenox_hts_fingerprint! '1US', '9801001010'
-      expect(described_class.where(key:'1US', value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT).count).to eq 1
+      described_class.create_lenox_hts_fingerprint! 1, 'US', '9801001010'
+      expect(described_class.where(key: described_class.make_compound_key(1, 'US'), value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT).count).to eq 1
     end
   end
   context :find_rl_profit_center do
