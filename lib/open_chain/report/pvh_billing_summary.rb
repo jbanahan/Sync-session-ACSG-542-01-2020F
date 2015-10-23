@@ -47,6 +47,7 @@ module OpenChain
       def query(report_type, brokerage_duty, invoice_numbers)
         type = "LV" if report_type == :lvs
         type = "AB" if report_type == :hvs
+        safe_invoice_numbers = invoice_numbers.map{ |inv| ActiveRecord::Base.sanitize inv }.join(',')
 
         <<-SQL
           SELECT '' AS 'BATCH',
@@ -72,7 +73,7 @@ module OpenChain
           FROM entries AS e 
             INNER JOIN broker_invoices AS bi ON e.id = bi.entry_id
             INNER JOIN broker_invoice_lines AS bil ON bi.id = bil.broker_invoice_id
-          WHERE bi.invoice_number IN (#{invoice_numbers.join(',')}) AND
+          WHERE bi.invoice_number IN (#{safe_invoice_numbers}) AND
                 bil.charge_code#{brokerage_duty ? "" : " NOT" } IN (1, 22) AND
                 e.entry_type = '#{type}'
           GROUP BY bi.id
