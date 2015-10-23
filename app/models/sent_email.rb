@@ -7,7 +7,7 @@ class SentEmail < ActiveRecord::Base
 
   def self.find_can_view user
     if user.sys_admin?
-      SentEmail.where("1=1")
+      SentEmail.scoped
     end
   end
 

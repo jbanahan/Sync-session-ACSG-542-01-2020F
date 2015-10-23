@@ -417,8 +417,8 @@ EOS
   private
 
     def message_att_to_standard_att message_attachment
-      filename_without_ext = File.extname(message_attachment.filename)
-      filename_ext = File.basename(message_attachment.filename, ".*")
+      filename_ext = File.extname(message_attachment.filename)
+      filename_without_ext = File.basename(message_attachment.filename, ".*")
 
       Tempfile.open([filename_without_ext, filename_ext]) do |temp|
         Attachment.add_original_filename_method(temp, message_attachment.filename)
@@ -429,7 +429,7 @@ EOS
 
         standard_att = Attachment.new
         standard_att.attached = temp
-        standard_att.save
+        standard_att.save!
         standard_att
       end
     end
