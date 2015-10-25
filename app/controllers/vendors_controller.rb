@@ -32,6 +32,7 @@ class VendorsController < ApplicationController
       c = Company.create(name:name.strip,vendor:true)
       if c.errors.full_messages.blank?
         OpenChain::WorkflowProcessor.async_process c
+        c.create_snapshot current_user
         redirect_to vendor_path(c)
       else
         errors_to_flash c

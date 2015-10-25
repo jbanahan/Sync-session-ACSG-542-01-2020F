@@ -72,6 +72,7 @@ class CompaniesController < ApplicationController
       @company = Company.create(name:params[:company][:cmp_name])
       if @company.errors.empty? && @company.update_model_field_attributes(params[:company])
         OpenChain::WorkflowProcessor.async_process @company
+        @company.create_snapshot(current_user)
         add_flash :notices, "Company created successfully."
       else
         errors_to_flash @company
@@ -88,6 +89,7 @@ class CompaniesController < ApplicationController
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
       if @company.update_model_field_attributes(params[:company])
         OpenChain::WorkflowProcessor.async_process @company
+        @company.create_snapshot(current_user)
         add_flash :notices, "Company was updated successfully."
       else
         errors_to_flash @company

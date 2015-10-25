@@ -66,6 +66,7 @@ describe VendorsController do
       c = Company.last
       expect(c.name).to eq 'VNAME'
       expect(c).to be_vendor
+      expect(c.entity_snapshots.count).to eq 1
       expect(response).to redirect_to("/vendors/#{c.id}")
     end
   end
