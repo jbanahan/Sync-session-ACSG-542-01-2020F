@@ -177,7 +177,7 @@ describe CoreModule do
 
   describe "group_options" do
     it "returns core module fields in a format usable for grouped_options_for_select" do
-      user = User.new
+      user = Factory(:user)
       user.stub(:view_module?) {|m| m.label == 'Product'}
       fields = CoreModule.grouped_options user
       expect(fields['Product'].size).to be > 0

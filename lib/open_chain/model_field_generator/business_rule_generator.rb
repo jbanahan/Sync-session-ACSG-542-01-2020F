@@ -17,7 +17,7 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
           end
           )
           limit 1)",
-        :can_view_lambda=>lambda {|u| u.view_business_validation_results? }
+        :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false}
       }],
       [rank_start+1,"#{uid_prefix}_failed_business_rules",:failed_business_rules,"Failed Business Rule Names",{:data_type=>:string,
         :import_lambda=>lambda {|o,d| "Failed Business Rule Names ignored. (read only)"},
@@ -28,7 +28,7 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
           INNER JOIN business_validation_rule_results failed_bvrr ON failed_bvr.id = failed_bvrr.business_validation_result_id AND failed_bvrr.business_validation_rule_id = failed_rule.id AND failed_bvrr.state = 'Fail'
           WHERE failed_bvr.validatable_id = #{table_name}.id AND failed_bvr.validatable_type = '#{module_type}'
           GROUP BY failed_bvr.validatable_id)",
-        :can_view_lambda=>lambda {|u| u.view_business_validation_results?}
+        :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false}
       }]
     ]
   end
