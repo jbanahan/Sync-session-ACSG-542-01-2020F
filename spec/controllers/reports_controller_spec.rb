@@ -245,4 +245,56 @@ describe ReportsController do
     end
   end
 
+  describe "PVH Billing Summary Report" do
+    context "show" do
+      it "renders page for Vandegrift user" do
+        MasterSetup.create(system_code: 'www-vfitrack-net')
+        @u = Factory(:master_user)
+        @u.stub(:view_broker_invoices?).and_return true
+        sign_in_as @u
+
+        get :show_pvh_billing_summary
+        expect(response).to be_success
+      end
+
+      it "doesn't render page for non-Vandegrift user" do
+        get :show_pvh_billing_summary
+        expect(response).to_not be_success
+      end
+    end
+
+    context "run" do
+      before(:each) do 
+        MasterSetup.create(system_code: 'www-vfitrack-net')
+        @invoice_numbers = "123456789 987654321 246810121" 
+        @u = Factory(:master_user)
+        @u.stub(:view_broker_invoices?).and_return true
+        sign_in_as @u
+      end
+
+      it "runs report for Vandegrift user" do
+        ReportResult.should_receive(:run_report!).with("PVH Billing Summary", @u, OpenChain::Report::PvhBillingSummary, {:settings => {:invoice_numbers => ['123456789', '987654321', '246810121']}, :friendly_settings=>[]})
+        post :run_pvh_billing_summary, {invoice_numbers: @invoice_numbers}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
+      end
+
+      it "doesn't run report with incorrectly formatted input" do
+        ReportResult.should_not_receive(:run_report!)
+        post :run_pvh_billing_summary, {invoice_numbers: "12345678, 987654321"}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "Invoice numbers should contain 9 digits and be separated by a space."
+      end
+
+      it "doesn't run report for non-Vandegrift user" do
+        @u = Factory(:user)
+        sign_in_as @u
+        ReportResult.should_not_receive(:run_report!)
+        post :run_pvh_billing_summary, {invoice_numbers: @invoice_numbers}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "You do not have permission to view this report"
+      end
+    end
+  end
+
 end

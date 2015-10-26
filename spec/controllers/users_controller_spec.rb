@@ -5,6 +5,7 @@ describe UsersController do
     @user = Factory(:user)
     sign_in_as @user
   end
+  
   describe :create do
     it "should create user with apostrophe in email address" do
       User.any_instance.stub(:admin?).and_return(true)
@@ -15,6 +16,132 @@ describe UsersController do
         post :create, {'company_id'=>@user.company_id,'user'=>u}
       }.to change(User,:count).by(1)
       expect(response).to be_redirect
+    end
+
+    context "when copying an existing user" do
+      before(:each) do
+        @user.admin = true
+        @copied_user = Factory(:user)
+      end
+
+      it "should add existing user's group memberships" do
+        @copied_user.groups << gr_assigned_1 = Factory(:group)
+        @copied_user.groups << gr_assigned_2 = Factory(:group)
+
+        new_user_params = {username: "Fred", email: "fred@abc.com", company_id: @copied_user.company.id, password: "pw12345", password_confirmation: "pw12345",
+                           group_ids: @copied_user.group_ids} 
+
+        post :create, {company_id: @copied_user.company.id, user: new_user_params}
+        new_user = User.last
+        expect(User.count).to eq 3
+        expect(new_user.groups.sort).to eq [gr_assigned_1, gr_assigned_2].sort
+        expect(response).to be_redirect
+      end
+
+      it "should add existing user's search setups" do
+        ss_assigned_1 = Factory(:search_setup, name: 'foo', user: @copied_user)
+        ss_assigned_2 = Factory(:search_setup, name: 'bar', user: @copied_user)
+
+        new_user_params = {username: "Fred", email: "fred@abc.com", company_id: @copied_user.company.id, password: "pw12345", password_confirmation: "pw12345"}
+        post :create, {company_id: @copied_user.company.id, user: new_user_params, assigned_search_setup_ids: [ss_assigned_1.id, ss_assigned_2.id]}
+        new_user = User.last
+
+        expect(User.count).to eq 3
+        expect(SearchSetup.count).to eq 4
+        expect(new_user.search_setups.pluck(:name).sort).to eq ['bar', 'foo']
+        expect(response).to be_redirect
+      end
+
+      it "should add existing user's custom reports" do
+        cr_assigned_1 = Factory(:custom_report, name: 'foo', user: @copied_user)
+        cr_assigned_2 = Factory(:custom_report, name: 'bar', user: @copied_user)
+
+        new_user_params = {username: "Fred", email: "fred@abc.com", company_id: @copied_user.company.id, password: "pw12345", password_confirmation: "pw12345"}
+        post :create, {company_id: @copied_user.company.id, user: new_user_params, assigned_custom_report_ids: [cr_assigned_1.id, cr_assigned_2.id]}
+        new_user = User.last
+
+        expect(User.count).to eq 3
+        expect(CustomReport.count).to eq 4
+        expect(new_user.custom_reports.pluck(:name).sort).to eq ['bar', 'foo']
+        expect(response).to be_redirect
+      end
+
+      it "should not attempt to add search setups or custom reports if the the user fails to save" do
+        ss_assigned_1 = Factory(:search_setup, name: 'foo', user: @copied_user)
+        ss_assigned_2 = Factory(:search_setup, name: 'bar', user: @copied_user)
+        cr_assigned_1 = Factory(:custom_report, name: 'foo', user: @copied_user)
+        cr_assigned_2 = Factory(:custom_report, name: 'bar', user: @copied_user)
+
+        new_user_params = {username: "Fred", email: "fred@abc.com", company_id: @copied_user.company.id} # missing password/confirmation
+        post :create, {company_id: @copied_user.company.id, user: new_user_params, assigned_search_setup_ids: [ss_assigned_1.id, ss_assigned_2.id],
+                       assigned_custom_report_ids: [cr_assigned_1.id, cr_assigned_2.id]}
+      
+        expect(SearchSetup.count).to eq 2
+        expect(CustomReport.count).to eq 2
+        expect(response).to render_template(:new)
+      end
+
+    end
+  end
+
+  describe :new do
+    context "with admin authorization" do
+      before(:each) do
+        @user.admin = true
+        @copied_user = Factory(:user)
+      end
+
+      it "makes search setups belonging to a copied user available to the view" do
+        
+        ss_assigned_1 = Factory(:search_setup, name: 'bar', user: @copied_user)
+        ss_assigned_2 = Factory(:search_setup, name: 'foo', user: @copied_user)
+        3.times { Factory(:search_setup) }
+
+        get :new, company_id: @copied_user.company.id, copy: @copied_user.id
+
+        expect(assigns(:assigned_search_setups)).to be_empty
+        expect(assigns(:available_search_setups)).to eq [ss_assigned_1, ss_assigned_2].sort{|ss1, ss2| ss1.name <=> ss2.name }
+        
+      end
+
+      it "makes custom reports belonging to a copied user available to the view" do
+
+        cr_assigned_1 = Factory(:custom_report, name: 'bar', user: @copied_user)
+        cr_assigned_2 = Factory(:custom_report, name: 'foo', user: @copied_user)
+        3.times { Factory(:custom_report) }
+
+        get :new, company_id: @copied_user.company.id, copy: @copied_user.id
+
+        expect(assigns(:assigned_custom_reports)).to be_empty 
+        expect(assigns(:available_custom_reports)).to eq [cr_assigned_1, cr_assigned_2].sort{|cr1, cr2| cr1.name <=> cr2.name }
+      end
+
+      it "makes group memberships belonging to a copied user available to the view" do
+        @copied_user.groups << gr_assigned_1 = Factory(:group)
+        @copied_user.groups << gr_assigned_2 = Factory(:group)
+        gr_available_1 = Factory(:group)
+        gr_available_2 = Factory(:group)
+        gr_available_3 = Factory(:group)
+
+        get :new, company_id: @copied_user.company.id, copy: @copied_user.id
+
+        expect(assigns(:assigned_groups)).to eq [gr_assigned_1, gr_assigned_2].sort{|gr1, gr2| gr1.name <=> gr2.name }
+        expect(assigns(:available_groups)).to eq [gr_available_1, gr_available_2, gr_available_3].sort{ |gr1, gr2| gr1.name <=> gr2.name }
+      end
+
+      it "makes copied-user permissions available to view" do
+        @copied_user.update_attributes(drawback_view: true)
+        get :new, company_id: @copied_user.company.id, copy: @copied_user.id
+        expect(assigns(:user).drawback_view).to be_true
+      end
+    end
+
+    context "without authorization" do
+      it "redirects" do
+        copied_user = Factory(:user)
+        get :new, company_id: copied_user.company.id, copy: copied_user.id
+        expect(response).to be_redirect
+      end
     end
   end
 
