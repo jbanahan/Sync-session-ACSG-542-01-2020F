@@ -17,7 +17,8 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleAttachmentTypes: "Has Attachment Types",
                 ValidationRuleCanadaGpt: "Entry Tariff lines utilize Canadian GPT rates.",
                 ValidationRuleEntryTariffMatchesProduct: "Entry Tariff Numbers Match Parts Database",
-                ValidationRuleOrderLineProductFieldFormat: "Order Line's Product Field Format"
+                ValidationRuleOrderLineProductFieldFormat: "Order Line's Product Field Format",
+                ValidationRuleOrderVendorFieldFormat: "Orders Vendor's Field Format"
               }
 
   def self.subclasses_array
