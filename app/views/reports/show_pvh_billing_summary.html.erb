@@ -1,0 +1,13 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<div class="col-md-3">
+  <h2>PVH Billing Report</h2>
+  <h4>Enter 9-digit invoice numbers separated by a space:</h4>
+  <%=form_tag reports_run_pvh_billing_summary_path, :id=>'frm_run', role: "form" do -%>
+    <div class="form-group">
+      <%=text_area_tag :invoice_numbers,"", :class=>'form-control', rows: 4%> 
+    </div>
+  <%end%>
+</div> 

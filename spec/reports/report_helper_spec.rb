@@ -40,6 +40,34 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  # mostly tested in table_from_query
+  describe "table_from_query_result"  do 
+    before :each do 
+      helper = Class.new do
+        include OpenChain::Report::ReportHelper
+        def run wb, query_result, conversions = {}, opts = {}
+          table_from_query_result @wb, query_result, conversions, opts
+        end
+      end
+      
+      @h = helper.new
+      q = "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
+      @result_set = ActiveRecord::Base.connection.execute q
+    end
+
+    it "extracts columns headers from result_set by default" do
+      wb = Spreadsheet::Workbook.new
+      XlsMaker.should_receive(:add_header_row).with(@wb, 0, ['EN', 'IDENT'])
+      @h.run wb, @result_set
+    end
+
+    it "extracts columns from opts if :column_names is used" do
+      wb = Spreadsheet::Workbook.new
+      XlsMaker.should_receive(:add_header_row).with(@wb, 0, ['Nigel', 'David'])
+      @h.run wb, @result_set, {}, {column_names: ['Nigel', 'David']}
+    end
+  end
+
   describe "write_result_set_to_sheet" do
 
     before :each do 
