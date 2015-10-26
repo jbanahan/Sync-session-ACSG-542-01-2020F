@@ -20,7 +20,7 @@ class BusinessValidationRule < ActiveRecord::Base
               }
 
   def self.subclasses_array
-    SUBCLASSES.keys.collect! {|key| [SUBCLASSES[key], key.to_s]}
+    SUBCLASSES.keys.collect! {|key| [SUBCLASSES[key], key.to_s]}.sort {|pair1,pair2| pair1[1] <=> pair2[1]}
   end
 
   def rule_attributes
