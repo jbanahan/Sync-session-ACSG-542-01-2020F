@@ -471,6 +471,7 @@ OpenChain::Application.routes.draw do
       get :next_item
       get :previous_item
       put :import_worksheet
+      get :validation_results
     end
     post :import_new_worksheet, :on=>:new
   end

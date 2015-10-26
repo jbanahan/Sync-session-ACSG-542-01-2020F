@@ -1,8 +1,11 @@
 require 'open_chain/field_logic'
 require 'open_chain/bulk_update'
 require 'open_chain/next_previous_support'
+require 'open_chain/business_rule_validation_results_support'
 class ProductsController < ApplicationController
   include Worksheetable
+  include ValidationResultsHelper
+  include OpenChain::BusinessRuleValidationResultsSupport
   include OpenChain::NextPreviousSupport
   before_filter :secure_classifications
 
@@ -136,6 +139,10 @@ class ProductsController < ApplicationController
           format.xml  { head :ok }
       end
     }
+  end
+
+  def validation_results
+    generic_validation_results(Product.find params[:id])
   end
 
   def bulk_edit

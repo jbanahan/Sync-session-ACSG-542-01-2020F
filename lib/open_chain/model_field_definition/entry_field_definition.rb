@@ -192,24 +192,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [134,:ent_k84_receive_date, :k84_receive_date, "K84 Received Date", {:data_type=>:date}],
       [135,:ent_k84_month, :k84_month, "K84 Month", {:data_type=>:integer}],
       [136,:ent_k84_due_date, :k84_due_date, "K84 Due Date", {:data_type=>:date}],
-      [137,:ent_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
-        :export_lambda=>lambda {|obj| obj.business_rules_state },
-        :qualified_field_name=> "(select state
-          from business_validation_results bvr
-          where bvr.validatable_type = 'Entry' and bvr.validatable_id = entries.id
-          order by (
-          case bvr.state
-              when 'Fail' then 0
-              when 'Review' then 1
-              when 'Pass' then 2
-              when 'Skipped' then 3
-              else 4
-          end
-          )
-          limit 1)",
-        :can_view_lambda=>lambda {|u| u.view_business_validation_results? }
-      }],
+      # used to be ent_rule_sate
       [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}],
       [139,:ent_exam_ordered_date,:exam_ordered_date,"Exam Ordered Date",{:data_type=>:datetime}],
       [140,:ent_employee_name,:employee_name,"Employee",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
@@ -222,17 +205,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [149,:ent_total_add, :total_add, "Total ADD", {:data_type=>:decimal,:currency=>:usd}],
       [150,:ent_total_cvd, :total_cvd, "Total CVD", {:data_type=>:decimal,:currency=>:usd}],
       [152,:ent_b3_print_date, :b3_print_date, "B3 Print Date", {:data_type=>:datetime}],
-      [153,:ent_failed_business_rules,:failed_business_rules,"Failed Business Rule Names",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Failed Business Rule Names ignored. (read only)"},
-        :export_lambda=>lambda {|obj| obj.failed_business_rules.join("\n ") },
-        :qualified_field_name=> "(SELECT GROUP_CONCAT(failed_rule.name ORDER BY failed_rule.name SEPARATOR '\n ')
-          FROM business_validation_results failed_bvr
-          INNER JOIN business_validation_rules failed_rule ON failed_rule.business_validation_template_id = failed_bvr.business_validation_template_id
-          INNER JOIN business_validation_rule_results failed_bvrr ON failed_bvr.id = failed_bvrr.business_validation_result_id AND failed_bvrr.business_validation_rule_id = failed_rule.id AND failed_bvrr.state = 'Fail'
-          WHERE failed_bvr.validatable_id = entries.id AND failed_bvr.validatable_type = 'Entry'
-          GROUP BY failed_bvr.validatable_id)",
-        :can_view_lambda=>lambda {|u| u.company.master?}
-      }],
+      # used to be ent_failed_business_rules
       [154, :ent_store_names, :store_names, "Store Names", {:data_type=>:text}],
       [155, :ent_final_delivery_date, :final_delivery_date, "Final Delivery Date", {:data_type=>:datetime}],
       [156, :ent_expected_update_time, :expected_update_time, "Expected Update Time", {:data_type=>:datetime, :can_view_lambda=>lambda {|u| u.company.broker?}}],
@@ -241,5 +214,6 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
     add_fields CoreModule::ENTRY, make_attachment_arrays(700,'ent',CoreModule::ENTRY,{ent_attachment_types: lambda {|u| u.company.master?}})
+    add_fields CoreModule::ENTRY, make_business_rule_arrays(800,'ent','entries','Entry')
   end
 end; end; end

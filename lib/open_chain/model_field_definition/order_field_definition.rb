@@ -16,23 +16,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
       [4,:ord_cust_ord_no, :customer_order_number, "Customer Order Number"],
       [5,:ord_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}],
       [6,:ord_mode, :mode, "Mode of Transport",{:data_type=>:string}],
-      [7,:ord_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
-        :export_lambda=>lambda {|obj| obj.business_rules_state },
-        :qualified_field_name=> "(select state
-          from business_validation_results bvr
-          where bvr.validatable_type = 'Order' and bvr.validatable_id = orders.id
-          order by (
-          case bvr.state
-              when 'Fail' then 0
-              when 'Review' then 1
-              when 'Pass' then 2
-              when 'Skipped' then 3
-              else 4
-          end
-          )
-          limit 1)"
-      }],
+      #was ord_rule_state
       [8,:ord_revised_date,:last_revised_date, 'Last Revised Date',{data_type: :date}],
       [9,:ord_approval_status,:approval_status,'Approval Status'],
       [10,:ord_window_start,:ship_window_start,'Ship Window Start Date',{data_type: :date}],
@@ -59,5 +43,6 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
     add_fields CoreModule::ORDER, make_importer_arrays(500,"ord","orders")
     add_fields CoreModule::ORDER, make_agent_arrays(600,'ord','orders')
     add_fields CoreModule::ORDER, make_factory_arrays(700,'ord','orders')
+    add_fields CoreModule::ORDER, make_business_rule_arrays(800,'ord','orders','Order')
   end
 end; end; end

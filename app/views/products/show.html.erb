@@ -1,3 +1,4 @@
+<%rule_state_field = ModelField.find_by_uid(:prod_rule_state)%>
 <% content_for :javascript do %>
   <% if @product.can_edit?(current_user) || @product.can_classify?(current_user)%>
   $(function() {
@@ -18,14 +19,20 @@
 
 <% content_for :action_bar do %>
   <% if (@product.can_edit?(current_user) || @product.can_classify?(current_user)) && !@product.locked?%>
-    <button id='btn_edit'>Edit</button>
-    <%if current_user.edit_classifications? %> <button id='btn_classify'>Classify</button><% end %>
+    <button id='btn_edit' title='Edit'><i class='fa fa-pencil'></i></button>
+    <%if current_user.edit_classifications? %> <button id='btn_classify' title='Classify'><i class='fa fa-globe'></i></button><% end %>
   <%end%>
-  <button class='btn_link' link_to='<%=products_path%>' key_map='b'>Back To Search</button>
+  <button class='btn_link' link_to='<%=products_path%>' key_map='b' title='Back To Search'><i class='fa fa-search'></i></button>
   <%=render :partial => 'shared/show_next_prev', :locals => {:obj=>@product} %>
-  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h'>History</button>
+  <%=business_rules_button rule_state_field, validation_results_product_path(@product)%>
+  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
 <% end %>
 <div class='container'>
+  <div class="row">
+    <div class="col-md-12">
+      <%=render partial: '/shared/business_rules', locals:{base_object:@product,rule_state_field:rule_state_field}%>
+    </div>
+  </div>
   <div class='row'>
     <div class='col-md-6' id='prod_attr'>
       <h3 class='text-center'>Attributes</h3>
