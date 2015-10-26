@@ -67,11 +67,11 @@ module OpenChain
                                          "Click <a href='#{path}'>here</a> to view it.")
     end
   
-    def simple_give_to other_user
+    def simple_give_to! other_user
       copy_name = self.name
       ss = deep_copy copy_name
       ss.user = other_user
-      ss.save
+      ss.save!
     end
   end
 end

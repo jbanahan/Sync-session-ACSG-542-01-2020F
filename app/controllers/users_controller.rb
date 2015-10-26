@@ -68,26 +68,33 @@ class UsersController < ApplicationController
 
 
         valid = false
-        User.transaction do
-          valid = @user.save && @user.update_user_password(password, password_confirmation)
-          # Rollback is swallowed by the transaction block
-          raise ActiveRecord::Rollback, "Bad user create." unless valid
-        end
+        begin
+          User.transaction do
+            valid = @user.save && @user.update_user_password(password, password_confirmation)
+            if valid
+              search_setups = params[:assigned_search_setup_ids]
+              if search_setups && @user.id
+                search_setups.each do |ss_id| 
+                  ss = SearchSetup.find(ss_id.to_i)
+                  ss.simple_give_to! @user
+                end
+              end
 
-        search_setups = params[:assigned_search_setup_ids]
-        if search_setups && @user.id
-          search_setups.each do |ss_id| 
-            ss = SearchSetup.find(ss_id.to_i)
-            ss.simple_give_to @user
+              custom_reports = params[:assigned_custom_report_ids]
+              if custom_reports && @user.id
+                custom_reports.each do |cr_id|
+                  cr = CustomReport.find(cr_id.to_i)
+                  cr.simple_give_to! @user
+                end
+              end
+            else 
+              # Rollback is swallowed by the transaction block
+              raise ActiveRecord::Rollback, "Bad user create."
+            end
           end
-        end
-
-        custom_reports = params[:assigned_custom_report_ids]
-        if custom_reports && @user.id
-          custom_reports.each do |cr_id|
-            cr = CustomReport.find(cr_id.to_i)
-            cr.simple_give_to @user
-          end
+        rescue
+          valid = false
+          add_flash :errors, "The user could not be created."
         end
 
         if valid
