@@ -16,11 +16,12 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleAnyEntryInvoiceLineHasFieldFormat: "At Least One Entry Invoice Line Matches Field Format",
                 ValidationRuleAttachmentTypes: "Has Attachment Types",
                 ValidationRuleCanadaGpt: "Entry Tariff lines utilize Canadian GPT rates.",
-                ValidationRuleEntryTariffMatchesProduct: "Entry Tariff Numbers Match Parts Database"
+                ValidationRuleEntryTariffMatchesProduct: "Entry Tariff Numbers Match Parts Database",
+                ValidationRuleOrderLineProductFieldFormat: "Order Line's Product Field Format"
               }
 
   def self.subclasses_array
-    SUBCLASSES.keys.collect! {|key| [SUBCLASSES[key], key.to_s]}.sort {|pair1,pair2| pair1[1] <=> pair2[1]}
+    SUBCLASSES.keys.collect! {|key| [SUBCLASSES[key], key.to_s]}.sort {|pair1,pair2| pair1[0] <=> pair2[0]}
   end
 
   def rule_attributes
