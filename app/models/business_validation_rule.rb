@@ -5,24 +5,35 @@ class BusinessValidationRule < ActiveRecord::Base
   has_many :search_criterions, dependent: :destroy
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_rule
 
-  SUBCLASSES ||= {ValidationRuleEntryInvoiceLineFieldFormat: "Entry Invoice Line Field Format",
-                ValidationRuleEntryInvoiceLineMatchesPoLine: "Entry Invoice Line Matches PO Line",
-                ValidationRuleFieldFormat: "Field Format",
-                ValidationRuleManual: "Manual",
-                PoloValidationRuleEntryInvoiceLineMatchesPoLine: "(Polo) Entry Invoice Line Matches PO Line",
-                ValidationRuleEntryInvoiceLineTariffFieldFormat: "Entry Invoice Tariff Field Format",
-                ValidationRuleEntryInvoiceFieldFormat: "Entry Invoice Field Format",
-                ValidationRuleEntryHtsMatchesPo: "Entry Invoice Line HTS Matches PO HTS",
-                ValidationRuleAnyEntryInvoiceLineHasFieldFormat: "At Least One Entry Invoice Line Matches Field Format",
-                ValidationRuleAttachmentTypes: "Has Attachment Types",
-                ValidationRuleCanadaGpt: "Entry Tariff lines utilize Canadian GPT rates.",
-                ValidationRuleEntryTariffMatchesProduct: "Entry Tariff Numbers Match Parts Database",
-                ValidationRuleOrderLineProductFieldFormat: "Order Line's Product Field Format",
-                ValidationRuleOrderVendorFieldFormat: "Orders Vendor's Field Format"
+  SUBCLASSES ||= {ValidationRuleEntryInvoiceLineFieldFormat: {label:"Entry Invoice Line Field Format"},
+                ValidationRuleEntryInvoiceLineMatchesPoLine: {label:"Entry Invoice Line Matches PO Line"},
+                ValidationRuleFieldFormat: {label:"Field Format"},
+                ValidationRuleManual: {label:"Manual"},
+                'OpenChain::CustomHandler::Polo::PoloValidationRuleEntryInvoiceLineMatchesPoLine'.to_sym=>
+                  {label:"Polo Entry Invoice Line Matches PO Line", 
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}},
+                ValidationRuleEntryInvoiceLineTariffFieldFormat: {label:"Entry Invoice Tariff Field Format"},
+                ValidationRuleEntryInvoiceFieldFormat: {label:"Entry Invoice Field Format"},
+                ValidationRuleEntryHtsMatchesPo: {label:"Entry Invoice Line HTS Matches PO HTS"},
+                ValidationRuleAnyEntryInvoiceLineHasFieldFormat: {label:"At Least One Entry Invoice Line Matches Field Format"},
+                ValidationRuleAttachmentTypes: {label:"Has Attachment Types"},
+                ValidationRuleCanadaGpt: {label:"Entry Tariff lines utilize Canadian GPT rates."},
+                ValidationRuleEntryTariffMatchesProduct: {label:"Entry Tariff Numbers Match Parts Database"},
+                ValidationRuleOrderLineProductFieldFormat: {label:"Order Line's Product Field Format"},
+                ValidationRuleOrderVendorFieldFormat: {label:"Orders Vendor's Field Format"},
+                'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderCascadingRisk'.to_sym=>
+                  {
+                    label: 'Lumber PO Cascading Risk',
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='ll'}
+                  }
               }
 
   def self.subclasses_array
-    SUBCLASSES.keys.collect! {|key| [SUBCLASSES[key], key.to_s]}.sort {|pair1,pair2| pair1[0] <=> pair2[0]}
+    r = SUBCLASSES.collect {|k,v|
+      v[:enabled_lambda] && !v[:enabled_lambda].call ? nil : [v[:label], k.to_s]
+    }
+    r.compact!
+    r.sort! {|pair1,pair2| pair1[0] <=> pair2[0]}
   end
 
   def rule_attributes
@@ -41,5 +52,10 @@ class BusinessValidationRule < ActiveRecord::Base
       return true unless sc.test? obj
     end
     false
+  end
+
+  # override to turn off the rule for subclasses_array
+  def self.enabled?
+    true
   end
 end

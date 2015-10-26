@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe BusinessValidationRule do
+  describe :enabled? do
+    it "should not return !enabled in subclasses_array" do
+      expect(described_class.subclasses_array.find {|a| a[1]=='PoloValidationRuleEntryInvoiceLineMatchesPoLine'}).to be_nil
+    end
+    it "should return when no enabled lambda in subclasses_array" do
+      a = described_class.subclasses_array
+      expect(a.find {|a| a[1]=='ValidationRuleManual'}).to_not be_nil
+    end
+  end
   describe :should_skip?
     it "should base should_skip? on search_criterions" do
       pass_ent = Entry.new(entry_number:'9')

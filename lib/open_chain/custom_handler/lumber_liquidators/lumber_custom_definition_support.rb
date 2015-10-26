@@ -28,6 +28,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     cmp_pc_approved_by_executive: {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'Company'},
     cmp_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :date, module_type: 'Company'},
     cmp_vendor_agreement_review: {label: 'Vendor Agreement Review', data_type: :string, module_type: 'Company'},
+    cmp_risk: {label: 'Risk', data_type: :string, module_type: 'Company'},
     plnt_country_iso_code: {label: 'Country ISO Code', data_type: :string, module_type: 'Plant'},
     plnt_sap_coo_abbreviation: {label: 'SAP COO Abbreviation', data_type: :string, module_type: 'Plant'},
     plnt_address: {label: 'Address', data_type: :text, module_type: 'Plant'},
@@ -87,7 +88,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ppga_pc_approved_date: {label: 'PC Approved Date', data_type: :date, module_type: 'PlantProductGroupAssignment'},
     ppga_pc_approved_by_executive: {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'PlantProductGroupAssignment'},
     ppga_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :date, module_type: 'PlantProductGroupAssignment'},
+    prod_risk: {label: 'Risk', data_type: :string, module_type: 'Product'},
     prod_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Product'},
+    ord_risk: {label: 'Risk', data_type: :string, module_type: 'Order'},
     ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'}
   }
 
