@@ -77,6 +77,11 @@
 <% end %>
 
 <div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <%=render partial: '/shared/business_rules', locals:{base_object:@order,rule_state_field:rule_state_field}%>
+    </div>
+  </div>
   <% if @order.closed? %>
     <div class="row">
       <div class="col-md-12">
