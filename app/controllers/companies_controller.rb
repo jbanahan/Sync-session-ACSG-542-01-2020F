@@ -1,3 +1,4 @@
+require 'open_chain/business_rule_validation_results_support'
 require 'open_chain/custom_handler/generic_alliance_product_generator'
 require 'open_chain/workflow_processor'
 class CompaniesController < ApplicationController
@@ -99,7 +100,7 @@ class CompaniesController < ApplicationController
     }
   end
 
-  
+
   def validation_results
     generic_validation_results(Company.find params[:id])
   end
