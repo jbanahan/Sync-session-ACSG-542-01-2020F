@@ -1,3 +1,4 @@
+
 class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   attr_accessible :description, :name, :rule_attributes_json, :type, :fail_state
@@ -59,3 +60,7 @@ class BusinessValidationRule < ActiveRecord::Base
     true
   end
 end
+
+# need require statements at end because they depend on the class existing
+require 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_order_cascading_risk'
+require 'open_chain/custom_handler/polo/polo_validation_rule_entry_invoice_line_matches_po_line'

@@ -1,5 +1,5 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
-module OpenChain; module CustomHandler; module LumberLiquidators; class LumberValidationRuleOrderCascadingRisk < BusinessValidationRule
+module OpenChain; module CustomHandler; module LumberLiquidators; class LumberValidationRuleOrderCascadingRisk < ::BusinessValidationRule
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport  
   RISK_VALUES ||= {
     grandfathered: 0,
