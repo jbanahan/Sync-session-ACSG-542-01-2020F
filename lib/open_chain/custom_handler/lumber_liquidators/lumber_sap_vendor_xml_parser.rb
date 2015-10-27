@@ -15,6 +15,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     self.new(opts).parse_dom dom
   end
 
+  def self.integration_folder
+    "/home/ubuntu/ftproot/chainroot/ll/_sap_vendor_xml"
+  end
+
   def initialize opts={}
     inner_opts = {workflow_processor:WorkflowProcessor.new}.merge opts
     @cdefs = self.class.prep_custom_definitions [:cmp_sap_company]

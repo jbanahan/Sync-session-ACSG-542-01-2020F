@@ -16,6 +16,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     self.new(opts).parse_dom dom
   end
 
+  def self.integration_folder
+    "/home/ubuntu/ftproot/chainroot/ll/_sap_po_xml"
+  end
+
   def initialize opts={}
     @user = User.integration
     @imp = Company.find_by_master(true)

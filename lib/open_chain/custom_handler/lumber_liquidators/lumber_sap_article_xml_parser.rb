@@ -16,6 +16,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     self.new.parse_dom dom
   end
 
+  def self.integration_folder
+    "/home/ubuntu/ftproot/chainroot/ll/_sap_article_xml"
+  end
+
   def initialize
     @user = User.integration
     @cdefs = self.class.prep_custom_definitions [:prod_sap_extract]
