@@ -10,12 +10,13 @@
     <%if include_process_actions %>
       <button data-toggle='modal' data-target='#process_actions_modal'>Process Reports</button>
     <%end%>
-    <%=business_rules_button rule_state_field, validation_results_drawback_claim_path(@claim)%>
   <%end-%>
 <%end%>
 <h2>Drawback Claim: <%=@claim.name%></h2>
 
-
+<div class='container'>
+<%=render partial: '/shared/business_rules', locals:{base_object:@claim,rule_state_field:ModelField.find_by_uid(:dc_rule_state),validation_path:validation_results_drawback_claim_path(@claim)}%>
+</div>
 <table class='ent_columns'>
   <tr>
     <td>

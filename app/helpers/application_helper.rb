@@ -19,7 +19,7 @@ module ApplicationHelper
   # create button to business rules page
   def business_rules_button rule_state_field, path
     if rule_state_field.can_view?(User.current)
-      return content_tag(:button,class: 'btn_link', link_to: path, title:'Business Rules') do
+      return content_tag(:button,class: 'btn_link', id:'business_rules_link_button', link_to: path, title:'Business Rules') do
         content_tag(:i,'',class:'fa fa-medkit')
       end
     else

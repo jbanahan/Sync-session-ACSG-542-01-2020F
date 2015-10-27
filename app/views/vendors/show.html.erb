@@ -1,4 +1,3 @@
-<%rule_state_field = ModelField.find_by_uid(:cmp_rule_state)%>
 <%content_for :javascript do %>
   $(document).ready(function() {
     ChainAddress.initAddresses();
@@ -12,7 +11,6 @@
   <%if MasterSetup.get.custom_feature?('Lumber SAP')%>
     <button id='vendor_setup_form' title='Vendor Setup Form'><i class='fa fa-download'></i></button>
   <%end%>
-  <%=business_rules_button rule_state_field, validation_results_vendor_path(@company)%>
 <%end%>
 <style type="text/css">
   #address_map {
@@ -31,11 +29,7 @@
   }
 </style>
 <div class="container">
-  <div class="row">
-    <div class="col-md-12">
-      <%=render partial: '/shared/business_rules', locals:{base_object:@company,rule_state_field:rule_state_field}%>
-    </div>
-  </div>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@company,rule_state_field:ModelField.find_by_uid(:cmp_rule_state), validation_path: validation_results_vendor_path(@product)}%>
   <div class="row">
     <div class="col-md-12">
       <h1><%=ModelField.find_by_uid(:cmp_name).process_export(@company,current_user)%></h1>
