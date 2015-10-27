@@ -23,6 +23,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def parse_dom dom
+    @first_expected_delivery_date = nil
     root = dom.root
     raise "Incorrect root element #{root.name}, expecting 'ORDERS05'." unless root.name == 'ORDERS05'
 
@@ -89,6 +90,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       price_per_unit = extended_cost / ol.quantity
     end
     ol.price_per_unit = price_per_unit 
+
+    exp_del = expected_delivery_date(line_el)
+    if !@first_expected_delivery_date || (exp_del && exp_del < @first_expected_delivery_date)
+      order.first_expected_delivery_date = exp_del
+      @first_expected_delivery_date = exp_del
+    end
   end
   private :process_line
 
@@ -109,6 +116,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     parse_date(str)
   end
   private :order_date
+
+  def expected_delivery_date base
+    el = REXML::XPath.first(base,"./E1EDP20")
+    return nil unless el
+    str = et(el,'EDATU')
+    return nil if str.blank?
+    parse_date(str)
+  end
 
   def parse_date str
     return Date.new(str[0,4].to_i,str[4,2].to_i,str[6,2].to_i)

@@ -28,6 +28,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.order_number).to eq '4700000325'
       expect(o.order_date.strftime('%Y%m%d')).to eq '20140805'
       expect(o.get_custom_value(@cdefs[:ord_sap_extract]).value.to_i).to eq ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2014-12-17 14:33:21').to_i
+      expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
 
       expect(o).to have(3).order_lines
 
