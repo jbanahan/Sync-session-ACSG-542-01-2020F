@@ -546,6 +546,7 @@ OpenChain::Application.routes.draw do
       get 'show_children'
       post 'update_children'
       post 'push_alliance_products'
+      get 'validation_results'
     end
 		resources :addresses
 		resources :divisions

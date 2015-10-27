@@ -1,6 +1,7 @@
 require 'open_chain/custom_handler/generic_alliance_product_generator'
 require 'open_chain/workflow_processor'
 class CompaniesController < ApplicationController
+  include OpenChain::BusinessRuleValidationResultsSupport
   # GET /companies
   # GET /companies.xml
   SEARCH_PARAMS = {
@@ -96,6 +97,11 @@ class CompaniesController < ApplicationController
       end
       redirect_to redirect_location(@company)
     }
+  end
+
+  
+  def validation_results
+    generic_validation_results(Company.find params[:id])
   end
   
   def shipping_address_list
