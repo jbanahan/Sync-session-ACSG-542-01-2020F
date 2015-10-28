@@ -260,11 +260,10 @@ class CoreModule
   def child_association_name(child_core_module)
     child_class = child_core_module.klass
     name = child_class.to_s.underscore.pluralize
-    reflections = klass.reflections
 
-    if reflections[name.to_sym].nil?
+    if klass.reflect_on_association[name.to_sym].nil?
       name = nil
-      reflections.each_pair do |assoc_name, reflection|
+      klass.reflections.each_pair do |assoc_name, reflection|
         if reflection.macro == :has_many && reflection.active_record == child_class
           name = assoc_name.to_s
           break

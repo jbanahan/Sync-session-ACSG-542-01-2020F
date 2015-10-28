@@ -7,6 +7,7 @@ module CoreObjectSupport
     base.instance_eval("include EntitySnapshotSupport")
     base.instance_eval("include BroadcastsEvents")
     base.instance_eval("include UpdateModelFieldsSupport")
+    base.instance_eval("include FingerprintSupport")
     if History.column_names.include?(base.name.foreign_key)
       base.instance_eval("has_many   :histories, :dependent => :destroy")
     end

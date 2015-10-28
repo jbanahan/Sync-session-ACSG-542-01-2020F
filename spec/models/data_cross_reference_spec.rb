@@ -211,4 +211,13 @@ describe DataCrossReference do
       expect(xref.reload.value).to eq "value2"
     end
   end
+
+  describe "create / find_po_fingerprint" do
+    it "finds xref object" do
+      o = Order.new order_number: "123"
+      DataCrossReference.create_po_fingerprint o, "fingerprint"
+      xref = DataCrossReference.find_po_fingerprint o
+      expect(xref.value).to eq "fingerprint"
+    end
+  end
 end

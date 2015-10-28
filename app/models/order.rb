@@ -123,6 +123,11 @@ class Order < ActiveRecord::Base
 	  end
 	  return r
 	end
+
+  # Returns true if order appears on any shipments.
+  def shipping?
+    self.piece_sets.where("shipment_line_id is not null").count > 0
+  end
 	
 	def can_view?(user)
 	  return user.view_orders? &&
@@ -217,7 +222,7 @@ class Order < ActiveRecord::Base
 
   # Generates a unique PO Number based on the vendor or importer information associated with the PO.  Importer/Vendor and Customer Order Number must
   # be set prior to calling this method.
-  def create_unique_po_number
+  def create_unique_po_number order_number = self.customer_order_number
     # Use the importer/vendor identifier as the "uniqueness" factor on the order number.  This is only a factor for PO's utilized on a shared instance.
     uniqueness = nil
     if has_importer?
@@ -229,7 +234,7 @@ class Order < ActiveRecord::Base
       raise "Failed to create unique Order Number from #{self.customer_order_number} for Vendor #{self.vendor.name}." if uniqueness.blank?
     end
 
-    Order.compose_po_number uniqueness, self.customer_order_number
+    Order.compose_po_number uniqueness, order_number
   end
 
   def self.compose_po_number company_identifer, order_number

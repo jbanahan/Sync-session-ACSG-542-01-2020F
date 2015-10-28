@@ -1,22 +1,33 @@
 require 'spreadsheet'
 require 'open_chain/xml_builder'
+require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_custom_definitions_support'
 
-module OpenChain; module CustomHandler; module ShoesForCrews; 
+module OpenChain; module CustomHandler; module ShoesForCrews
   class ShoesForCrewsPoSpreadsheetHandler
     include OpenChain::IntegrationClientParser
     include OpenChain::XmlBuilder
     include OpenChain::FtpFileSupport
+    include ShoesForCrewsCustomDefinitionsSupport
+
+    SHOES_SYSTEM_CODE ||= "SHOES"
+
+    def initialize
+      @cdefs = self.class.prep_custom_definitions([:prod_part_number, :order_line_color, :order_line_size, :order_line_destination_code])
+    end
 
     def ftp_credentials
       ftp2_vandegrift_inc 'to_ecs/Shoes_For_Crews/PO'
     end
 
     def parse data, opts = {}
-      write_xml(data) {|f| ftp_file f}
+      write_xml(data, opts) {|f| ftp_file f}
     end
 
-    def write_xml data
+    def write_xml data, opts = {}
       po_data = parse_spreadsheet data
+
+      process_po po_data, opts[:bucket], opts[:key]
+
       xml_document = build_xml po_data
       Tempfile.open(["ShoesForCrewsPO", ".xml"]) do |f|
         xml_document.write f
@@ -58,6 +69,8 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
             data[:order_balance] = row[10]
             # If we got the order balance there's nothing left in the spreadsheet to look for
             break
+          elsif has_alternate_po_number? row
+            data[:alternate_po_number] = row[1]
           end
         end
       end
@@ -94,7 +107,95 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
       doc
     end
 
+    def process_po data, bucket, key
+      status, po = *save_po(data, bucket, key)
+
+      case status
+      when "new"
+        po.freeze_all_custom_values_including_children
+
+        po.post_create_logic! user
+        fingerprint_handling po, user
+      when "updated"
+        po.freeze_all_custom_values_including_children
+
+        fingerprint_handling(po, user) do
+          po.post_update_logic! user
+          if po.approval_status == "Accepted"
+            po.unaccept! user
+          end
+        end
+      when "shipping"
+        # We'll probably want to, at some point, send out an email like the jill 850 parser to notify order couldn't be updated.
+      end
+    end
+
+    def save_po data, bucket, key
+      po = nil
+      update_status = nil
+
+      order_id, order_number = *get_order_data(data)
+
+      raise "An order number must be present in all files.  File #{File.basename(key)} is missing an order number." if order_id.blank?
+
+      find_order(order_id) do |existing_order, order|
+        po = order
+
+        order.customer_order_number = order_number
+        order.order_date = parse_date(data[:order_date])
+        order.mode = data[:ship_via]
+        order.first_expected_delivery_date = parse_date(data[:expected_delivery_date])
+        order.terms_of_sale = data[:payment_terms]
+        order.vendor = find_vendor(data[:vendor][:number], data[:vendor][:name])
+        order.last_file_bucket = bucket
+        order.last_file_path = key
+
+        if existing_order
+          if order.shipping?
+            update_status = "shipping"
+            break
+          else
+            update_status = "updated"
+            # We probably could use the upc and actually do line updates, but this is just easier
+            order.order_lines.destroy_all
+          end
+        else
+          update_status = "new"
+        end
+
+        line_number = 0
+        data[:items].each do |item|
+          product = find_product item
+          line = order.order_lines.build
+          line.line_number = (line_number += 1)
+          line.product = product
+          line.sku = item[:upc]
+          line.quantity = BigDecimal(item[:ordered].to_s.strip)
+          line.price_per_unit = BigDecimal(item[:unit_cost].to_s.strip)
+          line.find_and_set_custom_value(@cdefs[:order_line_destination_code], item[:warehouse_code]) unless item[:warehouse_code].blank?
+          size, color = extract_size_color_from_model_description item[:model]
+          line.find_and_set_custom_value(@cdefs[:order_line_size], size) unless size.blank?
+          line.find_and_set_custom_value(@cdefs[:order_line_color], color) unless color.blank?
+        end
+
+        order.save!
+      end
+
+      return [update_status, po]
+    end
+
     private 
+
+      def get_order_data data
+        order_id = data[:order_id]
+        order_id = data[:order_number] if order_id.blank?
+        order_id = data[:alternate_po_number] if order_id.blank?
+
+        order_number = data[:order_number]
+        order_number = data[:alternate_po_number] if order_number.blank?
+
+        [order_id, order_number]
+      end
 
       def safe_row sheet, row
         row.nil? ? [] : sheet.row(row)
@@ -171,6 +272,22 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
         v
       end
 
+      def parse_date d
+        v = nil
+        if d.respond_to?(:acts_like_date?)
+          v = d
+        else
+          string_val = d.to_s
+          if string_val =~ /\d{1,2}\/\d{1,2}\/\d{4}/
+            v = Date.strptime string_val, "%d/%m/%Y"
+          elsif string_val =~ /\d{4}\/\d{1,2}\/\d{1,2}/
+            v = Time.zone.parse(string_val).to_date
+          end
+        end
+
+        v
+      end
+
       def parse_party type, address_lines, number = nil
         data = {}
         data[:type] = type
@@ -187,6 +304,10 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
       def has_item_data? row
         # Column 5 is the UPC code, which should never be blank except on the pointless prepack lines they have on the 
         row && !row[5].blank?
+      end
+
+      def has_alternate_po_number? row
+        row && !row[1].blank?
       end
 
       def parse_item_data row
@@ -212,6 +333,95 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
 
       def order_balance_row? row
         row && row[8].is_a?(String) && row[8].upcase =~ /ORDER TOTAL/
+      end
+
+      def extract_size_color_from_model_description description
+        case description
+        when /.*\s*-\s*Size\s*(.*),\s*(.*)$/i # Venice - Size 07, Blk -> model + color + size = .*\s*-\s*Size\s*(.*),\s*(.*)$
+          [$1, $2]
+        when /.*\s*-\sSize\s*(.*)$/i # Comfort Max II Casual Insoles - Size 07 ->  model + size = .*\s*-\sSize\s*(.*)$
+          [$1, nil]
+        when /.*\s*-\s*(.*)$/i # Anti Fatigue Ultra Mat - Blk -> model + color = .*\s*-\s*(.*)$
+          [nil, $1]
+        else
+          nil
+        end
+      end
+
+      def find_order order_id
+        order = nil
+        existing = true
+        Lock.acquire("SHOES-"+order_id) do 
+          order = Order.where(order_number: "#{SHOES_SYSTEM_CODE}-#{order_id}", importer_id: importer.id).first_or_create! {|order| existing = false }
+        end
+
+        if order
+          Lock.with_lock_retry(order) do 
+            yield existing, order
+          end
+        end
+      end
+
+      def importer
+        @importer ||= Company.importers.where(system_code: SHOES_SYSTEM_CODE).first
+        raise "Company with system code #{SHOES_SYSTEM_CODE} not found." unless @importer
+        @importer
+      end
+
+      def user
+        @user ||= User.integration
+        @user
+      end
+
+      def find_vendor vendor_id, name
+        return nil if vendor_id.blank?
+
+        vendor = Company.vendors.where(system_code: "#{SHOES_SYSTEM_CODE}-#{vendor_id}").joins("INNER JOIN linked_companies lc ON lc.parent_id = #{importer.id}").first
+        if vendor.nil?
+          vendor = Company.create! system_code: "#{SHOES_SYSTEM_CODE}-#{vendor_id}", name: name, vendor: true
+          importer.linked_companies << vendor
+        end
+
+        vendor
+      end
+
+      def find_product item
+        product = Product.where(importer_id: importer.id, unique_identifier: "#{SHOES_SYSTEM_CODE}-#{item[:item_code]}").first_or_create!
+
+        part_cv = product.find_and_set_custom_value @cdefs[:prod_part_number], item[:item_code]
+        product.name = item[:model]
+        product.unit_of_measure = item[:case_uom]
+
+        if product.changed? || part_cv.changed?
+          product.save!
+          product.freeze_all_custom_values_including_children
+          product.create_snapshot user
+        end
+
+        product
+      end
+
+      def order_fingerprint po, user
+        fingerprint_fields = {model_fields: [:ord_ord_num, :ord_cust_ord_no, :ord_ord_date, :ord_mode, :ord_first_exp_del, :ord_terms, :ord_ven_syscode],
+          order_lines: {
+            model_fields: [:ordln_line_number, :ordln_puid, :ordln_sku, :ordln_ordered_qty, :ordln_ordln_ppu, @cdefs[:order_line_destination_code].model_field_uid, @cdefs[:order_line_size].model_field_uid, @cdefs[:order_line_color].model_field_uid]
+          }
+        }
+
+        po.generate_fingerprint fingerprint_fields, user
+      end
+
+      def fingerprint_handling po, user
+        fingerprint = order_fingerprint po, user
+        xref = DataCrossReference.find_po_fingerprint po
+        if xref.nil? 
+          xref = DataCrossReference.create_po_fingerprint(po, fingerprint) if xref.nil?
+          yield if block_given?
+        elsif xref.value != fingerprint
+          xref.value = fingerprint
+          xref.save!
+          yield if block_given?
+        end
       end
 
   end

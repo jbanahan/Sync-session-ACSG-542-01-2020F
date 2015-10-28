@@ -28,6 +28,7 @@ class DataCrossReference < ActiveRecord::Base
   ALLIANCE_CHECK_REPORT_CHECKSUM ||= 'al_check_checksum'
   ALLIANCE_INVOICE_REPORT_CHECKSUM ||= 'al_inv_checksum'
   OUTBOUND_315_EVENT ||= '315'
+  PO_FINGERPRINT ||= 'po_id'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
@@ -199,20 +200,45 @@ class DataCrossReference < ActiveRecord::Base
     elsif obj.is_a?(SecurityFiling)
       make_compound_key(obj.host_system, obj.host_system_file_number, event_code)
     else
-      raise "Unknown Model type encountered: #{obj.class}.  Unabled to generate 315 cross reference key."
+      raise "Unknown Model type encountered: #{obj.class}.  Unable to generate 315 cross reference key."
     end
   end
   private_class_method :milestone_key
+
+  def self.find_po_fingerprint order
+    find_unique_obj scoped, key: order.order_number, xref_type: PO_FINGERPRINT
+  end
+
+  def self.create_po_fingerprint order, fingerprint
+    add_xref! PO_FINGERPRINT, order.order_number, fingerprint
+  end
 
   def self.has_key? key, cross_reference_type
     DataCrossReference.where(key: key, cross_reference_type: cross_reference_type).exists?
   end
 
-  def self.find_unique relation
-    values = relation.limit(1).order("updated_at DESC").pluck(:value)
-    values.first
+  def self.find_unique relation, key: nil, xref_type: nil
+    find_unique_relation(relation, key: key, xref_type: xref_type).pluck(:value).first
   end
   private_class_method :find_unique
+
+  def self.find_unique_obj relation, key: nil, xref_type: nil
+    find_unique_relation(relation, key: key, xref_type: xref_type).first
+  end
+  private_class_method :find_unique_obj
+
+  def self.find_unique_relation relation, key: nil, xref_type: nil
+    if key
+      relation = relation.where(key: key)
+    end
+
+    if xref_type
+      relation = relation.where(cross_reference_type: xref_type)
+    end
+
+    relation.limit(1).order("updated_at DESC")
+  end
+  private_class_method :find_unique_relation
 
   def self.hash_for_type cross_reference_type
     h = Hash.new

@@ -28,6 +28,16 @@ module CustomFieldSupport
     cv
   end
 
+  # This method ONLY uses the custom_values relation to find the custom value to return.
+  # It returns the actual value inside the custom value object related to the given custom definition.
+  # If no custom definition is found for the object, nil is returned.
+  def custom_value custom_definition
+    id = custom_definition.id
+    cv = self.custom_values.find {|v| v.custom_definition_id == id}
+
+    cv ? cv.value : nil
+  end
+
 
   # This method ONLY uses the custom_values association to find the custom value object to use 
   # to set the passed in value - returning the custom value object that had its value set. 
