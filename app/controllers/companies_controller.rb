@@ -1,6 +1,9 @@
 require 'open_chain/custom_handler/generic_alliance_product_generator'
 require 'open_chain/workflow_processor'
 class CompaniesController < ApplicationController
+
+  before_filter :translate_booking_types, only: [:create, :update]
+
   # GET /companies
   # GET /companies.xml
   SEARCH_PARAMS = {
@@ -150,11 +153,18 @@ class CompaniesController < ApplicationController
       redirect_to c
     end
   end
+
   private 
-  def secure
-    Company.find_can_view(current_user)
-  end
-  def redirect_location company
-    params[:redirect_to].blank? ? company : params[:redirect_to]
-  end
+    def secure
+      Company.find_can_view(current_user)
+    end
+    def redirect_location company
+      params[:redirect_to].blank? ? company : params[:redirect_to]
+    end
+
+    def translate_booking_types
+      if params[:company][:cmp_enabled_booking_types].respond_to?(:join)
+        params[:company][:cmp_enabled_booking_types] = params[:company][:cmp_enabled_booking_types].join("\n ")
+      end
+    end
 end
