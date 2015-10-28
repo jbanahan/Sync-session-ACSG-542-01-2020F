@@ -261,7 +261,7 @@ class CoreModule
     child_class = child_core_module.klass
     name = child_class.to_s.underscore.pluralize
 
-    if klass.reflect_on_association[name.to_sym].nil?
+    if klass.reflect_on_association(name.to_sym).nil?
       name = nil
       klass.reflections.each_pair do |assoc_name, reflection|
         if reflection.macro == :has_many && reflection.active_record == child_class
