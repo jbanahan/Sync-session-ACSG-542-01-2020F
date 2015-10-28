@@ -108,7 +108,9 @@ module OpenChain; module CustomHandler
     end
 
     def ftp_folder(customer_code)
-      "to_ecs/fenix_invoices/#{customer_code}"
+      # For the momemnt (and possibly forever), due to issues with Fenix ND, we're going to just ignore the customer specfic sub-directories
+      # and load them all through to the "GENERIC" 810 mapping in Fenix ND by putting the files directly in the fenix_invoices directory
+      "to_ecs/fenix_invoices"
     end
 
 

@@ -282,7 +282,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
     it "should generate and ftp the file" do
       file = double("tempfile")
       @generator.should_receive(:generate_file).with(@i.id).and_yield file, "code"
-      @generator.should_receive(:ftp_file).with(file, folder: "to_ecs/fenix_invoices/code")
+      @generator.should_receive(:ftp_file).with(file, folder: "to_ecs/fenix_invoices")
 
       @generator.generate_and_send @i.id
     end
