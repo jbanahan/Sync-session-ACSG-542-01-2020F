@@ -169,28 +169,10 @@ module OpenChain; module ModelFieldDefinition; module BrokerInvoiceFieldDefiniti
       make_broker_invoice_entry_field(154,:bi_ent_first_7501_print,:first_7501_print,"7501 Print Date - First",:datetime,lambda {|entry| entry.first_7501_print},lambda {|u| u.company.broker?}),
       make_broker_invoice_entry_field(155,:bi_ent_first_entry_sent_date,:first_entry_sent_date,"First Summary Sent Date",:datetime,lambda {|entry| entry.first_entry_sent_date},lambda {|u| u.company.broker?}),
       make_broker_invoice_entry_field(156,:bi_ent_last_7501_print,:last_7501_print,"7501 Print Date - Last",:datetime,lambda {|entry| entry.last_7501_print},lambda {|u| u.company.broker?}),
-      [157, :bi_ent_broker_invoice_total, :broker_invoice_total, "Total Broker Invoice", {
-        :data_type=>:decimal,
-        :currency=>:usd,
-        :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
-        :export_lambda => lambda {|inv| inv.entry.blank? ? "" : inv.entry.broker_invoice_total},
-        :qualified_field_name => "(SELECT #{field_reference} FROM entries where entries.id = broker_invoices.entry_id)",
-        :can_view_lambda => lambda {|u| u.view_broker_invoices?}
-      }],
-      [158, :bi_ent_total_add, :total_add, "Total ADD", {
-        :data_type=>:decimal,
-        :currency=>:usd,
-        :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
-        :export_lambda => lambda {|inv| inv.entry.blank? ? "" : inv.entry.total_add},
-        :qualified_field_name => "(SELECT #{field_reference} FROM entries where entries.id = broker_invoices.entry_id)"
-      }],
-      [159, :bi_ent_total_cvd, :total_cvd, "Total CVD", {
-        :data_type=>:decimal,
-        :currency=>:usd,
-        :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
-        :export_lambda => lambda {|inv| inv.entry.blank? ? "" : inv.entry.total_cvd},
-        :qualified_field_name => "(SELECT #{field_reference} FROM entries where entries.id = broker_invoices.entry_id)"
-      }]
+
+      make_broker_invoice_entry_field(157,:bi_ent_broker_invoice_total,:broker_invoice_total,"Total Broker Invoice",:decimal,lambda {|entry| entry.broker_invoice_total},lambda {|u| u.view_broker_invoices?},{:currency=>:usd}),
+      make_broker_invoice_entry_field(158,:bi_ent_total_add,:total_add,"Total ADD",:decimal,lambda {|entry| entry.total_add},nil,{:currency=>:usd}),
+      make_broker_invoice_entry_field(159,:bi_ent_total_cvd,:total_cvd,"Total CVD",:decimal,lambda {|entry| entry.total_cvd},nil,{:currency=>:usd})
     ]
   end
 end; end; end;
