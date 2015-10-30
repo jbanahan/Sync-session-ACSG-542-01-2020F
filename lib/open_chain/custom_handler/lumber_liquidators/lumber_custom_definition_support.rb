@@ -29,6 +29,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     cmp_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :date, module_type: 'Company'},
     cmp_vendor_agreement_review: {label: 'Vendor Agreement Review', data_type: :string, module_type: 'Company'},
     cmp_risk: {label: 'Risk', data_type: :string, module_type: 'Company'},
+    cmp_po_blocked: {label: 'PO Blocked', data_type: :boolean, module_type: 'Company'},
     plnt_country_iso_code: {label: 'Country ISO Code', data_type: :string, module_type: 'Plant'},
     plnt_sap_coo_abbreviation: {label: 'SAP COO Abbreviation', data_type: :string, module_type: 'Plant'},
     plnt_address: {label: 'Address', data_type: :text, module_type: 'Plant'},

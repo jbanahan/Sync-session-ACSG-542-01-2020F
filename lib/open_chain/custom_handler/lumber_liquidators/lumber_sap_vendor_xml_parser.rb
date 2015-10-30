@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize opts={}
     inner_opts = {workflow_processor:WorkflowProcessor.new}.merge opts
-    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company]
+    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company,:cmp_po_blocked]
     @wfp = inner_opts[:workflow_processor]
     @user = User.integration
   end
@@ -49,12 +49,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       end
 
       update_address c, sap_code, base
+      lock_or_unlock_vendor c, base
 
       @wfp.process! c, @user
     end
   end
 
   private
+  def lock_or_unlock_vendor company, el
+    lock_code = et(el,'SPERM')
+    company.update_custom_value!(@cdefs[:cmp_po_blocked],(lock_code=='X'))
+  end
   def update_address company, sap_code, el
     add_sys_code = "#{sap_code}-CORP"
     add = company.addresses.where(system_code:add_sys_code).first_or_create!(name:'Corporate')
