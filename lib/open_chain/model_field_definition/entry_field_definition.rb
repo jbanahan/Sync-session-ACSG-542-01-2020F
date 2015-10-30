@@ -11,7 +11,6 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [8,:ent_type,:entry_type,"Entry Type",{:data_type=>:string}],
       [9,:ent_arrival_date,:arrival_date,"Arrival Date",{:data_type=>:datetime}],
       [10,:ent_filed_date,:entry_filed_date,"Entry Filed Date",{:data_type=>:datetime}],
-      [11,:ent_release_date,:release_date,"Release Date",{:data_type=>:datetime}],
       [12,:ent_first_release,:first_release_date,"First Release Date",{:data_type=>:datetime}],
       [14,:ent_last_billed_date,:last_billed_date,"Last Bill Issued Date",{:data_type=>:datetime}],
       [15,:ent_invoice_paid_date,:invoice_paid_date,"Invoice Paid Date",{:data_type=>:datetime}],
