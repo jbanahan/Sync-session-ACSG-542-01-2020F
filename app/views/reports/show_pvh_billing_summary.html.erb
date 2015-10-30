@@ -4,7 +4,7 @@
 <%end%>
 <div class="col-md-3">
   <h2>PVH Billing Report</h2>
-  <h4>Enter 9-digit invoice numbers separated by a space:</h4>
+  <h4>Enter one PVH invoice number per line:</h4>
   <%=form_tag reports_run_pvh_billing_summary_path, :id=>'frm_run', role: "form" do -%>
     <div class="form-group">
       <%=text_area_tag :invoice_numbers,"", :class=>'form-control', rows: 4%> 

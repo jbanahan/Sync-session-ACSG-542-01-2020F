@@ -359,12 +359,12 @@ class ReportsController < ApplicationController
 
   def run_pvh_billing_summary
     if OpenChain::Report::PvhBillingSummary.permission?(current_user)
-      settings = {invoice_numbers: params[:invoice_numbers].split(' ')}
-      if !settings[:invoice_numbers].empty? && settings[:invoice_numbers].all?{|inv| inv =~ /^[0-9]{9}$/}
-        run_report "PVH Billing Summary", OpenChain::Report::PvhBillingSummary, settings, []
-      else
-        add_flash :errors, "Invoice numbers should contain 9 digits and be separated by a space."
+      settings = {invoice_numbers: params[:invoice_numbers].to_s.split(' ')}
+      if settings[:invoice_numbers].empty?
+        add_flash :errors, "Please enter at least one invoice number."
         redirect_to request.referrer
+      else
+        run_report "PVH Billing Summary", OpenChain::Report::PvhBillingSummary, settings, []
       end
     else
       error_redirect "You do not have permission to view this report"

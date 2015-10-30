@@ -19,15 +19,19 @@ module OpenChain
       end
       
       def create_workbook(invoice_numbers)        
-        wb = XlsMaker.create_workbook 'LVS Billing'
-        XlsMaker.create_sheet wb, 'HVS Billing'
+        wb, lvs_sheet = XlsMaker.create_workbook_and_sheet 'LVS Billing', numeric_headers
+        hvs_sheet = XlsMaker.create_sheet wb, 'HVS Billing', numeric_headers
         lvs = combined_query(:lvs, invoice_numbers)
         hvs = combined_query(:hvs, invoice_numbers)
 
-        table_from_query_result wb.worksheet(0), lvs[:results], {}, {column_names: lvs[:header]}
-        table_from_query_result wb.worksheet(1), hvs[:results], {}, {column_names: hvs[:header]}
+        table_from_query_result lvs_sheet, lvs[:results], {}, {column_names: lvs[:header], header_row: 1}
+        table_from_query_result hvs_sheet, hvs[:results], {}, {column_names: hvs[:header], header_row: 1}
 
         wb
+      end
+
+      def numeric_headers 
+        ['F17', 'F8', 'F11', 'F24', '', 'F29', 'F32', 'F35', 'F38', 'F164', 'F165', 'F166', 'F167', 'F168', 'F173', 'F104', 'F102', 'F127', 'F28', 'F36']
       end
 
       def combined_query(report_type, invoice_numbers)

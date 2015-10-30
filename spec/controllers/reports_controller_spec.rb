@@ -279,11 +279,11 @@ describe ReportsController do
         expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
       end
 
-      it "doesn't run report with incorrectly formatted input" do
+      it "doesn't run report with missing invoice numbers" do
         ReportResult.should_not_receive(:run_report!)
-        post :run_pvh_billing_summary, {invoice_numbers: "12345678, 987654321"}
+        post :run_pvh_billing_summary, {invoice_numbers: " \n "}
         expect(response).to be_redirect
-        expect(flash[:errors].first).to eq "Invoice numbers should contain 9 digits and be separated by a space."
+        expect(flash[:errors].first).to eq "Please enter at least one invoice number."
       end
 
       it "doesn't run report for non-Vandegrift user" do

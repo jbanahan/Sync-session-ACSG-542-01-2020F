@@ -22,8 +22,10 @@ module OpenChain
       def table_from_query_result sheet, result_set, data_conversions = {}, opts = {}
         starting_column_number = opts[:query_column_offset].to_i > 0 ? opts[:query_column_offset] : 0
         column_names = opts[:column_names] ? opts[:column_names] : result_set.fields[starting_column_number..-1]
-        XlsMaker.add_header_row sheet, 0, column_names
-        data_rows = write_result_set_to_sheet result_set, sheet, column_names, 1, data_conversions, opts
+        header_row = opts[:header_row].presence || 0
+
+        XlsMaker.add_header_row sheet, header_row, column_names
+        data_rows = write_result_set_to_sheet result_set, sheet, column_names, header_row + 1, data_conversions, opts
         data_rows
       end
 

@@ -45,9 +45,6 @@ describe OpenChain::Report::ReportHelper do
     before :each do 
       helper = Class.new do
         include OpenChain::Report::ReportHelper
-        def run wb, query_result, conversions = {}, opts = {}
-          table_from_query_result @wb, query_result, conversions, opts
-        end
       end
       
       @h = helper.new
@@ -56,15 +53,24 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "extracts columns headers from result_set by default" do
-      wb = Spreadsheet::Workbook.new
-      XlsMaker.should_receive(:add_header_row).with(@wb, 0, ['EN', 'IDENT'])
-      @h.run wb, @result_set
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
+      XlsMaker.should_receive(:add_header_row).with(sheet, 0, ['EN', 'IDENT'])
+      @h.table_from_query_result sheet, @result_set
     end
 
     it "extracts columns from opts if :column_names is used" do
-      wb = Spreadsheet::Workbook.new
-      XlsMaker.should_receive(:add_header_row).with(@wb, 0, ['Nigel', 'David'])
-      @h.run wb, @result_set, {}, {column_names: ['Nigel', 'David']}
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
+      XlsMaker.should_receive(:add_header_row).with(sheet, 0, ['Nigel', 'David'])
+      @h.table_from_query_result sheet, @result_set, {}, {column_names: ['Nigel', 'David']}
+    end
+
+    it "uses header_row opt if given as row number to write header" do
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
+      opts = {column_names: ['Nigel', 'David'], header_row: 5}
+      XlsMaker.should_receive(:add_header_row).with(sheet, 5, ['Nigel', 'David'])
+      @h.should_receive(:write_result_set_to_sheet).with(@result_set, sheet, ['Nigel', 'David'], 6, {}, opts)
+      @h.table_from_query_result sheet, @result_set, {}, opts
+
     end
   end
 
