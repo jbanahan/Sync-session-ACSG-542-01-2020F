@@ -2,11 +2,15 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
   describe :generate do
-    it "should create xls file, and ftp it" do
+    it "should create xls file, and ftp it while rows are written to spreadsheet" do
       h = described_class.new
-      h.should_receive(:sync_xls).and_return('x')
-      h.should_receive(:ftp_file).with('x').and_return('y')
-      h.generate.should eq 'y'
+      h.should_receive(:row_count).exactly(3).times.and_return(1, 1, 0)
+      h.should_receive(:sync_xls).exactly(3).times.and_return('x', 'y', nil)
+
+      h.should_receive(:ftp_file).with('x')
+      h.should_receive(:ftp_file).with('y')
+
+      h.generate
     end
   end
   describe :ftp_credentials do

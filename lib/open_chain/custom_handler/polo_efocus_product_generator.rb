@@ -23,10 +23,11 @@ module OpenChain
       end
 
       def generate
+        count = nil
         begin
           file = sync_xls
-          ftp_file file if self.row_count > 0
-        end while self.row_count > 0
+          ftp_file file if (count = self.row_count) > 0
+        end while count > 0
       end
 
       def auto_confirm?
