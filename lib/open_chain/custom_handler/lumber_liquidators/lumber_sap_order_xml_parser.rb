@@ -59,12 +59,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       o.vendor = vend
       o.order_date = order_date(base)
 
-      REXML::XPath.each(base,'./E1EDP01') {|el| process_line o, el}
+      order_lines_processed = []
+      REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el).line_number.to_i}
+      o.order_lines.each {|ol| 
+        ol.mark_for_destruction unless order_lines_processed.include?(ol.line_number.to_i)
+      }
 
-      validate_line_totals(o,base)
 
       o.save!
       o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
+
+      o.reload
+      validate_line_totals(o,base)
+      
       o.create_snapshot @user
     end
   end
@@ -100,6 +107,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       order.first_expected_delivery_date = exp_del
       @first_expected_delivery_date = exp_del
     end
+    return ol
   end
   private :process_line
 
