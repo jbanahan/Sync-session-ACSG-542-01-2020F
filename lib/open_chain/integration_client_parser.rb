@@ -1,3 +1,5 @@
+require 'open_chain/s3'
+
 module OpenChain
   #adds static methods for processing data from S3, expects class to implement static integration_folder method to return location in s3 for files
   module IntegrationClientParser
