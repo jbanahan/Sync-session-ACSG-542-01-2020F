@@ -109,7 +109,7 @@ module CoreObjectSupport
             (sync_records.ignore_updates_before IS NULL OR
              sync_records.ignore_updates_before < #{join_table}.updated_at)
             "
-      if sent_at_before.respond_to?(:acts_like_time?) || sent_at_before.respond_to(:acts_like_date?)
+      if sent_at_before.respond_to?(:acts_like_time?) || sent_at_before.respond_to?(:acts_like_date?)
         query += " AND
             (sync_records.sent_at IS NULL OR sync_records.sent_at < '#{sent_at_before.to_s(:db)}')"
       end
