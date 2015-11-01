@@ -79,6 +79,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       vendor = Company.find_by_system_code_and_vendor('0000100131',true)
       expect(vendor).to_not be_nil
 
+      expect(@importer.linked_companies).to include(vendor)
+
       expect(Order.first.vendor).to eq vendor
     end
     it "should fail if total cost != line costs" do

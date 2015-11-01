@@ -35,6 +35,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     name = et(base,'NAME1')
     ActiveRecord::Base.transaction do
       c = Company.where(system_code:sap_code).first_or_create!(name:name,vendor:true)
+      Company.find_by_master(true).linked_companies << c
       sap_num_cv = c.get_custom_value(@cdefs[:cmp_sap_company])
       
       attributes_to_update = {}      
