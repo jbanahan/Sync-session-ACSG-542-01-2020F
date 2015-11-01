@@ -92,7 +92,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     prod_risk: {label: 'Risk', data_type: :string, module_type: 'Product'},
     prod_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Product'},
     ord_risk: {label: 'Risk', data_type: :string, module_type: 'Order'},
-    ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'}
+    ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'},
+    ord_type: {label: 'Order Type', data_type: :string, module_type: 'Order'}
   }
 
   def self.included(base)

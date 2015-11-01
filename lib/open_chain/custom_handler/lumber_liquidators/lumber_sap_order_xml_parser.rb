@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   def initialize opts={}
     @user = User.integration
     @imp = Company.find_by_master(true)
-    @cdefs = self.class.prep_custom_definitions [:ord_sap_extract]
+    @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type]
   end
 
   def parse_dom dom
@@ -35,7 +35,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     # order header info
     order_header = REXML::XPath.first(base,'E1EDK01')
-    order_type = et(order_header,'BSART')
     order_number = et(order_header,'BELNR')
     vendor_system_code = et(order_header,'RECIPNT_NO')
 
@@ -67,6 +66,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
 
       o.save!
+      o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
       o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
 
       o.reload

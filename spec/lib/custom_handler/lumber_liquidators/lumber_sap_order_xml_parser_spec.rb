@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       @importer = Factory(:master_company, importer:true)
       @vendor = Factory(:company,vendor:true,system_code:'0000100131')
       @product1= Factory(:product,unique_identifier:'000000000010001547')
-      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract]
+      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type]
     end
 
     it "should fail on bad root element" do
@@ -27,6 +27,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.vendor).to eq @vendor
       expect(o.order_number).to eq '4700000325'
       expect(o.order_date.strftime('%Y%m%d')).to eq '20140805'
+      expect(o.get_custom_value(@cdefs[:ord_type]).value).to eq 'ZMSP'
       expect(o.get_custom_value(@cdefs[:ord_sap_extract]).value.to_i).to eq ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2014-12-17 14:33:21').to_i
       expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
 
@@ -47,7 +48,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.entity_snapshots.count).to eq 1
     end
     it "should update order" do
-      existing_order = Factory(:order,order_number:'4700000325')
+      Factory(:order,order_number:'4700000325')
 
       dom = REXML::Document.new(@test_data)
       expect{described_class.new.parse_dom(dom)}.to_not change(Order,:count)
@@ -66,8 +67,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       o = Order.first
       # didn't write the order
       expect(o).to have(0).order_lines
-      
     end
+
     it "should create vendor if not found" do
       #clear the vendor
       expect{@vendor.destroy}.to change(Company,:count).by(-1)
