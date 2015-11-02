@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
       vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
-      @imp.linked_companies << vend
+      @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
       o.vendor = vend
       o.order_date = order_date(base)
 
