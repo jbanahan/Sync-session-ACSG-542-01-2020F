@@ -256,7 +256,9 @@ describe EntitySnapshot do
       described_class.should_receive(:bucket_name).and_return(expected_bucket)
 
       s3_obj = double('S3Obj')
-      s3_obj.stub(:bucket).and_return expected_bucket
+      s3_bucket = double("S3Bucket")
+      s3_obj.stub(:bucket).and_return s3_bucket
+      s3_bucket.stub(:name).and_return expected_bucket
       s3_obj.stub(:key).and_return expected_path
 
       version_obj = double('ObjectVersion')

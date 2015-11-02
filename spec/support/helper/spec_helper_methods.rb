@@ -52,9 +52,10 @@ module Helpers
       def method_missing(sym, *args, &block)
         raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
       end
-      def self.upload_data bucket, path, data
+      def self.upload_data bucket_name, path, data
         @@version_id ||= 0
         @@version_id += 1
+        bucket = Struct.new(:name).new(bucket_name)
         s3obj = Struct.new(:bucket, :key).new(bucket,path)
         vers = Struct.new(:version_id).new(@@version_id.to_s)
         return [s3obj,vers]

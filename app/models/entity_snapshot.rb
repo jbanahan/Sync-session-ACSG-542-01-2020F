@@ -88,8 +88,11 @@ class EntitySnapshot < ActiveRecord::Base
     path = expected_s3_path
     bucket = self.class.bucket_name
     s3obj, ver = OpenChain::S3.upload_data(bucket, path, json)
-    self.bucket = s3obj.bucket
+    self.bucket = s3obj.bucket.name
     self.doc_path = s3obj.key
+    # Technically, version can be nil if uploading to an unversioned bucket..
+    # If that happens though, then the bucket we're trying to use is set up wrong.
+    # Therefore, we this bomb hard if ver is nil
     self.version = ver.version_id
   end
 
