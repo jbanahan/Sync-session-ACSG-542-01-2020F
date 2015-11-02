@@ -12,6 +12,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       User.stub(:integration).and_return @integration_user
       @mock_workflow_processor = double('wf')
       @mock_workflow_processor.stub(:process!)
+      @master = Factory(:master_company)
     end
     it "should create vendor" do
       dom = REXML::Document.new(@test_data)
@@ -33,6 +34,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       expect(a.state).to eq 'QC'
       expect(a.postal_code).to eq '12345'
       expect(a.country).to eq @country
+
+      expect(@master.linked_companies).to include(c)
     end
     it "should update vendor by SAP # in system code" do
       dom = REXML::Document.new(@test_data)

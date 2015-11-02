@@ -91,8 +91,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ppga_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :date, module_type: 'PlantProductGroupAssignment'},
     prod_risk: {label: 'Risk', data_type: :string, module_type: 'Product'},
     prod_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Product'},
-    ord_risk: {label: 'Risk', data_type: :string, module_type: 'Order'},
-    ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'}
+    ord_approval_level: {label: 'Approval Level', data_type: :string, module_type: 'Order'},
+    ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'},
+    ord_type: {label: 'Order Type', data_type: :string, module_type: 'Order'}
   }
 
   def self.included(base)
