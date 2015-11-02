@@ -7,10 +7,10 @@
   <div class="row">
     <div class="col-md-6">
       <%= show_model_fields(f, :dc_imp_id, {dc_imp_id: {prompt: "Select an Importer", select_options: lambda {|value| options_from_collection_for_select(Company.importers.order("name ASC"), :id, :name_with_customer_number, value)}}}) %>
-      <%= show_model_fields(f, [:dc_name, :dc_exports_start_date, :dc_exports_end_date, :dc_entry_number, :dc_total_pieces_claimed, :dc_total_pieces_exported, :dc_planned_claim_amount, :dc_total_export_value, :dc_total_duty, :dc_duty_claimed, :dc_hmf_claimed]) %>
+      <%= show_model_fields(f, [:dc_name, :dc_exports_start_date, :dc_exports_end_date, :dc_entry_number, :dc_total_pieces_claimed, :dc_total_pieces_exported, :dc_planned_claim_amount, :dc_total_export_value, :dc_total_duty, :dc_duty_claimed, :dc_hmf_claimed, :dc_mpf_claimed]) %>
     </div>
     <div class="col-md-6">
-      <%= show_model_fields(f, [:dc_mpf_claimed, :dc_duty_check_amount, :dc_bill_amount, :dc_abi_accepted_date, :dc_sent_to_customs_date, :dc_billed_date, :dc_duty_check_received_date, :dc_hmf_mpf_check_number, :dc_hmf_mpf_check_amount, :dc_hmf_mpf_check_received_date, :dc_sent_to_client_date, :dc_liquidated_date]) %>
+      <%= show_model_fields(f, [:dc_duty_check_amount, :dc_bill_amount, :dc_abi_accepted_date, :dc_sent_to_customs_date, :dc_billed_date, :dc_duty_check_received_date, :dc_hmf_mpf_check_number, :dc_hmf_mpf_check_amount, :dc_hmf_mpf_check_received_date, :dc_sent_to_client_date, :dc_liquidated_date]) %>
     </div>
   </div>
 </div>
