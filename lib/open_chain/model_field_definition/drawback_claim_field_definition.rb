@@ -39,8 +39,11 @@ module OpenChain; module ModelFieldDefinition; module DrawbackClaimFieldDefiniti
           )
           limit 1)",
         :can_view_lambda=>lambda {|u| u.company.master?}
-      }]
+      }],
+      [23, :dc_sent_to_client_date, :sent_to_client_date, "Sent to Client", {data_type: :date}],
+      [24, :dc_liquidated_date, :liquidated_date, "Liquidated", {data_type: :date}]
     ]
     add_fields CoreModule::DRAWBACK_CLAIM, make_importer_arrays(100, "dc", "drawback_claims")
+
   end
 end; end; end
