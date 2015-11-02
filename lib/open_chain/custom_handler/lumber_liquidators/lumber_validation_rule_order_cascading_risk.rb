@@ -5,32 +5,34 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVa
     grandfathered: 0,
     low: 100,
     medium: 200,
-    high: 300
+    high: 300,
+    standard: 100,
+    executive: 300
   }
 
   def should_skip? order
-    cdefs = self.class.prep_custom_definitions [:ord_risk]
-    order_risk = order.get_custom_value(cdefs[:ord_risk]).value
-    return true if order_risk.blank?
-    return true if order_risk.downcase.to_sym == :grandfathered
+    cdefs = self.class.prep_custom_definitions [:ord_approval_level]
+    order_approval = order.get_custom_value(cdefs[:ord_approval_level]).value
+    return true if order_approval.blank?
+    return true if order_approval.downcase.to_sym == :grandfathered
     return super(order)
   end
 
   def run_validation order
-    cdefs = self.class.prep_custom_definitions [:ord_risk,:cmp_risk,:prod_risk]
-    order_risk = order.get_custom_value(cdefs[:ord_risk]).value
-    return nil if order_risk.blank?
+    cdefs = self.class.prep_custom_definitions [:ord_approval_level,:cmp_risk,:prod_risk]
+    order_approval = order.get_custom_value(cdefs[:ord_approval_level]).value
+    return nil if order_approval.blank?
 
-    order_risk_value = risk_value(order_risk)
-    return "ERROR: undefined Order risk value #{order_risk}." if order_risk_value.nil?
+    order_approval_value = risk_value(order_approval)
+    return "ERROR: undefined Order Approval level value #{order_approval}." if order_approval_value.nil?
     
     messages = Set.new
-    evaluate_vendor_risk order, messages, cdefs, order_risk, order_risk_value
-    evaluate_product_risk order, messages, cdefs, order_risk, order_risk_value
+    evaluate_vendor_risk order, messages, cdefs, order_approval, order_approval_value
+    evaluate_product_risk order, messages, cdefs, order_approval, order_approval_value
     return messages.empty? ? nil : messages.to_a.join("\n")
   end
 
-  def evaluate_vendor_risk order, messages, cdefs, order_risk, order_risk_value
+  def evaluate_vendor_risk order, messages, cdefs, order_approval, order_approval_value
     v = order.vendor
     return if v.nil?
     vend_risk = v.get_custom_value(cdefs[:cmp_risk]).value
@@ -44,13 +46,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVa
       return
     end
     
-    if vend_risk_value > order_risk_value
-      messages << "Vendor #{v.name} has a higher risk (#{vend_risk}) than this order (#{order_risk})."
+    if vend_risk_value > order_approval_value
+      messages << "Vendor #{v.name} has a higher risk (#{vend_risk}) than this order (#{order_approval})."
     end
   end
   private :evaluate_vendor_risk
 
-  def evaluate_product_risk order, messages, cdefs, order_risk, order_risk_value
+  def evaluate_product_risk order, messages, cdefs, order_approval, order_approval_value
     order.order_lines.each do |ol|
       p = ol.product
       prod_risk = p.get_custom_value(cdefs[:prod_risk]).value
@@ -65,8 +67,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberVa
         next
       end
 
-      if prod_risk_value > order_risk_value
-        messages << "Product #{p.unique_identifier} has a higher risk (#{prod_risk}) than this order (#{order_risk})."
+      if prod_risk_value > order_approval_value
+        messages << "Product #{p.unique_identifier} has a higher risk (#{prod_risk}) than this order (#{order_approval})."
       end
     end
   end
