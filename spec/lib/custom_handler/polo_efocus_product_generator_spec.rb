@@ -2,11 +2,15 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
   describe :generate do
-    it "should create xls file, and ftp it" do
+    it "should create xls file, and ftp it while rows are written to spreadsheet" do
       h = described_class.new
-      h.should_receive(:sync_xls).and_return('x')
-      h.should_receive(:ftp_file).with('x').and_return('y')
-      h.generate.should eq 'y'
+      h.should_receive(:row_count).exactly(3).times.and_return(1, 1, 0)
+      h.should_receive(:sync_xls).exactly(3).times.and_return('x', 'y', nil)
+
+      h.should_receive(:ftp_file).with('x')
+      h.should_receive(:ftp_file).with('y')
+
+      h.generate
     end
   end
   describe :ftp_credentials do
@@ -268,24 +272,31 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
   end
 
   describe "run_schedulable" do
-    it "implements SchedulableJob interface" do
+    it "runs repeatedly until all products are synced" do
       # New call creates the custom fields (easiest way to do this)
       described_class.new
-      @us = Factory(:country,:iso_code=>'US')
-      @classification = Factory(:classification, :country_id=>@us.id)
-      @tariff_record = Factory(:tariff_record, :classification => @classification, :hts_1 => '12345')
-      @match_product = @classification.product
-      @barthco_cust = CustomDefinition.where(label: "Barthco Customer ID").first
-      @test_style = CustomDefinition.where(label: "Test Style").first
-      @set_type = CustomDefinition.where(label: "Set Type").first
+      us = Factory(:country,:iso_code=>'US')
+      barthco_cust = CustomDefinition.where(label: "Barthco Customer ID").first
 
-      @match_product.update_custom_value! @barthco_cust, '100'
+      product = Factory(:tariff_record, hts_1: "12345", classification: Factory(:classification, country_id: us.id)).product
+      product.update_custom_value! barthco_cust, '100'
 
-      described_class.any_instance.should_receive(:ftp_file)
+      product2 = Factory(:tariff_record, hts_1: '12345', classification: Factory(:classification, country_id: us.id)).product
+      product2.update_custom_value! barthco_cust, '100'
+
+      product3 = Factory(:tariff_record, hts_1: '12345', classification: Factory(:classification, country_id: us.id)).product
+      product3.update_custom_value! barthco_cust, '100'
+
+      described_class.any_instance.stub(:max_results).and_return 1
+      described_class.any_instance.should_receive(:ftp_file).exactly(3).times
+
       described_class.run_schedulable
 
       # Just check that there's a sync record
-      expect(SyncRecord.first.syncable).to eq @classification.product
+      [product, product2, product3].each {|p| p.reload }
+      expect(product.sync_records.first).not_to be_nil
+      expect(product2.sync_records.first).not_to be_nil
+      expect(product3.sync_records.first).not_to be_nil
     end
   end
 end
