@@ -149,7 +149,7 @@ module OpenChain; module ModelFieldDefinition; module BrokerInvoiceFieldDefiniti
       make_broker_invoice_entry_field(134,:bi_ent_origin_state_code,:origin_state_codes,"Origin State Codes",:string,lambda {|entry| entry.origin_state_codes}),
       make_broker_invoice_entry_field(135,:bi_ent_paperless_certification,:paperless_certification,"Paperless Release Cert",:boolean,lambda {|entry| entry.paperless_certification}),
       make_broker_invoice_entry_field(136,:bi_ent_paperless_release,:paperless_release,"Paperless Entry Summary",:boolean,lambda {|entry| entry.paperless_release}),
-      make_broker_invoice_entry_field(137,:bi_ent_pars_reject_date,:pars_reject_date,"PARS Reject Date",:datetime,lambda {|entry| entry.pars.pars_reject_date}),
+      make_broker_invoice_entry_field(137,:bi_ent_pars_reject_date,:pars_reject_date,"PARS Reject Date",:datetime,lambda {|entry| entry.pars_reject_date}),
       make_broker_invoice_entry_field(138,:bi_ent_pay_type,:pay_type,"Pay Type",:integer,lambda {|entry| entry.pay_type}),
       make_broker_invoice_entry_field(139,:bi_ent_recon_flags,:recon_flags,"Recon Flags",:string,lambda {|entry| entry.recon_flags}),
       make_broker_invoice_entry_field(140,:bi_ent_release_cert_message,:release_cert_message,"Release Certification Message",:string,lambda {|entry| entry.release_cert_message}),
