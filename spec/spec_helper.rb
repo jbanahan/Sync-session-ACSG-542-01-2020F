@@ -52,6 +52,9 @@ Spork.prefork do
       unless example.metadata[:s3] 
         stub_s3
       end
+      unless example.metadata[:email_log]
+        stub_email_logging
+      end
 
       #clear ComparatorRegistry
       OpenChain::EntityCompare::ComparatorRegistry.clear

@@ -66,6 +66,10 @@ module Helpers
     OpenChain.const_set(:S3,mock_s3)
   end
 
+  def stub_email_logging
+    OpenMailer.any_instance.stub(:log_email).and_return true
+  end
+
   def unstub_s3
     OpenChain.send(:remove_const,:S3)
     OpenChain.const_set(:S3,@old_stub_s3_class)

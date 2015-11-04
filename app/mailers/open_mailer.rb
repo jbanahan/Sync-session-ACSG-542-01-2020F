@@ -406,15 +406,35 @@ EOS
   end
 
   def log_email
+    # Note: This method is stubbed out in testing unless you specifically tag your testing spec with "email_log: true"
     attachment_list = []
     message.attachments.each { |att| attachment_list << message_att_to_standard_att(att) } unless message.attachments.empty?
-    SentEmail.create!(email_subject: message.subject, email_to: message.to, email_cc: message.cc, email_bcc: message.bcc, 
-                      email_from: message.from, email_reply_to: message.reply_to, email_date: message.date, email_body: message.body,
+    # Message.to/etc are all actually Mail::AddressContainer, so we have to convert them to just a string before saving them
+    # Message.body is much more complex and also cannot be directly saved to the database, the body text must be extracted first.
+    SentEmail.create!(email_subject: message.subject, email_to: extract_email_addresses(message.to), email_cc: extract_email_addresses(message.cc), 
+                      email_bcc: extract_email_addresses(message.bcc), email_from: extract_email_addresses(message.from), 
+                      email_reply_to: extract_email_addresses(message.reply_to), email_date: Time.zone.now, email_body: extract_email_body(message.body),
                       attachments: attachment_list)
+
+    true
   end
   
 
   private
+
+    def extract_email_addresses list
+      emails = nil
+      if list
+        emails = list.select {|m| !m.nil? && !m.blank? }.join(", ")
+      end
+
+      emails
+    end
+
+    def extract_email_body body
+      # This seems to render the body out in the format that you would expect it to, and ignores attachment body parts.
+      body ? body.decoded : nil
+    end
 
     def message_att_to_standard_att message_attachment
       filename_ext = File.extname(message_attachment.filename)

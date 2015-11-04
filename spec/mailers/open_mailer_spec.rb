@@ -666,12 +666,11 @@ EMAIL
     end
   end
 
-  describe :log_email do
+  describe :log_email, email_log: true do
 
     it "saves outgoing e-mail fields and attachments" do   
-            
       sub = "what it's about"
-      to = "john@doe.com"
+      to = "john@doe.com; me@there.com, you@here.com"
       body = "Lorem ipsum dolor sit amet, consectetur adipisicing elit."
       OpenMailer.any_instance.stub(:blank_attachment?).and_return false
 
@@ -681,14 +680,34 @@ EMAIL
           email = SentEmail.last
           
           expect(email.email_subject).to eq sub
-          expect(email.email_to).to include to
-          expect(email.email_body).to include body
+          expect(email.email_to).to eq "john@doe.com, me@there.com, you@here.com"
+          expect(email.email_body).to include "Lorem ipsum dolor sit amet, consectetur adipisicing elit."
+          # Make sure we're logging all the html too on html messages
+          expect(email.email_body).to include '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
           expect(File.basename(email.attachments.first.attached_file_name, '.*')).to include 'tempfile_a'
           expect(File.basename(email.attachments.last.attached_file_name, '.*')).to include 'tempfile_b'
         end
       end
     end
 
+    it "saves body data from html mails without attachments" do
+      # Under the hood, the email body is done differently if there's no file attachments...so make sure the logging works 
+      # fine when the message doesn't have any attachments (.ie it's not a multi-part email)
+      OpenMailer.send_simple_html "me@there.com", "Subject", "This is a test"
+      email = SentEmail.where(email_subject: "Subject").first
+      expect(email.email_body).to include "This is a test"
+      expect(email.email_body).to include '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
+    end
+
+    it "saves data from text emails" do
+      OpenMailer.send_simple_text "me@there.com", "Subject", "This is a test"
+      email = SentEmail.where(email_subject: "Subject").first
+      expect(email.email_to).to eq "me@there.com"
+      # Newline is added onto the body by the mailer in plain text messages
+      expect(email.email_body).to eq "This is a test\n"
+      expect(email.email_from).to eq "do-not-reply@vfitrack.net"
+      expect(email.email_date).to be_within(1.minute).of Time.zone.now
+    end
   end
 
 end
