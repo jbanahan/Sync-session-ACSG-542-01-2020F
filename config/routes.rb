@@ -115,6 +115,8 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  resources :sent_emails, :only => [:index, :show]
+
   match '/my_tasks' => 'workflow#my_tasks', :via => :get
   match '/my_tasks/by_page_panel' => 'workflow#my_tasks_by_page_panel', :via => :get
   match '/my_tasks/by_due_panel' => 'workflow#my_tasks_by_due_panel', :via => :get

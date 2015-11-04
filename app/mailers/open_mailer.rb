@@ -1,7 +1,7 @@
 class OpenMailer < ActionMailer::Base
   include AbstractController::Callbacks # This can be removed when migrating to rails 4
 
-  after_filter :modify_email_for_development
+  after_filter :modify_email_for_development, :log_email
 
   ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
@@ -27,7 +27,6 @@ EOS
   def send_simple_html to, subject, body, file_attachments = []
     @body_content = body
     @attachment_messages = []
-
     pm_attachments = []
 
     file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
@@ -405,13 +404,39 @@ EOS
       fmt.html
     end
   end
+
+  def log_email
+    attachment_list = []
+    message.attachments.each { |att| attachment_list << message_att_to_standard_att(att) } unless message.attachments.empty?
+    SentEmail.create!(email_subject: message.subject, email_to: message.to, email_cc: message.cc, email_bcc: message.bcc, 
+                      email_from: message.from, email_reply_to: message.reply_to, email_date: message.date, email_body: message.body,
+                      attachments: attachment_list)
+  end
   
+
   private
+
+    def message_att_to_standard_att message_attachment
+      filename_ext = File.extname(message_attachment.filename)
+      filename_without_ext = File.basename(message_attachment.filename, ".*")
+
+      Tempfile.open([filename_without_ext, filename_ext]) do |temp|
+        Attachment.add_original_filename_method(temp, message_attachment.filename)
+        temp.binmode
+        temp << message_attachment.read
+        temp.flush
+        temp.rewind
+
+        standard_att = Attachment.new
+        standard_att.attached = temp
+        standard_att.save!
+        standard_att
+      end
+    end
 
     def save_large_attachment(file, registered_emails)
       email_attachment = nil
       attachment_text = nil
-
       if large_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
 
