@@ -440,8 +440,13 @@ module OpenChain
           # Just figure out whatever is closest to the actual reported duty amount, which will tell us 
           # whether we need to use the adjusted amount or not
           vals = [(t.duty_amount - ad_val).abs, (t.duty_amount - specific_duty).abs]
+
+          # When doing the calculations this way, there's actually the possibility due to some rounding involved
+          # in calculating the duty amount that the specific calculation MAY be more exact by a fraction of a cent
+          # - even when the adval rate is the effective rate.
+          # If this is the case, prefer the adval rate, since it's the overwhelmingly used scenario.
           
-          if ad_val.nonzero? && vals.min == vals[0]
+          if ad_val.nonzero? && (vals.min == vals[0] || ((vals[0] - vals[1]).abs <= BigDecimal("0.01")))
             t.duty_rate = adjusted_duty_rate
           else
             t.duty_rate = duty_rate

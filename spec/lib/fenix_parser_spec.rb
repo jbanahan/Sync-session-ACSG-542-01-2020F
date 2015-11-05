@@ -553,6 +553,19 @@ describe OpenChain::FenixParser do
     ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.classification_qty_1.should == BigDecimal(@hts_qty)
   end
 
+  it "prefers adval rate when rate calculations are within 1 cent of each other" do
+    @duty_rate = "7"
+    @hts_qty = "3"
+    @duty_amount = "21"
+    # This value results in the adval calculation being 1 cent off the specific calculation, in which case
+    # we still want the advalorem rate prefered
+    @entered_value = "300.10" 
+
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate.should == BigDecimal("0.07")
+  end
+
   it "should retry with_lock 5 times and re-raise error if failed after that" do
     Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_raise  ActiveRecord::StatementInvalid
     expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error ActiveRecord::StatementInvalid
