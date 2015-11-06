@@ -2,7 +2,7 @@ class OfficialTariffsController < ApplicationController
   skip_before_filter :require_user, :set_user_time_zone, :log_request, :only=>[:auto_classify,:auto_complete]
 
   def auto_complete
-    ot = OfficialTariff
+    ot = OfficialTariff.limit(10)
     if !params[:country].blank?
       ot = ot.where(:country_id=>params[:country])
     else
