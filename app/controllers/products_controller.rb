@@ -21,6 +21,10 @@ class ProductsController < ApplicationController
   # GET /products/1
   # GET /products/1.xml
   def show
+    if cookies[:product_beta] == 'y'
+      redirect_to "/products/#{params[:id]}/show_beta"
+      return
+    end
     p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
     freeze_custom_values p
     action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
@@ -38,6 +42,10 @@ class ProductsController < ApplicationController
   end
 
   def show_beta
+    if cookies[:product_beta] != 'y'
+      redirect_to "/products/#{params[:id]}"
+      return
+    end
     p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
     freeze_custom_values p
     action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {

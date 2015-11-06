@@ -1,7 +1,56 @@
-<% content_for :action_bar do %>
-  <button class='btn_link' link_to='<%=products_path%>' key_map='b'>Search</button>
-  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h'>History</button>
+<% content_for :javascript do %>
+  $(function() {
+    $("#beta-off").click(function() {
+      $.removeCookie('product_beta',{ path: '/' });
+      location.reload(true);
+    });
+  });
 <% end %>
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=products_path%>' key_map='b' title='Back To Search'><i class='fa fa-search'></i></button>
+  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
+<% end %>
+<div class="container">
+  <div class="col-xs-12">
+    <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <p>
+          <strong>Warning:</strong> This is a beta page.  It is not complete and may have bugs. 
+        </p>
+        <p><a class="btn btn-xs btn-default" data-toggle="modal" href='#prod-beta-modal'>more info</a> <button id='beta-off' class='btn btn-xs btn-default'>turn off beta</button></p>
+    </div>
+    <div class="modal fade" id="prod-beta-modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Product Beta</h4>
+          </div>
+          <div class="modal-body">
+            <p>
+              This is a beta version of the product module.  It is for testing purposes and does not have all of the features of the regular page.
+            </p>
+            <p>
+              Here are some features that haven't been implemented yet:
+            </p>
+            <ul>
+              <li>HTS numbers do not autocomplete</li>
+              <li>Date formats are ugly</li>
+            </ul>
+            <p><strong>Note:</strong><br />
+            The HTS 2 &amp; HTS 3 fields are going away in the next version.  All data will be migrated to use rows.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="container">
+<%=render partial: '/shared/business_rules', locals:{base_object:@product,rule_state_field:ModelField.find_by_uid(:prod_rule_state), validation_path: validation_results_product_path(@product)}%>
+</div>
 <div ng-app="ProductApp" product-id="<%=@product.id%>">
   <div ui-view></div>
 </div> <!-- end app -->

@@ -13,48 +13,6 @@
 <chain-loading-wrapper loading-flag='{{loadingFlag}}'>
   <div class="container">
     <div class="row">
-      <div class="container">
-        <div class="col-xs-12">
-          <div class="alert alert-warning">
-              <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-              <strong>Warning:</strong> This is a beta page.  It is not complete and may have bugs.  For more info <a class="btn btn-xs btn-link" data-toggle="modal" href='#prod-beta-modal'>click here</a>.
-          </div>
-          <div class="modal fade" id="prod-beta-modal">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                  <h4 class="modal-title">Product Beta</h4>
-                </div>
-                <div class="modal-body">
-                  <p>
-                    This is a beta version of the product module.  It is for testing purposes and does not have all of the features of the regular page.
-                  </p>
-                  <p>
-                    Here are some features that haven't been implemented yet:
-                  </p>
-                  <ul>
-                    <li>Attachments</li>
-                    <li>Comments</li>
-                    <li>History (it is still logged but there is no screen to view it)</li>
-                    <li>You cannot delete components from a classification</li>
-                    <li>HTS numbers do not autocomplete</li>
-                    <li>Autoclassify not implemented</li>
-                    <li>Date formats are ugly</li>
-                  </ul>
-                  <p><strong>Note:</strong><br />
-                  The HTS 2 &amp; HTS 3 fields are going away in the next version.  All data will be migrated to use rows.</p>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row">
       <div class="col-xs-12 text-center">
         <h1 style='margin: 0 0 1em 0;'>
           {{product.prod_uid}} - {{product.prod_name}}

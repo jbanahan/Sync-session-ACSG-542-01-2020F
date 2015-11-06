@@ -1,4 +1,10 @@
 <% content_for :javascript do %>
+  $(function() {
+    $("#beta-on").click(function() {
+      $.cookie('product_beta','y',{ path: '/' });
+      location.reload(true);
+    });
+  });
   <% if @product.can_edit?(current_user) || @product.can_classify?(current_user)%>
   $(function() {
     $( "#btn_edit" )
@@ -25,7 +31,16 @@
   <%=render :partial => 'shared/show_next_prev', :locals => {:obj=>@product} %>
   <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
 <% end %>
-<div class='container'>
+    
+<div class="container">
+  <div class="row">
+    <div class="col-md-1"></div>
+    <div class="col-md-10 text-center">
+      <p>
+        Try the new Beta version <button class='btn btn-xs btn-default' id='beta-on'>here</button>.
+      </p>
+    </div>
+  </div>
   <%=render partial: '/shared/business_rules', locals:{base_object:@product,rule_state_field:ModelField.find_by_uid(:prod_rule_state), validation_path: validation_results_product_path(@product)}%>
   <div class='row'>
     <div class='col-md-6' id='prod_attr'>
