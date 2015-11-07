@@ -21,7 +21,7 @@
               </div>
               <div ng-repeat="rr in bvr.rule_results">
                 <span ng-class='svc.stateToBootstrap("text",rr.state)'>
-                  <span class='glyphicon' ng-class="svc.stateToGlyphicon(rr.state)"></span>
+                  <state-icon state='rr.state'></state-icon>
                   <a href='' ng-click='editRuleResult(rr)' title='{{rr.rule.description}}'>
                     {{rr.rule.name}} - {{rr.state}}
                   </a>
@@ -35,7 +35,7 @@
         <div ng-show='ruleResultToEdit' class='panel' ng-class='svc.stateToBootstrap("panel",ruleResultToEdit.state)'>
           <div class="panel-heading">
             <h3 class='panel-title'>
-              <span class='glyphicon' ng-class="svc.stateToGlyphicon(ruleResultToEdit.state)"></span>
+              <state-icon state='ruleResultToEdit.state'></state-icon>
               {{ruleResultToEdit.rule.name}}
             </h3>
           </div>

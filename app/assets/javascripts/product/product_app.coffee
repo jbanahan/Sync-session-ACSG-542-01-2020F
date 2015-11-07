@@ -1,4 +1,4 @@
-productApp = angular.module('ProductApp', ['ChainComponents','ChainComments','ChainDomainer','ui.router'])
+productApp = angular.module('ProductApp', ['ChainComponents','ChainComments','ChainDomainer','CoreObjectValidationResultsApp','ui.router'])
 
 # api handling
 productApp.config ['$httpProvider', ($httpProvider) ->

@@ -1,0 +1,44 @@
+<div ng-hide='result.bv_results.length==0' class="panel" ng-class="stateToBootstrap('panel',result)">
+    <div class="panel-heading">
+      <h3 class="panel-title">Business Rules</h3>
+    </div>
+    <chain-loading-wrapper loading-flag='{{loading}}'>
+    </chain-loading-wrapper>
+    <ul ng-hide='loading=="loading"' ng-repeat='r in result.bv_results track by r.id' class='list-group'>
+      <li class='list-group-item'><strong>{{r.template.name}}</strong></li>
+      <li class='list-group-item' ng-repeat='rr in r.rule_results track by rr.id'>
+        <state-icon state='rr.state'></state-icon>
+        {{rr.rule.name}}
+        <span class='pull-right'>
+          <i class='fa fa-user' ng-show='rr.overridden_at' title='Overriden by {{rr.overridden_by.full_name}}'></i>
+          <button ng-click='editRuleResult(rr)' class='btn btn-default btn-xs' title='Edit Rule'><i class='fa fa-edit'></i></button>
+        </span>
+      </li>
+    </ul>
+</div>
+
+<div class="modal" id="business-rules-edit">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title"><state-icon state='resultToEdit.state'></state-icon>{{resultToEdit.rule.name}}</h4>
+      </div>
+      <div class="modal-body">
+        <p ng-show='resultToEdit.rule.description'>{{resultToEdit.rule.description}}</p>
+        <hr ng-if='resultToEdit.message && resultToEdit.rule.description' />
+        <pre ng-show='resultToEdit.message'>{{resultToEdit.message}}</pre>
+        <hr ng-if='resultToEdit.message' />
+        <label>Update</label>
+        <select ng-model='resultToEdit.state' ng-options='s for s in states' class='form-control'></select>
+        <textarea ng-model='resultToEdit.note' class='form-control'></textarea>
+        <div ng-show='resultToEdit.overridden_at' class='text-right text-muted'>
+          Last Edited By {{resultToEdit.overridden_by.full_name}} <span am-time-ago='resultToEdit.overridden_at' title="{{resultToEdit.overridden_at | amDateFormat:' MMMM Do YYYY, h:mm a'}}"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" ng-click='saveResult(resultToEdit)'>Save</button>
+      </div>
+    </div>
+  </div>
+</div>

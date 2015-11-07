@@ -318,7 +318,7 @@
           </div>
           <ul class="list-group">
             <li ng-repeat="att in attachments" class="list-group-item">
-              <a ng-click="deleteAttachment(att.id)" href="javascript:;" ng-if="canAttach"><span class="glyphicon glyphicon-remove error"></span></a>
+              <button class="btn btn-xs btn-danger pull-right" ng-click="deleteAttachment(att.id)" href="javascript:;" ng-if="canAttach"><i class="fa fa-trash"></i></button>
               <a href="/attachments/{{att.id}}/download" target="_blank">{{att.name}} <span class="badge">{{att.size}}</span></a>
             </li>
           </ul>

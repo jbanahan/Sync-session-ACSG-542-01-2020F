@@ -21,6 +21,7 @@
     </div>
     <div class="row">
       <div class="col-md-6">
+        <core-object-validation-panel plural-object='products' object-id='product.id'></core-object-validation-panel>
         <chain-view-edit edit-if='product.permissions.can_edit' view-template='/partials/products/attr_view.html' edit-template='/partials/products/attr_edit.html'
           panel-title='Attributes' panel-class='panel-primary' 
           before-edit='prepProductEditObject(product)' 
