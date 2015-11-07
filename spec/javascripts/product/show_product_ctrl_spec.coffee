@@ -51,14 +51,13 @@ describe 'ShowProductCtrl', ->
 
       scope.save(startProd)
 
-      expect(scope.loadingFlag).toEqual("loading")
+      spyOn(scope,'load')
 
       prodResp.resolve({data: {product: finishProd}})
 
       scope.$apply()
 
-      expect(scope.loadingFlag).toBeNull()
-      expect(scope.product).toEqual(finishProd)
+      expect(scope.load).toHaveBeenCalledWith(1)
 
   describe 'classificationByISO', ->
     product = null
