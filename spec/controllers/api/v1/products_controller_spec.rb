@@ -17,6 +17,7 @@ describe Api::V1::ProductsController do
         get "show", {id: @p.id, format: 'json', mf_uids: "prod_uid"}
         expect(response).to be_success
         json = ActiveSupport::JSON.decode response.body
+        json['product'].delete('permissions') #not testing the permissions functionality
         expect(json['product']).to eq({
           'id' => @p.id,
           'prod_uid' => @p.unique_identifier
@@ -92,6 +93,7 @@ describe Api::V1::ProductsController do
       get "by_uid", {format: 'json', mf_uids: "prod_uid", path_uid: @p.unique_identifier}
       expect(response).to be_success
       json = ActiveSupport::JSON.decode response.body
+      json['product'].delete('permissions') #not testing the permissions functionality
       expect(json['product']).to eq({
         'id' => @p.id,
         'prod_uid' => @p.unique_identifier
@@ -102,6 +104,7 @@ describe Api::V1::ProductsController do
       get "by_uid", {uid: @p.unique_identifier, format: 'json', mf_uids: "prod_uid"}
       expect(response).to be_success
       json = ActiveSupport::JSON.decode response.body
+      json['product'].delete('permissions') #not testing the permissions functionality
       expect(json['product']).to eq({
         'id' => @p.id,
         'prod_uid' => @p.unique_identifier
@@ -306,6 +309,9 @@ describe Api::V1::ProductsController do
       get :index, {fields: 'prod_uid, prod_uom'}
       expect(response).to be_success
       j = JSON.parse response.body
+      j['results'].each do |pj|
+        pj.delete('permissions') #not testing the permissions functionality
+      end
 
       # 3 keys = id, uid, uom
       expect(j['results'].first.keys.size).to eq 3

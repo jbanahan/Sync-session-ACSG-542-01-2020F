@@ -70,7 +70,7 @@ describe Api::V1::ModelFieldsController do
       expect(get :index).to be_success
       h = JSON.parse(response.body)
       div_name = h['fields'].find {|fld| fld['uid']=='prod_div_name'}
-      expected_auto_complete = {'url'=>'/api/v1/divisions/autocomplete'}
+      expected_auto_complete = {'url'=>'/api/v1/divisions/autocomplete?n=','field'=>'val'}
       expect(div_name['autocomplete']).to eq expected_auto_complete
     end
 

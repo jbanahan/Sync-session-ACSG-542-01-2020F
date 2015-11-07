@@ -24,7 +24,7 @@
       :data_type => :string,
       :autocomplete => {
         :url=>'/api/v1/divisions/autocomplete?n=',
-        field: 'val'
+        :field=>'val'
       }
     }]
     r << n
