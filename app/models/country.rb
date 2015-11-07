@@ -60,7 +60,7 @@ class Country < ActiveRecord::Base
     ["VIET NAM","VN"],["VIRGIN ISLANDS, BRITISH","VG"],["VIRGIN ISLANDS, U.S.","VI"],
     ["WALLIS AND FUTUNA","WF"],["WESTERN SAHARA","EH"],["YEMEN","YE"],["ZAMBIA","ZM"],["ZIMBABWE","ZW"]]
 
-  @@eu_iso_codes = ['AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV',
+  EU_ISO_CODES = ['AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV',
     'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
 
   @@skip_reload = false
@@ -81,10 +81,6 @@ class Country < ActiveRecord::Base
 
 	validates_uniqueness_of :iso_code
 
-  def european_union?
-    @@eu_iso_codes.include?(self.iso_code)
-  end
-
   def self.find_cached_by_id country_id
     c = CACHE.get("Country:id:#{country_id}")
     c = Country.find country_id if c.nil?
@@ -99,10 +95,9 @@ class Country < ActiveRecord::Base
       ALL_COUNTRIES.each do |c_array|
         raise "Country array should have been 2 elements, was #{c_array.length}.  #{c_array.length>0 ? "First element: "+c_array[0] : ""}" unless c_array.length == 2
         c = Country.where(:iso_code => c_array[1]).first_or_initialize
-        unless c.name==c_array[0]
-          c.name = c_array[0]
-          c.save!
-        end
+        c.name = c_array[0]
+        c.european_union = EU_ISO_CODES.include?(c.iso_code)
+        c.save!
       end
     ensure
       @@skip_reload = false

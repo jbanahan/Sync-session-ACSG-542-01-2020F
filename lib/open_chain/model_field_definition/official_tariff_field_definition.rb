@@ -35,20 +35,22 @@ module OpenChain; module ModelFieldDefinition; module OfficialTariffFieldDefinit
         data_type: :string,
         import_lambda: lambda {|ot,d| "Ingored (read only)"},
         export_lambda: lambda {|ot| ot.hts_code[0,6]},
-        qualified_field_name: 'LEFT(hts_code,6)',
+        qualified_field_name: 'LEFT(official_tariffs.hts_code,6)',
         read_only: true
       }],
       [22,:ot_binding_ruling_url, :brl,"Binding Ruling URL",{data_type: :string,
         read_only: true,
         export_lambda: lambda { |obj| 
           obj.binding_ruling_url
-        }
+        },
+        qualified_field_name: 'if((select iso_code from countries where official_tariffs.country_id = countries.id)="US",concat("http://rulings.cbp.gov/index.asp?qu=",left(official_tariffs.hts_code,4),"%2E",substr(official_tariffs.hts_code,5,2),"%2E",right(official_tariffs.hts_code,4),"&vw=results"),if((select european_union from countries where official_tariffs.country_id = countries.id)=1,concat("http://ec.europa.eu/taxation_customs/dds2/ebti/ebti_consultation.jsp?Lang=en&orderby=0&Expand=true&offset=1&range=25&nomenc=",left(official_tariffs.hts_code,6)),""))'
       }],
       [23,:ot_taric_url, :trl,"TARIC URL", {data_type: :string,
         read_only: true,
         export_lambda: lambda { |obj|
           obj.taric_url
-        }
+        },
+        qualified_field_name: 'if((select european_union from countries where official_tariffs.country_id = countries.id)=1,concat("http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?LangDescr=en&Taric=",official_tariffs.hts_code),"")'
       }]
     ]
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
