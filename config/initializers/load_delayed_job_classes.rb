@@ -5,6 +5,8 @@
 
 require 'open_chain/bulk_update'
 require 'open_chain/custom_handler/generic_alliance_product_generator'
+require 'open_chain/trello'
 
 OpenChain::BulkUpdateClassification
 OpenChain::CustomHandler::GenericAllianceProductGenerator
+OpenChain::Trello

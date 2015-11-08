@@ -99,6 +99,8 @@ OpenChain::Application.routes.draw do
       match "/:attachable_type/:attachable_id/attachments/:id/download" => "attachments#download", via: [:get], as: :download_attachable_attachment
       match "/:attachable_type/:attachable_id/attachments/:id" => "attachments#destroy", via: [:delete]
 
+      match "/feedback/send_feedback" => 'feedback#send_feedback', via: :post
+
       namespace :admin do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
         match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post

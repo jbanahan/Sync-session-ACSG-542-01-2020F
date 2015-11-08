@@ -1,0 +1,14 @@
+development:
+  developer_public_key: '8435a2cc632bb73c1c3389bdc6a26cd1'
+  member_token: '99e2ffb2fdf2765a69c9c1e1d4503d8a9d8318ad7c8db7e5a6cb35ec3d5ae4db'
+  vfi_track_priority_board_id: '563ebd16e200c94a546f50b9'
+
+test:
+  developer_public_key: 'testkey'
+  member_token: 'testtoken'
+  vfi_track_priority_board_id: 'testvfiid'
+
+production:
+  developer_public_key: '8435a2cc632bb73c1c3389bdc6a26cd1'
+  member_token: '99e2ffb2fdf2765a69c9c1e1d4503d8a9d8318ad7c8db7e5a6cb35ec3d5ae4db'
+  vfi_track_priority_board_id: '51f95b1ca1dd85f84f000039'
