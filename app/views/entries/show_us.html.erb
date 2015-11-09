@@ -12,6 +12,9 @@
   <button title='Download' id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>"><i class='fa fa-download'></i></button>
   <button class="btn_link" title='Sync Records' link_to='<%=sync_records_entry_path(@entry)%>'><i class='fa fa-exchange'></i></button>
 <%end-%>
+<div class='container'>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
+</div>
 <% cache [current_user.company,current_user,@entry] do-%>
   <style>
   .ent_columns {
@@ -36,9 +39,6 @@
   }
   </style>
   <%show_broker_invoices = current_user.view_broker_invoices? && !@entry.broker_invoices.blank?%>
-  <div class='container'>
-    <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
-  </div>
   <a name='ent_header'></a>
   <div class='quick_jump'>
     <a href='#c_invoices'>Commercial Invoices</a>
