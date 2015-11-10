@@ -1,0 +1,11 @@
+<div ng-if='product.variants || product.permissions.can_manage_variants' class="panel panel-primary">
+    <div class="panel-heading">
+      <h3 class="panel-title">Variants</h3>
+    </div>
+    <ul class="list-group">
+      <li ng-repeat='v in product.variants track by v.id' class="list-group-item">
+        {{v.var_identifier}}
+      </li>
+    </ul>
+</div>
+<pre>{{product.variants}}</pre>

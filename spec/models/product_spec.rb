@@ -171,10 +171,11 @@ describe Product do
   end
   context "security" do
     before :each do
-      @master_user = Factory(:master_user,:product_view=>true,:product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true)
-      @importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true)
-      @other_importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true)
-      @linked_importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true)
+      MasterSetup.get.update_attributes(:variant_enabled=>true)
+      @master_user = Factory(:master_user,:product_view=>true,:product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
+      @importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
+        @other_importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
+      @linked_importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
       @importer_user.company.linked_companies << @linked_importer_user.company
       @unassociated_product = Factory(:product)
       @importer_product = Factory(:product,:importer=>@importer_user.company)
@@ -188,6 +189,7 @@ describe Product do
           p.can_classify?(@master_user).should be_true
           p.can_comment?(@master_user).should be_true
           p.can_attach?(@master_user).should be_true
+          p.can_manage_variants?(@master_user).should be_true
         end
       end
       it "should allow importer to handle own products" do
@@ -196,6 +198,7 @@ describe Product do
         @importer_product.can_classify?(@importer_user).should be_true
         @importer_product.can_comment?(@importer_user).should be_true
         @importer_product.can_attach?(@importer_user).should be_true
+        @importer_product.can_manage_variants?(@importer_user).should be_true
       end
       it "should allow importer to handle linked company products" do
         @linked_product.can_view?(@importer_user).should be_true
@@ -203,6 +206,7 @@ describe Product do
         @linked_product.can_classify?(@importer_user).should be_true
         @linked_product.can_comment?(@importer_user).should be_true
         @linked_product.can_attach?(@importer_user).should be_true
+        @linked_product.can_manage_variants?(@importer_user).should be_true
       end
       it "should not allow importer to handle unlinked company products" do
         @importer_product.can_view?(@other_importer_user).should be_false
@@ -210,6 +214,7 @@ describe Product do
         @importer_product.can_classify?(@other_importer_user).should be_false
         @importer_product.can_comment?(@other_importer_user).should be_false
         @importer_product.can_attach?(@other_importer_user).should be_false
+        @importer_product.can_manage_variants?(@other_importer_user).should be_false
       end
       it "should not allow importer to handle product with no importer" do
         @unassociated_product.can_view?(@importer_user).should be_false
@@ -217,13 +222,14 @@ describe Product do
         @unassociated_product.can_classify?(@importer_user).should be_false
         @unassociated_product.can_comment?(@importer_user).should be_false
         @unassociated_product.can_attach?(@importer_user).should be_false
+        @unassociated_product.can_manage_variants?(@importer_user).should be_false
       end
       context "vendor" do
         before :each do
-          @vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true)
+          @vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
           @vendor_user.company.linked_companies << @linked_importer_user.company 
           @vendor_product = Factory(:product,:vendor=>@vendor_user.company) 
-          @linked_vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true) 
+          @linked_vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true) 
           @linked_vendor_user.company.linked_companies << @vendor_user.company
         end
 
@@ -234,6 +240,7 @@ describe Product do
           @vendor_product.can_classify?(@vendor_user).should be_false
           @vendor_product.can_comment?(@vendor_user).should be_true
           @vendor_product.can_attach?(@vendor_user).should be_true
+          @vendor_product.can_manage_variants?(@vendor_user).should be_false
         end
 
         it "should allow vendor to handle linked importer company products" do
@@ -242,6 +249,7 @@ describe Product do
           @linked_product.can_classify?(@vendor_user).should be_false
           @linked_product.can_comment?(@vendor_user).should be_true
           @linked_product.can_attach?(@vendor_user).should be_true
+          @linked_product.can_manage_variants?(@vendor_user).should be_false
         end
         
         it "should allow vendor to handle linked vendor company products" do
@@ -250,6 +258,7 @@ describe Product do
           @vendor_product.can_classify?(@linked_vendor_user).should be_false
           @vendor_product.can_comment?(@linked_vendor_user).should be_true
           @vendor_product.can_attach?(@linked_vendor_user).should be_true
+          @vendor_product.can_manage_variants?(@linked_vendor_user).should be_false
         end
 
         it "should not allow vendor to handle unlinked company products" do
@@ -258,6 +267,7 @@ describe Product do
           @importer_product.can_classify?(@vendor_user).should be_false
           @importer_product.can_comment?(@vendor_user).should be_false
           @importer_product.can_attach?(@other_importer_user).should be_false
+          @importer_product.can_manage_variants?(@vendor_user).should be_false
         end
 
         it "should not allow vendor to handle product with no vendor" do
@@ -266,6 +276,7 @@ describe Product do
           @unassociated_product.can_classify?(@vendor_user).should be_false
           @unassociated_product.can_comment?(@vendor_user).should be_false
           @unassociated_product.can_attach?(@vendor_user).should be_false
+          @unassociated_product.can_manage_variants?(@vendor_user).should be_false
         end
       end
     end

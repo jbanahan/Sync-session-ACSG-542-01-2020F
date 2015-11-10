@@ -49,7 +49,7 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
 
   def base_relation
     # Don't pre-load custom values, they'll be loaded later by the custom value freeze (which is actually more efficient)
-    Product.includes(classifications: [:tariff_records])
+    Product.includes([{classifications: [:tariff_records]}, :variants])
   end
 
   def obj_to_json_hash obj
@@ -68,7 +68,16 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
       custom_field_keys(CoreModule::TARIFF)
     )
 
-    h = to_entity_hash(obj, product_fields + class_fields + tariff_fields)
+    field_list = product_fields + class_fields + tariff_fields
+
+    if MasterSetup.get.variant_enabled?
+      variant_fields = limit_fields(
+        [:var_identifier] + custom_field_keys(CoreModule::VARIANT)
+      )
+      field_list = field_list + variant_fields
+    end
+
+    h = to_entity_hash(obj, field_list)
     h[:permissions] = render_permissions(obj)
     if render_attachments?
       render_attachments(obj,h)
@@ -77,13 +86,14 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
   end
 
   def render_permissions product
-    cu = current_user
+    cu = current_user #current_user is method, so saving as variable to prevent multiple calls
     {      
       can_view: product.can_view?(cu),
       can_edit: product.can_edit?(cu),
       can_classify: product.can_classify?(cu),
       can_comment: product.can_comment?(cu),
-      can_attach: product.can_attach?(cu)
+      can_attach: product.can_attach?(cu),
+      can_manage_variants: product.can_manage_variants?(cu)
     }
   end
   

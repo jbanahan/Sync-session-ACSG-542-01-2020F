@@ -26,6 +26,7 @@
           panel-title='Attributes' panel-class='panel-primary' 
           before-edit='prepProductEditObject(product)' 
           on-save='save(productEditObject)'></chain-view-edit>
+        <chain-variant-panel product='product'></chain-variant-panel>
         <div chain-attachment-panel attachments='product.attachments' attachable='product' attachable-type='Product' attachable-id='{{product.id}}' can-attach='product.permissions.can_attach'></div>
       </div>
       <div class="col-md-6">

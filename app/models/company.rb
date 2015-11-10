@@ -301,6 +301,13 @@ class Company < ActiveRecord::Base
     return add_classifications?
   end
 
+  def add_variants?
+    return master_setup.variant_enabled && edit_products?
+  end
+  def edit_variants?
+    return add_variants?
+  end
+
   def view_projects?
     self.master? && master_setup.project_enabled?
   end

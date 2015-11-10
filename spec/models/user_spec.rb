@@ -379,6 +379,42 @@ describe User do
         end
       end
     end
+
+    context "variant" do
+      before :each do
+        @u = Factory(:master_user, product_edit: true)
+      end
+      context "enabled" do
+        before :each do
+          MasterSetup.get.update_attributes(variant_enabled: true)
+        end
+
+        it "should pass with user enabled" do
+          @u.update_attributes(variant_edit:true)
+          expect(@u.add_variants?).to be_true
+          expect(@u.edit_variants?).to be_true
+        end
+        it "should fail with user not enabled" do
+          expect(@u.add_variants?).to be_false
+          expect(@u.edit_variants?).to be_false
+        end
+      end
+      context "disabled" do
+        before :each do
+          MasterSetup.get.update_attributes(variant_enabled: false)
+        end
+
+        it "should fail with user enabled" do
+          @u.update_attributes(variant_edit:true)
+          expect(@u.add_variants?).to be_false
+          expect(@u.edit_variants?).to be_false
+        end
+        it "should fail with user not enabled" do
+          expect(@u.add_variants?).to be_false
+          expect(@u.edit_variants?).to be_false
+        end
+      end
+    end
   end
 
   context :run_with_user_settings do

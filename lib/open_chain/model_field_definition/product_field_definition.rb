@@ -135,6 +135,13 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         },
         :data_type=>:integer
       }],
+      [20, :prod_variant_count, :variant_count, "Variant Count", {
+        :import_lambda=>lambda {|obj,data| "Variant Count ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.variants.count },
+        :qualified_field_name=>"((select count(*) from variants where variants.product_id = products.id))",
+        :data_type=>:integer,
+        :read_only => true
+      }]
     ]
     add_fields CoreModule::PRODUCT, make_last_changed_by(12,'prod',Product)
     add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")

@@ -1,6 +1,7 @@
 Dir[__dir__ + '/*'].each {|file| require file } #Require all files in this directory
 
 module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
+  include OpenChain::ModelFieldDefinition::BookingLineFieldDefinition
   include OpenChain::ModelFieldDefinition::BrokerInvoiceFieldDefinition
   include OpenChain::ModelFieldDefinition::BrokerInvoiceLineFieldDefinition
   include OpenChain::ModelFieldDefinition::CartonSetFieldDefinition
@@ -27,7 +28,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentLineFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
-  include OpenChain::ModelFieldDefinition::BookingLineFieldDefinition
+  include OpenChain::ModelFieldDefinition::VariantFieldDefinition
 
   def add_field_definitions
     add_company_fields
@@ -57,5 +58,6 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_plant_product_group_assignment_fields
     add_drawback_claim_fields
     add_booking_line_fields
+    add_variant_fields
   end
 end; end; end

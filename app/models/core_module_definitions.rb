@@ -119,6 +119,14 @@ module CoreModuleDefinitions
     :enabled_lambda => lambda { MasterSetup.get.delivery_enabled? },
     :key_model_field_uids => [:del_ref]
    })
+  VARIANT = CoreModule.new("Variant","Variant",{
+    :changed_at_parents_lambda=>lambda {|c| c.product.nil? ? [] : [c.product] },
+    :enabled_lambda=>lambda {MasterSetup.get.variant_enabled?},
+    :show_field_prefix=>false,
+    :unique_id_field_name=>:variant_identifier,
+    :key_model_field_uids => [:var_identifier],
+    :key_attribute_field_uid => :var_identifier
+    })
   TARIFF = CoreModule.new("TariffRecord","Tariff",{
      :changed_at_parents_lambda=>lambda {|tr|
        r = []
@@ -149,9 +157,15 @@ module CoreModuleDefinitions
                :statusable=>true,
                :file_formatable=>true,
                :worksheetable=>true,
-               :children => [CLASSIFICATION],
-               :child_lambdas => {CLASSIFICATION => lambda {|p| p.classifications}},
-               :child_joins => {CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id"},
+               :children => [CLASSIFICATION,VARIANT],
+               :child_lambdas => {
+                  CLASSIFICATION => lambda {|p| p.classifications},
+                  VARIANT => lambda {|p| p.variants}
+               },
+               :child_joins => {
+                  CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id",
+                  VARIANT => "LEFT OUTER JOIN variants ON products.id = variants.product_id"
+                },
                :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts,:prod_ven_name],
                :bulk_actions_lambda => lambda {|current_user|
                  bulk_actions = {}

@@ -15,6 +15,7 @@ class Product < ActiveRecord::Base
   validates	 :unique_identifier, :presence => true
   validates_uniqueness_of :unique_identifier
 
+  has_many   :variants, :dependent => :destroy, inverse_of: :product
   has_many   :classifications, :dependent => :destroy
   has_many   :order_lines, :dependent => :destroy
   has_many   :sales_order_lines, :dependent => :destroy
@@ -29,6 +30,7 @@ class Product < ActiveRecord::Base
   has_and_belongs_to_many :factories, :class_name=>"Address", :join_table=>"product_factories", :foreign_key=>'product_id', :association_foreign_key=>'address_id'
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true
+  accepts_nested_attributes_for :variants, :allow_destroy => true
   reject_nested_model_field_attributes_if :missing_classification_country?
 
   dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
@@ -86,6 +88,10 @@ class Product < ActiveRecord::Base
 
   def can_classify?(user)
     can_view?(user) && user.edit_classifications?
+  end
+
+  def can_manage_variants?(user)
+    can_view?(user) && user.edit_variants?
   end
 
   def can_comment? user

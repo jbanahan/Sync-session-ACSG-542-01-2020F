@@ -19,6 +19,7 @@ class User < ActiveRecord::Base
     :project_view, :project_edit,
     :vendor_view, :vendor_edit, :vendor_comment, :vendor_attach,
     :broker_invoice_view, :broker_invoice_edit,
+    :variant_edit,
     :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
     :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
@@ -539,6 +540,13 @@ class User < ActiveRecord::Base
   end
   def edit_classifications?
     add_classifications?
+  end
+
+  def add_variants?
+    self.variant_edit? && self.company.add_variants?
+  end
+  def edit_variants?
+    add_variants?
   end
 
   def view_projects?

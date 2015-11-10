@@ -48,13 +48,15 @@ describe Api::V1::ProductsController do
         Product.any_instance.stub(:can_classify?).and_return false
         Product.any_instance.stub(:can_comment?).and_return false
         Product.any_instance.stub(:can_attach?).and_return true
+        Product.any_instance.stub(:can_manage_variants?).and_return false
 
         expected_permissions = {
           'can_view'=>true,
           'can_edit'=>true,
           'can_classify'=>false,
           'can_comment'=>false,
-          'can_attach'=>true
+          'can_attach'=>true,
+          'can_manage_variants'=> false
         }
 
         expect(get :show, id: @p.id).to be_success
