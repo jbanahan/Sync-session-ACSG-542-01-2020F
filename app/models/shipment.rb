@@ -100,11 +100,16 @@ class Shipment < ActiveRecord::Base
   end
 
   def can_revise_booking? user
+    # Can't revise bookings that have shipment lines
     return false if self.shipment_lines.try(:size) > 0
+    # Can't revise bookings that haven't been confirmed or approved
     return false unless self.booking_approved_date || self.booking_confirmed_date
+
     if !self.booking_confirmed_date
+      # Users that can request or approve bookings can revise if it's not confirmed
       return true if self.can_approve_booking?(user,true) || self.can_request_booking?(user,true)
     else
+      # If there's a booking confirm date, only user's that can confirm can revise a booking
       return true if self.can_confirm_booking?(user,true)
     end
     return false

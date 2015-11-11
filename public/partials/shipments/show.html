@@ -305,10 +305,8 @@
                           {{ln.bkln_gross_kgs}}
                         </td>
                         <td class='text-right'>
-                          <span ng-show='shp.permissions.can_book'>
-                            <button ng-show='shp.permissions.can_add_remove_booking_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
-                            <button class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
-                          </span>
+                          <button ng-show='shp.permissions.can_add_remove_booking_lines' class="btn btn-xs btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                          <button ng-show='shp.permissions.can_add_remove_booking_lines' class='btn btn-xs btn-default' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
                         </td>
                       </tr>
                       </tbody>

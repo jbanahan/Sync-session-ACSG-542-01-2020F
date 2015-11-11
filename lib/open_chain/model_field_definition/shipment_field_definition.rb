@@ -163,7 +163,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              :data_type=>:string
          }],
       [62,:shp_isf_sent_at,:isf_sent_at,"ISF Sent At",{data_type: :datetime, read_only: true}],
-      [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :datetime}],
+      [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :date}],
       [64, :shp_confirmed_on_board_origin_date, :confirmed_on_board_origin_date, 'Confirmed On Board Origin Date', {data_type: :date}],
       [65, :shp_eta_last_foreign_port_date, :eta_last_foreign_port_date, 'ETA Last Foreign Port Date', {data_type: :date}],
       [66, :shp_departure_last_foreign_port_date, :departure_last_foreign_port_date, 'Departure Last Foreign Port Date', {data_type: :date}],
