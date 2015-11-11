@@ -16,6 +16,18 @@ module ApplicationHelper
   }
 
 
+  # create button to business rules page
+  def business_rules_button rule_state_field, path
+    if rule_state_field.can_view?(User.current)
+      return content_tag(:button,class: 'btn_link', id:'business_rules_link_button', link_to: path, title:'Business Rules') do
+        content_tag(:i,'',class:'fa fa-medkit')
+      end
+    else
+      return ''
+    end
+
+  end
+
   #create a visual
   def section_box title, html_options={}, &block
     inner_opts = {}.merge html_options
@@ -157,7 +169,7 @@ module ApplicationHelper
     hidden_field_tag field_name, value, inner_opts
   end
 
-  def attachment_icon att
+  def attachment_icon att, img_opts_override = {}
     title = "Uploaded: " + att.created_at.to_date.to_s
     title += "<br>Uploaded by: " + att.uploaded_by.full_name if att.uploaded_by && !att.uploaded_by.full_name.blank?
     title += "<br>Archive Title: " + att.attachment_archives.first.name unless att.try(:attachment_archives).try(:first).try(:name).blank?
@@ -172,10 +184,10 @@ module ApplicationHelper
       opts[:width]="75px"
       opts[:style]="border:1px solid #d7d7d7;"
       link_opts[:target]="chainio_attachment"
-      icon = image_tag(download_attachment_path(att), opts)
+      icon = image_tag(download_attachment_path(att), opts.merge(img_opts_override))
     elsif !fn.blank?
       ext = fn.split('.').last.downcase.to_sym
-      icon = image_tag(ICONS[ext],opts) unless ICONS[ext].nil?
+      icon = image_tag(ICONS[ext],opts.merge(img_opts_override)) unless ICONS[ext].nil?
     end
     link_to icon, download_attachment_path(att), link_opts
   end
@@ -486,11 +498,11 @@ module ApplicationHelper
   end
 
   def tariff_more_info hts_number, country_id
-    link_to "info", "#", {:class=>'lnk_tariff_popup btn btn-xs btn-default',:hts=>hts_number,:country=>country_id}
+    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_tariff_popup btn btn-xs btn-link',:hts=>hts_number,:country=>country_id}
   end
 
   def schedule_b_more_info hts_number
-    link_to "info", "#", {:class=>'lnk_schedb_popup btn btn-xs btn-default',:schedb=>hts_number}
+    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_schedb_popup btn btn-xs btn-link',:schedb=>hts_number}
   end
 
   def secure_link obj, user

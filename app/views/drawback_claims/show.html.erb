@@ -10,14 +10,13 @@
     <%if include_process_actions %>
       <button data-toggle='modal' data-target='#process_actions_modal'>Process Reports</button>
     <%end%>
-    <%if rule_state_field.can_view? current_user%>
-      <button class='btn_link' link_to='<%=validation_results_drawback_claim_path(@claim)%>'>Business Rules</button>
-    <%end-%>
   <%end-%>
 <%end%>
 <h2>Drawback Claim: <%=@claim.name%></h2>
 
-
+<div class='container'>
+<%=render partial: '/shared/business_rules', locals:{base_object:@claim,rule_state_field:ModelField.find_by_uid(:dc_rule_state),validation_path:validation_results_drawback_claim_path(@claim)}%>
+</div>
 <table class='ent_columns'>
   <tr>
     <td>
@@ -52,15 +51,19 @@
         <%=field_row "Billed", @claim.billed_date%>
         <%=field_row "Duty Check Received", @claim.duty_check_received_date%>
         <%=field_row "HMF/MPF Check Received", @claim.hmf_mpf_check_received_date%>
+        <%=field_row "Sent to Client", @claim.sent_to_client_date%>
+        <%=field_row "Liquidated", @claim.liquidated_date%>
       </table>
     </td>
   </tr>
 </table>
 
 <div class="row">
-  <div class="col-md-12">
-    <%= render :partial => 'shared/attachments', :locals => { :attachable => @claim } %>
-  </div>
+  <div class="col-md-6"><%=render :partial => 'shared/comments', :locals => {:commentable => @claim} %></div>
+</div>
+
+<div class="row">
+  <div class="col-md-12"><%= render :partial => 'shared/attachments', :locals => { :attachable => @claim } %></div>
 </div>
 
 <%if include_process_actions %>

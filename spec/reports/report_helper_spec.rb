@@ -40,6 +40,40 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  # mostly tested in table_from_query
+  describe "table_from_query_result"  do 
+    before :each do 
+      helper = Class.new do
+        include OpenChain::Report::ReportHelper
+      end
+      
+      @h = helper.new
+      q = "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
+      @result_set = ActiveRecord::Base.connection.execute q
+    end
+
+    it "extracts columns headers from result_set by default" do
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
+      XlsMaker.should_receive(:add_header_row).with(sheet, 0, ['EN', 'IDENT'])
+      @h.table_from_query_result sheet, @result_set
+    end
+
+    it "extracts columns from opts if :column_names is used" do
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
+      XlsMaker.should_receive(:add_header_row).with(sheet, 0, ['Nigel', 'David'])
+      @h.table_from_query_result sheet, @result_set, {}, {column_names: ['Nigel', 'David']}
+    end
+
+    it "uses header_row opt if given as row number to write header" do
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
+      opts = {column_names: ['Nigel', 'David'], header_row: 5}
+      XlsMaker.should_receive(:add_header_row).with(sheet, 5, ['Nigel', 'David'])
+      @h.should_receive(:write_result_set_to_sheet).with(@result_set, sheet, ['Nigel', 'David'], 6, {}, opts)
+      @h.table_from_query_result sheet, @result_set, {}, opts
+
+    end
+  end
+
   describe "write_result_set_to_sheet" do
 
     before :each do 

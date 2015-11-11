@@ -12,6 +12,8 @@ require 'open_chain/custom_handler/j_jill/j_jill_850_xml_parser'
 require 'open_chain/custom_handler/kewill_isf_xml_parser'
 require 'open_chain/custom_handler/lenox/lenox_po_parser'
 require 'open_chain/custom_handler/lenox/lenox_product_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_article_xml_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_order_xml_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_vendor_xml_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
@@ -118,7 +120,11 @@ module OpenChain
       elsif command['path'].include?('_kewill_isf/') && MasterSetup.get.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_sap_vendor_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
-        OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser.process_from_s3 bucket, remote_path
+        OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_sap_po_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_sap_article_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
         if fname.to_s.match /-ack/
           OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
@@ -163,6 +169,9 @@ module OpenChain
         ImportedFile.delay.process_integration_imported_file bucket, remote_path, command['path']
       elsif command['path'].include?('/_test_from_msl') && MasterSetup.get.custom_feature?('MSL+')
         #prevent errors; don't do anything else
+      elsif command['path'].include?('/_siemens_decrypt/') && File.basename(command['path']).to_s.upcase.ends_with?(".DAT.PGP")
+        # Need to send the original filename without the added timestamp in it that our file monitoring process adds.
+        OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path, original_filename: File.basename(command['path'])
       else
         response_type = 'error'
         status_msg = "Can't figure out what to do for path #{command['path']}"

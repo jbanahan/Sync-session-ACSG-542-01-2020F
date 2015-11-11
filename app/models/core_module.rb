@@ -107,6 +107,8 @@ class CoreModule
     @quicksearch_sort_by_mf = o[:quicksearch_sort_by_mf]
 
     @available_addresses_lambda = o[:available_addresses_lambda]
+
+    @logical_key_lambda = o[:logical_key_lambda]
   
   end
 
@@ -129,6 +131,12 @@ class CoreModule
   #returns the model field that you can show to the user to uniquely identify the record
   def unique_id_field
     ModelField.find_by_uid @unique_id_field_name
+  end
+
+  # returns a unique key for this instance based on the object given
+  def logical_key base_object
+    return @logical_key_lambda.call(base_object) if @logical_key_lambda
+    self.unique_id_field.process_export(base_object,nil,true)
   end
 
   #can the user view items for this module
@@ -252,11 +260,10 @@ class CoreModule
   def child_association_name(child_core_module)
     child_class = child_core_module.klass
     name = child_class.to_s.underscore.pluralize
-    reflections = klass.reflections
 
-    if reflections[name.to_sym].nil?
+    if klass.reflect_on_association(name.to_sym).nil?
       name = nil
-      reflections.each_pair do |assoc_name, reflection|
+      klass.reflections.each_pair do |assoc_name, reflection|
         if reflection.macro == :has_many && reflection.active_record == child_class
           name = assoc_name.to_s
           break

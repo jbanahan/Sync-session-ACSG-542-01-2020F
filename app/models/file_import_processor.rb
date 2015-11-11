@@ -66,6 +66,10 @@ class FileImportProcessor
       data_map = make_data_map row, base_column
       # Throw away the name of the key field, don't really care here
       *, key_model_field_value = find_module_key_field(data_map, @core_module)
+      if key_model_field_value
+        def key_model_field_value.unique_identifier?; true end
+        messages << key_model_field_value
+      end
 
       # The following lock prevents any other process from attempting a concurrent data import on the same 
       # Core Module + Key combination.  The process attempts to retry the lock wait up to 5 times (default aquire time
@@ -364,7 +368,7 @@ class FileImportProcessor
   class PreviewListener
     attr_accessor :messages
     def process_row row_number, object, messages, failed=false
-      self.messages = messages
+      self.messages = messages.reject{ |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
     end
 
     def process_start time

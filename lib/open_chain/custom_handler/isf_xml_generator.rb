@@ -50,7 +50,9 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
   end
 
   def generate(options={})
-    doc, root = build_xml_document "IsfEdiUpload", root_content:'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:isf="http://isf.kewill.com/ws/upload/"'
+    doc, root = build_xml_document "IsfEdiUpload"#
+    root.add_namespace("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+    root.add_namespace("xmlns:isf", "http://isf.kewill.com/ws/upload/")
     add_element root, 'CUSTOMER_ACCT_CD', options[:isf_cust_acct]
     add_element root, 'USER_NAME', options[:isf_username]
     add_element root, 'PASSWORD', options[:isf_password]

@@ -18,6 +18,8 @@
           <th>&nbsp;</th>
           <th>Customer</th>
           <th>Enabled?</th>
+          <th>Status</th>
+          <th>Source</th>
           <th>Events</th>
           <th>Output Format</th>
         </tr>
@@ -27,6 +29,8 @@
           <td><button type="button" class="btn btn-default" ng-click="showConfig(config.milestone_notification_config)">Edit</button></td>
           <td>{{config.milestone_notification_config.customer_number}}</td>
           <td>{{config.milestone_notification_config.enabled ? "Yes" : "No"}}</td>
+          <td>{{config.milestone_notification_config.testing ? "Testing" : "Production"}}</td>
+          <td>{{moduleTypes[config.milestone_notification_config.module_type]}}</td>
           <td>
               <ul ng-show="config.milestone_notification_config.setup_json && config.milestone_notification_config.setup_json.length > 0">
                 <li ng-repeat="event in config.milestone_notification_config.setup_json">

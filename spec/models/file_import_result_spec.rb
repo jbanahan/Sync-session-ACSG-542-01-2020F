@@ -29,8 +29,8 @@ describe FileImportResult do
       @fir = Factory(:file_import_result, imported_file: @imported_file)
       @user.messages.delete_all
 
-      @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1)
-      @cr2 = Factory(:change_record, failed: false, record_sequence_number: 2)
+      @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1, unique_identifier: "foo")
+      @cr2 = Factory(:change_record, failed: false, record_sequence_number: 2, unique_identifier: "bar")
       @fir.change_records << @cr1
       @fir.change_records << @cr2
     end
@@ -40,9 +40,19 @@ describe FileImportResult do
       output.class.should == Spreadsheet::Workbook
     end
 
-    it "should have three columns" do
+    it "should have four columns" do
       output = @fir.create_excel_report(true, "Some name")
-      output.worksheets.first.rows.length.should == 3
+      expect(output.worksheets.first.columns.length).to eq 4
+    end
+
+    it "should use the uid of the cm of the imported file as its second column header" do
+      output = @fir.create_excel_report(true, "Some name")
+      expect(output.worksheets.first.rows[0][1]).to eq "Unique Identifier"
+    end
+
+    it "should record the change_record's uid in the second column" do
+      output = @fir.create_excel_report(true, "Some name")
+      expect(output.worksheets.first.rows[1][1]).to eq "foo"
     end
 
     it "should have the appropriate number of rows when including all" do

@@ -93,7 +93,7 @@ describe OrdersController do
     it "should render page" do
       get :validation_results, id: @ord.id
       expect(response).to be_success
-      expect(assigns(:order)).to eq @ord
+      expect(assigns(:validation_object)).to eq @ord
     end
     it "should render json" do
       @bvr.business_validation_template.update_attributes(name:'myname')

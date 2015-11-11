@@ -1,0 +1,87 @@
+<% content_for :javascript do %>
+  $(function() {
+    $("#beta-off").click(function() {
+      $.removeCookie('product_beta',{ path: '/' });
+      location.reload(true);
+    });
+    $("#feedback-submit").click(function() {
+      $('#feedback-modal').modal('hide');
+      $.ajax('/api/v1/feedback/send_feedback.json', {
+        method:'POST',
+        headers: { 
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        data: JSON.stringify({'message':$('#feedback-ta').val(),url:window.location.href}),
+        success: function(response) {
+          window.alert('Thank you for your feedback.');
+        },
+        error: function(response) {
+          window.alert("We're sorry! There was an error submitting your feedback. Please email support@vandegriftinc.com for more assistance.");
+        }
+      });
+    })
+  });
+<% end %>
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=products_path%>' key_map='b' title='Back To Search'><i class='fa fa-search'></i></button>
+  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
+<% end %>
+<div class="container">
+  <div class="col-xs-12">
+    <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <p>
+          <strong>Warning:</strong> This is a beta page.  It is not complete and may have bugs. 
+        </p>
+        <p>
+          <a class="btn btn-xs btn-default" data-toggle="modal" href='#prod-beta-modal'>more info</a> 
+          <a class="btn btn-xs btn-default" data-toggle="modal" href='#feedback-modal'>send feedback</a>
+          <button id='beta-off' class='btn btn-xs btn-default'>turn off beta</button></p>
+    </div>
+    <div class="modal fade" id="prod-beta-modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Product Beta</h4>
+          </div>
+          <div class="modal-body">
+            <h1><i class='fa fa-bug'></i></h1>
+            <p>
+              This is a beta version of the product module.  It is for testing purposes and may have bugs.
+            </p>
+            <p>
+              <strong>Note:</strong><br />
+              The HTS 2 &amp; HTS 3 fields are going away in a future release.  They are not available through this screen.  <em>All data will be migrated to use HTS rows for you.</em></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div ng-app="ProductApp" product-id="<%=@product.id%>">
+  <div ui-view></div>
+</div> <!-- end app -->
+
+<div class="modal fade" id="feedback-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Feedback</h4>
+      </div>
+      <div class="modal-body">
+        <p>We're always looking to improve, and your feedback is greatly appreciated.</p>
+        <textarea id='feedback-ta' class='form-control' rows='8'></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id='feedback-submit'>Send</button>
+      </div>
+    </div>
+  </div>
+</div>

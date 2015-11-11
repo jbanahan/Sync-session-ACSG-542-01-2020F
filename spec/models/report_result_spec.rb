@@ -87,7 +87,7 @@ describe ReportResult do
       ReportResult.run_report! 'del', @u, @report_class
       File.exists?(@file_location).should be_false
     end
-    it "attaches report content to ReportResult", paperclip: true do
+    it "attaches report content to ReportResult", paperclip: true, s3: true do
       ReportResult.run_report! 'cont', @u, @report_class
       found = ReportResult.find_by_name 'cont'
       rc = found.report_content

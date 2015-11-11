@@ -519,7 +519,7 @@ describe ModelField do
         p = Factory(:product)
         r = @parent_mf.process_import p, 'abc', User.new
         p.should_not be_on_bill_of_materials
-        r.should == "Bill of Materials ignored, cannot be changed by upload."
+        expect(r).to match(/ignored/)
       end
       it "process_export should return csv of BOM parents" do
         parent1 = Factory(:product,:unique_identifier=>'bomc1')
@@ -543,7 +543,7 @@ describe ModelField do
         p = Factory(:product)
         r = @child_mf.process_import p, 'abc', User.new
         p.should_not be_on_bill_of_materials
-        r.should == "Bill of Materials ignored, cannot be changed by upload."
+        expect(r).to match(/ignored/)
       end
       it "should return csv of BOM children" do
         child1 = Factory(:product,:unique_identifier=>'bomc1')
@@ -658,7 +658,7 @@ describe ModelField do
           x.first.should == @p
         end
         it "should not import" do
-          @mf.process_import(@p,1, User.new).should == "Classification count ignored."
+          expect(@mf.process_import(@p,1, User.new)).to match(/ignored/)
         end
         it "should not count tariff records without hts_1 values" do
           @p.classifications.find_by_country_id(@c1.id).tariff_records.first.update_attributes(:hts_1=>'')

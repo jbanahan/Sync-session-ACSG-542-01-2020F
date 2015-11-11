@@ -25,7 +25,6 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
     # For each product, find all the HTS #'s asscociated with it and then spawn out a row for each one of them
     rows = []
     counter = 0
-
     c = Classification.includes(:custom_values).where(id: row[5]).first
     set_type = c.get_custom_value(@cdefs[:class_set_type]).value
 
@@ -56,8 +55,9 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
         end
       end
     end
-
+    
     if rows.length == 1
+    
       # They want the row counter for single tariff lines to be zero, not 1, so just
       # change it "post facto" when there's only a single tariff line
       rows[0][3] = "000"
@@ -66,7 +66,26 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
       rows = rows.insert(0, [row[0], row[1], "MULTI", "000", row[4]])
     end
 
+    fingerprint = Digest::SHA1.base64digest rows.flatten.join("/")
+    rows = fingerprint_filter rows, opts[:product_id], row[1], fingerprint
+    @buffered_ids[opts[:product_id]] = fingerprint if rows.empty?
     rows
+  end
+
+  def fingerprint_filter rows, prod_id, country_iso, new_fingerprint
+    old_fingerprint = DataCrossReference.find_lenox_hts_fingerprint(prod_id, country_iso)
+    if new_fingerprint == old_fingerprint
+      []
+    else
+      DataCrossReference.create_lenox_hts_fingerprint!(prod_id, country_iso, new_fingerprint)
+      rows
+    end
+  end
+
+  def sync
+    @buffered_ids = {}
+    super
+    write_sync_records @buffered_ids
   end
 
   def sync_code

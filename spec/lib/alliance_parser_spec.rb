@@ -394,8 +394,9 @@ describe OpenChain::AllianceParser do
   it 'should create entry' do
     Lock.should_receive(:acquire).with(Lock::ALLIANCE_PARSER, times: 3).and_yield
     Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_yield
-    OpenChain::SqlProxyClient.should_receive(:delay).and_return OpenChain::SqlProxyClient
-    OpenChain::SqlProxyClient.should_receive(:request_alliance_entry_details).with @ref_num, @est.parse(@extract_date_str)
+    sql_proxy = double("OpenChain::KewillSqlProxyClient")
+    OpenChain::KewillSqlProxyClient.should_receive(:delay).and_return sql_proxy
+    sql_proxy.should_receive(:request_alliance_entry_details).with @ref_num, @est.parse(@extract_date_str)
 
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content

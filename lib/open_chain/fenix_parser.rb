@@ -1,4 +1,6 @@
 require 'open_chain/integration_client_parser'
+require 'open_chain/fenix_sql_proxy_client'
+
 module OpenChain
   class FenixParser
     extend OpenChain::IntegrationClientParser
@@ -18,7 +20,16 @@ module OpenChain
       '1274' => :cadex_accept_date=,
       '1276' => :exam_ordered_date=,
       '1280' => :k84_receive_date=,
-      '105'=> :b3_print_date=
+      '105'=> :b3_print_date=,
+      'DOGIVEN' => :do_issued_date_first,
+      'DOCREQ' => {datatype: :date, setter: :docs_received_date_first},
+      'ETA' => {datatype: :date, setter: :eta_date=},
+      'RNSCUSREL' => :release_date=,
+      'CADXTRAN' => :cadex_sent_date=,
+      'CADXACCP' => :cadex_accept_date=,
+      'ACSREFF' => :exam_ordered_date=,
+      'CADK84REC' => {datatype: :date, setter: :k84_receive_date=},
+      'B3P' => :b3_print_date=
     }
 
     SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON', 'BL']
@@ -28,12 +39,43 @@ module OpenChain
       ["//opt/wftpserver/ftproot/www-vfitrack-net/_fenix", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_fenix"]
     end
 
+    def self.parse_lvs_query_results result_set
+      results = result_set.is_a?(String) ? ActiveSupport::JSON.decode(result_set) : result_set
+
+      # In almost all cases, the same summary entry will be used...there's no point in
+      # looking them up every time, so just look up on cache misses
+      entry_cache = Hash.new do |h, k|
+        h[k] = Entry.where(entry_number: k, source_system: SOURCE_CODE).first
+      end
+      # This is another optimization...no use looking up the CA country every time when we
+      # can do it once and provide it to the method
+      canada = Country.find_by_iso_code('CA')
+
+      parser = self.new
+      results.each do |result|
+        child_entry = result['child']
+
+        # For whatever reason, the transaction number in Fenix ND has a space at the end of it in the database
+        parent_entry = entry_cache[result['summary'].to_s.strip]
+
+        if parent_entry
+          parser.update_lvs_dates parent_entry, result['child'].to_s.strip, canada
+        end
+      end
+    end
+
     # take the text from a Fenix CSV output file and create entries
     def self.parse file_content, opts={}
       begin
         entry_lines = []
         current_file_number = ""
         CSV.parse(file_content) do |line|
+
+          if line[0] == "T"
+            opts[:timestamp] = parse_timestamp line
+            next
+          end
+
           # The "supporting" lines in the new format all have less than 10 file positions 
           # So, don't skip the line if we're proc'ing one of those.
           supporting_line_type = SUPPORTING_LINE_TYPES.include?(line[0])
@@ -104,7 +146,9 @@ module OpenChain
         # with valid entry numbers shortly
         return nil unless valid_entry_number? info[:entry_number]
 
-        find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path)) do |entry|
+        fenix_nd_entry = !opts[:timestamp].nil?
+
+        find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path, opts[:timestamp]), fenix_nd_entry) do |entry|
           # Entry is only yieled here if we need to process one (ie. it's not outdated)
           # This whole block is also already inside a transaction, so no need to bother with opening another one
           @entry = entry
@@ -124,7 +168,7 @@ module OpenChain
               process_bill_of_lading_line line
             else 
               process_invoice line
-              process_invoice_line line
+              process_invoice_line line, fenix_nd_entry
             end
           end
 
@@ -174,12 +218,39 @@ module OpenChain
           #write time to process without reprocessing hooks
           @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
 
+          # F type entries are LVS Summaries...when we get one of these we then want to request a full listing of any of the "child" LVS
+          # transaction numbers so we can pull the summary level dates down into the child entries.
+          if @entry.entry_type.to_s.upcase.strip == "F"
+            OpenChain::FenixSqlProxyClient.new.delay.request_lvs_child_transactions @entry.entry_number
+          end
+
         end
         nil
       end
     end
 
+    def update_lvs_dates parent_entry, child_transaction, import_country = nil
+      child_entry = nil
+      Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do
+        # Individual B3 lines will come through for these entries, at that point, they'll set the importer and other information
+        # LV is the fenix entry type for Low-Value entries.
+        child_entry = Entry.where(:entry_number => child_transaction, :source_system => SOURCE_CODE).first_or_create! :import_country => import_country, entry_type: "LV"
+      end
+
+      child_entry.release_date = parent_entry.release_date
+      child_entry.cadex_sent_date = parent_entry.cadex_sent_date
+      child_entry.cadex_accept_date = parent_entry.cadex_accept_date
+      child_entry.k84_receive_date = parent_entry.k84_receive_date
+
+      child_entry.save!
+    end
+
     private
+
+    def self.parse_timestamp line
+      time_zone.parse(line[1].to_s+line[2].to_s.rjust(6, "0"))
+    end
+    private_class_method :parse_timestamp
 
     def entry_information line
       {
@@ -265,13 +336,22 @@ module OpenChain
       ci.invoice_date = parse_date(line[18])
       ci.vendor_name = str_val(line[11])
       ci.currency = str_val(line[43])
+      # Fenix ND sometimes doesn't send the exchange rate when the currency is Canadian
       ci.exchange_rate = dec_val(line[44])
+      if ci.exchange_rate.blank?
+        if ci.currency == "CAD"
+          ci.exchange_rate = 1
+        else
+          raise "File # / Invoice # #{@entry.broker_reference} / #{ci.invoice_number} was missing an exchange rate.  Exchange rate must be present for commercial invoices where the currency is not CAD."
+        end
+      end
+
       ci.mfid = str_val(line[102])
       accumulate_string :vendor_names, ci.vendor_name
       accumulate_string :invoice_number, ci.invoice_number
     end
 
-    def process_invoice_line line
+    def process_invoice_line line, fenix_nd = true
       inv = @commercial_invoices[line[15]]
       #inv will be blank if there was no invoice information on the line
       return if inv.nil?
@@ -312,12 +392,16 @@ module OpenChain
       accumulate_string :org_state, org[1]
       accumulate_string :customer_references, inv_ln.customer_reference
 
-      total_value_with_adjustments = dec_val(line[105])
+      if fenix_nd
+        inv_ln.adjustments_amount = dec_val(line[113])
+      else
+        total_value_with_adjustments = dec_val(line[105])
 
-      if total_value_with_adjustments
-        adjustments_per_piece = dec_val(line[113])
-        total_value_with_adjustments += adjustments_per_piece if adjustments_per_piece
-        inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0")) 
+        if total_value_with_adjustments
+          adjustments_per_piece = dec_val(line[113])
+          total_value_with_adjustments += adjustments_per_piece if adjustments_per_piece
+          inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0")) 
+        end
       end
 
       t = inv_ln.commercial_invoice_tariffs.build
@@ -356,8 +440,13 @@ module OpenChain
           # Just figure out whatever is closest to the actual reported duty amount, which will tell us 
           # whether we need to use the adjusted amount or not
           vals = [(t.duty_amount - ad_val).abs, (t.duty_amount - specific_duty).abs]
+
+          # When doing the calculations this way, there's actually the possibility due to some rounding involved
+          # in calculating the duty amount that the specific calculation MAY be more exact by a fraction of a cent
+          # - even when the adval rate is the effective rate.
+          # If this is the case, prefer the adval rate, since it's the overwhelmingly used scenario.
           
-          if ad_val.nonzero? && vals.min == vals[0]
+          if ad_val.nonzero? && (vals.min == vals[0] || ((vals[0] - vals[1]).abs <= BigDecimal("0.01")))
             t.duty_rate = adjusted_duty_rate
           else
             t.duty_rate = duty_rate
@@ -382,19 +471,24 @@ module OpenChain
     end
 
     def process_activity_line entry, line, accumulated_dates
-      if !line[2].nil? && !line[3].nil? && ACTIVITY_DATE_MAP[line[2].strip]
-        time = (line[4].blank? ? time_zone.parse(line[3]).to_date : time_zone.parse("#{line[3]}#{line[4]}")) rescue nil
+      data = date_map_data line[2].strip
+      if !line[2].nil? && !line[3].nil? && data
+        if line[4].blank? || data[:datatype] == :date
+          time = time_zone.parse(line[3]).to_date rescue nil
+        else
+          time = time_zone.parse("#{line[3]}#{line[4]}") rescue nil
+        end
 
         # This assumes we're using a hash with a default return value of an empty array
         if time
-          accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << time
+          accumulated_dates[data[:setter]] << time
         end
       end
 
       # We're not capturing the date from Event 5, but we need to pull the employee code from it
       if !line[5].blank?
         case line[2].strip
-        when "5"
+        when "5", "SHPCR"
           # Capture the employee name that opened the file (Event 5 is File Opened)
           entry.employee_name = line[5]
         end
@@ -402,6 +496,14 @@ module OpenChain
 
       nil
       rescue
+    end
+
+    def date_map_data date_key
+      values = ACTIVITY_DATE_MAP[date_key]
+      if values && !values.is_a?(Hash)
+        values = {datatype: :datetime, setter: values}
+      end
+      values
     end
 
     def process_cargo_control_line line
@@ -466,6 +568,10 @@ module OpenChain
     end
 
     def time_zone
+      self.class.time_zone
+    end
+
+    def self.time_zone
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     end
 
@@ -524,7 +630,7 @@ module OpenChain
       c
     end
 
-    def find_and_process_entry file_number, entry_number, tax_id, importer_name, source_system_export_date
+    def find_and_process_entry file_number, entry_number, tax_id, importer_name, source_system_export_date, fenix_nd_entry = false
       # Make sure we aquire a cross process lock to prevent multiple job queues from executing this 
       # at the same time (prevents duplicate entries from being created).
       entry = nil
@@ -554,6 +660,13 @@ module OpenChain
           # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
           # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
           entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer.id, :last_exported_from_source=>source_system_export_date) 
+        end
+
+        if fenix_nd_entry
+          if !validate_no_transaction_reuse(entry, file_number)
+            # Set the entry to nil if the transaction is being reused...we don't want to update any data in it.
+            entry = nil
+          end
         end
       end
 
@@ -661,7 +774,9 @@ module OpenChain
       entry.last_exported_from_source.nil? || (entry.last_exported_from_source <= source_system_export_date)
     end
 
-    def find_source_system_export_time file_path
+    def find_source_system_export_time file_path, timestamp
+      # For the new B3 records coming from Fenix ND there's a T record at the top of the file that gives us the export timestamp...use that instead
+      return timestamp unless timestamp.nil?
       return if file_path.blank?
 
       export_time = nil
@@ -694,6 +809,19 @@ module OpenChain
         r = "0#{r}"
       end
       r
+    end
+
+    def validate_no_transaction_reuse entry, new_file_number
+      if entry.release_date && entry.release_date < time_zone.parse("2015-09-18")
+        subject = "Transaction # #{entry.entry_number} cannot be reused in Fenix ND"
+        message = "Transaction # #{entry.entry_number} / File # #{new_file_number} has been used previously in old Fenix as File # #{entry.broker_reference}. Please correct this Fenix ND file and resend to VFI Track."
+        m = OpenMailer.send_simple_html(Group.use_system_group("fenix_admin", "Fenix Admin"), subject, message)
+        m.deliver! if Array.wrap(m.to).length > 0
+
+        false
+      else
+        true
+      end
     end
   end
 end

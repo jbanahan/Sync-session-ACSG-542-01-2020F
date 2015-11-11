@@ -44,7 +44,7 @@ describe OpenChain::Wto6ChangeResetter do
       d = 5.days.ago
 
       #this is the expectation
-      # described_class.should_receive(:reset_fields_if_changed).with(p2,'prod_created_at',['prod_name'])
+      # need to test the Product call because the reset_field_if_changed stub is clobbered by the SchedulableJob loading the class
       Product.any_instance.should_receive(:wto6_changed_after?).once
       
       #have the test actually run the schedulable job since we have the dependency on the last_start_time being
@@ -53,6 +53,19 @@ describe OpenChain::Wto6ChangeResetter do
       s = SchedulableJob.new(opts:opts.to_json,run_class:'OpenChain::Wto6ChangeResetter')
       s.last_start_time = d
       s.run
+    end
+    it "should get all products if run_all option exists" do
+      cr = 12.days.ago
+      p = Factory(:product,updated_at:6.days.ago,created_at:cr)
+      p2 = Factory(:product,updated_at:4.days.ago,created_at:cr)
+      d = 5.days.ago
+
+      #this is the expectation
+      described_class.should_receive(:reset_fields_if_changed).twice
+
+      opts = {'change_date_field'=>'prod_created_at','fields_to_reset'=>['prod_name'],'run_all'=>'true','last_start_time'=>10.days.from_now}
+      
+      described_class.run_schedulable(opts)
     end
   end
 end

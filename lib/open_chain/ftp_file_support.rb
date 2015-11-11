@@ -35,5 +35,11 @@ module OpenChain
       opts[:remote_file_name] = remote_file_name unless remote_file_name.blank?
       opts
     end
+
+    def fenixapp_vfitrack_net folder, remote_file_name = nil
+      opts = {server: 'fenixapp.vfitrack.net', username: 'vfitrack', password: 'bJzgt1S##t', folder: folder, protocol: 'sftp'}
+      opts[:remote_file_name] = remote_file_name unless remote_file_name.blank?
+      opts
+    end
   end
 end

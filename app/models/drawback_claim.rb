@@ -43,6 +43,10 @@ class DrawbackClaim < ActiveRecord::Base
     user.view_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer)) 
   end
 
+  def can_comment? user
+    self.can_view?(user)
+  end
+
   def can_edit? user
     user.edit_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer)) 
   end

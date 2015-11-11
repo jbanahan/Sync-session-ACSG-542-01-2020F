@@ -1,4 +1,4 @@
-require 'open_chain/sql_proxy_client'
+require 'open_chain/kewill_sql_proxy_client'
 require 'open_chain/schedule_support'
 
 module OpenChain; module Report; class AllianceWebtrackingMonitorReport
@@ -14,7 +14,7 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
     # ago.  Give them a little bit of time to come over.
     upper_bounds = now - 1.hour
 
-    OpenChain::SqlProxyClient.request_file_tracking_info days_ago, upper_bounds
+    OpenChain::KewillSqlProxyClient.request_file_tracking_info days_ago, upper_bounds
   end
 
   def self.process_alliance_query_details json_results

@@ -10,6 +10,7 @@ describe Country do
       Country.load_default_countries
       Country.scoped.count.should == Country::ALL_COUNTRIES.size
       Country.find_by_iso_code('VN').name.should == 'VIET NAM'
+      Country.find_by_iso_code('IT').european_union?.should be_true
     end
     it "should not run if country count matches all countries" do
       Country.load_default_countries

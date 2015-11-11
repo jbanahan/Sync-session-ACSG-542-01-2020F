@@ -23,7 +23,11 @@ module OpenChain
       end
 
       def generate
-        ftp_file sync_xls
+        count = nil
+        begin
+          file = sync_xls
+          ftp_file file if (count = self.row_count) > 0
+        end while count > 0
       end
 
       def auto_confirm?
@@ -145,27 +149,50 @@ module OpenChain
           cd_s(@cdefs[:set_type].id)
         ]
         r = "SELECT #{fields.join(", ")} 
-FROM products 
-INNER JOIN classifications on classifications.product_id = products.id and classifications.country_id = (select id from countries where iso_code = \"US\" LIMIT 1)
-LEFT OUTER JOIN tariff_records on tariff_records.classification_id = classifications.id
+FROM products
+INNER JOIN classifications  on classifications.product_id = products.id 
+INNER JOIN countries countries on countries.iso_code = 'US' and classifications.country_id = countries.id
+LEFT OUTER JOIN tariff_records tariff_records on tariff_records.classification_id = classifications.id
+INNER JOIN custom_values cust_id ON products.id = cust_id.customizable_id AND cust_id.customizable_type = 'Product' and cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(cust_id.string_value), '')) > 0
+LEFT OUTER JOIN custom_values test_style ON products.id = test_style.customizable_id AND test_style.customizable_type = 'Product' and test_style.custom_definition_id = #{@cdefs[:test_style].id}
+LEFT OUTER JOIN custom_values set_type ON classifications.id = set_type.customizable_id AND set_type.customizable_type = 'Classification' and set_type.custom_definition_id = #{@cdefs[:set_type].id}
+INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id
 "
+      end
+
+      def inner_query 
+        # This query is here soley to allow us to do limits...it needs to be done as subquery like this because there can potentially be more than one row per product.
+        # If we didn't do this, then there's the possibility that we chop off a tariff record from a query if we just added a limit to a single query.
+        r = "SELECT inner_products.id
+FROM products inner_products
+INNER JOIN classifications inner_classifications on inner_classifications.product_id = inner_products.id 
+INNER JOIN countries inner_countries on inner_countries.iso_code = 'US' and inner_classifications.country_id = inner_countries.id
+LEFT OUTER JOIN tariff_records inner_tariff_records on inner_tariff_records.classification_id = inner_classifications.id
+"
+
 # The JOINS + WHERE clause below generates files that need to be synced
 # && Have an HTS 1, 2, or 3 value OR are 'RL' Sets 
 # && have Barthco Customer IDs
 # && DO NOT have a 'Test Style' value, 
-        if @custom_where.blank?
-          r += "#{Product.need_sync_join_clause(sync_code)} 
-INNER JOIN custom_values cust_id ON products.id = cust_id.customizable_id AND cust_id.customizable_type = 'Product' and cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(cust_id.string_value), '')) > 0
-LEFT OUTER JOIN custom_values test_style ON products.id = test_style.customizable_id AND test_style.customizable_type = 'Product' and test_style.custom_definition_id = #{@cdefs[:test_style].id}
-LEFT OUTER JOIN custom_values set_type ON classifications.id = set_type.customizable_id AND set_type.customizable_type = 'Classification' and set_type.custom_definition_id = #{@cdefs[:set_type].id}
-WHERE #{Product.need_sync_where_clause()} 
-AND (length(tariff_records.hts_1) > 0 OR length(tariff_records.hts_2) > 0 OR length(tariff_records.hts_3) > 0 OR (set_type.string_value = 'RL'))
-AND (test_style.string_value IS NULL OR length(rtrim(test_style.string_value)) = 0)"         
-        else 
-          r += @custom_where
+        if self.custom_where.blank?
+          r += "#{Product.need_sync_join_clause(sync_code, 'inner_products')} 
+INNER JOIN custom_values inner_cust_id ON inner_products.id = inner_cust_id.customizable_id AND inner_cust_id.customizable_type = 'Product' and inner_cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(inner_cust_id.string_value), '')) > 0
+LEFT OUTER JOIN custom_values inner_test_style ON inner_products.id = inner_test_style.customizable_id AND inner_test_style.customizable_type = 'Product' and inner_test_style.custom_definition_id = #{@cdefs[:test_style].id}
+LEFT OUTER JOIN custom_values inner_set_type ON inner_classifications.id = inner_set_type.customizable_id AND inner_set_type.customizable_type = 'Classification' and inner_set_type.custom_definition_id = #{@cdefs[:set_type].id}
+WHERE #{Product.need_sync_where_clause('inner_products', Time.zone.now - 3.hours)} 
+AND (length(inner_tariff_records.hts_1) > 0 OR length(inner_tariff_records.hts_2) > 0 OR length(inner_tariff_records.hts_3) > 0 OR (inner_set_type.string_value = 'RL'))
+AND (inner_test_style.string_value IS NULL OR length(rtrim(inner_test_style.string_value)) = 0)
+"
+        else
+          r += self.custom_where
         end
 
-        r
+        r += " ORDER BY inner_products.id ASC"
+        r + " LIMIT #{max_results}"
+      end
+
+      def max_results
+        5000
       end
 
     end

@@ -163,7 +163,11 @@ class FtpSender
   private_class_method :get_file_to_ftp
 
   def self.get_ftp_client my_opts
-    my_opts[:protocol] == "sftp" ? SftpClient.new : FtpClient.new
+    if Rails.configuration.enable_ftp
+      my_opts[:protocol] == "sftp" ? SftpClient.new : FtpClient.new
+    else
+      NoOpFtpClient.new
+    end
   end
   private_class_method :get_ftp_client
 
@@ -325,5 +329,44 @@ class FtpSender
         end
         raise e
       end
+  end
+
+  class NoOpFtpClient
+
+    attr_accessor :log, :remote_path
+
+    def connect server, user, password, log, opts
+      log << "File sending has been disabled for this environment.  All log messages after this are for reference only...no files were sent."
+      set_ok_response
+      yield
+    end
+
+    def after_login opts={}
+      # at this point, this is a no-op
+    end
+
+    def chdir folder, opts={}
+      # SFTP servers have no actual concept of current directories so we end up having
+      # to emulate it by keeping a remote path variable for the session (see connect method)
+
+      # cleanpath handles any folder traversals that might be done from the folder variable .ie 'path/blagh/../new'.cleanpath = 'path/new' 
+      @remote_path = append_path @remote_path, folder
+    end
+
+    def send_file local_path, remote_name, opts={}
+      set_ok_response
+    end
+
+    def last_response 
+      @last_response
+    end
+
+    def append_path path, append
+      Pathname.new(path + append).cleanpath
+    end
+
+    def set_ok_response
+      @last_response = "0 OK"
+    end
   end
 end

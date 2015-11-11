@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::ISFXMLGenerator do
                           consolidator_address: Factory(:full_address),
                           house_bill_of_lading:'this is a house bill',
                           master_bill_of_lading:'this is a master bill',
-                          est_load_date: 3.days.ago,
+                          est_load_date: 3.days.ago.to_date,
                           booking_number: 'This is the number you booked',
       )
       order = Factory(:order, order_number:'123456789')
@@ -78,10 +78,10 @@ describe OpenChain::CustomHandler::ISFXMLGenerator do
 
       expect(r.name).to eq 'IsfEdiUpload'
       expect(r.text('EDI_TXN_IDENTIFIER')).to eq @shipment.id.to_s
-      expect(Time.parse(r.text('DATE_CREATED'))).to be_within(1.second).of(Time.now)
+      expect(Time.parse(r.text('DATE_CREATED'))).to be_within(5.second).of(Time.now)
       expect(r.text('ACTION_CD')).to eq 'A'
       expect(r.text('IMPORTER_ACCT_CD')).to eq @shipment.importer.alliance_customer_number
-      expect(Time.parse(r.text('EST_LOAD_DATE'))).to be_within(1.second).of(@shipment.est_load_date)
+      expect(Time.zone.parse(r.text('EST_LOAD_DATE')).to_date).to eq @shipment.est_load_date
       expect(r.text('BOOKING_NBR')).to eq @shipment.booking_number
       expect(r.text('EdiBillLading/HOUSE_BILL_NBR')).to eq ' is a house bill'
       expect(r.text('EdiBillLading/HOUSE_BILL_SCAC_CD')).to eq 'this'

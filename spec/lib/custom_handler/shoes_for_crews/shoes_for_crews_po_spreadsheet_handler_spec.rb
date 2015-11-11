@@ -19,11 +19,12 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       consignee_address: "Consignee Name\r\nAddress1\r\nAddress 2",
       final_dest_address: "Final Dest Name\r\nAddress1\r\nAddress 2",
       order_balance: 100.00,
+      alternate_po_number: "PO#",
       items: [
         {
           item_code: "ITEMCODE1",
           warehouse_code: "ware",
-          model: "model",
+          model: "Senator - Size 07, Blk",
           upc: "upc",
           unit: 1.00,
           ordered: 2.00,
@@ -36,7 +37,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
         {
           item_code: "ITEMCODE2",
           warehouse_code: "ware",
-          model: "model",
+          model: "Senator - Size 07",
           upc: "upc",
           unit: 1.00,
           ordered: 2.00,
@@ -49,7 +50,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
         {
           item_code: "ITEMCODE3",
           warehouse_code: "ware",
-          model: "model",
+          model: "Senator - Blk",
           upc: "upc",
           unit: 1.00,
           ordered: 2.00,
@@ -116,6 +117,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
     row = sht.row 13
     row[0] = "Item Code"
+    row = sht.row 14
+    row[1] = data[:alternate_po_number]
     counter = 0
     (15..(15 + (data[:items].size - 1))).each do |r|
       row = sht.row r
@@ -143,6 +146,11 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     wb.write out
 
     out.string
+  end
+
+  let (:importer) { Factory(:importer, system_code: "SHOES") }
+  before :each do
+    importer
   end
 
   describe "parse_spreadsheet" do
@@ -277,6 +285,130 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       p = described_class.new
       p.should_receive(:ftp2_vandegrift_inc).with 'to_ecs/Shoes_For_Crews/PO'
       p.ftp_credentials
+    end
+  end
+
+  describe "process_po" do
+    let(:workbook_data) { defaults(@overrides) }
+    let(:workbook) { create_workbook workbook_data }
+    let(:data) { subject.parse_spreadsheet(create_workbook(workbook_data)) }
+    let(:custom_values) {subject.instance_variable_get("@cdefs")}
+
+    before :each do
+      @overrides = {}
+    end
+
+    it "saves a new PO" do
+      Order.any_instance.should_receive(:post_create_logic!)
+
+      subject.process_po data, "bucket", "key"
+      po = Order.where(order_number: "SHOES-" + workbook_data[:order_id]).first
+      expect(po).not_to be_nil
+      expect(po.importer).to eq importer
+      expect(po.customer_order_number).to eq "ORDER#"
+      expect(po.order_date).to eq Date.new(2013,11,14)
+      expect(po.mode).to eq "Ship Via"
+      expect(po.first_expected_delivery_date).to eq Date.new(2013, 11, 15)
+      expect(po.terms_of_sale).to eq "PAYMENT Terms"
+      expect(po.last_file_bucket).to eq "bucket"
+      expect(po.last_file_path).to eq "key"
+      expect(po.vendor.system_code).to eq "SHOES-123123"
+      expect(po.vendor.vendor).to be_true
+      expect(po.importer.linked_companies).to include po.vendor
+
+      expect(po.order_lines.length).to eq 3
+      line = po.order_lines.first
+
+      expect(line.line_number).to eq 1
+      expect(line.product.unique_identifier).to eq "SHOES-ITEMCODE1"
+      expect(line.product.name).to eq "Senator - Size 07, Blk"
+      expect(line.product.unit_of_measure).to eq "uom"
+      expect(line.product.importer).to eq importer
+      expect(line.product.last_snapshot).not_to be_nil
+      expect(line.product.custom_value(custom_values[:prod_part_number])).to eq "ITEMCODE1"
+
+      expect(line.sku).to eq "upc"
+      expect(line.quantity).to eq BigDecimal("2")
+      expect(line.price_per_unit).to eq BigDecimal("3")
+      expect(line.custom_value(custom_values[:order_line_destination_code])).to eq "ware"
+      expect(line.custom_value(custom_values[:order_line_size])).to eq "07"
+      expect(line.custom_value(custom_values[:order_line_color])).to eq "Blk"
+
+      # The next couple lines are just testing size/color parsing from the "model" source value
+      line = po.order_lines[1]
+      expect(line.line_number).to eq 2
+      expect(line.custom_value(custom_values[:order_line_size])).to eq "07"
+      expect(line.custom_value(custom_values[:order_line_color])).to be_nil
+
+      line = po.order_lines[2]
+      expect(line.line_number).to eq 3
+      expect(line.custom_value(custom_values[:order_line_size])).to be_nil
+      expect(line.custom_value(custom_values[:order_line_color])).to eq "Blk"
+
+      # Verify a fingerprint was set
+      fingerprint = DataCrossReference.find_po_fingerprint po
+      expect(fingerprint).not_to be_nil
+    end
+
+    it "updates a PO" do
+      order = Factory(:order, order_number: "SHOES-" + workbook_data[:order_id], importer: importer)
+      Order.any_instance.should_receive(:post_update_logic!)
+
+      subject.process_po data, "bucket", "key"
+
+      order.reload
+
+      # Just check if there are now lines, if so, it means the order was updated
+      expect(order.order_lines.length).to eq 3
+    end
+
+    it "does not update an order if the order is shipping" do
+      order = Factory(:order, order_number: "SHOES-" + workbook_data[:order_id], importer: importer)
+
+      # mock the find_order so we can provide our own order to make sure that when an order is 
+      # said to be shipping that it's not updated.
+      order.should_receive(:shipping?).and_return true
+      order.should_not_receive(:post_update_logic!)
+
+      subject.should_receive(:find_order).and_yield true, order
+
+      subject.process_po data, "bucket", "key"
+
+      order.reload
+
+      # Just check if there are now lines, if so, it means the order was updated
+      expect(order.order_lines.length).to eq 0
+    end
+
+    it "does not call post_update when the order has not been changed" do
+      # The easiest way to ensure we get identical fingerprints is to just use the process_po method twice
+      # using the same dataset.
+
+      subject.process_po data, "bucket", "key"
+      po = Order.where(order_number: "SHOES-" + workbook_data[:order_id]).first
+      subject.should_receive(:find_order).and_yield true, po
+      po.should_not_receive(:post_update_logic!)
+
+      subject.process_po data, "bucket", "key2"
+    end
+
+    it "calls unaccept if the order has been updated and the status was previously accepted" do
+      order = Factory(:order, order_number: "SHOES-" + workbook_data[:order_id], importer: importer, approval_status: "Accepted")
+      Order.any_instance.should_receive(:post_update_logic!)
+      Order.any_instance.should_receive(:unaccept!)
+
+      subject.process_po data, "bucket", "key"
+    end
+
+    it "uses the alternate PO number if standard order id and order number fields are blank" do
+      @overrides[:order_id] = ""
+      @overrides[:order_number] = ""
+      
+      subject.process_po data, "bucket", "key"
+
+      po = Order.where(order_number: "SHOES-" + workbook_data[:alternate_po_number]).first
+      expect(po).not_to be_nil
+      expect(po.customer_order_number).to eq workbook_data[:alternate_po_number]
     end
   end
 end

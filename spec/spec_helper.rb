@@ -49,11 +49,25 @@ Spork.prefork do
       unless example.metadata[:paperclip] 
         stub_paperclip
       end
+      unless example.metadata[:s3] 
+        stub_s3
+      end
+      unless example.metadata[:email_log]
+        stub_email_logging
+      end
+
+      #clear ComparatorRegistry
+      OpenChain::EntityCompare::ComparatorRegistry.clear
     end
     
     # Clears out the deliveries array before every test..which is only done automatically
     # for mailer tests.
-    config.after(:each) {ActionMailer::Base.deliveries = []}
+    config.after(:each) do
+      ActionMailer::Base.deliveries = []
+      unless example.metadata[:s3]
+        unstub_s3
+      end
+    end
 
     config.after(:each, :type => :controller) do
       # Counteract the application controller setting MasterSetup.current, which bleeds across multiple tests

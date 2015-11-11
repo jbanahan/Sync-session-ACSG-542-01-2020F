@@ -1,4 +1,10 @@
 <% content_for :javascript do %>
+  $(function() {
+    $("#beta-on").click(function() {
+      $.cookie('product_beta','y',{ path: '/' });
+      location.reload(true);
+    });
+  });
   <% if @product.can_edit?(current_user) || @product.can_classify?(current_user)%>
   $(function() {
     $( "#btn_edit" )
@@ -18,14 +24,24 @@
 
 <% content_for :action_bar do %>
   <% if (@product.can_edit?(current_user) || @product.can_classify?(current_user)) && !@product.locked?%>
-    <button id='btn_edit'>Edit</button>
-    <%if current_user.edit_classifications? %> <button id='btn_classify'>Classify</button><% end %>
+    <button id='btn_edit' title='Edit'><i class='fa fa-pencil'></i></button>
+    <%if current_user.edit_classifications? %> <button id='btn_classify' title='Classify'><i class='fa fa-globe'></i></button><% end %>
   <%end%>
-  <button class='btn_link' link_to='<%=products_path%>' key_map='b'>Back To Search</button>
+  <button class='btn_link' link_to='<%=products_path%>' key_map='b' title='Back To Search'><i class='fa fa-search'></i></button>
   <%=render :partial => 'shared/show_next_prev', :locals => {:obj=>@product} %>
-  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h'>History</button>
+  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
 <% end %>
-<div class='container'>
+    
+<div class="container">
+  <div class="row">
+    <div class="col-md-1"></div>
+    <div class="col-md-10 text-center">
+      <p>
+        Try the new Beta version <button class='btn btn-xs btn-default' id='beta-on'>here</button>.
+      </p>
+    </div>
+  </div>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@product,rule_state_field:ModelField.find_by_uid(:prod_rule_state), validation_path: validation_results_product_path(@product)}%>
   <div class='row'>
     <div class='col-md-6' id='prod_attr'>
       <h3 class='text-center'>Attributes</h3>

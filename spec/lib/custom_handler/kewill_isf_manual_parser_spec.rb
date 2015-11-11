@@ -45,7 +45,7 @@ describe OpenChain::CustomHandler::KewillIsfManualParser do
       @cf = Factory(:attachment)
       @k = OpenChain::CustomHandler::KewillIsfManualParser.new(@cf)
       OpenChain::CustomHandler::KewillIsfManualParser.stub(:process_s3).and_return nil #don't bother faking a real s3 path
-      OpenChain::CustomHandler::KewillIsfManualParser.should_receive(:process_s3).with(@cf.attached.path, "chain-io")
+      OpenChain::CustomHandler::KewillIsfManualParser.should_receive(:process_s3).with(@cf.attached.path, OpenChain::S3.bucket_name(:production))
       @k.process(@u)
     end
 

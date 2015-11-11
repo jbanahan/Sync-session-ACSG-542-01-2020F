@@ -1,0 +1,8 @@
+<div ng-repeat='fld in outerScope.dictionary.fieldsByRecordType(outerScope.dictionary.recordTypes.Product) track by fld.uid'>
+  <div class="form-group" ng-if="outerScope.product[fld.uid]">
+    <label class="control-label" for="{{fld.uid}}">{{fld.label}}</label>
+    <p class="form-control-static" id='{{fld.uid}}'>
+      <chain-field-view model='outerScope.product' field='fld'></chain-field-view>
+    </p>
+  </div>
+</div>

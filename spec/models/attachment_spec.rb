@@ -73,6 +73,47 @@ describe Attachment do
       a.can_view?(user).should be_false
     end
 
+    context "with attachment type limitations" do
+      let (:user) {Factory(:user)}
+      let (:entry) {Factory(:entry, importer: user.company)}
+      let (:attachment) {entry.attachments.build attached_file_name: "test.txt"}
+
+      it "limits access to Billing Invoice attachments to only those capable of viewing BrokerInvoices" do
+        a = attachment
+        a.attachment_type = "BilLIng InvoICE"
+        a.save!
+        BrokerInvoice.should_receive(:can_view?).with(user, a.attachable).and_return false
+        a.attachable.should_receive(:can_view?).with(user).and_return true
+        expect(a.can_view? user).to be_false
+      end
+
+      it "limits access to INVOICE attachments to only those capable of viewing broker invoices" do
+        a = attachment
+        a.attachment_type = "Invoice"
+        a.save!
+        BrokerInvoice.should_receive(:can_view?).with(user, a.attachable).and_return false
+        a.attachable.should_receive(:can_view?).with(user).and_return true
+        expect(a.can_view? user).to be_false
+      end
+
+      it "limits access to Archive Packet attachments to only those capable of viewing broker invoices" do
+        a = attachment
+        a.attachment_type = "Archive Packet"
+        a.save!
+        BrokerInvoice.should_receive(:can_view?).with(user, a.attachable).and_return false
+        a.attachable.should_receive(:can_view?).with(user).and_return true
+        expect(a.can_view? user).to be_false
+      end
+
+      it "does not limit for other attachment types" do
+        a = attachment
+        a.attachment_type = "Random Type"
+        a.save!
+        BrokerInvoice.should_not_receive(:can_view?).with(user, a.attachable)
+        a.attachable.should_receive(:can_view?).with(user).and_return true
+        expect(a.can_view? user).to be_true
+      end
+    end
   end
 
   describe "add_original_filename_method" do
@@ -83,6 +124,12 @@ describe Attachment do
       a.original_filename.should be_nil
       a.original_filename = "file.txt"
       a.original_filename.should == "file.txt"
+    end
+
+    it "sets a default value if given" do
+      a = "test"
+      Attachment.add_original_filename_method a, "filename.txt"
+      expect(a.original_filename).to eq "filename.txt"
     end
   end
 

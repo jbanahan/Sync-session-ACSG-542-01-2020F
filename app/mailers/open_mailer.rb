@@ -1,7 +1,7 @@
 class OpenMailer < ActionMailer::Base
   include AbstractController::Callbacks # This can be removed when migrating to rails 4
 
-  after_filter :modify_email_for_development
+  after_filter :modify_email_for_development, :log_email
 
   ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
@@ -27,7 +27,6 @@ EOS
   def send_simple_html to, subject, body, file_attachments = []
     @body_content = body
     @attachment_messages = []
-
     pm_attachments = []
 
     file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
@@ -49,7 +48,7 @@ EOS
       
     end
 
-    m = mail(:to=>to,:subject=>subject) do |format|
+    m = mail(to: explode_group_email_list(to, "TO"), subject: subject) do |format|
       format.html
     end
 
@@ -92,6 +91,13 @@ EOS
     end
   end
   
+  def send_registration_request(params)
+    @email, @fname, @lname, @company, @cust_no, @contact, @system_code = 
+      params.values_at(:email, :fname, :lname, :company, :cust_no, :contact, :system_code)
+
+    mail(:to => "support@vandegriftinc.com", :subject => "Registration Request")
+  end
+
   def send_feedback(current_user,params,request)
     @user = current_user
     @params = params
@@ -398,13 +404,59 @@ EOS
       fmt.html
     end
   end
+
+  def log_email
+    # Note: This method is stubbed out in testing unless you specifically tag your testing spec with "email_log: true"
+    attachment_list = []
+    message.attachments.each { |att| attachment_list << message_att_to_standard_att(att) } unless message.attachments.empty?
+    # Message.to/etc are all actually Mail::AddressContainer, so we have to convert them to just a string before saving them
+    # Message.body is much more complex and also cannot be directly saved to the database, the body text must be extracted first.
+    SentEmail.create!(email_subject: message.subject, email_to: extract_email_addresses(message.to), email_cc: extract_email_addresses(message.cc), 
+                      email_bcc: extract_email_addresses(message.bcc), email_from: extract_email_addresses(message.from), 
+                      email_reply_to: extract_email_addresses(message.reply_to), email_date: Time.zone.now, email_body: extract_email_body(message.body),
+                      attachments: attachment_list)
+
+    true
+  end
   
+
   private
+
+    def extract_email_addresses list
+      emails = nil
+      if list
+        emails = list.select {|m| !m.nil? && !m.blank? }.join(", ")
+      end
+
+      emails
+    end
+
+    def extract_email_body body
+      # This seems to render the body out in the format that you would expect it to, and ignores attachment body parts.
+      body ? body.decoded : nil
+    end
+
+    def message_att_to_standard_att message_attachment
+      filename_ext = File.extname(message_attachment.filename)
+      filename_without_ext = File.basename(message_attachment.filename, ".*")
+
+      Tempfile.open([filename_without_ext, filename_ext]) do |temp|
+        Attachment.add_original_filename_method(temp, message_attachment.filename)
+        temp.binmode
+        temp << message_attachment.read
+        temp.flush
+        temp.rewind
+
+        standard_att = Attachment.new
+        standard_att.attached = temp
+        standard_att.save!
+        standard_att
+      end
+    end
 
     def save_large_attachment(file, registered_emails)
       email_attachment = nil
       attachment_text = nil
-
       if large_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
 
@@ -448,11 +500,9 @@ EOS
     end
 
     def explode_group_email_list list, list_type
-      list = (list.respond_to?(:each) ? list : [list])
-
       new_list = []
       group_codes = []
-      list.each do |email_address|
+      Array.wrap(list).each do |email_address|
         if email_address.is_a? Group
           group_codes << email_address.system_code
           emails = email_address.users.map(&:email).find_all {|em| !em.blank?}
@@ -464,7 +514,7 @@ EOS
       # Track the groups being sent to under the covers to easily back-trace actual emails to distinct
       # groups
       headers["X-ORIGINAL-GROUP-#{list_type}"] = group_codes.join(", ") unless group_codes.blank?
-      new_list.blank? ? nil : new_list
+      new_list.blank? ? nil : new_list.flatten
     end
 
     def large_attachment? file

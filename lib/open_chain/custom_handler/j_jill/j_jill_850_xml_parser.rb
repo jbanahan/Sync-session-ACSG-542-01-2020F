@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       update_header = true
       po_assigned_to_shipment = false
       #skip orders already on shipments    
-      if ord && ord.piece_sets.where("shipment_line_id is not null").count > 0
+      if ord && ord.shipping?
         update_header = @inner_opts[:force_header_updates]
         update_lines = false
         po_assigned_to_shipment = true

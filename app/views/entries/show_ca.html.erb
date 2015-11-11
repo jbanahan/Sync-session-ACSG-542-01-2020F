@@ -1,10 +1,7 @@
 <%rule_state_field = ModelField.find_by_uid(:ent_rule_state)%>
 <%content_for :action_bar do -%>
-  <button class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
-  <%if rule_state_field.can_view? current_user%>
-    <button class='btn_link' link_to='<%=validation_results_entry_path(@entry)%>'>Business Rules</button>
-  <%end%>
-  <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>'>Sync Records</button>
+  <button class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>" title='Download'><i class='fa fa-download'></i></button>
+  <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>' title='Sync Records'><i class='fa fa-exchange'></i></button>
 <% end -%>
 <style>
 .quick_jump {
@@ -20,7 +17,9 @@
 }
 </style>
 <%show_broker_invoices = current_user.view_broker_invoices?%>
-<%=render partial: 'business_rules', locals:{entry:@entry}%>
+<div class='container'>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:rule_state_field, validation_path: validation_results_entry_path(@entry)}%>
+</div>
 <a name='ent_header'></a>
 <div class='quick_jump'><span class='qj_label'>Jump To:</span>
   <a href='#c_invoices'>Commercial Invoices</a>

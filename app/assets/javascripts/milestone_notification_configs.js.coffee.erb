@@ -53,6 +53,9 @@ angular.module('MilestoneConfigApp').factory 'milestoneSvc', ['$http', ($http) -
     copyMilestoneUpdateConfig: (configId) ->
       $http.get(milestonePath('/' + configId + '/copy')).then(milestoneHandler)
 
+    getModelFields: (module_type) ->
+      $http.get(milestonePath('/model_fields') + '?module_type='+module_type).then(milestoneHandler)
+
   }
 ]
 
@@ -67,6 +70,7 @@ MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneS
   milestoneSvc.getMilestoneUpdateConfigs().success((data) ->
     $scope.milestoneConfigs = data.configs
     $scope.outputStyles = data.output_styles
+    $scope.moduleTypes = data.module_types
     $scope.loadingFlag = null
   )
 
@@ -94,6 +98,7 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
     $scope.modelFieldList = resp.model_field_list
     $scope.eventList = resp.event_list
     $scope.outputStyles = resp.output_styles
+    $scope.moduleTypes = resp.module_types
     $scope.timezones = resp.timezones
     $scope.loadingFlag = null
 
@@ -128,4 +133,9 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
     $scope.config.setup_json = $scope.config.setup_json.filter (s) ->
       s.model_field_uid != event.model_field_uid
 
+  $scope.getModelFields = () ->
+    milestoneSvc.getModelFields($scope.config.module_type).then( (resp) ->
+      $scope.modelFieldList = resp.model_field_list
+      $scope.eventList = resp.event_list
+    )
 ]

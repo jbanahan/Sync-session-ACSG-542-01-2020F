@@ -22,19 +22,6 @@ describe 'CoreObjectValidationResultsApp', () ->
       it 'should default to default', () ->
         expect(svc.stateToBootstrap('text','other')).toEqual 'text-default'
 
-
-    describe 'stateToGlyphicon', () ->
-      it 'should convert Pass', () ->
-        expect(svc.stateToGlyphicon('Pass')).toEqual 'glyphicon-ok'
-      it 'should convert Review', () ->
-        expect(svc.stateToGlyphicon('Review')).toEqual 'glyphicon-user'
-      it 'should convert Fail', () ->
-        expect(svc.stateToGlyphicon('Fail')).toEqual 'glyphicon-remove'
-      it 'should convert Skipped', () ->
-        expect(svc.stateToGlyphicon('Skipped')).toEqual 'glyphicon-minus'
-      it 'should not convert Other', () ->
-        expect(svc.stateToGlyphicon('Other')).toEqual ''
-
     describe 'saveRuleResult', () ->
       it "should save", () ->
         rr = {id:99}

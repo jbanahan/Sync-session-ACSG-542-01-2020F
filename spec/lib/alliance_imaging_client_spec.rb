@@ -27,7 +27,6 @@ describe OpenChain::AllianceImagingClient do
 
   describe :process_image_file do
     before :each do
-      stub_paperclip
       @e1 = Factory(:entry,:broker_reference=>'123456',:source_system=>'Alliance')
       # We need to start w/ an actual pdf file as paperclip no longer just uses the file's
       # filename to discover mime type.
@@ -456,5 +455,123 @@ ERR
 
       OpenChain::AllianceImagingClient.run_schedulable
     end
+  end
+
+  describe "process_fenix_nd_image_file" do
+    before :each do
+      @message = {"source_system" => "Fenix", "export_process" => "sql_proxy", "doc_date" => "2015-09-04T05:30:35-10:00", "s3_key"=>"path/to/file.txt", "s3_bucket" => "bucket", 
+                  "file_number" => "11981001795105 ", "doc_desc" => "B3", "file_name" => "_11981001795105 _B3_01092015 14.24.42 PM.pdf", "version" => nil, "public" => true}
+      # We need to start w/ an actual pdf file as paperclip no longer just uses the file's
+      # filename to discover mime type.
+      @tempfile = Tempfile.new ["file", ".pdf"]
+      @tempfile.binmode
+      File.open("#{Rails.root}/spec/fixtures/files/sample.pdf", "rb") do |f|
+        @tempfile << f.read
+      end
+    end
+
+    after :each do
+      @tempfile.close! if @tempfile
+    end
+
+    it "saves attachment data to entry" do
+      Lock.should_receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times: 3).and_yield
+      Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_yield
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      entry = Entry.where(source_system: "Fenix", entry_number: "11981001795105").first
+      expect(entry).not_to be_nil
+      expect(entry.file_logged_date).to be_within(1.minute).of Time.zone.now
+
+      a = entry.attachments.first
+      expect(a).not_to be_nil
+      expect(a.attachment_type).to eq "B3"
+      expect(a.source_system_timestamp).to eq Time.zone.parse("2015-09-04T05:30:35-10:00")
+      expect(a.is_private).to be_nil
+      expect(a.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
+    end
+
+    it "adds attachment to an existing entry" do
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+      e.reload
+      expect(e.attachments.size).to eq 1
+    end
+
+    it "adds attachment to an existing entry even if the name and type are the same" do
+      @message["doc_desc"] = "Type"
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e.attachments.create! attachment_type: "Type", attached_file_name: "11981001795105 _B3_01092015 14.24.42 PM.pdf", source_system_timestamp: "2015-09-04T04:30:35-10:00"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+      e.reload
+      expect(e.attachments.size).to eq 2
+      expect(e.attachments.map {|a| a.attached_file_name }.uniq).to eq ["11981001795105 _B3_01092015 14.24.42 PM.pdf"]
+    end
+
+    it "replaces previous versions of B3 attachment" do
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T04:30:35-10:00"
+      e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T03:30:35-10:00"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      e.reload
+      expect(e.attachments.size).to eq 1
+      expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
+    end
+
+    it "does not save files that have newer versions attached to the entry" do
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-05T04:30:35-10:00", attached_file_name: "file.pdf"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      e.reload
+      expect(e.attachments.size).to eq 1
+      expect(e.attachments.first.attached_file_name).to eq "file.pdf"
+    end
+
+    it "replaces previous versions of RNS attachment" do
+      @message['doc_desc'] = "RNS"
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e.attachments.create! attachment_type: "RNS", source_system_timestamp: "2015-09-04T04:30:35-10:00"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      e.reload
+      expect(e.attachments.size).to eq 1
+      expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
+    end
+
+    it "replaces previous versions of B3 Recap attachment" do
+      @message['doc_desc'] = "B3 Recap"
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e.attachments.create! attachment_type: "B3 Recap", source_system_timestamp: "2015-09-04T04:30:35-10:00"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      e.reload
+      expect(e.attachments.size).to eq 1
+      expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
+    end
+
+    it 'replaces previous versions of billing invoices' do
+      @message['doc_desc'] = "Invoice"
+      @message['file_name'] = "invoice 123.pdf"
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      a1 = e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 123.pdf"
+      e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 345.pdf"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      e.reload
+      expect(e.attachments.size).to eq 2
+      expect(e.attachments.map {|a| a.attached_file_name}.sort).to eq ["invoice 123.pdf", "invoice 345.pdf"]
+      #make sure the new file referenced by message was the one that got created, and the existing one got removed
+      expect(e.attachments).not_to include a1
+    end
+
   end
 end

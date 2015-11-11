@@ -1,5 +1,7 @@
 require 'open_chain/workflow_processor'
+require 'open_chain/business_rule_validation_results_support'
 class VendorsController < ApplicationController
+  include OpenChain::BusinessRuleValidationResultsSupport
   around_filter :view_vendors_filter, only: [:index, :matching_vendors]
   
   def index
@@ -30,6 +32,7 @@ class VendorsController < ApplicationController
       c = Company.create(name:name.strip,vendor:true)
       if c.errors.full_messages.blank?
         OpenChain::WorkflowProcessor.async_process c
+        c.create_snapshot current_user
         redirect_to vendor_path(c)
       else
         errors_to_flash c
@@ -86,6 +89,10 @@ class VendorsController < ApplicationController
     secure_company_view do |c|
       render layout: false
     end
+  end
+
+  def validation_results
+    generic_validation_results(Company.find params[:id])
   end
 
   private

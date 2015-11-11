@@ -37,7 +37,7 @@ module ValidatesEntityChildren
 
     remove_instance_variable(:@validation_stopped) if defined?(@validation_stopped)
 
-    validation_messages.blank? ? nil : validation_messages.join("\n")
+    validation_messages.blank? ? nil : validation_messages.uniq.join("\n")
   end
 
   # Returns true if it is determined that none of the rule level search criterions matches

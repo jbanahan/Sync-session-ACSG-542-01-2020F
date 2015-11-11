@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'open_chain/report/sql_proxy_data_report'
 
 describe OpenChain::Report::SqlProxyDataReport do
 

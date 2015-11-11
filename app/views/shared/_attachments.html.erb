@@ -6,7 +6,7 @@
   <% end %>
   <% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
     <% content_for :action_bar do %>
-      <button class="btn btn-default" data-toggle="modal" href='#mod_attach_bs'>Add Attachment</button>
+      <button title='Add Attachment' class="btn btn-default" data-toggle="modal" href='#mod_attach_bs'><i class='fa fa-paperclip'></i></button>
     <%end%>
   <% end %>
 <%end-%>

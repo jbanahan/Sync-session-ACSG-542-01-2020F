@@ -333,4 +333,19 @@ describe Order do
     end
   end
 
+  describe :shipping? do
+    it "shows PO as shipping if any line has a piece set associated with a shipment" do
+      order = Factory(:order_line).order
+      sl = Factory(:shipment_line, product: order.order_lines.first.product)
+      PieceSet.create! order_line: order.order_lines.first, shipment_line: sl, quantity: 1
+
+      expect(order.shipping?).to be_true
+    end
+
+    it "does not show PO as shipping if there is no piece set associated w/ a shipment" do
+      order = Factory(:order_line).order
+      PieceSet.create! order_line: order.order_lines.first, quantity: 1
+      expect(order.shipping?).to be_false
+    end
+  end
 end

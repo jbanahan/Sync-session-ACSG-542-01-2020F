@@ -156,6 +156,9 @@ describe User do
       it "should not allow non master company user" do
         Factory(:user).should_not be_view_official_tariffs
       end
+      it "should allow if user can view products" do
+        expect(Factory(:user,product_view:true).view_official_tariffs?).to be_true
+      end
     end
     context "business_validation_results" do
       it "should allow master users" do
@@ -615,7 +618,7 @@ describe User do
         creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
         auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
 
-        expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: nil, errors: ["Google email account susan@rice.com has not been set up in VFI Track."]})
+        expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: nil, errors: ["Google email account susan@rice.com has not been set up in VFI Track. If you would like to request an account, please click the 'Need an account?' link below."]})
       end
     end
 

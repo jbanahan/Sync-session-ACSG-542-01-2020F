@@ -25,7 +25,31 @@ describe "CustomFieldSupport" do
       p = Factory(:product)
       cv = p.get_custom_value cd
       p.get_custom_value(cd).should equal cv
+    end
+  end
 
+  describe "custom_value" do
+    let (:custom_def) { Factory(:custom_definition,:module_type=>'Product',data_type:'string') }
+    let (:obj) { Factory(:product) }
+
+    it "retrieves a custom value" do
+      obj.custom_values.create! custom_definition: custom_def, string_value: "Testing"
+      expect(obj.custom_value(custom_def)).to eq "Testing"
+    end
+
+    it "returns nil if no custom value exists for the given definition" do
+      expect(obj.custom_value(custom_def)).to be_nil
+    end
+
+    it "does not use internal custom value caches" do
+      cv = obj.custom_values.create! custom_definition: custom_def, string_value: "Testing"
+      obj.load_custom_values
+
+      other_cv = obj.custom_values.reload.first
+      other_cv.value = "Test2"
+      other_cv.save!
+
+      expect(obj.custom_value(custom_def)).to eq "Test2"
     end
   end
 

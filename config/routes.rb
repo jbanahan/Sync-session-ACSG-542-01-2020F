@@ -40,12 +40,19 @@ OpenChain::Application.routes.draw do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
       end
-      resources :orders, only: [:index,:show]
+      resources :orders, only: [:index,:show] do
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
+      end
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
         post :login, on: :collection
         post :google_oauth2, on: :collection
+      end
+
+      resources :official_tariffs, only: [] do
+        get 'find/:iso/:hts' => 'official_tariffs#find', on: :collection, constraints: {hts: /[\d\.]+/}
       end
       resources :products, only: [:index, :show, :create, :update] do
         # The optional param is for temporary backwards compatibility on the API
@@ -64,7 +71,23 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
 
+      resources :model_fields, only: [:index] do
+        get :cache_key, on: :collection
+      end
+
+      resources :survey_responses, only: [:index, :show] do
+        member do
+          post :checkout
+          post :cancel_checkout
+          post :checkin
+          post :submit
+        end
+      end
+
+      match "/setup_data" => "setup_data#index", via: :get
+
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
+      match "/divisions/autocomplete" => "divisions#autocomplete", via: :get
 
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
       match "/intacct_data/receive_check_result" => "intacct_data#receive_check_result", :via => :post
@@ -80,14 +103,6 @@ OpenChain::Application.routes.draw do
       match "/workflow/:id/assign" => "workflow#assign", via: :put
       match "/workflow/:core_module/:id/my_instance_open_task_count" => "workflow#my_instance_open_task_count", via: :get
 
-      resources :survey_responses, only: [:index, :show] do
-        member do
-          post :checkout
-          post :cancel_checkout
-          post :checkin
-          post :submit
-        end
-      end
 
       match "/:attachable_type/:attachable_id/attachments/:id" => "attachments#show", via: [:get], as: :attachable_attachment
       match "/:attachable_type/:attachable_id/attachments" => "attachments#index", via: [:get], as: :attachable_attachments
@@ -95,12 +110,21 @@ OpenChain::Application.routes.draw do
       match "/:attachable_type/:attachable_id/attachments/:id/download" => "attachments#download", via: [:get], as: :download_attachable_attachment
       match "/:attachable_type/:attachable_id/attachments/:id" => "attachments#destroy", via: [:delete]
 
+      match "/feedback/send_feedback" => 'feedback#send_feedback', via: :post
+
       namespace :admin do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
         match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
         match 'users/:id/add_templates' => 'users#add_templates', via: :post
         resources :milestone_notification_configs, only: [:index, :show, :new, :create, :update, :destroy] do
           get :copy, on: :member
+          get :model_fields, on: :collection
+        end
+      end
+
+      resources :fenix_postbacks, only: [] do
+        collection do 
+          post :receive_lvs_results
         end
       end
 
@@ -121,6 +145,8 @@ OpenChain::Application.routes.draw do
       get 'download'
     end
   end
+
+  resources :sent_emails, :only => [:index, :show]
 
   match '/my_tasks' => 'workflow#my_tasks', :via => :get
   match '/my_tasks/by_page_panel' => 'workflow#my_tasks_by_page_panel', :via => :get
@@ -257,6 +283,7 @@ OpenChain::Application.routes.draw do
   match "/deliveries/:id/add_sets" => "deliveries#add_sets"
   match "/login" => "user_sessions#new", :as => :login
   match "/logout" => "user_sessions#destroy", :as => :logout
+  match "/register" => "registrations#send_email", :via => :post
   match "/my_subscriptions" => "users#event_subscriptions"
   match "/settings" => "settings#index", :as => :settings
   match "/tools" => "settings#tools", :as => :tools
@@ -278,6 +305,7 @@ OpenChain::Application.routes.draw do
   match "/enable_run_as" => "users#enable_run_as"
   match "/disable_run_as" => "users#disable_run_as"
   match "/users/set_homepage" => "users#set_homepage", :via => :post
+  match "/me" => "users#me", via: :get
 
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
@@ -401,6 +429,10 @@ OpenChain::Application.routes.draw do
   match "/reports/run_j_jill_weekly_freight_summary" => "reports#run_j_jill_weekly_freight_summary", :via=>:post
   match "/reports/show_drawback_audit_report" => "reports#show_drawback_audit_report", :via=>:get
   match "/reports/run_drawback_audit_report" => "reports#run_drawback_audit_report", :via=>:post
+  match "/reports/show_rl_tariff_totals" =>"reports#show_rl_tariff_totals", :via=>:get
+  match "/reports/run_rl_tariff_totals" =>"reports#run_rl_tariff_totals", :via=>:post
+  match "/reports/show_pvh_billing_summary" => "reports#show_pvh_billing_summary", :via => :get
+  match "/reports/run_pvh_billing_summary" => "reports#run_pvh_billing_summary", :via => :post
   get "/reports/show_pvh_container_log" => "reports#show_pvh_container_log"
   post "/reports/run_pvh_container_log" => "reports#run_pvh_container_log"
   get "reports/show_monthly_entry_summation" => "reports#show_monthly_entry_summation"
@@ -471,10 +503,12 @@ OpenChain::Application.routes.draw do
       post 'show_bulk_instant_classify'
     end
     member do
+      get 'show_beta'
       get 'history'
       get :next_item
       get :previous_item
       put :import_worksheet
+      get :validation_results
     end
     post :import_new_worksheet, :on=>:new
   end
@@ -529,6 +563,7 @@ OpenChain::Application.routes.draw do
       get 'plants'
       get 'products'
       get 'survey_responses'
+      get 'validation_results'
     end
     collection do
       get 'matching_vendors'
@@ -546,6 +581,7 @@ OpenChain::Application.routes.draw do
       get 'show_children'
       post 'update_children'
       post 'push_alliance_products'
+      get 'validation_results'
     end
 		resources :addresses
 		resources :divisions

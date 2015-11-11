@@ -9,7 +9,8 @@ module OpenChain; module ModelFieldGenerator; module LastChangedByGenerator
         },
         :qualified_field_name => "(SELECT username FROM users where users.id = #{table_name}.last_updated_by_id)",
         :data_type=>:string,
-        :history_ignore => true
+        :history_ignore => true,
+        :read_only => true
       }],
       [rank + 1,"#{uid_prefix}_last_changed_by_full_name".to_sym,:username,"Last Changed By Full Name", {
         :import_lambda => lambda {|a,b| return "Last Changed By cannot be set by import, ignored."},
@@ -19,7 +20,8 @@ module OpenChain; module ModelFieldGenerator; module LastChangedByGenerator
         },
         :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = #{table_name}.last_updated_by_id)",
         :data_type=>:string,
-        :history_ignore => true
+        :history_ignore => true,
+        :read_only => true
       }]
     ]
   end

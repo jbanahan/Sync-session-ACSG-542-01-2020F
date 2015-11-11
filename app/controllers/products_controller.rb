@@ -1,8 +1,11 @@
 require 'open_chain/field_logic'
 require 'open_chain/bulk_update'
 require 'open_chain/next_previous_support'
+require 'open_chain/business_rule_validation_results_support'
 class ProductsController < ApplicationController
   include Worksheetable
+  include ValidationResultsHelper
+  include OpenChain::BusinessRuleValidationResultsSupport
   include OpenChain::NextPreviousSupport
   before_filter :secure_classifications
 
@@ -18,6 +21,10 @@ class ProductsController < ApplicationController
   # GET /products/1
   # GET /products/1.xml
   def show
+    if cookies[:product_beta] == 'y'
+      redirect_to "/products/#{params[:id]}/show_beta"
+      return
+    end
     p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
     freeze_custom_values p
     action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
@@ -31,6 +38,22 @@ class ProductsController < ApplicationController
           format.xml  { render :xml => @product }
           format.json { render :json => @product }
       end
+    }
+  end
+
+  def show_beta
+    if cookies[:product_beta] != 'y'
+      redirect_to "/products/#{params[:id]}"
+      return
+    end
+    p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
+    freeze_custom_values p
+    action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
+      @product = p
+      @state_button_path = 'products'
+      @state_button_object_id = @product.id
+      p.load_custom_values #caches all custom values
+      @json_product = json_product_for_classification @product
     }
   end
 
@@ -136,6 +159,10 @@ class ProductsController < ApplicationController
           format.xml  { head :ok }
       end
     }
+  end
+
+  def validation_results
+    generic_validation_results(Product.find params[:id])
   end
 
   def bulk_edit

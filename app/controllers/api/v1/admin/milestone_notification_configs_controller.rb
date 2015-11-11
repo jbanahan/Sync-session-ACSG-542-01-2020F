@@ -1,8 +1,8 @@
 module Api; module V1; module Admin; class MilestoneNotificationConfigsController < Api::V1::Admin::AdminApiController
 
   def index 
-    configs = MilestoneNotificationConfig.order(:customer_number).all.collect {|c| config_json(c)}
-    render json: {configs: configs, output_styles: output_styles}
+    configs = MilestoneNotificationConfig.order(:customer_number, :testing).all.collect {|c| config_json(c)}
+    render json: {configs: configs, output_styles: output_styles, module_types: module_types}
   end
 
   def update
@@ -14,6 +14,10 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
   def new
     c = MilestoneNotificationConfig.new
     render json: config_json_with_model_fields(c)
+  end
+
+  def model_fields
+    render json: {model_field_list: model_field_list(params[:module_type]), event_list: event_list(params[:module_type])}
   end
 
   def create
@@ -42,6 +46,8 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
       c.customer_number = config[:customer_number]
       c.output_style = config[:output_style]
       c.enabled = config[:enabled].to_s.to_boolean
+      c.testing = config[:testing].to_s.to_boolean
+      c.module_type = config[:module_type]
       
       config[:search_criterions].each do |sc|
         c.search_criterions.build model_field_uid: sc[:mfid], operator: sc[:operator], value: sc[:value], include_empty: sc[:include_empty]
@@ -73,12 +79,12 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
 
     def config_json_with_model_fields config, copy = false
       json = config_json(config, copy)
-      {config: json, model_field_list: model_field_list, event_list: event_list, output_styles: output_styles, timezones: timezones}
+      {config: json, model_field_list: model_field_list(config.module_type), event_list: event_list(config.module_type), output_styles: output_styles, timezones: timezones, module_types: module_types}
     end
 
     def config_json config, copy = false
       c = config.as_json(
-        only: [:id, :customer_number, :enabled, :output_style],
+        only: [:id, :customer_number, :enabled, :output_style, :testing, :module_type],
         methods: [:setup_json]
       ).with_indifferent_access
       c[:milestone_notification_config][:setup_json].each do |setup|
@@ -98,19 +104,28 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
     end
 
 
-    def model_field_list
-      model_fields = CoreModule::ENTRY.model_fields(current_user)
+    def model_field_list module_type
+      cm = CoreModule.find_by_class_name(module_type)
       fields = []
-      model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: mf.label(true), datatype: mf.data_type.to_s} }
-      fields = fields.sort {|x, y| x[:label] <=> y[:label]}
+      if cm
+        model_fields = cm.model_fields(current_user)
+        fields = []
+        model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: mf.label(true), datatype: mf.data_type.to_s} }
+        fields = fields.sort {|x, y| x[:label] <=> y[:label]}
+      end
+      
       fields
     end
 
-    def event_list 
-      model_fields = CoreModule::ENTRY.model_fields(current_user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}
+    def event_list  module_type
+      cm = CoreModule.find_by_class_name(module_type)
       fields = []
-      model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: "#{mf.label} (#{mf.field_name}) - #{mf.data_type.to_s == "datetime" ? "Datetime" : "Date"}", datatype: mf.data_type.to_s} }
-      fields = fields.sort {|x, y| x[:label] <=> y[:label]}
+      if cm
+        model_fields = cm.model_fields(current_user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}
+        model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: "#{mf.label} (#{mf.field_name}) - #{mf.data_type.to_s == "datetime" ? "Datetime" : "Date"}", datatype: mf.data_type.to_s} }
+        fields = fields.sort {|x, y| x[:label] <=> y[:label]}
+      end
+      
       fields
     end
 
@@ -120,5 +135,9 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
 
     def timezones
       ActiveSupport::TimeZone.all.map {|tz| {name: tz.name, label: "#{tz.name} (#{tz.formatted_offset})" }}.insert(0, {name: "", label: ""})
+    end
+
+    def module_types
+      {CoreModule::SECURITY_FILING.class_name => "ISF", CoreModule::ENTRY.class_name => "Entry"}
     end
 end; end; end; end;

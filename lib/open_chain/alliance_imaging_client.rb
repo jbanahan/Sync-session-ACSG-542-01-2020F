@@ -27,7 +27,17 @@ class OpenChain::AllianceImagingClient
   def self.consume_images
     OpenChain::SQS.retrieve_messages_as_hash "https://queue.amazonaws.com/468302385899/alliance-img-doc-#{get_env}" do |hsh|
       t = OpenChain::S3.download_to_tempfile hsh["s3_bucket"], hsh["s3_key"]
-      OpenChain::AllianceImagingClient.process_image_file t, hsh
+      begin
+        if hsh["source_system"] == OpenChain::FenixParser::SOURCE_CODE && hsh["export_process"] == "sql_proxy"
+          process_fenix_nd_image_file t, hsh
+        else
+          OpenChain::AllianceImagingClient.process_image_file t, hsh
+        end
+      rescue => e
+        # If there's an error we should catch it, otherwise the message won't get pulled from the message queue
+        raise e unless Rails.env.production?
+        e.log_me ["Alliance imaging client hash: #{hsh}"], [t]
+      end
     end
   end
 
@@ -35,78 +45,137 @@ class OpenChain::AllianceImagingClient
   # it will likely be saved with the wrong content type.  ie. If you're saving a pdf, the file
   # it points to should have a .pdf extension on it.
   def self.process_image_file t, hsh
-      Attachment.add_original_filename_method t
-      begin
-        t.original_filename= hsh["file_name"]
-        source_system = hsh["source_system"].nil? ? OpenChain::AllianceParser::SOURCE_CODE : hsh["source_system"]
+    Attachment.add_original_filename_method t
+    t.original_filename= hsh["file_name"]
+    source_system = hsh["source_system"].nil? ? OpenChain::AllianceParser::SOURCE_CODE : hsh["source_system"]
 
-        attachment_type = hsh["doc_desc"]
+    attachment_type = hsh["doc_desc"]
 
-        delete_previous_file_versions = nil
-        if source_system == OpenChain::FenixParser::SOURCE_CODE
-          # The Fenix imaging client sends the entry number as "file_number" and not the broker ref
+    delete_previous_file_versions = nil
+    if source_system == OpenChain::FenixParser::SOURCE_CODE
+      # The Fenix imaging client sends the entry number as "file_number" and not the broker ref
 
-          # Create a shell entry record if there wasn't one, so we can actually attach the image.
-          # We don't do this for Alliance files because Chain initiates the imaging extracts for it, so
-          # there's no real valid scenario where an entry doesn't already exist in Chain.
+      # Create a shell entry record if there wasn't one, so we can actually attach the image.
+      # We don't do this for Alliance files because Chain initiates the imaging extracts for it, so
+      # there's no real valid scenario where an entry doesn't already exist in Chain.
 
-          entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first_or_create!(:file_logged_date => Time.zone.now)
+      entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first_or_create!(:file_logged_date => Time.zone.now)
 
-          # If we have an "Automated" attachment type for fenix files, use the file name to determine what type of document
-          # this is, either a B3 or RNS
-          if attachment_type && attachment_type.upcase == "AUTOMATED"
-            case hsh["file_name"]
-              when /_CDC_/i
-                attachment_type = "B3"
-                delete_previous_file_versions = true
-              when /_RNS_/i
-                attachment_type = "Customs Release Notice"
-                delete_previous_file_versions = true
-              when /_recap_/i
-                attachment_type = "B3 Recap"
-                delete_previous_file_versions = true
-            end
-          end
-        else
-          entry = Entry.find_by_broker_reference_and_source_system hsh["file_number"], source_system
+      # If we have an "Automated" attachment type for fenix files, use the file name to determine what type of document
+      # this is, either a B3 or RNS
+      if attachment_type && attachment_type.upcase == "AUTOMATED"
+        case hsh["file_name"]
+          when /_CDC_/i
+            attachment_type = "B3"
+            delete_previous_file_versions = true
+          when /_RNS_/i
+            attachment_type = "Customs Release Notice"
+            delete_previous_file_versions = true
+          when /_recap_/i
+            attachment_type = "B3 Recap"
+            delete_previous_file_versions = true
         end
-
-        if entry
-          Lock.with_lock_retry(entry) do 
-            att = entry.attachments.build
-            att.attached = t
-            att.attachment_type = attachment_type
-            att.is_private = attachment_type.upcase.starts_with?("PRIVATE") ? true : false
-            unless hsh["suffix"].blank?
-              att.alliance_suffix = hsh["suffix"][2,3]
-              att.alliance_revision = hsh["suffix"][0,2]
-            end
-            att.source_system_timestamp = hsh["doc_date"]
-
-            # If we have an alliance_revision number, we need to make sure there's no other attachments out there that have a higher revision number already.
-            # This can happen in scenarios where we're pulling in images for entries that haven't been updated in a little while where the message queue 
-            # info comes out of order (.ie revision 1 is sent to VFI Track prior to revision 0).  There's no real ordering of the data in Kewill Imaging either
-            # so we don't actually get the document lists from them based on the order they're attached as well, so it's very possible the message queue ordering
-            # is not ordered correctly by revision
-            return if !att.alliance_revision.blank? && !att.alliance_suffix.blank? &&
-                att.attachable.attachments.where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision > ?",att.alliance_revision).size > 0
-
-            att.save!
-            
-            if !att.alliance_revision.blank? && !att.alliance_suffix.blank?
-              att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision <= ?",att.alliance_revision).destroy_all
-            end
-
-            if delete_previous_file_versions
-              att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
-            end
-          end
-        end
-      rescue
-        raise $! unless Rails.env.production?
-        $!.log_me ["Alliance imaging client hash: #{hsh}"], [t]
       end
+    else
+      entry = Entry.find_by_broker_reference_and_source_system hsh["file_number"], source_system
+    end
 
+    if entry
+      Lock.with_lock_retry(entry) do 
+        att = entry.attachments.build
+        att.attached = t
+        att.attachment_type = attachment_type
+        att.is_private = attachment_type.upcase.starts_with?("PRIVATE") ? true : false
+        unless hsh["suffix"].blank?
+          att.alliance_suffix = hsh["suffix"][2,3]
+          att.alliance_revision = hsh["suffix"][0,2]
+        end
+        att.source_system_timestamp = hsh["doc_date"]
+
+        # If we have an alliance_revision number, we need to make sure there's no other attachments out there that have a higher revision number already.
+        # This can happen in scenarios where we're pulling in images for entries that haven't been updated in a little while where the message queue 
+        # info comes out of order (.ie revision 1 is sent to VFI Track prior to revision 0).  There's no real ordering of the data in Kewill Imaging either
+        # so we don't actually get the document lists from them based on the order they're attached as well, so it's very possible the message queue ordering
+        # is not ordered correctly by revision
+        return if !att.alliance_revision.blank? && !att.alliance_suffix.blank? &&
+            att.attachable.attachments.where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision > ?",att.alliance_revision).size > 0
+
+        att.save!
+        
+        if !att.alliance_revision.blank? && !att.alliance_suffix.blank?
+          att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision <= ?",att.alliance_revision).destroy_all
+        end
+
+        if delete_previous_file_versions
+          att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
+        end
+      end
+    end
+  end
+
+  def self.process_fenix_nd_image_file t, file_data
+    # Here's the hash data we can expect from the Fenix ND export process
+    # {"source_system" => "Fenix", "export_process" => "sql_proxy", "doc_date" => "", "s3_key"=>"path/to/file.txt", "s3_bucket" => "bucket", 
+    #   "file_number" => "11981001795105 ", "doc_desc" => "B3", "file_name" => "_11981001795105 _B3_01092015 14.24.42 PM.pdf", "version" => nil, "public" => true}
+
+    # Version appears to not be used at this point in Fenix
+
+    Attachment.add_original_filename_method t
+
+    # For some reason, the file_name for B3's starts w/ _, which is dumb...strip leading _'s (just do it on all files..leading underscores are pointless on anything)
+    t.original_filename = file_data["file_name"].to_s.gsub(/^_+/, "")
+
+    entry = nil
+    Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
+      entry = Entry.where(:entry_number=>file_data['file_number'].to_s.strip, :source_system=>OpenChain::FenixParser::SOURCE_CODE).first_or_create!(:file_logged_date => Time.zone.now)
+    end
+
+    if entry
+      Lock.with_lock_retry(entry) do 
+        att = entry.attachments.build
+        att.attached = t
+        att.attachment_type = file_data["doc_desc"]
+        att.source_system_timestamp = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(file_data["doc_date"]) unless file_data["doc_date"].blank?
+
+        if file_data["public"].to_s != "true"
+          # A value of true is the only thing that will allow the image to not be private
+          att.is_private = true
+        end
+
+        delete_other_file_algorithm = nil
+        case att.attachment_type.to_s.upcase
+        when "B3", "B3 RECAP", "RNS"
+          delete_other_file_algorithm = :attachment_type
+        when "INVOICE"
+          delete_other_file_algorithm = :attachment_type_and_filename
+        end
+
+        # Before we save this attachment, make sure there's no other attachments that are actually newer than this one...
+        # Which could happen since sqs messages are NOT guaranteed to be read back in the order they were placed (they virtually always
+        # will be though)
+        can_save = true
+        if delete_other_file_algorithm
+          other_attachments = other_attachments_query(att, delete_other_file_algorithm).where("source_system_timestamp > ?", att.source_system_timestamp).count
+          can_save = other_attachments == 0
+        end
+
+        if can_save
+          att.save!
+
+          if delete_other_file_algorithm
+            # Since we now know this attachment is the "latest" and greatest we can delete any others that are of this type
+            other_attachments_query(att, delete_other_file_algorithm).where("NOT attachments.id = ?", att.id).destroy_all
+          end
+        end
+      end
+    end
+  end
+
+  def self.other_attachments_query attachment, replacement_algorithm
+    rel = attachment.attachable.attachments.where(:attachment_type=>attachment.attachment_type)
+    rel = rel.where(attached_file_name: attachment.attached_file_name) if replacement_algorithm == :attachment_type_and_filename
+
+    rel
   end
 
   def self.send_entry_stitch_request entry_id

@@ -40,7 +40,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
         },
         :qualified_field_name => "(SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
-        :history_ignore=>true
+        :history_ignore=>true,
+        :read_only => true
       }]
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_cr".to_sym, :common_rate,"#{i} - Common Rate",{
@@ -55,7 +56,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
         },
         :qualified_field_name => "(SELECT common_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
-        :history_ignore=>true
+        :history_ignore=>true,
+        :read_only=>true
       }]
       if canada && canada.import_location
         id_counter += 1
@@ -71,7 +73,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
           },
           :qualified_field_name => "(SELECT general_preferential_tariff_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
-          :history_ignore=>true
+          :history_ignore=>true,
+          :read_only=>true
         }]
       end
       if OfficialTariff.where("import_regulations is not null OR export_regulations is not null").count>0
@@ -88,7 +91,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
           },
           :qualified_field_name => "(SELECT import_regulations FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
-          :history_ignore=>true
+          :history_ignore=>true,
+          :read_only=>true
         }]
         id_counter += 1
         r << [id_counter,"#{uid_prefix}_hts_#{i}_expregs".to_sym, :export_regulations,"#{i} - Export Regulations",{
@@ -103,7 +107,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
           },
           :qualified_field_name => "(SELECT export_regulations FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
-          :history_ignore=>true
+          :history_ignore=>true,
+          :read_only=>true
         }]
       end
       id_counter += 1
@@ -121,7 +126,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
         },
         :qualified_field_name => "(SELECT category FROM official_quotas WHERE official_quotas.hts_code = tariff_records.hts_#{i} AND official_quotas.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
-        :history_ignore=>true
+        :history_ignore=>true,
+        :read_only=>true
       }]
     end
     r

@@ -1,5 +1,7 @@
 require 'open_chain/sql_proxy_client'
 require 'open_chain/s3'
+require 'open_chain/integration_client_parser'
+require 'open_chain/alliance_imaging_client'
 
 module OpenChain; module CustomHandler; class KewillEntryParser
   extend OpenChain::IntegrationClientParser
@@ -103,12 +105,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         process_commercial_invoices e, entry
         process_broker_invoices e, entry
         process_fda_dates e, entry
-        process_totals e, entry
-
+        
         if opts[:key] && opts[:bucket]
           entry.last_file_path = opts[:key]
           entry.last_file_bucket = opts[:bucket]
         end
+
+        postprocess e, entry
         
         entry.save!
         entry.update_column :time_to_process, ((Time.now-start_time) * 1000)
@@ -213,6 +216,43 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.assign_attributes attributes
     end
 
+    # Any sort of post-handling of the data that needs to be done prior to saving belongs in this method
+    def postprocess e, entry
+      entry.monthly_statement_due_date = find_statement_due_date(e, entry)
+
+      process_totals e, entry
+    end
+
+    def find_statement_due_date e, entry
+      due_date = nil
+
+       # I'm not entirely sure why you'd have a periodic statement due date, where you don't have a statement number
+      # but the old feed did this too, so I'm keeping it in place
+      pms_year = e[:pms_year]
+      pms_month = e[:pms_month]
+      pms_day = nil
+      if pms_year.try(:nonzero?) && pms_month.try(:nonzero?)
+        dates = KeyJsonItem.usc_periodic_dates(pms_year).first
+        if dates
+          #JSON keys are always strings
+          pms_day = dates.data[pms_month.to_s]
+        end
+
+        # We're only currently tracking pms days since 2007, if we don't have a date after that time..then error
+        # so that we can set up the schedule
+
+        # The entry filed date check is here because the ISF system creates shell entry records with Arrival Dates sometimes months 
+        # in advance - which is valid.  However, the presence of the arrival date also then triggers an attempt to determine a statement
+        # date - which at this point in time is pointless as nothing has actually been filed for the entry yet and PMS statement dates may not 
+        # have even been published yet US CBP.  So wait till there's an entry filed date to bother reporting on the missing PMS values
+        if pms_day.nil? && pms_year > 2006 && !entry.entry_filed_date.nil?
+          StandardError.new("File ##{entry.broker_reference} / Division ##{entry.division_number}: No Periodic Monthly Statement Dates found for #{pms_year} and #{pms_month}.  This data must be set up immediately.").log_me
+        end
+      end
+
+      pms_day ? Date.new(pms_year, pms_month, pms_day) : nil
+    end
+
     def process_entry_header e, entry
       entry.customer_number = e[:cust_no]
       entry.entry_number = e[:entry_no]
@@ -277,26 +317,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         entry.monthly_statement_number = nil
       end
 
-      # I'm not entirely sure why you'd have a periodic statement due date, where you don't have a statement number
-      # but the old feed did this too, so I'm keeping it in place
-      pms_year = e[:pms_year]
-      pms_month = e[:pms_month]
-      pms_day = nil
-      if pms_year.try(:nonzero?) && pms_month.try(:nonzero?)
-        dates = KeyJsonItem.usc_periodic_dates(pms_year).first
-        if dates
-          #JSON keys are always strings
-          pms_day = dates.data[pms_month.to_s]
-        end
-
-        # We're only currently tracking pms days since 2007, if we don't have a date after that time..then error
-        # so that we can set up the schedule
-        if pms_day.nil? && pms_year > 2006
-          StandardError.new("File ##{entry.broker_reference} / Division ##{entry.division_number}: No Periodic Monthly Statement Dates found for #{pms_year} and #{pms_month}.  This data must be set up immediately.").log_me
-        end
-      end
-
-      entry.monthly_statement_due_date = pms_day ? Date.new(pms_year, pms_month, pms_day) : nil
       entry.census_warning = e[:census_warning].to_s.upcase == "Y"
       entry.error_free_release = e[:error_free_cr].to_s.upcase == "Y"
       entry.paperless_certification = e[:certification_es].to_s.upcase == "Y"
@@ -759,7 +779,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def parse_decimal str, decimal_places: 2, decimal_offset: 2, rounding_mode: BigDecimal::ROUND_HALF_UP, no_offset: false
       return BigDecimal.new("0") if str.blank? || str == 0
 
-      str = str.to_s
+      # Strip anything that's not a number or decimal point...some numeric fields are technical string fields in alliance
+      # (.ie contract amount) and all sorts of garbage is added to them sometimes.
+      str = str.to_s.gsub(/[^-\d\.]/, "")
 
       # if no_offset is passed, we're going to treat the incoming value like a standard numeric string, not the 
       # missing decimal garbage that Alliance normally sends.

@@ -7,6 +7,7 @@ module CoreObjectSupport
     base.instance_eval("include EntitySnapshotSupport")
     base.instance_eval("include BroadcastsEvents")
     base.instance_eval("include UpdateModelFieldsSupport")
+    base.instance_eval("include FingerprintSupport")
     if History.column_names.include?(base.name.foreign_key)
       base.instance_eval("has_many   :histories, :dependent => :destroy")
     end
@@ -69,7 +70,7 @@ module CoreObjectSupport
   end
 
   def process_linked_attachments
-    LinkedAttachment.delay.create_from_attachable_by_class_and_id(self.class,self.id) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
+    LinkedAttachment.delay(:priority=>600).create_from_attachable_by_class_and_id(self.class,self.id) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
   end
 
   # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded file links)
@@ -88,22 +89,34 @@ module CoreObjectSupport
   end
 
   module ClassMethods
-    def need_sync_join_clause trading_partner
-      sql = "LEFT OUTER JOIN sync_records ON sync_records.syncable_type = ? and sync_records.syncable_id = #{table_name}.id and sync_records.trading_partner = ?"
+    def need_sync_join_clause trading_partner, join_table = self.table_name
+      sql = "LEFT OUTER JOIN sync_records ON sync_records.syncable_type = ? and sync_records.syncable_id = #{join_table}.id and sync_records.trading_partner = ?"
       sanitize_sql_array([sql, name, trading_partner])
     end
 
-    def need_sync_where_clause
+    def need_sync_where_clause join_table = self.table_name, sent_at_before = nil
+      # sent_at_before is for cases where we don't want to resend product records prior to a certain timeframe OR
+      # cases where we're splitting up file sends on product count (batching) and don't want to resend ones we just
+      # sent in a previous batch.
+      query = 
       "(sync_records.id is NULL OR
          (
             (sync_records.sent_at is NULL OR
              sync_records.confirmed_at is NULL OR
              sync_records.sent_at > sync_records.confirmed_at OR
-             #{table_name}.updated_at > sync_records.sent_at
+             #{join_table}.updated_at > sync_records.sent_at
             ) AND
             (sync_records.ignore_updates_before IS NULL OR
-             sync_records.ignore_updates_before < #{table_name}.updated_at)
-        ))"
+             sync_records.ignore_updates_before < #{join_table}.updated_at)
+            "
+      if sent_at_before.respond_to?(:acts_like_time?) || sent_at_before.respond_to?(:acts_like_date?)
+        query += " AND
+            (sync_records.sent_at IS NULL OR sync_records.sent_at < '#{sent_at_before.to_s(:db)}')"
+      end
+
+      query + "
+        )
+      )"
     end
 
     def excel_url object_id

@@ -26,6 +26,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   end
   describe :parse do
     it 'should process from text' do
+      SecurityFiling.any_instance.should_receive(:broadcast_event).with(:save)
       @k.parse IO.read(@path)
       sf = SecurityFiling.first
       sf.host_system_file_number.should == '1870446'
@@ -259,14 +260,18 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
 
       it "sets DEL_ACCEPT description" do
         @dom.root.elements['STATUS_CD'].text = "DEL_ACCEPT"
+        @sf.last_event = Time.zone.now
         @k.new.parse_dom @dom, @sf
         expect(@sf.status_description).to eq "Delete Accepted"
+        expect(@sf.delete_accepted_date).to eq @sf.last_event
       end
 
       it "sets ACCMATCH description" do
         @dom.root.elements['STATUS_CD'].text = "ACCMATCH"
+        @sf.last_event = Time.zone.now
         @k.new.parse_dom @dom, @sf
         expect(@sf.status_description).to eq "Accepted And Matched"
+        expect(@sf.ams_match_date).to eq @sf.last_event
       end
 
       it "sets REPLACE description" do

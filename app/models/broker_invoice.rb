@@ -34,7 +34,7 @@ class BrokerInvoice < ActiveRecord::Base
   end
 
   def can_view? user
-    user.view_broker_invoices? && (user.company.master? || (self.entry && ( self.entry.importer_id==user.company_id || user.company.linked_companies.include?(self.entry.importer))))
+    self.class.can_view? user, self.entry
   end
   
   def can_edit? user
@@ -47,6 +47,10 @@ class BrokerInvoice < ActiveRecord::Base
 
   def self.search_where user
     "entry_id in (select id from entries where #{Entry.search_where user})"
+  end
+
+  def self.can_view? user, entry
+    user.view_broker_invoices? && (user.company.master? || (entry && ( entry.importer_id==user.company_id || user.company.linked_companies.include?(entry.importer))))
   end
 
 end

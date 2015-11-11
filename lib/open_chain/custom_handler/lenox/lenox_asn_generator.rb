@@ -12,9 +12,11 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
 
   def self.run_schedulable opts={}
     g = self.new(opts)
-    temps = g.generate_tempfiles g.find_shipments
-    g.ftp_file temps[0], {remote_file_name:'Vand_Header'}
-    g.ftp_file temps[1], {remote_file_name:'Vand_Detail'}
+    g.generate_tempfiles(g.find_shipments) do |header_file, detail_file|
+      g.ftp_file header_file, {remote_file_name:'Vand_Header'}
+      g.ftp_file detail_file, {remote_file_name:'Vand_Detail'}
+    end
+    nil
   end
 
   def initialize opts = {}
@@ -39,20 +41,24 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
 
   def generate_tempfiles shipments
     Shipment.transaction do
-      header_file = Tempfile.new(['LENOXHEADER','.txt'])
-      detail_file = Tempfile.new(['LENOXDETAIL','.txt'])
-      shipments.each do |shp|
-        hdata = ''
-        ddata = ''
-        generate_header_rows(shp) {|r| hdata << "#{r}\n"}
-        generate_detail_rows(shp) {|r| ddata << "#{r}\n"}
-        shp.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
-        header_file << hdata
-        detail_file << ddata
+      Tempfile.open(['LENOXHEADER','.txt']) do |header_file|
+        Tempfile.open(['LENOXDETAIL','.txt']) do |detail_file|
+          shipments.each do |shp|
+            hdata, ddata = '', ''
+            generate_header_rows(shp) {|r| hdata << "#{r}\n"}
+            generate_detail_rows(shp) {|r| ddata << "#{r}\n"}
+            shp.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
+            header_file << hdata
+            detail_file << ddata
+          end
+          header_file.flush
+          header_file.rewind
+          detail_file.flush
+          detail_file.rewind
+
+          yield header_file, detail_file
+        end
       end
-      header_file.flush
-      detail_file.flush
-      [header_file,detail_file]
     end
   end
 
@@ -71,7 +77,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r = ""
       r << "ASNH"
       r << @f.str(shipment.house_bill_of_lading,35)
-      r << @f.str(sl_array.first.order_lines.first.order.vendor.system_code.gsub("LENOX-",''),8)
+      r << @f.str(sl_array.first.order_lines.first.order.vendor.system_code.gsub(/^LENOX-/i,""),8)
       r << @f.str(container.container_number,17)
       r << @f.str(make_container_size_str(container),10)
       r << @f.num(weight,10,3)
@@ -106,7 +112,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.num(i+1,10)
       r << @f.str(order.get_custom_value(@cdefs[:order_factory_code]).value,10)
       r << @f.str(order.customer_order_number,35)
-      r << @f.str(ln.product.unique_identifier.gsub("LENOX-",""),35)
+      r << @f.str(ln.product.unique_identifier.gsub(/^LENOX-/i,""),35)
       r << @f.num(ln.quantity,7)
       r << @f.str(ln.product.get_custom_value(@cdefs[:product_coo]).value,4)
       r << @f.str('',35) #no commercial invoice number
@@ -116,7 +122,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << time_and_user
       r << @f.num(order_line.price_per_unit,18,6)
       r << @f.num(order_line.price_per_unit,18,6)
-      r << @f.str(order.vendor.system_code.gsub('LENOX-',''),8)
+      r << @f.str(order.vendor.system_code.gsub(/^LENOX-/i,""),8)
       yield r
     end
   end
@@ -140,7 +146,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       c = orders.first.vendor
       #strip the LENOX- prefix from the sytem code to get the lenox internal code
       #see the LenoxPoParser to see how these are created
-      vendor_code = c.system_code.gsub('LENOX-','') 
+      vendor_code = c.system_code.gsub(/^LENOX-/i,"") 
       h[vendor_code] ||= []
       h[vendor_code] << ci
     end

@@ -1,9 +1,9 @@
 <%content_for :action_bar do -%>
   <%pms = params.clone-%>
   <%pms[:mode]='detail'-%>
-  <button class='btn_link' link_to='<%=entry_path(@entry,pms)%>'>Detail Mode</button>
+  <button title='Detail Mode' class='btn_link' link_to='<%=entry_path(@entry,pms)%>'><i class='fa fa-search-plus'></i></button>
   <%if current_user.company.master?-%>
-    <%= button_to 'Update Images', get_images_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;'%>
+    <%= link_to raw("<i class='fa fa-file-image-o'></i>"), get_images_entry_path(@entry), title:'Update Images', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
   <%end-%>
 <%end-%>
 <style>
@@ -11,7 +11,9 @@
   border-top: 1px solid #333;
 }
 </style>
-<%=render partial: 'business_rules', locals:{entry:@entry}%>
+<div class='container'>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
+</div>
 <a name='ent_header'></a>
 <!-- Main header -->
 <table class='ent_columns'>

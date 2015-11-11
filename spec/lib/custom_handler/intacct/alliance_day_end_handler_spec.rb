@@ -23,8 +23,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)]}
       invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)]}
 
-      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::SqlProxyClient).and_return check_results
-      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::SqlProxyClient).and_return invoice_results
+      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
+      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
@@ -77,8 +77,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)]}
       invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)]}
 
-      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::SqlProxyClient).and_return check_results
-      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::SqlProxyClient).and_return invoice_results
+      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
+      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
@@ -110,8 +110,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)]}
       invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)]}
 
-      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::SqlProxyClient).and_return check_results
-      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::SqlProxyClient).and_return invoice_results
+      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
+      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)
@@ -144,8 +144,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)]}
       invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)]}
 
-      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::SqlProxyClient).and_return check_results
-      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::SqlProxyClient).and_return invoice_results
+      @h.should_receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
+      @h.should_receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
       @h.should_receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
       @h.should_receive(:wait_for_dimension_uploads)

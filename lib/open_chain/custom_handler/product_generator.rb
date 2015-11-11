@@ -50,7 +50,7 @@ module OpenChain
       def sync
         @row_count = 0
         has_fingerprint = self.respond_to? :trim_fingerprint
-        synced_products = {} 
+        synced_products = {}
         rt = Product.connection.execute query
         header_row = {}
         rt.fields.each_with_index do |f,i|
@@ -91,17 +91,20 @@ module OpenChain
           end
           
         end
-        if self.respond_to? :sync_code
-          synced_products.keys.in_groups_of(100,false) do |uids|
-            Product.transaction do
-              ActiveRecord::Base.connection.execute "DELETE FROM sync_records where trading_partner = \"#{sync_code}\" and syncable_id IN (#{uids.join(",")}); "
-              inserts = uids.collect do |y|
-                fp = ActiveRecord::Base.sanitize synced_products[y]
-                "(#{y},\"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\",#{has_fingerprint ? fp : 'null'})"
-              end
-              ActiveRecord::Base.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at#{auto_confirm? ? ',confirmed_at' : ''},updated_at,created_at,trading_partner,fingerprint)
-                VALUES #{inserts.join(",")}; "
+        write_sync_records synced_products if self.respond_to? :sync_code
+      end
+
+      def write_sync_records synced_products
+        has_fingerprint = self.respond_to? :trim_fingerprint
+        synced_products.keys.in_groups_of(100,false) do |uids|
+          Product.transaction do
+            ActiveRecord::Base.connection.execute "DELETE FROM sync_records where trading_partner = \"#{sync_code}\" and syncable_id IN (#{uids.join(",")}); "
+            inserts = uids.collect do |y|
+              fp = ActiveRecord::Base.sanitize synced_products[y]
+              "(#{y},\"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\",#{has_fingerprint ? fp : 'null'})"
             end
+            ActiveRecord::Base.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at#{auto_confirm? ? ',confirmed_at' : ''},updated_at,created_at,trading_partner,fingerprint)
+            VALUES #{inserts.join(",")}; "
           end
         end
       end

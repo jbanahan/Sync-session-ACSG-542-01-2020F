@@ -133,8 +133,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
             'file_no'=>12345, 'suffix'=>"A", 'cust_ref'=>"broker_inv_ref", 'invoice_date'=>20150401, 'total_amount'=>100.99, 'bill_to_cust'=>'CUST1',
             'name'=>'Customer 1', 'address_1' => '123 Fake St.', 'address_2' => 'Ste 22', 'city' => "Fakesville", 'state'=>'PA', 'zip' => 12345, 'country' => 'US',
             'lines' => [
-              {'charge' => '1', 'description' => 'DUTY', 'amount'=>100.00, 'vendor'=>'VEND', 'vendor_name' => 'VENDOR NAME', 'vendor_ref'=>'VENDOR', 'charge_type'=>'D'},
-              {'charge' => '100', 'description' => 'OUTLAY', 'amount'=>0.99, 'vendor'=>'', 'vendor_ref'=>'', 'charge_type'=>'O'}
+              {'charge' => '1', 'description' => 'DUTY', 'amount'=>-10000, 'vendor'=>'VEND', 'vendor_name' => 'VENDOR NAME', 'vendor_ref'=>'VENDOR', 'charge_type'=>'D'},
+              {'charge' => '100', 'description' => 'OUTLAY', 'amount'=>99, 'vendor'=>'', 'vendor_ref'=>'', 'charge_type'=>'O'}
             ]
           }
         ],
@@ -256,7 +256,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 'related_parties' => "Y",
                 'mid_name' => "MANFU2 NAME",
                 'volume' => 1299,
-                'contract' => 9999,
+                'contract' => "$9,999.00",
                 'department' => "DEPT2",
                 "store_no" => "STORE2",
                 'product_line' => "PRODUCT2",
@@ -453,7 +453,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       l = bi.broker_invoice_lines.first
       expect(l.charge_code).to eq "0001"
       expect(l.charge_description).to eq "DUTY"
-      expect(l.charge_amount).to eq 100.00
+      expect(l.charge_amount).to eq -100.00
       expect(l.vendor_name).to eq "VENDOR NAME"
       expect(l.vendor_reference).to eq "VENDOR"
       expect(l.charge_type).to eq "D"
@@ -711,6 +711,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     it "logs an error message if periodic monthly data is missing" do
       @e['pms_year'] = 2016
       StandardError.any_instance.should_receive(:log_me)
+      described_class.new.process_entry @e
+    end
+
+    it "does not log an error if periodic data is missing and the entry does not have a filed date value" do
+      @e['dates'].reject! {|v| v['date_no'] == 16 }
+
+      StandardError.any_instance.should_not_receive(:log_me)
       described_class.new.process_entry @e
     end
 

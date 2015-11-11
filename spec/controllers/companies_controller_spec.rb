@@ -2,10 +2,25 @@ require 'spec_helper'
 
 describe CompaniesController do
   before :each do
-
     @u = Factory(:user,:admin=>true,:company=>Factory(:company,:master=>true))
     sign_in_as @u
     @c = Factory(:company)
+  end
+
+  describe :create do
+    it "should trigger snapshot" do
+      OpenChain::WorkflowProcessor.stub(:async_process)
+      expect{post :create, {'company'=>{'cmp_name'=>'mycompany'}}}.to change(Company,:count).by(1)
+      c = Company.last
+      expect(c.entity_snapshots.count).to eq 1
+    end
+  end
+  describe :update do
+    it "should trigger snapshot" do
+      OpenChain::WorkflowProcessor.stub(:async_process)
+      put :update, {'id'=>@c.id, 'company'=>{'cmp_name'=>'mycompany'}}
+      expect(@c.entity_snapshots.count).to eq 1
+    end
   end
   describe "attachment_archive_enabled" do
     before :each do

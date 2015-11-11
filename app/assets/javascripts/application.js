@@ -15,8 +15,14 @@
 //= require json3
 //= require bootstrap
 //= require angular
+//= require_directory ./domainer
 //= require_directory ./comment
+//= require_directory ./product
 //= require_directory ./shipment
 //= require_directory .
+// These directories are after "." because they require scripts loaded from root
+//= require_directory ./setup_data
+//= require_directory ./official_tariff
+//= require_directory ./field_validator
 //= stub legacy
 //= stub html5shim

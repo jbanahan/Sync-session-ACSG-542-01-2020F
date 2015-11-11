@@ -6,6 +6,7 @@ class DataCrossReference < ActiveRecord::Base
 
   JJILL_ORDER_FINGERPRINT ||= 'jjill_order'
   LENOX_ITEM_MASTER_HASH ||= 'lenox_itm'
+  LENOX_HTS_FINGERPRINT ||= 'lenox_hts_fingerprint'
   RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'
   RL_PO_TO_BRAND ||= 'po_to_brand'
   UA_PLANT_TO_ISO ||= 'uap2i'
@@ -27,6 +28,7 @@ class DataCrossReference < ActiveRecord::Base
   ALLIANCE_CHECK_REPORT_CHECKSUM ||= 'al_check_checksum'
   ALLIANCE_INVOICE_REPORT_CHECKSUM ||= 'al_inv_checksum'
   OUTBOUND_315_EVENT ||= '315'
+  PO_FINGERPRINT ||= 'po_id'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
@@ -123,6 +125,16 @@ class DataCrossReference < ActiveRecord::Base
     add_xref! LENOX_ITEM_MASTER_HASH, part_number, hash
   end
 
+  #id_iso is the concatentation of a product id and a classification country's ISO
+  def self.find_lenox_hts_fingerprint prod_id, country_iso
+    find_unique where(cross_reference_type: LENOX_HTS_FINGERPRINT, key: make_compound_key(prod_id, country_iso))
+  end
+
+  #fingerprint is a hash of the HTS numbers for all tariff records under a product/classification
+  def self.create_lenox_hts_fingerprint!(prod_id, country_iso, fingerprint)
+    add_xref! LENOX_HTS_FINGERPRINT, make_compound_key(prod_id, country_iso), fingerprint
+  end
+
   def self.find_jjill_order_fingerprint order
     find_unique where(cross_reference_type: JJILL_ORDER_FINGERPRINT, key: order.id.to_s)
   end
@@ -175,22 +187,58 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.find_315_milestone entry, event_code
-    find_unique(where(cross_reference_type: OUTBOUND_315_EVENT, key: make_compound_key(entry.source_system, entry.broker_reference, event_code)))
+    find_unique(where(cross_reference_type: OUTBOUND_315_EVENT, key: milestone_key(entry, event_code)))
   end
 
   def self.create_315_milestone! entry, event_code, date
-    add_xref! OUTBOUND_315_EVENT, make_compound_key(entry.source_system, entry.broker_reference, event_code), date
+    add_xref! OUTBOUND_315_EVENT, milestone_key(entry, event_code), date
+  end
+
+  def self.milestone_key obj, event_code
+    if obj.is_a?(Entry)
+      make_compound_key(obj.source_system, obj.broker_reference, event_code)
+    elsif obj.is_a?(SecurityFiling)
+      make_compound_key(obj.host_system, obj.host_system_file_number, event_code)
+    else
+      raise "Unknown Model type encountered: #{obj.class}.  Unable to generate 315 cross reference key."
+    end
+  end
+  private_class_method :milestone_key
+
+  def self.find_po_fingerprint order
+    find_unique_obj scoped, key: order.order_number, xref_type: PO_FINGERPRINT
+  end
+
+  def self.create_po_fingerprint order, fingerprint
+    add_xref! PO_FINGERPRINT, order.order_number, fingerprint
   end
 
   def self.has_key? key, cross_reference_type
     DataCrossReference.where(key: key, cross_reference_type: cross_reference_type).exists?
   end
 
-  def self.find_unique relation
-    values = relation.limit(1).order("updated_at DESC").pluck(:value)
-    values.first
+  def self.find_unique relation, key: nil, xref_type: nil
+    find_unique_relation(relation, key: key, xref_type: xref_type).pluck(:value).first
   end
   private_class_method :find_unique
+
+  def self.find_unique_obj relation, key: nil, xref_type: nil
+    find_unique_relation(relation, key: key, xref_type: xref_type).first
+  end
+  private_class_method :find_unique_obj
+
+  def self.find_unique_relation relation, key: nil, xref_type: nil
+    if key
+      relation = relation.where(key: key)
+    end
+
+    if xref_type
+      relation = relation.where(cross_reference_type: xref_type)
+    end
+
+    relation.limit(1).order("updated_at DESC")
+  end
+  private_class_method :find_unique_relation
 
   def self.hash_for_type cross_reference_type
     h = Hash.new

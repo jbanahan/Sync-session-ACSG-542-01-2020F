@@ -2,7 +2,13 @@ class OfficialTariffsController < ApplicationController
   skip_before_filter :require_user, :set_user_time_zone, :log_request, :only=>[:auto_classify,:auto_complete]
 
   def auto_complete
-    render :json=>OfficialTariff.where(:country_id=>params[:country]).where("hts_code LIKE ?","#{TariffRecord.clean_hts(params[:hts])}%").pluck(:hts_code)
+    ot = OfficialTariff.limit(10)
+    if !params[:country].blank?
+      ot = ot.where(:country_id=>params[:country])
+    else
+      ot = ot.where('country_id = (select id from countries where iso_code = ?)',params[:country_iso])
+    end
+    render :json=>ot.where("hts_code LIKE ?","#{TariffRecord.clean_hts(params[:hts])}%").pluck(:hts_code)
   end
   def auto_classify
     h = params[:hts].blank? ? '' : params[:hts].strip.gsub('.','')
@@ -13,7 +19,6 @@ class OfficialTariffsController < ApplicationController
       v.each {|ot| hts << {'lacey_act'=>ot.lacey_act?,'code'=>ot.hts_code,'desc'=>ot.remaining_description,'rate'=>ot.common_rate,'use_count'=>ot.use_count}}
       r << {'iso'=>k.iso_code,'country_id'=>k.id,'hts'=>hts}
     end
-    r
     render :json => r
   end
   def index

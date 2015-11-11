@@ -62,6 +62,16 @@ describe DataCrossReference do
       expect(described_class.where(key:'part_no',value:'hashval',cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH).count).to eq 1
     end
   end
+  context :lenox_hts_fingerprint do
+    it "should find" do
+      described_class.create! key: described_class.make_compound_key(1, 'US'), value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT
+      expect(described_class.find_lenox_hts_fingerprint(1, 'US')).to eq '9801001010'
+    end
+    it "should create" do
+      described_class.create_lenox_hts_fingerprint! 1, 'US', '9801001010'
+      expect(described_class.where(key: described_class.make_compound_key(1, 'US'), value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT).count).to eq 1
+    end
+  end
   context :find_rl_profit_center do
     it "should find an rl profit center from the brand code" do
       company = Factory(:importer)
@@ -199,6 +209,15 @@ describe DataCrossReference do
       xref = DataCrossReference.create_315_milestone! e, 'code', 'value'
       DataCrossReference.create_315_milestone! e, 'code', 'value2'
       expect(xref.reload.value).to eq "value2"
+    end
+  end
+
+  describe "create / find_po_fingerprint" do
+    it "finds xref object" do
+      o = Order.new order_number: "123"
+      DataCrossReference.create_po_fingerprint o, "fingerprint"
+      xref = DataCrossReference.find_po_fingerprint o
+      expect(xref.value).to eq "fingerprint"
     end
   end
 end

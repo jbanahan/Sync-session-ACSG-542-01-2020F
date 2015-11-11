@@ -68,7 +68,23 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
       custom_field_keys(CoreModule::TARIFF)
     )
 
-    to_entity_hash(obj, product_fields + class_fields + tariff_fields)
+    h = to_entity_hash(obj, product_fields + class_fields + tariff_fields)
+    h[:permissions] = render_permissions(obj)
+    if render_attachments?
+      render_attachments(obj,h)
+    end
+    return h
+  end
+
+  def render_permissions product
+    cu = current_user
+    {      
+      can_view: product.can_view?(cu),
+      can_edit: product.can_edit?(cu),
+      can_classify: product.can_classify?(cu),
+      can_comment: product.can_comment?(cu),
+      can_attach: product.can_attach?(cu)
+    }
   end
   
 end; end; end

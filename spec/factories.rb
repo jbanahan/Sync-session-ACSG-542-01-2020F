@@ -24,6 +24,9 @@ end
 Factory.define :consignee, parent: :company do |c|
   c.consignee true
 end
+Factory.define :master_company, parent: :company do |c|
+  c.master true
+end
 Factory.define :part_number_correlation do |c|
 end
 Factory.define :address do |a|
@@ -48,7 +51,7 @@ Factory.define :user do |f|
   f.api_auth_token "auth_token"
 end
 Factory.define :master_user, :parent=>:user do |f|
-  f.after_create {|u| u.company.update_attributes(:master=>true)}
+  f.association :company, :factory => :master_company
 end
 Factory.define :admin_user, :parent=>:master_user do |f|
   f.after_create do |u|
@@ -182,6 +185,10 @@ end
 Factory.define :search_setup do |s|
   s.name  'search name'
   s.module_type  'Product'
+  s.association :user
+end
+Factory.define :custom_report do |s|
+  s.name  'custom report name'
   s.association :user
 end
 Factory.define :search_schedule do |s|
@@ -422,4 +429,10 @@ end
 Factory.define :plant_product_group_assignment do |f|
   f.association :plant
   f.association :product_group
+end
+
+Factory.define :sent_email do |f|
+  f.sequence(:email_subject) { |n| "subject#{n}" }
+  f.sequence(:email_to) { |n| "recipient#{n}" }
+  f.sequence(:email_from) { |n| "sender#{n}" }
 end

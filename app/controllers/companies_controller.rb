@@ -1,9 +1,10 @@
+require 'open_chain/business_rule_validation_results_support'
 require 'open_chain/custom_handler/generic_alliance_product_generator'
 require 'open_chain/workflow_processor'
 class CompaniesController < ApplicationController
+  include OpenChain::BusinessRuleValidationResultsSupport
 
   before_filter :translate_booking_types, only: [:create, :update]
-
   # GET /companies
   # GET /companies.xml
   SEARCH_PARAMS = {
@@ -75,6 +76,7 @@ class CompaniesController < ApplicationController
       @company = Company.create(name:params[:company][:cmp_name])
       if @company.errors.empty? && @company.update_model_field_attributes(params[:company])
         OpenChain::WorkflowProcessor.async_process @company
+        @company.create_snapshot(current_user)
         add_flash :notices, "Company created successfully."
       else
         errors_to_flash @company
@@ -91,12 +93,18 @@ class CompaniesController < ApplicationController
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
       if @company.update_model_field_attributes(params[:company])
         OpenChain::WorkflowProcessor.async_process @company
+        @company.create_snapshot(current_user)
         add_flash :notices, "Company was updated successfully."
       else
         errors_to_flash @company
       end
       redirect_to redirect_location(@company)
     }
+  end
+
+
+  def validation_results
+    generic_validation_results(Company.find params[:id])
   end
   
   def shipping_address_list

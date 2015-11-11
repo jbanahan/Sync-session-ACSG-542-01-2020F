@@ -214,4 +214,84 @@ describe EntitySnapshot do
 
   end
 
+  describe :bucket_name do
+    it "should append env.system_code.snapshots.vfitrack.net" do
+      env = Rails.env
+      MasterSetup.get.update_attributes(system_code:'syscode')
+      expect(EntitySnapshot.bucket_name).to eq "#{env}.syscode.snapshots.vfitrack.net"
+    end
+    it "should raise error if longer than 63 characters (AWS limit)" do
+      MasterSetup.get.update_attributes(system_code:'123456789012345678901234567890123456789012345678901234567890')
+      expect{EntitySnapshot.bucket_name}.to raise_error(/Bucket name too long/)
+    end
+  end
+  describe :create_bucket_if_needed do
+    before :each do
+      @bn = 'bucketname'
+      EntitySnapshot.stub(:bucket_name).and_return(@bn)
+    end
+    it "should find existing bucket" do
+      OpenChain::S3.should_receive(:bucket_exists?).with(@bn).and_return true
+      OpenChain::S3.should_not_receive(:create_bucket!)
+      described_class.create_bucket_if_needed!
+    end
+    it "should create bucket with versioning turned on" do
+      OpenChain::S3.should_receive(:bucket_exists?).with(@bn).and_return false
+      OpenChain::S3.should_receive(:create_bucket!).with(@bn,versioning: true)
+      described_class.create_bucket_if_needed!
+    end
+  end
+
+  describe :create_from_entity do
+    it "should write S3 file at logical path" do
+      expected_path = '/my/path'
+      expected_bucket = 'bucket'
+      expected_version = 'ABC123'
+      expected_json = '{"a":"b"}'
+      ent = Factory(:entry)
+      u = Factory(:user)
+      CoreModule::ENTRY.stub(:entity_json).and_return(expected_json)
+
+      described_class.any_instance.should_receive(:expected_s3_path).and_return(expected_path)
+      described_class.should_receive(:bucket_name).and_return(expected_bucket)
+
+      s3_obj = double('S3Obj')
+      s3_bucket = double("S3Bucket")
+      s3_obj.stub(:bucket).and_return s3_bucket
+      s3_bucket.stub(:name).and_return expected_bucket
+      s3_obj.stub(:key).and_return expected_path
+
+      version_obj = double('ObjectVersion')
+      version_obj.stub(:version_id).and_return(expected_version)
+      
+      OpenChain::S3.should_receive(:upload_data).
+        with(expected_bucket,expected_path,expected_json).
+        and_return([s3_obj,version_obj])
+
+      es = EntitySnapshot.create_from_entity(ent,u)
+      expect(es.bucket).to eq expected_bucket
+      expect(es.doc_path).to eq expected_path
+      expect(es.version).to eq expected_version
+      expect(es.compared_at).to be_nil
+    end
+
+    it "should call EntityCompare.process with snapshot" do
+      described_class.any_instance.stub(:write_s3)
+      OpenChain::EntityCompare::EntityComparator.should_receive(:delay).and_return(OpenChain::EntityCompare::EntityComparator)
+      OpenChain::EntityCompare::EntityComparator.should_receive(:process_by_id)
+
+      ent = Factory(:entry)
+      u = Factory(:user)
+      es = EntitySnapshot.create_from_entity(ent,u)
+    end
+  end
+
+  describe :expected_s3_path do
+    it "should be core module / recordable.id" do
+      ent = Factory(:entry)
+      es = EntitySnapshot.new
+      es.recordable = ent
+      expect(es.expected_s3_path).to eq "entry/#{ent.id}.json"
+    end
+  end
 end

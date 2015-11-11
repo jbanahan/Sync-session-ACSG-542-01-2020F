@@ -1,4 +1,4 @@
-require 'open_chain/sql_proxy_client'
+require 'open_chain/kewill_sql_proxy_client'
 require 'open_chain/report/report_helper'
 
 module OpenChain; module Report; module SqlProxyDataReport
@@ -79,7 +79,7 @@ module OpenChain; module Report; module SqlProxyDataReport
       raise "#{self.name} must implement the method 'sql_proxy_query_name'." unless self.respond_to?(:sql_proxy_query_name)
 
       # This is solely for testing purposes...
-      client = settings['sql_proxy_client'].nil? ? OpenChain::SqlProxyClient.new : settings['sql_proxy_client']
+      client = settings['sql_proxy_client'].nil? ? OpenChain::KewillSqlProxyClient.new : settings['sql_proxy_client']
 
       # Fill in the report class value so the postback controller knows which report to pass the results back to
       query_context = {'report_result_id' => settings['report_result_id']}

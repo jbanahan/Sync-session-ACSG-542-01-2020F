@@ -8,26 +8,39 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       before :each do 
         @tax_ids = ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001", 
         "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001", 
-        "809756851RM0001", "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001"]
+        "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002", "807150586RM0001",
+        "807150586RM0002"]
 
         @entries = []
         @tax_ids.each do |id|
-          @entries << Factory(:entry, importer: Factory(:importer, fenix_customer_number: id), entry_number: id, k84_receive_date: Time.zone.now)
+          @entries << Factory(:entry, importer: Factory(:importer, fenix_customer_number: id), entry_number: id, k84_receive_date: Time.zone.now, entry_type: "AB")
         end
       end
 
       it "finds siemens entries that do not have sync records" do
-        expect(subject.find_entries.size).to eq @entries.size
+        entries = subject.find_entries
+        expect(entries.size).to eq @entries.size
+        expect(entries).to include(*@entries)
       end
 
       it "excludes entries with sync records" do
         @entries.first.sync_records.create! trading_partner: "Siemens Billing"
-        expect(subject.find_entries.size).to eq (@entries.size - 1)
+        expect(subject.find_entries).not_to include(@entries.first)
       end
 
       it "excludes entries without k84 receive dates" do
         @entries.first.update_attributes! k84_receive_date: nil
-        expect(subject.find_entries.size).to eq (@entries.size - 1)
+        expect(subject.find_entries).not_to include(@entries.first)
+      end
+
+      it "does not find entries w/ k84 receive dates prior to 9/25/2015" do
+        @entries.first.update_attributes! k84_receive_date: '2015-09-24'
+        expect(subject.find_entries).not_to include(@entries.first)
+      end
+
+      it "excludes F type summary entries" do
+        @entries.first.update_attributes! entry_type: "F"
+        expect(subject.find_entries).not_to include(@entries.first)
       end
     end
 
@@ -40,12 +53,15 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
   describe "run_schedulable" do
     before :each do
       KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}'
+      @user = Factory(:user, email: "me@there.com")
+      group = Group.use_system_group("canada-accounting")
+      group.users << @user
     end
 
     it "should find entries and generate and send them" do
       t = Factory(:commercial_invoice_tariff)
       e = t.commercial_invoice_line.entry
-      e.update_attributes! importer: Factory(:importer, fenix_customer_number: "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789"
+      e.update_attributes! importer: Factory(:importer, fenix_customer_number: "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789", entry_type: "AB"
 
       file_data = nil
 
@@ -61,6 +77,11 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       # All that we care about here is ultimately 1 line of something was encrypted
       # the rest is tested below.
       expect(file_data.lines.size).to eq 1
+
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      # Ensure the email was the report and not an error
+      mail = ActionMailer::Base.deliveries.first
+      expect(mail.to).to eq [@user.email]
     end
   end
 
@@ -205,7 +226,8 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
       it "writes out formatted entry data to an IO source" do
         io = StringIO.new
-        subject.write_entry_data io, @ed
+        report = StringIO.new
+        subject.write_entry_data io, report, @ed
 
         io.rewind
         lines = io.readlines("\r\n")
@@ -319,6 +341,13 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l[556..566]).to eq "0.00".rjust(11)
         expect(l[567..577]).to eq "0.00".rjust(11)
         expect(l[578..591]).to eq "0.00".rjust(14)
+
+        report.rewind
+        csv_lines = CSV.parse(report.read)
+        expect(csv_lines.length).to eq 2
+
+        expect(csv_lines.first).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "1", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
+        expect(csv_lines.second).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "2", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
       end
     end
 
@@ -327,6 +356,9 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         before :each do
           @counter = KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}'
           @entry.save!
+          @user = Factory(:user, email: "me@there.com")
+          group = Group.use_system_group("canada-accounting")
+          group.users << @user
         end
         
         it "writes entry data to a file and sends it" do
@@ -346,7 +378,8 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
           decrypted_file = nil
           Tempfile.open("decrypt") do |f|
-            Tempfile.open("encrypted", encoding: "ascii-8bit") do |en|
+            Tempfile.open("encrypted") do |en|
+              en.binmode
               en << encrypted_file
               en.flush
               gpg.decrypt_file en, f
@@ -355,14 +388,17 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
             decrypted_file = f.read
           end
           expect(decrypted_file.lines("\r\n").length).to eq 2
-          expect(filename).to eq "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat.gpg"
+          expect(filename).to eq "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat.pgp"
           sr = @entry.sync_records.first
           expect(sr.trading_partner).to eq "Siemens Billing"
           expect(sr.sent_at).not_to be_nil
           expect(sr.confirmed_at).not_to be_nil
 
           expect(@counter.reload.data).to eq({"counter" => 1})
-          expect(ActionMailer::Base.deliveries.length).to eq 0
+          expect(ActionMailer::Base.deliveries.length).to eq 1
+          # Ensure the email was the report and not an error
+          mail = ActionMailer::Base.deliveries.first
+          expect(mail.to).to eq [@user.email]
         end
 
         it "sends an email if the ftp file couldn't be sent" do
