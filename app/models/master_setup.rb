@@ -86,8 +86,9 @@ class MasterSetup < ActiveRecord::Base
 
   # checks to see if the given custom feature is in the custom features list
   def custom_feature? feature
-    custom_features_list.include? feature
+    custom_features_list.map {|l| l.upcase}.include? feature.to_s.upcase
   end
+  
   # get the custom features enabled for this system as an array
   def custom_features_list
     return [] if self.custom_features.blank?

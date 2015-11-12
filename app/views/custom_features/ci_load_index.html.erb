@@ -1,0 +1,45 @@
+<% content_for :head_tags do %>
+<style type="text/css">
+  #ci_load thead td {padding-left: 3px; padding-right: 3px; font-size: 75%; border: 1px solid black;}
+  #ci_load tbody td {padding-top: 10px;}
+  #ci_load {margin-top: 20px; margin-bottom: 25px;}
+</style>
+<% end %>
+
+<% content_for :upload_form do %>
+<h2>Upload ONLY CI Load Files in Excel or CSV format.</h2>
+<h4>The following data columns should be present in your file in the <b>same order</b> as listed below.</h4>
+<table id="ci_load">
+  <thead>
+    <tr>
+      <td><b>*</b> File #</td>
+      <td><b>*</b> Customer</td>
+      <td><b>*</b> Invoice #</td>
+      <td>Invoice Date</td>
+      <td>Country of Origin</td>
+      <td>Part # / Style</td>
+      <td>Pieces</td>
+      <td>MID</td>
+      <td>Tariff #</td>
+      <td>Cotton Fee (Y/N)</td>
+      <td>Invoice Foreign Value</td>
+      <td>Quantity 1</td>
+      <td>Quantity 2</td>
+      <td>Gross Weight</td>
+      <td>PO #</td>
+      <td>Cartons</td>
+      <td>First Sale Amount</td>
+      <td>NDC / MMV</td>
+      <td>Department</td>
+      <td>SPI</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan="20">* Denotes columns that MUST have values in them.  If values are not present in all columns with a *, the file will not process.</td>
+    </tr>
+  </tbody>
+</table>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "CI Load File Upload", custom_feature: "ci_load", show_error: true} %>

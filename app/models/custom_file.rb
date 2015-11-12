@@ -9,6 +9,7 @@ require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
+require 'open_chain/custom_handler/ci_load_handler'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
@@ -56,8 +57,17 @@ class CustomFile < ActiveRecord::Base
   end
 
   def secure_url(expires_in=10.seconds)
-    OpenChain::S3.url_for attached.options[:bucket], attached.path, expires_in, :response_content_disposition=>"attachment; filename=\"#{self.attached_file_name}\""
+    OpenChain::S3.url_for bucket, attached.path, expires_in, :response_content_disposition=>"attachment; filename=\"#{self.attached_file_name}\""
   end
+
+  def bucket
+    attached.options[:bucket]
+  end
+
+  def path
+    attached.path
+  end
+
   private
   def no_post
     false
