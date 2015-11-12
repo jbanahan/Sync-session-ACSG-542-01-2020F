@@ -22,6 +22,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryTariffMatchesProduct: {label:"Entry Tariff Numbers Match Parts Database"},
                 ValidationRuleOrderLineProductFieldFormat: {label:"Order Line's Product Field Format"},
                 ValidationRuleOrderVendorFieldFormat: {label:"Orders Vendor's Field Format"},
+                ValidationRuleEntryDutyFree: {label: "Entry Invoice Duty-Free"},
                 'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderCascadingRisk'.to_sym=>
                   {
                     label: 'Lumber PO Cascading Risk',
