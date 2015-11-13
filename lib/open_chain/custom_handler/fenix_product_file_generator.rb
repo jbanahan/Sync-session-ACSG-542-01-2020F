@@ -42,7 +42,7 @@ module OpenChain
         r
       end
       
-      def make_file products
+      def make_file products, update_sync_records = true
         t = Tempfile.new(["fenix-#{@fenix_customer_code}",'.txt'])
         products.each do |p|
           c = p.classifications.find_by_country_id(@canada_id)
@@ -54,11 +54,14 @@ module OpenChain
             end
           end
 
-          sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
-          sr.sent_at = Time.now
-          sr.confirmed_at = 1.second.from_now
-          sr.confirmation_file_name = "Fenix Confirmation"
-          sr.save!
+          # If we need to manually generate a file, then we won't want to run the sync data
+          if update_sync_records
+            sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
+            sr.sent_at = Time.now
+            sr.confirmed_at = 1.second.from_now
+            sr.confirmation_file_name = "Fenix Confirmation"
+            sr.save!
+          end
         end
         t.flush
         t

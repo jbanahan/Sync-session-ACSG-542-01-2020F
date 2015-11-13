@@ -147,6 +147,13 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[359, 3]).to eq "CN "
       expect(read).to end_with "\r\n"
     end
+
+    it "skips sync record creation if instructed" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      @t = @h.make_file [@p], false
+      @p.reload
+      @p.should have(0).sync_records
+    end
   end
 
   describe "ftp file" do
