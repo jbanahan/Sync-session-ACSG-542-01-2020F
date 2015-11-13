@@ -354,12 +354,6 @@ class ApplicationController < ActionController::Base
     send_data spreadsheet.string, :filename => filename, :type => :xls
   end
 
-  def send_excel_workbook workbook, filename
-    spreadsheet = StringIO.new 
-    workbook.write spreadsheet
-    send_data spreadsheet.string, :filename => filename, :type => :xls
-  end
-
   def current_user
     # Clearance controller defines current_user method, we need to add in run_as handling here ourselves
     user = super
