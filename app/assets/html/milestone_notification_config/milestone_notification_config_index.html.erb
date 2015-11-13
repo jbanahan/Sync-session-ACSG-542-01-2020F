@@ -32,8 +32,8 @@
           <td>{{config.milestone_notification_config.testing ? "Testing" : "Production"}}</td>
           <td>{{moduleTypes[config.milestone_notification_config.module_type]}}</td>
           <td>
-              <ul ng-show="config.milestone_notification_config.setup_json && config.milestone_notification_config.setup_json.length > 0">
-                <li ng-repeat="event in config.milestone_notification_config.setup_json">
+              <ul ng-show="config.milestone_notification_config.setup_json && config.milestone_notification_config.setup_json.milestone_fields.length > 0">
+                <li ng-repeat="event in config.milestone_notification_config.setup_json.milestone_fields">
                   {{event.label}} - ({{event.event_code}})
                 </li>
               </ul>

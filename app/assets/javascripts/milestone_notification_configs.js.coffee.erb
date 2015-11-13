@@ -122,7 +122,7 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
     $state.go('index')
 
   $scope.newEvent = () ->
-    $scope.config.setup_json.push {}
+    $scope.config.setup_json.milestone_fields.push {}
 
   $scope.copyConfig = () ->
     id = $scope.config.id
@@ -130,7 +130,7 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
     $state.go('show', {configId: id, action: "copy"})
 
   $scope.removeEvent = (event) ->
-    $scope.config.setup_json = $scope.config.setup_json.filter (s) ->
+    $scope.config.setup_json.milestone_fields = $scope.config.setup_json.milestone_fields.filter (s) ->
       s.model_field_uid != event.model_field_uid
 
   $scope.getModelFields = () ->
@@ -138,4 +138,11 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
       $scope.modelFieldList = resp.model_field_list
       $scope.eventList = resp.event_list
     )
+
+  $scope.addFingerprintField = () ->
+    $scope.config.setup_json.fingerprint_fields.push ""
+
+  $scope.removeFingerprintField = (field) ->
+    $scope.config.setup_json.fingerprint_fields = $scope.config.setup_json.fingerprint_fields.filter (s) ->
+      s != field
 ]

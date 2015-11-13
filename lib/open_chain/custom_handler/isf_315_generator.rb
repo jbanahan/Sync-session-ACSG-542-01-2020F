@@ -18,8 +18,10 @@ module OpenChain; module CustomHandler; class Isf315Generator
         # Prevent any other 315 processes for this isf from running, otherwise, it's possible
         # for race conditions between backend processes to produce multiple 315's for the same isf/event
         Lock.acquire("315-#{isf.host_system_file_number}") do
-          setup.setup_json.each do |field|
-            milestones << process_field(field.with_indifferent_access, user, isf)
+          fingerprint_values = fingerprint_field_data isf, user, setup
+
+          setup.milestone_fields.each do |field|
+            milestones << process_field(field.with_indifferent_access, user, isf, setup.testing?, fingerprint_values)
           end
         end
       end
@@ -44,7 +46,8 @@ module OpenChain; module CustomHandler; class Isf315Generator
     end
 
     generate_and_send_xml_document(isf.importer_account_code, data_315s, testing) do |data_315|
-      DataCrossReference.create_315_milestone! isf, data_315.event_code, xref_date_value(data_315.event_date)
+      data_315.sync_record.confirmed_at = Time.zone.now
+      data_315.sync_record.save!
     end
    
     nil
@@ -69,6 +72,7 @@ module OpenChain; module CustomHandler; class Isf315Generator
       d.po_numbers = v(:sf_po_numbers, isf)
       d.event_code = milestone.code
       d.event_date = milestone.date
+      d.sync_record = milestone.sync_record
       d.datasource = "isf"
 
       d

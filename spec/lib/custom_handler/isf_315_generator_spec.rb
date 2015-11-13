@@ -46,22 +46,6 @@ describe OpenChain::CustomHandler::Isf315Generator do
     end
   end
 
-  class ArgCapture
-    def initialize
-      @captures = []
-    end
-
-    def matches? arg
-      byebug
-      @captures << arg
-      true
-    end
-
-    def captures
-      @captures
-    end
-  end
-
   describe "receive" do
     let(:isf) { SecurityFiling.create! host_system_file_number: "ref", importer_account_code: "cust", transaction_number: "trans",  transport_mode_code: "10", scac: "SCAC", vessel: "VES",
                                    voyage: "VOY", entry_port_code: "ENT", lading_port_code: "LAD", master_bill_of_lading: "M\nB", house_bills_of_lading: "H\nB", container_numbers: "C\nN", po_numbers: "P\nO", first_accepted_date: "2015-03-01 08:00"}
@@ -83,6 +67,10 @@ describe OpenChain::CustomHandler::Isf315Generator do
       fake_data = double
       fake_data.stub(:event_code).and_return "code"
       fake_data.stub(:event_date).and_return t
+      sync_record = SyncRecord.new
+      fake_data.stub(:sync_record).and_return sync_record
+      sync_record.should_receive(:save!)
+
       subject.should_receive(:generate_and_send_xml_document) do |cust_no, data, testing|
         expect(cust_no).to eq "cust"
         expect(testing).to be_false
@@ -94,9 +82,6 @@ describe OpenChain::CustomHandler::Isf315Generator do
       subject.receive :save, isf
       # for this test, all we care about is that some data was sent (not what was in the data)
       expect(cap.length).to eq 1
-
-      # verify the data cross reference is created using the yielded fake info above
-      expect(DataCrossReference.find_315_milestone(isf, "code")).to eq t.iso8601
     end
 
 
@@ -140,6 +125,9 @@ describe OpenChain::CustomHandler::Isf315Generator do
       fake_data = double
       fake_data.stub(:event_code).and_return "code"
       fake_data.stub(:event_date).and_return t
+      sync_record = SyncRecord.new
+      fake_data.stub(:sync_record).and_return sync_record
+      sync_record.should_receive(:save!)
       subject.should_receive(:generate_and_send_xml_document) do |cust_no, data, testing|
         expect(cust_no).to eq "cust"
         expect(testing).to be_false
@@ -165,8 +153,6 @@ describe OpenChain::CustomHandler::Isf315Generator do
       expect(d.event_code).to eq "code"
       expect(d.event_date).to eq t.iso8601
       expect(d.datasource).to eq "isf"
-
-      expect(DataCrossReference.find_315_milestone(isf, "code")).to eq t.iso8601
     end
 
     it "splits data by master bill" do

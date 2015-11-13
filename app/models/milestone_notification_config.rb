@@ -12,7 +12,7 @@ class MilestoneNotificationConfig < ActiveRecord::Base
 
   def setup_json
     if setup.blank?
-      []
+      {}
     else
       ActiveSupport::JSON.decode(self.setup)
     end
@@ -20,6 +20,24 @@ class MilestoneNotificationConfig < ActiveRecord::Base
 
   def setup_json= hash
     self.setup = ActiveSupport::JSON.encode hash
+  end
+
+  def fingerprint_fields
+    j = setup_json
+    if j.is_a?(Array)
+      []
+    else
+      j['fingerprint_fields'].presence || []
+    end
+  end
+
+  def milestone_fields
+    j = setup_json
+    if j.is_a?(Array)
+      j
+    else
+      j['milestone_fields'].presence || []
+    end
   end
 end
 

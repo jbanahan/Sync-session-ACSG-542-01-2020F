@@ -54,9 +54,10 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
       end if config[:search_criterions]
       
       setup = config[:setup_json]
+      setup_json = {}
       if setup
-        j = []
-        setup.each do |event|
+        fields = []
+        Array.wrap(setup[:milestone_fields]).each do |event|
           uid = event['model_field_uid']
           # uid could be blank if the user added a row, but then didn't fill anything in...skip it if that happened.
           next if uid.blank?
@@ -65,14 +66,22 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
           raise "Missing event_code for #{c.customer_number}.  No event model field for event code '#{uid}' found." unless mf
 
           conf = {model_field_uid: mf.uid.to_s, no_time: event["no_time"], timezone: event["timezone"]}
-          j << conf
+          fields << conf
         end
-        c.setup_json = j
-      else
-        c.setup_json = []
+
+        fingerprint_fields = []
+        Array.wrap(setup[:fingerprint_fields]).each do |field|
+          next if field.blank?
+          
+          mf = ModelField.find_by_uid(field)
+          raise "Missing identifier field for #{c.customer_number}.  No model field for code '#{field}' found." unless mf
+          fingerprint_fields << field
+        end
+        setup_json[:milestone_fields] = fields
+        setup_json[:fingerprint_fields] = fingerprint_fields
       end
 
-
+      c.setup_json = setup_json
       c.save!
       render json: config_json_with_model_fields(c)
     end
@@ -84,14 +93,19 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
 
     def config_json config, copy = false
       c = config.as_json(
-        only: [:id, :customer_number, :enabled, :output_style, :testing, :module_type],
-        methods: [:setup_json]
+        only: [:id, :customer_number, :enabled, :output_style, :testing, :module_type]
       ).with_indifferent_access
-      c[:milestone_notification_config][:setup_json].each do |setup|
+
+      # This is a little wonkier than it needs to be due to supporting some older json formats in the setup_json field
+      c[:milestone_notification_config][:setup_json] = {}
+      c[:milestone_notification_config][:setup_json][:milestone_fields] = config.milestone_fields
+      c[:milestone_notification_config][:setup_json][:fingerprint_fields] = config.fingerprint_fields
+
+      c[:milestone_notification_config][:setup_json][:milestone_fields].each do |setup|
         field = ModelField.find_by_uid setup["model_field_uid"]
         setup['label'] = field.label
         setup['event_code'] = field.uid.to_s.sub /^[^_]+_/, "" # Just trim the leading segement of the front of the uids and use as the event code
-      end
+      end unless c[:milestone_notification_config][:setup_json][:milestone_fields].blank?
       c[:milestone_notification_config][:search_criterions] = config.search_criterions.collect {|sc| sc.json(current_user)}
 
       if copy
