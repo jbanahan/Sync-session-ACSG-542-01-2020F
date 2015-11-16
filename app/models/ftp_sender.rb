@@ -338,7 +338,8 @@ class FtpSender
     def connect server, user, password, log, opts
       log << "File sending has been disabled for this environment.  All log messages after this are for reference only...no files were sent."
       set_ok_response
-      yield
+      @remote_path = Pathname.new ''
+      yield self
     end
 
     def after_login opts={}

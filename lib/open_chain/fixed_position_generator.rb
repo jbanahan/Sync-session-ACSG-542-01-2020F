@@ -8,22 +8,39 @@ module OpenChain; class FixedPositionGenerator
       line_break_replace_char:' ',
       date_format:'%Y%m%d',
       output_timezone: nil,
-      numeric_pad_char: ' '
+      numeric_pad_char: ' ',
+      blank_date_fill_char: ' ',
+      string_output_encoding: '',
+      string_output_encoding_replacement_char: '?',
     }.merge! opts
+
+    if !@opts[:string_output_encoding].blank?
+      @output_encoding = Encoding.find(@opts[:string_output_encoding])
+    else
+      @output_encoding = nil
+    end
   end
 
   def str s, len, right_justify = false, force_truncate = false
-    return ''.ljust(len,@opts[:pad_char]) if s.nil?
-    r = replace_newlines s.to_s
-    if r.length > len
-      raise "String '#{r}' is longer than #{len} characters" if @opts[:exception_on_truncate] && !force_truncate
-      return r[0,len]
-    end
-    if right_justify
-      return r.rjust(len,@opts[:pad_char])
+    v = nil
+    if !s.nil?
+      v = encode_string(replace_newlines(s.to_s))
+
+      if v.length > len
+        raise "String '#{v}' is longer than #{len} characters" if @opts[:exception_on_truncate] && !force_truncate
+        v = v[0,len]
+      end
     else
-      return r.ljust(len,@opts[:pad_char])
+      v = ''
     end
+
+    if right_justify
+      v = v.rjust(len,@opts[:pad_char])
+    else
+      v = v.ljust(len,@opts[:pad_char])
+    end
+
+    v
   end
 
   # makes a padded, right justified value with decimals
@@ -72,14 +89,19 @@ module OpenChain; class FixedPositionGenerator
 
   def date d, format_override=nil, timezone_override = nil
     f = format_override.blank? ? @opts[:date_format] : format_override
-    return ''.ljust(Time.now.strftime(f).length) if d.nil?
-    if d.respond_to?(:in_time_zone)
-      # Use the override, if given, fall back to opts if there, else fall back to Time.zone setting
-      tz = timezone_override ? timezone_override : (@opts[:output_timezone] ? @opts[:output_timezone] : Time.zone )
-      d = d.in_time_zone tz if tz
-    end
+    v = nil
+    if d.nil?
+      v = ''.ljust(Time.now.strftime(f).length, @opts[:blank_date_fill_char])
+    else
+      if d.respond_to?(:in_time_zone)
+        # Use the override, if given, fall back to opts if there, else fall back to Time.zone setting
+        tz = timezone_override ? timezone_override : (@opts[:output_timezone] ? @opts[:output_timezone] : Time.zone )
+        d = d.in_time_zone tz if tz
+      end
 
-    d.strftime(f)
+      v = d.strftime(f)
+    end
+    v
   end
 
   private 
@@ -88,5 +110,13 @@ module OpenChain; class FixedPositionGenerator
   end
   def replace_newlines s
     s.gsub(/(?:(?:\r\n)|\n|\r)/,@opts[:line_break_replace_char])
+  end
+
+  def encode_string s
+    if @output_encoding
+      s.encode @output_encoding, replace: @opts[:string_output_encoding_replacement_char], invalid: :replace, undef: :replace
+    else
+      s
+    end
   end
 end; end

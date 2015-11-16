@@ -15,6 +15,7 @@ require 'open_chain/custom_handler/lands_end/le_returns_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 require 'open_chain/custom_handler/polo/polo_fiber_content_parser'
 require 'open_chain/custom_handler/intacct/alliance_day_end_handler'
+require 'open_chain/custom_handler/ci_load_handler'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -31,6 +32,7 @@ class CustomFeaturesController < ApplicationController
   LE_RETURNS_PARSER = 'OpenChain::CustomHandler::LandsEnd::LeReturnsParser'
   LE_CI_UPLOAD = 'OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator'
   ALLIANCE_DAY_END = 'OpenChain::CustomHandler::Intacct::AllianceDayEndHandler'
+  CI_UPLOAD = 'OpenChain::CustomHandler::CiLoadHandler'
 
   def index
     render :layout=>'one_col'
@@ -513,5 +515,33 @@ class CustomFeaturesController < ApplicationController
       redirect_to f.secure_url
     }
   end
+
+  def ci_load_index
+    action_secure(OpenChain::CustomHandler::CiLoadHandler.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"CI Load Upload",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+    }
+  end
+
+  def ci_load_upload
+    f = CustomFile.new(:file_type=>CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"CI Load Upload",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a VFI Track message when it completes."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/ci_load'
+    }
+  end
   
+
+  def ci_load_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"CI Load Upload",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
 end

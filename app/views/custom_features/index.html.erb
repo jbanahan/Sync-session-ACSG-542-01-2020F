@@ -17,6 +17,13 @@
     </div>
   </div>
   <%-end-%>
+  <%- if OpenChain::CustomHandler::CiLoadHandler.can_view?(current_user) -%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "CI Load", '/custom_features/ci_load', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
   <%-if enabled_features.include? 'CSM Sync'%>
   <div class='row'>
     <div class='col-md-4 col-md-offset-4'>

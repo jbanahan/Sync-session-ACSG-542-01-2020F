@@ -13,24 +13,45 @@ describe CustomFile do
       cf.can_view?(u).should be_false
     end
   end
-  context 'attachment handling' do
-    before :each do
-      @data = Time.now.to_s
-      @t = Tempfile.new('a')
-      @t.write @data
-      @t.flush
-      @f = CustomFile.create!
+  
+  context 'with functional paperclip/s3', paperclip: true, s3: true do
+    let (:file_data) { Time.zone.now.to_s }
+    let (:file) do
+      f = Tempfile.new(["testing", ".txt"])
+      f.write file_data
+      f.flush
+      f
     end
+
     after :each do
-      @f.delete
+      file.close!
     end
-    it 'should attach file', paperclip: true, s3: true do
-      @f.attached = @t
-      @f.save!
-      @f.reload
-      OpenChain::S3.get_data('chain-io',@f.attached.path).should == @data
+
+    describe "save with attachment" do
+      it 'should attach file', paperclip: true, s3: true do
+        f = CustomFile.create! attached: file
+        expect(OpenChain::S3.get_data('chain-io',f.attached.path)).to eq file_data
+      end
+    end
+
+    describe "bucket" do
+      it "returns the bucket setup for paperclip" do
+        f = CustomFile.create! attached: file
+        expect(f.bucket).to eq Rails.configuration.paperclip_defaults[:bucket]
+      end
+    end
+
+    describe "path" do
+      it "returns the path given by the paperclip object" do
+        f = CustomFile.create! attached: file
+        # The master setup uuid is part of the path, but it's configured in the application.rb file
+        # and master setup won't exist there in test yet (in prod it's fine).  So don't test for that
+        # in this test.
+        expect(f.path).to end_with "custom_file/#{f.id}/#{f.attached_file_name}"
+      end
     end
   end
+
   context 'status logging' do
     it "should write start and finish times" do
       h = mock "handler"
