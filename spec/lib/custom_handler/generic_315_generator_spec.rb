@@ -15,18 +15,18 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"
         c.save! 
 
-        expect(described_class.new.accepts? :save, e).to be_true
+        expect(subject.accepts? :save, e).to be_true
       end
 
       it "doesn't accept entries without 315 setups" do
         e = Entry.new broker_reference: "ref", customer_number: "cust"
-        expect(described_class.new.accepts? :save, e).to be_false
+        expect(subject.accepts? :save, e).to be_false
       end
 
       it "doesn't accept entries without customer numbers" do 
         c = MilestoneNotificationConfig.create! enabled: true, output_style: "standard", module_type: "Entry"
         e = Entry.new broker_reference: "cust"
-        expect(described_class.new.accepts? :save, e).to be_false
+        expect(subject.accepts? :save, e).to be_false
       end
 
       it "doesn't find 315 setups for other modules" do
@@ -34,7 +34,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "SecurityFiling"
         c.save! 
 
-        expect(described_class.new.accepts? :save, e).to be_false
+        expect(subject.accepts? :save, e).to be_false
       end
 
       it "doesn't accept entries linked to 315 setups that are disabled" do
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c = MilestoneNotificationConfig.new customer_number: "cust", enabled: false, output_style: "standard", module_type: "Entry"
         c.save! 
 
-        expect(described_class.new.accepts? :save, e).to be_false
+        expect(subject.accepts? :save, e).to be_false
       end
 
       it "accepts if multiple configs are setup" do
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c.save! 
         c1.save!
 
-        expect(described_class.new.accepts? :save, e).to be_true
+        expect(subject.accepts? :save, e).to be_true
       end
 
       it "accepts if configs are all testing" do
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true, module_type: "Entry"
         c.save!
 
-        expect(described_class.new.accepts? :save, e).to be_true
+        expect(subject.accepts? :save, e).to be_true
       end
     end
     
@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       MasterSetup.stub(:get).and_return ms
       ms.stub(:custom_feature?).with("Entry 315").and_return false
 
-      expect(described_class.new.accepts? :save, e).to be_false
+      expect(subject.accepts? :save, e).to be_false
     end
   end
 
@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "generates and sends xml for 315 update" do
       Lock.should_receive(:acquire).with("315-123").and_yield 
-      c = described_class.new
+      c = subject
       file_contents = nil
       ftp_opts = nil
       c.should_receive(:ftp_file) do |file, opts|
@@ -104,9 +104,13 @@ describe OpenChain::CustomHandler::Generic315Generator do
       r = REXML::Document.new(file_contents).root
       expect(REXML::XPath.each(r, "VfiTrack315/MasterBills/MasterBill").collect {|v| v.text}).to eq(["A", "B"])
       expect(REXML::XPath.each(r, "VfiTrack315/Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
-      # Make sure we saved off the actual date that was sent in the xml so we don't bother resending
-      # the same data at a later time.
-      expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.in_time_zone("Eastern Time (US & Canada)").iso8601
+
+      @entry.reload
+      expect(@entry.sync_records.size).to eq 1
+      sr = @entry.sync_records.first
+      expect(sr.sent_at).to be_within(1.minute).of Time.zone.now
+      expect(sr.confirmed_at).to be_within(1.minute).of Time.zone.now
+      expect(sr.trading_partner).to eq "315_release_date"
       expect(ftp_opts).to eq folder: "to_ecs/315/CUST"
     end
 
@@ -120,11 +124,14 @@ describe OpenChain::CustomHandler::Generic315Generator do
       end
       subject.receive :save, @entry
       expect(ftp_opts).to eq folder: "to_ecs/315_test/CUST"
+      # Testing setups don't store off sync records
+      @entry.reload
+      expect(@entry.sync_records.size).to eq 0
     end
 
     it "accepts if all search creatrions match" do
       @config.search_criterions.create! model_field_uid: "ent_release_date", operator: "notnull"
-      c = described_class.new
+      c = subject
       c.should_receive(:ftp_file)
       c.receive :save, @entry
     end
@@ -133,14 +140,16 @@ describe OpenChain::CustomHandler::Generic315Generator do
       # Create one that matches and one that doesn't to ensure we bail even if only one doesn't match
       @config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "co", value: "NOMATCH"
       @config.search_criterions.create! model_field_uid: "ent_release_date", operator: "notnull"
-      c = described_class.new
+      c = subject
       c.should_not_receive(:ftp_file)
       c.receive :save, @entry
     end
 
     it "does not send 315 if milestone date is same as previous send" do
-      DataCrossReference.create_315_milestone! @entry, 'release_date', @entry.release_date.in_time_zone("Eastern Time (US & Canada)").iso8601
-      c = described_class.new
+      c = subject
+      m = OpenChain::CustomHandler::Generic315Generator::MilestoneUpdate.new 'release_date', @entry.release_date.in_time_zone("Eastern Time (US & Canada)")
+      fingerprint = c.calculate_315_fingerprint m, []
+      @entry.sync_records.create! trading_partner: "315_release_date", fingerprint: fingerprint, sent_at: Time.zone.now, confirmed_at: Time.zone.now
       c.should_not_receive(:ftp_file)
       c.receive :save, @entry
     end
@@ -150,12 +159,15 @@ describe OpenChain::CustomHandler::Generic315Generator do
         {model_field_uid: "ent_release_date", timezone: "Hawaii"}
       ]
       @config.save!
-      c = described_class.new
-      c.should_receive(:ftp_file)
+      c = subject
+      file_contents = nil
+      c.should_receive(:ftp_file) do |file, opts|
+        file_contents = file.read
+      end
 
       c.receive :save, @entry
-
-      expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.in_time_zone("Hawaii").iso8601
+      r = REXML::Document.new(file_contents).root
+      expect(r.text("VfiTrack315/Event/EventTime")).to eq(@entry.release_date.in_time_zone("Hawaii").strftime("%H%M"))
     end
 
     it "removes time" do
@@ -163,12 +175,15 @@ describe OpenChain::CustomHandler::Generic315Generator do
         {model_field_uid: "ent_release_date", no_time: true}
       ]
       @config.save!
-      c = described_class.new
-      c.should_receive(:ftp_file)
+      c = subject
+      file_contents = nil
+      c.should_receive(:ftp_file) do |file, opts|
+        file_contents = file.read
+      end
 
       c.receive :save, @entry
-
-      expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq @entry.release_date.to_date.iso8601
+      r = REXML::Document.new(file_contents).root
+      expect(r.text("VfiTrack315/Event/EventTime")).to eq("0000")
     end
 
     it "removes the time after changing to different timezone" do
@@ -177,19 +192,22 @@ describe OpenChain::CustomHandler::Generic315Generator do
         {model_field_uid: "ent_release_date", timezone: "Hawaii", no_time: true}
       ]
       @config.save!
-      c = described_class.new
-      c.should_receive(:ftp_file)
+      c = subject
+      file_contents = nil
+      c.should_receive(:ftp_file) do |file, opts|
+        file_contents = file.read
+      end
 
       c.receive :save, @entry
-
-      expect(DataCrossReference.find_315_milestone @entry, 'release_date').to eq (@entry.release_date - 1.day).to_date.iso8601
+      r = REXML::Document.new(file_contents).root
+      expect(r.text("VfiTrack315/Event/EventDate")).to eq((@entry.release_date - 1.day).to_date.strftime("%Y%m%d"))
     end
 
     it "sends distinct VfiTrack315 elements for each masterbill / container combination when output_format is 'mbol_container'" do
       @config.output_style = MilestoneNotificationConfig::OUTPUT_STYLE_MBOL_CONTAINER_SPLIT
       @config.save!
 
-      c = described_class.new
+      c = subject
       file_contents = nil
       c.should_receive(:ftp_file).exactly(1).times do |file|
         file_contents = file.read
@@ -217,7 +235,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       @config.output_style = MilestoneNotificationConfig::OUTPUT_STYLE_MBOL
       @config.save!
 
-      c = described_class.new
+      c = subject
       file_contents = nil
       c.should_receive(:ftp_file).exactly(1).times do |file|
         file_contents = file.read

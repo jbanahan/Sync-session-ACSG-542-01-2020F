@@ -1,5 +1,6 @@
 require 'open_chain/xml_builder'
 require 'open_chain/ftp_file_support'
+require 'digest/sha1'
 
 module OpenChain; module CustomHandler; module Generator315Support
   extend ActiveSupport::Concern
@@ -8,9 +9,9 @@ module OpenChain; module CustomHandler; module Generator315Support
 
   Data315 ||= Struct.new(:broker_reference, :entry_number, :ship_mode, :service_type, :carrier_code, :vessel, 
                           :voyage_number, :port_of_entry, :port_of_lading, :cargo_control_number, :master_bills, :house_bills, :container_numbers,
-                          :po_numbers, :event_code, :event_date, :datasource)
+                          :po_numbers, :event_code, :event_date, :datasource, :sync_record)
                           
-  MilestoneUpdate ||= Struct.new(:code, :date)
+  MilestoneUpdate ||= Struct.new(:code, :date, :sync_record)
 
   def generate_and_send_xml_document customer_number, data_315s, testing = false
     return if data_315s.nil? || data_315s.size == 0
@@ -70,24 +71,47 @@ module OpenChain; module CustomHandler; module Generator315Support
     nil
   end
 
-  def process_field field, user, entry
+  def process_field field, user, entry, testing, additional_fingerprint_values = []
     mf = ModelField.find_by_uid field[:model_field_uid]
     value = mf.process_export entry, user, true
 
     # Do nothing if there's no value..we don't bother sending blanked time fields..
+    milestone = nil
     if value
       timezone = field[:timezone].blank? ? default_timezone : ActiveSupport::TimeZone[field[:timezone]]
       no_time = field[:no_time].to_s.to_boolean
       updated_date = adjust_date_time(value, timezone, no_time)
       code = event_code mf.uid
 
-      # Now check to see if this updated_date has already been sent out
-      xref = DataCrossReference.find_315_milestone entry, code
-      if xref.nil? || xref != xref_date_value(updated_date)
-        return MilestoneUpdate.new(code, updated_date)
+      mu = MilestoneUpdate.new(code, updated_date)
+
+      # If we're testing...we're going to send files all the time, regardless over whether the data is changed or not
+      # Testing setups should be limited by search criterions to a single file (or small range of files), so this shouldn't
+      # matter.
+      if testing
+        milestone = mu
+      else
+        fingerprint = calculate_315_fingerprint(mu, additional_fingerprint_values)
+
+        sync_record = entry.sync_records.where(trading_partner: "315_#{code}").first_or_initialize
+
+        # If the confirmed at time nil it means the record wasn't actually sent (maybe generation failed), in which case,
+        # if it's been over 5 minutes since it was last sent, then try sending again
+        if sync_record.fingerprint != fingerprint || (sync_record.confirmed_at.nil? && (sync_record.sent_at > Time.zone.now - 5.minutes))
+          sync_record.fingerprint = fingerprint
+          # We're sort of abusing the sync record's confirmed at here so that we can do two-phase generating / sending
+          # Confirmed at is sent once we've confirmed the record has actually been sent (ftp'ed)
+          sync_record.sent_at = Time.zone.now
+          sync_record.confirmed_at = nil
+
+          sync_record.save!
+          mu.sync_record = sync_record
+
+          milestone = mu
+        end
       end
     end
-    nil
+    milestone
   end
 
   def adjust_date_time value, timezone, no_time
@@ -139,6 +163,27 @@ module OpenChain; module CustomHandler; module Generator315Support
   def event_code uid
     # Just trim the "ent_" of the front of the uids and use as the event code
     uid.to_s.sub /^[^_]+_/, ""
+  end
+
+  def calculate_315_fingerprint milestone, finger_print_fields
+    values = [milestone.code, xref_date_value(milestone.date)]
+    values.push *finger_print_fields
+
+    Digest::SHA1.hexdigest values.join("~*~")
+  end
+
+
+  def fingerprint_field_data obj, user, setup
+    # Sort the fields by name (so order doesn't play into the fingerprint) and eliminate any duplicates.
+    Array.wrap(setup.fingerprint_fields).sort.uniq.map {|f| ModelField.find_by_uid(f).process_export(obj, user, true)}.map do |v|
+      v = if v.respond_to?(:blank?)
+        v.blank? ? "" : v
+      else
+        v
+      end
+
+      v.respond_to?(:strip) ? v.strip : v
+    end
   end
 
 end; end; end;

@@ -14,14 +14,15 @@ module OpenChain; module CustomHandler; class Generic315Generator
 
     setups.each do |setup|
       matches = setup.search_criterions.collect {|sc| sc.test? entry}.uniq.compact
-      user = User.integration
       milestones = []
       if setup.search_criterions.length == 0 || (matches.length == 1 && matches[0] == true)
         # Prevent any other 315 processes for this entry from running, otherwise, it's possible
         # for race conditions between backend processes to produce multiple 315's for the same entry/event
         Lock.acquire("315-#{entry.broker_reference}") do
-          setup.setup_json.each do |field|
-            milestones << process_field(field.with_indifferent_access, user, entry)
+          fingerprint_values = fingerprint_field_data entry, user, setup
+
+          setup.milestone_fields.each do |field|
+            milestones << process_field(field.with_indifferent_access, user, entry, setup.testing?, fingerprint_values)
           end
         end
       end
@@ -47,7 +48,8 @@ module OpenChain; module CustomHandler; class Generic315Generator
     end
 
     generate_and_send_xml_document(entry.customer_number, data_315s, testing) do |data_315|
-      DataCrossReference.create_315_milestone! entry, data_315.event_code, xref_date_value(data_315.event_date)
+      data_315.sync_record.confirmed_at = Time.zone.now
+      data_315.sync_record.save!
     end
    
     nil
@@ -73,6 +75,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
       d.po_numbers = v(:ent_po_numbers, entry)
       d.event_code = milestone.code
       d.event_date = milestone.date
+      d.sync_record = milestone.sync_record
       d.datasource = "entry"
 
       d

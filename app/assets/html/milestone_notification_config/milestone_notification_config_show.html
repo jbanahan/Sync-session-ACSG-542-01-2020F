@@ -42,6 +42,24 @@
         <label>315 Output Filters (All filters must match entry for a 315 to be sent)</label>
         <div chain-search-criteria bound-item="config" model-fields="modelFieldList" />
       </div>
+      <div class="col-md-9" ng-show="modelFieldList && modelFieldList.length > 0" style="margin-top: 20px;">
+        <label>Fingerprint Fields - If any of the following field's change values new 315s will be sent for all events.</label>
+        <table class="table table-striped">
+          <tbody>
+            <tr ng-repeat="field in config.setup_json.fingerprint_fields track by $index">
+              <td><select ng-model="config.setup_json.fingerprint_fields[$index]" class="form-control" ng-options="mf.mfid as mf.label for mf in modelFieldList" /></td>
+              <td><button type="button" class="btn btn-danger" ng-click="removeFingerprintField(field)">
+                  <span class="glyphicon glyphicon-trash"></span>
+                </button></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" class="text-center"><button type="button" class="btn btn-default" ng-click="addFingerprintField()">Add Field</button></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
     <div class="row" ng-show="eventList && eventList.length > 0">
       <div class="col-md-12 text-center">
@@ -56,10 +74,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="event in config.setup_json">
+            <tr ng-repeat="event in config.setup_json.milestone_fields">
               <td>
                 <button type="button" class="btn btn-danger" ng-click="removeEvent(event)">
-                  <span class="glyphicon glyphicon-remove"></span>
+                  <span class="glyphicon glyphicon-trash"></span>
                 </button>
               </td>
               <td>
