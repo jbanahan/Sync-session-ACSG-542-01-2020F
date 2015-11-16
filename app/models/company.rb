@@ -315,6 +315,14 @@ class Company < ActiveRecord::Base
     n
   end
 
+  def enabled_booking_types_array
+    # ['product','order','order_line','container']
+    self.enabled_booking_types.to_s.split("\n").map(&:strip)
+  end
+
+  def self.booking_types
+    {"Product" => 'product', "Order" => 'order', 'Order Line' => 'order_line', "Container" => 'container'}
+  end
 
 	private
 

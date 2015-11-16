@@ -3,13 +3,11 @@ describe 'ShipmentService', ->
   beforeEach module('ShipmentApp')
 
   describe 'shipmentSvc', ->
-    http = svc = commentSvc = null
+    http = svc = null
 
     beforeEach inject((shipmentSvc,_commentSvc_,$httpBackend) ->
       svc = shipmentSvc
       http = $httpBackend
-      commentSvc = _commentSvc_
-      spyOn(commentSvc,'injectComments')
     )
 
     afterEach ->
@@ -19,23 +17,59 @@ describe 'ShipmentService', ->
     describe 'getShipment', ->
       it 'should get shipment from server', ->
         resp = {shipment: {id: 1}}
-        http.expectGET('/api/v1/shipments/1.json?summary=true&no_lines=true&include=order_lines,attachments').respond resp
+        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments').respond resp
         shp = null
         svc.getShipment(1).then (data) ->
           shp = data.data
         http.flush()
         expect(shp).toEqual resp
-        expect(commentSvc.injectComments).toHaveBeenCalledWith(resp.shipment,'Shipment')
 
-    describe 'injectLines', ->
+      it 'should get shipment from server, including shipmentLines', ->
+        resp = {shipment: {id: 1}}
+        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments&shipment_lines=true').respond resp
+        shp = null
+        svc.getShipment(1, true).then (data) ->
+          shp = data.data
+        http.flush()
+        expect(shp).toEqual resp
+
+      it 'should get shipment from server, including bookingLines', ->
+        resp = {shipment: {id: 1}}
+        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments&booking_lines=true').respond resp
+        shp = null
+        svc.getShipment(1, false, true).then (data) ->
+          shp = data.data
+        http.flush()
+        expect(shp).toEqual resp
+
+      it 'should get shipment from server, including shipment & bookingLines', ->
+        resp = {shipment: {id: 1}}
+        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments&shipment_lines=true&booking_lines=true').respond resp
+        shp = null
+        svc.getShipment(1, true, true).then (data) ->
+          shp = data.data
+        http.flush()
+        expect(shp).toEqual resp
+
+    describe 'injectShipmentLines', ->
       it 'should add lines to existing object', ->
         expected_line_array = [{id: 10},{id: 11}]
         resp = {shipment: {id: 1, lines: expected_line_array}}
         s = {id: 1}
-        http.expectGET('/api/v1/shipments/1.json?shipment_lines=true&include=order_lines').respond resp
+        http.expectGET('/api/v1/shipments/1/shipment_lines.json?include=order_lines').respond resp
         svc.injectShipmentLines(s)
         http.flush()
         expect(s.lines).toEqual expected_line_array
+
+    describe 'injectBookingLines', ->
+      it 'should add lines to existing object', ->
+        expected_line_array = [{id: 10},{id: 11}]
+        resp = {shipment: {id: 1, booking_lines: expected_line_array}}
+        s = {id: 1}
+        http.expectGET('/api/v1/shipments/1/booking_lines.json').respond resp
+        svc.injectBookingLines(s)
+        http.flush()
+        expect(s.booking_lines).toEqual expected_line_array
 
     describe 'saveShipment', ->
       it "should remove zero quantity lines that don't already have an ID", ->
@@ -127,12 +161,22 @@ describe 'ShipmentService', ->
         svc.uncancelShipment(shp)
         http.flush()
 
-    describe 'getParties', ->
+    describe 'getImporters', ->
       it 'should query companies api', ->
         resp = {'importers': [{id: 1}]}
-        http.expectGET('/api/v1/companies?roles=importer,carrier').respond resp
+        http.expectGET('/api/v1/companies?roles=importer').respond resp
         d = null
-        svc.getParties().success (data) ->
+        svc.getImporters().success (data) ->
+          d = data
+        http.flush()
+        expect(d).toEqual resp
+
+    describe 'getCarriers', ->
+      it 'should query companies api', ->
+        resp = {'carriers': [{id: 1}]}
+        http.expectGET('/api/v1/companies?roles=carrier&linked_with=1').respond resp
+        d = null
+        svc.getCarriers(1).success (data) ->
           d = data
         http.flush()
         expect(d).toEqual resp

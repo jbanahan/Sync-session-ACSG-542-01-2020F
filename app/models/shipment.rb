@@ -1,5 +1,6 @@
 class Shipment < ActiveRecord::Base
   include CoreObjectSupport
+  include ISFSupport
 	belongs_to	:carrier, :class_name => "Company"
 	belongs_to  :vendor,  :class_name => "Company"
 	belongs_to	:ship_from,	:class_name => "Address"
@@ -9,12 +10,18 @@ class Shipment < ActiveRecord::Base
   belongs_to :unlading_port, :class_name=>"Port"
   belongs_to :entry_port, :class_name=>"Port"
   belongs_to :destination_port, :class_name=>"Port"
+  belongs_to :final_dest_port, :class_name=>"Port"
   belongs_to :first_port_receipt, :class_name => "Port"
   belongs_to :last_foreign_port, :class_name => "Port"
   belongs_to :booking_requested_by, :class_name=>"User"
   belongs_to :booking_confirmed_by, :class_name=>"User"
   belongs_to :booking_approved_by, :class_name=>"User"
   belongs_to :canceled_by, :class_name=>"User"
+  belongs_to :cancel_requested_by, :class_name=>"User"
+  belongs_to :cancel_approved_by, :class_name=>"User"
+  belongs_to :consignee, :class_name=>"Company"
+  belongs_to :isf_sent_by, :class_name => "User"
+  belongs_to :booking_revised_by, :class_name => "User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :booking_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -93,21 +100,29 @@ class Shipment < ActiveRecord::Base
   end
 
   def can_revise_booking? user
+    # Can't revise bookings that have shipment lines
+    return false if self.shipment_lines.try(:size) > 0
+    # Can't revise bookings that haven't been confirmed or approved
     return false unless self.booking_approved_date || self.booking_confirmed_date
+
     if !self.booking_confirmed_date
+      # Users that can request or approve bookings can revise if it's not confirmed
       return true if self.can_approve_booking?(user,true) || self.can_request_booking?(user,true)
     else
+      # If there's a booking confirm date, only user's that can confirm can revise a booking
       return true if self.can_confirm_booking?(user,true)
     end
     return false
   end
   def revise_booking! user, async_snapshot = false
+    # Booking data gets revised all the time apparently before its actually on-boarded, so while we clear 
+    # the approval/confirmation info, we don't want to clear the initial receipt/request info.
     self.booking_approved_by = nil
     self.booking_approved_date = nil
     self.booking_confirmed_by = nil
     self.booking_confirmed_date = nil
-    self.booking_received_date = nil
-    self.booking_requested_by = nil
+    self.booking_revised_date = Time.zone.now.to_date
+    self.booking_revised_by = user
     self.save!
     self.create_snapshot_with_async_option async_snapshot, user
   end
@@ -171,6 +186,25 @@ class Shipment < ActiveRecord::Base
     self.uncancel_shipment! user, true
   end
 
+  def can_request_cancel? user, ignore_shipment_state=false
+    unless ignore_shipment_state
+      return false if self.canceled_date || self.cancel_requested_at
+    end
+    return false unless self.can_view?(user)
+    return false unless self.vendor == user.company || user.company.master?
+    return true
+  end
+  def request_cancel! user, async_snapshot = false
+    self.cancel_requested_at = 0.seconds.ago
+    self.cancel_requested_by = user
+    self.save!
+    OpenChain::EventPublisher.publish :shipment_cancel_request, self
+    self.create_snapshot_with_async_option async_snapshot, user
+  end
+  def async_request_cancel! user
+    self.request_cancel! user, true
+  end
+
   #private support methods for can cancel
   def can_cancel_as_vendor? user
     (!self.booking_received_date) && user.company==self.vendor
@@ -205,6 +239,12 @@ class Shipment < ActiveRecord::Base
     r = r.where(vendor_id:self.vendor_id) if self.vendor_id
     r
   end
+
+  def available_products user
+    return Product.where("1=0") if self.importer_id.blank? #can't find anything without an importer
+    p = Product.search_secure(user, Product).where(importer_id: self.importer_id)
+  end
+
   #get unique linked commercial invoices
   def commercial_invoices
     CommercialInvoice.
@@ -212,15 +252,24 @@ class Shipment < ActiveRecord::Base
       where("shipment_lines.shipment_id = ?",self.id).uniq
   end
 	def self.modes
+    # These are deprecated old modes...don't reference for the new screen
 	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']
 	end
+
+  def ocean?
+    ['OCEAN - LCL', 'OCEAN - FCL'].include? self.mode.to_s.upcase
+  end
+
+  def air?
+    'AIR' == self.mode.to_s.upcase
+  end
 
 	def can_view?(user)
     return false unless user.view_shipments?
     return true if user.company.master?
     imp = self.importer
     return false unless imp && (imp==user.company || imp.linked_company?(user.company))
-	  return (user.company == self.vendor || user.company == self.carrier || user.company = self.importer || (self.vendor && self.vendor.linked_companies.include?(user.company)))
+	  return (user.company == self.vendor || user.company == self.carrier || user.company == self.importer || (self.vendor && self.vendor.linked_companies.include?(user.company)))
 	end
 
 	def can_edit?(user)
@@ -229,13 +278,15 @@ class Shipment < ActiveRecord::Base
 	end
 
   # can the user currently add lines to this shipment
-  def can_add_remove_lines?(user)
-    return false if self.booking_confirmed_date || self.booking_approved_date
+  def can_add_remove_shipment_lines?(user)
     return self.can_edit?(user)
   end
 
   def can_add_remove_booking_lines?(user)
-    self.can_edit?(user)
+    # At any point up till there are actual manifest/shipment lines users w/ edit ability 
+    # can remove shipment lines.
+    return false if self.shipment_lines.length > 0
+    return self.can_edit?(user)
   end
 
   def can_comment?(user)
@@ -246,13 +297,17 @@ class Shipment < ActiveRecord::Base
     return user.attach_shipments? && self.can_view?(user)
   end
 
+  def can_book?
+    self.booking_received_date.nil?
+  end
+
 	def locked?
 	  (!self.vendor.nil? && self.vendor.locked?) ||
 	  (!self.carrier.nil? && self.carrier.locked?)
   end
 
   def dimensional_weight
-    self.volume / 0.006 if self.volume
+    (self.volume / 0.006).round(2) if self.volume
   end
 
   def chargeable_weight
@@ -272,5 +327,17 @@ class Shipment < ActiveRecord::Base
     a << "shipments.carrier_id = #{cid}"
     a << "shipments.importer_id = #{cid}"
     "(#{a.join(" OR ")})"
+  end
+
+  def enabled_booking_types
+    # ['product','order','order_line','container']
+    self.importer.try(:enabled_booking_types_array) || []
+  end
+
+  def mark_isf_sent!(user, async_snapshot=false)
+    self.isf_sent_at = 0.seconds.ago
+    self.isf_sent_by = user
+    save!
+    self.create_snapshot_with_async_option async_snapshot, user
   end
 end

@@ -1,3 +1,129 @@
 .ship-detail-summary {
   margin-top: 10px;
 }
+
+.booking-header-row {
+  margin-bottom: 40px;
+}
+
+.choose-booking-btn {
+  border-width: 4px;
+  width:100%;
+  white-space: normal;
+
+  padding: {
+    top: 20px;
+    bottom:20px;
+  }
+
+  strong.sku {
+    font-size: 26px;
+  }
+
+  .top {
+    font-size: 30px;
+  }
+
+  hr {
+    border-width: 5px;
+  }
+
+  &:hover {
+    background-color: #3e8acc;
+    color: white;
+  }
+}
+
+.booking-table {
+
+  th {
+    background-color: #f7f7f7;
+    &.short-column {
+      min-width: 55px;
+    }
+  }
+
+  .disabled {
+    background-color: #eee;
+  }
+
+  tbody>tr>td {
+    vertical-align: middle;
+    padding: {
+      top: 15px;
+      bottom: 15px;
+    };
+  }
+
+  td:first-child, th:first-child {
+    padding-left: 25px;
+  }
+
+  td:last-child, th:last-child {
+    padding-right: 25px;
+  }
+}
+
+booking-shipping-comparison {
+  .number {
+    font-size: 18px;
+    font-weight: bold;
+    margin:0;
+  }
+  .type {
+    font-size: 10px;
+  }
+  br {
+    height:5px;
+  }
+  h3 {
+    margin:{
+      bottom:25px;
+      top:15px;
+      left:22px;
+    }
+    font-size:18px;
+    font-weight: bold;
+  }
+  .text-right {
+    text-align: right;
+  }
+  .diagonal-border {
+    font-size: 49px;
+    padding:0;
+    font-family: "Helvetica Neue Light", Sans-Serif, sans-serif;
+    color: #cccccc;
+    margin-top: -10px;
+  }
+}
+
+.turnup {
+  animation-name: rotate180;
+  animation-duration: 500ms;
+  animation-fill-mode: forwards;
+}
+
+.turndown {
+  animation-name: negative180;
+  animation-duration: 500ms;
+  animation-fill-mode: forwards;
+}
+
+@keyframes rotate180 {
+  0% {transform: rotate(0deg)}
+  100% {transform: rotate(180deg)}
+}
+
+@keyframes negative180 {
+  0% {transform: rotate(180deg)}
+  100% {transform: rotate(0deg)}
+}
+
+.angucomplete-description {
+  color: #a6a6a6;
+  font-size: 12px;
+}
+
+#mod_new_address {
+  z-index: 2000;
+}

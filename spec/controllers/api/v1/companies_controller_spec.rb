@@ -21,6 +21,20 @@ describe Api::V1::CompaniesController do
       expect(j[2]['vendor']).to be_false
       expect(j[2]['importer']).to be_true
     end
+    it "only returns companies linked with company in linked_with param" do
+      c2 = Factory(:company,name:'c2',vendor:true,system_code:'B')
+      c3 = Factory(:company,name:'a3',vendor:true,system_code:'C')
+      [c2,c3].each {|c| @c.linked_companies << c}
+
+      master_company = Factory(:importer, name: "Master")
+      master_company.linked_companies << c2
+
+      get :index, linked_with: master_company.id, roles: "vendor"
+      expect(response).to be_success
+      j = JSON.parse(response.body)['vendors']
+      expect(j.size).to eql 1
+      expect(j.collect {|c| c['name']}).to eql ['c2']
+    end
     it "should only return companies with system codes" do
       c2 = Factory(:company,name:'c2')
       @c.linked_companies << c2

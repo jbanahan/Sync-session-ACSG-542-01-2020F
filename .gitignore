@@ -14,7 +14,6 @@ spec/tmp/*
 *.swp
 coverage/*
 coverage.data
-coverage/*
 .rvmrc*
 .ruby-gemset
 .ruby-version
@@ -27,6 +26,7 @@ config/pepsi.pem
 config/google_oauth2_api_login.json
 config/slack_client.yml
 config/siemens.asc
+config/secrets.yml
 config/fenix_sql_proxy.yml
 config/vfi-canada.asc
 .idea

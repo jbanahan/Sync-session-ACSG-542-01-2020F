@@ -18,7 +18,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     updatedLines
 
   setPortNames = (shipment) ->
-    names = ['dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
+    names = ['dest_port', 'final_dest_port', 'first_port_receipt', 'lading_port', 'last_foreign_port', 'unlading_port']
     for name in names
       setPortName shipment, name
 
@@ -28,32 +28,27 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       shipment["shp_#{portName}_id"] = undefined
 
   currentShipment = null
-  getShipmentSuccessHandler = (resp) ->
-    currentShipment = resp.data.shipment
-    if currentShipment.shp_dest_port_id > 0
-      currentShipment.dest_port = {
-        id: currentShipment.shp_dest_port_id
-        name: currentShipment.shp_dest_port_name
-      }
-    commentSvc.injectComments(currentShipment,'Shipment')
-    resp
 
   shipmentPost = (id, endpoint, options={id:id}) ->
-    $http.post('/api/v1/shipments/'+id+'/'+endpoint, options)
+    $http.post("/api/v1/shipments/#{id}/#{endpoint}", options)
+
+  shipmentGet = (id, endpoint) ->
+    $http.get("/api/v1/shipments/#{id}/#{endpoint}")
 
   return {
-    getShipment: (shipmentId,forceReload) ->
-      if !forceReload && currentShipment && parseInt(currentShipment.id) == parseInt(shipmentId)
-        $q.when {data: {shipment: currentShipment}}
-      else
-        $http.get('/api/v1/shipments/'+shipmentId+'.json?summary=true&no_lines=true&include=order_lines,attachments').then(getShipmentSuccessHandler)
+    getShipment: (shipmentId, shipmentLines, bookingLines) ->
+      requestParams = "summary=true&include=order_lines,attachments,comments"
+      requestParams += "&shipment_lines=true" if shipmentLines
+      requestParams += "&booking_lines=true" if bookingLines
+
+      $http.get('/api/v1/shipments/'+shipmentId+'.json?' + requestParams)
 
     injectShipmentLines: (shipment) ->
-      $http.get('/api/v1/shipments/'+shipment.id+'.json?shipment_lines=true&include=order_lines').then (resp) ->
+      $http.get('/api/v1/shipments/'+shipment.id+'/shipment_lines.json?include=order_lines').then (resp) ->
         shipment.lines = resp.data.shipment.lines
 
     injectBookingLines: (shipment) ->
-      $http.get('/api/v1/shipments/'+shipment.id+'.json?booking_lines=true&include=order_lines').then (resp) ->
+      $http.get('/api/v1/shipments/'+shipment.id+'/booking_lines.json').then (resp) ->
         shipment.booking_lines = resp.data.shipment.booking_lines
 
     saveShipment: (shipment) ->
@@ -66,19 +61,34 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
         method = "put"
         suffix = "/#{s.id}.json"
 
-      $http[method]("/api/v1/shipments#{suffix}",{shipment: s}).then(getShipmentSuccessHandler)
+      $http[method]("/api/v1/shipments#{suffix}",{shipment: s})
 
-    getParties: ->
-      $http.get('/api/v1/companies?roles=importer,carrier')
+    saveBookingLines: (lines, shipmentId) ->
+      $http.put("/api/v1/shipments/#{shipmentId}.json", {shipment:{id:shipmentId, booking_lines:lines}, summary:true})
+
+    getImporters: ->
+      $http.get('/api/v1/companies?roles=importer')
+
+    getCarriers: (importerId) ->
+      $http.get('/api/v1/companies?roles=carrier&linked_with=' + importerId)
 
     getAvailableOrders: (shipment) ->
-      $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')
+      shipmentGet(shipment.id, 'available_orders.json')
+
+    getBookedOrders: (shipment) ->
+      shipmentGet(shipment.id, 'booked_orders.json')
+
+    getAvailableLines: (shipment) ->
+      shipmentGet(shipment.id, 'available_lines.json')
 
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
 
-    processTradecardPackManifest: (shp, attachment) ->
-      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id}).then(getShipmentSuccessHandler)
+    processTradecardPackManifest: (shp, attachment, manufacturerAddressId) ->
+      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId})
+
+    processBookingWorksheet: (shp, attachment) ->
+      shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id})
 
     requestBooking: (shp) ->
       shipmentPost(shp.id, 'request_booking.json')
@@ -92,10 +102,16 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     reviseBooking: (shp) ->
       shipmentPost(shp.id, 'revise_booking.json')
 
+    requestCancel: (shp) ->
+      shipmentPost(shp.id, 'request_cancel.json')
+
     cancelShipment: (shp) ->
       shipmentPost(shp.id, 'cancel.json')
 
     uncancelShipment: (shp) ->
       shipmentPost(shp.id,'uncancel.json')
+
+    sendISF: (shp) ->
+      shipmentPost(shp.id,'send_isf.json')
   }
 ]

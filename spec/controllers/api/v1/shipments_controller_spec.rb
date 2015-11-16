@@ -69,12 +69,23 @@ describe Api::V1::ShipmentsController do
       sl1.linked_order_line_id = ol1.id
       sl2 = Factory(:shipment_line,shipment:sl1.shipment,quantity:25,product:ol2.product)
       sl2.linked_order_line_id = ol2.id
-      [sl1,sl2].each {|s| s.update_attributes(updated_at:Time.now)}
+      bl1 = Factory(:booking_line,shipment:sl1.shipment,quantity:600,product:ol1.product,order:ol1.order)
+      bl2 = Factory(:booking_line,shipment:sl1.shipment,quantity:50,order_line:ol1)
+      [sl1,sl2,bl1,bl2].each {|s| s.update_attributes(updated_at:Time.now)}
 
       get :show, id: sl1.shipment_id.to_s, summary: 'true'
       j = JSON.parse response.body
       expect(j['shipment']['id']).to eq sl1.shipment_id
-      expected_summary = {'line_count'=>'2','piece_count'=>'1,125','order_count'=>'1','product_count'=>'2'}
+      expected_summary = {
+          'booked_line_count'=>'2',
+          'booked_piece_count'=>'650',
+          'booked_order_count'=>'1',
+          'booked_product_count'=>'1',
+          'line_count'=>'2',
+          'piece_count'=>'1,125',
+          'order_count'=>'1',
+          'product_count'=>'2'
+      }
       expect(j['shipment']['summary']).to eq expected_summary
     end
 
@@ -151,6 +162,17 @@ describe Api::V1::ShipmentsController do
       slc = j['shipment']['carton_sets'].first
       expect(slc['cs_starting_carton']).to eq 1000
       expect(j['shipment']['lines'][0]['shpln_carton_set_uid']).to eq cs.id
+    end
+    it "should render comments" do
+      s = Factory(:shipment,reference:'123',mode:'Air',importer_reference:'DEF')
+      s.comments.create! user: @u, subject: "Subject", body: "Comment Body"
+      get :show, id: s.id, include: "comments"
+
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['shipment']['comments'].size).to eq 1
+      expect(j['shipment']['comments'].first['subject']).to eq "Subject"
+      expect(j['shipment']['comments'].first['body']).to eq "Comment Body"
     end
   end
   describe "request booking" do
@@ -476,7 +498,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "should not allow new lines if !can_add_remove_lines?" do
-      Shipment.any_instance.stub(:can_add_remove_lines?).and_return false
+      Shipment.any_instance.stub(:can_add_remove_shipment_lines?).and_return false
       @s_hash['lines'] = [
         { 'shpln_shipped_qty'=>'104',
           'shpln_puid'=>@product.unique_identifier
@@ -486,7 +508,7 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
     end
     it "should not allow lines to be deleted if !can_add_remove_lines?" do
-      Shipment.any_instance.stub(:can_add_remove_lines?).and_return false
+      Shipment.any_instance.stub(:can_add_remove_shipment_lines?).and_return false
       sl = Factory(:shipment_line,shipment:@shipment)
       @s_hash['lines'] = [
         { 'id'=>sl.id,
@@ -551,6 +573,269 @@ describe Api::V1::ShipmentsController do
       expect(r0['ord_ord_date']).to eq '2014-01-01'
       expect(r0['ord_ven_name']).to eq 'VENDORNAME'
       expect(r[1]['id']).to eq 100
+    end
+  end
+  describe "booked orders" do
+    before :each do
+      Shipment.any_instance.stub(:can_view?).and_return true
+      @shipment = Factory(:shipment)
+      @o1 = Factory :order,order_number:'ONUM',customer_order_number:'CNUM'
+      @o2 = Factory :order,order_number:'ONUM2',customer_order_number:'CNUM2'
+
+      Factory :booking_line, shipment_id:@shipment.id, order_id:@o1.id
+      Factory :booking_line, shipment_id:@shipment.id, order_id:@o2.id
+    end
+
+    it "returns orders that have been booked at the order_id level" do
+      get :booked_orders, id:@shipment.id
+      expect(response).to be_success
+      result = JSON.parse(response.body)['booked_orders']
+      lines_result = JSON.parse(response.body)['lines_available']
+      expect(result.size).to eq 2
+      expect(result[0]['id']).to eq @o1.id
+      expect(result[0]['ord_ord_num']).to eq @o1.order_number
+      expect(result[0]['ord_cust_ord_no']).to eq @o1.customer_order_number
+      expect(result[1]['id']).to eq @o2.id
+      expect(result[1]['ord_ord_num']).to eq @o2.order_number
+      expect(result[1]['ord_cust_ord_no']).to eq @o2.customer_order_number
+      expect(lines_result).to be false
+    end
+
+    it "lines_available is true if any lines are booked at the order_line_id level" do
+      Factory :booking_line, shipment_id:@shipment.id, order_line_id:99
+      
+      get :booked_orders, id:@shipment.id
+      expect(response).to be_success
+      result = JSON.parse(response.body)['lines_available']
+      expect(result).to be true
+    end
+  end
+  describe "available_lines" do
+    it "returns booking_lines with an order_line_id, in a format that mocks the linked order_line" do
+      Shipment.any_instance.stub(:can_view?).and_return true
+      shipment = Factory(:shipment)
+      order = Factory :order, order_number:'ONUM',customer_order_number:'CNUM'
+      prod1 = Factory :product
+      oline1 = Factory :order_line, order_id:order.id, line_number:1, sku:'SKU', product_id:prod1.id
+      bline1 = Factory :booking_line, shipment_id:shipment.id, order_line_id:oline1.id, line_number:5
+
+      get :available_lines, id:shipment.id
+      expect(response).to be_success
+      result = JSON.parse(response.body)['lines']
+      expect(result[0]['id']).to eq oline1.id
+      expect(result[0]['ordln_line_number']).to eq bline1.line_number
+      expect(result[0]['ordln_puid']).to eq bline1.product_identifier
+      expect(result[0]['ordln_sku']).to eq oline1.sku
+      expect(result[0]['ordln_ordered_qty']).to eq bline1.quantity
+      expect(result[0]['linked_line_number']).to eq oline1.line_number
+      expect(result[0]['linked_cust_ord_no']).to eq order.customer_order_number
+    end
+  end
+
+  describe "autocomplete_orders" do
+    before :each do
+      @order_1 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNUM")
+      @order_2 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNO#")
+      @s = Factory(:shipment, importer: @u.company, vendor: @u.company)
+    end
+
+    it "autocompletes order numbers that are available to utilize" do
+      # Just return all orders...all we care about is that Shipment.available_orders is used
+      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+
+      get :autocomplete_order, id: @s.id, n: "CNUM"
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      expect(r.first).to eq( {"order_number"=>@order_1.customer_order_number, "id"=>@order_1.id} )
+    end
+
+    it "returns blank if no autcomplete text is sent" do
+       Shipment.any_instance.should_not_receive(:available_orders)
+
+       get :autocomplete_order, id: @s.id, n: " "
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 0
+    end
+  end
+
+  describe "autocomplete_products" do
+    before :each do
+      @product1 = Factory(:product, importer: @u.company, unique_identifier: "Prod1")
+      @product2 = Factory(:product, importer: @u.company, unique_identifier: "Prod2")
+      @s = Factory(:shipment, importer: @u.company, vendor: @u.company)
+    end
+
+    it "autocompletes products that are available to utilize" do
+      # Just return all orders...all we care about is that Shipment.available_orders is used
+      Shipment.any_instance.should_receive(:available_products).with(@u).and_return Product.scoped
+
+      get :autocomplete_product, id: @s.id, n: "Prod1"
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      expect(r.first).to eq( {"unique_identifier"=>@product1.unique_identifier, "id"=>@product1.id} )
+    end
+
+    it "returns blank if no autcomplete text is sent" do
+      Shipment.any_instance.should_not_receive(:available_products)
+
+      get :autocomplete_product, id: @s.id, n: " "
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 0
+    end
+  end
+
+  describe "autocomplete_address" do
+    before :each do 
+      @u = Factory(:user, shipment_edit:true,shipment_view:true,order_view:true,product_view:true)
+      @importer = Factory(:importer)
+      @s = Factory(:shipment, importer: @importer)
+      @u.company.linked_companies << @importer
+      Shipment.any_instance.stub(:can_view?).with(@u).and_return true
+      allow_api_access @u
+    end
+
+    it "returns address matching by name linked to the importer" do
+      address = Factory(:full_address, name: "Company 1", company: @importer, in_address_book: true)
+
+      get :autocomplete_address, id: @s.id, n: "ny"
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      expect(r.first).to eq( {"name"=>address.name, "full_address" => address.full_address, "id"=>address.id} )
+    end
+
+    it "does not return address linked to companies user can't view" do
+      @u.company.linked_companies.delete_all
+
+      address = Factory(:full_address, name: "Company 1", company: @importer, in_address_book: true)
+
+      get :autocomplete_address, id: @s.id, n: "ny"
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 0
+    end
+
+    it "does not return address not saved to address book" do
+      address = Factory(:full_address, name: "Company 1", company: @importer, in_address_book: false)
+      get :autocomplete_address, id: @s.id, n: "ny"
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 0
+    end
+  end
+
+  describe "create_address" do
+    before :each do 
+      @importer = Factory(:importer)
+      @s = Factory(:shipment, importer: @importer)
+    end
+
+    it "creates an address associated with the importer" do
+      c = Factory(:country)
+      address = {name: "Address", line_1: "Line 1", city: "City", state: "ST", postal_code: "1234N", country_id: c.id, in_address_book: true}
+
+      post :create_address, id: @s.id, address: address
+      expect(response).to be_success
+
+      r = JSON.parse(response.body)["address"]
+      expect(r).not_to be_nil
+      expect(r['name']).to eq "Address"
+      expect(r["line_1"]).to eq "Line 1"
+      expect(r["city"]).to eq "City"
+      expect(r["state"]).to eq "ST"
+      expect(r["postal_code"]).to eq "1234N"
+      expect(r["country_id"]).to eq c.id
+      expect(r["in_address_book"]).to eq true
+      expect(r["company_id"]).to eq @importer.id
+    end
+
+    it "fails if user can't view" do
+      Shipment.any_instance.should_receive(:can_view?).and_return false
+
+      post :create_address, id: @s.id, address: {}
+      expect(response.status).to eq 404
+    end
+  end
+
+  describe "shipment_lines" do
+    before :each do
+      @line1 = Factory(:shipment_line)
+      @shipment = @line1.shipment
+      @line2 = Factory(:shipment_line, shipment: @shipment)
+    end
+
+    it "returns shell shipment with only shipment lines" do
+      get :shipment_lines, id: @shipment.id
+      expect(response).to be_success
+
+      r = JSON.parse(response.body)
+      expect(r['shipment']['lines'].length).to eq 2
+      expect(r['shipment']['lines'].first['id']).to eq @line1.id
+      expect(r['shipment']['lines'].first['shpln_line_number']).to eq @line1.line_number
+      expect(r['shipment']['lines'].first['order_lines']).to be_nil
+
+      expect(r['shipment']['lines'].second['id']).to eq @line2.id
+      expect(r['shipment']['lines'].second['shpln_line_number']).to eq @line2.line_number
+    end
+
+    it "returns order information if requested" do
+      ol1 = Factory(:order_line)
+      @line1.update_attributes! product: ol1.product
+
+      PieceSet.create! order_line: ol1, shipment_line: @line1, quantity: 1100
+
+      get :shipment_lines, id: @shipment.id, include: "order_lines"
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r['shipment']['lines'].length).to eq 2
+      expect(r['shipment']['lines'].first['order_lines'].length).to eq 1
+      ol = r['shipment']['lines'].first['order_lines'].first
+      expect(ol['allocated_quantity']).to eq "1100.0"
+      expect(ol['order_id']).to eq ol1.order_id
+      expect(ol['ord_ord_num']).to eq ol1.order.order_number.to_s
+      expect(ol['ordln_puid']).to eq ol1.product.unique_identifier
+
+      expect(r['shipment']['lines'].second['order_lines'].length).to eq 0
+    end
+
+    it "fails if user can't access the shipment" do
+      Shipment.any_instance.should_receive(:can_view?).and_return false
+      get :shipment_lines, id: @shipment.id, include: "order_lines"
+      expect(response.status).to eq 404
+    end
+  end
+
+  describe "booking_lines" do
+    before :each do
+      @line1 = Factory(:booking_line)
+      @shipment = @line1.shipment
+      @line2 = Factory(:booking_line, shipment: @shipment)
+    end
+
+    it "returns shell shipment with only shipment lines" do
+      get :booking_lines, id: @shipment.id
+      expect(response).to be_success
+
+      r = JSON.parse(response.body)
+
+      expect(r['shipment']['booking_lines'].length).to eq 2
+      expect(r['shipment']['booking_lines'].first['id']).to eq @line1.id
+      expect(r['shipment']['booking_lines'].first['bkln_line_number']).to eq @line1.line_number
+      expect(r['shipment']['booking_lines'].first['order_lines']).to be_nil
+
+      expect(r['shipment']['booking_lines'].second['id']).to eq @line2.id
+      expect(r['shipment']['booking_lines'].second['bkln_line_number']).to eq @line2.line_number
+    end
+
+    it "fails if user can't access the shipment" do
+      Shipment.any_instance.should_receive(:can_view?).and_return false
+      get :booking_lines, id: @shipment.id
+      expect(response.status).to eq 404
     end
   end
 end

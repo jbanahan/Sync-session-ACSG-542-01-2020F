@@ -7,11 +7,18 @@ describe Api::V1::PortsController do
   end
   describe :autocomplete do
     it "should paginate" do
-      11.times {|i| Factory(:port)}
-      get :autocomplete
+      11.times {|i| Factory(:port, name: "Name #{i}")}
+      get :autocomplete, n: "Name"
       expect(response).to be_success
       j = JSON.parse response.body
       expect(j.size).to eq 10
+    end
+    it "returns nothing if no search is entered" do
+      11.times {|i| Factory(:port, name: "Name #{i}")}
+      get :autocomplete, n: " "
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j.size).to eq 0
     end
     it "should allow name filter" do
       p = Factory(:port,name:'XabX')
@@ -20,8 +27,48 @@ describe Api::V1::PortsController do
       expect(response).to be_success
       j = JSON.parse response.body
       expect(j.size).to eq 1
-      expect(j.first['name']).to eq 'XabX'
+      expect(j.first['name']).to eq "(#{p.schedule_k_code}) XabX"
       expect(j.first['id']).to eq p.id
+    end
+
+    it "searches on schedule d" do
+      p = Factory(:port,name:'XabX', schedule_d_code: "1234", schedule_k_code: "")
+
+      get :autocomplete, n: '12'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j.size).to eq 1
+      expect(j.first['name']).to eq "(#{p.schedule_d_code}) XabX"
+    end
+
+    it "searches on schedule K" do
+      p = Factory(:port,name:'XabX', schedule_d_code: "", schedule_k_code: "12345")
+
+      get :autocomplete, n: '12'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j.size).to eq 1
+      expect(j.first['name']).to eq "(#{p.schedule_k_code}) XabX"
+    end
+
+    it "searches on locode" do
+      p = Factory(:port,name:'XabX', schedule_d_code: "", schedule_k_code: "", unlocode: "LOCOD")
+
+      get :autocomplete, n: 'cod'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j.size).to eq 1
+      expect(j.first['name']).to eq "(#{p.unlocode}) XabX"
+    end
+
+    it "searches on cbsa port" do
+      p = Factory(:port,name:'XabX', schedule_d_code: "", schedule_k_code: "", cbsa_port: "1234")
+
+      get :autocomplete, n: '12'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j.size).to eq 1
+      expect(j.first['name']).to eq "(#{p.cbsa_port}) XabX"
     end
   end
 end

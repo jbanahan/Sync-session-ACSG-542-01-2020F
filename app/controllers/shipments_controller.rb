@@ -1,3 +1,5 @@
+require 'open_chain/custom_handler/shipment_download_generator'
+
 class ShipmentsController < ApplicationController
   
 	def root_class
@@ -29,5 +31,13 @@ class ShipmentsController < ApplicationController
   # GET /shipments/1/edit
   def edit
     redirect_to "#{shipment_path(params[:id])}#/#{params[:id]}/edit"
+  end
+
+  def download
+    s = Shipment.find(params[:id])
+
+    action_secure(s.can_edit?(current_user),s,{:verb => "download",:module_name=>"shipment"}) {
+      send_excel_workbook OpenChain::CustomHandler::ShipmentDownloadGenerator.new.generate(s, current_user), "#{s.reference}.xls"
+    }
   end
 end

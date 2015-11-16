@@ -1,3 +1,5 @@
+require 'open_chain/custom_handler/isf_xml_generator'
+
 module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControllerBase
   include ActionView::Helpers::NumberHelper
 
@@ -25,8 +27,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def available_orders
-    s = Shipment.find params[:id]
-    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    s = get_shipment
     ord_fields = [:ord_ord_num,:ord_cust_ord_no,:ord_mode,:ord_imp_name,:ord_ord_date,:ord_ven_name]
     r = []
     s.available_orders(current_user).order('customer_order_number').each do |ord|
@@ -37,20 +38,40 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {available_orders:r}
   end
 
-  def process_tradecard_pack_manifest
-    s = Shipment.find params[:id]
-    raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
-    att = s.attachments.find_by_id(params[:attachment_id])
-    raise StatusableError.new("Attachment not linked to Shipment.",400) unless att
-    aj = s.attachment_process_jobs.where(attachment_id:att.id,
-          job_name:'Tradecard Pack Manifest').first_or_create!(user_id:current_user.id)
-    if aj.start_at
-      raise StatusableError.new("This manifest has already been submitted for processing.",400)
-    else
-      aj.update_attributes(start_at:Time.now)
-      aj.process
-      render_show CoreModule::SHIPMENT
+  def booked_orders
+    s = get_shipment
+    ord_fields = [:ord_ord_num,:ord_cust_ord_no]
+    result = []
+    lines_available = s.booking_lines.where('order_line_id IS NOT NULL').any?
+    order_ids = s.booking_lines.where('order_id IS NOT NULL').uniq.pluck(:order_id) # select distinct order_id from booking_lines where...
+    Order.where(id: order_ids).each do |order|
+      hsh = {id:order.id}
+      ord_fields.each {|uid| hsh[uid] = export_field(uid, order)}
+      result << hsh
     end
+    render json: {booked_orders:result, lines_available: lines_available}
+  end
+
+  def available_lines # makes a fake order based on booking lines.
+    s = get_shipment
+    lines = s.booking_lines.where('order_line_id IS NOT NULL').map do |line|
+      {id: line.order_line_id,
+       ordln_line_number: line.line_number,
+       ordln_puid: line.product_identifier,
+       ordln_sku: line.order_line.sku,
+       ordln_ordered_qty: line.quantity,
+       linked_line_number: line.order_line.line_number,
+       linked_cust_ord_no: line.customer_order_number}
+    end
+    render json: {lines: lines}
+  end
+
+  def process_tradecard_pack_manifest
+    attachment_job('Tradecard Pack Manifest')
+  end
+
+  def process_booking_worksheet
+    attachment_job('Booking Worksheet')
   end
 
   def request_booking
@@ -81,6 +102,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {'ok'=>'ok'}
   end
 
+  def request_cancel
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to request a booking.",:forbidden) unless s.can_request_cancel?(current_user)
+    s.async_request_cancel! current_user
+    render json: {'ok'=>'ok'}
+  end
+
   def cancel
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to cancel this booking.",:forbidden) unless s.can_cancel?(current_user)
@@ -93,6 +121,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     raise StatusableError.new("You do not have permission to undo canceling this booking.",:forbidden) unless s.can_uncancel?(current_user)
     s.async_uncancel_shipment! current_user
     render json: {'ok'=>'ok'}
+  end
+
+  def send_isf
+    shipment = Shipment.find params[:id]
+    if shipment.valid_isf?
+      ISFXMLGenerator.delay.generate_and_send(shipment.id, !shipment.isf_sent_at)
+      shipment.mark_isf_sent!(current_user)
+    else
+      raise 'Invalid ISF! <ul><li>' + shipment.errors.full_messages.join('</li><li>') + '</li></ul>'
+    end
   end
 
   def save_object h
@@ -127,6 +165,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_car_syscode,
       :shp_imp_name,
       :shp_imp_syscode,
+      :shp_imp_id,
       :shp_master_bill_of_lading,
       :shp_house_bill_of_lading,
       :shp_booking_number,
@@ -183,34 +222,36 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_fish_and_wildlife,
       :shp_volume,
       :shp_dimensional_weight,
-      :shp_chargeable_weight
+      :shp_chargeable_weight,
+      :shp_cancel_requested_by_full_name,
+      :shp_cancel_requested_at,
+      :shp_manufacturer_address_name,
+      :shp_buyer_address_name,
+      :shp_seller_address_name,
+      :shp_ship_to_address_name,
+      :shp_container_stuffing_address_name,
+      :shp_consolidator_address_name,
+      :shp_manufacturer_address_full_address,
+      :shp_buyer_address_full_address,
+      :shp_seller_address_full_address,
+      :shp_ship_to_address_full_address,
+      :shp_container_stuffing_address_full_address,
+      :shp_consolidator_address_full_address,
+      :shp_isf_sent_at,
+      :shp_est_load_date,
+      :shp_eta_last_foreign_port_date,
+      :shp_departure_last_foreign_port_date,
+      :shp_final_dest_port_id,
+      :shp_final_dest_port_name,
+      :shp_confirmed_on_board_origin_date,
+      :shp_buyer_address_id,
+      :shp_seller_address_id,
+      :shp_ship_to_address_id,
+      :shp_container_stuffing_address_id,
+      :shp_consolidator_address_id,
+      :shp_booking_revised_date,
+      :shp_booking_revised_by_full_name
     ] + custom_field_keys(CoreModule::SHIPMENT))
-
-    shipment_line_fields_to_render = limit_fields([
-      :shpln_line_number,
-      :shpln_shipped_qty,
-      :shpln_puid,
-      :shpln_pname,
-      :shpln_container_uid,
-      :shpln_container_number,
-      :shpln_container_size,
-      :shpln_cbms,
-      :shpln_gross_kgs,
-      :shpln_carton_qty,
-      :shpln_carton_set_uid
-    ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
-
-    booking_line_fields_to_render = limit_fields([
-         :bkln_line_number,
-         :bkln_quantity,
-         :bkln_puid,
-         :bkln_carton_qty,
-         :bkln_gross_kgs,
-         :bkln_cbms,
-         :bkln_carton_set_id,
-         :bkln_order_and_line_number,
-         :bkln_order_id
-     ] + custom_field_keys(CoreModule::BOOKING_LINE))
 
     container_fields_to_render = ([
       :con_uid,
@@ -246,8 +287,27 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     if render_summary?
       h['summary'] = render_summary(s)
     end
+    if render_comments?
+      h['comments'] = render_comments(s, current_user)
+    end
     h['permissions'] = render_permissions(s)
     h
+  end
+
+  def shipment_lines
+    s = get_shipment
+    h = {id: s.id}
+    h['lines'] = render_lines(s.shipment_lines, shipment_line_fields_to_render, render_order_fields?)
+
+    render json: {'shipment' => h}
+  end
+
+  def booking_lines
+    s = get_shipment
+    h = {id: s.id}
+    h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render)
+
+    render json: {'shipment' => h}
   end
 
   #override api_controller method to pre-load lines
@@ -262,20 +322,118 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     s = freeze_custom_values s, render_order_fields?
     s
   end
+
+  def autocomplete_order
+    results = []
+    if !params[:n].blank?
+      s = get_shipment
+
+      orders = s.available_orders current_user
+      results = orders.where('customer_order_number like ?',"%#{params[:n]}%").
+                  limit(10).
+                  collect {|order| {order_number:order.customer_order_number, id:order.id}}
+    end
+
+    render json: results
+  end
+
+  def autocomplete_product
+    results = []
+    if !params[:n].blank?
+      s = get_shipment
+
+      products = s.available_products current_user
+      results = products.where("unique_identifier LIKE ? ", "%#{params[:n]}%").
+                  limit(10).
+                  collect {|product| { unique_identifier:product.unique_identifier, id:product.id }}
+    end
+
+    render json: results
+  end
+
+  def autocomplete_address
+    json = []
+    if !params[:n].blank?
+      s = get_shipment
+
+      result = Address.where('addresses.name like ?',"%#{params[:n]}%").where(in_address_book:true).joins(:company).where(Company.secure_search(current_user)).where(companies: {id: s.importer_id})
+      result = result.order(:name)
+      result = result.limit(10)
+      json = result.map {|address| {name:address.name, full_address:address.full_address, id:address.id} }
+    end
+    
+    render json: json
+  end
+
+  def create_address
+    s = get_shipment
+
+    address = Address.new params[:address]
+    address.company = s.importer
+
+    address.save!
+
+    render json: address
+  end
+
   private
+  def get_shipment 
+    s = Shipment.find params[:id]
+    raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
+    s
+  end
+
+  def booking_line_fields_to_render
+    limit_fields([
+         :bkln_line_number,
+         :bkln_quantity,
+         :bkln_puid,
+         :bkln_carton_qty,
+         :bkln_gross_kgs,
+         :bkln_cbms,
+         :bkln_carton_set_id,
+         :bkln_order_and_line_number,
+         :bkln_order_id,
+         :bkln_container_size
+     ] + custom_field_keys(CoreModule::BOOKING_LINE))
+  end
+
+  def shipment_line_fields_to_render
+    limit_fields([
+      :shpln_line_number,
+      :shpln_shipped_qty,
+      :shpln_puid,
+      :shpln_pname,
+      :shpln_container_uid,
+      :shpln_container_number,
+      :shpln_container_size,
+      :shpln_cbms,
+      :shpln_gross_kgs,
+      :shpln_carton_qty,
+      :shpln_carton_set_uid,
+      :shpln_manufacturer_address_name,
+      :shpln_manufacturer_address_full_address
+    ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
+  end
+
   def render_permissions shipment
     {
       can_edit:shipment.can_edit?(current_user),
       can_view:shipment.can_view?(current_user),
       can_attach:shipment.can_attach?(current_user),
       can_comment:shipment.can_comment?(current_user),
+      can_book:shipment.can_book?,
       can_request_booking:shipment.can_request_booking?(current_user),
       can_approve_booking:shipment.can_approve_booking?(current_user),
       can_confirm_booking:shipment.can_confirm_booking?(current_user),
       can_revise_booking:shipment.can_revise_booking?(current_user),
-      can_add_remove_lines:shipment.can_add_remove_lines?(current_user),
+      can_add_remove_shipment_lines:shipment.can_add_remove_shipment_lines?(current_user),
+      can_add_remove_booking_lines:shipment.can_add_remove_booking_lines?(current_user),
+      can_request_cancel:shipment.can_request_cancel?(current_user),
       can_cancel:shipment.can_cancel?(current_user),
-      can_uncancel:shipment.can_uncancel?(current_user)
+      can_uncancel:shipment.can_uncancel?(current_user),
+      can_send_isf:shipment.can_approve_booking?(current_user, true),
+      enabled_booking_types:shipment.enabled_booking_types
     }
   end
   def render_shipment_lines?
@@ -312,19 +470,37 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     params[:summary]
   end
   def render_summary shipment
+    booked_piece_count = 0
     piece_count = 0
+    booked_order_ids = Set.new
     order_ids = Set.new
+    booked_product_ids = Set.new
     product_ids = Set.new
     shipment.shipment_lines.each do |sl|
       piece_count += sl.quantity unless sl.quantity.nil?
       sl.order_lines.each {|ol| order_ids << ol.order_id}
       product_ids << sl.product_id
     end
+    shipment.booking_lines.each do |bl|
+      booked_piece_count += bl.quantity unless bl.quantity.nil?
+      if bl.order_line_id.present?
+        booked_order_ids << bl.order_line.order_id
+        booked_product_ids << bl.order_line.product_id
+      else
+        booked_order_ids << bl.order_id
+        booked_product_ids << bl.product_id
+      end
+
+    end
     {
-      line_count: number_with_delimiter(shipment.shipment_lines.count),
+      line_count: number_with_delimiter(shipment.shipment_lines.size),
+      booked_line_count: number_with_delimiter(shipment.booking_lines.size),
       piece_count: number_with_delimiter(number_with_precision(piece_count, strip_insignificant_zeros:true)),
+      booked_piece_count: number_with_delimiter(number_with_precision(booked_piece_count, strip_insignificant_zeros:true)),
       order_count: number_with_delimiter(order_ids.to_a.compact.size),
-      product_count: number_with_delimiter(product_ids.to_a.compact.size)
+      booked_order_count: number_with_delimiter(booked_order_ids.to_a.compact.size),
+      product_count: number_with_delimiter(product_ids.to_a.compact.size),
+      booked_product_count: number_with_delimiter(booked_product_ids.to_a.compact.size)
     }
   end
   def render_order_fields?
@@ -367,11 +543,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
         end
         s_line = shipment.shipment_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['shpln_line_number'], obj.line_number)}
         if s_line.nil?
-          raise StatusableError.new("You cannot add lines to this shipment.",400) unless shipment.can_add_remove_lines?(current_user)
+          raise StatusableError.new("You cannot add lines to this shipment.",400) unless shipment.can_add_remove_shipment_lines?(current_user)
           s_line = shipment.shipment_lines.build(line_number:ln['cil_line_number'])
         end
         if ln['_destroy']
-          raise StatusableError.new("You cannot remove lines from this shipment.",400) unless shipment.can_add_remove_lines?(current_user)
+          raise StatusableError.new("You cannot remove lines from this shipment.",400) unless shipment.can_add_remove_shipment_lines?(current_user)
           s_line.mark_for_destruction
           next
         end
@@ -467,5 +643,29 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       }
     end
     s
+  end
+
+  def attachment_job(job_name)
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
+    att = s.attachments.find_by_id(params[:attachment_id])
+    raise StatusableError.new("Attachment not linked to Shipment.",400) unless att
+    aj = s.attachment_process_jobs.where(attachment_id:att.id,
+                                         job_name: job_name).first_or_create!(user_id:current_user.id, manufacturer_address_id:params[:manufacturer_address_id])
+    if aj.start_at
+      raise StatusableError.new("This manifest has already been submitted for processing.",400)
+    else
+      aj.update_attributes(start_at:Time.now)
+      aj.process
+      render_show CoreModule::SHIPMENT
+    end
+  end
+
+  def render_comments?
+    params[:include].present? && params[:include].match(/comments/)
+  end
+
+  def render_comments s, user
+    s.comments.map {|c| c.comment_json(user) }
   end
 end; end; end

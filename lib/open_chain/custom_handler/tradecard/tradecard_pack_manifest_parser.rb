@@ -2,23 +2,25 @@ require 'open_chain/xl_client'
 
 module OpenChain; module CustomHandler; module Tradecard; class TradecardPackManifestParser
 
-  def self.process_attachment shipment, attachment, user
-    parse shipment, attachment.attached.path, user
+  def self.process_attachment shipment, attachment, user, manufacturer_address_id=nil
+    parse shipment, attachment.attached.path, user, manufacturer_address_id
   end
-  def self.parse shipment, path, user
-    self.new.run(shipment,OpenChain::XLClient.new(path),user)
-  end
-
-  def run shipment, xl_client, user
-    process_rows shipment, xl_client.all_row_values, user
+  def self.parse shipment, path, user, manufacturer_address_id=nil
+    self.new.run(shipment,OpenChain::XLClient.new(path),user, manufacturer_address_id)
   end
 
-  def process_rows shipment, rows, user
+  def run shipment, xl_client, user, manufacturer_address_id=nil
+    process_rows shipment, xl_client.all_row_values, user, manufacturer_address_id
+  end
+
+  def process_rows shipment, rows, user, manufacturer_address_id=nil
     ActiveRecord::Base.transaction do
       raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
       validate_heading rows
+      # Containers should be added first...the lines parsing also updates container data
       add_containers shipment, rows if mode(rows)=='OCEAN'
-      add_lines shipment, rows
+      lines_added = add_lines shipment, rows, manufacturer_address_id
+      add_totals(shipment, lines_added)
       shipment.save!
     end
   end
@@ -52,14 +54,17 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     end
   end
 
-  def add_lines shipment, rows
+  def add_lines shipment, rows, manufacturer_address_id
     max_line_number = 0
     shipment.shipment_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
     carton_detail_header_row = header_row_index(rows,'CARTON DETAIL', 'PACKAGE DETAIL')
 
     return unless carton_detail_header_row
     cursor = carton_detail_header_row+2
+
+    parse_container_summary_info(shipment, rows[cursor]) unless shipment.mode.to_s.upcase == "AIR"
     container = nil
+    lines_added = []
     while cursor < rows.size
       r = rows[cursor]
       cursor += 1
@@ -70,22 +75,25 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
       end
       if r.size==57 && !r[29].blank? && r[29].to_s.match(/\d/)
         max_line_number += 1
-        add_line shipment, r, container, max_line_number
-        next
+        lines_added << add_line(shipment, r, container, max_line_number, manufacturer_address_id)
       end
     end
+
+    lines_added
   end
 
-  def add_line shipment, row, container, line_number
+  def add_line shipment, row, container, line_number, manufacturer_address_id
     po = OpenChain::XLClient.string_value row[14]
     sku = OpenChain::XLClient.string_value row[20]
     qty = clean_number(row[29])
     ol = find_order_line shipment, po, sku
-    sl = shipment.shipment_lines.build(product:ol.product,quantity:qty)
+    sl = shipment.shipment_lines.build(product:ol.product,quantity:qty, manufacturer_address_id:manufacturer_address_id)
     sl.container = container
     sl.linked_order_line_id = ol.id
     sl.line_number = line_number
     sl.carton_set = find_or_build_carton_set shipment, row
+
+    sl
   end
 
   def clean_number num
@@ -96,7 +104,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   def convert_number num, conversion
     n = clean_number num
     return nil if n.nil?
-    BigDecimal(n) * conversion
+    (BigDecimal(n) * conversion).round(4, BigDecimal::ROUND_HALF_UP)
   end
 
   def find_order_line shipment, po, sku
@@ -121,8 +129,8 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
 
     cs = shipment.carton_sets.to_a.find {|cs| cs.starting_carton == starting_carton} #don't hit DB since we haven't saved
     if cs.nil?
-      weight_factor = (row[48].to_s.strip == 'LB') ? 0.453592 : 1
-      dim_factor = (row[55].to_s.strip =='IN') ? 2.54 : 1
+      weight_factor = (row[48].to_s.strip == 'LB') ? BigDecimal("0.453592") : 1
+      dim_factor = dimension_coversion_factor(row[55].to_s.strip)
       cs = shipment.carton_sets.build(starting_carton:starting_carton)
       cs.carton_qty = clean_number row[37]
       cs.net_net_kgs = convert_number row[42], weight_factor
@@ -138,5 +146,67 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
 
   def header_row_index rows, *names
     rows.index {|r| r.size > 1 && names.include?(r[1].to_s.upcase)}
+  end
+
+  def parse_container_summary_info shipment, row
+    regex = /Equipment\s*#\s*:\s*(.*)Type\s*:\s*(.*)Seal\s*#\s*:\s*(.*)/i
+    cell = row.find {|c| c.to_s.match regex}
+
+    return nil if cell.blank?
+
+    info = cell.scan regex
+    if info.length > 0
+      container_number, size, seal = *info.flatten
+
+      container = shipment.containers.find {|c| c.container_number.to_s.upcase == container_number.strip.upcase}
+
+      if container
+        # Don't overwrite potential existing data w/ nil/blank data...
+
+        # Seal is often sent to us as "NULL" (java alert), if there isn't one associated w/ the container on the manifest
+        container.seal_number = seal.strip unless (seal.blank? || seal.upcase == "NULL")
+        size = Container.parse_container_size_description size
+        container.container_size = size unless size.blank?
+      end
+    end
+  end
+
+  def add_totals shipment, lines_added
+    gross_weight = BigDecimal(0)
+    total_package_count = 0
+    volume = BigDecimal(0)
+
+    carton_sets = Set.new
+    Array.wrap(lines_added).each do |line|
+      cs = line.carton_set
+      next if cs.nil? || carton_sets.include?(cs)
+
+      total_package_count += cs.carton_qty.presence || 0
+      gross_weight += cs.total_gross_kgs
+      volume += cs.total_volume_cbms
+
+      carton_sets << cs
+    end
+    
+    shipment.volume = (shipment.volume.presence || BigDecimal(0)) + volume
+    shipment.gross_weight = (shipment.gross_weight.presence || BigDecimal(0)) + gross_weight
+    # Only add packages to total if the uom is blank or cartons
+    if shipment.number_of_packages_uom.blank? || shipment.number_of_packages_uom =~ /(CTN|CARTON)/i
+      shipment.number_of_packages = (shipment.number_of_packages.presence || 0) + total_package_count
+      shipment.number_of_packages_uom = "CARTONS" if shipment.number_of_packages_uom.blank?
+    end
+  end
+
+  def dimension_coversion_factor uom
+    case uom
+    when "IN"
+      BigDecimal("2.54")
+    when "MR"
+      BigDecimal(100)
+    when "FT"
+      BigDecimal("30.48")
+    else
+      BigDecimal(1)
+    end
   end
 end; end; end; end

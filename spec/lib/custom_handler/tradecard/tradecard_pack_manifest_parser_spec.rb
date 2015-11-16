@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       att.should_receive(:attached).and_return atchd
       path = 'xyz'
       atchd.should_receive(:path).and_return path
-      described_class.should_receive(:parse).with(s,path,u).and_return 'x'
+      described_class.should_receive(:parse).with(s,path,u,nil).and_return 'x'
       expect(described_class.process_attachment(s, att, u)).to eq 'x'
     end
   end
@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       OpenChain::XLClient.should_receive(:new).with(path).and_return x      
       t = double('x')
       described_class.should_receive(:new).and_return t
-      t.should_receive(:run).with(s,x,u)
+      t.should_receive(:run).with(s,x,u,nil)
       described_class.parse s, path, u
     end
   end
@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       r = double('rows')
       x.should_receive(:all_row_values).and_return r
       d = described_class.new
-      d.should_receive(:process_rows).with(s,r,u)
+      d.should_receive(:process_rows).with(s,r,u,nil)
       d.run(s,x,u)
     end
   end
@@ -69,9 +69,9 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         net:'6.800',
         gross:'7.000',
         weight_unit:'KG',
-        length:'24.000',
-        width:'15.000',
-        height:'9.000',
+        length:'10.000',
+        width:'100.000',
+        height:'1000.000',
         dim_unit:'CM'
       }.merge overrides 
       r = Array.new(57,'')
@@ -106,18 +106,94 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       @s.stub(:can_edit?).and_return false
       expect{described_class.new.process_rows(@s,init_mock_array(3,{}),@u)}.to raise_error "You do not have permission to edit this shipment."
     end
-    it "should add containers for ocean" do
+    it "adds containers for ocean, and add 40 ft dry van container information" do
       row_seed = {61=>mode_row('OCEAN'),
         76=>subtitle_row('EQUIPMENT SUMMARY'),
         77=>['','','','Equipment #','Item Qty'],
         78=>['','','','ABCD12345','1234','10',''], #only care about the container number
-        79=>['','','','Totals']
+        79=>['','','','Totals'],
+        81=>subtitle_row('Package Detail'),
+        83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: Standard Dry 40 foot Seal #: SEAL1234']
       }
-      rows = init_mock_array 80, row_seed
+      rows = init_mock_array 85, row_seed
       expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
       @s.reload
-      expect(@s.containers.first.container_number).to eq 'ABCD12345'
+      cont = @s.containers.first
+      expect(cont.container_number).to eq 'ABCD12345'
+      expect(cont.container_size).to eq "40DV"
+      expect(cont.seal_number).to eq "SEAL1234"
     end
+    it "adds containers for ocean, and add High cube 40 ft container information" do
+      row_seed = {61=>mode_row('OCEAN'),
+        76=>subtitle_row('EQUIPMENT SUMMARY'),
+        77=>['','','','Equipment #','Item Qty'],
+        78=>['','','','ABCD12345','1234','10',''], #only care about the container number
+        79=>['','','','Totals'],
+        81=>subtitle_row('Package Detail'),
+        83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: High Cube 40 ft. Seal #: SEAL1234']
+      }
+      rows = init_mock_array 85, row_seed
+      expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
+      @s.reload
+      cont = @s.containers.first
+      expect(cont.container_number).to eq 'ABCD12345'
+      expect(cont.container_size).to eq "40HQ"
+      expect(cont.seal_number).to eq "SEAL1234"
+    end
+    it "adds containers for ocean, and add 20 ft dry container information (skipping null seal)" do
+      row_seed = {61=>mode_row('OCEAN'),
+        76=>subtitle_row('EQUIPMENT SUMMARY'),
+        77=>['','','','Equipment #','Item Qty'],
+        78=>['','','','ABCD12345','1234','10',''], #only care about the container number
+        79=>['','','','Totals'],
+        81=>subtitle_row('Package Detail'),
+        83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: Standard Dry 20 ft Seal #: null']
+      }
+      rows = init_mock_array 85, row_seed
+      expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
+      @s.reload
+      cont = @s.containers.first
+      expect(cont.container_number).to eq 'ABCD12345'
+      expect(cont.container_size).to eq "20DV"
+      expect(cont.seal_number).to be_nil
+    end
+
+    it "adds containers for ocean, and add High cube 40 ft container information" do
+      row_seed = {61=>mode_row('OCEAN'),
+        76=>subtitle_row('EQUIPMENT SUMMARY'),
+        77=>['','','','Equipment #','Item Qty'],
+        78=>['','','','ABCD12345','1234','10',''], #only care about the container number
+        79=>['','','','Totals'],
+        81=>subtitle_row('Package Detail'),
+        83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: High Cube 45 foot. Seal #: SEAL1234']
+      }
+      rows = init_mock_array 85, row_seed
+      expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
+      @s.reload
+      cont = @s.containers.first
+      expect(cont.container_number).to eq 'ABCD12345'
+      expect(cont.container_size).to eq "45HQ"
+      expect(cont.seal_number).to eq "SEAL1234"
+    end
+
+    it "ignores blank container summary information" do
+      row_seed = {61=>mode_row('OCEAN'),
+        76=>subtitle_row('EQUIPMENT SUMMARY'),
+        77=>['','','','Equipment #','Item Qty'],
+        78=>['','','','ABCD12345','1234','10',''], #only care about the container number
+        79=>['','','','Totals'],
+        81=>subtitle_row('Package Detail'),
+        83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: Seal #: ']
+      }
+      rows = init_mock_array 85, row_seed
+      expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
+      @s.reload
+      cont = @s.containers.first
+      expect(cont.container_number).to eq 'ABCD12345'
+      expect(cont.container_size).to be_nil
+      expect(cont.seal_number).to be_nil
+    end
+
     it "should not duplicate containers" do
       @s.containers.create!(container_number:'ABCD12345')
       row_seed = {61=>mode_row('OCEAN'),
@@ -361,15 +437,57 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         @s.reload
         cs = @s.carton_sets.find_by_starting_carton('1100')
         expect(cs.carton_qty).to eq 2
-        expect(cs.length_cm).to eq 24
-        expect(cs.width_cm).to eq 15
-        expect(cs.height_cm).to eq 9
+        expect(cs.length_cm).to eq 10
+        expect(cs.width_cm).to eq 100
+        expect(cs.height_cm).to eq 1000
         expect(cs.net_net_kgs).to eq 6.6
         expect(cs.net_kgs).to eq 6.8
         expect(cs.gross_kgs).to eq 7
         expect(cs.shipment_lines.count).to eq 1
         expect(cs.shipment_lines.first).to eq @s.shipment_lines.first
         expect(@s.shipment_lines.count).to eq 2
+
+        expect(@s.gross_weight).to eq BigDecimal(42)
+        expect(@s.number_of_packages).to eq 6
+        expect(@s.number_of_packages_uom).to eq "CARTONS"
+        expect(@s.volume).to eq BigDecimal(6)
+      end
+      it "adds shipment totals to existing amounts" do
+        @s.gross_weight = BigDecimal(10)
+        @s.volume = BigDecimal(10)
+        @s.number_of_packages = 20
+        @s.number_of_packages_uom = "CTNS"
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10'}),
+          87=>detail_line({range:'0002',carton_start:'1102',carton_qty:'4',item_qty:'8'})
+        }
+        rows = init_mock_array 90, row_seed
+        described_class.new.process_rows(@s,rows,@u)
+        @s.reload
+
+        expect(@s.gross_weight).to eq BigDecimal(52)
+        expect(@s.number_of_packages).to eq 26
+        expect(@s.number_of_packages_uom).to eq "CTNS"
+        expect(@s.volume).to eq BigDecimal(16)
+      end
+      it "does not update number of packags unless package uom is CARTONS or CTNS" do
+        @s.number_of_packages = 20
+        @s.number_of_packages_uom = "Pieces"
+
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10'}),
+          87=>detail_line({range:'0002',carton_start:'1102',carton_qty:'4',item_qty:'8'})
+        }
+        rows = init_mock_array 90, row_seed
+        described_class.new.process_rows(@s,rows,@u)
+        @s.reload
+        expect(@s.number_of_packages).to eq 20
       end
       it "should convert IN to CM" do
         row_seed = {
@@ -385,6 +503,36 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         expect(cs.length_cm).to eq 2.54
         expect(cs.width_cm).to eq 2.54
         expect(cs.height_cm).to eq 2.54
+      end
+      it "should convert Meters to CM" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10',dim_unit:'MR',length:'1',width:'1',height:'1'}),
+        }
+        rows = init_mock_array 90, row_seed
+        expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(1)
+        @s.reload
+        cs = @s.carton_sets.first
+        expect(cs.length_cm).to eq 100
+        expect(cs.width_cm).to eq 100
+        expect(cs.height_cm).to eq 100
+      end
+      it "should convert Feet to CM" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10',dim_unit:'FT',length:'1',width:'1',height:'1'}),
+        }
+        rows = init_mock_array 90, row_seed
+        expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(1)
+        @s.reload
+        cs = @s.carton_sets.first
+        expect(cs.length_cm).to eq 30.48
+        expect(cs.width_cm).to eq 30.48
+        expect(cs.height_cm).to eq 30.48
       end
       it "should convert LB to KG" do
         row_seed = {

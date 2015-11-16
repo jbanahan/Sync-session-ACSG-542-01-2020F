@@ -14,7 +14,12 @@ $(function() {
   <div class="container">
     <div class="row">
       <div class="col-md-12">
-        <%= show_model_fields f, [:cmp_name, :cmp_sys_code, :cmp_agent, :cmp_broker, :cmp_carrier, :cmp_customer, :cmp_factory, :cmp_importer, :cmp_vendor, :cmp_created_at, :cmp_updated_at, :cmp_alliance, :cmp_fenix, (@company.importer? ? :comp_show_buiness_rules : nil) ] %>
+        <%= show_model_fields f, [:cmp_name, :cmp_sys_code, :cmp_agent, :cmp_broker, :cmp_carrier, :cmp_customer, :cmp_factory, :cmp_importer, :cmp_vendor, :cmp_created_at, :cmp_updated_at, :cmp_alliance, :cmp_fenix, (@company.importer? ? :comp_show_buiness_rules : nil)] %>
+        <%= show_model_fields f, [:cmp_enabled_booking_types] do |mf, field_name, value, attributes|
+              attributes[:select_options] = options_for_select(Company.booking_types, @company.enabled_booking_types_array)
+              attributes[:multiple] = true
+              model_select_field_tag field_name, mf, @company.enabled_booking_types_array, attributes
+        end %>
         <%= show_custom_fields f %>
       </div>
     </div>

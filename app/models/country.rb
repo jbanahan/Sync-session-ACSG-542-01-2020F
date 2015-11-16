@@ -64,7 +64,7 @@ class Country < ActiveRecord::Base
     'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
 
   @@skip_reload = false
-  
+
   attr_accessible :import_location, :classification_rank
   after_save :update_model_fields
   after_commit :update_cache

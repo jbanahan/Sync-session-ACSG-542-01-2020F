@@ -1,0 +1,17 @@
+<div class="progress" style="border-radius:0;">
+    <div class="progress-bar" role="progressbar" aria-valuenow="{{percentValue()}}" aria-valuemin="0" aria-valuemax="100" ng-style="{width: percentValue()+'%'}">
+        <span class="sr-only">{{percentValue()}}% Complete</span>
+    </div>
+</div>
+<div class="row content-row">
+    <div class="col-md-7">
+        <h3>{{name}}</h3>
+    </div>
+    <div class="col-md-2 text-right" style="margin-left:-42px;">
+        <p class="number">{{numShipped}}</p><span class="type">SHIPPED</span>
+    </div>
+    <div class="col-md-1 diagonal-border">/</div>
+    <div class="col-md-2 text-right">
+        <p class="number">{{numBooked}}</p><span class="type">BOOKED</span>
+    </div>
+</div>

@@ -142,7 +142,41 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              read_only: true,
              export_lambda: lambda { |obj| obj.chargeable_weight },
              qualified_field_name: "(SELECT CASE WHEN IFNULL(shipments.gross_weight,0) > (IFNULL(shipments.volume,0) / 0.006) THEN IFNULL(shipments.gross_weight,0) ELSE (IFNULL(shipments.volume,0) / 0.006) END)"
-         }]
+         }],
+      [59,:shp_cancel_requested_by_full_name,:username,"Cancel Requested By", {
+             :import_lambda => lambda {|a,b| return "Cancel Requested By cannot be set by import, ignored."},
+             :export_lambda => lambda {|obj|
+               u = obj.cancel_requested_by
+               u.blank? ? "" : u.full_name
+             },
+             :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.cancel_requested_by_id)",
+             :data_type=>:string
+         }],
+      [60,:shp_cancel_requested_at,:cancel_requested_at,"Cancel Requested At",{data_type: :datetime, read_only: true}],
+      [61,:shp_isf_sent_by_full_name,:username,"ISf Sent By", {
+             :import_lambda => lambda {|a,b| return "ISF Sent By cannot be set by import, ignored."},
+             :export_lambda => lambda {|obj|
+               u = obj.isf_sent_by
+               u.blank? ? "" : u.full_name
+             },
+             :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.isf_sent_by_id)",
+             :data_type=>:string
+         }],
+      [62,:shp_isf_sent_at,:isf_sent_at,"ISF Sent At",{data_type: :datetime, read_only: true}],
+      [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :date}],
+      [64, :shp_confirmed_on_board_origin_date, :confirmed_on_board_origin_date, 'Confirmed On Board Origin Date', {data_type: :date}],
+      [65, :shp_eta_last_foreign_port_date, :eta_last_foreign_port_date, 'ETA Last Foreign Port Date', {data_type: :date}],
+      [66, :shp_departure_last_foreign_port_date, :departure_last_foreign_port_date, 'Departure Last Foreign Port Date', {data_type: :date}],
+      [67, :shp_booking_revised_date, :booking_revised_date, 'Booking Revised Date', {data_type: :date, read_only: true}],
+      [68, :shp_booking_revised_by_full_name,:username,"Booking Revised By", {
+        :export_lambda => lambda {|obj|
+          u = obj.booking_revised_by
+          u.blank? ? "" : u.full_name
+        },
+        :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.booking_revised_by_id)",
+        :data_type=>:string,
+        :read_only=>true
+      }],
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -156,6 +190,12 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Foreign Port of Lading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Foreign Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','First US Port')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(1110, 'shp_final_dest_port','shipments','final_dest_port','Final Destination')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1200,'shp','shipments','buyer')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1250,'shp','shipments','seller')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1300,'shp','shipments','ship_to')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1350,'shp','shipments','container_stuffing')
+    add_fields CoreModule::SHIPMENT, make_address_arrays(1400,'shp','shipments','consolidator')
 
   end
 end; end; end

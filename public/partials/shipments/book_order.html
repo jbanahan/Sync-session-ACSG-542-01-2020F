@@ -1,91 +1,194 @@
-<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
-  <div class='container'>
-    <div class="row">
-      <div class="col-md-12">
-        <h1>Book Order To Shipment {{shp.shp_ref}}</h1>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-xs-2">
-        <input type='text' ng-model='orderFilter' placeholder='Search orders' class='form-control input-sm'/>
-        <div class='text-right'><small><a href='' ng-click='orderFilter=null'>clear</a></small></div>
-        <br />
-        <div ng-show='availableOrders.length == 0'>No orders found</div>
-        <div class="btn-group btn-group-vertical" style="width:100%" data-toggle="buttons">
-          <label class="btn btn-md btn-default"
-              ng-repeat="ord in availableOrders | filter:orderFilter"
-              ng-class="{active:ord.id==activeOrder.id}"
-          ng-click="getOrder(ord)"><input type="radio"></input>{{ord.ord_cust_ord_no}}</label>
+<chain-loading-wrapper loading-flag='{{sbc.loadingFlag}}'>
+    <div class='container' ng-init="sbc.init()" data-container-id="chooseBooking">
+        <div class="row booking-header-row">
+            <div class="col-md-12">
+                <h1>Choose Type of Booking</h1>
+            </div>
         </div>
-      </div>
-      <div class="col-xs-10">
-        <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
-          <div ng-show='activeOrder'>
-            <h2 style='margin-top:0'>Order: {{activeOrder.ord_cust_ord_no}}</h2>
-            <table class='table table-striped'>
-              <thead>
-                <tr>
-                  <th>Line #</th>
-                  <th>Part #</th>
-                  <th>SKU</th>
-                  <th>
-                    <div class='btn-group'>
-                      <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
-                      <ul class='dropdown-menu' role='menu'>
-                        <li><a ng-click='clearQuantityToShip(activeOrder)'>Clear</a></li>
-                        <li><a ng-click='resetQuantityToShip(activeOrder)'>Reset</a></li>
-                        <li><a data-toggle='modal' data-target='#prorateModal'>Prorate</a></li>
-                      </ul>
+        <div class="row">
+            <div ng-if="sbc.isEnabled('product')" class="col-md-3">
+                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('product')">
+                    <span class="top">Book by <strong>Product</strong></span>
+                    <hr>
+                    <span class="bottom">Choose this if you do not have a purchase order number</span>
+                </button>
+            </div>
+            <div ng-if="sbc.isEnabled('order')" class="col-md-3">
+                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('order')">
+                    <span class="top">Book by<br><strong>Order</strong></span>
+                    <hr>
+                    <span class="bottom">Choose this if you do not want to include order details</span>
+                </button>
+            </div>
+            <div ng-if="sbc.isEnabled('order_line')" class="col-md-3">
+                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('order_line'); sbc.loadAvailableOrders();">
+                    <span class="top">Book by<br><strong class="sku">Order Line (SKU)</strong></span>
+                    <hr>
+                    <span class="bottom">Choose this if you want to provide full shipment details</span>
+                </button>
+            </div>
+            <div ng-if="sbc.isEnabled('container')" class="col-md-3">
+                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('container')">
+                    <span class="top">Book by <strong>Container</strong></span>
+                    <hr>
+                    <span class="bottom">Choose this if you just want to select a container's size</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class='container' data-container-id="product">
+        <div class="row booking-header-row">
+            <div class="col-md-12">
+                <h1>Book By Product</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <p style="text-align: right;"><button class="btn btn-sm btn-success" ng-click="sbc.addLine()"><i class="fa fa-plus"></i></button></p>
+                <table class="table booking-table">
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMs)</th>
+                        <th>Gross Weight (KGs)</th>
+                        <th class="short-column"></th>
+                    </tr>
+                    <tr ng-repeat="line in sbc.lines">
+                        <td><angucomplete-alt id='product_autocomplete' input-class='form-control' autofocus="true" placeholder='Search for Products...' selected-object='line.product' remote-url='/api/v1/shipments/{{sbc.shipmentId}}/autocomplete_product?n=' title-field='unique_identifier' minlength='3' initial-value=''></angucomplete-alt></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_quantity"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_cbms"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                        <td><button class="btn btn-xs btn-danger" title="Delete Line" ng-click="sbc.removeLine(line)"><i class="fa fa-trash"></i></button></td>
+                    </tr>
+                </table>
+                <p style="text-align: right;"><button class="btn btn-sm btn-success" ng-click="sbc.addLine()"><i class="fa fa-plus"></i></button></p>
+            </div>
+        </div>
+    </div>
+    <div class='container' data-container-id="order">
+        <div class="row booking-header-row">
+            <div class="col-md-12">
+                <h1>Book By Order</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <p style="text-align: right;"><button class="btn btn-sm btn-success" ng-click="sbc.addLine()"><i class="fa fa-plus"></i></button></p>
+                <table class="table booking-table">
+                    <tr>
+                        <th>Order</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMs)</th>
+                        <th>Gross Weight (KGs)</th>
+                        <th class="short-column"></th>
+                    </tr>
+                    <tr ng-repeat="line in sbc.lines">
+                        <td>
+                            <angucomplete-alt id='order_autocomplete' input-class='form-control'
+                                              placeholder='Search for Orders...' selected-object='line.order'
+                                              remote-url='/api/v1/shipments/{{sbc.shipmentId}}/autocomplete_order?n=' title-field='order_number' minlength='3' initial-value=''></angucomplete-alt>
+                        </td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_quantity"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_cbms"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                        <td><button class="btn btn-xs btn-danger" title="Delete Line" ng-click="sbc.removeLine(line)"><i class="fa fa-trash"></i></button></td>
+                    </tr>
+                </table>
+                <p style="text-align: right;"><button class="btn btn-sm btn-success" ng-click="sbc.addLine()"><i class="fa fa-plus"></i></button></p>
+            </div>
+        </div>
+    </div>
+    <div class='container' data-container-id="order_line">
+        <div class="row booking-header-row">
+            <div class="col-md-12">
+                <h1>Book by Order Line (SKU)</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-2">
+                <input type='text' ng-model='orderFilter' placeholder='Search orders' class='form-control input-sm'/>
+                <div class='text-right'><small><a href='' ng-click='orderFilter=null'>clear</a></small></div>
+                <br />
+                <div ng-show='sbc.availableOrders.length == 0'>No orders found</div>
+                <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
+                    <label class="btn btn-md btn-default"
+                           ng-repeat="ord in sbc.availableOrders | filter:orderFilter"
+                           ng-class="{active:ord.id==sbc.activeOrder.id}"
+                           ng-click="sbc.getOrder(ord.id);"><input type="radio" autocomplete="off"/>{{ord.ord_cust_ord_no}}</label>
+                </div>
+            </div>
+            <div class="col-xs-10">
+                <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
+                    <div ng-show='sbc.activeOrder'>
+                        <h2 style='margin-top:0'>Order: {{sbc.activeOrder.ord_cust_ord_no}}</h2>
+                        <table class='table booking-table'>
+                            <thead>
+                            <tr>
+                                <th class="short-column">Line</th>
+                                <th class="short-column">Part</th>
+                                <th class="short-column">SKU</th>
+                                <th>Quantity</th>
+                                <th>Cartons</th>
+                                <th>Volume (CBMs)</th>
+                                <th>Gross Weight (KGs)</th>
+                                <th>Enabled</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat='line in sbc.lines' ng-class="{disabled: line._disabled}">
+                                <td>{{line.ordln_line_number}}</td>
+                                <td>{{line.ordln_puid}}</td>
+                                <td>{{line.ordln_sku}}</td>
+                                <td><input ng-disabled="line._disabled" type="number" ng-model='line.bkln_quantity' class='form-control'/></td>
+                                <td><input ng-disabled="line._disabled" type="number" class="form-control" ng-model="line.bkln_carton_qty"></td>
+                                <td><input ng-disabled="line._disabled" type="number" class="form-control" ng-model="line.bkln_cbms"></td>
+                                <td><input ng-disabled="line._disabled" type="number" class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                                <td style="text-align: center"><i ng-click="line._disabled = !line._disabled" class="fa {{line._disabled ? 'fa-square-o' : 'fa-check-square-o'}}"></i></td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat='line in activeOrder.order_lines'>
-                  <td>{{line.ordln_line_number}}</td>
-                  <td>{{line.ordln_puid}}</td>
-                  <td>{{line.ordln_sku}}</td>
-                  <td><input type='number' ng-model='line.quantity_to_ship' class='form-control'/></td>
-                </tr>
-                <tr>
-                  <td colspan='3' class='text-right'>Total:</td>
-                  <td>{{totalToShip(activeOrder)}}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </chain-loading-wrapper>
-      </div>
+                </chain-loading-wrapper>
+            </div>
+        </div>
     </div>
-  </div>
+    <div class='container' data-container-id="container">
+        <div class="row booking-header-row">
+            <div class="col-md-12">
+                <h1>Book By Container</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <p style="text-align: right;"><button class="btn btn-sm btn-success" ng-click="sbc.addLine()"><i class="fa fa-plus"></i></button></p>
+                <table class="table booking-table">
+                    <tr>
+                        <th>Container Size</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMs)</th>
+                        <th>Gross Weight (KGs)</th>
+                        <th class="short-column"></th>
+                    </tr>
+                    <tr ng-repeat="line in sbc.lines">
+                        <td><select ng-model="line.bkln_container_size" ng-options="value for value in ['20','40','40HC','45HC']" class="form-control"></select></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_quantity"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_carton_qty"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_cbms"></td>
+                        <td><input type='number' class="form-control" ng-model="line.bkln_gross_kgs"></td>
+                        <td><button class="btn btn-xs btn-danger" title="Delete Line" ng-click="sbc.removeLine(line)"><i class="fa fa-trash"></i></button></td>
+                    </tr>
+                </table>
+                <p style="text-align: right;"><button class="btn btn-sm btn-success" ng-click="sbc.addLine()"><i class="fa fa-plus"></i></button></p>
+            </div>
+        </div>
+    </div>
 </chain-loading-wrapper>
-<div class="modal" id="prorateModal" tabindex="-1" role="dialog" aria-labelledby="prorateModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title" id="prorateModalLabel">Prorate Quantities</h4>
-      </div>
-      <div class="modal-body">
-        <form class='form-horizontal'>
-          <div class="form-group">
-            <label for='prorateSign'>Add/Remove</label>
-            <select id='prorateSign' class='form-control' ng-model='proration.sign'><option>Add</option><option>Remove</option></select>
-          </div>
-          <div class="form-group">
-            <label for="prorateAmount">Percent To Change</label>
-            <input id='prorateAmount' type='number' class='form-control' ng-model='proration.amount' />
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-success" data-dismiss="modal" ng-click='prorate(activeOrder,proration)' ng-disabled='!proration.amount || !proration.sign'>Go</button>
-      </div>
-    </div>
-  </div>
-</div>
 <div chain-action-bar>
-  <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder,"booking_lines")' ng-show='shp && activeOrder'>Save</button>
-  <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
+    <button class='btn btn-default' ng-click='sbc.saveLines()' ng-show='sbc.saveButtonEnabled()'>Save</button>
+    <button class='btn btn-default' ng-click='sbc.cancel()'>Cancel</button>
 </div>

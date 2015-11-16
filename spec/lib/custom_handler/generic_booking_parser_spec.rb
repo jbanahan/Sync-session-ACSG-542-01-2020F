@@ -21,37 +21,26 @@ describe OpenChain::CustomHandler::GenericBookingParser do
   end
 
     it 'parses it correctly' do
-      result = described_class.new.process_rows shipment, FORM_ARRAY, user
+      result = subject.process_rows shipment, FORM_ARRAY, user
       expect(result).to be_present
 
-      expect(shipment.receipt_location).to be_present
-      expect(shipment.freight_terms).to be_present
-      expect(shipment.lcl).not_to be_nil #false is allowed
-      expect(shipment.shipment_type).to be_present
-      expect(shipment.cargo_ready_date).to be_present
-      expect(shipment.booking_shipment_type).to be_present
-      expect(shipment.mode).to be_present
       expect(shipment.first_port_receipt).to be_nil
       expect(shipment.lading_port).to be_nil
       expect(shipment.unlading_port).to be_nil
       expect(shipment.destination_port).to be_nil
 
       expect(shipment.receipt_location).to eq "Sheerness, United Kingdom"
+      expect(shipment.cargo_ready_date).to eq Date.parse("2015-05-25")
       expect(shipment.freight_terms).to eq  "Collect"
-      expect(shipment.mode).to eq "Air"
-      expect(shipment.lcl).to be false
       expect(shipment.shipment_type).to eq "CFS/CY"
-      expect(shipment.cargo_ready_date).to eq Date.parse("2015-05-25 00:00:00 -0400")
       expect(shipment.booking_shipment_type).to eq "CFS/CY"
-
+      expect(shipment.lcl).to be false
+      expect(shipment.mode).to eq "Ocean - LCL"
+      expect(shipment.booking_mode).to eq "Ocean - LCL"
+      
       expect(shipment.booking_lines.length).to eq 7
       shipment.booking_lines.each do |line|
         expect(line).to be_persisted
-        expect(line.shipment).to eq shipment
-        expect(line.gross_kgs).to be_present
-        expect(line.cbms).to be_present
-        expect(line.carton_qty).to be_present
-        expect(line.quantity).to be_present
       end
 
       line = shipment.booking_lines.first.reload
@@ -110,6 +99,39 @@ describe OpenChain::CustomHandler::GenericBookingParser do
       expect(line.quantity).to eq 4676
       expect(line.cbms).to be_within(0.01).of 15.450
       expect(line.gross_kgs).to be_within(0.01).of 1920.000
+    end
+
+    it "handles CY/CY ship mode as Ocean - FCL" do
+      values = FORM_ARRAY.dup
+      values[30][10] = "CY/CY"
+
+      result = subject.process_rows shipment, FORM_ARRAY, user
+      expect(shipment.booking_shipment_type).to eq "CY/CY"
+      expect(shipment.shipment_type).to eq "CY/CY"
+      expect(shipment.mode).to eq "Ocean - FCL"
+      expect(shipment.booking_mode).to eq "Ocean - FCL"
+    end
+
+    it "handles CY/CFS ship mode as Ocean - FCL" do
+      values = FORM_ARRAY.dup
+      values[30][10] = "CY/CFS"
+
+      result = subject.process_rows shipment, FORM_ARRAY, user
+      expect(shipment.booking_shipment_type).to eq "CY/CFS"
+      expect(shipment.shipment_type).to eq "CY/CFS"
+      expect(shipment.mode).to eq "Ocean - FCL"
+      expect(shipment.booking_mode).to eq "Ocean - FCL"
+    end
+
+    it "handles CFS/CFS ship mode as Ocean - LCL" do
+      values = FORM_ARRAY.dup
+      values[30][10] = "CFS/CFS"
+
+      result = subject.process_rows shipment, FORM_ARRAY, user
+      expect(shipment.booking_shipment_type).to eq "CFS/CFS"
+      expect(shipment.shipment_type).to eq "CFS/CFS"
+      expect(shipment.mode).to eq "Ocean - LCL"
+      expect(shipment.booking_mode).to eq "Ocean - LCL"
     end
   end
 

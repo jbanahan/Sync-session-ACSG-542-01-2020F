@@ -21,6 +21,9 @@ end
 Factory.define :importer, parent: :company do |c|
   c.importer true
 end
+Factory.define :consignee, parent: :company do |c|
+  c.consignee true
+end
 Factory.define :master_company, parent: :company do |c|
   c.master true
 end
@@ -29,6 +32,15 @@ end
 Factory.define :address do |a|
   a.name "MYaddr"
   a.association :country
+  a.association :company
+end
+Factory.define :full_address, parent: :address do |a|
+  a.line_1 '99 Fake Street'
+  a.city 'Fakesville'
+  a.state 'PA'
+  a.postal_code '19191'
+end
+Factory.define :blank_address, class: Address do |a|
   a.association :company
 end
 Factory.define :user do |f|
@@ -135,7 +147,6 @@ end
 Factory.define :booking_line do |s|
   s.sequence(:line_number)
   s.quantity 1
-  s.association :product
   s.association :shipment
 end
 Factory.define :carton_set do |f|

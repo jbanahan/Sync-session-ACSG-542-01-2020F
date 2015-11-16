@@ -1,8 +1,9 @@
-<div class="form-group">
-  <label for="shp_car_name" class="control-label">Carrier</label>
-  <p class="form-control-static" id="shp_car_name">{{outerScope.shp.shp_car_name}}</p>
-</div>
-<div class="form-group">
-  <label for="shp_imp_name" class="control-label">Importer</label>
-  <p class="form-control-static" id="shp_imp_name">{{outerScope.shp.shp_imp_name}}</p>
+<div class="panel-group" id="address-accordion">
+  <address-expander title="Importer" address-name="outerScope.shp.shp_imp_name"></address-expander>
+  <address-expander title="Carrier" address-name="outerScope.shp.shp_car_name"></address-expander>
+  <address-expander title="Buyer" address-name="outerScope.shp.shp_buyer_address_name" full-address="outerScope.shp.shp_buyer_address_full_address"></address-expander>
+  <address-expander title="Seller" address-name="outerScope.shp.shp_seller_address_name" full-address="outerScope.shp.shp_seller_address_full_address"></address-expander>
+  <address-expander title="Ship To" address-name="outerScope.shp.shp_ship_to_address_name" full-address="outerScope.shp.shp_ship_to_address_full_address"></address-expander>
+  <address-expander title="Container Stuffing" address-name="outerScope.shp.shp_container_stuffing_address_name" full-address="outerScope.shp.shp_container_stuffing_address_full_address"></address-expander>
+  <address-expander title="Consolidator" address-name="outerScope.shp.shp_consolidator_address_name" full-address="outerScope.shp.shp_consolidator_address_full_address"></address-expander>
 </div>

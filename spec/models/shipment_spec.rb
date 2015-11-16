@@ -404,11 +404,18 @@ describe Shipment do
       s.stub(:can_confirm_booking?).and_return true #make sure we're not testing the wrong thing
       expect(s.can_revise_booking?(u)).to be_false
     end
+    it "does not allow revising bookings with shipment lines" do
+      u = double('u')
+      s = Shipment.new(booking_approved_date:Time.now)
+      s.shipment_lines.build
+      expect(s.can_revise_booking?(u)).to be_false
+    end
   end
   describe "revise booking" do
     it "should remove received, requested, approved and confirmed date and 'by' fields" do
       u = Factory(:user)
-      s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:Time.now,booking_approved_date:Time.now,booking_confirmed_date:Time.now)
+      original_receive= Time.zone.now
+      s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:original_receive,booking_approved_date:Time.now,booking_confirmed_date:Time.now)
       s.should_receive(:create_snapshot_with_async_option).with(false,u)
       s.revise_booking! u
       s.reload
@@ -416,35 +423,66 @@ describe Shipment do
       expect(s.booking_approved_date).to be_nil
       expect(s.booking_confirmed_by).to be_nil
       expect(s.booking_confirmed_date).to be_nil
-      expect(s.booking_received_date).to be_nil
-      expect(s.booking_requested_by).to be_nil
+      expect(s.booking_received_date).to eq original_receive.to_date
+      expect(s.booking_requested_by).to eq u
+      expect(s.booking_revised_date).to eq Time.zone.now.to_date
     end
   end
 
-  describe :can_add_remove_lines? do
+  describe :can_add_remove_booking_lines? do
     it "should allow adding lines if user can edit" do
       u = double('user')
       s = Shipment.new
       s.should_receive(:can_edit?).with(u).and_return true
-      expect(s.can_add_remove_lines?(u)).to be_true
+      expect(s.can_add_remove_booking_lines?(u)).to be_true
     end
     it "should not allow adding lines if user cannot edit" do
       u = double('user')
       s = Shipment.new
       s.should_receive(:can_edit?).with(u).and_return false
-      expect(s.can_add_remove_lines?(u)).to be_false
+      expect(s.can_add_remove_booking_lines?(u)).to be_false
     end
-    it "should not allow adding lines if booking is approved" do
-      u = double('user')
-      s = Shipment.new(booking_approved_date:Time.now)
-      s.stub(:can_edit?).and_return true #make sure we're not testing the wrong thing
-      expect(s.can_add_remove_lines?(u)).to be_false
+    
+    context "editable shipment" do
+      let(:shipment) do
+        s = Shipment.new
+        # stub can edit to make sure we're allowing anyone/anything to edit
+        s.stub(:can_edit?).and_return true
+        s
+      end
+
+      let(:user) { double("user") }
+
+      it "should allow adding booking lines if booking is approved" do
+        s = shipment.tap {|s| s.booking_approved_date = Time.now }
+        expect(s.can_add_remove_booking_lines? user).to be_true
+      end
+
+      it "should allow adding lines if booking is confirmed" do
+        s = shipment.tap {|s| s.booking_confirmed_date = Time.now }
+        expect(s.can_add_remove_booking_lines? user).to be_true
+      end
+
+      it "disallows adding lines if shipment has actual shipment lines on it" do
+        s = shipment.tap {|s| s.shipment_lines.build }
+        expect(s.can_add_remove_booking_lines?(user)).to be_false
+      end
     end
-    it "should not allow adding lines if booking is confirmed" do
+  end
+
+  describe :can_add_remove_shipment_lines? do
+    it "allows adding lines if user can edit" do
       u = double('user')
-      s = Shipment.new(booking_confirmed_date:Time.now)
-      s.stub(:can_edit?).and_return true #make sure we're not testing the wrong thing
-      expect(s.can_add_remove_lines?(u)).to be_false
+      s = Shipment.new
+      s.should_receive(:can_edit?).with(u).and_return true
+      expect(s.can_add_remove_shipment_lines?(u)).to be_true
+    end
+
+    it "disallows adding lines if user cannot edit" do
+      u = double('user')
+      s = Shipment.new
+      s.should_receive(:can_edit?).with(u).and_return false
+      expect(s.can_add_remove_shipment_lines?(u)).to be_false
     end
   end
 
@@ -530,6 +568,29 @@ describe Shipment do
       LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>s)
       s.reload
       s.linkable_attachments.first.should == linkable
+    end
+  end
+
+  describe "available_products" do
+    before :each do
+      @imp = Factory(:importer)
+      @product = Factory(:product, importer: @imp)
+      @product2 = Factory(:product)
+      @shipment = Factory(:shipment, importer: @imp)
+
+    end
+
+    it "limits available products to those sharing importers with the shipment and user's importer company" do
+      user = Factory(:user, company: @imp)
+      products = @shipment.available_products(user).all
+      expect(products.size).to eq 1
+    end
+
+    it "limits available products to those sharing importers with the shipment and user's linked companies" do
+      user = Factory(:user, company: Factory(:importer))
+      user.company.linked_companies << @imp
+      products = @shipment.available_products(user).all
+      expect(products.size).to eq 1
     end
   end
 end

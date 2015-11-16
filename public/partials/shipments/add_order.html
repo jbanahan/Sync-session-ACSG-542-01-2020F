@@ -6,53 +6,74 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-xs-2">
+      <div ng-hide="activeOrder" class="col-xs-2 col-xs-offset-5" style="text-align: center; margin-top:24px;">
+        <p><button ng-show="!!linesAvailable" ng-click="importBooking()" class="btn btn-md btn-default" style="width:100%">Import Booking</button></p>
+        <p ng-show="bookedOrders.length > 0">Booked Orders</p>
+        <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
+          <label class="btn btn-md btn-default"
+                 ng-repeat="ord in bookedOrders"
+                 ng-class="{active:ord.id==activeOrder.id}"
+                 ng-click="getOrder(ord)"><input type="radio">{{ord.ord_cust_ord_no}}</label>
+        </div>
+        <p style="margin-top:12px;">All Orders</p>
         <input type='text' ng-model='orderFilter' placeholder='Search orders' class='form-control input-sm'/>
         <div class='text-right'><small><a href='' ng-click='orderFilter=null'>clear</a></small></div>
         <br />
         <div ng-show='availableOrders.length == 0'>No orders found</div>
-        <div class="btn-group btn-group-vertical" style="width:100%" data-toggle="buttons">
+        <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
           <label class="btn btn-md btn-default"
               ng-repeat="ord in availableOrders | filter:orderFilter"
               ng-class="{active:ord.id==activeOrder.id}"
-          ng-click="getOrder(ord)"><input type="radio"></input>{{ord.ord_cust_ord_no}}</label>
+          ng-click="getOrder(ord)"><input type="radio">{{ord.ord_cust_ord_no}}</label>
         </div>
       </div>
-      <div class="col-xs-10">
+      <div ng-show='activeOrder' class="col-xs-12">
         <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
-          <div ng-show='activeOrder'>
-            <h2 style='margin-top:0'>Order: {{activeOrder.ord_cust_ord_no}}</h2>
-            <table class='table table-striped'>
-              <thead>
-                <tr>
-                  <th>Line #</th>
-                  <th>Part #</th>
-                  <th>SKU</th>
-                  <th>
-                    <div class='btn-group'>
-                      <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
-                      <ul class='dropdown-menu' role='menu'>
-                        <li><a ng-click='clearQuantityToShip(activeOrder)'>Clear</a></li>
-                        <li><a ng-click='resetQuantityToShip(activeOrder)'>Reset</a></li>
-                        <li><a data-toggle='modal' data-target='#prorateModal'>Prorate</a></li>
-                      </ul>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat='line in activeOrder.order_lines'>
-                  <td>{{line.ordln_line_number}}</td>
-                  <td>{{line.ordln_puid}}</td>
-                  <td>{{line.ordln_sku}}</td>
-                  <td><input type='number' ng-model='line.quantity_to_ship' class='form-control'/></td>
-                </tr>
-                <tr>
-                  <td colspan='3' class='text-right'>Total:</td>
-                  <td>{{totalToShip(activeOrder)}}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="row">
+            <div class="col-xs-8">
+              <h2>Order: {{activeOrder.ord_cust_ord_no}}</h2>
+            </div>
+            <div class="col-xs-4">
+              <label for="mfg-address-select">Choose Manufacturer</label>
+              <address-book-autocomplete id="mfg-address-select" shipment-id="shp.id" address-id-attribute="activeOrder.manufacturerAddressId"></address-book-autocomplete>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12">
+              <table class='table booking-table'>
+            <thead>
+              <tr>
+                <th>Line #</th>
+                <th>Part #</th>
+                <th>SKU</th>
+                <th>
+                  <div class='btn-group'>
+                    <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li><a ng-click='clearQuantityToShip(activeOrder)'>Clear</a></li>
+                      <li><a ng-click='resetQuantityToShip(activeOrder)'>Reset</a></li>
+                      <li><a data-toggle='modal' data-target='#prorateModal'>Prorate</a></li>
+                    </ul>
+                  </div>
+                </th>
+                <th>Enabled</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-class="{disabled:line._disabled}" ng-repeat='line in activeOrder.order_lines'>
+                <td>{{line.linked_cust_ord_no ? line.linked_cust_ord_no + " - " + line.linked_line_number : line.ordln_line_number}}</td>
+                <td>{{line.ordln_puid}}</td>
+                <td>{{line.ordln_sku}}</td>
+                <td><input ng-disabled="line._disabled" type='number' ng-model='line.quantity_to_ship' class='form-control'/></td>
+                <td style="text-align: center"><i ng-click="line._disabled = !line._disabled" class="fa {{line._disabled ? 'fa-square-o' : 'fa-check-square-o'}}"></i></td>
+              </tr>
+              <tr>
+                <td colspan='3' class='text-right'>Total:</td>
+                <td colspan="2">{{totalToShip(activeOrder)}}</td>
+              </tr>
+            </tbody>
+          </table>
+            </div>
           </div>
         </chain-loading-wrapper>
       </div>
@@ -85,7 +106,8 @@
     </div>
   </div>
 </div>
+<add-address-modal shipment-id="shp.id"></add-address-modal>
 <div chain-action-bar>
-  <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder,"lines")' ng-show='shp && activeOrder'>Save</button>
+  <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder)' ng-show='shp && activeOrder'>Save</button>
   <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
 </div>

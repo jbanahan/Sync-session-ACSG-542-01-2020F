@@ -15,13 +15,24 @@ OpenChain::Application.routes.draw do
       resources :shipments, only: [:index,:show,:create,:update] do
         member do
           post :process_tradecard_pack_manifest
+          post :process_booking_worksheet
           post :request_booking
           post :approve_booking
           post :confirm_booking
           post :revise_booking
+          post :request_cancel
           post :cancel
           post :uncancel
+          post :send_isf
           get :available_orders
+          get :booked_orders
+          get :available_lines
+          get :autocomplete_order
+          get :autocomplete_product
+          get :autocomplete_address
+          post :create_address
+          get :shipment_lines
+          get :booking_lines
         end
       end
       resources :fields, only: [:index]
@@ -116,6 +127,12 @@ OpenChain::Application.routes.draw do
           post :receive_lvs_results
         end
       end
+
+      resources :addresses, only: [:create] do
+        get :autocomplete, on: :collection
+      end
+
+      resources :countries, only: [:index]
     end
   end
 
@@ -460,6 +477,7 @@ OpenChain::Application.routes.draw do
       get 'history'
       get 'make_invoice'
       put 'generate_invoice'
+      get :download
     end
     resources :shipment_lines do
       post :create_multiple, :on => :collection

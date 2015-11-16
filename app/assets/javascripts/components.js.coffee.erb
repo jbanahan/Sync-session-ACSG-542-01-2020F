@@ -161,7 +161,7 @@
       panelMessage: '='
       panelType: '@'
     }
-    template: "<div ng-show='panelMessage && panelMessage.length>0'><div class='panel' ng-class='panelType'><div class='panel-heading'><h3 class='panel-title'>{{panelTitle}}</h3></div><div class='panel-body'><p>{{panelMessage}}</p></div></div></div>"
+    template: "<div ng-show='panelMessage && panelMessage.length>0'><div class='panel' ng-class='panelType'><div class='panel-heading'><h3 class='panel-title'>{{panelTitle}}</h3></div><div class='panel-body'><p ng-bind-html='panelMessage'></p></div></div></div>"
     link: (scope,el,attrs) ->
       this
   }
@@ -1188,3 +1188,4 @@
     ]
   }
 ]
+

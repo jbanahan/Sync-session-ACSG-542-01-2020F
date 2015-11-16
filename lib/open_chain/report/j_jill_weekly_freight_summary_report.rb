@@ -157,6 +157,8 @@ WHERE
 shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 and
 shipments.delivered_date > DATE_ADD(now(), INTERVAL -12 MONTH)
+and
+shipments.canceled_date IS NULL
 GROUP BY shipments.id
 QRY
     q
@@ -232,6 +234,7 @@ INNER JOIN ports as destination_port ON destination_port.id = shipments.destinat
 WHERE
 shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 AND shipments.arrival_port_date > '#{start_date}'
+AND shipments.canceled_date IS NULL
 ORDER BY shipments.arrival_port_date desc
 QRY
     q
@@ -286,6 +289,7 @@ left outer join companies vend on o.vendor_id = vend.id
 left outer join companies fact on o.factory_id = fact.id
 LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:original_gac_date].id} and gac.customizable_id = o.id and gac.customizable_type = 'Order'
 where s.arrival_port_date > '#{start_date}'
+and s.canceled_date IS NULL
 group by s.id, o.id
 order by s.arrival_port_date desc
 QRY
