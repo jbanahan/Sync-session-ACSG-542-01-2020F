@@ -260,6 +260,15 @@ describe Company do
       user = Factory(:user, company: my_company)
       (other_company.can_view?(user)).should be_false
     end
+
+    it "allows user to view linked companies" do
+      my_company = Factory(:company)
+      other_company = Factory(:company)
+      user = Factory(:user, company: my_company)
+      my_company.linked_companies << other_company
+
+      (other_company.can_view?(user)).should be_true
+    end
   end
 
   describe "search_secure" do

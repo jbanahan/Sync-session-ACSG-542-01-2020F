@@ -92,7 +92,7 @@ class Company < ActiveRecord::Base
 	  if user.company.master
 	    return true
 	  else
-	    return user.company == self
+	    return user.company == self || user.company.linked_company?(self)
 	  end
 	end
 
