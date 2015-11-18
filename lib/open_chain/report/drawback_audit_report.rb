@@ -15,6 +15,38 @@ module OpenChain
         workbook_to_tempfile wb, 'DrawbackClaim-'
       end
 
+      def run_and_attach(user, dc_id)
+        self.delay(:priority=>100).run_and_attach_to_dc(user, dc_id)
+      end
+
+      def run_and_attach_to_dc(user, dc_id)
+        dc = DrawbackClaim.find dc_id
+        results = exec_query user, dc_id
+        create_attachment results, dc
+        send_message user, dc_id
+      end
+
+      def exec_query(user, dc_id)
+        ActiveRecord::Base.connection.execute drawback_claim_query(user, dc_id)
+      end
+      
+      def create_attachment(results, dc)
+        Tempfile.open(['DrawbackClaim-', '.csv']) do |t|
+          t.binmode
+          CSV.open(t, "wb") do |csv|
+            csv << results.fields
+            results.each{ |line| csv << line }
+          end
+          dc.attachments.create!(attached: t)
+        end
+      end
+      
+      def send_message(user, dc_id)
+        user.messages.create(:subject=>"Report Complete: Drawback Audit Report",
+                             :body=>"<p>Your report has been attached to 
+                             <a href='#{Rails.application.routes.url_helpers.drawback_claim_url(host: MasterSetup.get.request_host, id: dc_id, protocol: (Rails.env.development? ? "http" : "https"))}'>this drawback claim.</a>.</p>")
+      end
+
       def drawback_claim_query(user, dc_id)
         <<-SQL
           SELECT substring(drawback_claims.entry_number,4,7) as 'Invoice', 
@@ -46,6 +78,7 @@ module OpenChain
       def self.run_report(user, settings = {})
         self.new.run(user, settings)
       end
+    
     end
   end
 end
