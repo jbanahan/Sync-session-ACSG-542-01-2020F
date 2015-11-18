@@ -157,13 +157,14 @@ INNER JOIN custom_values cust_id ON products.id = cust_id.customizable_id AND cu
 LEFT OUTER JOIN custom_values test_style ON products.id = test_style.customizable_id AND test_style.customizable_type = 'Product' and test_style.custom_definition_id = #{@cdefs[:test_style].id}
 LEFT OUTER JOIN custom_values set_type ON classifications.id = set_type.customizable_id AND set_type.customizable_type = 'Classification' and set_type.custom_definition_id = #{@cdefs[:set_type].id}
 INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id
+ORDER BY products.id, tariff_records.line_number
 "
       end
 
       def inner_query 
         # This query is here soley to allow us to do limits...it needs to be done as subquery like this because there can potentially be more than one row per product.
         # If we didn't do this, then there's the possibility that we chop off a tariff record from a query if we just added a limit to a single query.
-        r = "SELECT inner_products.id
+        r = "SELECT distinct inner_products.id
 FROM products inner_products
 INNER JOIN classifications inner_classifications on inner_classifications.product_id = inner_products.id 
 INNER JOIN countries inner_countries on inner_countries.iso_code = 'US' and inner_classifications.country_id = inner_countries.id
