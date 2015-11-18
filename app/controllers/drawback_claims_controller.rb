@@ -1,6 +1,7 @@
 require 'open_chain/custom_handler/duty_calc/export_history_parser'
 require 'open_chain/custom_handler/duty_calc/claim_audit_parser'
 require 'open_chain/business_rule_validation_results_support'
+require 'open_chain/report/drawback_audit_report'
 
 class DrawbackClaimsController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
@@ -68,6 +69,15 @@ class DrawbackClaimsController < ApplicationController
         add_flash :notices, "Report is being processed.  You'll receive a system message when it is complete."
       end
       redirect_to claim
+    }
+  end
+
+  def audit_report
+    claim = DrawbackClaim.find(params[:id])
+    action_secure(claim.can_view?(current_user), claim) {
+    OpenChain::Report::DrawbackAuditReport.new.run_and_attach(current_user, claim.id)
+    add_flash :notices, "Report is being processed.  You'll receive a system message when it is complete."
+    redirect_to request.referrer
     }
   end
 
