@@ -686,6 +686,7 @@ OpenChain::Application.routes.draw do
   end
   resources :drawback_claims do
     post 'process_report', on: :member
+    post 'audit_report', on: :member
     get 'validation_results', on: :member
   end
 

@@ -127,6 +127,27 @@ describe DrawbackClaimsController do
       expect(response).to redirect_to @claim
     end
   end
+  describe :audit_report do
+    before :each do
+      @u = Factory(:user, company: Factory(:master_company))
+      @claim = Factory(:drawback_claim)
+      sign_in_as @u
+    end
+
+    it "only runs for drawback viewers" do
+      OpenChain::Report::DrawbackAuditReport.any_instance.should_not_receive(:run_and_attach)
+      post :audit_report, id: @claim.id
+      expect(flash[:errors].count).to eq 1
+    end
+  
+    it "runs report" do
+      @u.stub(:view_drawback?).and_return true
+      OpenChain::Report::DrawbackAuditReport.any_instance.should_receive(:run_and_attach).with(@u, @claim.id)
+      post :audit_report, id: @claim.id
+      expect(flash[:notices]).to include "Report is being processed.  You'll receive a system message when it is complete."
+    end
+  end
+
     describe 'validation_results' do 
     before :each do     
       MasterSetup.get.update_attributes(:drawback_enabled => true)
