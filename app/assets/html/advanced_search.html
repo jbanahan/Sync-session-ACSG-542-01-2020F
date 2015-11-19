@@ -192,6 +192,12 @@
                   </div>
                 </div>
                 <div class='control-group'>
+                  <label class='control-label' for='sched-send-if-empty'>Send if Empty?</label>
+                  <div class='controls'>
+                    <input id='sched-send-if-empty' type='checkbox' ng-model='scheduleToEdit.send_if_empty'/>
+                  </div>
+                </div>
+                <div class='control-group'>
                   <label class='control-label' for='sched-format'>Format</label>
                   <div class='controls'>
                     <select class='form-control' id='sched-format' ng-model='scheduleToEdit.download_format'>

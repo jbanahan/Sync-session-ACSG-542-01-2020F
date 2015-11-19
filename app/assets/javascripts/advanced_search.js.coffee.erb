@@ -242,7 +242,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #create a new schedule and put it in edit mode
   $scope.addSchedule = () ->
-    s = {email_addresses:$scope.searchSetup.user.email,download_format:'xls',run_hour:0,run_monday:true}
+    s = {email_addresses:$scope.searchSetup.user.email,download_format:'xls',send_if_empty:true,run_hour:0,run_monday:true}
     $scope.searchSetup.search_schedules.push s
     $scope.editSchedule s
 
