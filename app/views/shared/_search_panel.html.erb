@@ -104,6 +104,7 @@ criterion_fields = current_search.criterion_fields_available(current_user) if cu
         <input class='sch_key' name='ignore_key' type='hidden' value='<%=ss.id%>' />
         <input class='sch_id' name='<%=ssa%>[id]' type='hidden' value='<%=ss.id%>'/>
         <input class='sch_dom' name='<%=ssa%>[day_of_month]' type='hidden' value='<%=ss.day_of_month%>'/>
+        <input class='sch_empty' name='<%=ssa%>[send_if_empty]' type='hidden' value='<%=ss.send_if_empty%>'/>
         <input class='sch_mon' name='<%=ssa%>[run_monday]' type='hidden' value='<%=ss.run_monday%>'/>
         <input class='sch_tue' name='<%=ssa%>[run_tuesday]' type='hidden' value='<%=ss.run_tuesday%>'/>
         <input class='sch_wed' name='<%=ssa%>[run_wednesday]' type='hidden' value='<%=ss.run_wednesday%>'/>
@@ -169,6 +170,7 @@ hrs_opts = {"midnight"=>"0"}
       <%days_opts = {"Any"=>""}%>
       <%(1..31).each {|x| days_opts[x]=x}%>
       <%=field_row "Day of Month", select_tag("dom",options_for_select(days_opts),{:id=>"sd_dom"}) %>
+      <%=field_row "Send if Empty", check_box_tag("send_if_empty","1",true,{:id=>"sd_empty"}) %>
       <%=field_row "Monday", check_box_tag("mon","1",false,{:id=>"sd_mon",:class=>'day_chk'}) %>
       <%=field_row "Tuesday", check_box_tag("tue","1",false,{:id=>"sd_tue",:class=>'day_chk'}) %>
       <%=field_row "Wednesday", check_box_tag("wed","1",false,{:id=>"sd_wed",:class=>'day_chk'}) %>
