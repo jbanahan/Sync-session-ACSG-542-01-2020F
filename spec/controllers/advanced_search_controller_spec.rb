@@ -180,7 +180,7 @@ describe AdvancedSearchController do
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
       # Include ftp information to make sure we're not actually including it by default for non-admin users
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
       get :setup, :id=>@ss.id, :format=>'json'
       response.should be_success
       h = JSON.parse response.body
@@ -208,7 +208,7 @@ describe AdvancedSearchController do
         {"mfid"=>"prod_name","operator"=>"eq","label"=>ModelField.find_by_uid(:prod_name).label,"value"=>"123","datatype"=>"string","include_empty"=>false}
       ]
       h['search_schedules'].should == [
-        {"email_addresses"=>"x@example.com","run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
+        {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
           "download_format"=>"xls","day_of_month"=>11}
       ]
@@ -229,7 +229,7 @@ describe AdvancedSearchController do
       @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11, 
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11, 
                                   :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
       SearchSetup.any_instance.stub(:can_ftp?).and_return true
 
@@ -238,7 +238,7 @@ describe AdvancedSearchController do
       h = JSON.parse response.body
       h['allow_ftp'].should be_true
       h['search_schedules'].should == [
-        {"email_addresses"=>"x@example.com","run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
+        {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
           "download_format"=>"xls","day_of_month"=>11, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password", "ftp_subfolder"=>"subf", "protocol"=>"protocol"}
       ]
