@@ -70,7 +70,6 @@ class SearchSchedule < ActiveRecord::Base
       log.info "#{Time.now}: Search schedule #{self.id} stopped, user is locked." if log
       return
     end
-
     User.run_with_user_settings(srch_setup.user) do
       cm = CoreModule.find_by_class_name srch_setup.module_type
       extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
@@ -82,9 +81,11 @@ class SearchSchedule < ActiveRecord::Base
         else 
           write_xls(srch_setup, t)
         end
-
-        send_email srch_setup.name, t, attachment_name, srch_setup.user, log
-        send_ftp srch_setup.name, t, attachment_name, log
+        
+        unless !send_if_empty? && report_blank?(t)
+          send_email srch_setup.name, t, attachment_name, srch_setup.user, log
+          send_ftp srch_setup.name, t, attachment_name, log
+        end
         self.update_attributes(:last_finish_time => Time.now)
         log.info "#{Time.now}: Search schedule #{self.id} complete." if log
       end
@@ -111,10 +112,34 @@ class SearchSchedule < ActiveRecord::Base
         attachment_name = "#{attachment_name}.xls"
       end
       
-      send_email rpt.name, t, attachment_name, rpt.user, log
-      send_ftp rpt.name, t, attachment_name, log
+      unless !send_if_empty? && report_blank?(t)
+        send_email rpt.name, t, attachment_name, rpt.user, log
+        send_ftp rpt.name, t, attachment_name, log
+      end
       self.update_attributes(:last_finish_time => Time.now)
       log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+    end
+  end
+
+  def report_blank? report_file
+    File.extname(report_file) == '.csv' ? csv_report_blank?(report_file) : xls_report_blank?(report_file)
+  end
+
+  def csv_report_blank? report_file
+    csv_report = CSV.read(report_file)
+    return true if csv_report.count == 1
+    if csv_report.count == 2   
+      (csv_report[1][0] =~ /No data was returned/).nil?  ? false : true
+    else false
+    end
+  end
+
+  def xls_report_blank? report_file
+    xls_report = Spreadsheet.open(report_file).worksheet 0
+    return true if xls_report.count == 1
+    if xls_report.count == 2
+      (xls_report.row(1)[0] =~ /No data was returned/).nil? ? false : true
+    else false
     end
   end
 
