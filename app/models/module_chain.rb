@@ -1,8 +1,6 @@
 #List of CoreModules in a parent -> child -> grandchild setup
 class ModuleChain
 
-  @list
-
   #add a CoreModule to the end of the list
   def add(cm) 
     @list = [] if @list.nil?
@@ -39,5 +37,14 @@ class ModuleChain
   def child cm
     idx = @list.index cm
     (idx+1>=@list.length || idx.nil?) ? nil : @list[idx+1]
+  end
+
+  # returns hash of all model fields for all core modules in the chain keyed by uid
+  def model_fields user=nil
+    h = {}
+    self.to_a.each do |cm|
+      h.merge! cm.model_fields(user)
+    end
+    h
   end
 end

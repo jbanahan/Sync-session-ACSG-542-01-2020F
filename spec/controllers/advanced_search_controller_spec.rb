@@ -212,7 +212,7 @@ describe AdvancedSearchController do
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
           "download_format"=>"xls","day_of_month"=>11}
       ]
-      no_non_accessible = CoreModule::PRODUCT.model_fields_including_children {|mf| mf.user_accessible?}.values
+      no_non_accessible = CoreModule::PRODUCT.default_module_chain.model_fields.values.collect {|mf| mf.user_accessible? ? mf : nil}.compact
       expected_model_fields = ModelField.sort_by_label(no_non_accessible).collect {|mf|
         x = {}
         x['mfid'] = mf.uid.to_s

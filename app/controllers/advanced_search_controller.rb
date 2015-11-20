@@ -153,7 +153,6 @@ class AdvancedSearchController < ApplicationController
       format.json {
         ss = current_user.search_setups.find_by_id params[:id]
         raise ActionController::RoutingError.new('Not Found') unless ss
-        model_fields = ss.core_module.model_fields_including_children(current_user) {|mf| mf.user_accessible?}.values
         h = {
           :id=>ss.id,
           :module_type=>ss.module_type,
@@ -181,7 +180,7 @@ class AdvancedSearchController < ApplicationController
             end
             f
           },
-          :model_fields => ModelField.sort_by_label(ss.core_module.model_fields_including_children(current_user) {|mf| mf.user_accessible?}.values).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
+          :model_fields => ModelField.sort_by_label(get_model_fields_for_setup(ss)).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
         }
         render :json=>h
       }
@@ -227,4 +226,8 @@ class AdvancedSearchController < ApplicationController
       per_page
     end
 
+    def get_model_fields_for_setup search_setup
+      chain = search_setup.core_module.default_module_chain
+      chain.model_fields(current_user).values
+    end
 end
