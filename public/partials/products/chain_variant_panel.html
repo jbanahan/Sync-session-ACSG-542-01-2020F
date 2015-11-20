@@ -2,10 +2,22 @@
     <div class="panel-heading">
       <h3 class="panel-title">Variants</h3>
     </div>
-    <ul class="list-group">
-      <li ng-repeat='v in product.variants track by v.id' class="list-group-item">
+    <div class='panel-body variant-section' ng-repeat='v in product.variants track by v.id'>
+      <div>
         {{v.var_identifier}}
-      </li>
+        <button class='btn btn-xs btn-default pull-right' ng-click='v.showDetail = !v.showDetail'><i class='fa' ng-class='{"fa-eye":!v.showDetail,"fa-eye-slash":v.showDetail}'></i></button>
+      </div>
+      <div ng-show='v.showDetail'>
+        <div ng-repeat='fld in dictionary.fieldsByRecordType(dictionary.recordTypes.Variant) track by fld.uid'>
+          <div class="form-group view-form-group" ng-if="v[fld.uid] && fld.uid!='var_identifier'">
+            <label class="control-label" for="{{fld.uid}}">{{fld.label}}</label>
+            <p class="form-control-static" id='{{fld.uid}}'>
+              <chain-field-view model='v' field='fld'></chain-field-view>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
     </ul>
 </div>
 <pre>{{product.variants}}</pre>

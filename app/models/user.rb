@@ -362,6 +362,8 @@ class User < ActiveRecord::Base
       return self.view_module?(CoreModule::PLANT)
     when CoreModule::DRAWBACK_CLAIM
       return self.view_drawback?
+    when CoreModule::VARIANT
+      return self.view_variants?
     end
     return false
   end
@@ -542,6 +544,9 @@ class User < ActiveRecord::Base
     add_classifications?
   end
 
+  def view_variants?
+    self.view_products?
+  end
   def add_variants?
     self.variant_edit? && self.company.add_variants?
   end

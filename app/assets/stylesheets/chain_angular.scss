@@ -1,0 +1,15 @@
+.view-form-group {
+  .control-label {
+    font-size: small;
+    margin:0;
+    color: #666;
+  }
+  .form-control-static {
+    margin: 3px 0 0 0;
+  }
+  margin-bottom: 8px;
+  border-top: 1px solid #eee;
+}
+.view-form-group:hover {
+  background-color: #eee
+}
