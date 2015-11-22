@@ -67,6 +67,8 @@ module OpenChain
     # Version of your assets, change this if you want to expire all your assets
     config.assets.version = '1.0'
 
+    config.assets.precompile += %w( vendor_portal.js vendor_portal.css )
+
     config.action_mailer.delivery_method = :postmark
     
     email_settings = YAML::load(File.open("#{::Rails.root.to_s}/config/email.yml"))

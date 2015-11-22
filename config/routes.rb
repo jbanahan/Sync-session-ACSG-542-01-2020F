@@ -761,6 +761,8 @@ OpenChain::Application.routes.draw do
 
   resources :milestone_notification_configs, only: [:index]
 
+  match "/vendor_portal" => "vendor_portal#index", via: :get
+
   #Griddler inbound email processing
   mount_griddler
 
