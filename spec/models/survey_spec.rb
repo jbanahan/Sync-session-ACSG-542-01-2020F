@@ -165,17 +165,18 @@ describe Survey do
       responses.should_not be_nil
 
       responses.row_count.should == 4
-      responses.row(0).should == ['Company', 'Label', 'Responder', 'Status', 'Rating', 'Invited', 'Opened', 'Submitted', 'Last Updated']
+      responses.row(0).should == ['Company/Group', 'Label', 'Responder', 'Email', 'Status', 'Rating', 'Invited', 'Opened', 'Submitted', 'Last Updated']
       x = responses.row(1)
       x[0].should == @r1.user.company.name
       x[1].should == @r1.subtitle
       x[2].should == @r1.user.full_name
-      x[3].should == @r1.status
-      x[4].should == @r1.rating
-      x[5].to_s.should == @r1.email_sent_date.to_s
-      x[6].to_s.should == @r1.response_opened_date.to_s
-      x[7].to_s.should == @r1.submitted_date.to_s
-      x[8].to_s.should == @r1.updated_at.to_s
+      x[3].should == @r1.user.email
+      x[4].should == @r1.status
+      x[5].should == @r1.rating
+      x[6].to_s.should == @r1.email_sent_date.to_s
+      x[7].to_s.should == @r1.response_opened_date.to_s
+      x[8].to_s.should == @r1.submitted_date.to_s
+      x[9].to_s.should == @r1.updated_at.to_s
 
       responses.row(2)[1].should == @r2.subtitle
 

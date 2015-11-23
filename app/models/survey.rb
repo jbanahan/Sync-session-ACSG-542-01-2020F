@@ -92,16 +92,17 @@ class Survey < ActiveRecord::Base
     sheet = workbook.create_worksheet :name=>"Survey Responses"
 
     row = 0
-    cols = ['Company', 'Label', 'Responder', 'Status', 'Rating', 'Invited', 'Opened', 'Submitted', 'Last Updated']
+    cols = ['Company/Group', 'Label', 'Responder', 'Email', 'Status', 'Rating', 'Invited', 'Opened', 'Submitted', 'Last Updated']
     col_widths = []
     XlsMaker.add_header_row sheet, row, cols, col_widths
     row += 1
 
     self.survey_responses.was_archived(false).each do |r|
       cols = []
-      cols << r.user.company.name
+      cols << (r.user ? r.user.company.name : r.group.name)
       cols << r.subtitle
       cols << r.responder_name
+      cols << (r.user ? r.user.email : "")
       cols << r.status
       cols << r.rating
       cols << r.email_sent_date
