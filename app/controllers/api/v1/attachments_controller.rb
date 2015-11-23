@@ -32,8 +32,13 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
     attachment = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type]), id: params[:id]).first
 
     if attachment && attachment.attachable.can_attach?(current_user)
-      attachment.destroy
-      OpenChain::WorkflowProcessor.async_process(attachment.attachable)
+      deleted = false
+      Attachment.transaction do 
+        deleted = attachment.destroy
+        attachment.rebuild_archive_packet if deleted
+      end
+      
+      OpenChain::WorkflowProcessor.async_process(attachment.attachable) if deleted
       render json: {}
     else
       raise ActiveRecord::RecordNotFound

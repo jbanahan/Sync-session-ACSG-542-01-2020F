@@ -44,9 +44,13 @@ class AttachmentsController < ApplicationController
     att = Attachment.find(params[:id])
     attachable = att.attachable
     if attachable.can_attach?(current_user)
-      att.destroy
+      deleted = false
+      Attachment.transaction do 
+        deleted = att.destroy
+        att.rebuild_archive_packet if deleted
+      end
       errors_to_flash att
-      OpenChain::WorkflowProcessor.async_process(attachable)
+      OpenChain::WorkflowProcessor.async_process(attachable) if deleted
     else
       add_flash :errors, "You do not have permission to delete this attachment."
     end

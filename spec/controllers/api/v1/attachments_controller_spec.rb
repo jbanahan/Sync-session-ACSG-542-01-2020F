@@ -126,8 +126,25 @@ describe Api::V1::AttachmentsController do
       end
       it "deletes an attachment" do
         @attachable.class.any_instance.should_receive(:can_attach?).with(@user).and_return true
+        Attachment.any_instance.should_receive(:rebuild_archive_packet)
 
         OpenChain::WorkflowProcessor.should_receive(:async_process)
+
+        delete :destroy, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
+        expect(response).to be_success
+        expect(response.body).to eq "{}"
+      end
+
+      it "doesn't rebuild rebuild_archive_packet or process workflow if delete fails" do
+        # Mock out the AR lookup
+        Attachment.should_receive(:where).and_return Attachment
+        Attachment.should_receive(:first).and_return @attachment
+
+        @attachable.class.any_instance.should_receive(:can_attach?).with(@user).and_return true
+        @attachment.should_receive(:destroy).and_return false
+        @attachment.should_not_receive(:rebuild_archive_packet)
+
+        OpenChain::WorkflowProcessor.should_not_receive(:async_process)
 
         delete :destroy, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
         expect(response).to be_success

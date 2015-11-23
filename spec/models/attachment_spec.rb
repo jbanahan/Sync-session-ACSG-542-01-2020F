@@ -394,5 +394,12 @@ describe Attachment do
       a = Attachment.new attached_file_name: "file.blahblah"
       expect(a.stitchable_attachment?).to be_false
     end
+
+    it "handles removed attachments names after an attachment is destroyed" do
+      a = Attachment.new attached_file_name: "file.pdf"
+      a.record_filename
+      a.attached_file_name = nil
+      expect(a.stitchable_attachment?).to be_true
+    end
   end
 end

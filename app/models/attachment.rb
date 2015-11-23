@@ -5,6 +5,9 @@ class Attachment < ActiveRecord::Base
   has_attached_file :attached, :path => ":master_setup_uuid/attachment/:id/:filename"
   before_create :sanitize
   before_post_process :no_post
+
+  # Needs to get prepended so it runs before the callbacks that has_attached_file (Paperclip) adds
+  before_destroy :record_filename, prepend: true 
   
   belongs_to :uploaded_by, :class_name => "User"
   belongs_to :attachable, :polymorphic => true
@@ -186,7 +189,6 @@ end
   def download_to_tempfile
     if attached
       # Attachments are always in chain-io bucket regardless of environment
-      #if block given, yield t
       if block_given?
         return OpenChain::S3.download_to_tempfile('chain-io', attached.path) do |f|
           yield f
@@ -200,11 +202,32 @@ end
   def stitchable_attachment?
     # The stitching process supports any image format that ImageMagick can convert to a pdf (which is apparently a ton of formats), 
     # for now, we'll just support stitching the major image formats.
-    Attachment.stitchable_attachment_extensions.include? File.extname(self.attached_file_name).try(:downcase)
+    filename = self.attached_file_name
+    if filename.blank? && defined?(@destroyed_filename)
+      filename = @destroyed_filename
+    end
+    Attachment.stitchable_attachment_extensions.include? File.extname(filename).try(:downcase)
+  end
+
+  def record_filename
+    # Paperclip (for some reason) - clears the attached_* attributes during it's destroy callbacks...we actually want
+    # to use the filename after it's been deleted internally for something...so record it here.
+    @destroyed_filename = self.attached_file_name
+    true
   end
 
   def self.stitchable_attachment_extensions
     ['.tif', '.tiff', '.jpg', '.jpeg', '.gif', '.png', '.bmp', '.pdf']
+  end
+
+  def rebuild_archive_packet
+    if self.stitchable_attachment? && self.attachable_id && self.attachable_type == "Entry"
+      # Just queue a stitch request...if the entry's importer isn't set up for stitching, then the stitch queue handler
+      # will just skip the request, no big deal.
+
+      # In cases where an Entry is being deleted, this is going to generate stitch requests for each attachment being
+      OpenChain::AllianceImagingClient.delay.send_entry_stitch_request(self.attachable_id)
+    end
   end
 
   private
