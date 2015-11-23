@@ -54,6 +54,14 @@
           <span ng-hide='resp.rating.length>0 || resp.can_rate'>Not Rated</span>
           <select ng-change='srService.saveRating(resp)' ng-disabled='resp.error_message' ng-show='resp.can_rate' ng-model='resp.rating' ng-options='v for v in resp.survey.rating_values'></select>
         </div>
+        <div>
+          <strong>Responder name:</strong></br>
+          {{resp.user.full_name}}
+        </div>
+        <div>
+          <strong>Responder email:</strong></br>
+          {{resp.user.email}}
+        </div>
         
       </div>
       <div class='col-md-6 form-inline'>
