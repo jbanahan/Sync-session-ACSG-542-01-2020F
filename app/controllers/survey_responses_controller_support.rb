@@ -65,16 +65,15 @@ module SurveyResponsesControllerSupport
   end
 
   def json_survey_response sr, user
-    rate_mode = rate_mode?(sr, user)
     respond_mode = respond_mode?(sr, user)
     archived = sr.archived? || sr.survey.archived?
-
-    h = sr.as_json(include: [
+    h = sr.as_json(methods: [:responder_name], include: [
         {answers:{methods:[:hours_since_last_update],include: {
           question:{methods:[:html_content,:choice_list, :require_comment_for_choices, :require_attachment_for_choices], only:[:id,:warning, :require_comment, :require_attachment]},
           answer_comments:{only:[:id,:content,:private,:created_at],include:[{user:{only:[:id, :username],methods:[:full_name]}}]}
         }}},
-        {survey:{only:[:id,:name],methods:[:rating_values]}}
+        {survey:{only:[:id,:name],methods:[:rating_values]}},
+        {user:{include: {company: {only: [:name]}}, only:[]}}
       ])
     # Since the web doesn't have support for checking out survey's...if we encounter a survey that's been checked out...just
     # treat it like it's read only...even if the user that checked out the survey is the one attempting to view it.  Since they
