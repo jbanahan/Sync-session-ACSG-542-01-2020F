@@ -73,7 +73,7 @@ module SurveyResponsesControllerSupport
           answer_comments:{only:[:id,:content,:private,:created_at],include:[{user:{only:[:id, :username],methods:[:full_name]}}]}
         }}},
         {survey:{only:[:id,:name],methods:[:rating_values]}},
-        {user:{include: {company: {only: [:name]}}, only:[]}}
+        {user:{include: {company: {only: [:name]}}, methods: [:full_name], only:[:email]}}
       ])
     # Since the web doesn't have support for checking out survey's...if we encounter a survey that's been checked out...just
     # treat it like it's read only...even if the user that checked out the survey is the one attempting to view it.  Since they
