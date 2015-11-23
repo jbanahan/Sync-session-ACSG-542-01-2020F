@@ -143,9 +143,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
     end
 
     rs = struct.new
-    rs.article_num = row[2].to_s.gsub(/\.0$/,'')
+    article_base = row[2].to_s.gsub(/\.0$/,'')
+    vendor_base = row[7].to_s.gsub(/\.0$/,'')
+    rs.article_num = lpad(article_base,18)
     rs.variant_id = row[3].to_s.gsub(/\.0$/,'')
-    rs.vendor_num = row[7].to_s.gsub(/\.0$/,'')
+    rs.vendor_num = lpad(vendor_base,10)
     rs.component = row[11]
     rs.component_thickness = row[12].to_s.gsub(/\.0$/,'')
     rs.genus = row[26]
@@ -156,5 +158,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
   end
   private_class_method :parse_row_array
 
+
+  def self.lpad(string,len)
+    s = string
+    s = "0#{s}" while s.length < len
+    s
+  end
 
 end; end; end end

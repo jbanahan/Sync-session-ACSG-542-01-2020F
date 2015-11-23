@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
         r = Array.new(33)
         r[2] = "article_num_#{row_num}"
         r[3] = "variant_id_#{row_num}"
-        r[7] = "vendor_num_#{row_num}"
+        r[7] = "vn_#{row_num}"
         r[11] = "component_#{row_num}"
         r[12] = "component_thickness_#{row_num}"
         r[26] = "genus_#{row_num}"
@@ -89,9 +89,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(errors).to eq []
 
       row_structs.each_with_index do |rs,row_num|
-        expect(rs.article_num).to eq "article_num_#{row_num}"
+        # left pad article number to 18 characters
+        expect(rs.article_num).to eq "00000article_num_#{row_num}"
         expect(rs.variant_id).to eq "variant_id_#{row_num}"
-        expect(rs.vendor_num).to eq "vendor_num_#{row_num}"
+        # left pad vendor number to 10 characters
+        expect(rs.vendor_num).to eq "000000vn_#{row_num}"
         expect(rs.component).to eq "component_#{row_num}"
         expect(rs.component_thickness).to eq "component_thickness_#{row_num}"
         expect(rs.genus).to eq "genus_#{row_num}"
@@ -132,14 +134,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       @cdefs = described_class.prep_my_custom_definitions
     end
     it "should create plant_variant_assignment" do
-      product = Factory(:product,unique_identifier:'pid')
+      product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)
       cmp = Factory(:company)
-      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'123')
+      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
       plnt = Factory(:plant,company:cmp)
 
-      s1 = @base_struct.new('pid','varid','123','base',1,'gen','spec','CN',2)
-      s2 = @base_struct.new('pid','varid','123','top',11.3,'g2','s2','MX',2)
+      s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
+      s2 = @base_struct.new('000000000000000pid','varid','0000000123','top',11.3,'g2','s2','MX',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1,s2],@u,@cdefs)}.to change(PlantVariantAssignment,:count).from(0).to(1)
@@ -157,10 +159,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(pva.get_custom_value(@cdefs[:pva_pc_approved_date]).value).to_not be_nil
     end
     it "should not reset approvals" do
-      product = Factory(:product,unique_identifier:'pid')
+      product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)
       cmp = Factory(:company)
-      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'123')
+      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
       plnt = Factory(:plant,company:cmp)
       pva = plnt.plant_variant_assignments.create!(variant_id:var.id)
       expected_approved_date = 1.week.ago
@@ -168,7 +170,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       u2 = Factory(:user)
       pva.update_custom_value!(@cdefs[:pva_pc_approved_by],u2.id)
 
-      s1 = @base_struct.new('pid','varid','123','base',1,'gen','spec','CN',2)
+      s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1],@u,@cdefs)}.to_not change(PlantVariantAssignment,:count)
@@ -182,13 +184,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
 
     end
     it "should create variant if it doesn't exist" do
-      product = Factory(:product,unique_identifier:'pid')
+      product = Factory(:product,unique_identifier:'000000000000000pid')
       cmp = Factory(:company)
-      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'123')
+      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
       plnt = Factory(:plant,company:cmp)
 
-      s1 = @base_struct.new('pid','varid','123','base',1,'gen','spec','CN',2)
-      s2 = @base_struct.new('pid','varid','123','top',11.3,'g2','s2','MX',2)
+      s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
+      s2 = @base_struct.new('000000000000000pid','varid','0000000123','top',11.3,'g2','s2','MX',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1,s2],@u,@cdefs)}.to change(PlantVariantAssignment,:count).from(0).to(1)
@@ -202,12 +204,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       
     end
     it "should create plant if vendor exists and plant doesn't" do
-      product = Factory(:product,unique_identifier:'pid')
+      product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)
       cmp = Factory(:company)
-      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'123')
+      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
       
-      s1 = @base_struct.new('pid','varid','123','base',1,'gen','spec','CN',2)
+      s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1],@u,@cdefs)}.to change(PlantVariantAssignment,:count).from(0).to(1)
@@ -220,7 +222,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       
     end
     it "should fail if product id is blank" do
-      s1 = @base_struct.new('','varid','123','base',1,'gen','spec','CN',2)
+      s1 = @base_struct.new('','varid','0000000123','base',1,'gen','spec','CN',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1],@u,@cdefs)}.to_not change(PlantVariantAssignment,:count)
@@ -228,7 +230,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(errors).to eq ["Article number is blank for row 2."]
     end
     it "should fail if variant_identifier is blank" do
-      s1 = @base_struct.new('pid','','123','base',1,'gen','spec','CN',2)
+      s1 = @base_struct.new('000000000000000pid','','0000000123','base',1,'gen','spec','CN',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1],@u,@cdefs)}.to_not change(PlantVariantAssignment,:count)
@@ -236,7 +238,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(errors).to eq ["Recipe ID is blank for row 2."]
     end
     it "should fail if vendor id is blank" do
-      s1 = @base_struct.new('pid','varid','','base',1,'gen','spec','CN',2)
+      s1 = @base_struct.new('000000000000000pid','varid','','base',1,'gen','spec','CN',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1],@u,@cdefs)}.to_not change(PlantVariantAssignment,:count)
@@ -244,25 +246,25 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(errors).to eq ["Vendor ID is blank for row 2."]
     end
     it "should fail if vendor doesn't exist" do
-      product = Factory(:product,unique_identifier:'pid')
+      product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)
       
-      s1 = @base_struct.new('pid','varid','123','base',1,'gen','spec','CN',2)
+      s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1],@u,@cdefs)}.to_not change(PlantVariantAssignment,:count)
 
-      expect(errors).to eq ['Vendor "123" not found for row 2.']
+      expect(errors).to eq ['Vendor "0000000123" not found for row 2.']
     end
     it "should fail if product doesn't exist" do
       cmp = Factory(:company)
-      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'123')
-      s1 = @base_struct.new('pid','varid','123','base',1,'gen','spec','CN',2)
+      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
+      s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
 
       errors = nil
       expect {errors = described_class.process_variant([s1],@u,@cdefs)}.to_not change(PlantVariantAssignment,:count)
 
-      expect(errors).to eq ['Product "pid" not found for row 2.']
+      expect(errors).to eq ['Product "000000000000000pid" not found for row 2.']
     end
   end
   describe '#write_results_message' do
