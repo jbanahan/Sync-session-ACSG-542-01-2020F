@@ -510,11 +510,11 @@ class ApplicationController < ActionController::Base
     return mf.label
   end
   def new_relic
-    if Rails.env=='production'
+    if Rails.env.production?
       m = MasterSetup.get
-      NewRelic::Agent.add_custom_parameters(:uuid=>m.uuid)
-      NewRelic::Agent.add_custom_parameters(:system_code=>m.system_code)
-      NewRelic::Agent.add_custom_parameters(:user=>current_user.username) unless current_user.nil?
+      attrs = {uuid: m.uuid, system_code: m.system_code}
+      attrs[:user] = current_user.username unless current_user.nil?
+      NewRelic::Agent.add_custom_attributes attrs
     end
   end
   def prep_model_fields
