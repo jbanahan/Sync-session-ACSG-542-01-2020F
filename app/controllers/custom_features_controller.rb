@@ -1,21 +1,22 @@
+require 'open_chain/custom_handler/ci_load_handler'
 require 'open_chain/custom_handler/ecellerate_shipment_activity_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
 require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
+require 'open_chain/custom_handler/intacct/alliance_day_end_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
 require 'open_chain/custom_handler/kewill_isf_manual_parser'
+require 'open_chain/custom_handler/lands_end/le_returns_parser'
+require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 require 'open_chain/custom_handler/lenox/lenox_shipment_status_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_epd_parser'
 require 'open_chain/custom_handler/polo_ca_entry_parser'
 require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
+require 'open_chain/custom_handler/polo/polo_fiber_content_parser'
 require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
-require 'open_chain/custom_handler/lands_end/le_returns_parser'
-require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
-require 'open_chain/custom_handler/polo/polo_fiber_content_parser'
-require 'open_chain/custom_handler/intacct/alliance_day_end_handler'
-require 'open_chain/custom_handler/ci_load_handler'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -33,9 +34,37 @@ class CustomFeaturesController < ApplicationController
   LE_CI_UPLOAD = 'OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator'
   ALLIANCE_DAY_END = 'OpenChain::CustomHandler::Intacct::AllianceDayEndHandler'
   CI_UPLOAD = 'OpenChain::CustomHandler::CiLoadHandler'
+  LUMBER_EPD = 'OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser'
 
   def index
     render :layout=>'one_col'
+  end
+
+  def lumber_epd_index
+    action_secure(OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser.can_view?(current_user),Product,{:verb=>"view",:module_name=>"EPD Report",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>LUMBER_EPD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+  def lumber_epd_upload
+    f = CustomFile.new(:file_type=>LUMBER_EPD,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"EPD Report",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/lumber_epd'
+    }
+  end
+  def lumber_epd_download
+    f = CustomFile.find params[:id] 
+    action_secure(OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"EPD Report",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
   end
   def ua_winshuttle_b_index
     action_secure(OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"UA Winshuttle Reports",:lock_check=>false}) {

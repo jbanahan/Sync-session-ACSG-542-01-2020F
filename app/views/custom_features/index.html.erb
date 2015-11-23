@@ -82,6 +82,13 @@
       </div>
     <%-end-%>
   <%-end-%>
+  <%-if enabled_features.include?('Lumber EPD') && OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser.can_view?(current_user)-%>
+    <div class="row">
+      <div class="col-md-4 col-md-offset-4">
+        <%=link_to "EPD Report", '/custom_features/lumber_epd', :class=>'btn btn-lg btn-default btn-block'%>
+      </div>
+    </div>
+  <%-end-%>
   <%-if enabled_features.include?('Fenix CI Upload') && OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler.new(nil).can_view?(current_user)-%>
   <div class='row'>
     <div class='col-md-4 col-md-offset-4'>

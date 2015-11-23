@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe CoreObjectSupport do
+  describe :find_by_custom_value do
+    it "shuould find by value" do
+      cd = Factory(:custom_definition,module_type:'Product')
+      p = Factory(:product)
+      p.update_custom_value!(cd,'myuid')
+      expect(Product.find_by_custom_value(cd,'myuid')).to eq p
+      expect(Product.find_by_custom_value(cd,'def')).to be_nil
+    end
+  end
   describe :workflow_instances do
     it "should have many workflow instances" do
       o = Factory(:order)

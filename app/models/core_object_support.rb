@@ -89,6 +89,9 @@ module CoreObjectSupport
   end
 
   module ClassMethods
+    def find_by_custom_value custom_definition, value
+      self.joins(:custom_values).where('custom_values.custom_definition_id = ?',custom_definition.id).where("custom_values.#{custom_definition.data_type}_value = ?",value).first
+    end
     def need_sync_join_clause trading_partner, join_table = self.table_name
       sql = "LEFT OUTER JOIN sync_records ON sync_records.syncable_type = ? and sync_records.syncable_id = #{join_table}.id and sync_records.trading_partner = ?"
       sanitize_sql_array([sql, name, trading_partner])

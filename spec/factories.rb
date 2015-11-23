@@ -24,6 +24,9 @@ end
 Factory.define :consignee, parent: :company do |c|
   c.consignee true
 end
+Factory.define :vendor, parent: :company do |c|
+  c.vendor true
+end
 Factory.define :master_company, parent: :company do |c|
   c.master true
 end
@@ -107,6 +110,14 @@ Factory.define :tariff_record do |t|
 end
 Factory.define :product_group do |f|
   f.sequence(:name)
+end
+Factory.define :variant do |f|
+  f.sequence(:variant_identifier)
+  f.association :product
+end
+Factory.define :plant_variant_assignment do |f|
+  f.association :variant
+  f.association :plant
 end
 Factory.define :change_record do |t|
   t.association :file_import_result

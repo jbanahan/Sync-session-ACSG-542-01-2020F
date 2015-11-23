@@ -123,9 +123,16 @@ module CoreModuleDefinitions
     :changed_at_parents_lambda=>lambda {|c| c.product.nil? ? [] : [c.product] },
     :enabled_lambda=>lambda {MasterSetup.get.variant_enabled?},
     :show_field_prefix=>false,
-    :unique_id_field_name=>:variant_identifier,
+    :unique_id_field_name=>:var_identifier,
     :key_model_field_uids => [:var_identifier],
     :key_attribute_field_uid => :var_identifier
+    })
+  PLANT_VARIANT_ASSIGNMENT = CoreModule.new("PlantVariantAssignment","Plant Variant Assignment",{
+    :show_field_prefix=>true,
+    :unique_id_field_name=>:pva_assignment_id,
+    :enabled_lambda=>lambda {MasterSetup.get.variant_enabled?},
+    :key_model_field_uids=>[:pva_assignment_id],
+    :key_attribute_field_uid=>:pva_assignment_id
     })
   TARIFF = CoreModule.new("TariffRecord","Tariff",{
      :changed_at_parents_lambda=>lambda {|tr|

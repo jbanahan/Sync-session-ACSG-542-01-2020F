@@ -3,6 +3,7 @@ class Plant < ActiveRecord::Base
   belongs_to :company, inverse_of: :plants, touch: true
 
   has_many :plant_product_group_assignments, inverse_of: :plant, dependent: :destroy
+  has_many :plant_variant_assignments, inverse_of: :plant, dependent: :destroy
   has_many :product_groups, through: :plant_product_group_assignments
 
   before_destroy :validate_in_use
@@ -28,6 +29,15 @@ class Plant < ActiveRecord::Base
   def can_attach? user
     return false unless self.company
     return self.company.can_attach?(user)
+  end
+
+  def self.search_secure user, base_object
+    base_object.where(search_where(user))
+  end
+
+  # where clause for search secure
+  def self.search_where user
+    "(plants.company_id IN (select id from companies where #{Company.secure_search(user)}))"
   end
 
   # can this logically be deleted

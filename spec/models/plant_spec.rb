@@ -1,6 +1,14 @@
 require 'spec_helper'
 
 describe Plant do
+  describe '#search_where' do
+    it "should find plant only where user can find company" do
+      plant = Factory(:plant)
+      plant_not_to_find = Factory(:plant)
+      user = Factory(:user,company:plant.company)
+      expect(Plant.where(Plant.search_where(user)).to_a).to eq [plant]
+    end
+  end
   describe :can_view? do
     it "should allow if user can view company as vendor" do
       Company.any_instance.stub(:can_view_as_vendor?).and_return true
