@@ -52,12 +52,13 @@ module OpenChain
         # We should be fine eager loading everything here since we're doing these week by week.
         # It shouldn't be THAT much data, at least at this point.
         conf = RL_INVOICE_CONFIGS[rl_company]
+        importer_id = importer_id(rl_company)
         query = BrokerInvoice.select("distinct broker_invoices.*").
                 joins(:entry).
                 # This needs to be part of the standard query clause, even if there's custom where clauses
                 # otherwise we're going to end up with results for every pass over the configs, which we don't
                 # want.
-                where(:entries => {:importer_tax_id => conf[:tax_id]}).
+                where(:entries => {:importer_id => importer_id}).
                 order("broker_invoices.invoice_date ASC")
 
 
@@ -163,11 +164,11 @@ module OpenChain
         return found
       end
 
-      def find_profit_center entry
+      def find_profit_center entry, rl_company
         brand = find_rl_brand entry
 
         if brand
-          DataCrossReference.find_rl_profit_center_by_brand entry.importer_id, brand
+          DataCrossReference.find_rl_profit_center_by_brand importer_id(rl_company), brand
         else
           nil
         end
@@ -229,8 +230,9 @@ module OpenChain
       class PoloMmglInvoiceWriter
         include OpenChain::XmlBuilder
        
-       def initialize generator, config
+       def initialize generator, rl_company, config
           @inv_generator = generator
+          @rl_company = rl_company
           @config = config
 
           @starting_row = 1
@@ -593,7 +595,7 @@ module OpenChain
               gst_row << @config[:unallocated_profit_center]
             end
             
-            profit_center = @inv_generator.find_profit_center(broker_invoice.entry)
+            profit_center = @inv_generator.find_profit_center(broker_invoice.entry, @rl_company)
             
             broker_invoice.broker_invoice_lines.each do |line|
               next if line.duty_charge_type?
@@ -728,7 +730,7 @@ module OpenChain
           def get_invoice_information broker_invoice
             rows = []
 
-            raw_profit_center = @inv_generator.find_profit_center(broker_invoice.entry)
+            raw_profit_center = @inv_generator.find_profit_center(broker_invoice.entry, @rl_company)
 
             # If no profit center is found..we fall back to using the "catch all" one for non-deployed brands
             profit_center = raw_profit_center.blank? ? @config[:unallocated_profit_center] : raw_profit_center
@@ -876,7 +878,7 @@ module OpenChain
             # This should never happen, but don't blow up if it does
             next unless broker_invoice
             begin
-              format = determine_invoice_output_format(broker_invoice)
+              format = determine_invoice_output_format(broker_invoice, rl_company)
               writer = create_writer(rl_company, format)
 
               if writer
@@ -936,13 +938,13 @@ module OpenChain
           return format != :exception
         end
 
-        def determine_invoice_output_format broker_invoice
+        def determine_invoice_output_format broker_invoice, rl_company
           output_format = nil
           entry = broker_invoice.entry
 
           # Because RL can't consistently supply us with PO data for stock transfers between 
           # US and Canada we're going to force all their invoices to use the ffi format.
-          if (entry.importer_tax_id == RL_INVOICE_CONFIGS[:rl_canada][:tax_id]) && entry.vendor_names.to_s.strip =~ /^Ralph Lauren/i
+          if rl_company == :rl_canada && entry.vendor_names.to_s.strip =~ /^Ralph Lauren/i
             output_format = :ffi
           else
             # Can we find an actual Brand?
@@ -951,7 +953,7 @@ module OpenChain
 
             if brand
               # If we can find a profit center, then we can possibly use the MM interface
-              profit_center = find_profit_center entry
+              profit_center = find_profit_center entry, rl_company
 
               if profit_center
                 # We can't handle multiple MM invoices for the same entry because we 
@@ -987,7 +989,7 @@ module OpenChain
 
           config = RL_INVOICE_CONFIGS[rl_company]
           if output_format == :mmgl
-            @output_writers[output_format] ||= PoloMmglInvoiceWriter.new(self, config)
+            @output_writers[output_format] ||= PoloMmglInvoiceWriter.new(self, rl_company, config)
             output = @output_writers[output_format]
           elsif output_format == :ffi
             @output_writers[output_format] ||= PoloFfiInvoiceWriter.new(self, rl_company, config)
@@ -1019,6 +1021,23 @@ module OpenChain
 
         def production?
           Rails.env.production?
+        end
+
+        def importer_id rl_company
+          @importer_ids ||= {}
+          id = @importer_ids[rl_company]
+
+          if id.nil?
+            importer_tax_id = RL_INVOICE_CONFIGS[rl_company][:tax_id]
+            unless importer_tax_id.blank?
+              id = Company.where(fenix_customer_number: importer_tax_id).pluck(:id).first
+              raise "No importer id found for Fenix Tax Id #{importer_tax_id}." if id.nil?
+
+              @importer_ids[rl_company] = id
+            end
+          end
+          
+          id
         end
     end
   end
