@@ -10,8 +10,7 @@ class RegistrationsController < ApplicationController
     {email: "Email", fname: "First name", lname: "Last name", 
      company: "Company", contact: "Contact"}.each { |k, v| add_flash(:errors, "#{v} cannot be blank") if params[k].empty? }
 
-    regex = /\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i  #http://stackoverflow.com/a/22994329
-    add_flash :errors, "Email is invalid" unless regex =~ params[:email] || params[:email].blank?
+    add_flash :errors, "Email is invalid" unless EmailValidator.valid?(params[:email]) || params[:email].blank?
 
     unless flash[:errors]
         fields = params.dup.merge(system_code: sys_code)
