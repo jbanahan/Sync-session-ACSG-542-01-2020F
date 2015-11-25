@@ -106,4 +106,24 @@ class SurveyResponsesController < ApplicationController
     end
   end
 
+  def remind
+    sr = SurveyResponse.find params[:id]
+    unless sr.can_edit?(current_user)
+      error_redirect "You do not have permission to work with this survey."
+      return
+    end    
+    email_to = params[:email_to]
+    if email_to.blank?
+      render json: {error: "Email address is required."}  
+    else
+      email_list = email_to.split(' ')
+      unless email_list.map{ |e| EmailValidator.valid? e }.all?
+        render json: {error: "Invalid email. Be sure to separate multiple addresses with spaces."}
+      else
+        OpenMailer.delay.send_survey_reminder(sr, email_list, params[:email_subject], params[:email_body])
+        render json: {ok: "ok"}
+      end
+    end
+  end
+
 end
