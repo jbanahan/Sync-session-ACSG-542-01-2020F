@@ -325,6 +325,11 @@ describe OpenChain::AllianceImagingClient do
     it "doesn't fail if the entry doesn't exist" do
       expect(OpenChain::AllianceImagingClient.send_entry_stitch_request -1).to be_false
     end
+
+    it "handles entries missing importers" do
+      @entry.update_attributes! importer: nil
+      expect(OpenChain::AllianceImagingClient.send_entry_stitch_request @entry.id).to be_false
+    end
   end
 
   describe "process_entry_stitch_response" do

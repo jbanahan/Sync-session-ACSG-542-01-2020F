@@ -182,7 +182,7 @@ class OpenChain::AllianceImagingClient
     # It's possible an entry will have been deleted since the stitch request was queued.
     entry = Entry.where(id: entry_id).first
     sent = false
-    if entry && entry.importer.attachment_archive_setup.try(:combine_attachments)
+    if entry && entry.importer.try(:attachment_archive_setup).try(:combine_attachments)
       attachment_order = "#{entry.importer.attachment_archive_setup.combined_attachment_order}".split("\n").collect {|n| n.strip.upcase}
 
       unordered_attachments = []
