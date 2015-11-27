@@ -42,6 +42,7 @@ class ProductsController < ApplicationController
   end
 
   def show_beta
+    @no_action_bar = true
     if cookies[:product_beta] != 'y'
       redirect_to "/products/#{params[:id]}"
       return

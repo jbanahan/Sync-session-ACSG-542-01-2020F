@@ -9,17 +9,22 @@ angular.module('ProductApp').factory 'productSvc', ['$http','$q','officialTariff
     resp
 
   return {
+    # get the product from the server or the in memory cache
     getProduct: (id) ->
-      deferred = $q.defer()
-
       if currentProduct && parseInt(currentProduct.id) == parseInt(id)
         #simulate the http response with the cached object
+        deferred = $q.defer()
         deferred.resolve {data: {product: currentProduct}}
+        return deferred.promise
       else
-        $http.get('/api/v1/products/'+id+'.json?include=attachments').then(productLoadSuccessHandler).then (resp) ->
+        return this.loadProduct(id)
+
+    # get the product from the server and warm the cache
+    loadProduct: (id) ->
+      deferred = $q.defer()
+      $http.get('/api/v1/products/'+id+'.json?include=attachments').then(productLoadSuccessHandler).then (resp) ->
           commentSvc.injectComments(currentProduct,'Product')
           deferred.resolve {data: {product: currentProduct}}
-
       deferred.promise
 
     saveProduct: (prod) ->

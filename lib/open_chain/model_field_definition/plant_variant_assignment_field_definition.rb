@@ -35,6 +35,12 @@ module OpenChain; module ModelFieldDefinition; module PlantVariantAssignmentFiel
         read_only: true,
         export_lambda: lambda {|obj| (obj.variant && obj.variant.product) ? ModelField.find_by_uid(:prod_name).process_export(obj.variant.product,nil,true) : ''},
         qualified_field_name: "(SELECT products.name FROM variants INNER JOIN products ON variants.product_id = products.id WHERE variants.id = plant_variant_assignments.variant_id)"
+      }],
+      [6,:pva_company_id, :company_id, "Company ID", {
+        data_type: :integer,
+        read_only: true,
+        export_lambda: lambda {|obj| obj.plant ? obj.plant.company_id : ''},
+        qualified_field_name: "(SELECT plants.company_id FROM plants WHERE plants.id = plant_variant_assignments.plant_id)"
       }]
     ]
   end

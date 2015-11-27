@@ -12,4 +12,9 @@ class Variant < ActiveRecord::Base
     message: "must have a unique id within the product" }
 
   dont_shallow_merge :Variant, ['id','created_at','updated_at']
+
+  def can_view? user
+    return false unless self.product
+    return self.product.can_view?(user)
+  end
 end

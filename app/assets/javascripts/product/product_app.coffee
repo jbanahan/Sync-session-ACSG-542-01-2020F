@@ -13,6 +13,14 @@ productApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRou
       $stateParams.productId
     ]
   }
+  resolveProductAndVariantIds = {
+    variantId: ['$stateParams', ($stateParams) ->
+      $stateParams.variantId
+    ],
+    productId: ['$stateParams', ($stateParams) ->
+      $stateParams.productId
+    ]
+  }
 
   $urlRouterProvider.otherwise('/')
 
@@ -30,5 +38,11 @@ productApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRou
       templateUrl: '/partials/products/show.html'
       controller: 'ShowProductCtrl'
       resolve: resolveProductId
+    }).
+    state('show_variant',{
+      url: '/:productId/variant/:variantId',
+      templateUrl: '/partials/products/show_variant.html',
+      controller: 'ShowVariantCtrl',
+      resolve: resolveProductAndVariantIds
     })
 ]

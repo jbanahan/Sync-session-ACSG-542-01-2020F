@@ -105,6 +105,15 @@
     )
 ]
 
+@components.filter 'chainViewFriendlyFields', [ ->
+  (fields) ->
+    return [] unless fields && fields.length > 0
+    $.grep fields, (fld) ->
+      return null if fld.user_id_field
+      return null if fld.user_field && !fld.user_full_name_field
+      return fld
+]
+
 @components.directive 'chainTextileView', [ ->
   {
     restrict: 'AE'

@@ -22,6 +22,7 @@
 //= require_directory .
 // These directories are after "." because they require scripts loaded from root
 //= require_directory ./setup_data
+//= require_directory ./state_toggle_buttons
 //= require_directory ./official_tariff
 //= require_directory ./field_validator
 //= stub legacy

@@ -1,4 +1,10 @@
-angular.module('ProductApp').controller 'ShowProductCtrl', ['$scope','productSvc','chainErrorHandler','chainDomainerSvc','setupDataSvc','productId',($scope,productSvc,chainErrorHandler,chainDomainerSvc,setupDataSvc,productId) ->
+angular.module('ProductApp').controller 'ShowProductCtrl', ['$scope','productSvc','chainErrorHandler','chainDomainerSvc','setupDataSvc','productId','$state',($scope,productSvc,chainErrorHandler,chainDomainerSvc,setupDataSvc,productId,$state) ->
+
+  productLoadHandler = (resp) ->
+    $scope.product = resp.data.product
+    $scope.loadingFlag = null
+    resp
+
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->
     $scope.notificationMessage = null
@@ -10,13 +16,15 @@ angular.module('ProductApp').controller 'ShowProductCtrl', ['$scope','productSvc
     $scope.loadingFlag = "loading"
     chainDomainerSvc.withDictionary().then (dict) ->
       $scope.dictionary = dict
-      productSvc.getProduct(id).then (resp) ->
-        $scope.product = resp.data.product
-        $scope.loadingFlag = null
+      productSvc.getProduct(id).then productLoadHandler
 
     setupDataSvc.getSetupData().then (sd) ->
       $scope.regions = sd.regions
       $scope.import_countries = sd.import_countries
+
+  $scope.reloadProduct = (id) ->
+    $scope.loadingFlag = "loading"
+    productSvc.loadProduct(id).then productLoadHandler
 
   $scope.save = (product) ->
     $scope.loadingFlag = "loading"
@@ -52,6 +60,9 @@ angular.module('ProductApp').controller 'ShowProductCtrl', ['$scope','productSvc
       else
         return null
     )
+
+  $scope.$on 'chain:state-toggle-change:finish', ->
+    $scope.reloadProduct($scope.product.id) if $scope.product && $scope.product.id
 
   #initializer
   if productId

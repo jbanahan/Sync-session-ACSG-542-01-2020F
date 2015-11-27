@@ -60,6 +60,9 @@ OpenChain::Application.routes.draw do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
       end
+      resources :variants, only: [:show] do
+        
+      end
 
       resources :plants, only: [] do
         get :state_toggle_buttons, on: :member

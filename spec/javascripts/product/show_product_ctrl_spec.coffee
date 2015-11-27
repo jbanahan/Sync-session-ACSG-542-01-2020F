@@ -42,6 +42,30 @@ describe 'ShowProductCtrl', ->
       expect(scope.regions).toEqual(setupData.regions)
       expect(scope.import_countries).toEqual(setupData.import_countries)
 
+  describe 'reloadProduct', ->
+    it 'should just reload the product without the other setup / dictionary data', ->
+      prod = {id: 1}
+      prodResp = $q.defer()
+      spyOn(productSvc,'loadProduct').andReturn(prodResp.promise)
+
+      scope.reloadProduct(1)
+
+      expect(scope.loadingFlag).toEqual("loading")
+
+      prodResp.resolve({data: {product: prod}})
+      scope.$apply()
+
+      expect(scope.loadingFlag).toBeNull()
+      expect(scope.product).toEqual(prod)
+
+  describe 'events', ->
+    it 'should reload product on chain:state-toggle-change:finish', ->
+      scope.product = {id:1}
+      spyOn(scope,'reloadProduct')
+      scope.$root.$broadcast('chain:state-toggle-change:finish')
+      expect(scope.reloadProduct).toHaveBeenCalledWith(1)
+    
+
   describe 'save', ->
     it "should save product", ->
       startProd = {id: 1}

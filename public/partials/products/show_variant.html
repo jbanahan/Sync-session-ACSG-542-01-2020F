@@ -1,0 +1,38 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <chain-panel panel-title='Errors' panel-message="eh.errorMessage" panel-type='panel-danger'></chain-panel>
+    </div>
+  </div>
+</div>
+<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-12 text-center">
+        <h1 style='margin: 0 0 1em 0;'>
+          <a ui-sref='show({productId: product.id})'>{{product.prod_uid}}</a> > {{variant.var_identifier}}
+        </h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <chain-view-edit edit-if='false' view-template='/partials/products/attr_view.html'
+          panel-title='Product Attributes' panel-class='panel-primary'></chain-view-edit>
+        </div>
+      <div class="col-md-6">
+        <chain-view-edit edit-if='false' view-template='/partials/products/variant_attr_view.html'
+          panel-title='Variant Attributes' panel-class='panel-primary'></chain-view-edit>
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+              <h3 class="panel-title">Plant Assignments</h3>
+            </div>
+            <ul class='list-group'>
+              <li class='list-group-item' ng-repeat='pva in variant.plant_variant_assignments track by ppa.id'>
+                <a ng-href='/vendors/{{pva.pva_company_id}}'>{{pva.pva_plant_name}}</a>
+              </li>
+            </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</chain-loading-wrapper>

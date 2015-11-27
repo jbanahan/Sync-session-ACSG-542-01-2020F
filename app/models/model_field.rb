@@ -73,6 +73,8 @@ class ModelField
     end
     @user_accessible = o[:user_accessible]
     @user_field = o[:user_field]
+    @user_id_field = o[:user_id_field]
+    @user_full_name_field = o[:user_full_name_field]
     @address_field = o[:address_field]
     @select_options_lambda = o[:select_options_lambda]
     @autocomplete = o[:autocomplete]
@@ -120,6 +122,14 @@ class ModelField
 
   def user_field?
     @user_field
+  end
+
+  def user_full_name_field?
+    @user_full_name_field
+  end
+
+  def user_id_field?
+    @user_id_field
   end
 
   def address_field?
@@ -677,12 +687,14 @@ class ModelField
       data_type: :string,
       field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
       read_only: true,
-      user_field: true
+      user_field: true,
+      user_full_name_field: true
     })
     fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
       :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
       :definition => custom_definition.definition, :default_label => "#{custom_definition.label}",
-      :read_only => true
+      :read_only => true,
+      :user_id_field => true
     })
     fields_to_add
   end

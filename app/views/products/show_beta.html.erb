@@ -23,10 +23,6 @@
     })
   });
 <% end %>
-<% content_for :action_bar do %>
-  <button class='btn_link' link_to='<%=products_path%>' key_map='b' title='Back To Search'><i class='fa fa-search'></i></button>
-  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
-<% end %>
 <div class="container">
   <div class="col-xs-12">
     <div class="alert alert-warning">

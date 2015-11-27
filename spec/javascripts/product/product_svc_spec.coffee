@@ -79,12 +79,39 @@ describe 'ProductSvc', ->
         http.flush()
 
         prod = null
-        svc.getProduct(1).then (httpResp) ->
-          prod = httpResp.data
+        svc.getProduct(1).then (cacheResp) ->
+          prod = cacheResp.data
 
         scope.$apply()
 
         expect(prod).toEqual resp
+
+    describe 'loadProduct', ->
+      it 'should reload product from server every time', ->
+        resp = {product: {id: 1}}
+
+        #both calls should be from server
+        http.expectGET('/api/v1/products/1.json?include=attachments').respond resp
+
+        prod1 = null
+        svc.loadProduct(1).then (httpResp) ->
+          prod1 = httpResp.data
+
+        http.flush()
+        scope.$apply()
+
+        expect(prod1).toEqual resp
+
+        http.expectGET('/api/v1/products/1.json?include=attachments').respond resp
+        prod2 = null
+        svc.loadProduct(1).then (httpResp) ->
+          prod2 = httpResp.data
+
+        http.flush()
+        scope.$apply()
+
+        expect(prod2).toEqual resp
+        
 
     describe 'saveProduct', ->
       it 'should save existing product', ->

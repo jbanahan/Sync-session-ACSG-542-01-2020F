@@ -4,7 +4,7 @@
     </div>
     <div class='panel-body variant-section' ng-repeat='v in product.variants track by v.id'>
       <div>
-        {{v.var_identifier}}
+        <button ng-click='showVariant(v)' class='btn btn-link btn-sm'>{{v.var_identifier}}</button>
         <button class='btn btn-xs btn-default pull-right' ng-click='v.showDetail = !v.showDetail'><i class='fa' ng-class='{"fa-eye":!v.showDetail,"fa-eye-slash":v.showDetail}'></i></button>
       </div>
       <div ng-show='v.showDetail'>
@@ -20,4 +20,3 @@
     </div>
     </ul>
 </div>
-<pre>{{product.variants}}</pre>

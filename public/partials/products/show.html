@@ -39,3 +39,10 @@
     </div>
   </div>
 </chain-loading-wrapper>
+<div chain-action-bar>
+  <div class="btn-group" role="group">
+    <button class='btn_link btn btn-default' link_to='/products' key_map='b' title='Back To Search'><i class='fa fa-search'></i></button>
+    <button class='btn_link btn btn-default' link_to='/products/{{product.id}}/history' key_map='h' title='History'><i class='fa fa-history'></i></button>
+    <state-toggle-buttons module-type='Products' object-id='{{product.id}}'></state-toggle-buttons>
+  </div>
+</div>
