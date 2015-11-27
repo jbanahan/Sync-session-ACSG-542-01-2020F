@@ -1,4 +1,3 @@
-
 class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   attr_accessible :description, :name, :rule_attributes_json, :type, :fail_state
@@ -26,6 +25,11 @@ class BusinessValidationRule < ActiveRecord::Base
                 'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderCascadingRisk'.to_sym=>
                   {
                     label: 'Lumber PO Cascading Risk',
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='ll'}
+                  },
+                'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant'.to_sym=>
+                  {
+                    label: 'Lumber PO Vendor Variant Assignment',
                     enabled_lambda: lambda {MasterSetup.get.system_code=='ll'}
                   }
               }

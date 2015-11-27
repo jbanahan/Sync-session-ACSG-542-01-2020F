@@ -134,6 +134,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       @cdefs = described_class.prep_my_custom_definitions
     end
     it "should create plant_variant_assignment" do
+      Product.any_instance.should_receive(:create_snapshot)
+
       product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)
       cmp = Factory(:company)

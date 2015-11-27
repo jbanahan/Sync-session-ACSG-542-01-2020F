@@ -88,6 +88,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
           return ["Product \"#{fv.article_num}\" not found for row #{fv.row_num}."]
         end
 
+        needs_snapshot = false
+
         variant = prod.variants.find_by_variant_identifier fv.variant_id
         if(variant.nil?)
           variant = prod.variants.create!(variant_identifier:fv.variant_id)
@@ -95,7 +97,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
 
         recipe = variant_array.collect {|v| "#{v.component}: #{v.genus}/#{v.species} - #{v.component_thickness} - #{v.coo}"}.join("\n")
 
-        variant.update_custom_value!(cdefs[:var_recipe],recipe)
+        cv_val = variant.get_custom_value(cdefs[:var_recipe]).value
+        if cv_val!=recipe
+          variant.update_custom_value!(cdefs[:var_recipe],recipe) 
+          needs_snapshot = true
+        end
 
         vendor = Company.find_by_custom_value cdefs[:cmp_sap_company], fv.vendor_num
 
@@ -110,7 +116,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
         if approved_date_cv.value.nil?
           pva.update_custom_value!(cdefs[:pva_pc_approved_date],0.seconds.ago)
           pva.update_custom_value!(cdefs[:pva_pc_approved_by],user.id)
+          needs_snapshot = true
         end
+
+        prod.create_snapshot(user) if needs_snapshot
 
         return []
       end
