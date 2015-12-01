@@ -77,12 +77,12 @@ class SearchSchedule < ActiveRecord::Base
       Tempfile.open(["scheduled_search_run", ".#{extension}"]) do |t|
         t.binmode
         if extension == "csv"
-          write_csv(srch_setup, t) 
+          report_blank = write_csv(srch_setup, t) 
         else 
-          write_xls(srch_setup, t)
+          report_blank = write_xls(srch_setup, t)
         end
         
-        unless !send_if_empty? && report_blank?(t)
+        if send_if_empty? || !report_blank?
           send_email srch_setup.name, t, attachment_name, srch_setup.user, log
           send_ftp srch_setup.name, t, attachment_name, log
         end
@@ -112,7 +112,7 @@ class SearchSchedule < ActiveRecord::Base
         attachment_name = "#{attachment_name}.xls"
       end
       
-      unless !send_if_empty? && report_blank?(t)
+      if send_if_empty? || !report_blank?(t)
         send_email rpt.name, t, attachment_name, rpt.user, log
         send_ftp rpt.name, t, attachment_name, log
       end
@@ -121,6 +121,7 @@ class SearchSchedule < ActiveRecord::Base
     end
   end
 
+  #For custom reports. Searches can use return value of #write_csv, #write_xls
   def report_blank? report_file
     File.extname(report_file) == '.csv' ? csv_report_blank?(report_file) : xls_report_blank?(report_file)
   end
@@ -144,16 +145,21 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   def write_csv srch_setup, t
-    t.write CsvMaker.new(:include_links=>srch_setup.include_links?,:no_time=>srch_setup.no_time?).make_from_search_query SearchQuery.new(srch_setup, srch_setup.user)
+    m, result_count = CsvMaker.new(:include_links=>srch_setup.include_links?,:no_time=>srch_setup.no_time?).make_from_search_query SearchQuery.new(srch_setup, srch_setup.user)
+    results = result_count > 0
+    t.write m
     t.flush
-    nil
+    
+    results
   end
 
   def write_xls srch_setup, t
-    m = XlsMaker.new(:include_links=>srch_setup.include_links?,:no_time=>srch_setup.no_time?).make_from_search_query SearchQuery.new(srch_setup, srch_setup.user)
+    m, result_count = XlsMaker.new(:include_links=>srch_setup.include_links?,:no_time=>srch_setup.no_time?).make_from_search_query SearchQuery.new(srch_setup, srch_setup.user)
+    results = result_count > 0
     m.write t
     t.flush
-    nil
+    
+    results
   end
 
   def send_email name, temp_file,attachment_name, user, log=nil

@@ -16,21 +16,29 @@ describe CsvMaker do
     end
 
     it "should build a csv file from a search query" do
-      csv = CSV.parse CsvMaker.new.make_from_search_query(@query)
+      raw_csv, data_row_count = CsvMaker.new.make_from_search_query(@query)
+      csv = CSV.parse raw_csv
+      data_row_count.should eq 1
       csv.length.should eq 2
       csv[0].should eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label]
       csv[1].should eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M")]
     end
 
+    it "should count 0 rows when csv is empty" do
+      @entry.destroy
+      *, data_row_count = CsvMaker.new.make_from_search_query(@query)
+      data_row_count.should eq 0
+    end
+
     it "should add web links" do
-      csv = CSV.parse CsvMaker.new(include_links: true).make_from_search_query(@query)
+      csv = CSV.parse CsvMaker.new(include_links: true).make_from_search_query(@query).first
       csv.length.should eq 2
       csv[0].should eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label, "Links"]
       csv[1].should eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M"), @entry.view_url]
     end
 
     it "should not include time" do
-      csv = CSV.parse CsvMaker.new(no_time: true).make_from_search_query(@query)
+      csv = CSV.parse CsvMaker.new(no_time: true).make_from_search_query(@query).first
       csv.length.should eq 2
       csv[0].should eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label]
       csv[1].should eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d")]
@@ -42,7 +50,7 @@ describe CsvMaker do
       ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
       ss.search_criterions.create! model_field_uid: "prod_uid", operator: "notnull"
       ss.search_columns.create!(:model_field_uid=>'prod_uid')
-      r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))
+      r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user)).first
       arrays = CSV.parse r
       arrays[1][0].should == "abc def"
     end
@@ -52,7 +60,7 @@ describe CsvMaker do
       ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
       ss.search_criterions.create! model_field_uid: "prod_uid", operator: "notnull"
       ss.search_columns.create!(:model_field_uid=>'prod_uid')
-      r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))
+      r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user)).first
       arrays = CSV.parse r
       arrays[1][0].should == "abc def"
     end
@@ -62,14 +70,14 @@ describe CsvMaker do
       ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
       ss.search_criterions.create! model_field_uid: "prod_uid", operator: "notnull"
       ss.search_columns.create!(:model_field_uid=>'prod_uid')
-      r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))
+      r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user)).first
       arrays = CSV.parse r
       arrays[1][0].should == "abc  def"
     end
 
     it "should output nil values as blank" do
       @entry.update_attributes first_it_date: nil
-      csv = CSV.parse CsvMaker.new.make_from_search_query(@query)
+      csv = CSV.parse CsvMaker.new.make_from_search_query(@query).first
       csv.length.should eq 2
       csv[1].should eq ["", @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M")]
     end

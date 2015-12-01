@@ -555,7 +555,7 @@ function readScheduleContainer(c) {
 }
 function writeScheduleContainer(container,rv,parentHash) {
   if((rv.mon || rv.tue || rv.wed || rv.thu || rv.fri || rv.sat || rv.sun || rv.dom) && 
-      rv.email || rv.ftpsvr || rv.empty) {
+      rv.email || rv.ftpsvr) {
     var id = new Date().getTime();
     var ssa = parentHash+"[search_schedules_attributes]["+id+"]";
     var r = "<li class='sch_data_cont'>";
