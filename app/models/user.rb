@@ -1,5 +1,6 @@
 require 'securerandom'
 require 'digest/sha1'
+require 'email_validator'
 
 class User < ActiveRecord::Base
   include Clearance::User
