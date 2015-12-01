@@ -650,9 +650,8 @@ class User < ActiveRecord::Base
   end
 
   def valid_email
-    regex = /\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i  #http://stackoverflow.com/a/22994329
-    rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| !!(e =~ regex) } 
-    error_message = rejected.count > 1 ? "The following emails are invalid: #{rejected.join(', ')}" : "Invalid email address"
+    rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| EmailValidator.valid? e } 
+    error_message = rejected.count > 1 ? "invalid: #{rejected.join(', ')}" : "invalid"
     errors.add(:email, error_message) unless rejected.empty?
   end
 end

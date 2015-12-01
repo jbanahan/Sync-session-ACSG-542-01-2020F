@@ -692,7 +692,7 @@ describe User do
   describe "email validation" do
     it "should update email field if all members of semicolon/comma-separated list match regex pattern" do
       u = Factory(:user, email: "default@vandegriftinc.com")
-      list = "abc@example.net, nbc123@vandegriftinc.com; cbs_1@britishcompany.co.uk"
+      list = "abc@exam-ple.net, nbc123@vandegriftinc.com; cbs_1@britishcompany.co.uk; 1@2.3.com, philip.glass@mail.ymu-global.com"
       u.update_attributes(email: list)
       u.reload
       expect(u.email).to eq list
@@ -701,11 +701,11 @@ describe User do
 
     it "should not update email field if any member of semicolon/comma-separated list fails to match regex pattern" do
       u = Factory(:user, email: "default@vandegriftinc.com")
-      list = "abc@example.*et, nbc123grifter.com; 1@2.3.com, cbs@somewhere.org"
+      list = "abc@example.*et, nbc123grifter.com; cbs@somewhere.org"
       u.update_attributes(email: list)
       u.reload
       expect(u.email).to eq "default@vandegriftinc.com"
-      expect(u.errors.messages[:email]).to eq ["The following emails are invalid: abc@example.*et, nbc123grifter.com, 1@2.3.com"]
+      expect(u.errors.full_messages).to eq ["Email invalid: abc@example.*et, nbc123grifter.com"]
     end
   
     it "should have a different error for one invalid email" do
@@ -714,7 +714,7 @@ describe User do
       u.update_attributes(email: addr)
       u.reload
       expect(u.email).to eq "default@vandegriftinc.com"
-      expect(u.errors.messages[:email]).to eq ["Invalid email address"]
+      expect(u.errors.full_messages).to eq ["Email invalid"]
     end
 
   end

@@ -69,6 +69,8 @@ gem 'slack-ruby-client', '~> 0.2.1'
 # Trello.com integration
 gem 'ruby-trello', '1.3.0'
 
+gem 'email_validator', '~> 1.6.0', require: 'email_validator/strict'
+
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
