@@ -8,7 +8,7 @@
     <div ng-repeat='c in parentObject.comments'>
     <div class='panel panel-info'>
       <div class='panel-heading'>
-        <div><div class='pull-right'><abbr am-time-ago='c.created_at' title='{{c.created_at}}'></abbr> {{c.user.full_name}}</div>{{c.subject}}</div>
+        <div><div class='pull-right'><abbr am-time-ago='c.created_at' title='{{c.created_at}}'></abbr> {{c.user.full_name}}</div>{{c.subject}}&nbsp;</div>
       </div>
       <div class='panel-body'>
          {{c.body}}
