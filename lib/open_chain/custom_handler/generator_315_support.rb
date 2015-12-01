@@ -96,8 +96,8 @@ module OpenChain; module CustomHandler; module Generator315Support
         sync_record = entry.sync_records.where(trading_partner: "315_#{code}").first_or_initialize
 
         # If the confirmed at time nil it means the record wasn't actually sent (maybe generation failed), in which case,
-        # if it's been over 5 minutes since it was last sent, then try sending again
-        if sync_record.fingerprint != fingerprint || (sync_record.confirmed_at.nil? && (sync_record.sent_at > Time.zone.now - 5.minutes))
+        # if it's been over 5 minutes since it was last sent, then try sending again.
+        if sync_record.fingerprint != fingerprint || sync_record.sent_at.nil? || (sync_record.confirmed_at.nil? && (sync_record.sent_at > Time.zone.now - 5.minutes))
           sync_record.fingerprint = fingerprint
           # We're sort of abusing the sync record's confirmed at here so that we can do two-phase generating / sending
           # Confirmed at is sent once we've confirmed the record has actually been sent (ftp'ed)

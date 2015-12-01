@@ -97,4 +97,32 @@ describe OpenChain::CustomHandler::Generator315Support do
       expect(folder).to eq "to_ecs/315_test/CN"
     end
   end
+
+  describe "process_field" do
+    let (:entry) { Factory(:entry, release_date: Time.zone.parse("2015-12-01 12:05")) }
+    let (:user) { Factory(:master_user) }
+    let (:field) {
+      {
+        model_field_uid: :ent_release_date
+      }
+    }
+
+    it "returns a milestone update object for a specific model field" do
+      milestone = subject.process_field field, user, entry, false, []
+      expect(milestone.code).to eq "release_date"
+      expect(milestone.date).to eq entry.release_date.in_time_zone("America/New_York")
+      expect(milestone.sync_record.sent_at).to be_within(1.minutes).of(Time.zone.now)
+      expect(milestone.sync_record.fingerprint).not_to be_nil
+      expect(milestone.sync_record.trading_partner).to eq "315_release_date"
+    end
+
+    it "returns a milestone update object when a sync_record has been cleared" do
+      sr = entry.sync_records.create! trading_partner: "315_release_date"
+
+      milestone = subject.process_field field, user, entry, false, []
+      expect(milestone.code).to eq "release_date"
+      expect(milestone.sync_record).to eq sr
+    end
+
+  end
 end
