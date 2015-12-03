@@ -65,3 +65,6 @@ class BusinessValidationRule < ActiveRecord::Base
     true
   end
 end
+
+# need require statements at end because they depend on the class existing
+require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_order_vendor_variant'

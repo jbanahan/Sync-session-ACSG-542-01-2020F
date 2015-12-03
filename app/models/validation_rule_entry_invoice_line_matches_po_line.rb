@@ -71,3 +71,6 @@ class ValidationRuleEntryInvoiceLineMatchesPoLine < BusinessValidationRule
     ra['match_fields']
   end
 end
+
+# need require statements at end because they depend on the class existing
+require_dependency 'open_chain/custom_handler/polo/polo_validation_rule_entry_invoice_line_matches_po_line'
