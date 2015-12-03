@@ -1,0 +1,35 @@
+<table id="us-invoices" class="table table-striped">
+    <thead>
+      <tr>
+        <% if edit %>
+          <th>&nbsp;</th>
+        <% end %>
+        <th>Invoice Number</th>
+        <th>Invoice Date</th>
+        <th>Amount</th>
+        <th>Customer Name</th>
+        <th>Entry Number</th>
+        <th>Bill To Name</th>
+        <th>Release Date</th>
+        <th>PMS Month</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% us_invoices.each do |bi| %>
+        <tr>
+          <% if edit %>
+            <td><%= check_box("selected", "to_remove", {:multiple => true}, bi.id, nil) %></td>
+          <% end %>
+          <td><%= link_to bi.invoice_number, broker_invoice_path(bi) %></td>
+          <td><%= bi.invoice_date %></td>
+          <td><%= number_to_currency(bi.invoice_total) %></td>
+          <td><%= bi.entry.importer.name %></td>
+          <td><%= bi.entry.entry_number %></td>
+          <td><%= bi.bill_to_name %></td>
+          <td><%= bi.entry.release_date %></td>
+          <td><%= bi.entry.monthly_statement_due_date %></td>
+        </tr>
+      <% end %>      
+    </tbody>
+</table>
+

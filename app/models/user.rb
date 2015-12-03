@@ -427,6 +427,12 @@ class User < ActiveRecord::Base
   def edit_broker_invoices?
     self.broker_invoice_edit && self.company.edit_broker_invoices?
   end
+  def view_summary_statements?
+    view_broker_invoices?
+  end
+  def edit_summary_statements?
+    edit_broker_invoices?
+  end
   def view_entries?
     self.entry_view? && self.company.view_entries?
   end

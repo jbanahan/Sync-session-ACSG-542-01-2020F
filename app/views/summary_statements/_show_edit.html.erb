@@ -1,0 +1,66 @@
+<% edit = current_page?(edit_summary_statement_path) %>
+
+<% if edit %>
+  <% content_for :javascript do %>
+    $(function() {
+      
+      $("#btn-remove").click(function(evt) {
+        evt.preventDefault();
+        $("#remove-frm").submit();
+      })
+
+      $("#btn-modal-add").click(function(evt) {
+        $("#mod-add").modal("hide");
+        $("#add-frm").submit();
+      });
+      
+      if ($('#us-invoices, #ca-invoices').length === 0)
+        $("#btn-add").click();
+    });
+  <%end%>
+
+  <%content_for :action_bar do %>
+    <button id='btn-add' title="Add Invoices" data-toggle="modal" data-target="#mod-add"><i class='fa fa-plus'></i></button>
+    <button id='btn-remove' title="Remove Invoices"><i class='fa fa-minus'></i></button>
+  <%end%>
+<%end%>
+
+<%content_for :action_bar do %>
+  <button id='btn-download' title='Download' class='btn_link' link_to="<%=summary_statement_path(@summary_statement, format: :xls)%>"><i class='fa fa-download'></i></button>
+  <% unless edit || !current_user.edit_broker_invoices? %>
+    <button id='btn-edit' title='Edit Summary Statement' class='btn_link' link_to="<%=edit_summary_statement_path(@summary_statement)%>" ><i class='fa fa-pencil'></i></button>
+  <% end %>
+<%end%>
+
+<h3><%=@summary_statement.customer.name%><br><br></h3>
+<h4>Summary Statement: <strong><%= @summary_statement.statement_number %></strong></h4>
+<%= form_tag(summary_statement_path(@summary_statement), :method => :put, :id => 'remove-frm') do%>
+  <%unless @us_invoices.empty?%>
+    <%= render partial: "us", locals: {us_invoices: @us_invoices, edit: edit}%>
+  <%end%>
+  <%unless @ca_invoices.empty?%>
+    <%= render partial: "ca", locals: {ca_invoices: @ca_invoices, edit: edit}%>
+  <%end%>
+<%end%>
+<h4>Total: <strong><%= number_to_currency @summary_statement.total %></strong></h4>
+
+<div class="modal" id='mod-add'>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">Add Broker Invoices to Summary Statement</h4>
+      </div>
+      <div class="modal-body">
+        <p>Invoice Numbers</p>
+          <%= form_tag(summary_statement_path(@summary_statement), :method => :put, :id => 'add-frm') do%>
+            <textarea class='form-control' rows='6' name='selected[to_add]'></textarea>
+          <%end%>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id='btn-modal-add'>Add</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

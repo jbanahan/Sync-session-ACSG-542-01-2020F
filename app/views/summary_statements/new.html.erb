@@ -1,0 +1,17 @@
+<div class='col-md-2'>
+  <%= form_tag("/summary_statements", :method => :post, :id => 'create-statement-frm') do%>
+    <div class="form-group">
+      <label for="company-drop-down">Customer</label>
+      <select id='company-drop-down' name='company' class='form-control'>
+        <% @companies.each do |co| %>
+          <option value="<%= co.id %>"><%= co.name %></option>
+        <% end %>
+      </select>
+    </div>
+    <div class='form-group'>
+      <label for="stat-num-box">Statement Number</label>
+      <input id='stat-num-box' class='form-control' type="text" name='stat_num'>
+    </div>
+      <input type="submit" value="Create">  
+  <%end%>
+</div>

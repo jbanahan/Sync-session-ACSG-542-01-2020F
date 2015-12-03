@@ -3,6 +3,7 @@ class BrokerInvoice < ActiveRecord::Base
   include IntegrationParserSupport
   belongs_to :entry, :touch=>true
   belongs_to :bill_to_country, :class_name=>'Country'
+  belongs_to :summary_statement
   has_many :broker_invoice_lines, :dependent => :destroy, :inverse_of=>:broker_invoice
   
   before_validation {self.currency = "USD" if self.currency.blank?}

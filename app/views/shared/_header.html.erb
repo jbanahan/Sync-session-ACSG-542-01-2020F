@@ -139,6 +139,12 @@
           <%end%>
           <%=nav_section 'binv-sec', 'Broker Invoice', current_user.view_broker_invoices? do%>
             <%=nav_item 'Search', '/broker_invoices?force_search=true'%>
+            <% if current_user.view_summary_statements?%> 
+              <%=nav_item 'Summary Statements', '/summary_statements'%>
+            <% end %>
+            <%if current_user.edit_summary_statements?%> 
+              <%=nav_item 'New Statement', '/summary_statements/new'%>
+            <%end%>
           <%end%>
           <%=nav_section 'drw-sec', 'Drawback', current_user.view_drawback? do%>
             <%=nav_item 'Search Claims', '/drawback_claims?force_search=true'%>
