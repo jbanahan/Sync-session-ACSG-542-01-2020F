@@ -1,5 +1,5 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
-module OpenChain; module CustomHandler; module LumberLiquidators; class LumberValidationRuleOrderVendorVariant
+module OpenChain; module CustomHandler; module LumberLiquidators; class LumberValidationRuleOrderVendorVariant < BusinessValidationRule
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
   def run_validation order
