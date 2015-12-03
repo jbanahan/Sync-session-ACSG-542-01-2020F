@@ -38,7 +38,7 @@ class XlsMaker
       
       raise "Your report has over #{max_results} rows.  Please adjust your parameter settings to limit the size of the report." if (row_number += 1) > max_results
     end
-    wb
+    [wb, row_number - 1]
   end
 
   #delay job friendly version of make_from_search_query

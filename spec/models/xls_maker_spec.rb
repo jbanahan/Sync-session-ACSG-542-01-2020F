@@ -17,15 +17,21 @@ describe XlsMaker do
         and_yield({:row_key=>2,:result=>['c','d',Date.new(2013,4,30),Time.now]})
     end
     it "should create workbook" do
-      wb = XlsMaker.new.make_from_search_query @sq
+      wb, data_row_count = XlsMaker.new.make_from_search_query @sq
+      data_row_count.should == 2
       s = wb.worksheet(0)
       s.row(1)[0].should == 'a'
       s.row(1)[1].should == 'b'
       s.row(2)[0].should == 'c'
       s.row(2)[1].should == 'd'
     end
+    it "should count 0 rows when workbook is empty" do
+       @sq.stub(:execute).and_return nil
+       *, data_row_count = XlsMaker.new.make_from_search_query @sq
+       expect(data_row_count).to eq 0
+    end
     it "should write headings" do
-      wb = XlsMaker.new.make_from_search_query @sq
+      wb, * = XlsMaker.new.make_from_search_query @sq
       s = wb.worksheet(0)
       r = s.row(0)
       r[0].should == ModelField.find_by_uid(:ent_brok_ref).label
@@ -34,22 +40,22 @@ describe XlsMaker do
       r[3].should == ModelField.find_by_uid(:ent_file_logged_date).label
     end
     it "should format dates with DATE_FORMAT" do
-      wb = XlsMaker.new.make_from_search_query @sq
+      wb, * = XlsMaker.new.make_from_search_query @sq
       wb.worksheet(0).row(1).format(2).should == XlsMaker::DATE_FORMAT
     end
     it "should format date_time with DATE_TIME_FORMAT" do
-      wb = XlsMaker.new.make_from_search_query @sq
+      wb, * = XlsMaker.new.make_from_search_query @sq
       wb.worksheet(0).row(1).format(3).should == XlsMaker::DATE_TIME_FORMAT 
     end
     it "should format date_time with DATE_FORMAT if no_time option is set" do
-      wb = XlsMaker.new(:no_time=>true).make_from_search_query @sq
+      wb, * = XlsMaker.new(:no_time=>true).make_from_search_query @sq
       wb.worksheet(0).row(1).format(3).should == XlsMaker::DATE_FORMAT
     end
     it "should add web links" do
       Entry.any_instance.stub(:excel_url).and_return("abc")
       Entry.should_receive(:find).with(1).and_return(Entry.new(:id=>1))
       Entry.should_receive(:find).with(2).and_return(Entry.new(:id=>2))
-      wb = XlsMaker.new(:include_links=>true).make_from_search_query @sq
+      wb, * = XlsMaker.new(:include_links=>true).make_from_search_query @sq
       s = wb.worksheet(0)
       s.row(1)[4].should be_a Spreadsheet::Link
     end

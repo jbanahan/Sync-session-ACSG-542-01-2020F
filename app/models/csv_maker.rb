@@ -23,7 +23,7 @@ class CsvMaker
     columns = search_query.search_setup.search_columns.order('rank ASC')
     row_number = 1
     base_objects = {}
-    CSV.generate(prep_opts(columns, search_query.user)) do |csv|
+    report = CSV.generate(prep_opts(columns, search_query.user)) do |csv|
       search_query.execute do |row_hash|
         #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
         key = row_hash[:row_key]
@@ -38,6 +38,7 @@ class CsvMaker
         raise "Your report has over #{max_results} rows.  Please adjust your parameter settings to limit the size of the report." if (row_number += 1) > max_results
       end
     end
+    [report, row_number - 1]
   end
 
   private

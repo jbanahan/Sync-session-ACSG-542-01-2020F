@@ -10,7 +10,7 @@ describe SearchSchedule do
         :name => 'test/-#t!e~s)t .^t&x@t', :download_format => 'csv'
         )
       @report = CustomReport.new(:user => @u, name: "blah")
-      @ss = SearchSchedule.new(:search_setup=>@setup, :custom_report=>@report, :download_format=>"csv")
+      @ss = SearchSchedule.new(:search_setup=>@setup, :custom_report=>@report, :download_format=>"csv", :send_if_empty=>true)
     end
 
     after :each do
@@ -130,6 +130,36 @@ describe SearchSchedule do
       @ss.last_finish_time.should_not be_nil
     end
 
+    context "'send_if_empty' is false" do
+      before(:each) { @ss.update_attributes(send_if_empty: false) }
+      
+      it "doesn't email/ftp user if there are no search results" do
+        @ss.custom_report = nil
+        log = double
+        log.should_receive(:info).exactly(2).times
+        @ss.should_receive(:write_csv)
+
+        @ss.stub(:report_blank?).and_return true
+        @ss.should_not_receive(:send_email)
+        @ss.should_not_receive(:send_ftp)
+        
+        @ss.run log
+      end
+
+      it "doesn't email/ftp user if there are no custom reports" do
+        @ss.search_setup = nil
+        @report.stub(:csv_file).and_return @temp
+        log = double
+        log.should_receive(:info).exactly(2).times
+
+        @ss.stub(:report_blank?).and_return true
+        @ss.should_not_receive(:send_email)
+        @ss.should_not_receive(:send_ftp)
+        
+        @ss.run log     
+      end
+    end
+
     it "sends user messages when search fails" do
       @ss.custom_report = nil
       @ss.should_receive(:write_csv).and_raise "Failed"
@@ -218,4 +248,39 @@ describe SearchSchedule do
       end
     end
   end
+
+  describe :report_blank? do
+    before(:each) { @ss = SearchSchedule.new }
+
+    it "returns true when an xls report is blank" do
+      File.open("spec/fixtures/files/blank_report_1.xls", "r") do |xls_file|
+        expect(@ss.send(:report_blank?, xls_file)).to be true
+      end
+      File.open("spec/fixtures/files/blank_report_2.xls", "r") do |xls_file|
+        expect(@ss.send(:report_blank?, xls_file)).to be true
+      end
+    end
+
+    it "returns true when a cvs report is blank" do
+      File.open("spec/fixtures/files/blank_report_1.csv", "r") do |xls_file|
+        expect(@ss.send(:report_blank?, xls_file)).to be true
+      end
+      File.open("spec/fixtures/files/blank_report_2.csv", "r") do |csv_file|
+        expect(@ss.send(:report_blank?, csv_file)).to be true
+      end
+    end
+
+    it "returns false when an xls report isn't blank" do
+      File.open("spec/fixtures/files/test_sheet_1.xls", "r") do |xls_file|
+        expect(@ss.send(:report_blank?, xls_file)).to be false
+      end
+    end
+
+    it "returns false when a csv report isn't blank" do
+      File.open("spec/fixtures/files/test_sheet_3.csv", "r") do |csv_file|
+        expect(@ss.send(:report_blank?, csv_file)).to be false
+      end
+    end
+  end
+
 end
