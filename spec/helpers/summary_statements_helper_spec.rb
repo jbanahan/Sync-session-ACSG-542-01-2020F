@@ -35,7 +35,7 @@ describe SummaryStatementsHelper do
 
     it "renders data for CA invoices" do
       ent = Factory(:entry, importer: @company, import_country: Factory(:country, iso_code: 'CA'),
-                     entry_number: "246810", k84_month: 5, cadex_accept_date: DateTime.now)
+                     entry_number: "246810", k84_month: 5, cadex_accept_date: Time.zone.parse("2015-12-02 13:50"))
       bi = Factory(:broker_invoice, summary_statement: @sum_stat, entry: ent, invoice_number: "123456789",
                    invoice_date: Date.today, invoice_total: 100, bill_to_name: @company.name)
     
