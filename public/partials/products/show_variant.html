@@ -27,7 +27,7 @@
               <h3 class="panel-title">Plant Assignments</h3>
             </div>
             <ul class='list-group'>
-              <li class='list-group-item' ng-repeat='pva in variant.plant_variant_assignments track by ppa.id'>
+              <li class='list-group-item' ng-repeat='pva in variant.plant_variant_assignments track by pva.id'>
                 <a ng-href='/vendors/{{pva.pva_company_id}}'>{{pva.pva_plant_name}}</a>
               </li>
             </ul>
