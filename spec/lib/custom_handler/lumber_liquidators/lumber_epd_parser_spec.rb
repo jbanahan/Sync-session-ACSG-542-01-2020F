@@ -185,6 +185,42 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(pva.get_custom_value(@cdefs[:pva_pc_approved_date]).value.to_i).to eq expected_approved_date.to_i
 
     end
+    it "should create one variant with multiple plant variant assignments for multiple vendors and same recipe id" do
+      product = Factory(:product,unique_identifier:'000000000000000pid')
+      cmp = Factory(:company)
+      cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
+      plnt = Factory(:plant,company:cmp)
+
+      cmp_2 = Factory(:company)
+      cmp_2.update_custom_value!(@cdefs[:cmp_sap_company],'0000000456')
+      plnt_2 = Factory(:plant,company:cmp_2)
+
+
+      s1_1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
+      s2_1 = @base_struct.new('000000000000000pid','varid','0000000123','top',11.3,'g2','s2','MX',2)
+      s1_2 = @base_struct.new('000000000000000pid','varid','0000000456','base',1,'gen','spec','CN',2)
+      s2_2 = @base_struct.new('000000000000000pid','varid','0000000456','top',11.3,'g2','s2','MX',2)
+
+
+      errors = nil
+      expect {errors = described_class.process_variant([s1_1,s2_1,s1_2,s2_2],@u,@cdefs)}.to change(PlantVariantAssignment,:count).from(0).to(2)
+
+      expect(errors).to be_empty
+
+      expect(Variant.count).to eq 1
+      var = Variant.first
+      expect(var.get_custom_value(@cdefs[:var_recipe]).value).to eq "base: gen/spec - 1 - CN\ntop: g2/s2 - 11.3 - MX"
+
+      pva = plnt.plant_variant_assignments.first
+      expect(pva.variant).to eq var
+      expect(pva.get_custom_value(@cdefs[:pva_pc_approved_by]).value).to eq @u.id
+      expect(pva.get_custom_value(@cdefs[:pva_pc_approved_date]).value).to_not be_nil
+
+      pva_2 = plnt_2.plant_variant_assignments.first
+      expect(pva_2.variant).to eq var
+      expect(pva_2.get_custom_value(@cdefs[:pva_pc_approved_by]).value).to eq @u.id
+      expect(pva_2.get_custom_value(@cdefs[:pva_pc_approved_date]).value).to_not be_nil
+    end
     it "should create variant if it doesn't exist" do
       product = Factory(:product,unique_identifier:'000000000000000pid')
       cmp = Factory(:company)

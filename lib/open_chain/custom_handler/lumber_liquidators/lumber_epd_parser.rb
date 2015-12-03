@@ -95,28 +95,31 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
           variant = prod.variants.create!(variant_identifier:fv.variant_id)
         end
 
-        recipe = variant_array.collect {|v| "#{v.component}: #{v.genus}/#{v.species} - #{v.component_thickness} - #{v.coo}"}.join("\n")
+        variant_vendor_hash = make_variant_vendor_hash(variant_array)
 
-        cv_val = variant.get_custom_value(cdefs[:var_recipe]).value
-        if cv_val!=recipe
-          variant.update_custom_value!(cdefs[:var_recipe],recipe) 
-          needs_snapshot = true
-        end
+        variant_vendor_hash.each do |vendor_num, va|
+          recipe = va.collect {|v| "#{v.component}: #{v.genus}/#{v.species} - #{v.component_thickness} - #{v.coo}"}.join("\n")
 
-        vendor = Company.find_by_custom_value cdefs[:cmp_sap_company], fv.vendor_num
+          cv_val = variant.get_custom_value(cdefs[:var_recipe]).value
+          if cv_val!=recipe
+            variant.update_custom_value!(cdefs[:var_recipe],recipe) 
+            needs_snapshot = true
+          end
 
-        if vendor.nil?
-          return ["Vendor \"#{fv.vendor_num}\" not found for row #{fv.row_num}."]
-        end
+          vendor = Company.find_by_custom_value cdefs[:cmp_sap_company], vendor_num
+          if vendor.nil?
+            return ["Vendor \"#{vendor_num}\" not found for row #{va.first.row_num}."]
+          end
+          
+          plant = vendor.plants.first_or_create!(name:vendor.name)
 
-        plant = vendor.plants.first_or_create!(name:vendor.name)
-
-        pva = variant.plant_variant_assignments.first_or_create!(plant_id:plant.id)
-        approved_date_cv = pva.get_custom_value(cdefs[:pva_pc_approved_date])
-        if approved_date_cv.value.nil?
-          pva.update_custom_value!(cdefs[:pva_pc_approved_date],0.seconds.ago)
-          pva.update_custom_value!(cdefs[:pva_pc_approved_by],user.id)
-          needs_snapshot = true
+          pva = variant.plant_variant_assignments.where(plant_id:plant.id).first_or_create!
+          approved_date_cv = pva.get_custom_value(cdefs[:pva_pc_approved_date])
+          if approved_date_cv.value.nil?
+            pva.update_custom_value!(cdefs[:pva_pc_approved_date],0.seconds.ago)
+            pva.update_custom_value!(cdefs[:pva_pc_approved_by],user.id)
+            needs_snapshot = true
+          end
         end
 
         prod.create_snapshot(user) if needs_snapshot
@@ -167,6 +170,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
   end
   private_class_method :parse_row_array
 
+  def self.make_variant_vendor_hash variants
+    h = {}
+    variants.each do |v|
+      h[v.vendor_num] ||= []
+      h[v.vendor_num] << v
+    end
+    h
+  end
 
   def self.lpad(string,len)
     s = string
