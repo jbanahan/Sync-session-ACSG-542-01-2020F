@@ -6,7 +6,7 @@ describe OpenChain::Report::XLSSearch do
     @xl_out = mock("Spreadsheet")
     @xl_out.stub(:write)
     @xl_maker = mock("XlsMaker")
-    @xl_maker.should_receive(:make_from_search_query_by_search_id_and_user_id).and_return(@xl_out)
+    @xl_maker.should_receive(:make_from_search_query_by_search_id_and_user_id).and_return([@xl_out, 3])
   end
   it "should include links" do
     ss = Factory(:search_setup,:include_links=>true,:user=>@u)
