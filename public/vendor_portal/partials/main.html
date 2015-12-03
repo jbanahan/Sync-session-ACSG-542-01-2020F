@@ -1,0 +1,48 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <img src="/logo.png" alt="Logo"><br />
+      <h1>Vendor Portal</h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Orders</h3>
+          </div>
+          <div class="panel-body">
+            <div ng-repeat='o in orders track by o.id'>
+              <a ng-href='/orders/{{o.id}}'>{{o.ord_ord_num}}</a>
+              hell world
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Settings</h3>
+          </div>
+          <div class="panel-body">
+            
+          </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Surveys</h3>
+          </div>
+          <div class="panel-body">
+            
+          </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      
+    </div>
+  </div>
+</div>

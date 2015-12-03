@@ -208,7 +208,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     end
     k = core_module.klass.search_secure(user,k)
     k = k.paginate(per_page:per_page,page:page)
-    r = k.to_a.collect {|obj| obj_to_json_hash(obj)}
+    r = k.to_a.uniq.collect {|obj| obj_to_json_hash(obj)}
     render json:{results:r,page:page,per_page:per_page}
   end
 

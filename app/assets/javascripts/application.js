@@ -27,3 +27,4 @@
 //= require_directory ./field_validator
 //= stub legacy
 //= stub html5shim
+//= stub vendor_portal
