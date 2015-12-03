@@ -29,6 +29,7 @@ class Company < ActiveRecord::Base
   has_many  :surveys, dependent: :destroy
   has_many  :attachments, as: :attachable, dependent: :destroy
   has_many  :plants, dependent: :destroy, inverse_of: :company
+  has_many  :summary_statements, :foreign_key => :customer_id
 
   has_one :attachment_archive_setup, :dependent => :destroy
 

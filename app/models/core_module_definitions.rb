@@ -294,6 +294,18 @@ module CoreModuleDefinitions
      enabled_lambda: lambda { MasterSetup.get.drawback_enabled? }
   )
 
+  SUMMARY_STATEMENT = CoreModule.new("SummaryStatement", "Summary Statement", {
+    default_search_columns: [:sum_statement_num],
+    :unique_id_field_name => :sum_statement_num,
+    key_model_field_uids: [:sum_statement_num],
+    children: [BROKER_INVOICE],
+    child_lambdas: {BROKER_INVOICE => lambda {|stat| stat.broker_invoices}},
+    child_joins: {BROKER_INVOICE => "LEFT OUTER JOIN broker_invoices on summary_statements.id = broker_invoices.summary_statement_id"},
+    quicksearch_fields: [:sum_statement_num],
+    :quicksearch_sort_by_mf => :sum_statement_num,
+    enabled_lambda: lambda { MasterSetup.get.broker_invoice_enabled? }
+  })
+
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
     mc.add_array core_module_array
@@ -309,5 +321,6 @@ module CoreModuleDefinitions
   set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
   set_default_module_chain SECURITY_FILING, [SECURITY_FILING,SECURITY_FILING_LINE]
   set_default_module_chain COMPANY, [COMPANY, PLANT, PLANT_PRODUCT_GROUP_ASSIGNMENT]
+  set_default_module_chain SUMMARY_STATEMENT, [SUMMARY_STATEMENT, BROKER_INVOICE, BROKER_INVOICE_LINE]
 
 end

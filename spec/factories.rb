@@ -447,3 +447,9 @@ Factory.define :sent_email do |f|
   f.sequence(:email_to) { |n| "recipient#{n}" }
   f.sequence(:email_from) { |n| "sender#{n}" }
 end
+
+Factory.define :summary_statement do |f|
+  f.sequence(:statement_number) { |n| "statement_#{n}" }
+  f.association :customer, :factory => :company
+end
+

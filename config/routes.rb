@@ -770,4 +770,8 @@ OpenChain::Application.routes.draw do
 
   resources :groups, except: [:show]
 
+  resources :summary_statements, except: [:destroy] do
+    get 'get_invoices', :on=>:member
+  end
+
 end
