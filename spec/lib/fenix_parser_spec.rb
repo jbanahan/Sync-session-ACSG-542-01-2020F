@@ -677,6 +677,16 @@ describe OpenChain::FenixParser do
     expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error "File # / Invoice # #{@file_number} / #{@invoice_number} was missing an exchange rate.  Exchange rate must be present for commercial invoices where the currency is not CAD."
   end
 
+  it "doesn't fail if invoice line is missing duty amount" do
+    # Sometimes an entry is pre-keyed and sits around and gets sent across to VFI Track missing some duty information
+    # Just make sure this doesn't fail.
+    @duty_amount = ""
+    OpenChain::FenixParser.parse @entry_lambda.call
+    e = Entry.find_by_broker_reference @file_number
+
+    expect(e.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_amount).to be_nil
+  end
+
 
   context "with fenix admin group" do
     let (:group) {Group.create! system_code: "fenix_admin", name: "Fenix Admin"}

@@ -429,7 +429,7 @@ module OpenChain
       t.duty_amount = dec_val(line[47])
 
       duty_rate = dec_val(line[46])
-      if duty_rate.try(:nonzero?) && t.entered_value.try(:nonzero?)
+      if duty_rate.try(:nonzero?) && t.entered_value.try(:nonzero?) && t.duty_amount.try(:nonzero?)
         adjusted_duty_rate = (duty_rate / BigDecimal(100))
 
         # if no classification quantity was present we'll assume we got an adval rate
