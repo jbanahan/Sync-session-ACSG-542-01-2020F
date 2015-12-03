@@ -27,7 +27,7 @@
   </script>
 <%-end-%>
 <div id='survey-response-wrap' ng-app='SurveyResponseApp' ng-init='response_id = <%=@sr.id%>'>
-  <div class='container' ng-controller='srController'>
+  <div class='container' ng-controller='srController' id="outer-container">
     <div class='row text-center' style='margin-bottom:20px;'>
       <div class='col-md-12'>
         <h1>{{resp.survey.name}} - {{resp.user ? resp.user.company.name : resp.responder_name}}<span ng-show='resp.subtitle.length>0'> - {{resp.subtitle}}</span></h1>
@@ -201,9 +201,41 @@
         </div>
       </div>
     </div>
+    <div class="modal" id="remind-modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Send Reminder</h4>
+          </div>
+          <div class="modal-body" id="remind-modal-container">
+            <form>
+              <div class='form-group'>
+                <label for='remind-to'>To</label>
+                <input id='remind-to' type='text' class='form-control' ng-model= 'messageFields.email_to' />
+              </div>
+              <div class='form-group'>
+                <label for='remind-subject'>Subject</label>
+                <input id='remind-subject' type='text' class='form-control' ng-model= 'messageFields.email_subject' />
+              </div>
+              <div class="form-group">
+                <label for="comment">Body</label>
+                <textarea class="form-control" rows="5" id="remind-body" ng-model = 'messageFields.email_body'></textarea>
+                <small class="pull-right">A link to the survey will be added to the message body.</small>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-default" ng-click="sendEmails(resp, messageFields)">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div chain-action-bar>
       <button class='btn btn-default' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
       <button class='btn btn-default' ng-show="!resp.archived" ng-click='srService.invite(resp)'>Resend Email Invite</button>
+      <button class='btn btn-default' ng-show="!resp.archived" ng-click='showRemindModal(reminderDefaults)'>Send Reminder Email</button>
       <%-if @sr.survey.can_edit?(current_user)-%>
         <button class='btn_link btn btn-default' link_to='<%=survey_path(@sr.survey)%>'>Survey Dashboard</button>
       <%-end-%>
