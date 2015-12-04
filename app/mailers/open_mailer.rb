@@ -423,11 +423,10 @@ EOS
   private
 
     def extract_email_addresses list
-      emails = nil
-      if list
+      emails = list
+      if list && list.respond_to?(:select)
         emails = list.select {|m| !m.nil? && !m.blank? }.join(", ")
       end
-
       emails
     end
 
