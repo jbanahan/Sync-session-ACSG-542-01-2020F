@@ -71,7 +71,6 @@ class SearchSchedule < ActiveRecord::Base
       return
     end
     User.run_with_user_settings(srch_setup.user) do
-      cm = CoreModule.find_by_class_name srch_setup.module_type
       extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
       attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
       Tempfile.open(["scheduled_search_run", ".#{extension}"]) do |t|
@@ -91,6 +90,7 @@ class SearchSchedule < ActiveRecord::Base
       end
     end
   rescue => e
+    e.log_me
     send_error_to_user user, e.message
   end
 
