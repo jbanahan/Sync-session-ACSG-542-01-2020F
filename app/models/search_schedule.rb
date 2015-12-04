@@ -76,12 +76,12 @@ class SearchSchedule < ActiveRecord::Base
       Tempfile.open(["scheduled_search_run", ".#{extension}"]) do |t|
         t.binmode
         if extension == "csv"
-          report_blank = write_csv(srch_setup, t) 
+         report_has_data = write_csv(srch_setup, t) 
         else 
-          report_blank = write_xls(srch_setup, t)
+         report_has_data = write_xls(srch_setup, t)
         end
         
-        if send_if_empty? || !report_blank?(t)
+        if send_if_empty? || report_has_data
           send_email srch_setup.name, t, attachment_name, srch_setup.user, log
           send_ftp srch_setup.name, t, attachment_name, log
         end
