@@ -131,22 +131,26 @@ root.Chain =
     $('select.pagechanger').on 'change', () ->
       window.location = baseUrl+'?page='+$(this).val()
 
-  # generates html string for  a bootstrap error panel
-  makeErrorPanel: (messages) ->
-    inner = messages
-    if $.isArray(messages) and messages.length > 1
-      inner = "<ul>"
-      messages.forEach (msg) -> inner += "<li>" + msg + "</li>"
-      inner += "</ul>"
-    "<div class='container'><div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>#{inner}</div></div></div>"
+  # generates html string for a bootstrap error panel
+  makeErrorPanel: (messages, needs_container = true) ->
+    Chain.makePanel messages, "error", needs_container
+      
+  makeSuccessPanel: (messages, needs_container = true) -> 
+    Chain.makePanel messages, "success", needs_container
 
-  makeSuccessPanel: (messages) -> 
+  makePanel: (messages, type, needs_container) ->
     inner = messages
     if $.isArray(messages) and messages.length > 1
       inner = "<ul>"
       messages.forEach (msg) -> inner += "<li>" + msg + "</li>"
       inner += "</ul>"
-    "<div class='container'><div class='panel panel-success'><div class='panel-heading'><h3 class='panel-title'>Success!</h3></div><div class='panel-body'>#{inner}</div></div></div>"
+    if type == "success"
+      outer = "<div class='panel panel-success'><div class='panel-heading'><h3 class='panel-title'>Success!</h3></div><div class='panel-body'>#{inner}</div></div>"
+    else
+      outer = "<div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>#{inner}</div></div>"
+    if needs_container
+      outer = "<div class='container'>#{outer}</div>"
+    outer
 
   setStorageItem: (name, value) ->
     if (typeof(Storage) == undefined)
