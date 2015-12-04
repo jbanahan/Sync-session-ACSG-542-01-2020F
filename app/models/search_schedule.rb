@@ -81,7 +81,7 @@ class SearchSchedule < ActiveRecord::Base
           report_blank = write_xls(srch_setup, t)
         end
         
-        if send_if_empty? || !report_blank?
+        if send_if_empty? || !report_blank?(t)
           send_email srch_setup.name, t, attachment_name, srch_setup.user, log
           send_ftp srch_setup.name, t, attachment_name, log
         end
