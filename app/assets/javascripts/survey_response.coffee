@@ -99,6 +99,12 @@ srApp.factory 'srService', ['$http','$sce',($http,$sce) ->
       $http.get('/survey_responses/'+r.id+'/invite.json').then(((response) ->
         r.success_message = 'Invite sent successfully.'
       ))
+
+    remind: (r, fields) ->
+      $http.post("/survey_responses/#{r.id}/remind", 
+        {"email_to": fields.email_to, "email_subject": fields.email_subject, "email_body": fields.email_body})
+      .then((resp) -> resp.data)
+
   }
 ]
 
@@ -195,9 +201,69 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
   $scope.$watch 'srService.resp', (newVal,oldVal, scope) ->
     $scope.resp = newVal
     scope.filterAnswers()
+    $scope.setReminderDefaults($scope.resp)
   
   $scope.$watch 'srService.settings.filterMode', (newVal,oldVal, scope) ->
     scope.filterAnswers()
+
+  do $scope.setReminderDefaults = (resp = $scope.resp) ->
+    return if $scope.reminderDefaults || !resp.survey
+    $scope.reminderDefaults = {
+      email_to: $scope.getEmails(resp)
+      email_subject: "Reminder: "+resp.survey.name
+      email_body:"Please follow the link below to complete your survey."
+    }
+
+  $scope.showRemindModal = (defaults) ->
+    $scope.setMessageFields defaults
+    $('#remind-modal').modal 'show'
+    true
+
+  $scope.setMessageFields = (defaults) ->
+    $scope.messageFields = {
+      email_to: defaults.email_to
+      email_subject: defaults.email_subject
+      email_body: defaults.email_body
+    }
+  
+  $scope.getEmails = (resp) ->
+    emails = []
+    if resp.user
+      emails = [resp.user.email]
+    if resp.group?.users
+      emails.push(u.email) for u in resp.group.users
+    emails.join(' ')
+
+  $scope.sendEmails = (resp, fields) ->
+    srService.remind(resp, fields).then(
+      ((data) ->
+        if data.error
+          $scope.setErrorPanel data.error
+        else if data.ok
+          $('#remind-modal').modal 'hide'
+          $scope.clearPanels
+          $scope.setSuccessPanel "Emails sent"
+          window.scrollTo(0,0)),
+      ((error) ->
+        $scope.setErrorPanel 'Server temporarily unavailable. Please try again later.'))
+
+  $scope.setErrorPanel = (message) ->
+    panel = Chain.makeErrorPanel(message, false)
+    $scope.clearPanels()
+    $('#remind-modal-container').prepend(panel)
+    true
+
+  $scope.setSuccessPanel = (message) ->
+    panel = Chain.makeSuccessPanel(message, true)
+    $scope.clearPanels()
+    $('#outer-container').prepend(panel)
+    true
+
+  $scope.clearPanels = () ->
+    $('.panel-success').remove()
+    $('.panel-danger').remove()
+    true
+
   @
 ])
 
