@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   def initialize opts={}
     @user = User.integration
     @imp = Company.find_by_master(true)
-    @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type]
+    @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone]
   end
 
   def parse_dom dom
@@ -58,6 +58,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
       o.vendor = vend
       o.order_date = order_date(base)
+      o.currency = et(order_header,'CURCY')
+      o.terms_of_payment = et(order_header,'ZTERM')
+      o.terms_of_sale = ship_terms(base)
 
       order_lines_processed = []
       REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el).line_number.to_i}
@@ -69,6 +72,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       o.save!
       o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
       o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
+      buyer_name, buyer_phone = buyer_info(base)
+      o.update_custom_value!(@cdefs[:ord_buyer_name],buyer_name)
+      o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
 
       o.reload
       validate_line_totals(o,base)
@@ -93,6 +99,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     ol.product = find_product(line_el)
     ol.quantity = BigDecimal(et(line_el,'MENGE'))
+    ol.unit_of_measure = et(line_el,'MENEE')
 
     # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
     price_per_unit = nil
@@ -121,6 +128,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     )
   end
 
+  def ship_terms base
+    el = REXML::XPath.first(base,"./E1EDK17[QUALF = '001']")
+    return nil unless el
+    str = et(el,'LKTEXT')
+    return str.blank? ? nil : str
+  end
+  private :ship_terms
+
+  def buyer_info base
+    el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'AG']")
+    return [nil,nil] unless el
+    return [et(el,'BNAME'),et(el,'TELF1')]
+  end
+
   def order_date base
     el = REXML::XPath.first(base,"./E1EDK03[IDDAT = '012']")
     return nil unless el
@@ -137,6 +158,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     return nil if str.blank?
     parse_date(str)
   end
+  private :expected_delivery_date
 
   def parse_date str
     return Date.new(str[0,4].to_i,str[4,2].to_i,str[6,2].to_i)

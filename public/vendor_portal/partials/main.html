@@ -1,25 +1,36 @@
 <div class="container">
   <div class="row">
     <div class="col-md-12 text-center">
-      <img src="/logo.png" alt="Logo"><br />
+      <a ui-sref='main'><img src="/logo.png" alt="Logo"></a>
+      <br />
       <h1>Vendor Portal</h1>
     </div>
   </div>
   <div class="row">
-    <div class="col-md-6">
-      <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Orders</h3>
-          </div>
-          <div class="panel-body">
-            <div ng-repeat='o in orders track by o.id'>
-              <a ng-href='/orders/{{o.id}}'>{{o.ord_ord_num}}</a>
-              hell world
-            </div>
-          </div>
+    <div class="col-md-8">
+      <chain-vp-order-panel></chain-vp-order-panel>
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Shipments</h3>
+        </div>
+        <div class="panel-body text-muted text-center">
+          <strong>Coming Soon!</strong>
+        </div>
       </div>
+
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
+      <!--surveys-->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Surveys</h3>
+        </div>
+        <div class="panel-body text-muted text-center">
+          <strong>Coming Soon!</strong>
+        </div>
+      </div>
+
+      <!--settings-->
       <div class="panel panel-primary">
           <div class="panel-heading">
             <h3 class="panel-title">Settings</h3>
@@ -32,14 +43,6 @@
   </div>
   <div class="row">
     <div class="col-md-6">
-      <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Surveys</h3>
-          </div>
-          <div class="panel-body">
-            
-          </div>
-      </div>
     </div>
     <div class="col-md-6">
       

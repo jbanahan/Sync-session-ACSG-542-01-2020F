@@ -1,0 +1,47 @@
+<div class="panel panel-primary">
+    <div class="panel-heading">
+      <h3 class="panel-title">Orders - {{loading}}</h3>
+    </div>
+    <div class="panel-body bg-info">
+      <select class='form-control' ng-model='activeSearch' ng-change='activateSearch()' ng-options='opt.name for opt in searchOptions track by opt.id'></select>
+    </div>
+    <div class='panel-body form-inline' ng-if='activeSearch.id=="findone"'> 
+      <div class="form-group">
+        <input type='text' class='form-control' ng-model='findOneVal' placeholder='order number' ng-keyup="$event.keyCode == 13 && find(findOneVal)"/>
+        <button class='btn btn-success btn-sm' ng-click='find(findOneVal)'><i class='fa fa-search'></i></button>
+      </div>
+    </div>
+
+    <div class="panel-body" ng-if="loading=='loading'">
+      <chain-loading-wrapper loading-flag='{{loading}}'>  
+      </chain-loading-wrapper>
+    </div>
+  
+    <div class='panel-body bg-info text-center' ng-if="activeOrders.length == [] && loading!='loading'">
+      <strong>No orders found</strong>
+    </div>
+
+    <div class='panel-body bg-danger text-center' ng-if="activeOrders.length > 49 && loading!='loading'">
+      Only 50 orders are displayed. Use search from the drop down menu to find you order.
+    </div>
+    <table class="table table-striped" ng-if='activeOrders.length > 0'>
+      <thead>
+        <tr>
+          <th>{{dictionary.fields.ord_ord_num.label}}</th>
+          <th>{{dictionary.fields.ord_ord_date.label}}</th>
+          <th>{{dictionary.fields.ord_window_start.label}}</th>
+        </tr>
+      </thead>
+      <tr ng-repeat='o in activeOrders track by o.id'>
+        <td>
+          <a ui-sref='showOrder({id:o.id})'>{{o.ord_ord_num}}</a>
+        </td>
+        <td>
+          {{o.ord_ord_date}}
+        </td>
+        <td>
+          {{o.ord_window_start}}
+        </td>
+      </tr>
+    </table>
+</div>

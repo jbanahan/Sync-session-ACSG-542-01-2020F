@@ -16,4 +16,14 @@ describe Api::V1::OrdersController do
       expect(j['results'].collect{|r| r['ord_ord_num']}).to eq ['123','ABC']
     end
   end
+  describe :get do
+    it "should append custom_view to order if not nil" do
+      OpenChain::CustomHandler::CustomViewSelector.stub(:order_view).and_return 'abc'
+      o = Factory(:order)
+      get :show, id: o.id
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['order']['custom_view']).to eq 'abc'
+    end
+  end
 end

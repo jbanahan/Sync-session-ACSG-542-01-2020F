@@ -128,3 +128,123 @@
   ]);
 
 }).call(this);
+
+(function() {
+  var cDom;
+
+  cDom = angular.module('ChainDomainer', ['Domainer']);
+
+  cDom.factory('chainDomainerSvc', [
+    '$http', 'domainerSvc', function($http, domainerSvc) {
+      var domainDAOChain, setupDone;
+      domainDAOChain = {
+        makeDictionary: function(worker) {
+          return $http.get('/api/v1/model_fields').then(function(resp) {
+            var data, dict, fld, i, j, len, len1, recordTypes, ref, ref1, rt;
+            data = resp.data;
+            dict = new DomainDictionary();
+            recordTypes = {};
+            ref = data.recordTypes;
+            for (i = 0, len = ref.length; i < len; i++) {
+              rt = ref[i];
+              dict.registerRecordType(rt);
+              recordTypes[rt.uid] = rt;
+            }
+            ref1 = data.fields;
+            for (j = 0, len1 = ref1.length; j < len1; j++) {
+              fld = ref1[j];
+              fld.recordType = recordTypes[fld.record_type_uid];
+              dict.registerField(fld);
+            }
+            return worker(dict);
+          });
+        }
+      };
+      setupDone = false;
+      return {
+        withDictionary: function() {
+          if (!setupDone) {
+            domainerSvc.setLocalDAO(domainDAOChain);
+            domainerSvc.setRemoteDAO(domainDAOChain);
+            domainerSvc.setExpirationChecker(new DomainExpirationCheckerLocal());
+            setupDone = true;
+          }
+          return domainerSvc.withDictionary();
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainLoader', function() {
+    return {
+      restrict: 'E',
+      replace: true,
+      template: '<div class="chain-loader"></div>'
+    };
+  });
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainLoadingWrapper', function() {
+    return {
+      restrict: 'E',
+      scope: {
+        loadingFlag: '@'
+      },
+      transclude: true,
+      template: "<div class='container-fluid' ng-if='isLoading()'> <div class='row'> <div class='col-md-12'> <chain-loader></chain-loader> </div> </div> </div> <div ng-transclude ng-if='!isLoading()'></div>",
+      link: function(scope, el, attrs) {
+        return scope.isLoading = function() {
+          return scope.loadingFlag === 'loading';
+        };
+      }
+    };
+  });
+
+}).call(this);
+
+(function() {
+  var dMod;
+
+  dMod = angular.module('Domainer', []);
+
+  dMod.factory('domainerSvc', [
+    '$q', function($q) {
+      var domainer, expChecker, localDAO, remoteDAO;
+      localDAO = null;
+      remoteDAO = null;
+      expChecker = null;
+      domainer = null;
+      return {
+        setLocalDAO: function(d) {
+          localDAO = d;
+          return domainer = null;
+        },
+        setRemoteDAO: function(d) {
+          remoteDAO = d;
+          return domainer = null;
+        },
+        setExpirationChecker: function(d) {
+          expChecker = d;
+          return domainer = null;
+        },
+        withDictionary: function() {
+          var deferred;
+          if (!domainer) {
+            domainer = new Domainer(new DomainDataAccessSetup(localDAO, remoteDAO, expChecker));
+          }
+          deferred = $q.defer();
+          domainer.withDictionary(function(dict) {
+            return deferred.resolve(dict);
+          });
+          return deferred.promise;
+        }
+      };
+    }
+  ]);
+
+}).call(this);

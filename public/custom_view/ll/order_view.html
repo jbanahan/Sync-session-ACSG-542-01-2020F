@@ -1,0 +1,141 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <a ui-sref='main'><img src="/logo.png" alt="Logo"></a>
+      <br />
+      <h1>
+        <small>Purchase Order</small>
+        <br />
+        {{order.ord_ord_num}}
+      </h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-5">
+      <div class="panel panel-primary">
+          <div class="panel-heading">
+          </div>
+          <ul class='list-group'>
+            <li class='list-group-item'>
+              Issue Date: <span class='pull-right'>{{order.ord_ord_date}}</span>
+            </li>
+            <li class='list-group-item'>
+              Delivery Date: <span class='pull-right'>{{order.ord_first_exp_del}}</span>
+            </li>
+            <li class="list-group-item">
+              Vendor No.
+              <span class="pull-right">{{order.ord_ven_syscode}}</span>
+            </li>
+            <li class="list-group-item">
+              Vendor Name
+              <span class="pull-right">{{order.ord_ven_name}}</span>
+            </li>
+            <li class="list-group-item">
+              Currency
+              <span class="pull-right">{{order.ord_currency}}</span>
+            </li>
+            <li class="list-group-item">
+              Buyer
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Buyer Name')[0].uid]}}</span>
+            </li>
+            <li class="list-group-item">
+              Buyer Phone
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Buyer Phone')[0].uid]}}</span>
+            </li>
+            <li class="list-group-item">
+              Terms of Payment
+              <span class="pull-right">{{order.ord_payment_terms}}</span>
+            </li>
+            <li class="list-group-item">
+              Terms of Delivery
+              <span class="pull-right">{{order.ord_terms}}</span>
+            </li>
+          </ul>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Vendor Order Address</h3>
+        </div>
+        <div class="panel-body">
+          <span class='bg-danger'>TBD</span>
+        </div>
+      </div>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Vendor Ship From Address</h3>
+        </div>
+        <div class="panel-body">
+          <span class='bg-danger'>TBD</span>
+        </div>
+      </div>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Billing Address</h3>
+        </div>
+        <div class="panel-body">
+          <address>
+            <strong>Lumber Liquidators</strong><br />
+            ATTN: Accounts Payable<br />
+            3000 John Deere Rd<br />
+            Toano, VA 23168 US
+          </address>
+        </div>
+      </div>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Ship To Address</h3>
+        </div>
+        <div class="panel-body">
+          <span class='bg-danger'>TBD</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Line Num</th>
+            <th>Article</th>
+            <th>Quantity</th>
+            <th>UM</th>
+            <th>Unit Price</th>
+            <th>Net Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat='ol in order.order_lines track by ol.id'>
+            <td>{{ol.ordln_line_number}}</td>
+            <td>
+              <small>{{ol.ordln_puid}}</small><br />
+              {{ol.ordln_pname}}
+            </td>
+            <td class='text-right numeric'>{{ol.ordln_ordered_qty}}</td>
+            <td>{{ol.ordln_unit_of_measure}}</td>
+            <td class='text-right numeric'>{{ol.ordln_ppu}}</td>
+            <td class='text-right numeric'>{{ol.ordln_total_cost}}</td>
+          </tr>
+          <tr>
+            <td class='text-right' colspan='5'>Total</td>
+            <td class='text-right numeric'>{{order.ord_total_cost}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="panel panel-default">
+          <div class="panel-body">
+            The Purchase Order is subject to and incorporates by reference the Purchase Order Terms and Conditions located
+            at <a href='http://www.llvendors.com'>www.llvendors.com</a>. By accepting this Purchase Order, Seller agrees to be bound
+            by the Purchase Order Terms and Conditions. The Terms and Conditions may not be modified, altered, amended or edited in any
+            way without the express written consent of Lumber Liquidators' Chief Merchandising Officer.
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
