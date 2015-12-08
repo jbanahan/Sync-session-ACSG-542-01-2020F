@@ -48,6 +48,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
       expect(described_class.fingerprint(h)).to eq expected_fingerprint
     end
+    it "should generate if no order lines" do
+      o = Factory(:order,order_number:'ON1',ship_window_start:Date.new(2015,1,1),ship_window_end:Date.new(2015,1,10),currency:'USD',terms_of_payment:'NT30',terms_of_sale:'FOB')
+      expected_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB"
+      h = JSON.parse(CoreModule::ORDER.entity_json(o))
+
+      expect(described_class.fingerprint(h)).to eq expected_fingerprint
+    end
   end
   describe '#get_json_hash' do
     it 'should get JSON hash from s3 data' do

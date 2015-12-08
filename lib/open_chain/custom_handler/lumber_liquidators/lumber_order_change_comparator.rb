@@ -24,11 +24,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     ORDER_MODEL_FIELDS.each do |uid|
       elements << order_hash[uid.to_s]
     end
-    entity_hash['entity']['children'].each do |child|
-      next unless child['entity']['core_module'] == 'OrderLine'
-      child_hash = child['entity']['model_fields']
-      ORDER_LINE_MODEL_FIELDS.each do |uid|
-        elements << child_hash[uid.to_s]
+    if entity_hash['entity']['children']
+      entity_hash['entity']['children'].each do |child|
+        next unless child['entity']['core_module'] == 'OrderLine'
+        child_hash = child['entity']['model_fields']
+        ORDER_LINE_MODEL_FIELDS.each do |uid|
+          elements << child_hash[uid.to_s]
+        end
       end
     end
     elements.join('~')
