@@ -17,10 +17,18 @@
           </div>
           <ul class='list-group'>
             <li class='list-group-item'>
-              Issue Date: <span class='pull-right'>{{order.ord_ord_date}}</span>
+              Issue Date <span class='pull-right'>{{order.ord_ord_date}}</span>
             </li>
             <li class='list-group-item'>
-              Delivery Date: <span class='pull-right'>{{order.ord_first_exp_del}}</span>
+              Delivery Date <span class='pull-right'>{{order.ord_first_exp_del}}</span>
+            </li>
+            <li class='list-group-item'>
+              Ship Window Start 
+              <span class='pull-right bg-danger'>NO DATA</span>
+            </li>
+            <li class='list-group-item'>
+              Ship No Later
+              <span class='pull-right bg-danger'>NO DATA</span>
             </li>
             <li class="list-group-item">
               Vendor No.
@@ -49,6 +57,17 @@
             <li class="list-group-item">
               Terms of Delivery
               <span class="pull-right">{{order.ord_terms}}</span>
+            </li>
+          </ul>
+      </div>
+      <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Order Status</h3>
+          </div>
+          <ul class='list-group'>
+            <li class='list-group-item'>
+              Vendor Approval Status
+              <span class='pull-right'>{{order.ord_approval_status}}</span>
             </li>
           </ul>
       </div>
@@ -95,7 +114,7 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <table class="table">
+      <table class="table table-bordered table-striped">
         <thead>
           <tr>
             <th>Line Num</th>

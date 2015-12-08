@@ -62,13 +62,9 @@ module OpenChain
       return b
     end
 
-    # Retrieves the data specified by the bucket/key descriptor.
-    # If the IO parameter is defined, the object is expected to be an IO-like object
-    # (answering to write, flush and rewind) and all data is streamed directly to 
-    # this object and nothing is returned.
-    #
-    # If no io object is provided, the full file content is returned.
-    def self.get_data bucket, key, io = nil
+
+    # Same functionality as get_data but with specified object version
+    def self.get_versioned_data bucket, key, version, io = nil
       retry_lambda = lambda {
         if io
           # If we started writing to a file, we need to truncate what we've already written
@@ -82,6 +78,9 @@ module OpenChain
       }
       s3_action_with_retries 3, retry_lambda do
         s3_file = s3_file(bucket, key)
+        if !version.blank?
+          s3_file = s3_file.versions[version]
+        end
         if io
           s3_file.read {|chunk| io.write chunk}
           # Flush the data and reset the read/write pointer to the beginning of the IO object 
@@ -93,6 +92,15 @@ module OpenChain
           s3_file.read
         end
       end
+    end
+    # Retrieves the data specified by the bucket/key descriptor.
+    # If the IO parameter is defined, the object is expected to be an IO-like object
+    # (answering to write, flush and rewind) and all data is streamed directly to 
+    # this object and nothing is returned.
+    #
+    # If no io object is provided, the full file content is returned.
+    def self.get_data bucket, key, io = nil
+      get_versioned_data(bucket,key,nil,io)
     end
 
     def self.s3_file bucket, key

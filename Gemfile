@@ -24,6 +24,9 @@ gem 'newrelic_rpm', '~> 3.12.1.298'
 #text processing/encoding stuff
 gem 'RedCloth', '4.2.9'
 
+# PDF Generator
+gem 'prawn', '2.0.2'
+
 #javascript environment, we will compile assets during deployment
 #so we need these on the production servers as well
 gem 'execjs', '2.0.1'
@@ -86,6 +89,7 @@ end
 group :test do
   gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
   gem 'webmock'
+  gem 'timecop', '~> 0.8.0'
 end
 # Gems used only for assets and not required
 # in production environments by default.

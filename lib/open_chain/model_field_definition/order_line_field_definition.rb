@@ -16,12 +16,7 @@ module OpenChain; module ModelFieldDefinition; module OrderLineFieldDefinition
       }],
       [9,:ordln_sku,:sku,'SKU',{data_type: :string}],
       [10,:ordln_total_cost, :total_cost, "Total Price", {data_type: :decimal, read_only: true,
-        qualified_field_name: "IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)",
-        export_lambda: lambda {|obj| 
-          ppu = obj.price_per_unit.nil? ? 0 : obj.price_per_unit
-          qty = obj.quantity.nil? ? 0 : obj.quantity
-          ppu * qty
-        }
+        qualified_field_name: "IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)"
       }],
       [11,:ordln_unit_of_measure,:unit_of_measure,'Unit of Measure',{data_type: :string}]
     ]
