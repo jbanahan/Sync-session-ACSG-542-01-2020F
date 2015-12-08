@@ -20,15 +20,10 @@
               Issue Date <span class='pull-right'>{{order.ord_ord_date}}</span>
             </li>
             <li class='list-group-item'>
-              Delivery Date <span class='pull-right'>{{order.ord_first_exp_del}}</span>
+              Planned Delivery Date <span class='pull-right'>{{order.ord_first_exp_del}}</span>
             </li>
             <li class='list-group-item'>
-              Ship Window Start 
-              <span class='pull-right bg-danger'>NO DATA</span>
-            </li>
-            <li class='list-group-item'>
-              Ship No Later
-              <span class='pull-right bg-danger'>NO DATA</span>
+              Ship Window <span class='pull-right'><small>To be provided by freight forwarder</small></span>
             </li>
             <li class="list-group-item">
               Vendor No.
@@ -41,14 +36,6 @@
             <li class="list-group-item">
               Currency
               <span class="pull-right">{{order.ord_currency}}</span>
-            </li>
-            <li class="list-group-item">
-              Buyer
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Buyer Name')[0].uid]}}</span>
-            </li>
-            <li class="list-group-item">
-              Buyer Phone
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Buyer Phone')[0].uid]}}</span>
             </li>
             <li class="list-group-item">
               Terms of Payment
@@ -83,10 +70,10 @@
       </div>
       <div class="panel panel-primary">
         <div class="panel-heading">
-          <h3 class="panel-title">Vendor Ship From Address</h3>
+          <h3 class="panel-title">Vendor Ship From</h3>
         </div>
         <div class="panel-body">
-          <span class='bg-danger'>TBD</span>
+          As dictated by supplier reference manual, the manufacturer must ship from previously approved facilities.
         </div>
       </div>
       <div class="panel panel-primary">
@@ -95,7 +82,7 @@
         </div>
         <div class="panel-body">
           <address>
-            <strong>Lumber Liquidators</strong><br />
+            <strong>Lumber Liquidators Services, LLC</strong><br />
             ATTN: Accounts Payable<br />
             3000 John Deere Rd<br />
             Toano, VA 23168 US
