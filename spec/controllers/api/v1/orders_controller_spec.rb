@@ -25,5 +25,58 @@ describe Api::V1::OrdersController do
       j = JSON.parse response.body
       expect(j['order']['custom_view']).to eq 'abc'
     end
+    it "should set permission hash" do
+      o = Factory(:order)
+      Order.any_instance.stub(:can_view?).and_return true
+      Order.any_instance.stub(:can_edit?).and_return true
+      Order.any_instance.stub(:can_accept?).and_return false
+      Order.any_instance.stub(:can_attach?).and_return true
+      Order.any_instance.stub(:can_comment?).and_return false
+
+      expected_permissions = {
+        'can_view'=>true,
+        'can_edit'=>true,
+        'can_accept'=>false,
+        'can_attach'=>true,
+        'can_comment'=>false
+      }
+
+      expect(get :show, id: o.id).to be_success
+
+      expect(JSON.parse(response.body)['order']['permissions']).to eq expected_permissions
+
+    end
+  end
+  describe :accept do
+    it "should accept order if user has permission" do
+      Order.any_instance.stub(:can_accept?).and_return true
+      Order.any_instance.should_receive(:async_accept!)
+      o = Factory(:order)
+      post :accept, id: o.id
+      expect(response).to redirect_to "/api/v1/orders/#{o.id}"
+    end
+    it "should fail if user does not have permission" do
+      Order.any_instance.stub(:can_accept?).and_return false
+      Order.any_instance.should_not_receive(:async_accept!)
+      o = Factory(:order)
+      post :accept, id: o.id
+      expect(response.status).to eq 401
+    end
+  end
+  describe :accept do
+    it "should unaccept order if user has permission" do
+      Order.any_instance.stub(:can_accept?).and_return true
+      Order.any_instance.should_receive(:async_unaccept!)
+      o = Factory(:order)
+      post :unaccept, id: o.id
+      expect(response).to redirect_to "/api/v1/orders/#{o.id}"
+    end
+    it "should fail if user does not have permission" do
+      Order.any_instance.stub(:can_accept?).and_return false
+      Order.any_instance.should_not_receive(:async_unaccept!)
+      o = Factory(:order)
+      post :unaccept, id: o.id
+      expect(response.status).to eq 401
+    end
   end
 end

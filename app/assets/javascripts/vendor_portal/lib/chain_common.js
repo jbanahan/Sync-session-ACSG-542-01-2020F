@@ -123,6 +123,20 @@
         return product;
       });
       publicMethods.Order = newCoreModuleClient('orders', 'order');
+      publicMethods.Order.accept = function(order) {
+        return $http.post('/api/v1/orders/' + order.id + '/accept.json', {
+          id: order.id
+        }).then(function(resp) {
+          return publicMethods.Order.load(order.id);
+        });
+      };
+      publicMethods.Order.unaccept = function(order) {
+        return $http.post('/api/v1/orders/' + order.id + '/unaccept.json', {
+          id: order.id
+        }).then(function(resp) {
+          return publicMethods.Order.load(order.id);
+        });
+      };
       return publicMethods;
     }
   ]);

@@ -190,6 +190,17 @@
 }).call(this);
 
 (function() {
+  angular.module('VendorPortal').directive('orderAcceptButton', function() {
+    return {
+      restrict: 'E',
+      replace: true,
+      template: '<button class="btn btn-xs btn-link" ng-if="order.permissions.can_accept" ng-click="toggleAccept(order)">{{order.ord_approval_status!="Accepted" ? "Accept" : "Clear"}}</button>'
+    };
+  });
+
+}).call(this);
+
+(function() {
   var app;
 
   app = angular.module('VendorPortal');
@@ -205,6 +216,27 @@
             return delete $scope.loading;
           });
         });
+      };
+      $scope.accept = function(order) {
+        $scope.loading = 'loading';
+        return chainApiSvc.Order.accept(order).then(function(o) {
+          $scope.order = o;
+          return delete $scope.loading;
+        });
+      };
+      $scope.unaccept = function(order) {
+        $scope.loading = 'loading';
+        return chainApiSvc.Order.unaccept(order).then(function(o) {
+          $scope.order = o;
+          return delete $scope.loading;
+        });
+      };
+      $scope.toggleAccept = function(order) {
+        if (order.ord_approval_status === 'Accepted') {
+          return $scope.unaccept(order);
+        } else {
+          return $scope.accept(order);
+        }
       };
       if (!$scope.$root.isTest) {
         return $scope.init($stateParams.id);

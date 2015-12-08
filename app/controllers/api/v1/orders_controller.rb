@@ -10,6 +10,20 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     render_show CoreModule::ORDER
   end
 
+  def accept
+    o = Order.find params[:id]
+    raise StatusableError.new("Access denied.", :unauthorized) unless o.can_view?(current_user) && o.can_accept?(current_user)
+    o.async_accept! current_user
+    redirect_to "/api/v1/orders/#{o.id}"
+  end
+
+  def unaccept
+    o = Order.find params[:id]
+    raise StatusableError.new("Access denied.", :unauthorized) unless o.can_view?(current_user) && o.can_accept?(current_user)
+    o.async_unaccept! current_user
+    redirect_to "/api/v1/orders/#{o.id}"
+  end
+
   def obj_to_json_hash o
     headers_to_render = limit_fields([
       :ord_ord_num,
@@ -53,6 +67,17 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     if !custom_view.blank?
       h['custom_view'] = custom_view
     end
+    h['permissions'] = render_permissions(o)
     h
+  end
+  def render_permissions order
+    cu = current_user #current_user is method, so saving as variable to prevent multiple calls
+    {      
+      can_view: order.can_view?(cu),
+      can_edit: order.can_edit?(cu),
+      can_accept: order.can_accept?(cu),
+      can_attach: order.can_attach?(cu),
+      can_comment: order.can_comment?(cu)
+    }
   end
 end; end; end

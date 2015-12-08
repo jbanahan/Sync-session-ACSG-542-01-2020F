@@ -43,6 +43,8 @@ OpenChain::Application.routes.draw do
       resources :orders, only: [:index,:show] do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
+        post :accept, on: :member
+        post :unaccept, on: :member
       end
 
       resources :users, only: [] do
