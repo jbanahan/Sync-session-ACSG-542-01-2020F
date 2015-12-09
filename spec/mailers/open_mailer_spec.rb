@@ -666,6 +666,30 @@ EMAIL
     end
   end
 
+  describe :send_survey_reminder do
+  
+    it "sends email with specified recipients, subject & body, with a link to the survey" do
+      sr = Factory(:survey_response)
+      ms = double()
+      ms.should_receive(:request_host).and_return "localhost:3000"
+      MasterSetup.stub(:get).and_return ms
+      link_addr = "http://localhost:3000/survey_responses/#{sr.id}"
+
+      email_to = ["john.smith@abc.com", "sue.anderson@cbs.com"]
+      email_subject = "don't forget to complete your survey"
+      email_body = "behold, a survey you almost forgot to complete!"
+      link_addr = "http://localhost:3000/survey_responses/#{sr.id}"
+
+      OpenMailer.send_survey_reminder(sr, email_to, email_subject, email_body).deliver!
+      m = ActionMailer::Base.deliveries.pop
+
+      expect(m.to).to eq email_to
+      expect(m.subject).to eq email_subject
+      expect(m.body.raw_source).to match(/#{Regexp.quote(email_body)}.+#{Regexp.quote(link_addr)}/)
+    end
+
+  end
+
   describe :log_email, email_log: true do
 
     it "saves outgoing e-mail fields and attachments" do   
