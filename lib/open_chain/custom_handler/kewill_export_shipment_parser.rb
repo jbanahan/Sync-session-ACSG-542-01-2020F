@@ -257,29 +257,21 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     # using EXPORT- to avoid collisions with shipments we track for other customers.  The file number is unique
     # for all export shipments, it's analogous to the file number in the entry.
     shipment = nil
-    if file_number.starts_with?("14") && last_exported_from_source
+    if file_number.starts_with?("14")
 
       Lock.acquire("ExportShipment") do
         shipment = Shipment.where(reference: "EXPORT-#{file_number}").first_or_create! last_exported_from_source: last_exported_from_source
-
-        # Only use shipment files that are the same age as or newer than our current shipment
-        if !shipment.last_exported_from_source.nil? && shipment.last_exported_from_source > last_exported_from_source
-          shipment = nil
-        end
       end
 
       if shipment
         Lock.with_lock_retry(shipment) do
-          # Only use shipment files that are the same age as or newer than our current shipment, 
-          # the with_lock_retry may return back a different set of shipment data that we were dealing with
-          # before (it essentially does a reload), so check that we're still good on the export date
-          if shipment.last_exported_from_source.nil? || shipment.last_exported_from_source <= last_exported_from_source
-            shipment.last_exported_from_source = last_exported_from_source
-            shipment = yield shipment
-          else
-            shipment = nil
-          end
-          
+          # The reason we don't skip files that may be processed out of date has to do with the fact that the data for these files is sent
+          # in two files that are generated almost at the same moment, so if we receive them slightly out of order there's a good chance that
+          # one of the two files will be skipped...the primarily has to do w/ how our file_pusher does not process files in order of mtime,
+          # but also that AWS SQS queues are not guaranteed to process in exact order of receipt time.  As well, the ftp process in Kewill
+          # doesn't appear to send in the exact order these export files are generated either.
+          shipment.last_exported_from_source = last_exported_from_source
+          shipment = yield shipment
         end
       end
 

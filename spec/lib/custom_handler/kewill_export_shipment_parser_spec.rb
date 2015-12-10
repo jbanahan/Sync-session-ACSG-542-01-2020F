@@ -78,15 +78,6 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
          expect(s.containers.first).to eq container
       end
 
-      it "does not parse shipment if existing shipment is newer than file" do
-        s = Shipment.create! reference: "EXPORT-1402240", last_exported_from_source: Time.zone.now
-
-        subject.parse IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT")
-
-        s.reload
-        expect(s.importer).to be_nil
-      end
-
       it "reuses existing comments w/ same subjects" do
         s = Shipment.create! reference: "EXPORT-1402240"
         user = Factory(:user)
@@ -141,15 +132,6 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
       expect(s.est_departure_date).to eq Date.new(2015,11,2)
       expect(s.est_arrival_port_date).to eq Date.new(2015,12,13)
       expect(s.entity_snapshots.size).to eq 1
-    end
-
-    it "does not parse shipment if existing shipment is newer than file" do
-      s = Shipment.create! reference: "EXPORT-1402240", last_exported_from_source: Time.zone.now
-
-      subject.parse IO.read("spec/fixtures/files/Kewill Export Ocean Job.DAT")
-
-      s.reload
-      expect(s.vessel_carrier_scac).to be_nil
     end
   end
   
