@@ -22,6 +22,8 @@ require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_spreadshee
 require 'open_chain/custom_handler/lands_end/le_parts_parser'
 require 'open_chain/custom_handler/intacct/alliance_day_end_ar_ap_parser'
 require 'open_chain/custom_handler/intacct/alliance_check_register_parser'
+require 'open_chain/custom_handler/kewill_export_shipment_parser'
+require 'open_chain/custom_handler/siemens/siemens_decryption_passthrough_handler'
 
 module OpenChain
   class IntegrationClient
@@ -172,6 +174,8 @@ module OpenChain
       elsif command['path'].include?('/_siemens_decrypt/') && File.basename(command['path']).to_s.upcase.ends_with?(".DAT.PGP")
         # Need to send the original filename without the added timestamp in it that our file monitoring process adds.
         OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path, original_filename: File.basename(command['path'])
+      elsif command['path'].include?('/_kewill_exports/') && MasterSetup.get.custom_feature?('alliance')
+        OpenChain::CustomHandler::KewillExportShipmentParser.new.delay.process_from_s3 bucket, remote_path
       else
         response_type = 'error'
         status_msg = "Can't figure out what to do for path #{command['path']}"

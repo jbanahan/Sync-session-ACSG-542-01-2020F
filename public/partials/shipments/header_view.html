@@ -67,23 +67,23 @@
   <p class="form-control-static" id="shp_first_port_receipt_name">{{outerScope.shp.shp_first_port_receipt_name}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_lading_port_name" class="control-label">Foreign Port of Lading</label>
+  <label for="shp_lading_port_name" class="control-label">Port of Lading</label>
   <p class="form-control-static" id="shp_lading_port_name">{{outerScope.shp.shp_lading_port_name}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_eta_last_foreign_port_date" class="control-label">ETA Last Foreign Port</label>
+  <label for="shp_eta_last_foreign_port_date" class="control-label">ETA Last Origin Port</label>
   <p class="form-control-static" id="shp_eta_last_foreign_port_date">{{outerScope.shp.shp_eta_last_foreign_port_date}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_last_foreign_port_name" class="control-label">Last Foreign Port</label>
+  <label for="shp_last_foreign_port_name" class="control-label">Last Origin Port</label>
   <p class="form-control-static" id="shp_last_foreign_port_name">{{outerScope.shp.shp_last_foreign_port_name}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_departure_last_foreign_port_date" class="control-label">Departure Last Foreign Port</label>
+  <label for="shp_departure_last_foreign_port_date" class="control-label">Departure Last Origin Port</label>
   <p class="form-control-static" id="shp_departure_last_foreign_port_date">{{outerScope.shp.shp_departure_last_foreign_port_date}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_unlading_port_name" class="control-label">First US Port</label>
+  <label for="shp_unlading_port_name" class="control-label">Unlading Port</label>
   <p class="form-control-static" id="shp_unlading_port_name">{{outerScope.shp.shp_unlading_port_name}}</p>
 </div>
 <div class="form-group">
@@ -109,6 +109,14 @@
 <div class="form-group">
   <label for="shp_chargeable_weight" class="control-label">Chargeable Weight</label>
   <p class="form-control-static" id="shp_chargeable_weight">{{outerScope.shp.shp_chargeable_weight ? outerScope.shp.shp_chargeable_weight + ' kg' : "" }}</p>
+</div>
+<div class="form-group">
+  <label for="shp_freight_total" class="control-label">Freight Total</label>
+  <p class="form-control-static" id="shp_freight_total">{{outerScope.shp.shp_freight_total}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_chargeable_weight" class="control-label">Invoice Total</label>
+  <p class="form-control-static" id="shp_invoice_total">{{outerScope.shp.shp_invoice_total}}</p>
 </div>
 <div class="form-group">
   <label for="shp_fish_and_wildlife" class="control-label">Fish and Wildlife</label>

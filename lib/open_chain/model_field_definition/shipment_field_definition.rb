@@ -165,8 +165,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [62,:shp_isf_sent_at,:isf_sent_at,"ISF Sent At",{data_type: :datetime, read_only: true}],
       [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :date}],
       [64, :shp_confirmed_on_board_origin_date, :confirmed_on_board_origin_date, 'Confirmed On Board Origin Date', {data_type: :date}],
-      [65, :shp_eta_last_foreign_port_date, :eta_last_foreign_port_date, 'ETA Last Foreign Port Date', {data_type: :date}],
-      [66, :shp_departure_last_foreign_port_date, :departure_last_foreign_port_date, 'Departure Last Foreign Port Date', {data_type: :date}],
+      [65, :shp_eta_last_foreign_port_date, :eta_last_foreign_port_date, 'ETA Last Origin Port Date', {data_type: :date}],
+      [66, :shp_departure_last_foreign_port_date, :departure_last_foreign_port_date, 'Departure Last Origin Port Date', {data_type: :date}],
       [67, :shp_booking_revised_date, :booking_revised_date, 'Booking Revised Date', {data_type: :date, read_only: true}],
       [68, :shp_booking_revised_by_full_name,:username,"Booking Revised By", {
         :export_lambda => lambda {|obj|
@@ -177,6 +177,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :data_type=>:string,
         :read_only=>true
       }],
+      [69, :shp_freight_total, :freight_total, "Freight Total", {data_type: :decimal}],
+      [70, :shp_invoice_total, :invoice_total, "Invoice Total", {data_type: :decimal}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -187,9 +189,9 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_comment_arrays(600,'shp','Shipment')
     add_fields CoreModule::SHIPMENT, make_port_arrays(700,'shp_dest_port','shipments','destination_port','Destination Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(800, 'shp_first_port_receipt','shipments','first_port_receipt','First Port of Receipt')
-    add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Foreign Port of Lading')
-    add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Foreign Port')
-    add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','First US Port')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Port of Lading')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Origin Port')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','Port of Unlading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1110, 'shp_final_dest_port','shipments','final_dest_port','Final Destination')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1200,'shp','shipments','buyer')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1250,'shp','shipments','seller')
