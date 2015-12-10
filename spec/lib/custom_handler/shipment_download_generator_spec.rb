@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
         sheet = workbook.worksheet 0
         expect(sheet.row(0).to_a).to eq ["Freight Receipt Location", "Destination Port Name", "Final Destination Name", "Master Bill of Lading", "House Bill of Lading", "Vessel", "Voyage"]
         expect(sheet.row(1).to_a).to eq [@shipment.receipt_location, @shipment.destination_port.name, @shipment.final_dest_port.name, @shipment.master_bill_of_lading, @shipment.house_bill_of_lading, @shipment.vessel, @shipment.voyage]
-        expect(sheet.row(2).to_a).to eq ["Confirmed On Board Origin Date", "Departure Date", "ETA Last Foreign Port Date", "Departure Last Foreign Port Date", "Est Arrival Date"]
+        expect(sheet.row(2).to_a).to eq ["Confirmed On Board Origin Date", "Departure Date", "ETA Last Origin Port Date", "Departure Last Origin Port Date", "Est Arrival Date"]
         expect(sheet.row(3).to_a).to eq [@shipment.confirmed_on_board_origin_date, @shipment.departure_date, @shipment.eta_last_foreign_port_date, @shipment.departure_last_foreign_port_date, @shipment.est_arrival_port_date]
       end
 
@@ -129,7 +129,7 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
 
         expect(sheet.rows[0].to_a).to eq ["Freight Receipt Location", "Destination Port Name", "Final Destination Name", "Master Bill of Lading", "House Bill of Lading", "Vessel", "Voyage", "Container Number", "Container Size", "Seal Number"]
         expect(sheet.rows[1].to_a).to eq [@shipment.receipt_location, @shipment.destination_port.name, @shipment.final_dest_port.name, @shipment.master_bill_of_lading, @shipment.house_bill_of_lading, @shipment.vessel, @shipment.voyage, @container1.container_number, @container1.container_size, @container1.seal_number]
-        expect(sheet.rows[2].to_a).to eq ["Confirmed On Board Origin Date", "Departure Date", "ETA Last Foreign Port Date", "Departure Last Foreign Port Date", "Est Arrival Date"]
+        expect(sheet.rows[2].to_a).to eq ["Confirmed On Board Origin Date", "Departure Date", "ETA Last Origin Port Date", "Departure Last Origin Port Date", "Est Arrival Date"]
         expect(sheet.rows[3].to_a).to eq [@shipment.confirmed_on_board_origin_date, @shipment.departure_date, @shipment.eta_last_foreign_port_date, @shipment.departure_last_foreign_port_date, @shipment.est_arrival_port_date]
 
         expect(sheet.row(6).to_a).to eq ["Container Number", "Customer Order Number", "Part Number", "Manufacturer Address Name", "Cartons", "Quantity Shipped", "Volume (CBMS)", "Ship Window End Date", "Freight Terms", "Shipment Type", "First Expected Delivery Date", "Booking Received Date", "Cargo On Hand Date", "Docs Received Date"]
