@@ -250,7 +250,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_container_stuffing_address_id,
       :shp_consolidator_address_id,
       :shp_booking_revised_date,
-      :shp_booking_revised_by_full_name
+      :shp_booking_revised_by_full_name,
+      :shp_freight_total,
+      :shp_invoice_total
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     container_fields_to_render = ([

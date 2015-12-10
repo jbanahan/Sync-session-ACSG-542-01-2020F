@@ -29,6 +29,7 @@ class DataCrossReference < ActiveRecord::Base
   ALLIANCE_INVOICE_REPORT_CHECKSUM ||= 'al_inv_checksum'
   OUTBOUND_315_EVENT ||= '315'
   PO_FINGERPRINT ||= 'po_id'
+  EXPORT_CARRIER ||= 'export_carriers'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [

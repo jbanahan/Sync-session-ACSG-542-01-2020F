@@ -44,14 +44,7 @@
     <hr />
     <div class="row">
       <div class="col-md-8"> <!--start comments-->
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Comments</h3>
-          </div>
-          <div class="panel-body">
-            <chain-comment parent-object='shp' module-type='Shipment'></chain-comment>
-          </div>
-        </div>
+        <chain-comment parent-object='shp' module-type='Shipment'></chain-comment>
       </div>  <!--end comments -->
       <div class="col-md-4">  <!--start attachments-->
         <div chain-attachment-panel attachable="shp" attachable-type='Shipment' attachable-id='{{shp.id}}' can-attach='shp.permissions.can_attach' attachments="shp.attachments" />
