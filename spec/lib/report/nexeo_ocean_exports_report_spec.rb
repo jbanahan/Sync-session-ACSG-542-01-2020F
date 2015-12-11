@@ -120,8 +120,8 @@ describe OpenChain::Report::NexeoOceanExportsReport do
         expect(email.to).to eq ["me@there.com"]
         expect(email.subject).to eq "Nexeo Exports for Dec"
         expect(email.body.raw_source).to include "Attached is the Nexeo Export shipment report for December."
-        expect(email.attachments.first).not_to be_nil
-        wb = Spreadsheet.open(StringIO.new(email.attachments.first.read))
+        expect(email.attachments["Exports 12-01-2015 - 01-01-2016.xls"]).not_to be_nil
+        wb = Spreadsheet.open(StringIO.new(email.attachments["Exports 12-01-2015 - 01-01-2016.xls"].read))
 
         # Just make sure there's some data here.
         sheet = wb.worksheet 0

@@ -40,7 +40,7 @@ module OpenChain; module Report; class NexeoOceanExportsReport
       "MBL" => master_bill_translation
     }
     table_from_query sheet, query(start_date, end_date), translations, column_names: headers
-    workbook_to_tempfile wb, filename, file_name: filename
+    workbook_to_tempfile wb, filename, file_name: "#{filename}.xls"
   end
 
   def self.query start_date, end_date
