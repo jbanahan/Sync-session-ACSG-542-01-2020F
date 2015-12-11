@@ -3,7 +3,8 @@ require 'spec_helper'
 describe ScheduledReportsController do
 
   before :each do
-    MasterSetup.create(request_host:"localhost:3000")
+    ms = MasterSetup.new(request_host:"localhost:3000")
+    MasterSetup.stub(:get).and_return ms
     @user = Factory(:master_user,:email=>'a@example.com')
 
     sign_in_as @user
