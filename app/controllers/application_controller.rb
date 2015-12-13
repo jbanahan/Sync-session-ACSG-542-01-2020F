@@ -276,7 +276,7 @@ class ApplicationController < ActionController::Base
     opts = {
       :lock_check => true, 
       :verb => "edit", 
-      :lock_lambda => lambda {|obj| obj.respond_to?(:locked?) && obj.locked?},
+      :lock_lambda => lambda {|o| o.respond_to?(:locked?) && o.locked?},
       :module_name => "object"}.merge(options)
     err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
     err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj) 
@@ -504,7 +504,6 @@ class ApplicationController < ActionController::Base
     r
   end
   def model_field_label(model_field_uid) 
-    r = ""
     return "" if model_field_uid.nil?
     mf = ModelField.find_by_uid(model_field_uid)
     return mf.label
