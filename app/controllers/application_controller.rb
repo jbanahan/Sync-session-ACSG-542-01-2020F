@@ -241,15 +241,17 @@ class ApplicationController < ActionController::Base
   end
 
   def require_user
-    if current_user && User.access_allowed?(current_user)
-      User.current = current_user
+    cu = current_user
+    if cu && User.access_allowed?(cu)
+      User.current = cu
+      portal_redirect(cu)
     else
       respond_to do |format|
         format.any(:js, :json, :xml) { head :unauthorized }
         format.any {
           # If we had a user that signed in and was disabled, we need to log them out as well, otherwise the login page will see the login and try
           # to redirect, which'll bring us back here, and cause a redirect loop
-          if current_user
+          if cu
             sign_out
           end
 
@@ -353,5 +355,10 @@ class ApplicationController < ActionController::Base
       end
       cookies['AUTH-TOKEN'] = {value:u.user_auth_token}
     end
+  end
+
+  def portal_redirect user
+    prp = user.portal_redirect_path
+    redirect_to prp unless prp.blank? || request.path.downcase.index(prp.downcase)==0
   end
 end
