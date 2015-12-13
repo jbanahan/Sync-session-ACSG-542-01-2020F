@@ -1,5 +1,6 @@
 require 'rexml/document'
 require 'set'
+require 'open_chain/ftp_file_support'
 
 module OpenChain; module CustomHandler; module UnderArmour
   class UnderArmour315Generator
