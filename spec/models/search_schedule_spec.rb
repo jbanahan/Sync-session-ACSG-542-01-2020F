@@ -133,13 +133,40 @@ describe SearchSchedule do
     context "'send_if_empty' is false" do
       before(:each) { @ss.update_attributes(send_if_empty: false) }
       
+      it "does email/ftp user if there are search results" do
+        @ss.custom_report = nil
+        log = double
+        log.should_receive(:info).exactly(2).times
+
+        @ss.stub(:write_csv).and_return true
+        
+        @ss.should_receive(:send_email)
+        @ss.should_receive(:send_ftp)
+
+        @ss.run log
+      end
+
+      it "does email/ftp user if there are custom reports" do
+        @ss.search_setup = nil
+        @report.stub(:csv_file).and_return @temp
+        log = double
+        log.should_receive(:info).exactly(2).times
+
+        @ss.stub(:report_blank?).and_return false
+        
+        @ss.should_receive(:send_email)
+        @ss.should_receive(:send_ftp)
+
+        @ss.run log
+      end
+
       it "doesn't email/ftp user if there are no search results" do
         @ss.custom_report = nil
         log = double
         log.should_receive(:info).exactly(2).times
-        @ss.should_receive(:write_csv)
 
-        @ss.stub(:report_blank?).and_return true
+        @ss.stub(:write_csv).and_return false
+        
         @ss.should_not_receive(:send_email)
         @ss.should_not_receive(:send_ftp)
         
