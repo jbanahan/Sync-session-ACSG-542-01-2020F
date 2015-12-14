@@ -206,7 +206,7 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
   $scope.$watch 'srService.settings.filterMode', (newVal,oldVal, scope) ->
     scope.filterAnswers()
 
-  do $scope.setReminderDefaults = (resp = $scope.resp) ->
+  $scope.setReminderDefaults = (resp) ->
     return if $scope.reminderDefaults || !resp.survey
     $scope.reminderDefaults = {
       email_to: $scope.getEmails(resp)
