@@ -3,6 +3,7 @@ module OpenChain; module CustomHandler; class CustomViewSelector
     @@handler = handler
   end
   def self.order_view order, user
+    @@handler ||= false
     if @@handler && @@handler.respond_to?(:order_view)
       return @@handler.order_view(order,user)
     end

@@ -43,7 +43,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
         export_lambda: lambda {|obj|
           obj.order_lines.inject(0) {|init,ol| init + ol.total_cost}
         },
-        qualified_field_name: "(SELECT SUM(IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)) FROM order_lines WHERE order_lines.order_id = orders.id"
+        qualified_field_name: "(SELECT SUM(IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)) FROM order_lines WHERE order_lines.order_id = orders.id)"
       }]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
