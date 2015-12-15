@@ -1,7 +1,7 @@
 (function() {
   var app;
 
-  app = angular.module('ChainCommon', []);
+  app = angular.module('ChainCommon', ['ChainCommon-Templates']);
 
   app.config([
     '$httpProvider', function($httpProvider) {
@@ -17,8 +17,8 @@
   app = angular.module('ChainCommon');
 
   app.factory('chainApiSvc', [
-    '$http', '$q', function($http, $q) {
-      var newCoreModuleClient, publicMethods;
+    '$http', '$q', '$sce', function($http, $q, $sce) {
+      var newCoreModuleClient, newUserClient, publicMethods;
       publicMethods = {};
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
         var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
@@ -137,6 +137,51 @@
           return publicMethods.Order.load(order.id);
         });
       };
+      publicMethods.Message = {
+        list: function() {
+          return $http.get('/api/v1/messages.json').then(function(resp) {
+            var j, len, m, msgs;
+            msgs = resp.data.messages;
+            for (j = 0, len = msgs.length; j < len; j++) {
+              m = msgs[j];
+              if (m.body) {
+                m.htmlSafeBody = $sce.trustAsHtml(m.body);
+              }
+            }
+            return msgs;
+          });
+        },
+        count: function(user) {
+          return $http.get('/api/v1/messages/count/' + user.id + '.json').then(function(resp) {
+            return resp.data.message_count;
+          });
+        }
+      };
+      newUserClient = function() {
+        var cachedMe;
+        cachedMe = null;
+        return {
+          loadMe: function() {
+            return $http.get('/api/v1/users/me.json').then(function(resp) {
+              return resp.data.user;
+            });
+          },
+          me: function() {
+            var d;
+            if (cachedMe) {
+              d = $q.defer();
+              d.resolve(cachedMe);
+              return d.promise;
+            } else {
+              return this.loadMe().then(function(u) {
+                cachedMe = u;
+                return cachedMe;
+              });
+            }
+          }
+        };
+      };
+      publicMethods.User = newUserClient();
       return publicMethods;
     }
   ]);
@@ -222,6 +267,80 @@
 }).call(this);
 
 (function() {
+  var app;
+
+  app = angular.module('ChainCommon');
+
+  app.directive('chainMessagesLink', [
+    'chainApiSvc', '$interval', '$timeout', '$compile', function(chainApiSvc, $interval, $timeout, $compile) {
+      return {
+        restrict: 'E',
+        scope: {},
+        replace: true,
+        template: "<a ng-click='showModal()'>Messages</a>",
+        link: function(scope, el, attrs) {
+          var actuallyShowModal, updateMessageCount;
+          updateMessageCount = function() {
+            return chainApiSvc.User.me().then(function(me) {
+              return chainApiSvc.Message.count(me).then(function(c) {
+                if (c > 0) {
+                  return el.html('Messages (' + c + ')');
+                } else {
+                  return el.html('Messages');
+                }
+              });
+            });
+          };
+          updateMessageCount();
+          $interval(updateMessageCount, 30000);
+          actuallyShowModal = function() {
+            return $('#chain-messages-modal').modal('show');
+          };
+          return scope.showModal = function() {
+            var compiledEl, mod;
+            mod = $('#chain-messages-modal');
+            if (mod.length === 0) {
+              compiledEl = angular.element('<chain-messages-modal></chain-messages-modal>');
+              $compile(compiledEl)(scope.$root.$new());
+              $('body').append(compiledEl);
+              $timeout(actuallyShowModal, 0);
+            } else {
+              actuallyShowModal();
+            }
+            return null;
+          };
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainMessagesModal', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {},
+        templateUrl: 'chain-messages-modal.html',
+        link: function(scope, el, atrs) {
+          scope.loadMessages = function() {
+            scope.messages = [];
+            return chainApiSvc.Message.list().then(function(msgs) {
+              return scope.messages = msgs;
+            });
+          };
+          return $(el).on('show.bs.modal', function() {
+            return scope.loadMessages();
+          });
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   var dMod;
 
   dMod = angular.module('Domainer', []);
@@ -262,3 +381,10 @@
   ]);
 
 }).call(this);
+
+angular.module('ChainCommon-Templates', ['chain-messages-modal.html']);
+
+angular.module("chain-messages-modal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-messages-modal.html",
+    "<div class=\"modal\" id=\"chain-messages-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Messages</h4></div><div class=\"modal-body\"><div class=\"panel-group\"><div class=\"panel\" ng-repeat=\"m in messages track by m.id\"><div class=\"panel-heading\"><h3 class=\"panel-title\" ng-click=\"m.shown=!m.shown\">{{m.subject}}</h3></div><div ng-show=\"m.shown\" ng-bind-html=\"m.htmlSafeBody\" class=\"panel-body\"></div></div></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
+}]);

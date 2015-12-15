@@ -10,6 +10,8 @@ OpenChain::Application.routes.draw do
   namespace :api do
     namespace :v1 do
       match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
+      match '/messages/count/:user_id' => 'messages#count'
+      resources :messages, only: [:index]
       resources :comments, only: [:create,:destroy]
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
@@ -51,6 +53,7 @@ OpenChain::Application.routes.draw do
         resources :event_subscriptions, only: [:index,:create]
         post :login, on: :collection
         post :google_oauth2, on: :collection
+        get :me, on: :collection
       end
 
       resources :official_tariffs, only: [] do

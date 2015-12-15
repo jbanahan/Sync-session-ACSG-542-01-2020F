@@ -9,16 +9,16 @@
   <%= javascript_include_tag "vendor_portal" -%>
 </head>
 <body>
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
-        <div class='text-right'>
-          <%=current_user.full_name%> - <a href='/vendor_portal'>Home</a> - <a href='/logout'>Log Out</a>
+  <div ng-app='VendorPortal'>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <div class='text-right'>
+            <%=current_user.full_name%> - <chain-messages-link></chain-messages-link> - <a href='/logout'>Log Out</a>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div ng-app='VendorPortal'>
     <div ui-view></div>
   </div>
 </body>

@@ -121,4 +121,28 @@ describe Api::V1::UsersController do
       expect(response.status).to eq 403
     end
   end
+
+  describe "#me" do
+    it "should get my user profile" do
+      u = Factory(:user,
+        first_name:'Joe',
+        last_name:'User',
+        username:'uname',
+        email:'j@sample.com',
+        email_new_messages:true)
+      allow_api_access u
+
+      get :me
+
+      expect(response).to be_success
+      expected = {'user'=>{
+        'username'=>'uname',
+        'full_name'=>u.full_name,
+        'first_name'=>u.first_name,
+        'last_name'=>u.last_name,
+        'email'=>'j@sample.com',
+        'email_new_messages'=>true,
+        'id'=>u.id}}
+    end
+  end
 end

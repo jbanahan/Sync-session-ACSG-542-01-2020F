@@ -1,7 +1,7 @@
 (function() {
   var app;
 
-  app = angular.module('VendorPortal', ['ui.router', 'ChainCommon', 'ChainDomainer']);
+  app = angular.module('VendorPortal', ['ui.router', 'ChainCommon', 'ChainDomainer', 'VendorPortal-Templates']);
 
   app.config([
     '$httpProvider', function($httpProvider) {
@@ -14,7 +14,7 @@
       $urlRouterProvider.otherwise('/');
       return $stateProvider.state('main', {
         url: '/',
-        templateUrl: "/vendor_portal/partials/main.html"
+        templateUrl: "vendor_portal/partials/main.html"
       }).state('showOrder', {
         url: '/orders/:id',
         template: "<chain-loading-wrapper loading-flag='{{loading}}'><dynamic-show-order></dynamic-show-order></chain-loading-wrapper>",
@@ -188,6 +188,23 @@
   ]);
 
 }).call(this);
+
+angular.module('VendorPortal-Templates', ['vendor_portal/partials/chain_vp_order_panel.html', 'vendor_portal/partials/main.html', 'vendor_portal/partials/standard_order_template.html']);
+
+angular.module("vendor_portal/partials/chain_vp_order_panel.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("vendor_portal/partials/chain_vp_order_panel.html",
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Orders - {{loading}}</h3></div><div class=\"panel-body bg-info\"><select class=\"form-control\" ng-model=\"activeSearch\" ng-change=\"activateSearch()\" ng-options=\"opt.name for opt in searchOptions track by opt.id\"></select></div><div class=\"panel-body form-inline\" ng-if=\"activeSearch.id==&quot;findone&quot;\"><div class=\"form-group\"><input class=\"form-control\" ng-model=\"findOneVal\" placeholder=\"order number\" ng-keyup=\"$event.keyCode == 13 && find(findOneVal)\"> <button class=\"btn btn-success btn-sm\" ng-click=\"find(findOneVal)\"><i class=\"fa fa-search\"></i></button></div></div><div class=\"panel-body\" ng-if=\"loading=='loading'\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper></div><div class=\"panel-body bg-info text-center\" ng-if=\"activeOrders.length == [] && loading!='loading'\"><strong>No orders found</strong></div><div class=\"panel-body bg-danger text-center\" ng-if=\"activeOrders.length > 49 && loading!='loading'\">Only 50 orders are displayed. Use search from the drop down menu to find you order.</div><table class=\"table table-striped\" ng-if=\"activeOrders.length > 0\"><thead><tr><th>{{dictionary.fields.ord_ord_num.label}}</th><th>{{dictionary.fields.ord_ord_date.label}}</th><th>{{dictionary.fields.ord_window_start.label}}</th></tr></thead><tr ng-repeat=\"o in activeOrders track by o.id\"><td><a ui-sref=\"showOrder({id:o.id})\">{{o.ord_ord_num}}</a></td><td>{{o.ord_ord_date}}</td><td>{{o.ord_window_start}}</td></tr></table></div>");
+}]);
+
+angular.module("vendor_portal/partials/main.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("vendor_portal/partials/main.html",
+    "<div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><a ui-sref=\"main\"><img src=\"/logo.png\" alt=\"Logo\"></a><br><h1>Vendor Portal</h1></div></div><div class=\"row\"><div class=\"col-md-8\"><chain-vp-order-panel></chain-vp-order-panel></div><div class=\"col-md-4\"><div class=\"panel panel-default\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Surveys</h3></div><div class=\"panel-body text-muted text-center\"><strong>Coming Soon!</strong></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Settings</h3></div><div class=\"panel-body\"></div></div></div></div><div class=\"row\"><div class=\"col-md-6\"></div><div class=\"col-md-6\"></div></div></div>");
+}]);
+
+angular.module("vendor_portal/partials/standard_order_template.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("vendor_portal/partials/standard_order_template.html",
+    "<div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1><small class=\"text-muted\">Purchase Order</small><br>{{order.ord_ord_num}}</h1></div></div><div class=\"row\"><div class=\"col-md-5\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">&nbsp;</h3></div><div class=\"panel-body\"></div></div></div><div class=\"col-md-7\"></div></div></div>");
+}]);
 
 (function() {
   angular.module('VendorPortal').directive('orderAcceptButton', function() {
