@@ -321,4 +321,61 @@ describe SurveyResponsesController do
       expect(flash[:errors]).to include "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers."
     end
   end
+
+  describe "remind" do
+    before(:each) do
+      @u = Factory(:user)
+      sign_in_as @u
+      @sr = Factory(:survey_response, :user=>@u, survey: Factory(:survey, company: @u.company))
+      @email_to = "joe@test.com sue@test.com"
+      @email_subject = "Reminder: Important Survey"
+      @email_body = "Please follow the link below to complete your survey."
+      @dj = Delayed::Worker.delay_jobs
+      Delayed::Worker.delay_jobs = false
+    end
+
+    after(:each) { Delayed::Worker.delay_jobs = @dj }
+    
+    it "restricts access" do
+      post :remind, id: @sr.id, email_to: @email_to, email_subject: @email_subject, email_body: @email_body
+      
+      expect(ActionMailer::Base.deliveries.count).to eq 0
+      expect(flash[:errors]).to include "You do not have permission to work with this survey."
+      expect(response).to redirect_to request.referrer
+    end
+
+    it "only sends with an email address" do
+      @u.stub(:edit_surveys?).and_return true
+      post :remind, id: @sr.id, email_to: "", email_subject: @email_subject, email_body: @email_body
+      
+      expect(ActionMailer::Base.deliveries.count).to eq 0
+      expect(JSON.parse(response.body)["error"]).to eq "Email address is required."
+    end
+
+    it "validates emails" do
+      @u.stub(:edit_surveys?).and_return true
+      post :remind, id: @sr.id, email_to: "joe@test sue@test.com", email_subject: @email_subject, email_body: @email_body
+
+      expect(ActionMailer::Base.deliveries.count).to eq 0
+      expect(JSON.parse(response.body)["error"]).to eq "Invalid email. Be sure to separate multiple addresses with spaces."
+    end
+
+    it "sends custom emails to all recipients" do
+      @u.stub(:edit_surveys?).and_return true
+      ms = double()
+      ms.should_receive(:request_host).and_return "localhost:3000"
+      MasterSetup.stub(:get).and_return ms
+      link_addr = "http://localhost:3000/survey_responses/#{@sr.id}"
+      
+      post :remind, id: @sr.id, email_to: @email_to, email_subject: @email_subject, email_body: @email_body
+
+      expect(ActionMailer::Base.deliveries.count).to eq 1
+      
+      msg = ActionMailer::Base.deliveries.pop
+      expect(msg.to).to eq ["joe@test.com", "sue@test.com"]
+      expect(msg.subject).to eq @email_subject
+      expect(msg.body.raw_source).to match(/#{Regexp.quote(@email_body)}.+#{Regexp.quote(link_addr)}/)
+      expect(JSON.parse(response.body)["ok"]).to eq "ok"
+    end
+  end  
 end

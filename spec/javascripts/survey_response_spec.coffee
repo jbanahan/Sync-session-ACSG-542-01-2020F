@@ -46,6 +46,13 @@ describe "SurveyResponseApp", () ->
         expect(resp.success_message).toEqual 'Sending invite.'
         http.flush()
         expect(resp.success_message).toEqual 'Invite sent successfully.'
+
+    describe 'remind', () ->
+      it "should make send reminder emails call", () ->
+        fields = {email_to: "john.smith@abc.com", email_subject: "Survey you need to take", email_body: "Don't forget the survey!"}
+        http.expectPOST('/survey_responses/7/remind', fields).respond({ok:'ok'})
+        svc.remind {id: 7}, fields
+        http.flush()
         
     describe 'addAnswerComment', () ->
       
@@ -395,4 +402,63 @@ describe "SurveyResponseApp", () ->
         answer.choice = "A"
         expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide an attachment.")
 
+    describe "setReminderDefaults", () ->
 
+      it "sets $scope.reminderDefaults", () ->
+        $scope.setReminderDefaults {user: {email: "john.smith@abc.com"}, survey: {name: "Survey Title"}}
+        expect($scope.reminderDefaults).toEqual {email_to: "john.smith@abc.com", \
+                                                 email_subject: "Reminder: Survey Title", \
+                                                 email_body: "Please follow the link below to complete your survey." }
+
+      it "leaves defaults unchanged if they've already been set", () ->
+        originalAssignment = $scope.reminderDefaults = {email_to: "john.smith@abc.com", \
+                                                        email_subject: "Reminder: Survey Title", \
+                                                        email_body: "Please follow the link below to complete your survey." }
+
+        $scope.setReminderDefaults {user: {email: "sue.anderson@cbs.com"}, survey: {name: "New Survey"}}
+        expect($scope.reminderDefaults).toEqual originalAssignment
+
+
+    describe "setMessageFields", () ->
+
+      it "initializes $scope.messageFields if arg isn't null", () ->
+        arg = {email_to: "john.smith@abc.com", email_subject: "Survey you need to take", email_body: "Don't forget the survey!"}
+        $scope.setMessageFields arg
+        expect($scope.messageFields).toEqual arg
+
+    describe "getEmails", () ->
+
+      it "returns an email if response includes a user", () ->
+        resp = {user: {email: "john.smith@abc.com"}}
+        expect($scope.getEmails resp).toEqual "john.smith@abc.com"
+      
+      it "returns a space-separated list of emails if response includes a group", () ->
+        resp = {group: {users: [{email: "phil.black@nbc.com"}, {email: "sue.anderson@cbs.com"}]}}
+        expect($scope.getEmails resp).toEqual "phil.black@nbc.com sue.anderson@cbs.com"
+
+      it "returns a space-separated list containing user followed by group members if both exist", () ->
+        resp = {user: {email: "john.smith@abc.com"}, group: {users: [{email: "phil.black@nbc.com"}, {email: "sue.anderson@cbs.com"}]}}
+        expect($scope.getEmails resp).toEqual "john.smith@abc.com phil.black@nbc.com sue.anderson@cbs.com"
+
+    describe "sendEmails", () ->
+      beforeEach () ->
+        spyOn $scope, 'setErrorPanel'
+        spyOn $scope, 'setSuccessPanel'
+      
+      it "displays confirmation if response is ok", () ->
+        spyOn(svc, 'remind').andReturn($.Deferred().resolve {ok: "ok"})
+        $scope.sendEmails "response", "fields"
+        expect(svc.remind).toHaveBeenCalledWith("response","fields")
+        expect($scope.setSuccessPanel).toHaveBeenCalledWith("Emails sent")
+        
+      it "displays an error if response includes one", () ->
+        spyOn(svc, 'remind').andReturn($.Deferred().reject())
+        $scope.sendEmails "response", "fields"
+        expect(svc.remind).toHaveBeenCalledWith("response","fields")
+        expect($scope.setErrorPanel).toHaveBeenCalledWith("Server temporarily unavailable. Please try again later.")
+      
+      it "displays an error if response fails", () ->
+        spyOn(svc, 'remind').andReturn($.Deferred().resolve {error: "ERROR!"})
+        $scope.sendEmails "response", "fields"
+        expect(svc.remind).toHaveBeenCalledWith("response","fields")
+        expect($scope.setErrorPanel).toHaveBeenCalledWith("ERROR!")

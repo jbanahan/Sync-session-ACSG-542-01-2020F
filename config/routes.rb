@@ -688,6 +688,7 @@ OpenChain::Application.routes.draw do
       get 'invite'
       put 'archive'
       put 'restore'
+      post 'remind'
     end
     resources :corrective_action_plans, :only=>[:show,:create,:destroy,:update] do
       post 'add_comment', on: :member

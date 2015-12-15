@@ -293,6 +293,15 @@ EOS
     end
   end
 
+  def send_survey_reminder survey_response, to, subject, body
+    link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
+    @body_content = "<p>#{ERB::Util.html_escape(body).gsub("\n", "<br>")}</p><p>#{link_addr}</p>".html_safe
+    @attachment_messages = []
+    mail(:to=>to, :subject=>subject) do |format|
+      format.html { render 'send_simple_html' }
+    end
+  end
+
   #send survey update notification
   def send_survey_subscription_update survey_response, response_updates, survey_subscriptions, corrective_action_plan = false
     @cap_mode = corrective_action_plan
