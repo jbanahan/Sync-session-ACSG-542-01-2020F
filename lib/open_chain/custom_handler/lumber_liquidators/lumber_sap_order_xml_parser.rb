@@ -83,96 +83,93 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
   end
 
-  def validate_line_totals order, base_el
-    expected_el = REXML::XPath.first(base_el,'E1EDS01/SUMME')
-    return true if expected_el.nil?
-    expected = BigDecimal(expected_el.text)
-    actual = order.order_lines.inject(BigDecimal('0.00')) {|mem,ln| mem + BigDecimal(ln.quantity * (ln.price_per_unit.blank? ? 0 : ln.price_per_unit)).round(2)}
-    raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
-  end
+  private
 
-  def process_line order, line_el
-    line_number = et(line_el,'POSEX').to_i
-
-    ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
-    ol = order.order_lines.build(line_number:line_number) unless ol
-
-    ol.product = find_product(line_el)
-    ol.quantity = BigDecimal(et(line_el,'MENGE'))
-    ol.unit_of_measure = et(line_el,'MENEE')
-
-    # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
-    price_per_unit = nil
-    extended_cost_text = et(line_el,'NETWR')
-    if !extended_cost_text.blank?
-      extended_cost = BigDecimal(extended_cost_text)
-      price_per_unit = extended_cost / ol.quantity
+    def validate_line_totals order, base_el
+      expected_el = REXML::XPath.first(base_el,'E1EDS01/SUMME')
+      return true if expected_el.nil?
+      expected = BigDecimal(expected_el.text)
+      actual = order.order_lines.inject(BigDecimal('0.00')) {|mem,ln| mem + BigDecimal(ln.quantity * (ln.price_per_unit.blank? ? 0 : ln.price_per_unit)).round(2)}
+      raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
     end
-    ol.price_per_unit = price_per_unit 
 
-    exp_del = expected_delivery_date(line_el)
-    if !@first_expected_delivery_date || (exp_del && exp_del < @first_expected_delivery_date)
-      order.first_expected_delivery_date = exp_del
-      @first_expected_delivery_date = exp_del
+    def process_line order, line_el
+      line_number = et(line_el,'POSEX').to_i
+
+      ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
+      ol = order.order_lines.build(line_number:line_number) unless ol
+
+      ol.product = find_product(line_el)
+      ol.quantity = BigDecimal(et(line_el,'MENGE'))
+      ol.unit_of_measure = et(line_el,'MENEE')
+
+      # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
+      price_per_unit = nil
+      extended_cost_text = et(line_el,'NETWR')
+      if !extended_cost_text.blank?
+        extended_cost = BigDecimal(extended_cost_text)
+        price_per_unit = extended_cost / ol.quantity
+      end
+      ol.price_per_unit = price_per_unit 
+
+      exp_del = expected_delivery_date(line_el)
+      if !@first_expected_delivery_date || (exp_del && exp_del < @first_expected_delivery_date)
+        order.first_expected_delivery_date = exp_del
+        @first_expected_delivery_date = exp_del
+      end
+      return ol
     end
-    return ol
-  end
-  private :process_line
 
-  def find_product order_line_el
-    product_base = REXML::XPath.first(order_line_el,'E1EDP19')
-    prod_uid = et(product_base,'IDTNR')
-    return Product.where(unique_identifier:prod_uid).first_or_create!(
-      importer:@imp,
-      name:et(product_base,'KTEXT')
-    )
-  end
+    def find_product order_line_el
+      product_base = REXML::XPath.first(order_line_el,'E1EDP19')
+      prod_uid = et(product_base,'IDTNR')
+      return Product.where(unique_identifier:prod_uid).first_or_create!(
+        importer:@imp,
+        name:et(product_base,'KTEXT')
+      )
+    end
 
-  def ship_terms base
-    el = REXML::XPath.first(base,"./E1EDK17[QUALF = '001']")
-    return nil unless el
-    str = et(el,'LKTEXT')
-    return str.blank? ? nil : str
-  end
-  private :ship_terms
+    def ship_terms base
+      el = REXML::XPath.first(base,"./E1EDK17[QUALF = '001']")
+      return nil unless el
+      str = et(el,'LKTEXT')
+      return str.blank? ? nil : str
+    end
 
-  def buyer_info base
-    el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'AG']")
-    return [nil,nil] unless el
-    return [et(el,'BNAME'),et(el,'TELF1')]
-  end
+    def buyer_info base
+      el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'AG']")
+      return [nil,nil] unless el
+      return [et(el,'BNAME'),et(el,'TELF1')]
+    end
 
-  def order_date base
-    el = REXML::XPath.first(base,"./E1EDK03[IDDAT = '012']")
-    return nil unless el
-    str = et(el,'DATUM')
-    return nil if str.blank?
-    parse_date(str)
-  end
-  private :order_date
+    def order_date base
+      el = REXML::XPath.first(base,"./E1EDK03[IDDAT = '012']")
+      return nil unless el
+      str = et(el,'DATUM')
+      return nil if str.blank?
+      parse_date(str)
+    end
 
-  def expected_delivery_date base
-    el = REXML::XPath.first(base,"./E1EDP20")
-    return nil unless el
-    str = et(el,'EDATU')
-    return nil if str.blank?
-    parse_date(str)
-  end
-  private :expected_delivery_date
+    def expected_delivery_date base
+      el = REXML::XPath.first(base,"./E1EDP20")
+      return nil unless el
+      str = et(el,'EDATU')
+      return nil if str.blank?
+      parse_date(str)
+    end
 
-  def parse_date str
-    return Date.new(str[0,4].to_i,str[4,2].to_i,str[6,2].to_i)
-  end
-  private :parse_date
+    def parse_date str
+      return Date.new(str[0,4].to_i,str[4,2].to_i,str[6,2].to_i)
+    end
 
-  def extract_time envelope_element
-    date_part = et(envelope_element,'CREDAT')
-    time_part = et(envelope_element,'CRETIM')
+    def extract_time envelope_element
+      date_part = et(envelope_element,'CREDAT')
+      time_part = et(envelope_element,'CRETIM')
 
-    # match ActiveSupport::TimeZone.parse
-    formatted_date = "#{date_part[0,4]}-#{date_part[4,2]}-#{date_part[6,2]} #{time_part[0,2]}:#{time_part[2,2]}:#{time_part[4,2]}"
+      # match ActiveSupport::TimeZone.parse
+      formatted_date = "#{date_part[0,4]}-#{date_part[4,2]}-#{date_part[6,2]} #{time_part[0,2]}:#{time_part[2,2]}:#{time_part[4,2]}"
 
-    ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
-  end
-  private :extract_time
+      ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
+    end
+    
 end; end; end; end
