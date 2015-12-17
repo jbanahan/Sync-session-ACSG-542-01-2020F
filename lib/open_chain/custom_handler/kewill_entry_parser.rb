@@ -544,8 +544,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
       Array.wrap(e[:ids]).each do |id|
         it_numbers << id[:it_no]
-        master_bills << id[:scac].to_s + id[:master_bill].to_s
-        house_bills << id[:house_bill].to_s
+        master_bills << id[:scac].to_s.strip + id[:master_bill].to_s
+        house_bills << id[:scac_house].to_s.strip + id[:house_bill].to_s
         subhouse_bills << id[:sub_bill].to_s
       end
       blank = lambda {|d| d.blank?}

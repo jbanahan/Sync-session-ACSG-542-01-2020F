@@ -114,9 +114,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'note' => "User3 did something", 'modified_by'=>"User3", 'date_updated' => 201503201247}
         ],
         'ids' => [
-          {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO'},
-          {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO'}, # Skip the second line, it's duplicate
-          {'scac'=>"XXXX", 'master_bill'=>"MASTER2", 'house_bill'=>"HOUSE2", 'sub_bill'=>'SUB2', 'it_no'=>'ITNO2'},
+          {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO', 'scac_house'=>'    '},
+          {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO', 'scac_house'=>"SCAC"}, # Skip the second line, it's duplicate
+          {'scac'=>"XXXX", 'master_bill'=>"MASTER2", 'house_bill'=>"HOUSE2", 'sub_bill'=>'SUB2', 'it_no'=>'ITNO2', 'scac_house'=>"SCAC2"},
           {'scac'=>"", 'master_bill'=>"", 'house_bill'=>"", 'sub_bill'=>'', 'it_no'=>''} # Skip blanks
         ],
         'cust_refs' => [
@@ -377,7 +377,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.last_7501_print).to eq tz.parse "201503201247"
 
       expect(entry.master_bills_of_lading).to eq "XXXXMASTER\n XXXXMASTER2"
-      expect(entry.house_bills_of_lading).to eq "HOUSE\n HOUSE2"
+      expect(entry.house_bills_of_lading).to eq "HOUSE\n SCAC2HOUSE2\n SCACHOUSE"
       expect(entry.sub_house_bills_of_lading).to eq "SUB\n SUB2"
       expect(entry.it_numbers).to eq "ITNO\n ITNO2"
 
