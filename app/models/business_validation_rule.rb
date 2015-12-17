@@ -22,6 +22,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleOrderLineProductFieldFormat: {label:"Order Line's Product Field Format"},
                 ValidationRuleOrderVendorFieldFormat: {label:"Orders Vendor's Field Format"},
                 ValidationRuleEntryDutyFree: {label: "Entry Invoice Tariff SPI Indicates Duty Free"},
+                ValidationRuleAscenaInvoiceAudit: {label: "Ascena Entry Invoice Audit"},
                 'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant'.to_sym=>
                   {
                     label: 'Lumber PO Vendor Variant Assignment',
