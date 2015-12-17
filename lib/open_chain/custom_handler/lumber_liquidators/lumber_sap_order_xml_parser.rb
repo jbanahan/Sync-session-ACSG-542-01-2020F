@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       o.vendor = vend
       o.order_date = order_date(base)
       o.currency = et(order_header,'CURCY')
-      o.terms_of_payment = et(order_header,'ZTERM')
+      o.terms_of_payment = payment_terms_description(base)
       o.terms_of_sale = ship_terms(base)
 
       order_lines_processed = []
@@ -158,6 +158,33 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       parse_date(str)
     end
 
+    def payment_terms_description base
+      elements = REXML::XPath.match(base,"./E1EDK18")
+      # According to the doc from LL, If no E1DK18 is present, then order is due immediately.
+      return "Due Immediately" unless elements.try(:size) > 0
+
+      values = []
+      elements.each do |el|
+        days = et(el, 'TAGE')
+        percent = et(el, 'PRZNT')
+
+        next if days.blank?
+
+        if percent.blank?
+          values << "Net #{days}"
+        else
+          # Strip trailing insignificant digits
+          if percent =~ /\.\d*[0]+$/
+            percent.sub! /0+$/, ""
+            percent = percent[0..-2] if percent.ends_with?(".")
+          end
+          values << "#{percent}% #{days} Days"
+        end
+      end
+
+      values.join(", ")
+    end
+
     def parse_date str
       return Date.new(str[0,4].to_i,str[4,2].to_i,str[6,2].to_i)
     end
@@ -171,5 +198,5 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
     end
-    
+
 end; end; end; end
