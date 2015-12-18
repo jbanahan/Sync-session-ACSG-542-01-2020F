@@ -386,6 +386,10 @@ OpenChain::Application.routes.draw do
   match "/custom_features/alliance_day_end" => "custom_features#alliance_day_end_index", :via=>:get
   match "/custom_features/alliance_day_end/upload" => "custom_features#alliance_day_end_upload", :via => :post
   match "/custom_features/alliance_day_end/:id/download" => "custom_features#alliance_day_end_download", :via => :get
+  match "/custom_features/ascena_ca_invoices" => "custom_features#ascena_ca_invoices_index", :via=>:get
+  match "/custom_features/ascena_ca_invoices/upload" => "custom_features#ascena_ca_invoices_upload", :via => :post
+  match "/custom_features/ascena_ca_invoices/:id/download" => "custom_features#ascena_ca_invoices_download", :via => :get
+
 
   match "/custom_features/lenox_shipment_status" => "custom_features#lenox_shipment_status_index", :via=>:get
   match "/custom_features/lenox_shipment_status/upload" => "custom_features#lenox_shipment_status_upload", :via => :post
