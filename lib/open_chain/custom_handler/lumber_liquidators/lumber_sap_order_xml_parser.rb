@@ -42,20 +42,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
 
-    ActiveRecord::Base.transaction do
-      o = Order.find_by_order_number(order_number)
-      if o
-        previous_extract_time = o.get_custom_value(@cdefs[:ord_sap_extract]).value
-        if previous_extract_time && previous_extract_time.to_i > ext_time.to_i
-          return # don't parse since this is older than the previous extract
-        end
-      else
-        o = Order.new(order_number:order_number,importer:@imp)
-      end
+    find_order(order_number, @imp, ext_time) do |o|
 
       # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
-      vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
-      @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
+      vend = nil
+      Lock.acquire("Vendor-#{vendor_system_code}") do 
+        vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
+        @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
+      end
+
       o.vendor = vend
       o.order_date = order_date(base)
       o.currency = et(order_header,'CURCY')
@@ -84,6 +79,27 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   private
+
+    def find_order order_number, importer, extract_time
+      o = nil
+      Lock.acquire("LUMBER-#{order_number}") do
+        po = Order.where(order_number: order_number).first_or_create! importer: importer
+
+        if process_file?(extract_time, po)
+          Lock.with_lock_retry(po) do
+            o = yield po
+          end
+        end
+      end
+      o
+    end
+
+    def process_file? extract_time, order
+      previous_extract_time = order.get_custom_value(@cdefs[:ord_sap_extract]).value
+
+      # We only want to process the file if there was no previous process time, OR the current extract is after (or equal to) the previous time
+      return previous_extract_time.nil? || extract_time.to_i >=  previous_extract_time.to_i
+    end
 
     def validate_line_totals order, base_el
       expected_el = REXML::XPath.first(base_el,'E1EDS01/SUMME')
