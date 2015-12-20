@@ -36,4 +36,26 @@ describe Api::V1::MessagesController do
       expect(JSON.parse(response.body)).to eq expected
     end
   end
+
+  describe '#mark_as_read' do
+    it "should mark message as read" do
+      m = @u.messages.create!(subject:'M1',body:'my body')
+
+      post :mark_as_read, id: m.id
+
+      expect(response).to be_success
+
+      expect(JSON.parse(response.body)['message']['subject']).to eq 'M1'
+      m.reload
+      expect(m).to be_viewed
+    end
+    it "should 404 if message not found for current user" do
+      m = Factory(:user).messages.create!(subject:'X')
+      
+      post :mark_as_read, id: m.id
+
+      expect(response.status).to eq 404
+
+    end
+  end
 end

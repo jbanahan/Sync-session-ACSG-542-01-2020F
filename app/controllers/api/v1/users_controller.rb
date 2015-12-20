@@ -27,6 +27,13 @@ module Api; module V1; class UsersController < Api::V1::ApiController
     render json: {user: h}
   end
 
+  def toggle_email_new_messages
+    u = current_user
+    u.email_new_messages = !u.email_new_messages?
+    u.save!
+    redirect_to '/api/v1/users/me'
+  end
+
   def google_oauth2
     # What's happening here is the user's device is making a validation request to google to obtain an 
     # authtoken.  Their device is then sharing that token with us, which we can then use to 
@@ -49,7 +56,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
       result = nil
       begin
         result = strategy.client.request(:get, 'https://www.googleapis.com/oauth2/v3/userinfo', params: {access_token: access_token}).parsed.with_indifferent_access
-      rescue => e
+      rescue
         # If the token is bad or old then we'll get an error..we don't really care..just forbid access in this case
       end
 

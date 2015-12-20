@@ -47,3 +47,17 @@
     box-shadow: 0 2.5em 0 0 #348; } }
 
 /*# sourceMappingURL=chain_loading_wrapper.css.map */
+
+#chain-messages-modal .subject {
+  cursor: pointer;
+  border-left: 3px solid #EBC6A7;
+  padding-left: 0.25em; }
+#chain-messages-modal .unread-subject {
+  font-weight: bold;
+  border-left: 3px solid #348 !important; }
+#chain-messages-modal .message-body {
+  margin-left: 1em;
+  border-left: 3px solid #ccc;
+  padding-left: 1em; }
+
+/*# sourceMappingURL=chain_messages_modal.css.map */

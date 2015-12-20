@@ -36,8 +36,10 @@ module Api; module V1; class ApiController < ActionController::Base
         raise StatusableError.new("Request must include Accept header of 'application/json'.", :not_acceptable)
       end
 
-      if ["POST","PUT"].include?(request.method)  && !request.headers["CONTENT_TYPE"].match(/application\/json/)
-        raise StatusableError.new("Content-Type '#{request.headers["CONTENT_TYPE"]}' not supported.", :not_acceptable)
+      content_type = request.headers["CONTENT_TYPE"]
+      content_type = "" if content_type.nil?
+      if ["POST","PUT"].include?(request.method)  && !content_type.match(/application\/json/)
+        raise StatusableError.new("Content-Type '#{content_type}' not supported.", :not_acceptable)
       end
     end
 

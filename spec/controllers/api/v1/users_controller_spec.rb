@@ -145,4 +145,27 @@ describe Api::V1::UsersController do
         'id'=>u.id}}
     end
   end
+
+  describe "#toggle_email_new_messages" do
+    it "should set email_new_messages" do
+      u = Factory(:user)
+      allow_api_access u
+      post :toggle_email_new_messages
+      expect(response).to redirect_to '/api/v1/users/me'
+
+      u.reload
+      expect(u.email_new_messages).to be_true
+    end
+    it "should unset email_new_messages" do
+      u = Factory(:user)
+      u.email_new_messages = true
+      u.save!
+      allow_api_access u
+      post :toggle_email_new_messages
+      expect(response).to redirect_to '/api/v1/users/me'
+      
+      u.reload
+      expect(u.email_new_messages).to be_false
+    end
+  end
 end

@@ -11,7 +11,9 @@ OpenChain::Application.routes.draw do
     namespace :v1 do
       match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
       match '/messages/count/:user_id' => 'messages#count'
-      resources :messages, only: [:index]
+      resources :messages, only: [:index] do
+        post :mark_as_read, on: :member
+      end
       resources :comments, only: [:create,:destroy]
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
@@ -54,6 +56,7 @@ OpenChain::Application.routes.draw do
         post :login, on: :collection
         post :google_oauth2, on: :collection
         get :me, on: :collection
+        post 'me/toggle_email_new_messages' => 'users#toggle_email_new_messages', on: :collection
       end
 
       resources :official_tariffs, only: [] do

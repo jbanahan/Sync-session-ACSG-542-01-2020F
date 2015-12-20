@@ -18,7 +18,7 @@
 
   app.factory('chainApiSvc', [
     '$http', '$q', '$sce', function($http, $q, $sce) {
-      var newCoreModuleClient, newUserClient, publicMethods;
+      var newCoreModuleClient, newMessageClient, newUserClient, publicMethods;
       publicMethods = {};
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
         var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
@@ -137,26 +137,43 @@
           return publicMethods.Order.load(order.id);
         });
       };
-      publicMethods.Message = {
-        list: function() {
-          return $http.get('/api/v1/messages.json').then(function(resp) {
-            var j, len, m, msgs;
-            msgs = resp.data.messages;
-            for (j = 0, len = msgs.length; j < len; j++) {
-              m = msgs[j];
-              if (m.body) {
-                m.htmlSafeBody = $sce.trustAsHtml(m.body);
+      newMessageClient = function() {
+        var processMessageResponse;
+        processMessageResponse = function(m) {
+          if (m.body) {
+            m.htmlSafeBody = $sce.trustAsHtml(m.body);
+          }
+          return m;
+        };
+        return {
+          list: function(pageNumber) {
+            var pn;
+            pn = pageNumber ? pageNumber : 1;
+            return $http.get('/api/v1/messages.json?page=' + pn).then(function(resp) {
+              var j, len, m, msgs;
+              msgs = resp.data.messages;
+              for (j = 0, len = msgs.length; j < len; j++) {
+                m = msgs[j];
+                processMessageResponse(m);
               }
-            }
-            return msgs;
-          });
-        },
-        count: function(user) {
-          return $http.get('/api/v1/messages/count/' + user.id + '.json').then(function(resp) {
-            return resp.data.message_count;
-          });
-        }
+              return msgs;
+            });
+          },
+          count: function(user) {
+            return $http.get('/api/v1/messages/count/' + user.id + '.json').then(function(resp) {
+              return resp.data.message_count;
+            });
+          },
+          markAsRead: function(message) {
+            return $http.post('/api/v1/messages/' + message.id + '/mark_as_read.json', {
+              message: message
+            }).then(function(resp) {
+              return processMessageResponse(resp.data.message);
+            });
+          }
+        };
       };
+      publicMethods.Message = newMessageClient();
       newUserClient = function() {
         var cachedMe;
         cachedMe = null;
@@ -178,6 +195,12 @@
                 return cachedMe;
               });
             }
+          },
+          toggleEmailNewMessages: function() {
+            return $http.post('/api/v1/users/me/toggle_email_new_messages.json', {}).then(function(resp) {
+              cachedMe = resp.data.user;
+              return cachedMe;
+            });
           }
         };
       };
@@ -325,13 +348,40 @@
         templateUrl: 'chain-messages-modal.html',
         link: function(scope, el, atrs) {
           scope.loadMessages = function() {
-            scope.messages = [];
+            delete scope.messages;
             return chainApiSvc.Message.list().then(function(msgs) {
-              return scope.messages = msgs;
+              scope.messages = msgs;
+              return scope.messages;
+            });
+          };
+          scope.loadUser = function() {
+            delete scope.user;
+            return chainApiSvc.User.me().then(function(u) {
+              scope.user = u;
+              return scope.user;
+            });
+          };
+          scope.readMessage = function(message) {
+            if (!message.viewed) {
+              chainApiSvc.Message.markAsRead(message);
+            }
+            message.shown = true;
+            return message.viewed = true;
+          };
+          scope.toggleEmailNewMessages = function() {
+            scope.loading = 'loading';
+            return chainApiSvc.User.toggleEmailNewMessages().then(function(u) {
+              scope.user = u;
+              return delete scope.loading;
             });
           };
           return $(el).on('show.bs.modal', function() {
-            return scope.loadMessages();
+            scope.loading = 'loading';
+            return scope.loadUser().then(function() {
+              return scope.loadMessages().then(function() {
+                return delete scope.loading;
+              });
+            });
           });
         }
       };
@@ -386,5 +436,5 @@ angular.module('ChainCommon-Templates', ['chain-messages-modal.html']);
 
 angular.module("chain-messages-modal.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-messages-modal.html",
-    "<div class=\"modal\" id=\"chain-messages-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Messages</h4></div><div class=\"modal-body\"><div class=\"panel-group\"><div class=\"panel\" ng-repeat=\"m in messages track by m.id\"><div class=\"panel-heading\"><h3 class=\"panel-title\" ng-click=\"m.shown=!m.shown\">{{m.subject}}</h3></div><div ng-show=\"m.shown\" ng-bind-html=\"m.htmlSafeBody\" class=\"panel-body\"></div></div></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
+    "<div class=\"modal\" id=\"chain-messages-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Messages</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"><div ng-if=\"messages && messages.length==0\" class=\"text-success text-center\">You don't have any messages.</div><div class=\"panel-group\"><div class=\"panel\" ng-repeat=\"m in messages track by m.id\"><div class=\"panel-heading\"><h3 class=\"panel-title subject\" ng-click=\"readMessage(m)\" ng-class=\"{'unread-subject':!m.viewed}\">{{m.subject}}</h3></div><div ng-show=\"m.shown\" class=\"panel-body\"><div ng-bind-html=\"m.htmlSafeBody\" class=\"message-body\"></div></div></div></div></chain-loading-wrapper></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" id=\"toggle-email-new-messages\" ng-click=\"toggleEmailNewMessages()\"><i class=\"fa\" ng-class=\"{'fa-square-o':!user.email_new_messages, 'fa-check-square-o':user.email_new_messages}\"></i> Email Messages</button> <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
 }]);
