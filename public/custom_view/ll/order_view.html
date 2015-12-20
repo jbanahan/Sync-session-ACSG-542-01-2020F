@@ -101,35 +101,42 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <table class="table table-bordered table-striped">
-        <thead>
-          <tr>
-            <th>Line Num</th>
-            <th>Article</th>
-            <th>Quantity</th>
-            <th>UM</th>
-            <th>Unit Price</th>
-            <th>Net Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr ng-repeat='ol in order.order_lines track by ol.id'>
-            <td>{{ol.ordln_line_number}}</td>
-            <td>
-              <small>{{ol.ordln_puid}}</small><br />
-              {{ol.ordln_pname}}
-            </td>
-            <td class='text-right numeric'>{{ol.ordln_ordered_qty}}</td>
-            <td>{{ol.ordln_unit_of_measure}}</td>
-            <td class='text-right numeric'>{{ol.ordln_ppu}}</td>
-            <td class='text-right numeric'>{{ol.ordln_total_cost}}</td>
-          </tr>
-          <tr>
-            <td class='text-right' colspan='5'>Total</td>
-            <td class='text-right numeric'>{{order.ord_total_cost}}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="panel panel-primary">
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Line Num</th>
+              <th>Article</th>
+              <th>Quantity</th>
+              <th>UM</th>
+              <th>Unit Price</th>
+              <th>Net Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat='ol in order.order_lines track by ol.id'>
+              <td>{{ol.ordln_line_number}}</td>
+              <td>
+                <small>{{ol.ordln_puid}}</small><br />
+                {{ol.ordln_pname}}
+              </td>
+              <td class='text-right numeric'>{{ol.ordln_ordered_qty}}</td>
+              <td>{{ol.ordln_unit_of_measure}}</td>
+              <td class='text-right numeric'>{{ol.ordln_ppu}}</td>
+              <td class='text-right numeric'>{{ol.ordln_total_cost}}</td>
+            </tr>
+            <tr>
+              <td class='text-right' colspan='5'>Total</td>
+              <td class='text-right numeric'>{{order.ord_total_cost}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <chain-comments-panel parent="order" module-type="Order"></chain-comments-panel>
     </div>
   </div>
   <div class="row">

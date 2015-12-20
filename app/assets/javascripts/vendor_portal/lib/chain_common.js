@@ -18,7 +18,7 @@
 
   app.factory('chainApiSvc', [
     '$http', '$q', '$sce', function($http, $q, $sce) {
-      var newCoreModuleClient, newMessageClient, newUserClient, publicMethods;
+      var newCommentClient, newCoreModuleClient, newMessageClient, newUserClient, publicMethods;
       publicMethods = {};
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
         var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
@@ -205,7 +205,73 @@
         };
       };
       publicMethods.User = newUserClient();
+      newCommentClient = function() {
+        return {
+          "delete": function(comment) {
+            return $http["delete"]('/api/v1/comments/' + comment.id + '.json');
+          },
+          forModule: function(moduleType, objectId) {
+            return $http.get('/api/v1/comments/for_module/' + moduleType + '/' + objectId + '.json').then(function(resp) {
+              return resp.data.comments;
+            });
+          },
+          post: function(comment) {
+            return $http.post('/api/v1/comments.json', {
+              comment: comment
+            }).then(function(resp) {
+              return resp.data.comment;
+            });
+          }
+        };
+      };
+      publicMethods.Comment = newCommentClient();
       return publicMethods;
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainCommentsPanel', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {
+          parent: '=',
+          moduleType: '@'
+        },
+        templateUrl: 'chain-comments-panel.html',
+        link: function(scope, el, attrs) {
+          var loadComments, setCommentToAdd;
+          loadComments = function() {
+            return chainApiSvc.Comment.forModule(scope.moduleType, scope.parent.id).then(function(comments) {
+              return scope.comments = comments;
+            });
+          };
+          setCommentToAdd = function() {
+            return scope.commentToAdd = {
+              commentable_id: scope.parent.id,
+              commentable_type: scope.moduleType
+            };
+          };
+          scope["delete"] = function(comment) {
+            return chainApiSvc.Comment["delete"](comment).then(function() {
+              return loadComments();
+            });
+          };
+          scope.add = function(comment) {
+            return chainApiSvc.Comment.post(comment).then(function(c) {
+              if (!scope.comments) {
+                scope.comments = [];
+              }
+              scope.comments.push(c);
+              return setCommentToAdd();
+            });
+          };
+          loadComments();
+          return setCommentToAdd();
+        }
+      };
     }
   ]);
 
@@ -432,7 +498,12 @@
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-messages-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-comments-panel.html', 'chain-messages-modal.html']);
+
+angular.module("chain-comments-panel.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-comments-panel.html",
+    "<div class=\"panel panel-primary chain-comments-panel\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Comments</h3></div><div class=\"panel-body\"><div ng-repeat=\"c in comments track by c.id\"><div class=\"panel panel-info\"><div class=\"panel-heading\"><div><div class=\"pull-right\"><abbr am-time-ago=\"c.created_at\" title=\"{{c.created_at}}\"></abbr> {{c.user.full_name}}</div>{{c.subject}}&nbsp;</div></div><div class=\"panel-body comment-body\">{{c.body}}</div><div class=\"panel-footer text-right\" ng-if=\"c.permissions.can_delete\"><button class=\"btn btn-xs btn-danger chain-comment-delete\" ng-click=\"c.deleteCheck=true\" ng-hide=\"c.deleteCheck\" title=\"Delete\"><i class=\"fa fa-trash\"></i></button><div ng-show=\"c.deleteCheck && !c.deleting\">Are you sure you want to delete this? <button class=\"btn btn-sm btn-danger chain-comment-delete-confirm\" ng-click=\"delete(c)\">Yes</button> &nbsp; <button class=\"btn btn-sm btn-default\" ng-click=\"c.deleteCheck=false\">No</button></div><div ng-show=\"deleting\">Deleting...</div></div></div></div><div class=\"panel panel-default chain-add-comment-panel\" ng-if=\"parent.permissions.can_comment\"><div class=\"panel-heading\"><input class=\"form-control\" placeholder=\"Subject\" ng-model=\"commentToAdd.subject\"></div><div class=\"panel-body\"><textarea ng-model=\"commentToAdd.body\" class=\"form-control\"></textarea></div><div class=\"panel-footer text-right\"><button class=\"btn btn-xs btn-success chain-add-comment-button\" ng-click=\"add(commentToAdd)\" ng-disabled=\"!(commentToAdd.body.length > 0)\"><i class=\"fa fa-plus\"></i></button></div></div></div></div>");
+}]);
 
 angular.module("chain-messages-modal.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-messages-modal.html",
