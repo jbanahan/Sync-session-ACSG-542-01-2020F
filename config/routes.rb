@@ -10,6 +10,10 @@ OpenChain::Application.routes.draw do
   namespace :api do
     namespace :v1 do
       match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
+      match '/messages/count/:user_id' => 'messages#count'
+      resources :messages, only: [:index] do
+        post :mark_as_read, on: :member
+      end
       resources :comments, only: [:create,:destroy]
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
@@ -43,12 +47,16 @@ OpenChain::Application.routes.draw do
       resources :orders, only: [:index,:show] do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
+        post :accept, on: :member
+        post :unaccept, on: :member
       end
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
         post :login, on: :collection
         post :google_oauth2, on: :collection
+        get :me, on: :collection
+        post 'me/toggle_email_new_messages' => 'users#toggle_email_new_messages', on: :collection
       end
 
       resources :official_tariffs, only: [] do
@@ -309,6 +317,7 @@ OpenChain::Application.routes.draw do
   match "/disable_run_as" => "users#disable_run_as"
   match "/users/set_homepage" => "users#set_homepage", :via => :post
   match "/me" => "users#me", via: :get
+  match "/logo.png" => "logo#logo", via: :get
 
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
@@ -760,6 +769,8 @@ OpenChain::Application.routes.draw do
   resources :search_templates, only: [:index,:destroy]
 
   resources :milestone_notification_configs, only: [:index]
+
+  match "/vendor_portal" => "vendor_portal#index", via: :get
 
   #Griddler inbound email processing
   mount_griddler

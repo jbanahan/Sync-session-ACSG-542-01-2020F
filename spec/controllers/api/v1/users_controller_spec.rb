@@ -121,4 +121,51 @@ describe Api::V1::UsersController do
       expect(response.status).to eq 403
     end
   end
+
+  describe "#me" do
+    it "should get my user profile" do
+      u = Factory(:user,
+        first_name:'Joe',
+        last_name:'User',
+        username:'uname',
+        email:'j@sample.com',
+        email_new_messages:true)
+      allow_api_access u
+
+      get :me
+
+      expect(response).to be_success
+      expected = {'user'=>{
+        'username'=>'uname',
+        'full_name'=>u.full_name,
+        'first_name'=>u.first_name,
+        'last_name'=>u.last_name,
+        'email'=>'j@sample.com',
+        'email_new_messages'=>true,
+        'id'=>u.id}}
+    end
+  end
+
+  describe "#toggle_email_new_messages" do
+    it "should set email_new_messages" do
+      u = Factory(:user)
+      allow_api_access u
+      post :toggle_email_new_messages
+      expect(response).to redirect_to '/api/v1/users/me'
+
+      u.reload
+      expect(u.email_new_messages).to be_true
+    end
+    it "should unset email_new_messages" do
+      u = Factory(:user)
+      u.email_new_messages = true
+      u.save!
+      allow_api_access u
+      post :toggle_email_new_messages
+      expect(response).to redirect_to '/api/v1/users/me'
+      
+      u.reload
+      expect(u.email_new_messages).to be_false
+    end
+  end
 end

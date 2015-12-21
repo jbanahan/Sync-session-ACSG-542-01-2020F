@@ -718,4 +718,16 @@ describe User do
     end
 
   end
+
+  describe :portal_redirect_path do
+    it "should return nil if portal_mode.blank?" do
+      expect(User.new.portal_redirect_path).to be_nil
+    end
+    it "should return nil if portal_mode not found in list" do
+      expect(User.new(portal_mode:'ABC').portal_redirect_path).to be_nil
+    end
+    it "should return portal redirect for vendor" do
+      expect(User.new(portal_mode:'vendor').portal_redirect_path).to eq '/vendor_portal'
+    end
+  end
 end

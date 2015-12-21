@@ -10,6 +10,22 @@ describe OrdersController do
     sign_in_as @u
   end
 
+  describe '#show' do
+    context 'order_view_template' do
+      it 'should render default template' do
+        o = Factory(:order,importer:@u.company)
+        get :show, id: o.id
+        expect(response).to render_template :show
+      end
+      it 'should render custom template' do
+        @u.company.update_attributes(order_view_template:'custom_views/j_jill/orders/show.html.erb')
+        o = Factory(:order,importer:@u.company)
+        get :show, id: o.id
+        expect(response).to render_template 'custom_views/j_jill/orders/show.html'
+      end
+    end
+  end
+
   describe :accept do
     it "should accept if user has permission" do
       Order.any_instance.should_receive(:async_accept!).with(@u)

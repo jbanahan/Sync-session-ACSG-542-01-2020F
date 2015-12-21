@@ -287,4 +287,39 @@ describe ApplicationController do
       expect(assigns(:run_as_user)).to eq u
     end
   end
+
+  describe :portal_redirect do
+    controller do
+      def show 
+        render :text => current_user.username
+      end
+    end
+
+    before :each do
+      @routes.draw {
+        resources :anonymous
+      }
+    end
+
+    it "should redirect to portal_redirect_path if not blank?" do
+    
+      User.any_instance.stub(:portal_redirect_path).and_return '/abc'
+      u = Factory(:user)
+      sign_in_as u
+
+      get :show, id: 1
+
+      expect(response).to redirect_to '/abc'
+
+    end
+    it "should not do anything if portal_redirect_path.blank?" do
+      u = Factory(:user)
+      sign_in_as u
+
+      get :show, id: 1
+
+      expect(response).to be_success
+      expect(response.body).to eq u.username
+    end
+  end
 end

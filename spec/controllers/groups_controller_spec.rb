@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe GroupsController do
   before(:each) do
+        User.scoped.destroy_all #clear default sysadmin user
         @user = Factory(:user, admin: true)
         sign_in_as @user
   end

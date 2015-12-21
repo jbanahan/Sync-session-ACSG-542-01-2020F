@@ -50,7 +50,7 @@ describe SearchSetup do
   end
   describe :give_to do
     before :each do
-      MasterSetup.create(request_host:"localhost:3000")
+      MasterSetup.get.update_attributes(request_host:"localhost:3000")
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")
       @u2 = Factory(:user)
       @s = SearchSetup.create!(:name=>"X",:module_type=>"Product",:user_id=>@u.id)

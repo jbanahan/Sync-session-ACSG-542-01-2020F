@@ -6,6 +6,8 @@ class Order < ActiveRecord::Base
   belongs_to :division
 	belongs_to :vendor,  :class_name => "Company"
 	belongs_to :ship_to, :class_name => "Address"
+  belongs_to :ship_from, :class_name => "Address"
+  belongs_to :order_from_address, :class_name => "Address"
   belongs_to :importer, :class_name => "Company"
   belongs_to :agent, :class_name=>"Company"
   belongs_to :closed_by, :class_name=>'User'

@@ -95,6 +95,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_approval_level: {label: 'Approval Level', data_type: :string, module_type: 'Order'},
     ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'},
     ord_type: {label: 'Order Type', data_type: :string, module_type: 'Order'},
+    ord_buyer_name: {label: 'Buyer Name', data_type: :string, module_type: 'Order'},
+    ord_buyer_phone: {label: 'Buyer Phone', data_type: :string, module_type: 'Order'},
     var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant'}
   }
 

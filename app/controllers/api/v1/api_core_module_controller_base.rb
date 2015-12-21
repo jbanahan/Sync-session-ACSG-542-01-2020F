@@ -193,7 +193,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
     per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
     per_page = 50 if per_page > 50
-    k = core_module.klass.scoped
+    k = core_module.klass.scoped.select("DISTINCT #{core_module.table_name}.id")
 
     #apply search criterions
     search_criterions.each do |sc|
@@ -201,14 +201,15 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
       k = sc.apply(k)
     end
 
+    k = core_module.klass.search_secure(user,k)
+    outer_query = core_module.klass.where("ID IN (#{k.to_sql})")
     #apply sort criterions
     sort_criterions.each do |sc|
       return unless validate_model_field 'Sort', sc.model_field_uid, core_module, user
-      k = sc.apply(k)
+      outer_query = outer_query.order("#{sc.model_field.qualified_field_name}#{sc.descending? ? ' desc' : ''}")
     end
-    k = core_module.klass.search_secure(user,k)
-    k = k.paginate(per_page:per_page,page:page)
-    r = k.to_a.collect {|obj| obj_to_json_hash(obj)}
+    outer_query = outer_query.paginate(per_page:per_page,page:page)
+    r = outer_query.to_a.collect {|obj| obj_to_json_hash(obj)}
     render json:{results:r,page:page,per_page:per_page}
   end
 

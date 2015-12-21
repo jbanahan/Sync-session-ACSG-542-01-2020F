@@ -1,0 +1,4 @@
+/* Manfiest for vendor_portal
+ *= require_directory ./vendor_portal/lib
+ *= require_directory ./vendor_portal/app
+ */

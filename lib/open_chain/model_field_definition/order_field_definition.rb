@@ -34,7 +34,22 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
       }],
       [16,:ord_season,:season,'Season',{data_type: :string}],
       [17,:ord_terms,:terms_of_sale,'Terms of Sale',{data_type: :string}],
-      [18,:ord_product_category,:product_category,'Product Category',{data_type: :string}]
+      [18,:ord_product_category,:product_category,'Product Category',{data_type: :string}],
+      [19,:ord_payment_terms,:terms_of_payment,'Terms of Payment', {data_type: :string}],
+      [20,:ord_currency,:currency,'Currency',{data_type: :string}],
+      [21,:ord_total_cost,:total_cost,'Total Cost',{
+        data_type: :decimal,
+        read_only: true,
+        export_lambda: lambda {|obj|
+          obj.order_lines.inject(0) {|init,ol| init + ol.total_cost}
+        },
+        qualified_field_name: "(SELECT SUM(IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)) FROM order_lines WHERE order_lines.order_id = orders.id)"
+      }],
+      [22,:ord_ship_to_count,:ship_to_count,'Ship To Count', {data_type: :integer,
+        read_only: true,
+        export_lambda: lambda {|obj| obj.order_lines.collect {|ol| ol.ship_to_id}.uniq.length},
+        qualified_field_name: "(SELECT COUNT(DISTINCT ship_to_id) FROM order_lines WHERE order_lines.order_id = orders.id)"
+      }]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
@@ -44,5 +59,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
     add_fields CoreModule::ORDER, make_agent_arrays(600,'ord','orders')
     add_fields CoreModule::ORDER, make_factory_arrays(700,'ord','orders')
     add_fields CoreModule::ORDER, make_business_rule_arrays(800,'ord','orders','Order')
+    add_fields CoreModule::ORDER, make_ship_from_arrays(900,'ord','orders')
+    add_fields CoreModule::ORDER, make_address_arrays(1000,"ord",'orders','order_from')
   end
 end; end; end

@@ -1,0 +1,164 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <a ui-sref='main'><img src="/logo.png" alt="Logo"></a>
+      <br />
+      <h1>
+        <small>Purchase Order</small>
+        <br />
+        {{order.ord_ord_num}}
+      </h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-5">
+      <div class="panel panel-primary">
+          <div class="panel-heading">
+          </div>
+          <ul class='list-group'>
+            <li class='list-group-item'>
+              Issue Date <span class='pull-right'>{{order.ord_ord_date}}</span>
+            </li>
+            <li class='list-group-item'>
+              Planned Delivery Date <span class='pull-right'>{{order.ord_first_exp_del}}</span>
+            </li>
+            <li class='list-group-item'>
+              Ship Window <span class='pull-right'><small>To be provided by freight forwarder</small></span>
+            </li>
+            <li class="list-group-item">
+              Vendor No.
+              <span class="pull-right">{{order.ord_ven_syscode}}</span>
+            </li>
+            <li class="list-group-item">
+              Vendor Name
+              <span class="pull-right">{{order.ord_ven_name}}</span>
+            </li>
+            <li class="list-group-item">
+              Currency
+              <span class="pull-right">{{order.ord_currency}}</span>
+            </li>
+            <li class="list-group-item">
+              Terms of Payment
+              <span class="pull-right">{{order.ord_payment_terms}}</span>
+            </li>
+            <li class="list-group-item">
+              Terms of Delivery
+              <span class="pull-right">{{order.ord_terms}}</span>
+            </li>
+          </ul>
+      </div>
+      <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Order Status</h3>
+          </div>
+          <ul class='list-group'>
+            <li class='list-group-item'>
+              Vendor Approval Status
+              <span class='pull-right'>{{order.ord_approval_status}} <order-accept-button></order-accept-button></span>
+            </li>
+          </ul>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Vendor Order Address</h3>
+        </div>
+        <div class="panel-body">
+          <chain-address address='{{order.ord_order_from_address_full_address}}'></chain-address>
+        </div>
+      </div>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Vendor Ship From</h3>
+        </div>
+        <div class="panel-body">
+          As dictated by supplier reference manual, the manufacturer must ship from previously approved facilities.
+        </div>
+      </div>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Billing Address</h3>
+        </div>
+        <div class="panel-body">
+          <address>
+            <strong>Lumber Liquidators Services, LLC</strong><br />
+            ATTN: Accounts Payable<br />
+            3000 John Deere Rd<br />
+            Toano, VA 23168 US
+          </address>
+        </div>
+      </div>
+      <div class="panel panel-primary" >
+        <div class="panel-heading">
+          <h3 class="panel-title">Ship To Address</h3>
+        </div>
+        <div ng-if='order.order_lines.length > 0 && order.ord_ship_to_count==1' class="panel-body">
+          <chain-address address="{{order.order_lines[0].ordln_ship_to_full_address}}"></chain-address>
+        </div>
+        <div ng-if='order.ord_ship_to_count > 1' class='panel-body'>
+          <strong>Multi-Stop</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="panel panel-primary">
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Line Num</th>
+              <th>Article</th>
+              <th ng-if='order.ord_ship_to_count > 1'>Ship To</th>
+              <th>Quantity</th>
+              <th>UM</th>
+              <th>Unit Price</th>
+              <th>Net Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat='ol in order.order_lines track by ol.id'>
+              <td>{{ol.ordln_line_number}}</td>
+              <td>
+                <small>{{ol.ordln_puid}}</small><br />
+                {{ol.ordln_pname}}
+              </td>
+              <td ng-if='order.ord_ship_to_count > 1'>
+                <chain-address address='{{ol.ordln_ship_to_full_address}}'></chain-address>
+              </td>
+              <td class='text-right numeric'>{{ol.ordln_ordered_qty}}</td>
+              <td>{{ol.ordln_unit_of_measure}}</td>
+              <td class='text-right numeric'>{{ol.ordln_ppu}}</td>
+              <td class='text-right numeric'>{{ol.ordln_total_cost}}</td>
+            </tr>
+            <tr>
+              <td class='text-right' colspan='5'>Total</td>
+              <td class='text-right numeric'>{{order.ord_total_cost}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <chain-comments-panel parent="order" module-type="Order"></chain-comments-panel>
+    </div>
+    <div class="col-md-6">
+      <chain-attachments-panel parent="order" module-type="Order"></chain-attachments-panel>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="panel panel-default">
+          <div class="panel-body">
+            The Purchase Order is subject to and incorporates by reference the Purchase Order Terms and Conditions located
+            at <a href='http://www.llvendors.com'>www.llvendors.com</a>. By accepting this Purchase Order, Seller agrees to be bound
+            by the Purchase Order Terms and Conditions. The Terms and Conditions may not be modified, altered, amended or edited in any
+            way without the express written consent of Lumber Liquidators' Chief Merchandising Officer.
+          </div>
+      </div>
+    </div>
+  </div>
+</div>

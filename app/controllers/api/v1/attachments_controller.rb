@@ -16,7 +16,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
   end
 
   def index 
-    att = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type]))
+    att = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type])).order('created_at desc')
 
     attachments = []
     att.each do |a|
