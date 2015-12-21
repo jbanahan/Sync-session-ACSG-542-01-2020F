@@ -58,8 +58,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       o.terms_of_sale = ship_terms(base)
       o.order_from_address = order_from_address(base,vend)
 
+      header_ship_to = ship_to_address(base,@imp)
+
       order_lines_processed = []
-      REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp).line_number.to_i}
+      REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to).line_number.to_i}
       o.order_lines.each {|ol| 
         ol.mark_for_destruction unless order_lines_processed.include?(ol.line_number.to_i)
       }
@@ -110,7 +112,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
     end
 
-    def process_line order, line_el, importer
+    def process_line order, line_el, importer, header_ship_to
       line_number = et(line_el,'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
@@ -136,6 +138,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       end
 
       ol.ship_to = ship_to_address(line_el,importer)
+
+      ol.ship_to = header_ship_to if ol.ship_to.nil?
 
       return ol
     end
@@ -171,8 +175,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def order_from_address base, vendor
-      el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'WE']")
-      return address(el,vendor)
+      vendor.addresses.first
     end
 
     def ship_to_address base, importer
