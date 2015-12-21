@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
     it "should re-use existing address" do
       oa = @vendor.addresses.new
-      oa.name = "EAST BRUNSWICK NJ 1183 Courtney Wilson"
+      oa.name = "Courtney Wilson"
       oa.line_1 = '2 Claire Road'
       oa.line_2 = 'Suite 2-C'
       oa.city = 'East Brunswick'
@@ -112,7 +112,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       oa.save!
 
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom)}.to_not change(Address,:count)
+      described_class.new.parse_dom(dom)
 
       expect(Order.first.order_from_address_id).to eq oa.id
     end
