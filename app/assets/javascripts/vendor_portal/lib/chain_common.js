@@ -18,7 +18,7 @@
 
   app.factory('chainApiSvc', [
     '$http', '$q', '$sce', function($http, $q, $sce) {
-      var newCommentClient, newCoreModuleClient, newMessageClient, newUserClient, publicMethods;
+      var newAttachmentClient, newCommentClient, newCoreModuleClient, newMessageClient, newUserClient, publicMethods;
       publicMethods = {};
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
         var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
@@ -225,7 +225,42 @@
         };
       };
       publicMethods.Comment = newCommentClient();
+      newAttachmentClient = function() {
+        return {
+          forModule: function(moduleType, objectId) {
+            return $http.get('/api/v1/' + moduleType + '/' + objectId + '/attachments.json').then(function(resp) {
+              return resp.data;
+            });
+          }
+        };
+      };
+      publicMethods.Attachment = newAttachmentClient();
       return publicMethods;
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainAttachmentsPanel', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {
+          parent: '=',
+          moduleType: '@'
+        },
+        templateUrl: 'chain-attachments-panel.html',
+        link: function(scope, el, attrs) {
+          var load;
+          load = function() {
+            return chainApiSvc.Attachment.forModule(scope.moduleType, scope.parent.id).then(function(atts) {
+              return scope.attachments = atts;
+            });
+          };
+          return load();
+        }
+      };
     }
   ]);
 
@@ -498,7 +533,12 @@
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-comments-panel.html', 'chain-messages-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-comments-panel.html', 'chain-messages-modal.html']);
+
+angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-attachments-panel.html",
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.name}} <span class=\"badge\">{{att.size}}</span></a></li></ul></div>");
+}]);
 
 angular.module("chain-comments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-comments-panel.html",
