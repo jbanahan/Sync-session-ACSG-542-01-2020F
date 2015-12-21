@@ -65,10 +65,20 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
   end
   describe '#run_changes' do
+    before :each do
+      @u = double('user')
+      @o = double('order')
+      Order.should_receive(:find).with(1).and_return @o
+      User.stub(:integration).and_return @u
+      OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.stub(:create!)
+      @o.stub(:unaccept!)
+    end
     it 'should call Order PDF generator' do
-      o = double('order')
-      Order.should_receive(:find).with(1).and_return o
-      OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.should_receive(:create!).with(o)
+      OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.should_receive(:create!).with(@o)
+      described_class.run_changes 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
+    end
+    it "should clear approval" do
+      @o.should_receive(:unaccept!).with(@u)
       described_class.run_changes 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
   end

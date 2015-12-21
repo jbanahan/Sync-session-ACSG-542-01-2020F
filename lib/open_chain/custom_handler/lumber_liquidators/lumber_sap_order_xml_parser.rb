@@ -56,6 +56,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       o.currency = et(order_header,'CURCY')
       o.terms_of_payment = payment_terms_description(base)
       o.terms_of_sale = ship_terms(base)
+      o.order_from_address = order_from_address(base,vend)
 
       order_lines_processed = []
       REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el).line_number.to_i}
@@ -166,6 +167,38 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       parse_date(str)
     end
 
+    def order_from_address base, vendor
+      el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'WE']")
+      return nil unless el
+      my_addr = Address.new
+      my_addr.company_id = vendor.id
+      
+      name1 = et(el,'NAME1')
+      name2 = et(el,'NAME2')
+      my_addr.name = [name1,name2].join(" ")
+      
+      my_addr.line_1 = et(el,'STRAS')
+      my_addr.line_2 = et(el,'STRS2')
+      my_addr.city = et(el,'ORT01')
+      my_addr.state = et(el,'REGIO')
+      my_addr.postal_code = et(el,'PSTLZ')
+
+      country_iso = et(el,'LAND1')
+      my_addr.country = Country.find_by_iso_code(country_iso) unless country_iso.blank?
+
+      my_addr.system_code = et(el,'LIFNR')
+
+      hk = Address.make_hash_key my_addr
+
+      existing = vendor.addresses.find_by_address_hash hk
+
+      return existing if existing
+
+      my_addr.save!
+
+      return my_addr
+    end
+
     def expected_delivery_date base
       el = REXML::XPath.first(base,"./E1EDP20")
       return nil unless el
@@ -191,7 +224,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         else
           # Strip trailing insignificant digits
           if percent =~ /\.\d*[0]+$/
-            percent.sub! /0+$/, ""
+            percent.sub!(/0+$/, "")
             percent = percent[0..-2] if percent.ends_with?(".")
           end
           values << "#{percent}% #{days} Days"

@@ -42,7 +42,9 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       :ord_payment_terms,
       :ord_terms,
       :ord_total_cost,
-      :ord_approval_status
+      :ord_approval_status,
+      :ord_order_from_address_name,
+      :ord_order_from_address_full_address
     ] + custom_field_keys(CoreModule::ORDER))
     line_fields_to_render = limit_fields([
       :ordln_line_number,

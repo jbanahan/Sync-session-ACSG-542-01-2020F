@@ -12,6 +12,24 @@
 }).call(this);
 
 (function() {
+  angular.module('ChainCommon').directive('chainAddress', [
+    function() {
+      return {
+        restrict: 'E',
+        scope: {
+          address: '@'
+        },
+        template: "<address> <span ng-repeat='ln in lines' ng-class='{\"chain-address-name\":$first}'> {{ln}}<br ng-if='!$last'/> </span> </address>",
+        link: function(scope, el, attrs) {
+          return scope.lines = scope.address.split("\n");
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   var app;
 
   app = angular.module('ChainCommon');
