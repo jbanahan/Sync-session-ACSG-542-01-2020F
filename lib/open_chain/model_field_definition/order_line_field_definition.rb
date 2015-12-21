@@ -21,5 +21,7 @@ module OpenChain; module ModelFieldDefinition; module OrderLineFieldDefinition
       [11,:ordln_unit_of_measure,:unit_of_measure,'Unit of Measure',{data_type: :string}]
     ]
     add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
+    add_fields CoreModule::ORDER_LINE, make_ship_to_arrays(200,"ordln","order_lines")
+
   end
 end; end; end

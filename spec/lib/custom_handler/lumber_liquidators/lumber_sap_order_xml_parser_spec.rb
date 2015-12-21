@@ -34,14 +34,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.currency).to eq 'USD'
       # No terms in XML should be "Due Immediately"
       expect(o.terms_of_payment).to eq 'Due Immediately'
-      expect(o.terms_of_sale).to eq 'Free on Board'
+      expect(o.terms_of_sale).to eq 'FOB'
       expect(o.get_custom_value(@cdefs[:ord_buyer_name]).value).to eq 'Purchasing Grp 100'
       expect(o.get_custom_value(@cdefs[:ord_buyer_phone]).value).to eq '757-259-4280'
 
 
       # order address
       oa = o.order_from_address
-      expect(oa.name).to eq "EAST BRUNSWICK NJ 1183 Courtney Wilson"
+      expect(oa.name).to eq "Courtney Wilson"
       expect(oa.line_1).to eq '2 Claire Road'
       expect(oa.line_2).to eq 'Suite 2-C'
       expect(oa.city).to eq 'East Brunswick'
@@ -59,6 +59,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ol.quantity).to eq 5602.8
       expect(ol.price_per_unit).to eq 1.85
       expect(ol.unit_of_measure).to eq 'FTK'
+
+      ship_to = ol.ship_to
+      expect(ship_to.name).to eq "Angel Aguilar"
+      expect(ship_to.line_1).to eq '6548 Telegraph Road'
+      expect(ship_to.line_2).to be_blank
+      expect(ship_to.city).to eq 'City of Commerce'
+      expect(ship_to.state).to eq 'CA'
+      expect(ship_to.postal_code).to eq '90040'
+      expect(ship_to.country).to eq @usa
+      expect(ship_to.system_code).to eq '1005'      
 
       # new product
       new_prod = o.order_lines.find_by_line_number(2).product

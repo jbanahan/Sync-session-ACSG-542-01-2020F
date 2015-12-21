@@ -89,12 +89,15 @@
           </address>
         </div>
       </div>
-      <div class="panel panel-primary">
+      <div class="panel panel-primary" >
         <div class="panel-heading">
           <h3 class="panel-title">Ship To Address</h3>
         </div>
-        <div class="panel-body">
-          <span class='bg-danger'>TBD</span>
+        <div ng-if='order.order_lines.length > 0 && order.ord_ship_to_count==1' class="panel-body">
+          <chain-address address="{{order.order_lines[0].ordln_ship_to_full_address}}"></chain-address>
+        </div>
+        <div ng-if='order.ord_ship_to_count > 1' class='panel-body'>
+          <strong>Multi-Stop</strong>
         </div>
       </div>
     </div>
@@ -107,6 +110,7 @@
             <tr>
               <th>Line Num</th>
               <th>Article</th>
+              <th ng-if='order.ord_ship_to_count > 1'>Ship To</th>
               <th>Quantity</th>
               <th>UM</th>
               <th>Unit Price</th>
@@ -119,6 +123,9 @@
               <td>
                 <small>{{ol.ordln_puid}}</small><br />
                 {{ol.ordln_pname}}
+              </td>
+              <td ng-if='order.ord_ship_to_count > 1'>
+                <chain-address address='{{ol.ordln_ship_to_full_address}}'></chain-address>
               </td>
               <td class='text-right numeric'>{{ol.ordln_ordered_qty}}</td>
               <td>{{ol.ordln_unit_of_measure}}</td>

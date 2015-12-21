@@ -44,6 +44,11 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
           obj.order_lines.inject(0) {|init,ol| init + ol.total_cost}
         },
         qualified_field_name: "(SELECT SUM(IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)) FROM order_lines WHERE order_lines.order_id = orders.id)"
+      }],
+      [22,:ord_ship_to_count,:ship_to_count,'Ship To Count', {data_type: :integer,
+        read_only: true,
+        export_lambda: lambda {|obj| obj.order_lines.collect {|ol| ol.ship_to_id}.uniq.length},
+        qualified_field_name: "(SELECT COUNT(DISTINCT ship_to_id) FROM order_lines WHERE order_lines.order_id = orders.id)"
       }]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")

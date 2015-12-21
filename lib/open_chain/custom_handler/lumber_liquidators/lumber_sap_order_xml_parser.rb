@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       o.order_from_address = order_from_address(base,vend)
 
       order_lines_processed = []
-      REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el).line_number.to_i}
+      REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp).line_number.to_i}
       o.order_lines.each {|ol| 
         ol.mark_for_destruction unless order_lines_processed.include?(ol.line_number.to_i)
       }
@@ -110,7 +110,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
     end
 
-    def process_line order, line_el
+    def process_line order, line_el, importer
       line_number = et(line_el,'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
@@ -134,6 +134,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         order.first_expected_delivery_date = exp_del
         @first_expected_delivery_date = exp_del
       end
+
+      ol.ship_to = ship_to_address(line_el,importer)
+
       return ol
     end
 
@@ -149,7 +152,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     def ship_terms base
       el = REXML::XPath.first(base,"./E1EDK17[QUALF = '001']")
       return nil unless el
-      str = et(el,'LKTEXT')
+      str = et(el,'LKOND')
       return str.blank? ? nil : str
     end
 
@@ -169,13 +172,22 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     def order_from_address base, vendor
       el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'WE']")
+      return address(el,vendor)
+    end
+
+    def ship_to_address base, importer
+      el = REXML::XPath.first(base,"./E1EDPA1[PARVW = 'WE']")
+      return address(el,importer)
+    end
+
+    def address el, company
       return nil unless el
       my_addr = Address.new
-      my_addr.company_id = vendor.id
+      my_addr.company_id = company.id
       
       name1 = et(el,'NAME1')
       name2 = et(el,'NAME2')
-      my_addr.name = [name1,name2].join(" ")
+      my_addr.name = name2.blank? ? name1 : name2
       
       my_addr.line_1 = et(el,'STRAS')
       my_addr.line_2 = et(el,'STRS2')
@@ -190,7 +202,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       hk = Address.make_hash_key my_addr
 
-      existing = vendor.addresses.find_by_address_hash hk
+      existing = company.addresses.find_by_address_hash hk
 
       return existing if existing
 

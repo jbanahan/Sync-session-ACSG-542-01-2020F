@@ -5,8 +5,9 @@ class OrderLine < ActiveRecord::Base
   include UpdateModelFieldsSupport
   
   belongs_to :order
+  belongs_to :ship_to, :class_name => 'Address'
 
-  has_many   :histories, :dependent => :destroy
+  has_many  :histories, :dependent => :destroy
   has_many  :shipment_lines, :through => :piece_sets
 	
   validates_uniqueness_of :line_number, :scope => :order_id	
