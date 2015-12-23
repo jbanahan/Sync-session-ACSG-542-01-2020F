@@ -30,7 +30,7 @@ describe Api::V1::EventSubscriptionsController do
     before :each do
       @u = Factory(:user)
       #bad user ids should be ignored
-      @payload = [{'event_type'=>'CREATE_ORDER','user_id'=>99,'email'=>true},{'event_type'=>'CREATE_COMMENT','user_id'=>22,'email'=>false}]
+      @payload = [{'event_type'=>'CREATE_ORDER','user_id'=>99,'email'=>true, 'system_message'=>true},{'event_type'=>'CREATE_COMMENT','user_id'=>22,'email'=>false}]
 
     end
     it "should handle create with no subscriptions" do
@@ -46,9 +46,11 @@ describe Api::V1::EventSubscriptionsController do
       es1 = @u.event_subscriptions.first
       expect(es1.event_type).to eq 'CREATE_ORDER'
       expect(es1).to be_email
+      expect(es1).to be_system_message
       es2 = @u.event_subscriptions.last
       expect(es2.event_type).to eq 'CREATE_COMMENT'
       expect(es2).to_not be_email
+      expect(es2).to_not be_system_message
     end
     it "should 404 if current_user cannot view user" do
       allow_api_access Factory(:user)

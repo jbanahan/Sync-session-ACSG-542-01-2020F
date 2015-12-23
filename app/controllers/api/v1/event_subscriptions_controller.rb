@@ -13,7 +13,8 @@ module Api; module V1; class EventSubscriptionsController < Api::V1::ApiControll
         params[:event_subscriptions].each do |es|
           u.event_subscriptions.build(
             event_type:es['event_type'],
-            email:es['email']
+            email:es['email'],
+            system_message:es['system_message']
             )
         end
       end

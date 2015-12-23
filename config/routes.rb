@@ -11,7 +11,7 @@ OpenChain::Application.routes.draw do
     namespace :v1 do
       match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
       match '/messages/count/:user_id' => 'messages#count'
-      resources :messages, only: [:index] do
+      resources :messages, only: [:index, :create] do
         post :mark_as_read, on: :member
       end
       resources :comments, only: [:create,:destroy]

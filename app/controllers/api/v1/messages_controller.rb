@@ -1,10 +1,16 @@
 module Api; module V1; class MessagesController < Api::V1::ApiController
+  before_filter :require_admin, only: [:create]
   def index
     messages = paginate(current_user.messages.order('created_at desc'))
     message_hashes = messages.collect do |m|
       message_hash(m)
     end
     render json: {messages: message_hashes}
+  end
+
+  def create
+    Message.create!(params[:message])
+    render json: {ok: 'ok'}
   end
 
   def count

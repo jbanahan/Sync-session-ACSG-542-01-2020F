@@ -58,4 +58,23 @@ describe Api::V1::MessagesController do
 
     end
   end
+
+  describe '#create' do
+    it "should restrict to admin" do
+      expect {post :create, {message: {user_id:@u.id, subject: 'hello'}}}.to_not change(Message,:count)
+      expect(response.status).to eq 403
+    end
+    it "should post message to user" do
+      @u.admin = true
+      @u.save!
+
+      expect {post :create, {message: {user_id:@u.id, subject: 'hello', body:'body'}}}.to change(Message,:count).by(1)
+      expect(response).to be_success
+
+      m = Message.first
+      expect(m.subject).to eq 'hello'
+      expect(m.body).to eq 'body'
+      expect(m.user).to eq @u
+    end
+  end
 end
