@@ -1,6 +1,7 @@
 <%
   subs = @user.event_subscriptions
   email_subs = subs.collect {|s| s.email? ? s.event_type : nil}
+  system_message_subs = subs.collect {|s| s.system_message? ? s.event_type : nil}
 %>
 <%-content_for :action_bar do-%>
   <button id='btn_save'>Save</button>
@@ -34,6 +35,7 @@
           <tr>
             <th>Event</th>
             <th>Email</th>
+            <th>System Message</th>
           </tr>
         </thead>
           <tbody>
@@ -44,30 +46,37 @@
             <tr>
               <td>Create</td>
               <td><input type='checkbox' event_type='ORDER_CREATE' sub_type='email' <%=email_subs.include?('ORDER_CREATE') ? 'checked="checked"' : ""%> /></td>
+              <td><input type='checkbox' event_type='ORDER_CREATE' sub_type='system_message' <%=system_message_subs.include?('ORDER_CREATE') ? 'checked="checked"' : ""%> /></td>
             </tr>
             <tr>
               <td>Update</td>
               <td><input type='checkbox' event_type='ORDER_UPDATE' sub_type='email' <%=email_subs.include?('ORDER_UPDATE') ? 'checked="checked"' : ""%> /></td>
+              <td><input type='checkbox' event_type='ORDER_UPDATE' sub_type='system_message' <%=system_message_subs.include?('ORDER_UPDATE') ? 'checked="checked"' : ""%> /></td>
             </tr>
             <tr>
               <td>Close</td>
               <td><input type='checkbox' event_type='ORDER_CLOSE' sub_type='email' <%=email_subs.include?('ORDER_CLOSE') ? 'checked="checked"' : ""%> /></td>
+              <td><input type='checkbox' event_type='ORDER_CLOSE' sub_type='system_message' <%=system_message_subs.include?('ORDER_CLOSE') ? 'checked="checked"' : ""%> /></td>
             </tr>
             <tr>
               <td>Reopen</td>
               <td><input type='checkbox' event_type='ORDER_REOPEN' sub_type='email' <%=email_subs.include?('ORDER_REOPEN') ? 'checked="checked"' : ""%> /></td>
+              <td><input type='checkbox' event_type='ORDER_REOPEN' sub_type='system_message' <%=system_message_subs.include?('ORDER_REOPEN') ? 'checked="checked"' : ""%> /></td>
             </tr>
             <tr>
               <td>Comment</td>
               <td><input type='checkbox' event_type='ORDER_COMMENT_CREATE' sub_type='email' <%=email_subs.include?('ORDER_COMMENT_CREATE') ? 'checked="checked"' : ""%> /></td>
+              <td><input type='checkbox' event_type='ORDER_COMMENT_CREATE' sub_type='system_message' <%=system_message_subs.include?('ORDER_COMMENT_CREATE') ? 'checked="checked"' : ""%> /></td>
             </tr>
             <tr>
               <td>Accept</td>
               <td><input type='checkbox' event_type='ORDER_ACCEPT' sub_type='email' <%=email_subs.include?('ORDER_ACCEPT') ? 'checked="checked"' : ""%> /></td>
+              <td><input type='checkbox' event_type='ORDER_ACCEPT' sub_type='system_message' <%=system_message_subs.include?('ORDER_ACCEPT') ? 'checked="checked"' : ""%> /></td>
             </tr>
             <tr>
               <td>Unaccept</td>
               <td><input type='checkbox' event_type='ORDER_UNACCEPT' sub_type='email' <%=email_subs.include?('ORDER_UNACCEPT') ? 'checked="checked"' : ""%> /></td>
+              <td><input type='checkbox' event_type='ORDER_UNACCEPT' sub_type='system_message' <%=system_message_subs.include?('ORDER_UNACCEPT') ? 'checked="checked"' : ""%> /></td>
             </tr>
 
           <%end%>
@@ -78,18 +87,22 @@
             <tr>
               <td>Comment</td>
               <td><input type='checkbox' event_type='SHIPMENT_COMMENT_CREATE' sub_type='email' <%=email_subs.include?('SHIPMENT_COMMENT_CREATE') ? 'checked="checked"' : ""%> </td>
+              <td><input type='checkbox' event_type='SHIPMENT_COMMENT_CREATE' sub_type='system_message' <%=system_message_subs.include?('SHIPMENT_COMMENT_CREATE') ? 'checked="checked"' : ""%> </td>
             </tr>
             <tr>
               <td>Booking Request</td>
               <td><input type='checkbox' event_type='SHIPMENT_BOOK_REQ' sub_type='email' <%=email_subs.include?('SHIPMENT_BOOK_REQ') ? 'checked="checked"' : ""%> </td>
+              <td><input type='checkbox' event_type='SHIPMENT_BOOK_REQ' sub_type='system_message' <%=system_message_subs.include?('SHIPMENT_BOOK_REQ') ? 'checked="checked"' : ""%> </td>
             </tr>
             <tr>
               <td>Booking Approval</td>
               <td><input type='checkbox' event_type='SHIPMENT_BOOK_APPROVE' sub_type='email' <%=email_subs.include?('SHIPMENT_BOOK_APPROVE') ? 'checked="checked"' : ""%> </td>
+              <td><input type='checkbox' event_type='SHIPMENT_BOOK_APPROVE' sub_type='system_message' <%=system_message_subs.include?('SHIPMENT_BOOK_APPROVE') ? 'checked="checked"' : ""%> </td>
             </tr>
             <tr>
               <td>Booking Confirmation</td>
               <td><input type='checkbox' event_type='SHIPMENT_BOOK_CONFIRM' sub_type='email' <%=email_subs.include?('SHIPMENT_BOOK_CONFIRM') ? 'checked="checked"' : ""%> </td>
+              <td><input type='checkbox' event_type='SHIPMENT_BOOK_CONFIRM' sub_type='system_message' <%=system_message_subs.include?('SHIPMENT_BOOK_CONFIRM') ? 'checked="checked"' : ""%> </td>
             </tr>
           <%end%>
         </tbody>
