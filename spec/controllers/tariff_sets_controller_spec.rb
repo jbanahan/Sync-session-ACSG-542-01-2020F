@@ -64,22 +64,27 @@ describe TariffSetsController do
         sign_in_as @user
       end
       it 'should delay load from s3 and without activating' do
-        Country.should_receive(:find).with(@country.id.to_s).and_return(@country)
         TariffLoader.should_receive(:delay).and_return(TariffLoader)
-        TariffLoader.should_receive(:process_s3).with('abc',@country,'lbl',false,instance_of(User))
-        post :load, :country_id=>@country.id, :path=>'abc', :label=>'lbl'
+        TariffLoader.should_receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",false,instance_of(User))
+        post :load, :country_id=>@country.id, :path=>"path/to/file/#{@country.iso_code}_abc", :label=>"#{@country.iso_code}-lbl"
       end
       it 'should delay load from s3 and without activating and run at date specified from params' do
-        Country.should_receive(:find).with(@country.id.to_s).and_return(@country)
         TariffLoader.should_receive(:delay).with(:run_at => ActiveSupport::TimeZone[@user.time_zone].parse("2012-01-01 01:01")).and_return(TariffLoader)
-        TariffLoader.should_receive(:process_s3).with('abc',@country,'lbl',false,instance_of(User))
-        post :load, :country_id=>@country.id, :path=>'abc', :label=>'lbl', :date => {:year => "2012", :month=>1, :day => 1, :hour=>1, :minute => 1}
+        TariffLoader.should_receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",false,instance_of(User))
+        post :load, :country_id=>@country.id, :path=>"path/to/file/#{@country.iso_code}_abc", :label=>"#{@country.iso_code}-lbl", :date => {:year => "2012", :month=>1, :day => 1, :hour=>1, :minute => 1}
       end
       it 'should delay load from s3 and activate' do
-        Country.should_receive(:find).with(@country.id.to_s).and_return(@country)
         TariffLoader.should_receive(:delay).and_return(TariffLoader)
-        TariffLoader.should_receive(:process_s3).with('abc',@country,'lbl',true,instance_of(User))
-        post :load, :country_id=>@country.id, :path=>'abc', :label=>'lbl', :activate=>'yes'
+        TariffLoader.should_receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",true,instance_of(User))
+        post :load, :country_id=>@country.id, :path=>"path/to/file/#{@country.iso_code}_abc", :label=>"#{@country.iso_code}-lbl", :activate=>'yes'
+      end
+      it "fails if country selected does not match the file path" do
+        post :load, :country_id=>@country.id, :path=>"path/to/file/AA_abc", :label=>"#{@country.iso_code}-lbl", :activate=>'yes'
+        expect(flash[:errors]).to include "Tariff Set filename and Label must begin with the Country you are loading's ISO Code."
+      end
+      it "fails if country selected does not match the label" do
+        post :load, :country_id=>@country.id, :path=>"path/to/file/#{@country.iso_code}_abc", :label=>"lbl", :activate=>'yes'
+        expect(flash[:errors]).to include "Tariff Set filename and Label must begin with the Country you are loading's ISO Code."
       end
     end
   end

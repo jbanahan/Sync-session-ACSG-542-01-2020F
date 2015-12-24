@@ -30,8 +30,14 @@ class TariffSetsController < ApplicationController
         run_at = make_date_time params[:date]
       end
       
-      TariffLoader.delay(:run_at => run_at).process_s3 params['path'], country, params['label'], (params['activate'] ? true : false), current_user
-      add_flash :notices, "Tariff Set is loading in the background. You'll receive a system message when it's done."
+      # Verify that the file the S3 path points to starts w/ the countrie's ISO code...this helps to ensure we don't accidently load a set to a wrong
+      # country.
+      if File.basename(params['path']).upcase.starts_with?(country.iso_code) && params['label'].to_s.upcase.starts_with?(country.iso_code)
+        TariffLoader.delay(:run_at => run_at).process_s3 params['path'], country, params['label'], (params['activate'] ? true : false), current_user
+        add_flash :notices, "Tariff Set is loading in the background. You'll receive a system message when it's done."
+      else
+        add_flash :errors, "Tariff Set filename and Label must begin with the Country you are loading's ISO Code."
+      end
     else
       add_flash :errors, "Only system administrators can load tariff sets."
     end
