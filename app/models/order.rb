@@ -50,7 +50,7 @@ class Order < ActiveRecord::Base
   ########
 
   def accept! user, async_snapshot = false
-    self.approval_status = 'Accepted'
+    mark_order_as_accepted
     self.save!
     OpenChain::EventPublisher.publish :order_accept, self
     self.create_snapshot_with_async_option async_snapshot, user
@@ -71,6 +71,11 @@ class Order < ActiveRecord::Base
     u.admin? || u.company == self.vendor || u.company == self.agent
   end
 
+  # Don't use this method directly unless you know there is no acceptance
+  # policy for the given company and the orders need be selectable on the shipment screen.
+  def mark_order_as_accepted
+    self.approval_status = 'Accepted'
+  end
 
   ########
   # Order Close Logic

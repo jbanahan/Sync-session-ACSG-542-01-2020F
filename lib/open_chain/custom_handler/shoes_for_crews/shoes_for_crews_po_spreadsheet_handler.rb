@@ -121,9 +121,6 @@ module OpenChain; module CustomHandler; module ShoesForCrews
 
         fingerprint_handling(po, user) do
           po.post_update_logic! user
-          if po.approval_status == "Accepted"
-            po.unaccept! user
-          end
         end
       when "shipping"
         # We'll probably want to, at some point, send out an email like the jill 850 parser to notify order couldn't be updated.
@@ -178,6 +175,11 @@ module OpenChain; module CustomHandler; module ShoesForCrews
           line.find_and_set_custom_value(@cdefs[:order_line_color], color) unless color.blank?
         end
 
+        # If we don't mark the order as accepted, they will not be able to be selected on the shipment screen.
+        # As S4C doesn't have an acceptance step, we're safe to accept everything coming through here.
+        # We're also bypassing the standard accept because we don't want to kick out acceptance comments to 
+        # everyone for these, since, again, there's no acceptance step
+        order.mark_order_as_accepted
         order.save!
       end
 

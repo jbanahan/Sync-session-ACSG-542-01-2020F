@@ -315,6 +315,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(po.vendor.system_code).to eq "SHOES-123123"
       expect(po.vendor.vendor).to be_true
       expect(po.importer.linked_companies).to include po.vendor
+      expect(po.approval_status).to eq "Accepted"
 
       expect(po.order_lines.length).to eq 3
       line = po.order_lines.first
@@ -390,14 +391,6 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       po.should_not_receive(:post_update_logic!)
 
       subject.process_po data, "bucket", "key2"
-    end
-
-    it "calls unaccept if the order has been updated and the status was previously accepted" do
-      order = Factory(:order, order_number: "SHOES-" + workbook_data[:order_id], importer: importer, approval_status: "Accepted")
-      Order.any_instance.should_receive(:post_update_logic!)
-      Order.any_instance.should_receive(:unaccept!)
-
-      subject.process_po data, "bucket", "key"
     end
 
     it "uses the alternate PO number if standard order id and order number fields are blank" do

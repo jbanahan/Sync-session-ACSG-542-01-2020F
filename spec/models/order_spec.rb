@@ -348,4 +348,12 @@ describe Order do
       expect(order.shipping?).to be_false
     end
   end
+
+  describe "mark_order_as_accepted" do
+    it "marks the order" do
+      o = Order.new
+      o.mark_order_as_accepted
+      expect(o.approval_status).to eq "Accepted"
+    end
+  end
 end
