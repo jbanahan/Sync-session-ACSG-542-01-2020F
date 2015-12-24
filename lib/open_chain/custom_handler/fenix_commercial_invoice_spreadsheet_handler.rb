@@ -1,8 +1,9 @@
-require 'open_chain/custom_handler/fenix_invoice_generator'
+require 'open_chain/xl_client'
 require 'open_chain/custom_handler/fenix_nd_invoice_generator'
 
 module OpenChain; module CustomHandler
   class FenixCommercialInvoiceSpreadsheetHandler
+    include ActionView::Helpers::NumberHelper
 
     def initialize custom_file
       @custom_file = custom_file
@@ -48,16 +49,50 @@ module OpenChain; module CustomHandler
         end
       end
 
-      use_nd = MasterSetup.get.custom_feature? "Fenix ND Invoices"
       invoices_to_send.each do |invoice|
-        if use_nd
-          OpenChain::CustomHandler::FenixNdInvoiceGenerator.generate invoice.id
-        else
-          OpenChain::CustomHandler::FenixInvoiceGenerator.generate invoice.id
-        end
+        OpenChain::CustomHandler::FenixNdInvoiceGenerator.generate invoice.id
       end
 
       errors
+    end
+
+    def parse_header row
+      if respond_to?(:prep_header_row)
+        row = prep_header_row(row)
+      end
+      invoice = find_invoice text_value(row[0]), text_value(row[1])
+
+      invoice.invoice_date = parse_date row[2]
+      invoice.country_origin_code = text_value row[3]
+      invoice.currency = 'CAD'
+      
+      invoice
+    end
+
+    def parse_details invoice, rows
+      rows.each do |row|
+        if respond_to? :prep_line_row
+          row = prep_line_row(row)
+        end
+
+        detail = invoice.commercial_invoice_lines.build
+
+        detail.part_number = text_value row[4]
+        detail.country_origin_code = text_value row[5]
+        detail.quantity = decimal_value(row[8])
+        detail.unit_price = decimal_value(row[9])
+        detail.po_number = text_value row[10]
+        detail.customer_reference = text_value row[12]
+
+        tariff = detail.commercial_invoice_tariffs.build
+        tariff.hts_code = text_value row[6]
+        if tariff.hts_code.respond_to? :gsub
+          tariff.hts_code.gsub!(".", "")
+        end
+
+        tariff.tariff_description = text_value row[7]
+        tariff.tariff_provision = text_value row[11]
+      end
     end
 
     class CsvClient
@@ -83,8 +118,7 @@ module OpenChain; module CustomHandler
       
     end
 
-
-    private 
+    protected 
 
       def file_reader s3_path
         case File.extname(s3_path).downcase
@@ -125,7 +159,7 @@ module OpenChain; module CustomHandler
           next if (row_number +=1) == 1 && has_header_line?
 
           blank = blank_row row
-          invoice_number = row[1]
+          invoice_number = parse_invoice_number_from_row row
 
           # If we hit a blank row and we have accumulated invoice data
           # Or if we have a new invoice number we'll store off the existing data and 
@@ -153,43 +187,8 @@ module OpenChain; module CustomHandler
         true
       end
 
-      def parse_header row
-        if respond_to?(:prep_header_row)
-          row = prep_header_row(row)
-        end
-        invoice = find_invoice text_value(row[0]), text_value(row[1])
-
-        invoice.invoice_date = parse_date row[2]
-        invoice.country_origin_code = text_value row[3]
-        invoice.currency = 'CAD'
-        
-        invoice
-      end
-
-      def parse_details invoice, rows
-        rows.each do |row|
-          if respond_to? :prep_line_row
-            row = prep_line_row(row)
-          end
-
-          detail = invoice.commercial_invoice_lines.build
-
-          detail.part_number = text_value row[4]
-          detail.country_origin_code = text_value row[5]
-          detail.quantity = row[8]
-          detail.unit_price = row[9]
-          detail.po_number = text_value row[10]
-          detail.customer_reference = text_value row[12]
-
-          tariff = detail.commercial_invoice_tariffs.build
-          tariff.hts_code = text_value row[6]
-          if tariff.hts_code.respond_to? :gsub
-            tariff.hts_code.gsub!(".", "")
-          end
-
-          tariff.tariff_description = text_value row[7]
-          tariff.tariff_provision = text_value row[11]
-        end
+      def parse_invoice_number_from_row row
+        row[1]
       end
 
       def parse_date value
@@ -215,6 +214,12 @@ module OpenChain; module CustomHandler
 
       def text_value value
         OpenChain::XLClient.string_value value
+      end
+
+      def decimal_value value, decimal_places = 3
+        v = BigDecimal(value.to_s)
+        # Round to t decimal places
+        v.round(decimal_places, BigDecimal::ROUND_HALF_UP)
       end
 
       def find_invoice fenix_importer, invoice_number

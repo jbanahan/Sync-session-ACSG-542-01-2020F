@@ -11,6 +11,7 @@ require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/ci_load_handler'
+require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
@@ -23,16 +24,29 @@ class CustomFile < ActiveRecord::Base
   before_create :sanitize
   before_post_process :no_post
 
+  # Delay'able method for ease of backend processing
+  def self.process custom_file_id, user_id, parameters = {}
+    CustomFile.find(custom_file_id).process User.find(user_id), parameters
+  end
+
   # process the attached file using the appropriate handler
-  def process user
+  def process user, parameters = {}
     r = nil
     self.update_attributes(:start_at=>0.seconds.ago)
     begin
-      r = handler.process user
+      # We need to support passing some parameters here, so rather than refactor every handler to have it support
+      # multiple method params, just check if process has an arity greater than one, and pass parameters if so,
+      # otherwise, pass just the user
+      h = handler
+      if h.method(:process).arity > 1
+        r = h.process user, parameters
+      else
+        r = h.process user
+      end
       self.update_attributes(:finish_at=>0.seconds.ago,:error_message=>nil)
-    rescue
-      self.update_attributes(:error_at=>0.seconds.ago,:error_message=>$!.message)
-      raise $!
+    rescue => e
+      self.update_attributes(:error_at=>0.seconds.ago,:error_message=>e.message)
+      raise e
     end
     r
   end
@@ -44,12 +58,7 @@ class CustomFile < ActiveRecord::Base
   # get the custom file handler that will process this file based on it's file_type
   def handler
     raise "Cannot get handler if file_type is not set." if self.file_type.blank?
-    if self.file_type.include?(':')
-      h = self.file_type.split('::').inject(Kernel) {|scope, const_name| scope.const_get(const_name)} 
-      h.new(self)
-    else
-      Kernel.const_get(self.file_type).new(self)
-    end
+    self.file_type.constantize.new(self)
   end
 
   # send the updated version of the file

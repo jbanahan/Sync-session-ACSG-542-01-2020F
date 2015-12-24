@@ -50,6 +50,53 @@ describe CustomFile do
         expect(f.path).to end_with "custom_file/#{f.id}/#{f.attached_file_name}"
       end
     end
+
+    describe "process" do
+      let (:user) { Factory(:user) }
+
+      class SingleArgHandler
+        cattr_accessor :user
+        def initialize custom_file
+          @@user ||= []
+        end
+
+        def process user
+          @@user << user
+        end
+      end
+
+      after :each do
+        SingleArgHandler.user.try(:clear)
+        DoubleArgHandler.user.try(:clear)
+        DoubleArgHandler.params.try(:clear)
+      end
+
+      it "processes a file, using single arg process" do
+        f = CustomFile.create! attached: file, file_type: SingleArgHandler.name
+        f.process user
+        expect(SingleArgHandler.user).to include user
+      end
+
+      class DoubleArgHandler
+        cattr_accessor :user, :params
+        def initialize custom_file
+          @@user ||= []
+          @@params ||= []
+        end
+
+        def process user, params
+          @@user << user
+          @@params << params
+        end
+      end
+
+      it "processes a file, using a double arg handler" do
+        f = CustomFile.create! attached: file, file_type: DoubleArgHandler.name
+        f.process(user, {"test" => "123"})
+        expect(DoubleArgHandler.user).to include user
+        expect(DoubleArgHandler.params).to include({"test" => "123"})
+      end
+    end
   end
 
   context 'status logging' do

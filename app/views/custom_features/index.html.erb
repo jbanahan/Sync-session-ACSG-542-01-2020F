@@ -152,4 +152,11 @@
     </div>
   </div>
   <%-end%>
+  <%- if enabled_features.include?('Fenix CI Upload') && OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler.new(nil).can_view?(current_user) -%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "Fisher Commercial Invoice Upload", '/custom_features/fisher_ci_load', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
 </div>
