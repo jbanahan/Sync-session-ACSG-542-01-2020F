@@ -1,5 +1,4 @@
 require 'spec_helper'
-require "open_chain/custom_handler/fenix_invoice_generator"
 
 describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
@@ -67,7 +66,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       ]
       @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])
 
-      OpenChain::CustomHandler::FenixInvoiceGenerator.should_receive(:generate).exactly(3).times
+      OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate).exactly(3).times
 
       errors = @h.parse "file.xlsx"
       errors.length.should eq 0
@@ -136,7 +135,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
       @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])
 
-      OpenChain::CustomHandler::FenixInvoiceGenerator.should_receive(:generate).twice
+      OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate).twice
 
       errors = @h.parse "file.xlsx"
       errors.length.should eq 0
@@ -148,7 +147,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     it "should error if importer is not found" do
       file_contents = [["Column", "Heading"],["NOIMPORTER", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
-      OpenChain::CustomHandler::FenixInvoiceGenerator.should_not_receive(:generate)
+      OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_not_receive(:generate)
 
       errors = @h.parse "file.xlsx"
       errors.length.should eq 1
@@ -159,7 +158,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       @importer = Factory(:company, importer: true, fenix_customer_number: "  ")
       file_contents = [["Column", "Heading"],["  ", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
-      OpenChain::CustomHandler::FenixInvoiceGenerator.should_not_receive(:generate)
+      OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_not_receive(:generate)
 
       errors = @h.parse "file.xlsx"
       errors.length.should eq 1
@@ -169,7 +168,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     it "should not send invoices if suppressed" do
       file_contents = [["Column", "Heading"],[@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
-      OpenChain::CustomHandler::FenixInvoiceGenerator.should_not_receive(:generate)
+      OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_not_receive(:generate)
 
       errors = @h.parse "file.xlsx", true
       errors.length.should eq 0

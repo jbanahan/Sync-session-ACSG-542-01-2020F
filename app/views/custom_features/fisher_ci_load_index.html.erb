@@ -1,0 +1,22 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    if($.trim($("input[name='invoice_date']").val()).length == 0) {
+      window.alert("You must enter an Invoice Date.");
+            return false;
+    }
+  });
+});
+<%end-%>
+
+<% content_for :upload_form do %>
+<h2>Upload ONLY Fisher Excel Invoice Files</h2>
+<div class="form-group">
+  <label for='invoice_date' class="col-md-1 control-label">Invoice Date:</label>
+  <div class="col-md-2">
+    <input type="date" name='invoice_date' value='' class="form-control"/>
+  </div>
+</div>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Fisher Commercial Invoice Spreadsheet Upload", custom_feature: "fisher_ci_load"} %>

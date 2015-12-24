@@ -426,6 +426,10 @@ class ApplicationController < ActionController::Base
     return (!errors.nil? && errors.length > 0) || (!notices.nil? && notices.length > 0)
   end
 
+  def has_errors?
+    !flash[:errors].nil? && flash[:errors].length > 0
+  end
+
   def add_flash(type,message,options={})
     now = options[:now] || (request.xhr? ? true : false)
     if now

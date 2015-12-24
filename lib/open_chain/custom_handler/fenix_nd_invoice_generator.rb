@@ -1,5 +1,3 @@
-require 'tempfile'
-require 'bigdecimal'
 require 'open_chain/ftp_file_support'
 
 module OpenChain; module CustomHandler
@@ -71,13 +69,13 @@ module OpenChain; module CustomHandler
 
         Tempfile.open(["#{customer_code}_fenix_invoice",'.txt'], {:external_encoding =>"ASCII"}) do |t|
           # Write out the header information
-          write_fields t, "H", FenixInvoiceGenerator::HEADER_OUTPUT_FORMAT, header_map, invoice
+          write_fields t, "H", FenixNdInvoiceGenerator::HEADER_OUTPUT_FORMAT, header_map, invoice
 
           line_count = 0
           invoice.commercial_invoice_lines.each do |line|
             line.commercial_invoice_tariffs.each do |tariff|
               if rollup_by.blank?
-                write_fields t, "D", FenixInvoiceGenerator::DETAIL_OUTPUT_FORMAT, detail_map, invoice, line, tariff
+                write_fields t, "D", FenixNdInvoiceGenerator::DETAIL_OUTPUT_FORMAT, detail_map, invoice, line, tariff
                 line_count += 1
               else
                 # For outputs where we're rolling up the lines, we'll basically have to buffer the lines generated in memory and then write them out after rolling them together.

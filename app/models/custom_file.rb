@@ -11,6 +11,7 @@ require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/ci_load_handler'
+require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
