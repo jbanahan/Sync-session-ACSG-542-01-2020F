@@ -68,7 +68,11 @@ class Order < ActiveRecord::Base
     self.unaccept! user, true
   end
   def can_accept? u
-    u.admin? || u.company == self.vendor || u.company == self.agent
+    u.admin? || 
+    (
+      (u.company == self.vendor || u.company == self.agent)  && 
+      u.in_group?('ORDERACCEPT')
+    )
   end
 
   # Don't use this method directly unless you know there is no acceptance
