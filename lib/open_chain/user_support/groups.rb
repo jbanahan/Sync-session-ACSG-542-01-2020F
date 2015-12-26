@@ -16,4 +16,22 @@ module OpenChain; module UserSupport; module Groups
   def user_group_codes
     group_cache(true).to_a
   end
+
+  def group_cache(ensure_created)
+    if @group_cache.nil? && ensure_created
+      @group_cache = SortedSet.new self.groups.map(&:system_code)
+    end
+
+    @group_cache
+  end
+
+  def add_to_group_cache group
+    group_cache(true) << group.system_code
+    nil
+  end
+
+  def remove_from_group_cache group
+    group_cache(false).try(:delete, group.system_code)
+    nil
+  end
 end; end; end

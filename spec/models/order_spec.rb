@@ -90,9 +90,20 @@ describe Order do
     end
   end
   describe 'can_accept' do
+    before :each do
+      @g = Group.new(system_code:'ORDERACCEPT')
+    end
+    it "should not allow if user not in 'ORDERACCEPT' group" do
+      v = Company.new(vendor:true)
+      u = User.new
+      u.company = v
+      o = Order.new(vendor:v)
+      expect(o.can_accept?(u)).to be_false
+    end
     it "should allow vendor user to accept" do
       v = Company.new(vendor:true)
       u = User.new
+      u.add_to_group_cache @g
       u.company = v
       o = Order.new(vendor:v)
       expect(o.can_accept?(u)).to be_true
@@ -100,6 +111,7 @@ describe Order do
     it "should allow agent to accept" do
       a = Company.new(agent:true)
       u = User.new
+      u.add_to_group_cache @g
       u.company = a
       o = Order.new(agent:a)
       expect(o.can_accept?(u)).to be_true
@@ -107,6 +119,7 @@ describe Order do
     it "should allow admin user to accept" do
       c = Company.new(vendor:true)
       u = User.new
+      u.add_to_group_cache @g
       u.company = c
       u.admin = true
       o = Order.new
@@ -116,6 +129,7 @@ describe Order do
     it "should not allow user who is not admin to accept" do
       c = Company.new(vendor:true)
       u = User.new
+      u.add_to_group_cache @g
       u.company = c
       u.admin = false
       o = Order.new

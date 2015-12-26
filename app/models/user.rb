@@ -345,24 +345,6 @@ class User < ActiveRecord::Base
     true
   end
 
-  def group_cache(ensure_created)
-    if @group_cache.nil? && ensure_created
-      @group_cache = SortedSet.new self.groups.map(&:system_code)
-    end
-
-    @group_cache
-  end
-
-  def add_to_group_cache group
-    group_cache(true) << group.system_code
-    nil
-  end
-
-  def remove_from_group_cache group
-    group_cache(false).try(:delete, group.system_code)
-    nil
-  end
-
   def valid_email
     rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| EmailValidator.valid? e } 
     error_message = rejected.count > 1 ? "invalid: #{rejected.join(', ')}" : "invalid"
