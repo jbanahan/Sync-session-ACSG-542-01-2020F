@@ -113,6 +113,29 @@ class UsersController < ApplicationController
       }
     end
 
+
+    def show_create_from_template
+      admin_secure do
+        @company_id = params[:company_id]
+        @user_templates = UserTemplate.all
+        @no_action_bar = true
+      end
+    end
+    # POST
+    def create_from_template
+      admin_secure do
+        company = Company.find params[:company_id]
+        user_template = UserTemplate.find params[:user_template_id]
+        username = params[:username]
+        username = params[:email] if username.blank?
+        user_template.create_user! company, params[:first_name], 
+          params[:last_name], username, params[:email], params[:time_zone],
+          params[:notify_user]
+        add_flash :notices, 'User created.'
+        redirect_to company_users_path(company)
+      end
+    end
+
     # PUT /users/1
     # PUT /users/1.xml
     def update

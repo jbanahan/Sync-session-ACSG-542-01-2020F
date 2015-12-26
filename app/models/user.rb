@@ -78,7 +78,7 @@ class User < ActiveRecord::Base
       pwd = generate_authtoken(u)
       u.password = pwd
       u.disallow_password = true
-      u.api_auth_token =  generate_authtoken(u)
+      u.api_auth_token = generate_authtoken(u)
       u.time_zone = "Eastern Time (US & Canada)"
       u.save!
     end

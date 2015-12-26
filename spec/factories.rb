@@ -87,6 +87,10 @@ Factory.define :drawback_user, :parent=>:user do |f|
   f.drawback_edit true
   f.after_create {|u| u.company.update_attributes(:drawback=>true)}
 end
+Factory.define :user_template do |f|
+  f.name 'mytemplate'
+  f.template_json "{}"
+end
 Factory.define :country do |c|
   c.iso_code {Factory.next :iso}
   c.sequence(:name) {|n| "Country #{n}"}

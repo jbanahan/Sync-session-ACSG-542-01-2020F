@@ -7,6 +7,7 @@
         window.location = '<%=new_company_user_path(@company)%>';
         });
     $("#btn_bulk").click(function() {window.location = '<%=show_bulk_upload_company_users_path(@company)%>';});
+    $("#btn_from_template").click(function() {window.location = '/companies/<%=@company.id%>/users/create_from_template';});
     $("#btn_send_email").click(function() {
       $("#users_form").submit();
     });
@@ -34,6 +35,7 @@
   <% unless @company.locked? %>
     <button id='btn_new'>New</button>
     <%if current_user.admin? -%>
+      <button id='btn_from_template'>New From Template</button>
       <button id='btn_bulk'>Bulk</button>
     <%end-%>
   <% end %>

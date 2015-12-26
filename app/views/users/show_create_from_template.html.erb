@@ -1,0 +1,51 @@
+<%=form_tag("/companies/#{@company_id}/users/create_from_template", method: :post) do %>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+              <h3 class="panel-title">Create User From Template</h3>
+            </div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label for="user_template_id">Template</label>
+                <select name='user_template_id' class='form-control' required>
+                  <%@user_templates.each do |ut|%>
+                    <option value='<%=ut.id%>'><%=ut.name%></option>
+                  <%end%>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type='email' name='email' class='form-control' required />
+              </div>
+              <div class="form-group">
+                <label for="first_name">First Name</label>
+                <input type='text' name='first_name' class='form-control' />
+              </div>
+              <div class="form-group">
+                <label for="last_name">Last Name</label>
+                <input type='text' name='last_name' class='form-control' />
+              </div>
+              <div class="form-group">
+                <label for="username">Username</label>
+                <input type='text' label='username' class='form-control' placeholder='defaults to email address' />
+              </div>
+              <div class="form-group">
+                <label for="time_zone">Time Zone</label>
+                <%=time_zone_select( nil, 'time_zone', ActiveSupport::TimeZone.us_zones, {default: "Eastern Time (US & Canada)"}, {class:'form-control'})%>
+              </div>
+              <div class="form-group">
+                <input type='checkbox' name='notify_user' value='true' />
+                <label for='notify_user'>Email Invite To User</label>
+              </div>              
+            </div>
+            <div class="panel-footer text-right">
+              <a href='<%=company_users_path(@company_id)%>' class='btn btn-default'>Cancel</a>
+              <input type='submit' value='Create' class='btn btn-success'>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<%end%>
