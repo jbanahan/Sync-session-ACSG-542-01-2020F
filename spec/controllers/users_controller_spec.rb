@@ -84,6 +84,63 @@ describe UsersController do
     end
   end
 
+  describe :show_create_from_template do
+    before :each do
+      @t = Factory(:user_template)
+    end
+    it "should only allow admins" do
+      u = Factory(:user)
+      sign_in_as u
+      get :show_create_from_template, company_id: u.company_id
+      expect(response).to be_redirect
+      expect(assigns(:user_templates)).to be_nil
+    end
+    it "should assign user templates" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      get :show_create_from_template, company_id: u.company_id
+      expect(response).to be_success
+      expect(assigns(:user_templates).to_a).to eq [@t]
+    end
+  end
+
+  describe :create_from_template do
+    before :each do
+      @t = Factory(:user_template)
+    end
+    it "should only allow admins" do
+      UserTemplate.any_instance.should_not_receive(:create_user!)
+      u = Factory(:user)
+      sign_in_as u
+      post :create_from_template, {
+        company_id: u.company_id, 
+        user_template_id: @t.id,
+        first_name: 'Joe', last_name: 'Smith',
+        email: 'jsmith@sample.com',
+        time_zone: 'Eastern Time (US & Canada)',
+        notify_user: 'true'}
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq 1
+    end
+    it "should create user based on template" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      UserTemplate.any_instance.should_receive(:create_user!).with(
+        u.company,
+        'Joe', 'Smith', 'jsmith@sample.com', 'jsmith@sample.com', 
+        'Eastern Time (US & Canada)', 'true'
+      )
+      post :create_from_template, {
+        company_id: u.company_id, 
+        user_template_id: @t.id,
+        first_name: 'Joe', last_name: 'Smith',
+        email: 'jsmith@sample.com',
+        time_zone: 'Eastern Time (US & Canada)',
+        notify_user: 'true'}
+      expect(response).to be_redirect
+    end
+  end
+
   describe :new do
     context "with admin authorization" do
       before(:each) do

@@ -622,16 +622,22 @@ OpenChain::Application.routes.draw do
     resources :attachment_archive_setups, :except=>[:destroy,:index]
 
 		resources :users do
-		  get :disable, :on => :member
-		  get :enable, :on => :member
-      post :bulk_invite, :on => :collection
+      member do
+  		  get :disable
+  		  get :enable
+        get :event_subscriptions
+      end
+      collection do
+        get :show_bulk_upload
+        post :bulk_invite
+        post :bulk_upload
+        post :preview_bulk_upload
+        get :create_from_template, to: 'users#show_create_from_template'
+        post :create_from_template
+      end
       resources :debug_records, :only => [:index, :show] do
         get :destroy_all, :on => :collection
       end
-      get :show_bulk_upload, :on=>:collection
-      post :preview_bulk_upload, :on=>:collection
-      post :bulk_upload, :on=>:collection
-      get :event_subscriptions, on: :member
     end
     resources :charge_categories, :only => [:index, :create, :destroy]
 		get :shipping_address_list, :on => :member
@@ -773,6 +779,8 @@ OpenChain::Application.routes.draw do
   resources :search_templates, only: [:index,:destroy]
 
   resources :milestone_notification_configs, only: [:index]
+
+  resources :user_templates
 
   match "/vendor_portal" => "vendor_portal#index", via: :get
 
