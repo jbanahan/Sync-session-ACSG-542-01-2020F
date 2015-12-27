@@ -211,7 +211,7 @@ angular.module("vendor_portal/partials/standard_order_template.html", []).run(["
     return {
       restrict: 'E',
       replace: true,
-      template: '<button class="btn btn-xs btn-link" ng-if="order.permissions.can_accept" ng-click="toggleAccept(order)">{{order.ord_approval_status!="Accepted" ? "Approve" : "Clear"}}</button>'
+      template: '<button class="btn btn-xs btn-link" ng-if="order.permissions.can_accept" ng-click="toggleAccept(order)">{{order.ord_approval_status!="Accepted" ? "Approve" : "Remove"}}</button>'
     };
   });
 
