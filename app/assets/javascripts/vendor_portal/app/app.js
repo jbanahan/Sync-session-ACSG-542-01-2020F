@@ -63,6 +63,9 @@
             {
               field: 'ord_approval_status',
               operator: 'null'
+            }, {
+              field: 'ord_closed_at',
+              operator: 'null'
             }
           ],
           sorts: defaultSorts,
