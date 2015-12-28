@@ -61,5 +61,6 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
     add_fields CoreModule::ORDER, make_business_rule_arrays(800,'ord','orders','Order')
     add_fields CoreModule::ORDER, make_ship_from_arrays(900,'ord','orders')
     add_fields CoreModule::ORDER, make_address_arrays(1000,"ord",'orders','order_from')
+    add_fields CoreModule::ORDER, make_comment_arrays(1100,"ord","Order")
   end
 end; end; end
