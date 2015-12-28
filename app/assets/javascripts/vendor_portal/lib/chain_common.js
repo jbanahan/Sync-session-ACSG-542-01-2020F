@@ -36,7 +36,7 @@
 
   app.factory('chainApiSvc', [
     '$http', '$q', '$sce', function($http, $q, $sce) {
-      var newAttachmentClient, newCommentClient, newCoreModuleClient, newMessageClient, newUserClient, publicMethods;
+      var newAttachmentClient, newCommentClient, newCoreModuleClient, newMessageClient, newSupportClient, newUserClient, publicMethods;
       publicMethods = {};
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
         var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
@@ -253,6 +253,18 @@
         };
       };
       publicMethods.Attachment = newAttachmentClient();
+      newSupportClient = function() {
+        return {
+          sendRequest: function(supportRequest) {
+            return $http.post('/api/v1/support_request', {
+              support_request: supportRequest
+            }).then(function(resp) {
+              return resp.data.support_request_response;
+            });
+          }
+        };
+      };
+      publicMethods.Support = newSupportClient();
       return publicMethods;
     }
   ]);
@@ -510,6 +522,37 @@
 }).call(this);
 
 (function() {
+  angular.module('ChainCommon').directive('chainSupportModal', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {},
+        templateUrl: 'chain-support-modal.html',
+        link: function(scope, el, attrs) {
+          scope.submit = function() {
+            scope.loading = 'loading';
+            return chainApiSvc.Support.sendRequest({
+              body: scope.messageBody
+            }).then(function(r) {
+              scope.messageBody = '';
+              scope.ticketNumber = r.ticket;
+              return delete scope.loading;
+            });
+          };
+          return $(el).on('show.bs.modal', function() {
+            return scope.$apply(function() {
+              delete scope.ticketNumber;
+              return scope.messageBody = '';
+            });
+          });
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   var dMod;
 
   dMod = angular.module('Domainer', []);
@@ -551,7 +594,7 @@
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-comments-panel.html', 'chain-messages-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-comments-panel.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
@@ -566,4 +609,9 @@ angular.module("chain-comments-panel.html", []).run(["$templateCache", function(
 angular.module("chain-messages-modal.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-messages-modal.html",
     "<div class=\"modal\" id=\"chain-messages-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Messages</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"><div ng-if=\"messages && messages.length==0\" class=\"text-success text-center\">You don't have any messages.</div><div class=\"panel-group\"><div class=\"panel\" ng-repeat=\"m in messages track by m.id\"><div class=\"panel-heading\"><h3 class=\"panel-title subject\" ng-click=\"readMessage(m)\" ng-class=\"{'unread-subject':!m.viewed}\">{{m.subject}}</h3></div><div ng-show=\"m.shown\" class=\"panel-body\"><div ng-bind-html=\"m.htmlSafeBody\" class=\"message-body\"></div></div></div></div></chain-loading-wrapper></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" id=\"toggle-email-new-messages\" ng-click=\"toggleEmailNewMessages()\"><i class=\"fa\" ng-class=\"{'fa-square-o':!user.email_new_messages, 'fa-check-square-o':user.email_new_messages}\"></i> Email Messages</button> <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
+}]);
+
+angular.module("chain-support-modal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-support-modal.html",
+    "<div class=\"modal fade\" id=\"chain-support-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Help</h4></div><div class=\"modal-body\"><div ng-hide=\"ticketNumber\"><label>Message:</label><textarea ng-model=\"messageBody\" class=\"form-control\"></textarea></div><div ng-show=\"ticketNumber\"><div class=\"alert alert-success\">Your ticket number is <strong id=\"chain-support-ticket-no\">{{ticketNumber}}</strong>.</div></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button id=\"chain-support-submit\" ng-show=\"!ticketNumber\" ng-disabled=\"!messageBody || messageBody.length == 0\" ng-click=\"submit()\" type=\"button\" class=\"btn btn-primary\">Save changes</button></div></div></div></div>");
 }]);
