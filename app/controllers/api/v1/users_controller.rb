@@ -73,6 +73,21 @@ module Api; module V1; class UsersController < Api::V1::ApiController
     end
   end
 
+  # Change the currently logged in user's password
+  # POST: /api/v1/users/change_my_password.json {password: "XXXXX"}
+  def change_my_password
+    user = current_user
+    if user.update_user_password params[:password], params[:password]
+      render json: ""
+    else
+      if user.errors.size > 0
+        render_error user.errors
+      else
+        render_error "Failed to update password."
+      end
+    end
+  end
+
   private
     def test? 
       Rails.env.test?

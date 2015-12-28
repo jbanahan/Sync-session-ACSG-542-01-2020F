@@ -591,8 +591,9 @@ describe User do
       expect(@user.errors.full_messages).to eq ["Password must match password confirmation."]
     end
 
-    it "skips update if password is blank" do
-      expect(@user.update_user_password ' ', 'notmatched').to be_true
+    it "skips fails if password is blank" do
+      expect(@user.update_user_password ' ', 'notmatched').to be_false
+      expect(@user.errors[:password]).to eq ["cannot be blank."]
       expect(User.authenticate @user.username, ' ').to be_nil
     end
   end

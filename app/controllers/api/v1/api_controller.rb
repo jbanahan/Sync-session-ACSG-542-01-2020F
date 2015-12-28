@@ -19,7 +19,9 @@ module Api; module V1; class ApiController < ActionController::Base
 
   def render_error errors, status = :internal_server_error
     e = nil
-    if errors.respond_to? :each
+    if errors.is_a?(ActiveModel::Errors)
+      e = errors.full_messages
+    elsif errors.respond_to? :each
       e = []
       errors.each {|err| e << err.to_s}
     else

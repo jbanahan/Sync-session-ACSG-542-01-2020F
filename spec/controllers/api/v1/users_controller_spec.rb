@@ -168,4 +168,23 @@ describe Api::V1::UsersController do
       expect(u.email_new_messages).to be_false
     end
   end
+
+  describe "change_my_password" do
+    let (:user) { Factory(:user) }
+
+    it "allows user to change their password" do
+      allow_api_access(user)
+      post :change_my_password, password: "TEST123"
+
+      expect(response).to be_success
+      expect(response.body).to eq ""
+    end
+
+    it "returns errors" do
+      allow_api_access(user)
+      post :change_my_password
+      expect(response).not_to be_success
+      expect(response.body).to eq({errors: ["Password cannot be blank."]}.to_json)
+    end
+  end
 end
