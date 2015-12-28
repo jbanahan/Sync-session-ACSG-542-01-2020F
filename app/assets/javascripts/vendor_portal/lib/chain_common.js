@@ -36,7 +36,7 @@
 
   app.factory('chainApiSvc', [
     '$http', '$q', '$sce', function($http, $q, $sce) {
-      var newAttachmentClient, newCommentClient, newCoreModuleClient, newMessageClient, newUserClient, publicMethods;
+      var newAttachmentClient, newCommentClient, newCoreModuleClient, newMessageClient, newSupportClient, newUserClient, publicMethods;
       publicMethods = {};
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
         var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
@@ -196,6 +196,24 @@
         var cachedMe;
         cachedMe = null;
         return {
+          changePassword: function(password, confirmation) {
+            var d;
+            d = $q.defer();
+            if (password !== confirmation) {
+              d.reject({
+                errors: ["Password confirmation does not match. Please try again."]
+              });
+            } else {
+              $http.post('/api/v1/users/change_my_password.json', {
+                password: password
+              }).then((function(resp) {
+                return d.resolve(resp.data);
+              }), (function(errResp) {
+                return d.reject(errResp.data);
+              }));
+            }
+            return d.promise;
+          },
           loadMe: function() {
             return $http.get('/api/v1/users/me.json').then(function(resp) {
               return resp.data.user;
@@ -253,6 +271,18 @@
         };
       };
       publicMethods.Attachment = newAttachmentClient();
+      newSupportClient = function() {
+        return {
+          sendRequest: function(supportRequest) {
+            return $http.post('/api/v1/support_request', {
+              support_request: supportRequest
+            }).then(function(resp) {
+              return resp.data.support_request_response;
+            });
+          }
+        };
+      };
+      publicMethods.Support = newSupportClient();
       return publicMethods;
     }
   ]);
@@ -277,6 +307,55 @@
             });
           };
           return load();
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainChangePasswordModal', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {},
+        templateUrl: 'chain-change-password-modal.html',
+        link: function(scope, el, attrs) {
+          scope.changePassword = function() {
+            var conf, pwd;
+            scope.loading = 'loading';
+            scope.errors = [];
+            delete scope.success;
+            pwd = scope.password;
+            conf = scope.confirmation;
+            return chainApiSvc.User.changePassword(pwd, conf).then((function(resp) {
+              delete scope.loading;
+              return scope.success = "Password successfully changed.";
+            }), (function(err) {
+              var i, len, m, ref, results;
+              delete scope.loading;
+              ref = err.errors;
+              results = [];
+              for (i = 0, len = ref.length; i < len; i++) {
+                m = ref[i];
+                results.push(scope.errors.push(m));
+              }
+              return results;
+            }));
+          };
+          $(el).on('show.bs.modal', function() {
+            return scope.$apply(function() {
+              delete scope.loading;
+              scope.errors = [];
+              scope.password = '';
+              scope.confirmation = '';
+              return delete scope.success;
+            });
+          });
+          return $(el).on('shown.bs.modal', function() {
+            return $(document).find('input[type="password"]:first').focus();
+          });
         }
       };
     }
@@ -510,6 +589,40 @@
 }).call(this);
 
 (function() {
+  angular.module('ChainCommon').directive('chainSupportModal', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {},
+        templateUrl: 'chain-support-modal.html',
+        link: function(scope, el, attrs) {
+          scope.submit = function() {
+            scope.loading = 'loading';
+            return chainApiSvc.Support.sendRequest({
+              body: scope.messageBody
+            }).then(function(r) {
+              scope.messageBody = '';
+              scope.ticketNumber = r.ticket;
+              return delete scope.loading;
+            });
+          };
+          $(el).on('show.bs.modal', function() {
+            return scope.$apply(function() {
+              delete scope.ticketNumber;
+              return scope.messageBody = '';
+            });
+          });
+          return $(el).on('shown.bs.modal', function() {
+            return $(el).find('textarea').focus();
+          });
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   var dMod;
 
   dMod = angular.module('Domainer', []);
@@ -551,11 +664,16 @@
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-comments-panel.html', 'chain-messages-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
     "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.name}} <span class=\"badge\">{{att.size}}</span></a></li></ul></div>");
+}]);
+
+angular.module("chain-change-password-modal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-change-password-modal.html",
+    "<div class=\"modal fade\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Change Password</h4></div><div class=\"modal-body\"><div id=\"chain-change-password-form\" ng-show=\"!loading && !success\"><div class=\"form-group\"><label for=\"np\">New Password</label><input type=\"password\" class=\"form-control\" ng-model=\"password\"></div><div class=\"form-group\"><label for=\"np\">Confirm New Password</label><input type=\"password\" class=\"form-control\" ng-model=\"confirmation\"></div></div><div id=\"chain-change-password-loading\" ng-show=\"loading==&quot;loading&quot;\"><chain-loader></chain-loader></div><div id=\"chain-change-password-confirm\" ng-show=\"success.length > 0\"><div class=\"alert alert-success\">Password changed successfully.</div></div><div id=\"chain-change-password-errors\" ng-show=\"errors.length > 0\"><div class=\"alert alert-danger\"><strong>Errors:</strong><ul><li ng-repeat=\"e in errors\">{{e}}</li></ul></div></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button id=\"chain-change-password-submit\" ng-click=\"changePassword()\" ng-show=\"!(success.length > 0)\" type=\"button\" class=\"btn btn-primary\">Save changes</button></div></div></div></div>");
 }]);
 
 angular.module("chain-comments-panel.html", []).run(["$templateCache", function($templateCache) {
@@ -566,4 +684,9 @@ angular.module("chain-comments-panel.html", []).run(["$templateCache", function(
 angular.module("chain-messages-modal.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-messages-modal.html",
     "<div class=\"modal\" id=\"chain-messages-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Messages</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"><div ng-if=\"messages && messages.length==0\" class=\"text-success text-center\">You don't have any messages.</div><div class=\"panel-group\"><div class=\"panel\" ng-repeat=\"m in messages track by m.id\"><div class=\"panel-heading\"><h3 class=\"panel-title subject\" ng-click=\"readMessage(m)\" ng-class=\"{'unread-subject':!m.viewed}\">{{m.subject}}</h3></div><div ng-show=\"m.shown\" class=\"panel-body\"><div ng-bind-html=\"m.htmlSafeBody\" class=\"message-body\"></div></div></div></div></chain-loading-wrapper></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" id=\"toggle-email-new-messages\" ng-click=\"toggleEmailNewMessages()\"><i class=\"fa\" ng-class=\"{'fa-square-o':!user.email_new_messages, 'fa-check-square-o':user.email_new_messages}\"></i> Email Messages</button> <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
+}]);
+
+angular.module("chain-support-modal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-support-modal.html",
+    "<div class=\"modal fade\" id=\"chain-support-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Help</h4></div><div class=\"modal-body\"><div ng-hide=\"ticketNumber\"><label>Message:</label><textarea ng-model=\"messageBody\" class=\"form-control\"></textarea></div><div ng-show=\"ticketNumber\"><div class=\"alert alert-success\">Your ticket number is <strong id=\"chain-support-ticket-no\">{{ticketNumber}}</strong>.</div></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button id=\"chain-support-submit\" ng-show=\"!ticketNumber\" ng-disabled=\"!messageBody || messageBody.length == 0\" ng-click=\"submit()\" type=\"button\" class=\"btn btn-primary\">Save changes</button></div></div></div></div>");
 }]);

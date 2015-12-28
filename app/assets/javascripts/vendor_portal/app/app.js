@@ -198,7 +198,10 @@ angular.module("vendor_portal/partials/chain_vp_order_panel.html", []).run(["$te
 
 angular.module("vendor_portal/partials/main.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("vendor_portal/partials/main.html",
-    "<div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><a ui-sref=\"main\"><img src=\"/logo.png\" alt=\"Logo\"></a><br><h1>Vendor Portal</h1></div></div><div class=\"row\"><div class=\"col-md-8\"><chain-vp-order-panel></chain-vp-order-panel></div><div class=\"col-md-4\"><div class=\"panel panel-default\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Surveys</h3></div><div class=\"panel-body text-muted text-center\"><strong>Coming Soon!</strong></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Settings</h3></div><div class=\"panel-body\"></div></div></div></div><div class=\"row\"><div class=\"col-md-6\"></div><div class=\"col-md-6\"></div></div></div>");
+    "<div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><a ui-sref=\"main\"><img src=\"/logo.png\" alt=\"Logo\"></a><br><h1>Vendor Portal</h1></div></div><div class=\"row\"><div class=\"col-md-8\"><chain-vp-order-panel></chain-vp-order-panel></div><div class=\"col-md-4\"><div class=\"panel panel-default\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Surveys</h3></div><div class=\"panel-body text-muted text-center\"><strong>Coming Soon!</strong></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Settings</h3></div><div class=\"panel-body\"><a href=\"#\" id=\"change-password-link\">Change Password</a></div></div></div></div><chain-change-password-modal></chain-change-password-modal><script>$('#change-password-link').click(function() {\n" +
+    "      $('chain-change-password-modal .modal').modal('show');\n" +
+    "      return false;\n" +
+    "    });</script></div>");
 }]);
 
 angular.module("vendor_portal/partials/standard_order_template.html", []).run(["$templateCache", function($templateCache) {

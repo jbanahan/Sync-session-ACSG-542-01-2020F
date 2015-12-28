@@ -78,7 +78,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
   def change_my_password
     user = current_user
     if user.update_user_password params[:password], params[:password]
-      render json: ""
+      render json: {ok:'ok'}
     else
       if user.errors.size > 0
         render_error user.errors
