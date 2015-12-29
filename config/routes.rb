@@ -153,6 +153,8 @@ OpenChain::Application.routes.draw do
       end
 
       resources :countries, only: [:index]
+
+      resources :support_requests, only: [:create]
     end
   end
 

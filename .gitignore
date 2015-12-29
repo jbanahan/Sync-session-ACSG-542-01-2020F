@@ -29,5 +29,6 @@ config/siemens.asc
 config/secrets.yml
 config/fenix_sql_proxy.yml
 config/vfi-canada.asc
+config/support_request.yml
 .idea
 dump.rdb
