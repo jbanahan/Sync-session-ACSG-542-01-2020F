@@ -196,6 +196,24 @@
         var cachedMe;
         cachedMe = null;
         return {
+          changePassword: function(password, confirmation) {
+            var d;
+            d = $q.defer();
+            if (password !== confirmation) {
+              d.reject({
+                errors: ["Password confirmation does not match. Please try again."]
+              });
+            } else {
+              $http.post('/api/v1/users/change_my_password.json', {
+                password: password
+              }).then((function(resp) {
+                return d.resolve(resp.data);
+              }), (function(errResp) {
+                return d.reject(errResp.data);
+              }));
+            }
+            return d.promise;
+          },
           loadMe: function() {
             return $http.get('/api/v1/users/me.json').then(function(resp) {
               return resp.data.user;
@@ -289,6 +307,55 @@
             });
           };
           return load();
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainChangePasswordModal', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {},
+        templateUrl: 'chain-change-password-modal.html',
+        link: function(scope, el, attrs) {
+          scope.changePassword = function() {
+            var conf, pwd;
+            scope.loading = 'loading';
+            scope.errors = [];
+            delete scope.success;
+            pwd = scope.password;
+            conf = scope.confirmation;
+            return chainApiSvc.User.changePassword(pwd, conf).then((function(resp) {
+              delete scope.loading;
+              return scope.success = "Password successfully changed.";
+            }), (function(err) {
+              var i, len, m, ref, results;
+              delete scope.loading;
+              ref = err.errors;
+              results = [];
+              for (i = 0, len = ref.length; i < len; i++) {
+                m = ref[i];
+                results.push(scope.errors.push(m));
+              }
+              return results;
+            }));
+          };
+          $(el).on('show.bs.modal', function() {
+            return scope.$apply(function() {
+              delete scope.loading;
+              scope.errors = [];
+              scope.password = '';
+              scope.confirmation = '';
+              return delete scope.success;
+            });
+          });
+          return $(el).on('shown.bs.modal', function() {
+            return $(document).find('input[type="password"]:first').focus();
+          });
         }
       };
     }
@@ -539,11 +606,14 @@
               return delete scope.loading;
             });
           };
-          return $(el).on('show.bs.modal', function() {
+          $(el).on('show.bs.modal', function() {
             return scope.$apply(function() {
               delete scope.ticketNumber;
               return scope.messageBody = '';
             });
+          });
+          return $(el).on('shown.bs.modal', function() {
+            return $(el).find('textarea').focus();
           });
         }
       };
@@ -594,11 +664,16 @@
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-comments-panel.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
     "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.name}} <span class=\"badge\">{{att.size}}</span></a></li></ul></div>");
+}]);
+
+angular.module("chain-change-password-modal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-change-password-modal.html",
+    "<div class=\"modal fade\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Change Password</h4></div><div class=\"modal-body\"><div id=\"chain-change-password-form\" ng-show=\"!loading && !success\"><div class=\"form-group\"><label for=\"np\">New Password</label><input type=\"password\" class=\"form-control\" ng-model=\"password\"></div><div class=\"form-group\"><label for=\"np\">Confirm New Password</label><input type=\"password\" class=\"form-control\" ng-model=\"confirmation\"></div></div><div id=\"chain-change-password-loading\" ng-show=\"loading==&quot;loading&quot;\"><chain-loader></chain-loader></div><div id=\"chain-change-password-confirm\" ng-show=\"success.length > 0\"><div class=\"alert alert-success\">Password changed successfully.</div></div><div id=\"chain-change-password-errors\" ng-show=\"errors.length > 0\"><div class=\"alert alert-danger\"><strong>Errors:</strong><ul><li ng-repeat=\"e in errors\">{{e}}</li></ul></div></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button id=\"chain-change-password-submit\" ng-click=\"changePassword()\" ng-show=\"!(success.length > 0)\" type=\"button\" class=\"btn btn-primary\">Save changes</button></div></div></div></div>");
 }]);
 
 angular.module("chain-comments-panel.html", []).run(["$templateCache", function($templateCache) {

@@ -177,13 +177,14 @@ describe Api::V1::UsersController do
       post :change_my_password, password: "TEST123"
 
       expect(response).to be_success
-      expect(response.body).to eq ""
+      expected = {"ok"=>"ok"}
+      expect(JSON.parse(response.body)).to eq expected
     end
 
     it "returns errors" do
       allow_api_access(user)
       post :change_my_password
-      expect(response).not_to be_success
+      expect(response.status).to eq 406
       expect(response.body).to eq({errors: ["Password cannot be blank."]}.to_json)
     end
   end
