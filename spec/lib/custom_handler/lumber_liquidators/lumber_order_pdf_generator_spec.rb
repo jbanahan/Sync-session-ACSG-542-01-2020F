@@ -5,8 +5,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
     it 'should create pdf and attach to order' do
       Timecop.freeze(Time.now) do
         o = Factory(:order,order_number:'ABC')
-        expect{described_class.create! o}.to change(Attachment,:count).from(0).to(1)
+        described_class.create! o, Factory(:master_user)
         o.reload
+        expect(o.attachments.size).to eq 1
         
         att = o.attachments.first
         expect(att.attachment_type).to eq 'Order Printout'

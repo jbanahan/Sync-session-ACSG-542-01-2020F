@@ -14,4 +14,25 @@ module Api; module V1; module Admin; class UsersController < Api::V1::Admin::Adm
       render json: {'message'=>"#{count} templates added."}
     end
   end
+
+  # Change a specific user's password
+  # POST: /api/v1/admin/users/:id/change_password {password: "XYZ"}
+  def change_user_password
+    user = User.where(id: params[:id]).first
+    valid = false
+    if user 
+      valid = user.update_user_password params[:password], params[:password]
+    end
+
+    if valid
+      render json: ""
+    else
+      if user.errors.size > 0
+        render_error user.errors
+      else
+        render_error "Failed to update password."
+      end
+      
+    end
+  end
 end; end; end; end

@@ -26,6 +26,7 @@ gem 'RedCloth', '4.2.9'
 
 # PDF Generator
 gem 'prawn', '2.0.2'
+gem 'prawn-table', '0.2.2'
 
 #javascript environment, we will compile assets during deployment
 #so we need these on the production servers as well

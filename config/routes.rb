@@ -53,10 +53,14 @@ OpenChain::Application.routes.draw do
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
-        post :login, on: :collection
-        post :google_oauth2, on: :collection
-        get :me, on: :collection
-        post 'me/toggle_email_new_messages' => 'users#toggle_email_new_messages', on: :collection
+        collection do 
+          post :login
+          post :google_oauth2
+          get :me
+          post 'me/toggle_email_new_messages' => 'users#toggle_email_new_messages'
+          post :change_my_password
+        end
+        
       end
 
       resources :official_tariffs, only: [] do
@@ -126,7 +130,12 @@ OpenChain::Application.routes.draw do
       namespace :admin do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
         match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
-        match 'users/:id/add_templates' => 'users#add_templates', via: :post
+        resources :users, only: [] do
+          member do 
+            post :add_templates
+            post :change_user_password
+          end
+        end
         resources :milestone_notification_configs, only: [:index, :show, :new, :create, :update, :destroy] do
           get :copy, on: :member
           get :model_fields, on: :collection

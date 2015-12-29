@@ -227,18 +227,20 @@ class User < ActiveRecord::Base
   end
 
   def update_user_password password, password_confirmation
-    # The password will be blank most of the time on the user maint screen, unless the user
-    # is actually trying to update their password.
-    valid = password.blank?
-    unless valid
+    # Fail if the password is blank, under no circumstance do we want to accidently set someone's password
+    # to a blank string.
+    valid = false
+    if password.blank?
+      errors.add(:password, "cannot be blank.")
+    else
       if password != password_confirmation
-        valid = false
         errors.add(:password, "must match password confirmation.")
       else
         # This is the clearance method for updating the password.
         valid = update_password(password)
       end
     end
+
     valid
   end
 

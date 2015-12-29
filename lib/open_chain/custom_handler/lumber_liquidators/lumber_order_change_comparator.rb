@@ -15,8 +15,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   def self.run_changes type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     o = Order.find id
-    o.unaccept! User.integration
-    OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.create! o
+    u = User.integration
+    o.unaccept! u
+    OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.create! o, u
   end
 
   def self.fingerprint entity_hash
