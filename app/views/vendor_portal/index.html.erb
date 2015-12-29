@@ -5,10 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VFI Track Vendor Portal</title>
   <%= stylesheet_link_tag    "vendor_portal", :media => "all" -%>
+  <style type="text/css">
+    #support-link {
+      padding: 0;
+    }
+  </style>
   
   <%= javascript_include_tag "vendor_portal" -%>
   <script type="text/javascript">
-    $(document).on('click','#support-link',function() {
+    $(document).on('click','#support-link',function(evt) {
       $('chain-support-modal .modal').modal('show');
     });
   </script>
@@ -21,7 +26,7 @@
           <div class='text-right'>
             <%=current_user.full_name%> - 
             <chain-messages-link></chain-messages-link> - 
-            <a id='support-link' href='#' title='Help'><i class="fa fa-question-circle"></i></a> - 
+            <button id='support-link' title='Help' class='btn btn-link'><i class="fa fa-question-circle"></i></button> - 
             <a href='/logout'>Log Out</a>
           </div>
         </div>
