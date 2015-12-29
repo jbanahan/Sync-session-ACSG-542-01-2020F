@@ -93,4 +93,19 @@ module Helpers
     OpenChain::EventPublisher.stub(:publish).and_return nil
   end
 
+  def retry_expect retry_count: 2, retry_wait: 1, additional_rescue_from: []
+    # Allow for capturing and retrying when the expectations run in the block errors from other errors as well
+    rescue_from = additional_rescue_from.dup
+    rescue_from << RSpec::Expectations::ExpectationNotMetError
+
+    retries = -1
+    begin
+      yield
+    rescue Exception => e
+      raise e if (retries += 1) >= retry_count || rescue_from.find {|r| e.is_a?(r) }.nil?
+      sleep(retry_wait)
+      retry
+    end
+  end
+
 end
