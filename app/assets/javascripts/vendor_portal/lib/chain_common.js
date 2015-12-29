@@ -274,7 +274,7 @@
       newSupportClient = function() {
         return {
           sendRequest: function(supportRequest) {
-            return $http.post('/api/v1/support_request', {
+            return $http.post('/api/v1/support_requests', {
               support_request: supportRequest
             }).then(function(resp) {
               return resp.data.support_request_response;
