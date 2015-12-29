@@ -15,7 +15,7 @@ describe ReportsController do
         response.should be_success
       end
       it 'should run the report' do
-        post :run_containers_released, {'arrival_date_start'=>'2012-01-01','arrival_date_end'=>'2012-01-02','customer_numbers'=>"A\nB"}
+        post :run_containers_released, {'arrival_date_start'=>'2012-01-01','arrival_end_date'=>'2012-01-02','customer_numbers'=>"A\nB"}
         response.should redirect_to('/report_results')
         ReportResult.all.should have(1).item
         rr = ReportResult.first
@@ -295,6 +295,62 @@ describe ReportsController do
         expect(flash[:errors].first).to eq "You do not have permission to view this report"
       end
     end
+  end
+
+  describe "Eddie Bauer CA K84 Summary" do
+    before :each do
+      MasterSetup.create!(system_code: 'www-vfitrack-net')
+      @u = Factory(:master_user)
+      @u.stub(:view_commercial_invoices?).and_return true
+      sign_in_as @u
+
+      @start_date = Date.today - 10
+      @end_date = Date.today
+    end
+
+    context "show" do
+      it "renders page for Vandegrift user" do
+        get :show_eddie_bauer_ca_k84_summary
+        expect(response).to be_success
+      end
+
+      it "doesn't render page for non-Vandegrift user" do
+        @u = Factory(:user)
+        sign_in_as @u
+        get :show_eddie_bauer_ca_k84_summary
+        expect(response).to_not be_success
+      end
+    end
+
+    context "run" do
+
+      it "runs report for Vandegrift user" do
+        ReportResult.should_receive(:run_report!).with("Eddie Bauer CA K84 Summary", @u, OpenChain::Report::EddieBauerCaK84Summary, {settings: {start_date: @start_date, end_date: @end_date}, friendly_settings: []})
+        post :run_eddie_bauer_ca_k84_summary, {start_date: @start_date, end_date: @end_date }
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
+      end
+
+      it "doesn't run report for non-Vandegrift user" do
+        @u = Factory(:user)
+        sign_in_as @u
+        ReportResult.should_not_receive(:run_report!)
+        post :run_eddie_bauer_ca_k84_summary, {start_date: @start_date, end_date: @end_date}
+        
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "You do not have permission to view this report"
+      end
+
+      it "doesn't run report with missing date range" do
+        ReportResult.should_not_receive(:run_report!)
+        post :run_eddie_bauer_ca_k84_summary, {start_date: "", end_date: ""}
+        
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "Please enter a start and end date."
+      end
+
+    end
+
   end
 
 end
