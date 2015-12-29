@@ -184,7 +184,7 @@ describe Api::V1::UsersController do
     it "returns errors" do
       allow_api_access(user)
       post :change_my_password
-      expect(response).not_to be_success
+      expect(response.status).to eq 406
       expect(response.body).to eq({errors: ["Password cannot be blank."]}.to_json)
     end
   end

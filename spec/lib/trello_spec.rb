@@ -2,35 +2,61 @@ require 'spec_helper'
 
 describe OpenChain::Trello do
 
+  let (:user) {
+    Factory(:user, email:'b@sample.com',first_name:'Joe',last_name:'Shmo',company:Factory(:company,name:'ACustomer'))
+  }
+
   describe :create_feedback_card! do
-    before :each do
-      @u = Factory(:user, email:'b@sample.com',first_name:'Joe',last_name:'Shmo',company:Factory(:company,name:'ACustomer'))
-      @message = 'hello world'
-      @url = "https://sample.vfitrack.net/test/something#here"
-      @board_id = 'testvfiid' # /config/trello.yml
-      @list_name = 'Feedback'
 
-      @expected_name = "FB: ACustomer - Joe Shmo"
-      @expected_message = "```\nhello world\n```\n\n**Client:** ACustomer\n**User:** Joe Shmo\n**Email:** b@sample.com\n**URL:** #{@url}\n"
+    it "adds feedback card to the defined list" do
+      wrapper = double("OpenChain::Trello::ApiWrapper")
+      message = "hello world"
+      url = "https://sample.vfitrack.net/test/something#here"
 
-      @api = described_class::ApiWrapper
+      described_class.should_receive(:wrapper).and_return wrapper
+      body = "```\nhello world\n```\n\n**Client:** ACustomer\n**User:** Joe Shmo\n**Email:** b@sample.com\n**URL:** #{url}\n"
+
+      wrapper.should_receive(:create_card_on_board!).with 'testvfiid', 'Feedback', "FB: #{user.company.name} - #{user.full_name}", body
+      
+      described_class.create_feedback_card! user.id, url, message
     end
+  end
 
-    it "should add to list" do
-      list = double('list')
-      list.stub(:id).and_return('l-id')
-      @api.should_receive(:find_or_create_list_by_name!).with(@board_id,'Feedback').and_return(list)
-      @api.should_receive(:create_card!).with('l-id',@expected_name,{desc:@expected_message})
+  describe "send_support_request!" do
+    let (:request) {
+      r = SupportRequest.new user: user, created_at: Time.zone.parse("2015-12-29 15:00"), referrer_url: "http://www.vfitrack.net", body: "Help!"
+      r.stub(:id).and_return 1
+      r
+    }
 
-      described_class.create_feedback_card! @u.id, @url, @message
+    it "generates card data and creates it" do
+      card_name = "Ticket # 1 - #{user.email}"
+      card_body = "```\nHelp!\n```\n\n**Submitted:** 2015-12-29 10:00 AM EST\n**Client:** ACustomer\n**User:** Joe Shmo\n**Email:** b@sample.com\n**URL:** http://www.vfitrack.net\n\n"
+
+      described_class.should_receive(:create_card_on_board!).with("board-id", "list-name", card_name, card_body, label_colors: "label-color")
+
+      described_class.send_support_request! "board-id", "list-name", request, "label-color"
     end
+  end
 
+  describe "create_support_request!" do
+    let (:wrapper) { double("OpenChain::Trello::ApiWrapper") }
+
+    it "passes through values to api wrapper" do
+      wrapper.should_receive(:create_card_on_board!).with "board-id", "list_name", "card name", "card body", {opts: "opt"}
+
+      described_class.should_receive(:wrapper).and_return wrapper
+
+      described_class.create_card_on_board! "board-id", "list_name", "card name", "card body", {opts: "opt"}
+    end
   end
 
   describe OpenChain::Trello::ApiWrapper do
+    subject { OpenChain::Trello::ApiWrapper.new }
+
     describe 'configuration' do
       it "should load trello configuration on class load" do
-        described_class
+        subject
         config = ::Trello.configuration
         # /config/trello.yml
         expect(config.developer_public_key).to eq 'testkey'
@@ -38,61 +64,175 @@ describe OpenChain::Trello do
       end
     end
 
-    describe :find_list_by_name do
-      before :each do
-        @board = double('board')
-        ::Trello::Board.should_receive(:find).with('BN').and_return(@board)
-        @lists = ["ABC","DEF","GHI"].collect do |n|
-          l = double("list-#{n}")
-          l.stub(:name).and_return n
-          l.stub(:id).and_return "#{n}-ID"
-          l
+    describe "create_card_on_board!" do
+
+      let (:list) {
+        list = double("Trello::List")
+        list.stub(:id).and_return "list-id"
+        list
+      }
+
+      let (:labels) {
+        red = double("Trello::Label")
+        red.stub(:color).and_return "red"
+        red.stub(:id).and_return "label-red"
+
+        blue = double("Trello::Label")
+        blue.stub(:color).and_return "blue"
+        blue.stub(:id).and_return "label-blue"
+        [red, blue]
+      }
+
+      let (:board) {
+        board = double("Trello::Board")
+        board.stub(:id).and_return "board-id"
+        board.stub(:labels).and_return labels
+        board
+      }
+
+      
+      it "uses Trello::Card.create to create a card" do
+        subject.should_receive(:with_list).with(board.id, "List Name").and_yield list
+
+        Trello::Card.should_receive(:create).with({list_id: list.id, name: "Card Name", desc: "Card Body", option1: "opt", option2: "opt2"})
+
+        subject.create_card_on_board! board.id, "List Name", "Card Name", "Card Body", option1: "opt", option2: "opt2"
+      end
+
+      it "accepts option for label_color and applies it" do
+        subject.should_receive(:with_list).with(board.id, "List Name").and_yield list
+        subject.should_receive(:with_board).with(board.id).and_yield board
+
+
+        Trello::Card.should_receive(:create).with({list_id: list.id, name: "Card Name", desc: "Card Body", option1: "opt", option2: "opt2", card_labels: "label-red"})
+        subject.create_card_on_board! board.id, "List Name", "Card Name", "Card Body", option1: "opt", option2: "opt2", label_colors: "red"
+      end
+
+      it "accepts multiple label colors" do
+        subject.should_receive(:with_list).with(board.id, "List Name").and_yield list
+        subject.should_receive(:with_board).with(board.id).and_yield board
+
+
+        Trello::Card.should_receive(:create).with({list_id: list.id, name: "Card Name", desc: "Card Body", option1: "opt", option2: "opt2", card_labels: "label-red,label-blue"})
+        subject.create_card_on_board! board.id, "List Name", "Card Name", "Card Body", option1: "opt", option2: "opt2", label_colors: "red, blue"
+      end
+    end
+
+    describe "with_board" do
+      let (:board) {
+        board = double("Trello::Board")
+        board.stub(:id).and_return "board-id"
+        board
+      }
+
+      it "looks up a board and yields it to the caller, returning the result of the block" do
+        Trello::Board.should_receive(:find).with(board.id).and_return board
+        expect(subject.with_board(board.id) {|b| b.id}).to eq board.id
+      end
+
+      context "with cached board lookup" do
+        let (:board_2) {
+          board = double("Trello::Board")
+          board.stub(:id).and_return "board2-id"
+          board
+        }
+
+        before :each do
+          Trello::Board.stub(:find).with(board.id).once.and_return board
+          subject.with_board(board.id) {|b| b.id}
         end
-        @board.stub(:lists).and_return(@lists)
-      end
-
-      it "should find list by looping board" do
-        expect(described_class::ApiWrapper.find_list_by_name('BN','DEF').id).to eq 'DEF-ID'
-      end
-
-      it "should return nil if not found" do
-        expect(described_class::ApiWrapper.find_list_by_name('BN','Z')).to be_nil
-      end
-    end
-
-    describe :find_or_create_list_by_name! do
-      it "should find" do
-        create_opts = {pos:1}
-        list = double('list')
-        described_class::ApiWrapper.should_receive(:find_list_by_name).with('BN','Z').and_return list
-        expect(described_class::ApiWrapper.find_or_create_list_by_name!('BN','Z',create_opts)).to eq list
-      end
-      it "should create" do
-        create_opts = {pos:1}
-        list = double('list')
-        described_class::ApiWrapper.should_receive(:find_list_by_name).with('BN','Z').and_return nil
-        described_class::ApiWrapper.should_receive(:create_list!).with('BN','Z',create_opts).and_return list
-        expect(described_class::ApiWrapper.find_or_create_list_by_name!('BN','Z',create_opts)).to eq list
-      end
-    end
-
-    describe :create_list! do
-      it "should create list" do
-        expected_opts = {name:'n',board_id:'BN',pos:55}
-        list = double('list')
-        ::Trello::List.should_receive(:create).with(expected_opts).and_return(list)
         
-        expect(described_class::ApiWrapper.create_list!('BN','n', {pos:55})).to eq list        
+        it "caches the result of the board lookup" do
+          expect(subject.with_board(board.id) {|b| b.id}).to eq board.id
+        end
+
+        it "explodes cache if different board id is given" do
+          Trello::Board.stub(:find).with(board_2.id).once.and_return board_2
+          expect(subject.with_board(board_2.id) {|b| b.id}).to eq board_2.id
+          # Call again to make sure the second call is cached
+          expect(subject.with_board(board_2.id) {|b| b.id}).to eq board_2.id
+        end
       end
     end
 
-    describe :create_card! do
-      it "should create card" do
-        expected_opts = {name:'n',list_id:'abc',desc:'des'}
-        mock_card = double('card')
-        ::Trello::Card.should_receive(:create).with(expected_opts).and_return(mock_card)
-        
-        expect(described_class::ApiWrapper.create_card! 'abc', 'n', {desc: 'des'}).to eq mock_card
+    describe "with_list" do
+      let (:board) {
+        board = double("Trello::Board")
+        board.stub(:id).and_return "board-id"
+        board.stub(:name).and_return "Board Name"
+        board
+      }
+
+      let (:list) {
+        list = double("Trello::List")
+        list.stub(:id).and_return "list-id"
+        list.stub(:name).and_return "list-name"
+        list
+      }
+
+      before :each do
+        subject.stub(:with_board).with(board.id).and_yield board
+      end
+
+      it "finds and yields the requested list" do
+        board.should_receive(:lists).and_return [list]
+        expect(subject.with_list(board.id, list.name) {|l| l.id}).to eq list.id
+      end
+
+      it "creates the requested list if missing" do
+        board.should_receive(:lists).and_return []
+        board.should_receive(:create_list!).with(board.id, list.name).and_return list
+
+        expect(subject.with_list(board.id, list.name) {|l| l.id}).to eq list.id
+      end
+
+      it "raises an error if instructed when the list is missing" do
+        board.should_receive(:lists).and_return []
+        expect { subject.with_list(board.id, list.name, true) {|l| l.id} }.to raise_error "Unable to find a list named #{list.name} on the board #{board.name}"
+      end
+    end
+
+    describe "find_label_ids_by_colors" do
+
+      let (:labels) {
+        red = double("Trello::Label")
+        red.stub(:color).and_return "red"
+        red.stub(:id).and_return "label-red"
+
+        blue = double("Trello::Label")
+        blue.stub(:color).and_return "blue"
+        blue.stub(:id).and_return "label-blue"
+        [red, blue]
+
+        magenta = double("Trello::Label")
+        magenta.stub(:color).and_return "magenta"
+        magenta.stub(:id).and_return "label-magenta"
+        [red, blue, magenta]
+      }
+
+      let (:board) {
+        board = double("Trello::Board")
+        board.stub(:id).and_return "board-id"
+        board.stub(:labels).and_return labels
+        board
+      }
+
+      before :each do
+        subject.stub(:with_board).with(board.id).and_yield board
+      end
+
+      it "finds label ids for a specific set of colors" do
+        label_ids = subject.find_label_ids_by_colors board.id, "red, blue"
+        expect(label_ids).to eq ["label-red", "label-blue"]
+      end
+
+      it "rejects colors that are not actual Trello label colors" do
+        expect(subject.find_label_ids_by_colors board.id, "magenta").to eq []
+      end
+
+      it "doesn't look up the board, and returns blank array if colors is blank" do
+        subject.should_not_receive(:with_board)
+        expect(subject.find_label_ids_by_colors nil, nil).to eq []
       end
     end
   end

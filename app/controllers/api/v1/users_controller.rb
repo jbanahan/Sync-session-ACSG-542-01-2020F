@@ -81,9 +81,9 @@ module Api; module V1; class UsersController < Api::V1::ApiController
       render json: {ok:'ok'}
     else
       if user.errors.size > 0
-        render_error user.errors
+        render_error user.errors, 406
       else
-        render_error "Failed to update password."
+        render_error "Failed to update password.", 406
       end
     end
   end
