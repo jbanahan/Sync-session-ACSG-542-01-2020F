@@ -181,7 +181,7 @@ describe OpenChain::Trello do
 
       it "creates the requested list if missing" do
         board.should_receive(:lists).and_return []
-        board.should_receive(:create_list!).with(board.id, list.name).and_return list
+        OpenChain::Trello::ApiWrapper.any_instance.should_receive(:create_list!).with(board.id, list.name).and_return list
 
         expect(subject.with_list(board.id, list.name) {|l| l.id}).to eq list.id
       end
