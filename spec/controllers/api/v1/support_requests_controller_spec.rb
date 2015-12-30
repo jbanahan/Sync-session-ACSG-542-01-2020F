@@ -15,6 +15,8 @@ describe Api::V1::SupportRequestsController do
 
   describe "create" do
     it "creates a support request" do
+      sc_config = {"more_help_message"=>"mhm"}
+      SupportRequest.stub(:support_request_config).and_return sc_config
       @request.env['HTTP_REFERER'] = "http://www.vfitrack.net"
 
       post :create, support_request: {body: "Help!", importance: "Critical"}
@@ -31,7 +33,7 @@ describe Api::V1::SupportRequestsController do
       expect(sr.user).to eq user
 
       req = JSON.parse(response.body)
-      expect(JSON.parse(response.body)).to eq({"support_request_response" => {"ticket_number" => sr.ticket_number}})
+      expect(JSON.parse(response.body)).to eq({"support_request_response" => {"ticket_number" => sr.ticket_number,"more_help_message"=>"mhm"}})
     end
 
     it "rolls back save if error occurs in sending" do

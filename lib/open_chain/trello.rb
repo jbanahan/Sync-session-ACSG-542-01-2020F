@@ -89,6 +89,7 @@ DESC
       end
     end
 
+
     def find_label_ids_by_colors board_id, label_colors
       return [] if label_colors.blank?
 
@@ -121,15 +122,23 @@ DESC
     def with_list board_id, list_name, raise_if_missing = false
       retval = nil
       with_board(board_id) do |b|
-        list = b.lists.find {|list| list.name == list_name}
+        list = b.lists.find {|lst| lst.name == list_name}
         raise "Unable to find a list named #{list_name} on the board #{b.name}" if list.nil? && raise_if_missing
 
-        list = b.create_list!(b.id, list_name) unless list
+        list = create_list!(b.id, list_name) unless list
 
         retval = yield list if list
       end
       retval
     end
+    
+    # create a list and return its ::Trello object
+    def create_list! board_id, name, opts={}
+      inner_opts = {board_id:board_id,name:name}
+      inner_opts.merge!(opts)
+      ::Trello::List.create(inner_opts)
+    end
+
   end
 
 end; end

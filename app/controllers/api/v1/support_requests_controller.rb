@@ -16,7 +16,8 @@ module Api; module V1;  class SupportRequestsController < Api::V1::ApiController
 
     if valid
       render json: {support_request_response: {
-        ticket_number: r.ticket_number
+        ticket_number: r.ticket_number,
+        more_help_message: SupportRequest.support_request_config['more_help_message']
       }
     }
     else
