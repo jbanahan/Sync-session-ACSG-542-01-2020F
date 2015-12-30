@@ -9,6 +9,12 @@
     #support-link {
       padding: 0;
     }
+    #run_as_box {
+      background-color: #FF4747;
+      text-align: center;
+      font-weight: bold;
+      border-bottom: 1px solid black;
+    }
   </style>
   
   <%= javascript_include_tag "vendor_portal" -%>
@@ -19,6 +25,9 @@
   </script>
 </head>
 <body>
+  <% if @run_as_user %>
+    <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
+  <% end %>
   <div ng-app='VendorPortal'>
     <div class="container-fluid">
       <div class="row">

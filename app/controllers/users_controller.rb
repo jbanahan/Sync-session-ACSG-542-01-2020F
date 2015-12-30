@@ -1,5 +1,6 @@
 class UsersController < ApplicationController
   skip_before_filter :check_tos, :only => [:show_tos, :accept_tos]
+  skip_before_filter :require_user, only: [:disable_run_as]
     # GET /users
     def index
       respond_to do |format|
@@ -218,7 +219,8 @@ class UsersController < ApplicationController
       end
     end
     def disable_run_as
-      if @run_as_user
+      cu = current_user #load current_user here in case not logged in since we're skipping filters to avoid the portal_redirect
+      if cu && @run_as_user
         @run_as_user.run_as = nil
         @run_as_user.save
         add_flash :notices, "Run As disabled."
