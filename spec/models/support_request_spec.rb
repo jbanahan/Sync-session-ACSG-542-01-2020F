@@ -8,17 +8,6 @@ describe SupportRequest do
     r = SupportRequest.new user: user, created_at: Time.zone.parse("2015-12-29 15:00"), referrer_url: "http://www.vfitrack.net", body: "Help!", severity: "OMG!!!", ticket_number: "Ticket", external_link: "Link"
   }
 
-
-  describe "to_json" do
-    it "jsonizes the object" do
-      expect(support_request.to_json).to eq( 
-        {support_request_response: {
-          ticket_number: "Ticket"
-        }}
-      )
-    end
-  end
-
   context "with trello config" do
     let(:config) {
       {"trello" => {"board_id" => "the_board", "list_name" => "The List", "severity_colors" => {"OMG!!!" => "red", "Meh" => "green"}}}

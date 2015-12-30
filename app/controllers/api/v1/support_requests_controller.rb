@@ -15,7 +15,10 @@ module Api; module V1;  class SupportRequestsController < Api::V1::ApiController
     end
 
     if valid
-      render json: r.to_json
+      render json: {support_request_response: {
+        ticket_number: r.ticket_number
+      }
+    }
     else
       render_error r.errors
     end
