@@ -598,13 +598,25 @@
         link: function(scope, el, attrs) {
           scope.submit = function() {
             scope.loading = 'loading';
+            scope.errors = [];
             return chainApiSvc.Support.sendRequest({
               body: scope.messageBody
-            }).then(function(r) {
+            }).then((function(r) {
               scope.messageBody = '';
-              scope.ticketNumber = r.ticket;
+              scope.ticketNumber = r.ticket_number;
+              scope.moreHelpMessage = r.more_help_message;
               return delete scope.loading;
-            });
+            }), (function(err) {
+              var i, len, m, ref, results;
+              delete scope.loading;
+              ref = err.errors;
+              results = [];
+              for (i = 0, len = ref.length; i < len; i++) {
+                m = ref[i];
+                results.push(scope.errors.push(m));
+              }
+              return results;
+            }));
           };
           $(el).on('show.bs.modal', function() {
             return scope.$apply(function() {
@@ -688,5 +700,5 @@ angular.module("chain-messages-modal.html", []).run(["$templateCache", function(
 
 angular.module("chain-support-modal.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-support-modal.html",
-    "<div class=\"modal fade\" id=\"chain-support-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Help</h4></div><div class=\"modal-body\"><div ng-hide=\"ticketNumber\"><label>Message:</label><textarea ng-model=\"messageBody\" class=\"form-control\"></textarea></div><div ng-show=\"ticketNumber\"><div class=\"alert alert-success\">Your ticket number is <strong id=\"chain-support-ticket-no\">{{ticketNumber}}</strong>.</div></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button id=\"chain-support-submit\" ng-show=\"!ticketNumber\" ng-disabled=\"!messageBody || messageBody.length == 0\" ng-click=\"submit()\" type=\"button\" class=\"btn btn-primary\">Save changes</button></div></div></div></div>");
+    "<div class=\"modal fade\" id=\"chain-support-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Help</h4></div><div class=\"modal-body\"><div ng-hide=\"ticketNumber || loading\"><label>Message:</label><textarea ng-model=\"messageBody\" class=\"form-control\"></textarea></div><div ng-show=\"ticketNumber\"><div class=\"alert alert-success\"><p>Your ticket number is <strong id=\"chain-support-ticket-no\">{{ticketNumber}}</strong>.</p><p ng-show=\"moreHelpMessage\">{{moreHelpMessage}}</p></div></div><div ng-show=\"errors.length > 0\"><div class=\"alert alert-danger\"><strong>There were errors submitting your support request. You may email <a href=\"mailto:support@vandegriftinc.com\">support@vandegriftinc.com</a> for more help:</strong><ul><li ng-repeat=\"e in errors\">{{e}}</li></ul></div></div><div ng-show=\"loading==&quot;loading&quot;\"><chain-loader></chain-loader></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button id=\"chain-support-submit\" ng-show=\"!ticketNumber\" ng-disabled=\"!messageBody || messageBody.length == 0\" ng-click=\"submit()\" type=\"button\" class=\"btn btn-primary\">Save changes</button></div></div></div></div>");
 }]);

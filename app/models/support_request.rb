@@ -8,13 +8,6 @@ class SupportRequest < ActiveRecord::Base
     true
   end
 
-  def to_json
-    {support_request_response: {
-        ticket_number: self.ticket_number
-      }
-    }
-  end
-
   def self.request_sender
     return TestingSender.new if Rails.env.test?
 
