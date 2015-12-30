@@ -1,6 +1,7 @@
 require 'open_chain/workflow_processor'
 
 class AttachmentsController < ApplicationController
+  skip_before_filter :portal_redirect, only: [:download]
   def create
     if params[:attachment][:attached].nil?
       add_flash :errors, "Please choose a file before uploading."
