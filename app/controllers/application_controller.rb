@@ -14,6 +14,7 @@ class ApplicationController < ActionController::Base
   before_filter :new_relic
   before_filter :set_master_setup
   before_filter :require_user
+  before_filter :portal_redirect
   before_filter :set_user_time_zone
   before_filter :log_last_request_time
   before_filter :log_request
@@ -248,7 +249,7 @@ class ApplicationController < ActionController::Base
     cu = current_user
     if cu && User.access_allowed?(cu)
       User.current = cu
-      portal_redirect(cu)
+      @require_user_run = true
     else
       respond_to do |format|
         format.any(:js, :json, :xml) { head :unauthorized }
@@ -361,8 +362,9 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def portal_redirect user
-    prp = user.portal_redirect_path
+  def portal_redirect
+    return unless @require_user_run
+    prp = current_user.portal_redirect_path
     redirect_to prp unless prp.blank? || request.path.downcase.index(prp.downcase)==0
   end
 end
