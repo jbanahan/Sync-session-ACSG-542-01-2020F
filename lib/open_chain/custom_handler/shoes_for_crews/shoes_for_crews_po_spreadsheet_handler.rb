@@ -135,6 +135,13 @@ module OpenChain; module CustomHandler; module ShoesForCrews
 
       raise "An order number must be present in all files.  File #{File.basename(key)} is missing an order number." if order_id.blank?
 
+      # I'm not entirely sure why, but I keep getting duplicate products when I'm creating products inside the find_order transaction/lock.
+      # I'm guessing it has to do w/ multiple distinct transactions running and then being merged at the same time, each distinct transaction
+      # having its own newly created product (which wouldn't happen if we had a unique index).  
+      # By running the product lookups outside of a containing transaction, this should prevent that from happening.
+
+      products = find_all_products data[:items]
+
       find_order(order_id) do |existing_order, order|
         po = order
 
@@ -162,7 +169,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews
 
         line_number = 0
         data[:items].each do |item|
-          product = find_product item
+          product = products[item[:item_code]]
           line = order.order_lines.build
           line.line_number = (line_number += 1)
           line.product = product
@@ -385,6 +392,14 @@ module OpenChain; module CustomHandler; module ShoesForCrews
         end
 
         vendor
+      end
+
+      def find_all_products items
+        products = {}
+        items.each do |item|
+          products[item[:item_code]] = find_product item
+        end
+        products
       end
 
       def find_product item
