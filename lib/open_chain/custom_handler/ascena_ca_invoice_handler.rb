@@ -1,6 +1,6 @@
 module OpenChain; module CustomHandler
   class AscenaCaInvoiceHandler
-    IMPORTER_ID = 1137
+    FENIX_ID = "858053119RM0001"
 
     def initialize custom_file
       @custom_file = custom_file
@@ -58,19 +58,21 @@ module OpenChain; module CustomHandler
         if existing_invoice
           existing_invoice.commercial_invoice_lines.destroy_all
         else
-          existing_invoice = CommercialInvoice.create!(invoice_number: invoice_number, importer_id: IMPORTER_ID)
+          importer_id = get_importer_id FENIX_ID
+          existing_invoice = CommercialInvoice.new(invoice_number: invoice_number, importer_id: importer_id)
         end
 
         CSV.foreach(csv_file) do |row|
-          parse_invoice_line row, existing_invoice unless counter.zero?
+          existing_invoice = parse_invoice_line row, existing_invoice unless counter.zero?
           counter += 1
         end
+        existing_invoice.save!
       end
     end
 
     def parse_invoice_line csv_line, existing_invoice
       line = read_line csv_line
-      write_line line, existing_invoice
+      build_line line, existing_invoice
     end
 
     def get_invoice_number csv_file
@@ -85,7 +87,13 @@ module OpenChain; module CustomHandler
     end
 
     def convert_coo coo
-      coo.length == 3 ? "US" : coo
+      (coo.length == 3 && coo[0] == 'U') ? "US" : coo
+    end
+
+    def get_importer_id fenix_id
+      co = Company.where(fenix_customer_number: fenix_id).first
+      raise "Fenix ID not found!" unless co
+      co.id
     end
    
    private
@@ -98,12 +106,12 @@ module OpenChain; module CustomHandler
       result
     end
 
-    def write_line parsed_hsh, existing_invoice
-      cil = existing_invoice.commercial_invoice_lines.create!(part_number: parsed_hsh[:part_number], 
+    def build_line parsed_hsh, existing_invoice
+      cil = existing_invoice.commercial_invoice_lines.build(part_number: parsed_hsh[:part_number], 
                                                 country_origin_code: convert_coo(parsed_hsh[:country_origin_code]), 
                                                 quantity: parsed_hsh[:quantity], value: parsed_hsh[:value])
-      cil.commercial_invoice_tariffs.create!(hts_code: parsed_hsh[:hts_code])
-      nil
+      cil.commercial_invoice_tariffs.build(hts_code: parsed_hsh[:hts_code])
+      existing_invoice
     end
 
 

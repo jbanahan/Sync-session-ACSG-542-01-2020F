@@ -1,13 +1,24 @@
 module OpenChain
   class AscenaInvoiceValidatorHelper
-    IMPORTER_ID = 1137
 
     # run first
-    # assumption: No commercial_invoice_line on the entry has more than one commercial_tariff
+    # assumption: No commercial_invoice_line on the entry has more than one commercial_invoice_tariff
     def run_queries entry 
-      invoice_numbers = entry.commercial_invoice_numbers.split("\n").map{ |x| "\"#{x.strip}\"" }.join(", ")
-      @unrolled_results = gather_unrolled invoice_numbers
+      invoice_numbers = entry.commercial_invoice_numbers.split("\n").map{ |x| x.strip.inspect }.join(", ")
+      @unrolled_results = gather_unrolled invoice_numbers, entry.importer_id
       @fenix_results = gather_entry entry
+    end
+
+    def invoice_list_diff
+      unrolled_inv_numbers, fenix_inv_numbers = [].to_set, [].to_set
+      @unrolled_results.each { |row| unrolled_inv_numbers.add row['invoice_number'] }
+      @fenix_results.each { |row| fenix_inv_numbers.add row['invoice_number'] }
+      if unrolled_inv_numbers == fenix_inv_numbers
+        ""
+      else 
+        only_fenix = relative_complement unrolled_inv_numbers, fenix_inv_numbers
+        "Missing unrolled invoices: #{only_fenix.to_a.join(", ")}"
+      end
     end
 
     def total_value_per_hts_coo_diff
@@ -121,12 +132,12 @@ module OpenChain
       set
     end
 
-    def gather_unrolled invoice_numbers
+    def gather_unrolled invoice_numbers, importer_id
       query = "SELECT ci.invoice_number, cil.part_number, cil.country_origin_code, cit.hts_code, cil.quantity, cil.value " \
               "FROM commercial_invoices AS ci " \
               "  INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id " \
               "  INNER JOIN commercial_invoice_tariffs AS cit ON cil.id = cit.commercial_invoice_line_id " \
-              "WHERE ci.entry_id IS NULL AND ci.importer_id = #{IMPORTER_ID} AND ci.invoice_number IN (#{invoice_numbers})"
+              "WHERE ci.entry_id IS NULL AND ci.importer_id = #{importer_id} AND ci.invoice_number IN (#{invoice_numbers})"
     
       ActiveRecord::Base.connection.exec_query(query)
     end

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::AscenaInvoiceValidatorHelper do
 
   before(:each) do
-    @ent = Factory(:entry, commercial_invoice_numbers: "123456789\n 987654321")
+    @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789\n 987654321")
     @validator = described_class.new
     
     #fenix
@@ -61,9 +61,24 @@ describe OpenChain::AscenaInvoiceValidatorHelper do
 
   describe "run_queries" do
     it "executes #gather_unrolled and :gather_entry" do
-      @validator.should_receive(:gather_unrolled).with %Q("123456789", "987654321")
+      @validator.should_receive(:gather_unrolled).with(%Q("123456789", "987654321"), 1137)
       @validator.should_receive(:gather_entry).with @ent
       @validator.run_queries @ent
+    end
+  end
+
+  describe "invoice_list_diff" do
+    it "returns empty if every invoice on the entry has at least one unrolled invoice" do
+      @validator.run_queries @ent
+      expect(@validator.invoice_list_diff).to be_empty
+    end
+
+    it "returns list of missing unrolled invoices" do
+      ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '111111111', importer_id: 1137)  
+      cil = Factory(:commercial_invoice_line, commercial_invoice: ci)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: cil)
+      @validator.run_queries @ent
+      expect(@validator.invoice_list_diff).to eq "Missing unrolled invoices: 111111111"
     end
   end
 

@@ -89,7 +89,8 @@ describe OpenChain::CustomHandler::AscenaCaInvoiceHandler do
                "0.04", "CN", "9.45", "0", "0.9", "3924.90.0099", "0", "4", "53.36", "Plastic", " ", " ", " ", " ", " ", 
                " ", " ", " ", " ", "12.64", "0.19", "0.51"]
 
-      @ci = Factory(:commercial_invoice, entry: nil, invoice_number: @row1[0], importer_id: '1137') 
+      @co = Factory(:company, fenix_customer_number: "858053119RM0001")
+      @ci = Factory(:commercial_invoice, entry: nil, invoice_number: @row1[0], importer_id: @co.id) 
       @handler = described_class.new "file.csv" # dummy input
     end
 
@@ -107,7 +108,7 @@ describe OpenChain::CustomHandler::AscenaCaInvoiceHandler do
         cil_first = CommercialInvoiceLine.first
         cit_first = CommercialInvoiceTariff.first
 
-        expect(ci.importer_id).to eq 1137
+        expect(ci.importer_id).to eq @co.id
         expect(ci.invoice_number).to eq "CA201512031"
         expect(cil_first.part_number).to eq "1918-619-1"
         expect(cil_first.country_origin_code).to eq "CN"
@@ -135,7 +136,7 @@ describe OpenChain::CustomHandler::AscenaCaInvoiceHandler do
       end
 
       it "translates csv rows into corresponding ActiveRecord objects" do
-        # intentionally blank
+        CommercialInvoice.destroy_all
       end
 
       it "replaces invoice lines if invoice already exists" do 
@@ -148,19 +149,15 @@ describe OpenChain::CustomHandler::AscenaCaInvoiceHandler do
 
     describe "parse_invoice_line" do
       it "translates csv row into corresponding ActiveRecord objects" do
-        @handler.parse_invoice_line @row1, @ci
-
-        cil = CommercialInvoiceLine.last
-        cit = CommercialInvoiceTariff.last
+        invoice_with_built_line = @handler.parse_invoice_line @row1, @ci
+        cil = invoice_with_built_line.commercial_invoice_lines.first
+        cit = cil.commercial_invoice_tariffs.first
         
         expect(cil.part_number).to eq "1918-619-1"
         expect(cil.country_origin_code).to eq "CN"
         expect(cil.quantity).to eq 4
         expect(cil.value).to eq 7.4
         expect(cit.hts_code).to eq "3304100000"
-
-        expect(cit.commercial_invoice_line).to eq cil
-        expect(cil.commercial_invoice).to eq @ci
       end      
 
       it "throws an exception if tariff number has wrong format" do
@@ -200,6 +197,19 @@ describe OpenChain::CustomHandler::AscenaCaInvoiceHandler do
       it "converts 3-letter country-of-origin codes to 'US' and leaves others unchanged" do
         expect(@handler.convert_coo 'UCA').to eq 'US'
         expect(@handler.convert_coo 'ID').to eq 'ID'
+        expect(@handler.convert_coo 'ABC').to eq 'ABC'
+      end
+    end
+
+    describe "get_importer_id" do
+      before(:each) { @co = Factory(:company, fenix_customer_number: "123456789") }
+
+      it "looks up importer_id using Fenix ID" do
+        expect(@handler.get_importer_id("123456789")).to eq @co.id
+      end
+      
+      it "throws exception if Fenix ID not found" do
+        expect{ @handler.get_importer_id("111111111") }.to raise_error("Fenix ID not found!")
       end
     end
   

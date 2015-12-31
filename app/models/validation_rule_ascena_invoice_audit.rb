@@ -15,12 +15,15 @@ class ValidationRuleAscenaInvoiceAudit < BusinessValidationRule
 
   def execute_tests validator, style_set
     errors = []
-    errors << validator.total_value_per_hts_coo_diff
-    errors << validator.total_qty_per_hts_coo_diff
-    errors << validator.total_value_diff
-    errors << validator.total_qty_diff
-    errors << validator.hts_set_diff
-    errors << validator.style_set_match(style_set)
+    errors << validator.invoice_list_diff
+    if errors.first.blank?
+      errors << validator.total_value_per_hts_coo_diff
+      errors << validator.total_qty_per_hts_coo_diff
+      errors << validator.total_value_diff
+      errors << validator.total_qty_diff
+      errors << validator.hts_set_diff
+      errors << validator.style_set_match(style_set)
+    end
     errors = errors.reject{ |err| err.empty? }.join("\n")
     errors = screen_for_long_message errors
     errors unless errors.empty?

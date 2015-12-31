@@ -8,7 +8,8 @@ describe ValidationRuleAscenaInvoiceAudit do
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.stub(:gather_entry)
   end
 
-  it "passes if all six tests succeed" do
+  it "passes if all seven tests succeed" do
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:invoice_list_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_value_per_hts_coo_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_qty_per_hts_coo_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_value_diff).and_return ""
@@ -19,7 +20,8 @@ describe ValidationRuleAscenaInvoiceAudit do
     expect(@rule.run_validation @ent).to be_nil
   end
   
-  it "fails if any of the six tests fails" do
+  it "fails if any of the seven tests fails" do
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:invoice_list_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_value_per_hts_coo_diff).and_return "ERROR: total value per hts/coo"
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_qty_per_hts_coo_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_value_diff).and_return ""
@@ -31,6 +33,7 @@ describe ValidationRuleAscenaInvoiceAudit do
   end
 
   it "produces multiple error messages if there are multiple failing tests" do
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:invoice_list_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_value_per_hts_coo_diff).and_return "ERROR: total value per hts/coo"
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_qty_per_hts_coo_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_value_diff).and_return "ERROR: total value"
@@ -41,7 +44,19 @@ describe ValidationRuleAscenaInvoiceAudit do
     expect(@rule.run_validation @ent).to eq "ERROR: total value per hts/coo\nERROR: total value\nERROR: style set"
   end
 
+  it "skips remaining validations if unrolled commercial invoices are missing" do
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:invoice_list_diff).and_return "ERROR: missing unrolled invoices"
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.stub(:total_value_per_hts_coo_diff).and_return "ERROR: total value per hts/coo"
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.stub(:total_qty_per_hts_coo_diff).and_return ""
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.stub(:total_value_diff).and_return "ERROR: total value"
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.stub(:total_qty_diff).and_return ""
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.stub(:hts_set_diff).and_return ""
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.stub(:style_set_match).with(['1111', '2222'].to_set).and_return "ERROR: style set"
+    expect(@rule.run_validation @ent).to eq "ERROR: missing unrolled invoices"
+  end
+
   it "abridges the error list if it's too long" do
+    OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:invoice_list_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_value_per_hts_coo_diff).and_return "z" * (described_class::MAX_LENGTH + 1)
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_qty_per_hts_coo_diff).and_return ""
     OpenChain::AscenaInvoiceValidatorHelper.any_instance.should_receive(:total_value_diff).and_return ""
