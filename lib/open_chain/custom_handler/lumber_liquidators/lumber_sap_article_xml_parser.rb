@@ -36,25 +36,25 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
 
-    ActiveRecord::Base.transaction do
-      p = Product.find_by_unique_identifier(uid)
-      if p
-        previous_extract_time = p.get_custom_value(@cdefs[:prod_sap_extract]).value
-        if previous_extract_time && previous_extract_time.to_i > ext_time.to_i
-          return # don't parse since this is older than the previous extract
-        end
-      else
-        p = Product.new(unique_identifier:uid) 
-      end
-
-      p.importer = Company.find_by_master(true)
-      p.name = name
-      p.save!
-      p.update_custom_value!(@cdefs[:prod_sap_extract],ext_time)
-      p.create_snapshot(@user)
+    p = nil
+    Lock.aquire("Product-#{uid}") do
+      p = Product.where(unique_identifier: uid).first_or_create!
     end
 
+    Lock.with_lock_retry(p) do
+      previous_extract_time = p.custom_value(@cdefs[:prod_sap_extract])
+      if previous_extract_time && previous_extract_time.to_i > ext_time.to_i
+        return # don't parse since this is older than the previous extract
+      end
+
+      p.importer = Company.where(master: true).first
+      p.name = name
+      p.find_and_set_custom_value(@cdefs[:prod_sap_extract], ext_time)
+      p.save!
+      p.create_snapshot(@user)
+    end
   end
+
   def extract_time envelope_element
     date_part = et(envelope_element,'CREDAT')
     time_part = et(envelope_element,'CRETIM')
