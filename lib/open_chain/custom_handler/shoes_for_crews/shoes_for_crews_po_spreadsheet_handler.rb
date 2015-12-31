@@ -388,11 +388,18 @@ module OpenChain; module CustomHandler; module ShoesForCrews
       end
 
       def find_product item
-        product = Product.where(importer_id: importer.id, unique_identifier: "#{SHOES_SYSTEM_CODE}-#{item[:item_code]}").first_or_create!
+        unique_identifier = "#{SHOES_SYSTEM_CODE}-#{item[:item_code]}"
+        product = nil
+        part_cv = nil
+        
+        Lock.acquire("#{importer.id}-#{unique_identifier}") do 
+          product = Product.where(importer_id: importer.id, unique_identifier: "#{SHOES_SYSTEM_CODE}-#{item[:item_code]}").first_or_create!
 
-        part_cv = product.find_and_set_custom_value @cdefs[:prod_part_number], item[:item_code]
-        product.name = item[:model]
-        product.unit_of_measure = item[:case_uom]
+          part_cv = product.find_and_set_custom_value @cdefs[:prod_part_number], item[:item_code]
+          product.name = item[:model]
+          product.unit_of_measure = item[:case_uom]
+        end
+        
 
         if product.changed? || part_cv.changed?
           product.save!
