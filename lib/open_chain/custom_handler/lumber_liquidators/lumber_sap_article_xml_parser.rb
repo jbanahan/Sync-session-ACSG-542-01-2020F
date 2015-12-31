@@ -37,7 +37,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     ext_time = extract_time(envelope)
 
     p = nil
-    Lock.aquire("Product-#{uid}") do
+    Lock.acquire("Product-#{uid}") do
       p = Product.where(unique_identifier: uid).first_or_create!
     end
 
