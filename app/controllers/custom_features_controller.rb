@@ -19,6 +19,7 @@ require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/ascena_ca_invoice_handler'
+require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -39,6 +40,7 @@ class CustomFeaturesController < ApplicationController
   LUMBER_EPD = 'OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser'
   FISHER_CI_UPLOAD = 'OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler'
   ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::AscenaCaInvoiceHandler'
+  CREW_RETURNS ||= 'OpenChain::CustomHandler::JCrew::JCrewReturnsParser'
 
   def index
     render :layout=>'one_col'
@@ -608,7 +610,6 @@ class CustomFeaturesController < ApplicationController
     }
   end
   
-
   def fisher_ci_load_download
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"Fisher CI Load Upload",:lock_check=>false}) {
@@ -644,4 +645,36 @@ class CustomFeaturesController < ApplicationController
       redirect_to f.secure_url
     }
   end
+
+  def crew_returns_index
+    action_secure(OpenChain::CustomHandler::JCrew::JCrewReturnsParser.new(nil).can_view?(current_user),Product,{:verb=>"view",:module_name=>"J.Crew Returns",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>CREW_RETURNS).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+    }
+  end
+
+  def crew_returns_upload
+    f = CustomFile.new(:file_type=>CREW_RETURNS,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"J.Crew Returns",:lock_check=>false}) {
+     
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload."
+      end
+
+      if !has_errors? && f.save
+        CustomFile.delay.process f.id, current_user.id
+        add_flash :notices, "Your file is being processed.  You'll receive a VFI Track message when it completes."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/crew_returns'
+    }
+  end
+  
+  def crew_returns_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"J.Crew Returns",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
 end
