@@ -18,6 +18,7 @@ require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
+require 'open_chain/custom_handler/ascena_ca_invoice_handler'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -37,6 +38,7 @@ class CustomFeaturesController < ApplicationController
   CI_UPLOAD = 'OpenChain::CustomHandler::CiLoadHandler'
   LUMBER_EPD = 'OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser'
   FISHER_CI_UPLOAD = 'OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler'
+  ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::AscenaCaInvoiceHandler'
 
   def index
     render :layout=>'one_col'
@@ -614,4 +616,32 @@ class CustomFeaturesController < ApplicationController
     }
   end
 
+  def ascena_ca_invoices_index
+    action_secure(OpenChain::CustomHandler::AscenaCaInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Ascena CA Invoices",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>ASCENA_CA_INVOICES).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def ascena_ca_invoices_upload
+    f = CustomFile.new(:file_type=>ASCENA_CA_INVOICES,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Ascena CA Invoices",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/ascena_ca_invoices'
+    }
+  end
+
+  def ascena_ca_invoices_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Ascena CA Invoices",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
 end
