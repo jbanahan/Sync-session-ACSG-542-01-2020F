@@ -10,8 +10,9 @@
   <%= field_row "Bcc", @sent_email.email_bcc if @sent_email.email_bcc %>
   <%= field_row "Subject", @sent_email.email_subject %>
   <%= field_row "Date", @sent_email.email_date %>
-  <%= field_row "Body", @sent_email.email_body %>
 </table>
+
+<iframe src="<%= body_sent_email_path(@sent_email)%>" width="800" height="400" style="border: 0"></iframe>
 
 <% unless @sent_email.attachments.empty? %>
     <br><strong><p>Attachments:</p></strong>

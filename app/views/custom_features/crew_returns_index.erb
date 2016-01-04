@@ -1,0 +1,6 @@
+<% content_for :upload_form do %>
+<h2>Upload J.Crew Return files in PDF or CSV formats.</h2>
+<h4>You may zip any number of pdf or csv files together in to a single .zip file and upload that file as well.</h4>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "J.Crew Returns Upload", custom_feature: "crew_returns"} %>

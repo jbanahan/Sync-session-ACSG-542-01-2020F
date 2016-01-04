@@ -29,6 +29,15 @@ class SentEmailsController < ApplicationController
       end
     }
   end
+
+  def body 
+    # In order to actually render the email's content on the page we're using an iframe to render it
+    # with it's src pointing to this method
+    sys_admin_secure {
+      email = SentEmail.find(params[:id])
+      render :inline => email.email_body.to_s
+    }
+  end
   
   private 
 

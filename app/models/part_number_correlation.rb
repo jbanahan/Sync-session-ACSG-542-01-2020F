@@ -17,8 +17,7 @@ class PartNumberCorrelation < ActiveRecord::Base
       xls_file = self.attachment.attached
       xlc = OpenChain::XLClient.new(xls_file.path)
       importers = Company.where(id: importer_ids).to_a
-      country = Country.find_by_iso_code(self.entry_country_iso)
-      tf = OpenChain::TariffFinder.new(country, importers)
+      tf = OpenChain::TariffFinder.new(self.entry_country_iso, importers)
 
       #note: indexed at zero
       product_column_number = alphabet_column_to_numeric_column(self.part_column)

@@ -168,7 +168,11 @@ OpenChain::Application.routes.draw do
     end
   end
 
-  resources :sent_emails, :only => [:index, :show]
+  resources :sent_emails, :only => [:index, :show] do
+    member do
+      get "body"
+    end
+  end
 
   match '/my_tasks' => 'workflow#my_tasks', :via => :get
   match '/my_tasks/by_page_panel' => 'workflow#my_tasks_by_page_panel', :via => :get
@@ -409,6 +413,10 @@ OpenChain::Application.routes.draw do
   match "/custom_features/fisher_ci_load" => "custom_features#fisher_ci_load_index", :via=>:get
   match "/custom_features/fisher_ci_load/upload" => "custom_features#fisher_ci_load_upload", :via => :post
   match "/custom_features/fisher_ci_load/:id/download" => "custom_features#fisher_ci_load_download", :via => :get
+
+  get "/custom_features/crew_returns" => "custom_features#crew_returns_index"
+  post "/custom_features/crew_returns/upload" => "custom_features#crew_returns_upload"
+  get "/custom_features/crew_returns/:id/download" => "custom_features#crew_returns_download"
 
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
