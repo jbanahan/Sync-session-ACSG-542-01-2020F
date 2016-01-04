@@ -32,12 +32,12 @@ class ReportsController < ApplicationController
   end
   def run_containers_released
     settings = {}
-    settings['arrival_date_start'] = params[:arrival_date_start] unless params[:arrival_date_start].blank?
-    settings['arrival_date_end'] = params[:arrival_date_end] unless params[:arrival_date_end].blank?
+    settings['arrival_start_date'] = params[:arrival_start_date] unless params[:arrival_start_date].blank?
+    settings['arrival_end_date'] = params[:arrival_end_date] unless params[:arrival_end_date].blank?
     customer_numbers = []
     params[:customer_numbers].lines {|l| customer_numbers << l.strip unless l.strip.blank?} unless params[:customer_numbers].blank?
     settings['customer_numbers'] = customer_numbers unless customer_numbers.blank?
-    fs = ["Arrival date between #{settings['arrival_date_start'].blank? ? "ANY" : settings['arrival_date_start']} and #{settings['arrival_date_end'].blank? ? "ANY" : settings['arrival_date_end']}"]
+    fs = ["Arrival date between #{settings['arrival_start_date'].blank? ? "ANY" : settings['arrival_start_date']} and #{settings['arrival_end_date'].blank? ? "ANY" : settings['arrival_end_date']}"]
     fs << "Only customer numbers #{customer_numbers.join(", ")}" unless customer_numbers.blank?
     run_report "Container Release Status", OpenChain::Report::ContainersReleased, settings, fs
   end
@@ -408,6 +408,28 @@ class ReportsController < ApplicationController
   end
   def run_container_cost_breakdown
     run_report "Container Cost Breakdown", OpenChain::Report::EntryContainerCostBreakdown, params.slice(:start_date, :end_date, :customer_number), []
+  end
+
+  def show_eddie_bauer_ca_k84_summary
+    if OpenChain::Report::EddieBauerCaK84Summary.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_eddie_bauer_ca_k84_summary
+    if OpenChain::Report::EddieBauerCaK84Summary.permission?(current_user)
+      if params[:start_date].blank? || params[:end_date].blank?
+        add_flash :errors, "Please enter a start and end date."
+        redirect_to request.referrer
+        return
+      end
+      settings = {start_date: params[:start_date].to_date, end_date: params[:end_date].to_date}
+      run_report "Eddie Bauer CA K84 Summary", OpenChain::Report::EddieBauerCaK84Summary, settings, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
   end
 
   private
