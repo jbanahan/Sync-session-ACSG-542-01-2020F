@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     9 => {attribute: :first_it_date, datatype: :date, directive: :first},
     11 => {attribute: :eta_date, datatype: :date},
     12 => :arrival_date,
-    16 => {attribute: :entry_filed_date, datatype: :datetime, directive: :ifnull},
+    16 => {attribute: :entry_filed_date, datatype: :datetime},
     19 => :release_date,
     20 => :fda_release_date,
     24 => :trucker_called_date,

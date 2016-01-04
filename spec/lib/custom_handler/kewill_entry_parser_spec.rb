@@ -721,13 +721,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       described_class.new.process_entry @e
     end
 
-    it "does not update entry filed date" do
-      e = Factory(:entry, broker_reference: @e['file_no'], source_system: "Alliance", entry_filed_date: Time.zone.now)
-      described_class.new.process_entry @e
-
-      expect(e.entry_filed_date.to_i).to eq(e.reload.entry_filed_date.to_i)
-    end
-
     it "skips purged entries" do
       EntryPurge.create source_system: "Alliance", broker_reference: @e['file_no'], date_purged: Time.zone.parse("2015-05-01 00:00")
       expect(subject.process_entry @e).to be_nil
@@ -891,7 +884,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       standard_dates = [:export_date, :docs_received_date, :file_logged_date, :eta_date, :arrival_date, :release_date, :fda_release_date, :trucker_called_date, :delivery_order_pickup_date, 
         :freight_pickup_date, :last_billed_date, :invoice_paid_date, :duty_due_date, :liquidation_date, :daily_statement_due_date, :free_date, :edi_received_date, :fda_transmit_date, :daily_statement_approved_date, 
         :final_delivery_date, :worksheet_date, :available_date, :isf_sent_date, :isf_accepted_date, :fda_review_date, :first_release_date, :first_entry_sent_date, :monthly_statement_received_date, :monthly_statement_paid_date]
-      first_last_dates = [:first_it_date, :entry_filed_date]
+      first_last_dates = [:first_it_date]
 
       values = {}
       (standard_dates + first_last_dates).each {|k| values[k] = Date.today}
