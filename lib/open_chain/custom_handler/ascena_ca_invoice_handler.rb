@@ -62,7 +62,7 @@ module OpenChain; module CustomHandler
           existing_invoice = CommercialInvoice.new(invoice_number: invoice_number, importer_id: importer_id)
         end
 
-        CSV.foreach(csv_file) do |row|
+        CSV.foreach(csv_file, encoding: "Windows-1252:UTF-8") do |row|
           existing_invoice = parse_invoice_line row, existing_invoice unless counter.zero?
           counter += 1
         end
@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler
     def get_invoice_number csv_file
       counter = 0
       invoice_number = nil
-      CSV.foreach(csv_file) do |row|
+      CSV.foreach(csv_file, encoding: "Windows-1252:UTF-8") do |row|
         invoice_number = row[0] if counter == 1  
         counter += 1
         break if counter > 1
