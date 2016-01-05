@@ -326,6 +326,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.consignee_state).to eq "PA"
       expect(entry.transport_mode_code).to eq "10"
       expect(entry.carrier_code).to eq "Carrier"
+      expect(entry.house_carrier_code).to eq "SCAC"
       expect(entry.carrier_name).to eq "Carrier Name"
       expect(entry.company_number).to eq "02"
       expect(entry.division_number).to eq "0009"

@@ -208,7 +208,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [154, :ent_store_names, :store_names, "Store Names", {:data_type=>:text}],
       [155, :ent_final_delivery_date, :final_delivery_date, "Final Delivery Date", {:data_type=>:datetime}],
       [156, :ent_expected_update_time, :expected_update_time, "Expected Update Time", {:data_type=>:datetime, :can_view_lambda=>lambda {|u| u.company.broker?}}],
-      [157, :ent_fda_pending_release_line_count, :fda_pending_release_line_count, "FDA Pending Release Line Count", {data_type: :integer}]
+      [157, :ent_fda_pending_release_line_count, :fda_pending_release_line_count, "FDA Pending Release Line Count", {data_type: :integer}],
+      [158, :ent_house_carrier_code, :house_carrier_code, "House Carrier Code"]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

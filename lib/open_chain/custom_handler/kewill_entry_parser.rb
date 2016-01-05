@@ -541,18 +541,23 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       master_bills = Set.new
       house_bills = Set.new
       subhouse_bills = Set.new
+      house_scacs = Set.new
 
       Array.wrap(e[:ids]).each do |id|
         it_numbers << id[:it_no]
         master_bills << id[:scac].to_s.strip + id[:master_bill].to_s
         house_bills << id[:scac_house].to_s.strip + id[:house_bill].to_s
         subhouse_bills << id[:sub_bill].to_s
+        house_scacs << id[:scac_house].to_s.strip unless id[:scac_house].to_s.blank?
       end
       blank = lambda {|d| d.blank?}
       entry.it_numbers = it_numbers.reject(&blank).sort.join("\n ")
       entry.master_bills_of_lading = master_bills.reject(&blank).sort.join("\n ")
       entry.house_bills_of_lading = house_bills.reject(&blank).sort.join("\n ")
       entry.sub_house_bills_of_lading = subhouse_bills.reject(&blank).sort.join("\n ")
+      # Technically, based on the DB structure in Kewill, there can be more than 1 house carrier code
+      # In practice, according to Mark, that won't happen.  So we're only pulling the first non-blank value encountered.
+      entry.house_carrier_code = house_scacs.first
       nil
     end
 
