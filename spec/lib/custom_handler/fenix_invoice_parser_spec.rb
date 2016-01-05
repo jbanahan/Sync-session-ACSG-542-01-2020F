@@ -168,6 +168,17 @@ INV
     expect(bi).to_not be_nil
   end
 
+  it "does not create receivables for GENERIC customer" do
+    @ent.update_attributes! entry_number: "11981001052312"
+    @content = <<INV
+    INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+    01/14/2013,GENERIC, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+    01/14/2013,GENERIC, 1 , 9 , 0 ,11981001052312, 55 WITH OTHER TEXT ,BILLING, -20,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+INV
+    @k.parse @content
+    expect(IntacctReceivable.count).to eq 0
+  end
+
   it "creates intacct receivables" do
     @ent.update_attributes! entry_number: "11981001052312"
     @content = <<INV

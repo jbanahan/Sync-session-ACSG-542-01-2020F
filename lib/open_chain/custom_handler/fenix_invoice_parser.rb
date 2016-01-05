@@ -85,7 +85,7 @@ module OpenChain
           end
         end
 
-        create_intacct_invoice(invoice) if invoice
+        create_intacct_invoice(invoice) unless invoice.nil? || invoice.customer_number == "GENERIC"
       end
 
       private 
