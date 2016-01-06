@@ -815,7 +815,7 @@ module OpenChain
       if entry.release_date && entry.release_date < time_zone.parse("2015-09-18")
         subject = "Transaction # #{entry.entry_number} cannot be reused in Fenix ND"
         message = "Transaction # #{entry.entry_number} / File # #{new_file_number} has been used previously in old Fenix as File # #{entry.broker_reference}. Please correct this Fenix ND file and resend to VFI Track."
-        m = OpenMailer.send_simple_html(Group.use_system_group("fenix_admin", "Fenix Admin"), subject, message)
+        m = OpenMailer.send_simple_html(Group.use_system_group("fenix_admin", name: "Fenix Admin"), subject, message)
         m.deliver! if Array.wrap(m.to).length > 0
 
         false

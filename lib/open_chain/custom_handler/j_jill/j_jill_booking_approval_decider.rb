@@ -20,8 +20,8 @@ module OpenChain; module CustomHandler; module JJill; class JJillBookingApproval
   end
 
   def self.do_workflow! shipment, workflow_inst, user
-    lmd = Group.use_system_group 'VFI-LMD-BOOK', "LMD Booking Team"
-    approvers = Group.use_system_group 'JJILL-BOOK-APRV', "J Jill Booking Approvers"
+    lmd = Group.use_system_group 'VFI-LMD-BOOK', name: "LMD Booking Team"
+    approvers = Group.use_system_group 'JJILL-BOOK-APRV', name: "J Jill Booking Approvers"
     book_req = first_or_create_test! workflow_inst,
       'JJILL-BOOKREQ',
       OpenChain::WorkflowTester::MultiStateWorkflowTest,

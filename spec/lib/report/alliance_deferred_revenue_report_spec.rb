@@ -3,14 +3,15 @@ require 'spec_helper'
 describe OpenChain::Report::AllianceDeferredRevenueReport do
 
   describe "permission?" do
-    it "grants permission to vfitrack Luca, bglick, jhulford users" do
+    it "grants permission to users in accounting group" do
       d = double("MasterSetup")
       MasterSetup.stub(:get).and_return d
       d.stub(:system_code).and_return "www-vfitrack-net"
 
-      expect(described_class.permission? User.new(username:'Luca')).to be_true
-      expect(described_class.permission? User.new(username:'jhulford')).to be_true
-      expect(described_class.permission? User.new(username:'bglick')).to be_true
+      u = Factory(:user)
+      u.groups << Group.use_system_group("intacct-accounting")
+
+      expect(described_class.permission? u).to be_true
     end
 
     it "does not allow plain users" do
@@ -32,9 +33,9 @@ describe OpenChain::Report::AllianceDeferredRevenueReport do
     it "handles all pre-query setup" do
       u = User.new
       client = double("SqlProxyClient")
-      settings = {'start_date' => "2014-01-01", "end_date"=>"2014-01-02", 'report_result_id' => 1, 'sql_proxy_client' => client}
+      settings = {'start_date' => "2014-01-01", 'report_result_id' => 1, 'sql_proxy_client' => client}
 
-      client.should_receive(:report_query).with("deferred_revenue", {:start_date => "20140101", :end_date =>"20140102"}, {'report_result_id' => 1})
+      client.should_receive(:report_query).with("deferred_revenue", {:start_date => "20140101"}, {'report_result_id' => 1})
 
       described_class.run_report u, settings
     end
@@ -47,16 +48,16 @@ describe OpenChain::Report::AllianceDeferredRevenueReport do
     
     it "handles all post-query processing" do
       u = User.new
-      results = [{'bf'=>"12345", 'ff' => "98765", 'dr' => "12.5"}]
-      settings = {'start_date' => "2014-01-01", "end_date"=>"2014-01-02"}
+      results = [{'bf'=>"12345", 'ff' => "98765", "bid" => "2014-01-01", "c" => "CUST", 'dr' => "12.5", "fid" => "2014-02-01"}]
+      settings = {'start_date' => "2014-01-01"}
 
       @tf = described_class.new.process_results u, results, settings
-      expect(File.basename(@tf.path)).to start_with "Deferred Revenue From #{settings['start_date']} To #{settings['end_date']} - "
+      expect(@tf.original_filename).to eq "Deferred Revenue On #{settings['start_date']}.xls"
       wb = Spreadsheet.open @tf.path
       sheet = wb.worksheets.find {|s| s.name == "Deferred Revenue"}
       expect(sheet).not_to be_nil
-      expect(sheet.row(0)).to eq ["Broker File Number", "Freight File", "Revenue To Defer"]
-      expect(sheet.row(1)).to eq ["12345", "98765", 12.5]
+      expect(sheet.row(0)).to eq ["Broker File #", "Freight File #", "Brokerage Invoice Date", "Cust #", "Deferred Revenue", "Freight Invoice Date"]
+      expect(sheet.row(1)).to eq ["12345", "98765", "2014-01-01", "CUST", 12.5, "2014-02-01"]
     end
   end
 end

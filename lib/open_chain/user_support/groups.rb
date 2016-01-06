@@ -1,6 +1,8 @@
 # groups logic for User class
 module OpenChain; module UserSupport; module Groups
   def in_group? group
+    return false if group.nil?
+    
     cache = group_cache(true)
     to_find = group.respond_to?(:system_code) ? group.system_code : group
     cache.include? to_find.to_s

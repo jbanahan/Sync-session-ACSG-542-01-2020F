@@ -66,7 +66,7 @@ class IntacctErrorsController < ApplicationController
   end
 
   def self.allowed_user? user
-    (Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net') && user.in_group?(Group.use_system_group(VFI_ACCOUNTING_USERS, "Intacct Accounting"))
+    (Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net') && user.in_group?(Group.use_system_group(VFI_ACCOUNTING_USERS, create: false))
   end
 
 end

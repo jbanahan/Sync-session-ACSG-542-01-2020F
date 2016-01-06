@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module GroupSupport
     group_codes.each do |code|
       name = group_code_name_hash[code]
       next if name.blank?
-      r[code] = Group.use_system_group code, name
+      r[code] = Group.use_system_group code, name: name
     end
     r
   end

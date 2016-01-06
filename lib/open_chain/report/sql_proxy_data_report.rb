@@ -58,7 +58,11 @@ module OpenChain; module Report; module SqlProxyDataReport
 
     table_from_sql_proxy_query sheet, results, column_headers(run_by, settings), conversions
 
-    workbook_to_tempfile wb, report_filename_prefix(run_by, settings)
+    filename = report_filename(run_by, settings)
+    tf = workbook_to_tempfile wb, filename
+    Attachment.add_original_filename_method tf, filename
+
+    tf
   end
 
   module ClassMethods
