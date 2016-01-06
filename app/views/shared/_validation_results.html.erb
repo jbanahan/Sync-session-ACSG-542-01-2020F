@@ -49,7 +49,7 @@
               <br>
               <pre>{{ruleResultToEdit.message}}</pre>
             </div>
-            <select ng-model='ruleResultToEdit.state' ng-options='s for s in svc.states' class='form-control'>
+            <select ng-model='ruleResultToEdit.state' ng-disabled='!ruleResultToEdit.editable' ng-options='s for s in svc.states' class='form-control'>
             </select>
             <textarea ng-model='ruleResultToEdit.note' class='form-control'></textarea>
             <div ng-show='ruleResultToEdit.overridden_at' class='text-right text-muted'>
