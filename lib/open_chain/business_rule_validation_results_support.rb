@@ -28,7 +28,7 @@ module OpenChain; module BusinessRuleValidationResultsSupport
               rule_results:[]
             }
             bvr.business_validation_rule_results.each do |rr|
-              h[:rule_results] << business_validation_rule_result_json(rr)
+              h[:rule_results] << business_validation_rule_result_json(rr).merge({editable: rr.can_edit?(current_user)})
             end
             r[:bv_results] << h
           end
