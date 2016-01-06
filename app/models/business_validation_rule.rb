@@ -1,6 +1,7 @@
 class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
-  attr_accessible :description, :name, :rule_attributes_json, :type, :fail_state
+  belongs_to :group
+  attr_accessible :description, :name, :rule_attributes_json, :type, :group_id, :fail_state
 
   has_many :search_criterions, dependent: :destroy
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_rule
