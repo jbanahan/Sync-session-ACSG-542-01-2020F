@@ -22,19 +22,22 @@ describe BusinessValidationRulesController do
       expect(response).to be_redirect
     end
 
-    it "should create the correct rule" do
+    it "should create the correct rule and assign an override group if specified" do
+      group = Factory(:group)
       u = Factory(:admin_user)
       sign_in_as u
       post :create, 
             business_validation_template_id: @bvt.id, 
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-2"}',
-              "type" => "ValidationRuleManual"
+              "type" => "ValidationRuleManual",
+              "group_id" => group.id
             }
       expect(response).to be_redirect
       new_rule = BusinessValidationRule.last
       new_rule.business_validation_template.id.should == @bvt.id
       new_rule.rule_attributes_json.should == '{"valid":"json-2"}'
+      expect(new_rule.group).to eq group
     end
 
     it "should only save for valid JSON" do
