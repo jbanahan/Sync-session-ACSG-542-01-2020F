@@ -27,6 +27,11 @@
                 Fail state:
               </b>
               <%= r.fail_state %>
+            </li>
+            <li>
+              <b>Override group:</b>
+              <%= r.group.name if r.group %>
+            </li>
             <li>
               <b>
                 Search criteria:
@@ -41,9 +46,9 @@
                   <%= link_to "Manage Criteria", edit_business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id) %>
                 </li>
               </ul>
-            <li>
-              <%= link_to "Delete", business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id), method: :delete, style: "color: #B83838;" %>
-            </li>
+              <li>
+                <%= link_to "Delete", business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id), method: :delete, style: "color: #B83838;" %>
+              </li>
             </li>
           </ul>
         </li>
