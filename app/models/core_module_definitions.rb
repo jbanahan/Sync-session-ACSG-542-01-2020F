@@ -82,7 +82,7 @@ module CoreModuleDefinitions
     :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.shipment},
     :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
     :key_model_field_uids => [:shp_ref],
-    :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number]
+    :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number, :shp_importer_reference]
     })
   SALE_LINE = CoreModule.new("SalesOrderLine","Sale Line",{
     :show_field_prefix=>true,
