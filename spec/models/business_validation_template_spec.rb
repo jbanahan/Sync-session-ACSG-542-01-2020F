@@ -56,6 +56,21 @@ describe BusinessValidationTemplate do
       RuntimeError.any_instance.should_receive(:log_me).with ["Failed to generate rule results for Entry id #{match.id}"]
       @bvt.create_results!
     end
+    it "limits query results to only those associated w/ the current template" do
+      # This makes sure we're not getting results back from other templates that have outdated rule results...bug resolution
+      entry = Factory(:entry,customer_number:'12345')
+      @bvt.business_validation_results.create! validatable: entry, state: "Pass", updated_at: (entry.updated_at - 1.hour)
+
+      template = Factory(:business_validation_template)
+      template.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
+      template.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'12345'}.to_json)
+      template.business_validation_results.create! validatable: entry, state: "Pass", updated_at: (entry.updated_at + 1.hour)
+      template.reload
+
+      template.should_not_receive(:create_result!)
+
+      template.create_results!
+    end
   end
   describe :create_result! do
     it "should create result based on rules" do

@@ -41,15 +41,24 @@ class BusinessValidationTemplate < ActiveRecord::Base
   def create_results! run_validation = false
     cm = CoreModule.find_by_class_name(self.module_type)
     klass = cm.klass 
+    # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be 
+    # distinct is the core module's id.
     srch = klass.select("DISTINCT #{cm.table_name}.*").where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
-    srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id")
+    srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id AND business_validation_results.business_validation_template_id = #{self.id}")
     self.search_criterions.each {|sc| srch = sc.apply(srch)}
-    srch.each do |obj|
+    srch.each do |id|
+      obj = nil
       begin
-        self.create_result! obj, run_validation
+        # Use this rather than find, since it's possible, though unlikely, that the obj has been removed from the system since being returned from the query above
+        obj = klass.where(id: id).first
+        self.create_result!(id, run_validation) unless obj.nil?
       rescue => e
         # Don't let one bad object spoil the whole rule run
-        e.log_me ["Failed to generate rule results for #{obj.class} id #{obj.id}"]
+        if obj
+          e.log_me ["Failed to generate rule results for #{obj.class} id #{obj.id}"]
+        else
+          e.log_me
+        end
       end
     end
   end
