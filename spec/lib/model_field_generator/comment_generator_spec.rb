@@ -123,11 +123,13 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
     end
     it "should work when multiple comments" do
       o = Factory(:order)
-      2.times {|i| o.comments.create!(body:i.to_s,user:@u)}
-      expect(@mf.process_export(o,nil,true)).to eq Comment.last.created_at
+      o.comments.create!(body:"1",user:@u, created_at: 1.minute.ago)
+      comment2 = o.comments.create!(body:"2",user:@u)
+      comment2.reload
+      expect(@mf.process_export(o,nil,true)).to eq comment2.created_at
 
       @sc.value = 1.day.ago
-      expected_result = [{row_key:o.id,result:[Comment.last.created_at.strftime('%Y-%m-%d %H:%M:%S')]}]
+      expected_result = [{row_key:o.id,result:[comment2.created_at.strftime('%Y-%m-%d %H:%M:%S')]}]
       expect(SearchQuery.new(@ss,@u).execute).to eq expected_result
     end
   end
