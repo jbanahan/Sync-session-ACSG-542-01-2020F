@@ -18,7 +18,7 @@ class BusinessValidationRuleResultsController < ApplicationController
         render json: {save_response:{
           validatable_state:bvr.validatable.business_rules_state,
           result_state:bvr.state,
-          rule_result:business_validation_rule_result_json(rr)
+          rule_result:business_validation_rule_result_json(rr, current_user)
         }} 
 
       }
