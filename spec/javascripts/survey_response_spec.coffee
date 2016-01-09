@@ -306,8 +306,57 @@ describe "SurveyResponseApp", () ->
         $scope.resp = {answers:[{id:1},{id:2,new_comment:' '}]}
         expect($scope.hasUnsavedComments()).toBe(false)
 
+    describe "arrangeAnswers", () ->
+      
+      beforeEach () ->
+        $scope.resp.answers = [
+          {id:1, rating: 'x', sort_number: 1, updated_at: "2015-01-13", question: {}}
+          {id:2, rating: 'y', sort_number: 4, updated_at: "2015-01-14", question: {}}
+          {id:3, rating: 'x', sort_number: 2, updated_at: "2015-01-15", question: {}}
+          {id:4, rating: 'x', sort_number: 3, updated_at: "2015-01-16", question: {}}
+          ]
+        $scope.resp.survey_takers = [1]
+
+      it "filters 'All' and sorts 'By Number' by default", () ->
+        results = $scope.arrangeAnswers()
+        x = []
+        x.push r.id for r in results
+        expect(x).toEqual([1,3,4,2])
+
+      it "filters and sorts by specified params", () ->
+        $scope.srService.settings.filterMode = "Rating: x"
+        $scope.srService.settings.sortMode = "By Time Updated"
+        results = $scope.arrangeAnswers()
+        x = []
+        x.push r.id for r in results
+        expect(x).toEqual([4, 3, 1])
+
+
+    describe "sortAnswers", () ->
+      answers = null
+
+      beforeEach () ->
+        answers = [
+          {id:1, sort_number: 1, updated_at: "2015-01-14", question: {}}
+          {id:2, sort_number: 3, updated_at: "2015-01-15", question: {}}
+          {id:3, sort_number: 2, updated_at: "2015-01-16", question: {}}
+        ]
+
+      it "should order by sort number", () ->
+        results = $scope.sortAnswers(answers, "By Number")
+        x = []
+        x.push r.id for r in results
+        expect(x).toEqual([1, 3, 2])
+
+      it "should order by most recently updated", () ->
+        results = $scope.sortAnswers(answers, "By Time Updated")
+        x = []
+        x.push r.id for r in results
+        expect(x).toEqual([3,2,1])
+
+
     describe "filterAnswers", () ->
-      filter = answers = null
+      answers = null
       
       beforeEach () ->
         answers = [
@@ -321,38 +370,28 @@ describe "SurveyResponseApp", () ->
           {id:8,rating:'y',choice:'x', question: {require_comment: true}}
           ]
         $scope.resp.survey_takers = [1]
-        $scope.resp.answers = answers
 
       it "should show all when filter mode is 'All'", () ->
-        expect($scope.filterAnswers("All")).toEqual(answers)
-        expect($scope.filteredAnswers).toEqual(answers)
+        expect($scope.filterAnswers(answers, "All")).toEqual(answers)
 
       it "should filter by rating if filter mode starts with 'Rating: '", () ->
-        results = $scope.filterAnswers("Rating: x")
+        results = $scope.filterAnswers(answers, "Rating: x")
         x = []
         x.push r.id for r in results
         expect(x).toEqual([1,4,5,6])
 
       it "should show all without rating when filter mode is 'Not Rated'", () ->
-        results = $scope.filterAnswers("Not Rated")
+        results = $scope.filterAnswers(answers, "Not Rated")
         x = []
         x.push r.id for r in results
         expect(x).toEqual([2,3])
 
       it "should show all without answer when filter mode is 'Not Answered'", () ->
-        results = $scope.filterAnswers("Not Answered")
+        results = $scope.filterAnswers(answers, "Not Answered")
         x = []
         x.push r.id for r in results
         expect(x).toEqual([1, 7, 8])
-
-      it "defaults to service settings mode if no param is provided", () ->
-        $scope.srService.settings.filterMode = "Rating: y"
-        results = $scope.filterAnswers()
-        x = []
-        x.push r.id for r in results
-        expect(x).toEqual([7, 8])
-
-
+      
     describe "warningMessage", () ->
       answer = null
 

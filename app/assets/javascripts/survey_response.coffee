@@ -21,6 +21,7 @@ srApp.factory 'srService', ['$http','$sce',($http,$sce) ->
     settings: {
       viewMode:'loading'
       filterMode: 'All'
+      sortMode: 'By Number'
     }
 
     filterModes: []
@@ -32,6 +33,7 @@ srApp.factory 'srService', ['$http','$sce',($http,$sce) ->
         svc.resp = resp.data.survey_response
         svc.settings.viewMode = 'view'
         svc.filterModes = ['All','Not Answered','Not Rated']
+        svc.sortModes = ['By Number', 'By Time Updated']
         if svc.resp.survey && svc.resp.survey.rating_values
           svc.filterModes.push("Rating: "+m) for m in svc.resp.survey.rating_values
         if svc.resp.answers
@@ -125,7 +127,7 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
   $scope.submit = () ->
     if !$scope.contact_form.$valid
       $scope.resp.error_message = 'You must complete all contact fields before submitting.'
-    else if $scope.filterAnswers('Not Answered').length > 0
+    else if $scope.filterAnswers($scope.resp.answers, 'Not Answered').length > 0
       $scope.resp.error_message = "You must answer all required questions. Use the 'Not Answered' filter to identify any questions that still need answers."
     else
       $scope.srService.submit($scope.resp)
@@ -176,35 +178,47 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
 
   $scope.srService.load($scope.response_id) if $scope.response_id
   
-  $scope.filterAnswers = (modeParam) ->
-    mode = if modeParam then modeParam else (if $scope.srService.settings.filterMode then $scope.srService.settings.filterMode else "All")
+  $scope.filterAnswers = (answers, mode) ->
     r = []
-    return r unless $scope.resp.answers
-    for a in $scope.resp.answers
-      switch mode
-        when 'Not Rated'
-          r.push a if !a.rating || a.rating.length == 0
-        when 'Not Answered'
-          r.push a if $scope.warningMessage(a).length > 0
-        else
-          if mode.indexOf('Rating: ')==0
-            targetRating = mode.slice(8,mode.length)
-            r.push a if a.rating && a.rating == targetRating
+    if answers
+      for a in answers
+        switch mode
+          when 'Not Rated'
+            r.push a if !a.rating || a.rating.length == 0
+          when 'Not Answered'
+            r.push a if $scope.warningMessage(a).length > 0
           else
-            r.push a
-    $scope.filteredAnswers = r
+            if mode.indexOf('Rating: ')==0
+              targetRating = mode.slice(8,mode.length)
+              r.push a if a.rating && a.rating == targetRating
+            else
+              r.push a
     r
+
+  $scope.sortAnswers = (answers, mode) ->
+    byNumber = (a, b) -> 
+      a.sort_number - b.sort_number
+    byDate = (a, b) ->
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    answers.sort(if mode == 'By Number' then byNumber else byDate)
+
+  $scope.arrangeAnswers = () ->
+    if $scope.resp.answers
+      filterMode = if $scope.srService.settings.filterMode then $scope.srService.settings.filterMode else "All"
+      sortMode = if $scope.srService.settings.sortMode then $scope.srService.settings.sortMode else "By Number"
+      filteredAnswers = $scope.filterAnswers($scope.resp.answers, filterMode)
+      $scope.arrangedAnswers = $scope.sortAnswers(filteredAnswers, sortMode)
 
   $scope.hasUnsavedComments = () ->
     $filter('unsavedComments')($scope.resp.answers).length != 0
 
   $scope.$watch 'srService.resp', (newVal,oldVal, scope) ->
     $scope.resp = newVal
-    scope.filterAnswers()
+    scope.arrangeAnswers()
     $scope.setReminderDefaults($scope.resp)
   
   $scope.$watch 'srService.settings.filterMode', (newVal,oldVal, scope) ->
-    scope.filterAnswers()
+    scope.arrangeAnswers()
 
   $scope.setReminderDefaults = (resp) ->
     return if $scope.reminderDefaults || !resp.survey
