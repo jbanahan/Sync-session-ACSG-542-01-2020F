@@ -31,7 +31,8 @@ describe Message do
     end
 
     it "does not send email to user that doesn't want them" do
-      user.update_attributes! email_new_messages: false
+      user.email_new_messages = false
+      user.save!
       OpenMailer.should_not_receive(:delay)
       user.messages.create! subject: "Subject", body: "Body"
     end
