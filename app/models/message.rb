@@ -13,7 +13,7 @@ class Message < ActiveRecord::Base
   # Emails message to user is user has checked corresponding option
   # on the messages index page
   def email_to_user
-    if user.email_new_messages
+    if user.active? && user.email_new_messages
       OpenMailer.delay.send_message(self)
     end
   end

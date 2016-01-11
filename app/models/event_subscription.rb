@@ -8,7 +8,7 @@ class EventSubscription < ActiveRecord::Base
     obj = object_for_event_type(event_type,object_id)
     return [] unless obj
     all_subs = EventSubscription.where(event_type:event_subscription_type(event_type,obj)).where(subscription_type=>true).includes(:user)
-    all_subs.collect {|es| obj.can_view?(es.user) ? es : nil}.compact
+    all_subs.collect {|es| (es.user.active? && obj.can_view?(es.user)) ? es : nil}.compact
   end
 
   private

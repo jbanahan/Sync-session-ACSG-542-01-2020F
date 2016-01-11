@@ -19,4 +19,29 @@ describe Message do
       Message.run_schedulable
     end
   end
+
+  describe "email_to_user" do
+    let(:user) { Factory(:user, email_new_messages: true) }
+
+    it "sends emails to user who gets a system message" do
+      OpenMailer.should_receive(:delay).and_return OpenMailer
+      OpenMailer.should_receive(:send_message)
+
+      user.messages.create! subject: "Subject", body: "Body"
+    end
+
+    it "does not send email to user that doesn't want them" do
+      user.update_attributes! email_new_messages: false
+      OpenMailer.should_not_receive(:delay)
+      user.messages.create! subject: "Subject", body: "Body"
+    end
+
+    it "doesn't send email to disabled users" do
+      user.disabled = true
+      user.save!
+
+      OpenMailer.should_not_receive(:delay)
+      user.messages.create! subject: "Subject", body: "Body"
+    end
+  end
 end
