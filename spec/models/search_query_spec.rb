@@ -134,6 +134,15 @@ describe SearchQuery do
       r[0][:row_key].should == @p3.id
     end
 
+    it "should not bomb on IN lists with slashes in a value" do
+      @p3.update_attributes :name => "testing"
+      @ss.search_criterions[0].value = "test\\\ntesting"
+      r = @sq.execute per_page: 1000
+      r.should have(1).results
+
+      r[0][:row_key].should == @p3.id
+    end
+
     it "should handle relative fields referencing different core modules" do
       # Make sure that the search criterion's value is the only thing referencing a different module level so 
       # that we're sure that we're testing the code that handles collecting this field's core module
