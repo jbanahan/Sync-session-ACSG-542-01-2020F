@@ -313,12 +313,13 @@ EMAIL
         f << "Content"
 
         OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
-        OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body</p>", f, "Test name", "test@email.com").deliver
+        OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body\n</p>", f, "Test name", "test@email.com").deliver
 
         mail = ActionMailer::Base.deliveries.pop
         mail.to.should == ["me@there.com"]
+        mail.reply_to.should == ["test@email.com"]
         mail.subject.should == "Subject"
-        mail.body.raw_source.should match("&lt;p&gt;Body&lt;/p&gt;")
+        mail.body.raw_source.should match("&lt;p&gt;Body<br>&lt;/p&gt;")                                            
 
         pa = mail.attachments[File.basename(f)]
         pa.should_not be_nil
@@ -338,12 +339,13 @@ EMAIL
           f2.flush
           f.flush
           
-          OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2], "Test name", "test@email.com").deliver
+          OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body\n</p>", [f, f2], "Test name", "test@email.com").deliver
 
           mail = ActionMailer::Base.deliveries.pop
           mail.to.should == ["me@there.com"]
+          mail.reply_to.should == ["test@email.com"]
           mail.subject.should == "Subject"
-          mail.body.raw_source.should match("<p>Body</p>")
+          mail.body.raw_source.should match("&lt;p&gt;Body<br>&lt;/p&gt;")
           mail.attachments.should have(2).items
 
           pa = mail.attachments[File.basename(f)]

@@ -369,7 +369,7 @@ EOS
   end
 
   def auto_send_attachments to, subject, body, file_attachments, sender_name, sender_email
-    @body_content = body
+    @body_content = ERB::Util.html_escape(body).gsub("\n", "<br>").html_safe
     @attachment_messages = []
     @sender_name = sender_name
     @sender_email = sender_email
@@ -389,7 +389,7 @@ EOS
       end
     end
 
-    m = mail(:to=>to,:subject=>subject) do |format|
+    m = mail(:to=>to, :reply_to => sender_email, :subject=>subject) do |format|
       format.html
     end
 
