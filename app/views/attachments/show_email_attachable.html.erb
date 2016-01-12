@@ -11,7 +11,7 @@
       <div class="col-md-4 col-md-offset-4">
         <div class="form-group">
           <label>Send to:</label>
-          <input type="email" class="form-control" id="send_to_address" placeholder="Enter email address..." value="<%=current_user.email%>" autofocus=true>
+          <textarea class='form-control' id="send_to_address" placeholder="Enter up to 10 email addresses (space separated)..." value="<%=current_user.email%>" autofocus=true rows=4></textarea>
         </div>
 
         <div class="form-group">
@@ -80,7 +80,10 @@
 
   $(function(){
 
-    var email_check = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$/i
+    var email_regex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$/i;
+    var email_valid = function(elem, ind, arr) {
+      return email_regex.test(elem);
+    }
 
     $("#select_all_button").click(function(){
       $('input[type=checkbox]').prop("checked",true)
@@ -91,11 +94,17 @@
     });
 
     $("#submit_attachment_email").click(function(){
-      if ($("#send_to_address").val()==""){
-        alert("Please enter an email address")
+      var addressStr = $("#send_to_address").val();
+      var addressArr = addressStr.split(" ");
+      
+      if (addressStr==""){
+        alert("Please enter an email address.")
       }
-      else if (email_check.test($("#send_to_address").val()) == false){
-        alert("Please ensure the email address is valid.");
+      else if (addressArr.length > 10){
+        alert("Cannot accept more than 10 email addresses.")
+      }
+      else if (!addressArr.every(email_valid)){
+        alert("Please ensure all email addresses are valid.");
       }
       else if ($("input:checked").length == 0){
         alert("Please select at least one attachment to send.");
@@ -104,7 +113,7 @@
         //so things are good to go
         attachable_id = <%= @attachable.id %>
         controller_name = "<%= @attachable.class.to_s %>"
-        to_address = $("#send_to_address").val();
+        to_address = addressArr.join(",");
         email_subject = $("#email_subject").val();
         email_body = $("#email_body").val();
         ids_to_include = []
