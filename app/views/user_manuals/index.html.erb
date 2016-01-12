@@ -1,0 +1,82 @@
+<%content_for :javascript do%>
+$(function() {
+  $('#btn_new_user_manual').click(function() {
+    $('#new_user_manual').modal('show');
+  });
+});
+<%end%>
+<%content_for :action_bar do%>
+  <button class='btn' id='btn_new_user_manual'><i class='fa fa-plus'></i></button>
+<%end%>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h1>User Manuals</h1>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>URL Regex</th>
+            <th>Groups</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%@user_manuals.each do |um| %>
+            <tr>
+              <td>
+                <a href='<%=download_user_manual_path(um)%>' target='_blank'>
+                  <%=um.name%>
+                </a>
+              </td>
+              <td><%=um.page_url_regex%></td>
+              <td>
+<pre>
+<%=um.groups%>
+</pre>
+              </td>
+              <td>
+                <a href='<%=edit_user_manual_path(um)%>'>Edit</a>
+              </td>
+            </tr>
+          <%end%>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="new_user_manual">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <%=form_for UserManual.new, html: {multipart: true} do |f|%>
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">New User Manual</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <%=f.label :name%>
+            <%=f.text_field :name, required: true, class: 'form-control'%>
+          </div>
+          <div class="form-group">
+            <label for='user_manual_file'>Attachment</label>
+            <input type='file' id='user_manual_file' name='user_manual_file' required='required' class='form-control' />
+          </div>
+          <div class="form-group">
+            <%=f.label :page_url_regex, 'Matching Page URL (regex)'%>
+            <%=f.text_field :page_url_regex, class: 'form-control'%>
+          </div>
+          <div class="form-group">
+            <%=f.label :groups, 'Group System Codes'%>
+            <%=f.text_area :groups, class: 'form-control', rows: 5%>
+            <em class='small'>One per line</em>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <input type='submit' class='btn btn-primary' value='Create' />
+        </div>
+      <%end%>
+    </div>
+  </div>
+</div>

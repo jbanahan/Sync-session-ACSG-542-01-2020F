@@ -1,0 +1,32 @@
+<%content_for :javascript do %>
+$(function() {
+  $('#submit-form').click(function() {$('#edit_um').submit();});
+  $('#cancel-back').click(function() {window.location = "<%=user_manuals_path%>";});
+});
+<%end%>
+<%content_for :action_bar do %>
+  <button class='btn' id='submit-form'><i class='fa fa-floppy-o'></i></button>
+  <button class='btn' id='cancel-back'><i class='fa fa-arrow-left'></i></button>
+<%end%>
+<%=form_for @user_manual, html: {id: 'edit_um'} do |f|%>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h2>Edit User Manual</h2>
+        <div class="form-group">
+          <%=f.label :name%>
+          <%=f.text_field :name, required: true, class: 'form-control'%>
+        </div>
+        <div class="form-group">
+          <%=f.label :page_url_regex, 'Matching Page URL (regex)'%>
+          <%=f.text_field :page_url_regex, class: 'form-control'%>
+        </div>
+        <div class="form-group">
+          <%=f.label :groups, 'Group System Codes'%>
+          <%=f.text_area :groups, class: 'form-control', rows: 5%>
+          <em class='small'>One per line</em>
+        </div>
+      </div>
+    </div>
+  </div>
+<%end%>

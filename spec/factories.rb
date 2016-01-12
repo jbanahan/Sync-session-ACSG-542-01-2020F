@@ -457,3 +457,6 @@ Factory.define :summary_statement do |f|
   f.association :customer, :factory => :company
 end
 
+Factory.define :user_manual do |f|
+  f.name "MyManual"
+end
