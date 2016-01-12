@@ -11,6 +11,7 @@ class EntryComment < ActiveRecord::Base
     "ABQBLREQ" => 'ABI',
     "ABQSTADL" => 'ABI',
     "KC ABI Send" => 'ABI',
+    "CUSTOMS" => 'ABI',
     "KC Email" => 'SYSTEM',
     "KC_KI" => 'SYSTEM',
     "SYSTEM" => 'SYSTEM', 
