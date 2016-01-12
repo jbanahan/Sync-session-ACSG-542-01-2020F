@@ -75,10 +75,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
     it 'should call Order PDF generator' do
       OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.should_receive(:create!).with(@o, User.integration)
+      @o.should_receive(:approval_status).and_return nil
       described_class.run_changes 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
     it "should clear approval" do
       @o.should_receive(:unaccept!).with(@u)
+      @o.should_receive(:approval_status).and_return 'Approved'
       described_class.run_changes 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
   end

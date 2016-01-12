@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   def self.run_changes type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     o = Order.find id
     u = User.integration
-    o.unaccept! u
+    o.unaccept! u if !o.approval_status.blank?
     OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.create! o, u
   end
 

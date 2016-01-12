@@ -99,6 +99,8 @@ OpenChain::Application.routes.draw do
         end
       end
 
+      resources :user_manuals, only: [:index]
+
       match "/setup_data" => "setup_data#index", via: :get
 
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
@@ -823,4 +825,7 @@ OpenChain::Application.routes.draw do
     get 'get_invoices', :on=>:member
   end
 
+  resources :user_manuals, except: [:show] do
+    get :download, on: :member
+  end
 end

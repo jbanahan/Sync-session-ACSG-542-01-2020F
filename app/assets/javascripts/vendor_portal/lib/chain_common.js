@@ -35,8 +35,8 @@
   app = angular.module('ChainCommon');
 
   app.factory('chainApiSvc', [
-    '$http', '$q', '$sce', function($http, $q, $sce) {
-      var newAttachmentClient, newCommentClient, newCoreModuleClient, newMessageClient, newSupportClient, newUserClient, publicMethods;
+    '$http', '$q', '$sce', '$location', function($http, $q, $sce, $location) {
+      var newAttachmentClient, newCommentClient, newCoreModuleClient, newMessageClient, newSupportClient, newUserClient, newUserManualClient, publicMethods;
       publicMethods = {};
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
         var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
@@ -283,6 +283,22 @@
         };
       };
       publicMethods.Support = newSupportClient();
+      newUserManualClient = function() {
+        return {
+          list: function() {
+            var url;
+            url = $location.absUrl();
+            return $http.get('/api/v1/user_manuals', {
+              params: {
+                source_page: url
+              }
+            }).then(function(resp) {
+              return resp.data.user_manuals;
+            });
+          }
+        };
+      };
+      publicMethods.UserManual = newUserManualClient();
       return publicMethods;
     }
   ]);
@@ -596,6 +612,7 @@
         scope: {},
         templateUrl: 'chain-support-modal.html',
         link: function(scope, el, attrs) {
+          var clearMessageInfo, loadUserManuals;
           scope.submit = function() {
             scope.loading = 'loading';
             scope.errors = [];
@@ -618,10 +635,23 @@
               return results;
             }));
           };
+          clearMessageInfo = function() {
+            delete scope.ticketNumber;
+            return scope.messageBody = '';
+          };
+          loadUserManuals = function() {
+            scope.umLoading = "loading";
+            return chainApiSvc.UserManual.list().then(function(r) {
+              scope.userManuals = r;
+              return delete scope.umLoading;
+            });
+          };
           $(el).on('show.bs.modal', function() {
             return scope.$apply(function() {
-              delete scope.ticketNumber;
-              return scope.messageBody = '';
+              clearMessageInfo();
+              if (!scope.userManuals) {
+                return loadUserManuals();
+              }
             });
           });
           return $(el).on('shown.bs.modal', function() {
@@ -700,5 +730,5 @@ angular.module("chain-messages-modal.html", []).run(["$templateCache", function(
 
 angular.module("chain-support-modal.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-support-modal.html",
-    "<div class=\"modal fade\" id=\"chain-support-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Help</h4></div><div class=\"modal-body\"><div ng-hide=\"ticketNumber || loading\"><label>Message:</label><textarea ng-model=\"messageBody\" class=\"form-control\"></textarea></div><div ng-show=\"ticketNumber\"><div class=\"alert alert-success\"><p>Your ticket number is <strong id=\"chain-support-ticket-no\">{{ticketNumber}}</strong>.</p><p ng-show=\"moreHelpMessage\">{{moreHelpMessage}}</p></div></div><div ng-show=\"errors.length > 0\"><div class=\"alert alert-danger\"><strong>There were errors submitting your support request. You may email <a href=\"mailto:support@vandegriftinc.com\">support@vandegriftinc.com</a> for more help:</strong><ul><li ng-repeat=\"e in errors\">{{e}}</li></ul></div></div><div ng-show=\"loading==&quot;loading&quot;\"><chain-loader></chain-loader></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button id=\"chain-support-submit\" ng-show=\"!ticketNumber\" ng-disabled=\"!messageBody || messageBody.length == 0\" ng-click=\"submit()\" type=\"button\" class=\"btn btn-primary\">Save changes</button></div></div></div></div>");
+    "<div class=\"modal fade\" id=\"chain-support-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Help</h4></div><div class=\"modal-body\"><div><h3>User Manuals:</h3><div id=\"userManualLoading\" ng-if=\"umLoading==&quot;loading&quot;\"><chain-loader></chain-loader></div><div ng-show=\"userManuals.length==0\">There aren't any user manuals for this page.</div><div ng-repeat=\"um in userManuals track by um.id\"><a href=\"/user_manuals/{{um.id}}/download\" target=\"_blank\">{{um.name}}</a></div><hr></div><div ng-hide=\"ticketNumber || loading\"><label>Send A Message:</label><textarea ng-model=\"messageBody\" class=\"form-control\"></textarea></div><div ng-show=\"ticketNumber\"><div class=\"alert alert-success\"><p>Your ticket number is <strong id=\"chain-support-ticket-no\">{{ticketNumber}}</strong>.</p><p ng-show=\"moreHelpMessage\">{{moreHelpMessage}}</p></div></div><div ng-show=\"errors.length > 0\"><div class=\"alert alert-danger\"><strong>There were errors submitting your support request. You may email <a href=\"mailto:support@vandegriftinc.com\">support@vandegriftinc.com</a> for more help:</strong><ul><li ng-repeat=\"e in errors\">{{e}}</li></ul></div></div><div ng-show=\"loading==&quot;loading&quot;\"><chain-loader></chain-loader></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button id=\"chain-support-submit\" ng-show=\"!ticketNumber\" ng-disabled=\"!messageBody || messageBody.length == 0\" ng-click=\"submit()\" type=\"button\" class=\"btn btn-primary\">Send Message</button></div></div></div></div>");
 }]);
