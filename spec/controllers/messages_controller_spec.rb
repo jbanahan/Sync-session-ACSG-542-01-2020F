@@ -70,4 +70,63 @@ describe MessagesController do
     end
   end
 
+  context "send messages" do
+    before :each do
+      Company.destroy_all
+      @company = Factory(:company)
+    end
+
+    describe "new_bulk" do
+      it "only allows use by admins" do
+        u = Factory(:user, company: @company)
+        sign_in_as u
+
+        get :new_bulk
+        expect(flash[:errors]).to include "Only administrators can do this."
+        expect(response).to be_redirect
+      end
+
+      it "displays the selection screen" do
+        u = Factory(:admin_user, company: @company)
+        sign_in_as u
+
+        get :new_bulk
+        expect(assigns(:companies)).to eq [@company]
+        expect(response).to be_success
+      end
+    end
+
+    describe "send_to_users" do
+      before :each do
+        User.destroy_all
+        @receiver1 = Factory(:user, company: @company)
+        @receiver2 = Factory(:user, company: @company)
+      end
+
+      it "only allows use by admins" do
+        u = Factory(:user)
+        sign_in_as u
+        post :send_to_users, {receivers: [@receiver1.id, @receiver2.id], message_subject: "Test Message", message_body: "This is a test."}
+
+        expect(@receiver1.messages).to be_empty
+        expect(@receiver2.messages).to be_empty
+        expect(flash[:errors]).to include "Only administrators can do this."
+        expect(response).to be_redirect
+      end
+
+      it "creates notifications for specified users" do
+        u = Factory(:admin_user)
+        sign_in_as u
+        
+        d = double("delayed_job")
+        Message.should_receive(:delay).and_return d
+        d.should_receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "This is a test.")
+        
+        post :send_to_users, {receivers: [@receiver1.id, @receiver2.id], message_subject: "Test Message", message_body: "This is a test."}
+        expect(flash[:notices]).to include "Message sent."
+        expect(response).to be_redirect
+      end
+    end
+  end
+
 end
