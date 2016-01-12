@@ -51,7 +51,7 @@
                 <input type='text' class='search-query form-control' placeholder='Quick Search' data-toggle='tooltip' title='press / to jump here' name='v' />
               </div>
               <div class='col-xs-1'>
-                <a href='#' onclick="$('#quicksearch').submit(); return false;">
+                <a href='#' onclick="$('#mini-qs').submit(); return false;">
                   <span class='glyphicon glyphicon-search'></span>
                 </a>
               </div>
@@ -115,6 +115,7 @@
           <%=nav_section 'ord-sec', 'Order', current_user.view_orders? do%>
             <%=nav_item 'Search', '/orders?force_search=true', current_user.view_orders?%>
             <%=nav_item 'New', '/orders/new', current_user.edit_orders?%>
+            <%=nav_item 'Vendor Portal', '/vendor_portal', !User.where(portal_mode:'vendor').empty?%>
           <%end%>
           <%=nav_section 'shp-sec', 'Shipment', current_user.view_shipments? do%>
             <%=nav_item 'Search', '/shipments?force_search=true'%>
