@@ -1,9 +1,29 @@
 class EntryComment < ActiveRecord::Base
   belongs_to :entry, :inverse_of=>:entry_comments
   before_save :identify_public_comments
+
+  USER_TYPE_MAP ||= {
+    'ISF Upload' => 'ISF',
+    'KC Abi Send' => 'ABI',
+    "ABABIUP6" => 'ABI',
+    "ABDUEDAT" => 'ABI',
+    "ABISYS" => 'ABI',
+    "ABQBLREQ" => 'ABI',
+    "ABQSTADL" => 'ABI',
+    "KC ABI Send" => 'ABI',
+    "KC Email" => 'SYSTEM',
+    "KC_KI" => 'SYSTEM',
+    "SYSTEM" => 'SYSTEM', 
+    "PayDueRsnd" => 'SYSTEM'
+  }
  
   def can_view? user
     entry.can_view?(user) && (public_comment || user.company.broker?)
+  end
+
+  def comment_type
+    r = USER_TYPE_MAP[self.username]
+    r.blank? ? 'USER' : r
   end
 
   private 
