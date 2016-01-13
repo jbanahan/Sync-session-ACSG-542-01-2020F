@@ -114,6 +114,17 @@ describe MessagesController do
         expect(response).to be_redirect
       end
 
+      it 'sanitizes html' do
+        u = Factory(:admin_user)
+        sign_in_as u
+        
+        d = double("delayed_job")
+        Message.should_receive(:delay).and_return d
+        d.should_receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "This is a test.")
+
+        post :send_to_users, {receivers: [@receiver1.id, @receiver2.id], message_subject: "Test <em>Message</em>", message_body: "<a href=\'http://www.google.com\'>This is a test.</a>"}
+      end
+
       it "creates notifications for specified users" do
         u = Factory(:admin_user)
         sign_in_as u
