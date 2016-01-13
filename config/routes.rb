@@ -506,8 +506,6 @@ OpenChain::Application.routes.draw do
 
   resources :worksheet_configs
 
-  
-  post '/messages/send_to_users' => 'messages#send_to_users', :via => :post
   resources :messages, :only => [:index, :new, :create, :destroy] do
     member do
       get 'read'
@@ -516,6 +514,7 @@ OpenChain::Application.routes.draw do
       get 'new_bulk'
       get 'read_all'
       get 'message_count'
+      post 'send_to_users'
     end
   end
 
