@@ -78,10 +78,28 @@ module OpenChain; module CustomHandler; module Polo
         # We could sum the invoice lines to come up with the value, but we should probably take the value 
         # listed in the spreadsheet.  That way if there are any issues at all w/ bad data in the individual lines, we at least
         # may have the correct value in the total
-        invoice.invoice_value = get_cell_value xl, 9, summary_start_row
-        invoice.total_quantity = get_cell_value xl, 0, summary_start_row + 7
-        invoice.total_quantity_uom = "CTNS"
-        invoice.gross_weight = get_cell_value xl, 0, summary_start_row + 8
+
+        # Find the last row with a numeric value in it, that should be the invoice value
+        invoice.invoice_value = get_row_values(xl, summary_start_row).reverse.find {|v| v.to_i > 0 }
+
+        # Now find where the quantity and the cartons are offset from the summary start
+        counter = summary_start_row 
+        carton_row = nil
+        weight_row = nil
+        begin
+          row = get_row_values(xl, (counter += 1))
+          carton_row = row if row[1].to_s.upcase.include?("CARTONS")
+          weight_row = row if row[1].to_s.upcase.include?("WEIGHT")
+        end while (carton_row.nil? || weight_row.nil?) && counter < (summary_start_row + 20)
+
+        if carton_row
+          invoice.total_quantity = carton_row[0]
+          invoice.total_quantity_uom = "CTNS"  
+        end
+
+        if weight_row
+          invoice.gross_weight = weight_row[0]
+        end
       end
 
       def find_invoice invoice_number, importer
@@ -229,12 +247,16 @@ module OpenChain; module CustomHandler; module Polo
 
         # What we're looking for a is row that has HTS in the first cell and country in the second
         # Don't go any further than row 25 - that's just rediculous.
+
+        # Find details columns (since RL is sending different formats of the invoice now)
+        column_map = nil
         detail_header_row = nil
         (15..25).each do |row|
-          vals = get_row_values xl, row
-          if vals[0].to_s.upcase.include?("STYLE") && vals[2].to_s.upcase.include?("HTS")
+          mapping = detail_column_map(get_row_values(xl, row))
+          if mapping["STYLE"] && mapping["HTS"]
             detail_header_row = row
-            break;
+            column_map = mapping
+            break
           end
         end
 
@@ -261,12 +283,12 @@ module OpenChain; module CustomHandler; module Polo
             tariff = line.commercial_invoice_tariffs.build
 
             line.po_number = po_number
-            line.part_number = row[0]
-            line.country_origin_code = row[1]
-            tariff.hts_code = hts_value row[2]
-            tariff.tariff_description = row[6]
-            line.quantity = decimal_value row[7]
-            line.unit_price = decimal_value row[8]
+            line.part_number = v(column_map, row, "STYLE")
+            line.country_origin_code = v(column_map, row, "COUNTRY")
+            tariff.hts_code = hts_value(v(column_map, row, "HTS"))
+            tariff.tariff_description = v(column_map, row, "DESCRIPTION")
+            line.quantity = decimal_value(v(column_map, row, "QTY"))
+            line.unit_price = decimal_value(v(column_map, row, "UNIT"))
           end
         end
 
@@ -276,8 +298,9 @@ module OpenChain; module CustomHandler; module Polo
       end
 
       def totals_line? values
-        # We're looking for a row that has Units in column 5 and Total in column 7 as the marker for when detail lines end
-        values[5].to_s.upcase.include?("UNITS") && values[7].to_s.upcase.include?("TOTAL")
+        # We're looking for a row that has a Units label in it as the sole label of a column and the next column has a numeric value in it
+        index = values.index {|v| v.to_s.strip =~ /^UNITS\s*[:punct:]*$/i}
+        !index.nil? && index > 0 && values[index + 1].to_i > 0
       end
 
       def valid_detail_line? values
@@ -309,6 +332,22 @@ module OpenChain; module CustomHandler; module Polo
         end
 
         hts
+      end
+
+      def detail_column_map header_row
+        mapping = {}
+        row = header_row.map {|v| v.to_s.upcase }
+        ["STYLE", "COUNTRY", "HTS", "DESCRIPTION", "QTY", "UNIT"].each do |header|
+          index = row.index {|v| v.include?(header)}
+          mapping[header] = index if index
+        end
+
+        mapping
+      end
+
+      def v mapping, row, header
+        index = mapping[header]
+        index ? row[index] : nil
       end
 
   end
