@@ -66,7 +66,11 @@
       </div>
       <div class='col-md-6 form-inline'>
         <strong>Question Filter</strong><br/>
-        <select class='form-control' ng-model='srService.settings.filterMode' ng-options='r for r in srService.filterModes' ng-change='filterAnswers()'></select>
+        <select class='form-control' ng-model='srService.settings.filterMode' ng-options='r for r in srService.filterModes' ng-change='arrangeAnswers()'></select>
+      </div>
+      <div class='col-md-6 form-inline'>
+        <strong>Question Sort</strong><br/>
+        <select class='form-control' ng-model='srService.settings.sortMode' ng-options='r for r in srService.sortModes' ng-change='arrangeAnswers()'></select>
       </div>
     </div>
     <form name='contact_form'>
@@ -108,10 +112,10 @@
     </form>
     <div class='row'>
       <div class='col-md-8 col-md-offset-2 text-center alert alert-info' ng-hide='srService.settings.filterMode=="All"'>
-        Showing {{filteredAnswers.length}} of {{resp.answers.length}} questions.
+        Showing {{arrangedAnswers.length}} of {{resp.answers.length}} questions.
       </div>
     </div>
-    <div ng-repeat='answer in filteredAnswers' style='margin-bottom:20px;'>
+    <div ng-repeat='answer in arrangedAnswers' style='margin-bottom:20px;'>
       <div class='row'>
         <div class='col-md-12'>
           <legend class='text-info' style="padding-bottom: 3px;">
