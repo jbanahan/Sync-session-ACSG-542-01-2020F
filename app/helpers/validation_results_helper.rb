@@ -11,7 +11,7 @@ module ValidationResultsHelper
     end
     panel_state
   end
-  def business_validation_rule_result_json rr
+  def business_validation_rule_result_json rr, current_user
     return {
       id:rr.id,
       state:rr.state,
@@ -19,7 +19,8 @@ module ValidationResultsHelper
       note:rr.note,
       message:rr.message,
       overridden_by:(rr.overridden_by ? {full_name:rr.overridden_by.full_name} : nil),
-      overridden_at:rr.overridden_at
+      overridden_at:rr.overridden_at,
+      editable: rr.can_edit?(current_user)
     }
   end
 end

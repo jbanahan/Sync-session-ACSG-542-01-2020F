@@ -12,13 +12,22 @@ describe BusinessValidationRuleResult do
     end
   end
   describe :can_edit do
-    it "should allow users from master company" do
-      u = Factory(:master_user)
-      expect(described_class.new.can_edit?(u)).to be_true
+    before :each do
+      @group = Factory(:group)
+      @bvrr = Factory(:business_validation_rule_result, business_validation_rule: Factory(:business_validation_rule, group: @group))
     end
-    it "should not allow users not from master company" do
+
+    it "should allow users who belong to rule's override group" do
+      u = Factory(:user, groups: [@group])
+      expect(@bvrr.can_edit?(u)).to be_true
+    end
+    it "should allow users who are admins" do
+      u = Factory(:admin_user)
+      expect(@bvrr.can_edit?(u)).to be_true
+    end
+    it "should not allow users who aren't admins or don't belong to rule's override group" do
       u = Factory(:user)
-      expect(described_class.new.can_edit?(u)).to be_false
+      expect(@bvrr.can_edit?(u)).to be_false
     end
   end
   describe :run_validation do

@@ -25,6 +25,7 @@ class BusinessValidationTemplatesController < ApplicationController
       @rules = @bvt.business_validation_rules
       @new_criterion = SearchCriterion.new
       @new_rule = BusinessValidationRule.new
+      @groups = Group.all
     }
   end
 

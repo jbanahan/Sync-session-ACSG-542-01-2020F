@@ -3,7 +3,7 @@ require 'spec_helper'
 describe BusinessValidationRuleResultsController do
   describe :update do
     before :each do 
-      @u = Factory(:master_user)
+      @u = Factory(:admin_user)
       @ent = Factory(:entry)
       @rr = Factory(:business_validation_rule_result,state:'Fail')
       bvr = @rr.business_validation_result

@@ -25,6 +25,11 @@
     <%= f.text_area :rule_attributes_json, rows: 4, class: "form-control", id: "new-rule-rule-attribute-json-field", placeholder: "Enter the rule's JSON..." %>
   </div>
 
+  <div class="form-group">
+    <label for="group_id">Override group</label>
+    <%= f.select :group_id, options_from_collection_for_select(@groups, 'id', 'name'), { include_blank: true }, {class: "form-control", id: "new-rule-type"} %>
+  </div>
+
   <div align="center">
     <%= f.submit "Submit", class: "btn btn-primary btn-lg", style: "margin-top: 20px;" %>
   </div>
