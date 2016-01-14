@@ -91,6 +91,24 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
       expect(EntitySnapshot.count).to eq 1
     end
+    it "should update product name" do
+      original_product_name = "SPACE-DYED COTTON PULLOVER"
+      new_product_name = "SOMETHING ELSE"
+      xml_text = IO.read(@path)
+
+      # first run creates product with original_product_name
+      described_class.parse xml_text
+
+      p = Product.first
+      expect(p.name).to eq original_product_name
+
+      xml_text.gsub!(original_product_name,new_product_name)
+
+      described_class.parse xml_text
+
+      p.reload
+      expect(p.name).to eq new_product_name
+    end
     it "should reuse same address based on hash" do
       st  = @c.addresses.create!(system_code:'0101',name:'J JILL',
         line_1:'RECEIVING',line_2:'100 BIRCH POND DRIVE',

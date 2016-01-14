@@ -190,13 +190,13 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   def parse_product group_11
     po1_el = REXML::XPath.first(group_11,'PO1')
     prod_uid = "#{UID_PREFIX}-#{et po1_el, 'PO111'}"
-    p = Product.where(importer_id:@jill.id,unique_identifier:prod_uid).first_or_create!(name:REXML::XPath.first(group_11,'LIN/LIN03').text)
+    p = Product.where(importer_id:@jill.id,unique_identifier:prod_uid).first_or_create!
+   
+    # update product attributes
+    product_name = REXML::XPath.first(group_11,'LIN/LIN03').text
     uom = et po1_el, 'PO103'
-    if uom != p.unit_of_measure
-      p.unit_of_measure = uom
-      p.save!
-      EntitySnapshot.create_from_entity p, @user
-    end
+    update_product_if_needed(p,product_name,uom)
+   
     cv = p.get_custom_value(@cdefs[:vendor_style])
     vendor_style = et(po1_el,'PO111')
     @vendor_styles << vendor_style unless vendor_style.blank?
@@ -211,6 +211,22 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       imp_cv.save!
     end
     p
+  end
+
+  def update_product_if_needed p, product_name, unit_of_measure
+    need_update = false
+    if !product_name.blank? && product_name != p.name
+      p.name = product_name
+      need_update = true
+    end
+    if unit_of_measure != p.unit_of_measure
+      p.unit_of_measure = unit_of_measure
+      need_update = true
+    end
+    if need_update
+      p.save!
+      EntitySnapshot.create_from_entity p, @user
+    end
   end
 
   def find_or_create_vendor vendor_ref
