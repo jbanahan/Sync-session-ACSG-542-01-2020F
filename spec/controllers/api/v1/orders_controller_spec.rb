@@ -79,4 +79,20 @@ describe Api::V1::OrdersController do
       expect(response.status).to eq 401
     end
   end
+
+  describe "by_order_number" do
+    it "gets order by order_number" do
+      o = Factory(:order)
+      get :by_order_number, order_number: o.order_number
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['order']['ord_ord_num']).to eq o.order_number.to_s
+    end
+
+    it "returns an error if order not found" do
+      get :by_order_number, order_number: "NOTANORDER"
+      expect(response).not_to be_success
+      expect(response.status).to eq 404
+    end
+  end
 end

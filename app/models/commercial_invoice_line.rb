@@ -19,4 +19,8 @@ class CommercialInvoiceLine < ActiveRecord::Base
   def total_fees
     [prorated_mpf, hmf, cotton_fee].compact.sum
   end
+
+  def total_entered_value
+    BigDecimal.new(self.commercial_invoice_tariffs.map(&:entered_value).compact.sum)
+  end
 end

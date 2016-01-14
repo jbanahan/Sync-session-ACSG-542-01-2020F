@@ -20,7 +20,7 @@ describe OpenChain::Api::ApiClient do
       expect(OpenChain::Api::ApiClient.new 'jcrew', 'test', 'test').to_not be_nil
       expect(OpenChain::Api::ApiClient.new 'bdemo', 'test', 'test').to_not be_nil
       expect(OpenChain::Api::ApiClient.new 'das', 'test', 'test').to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'warnaco', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'll', 'test', 'test').to_not be_nil
       expect(OpenChain::Api::ApiClient.new 'dev', 'test', 'test').to_not be_nil
       expect(OpenChain::Api::ApiClient.new 'test', 'test', 'test').to_not be_nil
 
