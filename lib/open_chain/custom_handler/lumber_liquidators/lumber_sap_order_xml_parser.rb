@@ -120,7 +120,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       line_number = et(line_el,'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
-      ol = order.order_lines.build(line_number:line_number) unless ol
+      ol = order.order_lines.build(line_number:line_number,total_cost_digits:2) unless ol
 
       ol.product = find_product(line_el)
       ol.quantity = BigDecimal(et(line_el,'MENGE'),4)

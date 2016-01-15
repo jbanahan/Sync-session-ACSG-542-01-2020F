@@ -43,7 +43,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
         export_lambda: lambda {|obj|
           obj.order_lines.inject(0) {|init,ol| init + ol.total_cost}
         },
-        qualified_field_name: "(SELECT SUM(IFNULL((order_lines.price_per_unit * order_lines.quantity), 0)) FROM order_lines WHERE order_lines.order_id = orders.id)"
+        qualified_field_name: "(SELECT SUM(#{OrderLine::TOTAL_COST_SUBQUERY}) FROM order_lines WHERE order_lines.order_id = orders.id)"
       }],
       [22,:ord_ship_to_count,:ship_to_count,'Ship To Count', {data_type: :integer,
         read_only: true,
