@@ -106,8 +106,8 @@
 
         Chain.sendEmailAttachments(controller_name, attachable_id, to_address, email_subject, email_body, ids_to_include)       
         .fail(function(data){
-          if (data.responseJSON && data.responseJSON.email_error)
-            alert(data.responseJSON.email_error);
+          if (data.responseJSON)
+            alert(data.responseJSON.error);
           else 
           alert("We were unable to send your attachments.  Please try sending fewer attachments at once or try again after reloading the page.");
         })

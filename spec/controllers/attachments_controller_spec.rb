@@ -14,7 +14,7 @@ describe AttachmentsController do
       post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "", email_subject: "test message", 
                                    email_body: "This is a test.", ids_to_include: ['1','2','3'], full_name: @u.full_name, email: @u.email
       expect(response.status).to eq 500
-      expect(response.body).to eq({email_error: "Please enter an email address."}.to_json)
+      expect(JSON.parse(response.body)['error']).to eq "Please enter an email address."
     end
     
     it "checks that there are no more than 10 emails" do
@@ -25,7 +25,7 @@ describe AttachmentsController do
       post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: too_many_emails.join(','), email_subject: "test message", 
                                    email_body: "This is a test.", ids_to_include: ['1','2','3'], full_name: @u.full_name, email: @u.email
       expect(response.status).to eq 500
-      expect(response.body).to eq({email_error: "Cannot accept more than 10 email addresses."}.to_json)
+      expect(JSON.parse(response.body)['error']).to eq "Cannot accept more than 10 email addresses."
     end
     
     it "validates email addresses before sending" do
@@ -33,7 +33,7 @@ describe AttachmentsController do
       post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "john@abc.com, sue@abccom", email_subject: "test message", 
                                    email_body: "This is a test.", ids_to_include: ['1','2','3'], full_name: @u.full_name, email: @u.email
       expect(response.status).to eq 500
-      expect(response.body).to eq({email_error: "Please ensure all email addresses are valid."}.to_json)
+      expect(JSON.parse(response.body)['error']).to eq "Please ensure all email addresses are valid."
     end
 
     it "sends email" do
