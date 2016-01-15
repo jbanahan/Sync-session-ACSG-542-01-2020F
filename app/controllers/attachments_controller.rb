@@ -86,8 +86,13 @@ class AttachmentsController < ApplicationController
   end
 
   def send_email_attachable
-    Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
-    render text: "OK"
+    email_list = params[:to_address].delete(' ').split(',')
+    unless email_list.map{ |e| EmailValidator.valid? e }.all?
+      render text: "Please ensure all email addresses are valid."
+    else
+      Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
+      render text: "OK"
+    end
   end
 
   private

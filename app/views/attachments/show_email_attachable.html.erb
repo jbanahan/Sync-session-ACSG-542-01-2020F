@@ -11,7 +11,7 @@
       <div class="col-md-4 col-md-offset-4">
         <div class="form-group">
           <label>Send to:</label>
-          <textarea class='form-control' id="send_to_address" placeholder="Enter up to 10 email addresses (space separated)..." value="<%=current_user.email%>" autofocus=true rows=4></textarea>
+          <textarea class='form-control' id="send_to_address" placeholder="Enter up to 10 email addresses (comma separated)..." value="<%=current_user.email%>" autofocus=true rows=4></textarea>
         </div>
 
         <div class="form-group">
@@ -80,11 +80,6 @@
 
   $(function(){
 
-    var email_regex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$/i;
-    var email_valid = function(elem, ind, arr) {
-      return email_regex.test(elem);
-    }
-
     $("#select_all_button").click(function(){
       $('input[type=checkbox]').prop("checked",true)
     });
@@ -95,16 +90,13 @@
 
     $("#submit_attachment_email").click(function(){
       var addressStr = $("#send_to_address").val();
-      var addressArr = addressStr.split(" ");
+      var addressArr = addressStr.split(",");
       
       if (addressStr==""){
         alert("Please enter an email address.")
       }
       else if (addressArr.length > 10){
         alert("Cannot accept more than 10 email addresses.")
-      }
-      else if (!addressArr.every(email_valid)){
-        alert("Please ensure all email addresses are valid.");
       }
       else if ($("input:checked").length == 0){
         alert("Please select at least one attachment to send.");
@@ -124,13 +116,16 @@
 
         Chain.sendEmailAttachments(controller_name, attachable_id, to_address, email_subject, email_body, ids_to_include)       
         .fail(function(data){
-            alert("We were unable to send your attachments.  Please try sending fewer attachments at once or try again after reloading the page.");
+          alert("We were unable to send your attachments.  Please try sending fewer attachments at once or try again after reloading the page.");
         })
         .done(function(data){
-            if(confirm("Your email has been sent successfully.  Click OK to return to the previous page."))
-            {
-              history.go(-1);
-            }
+          //check email validity
+          if (/email/.test(data))
+            alert(data);
+          else if(confirm("Your email has been sent successfully.  Click OK to return to the previous page."))
+          {
+            history.go(-1);
+          }
         });
 
       }
