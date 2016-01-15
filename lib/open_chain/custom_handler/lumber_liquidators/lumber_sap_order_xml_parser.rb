@@ -227,30 +227,43 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def payment_terms_description base
-      elements = REXML::XPath.match(base,"./E1EDK18")
-      # According to the doc from LL, If no E1DK18 is present, then order is due immediately.
-      return "Due Immediately" unless elements.try(:size) > 0
+      # Use the ZTERM element to determine if there a special term codes that we need to handle
+      # outside of the standard path of parsing the terms elements into a terms description.
+      # Special Terms don't have these elements.
+      zterm = REXML::XPath.first(base, "./E1EDK01/ZTERM").try(:text)
+      if special_payment_terms[zterm]
+        special_payment_terms[zterm]
+      else
+        elements = REXML::XPath.match(base,"./E1EDK18")
 
-      values = []
-      elements.each do |el|
-        days = et(el, 'TAGE')
-        percent = et(el, 'PRZNT')
+        # According to the doc from LL, If no E1DK18 is present, then order is due immediately.
+        return "Due Immediately" unless elements.try(:size) > 0
 
-        next if days.blank?
+        values = []
+        elements.each do |el|
+          days = et(el, 'TAGE')
+          percent = et(el, 'PRZNT')
 
-        if percent.blank?
-          values << "Net #{days}"
-        else
-          # Strip trailing insignificant digits
-          if percent =~ /\.\d*[0]+$/
-            percent.sub!(/0+$/, "")
-            percent = percent[0..-2] if percent.ends_with?(".")
+          next if days.blank?
+
+          if percent.blank?
+            values << "Net #{days}"
+          else
+            # Strip trailing insignificant digits
+            if percent =~ /\.\d*[0]+$/
+              percent.sub!(/0+$/, "")
+              percent = percent[0..-2] if percent.ends_with?(".")
+            end
+            values << "#{percent}% #{days} Days"
           end
-          values << "#{percent}% #{days} Days"
         end
-      end
 
-      values.join(", ")
+        values.join(", ")
+      end
+    end
+
+    def special_payment_terms
+      {"TT00" => "T/T At Sight", "TT30" => "T/T Net 30"}
     end
 
     def parse_date str
