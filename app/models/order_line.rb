@@ -12,9 +12,12 @@ class OrderLine < ActiveRecord::Base
 	
   validates_uniqueness_of :line_number, :scope => :order_id	
 
+  TOTAL_COST_SUBQUERY ||= 'IFNULL(IF(order_lines.total_cost_digits IS NULL,(order_lines.price_per_unit * order_lines.quantity),ROUND(order_lines.price_per_unit * order_lines.quantity,total_cost_digits)), 0)'
   def total_cost 
     return 0 if self.price_per_unit.blank? || self.quantity.blank?
-    self.price_per_unit * self.quantity
+    total_cost = self.price_per_unit * self.quantity
+    total_cost = BigDecimal(total_cost).round(total_cost_digits) unless self.total_cost_digits.nil?
+    total_cost
   end
 
 	def related_shipments
