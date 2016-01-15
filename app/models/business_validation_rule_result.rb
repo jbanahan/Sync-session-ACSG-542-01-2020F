@@ -9,7 +9,11 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   end
 
   def can_edit? user
-    user.admin? || (user.in_group? business_validation_rule.group)
+    if business_validation_rule.group
+      user.admin? || (user.in_group? business_validation_rule.group)
+    else
+      user.edit_business_validation_rule_results?
+    end
   end
 
   def run_validation obj
