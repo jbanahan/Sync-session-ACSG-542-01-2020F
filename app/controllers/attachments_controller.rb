@@ -86,8 +86,17 @@ class AttachmentsController < ApplicationController
   end
 
   def send_email_attachable
-    Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
-    render text: "OK"
+    email_list = params[:to_address].delete(' ').split(',')
+    if email_list.empty?
+      render_json_error "Please enter an email address."
+    elsif email_list.count > 10
+      render_json_error "Cannot accept more than 10 email addresses."
+    elsif !email_list.map{ |e| EmailValidator.valid? e }.all?
+      render_json_error "Please ensure all email addresses are valid."
+    else
+      Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
+      render json: {ok: 'OK'}
+    end
   end
 
   private
