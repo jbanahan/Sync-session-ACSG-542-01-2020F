@@ -511,8 +511,10 @@ OpenChain::Application.routes.draw do
       get 'read'
     end
     collection do
+      get 'new_bulk'
       get 'read_all'
       get 'message_count'
+      post 'send_to_users'
     end
   end
 

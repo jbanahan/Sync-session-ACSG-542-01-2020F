@@ -45,4 +45,18 @@ describe Message do
       user.messages.create! subject: "Subject", body: "Body"
     end
   end
+
+  describe "send_to_users" do
+    it "distributes message to specified users" do
+      u1 = Factory(:user)
+      u2 = Factory(:user)
+      described_class.send_to_users([u1.id, u2.id], "Test Message", "This is a test.")
+
+      expect(u1.messages.first.subject).to eq "Test Message"
+      expect(u1.messages.first.body).to eq "This is a test."
+      expect(u2.messages.first.subject).to eq "Test Message"
+      expect(u2.messages.first.body).to eq "This is a test."
+    end
+  end
+
 end

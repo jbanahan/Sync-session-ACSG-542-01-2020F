@@ -26,4 +26,11 @@ class Message < ActiveRecord::Base
   def self.run_schedulable
     purge_messages
   end
+
+  def self.send_to_users receivers, subject, body
+    receivers.each do |receiver_id|
+      r = User.find(receiver_id)
+      r.messages.create!(subject: subject, body: body)
+    end
+  end
 end
