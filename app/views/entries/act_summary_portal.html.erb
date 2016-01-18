@@ -1,0 +1,19 @@
+<script>
+  $(document).ready(function() {
+    $('#impselect').on('change',function() {
+      window.location = '/entries/importer/'+$(this).val()+'/activity_summary/<%=@iso%>';
+    });
+  });
+</script>
+
+<div class="container">
+    <div class="row" style='margin-bottom:20px;'>
+      <div class="col-md-12 text-center">
+        <h1><%= @iso == 'us' ? 'US' : 'Canada' %> Entry Activity</h1>
+        <select id='impselect' class='form-control'>
+          <option value="" selected disabled></option>
+          <%=options_from_collection_for_select @importers, 'id', 'name', :prompt => true%>
+        </select>
+      </div>
+    </div>
+</div>

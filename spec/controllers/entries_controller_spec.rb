@@ -321,6 +321,80 @@ describe EntriesController do
     end
   end
 
+  context "country activity summaries" do
+    before(:each) do
+      @ca_1 = Factory.build(:company, fenix_customer_number: "1")
+      @ca_2 = Factory.build(:company, fenix_customer_number: "2")
+      @ca_3 = Factory.build(:company, fenix_customer_number: "3")
+      @us_1 = Factory.build(:company, alliance_customer_number: "1")
+      @us_2 = Factory.build(:company, alliance_customer_number: "2")
+      @us_3 = Factory.build(:company, alliance_customer_number: "3")
+
+      @ca_companies = [@ca_1, @ca_2, @ca_3]
+      @us_companies = [@us_1, @us_2, @us_3]
+    end
+
+    describe "ca_activity_summary" do
+      before(:each) do 
+        @iso = 'ca'
+        @us_companies.each{ |co| co.save! }
+      end
+
+      it "renders activity_summary if called with an importer_id" do
+        @ca_companies.each{ |co| co.save! }
+        get :ca_activity_summary, {importer_id: @us_1.id}
+        expect(response).to render_template :activity_summary
+      end
+
+      it "renders activity_summary_portal if there are multiple CA importers" do
+        @ca_companies.each{ |co| co.save! }
+        get :ca_activity_summary
+        expect(response).to render_template :act_summary_portal
+      end
+
+      it "redirects to the CA importer if there is only one" do
+        @ca_1.save!
+        get :ca_activity_summary
+        expect(response).to redirect_to "/entries/importer/#{@ca_1.id}/activity_summary/ca"
+      end
+
+      it "redirects to the user's importer if there are no CA importers" do
+        get :ca_activity_summary
+        expect(response).to redirect_to "/entries/importer/#{@u.company.id}/activity_summary/ca"
+      end
+    end
+
+    describe "us_activity_summary" do
+      before(:each) do 
+        @iso = 'us'
+        @ca_companies.each{ |co| co.save! }
+      end
+
+      it "renders activity_summary if called with an importer_id" do
+        @us_companies.each{ |co| co.save! }
+        get :us_activity_summary, {importer_id: @us_1.id}
+        expect(response).to render_template :activity_summary
+      end
+
+      it "renders activity_summary_portal if there are multiple US importers" do
+        @us_companies.each{ |co| co.save! }
+        get :us_activity_summary
+        expect(response).to render_template :act_summary_portal
+      end
+
+      it "redirects to the US importer if there is only one" do
+        @us_1.save!
+        get :us_activity_summary
+        expect(response).to redirect_to "/entries/importer/#{@us_1.id}/activity_summary/us"
+      end
+
+      it "redirects to the user's importer if there are no US importers" do
+        get :us_activity_summary
+        expect(response).to redirect_to "/entries/importer/#{@u.company.id}/activity_summary/us"
+      end
+    end
+  end
+
   describe "by_release_range" do
     before :each do 
       @country = Factory(:country, iso_code: 'US')

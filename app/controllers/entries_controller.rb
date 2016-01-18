@@ -17,17 +17,15 @@ class EntriesController < ApplicationController
     redirect_to advanced_search CoreModule::ENTRY, params[:force_search]
   end
   def ca_activity_summary
-    params[:importer_id] ||= current_user.company.master? ? Company.where('length(fenix_customer_number)>0').order(:fenix_customer_number).first.id : current_user.company_id
-    @iso = 'ca'
-    render :activity_summary
+    importers = Company.where('length(fenix_customer_number)>0').order(:fenix_customer_number)
+    activity_summary_select importers, 'ca'
   end
   def ca_activity_summary_content
     activity_summary_content
   end
   def us_activity_summary
-    params[:importer_id] ||= current_user.company.master? ? Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number).first.id : current_user.company_id
-    @iso = 'us'
-    render :activity_summary
+    importers = Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number)
+    activity_summary_select importers, 'us'
   end
   def us_activity_summary_content
     activity_summary_content
@@ -240,6 +238,21 @@ class EntriesController < ApplicationController
     end
     @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first
     render layout: false
+  end
+
+  def activity_summary_select importer_list, iso
+    @iso = iso
+    if params[:importer_id]
+      render :activity_summary
+    else
+      @importers = current_user.company.master? ? importer_list : []
+      if @importers.count > 1
+        render :act_summary_portal
+      else
+        importer_id = (@importers.count == 1) ? @importers.first.id : current_user.company.id
+        redirect_to "/entries/importer/#{importer_id}/activity_summary/#{@iso}"
+      end
+    end
   end
 
 end
