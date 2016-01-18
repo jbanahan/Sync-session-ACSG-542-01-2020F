@@ -36,13 +36,13 @@ module OpenChain; module CustomHandler; module Polo
       # Luckily, the XLServer / POI library seems to be able to handle the files.
       xl = xl_client s3_path
 
-      invoice = parse_header xl
+      invoice, po_number = parse_header xl
 
       # We want the last line number because there's some summary information after it
       # that we'll want to grab.  Because we're using xl client it's much more efficient reading
       # down the page progressively than trying to find the last lines as part of the header
       # parsing method (due to every xl_client call being an http request)
-      summary_start_row = parse_details xl, invoice
+      summary_start_row = parse_details xl, invoice, po_number
 
       parse_summary xl, summary_start_row, invoice
       invoice.save!
@@ -64,14 +64,50 @@ module OpenChain; module CustomHandler; module Polo
           raise "No Importer company exists with Tax ID #{RL_CA_FACTORY_STORE_TAX_ID}.  This company must exist before RL CA invoices can be created against it."
         end
 
-        invoice = find_invoice get_cell_value(xl, 1, 4), importer
-        invoice.invoice_date = get_invoice_date xl, 0, 4
-        invoice.country_origin_code = get_cell_value xl, 0, 11
-        invoice.currency = parse_currency get_cell_value(xl, 0, 15)
-        invoice.consignee = parse_company importer, :consignee, xl, 4, 6, "Importer of Record"
-        invoice.vendor = parse_company importer, :vendor, xl, 0, 6, "Country of Export"
+        header_row = nil
+        counter = -1
+        begin
+          row = get_row_values(xl, (counter+= 1)).map(&:to_s)
+          # Look for a row w/ Date and Ref # in there somewhere
+          date_found = row.find {|v| v =~ /DATE/i }
+          ref_found = row.find {|v| v =~ /REF\s*#/i}
 
-        invoice
+          if date_found && ref_found
+            header_row = row
+            break
+          end
+        end while header_row.nil? && counter < 20
+
+
+        raise "Unable to find header starting row." if header_row.nil?
+
+        # The row immediately after the header is the row that has the invoice date, invoice # and po #
+        column_map = header_column_map header_row
+
+        invoice_row = get_row_values(xl, (counter += 1))
+
+        invoice = find_invoice v(column_map, invoice_row, "REF#"), importer
+        invoice.invoice_date = date_value(v(column_map, invoice_row, "DATE"))
+        po_number = v(column_map, invoice_row, "CA P.O.")
+
+        # Find the "country of export" and Terms of Sale / Currency cells
+        begin 
+          row = get_row_values(xl, (counter += 1))
+
+          if row[0].to_s =~ /Shipper \/ Exporter/i
+            invoice.vendor = parse_company importer, :vendor, xl, 0, (counter += 1), "Country of Export"
+          end
+
+          if row[0].to_s =~ /Country of Export/i
+            invoice.country_origin_code = get_cell_value xl, 0, (counter += 1)
+          end
+
+          if row[0].to_s =~ /Terms of Sale/i
+            invoice.currency = parse_currency get_cell_value(xl, 0, (counter += 1))
+          end
+        end while (invoice.country_origin_code.nil? || invoice.currency.nil?) && counter < 30
+
+        [invoice, po_number]
       end
 
       def parse_summary xl, summary_start_row, invoice
@@ -125,8 +161,7 @@ module OpenChain; module CustomHandler; module Polo
         xl.get_row_values 0, row
       end
 
-      def get_invoice_date xl, column, row
-        value = get_cell_value xl, column, row
+      def date_value value
         unless value.nil? || value.acts_like?(:time) || value.acts_like?(:date)
           # We'll assume at this point we can try and parse a date out of whatever value we got.
           Date.strptime(value.to_s, "%m/%d/%Y") rescue value = nil
@@ -175,7 +210,7 @@ module OpenChain; module CustomHandler; module Polo
                   joins(:addresses).where(:addresses => {:name => digest}).
                   first
 
-        unless company
+        if company.nil? && !address[:name].blank?
           company = Company.new :name => address[:name], :name_2 => address[:name_2]
           company.vendor = company_type == :vendor
           company.consignee = company_type == :consignee
@@ -206,7 +241,7 @@ module OpenChain; module CustomHandler; module Polo
       end
 
       def parse_address_lines address_lines
-        address = nil
+        address = {}
         if address_lines.length == 3
           address = {:name => address_lines[0], :line_1 => address_lines[1], :city_state_zip => address_lines[2]}
         elsif address_lines.length == 4
@@ -240,20 +275,13 @@ module OpenChain; module CustomHandler; module Polo
         address
       end
 
-      def parse_details xl, invoice
-        # Detail lines SHOULD start at line 18.  Because I don't trust RL to keep the invoice template exactly the same
-        # and if the header information is slightly off it's not too big of an issue to fix manually, but if we're missing
-        # detail lines it's a problem.
-
-        # What we're looking for a is row that has HTS in the first cell and country in the second
-        # Don't go any further than row 25 - that's just rediculous.
-
+      def parse_details xl, invoice, po_number
         # Find details columns (since RL is sending different formats of the invoice now)
         column_map = nil
         detail_header_row = nil
         (15..25).each do |row|
           mapping = detail_column_map(get_row_values(xl, row))
-          if mapping["STYLE"] && mapping["HTS"]
+          if mapping["STYLE"] && mapping["HTS"] && mapping["DESCRIPTION"]
             detail_header_row = row
             column_map = mapping
             break
@@ -261,10 +289,8 @@ module OpenChain; module CustomHandler; module Polo
         end
 
         if detail_header_row.nil?
-          raise 'Unable to locate where invoice detail lines begin.  Detail lines should begin after a header in Column A named "HTS" and a header in Column B named "Country of Origin".'
+          raise 'Unable to locate where invoice detail lines begin.  Detail lines should begin after a row with columns named "Style Number", "HTS", and "Description of Goods".'
         end
-
-        po_number = get_cell_value xl, 7, 4
 
         # All this while condition does is get the next row value, increment the row counter and validate that we haven't 
         # hit the totals line (ie. we're past the details section)
@@ -335,9 +361,13 @@ module OpenChain; module CustomHandler; module Polo
       end
 
       def detail_column_map header_row
+        create_mapping ["STYLE", "COUNTRY", "HTS", "DESCRIPTION", "QTY", "UNIT"], header_row
+      end
+
+      def create_mapping values, header_row
         mapping = {}
         row = header_row.map {|v| v.to_s.upcase }
-        ["STYLE", "COUNTRY", "HTS", "DESCRIPTION", "QTY", "UNIT"].each do |header|
+        values.each do |header|
           index = row.index {|v| v.include?(header)}
           mapping[header] = index if index
         end
@@ -350,5 +380,8 @@ module OpenChain; module CustomHandler; module Polo
         index ? row[index] : nil
       end
 
+      def header_column_map header_row
+        create_mapping ["DATE", "REF#", "CA P.O."], header_row
+      end
   end
 end; end; end
