@@ -10,10 +10,10 @@
     | <%=link_to "download", survey_path(s, :format=>:xls) %>
   </td>
   <td><%=s.name%></td>
-  <td><%=s.survey_responses.count%></td>
-  <td><%=s.survey_responses.where(:status=>SurveyResponse::STATUSES[:incomplete]).count%></td>
-  <td><%=s.survey_responses.where(:status=>SurveyResponse::STATUSES[:needs_rating]).count%></td>
-  <td><%=s.survey_responses.where(:status=>SurveyResponse::STATUSES[:rated]).count%></td>
+  <td><%=s.survey_responses.was_archived(false).count%></td>
+  <td><%=s.survey_responses.was_archived(false).where(:status=>SurveyResponse::STATUSES[:incomplete]).count%></td>
+  <td><%=s.survey_responses.was_archived(false).where(:status=>SurveyResponse::STATUSES[:needs_rating]).count%></td>
+  <td><%=s.survey_responses.was_archived(false).where(:status=>SurveyResponse::STATUSES[:rated]).count%></td>
   <td><%- log = s.most_recent_response_log%><%= log ? (log.updated_at.in_time_zone(current_user.time_zone).to_s + " / " + log.user.full_name) : ""%></td>
 </tr>
 <%end%>
