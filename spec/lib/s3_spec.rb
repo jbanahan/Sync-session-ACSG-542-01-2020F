@@ -251,11 +251,13 @@ describe OpenChain::S3, s3: true do
         end
 
         it 'checks each subfolder given and yields integration keys' do
-          OpenChain::S3.should_receive(:integration_bucket_name).exactly(2).times.and_return(@bucket)
-          found_keys = []
-          OpenChain::S3.integration_keys(Date.new(2011,12,26), ["/subfolder/2", "/subfolder/1"]) {|key| found_keys << key }
-          found_keys[0].should == @my_keys[1]
-          found_keys[1].should == @my_keys[0]
+          retry_expect {
+            OpenChain::S3.stub(:integration_bucket_name).and_return(@bucket)
+            found_keys = []
+            OpenChain::S3.integration_keys(Date.new(2011,12,26), ["/subfolder/2", "/subfolder/1"]) {|key| found_keys << key }
+            found_keys[0].should == @my_keys[1]
+            found_keys[1].should == @my_keys[0]
+          }
         end
       end
     end
