@@ -21,7 +21,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     9 => {attribute: :first_it_date, datatype: :date, directive: :first},
     11 => {attribute: :eta_date, datatype: :date},
     12 => :arrival_date,
-    16 => {attribute: :entry_filed_date, datatype: :datetime},
     19 => :release_date,
     20 => :fda_release_date,
     24 => :trucker_called_date,
@@ -474,6 +473,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def process_notes e, entry
       entry.entry_comments.each {|c| c.mark_for_destruction}
 
+      customs_response_times = []
       Array.wrap(e[:notes]).each do |n|
         note = n[:note]
         generated_at = parse_numeric_datetime(n[:date_updated])
@@ -489,7 +489,12 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.first_7501_print = earliest_date(entry.first_7501_print, generated_at)
           entry.last_7501_print = latest_date(entry.first_7501_print, generated_at)
         end
+
+        # We're recording the Entry Filed Date as time of the first reponse from customs
+        customs_response_times << generated_at if comment.username.to_s.upcase == "CUSTOMS"
       end
+
+      entry.entry_filed_date = (customs_response_times.size > 0 ? customs_response_times.sort.first : nil)
 
       nil
     end

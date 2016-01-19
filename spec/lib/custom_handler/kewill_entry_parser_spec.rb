@@ -2,9 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::KewillEntryParser do
 
-  def tz
-    ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
-  end
+  let (:tz) {ActiveSupport::TimeZone["Eastern Time (US & Canada)"]}
 
   describe "process_entry" do
 
@@ -111,7 +109,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'notes' => [
           {'note' => "Document Image created for F7501F   7501 Form.", 'modified_by'=>"User1", 'date_updated' => 201503191930, 'confidential' => "Y"},
           {'note' => "Document Image created for FORM_N7501", 'modified_by'=>"User2", 'date_updated' => 201503201247},
-          {'note' => "User3 did something", 'modified_by'=>"User3", 'date_updated' => 201503201247}
+          {'note' => "User3 did something", 'modified_by'=>"User3", 'date_updated' => 201503201247},
+          {'note' => "Customs Did something", 'modified_by'=>"CUSTOMS", 'date_updated'=>201601191230}
         ],
         'ids' => [
           {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO', 'scac_house'=>'    '},
@@ -351,7 +350,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.first_it_date).to eq tz.parse("201503011000").to_date
       expect(entry.eta_date).to eq tz.parse("201503011100").to_date
       expect(entry.arrival_date).to eq tz.parse "201503011200"
-      expect(entry.entry_filed_date).to eq tz.parse "201503011300"
+      expect(entry.entry_filed_date).to eq tz.parse "201601191230"
       expect(entry.release_date).to eq tz.parse "201503011400"
       expect(entry.fda_release_date).to eq tz.parse "201503011500"
       expect(entry.trucker_called_date).to eq tz.parse "201503011600"
@@ -383,7 +382,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.it_numbers).to eq "ITNO\n ITNO2"
 
       comments = entry.entry_comments
-      expect(comments.size).to eq 3
+      expect(comments.size).to eq 4
 
       expect(comments.first.body).to eq "Document Image created for F7501F   7501 Form."
       expect(comments.first.username).to eq "User1"
@@ -690,7 +689,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.broker_invoices.first.invoice_number).to eq "12345A"
       expect(entry.commercial_invoices.size).to eq 2
       expect(entry.commercial_invoices.first.invoice_number).to eq "INV1"
-      expect(entry.entry_comments.size).to eq 3
+      expect(entry.entry_comments.size).to eq 4
       expect(entry.containers.size).to eq 2
       expect(entry.containers.first.container_number).to eq "CONT1"
     end
@@ -902,6 +901,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # These values all should have been cleared and reparsed from the dates in the json - and since there are no dates in the json we 
       # sent in the test, they should all be nil
       standard_dates.each {|d| expect(attributes[d.to_s]).to be_nil, "expected #{d.to_s} to be nil, got '#{attributes[d.to_s]}'"}
+    end
+
+    it "uses the earliest CUSTOMS comment for Entry Filed Date" do
+      @e['notes'] << {'note' => "Customs Did something", 'modified_by'=>"CUSTOMS", 'date_updated'=>201501191230}
+      entry = subject.process_entry @e
+
+      expect(entry.entry_filed_date).to eq tz.parse("201501191230")
     end
   end
 
