@@ -3,11 +3,23 @@
 <%end%>
 <%content_for :javascript do%>
   $(function() {
+    
+    (function setShowArchivedToggle() {
+      var searchString = window.location.search;
+      if (searchString == "" || searchString.split('=')[1] == 'false') {
+        $("#btn_toggle_show_archived").click(function() { window.location="<%=survey_path @survey%>?show_archived_responses=true"; });
+        $('#btn_toggle_show_archived').text("Show Archived Responses");
+      }
+      else {
+        $("#btn_toggle_show_archived").click(function() { window.location="<%=survey_path @survey%>?show_archived_responses=false"; });
+        $('#btn_toggle_show_archived').text("Hide Archived Responses");
+      }
+    })();
+
     $("#mod_copy").dialog({autoOpen:false,title:"Confirm Copy",buttons:{
       "OK":function() {window.location="/surveys/<%=@survey.id%>/copy"},"Cancel":function() {$("#mod_copy").dialog('close');}
     }}); 
     $("#btn_cpy").click(function() {$("#mod_copy").dialog('open');});
-    $("#btn_show_archived").click(function() {window.location="<%=survey_path @survey%>?show_archived_responses=true"});
   });
   google.load('visualization', '1.0', {'packages':['corechart']});
   var respC = function drawChart() {
@@ -67,7 +79,7 @@
   <% end %>
   
   <% if @survey.can_edit?(current_user) && @survey.survey_responses.was_archived(true).count > 0 %>
-    <button id='btn_show_archived'>Show Archived Responses</button>
+    <button id='btn_toggle_show_archived'>Show Archived Responses</button>
   <% end %>
 <%end%>
 <% if @survey.archived? %>
