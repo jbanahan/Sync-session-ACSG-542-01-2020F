@@ -3,18 +3,6 @@
 <%end%>
 <%content_for :javascript do%>
   $(function() {
-    
-    (function setShowArchivedToggle() {
-      var searchString = window.location.search;
-      if (searchString == "" || searchString.split('=')[1] == 'false') {
-        $("#btn_toggle_show_archived").click(function() { window.location="<%=survey_path @survey%>?show_archived_responses=true"; });
-        $('#btn_toggle_show_archived').text("Show Archived Responses");
-      }
-      else {
-        $("#btn_toggle_show_archived").click(function() { window.location="<%=survey_path @survey%>?show_archived_responses=false"; });
-        $('#btn_toggle_show_archived').text("Hide Archived Responses");
-      }
-    })();
 
     $("#mod_copy").dialog({autoOpen:false,title:"Confirm Copy",buttons:{
       "OK":function() {window.location="/surveys/<%=@survey.id%>/copy"},"Cancel":function() {$("#mod_copy").dialog('close');}
@@ -77,9 +65,12 @@
   <% elsif @survey.can_edit?(current_user) %>
       <%= button_to "Restore Survey", {action: :restore, id: @survey.id}, method: :put, class:'btn navbar-btn btn-default', form_class:'inline-button-to'%>
   <% end %>
-  
   <% if @survey.can_edit?(current_user) && @survey.survey_responses.was_archived(true).count > 0 %>
-    <button id='btn_toggle_show_archived'>Show Archived Responses</button>
+    <% if @show_archived %>
+      <%= link_to "Hide Archived Responses", survey_path(@survey, show_archived_responses: "false"), class:'btn navbar-btn btn-default', form_class:'inline-button-to' %>
+    <% else %>
+      <%= link_to "Show Archived Responses", survey_path(@survey, show_archived_responses: "true"), class:'btn navbar-btn btn-default', form_class:'inline-button-to' %>
+    <% end %>
   <% end %>
 <%end%>
 <% if @survey.archived? %>
