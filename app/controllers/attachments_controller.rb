@@ -94,8 +94,13 @@ class AttachmentsController < ApplicationController
     elsif !email_list.map{ |e| EmailValidator.valid? e }.all?
       render_json_error "Please ensure all email addresses are valid."
     else
-      Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
-      render json: {ok: 'OK'}
+      total_size = Attachment.where("id IN (#{params[:ids_to_include].join(', ')})").sum(:attached_file_size)
+      if total_size > 10485760
+        render_json_error "Attachments cannot be over 10 MB."
+      else
+        Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
+        render json: {ok: 'OK'}
+      end
     end
   end
 
