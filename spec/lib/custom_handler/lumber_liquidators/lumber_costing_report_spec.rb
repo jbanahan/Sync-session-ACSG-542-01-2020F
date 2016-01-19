@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
   let (:api) { double("OpenChain::Api::OrderApiClient")}
   subject { described_class.new api_client: api}
   let (:entry) do 
-      entry = Factory(:entry, entry_number: "ENT", master_bills_of_lading: "MBOL", entered_value: 100, last_exported_from_source: "2016-01-01 12:00", customer_number: "LUMBER", source_system:"Alliance")
+      entry = Factory(:entry, entry_number: "ENT", master_bills_of_lading: "MBOL", entered_value: 100, arrival_date: '2016-01-20 12:00', customer_number: "LUMBER", source_system:"Alliance")
       container = Factory(:container, entry: entry, container_number: "CONT") 
       invoice_line = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: entry), container: container, 
                              po_number: "PO", part_number: "000123", quantity: 10, value: 100.0, add_duty_amount: 110.0, cvd_duty_amount: 120.00, hmf: 130.00, prorated_mpf: 140.00)
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       e, data, fingerprint = subject.generate_entry_data entry.id
       expect(e).not_to be_nil
       expect(data.size).to eq 1
-      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "400235", "100.000", "", "200.000", "110.000", "120.000", "100.000", "", "", "", "", "", "", "130.000", "140.000", "", "", "", "", ""]
+      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "400235", "100.000", nil, "200.000", "110.000", "120.000", "100.000", nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil]
       expect(fingerprint).to eq Digest::SHA1.hexdigest(data.first.join("*~*"))
     end
 
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
         expect(data.first[13]).to eq "33.334"
         expect(data[1][13]).to eq "33.333"
         expect(data[2][13]).to eq "33.333"
-        expect(data[3][13]).to eq ""
+        expect(data[3][13]).to be_nil
       end
     end
     
@@ -115,63 +115,38 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
   end
 
   describe "run" do
-    let(:start_time) {Time.zone.parse "2016-01-01 00:00"}
-    let(:end_time) {Time.zone.parse "2016-01-02 00:00"}
-
-    before :each do
-      subject.should_receive(:poll).and_yield start_time, end_time
-    end
 
     context "with found entries" do
       after :each do
         subject.should_receive(:generate_and_send_entry_data).with entry.id
-        subject.run
+        subject.run start_time: Time.zone.parse("2016-01-17 12:00")
       end
 
-      it "polls for available entries and generates and sends results" do 
+      it "finds entry and generates and sends results" do 
 
-      end
-
-      it "finds entries with rule validation results updated since previous runtime" do
-        entry.update_attributes! last_exported_from_source: (start_time - 1.minute)
-        entry.business_validation_results.create! state: "Pass", updated_at: (start_time + 1.minute)
-      end
-
-      it "finds entries that were previously synced, but have no release date" do
-        entry.sync_records.create! trading_partner: "LL_COST_REPORT"
-      end
-
-      it "find entries previously synced with release dates after the previous run time" do
-        entry.sync_records.create! trading_partner: "LL_COST_REPORT"
-        entry.update_attributes! release_date: (start_time + 1.minute)
       end
     end
 
     context "with entries that should not be found" do
       after :each do
         subject.should_not_receive(:generate_and_send_entry_data)
-        subject.run
+        subject.run start_time: Time.zone.parse("2016-01-17 12:00")
       end
       
       it "does not find non-lumber entries" do
         entry.update_attributes! customer_number: "NOTLUMBER"  
       end
 
-      it "does not find entries sent after last run" do
-        entry.update_attributes! last_exported_from_source: Time.zone.now
-      end
-
-      it 'does not find entries sent before last run' do
-        entry.update_attributes! last_exported_from_source: (start_time - 1.minute)
+      it "does not find with arrival dates more than 3 days out " do
+        entry.update_attributes! arrival_date: '2016-01-21 12:00'
       end
 
       it "does not find entries without broker invoices" do
         entry.broker_invoices.destroy_all
       end
 
-      it "does not find previously synced entries with release dates in the past" do
+      it "does not find previously synced entries" do
         entry.sync_records.create! trading_partner: "LL_COST_REPORT"
-        entry.update_attributes! release_date: (start_time - 1.minute)
       end
     end
   end
@@ -205,7 +180,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
   end
 
   describe "run_schedulable" do
-    it "intializes an the report class and runs it" do
+    it "intializes the report class and runs it" do
       described_class.any_instance.should_receive(:run)
       described_class.run_schedulable
     end

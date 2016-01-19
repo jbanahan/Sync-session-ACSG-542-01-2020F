@@ -21,15 +21,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     connect_vfitrack_net 'to_ecs/lumber_costing_report'
   end
 
-  def run
+  def run start_time: Time.zone.now
     # We want to find anything updated since the last time this job ran to completion (at this point, the job is supposed
     # to be scheduled nightly at midnight)
-    poll do |start_time, end_time|
-      ids = find_entry_ids start_time, end_time
+    ids = find_entry_ids start_time
 
-      ids.each do |id|
-        generate_and_send_entry_data id
-      end
+    ids.each do |id|
+      generate_and_send_entry_data id
     end
   end
 
@@ -61,18 +59,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     e.log_me
   end
 
-  def find_entry_ids start_time, end_time
-    Entry.select("DISTINCT entries.id").
+  def find_entry_ids start_time
+    # Data should be sent ONLY ONCE and not sent until Arrival Date - 3 days.
+
+    v = Entry.select("DISTINCT entries.id").
           # We have to have broker invoices before we send this data
           joins(:broker_invoices).
-          joins("LEFT OUTER JOIN business_validation_results bvr ON entries.id = bvr.validatable_id and bvr.validatable_type = 'Entry'").
           joins("LEFT OUTER JOIN sync_records sync ON sync.syncable_id = entries.id AND sync.syncable_type = 'Entry' and sync.trading_partner = 'LL_COST_REPORT'").
           where(source_system: "Alliance", customer_number: "LUMBER").
-          # IF the entry was exported from source system since the last run OR if a validation result has been updated since the last run
-          where("(last_exported_from_source >= :start_time AND last_exported_from_source < :end_time) OR (bvr.updated_at >= :start_time AND bvr.updated_at <= :end_time)", {start_time: start_time, end_time: end_time}).
-          # If we haven't sent the file already we should send it, otherwise only send if the release date hasn't been set or it's in the future
-          where("sync.id IS NULL OR entries.release_date IS NULL OR entries.release_date >= ?", start_time).
-          pluck :id
+          # Lumber wants these when Arrival Date is 3 days out (.ie Arrival Date minus 3)
+          where("entries.arrival_date IS NOT NULL AND date_sub(date(entries.arrival_date), interval 3 day) <= date(?)", start_time).
+          # If we haven't sent the file already we should send it...no updates.
+          where("sync.id IS NULL")
+    v.pluck :id
   end
 
   def generate_entry_data entry_id 
@@ -153,12 +152,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
         row = row.map do |v| 
           if v.is_a?(Numeric)
             if v == 0
-              ""
+              nil
             else
               number_with_precision(v, precision: 3)
             end
           else
-            v.to_s
+            v = v.to_s
+            v.blank? ? nil : v
           end
         end
 
