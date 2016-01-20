@@ -47,26 +47,35 @@
       <% end %>
     <% end %>
 
-    <% @attachments_array.each do |single_attachment| %>
-      <div class="row">
-        <div class="col-md-4 col-md-offset-4">
-          <div class="checkbox">
-            <label>
-              <% if number_of_attachments == 1 %>
-                <!-- If there's only one, it has to be attached, so attach it by default -->
-                <input type="checkbox" value="" checked=true>
-              <% else %>
-                <input type="checkbox" value="">
-              <% end %>
-              <%= single_attachment.attached_file_name %> <%unless single_attachment.attachment_type.blank?%>(<%=single_attachment.attachment_type%>)<%end%>
-              <div style="display: none" class="attachment_id_container">
-                <%= single_attachment.id %>
-              </div>
-            </label>
-          </div>
+    <div class="col-md-4 col-md-offset-4">                
+      <% @attachments_array.each do |single_attachment| %>
+        <div class="row">
+            <div class="checkbox att-checkbox">
+              <div class="col-md-8">
+                  <label>
+                    <% if number_of_attachments == 1 %>
+                      <!-- If there's only one, it has to be attached, so attach it by default -->
+                      <input type="checkbox" value="" checked=true>
+                    <% else %>
+                      <input type="checkbox" value="">
+                    <% end %>
+                    <%= single_attachment.attached_file_name %> <%unless single_attachment.attachment_type.blank?%>(<%=single_attachment.attachment_type%>)<%end%>
+                    <div style="display: none" class="attachment_id_container">
+                      <%= single_attachment.id %>
+                    </div>
+                  </label>
+                </div>
+              <div class="col-md-4" data-file-size="<%=single_attachment.attached_file_size%>"><%=number_to_human_size(single_attachment.attached_file_size)%></div>
+            </div>                
         </div>
+      <% end %>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-5 col-md-offset-4"
+        <br><br><p>Total Size of Selected Attachments (limit 10 MB):&nbsp;&nbsp;&nbsp;<span id="total-file-size"></span></p>
       </div>
-    <% end %>
+    </div>
 
     <div class="row">
       <div class="col-md-4 col-md-offset-4" align="center">
@@ -80,12 +89,44 @@
 
   $(function(){
 
+    updateTotalSize();
+
+    function bytesToSize(bytes) {
+     var sizes = ['Bytes', 'KB', 'MB'];
+     if (bytes == 0) return '0 Bytes';
+     var i = parseInt(Math.log(bytes) / Math.log(1024));
+     return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
+    }; //based on http://stackoverflow.com/a/18650828
+
+    function updateTotalSize() {
+      var selectedAttachments = $('.att-checkbox').filter(function(i) { return $(this).find('input').is(':checked'); });
+      var attachmentSizes = selectedAttachments.map(function() { return $(this).find("[data-file-size]").data().fileSize; });
+      var total = jQuery.makeArray(attachmentSizes).reduce(function(acc, nxt) { return acc += nxt; }, 0);
+      var totalTag = $('#total-file-size')
+      
+      totalTag.text(bytesToSize(total));
+      if (total > 10485760){
+        totalTag.css('color', 'red');
+        $('#submit_attachment_email').prop('disabled', true);
+      }
+      else {
+        totalTag.css('color', '');
+        $('#submit_attachment_email').prop('disabled', false);
+      }
+    }
+
+    $("input[type='checkbox']").on('change', function() { 
+      updateTotalSize();
+    });
+
     $("#select_all_button").click(function(){
-      $('input[type=checkbox]').prop("checked",true)
+      $('input[type=checkbox]').prop("checked",true);
+      $('input[type=checkbox]').triggerHandler('change');
     });
 
     $("#select_none_button").click(function(){
-      $('input[type=checkbox]').prop("checked",false)
+      $('input[type=checkbox]').prop("checked",false);
+      $('input[type=checkbox]').triggerHandler('change');
     });
 
     $("#submit_attachment_email").click(function(){

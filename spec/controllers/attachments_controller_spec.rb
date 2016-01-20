@@ -36,6 +36,16 @@ describe AttachmentsController do
       expect(JSON.parse(response.body)['error']).to eq "Please ensure all email addresses are valid."
     end
 
+    it "checks that attachments are under 10MB" do
+      att_1 = Factory(:attachment, attached_file_size: 5000000)
+      att_2 = Factory(:attachment, attached_file_size: 7000000)
+      Attachment.should_not_receive(:delay)
+      post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "john@abc.com, sue@abc.com", email_subject: "test message", 
+                                   email_body: "This is a test.", ids_to_include: [att_1.id.to_s, att_2.id.to_s], full_name: @u.full_name, email: @u.email
+      expect(response.status).to eq 500
+      expect(JSON.parse(response.body)['error']).to eq "Attachments cannot be over 10 MB."
+    end
+
     it "sends email" do
       d = double("delay")
       Attachment.should_receive(:delay).and_return d
