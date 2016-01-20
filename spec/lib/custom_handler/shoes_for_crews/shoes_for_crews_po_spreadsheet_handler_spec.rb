@@ -302,10 +302,10 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       Order.any_instance.should_receive(:post_create_logic!)
 
       subject.process_po data, "bucket", "key"
-      po = Order.where(order_number: "SHOES-" + workbook_data[:order_id]).first
+      po = Order.where(order_number: "SHOES-ORDERID").first
       expect(po).not_to be_nil
       expect(po.importer).to eq importer
-      expect(po.customer_order_number).to eq "ORDER#"
+      expect(po.customer_order_number).to eq "ORDERID"
       expect(po.order_date).to eq Date.new(2013,11,14)
       expect(po.mode).to eq "Ship Via"
       expect(po.first_expected_delivery_date).to eq Date.new(2013, 11, 15)
