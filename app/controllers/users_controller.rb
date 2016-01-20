@@ -149,10 +149,13 @@ class UsersController < ApplicationController
 
         valid = false
         User.transaction do 
+          
           # Deleting password params because they're not set as accessible in the user model
+          password = params[:user].delete(:password)
+          password_conf = params[:user].delete(:password_confirmation)
 
           # Don't do password update if password is blank
-          update_password = params[:user][:password].blank? ? true : @user.update_user_password(params[:user].delete(:password), params[:user].delete(:password_confirmation))
+          update_password = password.blank? ? true : @user.update_user_password(password, password_conf)
 
           valid =  update_password && @user.update_attributes(params[:user])
           # Rollback is swallowed by the transaction block

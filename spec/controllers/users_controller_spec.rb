@@ -214,7 +214,7 @@ describe UsersController do
       group = Factory(:group)
       # Verify the password doesn't change if we don't include it in the params
       pwd = @u.encrypted_password
-      params = {company_id: @u.company.id, id: @u.id, user: {username: 'testing', group_ids: [group.id]}}
+      params = {company_id: @u.company.id, id: @u.id, user: {username: 'testing', group_ids: [group.id], password: "   ", password_confirmation: "  "}}
 
       post :update, params
       expect(response).to be_redirect
