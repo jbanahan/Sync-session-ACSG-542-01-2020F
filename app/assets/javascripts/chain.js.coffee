@@ -135,7 +135,7 @@ root.Chain =
   makeErrorPanel: (messages, needs_container = true) ->
     Chain.makePanel messages, "error", needs_container
       
-  makeSuccessPanel: (messages, needs_container = true) -> 
+  makeSuccessPanel: (messages, needs_container = true) ->
     Chain.makePanel messages, "success", needs_container
 
   makePanel: (messages, type, needs_container) ->
@@ -403,6 +403,9 @@ root.Chain =
           @startPolling(pollingSeconds)
 
     initNotificationCenter : () ->
+      $('[data-toggle="notification-center"]').click ->
+        Chain.toggleNotificationCenter()
+
       $('[notification-center-toggle-target]').on 'click', () ->
         Chain.showNotificationCenterPane($(this).attr('notification-center-toggle-target'))
 
@@ -478,10 +481,8 @@ root.Chain =
         if $("#notification-center").is(":visible")
           $("#notification-center button.close").click()
         if $('.sidebar-offcanvas').hasClass 'active'
-          $('[data-toggle="offcanvas"]').click()   
+          $('[data-toggle="offcanvas"]').click()
 
-    $(document).on 'keyup', null, '/', () ->
-      $(".search-query:visible:first").focus()
     $(document).on 'keyup', null, "m", () ->
       $('[data-toggle="offcanvas"]:first').click()
       $('#sidebar:visible .list-group-item:first').focus()
@@ -672,8 +673,5 @@ $(document).ready () ->
         $('.task-wrap .task-email-check-wrap').html(h)
     }
     
-  $("div[notification-center-pane='tasks']").on 'chain:workflow-change', () ->
+  $(document).on 'chain:workflow-change', () ->
     Chain.showNotificationCenterPane('tasks')
-
-  $("#set-homepage-btn").click (evt) ->
-    $.post("/users/set_homepage", {homepage: $(location).attr("href")})

@@ -1,6 +1,34 @@
 require 'spec_helper'
 
 describe User do
+  describe :api_hash do
+    it "should get hash" do
+      u = Factory(:user,
+        first_name:'Joe',
+        last_name:'User',
+        username:'uname',
+        email:'j@sample.com',
+        email_new_messages:true)
+      u.stub(:view_orders?).and_return true
+      h = u.api_hash
+      
+      expect(h[:permissions][:view_orders]).to eq true
+      expect(h[:permissions][:view_shipments]).to be_false
+      # not testing every permission
+      h.delete(:permissions)
+
+      expected = {
+        username:'uname',
+        full_name:u.full_name,
+        first_name:u.first_name,
+        last_name:u.last_name,
+        email:'j@sample.com',
+        email_new_messages:true,
+        id:u.id
+      }
+      expect(h).to eq expected
+    end
+  end
   describe :groups do
     before :each do
       @gA = Factory(:group,system_code:'groupA')

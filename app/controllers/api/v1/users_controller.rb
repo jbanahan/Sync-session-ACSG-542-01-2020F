@@ -14,17 +14,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
   end
 
   def me
-    u = current_user
-    h = {
-      id: u.id,
-      full_name: u.full_name,
-      first_name: u.first_name,
-      last_name: u.last_name,
-      email: u.email,
-      email_new_messages: u.email_new_messages,
-      username: u.username
-    }
-    render json: {user: h}
+    render json: {user: current_user.api_hash}
   end
 
   def toggle_email_new_messages

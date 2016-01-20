@@ -104,6 +104,9 @@ module OpenChain; module UserSupport; module UserPermissions
   def edit_drawback?
     self.drawback_edit? && MasterSetup.get.drawback_enabled?
   end
+  def upload_drawback?
+    self.edit_drawback? &&  self.company.master?
+  end
   def view_commercial_invoices?
     self.commercial_invoice_view? && MasterSetup.get.entry_enabled?
   end
@@ -285,6 +288,10 @@ module OpenChain; module UserSupport; module UserPermissions
 
   def edit_status_rules?
     self.admin?
+  end
+
+  def view_vendor_portal?
+    self.order_view? && !User.where(portal_mode:'vendor').empty?
   end
 
 end; end; end
