@@ -71,6 +71,12 @@ describe BusinessValidationTemplate do
 
       template.create_results!
     end
+    it "does not evaulate anything if there are no criterions associated with the template" do
+      @bvt.search_criterions.destroy_all
+
+      @bvt.create_results!
+      expect(BusinessValidationResult.count).to eq 0
+    end
   end
   describe :create_result! do
     it "should create result based on rules" do

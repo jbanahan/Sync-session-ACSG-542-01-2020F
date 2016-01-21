@@ -39,6 +39,11 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
   #run create
   def create_results! run_validation = false
+    # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
+    # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
+    # never be false associated with the template
+    return if self.search_criterions.length == 0
+    
     cm = CoreModule.find_by_class_name(self.module_type)
     klass = cm.klass 
     # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be 
