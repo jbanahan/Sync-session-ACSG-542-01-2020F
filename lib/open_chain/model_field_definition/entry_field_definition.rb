@@ -209,7 +209,13 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [155, :ent_final_delivery_date, :final_delivery_date, "Final Delivery Date", {:data_type=>:datetime}],
       [156, :ent_expected_update_time, :expected_update_time, "Expected Update Time", {:data_type=>:datetime, :can_view_lambda=>lambda {|u| u.company.broker?}}],
       [157, :ent_fda_pending_release_line_count, :fda_pending_release_line_count, "FDA Pending Release Line Count", {data_type: :integer}],
-      [158, :ent_house_carrier_code, :house_carrier_code, "House Carrier Code"]
+      [158, :ent_house_carrier_code, :house_carrier_code, "House Carrier Code"],
+      [159, :ent_currencies, :currencies, "Currencies", {
+        :import_lambda=>lambda {|obj, data| "Currencies ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.commercial_invoices.map{|ci| ci.currency}.uniq.join("\n")},
+        :qualified_field_name=> '(SELECT GROUP_CONCAT(DISTINCT currency SEPARATOR "\n") FROM commercial_invoices AS ci where ci.entry_id = entries.id)',
+        :data_type=>:string
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
