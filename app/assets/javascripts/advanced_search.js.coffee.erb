@@ -1,5 +1,5 @@
 root = exports ? this
-advSearchApp = angular.module('AdvancedSearchApp',['ngRoute','ChainComponents']).config(['$routeProvider', ($routeProvider) -> 
+advSearchApp = angular.module('AdvancedSearchApp',['ngRoute','ChainComponents']).config(['$routeProvider', ($routeProvider) ->
   $routeProvider.
     when('/:searchId/:page',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'}).
     when('/:searchId',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'}).
@@ -9,7 +9,7 @@ advSearchApp.config ['$httpProvider', ($httpProvider) ->
   $httpProvider.defaults.headers.common['Accept'] = 'application/json'
 ]
 
-advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators',($scope,$routeParams,$location,$http,chainSearchOperators) ->
+advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators','$timeout',($scope,$routeParams,$location,$http,chainSearchOperators,$timeout) ->
   
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
@@ -235,6 +235,9 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     )
   $scope.toggleSetup = () ->
     $scope.showSetup = !$scope.showSetup
+    $timeout ->
+      $('#search-setup-name-box').focus()
+    null #can't return jquery object
 
   #put a schedule in edit mode
   $scope.editSchedule = (s) ->
@@ -314,7 +317,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   #send background job to build excel
   $scope.backgroundDownload = () ->
     $http.get('/advanced_search/'+$scope.searchSetup.id+"/download.json").
-      success(() -> 
+      success(() ->
         $scope.notices.push "Report is running in the background. You will receive a system message when it's done."
       ).error((data) ->
         if data.errors
