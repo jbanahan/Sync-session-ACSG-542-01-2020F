@@ -1,7 +1,6 @@
 require 'open_chain/model_field_renderer/field_helper_support'
 
 module ApplicationHelper
-  include ::HeaderHelper
   include ::WorkflowHelper
   include ::OpenChain::ModelFieldRenderer::FieldHelperSupport
 
