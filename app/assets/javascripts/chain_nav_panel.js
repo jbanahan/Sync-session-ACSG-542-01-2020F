@@ -152,6 +152,7 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
       var items;
       items = [];
       items.push(makeItem('account', 'Account', '/me'));
+      items.push(makeItem('custom-features', 'Custom Features', '/custom_features'));
       items.push(makeItem('dashboard', 'Dashboard', '/dashboard_widgets'));
       items.push(makeItem('reports', 'Reports', '/report_results'));
       items.push(makeItem('support', 'Support', '/support_tickets'));
