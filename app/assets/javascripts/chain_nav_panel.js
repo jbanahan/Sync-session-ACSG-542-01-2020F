@@ -137,8 +137,8 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
     addSurveyMenu = function(cat, u) {
       var items;
       items = [];
-      makeItemIf(u.permissions.view_survey_responses, items, 'View', '/survey_responses');
-      makeItemIf(u.permissions.view_surveys, items, 'Edit', '/surveys');
+      makeItemIf(u.permissions.view_survey_responses, items, 'survey-edit', 'View', '/survey_responses');
+      makeItemIf(u.permissions.view_surveys, items, 'survey-view', 'Edit', '/surveys');
       return makeMenuIf(cat, 'nav-cat-survey', 'Survey', items);
     };
     addVendorMenu = function(cat, u) {
