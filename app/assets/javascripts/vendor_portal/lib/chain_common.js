@@ -5,7 +5,26 @@
 
   app.config([
     '$httpProvider', function($httpProvider) {
-      return $httpProvider.defaults.headers.common['Accept'] = 'application/json';
+      $httpProvider.defaults.headers.common['Accept'] = 'application/json';
+      return $httpProvider.interceptors.push([
+        '$q', 'chainErrorSvc', function($q, chainErrorSvc) {
+          return {
+            responseError: function(rejection) {
+              var data;
+              console.log(rejection);
+              data = rejection.data;
+              if (data && data.errors && data.errors.length > 0) {
+                chainErrorSvc.addErrors(data.errors);
+              } else if (rejection.statusText) {
+                chainErrorSvc.addErrors(["Unexpected server error: " + rejection.statusText]);
+              } else {
+                chainErrorSvc.addErrors(["Unexpected server error: " + data]);
+              }
+              return $q.reject(rejection);
+            }
+          };
+        }
+      ]);
     }
   ]);
 
@@ -474,6 +493,79 @@
 }).call(this);
 
 (function() {
+  var mod;
+
+  mod = angular.module('ChainCommon');
+
+  mod.factory('chainErrorSvc', [
+    '$rootScope', function($rootScope) {
+      var errors;
+      errors = {};
+      return {
+        addErrors: function(errorMessages) {
+          var i, len, m;
+          for (i = 0, len = errorMessages.length; i < len; i++) {
+            m = errorMessages[i];
+            if (errors[m]) {
+              errors[m] = errors[m] + 1;
+            } else {
+              errors[m] = 1;
+            }
+          }
+          return $rootScope.$broadcast('chain-errors-added');
+        },
+        clearErrors: function() {
+          var m;
+          for (m in errors) {
+            delete errors[m];
+          }
+          return $rootScope.$broadcast('chain-errors-cleared');
+        },
+        errors: function() {
+          var m, r;
+          r = [];
+          for (m in errors) {
+            r.push(m);
+          }
+          return r;
+        }
+      };
+    }
+  ]);
+
+  mod.directive('chainErrors', [
+    'chainErrorSvc', function(chainErrorSvc) {
+      return {
+        restrict: 'E',
+        scope: {},
+        templateUrl: 'chain-errors.html',
+        link: function(scope, el, attrs) {
+          scope.errorSvc = chainErrorSvc;
+          scope.silence = function() {
+            return chainErrorSvc.silenceErrors = true;
+          };
+          scope.isVisible = false;
+          scope.$root.$on('chain-errors-added', function() {
+            scope.isVisible = true;
+            if (!chainErrorSvc.silenceErrors) {
+              return $('.chain-errors-modal:first').modal('show');
+            }
+          });
+          $(el).on('hide.bs.modal', function() {
+            return scope.$apply(function() {
+              scope.isVisible = false;
+              return chainErrorSvc.clearErrors();
+            });
+          });
+          return null;
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   angular.module('ChainCommon').directive('chainLoader', function() {
     return {
       restrict: 'E',
@@ -706,7 +798,7 @@
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
@@ -721,6 +813,11 @@ angular.module("chain-change-password-modal.html", []).run(["$templateCache", fu
 angular.module("chain-comments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-comments-panel.html",
     "<div class=\"panel panel-primary chain-comments-panel\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Comments</h3></div><div class=\"panel-body\"><div ng-repeat=\"c in comments track by c.id\"><div class=\"panel panel-info\"><div class=\"panel-heading\"><div><div class=\"pull-right\"><abbr am-time-ago=\"c.created_at\" title=\"{{c.created_at}}\"></abbr> {{c.user.full_name}}</div>{{c.subject}}&nbsp;</div></div><div class=\"panel-body comment-body\">{{c.body}}</div><div class=\"panel-footer text-right\" ng-if=\"c.permissions.can_delete\"><button class=\"btn btn-xs btn-danger chain-comment-delete\" ng-click=\"c.deleteCheck=true\" ng-hide=\"c.deleteCheck\" title=\"Delete\"><i class=\"fa fa-trash\"></i></button><div ng-show=\"c.deleteCheck && !c.deleting\">Are you sure you want to delete this? <button class=\"btn btn-sm btn-danger chain-comment-delete-confirm\" ng-click=\"delete(c)\">Yes</button> &nbsp; <button class=\"btn btn-sm btn-default\" ng-click=\"c.deleteCheck=false\">No</button></div><div ng-show=\"deleting\">Deleting...</div></div></div></div><div class=\"panel panel-default chain-add-comment-panel\" ng-if=\"parent.permissions.can_comment\"><div class=\"panel-heading\"><input class=\"form-control\" placeholder=\"Subject\" ng-model=\"commentToAdd.subject\"></div><div class=\"panel-body\"><textarea ng-model=\"commentToAdd.body\" class=\"form-control\"></textarea></div><div class=\"panel-footer text-right\"><button class=\"btn btn-xs btn-success chain-add-comment-button\" ng-click=\"add(commentToAdd)\" ng-disabled=\"!(commentToAdd.body.length > 0)\"><i class=\"fa fa-plus\"></i></button></div></div></div></div>");
+}]);
+
+angular.module("chain-errors.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-errors.html",
+    "<div class=\"modal fade chain-errors-modal\" id=\"chain-errors-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Errors</h4></div><div class=\"modal-body\" ng-if=\"isVisible\"><p ng-repeat=\"e in errorSvc.errors()\">{{e}}</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-link\" data-dismiss=\"modal\" ng-click=\"silence()\">Stop showing errors on this page</button> <button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
 }]);
 
 angular.module("chain-messages-modal.html", []).run(["$templateCache", function($templateCache) {
