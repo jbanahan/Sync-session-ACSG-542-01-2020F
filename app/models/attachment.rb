@@ -22,7 +22,7 @@ class Attachment < ActiveRecord::Base
     return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image") && !self.attached_content_type.ends_with?('tiff')
   end
   
-  def secure_url(expires_in=10.seconds)
+  def secure_url(expires_in=90.seconds)
     OpenChain::S3.url_for attached.options[:bucket], attached.path, expires_in
   end
 
