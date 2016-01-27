@@ -224,6 +224,15 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                     'tariff_desc' => "OTHER STUFF",
                     'tariff_desc_additional' => "REPLACEMENT DESC"
                   }
+                ],
+                'containers' => [
+                  {
+                    "seq_no": 1,
+                    "container_no": "CONT2",
+                    "cartons": 0,
+                    "qty": 21772800,
+                    "qty_uom": "SQ"
+                  }
                 ]
               }
             ]
@@ -403,7 +412,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.customer_references).to eq "ref1\n ref2\n broker_inv_ref"
 
       expect(entry.containers.size).to eq 2
-      c = entry.containers.first
+      c = entry.containers.find {|co| co.container_number == "CONT1"}
       expect(c.container_number).to eq "CONT1"
       expect(c.goods_description).to eq "DESC 1"
       expect(c.container_size).to eq "20"
@@ -415,7 +424,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(c.size_description).to eq "DRY VAN"
       expect(c.teus).to eq 2
 
-      c = entry.containers.second
+      c = entry.containers.find {|co| co.container_number == "CONT2"}
       expect(c.container_number).to eq "CONT2"
       expect(c.goods_description).to eq "DESC 3\n DESC 4"
       expect(c.container_size).to eq "40"
@@ -522,7 +531,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.cvd_duty_amount).to eq 3.45
       expect(line.cvd_case_value).to eq 4.56
       expect(line.cvd_case_percent).to eq 5.67
-      expect(line.container).to eq entry.containers.first
+      expect(line.container.container_number).to eq "CONT2"
       expect(line.fda_review_date).to be_nil
       expect(line.fda_hold_date).to be_nil
       expect(line.fda_release_date).to be_nil
@@ -908,6 +917,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       entry = subject.process_entry @e
 
       expect(entry.entry_filed_date).to eq tz.parse("201501191230")
+    end
+
+    it "falls back to line level container_no attribute if no container is found via sub-elements" do
+      @e['commercial_invoices'].first['lines'].first['containers'].first["container_no"] = "NOTACONTAINER"
+      entry = subject.process_entry @e
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.container.container_number).to eq "CONT1"
     end
   end
 

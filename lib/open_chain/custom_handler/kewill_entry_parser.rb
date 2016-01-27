@@ -670,7 +670,19 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         end
       end
 
-      if !l[:container_no].blank?
+      # Prefer the container sub-element to the actual container_no on the line level.
+      # There's actually two ways to key containers on the invoice line.  The sub-element way
+      # is accessed through a dropdown list in KEC so it should be more accurate than
+      # the one on the line, which is just keyed into a textbox.
+      Array.wrap(l[:containers]).each do |cont|
+        container_number = cont[:container_no].to_s.strip
+        next if container_number.blank?
+
+        container = entry.containers.find {|c| c.container_number == container_number}
+        line.container = container if container
+      end
+
+      if line.container.nil? && !l[:container_no].blank?
         container_number = l[:container_no].strip
         container = entry.containers.find {|c| c.container_number == container_number}
         line.container = container if container
