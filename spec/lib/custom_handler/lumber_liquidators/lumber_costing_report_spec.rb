@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       e, data, fingerprint = subject.generate_entry_data entry.id
       expect(e).not_to be_nil
       expect(data.size).to eq 1
-      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "400235", "100.000", nil, "200.000", "110.000", "120.000", "100.000", nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil]
+      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "400235", "100.000", nil, "200.000", "110.000", "120.000", "100.000", nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil, "USD"]
       expect(fingerprint).to eq Digest::SHA1.hexdigest(data.first.join("*~*"))
     end
 
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     end
     
 
-    [{"0004"=>9},{"0007"=>13},{'0176'=>14},{'0050'=>14},{'0142'=>14},{'0186'=>15},{'0191'=>16},{'0189'=>19},{'0720'=>19},{'0739'=>19},{'0212'=>22},{'0016'=>23},{'0031'=>24},{'0125'=>24},{'0026'=>24},{'0193'=>25},{'0196'=>25}].each do |charge|
+    [{"0004"=>9},{"0007"=>13},{'0176'=>14},{'0050'=>14},{'0142'=>14},{'0235'=>15},{'0191'=>16},{'0189'=>19},{'0720'=>19},{'0739'=>19},{'0212'=>22},{'0016'=>23},{'0031'=>24},{'0125'=>24},{'0026'=>24},{'0193'=>25},{'0196'=>25}].each do |charge|
       it "uses the correct output charge column for code #{charge.keys.first}" do
         entry.broker_invoices.first.broker_invoice_lines.first.update_attributes! charge_code: charge.keys.first
 
