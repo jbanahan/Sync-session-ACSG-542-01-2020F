@@ -304,8 +304,7 @@ describe ReportsController do
       @u.stub(:view_commercial_invoices?).and_return true
       sign_in_as @u
 
-      @start_date = Date.today - 10
-      @end_date = Date.today
+      @date = Date.today
     end
 
     context "show" do
@@ -325,8 +324,8 @@ describe ReportsController do
     context "run" do
 
       it "runs report for Vandegrift user" do
-        ReportResult.should_receive(:run_report!).with("Eddie Bauer CA K84 Summary", @u, OpenChain::Report::EddieBauerCaK84Summary, {settings: {start_date: @start_date, end_date: @end_date}, friendly_settings: []})
-        post :run_eddie_bauer_ca_k84_summary, {start_date: @start_date, end_date: @end_date }
+        ReportResult.should_receive(:run_report!).with("Eddie Bauer CA K84 Summary", @u, OpenChain::Report::EddieBauerCaK84Summary, {settings: {date: @date}, friendly_settings: []})
+        post :run_eddie_bauer_ca_k84_summary, {date: @date}
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
       end
@@ -335,7 +334,7 @@ describe ReportsController do
         @u = Factory(:user)
         sign_in_as @u
         ReportResult.should_not_receive(:run_report!)
-        post :run_eddie_bauer_ca_k84_summary, {start_date: @start_date, end_date: @end_date}
+        post :run_eddie_bauer_ca_k84_summary, {date: @date}
         
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq "You do not have permission to view this report"
@@ -343,10 +342,10 @@ describe ReportsController do
 
       it "doesn't run report with missing date range" do
         ReportResult.should_not_receive(:run_report!)
-        post :run_eddie_bauer_ca_k84_summary, {start_date: "", end_date: ""}
+        post :run_eddie_bauer_ca_k84_summary, {date: ""}
         
         expect(response).to be_redirect
-        expect(flash[:errors].first).to eq "Please enter a start and end date."
+        expect(flash[:errors].first).to eq "Please enter a K84 due date."
       end
 
     end
