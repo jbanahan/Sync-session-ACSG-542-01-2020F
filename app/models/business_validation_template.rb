@@ -10,7 +10,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
   validates :module_type, presence: true
   
   has_many :business_validation_rules, dependent: :destroy, inverse_of: :business_validation_template
-  has_many :business_validation_results, inverse_of: :business_validation_template
+  has_many :business_validation_results, dependent: :destroy, inverse_of: :business_validation_template
   has_many :search_criterions, dependent: :destroy
 
   def self.run_schedulable opts = {}
