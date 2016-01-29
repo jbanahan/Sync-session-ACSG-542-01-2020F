@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract]
+    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract, :prod_old_article]
   end
 
   def parse_dom dom
@@ -50,6 +50,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       p.importer = Company.where(master: true).first
       p.name = name
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], ext_time)
+      p.find_and_set_custom_value(@cdefs[:prod_old_article], et(REXML::XPath.first(root,'//IDOC/E1BPE1MARART'),'OLD_MAT_NO'))
       p.save!
       p.create_snapshot(@user)
     end
