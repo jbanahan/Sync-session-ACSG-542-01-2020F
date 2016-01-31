@@ -2,8 +2,10 @@ require 'prawn'
 # Technically prawn/table isn't required to be require, but this class will fail HARD if it's not included and I wanted some
 # concrete location in the code to reflect the dependency
 require 'prawn/table' 
+require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderPdfGenerator
+  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   include ActionView::Helpers::NumberHelper 
 
   def self.create! order, user
@@ -15,6 +17,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       att.attached = file
       att.save!
     end
+  end
+
+  def initialize
+    @old_article_uid = self.class.prep_custom_definitions([:prod_old_article])[:prod_old_article].model_field_uid
   end
 
   def render order, user, open_file_object
@@ -183,6 +189,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def v order, user, uid
+    return '' unless order
     ModelField.find_by_uid(uid).process_export(order, user).to_s
   end
 
@@ -214,7 +221,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     order.order_lines.each do |ol|
       line = []
       line << v(ol, user, :ordln_line_number)
-      line << "<font size='7'>#{v(ol, user, :ordln_puid)}</font>\n#{v(ol, user, :ordln_pname)}"
+      byebug
+      line << "<font size='7'>#{v(ol, user, :ordln_puid)}</font>\n#{v(ol.product, user, @old_article_uid)}\n#{v(ol, user, :ordln_pname)}"
       if multi_shipto
         line << address_lines(ol, user, :ordln_ship_to_full_address)
       end
