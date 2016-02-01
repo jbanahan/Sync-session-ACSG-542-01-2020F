@@ -1,4 +1,4 @@
-module OpenChain; module CustomHandler
+module OpenChain; module CustomHandler; module Ascena
   class AscenaCaInvoiceHandler
     FENIX_ID = "858053119RM0001"
 
@@ -116,4 +116,4 @@ module OpenChain; module CustomHandler
 
 
   end
-end; end
+end; end; end

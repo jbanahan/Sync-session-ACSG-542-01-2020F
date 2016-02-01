@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe OpenChain::CustomHandler::AscenaCaInvoiceHandler do
+describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
   describe 'process' do
     before :each do 
       @cf = double("Custom File")
