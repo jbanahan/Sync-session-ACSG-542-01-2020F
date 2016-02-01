@@ -221,7 +221,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     order.order_lines.each do |ol|
       line = []
       line << v(ol, user, :ordln_line_number)
-      byebug
       line << "<font size='7'>#{v(ol, user, :ordln_puid)}</font>\n#{v(ol.product, user, @old_article_uid)}\n#{v(ol, user, :ordln_pname)}"
       if multi_shipto
         line << address_lines(ol, user, :ordln_ship_to_full_address)
