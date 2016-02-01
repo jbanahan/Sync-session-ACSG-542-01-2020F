@@ -618,7 +618,7 @@ class CustomFeaturesController < ApplicationController
   end
 
   def ascena_ca_invoices_index
-    action_secure(OpenChain::CustomHandler::AscenaCaInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Ascena CA Invoices",:lock_check=>false}) {
+    action_secure(OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Ascena CA Invoices",:lock_check=>false}) {
       @files = CustomFile.where(:file_type=>ASCENA_CA_INVOICES).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
       render :layout => 'one_col'
     }

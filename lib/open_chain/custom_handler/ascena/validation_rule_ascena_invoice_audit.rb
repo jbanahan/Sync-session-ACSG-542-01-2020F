@@ -1,11 +1,11 @@
-require 'open_chain/ascena_invoice_validator_helper'
+require 'open_chain/custom_handler/ascena/ascena_invoice_validator_helper'
 
 class ValidationRuleAscenaInvoiceAudit < BusinessValidationRule
   MAX_LENGTH = 65535
 
   def run_validation entry
     style_set = rule_attributes["style_list"].to_set  
-    validator = OpenChain::AscenaInvoiceValidatorHelper.new
+    validator = OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper.new
     
     validator.run_queries entry
     execute_tests validator, style_set

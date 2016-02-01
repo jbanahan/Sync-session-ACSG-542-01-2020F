@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe OpenChain::AscenaInvoiceValidatorHelper do
+describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
   before(:each) do
     @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789\n 987654321")
