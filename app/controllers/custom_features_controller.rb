@@ -18,7 +18,7 @@ require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
-require 'open_chain/custom_handler/ascena_ca_invoice_handler'
+require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
 
 class CustomFeaturesController < ApplicationController
@@ -39,7 +39,7 @@ class CustomFeaturesController < ApplicationController
   CI_UPLOAD = 'OpenChain::CustomHandler::CiLoadHandler'
   LUMBER_EPD = 'OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser'
   FISHER_CI_UPLOAD = 'OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler'
-  ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::AscenaCaInvoiceHandler'
+  ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler'
   CREW_RETURNS ||= 'OpenChain::CustomHandler::JCrew::JCrewReturnsParser'
 
   def index
