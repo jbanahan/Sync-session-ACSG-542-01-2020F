@@ -2,7 +2,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   belongs_to :business_validation_result, touch: true
   belongs_to :business_validation_rule, inverse_of: :business_validation_rule_results
   belongs_to :overridden_by, class_name:'User'
-  attr_accessible :message, :note, :overridden_at, :state
+  attr_accessible :message, :note, :overridden_at, :overridden_by, :state
 
   after_destroy { |rr| delete_parent_bvre rr }
   
@@ -38,6 +38,11 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   def override override_user
     self.overridden_by = override_user
     self.overridden_at = Time.now
+  end
+
+  def cancel_override
+    self.overridden_by = nil
+    self.overridden_at = nil
   end
 
   private

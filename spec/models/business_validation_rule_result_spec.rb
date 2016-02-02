@@ -113,4 +113,14 @@ describe BusinessValidationRuleResult do
       expect(BusinessValidationResult.where(id: @bvre.id).count).to eq 1
     end
   end
+
+  describe :cancel_override do
+    it "should set overridden_at and overridden_by to nil" do
+      u = User.new
+      r = Factory(:business_validation_rule_result, overridden_at: Time.now, overridden_by: u)
+      r.cancel_override
+      expect(r.overridden_by).to eq nil
+      expect(r.overridden_at).to eq nil
+    end
+  end
 end
