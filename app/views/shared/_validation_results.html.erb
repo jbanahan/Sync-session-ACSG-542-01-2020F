@@ -21,10 +21,16 @@
               </div>
               <div ng-repeat="rr in bvr.rule_results">
                 <span ng-class='svc.stateToBootstrap("text",rr.state)'>
-                  <state-icon state='rr.state'></state-icon>
-                  <a href='' ng-click='editRuleResult(rr)' title='{{rr.rule.description}}'>
-                    {{rr.rule.name}} - {{rr.state}}
-                  </a>
+                  <div class="col-md-5">
+                    <state-icon state='rr.state'></state-icon>
+                    <a href='' ng-click='editRuleResult(rr)' title='{{rr.rule.description}}'>
+                      {{rr.rule.name}} - {{rr.state}}
+                    </a>
+                  </div>
+                  <div ng-show='rr.overridden_at' class="col-md-7">
+                    <span class="label label-info">Overridden</span>&nbsp;
+                    <a href="javascript:void(0)" ><i ng-show='rr.editable' title="Reset" ng-click='cancelOverride(rr)' class="fa fa-refresh"></i>
+                  </div>
                 </span>
               </div>
             </div>
@@ -52,8 +58,13 @@
             <select ng-model='ruleResultToEdit.state' ng-disabled='!ruleResultToEdit.editable' ng-options='s for s in svc.states' class='form-control'>
             </select>
             <textarea ng-model='ruleResultToEdit.note' class='form-control'></textarea>
-            <div ng-show='ruleResultToEdit.overridden_at' class='text-right text-muted'>
-              Last Edited By {{ruleResultToEdit.overridden_by.full_name}} <span am-time-ago='ruleResultToEdit.overridden_at' title="{{ruleResultToEdit.overridden_at | amDateFormat:' MMMM Do YYYY, h:mm a'}}"></span>
+            <div ng-show='ruleResultToEdit.overridden_at'>
+              <div class='text-right text-muted'>
+                Last Edited By {{ruleResultToEdit.overridden_by.full_name}} <span am-time-ago='ruleResultToEdit.overridden_at' title="{{ruleResultToEdit.overridden_at | amDateFormat:' MMMM Do YYYY, h:mm a'}}"></span>
+              </div>
+              <div class="small text-warning">
+                <br>This validation has been overridden and will not automatically update until it has been reset.
+              </div>
             </div>
           </div>
           <div class='panel-footer text-right'>

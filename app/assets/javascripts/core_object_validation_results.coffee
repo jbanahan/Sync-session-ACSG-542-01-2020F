@@ -31,8 +31,13 @@ app.factory 'coreObjectValidationResultsSvc', ['$http',($http) ->
               bvr.state = data.save_response.result_state
 
       p
+    
+    cancelOverride: (rr) ->
+      console.log "inside service"
+      $http.put('/business_validation_rule_results/' + rr.id + '/cancel_override')
   }
 ]
+
 
 app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidationResultsSvc',($scope,coreObjectValidationResultsSvc) ->
   $scope.svc = coreObjectValidationResultsSvc
@@ -41,14 +46,28 @@ app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidatio
     $scope.ruleResultToEdit = rr
   $scope.saveRuleResult = (rr) ->
     p = coreObjectValidationResultsSvc.saveRuleResult $scope.result, rr
-    p.success () ->
+    p.success (data) ->
       $scope.editRuleResult data.save_response.rule_result
 
   $scope.loadObject = (pluralObject, objectId) ->
+    coreObjectValidationResultsSvc.pluralObject = pluralObject
+    coreObjectValidationResultsSvc.objectId = objectId
     p = coreObjectValidationResultsSvc.loadRuleResult pluralObject, objectId
     p.success (data) ->
       $scope.result = data['business_validation_result']
+  
+  $scope.cancelOverride = (rr) ->
+    pluObj = coreObjectValidationResultsSvc.pluralObject
+    objId = coreObjectValidationResultsSvc.objectId
+    if pluObj and objId
+      $scope.result = null
+      $scope.ruleResultToEdit = null
+      coreObjectValidationResultsSvc.cancelOverride(rr).then ->
+        $scope.loadObject pluObj, objId
+    else
+      console.log('ERROR: pluralObject or objectId not found in coreObjectValidationResultsSvc!')
 ]
+
 
 app.directive 'coreObjectValidationPanel', ['coreObjectValidationResultsSvc', (coreObjectValidationResultsSvc)->
   {

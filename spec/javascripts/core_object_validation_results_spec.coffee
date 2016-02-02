@@ -47,14 +47,25 @@ describe 'CoreObjectValidationResultsApp', () ->
           resolvedPromise = data
         http.flush()
         expect(resolvedPromise).toEqual returnVal
+
+    describe 'cancelOverride', () ->
+      it "calls cancel-override PUT route", () ->
+        rr = {id: 1}
+        http.expectPUT('/business_validation_rule_results/1/cancel_override').respond {}
+        svc.cancelOverride rr
+        http.flush()
+
         
   describe 'controller', () ->
-    ctrl = svc = $scope = null
+    ctrl = svc = $scope = q = null
 
-    beforeEach inject(($rootScope,$controller,coreObjectValidationResultsSvc) ->
+    beforeEach inject(($rootScope,$controller,$q,coreObjectValidationResultsSvc) ->
       $scope = $rootScope.$new()
       svc = coreObjectValidationResultsSvc
       ctrl = $controller('coreObjectValidationResultsCtrl',{$scope:$scope,srService:svc})
+      q = $q
+      svc.pluralObject = {x: 'x'}
+      svc.objectId = {y: 'y'}
     )
 
     describe 'editRuleResult', () ->
@@ -62,4 +73,44 @@ describe 'CoreObjectValidationResultsApp', () ->
         x = {a:'b'}
         $scope.editRuleResult(x)
         expect($scope.ruleResultToEdit).toEqual x
-    
+
+    describe 'cancelOverride', () ->
+      it "deletes result and ruleResultToEdit", () ->
+        $scope.result = "foo"
+        $scope.ruleResultToEdit = "bar"
+        $scope.cancelOverride {}
+        expect($scope.result).toBe null
+        expect($scope.ruleResultToEdit).toBe null
+      
+      it "calls the service's cancelOverride ", () ->
+        deferredOverride = q.defer()
+        deferredOverride.resolve {a:'a'}
+        spyOn(svc, 'cancelOverride').andReturn deferredOverride.promise
+
+        deferredLoad = q.defer()
+        loadResolution = {b:'b'}
+        deferredLoad.resolve loadResolution
+        spyOn($scope, 'loadObject').andReturn deferredLoad.promise
+        
+        svc.pluralObject = {c: 'c'}
+        svc.objectId = {d: 'd'}
+        rr = {id:100}
+        returnVal = null
+        $scope.cancelOverride(rr).then (rv) ->
+          returnVal = rv
+        
+        $scope.$apply()
+
+        expect(returnVal).toEqual loadResolution
+        expect(svc.cancelOverride).toHaveBeenCalledWith(rr)
+        expect($scope.loadObject).toHaveBeenCalledWith(svc.pluralObject, svc.objectId)
+
+      it "logs an error if pluralObject or objectId not found in coreObjectValidationResultsSvc", () ->
+        svc.pluralObject = null
+        rr = {id:100}
+        spyOn(svc, 'cancelOverride').andCallThrough()
+        spyOn(console, 'log')
+        $scope.cancelOverride(rr)
+
+        expect(svc.cancelOverride).not.toHaveBeenCalled()
+        expect(console.log).toHaveBeenCalledWith("ERROR: pluralObject or objectId not found in coreObjectValidationResultsSvc!")
