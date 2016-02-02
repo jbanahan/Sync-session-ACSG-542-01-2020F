@@ -98,10 +98,8 @@ describe BusinessValidationRuleResult do
 
   describe "after_destroy" do
     before :each do
-      @bvre = Factory(:business_validation_result)
       @bvrr_1 = Factory(:business_validation_rule_result)
-      @bvrr_1.business_validation_result = @bvre
-      @bvrr_1.save!
+      @bvre = @bvrr_1.business_validation_result
     end
 
     it "should destroy parent object if destroyed and without siblings" do
@@ -110,9 +108,7 @@ describe BusinessValidationRuleResult do
     end
 
     it "should do nothing if destroyed with at least one sibling" do
-      @bvrr_2 = Factory(:business_validation_rule_result)
-      @bvrr_2.business_validation_result = @bvre
-      @bvrr_2.save!
+      @bvrr_2 = Factory(:business_validation_rule_result, business_validation_result: @bvre)
       @bvrr_2.destroy
       expect(BusinessValidationResult.where(id: @bvre.id).count).to eq 1
     end

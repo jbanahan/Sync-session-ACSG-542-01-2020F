@@ -45,7 +45,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   def delete_parent_bvre rr
     bvre_id = rr.business_validation_result_id
     total = BusinessValidationRuleResult.where(business_validation_result_id: bvre_id).count
-    BusinessValidationResult.find_by_id(bvre_id).try(:destroy) if total.zero?
+    rr.business_validation_result.destroy if total.zero?
   end
 
 end
