@@ -5,7 +5,8 @@ module OpenChain; module CustomHandler; module Ascena
     MAX_LENGTH = 65535
 
     def run_validation entry
-      style_set = rule_attributes["style_list"].to_set  
+      style_list = rule_attributes["style_list"]
+      style_set = style_list ? rule_attributes["style_list"].to_set : nil
       validator = OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper.new
       
       validator.run_queries entry
@@ -23,7 +24,7 @@ module OpenChain; module CustomHandler; module Ascena
         errors << validator.total_value_diff
         errors << validator.total_qty_diff
         errors << validator.hts_set_diff
-        errors << validator.style_set_match(style_set)
+        errors << validator.style_set_match(style_set) if style_set
       end
       errors = errors.reject{ |err| err.empty? }.join("\n")
       errors = screen_for_long_message errors

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit do
   before :each do
     @ent = Factory(:entry, commercial_invoice_numbers: "123456789\n 987654321")
-    @rule = described_class.new(rule_attributes_json: {hts_list: ['123456789', '987654321'], style_list: ['1111', '2222']}.to_json)
+    @rule = described_class.new(rule_attributes_json: {style_list: ['1111', '2222']}.to_json)
     @helper = OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper 
     @helper.any_instance.stub(:gather_unrolled)
     @helper.any_instance.stub(:gather_entry)
@@ -54,6 +54,20 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit do
     @helper.any_instance.stub(:hts_set_diff).and_return ""
     @helper.any_instance.stub(:style_set_match).with(['1111', '2222'].to_set).and_return "ERROR: style set"
     expect(@rule.run_validation @ent).to eq "ERROR: missing unrolled invoices"
+  end
+
+  it "skips style-list validation if list isn't included" do
+    rule = described_class.new
+    @helper.any_instance.should_receive(:invoice_list_diff).and_return ""
+    @helper.any_instance.should_receive(:total_value_per_hts_coo_diff).and_return ""
+    @helper.any_instance.should_receive(:total_qty_per_hts_coo_diff).and_return ""
+    @helper.any_instance.should_receive(:total_value_diff).and_return ""
+    @helper.any_instance.should_receive(:total_qty_diff).and_return ""
+    @helper.any_instance.should_receive(:hts_set_diff).and_return ""
+    
+    #workaround for Rspec 2.12 bug affecting #should_not_receive (https://github.com/rspec/rspec-mocks/issues/228)
+    @helper.any_instance.stub(:style_set_match).and_return "This method should not have been called!"    
+    expect(rule.run_validation @ent).to be_nil
   end
 
   it "abridges the error list if it's too long" do
