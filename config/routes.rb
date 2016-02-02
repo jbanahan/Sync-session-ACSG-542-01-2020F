@@ -217,7 +217,9 @@ OpenChain::Application.routes.draw do
   match '/business_validation_templates/:id/edit_angular' => 'business_validation_templates#edit_angular', via: :get
   match '/business_validation_rules/:id/edit_angular' => 'business_validation_rules#edit_angular', via: :get
 
-  resources :business_validation_rule_results, only: [:update]
+  resources :business_validation_rule_results, only: [:update] do
+    put 'cancel_override', :on=>:member
+  end
 
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]

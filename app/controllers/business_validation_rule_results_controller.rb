@@ -24,6 +24,17 @@ class BusinessValidationRuleResultsController < ApplicationController
       }
     end
   end
+  def cancel_override
+    rr = BusinessValidationRuleResult.find params[:id]
+    unless rr.can_edit? current_user
+      render_json_error "You do not have permission to perform this activity."
+      return
+    end
+    rr.update_attributes(overridden_at: nil, overridden_by: nil)
+    obj = rr.business_validation_result.validatable
+    BusinessValidationTemplate.create_results_for_object! obj
+    render json: {ok:'ok'}
+  end
 
   private
   def sanitized_attributes a

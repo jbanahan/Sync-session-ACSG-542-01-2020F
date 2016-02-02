@@ -1,18 +1,19 @@
 require 'spec_helper'
 
 describe BusinessValidationRuleResultsController do
-  describe :update do
-    before :each do 
-      @u = Factory(:admin_user)
-      @ent = Factory(:entry)
-      @rr = Factory(:business_validation_rule_result,state:'Fail')
-      bvr = @rr.business_validation_result
-      bvr.state='Fail'
-      bvr.validatable = @ent
-      bvr.save!
+  before :each do 
+    @u = Factory(:admin_user)
+    @ent = Factory(:entry)
+    @rr = Factory(:business_validation_rule_result,state:'Fail')
+    bvr = @rr.business_validation_result
+    bvr.state='Fail'
+    bvr.validatable = @ent
+    bvr.save!
 
-      sign_in_as @u
-    end
+    sign_in_as @u
+  end
+
+  describe :update do
     it "should return json if requested" do
       @rr.business_validation_rule.update_attributes(name:'myname')
       put :update, id: @rr.id, business_validation_rule_result:{note:'abc', state:'Pass'}, format: :json
@@ -56,6 +57,28 @@ describe BusinessValidationRuleResultsController do
       expect(@rr.note).to eq 'abc'
       expect(@rr.state).to eq 'Pass'
       expect(@rr.message).to eq 'xyz'
+    end
+  end
+  describe :cancel_override do       
+    it "runs only for authorized users" do
+      @rr.update_attributes(overridden_at: Time.now, overridden_by: @u)
+      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(@u).and_return(false)
+      BusinessValidationTemplate.should_not_receive(:create_results_for_object!)
+      put :cancel_override, id: @rr.id
+      
+      expect(@rr.overridden_at).to_not be nil
+      expect(@rr.overridden_by).to_not be nil
+      expect(JSON.parse(response.body)["error"]).to eq "You do not have permission to perform this activity."
+    end
+    it "clears overidden attributes, reruns validations for the result's validatable" do
+      @rr.update_attributes(overridden_at: Time.now, overridden_by: @u)
+      BusinessValidationTemplate.should_receive(:create_results_for_object!, @ent)
+      put :cancel_override, id: @rr.id
+      @rr.reload
+      expect(@rr.overridden_at).to be nil
+      expect(@rr.overridden_by).to be nil
+      expect(flash[:errors]).to be nil
+      expect(JSON.parse(response.body)["ok"]).to eq "ok"
     end
   end
 end
