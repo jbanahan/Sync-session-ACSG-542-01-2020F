@@ -159,7 +159,7 @@
     </div>
   </div>
   <%-end%>
-  <%-if enabled_features.include?('Ascena CA Invoices') && OpenChain::CustomHandler::AscenaCaInvoiceHandler.new(nil).can_view?(current_user)-%>
+  <%-if enabled_features.include?('Ascena CA Invoices') && OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler.new(nil).can_view?(current_user)-%>
   <div class='row'>
     <div class='col-md-4 col-md-offset-4'>
       <%=link_to "Ascena CA Invoice Upload", '/custom_features/ascena_ca_invoices', :class=>'btn btn-lg btn-default btn-block'%>

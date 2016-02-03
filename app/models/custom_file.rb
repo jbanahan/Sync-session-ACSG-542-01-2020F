@@ -13,7 +13,7 @@ require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/ci_load_handler'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
-require 'open_chain/custom_handler/ascena_ca_invoice_handler'
+require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
