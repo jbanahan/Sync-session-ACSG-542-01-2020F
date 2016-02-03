@@ -4,18 +4,14 @@
 <%end%>
 
 <h2>Eddie Bauer CA K84 Summary</h2>
-<p>Select the date range and click the Run Report button to continue.</p>
+<p>Select the K84 due date and click the Run Report button to continue.</p>
 
 <form class="form-horizontal" action="<%= reports_run_eddie_bauer_ca_k84_summary_path %>" method="POST" role="form" id="frm_run">
   <input name="authenticity_token" value="<%= form_authenticity_token %>" type="hidden">
   <div class="col-md-6">
     <div class="form-group">
-      <div class="col-md-3"><label class="control-label" for="start_date">Start date:</label></div>
-      <div class="col-md-3"><%=text_field_tag :start_date,"", :class=>'form-control isdate'%></div>
-    </div>
-    <div class="form-group">
-      <div class="col-md-3"><label class="control-label" for="end_date">End date:</label></div>
-      <div class="col-md-3"><%=text_field_tag :end_date, "", :class=>'form-control isdate' %></div>
+      <div class="col-md-3"><label class="control-label" for="date">Due date:</label></div>
+      <div class="col-md-3"><%=text_field_tag :date,"", :class=>'form-control isdate'%></div>
     </div>
   </div> 
 </form>

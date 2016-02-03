@@ -4,27 +4,36 @@ module OpenChain
     class EddieBauerCaK84Summary
       include OpenChain::Report::ReportHelper
 
-      FENIX_NUMBER = "855157855RM0001"
+      CUST_NO_1 = "EDDIEBR"
+      CUST_NO_2 = "EBSUPPLY"
 
       def self.permission? user
         MasterSetup.get.system_code=='www-vfitrack-net' && user.company.master? && user.view_commercial_invoices? 
       end
 
       def run(user, settings)
-        wb = XlsMaker.create_workbook 'CA K84 Summary'
-        XlsMaker.create_sheet wb, 'CA K84 Detail'
-        table_from_query wb.worksheet(0), po_query(user, settings['start_date'], settings['end_date']), 
-          {2 => currency_format_lambda, 3 => currency_format_lambda, 4 => currency_format_lambda, 7 => currency_format_lambda, 8 => currency_format_lambda, 9 => currency_format_lambda} 
-        table_from_query wb.worksheet(1), detail_query(user, settings['start_date'], settings['end_date']), 
-          {5 => currency_format_lambda, 6 => currency_format_lambda, 7 => currency_format_lambda, 8 => currency_format_lambda, 9 => currency_format_lambda, 11 => weblink_translation_lambda(CoreModule::ENTRY)}
+        wb = XlsMaker.create_workbook "CA K84 Summary - Eddie Bauer"
+        XlsMaker.create_sheet wb, "CA K84 Detail - Eddie Bauer"
+        XlsMaker.create_sheet wb, "CA K84 Summary - EB Supply"
+        XlsMaker.create_sheet wb, "CA K84 Detail - EB Supply"
+        
+        fill_sheets(user, wb, settings['date'], 0, 1, CUST_NO_1)
+        fill_sheets(user, wb, settings['date'], 2, 3, CUST_NO_2)
         workbook_to_tempfile wb, 'EddieBauerCaK84-'
+      end
+
+      def fill_sheets(user, workbook, date, summary_sheet_no, detail_sheet_no, customer_number)
+        table_from_query workbook.worksheet(summary_sheet_no), po_query(user, customer_number, date), 
+          {2 => currency_format_lambda, 3 => currency_format_lambda, 4 => currency_format_lambda, 7 => currency_format_lambda, 8 => currency_format_lambda, 9 => currency_format_lambda} 
+        table_from_query workbook.worksheet(detail_sheet_no), detail_query(user, customer_number, date), 
+          {5 => currency_format_lambda, 6 => currency_format_lambda, 7 => currency_format_lambda, 8 => currency_format_lambda, 9 => currency_format_lambda, 11 => weblink_translation_lambda(CoreModule::ENTRY)}
       end
 
       def currency_format_lambda
         lambda { |result_set_row, raw_column_value| sprintf('%.2f', raw_column_value) if raw_column_value }
       end
 
-      def po_query(user, start_date, end_date)
+      def po_query(user, customer_number, date)
         <<-SQL
           SELECT (CASE SUBSTR(cil.po_number, 1, 1) WHEN "E" THEN "NON-MERCH" ELSE "MERCH" END) AS Business,
                  cil.po_number AS "Invoice Line - PO number",
@@ -37,18 +46,18 @@ module OpenChain
                  SUM(cit.entered_value) * 0.18 AS "Avg Duty 18%",
                  SUM(cit.duty_amount) - (SUM(cit.entered_value) * 0.18) AS "+/- Duty"
           FROM entries AS e
-            INNER JOIN companies AS c ON e.importer_id = c.id
             INNER JOIN commercial_invoices AS ci ON e.id = ci.entry_id
             INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id
             INNER JOIN commercial_invoice_tariffs AS cit ON cil.id = cit.commercial_invoice_line_id
-          WHERE e.k84_due_date >= "#{start_date}" AND e.k84_due_date <= "#{end_date}"
-            AND c.fenix_customer_number = "#{FENIX_NUMBER}"
+          WHERE e.customer_number = "#{customer_number}"
+            AND e.k84_due_date = "#{date}"
+            AND e.entry_type != "F"
           GROUP BY cil.po_number, e.release_date, e.master_bills_of_lading
           ORDER BY e.release_date, cil.po_number
         SQL
       end
 
-      def detail_query(user, start_date, end_date)
+      def detail_query(user, customer_number, date)
         <<-SQL
           SELECT e.broker_reference AS "Broker Reference",
                  e.release_date AS "Release Date",
@@ -63,12 +72,12 @@ module OpenChain
                  cil.line_number AS "Invoice Line - Line Number",
                  e.id AS "Web Links"
           FROM entries AS e
-            INNER JOIN companies AS c ON e.importer_id = c.id
             INNER JOIN commercial_invoices AS ci ON e.id = ci.entry_id
             INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id
             INNER JOIN commercial_invoice_tariffs AS cit ON cil.id = cit.commercial_invoice_line_id
-          WHERE e.k84_due_date >= "#{start_date}" AND e.k84_due_date <= "#{end_date}"
-            AND c.fenix_customer_number = "#{FENIX_NUMBER}"
+          WHERE e.customer_number = "#{customer_number}"
+            AND e.k84_due_date = "#{date}"
+            AND e.entry_type != "F"
           GROUP BY cil.po_number, cil.line_number, e.broker_reference, e.release_date, e.cadex_sent_date
           ORDER BY e.release_date, e.broker_reference, cil.line_number
         SQL
