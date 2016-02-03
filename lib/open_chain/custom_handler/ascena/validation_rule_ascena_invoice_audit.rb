@@ -2,7 +2,7 @@ require 'open_chain/custom_handler/ascena/ascena_invoice_validator_helper'
 
 module OpenChain; module CustomHandler; module Ascena
   class ValidationRuleAscenaInvoiceAudit < BusinessValidationRule
-    MAX_LENGTH = 65535
+    MAX_LENGTH ||= 65535
 
     def run_validation entry
       style_list = rule_attributes["style_list"]
