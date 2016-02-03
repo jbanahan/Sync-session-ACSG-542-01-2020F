@@ -23,8 +23,12 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleOrderLineProductFieldFormat: {label:"Order Line's Product Field Format"},
                 ValidationRuleOrderVendorFieldFormat: {label:"Orders Vendor's Field Format"},
                 ValidationRuleEntryDutyFree: {label: "Entry Invoice Tariff SPI Indicates Duty Free"},
-                ValidationRuleAscenaInvoiceAudit: {label: "Ascena Entry Invoice Audit"},
                 ValidationRuleEntryInvoiceValueMatchesDaPercent: {label: "Entry Total Matches Invoice Deduction Additions"},
+                'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
+                  {
+                    label: "Ascena Entry Invoice Audit",
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}
+                  },
                 'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant'.to_sym=>
                   {
                     label: 'Lumber PO Vendor Variant Assignment',
@@ -66,3 +70,4 @@ end
 
 # need require statements at end because they depend on the class existing
 require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_order_vendor_variant'
+require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_invoice_audit'
