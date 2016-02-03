@@ -4,6 +4,8 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   belongs_to :overridden_by, class_name:'User'
   attr_accessible :message, :note, :overridden_at, :state
 
+  after_destroy { |rr| delete_parent_bvre rr }
+  
   def can_view? user
     user.view_business_validation_rule_results?
   end
@@ -37,4 +39,13 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     self.overridden_by = override_user
     self.overridden_at = Time.now
   end
+
+  private
+
+  def delete_parent_bvre rr
+    bvre_id = rr.business_validation_result_id
+    total = BusinessValidationRuleResult.where(business_validation_result_id: bvre_id).count
+    rr.business_validation_result.destroy if total.zero?
+  end
+
 end
