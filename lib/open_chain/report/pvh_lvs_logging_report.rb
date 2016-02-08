@@ -28,8 +28,8 @@ module OpenChain
         start_date_time, end_date_time = query_time
         wb = XlsMaker.create_workbook 'LVS Logging'
         XlsMaker.create_sheet wb, 'HVS Logging'
-        table_from_query wb.worksheet(0), query(:lvs, start_date_time, end_date_time), {'Entry Date' => date_conversion_lambda} 
-        table_from_query wb.worksheet(1), query(:hvs, start_date_time, end_date_time), {'Entry Date' => date_conversion_lambda} 
+        table_from_query wb.worksheet(0), query(:lvs, start_date_time, end_date_time), {'CADEX Sent Date' => date_conversion_lambda} 
+        table_from_query wb.worksheet(1), query(:hvs, start_date_time, end_date_time), {'Entry Filed Date' => date_conversion_lambda} 
         wb
       end
 
@@ -62,7 +62,7 @@ module OpenChain
             e.total_units AS Units,
             e.entry_number AS 'Entry #',
             e.direct_shipment_date AS 'Shipped Date',
-            e.entry_filed_date AS 'Entry Date',
+            #{type == 'LV' ? "e.cadex_sent_date AS 'CADEX Sent Date'" : "e.entry_filed_date AS 'Entry Filed Date'"},
             e.entered_value AS 'Entered Value',
             e.total_duty AS 'B3 Duties',
             bi.invoice_number AS 'Broker Invoice',
@@ -77,7 +77,7 @@ module OpenChain
             (SELECT GROUP_CONCAT(cit.tariff_description SEPARATOR '; ')
              FROM commercial_invoices AS ci INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id
              INNER JOIN commercial_invoice_tariffs as cit ON cil.id = cit.commercial_invoice_line_id
-             WHERE ci.entry_id = e.id) AS "Description",
+             WHERE ci.entry_id = e.id) AS 'Description',
             '' AS Contact,
             '' AS 'Bill Code',
             '' AS Paid
