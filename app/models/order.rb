@@ -16,8 +16,10 @@ class Order < ActiveRecord::Base
 	validates  :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
 	
-	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number', :autosave => true
+	has_many	 :order_lines, dependent: :destroy, order: 'line_number', autosave: true, inverse_of: :order
 	has_many   :piece_sets, :through => :order_lines
+
+  accepts_nested_attributes_for :order_lines, :allow_destroy => true
 
 
   ########

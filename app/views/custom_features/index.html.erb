@@ -173,4 +173,11 @@
     </div>
   </div>
   <%-end%>
+  <%- if OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser.can_view?(current_user) -%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "PVH Workflow Upload", '/custom_features/pvh_workflow', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
 </div>
