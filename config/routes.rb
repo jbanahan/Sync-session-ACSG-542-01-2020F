@@ -424,6 +424,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/crew_returns/upload" => "custom_features#crew_returns_upload"
   get "/custom_features/crew_returns/:id/download" => "custom_features#crew_returns_download"
 
+  get "/custom_features/pvh_workflow" => "custom_features#pvh_workflow_index"
+  post "/custom_features/pvh_workflow/upload" => "custom_features#pvh_workflow_upload"
+  get "/custom_features/pvh_workflow/:id/download" => "custom_features#pvh_workflow_download"
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get

@@ -1,32 +1,36 @@
 module LinesSupport
-#need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
-  def self.included(base)
-    base.instance_eval("has_many :piece_sets")
-    base.instance_eval("has_many :order_lines, :through => :piece_sets")
-    base.instance_eval("has_many :sales_order_lines, :through => :piece_sets")
-    base.instance_eval("has_many :shipment_lines, :through => :piece_sets")
-    base.instance_eval("has_many :delivery_lines, :through => :piece_sets")
-    base.instance_eval("has_many :drawback_import_lines, :through => :piece_sets")
-    base.instance_eval("has_many :commercial_invoice_lines, :through => :piece_sets")
-    base.instance_eval("has_many :security_filing_lines, :through=>:piece_sets")
-    unless ["CommercialInvoiceLine","SecurityFilingLine"].include? base.instance_eval("self.name")
-      base.instance_eval("belongs_to :product")
-      base.instance_eval("validates :product, :presence => true")
-      base.instance_eval("before_validation :default_quantity") 
-      unless base.instance_eval("self.name") == "DrawbackImportLine"
-        base.instance_eval("before_validation :default_line_number")
+  extend ActiveSupport::Concern
+
+  #need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
+  included do
+    has_many :piece_sets
+    has_many :order_lines, :through => :piece_sets
+    has_many :sales_order_lines, :through => :piece_sets
+    has_many :shipment_lines, :through => :piece_sets
+    has_many :delivery_lines, :through => :piece_sets
+    has_many :drawback_import_lines, :through => :piece_sets
+    has_many :commercial_invoice_lines, :through => :piece_sets
+    has_many :security_filing_lines, :through=>:piece_sets
+
+    unless ["CommercialInvoiceLine","SecurityFilingLine"].include?(self.name)
+      belongs_to :product
+      before_validation :default_quantity
+      validates :product, :presence => true
+      
+      unless self.name == "DrawbackImportLine"
+        before_validation :default_line_number
       end
     end
-#the writers below are used to indicate that a related piece set should be created on save
-    base.instance_eval("attr_accessor :linked_order_line_id")
-    base.instance_eval("attr_accessor :linked_shipment_line_id")
-    base.instance_eval("attr_accessor :linked_sales_order_line_id")
-    base.instance_eval("attr_accessor :linked_delivery_line_id")
-    base.instance_eval("attr_accessor :linked_drawback_line_id")
-    base.instance_eval("attr_accessor :linked_commercial_invoice_line_id")
-    base.instance_eval("attr_accessor :linked_security_filing_line_id")
-    base.instance_eval("after_save :process_links")
-    base.instance_eval("after_destroy :merge_piece_sets")
+
+    attr_accessor :linked_order_line_id
+    attr_accessor :linked_shipment_line_id
+    attr_accessor :linked_sales_order_line_id
+    attr_accessor :linked_delivery_line_id
+    attr_accessor :linked_drawback_line_id
+    attr_accessor :linked_commercial_invoice_line_id
+    attr_accessor :linked_security_filing_line_id
+    after_save :process_links
+    after_destroy :merge_piece_sets
   end
 
   def default_line_number

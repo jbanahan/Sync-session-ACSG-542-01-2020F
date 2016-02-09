@@ -20,6 +20,7 @@ require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generat
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/ascena_ca_invoice_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
+require 'open_chain/custom_handler/pvh/pvh_shipment_workflow_parser'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -41,6 +42,7 @@ class CustomFeaturesController < ApplicationController
   FISHER_CI_UPLOAD = 'OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler'
   ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::AscenaCaInvoiceHandler'
   CREW_RETURNS ||= 'OpenChain::CustomHandler::JCrew::JCrewReturnsParser'
+  PVH_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser'
 
   def index
     render :layout=>'one_col'
@@ -673,6 +675,37 @@ class CustomFeaturesController < ApplicationController
   def crew_returns_download
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"J.Crew Returns",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def pvh_workflow_index
+    action_secure(OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser.can_view?(current_user),Shipment,{:verb=>"view",:module_name=>"PVH Workflow",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>PVH_WORKFLOW).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+    }
+  end
+
+  def pvh_workflow_upload
+    f = CustomFile.new(:file_type=>PVH_WORKFLOW,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"PVH Workflow",:lock_check=>false}) {
+     
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload."
+      end
+
+      if !has_errors? && f.save
+        CustomFile.delay.process f.id, current_user.id
+        add_flash :notices, "Your file is being processed.  You'll receive a VFI Track message when it completes."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/pvh_workflow'
+    }
+  end
+  
+  def pvh_workflow_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"PVH Workflow",:lock_check=>false}) {
       redirect_to f.secure_url
     }
   end

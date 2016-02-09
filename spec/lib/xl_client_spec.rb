@@ -178,7 +178,7 @@ describe OpenChain::XLClient do
     @client.get_row_as_column_hash(0,1).should == expected_val
   end
   it 'should get a row' do
-    t = Time.now
+    t = Time.at(Time.now.to_i)
     cmd = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>0,"row"=>10}}
     return_array = [{"position"=>{"sheet"=>0,"row"=>10,"column"=>0},"cell"=>{"value"=>"abc","datatype"=>"string"}},
                     {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t.to_i,"datatype"=>"datetime"}}]
@@ -191,18 +191,18 @@ describe OpenChain::XLClient do
     first_cell['cell']['datatype'].should == "string"
     second_cell = r[1]
     second_cell['position']['column'].should == 3
-    second_cell['cell']['value'].to_i.should == t.to_i
+    second_cell['cell']['value'].should == t
     second_cell['cell']['datatype'].should == "datetime"
   end
 
   it "should return a row's cell values as an array" do
-    t = Time.now
+    t = Time.at(Time.now.to_i)
     cmd = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>0,"row"=>10}}
     return_array = [{"position"=>{"sheet"=>0,"row"=>10,"column"=>0},"cell"=>{"value"=>"abc","datatype"=>"string"}},
                     {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t.to_i,"datatype"=>"datetime"}}]
     @client.should_receive(:send).with(cmd).and_return(return_array)
     r = @client.get_row_values(0, 10)
-    r.should == ["abc", nil, nil, Time.at(t.to_i)]
+    r.should == ["abc", nil, nil, t]
   end
   it "should return empty array if get_row_as_column_hash returns empty hash" do
     @client.should_receive(:get_row_as_column_hash).with(0,10).and_return({})

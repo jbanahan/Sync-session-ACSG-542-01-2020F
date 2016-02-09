@@ -4,7 +4,7 @@ class OrderLine < ActiveRecord::Base
   include ShallowMerger
   include UpdateModelFieldsSupport
   
-  belongs_to :order
+  belongs_to :order, inverse_of: :order_lines
   belongs_to :ship_to, :class_name => 'Address'
 
   has_many  :histories, :dependent => :destroy
@@ -50,6 +50,9 @@ class OrderLine < ActiveRecord::Base
     }
   end
 
+  def shipping?
+    self.piece_sets.where("shipment_line_id is not null").count > 0
+  end
 	
 	def find_same
     found = OrderLine.where({:order_id => self.order_id, :line_number => self.line_number})
