@@ -269,6 +269,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.voyage = e[:voyage_flight_no]
       entry.vessel = e[:vessel_airline_name]
       entry.location_of_goods = e[:location]
+      entry.location_of_goods_description = e[:location_of_goods]
 
       entry.ult_consignee_code = e[:uc_no]
       entry.ult_consignee_name = e[:uc_name]

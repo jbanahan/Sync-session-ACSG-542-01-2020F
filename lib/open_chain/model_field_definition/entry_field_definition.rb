@@ -215,7 +215,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :export_lambda=>lambda {|obj| obj.commercial_invoices.map{|ci| ci.currency}.uniq.join("\n")},
         :qualified_field_name=> '(SELECT GROUP_CONCAT(DISTINCT currency SEPARATOR "\n") FROM commercial_invoices AS ci where ci.entry_id = entries.id)',
         :data_type=>:string
-      }]
+      }],
+      [160, :ent_location_of_goods_desc, :location_of_goods_description, "Location of Goods Description", {data_type: :string}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

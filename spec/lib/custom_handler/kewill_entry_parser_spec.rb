@@ -30,6 +30,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'destination_state' => "PA",
         'entry_type' => 1,
         'voyage_flight_no' => "Voyage",
+        'vessel_airline_name' => "Vessel",
+        'location' => "ABC123",
+        'location_of_goods' => "LOCATION",
         'uc_no' => "UCNO",
         'uc_name' => "UC Name",
         'uc_address_1' => "123 Fake St.",
@@ -326,6 +329,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.destination_state).to eq "PA"
       expect(entry.entry_type).to eq "01"
       expect(entry.voyage).to eq "Voyage"
+      expect(entry.vessel).to eq "Vessel"
+      expect(entry.location_of_goods).to eq "ABC123"
+      expect(entry.location_of_goods_description).to eq "LOCATION"
       expect(entry.ult_consignee_code).to eq "UCNO"
       expect(entry.ult_consignee_name).to eq "UC Name"
       expect(entry.consignee_address_1).to eq "123 Fake St."

@@ -186,7 +186,6 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         # Piece set should never be blank, the shipment_line.order_lines association is done through piece sets above and this is how
         # we locate which line to use (or build a new one, which will have a piece set too)
         piece_set = shipment_line.piece_sets.find {|ps| ps.order_line_id == order_line.id }
-        byebug if piece_set.nil?
         piece_set.quantity = BigDecimal(v(line, 18))
         shipment_line.quantity = BigDecimal(v(line, 18))
         shipment_line.carton_qty = v(line, 25).to_i
