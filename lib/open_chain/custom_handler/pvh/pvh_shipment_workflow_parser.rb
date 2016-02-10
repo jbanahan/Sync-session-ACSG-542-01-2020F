@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
 
   def initialize file
     @custom_file = file
-    @cdefs = self.class.prep_custom_definitions [:ord_division, :ord_line_color, :ord_line_destination_code, :prod_part_number, :prod_short_description, :shp_priority]
+    @cdefs = self.class.prep_custom_definitions [:ord_division, :ord_line_color, :ord_line_destination_code, :prod_part_number, :prod_short_description, :shp_priority, :shpln_invoice_number]
   end
 
   def self.can_view? user
@@ -146,7 +146,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
       shipment.master_bill_of_lading = v(fl, 5) + v(fl, 6)
       shipment.vessel = v(fl, 3)
       shipment.voyage = v(fl, 32)
-      shipment.importer_reference = v(fl, 11)
+      shipment.importer_reference = v(fl, 1)
       shipment.est_arrival_port_date = parse_date(fl, 0)
       shipment.est_departure_date = parse_date(fl, 35)
       shipment.destination_port = parse_port(fl, 31)
@@ -186,10 +186,12 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         # Piece set should never be blank, the shipment_line.order_lines association is done through piece sets above and this is how
         # we locate which line to use (or build a new one, which will have a piece set too)
         piece_set = shipment_line.piece_sets.find {|ps| ps.order_line_id == order_line.id }
+        byebug if piece_set.nil?
         piece_set.quantity = BigDecimal(v(line, 18))
         shipment_line.quantity = BigDecimal(v(line, 18))
         shipment_line.carton_qty = v(line, 25).to_i
         shipment_line.product = order_line.product
+        shipment_line.find_and_set_custom_value(@cdefs[:shpln_invoice_number], v(line, 11))
       end
 
       saved = shipment.changed? && shipment.save

@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(s.master_bill_of_lading).to eq "OOLU2567813300"
       expect(s.vessel).to eq "KAETHE P"
       expect(s.voyage).to eq "016"
-      expect(s.importer_reference).to eq "0159419203"
+      expect(s.importer_reference).to eq "2254444"
       expect(s.est_arrival_port_date).to eq Date.new(2016, 1, 21)
       expect(s.est_departure_date).to eq Date.new(2015, 12,20)
       expect(s.destination_port).to eq unlading_port
@@ -80,6 +80,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(line.carton_qty).to eq 63
       expect(line.piece_sets.length).to eq 1
       expect(line.piece_sets.first.quantity).to eq 2394
+      expect(line.custom_value(cdefs[:shpln_invoice_number])).to eq "0159419203"
 
       ol1 = line.piece_sets.first.order_line
 
