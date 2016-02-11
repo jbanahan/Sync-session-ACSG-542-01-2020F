@@ -60,23 +60,26 @@ describe BusinessValidationRuleResultsController do
     end
   end
   describe :cancel_override do       
+    before(:each) { @rr.update_attributes(overridden_at: Time.now, overridden_by: @u, note: "Some message.") }
+    
     it "runs only for authorized users" do
-      @rr.update_attributes(overridden_at: Time.now, overridden_by: @u)
       BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(@u).and_return(false)
       BusinessValidationTemplate.should_not_receive(:create_results_for_object!)
       put :cancel_override, id: @rr.id
-      
+    
       expect(@rr.overridden_at).to_not be nil
       expect(@rr.overridden_by).to_not be nil
+      expect(@rr.note).to_not be nil
       expect(JSON.parse(response.body)["error"]).to eq "You do not have permission to perform this activity."
     end
-    it "clears overidden attributes, reruns validations for the result's validatable" do
-      @rr.update_attributes(overridden_at: Time.now, overridden_by: @u)
+    it "clears overridden attributes and note, reruns validations for the result's validatable" do
       BusinessValidationTemplate.should_receive(:create_results_for_object!, @ent)
       put :cancel_override, id: @rr.id
       @rr.reload
+      
       expect(@rr.overridden_at).to be nil
       expect(@rr.overridden_by).to be nil
+      expect(@rr.note).to be nil
       expect(flash[:errors]).to be nil
       expect(JSON.parse(response.body)["ok"]).to eq "ok"
     end
