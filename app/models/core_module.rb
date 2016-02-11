@@ -104,7 +104,7 @@ class CoreModule
       @quicksearch_lambda = lambda {|user, scope| klass.search_secure(user, scope)}
     end
 
-    @quicksearch_extra_fields = o[:quicksearch_extra_fields]
+    @quicksearch_extra_fields = (o[:quicksearch_extra_fields].presence || []).map {|f| f.respond_to?(:call) ? f.call : f}.compact
     @quicksearch_fields = o[:quicksearch_fields]
     @quicksearch_sort_by_mf = o[:quicksearch_sort_by_mf]
 

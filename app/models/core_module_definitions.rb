@@ -192,7 +192,7 @@ module CoreModuleDefinitions
                :unique_id_field_name=>:prod_uid,
                :key_model_field_uids => [:prod_uid],
                :quicksearch_fields => [:prod_uid,:prod_name],
-               :quicksearch_extra_fields => [ "*fhts_1_#{ Country.find_by_iso_code('US').id }".to_sym ]
+               :quicksearch_extra_fields => [ lambda { us = Country.where(iso_code: 'US', import_location:true).first;  us ? "*fhts_1_#{us.id}".to_sym : nil }]
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
        :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
