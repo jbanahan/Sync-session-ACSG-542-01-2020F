@@ -74,6 +74,12 @@ describe 'CoreObjectValidationResultsApp', () ->
         $scope.editRuleResult(x)
         expect($scope.ruleResultToEdit).toEqual x
 
+      it "should clear ruleResultChanged flag", () ->
+        $scope.ruleResultChanged = true
+        x = {a:'b'}
+        $scope.editRuleResult(x)
+        expect($scope.ruleResultChanged).toBe null
+
     describe 'cancelOverride', () ->
       it "deletes result and ruleResultToEdit", () ->
         $scope.result = "foo"
@@ -114,3 +120,9 @@ describe 'CoreObjectValidationResultsApp', () ->
 
         expect(svc.cancelOverride).not.toHaveBeenCalled()
         expect(console.log).toHaveBeenCalledWith("ERROR: pluralObject or objectId not found in coreObjectValidationResultsSvc!")
+
+    describe 'markRuleResultChanged', () ->
+      it "sets ruleResultChanged flag", () ->
+        $scope.ruleResultChanged = true
+        $scope.markRuleResultChanged()
+        expect($scope.ruleResultChanged).toBe true

@@ -33,7 +33,6 @@ app.factory 'coreObjectValidationResultsSvc', ['$http',($http) ->
       p
     
     cancelOverride: (rr) ->
-      console.log "inside service"
       $http.put('/business_validation_rule_results/' + rr.id + '/cancel_override')
   }
 ]
@@ -44,6 +43,8 @@ app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidatio
   $scope.ruleResultToEdit = null
   $scope.editRuleResult = (rr) ->
     $scope.ruleResultToEdit = rr
+    $scope.ruleResultChanged = null
+
   $scope.saveRuleResult = (rr) ->
     p = coreObjectValidationResultsSvc.saveRuleResult $scope.result, rr
     p.success (data) ->
@@ -66,6 +67,9 @@ app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidatio
         $scope.loadObject pluObj, objId
     else
       console.log('ERROR: pluralObject or objectId not found in coreObjectValidationResultsSvc!')
+
+  $scope.markRuleResultChanged = () ->
+    $scope.ruleResultChanged = true
 ]
 
 
