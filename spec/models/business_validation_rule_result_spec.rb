@@ -115,12 +115,13 @@ describe BusinessValidationRuleResult do
   end
 
   describe :cancel_override do
-    it "should set overridden_at and overridden_by to nil" do
+    it "should set overridden_at, overridden_by, and note to nil" do
       u = User.new
-      r = Factory(:business_validation_rule_result, overridden_at: Time.now, overridden_by: u)
+      r = Factory(:business_validation_rule_result, overridden_at: Time.now, overridden_by: u, note: "Some message.")
       r.cancel_override
       expect(r.overridden_by).to eq nil
       expect(r.overridden_at).to eq nil
+      expect(r.note).to eq nil
     end
   end
 end

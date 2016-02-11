@@ -43,6 +43,8 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   def cancel_override
     self.overridden_by = nil
     self.overridden_at = nil
+    self.note = nil
+    save!
   end
 
   private
