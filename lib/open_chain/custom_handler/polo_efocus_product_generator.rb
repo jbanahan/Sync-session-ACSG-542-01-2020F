@@ -16,7 +16,7 @@ module OpenChain
         super(opts)
         @cdefs = self.class.prep_custom_definitions [:bartho_customer_id, :test_style, :set_type]
       end
-      
+
       #Superclass requires this method
       def sync_code
         SYNC_CODE
@@ -37,7 +37,7 @@ module OpenChain
       def ftp_credentials
         {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/efocus_products"}
       end
-    
+
       def query
         fields = [
           "products.id",
@@ -126,7 +126,7 @@ module OpenChain
           cd_s(74),
           cd_s(75),
           cd_s(76),
-          "IFNULL((SELECT system_code FROM companies where companies.id = products.vendor_id),\"\") AS `#{ModelField.find_by_uid(:prod_ven_syscode).label}`",
+          "\"\" AS `Vendor Code`",
           cd_s(78),
           cd_s(79, boolean_y_n: true),
           cd_s(132),
@@ -148,9 +148,9 @@ module OpenChain
           cd_s(95),
           cd_s(@cdefs[:set_type].id)
         ]
-        r = "SELECT #{fields.join(", ")} 
+        r = "SELECT #{fields.join(", ")}
 FROM products
-INNER JOIN classifications  on classifications.product_id = products.id 
+INNER JOIN classifications  on classifications.product_id = products.id
 INNER JOIN countries countries on countries.iso_code = 'US' and classifications.country_id = countries.id
 LEFT OUTER JOIN tariff_records tariff_records on tariff_records.classification_id = classifications.id
 INNER JOIN custom_values cust_id ON products.id = cust_id.customizable_id AND cust_id.customizable_type = 'Product' and cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(cust_id.string_value), '')) > 0
@@ -161,26 +161,26 @@ ORDER BY products.id, tariff_records.line_number
 "
       end
 
-      def inner_query 
+      def inner_query
         # This query is here soley to allow us to do limits...it needs to be done as subquery like this because there can potentially be more than one row per product.
         # If we didn't do this, then there's the possibility that we chop off a tariff record from a query if we just added a limit to a single query.
         r = "SELECT distinct inner_products.id
 FROM products inner_products
-INNER JOIN classifications inner_classifications on inner_classifications.product_id = inner_products.id 
+INNER JOIN classifications inner_classifications on inner_classifications.product_id = inner_products.id
 INNER JOIN countries inner_countries on inner_countries.iso_code = 'US' and inner_classifications.country_id = inner_countries.id
 LEFT OUTER JOIN tariff_records inner_tariff_records on inner_tariff_records.classification_id = inner_classifications.id
 "
 
 # The JOINS + WHERE clause below generates files that need to be synced
-# && Have an HTS 1, 2, or 3 value OR are 'RL' Sets 
+# && Have an HTS 1, 2, or 3 value OR are 'RL' Sets
 # && have Barthco Customer IDs
-# && DO NOT have a 'Test Style' value, 
+# && DO NOT have a 'Test Style' value,
         if self.custom_where.blank?
-          r += "#{Product.need_sync_join_clause(sync_code, 'inner_products')} 
+          r += "#{Product.need_sync_join_clause(sync_code, 'inner_products')}
 INNER JOIN custom_values inner_cust_id ON inner_products.id = inner_cust_id.customizable_id AND inner_cust_id.customizable_type = 'Product' and inner_cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(inner_cust_id.string_value), '')) > 0
 LEFT OUTER JOIN custom_values inner_test_style ON inner_products.id = inner_test_style.customizable_id AND inner_test_style.customizable_type = 'Product' and inner_test_style.custom_definition_id = #{@cdefs[:test_style].id}
 LEFT OUTER JOIN custom_values inner_set_type ON inner_classifications.id = inner_set_type.customizable_id AND inner_set_type.customizable_type = 'Classification' and inner_set_type.custom_definition_id = #{@cdefs[:set_type].id}
-WHERE #{Product.need_sync_where_clause('inner_products', Time.zone.now - 3.hours)} 
+WHERE #{Product.need_sync_where_clause('inner_products', Time.zone.now - 3.hours)}
 AND (length(inner_tariff_records.hts_1) > 0 OR length(inner_tariff_records.hts_2) > 0 OR length(inner_tariff_records.hts_3) > 0 OR (inner_set_type.string_value = 'RL'))
 AND (inner_test_style.string_value IS NULL OR length(rtrim(inner_test_style.string_value)) = 0)
 "
