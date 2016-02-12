@@ -104,7 +104,6 @@ describe ProductsController do
 
         params[:product][:uniqe_identifier].should be_nil
         params[:product][:id].should be_nil
-        params[:product][:vendor_id].should be_nil
         params[:product][:field2].should be_nil
         params[:utf8].should be_nil
         expect(params[:pk]["0"]).to eq "0"
@@ -113,7 +112,7 @@ describe ProductsController do
         {:message => "Test", :errors => ["1", "2"]}
       end
       # Several fields are not allowed to be bulk updated (as well as blank values)
-      p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :vendor_id=>"id", :field2 => '', :classifications_attributes=>{"us"=>"1"}}, :utf8 => 'v'}
+      p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :field2 => '', :classifications_attributes=>{"us"=>"1"}}, :utf8 => 'v'}
       pks = {}
       (0..9).each do |i|
         pks[i.to_s] = i.to_s

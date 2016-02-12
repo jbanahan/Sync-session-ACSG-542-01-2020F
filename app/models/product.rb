@@ -34,7 +34,7 @@ class Product < ActiveRecord::Base
   accepts_nested_attributes_for :variants, :allow_destroy => true
   reject_nested_model_field_attributes_if :missing_classification_country?
 
-  dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
+  dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier']
 
 
   def locked?
