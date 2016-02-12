@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       headings = {0=>'Vendor',2=>'Stock Category',3=>'Ship From Country',5=>'PO Number',6=>'IBD Number',7=>'Delivery Date',8=>'AGI Date',9=>'Material',11=>'Grid Value',12=>'Plant',
       14=>'Company Code',16=>'PO Doc Type',17=>'Delivery Qty',18=>'AFS Net Price',19=>'Delivery Value'}
       client = OpenChain::XLClient.new s3_path
-      row = client.get_row 0, 0 
+      row = client.get_row 0, 0
       val_hash = {}
       row.each do |cell|
         val_hash[cell['position']['column']] = cell['cell']['value']
@@ -78,14 +78,14 @@ module OpenChain; module CustomHandler; module UnderArmour
         raise $!
       end
     end
-    
+
     private
     #find or create custom definitions required by the parser
     def init_custom_definitions
       @custom_definitions = {}
       cdefs = self.class.prep_custom_definitions(CUSTOM_DEFINITIONS.values.collect{|v| v[0]})
       CUSTOM_DEFINITIONS.each do |k,v|
-        @custom_definitions[k] = cdefs[v[0]] 
+        @custom_definitions[k] = cdefs[v[0]]
       end
     end
     def process_header row
@@ -111,7 +111,7 @@ module OpenChain; module CustomHandler; module UnderArmour
 
     def process_custom_values row, index
       prod = product(row)
-      line = @shipment_lines[row_uid(row)] 
+      line = @shipment_lines[row_uid(row)]
       CUSTOM_DEFINITIONS.each do |k,v|
         base = (k=='Delivery Date' ? @shipment : line)
         cv = base.get_custom_value @custom_definitions[k]
@@ -124,7 +124,7 @@ module OpenChain; module CustomHandler; module UnderArmour
         else
           val = trim_numeric(row[v[1]])
         end
-        cv.value = val 
+        cv.value = val
         cv.save!
       end
     end
@@ -138,7 +138,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       uid = row[9].split('-').first
       p = @product_cache[uid]
       if p.blank?
-        p = Product.find_or_create_by_unique_identifier(uid,:vendor_id=>@shipment.vendor_id)
+        p = Product.find_or_create_by_unique_identifier(uid)
         @product_cache[uid] = p
       end
       p

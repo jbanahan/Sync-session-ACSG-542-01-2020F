@@ -24,7 +24,7 @@ describe ProductsController do
       ss.touch #makes underlying search run
       get :next_item, :id=>"99"
       response.should redirect_to request.referrer
-      flash[:errors].first.should == "Next object could not be found."
+      expect(flash[:errors].first).to eq "Next object could not be found."
     end
   end
   describe :previous do
@@ -42,7 +42,7 @@ describe ProductsController do
       ss.touch #makes underlying search run
       get :previous_item, :id=>"99"
       response.should redirect_to request.referrer
-      flash[:errors].first.should == "Previous object could not be found."
+      expect(flash[:errors].first).to eq "Previous object could not be found."
     end
   end
   describe :create do
@@ -53,18 +53,18 @@ describe ProductsController do
     it "should pass if importer_id is current company" do
       post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@user.company.id}
       p = Product.first
-      p.unique_identifier.should == "abc123455_pccreate"
-      p.importer.should == @user.company
+      expect(p.unique_identifier).to eq "abc123455_pccreate"
+      expect(p.importer).to eq @user.company
     end
     it "should pass if importer_id is linked company" do
       post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@linked_importer.id}
       p = Product.first
-      p.unique_identifier.should == "abc123455_pccreate"
-      p.importer.should == @linked_importer
+      expect(p.unique_identifier).to eq "abc123455_pccreate"
+      expect(p.importer).to eq @linked_importer
     end
   end
   describe :update do
-    before :each do 
+    before :each do
       @product = Factory(:product,:importer=>@user.company)
     end
     it "should fail if not master and importer_id is not current company or linked company" do
@@ -74,14 +74,14 @@ describe ProductsController do
     it "should pass if importer_id is linked company" do
       put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@linked_importer.id}
       p = Product.find @product.id
-      p.unique_identifier.should == "abc123455_pccreate"
-      p.importer.should == @linked_importer
+      expect(p.unique_identifier).to eq "abc123455_pccreate"
+      expect(p.importer).to eq @linked_importer
     end
     it "should pass if importer_id is current company" do
       put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@user.company.id}
       p = Product.find @product.id
-      p.unique_identifier.should == "abc123455_pccreate"
-      p.importer.should == @user.company
+      expect(p.unique_identifier).to eq "abc123455_pccreate"
+      expect(p.importer).to eq @user.company
     end
     it "should clear custom value at classification level" do
       cntry = Factory(:country)
@@ -96,9 +96,10 @@ describe ProductsController do
 
   describe :bulk_update do
     it "should bulk update inline for less than 10 products" do
-      OpenChain::BulkUpdateClassification.should_receive(:go) do |params, user, opts| 
-        params['product']['classifications_attributes'].should == {"us" => "1"}
-        user.id.should == @user.id
+      OpenChain::BulkUpdateClassification.should_receive(:go) do |params, user, opts|
+        expected = {"us" => "1"}
+        expect(params['product']['classifications_attributes']).to eq expected
+        expect(user.id).to eq @user.id
         opts[:no_user_message].should be_true
 
         params[:product][:uniqe_identifier].should be_nil
@@ -106,8 +107,8 @@ describe ProductsController do
         params[:product][:vendor_id].should be_nil
         params[:product][:field2].should be_nil
         params[:utf8].should be_nil
-        params[:pk]["0"].should == "0"
-        params[:pk]["9"].should == "9"
+        expect(params[:pk]["0"]).to eq "0"
+        expect(params[:pk]["9"]).to eq "9"
 
         {:message => "Test", :errors => ["1", "2"]}
       end
@@ -118,12 +119,12 @@ describe ProductsController do
         pks[i.to_s] = i.to_s
       end
       p[:pk] = pks
-      
+
       post :bulk_update, p
       expect(response).to redirect_to controller.advanced_search(CoreModule::PRODUCT, false, true)
-      flash[:notices].first.should == "Test"
-      flash[:errors][0].should == "1"
-      flash[:errors][1].should == "2"
+      expect(flash[:notices].first).to eq "Test"
+      expect(flash[:errors][0]).to eq "1"
+      expect(flash[:errors][1]).to eq "2"
     end
 
     it "should delay bulk updates with over 10 keys" do
@@ -133,36 +134,36 @@ describe ProductsController do
         pks[i.to_s] = i.to_s
       end
       p[:pk] = pks
-    
+
       bulk = double("OpenChain::BulkUpdateClassification")
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(bulk)
-      bulk.should_receive(:go_serializable) do |params, id| 
-        id.should == @user.id
+      bulk.should_receive(:go_serializable) do |params, id|
+        expect(id).to eq @user.id
         params = JSON.parse params
-        params['pk'].length.should == 11
-        params['product']['field'].should == "value"
+        expect(params['pk'].length).to eq 11
+        expect(params['product']['field']).to eq "value"
       end
 
       post :bulk_update, p
       expect(response).to redirect_to controller.advanced_search(CoreModule::PRODUCT, false, true)
-      flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
+      expect(flash[:notices].first).to eq "These products will be updated in the background.  You will receive a system message when they're ready."
     end
 
     it "should delay bulk updates for search runs" do
       p = {:product => {:field => "value"}, :sr_id => 1, :pk => {"0" => "0"}}
-      
+
       bulk = double("OpenChain::BulkUpdateClassification")
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(bulk)
-      bulk.should_receive(:go_serializable) do |params, id| 
-        id.should == @user.id
+      bulk.should_receive(:go_serializable) do |params, id|
+        expect(id).to eq @user.id
         params = JSON.parse params
-        params['sr_id'].should == "1"
-        params['product']['field'].should == "value"
+        expect(params['sr_id']).to eq "1"
+        expect(params['product']['field']).to eq "value"
       end
 
       post :bulk_update, p
       expect(response).to redirect_to controller.advanced_search(CoreModule::PRODUCT, false, true)
-      flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
+      expect(flash[:notices].first).to eq "These products will be updated in the background.  You will receive a system message when they're ready."
     end
   end
 
@@ -173,14 +174,14 @@ describe ProductsController do
       b = double
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(b)
       b.should_receive(:quick_classify) do |json, id|
-        id.should == @user
+        expect(id).to eq @user
         params = ActiveSupport::JSON.decode json
-        params["sr_id"].should == "1"
+        expect(params["sr_id"]).to eq "1"
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to Product 
-      flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
+      response.should redirect_to Product
+      expect(flash[:notices].first).to eq "These products will be updated in the background.  You will receive a system message when they're ready."
     end
 
     it "should run delayed for more than 10 products" do
@@ -189,18 +190,18 @@ describe ProductsController do
         pks[i.to_s] = i.to_s
       end
       p = {:pk => pks}
-      
+
       b = double
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(b)
       b.should_receive(:quick_classify) do |json, id|
-        id.should == @user
+        expect(id).to eq @user
         params = ActiveSupport::JSON.decode json
-        params["pk"].length.should == 11
+        expect(params["pk"].length).to eq 11
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to Product 
-      flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
+      response.should redirect_to Product
+      expect(flash[:notices].first).to eq "These products will be updated in the background.  You will receive a system message when they're ready."
     end
 
     it "should not run delayed for 10 products" do
@@ -211,8 +212,8 @@ describe ProductsController do
       p = {:pk => pks}
       b = BulkProcessLog.create!
       OpenChain::BulkUpdateClassification.should_receive(:quick_classify) do |params, u, options|
-        u.should == @user
-        params[:pk].length.should == 10
+        expect(u).to eq @user
+        expect(params[:pk].length).to eq 10
         options[:no_user_message].should be_true
         b
       end
@@ -225,19 +226,19 @@ describe ProductsController do
       delay = double
       p = {"k1"=>"v1", "k2"=>"v2", :sr_id=>"1"}
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
-      delay.should_receive(:quick_classify) do |args, id| 
+      delay.should_receive(:quick_classify) do |args, id|
         json = JSON.parse(args)
-        json["k1"].should == "v1"
-        json["k2"].should == "v2"
-        id.should == @user
+        expect(json["k1"]).to eq "v1"
+        expect(json["k2"]).to eq "v2"
+        expect(id).to eq @user
       end
 
-      request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=val" 
+      request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=val"
       post :bulk_update_classifications, p
-      flash[:notices].should == ["These products will be updated in the background.  You will receive a system message when they're ready."]
+      expect(flash[:notices]).to eq ["These products will be updated in the background.  You will receive a system message when they're ready."]
       response.should redirect_to Product
     end
-    
+
     it "should redirect to products_path with no referer" do
       delay = double
       p = {:sr_id => "1"}
@@ -249,7 +250,7 @@ describe ProductsController do
     end
 
     it "should redirect to 'back_to' parameter if set" do
-      request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=x" 
+      request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=x"
       delay = double
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
       delay.should_receive(:quick_classify)

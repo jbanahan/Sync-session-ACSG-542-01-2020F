@@ -88,10 +88,10 @@ class ProductsController < ApplicationController
   # POST /products.xml
   def create
     # What we're doing here is assigning field attributes to a dummy object just to do the security check validations
-    p = Product.new
-    p.assign_model_field_attributes params[:product], no_validation: true
+    prod = Product.new
+    prod.assign_model_field_attributes params[:product], no_validation: true
 
-    action_secure(current_user.add_products?,p,{:verb => "create",:module_name=>"product"}) {
+    action_secure(current_user.add_products?,prod,{:verb => "create",:module_name=>"product"}) {
       succeed = lambda { |p|
         respond_to do |format|
           add_flash :notices, "Product created successfully."
@@ -122,9 +122,9 @@ class ProductsController < ApplicationController
   # PUT /products/1
   # PUT /products/1.xml
   def update
-    p = Product.find(params[:id])
-    importer_id = p.importer_id
-    action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
+    prod = Product.find(params[:id])
+    importer_id = prod.importer_id
+    action_secure((prod.can_edit?(current_user) || prod.can_classify?(current_user)),prod,{:verb => "edit",:module_name=>"product"}) {
       succeed = lambda {|p|
         add_flash :notices, "Product was saved successfully."
         redirect_to p
@@ -142,7 +142,7 @@ class ProductsController < ApplicationController
         end
       }
       #Don't ignore blank values on individual updates
-      validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate, exclude_blank_values: false)
+      validate_and_save_module(prod,params[:product],succeed, failure,:before_validate=>before_validate, exclude_blank_values: false)
     }
   end
 
@@ -175,7 +175,7 @@ class ProductsController < ApplicationController
 
   def bulk_update
     action_secure((current_user.edit_products? || current_user.edit_classifications?),Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
-      [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
+      [:unique_identifier,:id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
       params[:product].each {|k,v| params[:product].delete k if v.blank?}
       params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?} if params[:product_cf]
       params.delete :utf8
@@ -212,7 +212,7 @@ class ProductsController < ApplicationController
         OpenChain::BulkUpdateClassification.delay.quick_classify params.to_json, current_user
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       else
-        log = OpenChain::BulkUpdateClassification.quick_classify params, current_user, :no_user_message => true
+        OpenChain::BulkUpdateClassification.quick_classify params, current_user, :no_user_message => true
         add_flash :notices, "Your products have been updated."
       end
 

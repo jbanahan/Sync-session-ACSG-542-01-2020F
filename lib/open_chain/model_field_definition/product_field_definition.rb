@@ -144,7 +144,6 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
       }]
     ]
     add_fields CoreModule::PRODUCT, make_last_changed_by(12,'prod',Product)
-    add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")
     add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
     add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
     add_fields CoreModule::PRODUCT, make_importer_arrays(250,"prod","products")

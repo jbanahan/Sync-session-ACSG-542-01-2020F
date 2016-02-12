@@ -3,7 +3,7 @@ require 'open_chain/business_rule_validation_results_support'
 class VendorsController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
   around_filter :view_vendors_filter, only: [:index, :matching_vendors]
-  
+
   def index
     flash.keep
     redirect_to advanced_search CoreModule::COMPANY, params[:force_search]
@@ -78,7 +78,10 @@ class VendorsController < ApplicationController
 
   def products
     render_infinite('products','product_rows',:products) do |c|
-      @products = Product.search_secure(current_user,Product.where(vendor_id:c.id).order('unique_identifier'))
+      p = Product.joins(:product_vendor_assignments).where('product_vendor_assignments.vendor_id = ?',c.id)
+      @products = Product.search_secure(
+        current_user,p
+        ).order('unique_identifier')
       @products = @products.where('unique_identifier like ?',"%#{params[:q]}%") if params[:q]
       @products = @products.paginate(:per_page=>20,:page => params[:page])
       @products
