@@ -8,5 +8,6 @@ class CreateProductVendorAssignments < ActiveRecord::Migration
     end
     add_index :product_vendor_assignments, :product_id
     add_index :product_vendor_assignments, :vendor_id
+    add_index :product_vendor_assignments, [:vendor_id,:product_id], unique: true
   end
 end
