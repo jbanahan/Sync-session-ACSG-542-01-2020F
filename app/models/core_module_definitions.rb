@@ -175,7 +175,7 @@ module CoreModuleDefinitions
                   CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id",
                   VARIANT => "LEFT OUTER JOIN variants ON products.id = variants.product_id"
                 },
-               :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts,:prod_ven_name],
+               :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts],
                :bulk_actions_lambda => lambda {|current_user|
                  bulk_actions = {}
                  bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products? || current_user.edit_classifications?
@@ -254,7 +254,7 @@ module CoreModuleDefinitions
   OFFICIAL_TARIFF = CoreModule.new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate], :quicksearch_fields=> [:ot_hts_code,:ot_full_desc])
   PLANT_PRODUCT_GROUP_ASSIGNMENT = CoreModule.new('PlantProductGroupAssignment','Plant Product Group Assignment',
     unique_id_field_name: :ppga_pg_name,
-    default_search_columns:[:ppga_pg_name], 
+    default_search_columns:[:ppga_pg_name],
     key_model_field_uids: [:ppga_pg_name],
     show_field_prefix: true)
   PLANT = CoreModule.new("Plant","Plant",
