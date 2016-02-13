@@ -390,7 +390,7 @@ Factory.define :business_validation_rule_result do |f|
   }
 end
 Factory.define :container do |f|
-  f.container_number {Factory.next :alpha_numeric} 
+  f.container_number {Factory.next :alpha_numeric}
   f.association :entry
 end
 Factory.define :event_subscription do |f|
@@ -459,4 +459,9 @@ end
 
 Factory.define :user_manual do |f|
   f.name "MyManual"
+end
+
+Factory.define :product_vendor_assignment do |f|
+  f.association :product
+  f.association :vendor
 end

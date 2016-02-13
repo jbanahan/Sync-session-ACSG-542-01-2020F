@@ -306,6 +306,11 @@ module CoreModuleDefinitions
     enabled_lambda: lambda { MasterSetup.get.broker_invoice_enabled? }
   })
 
+  PRODUCT_VENDOR_ASSIGNMENT = CoreModule.new("ProductVendorAssignment","Product Vendor Assignment", {
+    default_search_columns: [:pva_ven_name, :pva_puid, :pva_pname],
+    key_model_field_uids: [:pva_ven_name, :pva_puid]
+  })
+
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
     mc.add_array core_module_array
