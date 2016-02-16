@@ -1,4 +1,5 @@
 require 'open_chain/search_query_controller_helper'
+require 'open_chain/report/xls_search'
 class AdvancedSearchController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
 
@@ -139,6 +140,29 @@ class AdvancedSearchController < ApplicationController
           render json: {:errors => errors}, status: 500
         end
       }
+    end
+  end
+
+  def send_email
+    ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
+    raise ActionController::RoutingError.new('Not Found') unless ss
+    errors = []
+    if ss.downloadable? errors
+      mail_fields = params[:mail_fields] || {}
+      email_to = mail_fields[:to]
+      if email_to.blank?
+        render_json_error "Email address is required."
+      else
+        email_list = email_to.split(',')
+        unless email_list.map{ |e| EmailValidator.valid? e }.all?
+          render_json_error "Invalid email. Be sure to separate multiple addresses with commas."
+        else
+          OpenChain::Report::XLSSearch.delay.run_and_email_report current_user, ss.id, mail_fields
+          render :json=>{:ok=>:ok}
+        end
+      end
+    else
+      render_json_error errors.first
     end
   end
 

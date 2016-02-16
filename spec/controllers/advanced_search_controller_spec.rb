@@ -456,6 +456,57 @@ describe AdvancedSearchController do
     end
   end
 
+  describe :send_email do
+    before(:each) do 
+      @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:no_time=>false,
+        :module_type=>"Product") 
+      SearchSetup.any_instance.stub(:downloadable?).and_return true
+    end
+
+    it "runs report as a delayed job" do
+      sender = "tufnel@stonehenge.biz"
+      recipient = "st-hubbins@hellhole.co.uk, smalls@sharksandwich.net"
+      mail_subject = "amp"
+      body = "Goes to 11."
+
+      d = double("delay")
+      OpenChain::Report::XLSSearch.should_receive(:delay).and_return d
+      d.should_receive(:run_and_email_report).with(@user, @ss.id, {'to' => recipient, 'reply_to' => sender, 'subject' => mail_subject, 'body' => body})
+      post :send_email, :id=>@ss.id, :mail_fields => {:to => recipient, :reply_to => sender, :subject => mail_subject, :body => body}
+      expect(JSON.parse(response.body)).to eq({'ok' => 'ok'})
+    end
+
+    it "errors if email missing" do
+      OpenChain::Report::XLSSearch.should_not_receive(:delay)
+      
+      post :send_email, :id=>@ss.id, :mail_fields=> {}
+      expect(JSON.parse(response.body)['error']).to eq "Email address is required."
+    end
+
+    it "errors if one or more emails aren't valid" do
+      OpenChain::Report::XLSSearch.should_not_receive(:delay)
+      
+      post :send_email, :id=>@ss.id, :mail_fields=> {'to' => 'tufnel@stonehenge.biz, st-hubbins.com'}
+      expect(JSON.parse(response.body)['error']).to eq "Invalid email. Be sure to separate multiple addresses with commas."
+    end
+
+    it "errors if search not found" do
+      expect { get :send_email, :id=>1000 }.to raise_error("Not Found")
+      OpenChain::Report::XLSSearch.should_not_receive(:delay)
+    end
+
+    it "errors if search isn't downloadable" do
+      SearchSetup.any_instance.should_receive(:downloadable?) do |errors|
+          errors << "This is an error"
+          false
+        end
+      get :send_email, :id=>@ss.id
+      OpenChain::Report::XLSSearch.should_not_receive(:delay)
+      response.should be_error
+      expect(JSON.parse(response.body)['error']).to eq "This is an error"
+    end
+  end
+
   describe :legacy_javascripts? do
     it "should not include legacy javascripts" do
       AdvancedSearchController.new.legacy_javascripts?.should be_false

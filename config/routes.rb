@@ -371,6 +371,7 @@ OpenChain::Application.routes.draw do
     get 'last_search_id', :on=>:collection
     get 'setup', :on=>:member
     get 'download', :on=>:member
+    post 'send_email', :on=>:member
     get 'total_objects', :on=>:member
   end
 
