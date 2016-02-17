@@ -432,6 +432,22 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_ll_prod_risk_report
+    if OpenChain::Report::LlProdRiskReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_ll_prod_risk_report
+    if OpenChain::Report::LlProdRiskReport.permission? current_user
+      run_report "Lumber Liquidators Product Risk Report", OpenChain::Report::LlProdRiskReport, {}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin
