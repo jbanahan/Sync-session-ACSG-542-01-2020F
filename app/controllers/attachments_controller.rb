@@ -69,6 +69,28 @@ class AttachmentsController < ApplicationController
     end
   end
 
+  def download_last_integration_file
+    downloaded = false
+    if current_user.sys_admin? && params[:attachable_type].presence && params[:attachable_id].presence
+      begin
+        obj = get_attachable params[:attachable_type], params[:attachable_id]
+        if obj.respond_to?(:last_file_secure_url) && obj.can_view?(current_user)
+          url = obj.last_file_secure_url
+          if url
+            redirect_to url
+            downloaded = true
+          end
+        end
+      rescue
+        #don't care...user will redirect to error below if this happens
+      end
+    end
+    
+    if !downloaded
+      error_redirect "You do not have permission to download this attachment."
+    end
+  end
+
   def show_email_attachable
     @attachments_array = Attachment.where(attachable_type: params[:attachable_type], attachable_id: params[:attachable_id]).find_all {|a| a.can_view?(current_user)}
     if @attachments_array.size > 0
@@ -76,7 +98,7 @@ class AttachmentsController < ApplicationController
     else
       add_flash :errors, "No attachments available to email."
       begin
-        attachable = params[:attachable_type].to_s.camelize.constantize.where(id: params[:attachable_id]).first
+        attachable = get_attachable params[:attachable_type], params[:attachable_id]
         redirect_to redirect_location attachable
       rescue
         redirect_back_or_default :root
@@ -107,6 +129,10 @@ class AttachmentsController < ApplicationController
   private
   def redirect_location attachable
     params[:redirect_to].blank? ? attachable : params[:redirect_to]
+  end
+
+  def get_attachable type, id
+    attachable = type.to_s.camelize.constantize.where(id: id).first
   end
 
 end

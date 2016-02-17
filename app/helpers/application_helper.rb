@@ -506,10 +506,8 @@ module ApplicationHelper
   end
 
   def secure_link obj, user
-    return "" unless user.sys_admin?
-    sec_url = obj.last_file_secure_url
-    return "" unless sec_url
-    return content_tag('div', content_tag('b',"Integration File:") + " " + link_to(obj.last_file_path.split("/").last, sec_url)).html_safe
+    return "" unless user.sys_admin? && obj.has_last_file?
+    return content_tag('div', content_tag('b',"Integration File:") + " " + link_to(obj.last_file_path.split("/").last, download_last_integration_file_attachments_path(attachable_id: obj.id, attachable_type: obj.class.to_s))).html_safe
   end
 
   private

@@ -307,7 +307,13 @@ OpenChain::Application.routes.draw do
 
   resources :status_rules
   resources :attachments do
-    get 'download', :on => :member
+    member do 
+      get 'download'
+    end
+
+    collection do
+      get 'download_last_integration_file'
+    end
   end
   resources :comments do
     post 'send_email', :on => :member
