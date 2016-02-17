@@ -6,7 +6,7 @@ class Group < ActiveRecord::Base
   validates :name, presence: true
   validates :system_code, uniqueness: true, unless: Proc.new {|g| g.system_code.blank? }
 
-  scope :visible_to_user, lambda {|u| 
+  scope :visible_to_user, lambda {|u|
     if u.company.master?
       Group.scoped
     else
@@ -15,7 +15,7 @@ class Group < ActiveRecord::Base
   FROM groups g
   INNER JOIN user_group_memberships m ON m.group_id = g.id AND m.user_id = #{u.id}
   UNION
-  SELECT g.id 
+  SELECT g.id
   FROM groups g
   INNER JOIN user_group_memberships m ON m.group_id = g.id
   INNER JOIN users u on u.id = m.user_id AND u.company_id = #{u.company_id}
@@ -31,7 +31,7 @@ QRY
   }
   # Finds (and creates if not found) the system group w/ the given system code
   # Uses group_name only when creating the group
-  def self.use_system_group system_code, name: nil, create: true
+  def self.use_system_group system_code, name = nil, create = true
     group_name = system_code if group_name.nil?
     g = Group.where(system_code: system_code)
     if create
@@ -39,6 +39,6 @@ QRY
     else
       g.where(system_code: system_code).first
     end
-    
+
   end
 end

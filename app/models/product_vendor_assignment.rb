@@ -17,4 +17,14 @@ class ProductVendorAssignment < ActiveRecord::Base
     return false unless self.vendor && self.product
     return self.vendor.can_edit?(user) && self.product.can_edit?(user)
   end
+
+  def self.search_secure user, base_object
+    base_object.where search_where user
+  end
+
+  def self.search_where user
+    return "1=1" if user.company.master?
+    "(product_vendor_assignments.vendor_id IN (SELECT id FROM companies WHERE #{Company.search_where(user)}))"
+  end
+
 end

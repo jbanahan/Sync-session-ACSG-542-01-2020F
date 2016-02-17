@@ -465,3 +465,8 @@ Factory.define :product_vendor_assignment do |f|
   f.association :product
   f.association :vendor
 end
+
+Factory.define :custom_view_template do |f|
+  f.sequence(:template_identifier) {|n| "t_#{n}"}
+  f.sequence(:template_path) {|n| "tp_#{n}"}
+end

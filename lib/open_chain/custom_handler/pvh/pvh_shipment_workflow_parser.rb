@@ -126,7 +126,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         product['prod_imp_id'] = importer.id
         product[uid(:prod_part_number)] = v(line, 15)
         # Don't bother saving off any part descriptions...
-        # PVH seems to use the same style number for multiple styles (even when the same division is ordering) 
+        # PVH seems to use the same style number for multiple styles (even when the same division is ordering)
         # and we're really not using the products for anything at this point, except that the order requires them to be
         # there
 
@@ -154,7 +154,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
       shipment.find_and_set_custom_value(@cdefs[:shp_priority], v(fl, 7))
 
       file_lines.each do |line|
-        # Find or create the container line this refers to 
+        # Find or create the container line this refers to
         container_number = v(line, 4)
         container = shipment.containers.find {|c| c.container_number == container_number }
         if container.nil?
@@ -166,10 +166,10 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         # The uniqueness factor of the order lines in the pvh file is the order / style / color (whish they'd send a sku)
         ol_style = "PVH-#{v(line, 15)}"
         ol_color = v(line, 17)
-        # Since we're working with object that may not have been saved, we need to use the actual attribute matches on these rather than the == 
+        # Since we're working with object that may not have been saved, we need to use the actual attribute matches on these rather than the ==
         # equality.  Since id is going to be zero quite a bit (haven't been saved yet)
         order_line = order.order_lines.find {|ol| ol.product.unique_identifier == ol_style && ol.custom_value(@cdefs[:ord_line_color]) == ol_color}
-        shipment_line = shipment.shipment_lines.find do |sl| 
+        shipment_line = shipment.shipment_lines.find do |sl|
 
           match = sl.container && (sl.container.container_number == container.container_number)
           if match
@@ -186,7 +186,6 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         # Piece set should never be blank, the shipment_line.order_lines association is done through piece sets above and this is how
         # we locate which line to use (or build a new one, which will have a piece set too)
         piece_set = shipment_line.piece_sets.find {|ps| ps.order_line_id == order_line.id }
-        byebug if piece_set.nil?
         piece_set.quantity = BigDecimal(v(line, 18))
         shipment_line.quantity = BigDecimal(v(line, 18))
         shipment_line.carton_qty = v(line, 25).to_i
@@ -197,7 +196,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
       saved = shipment.changed? && shipment.save
     end
 
-    if saved 
+    if saved
       shipment.create_snapshot user
     end
 
@@ -233,7 +232,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
 
     def find_shipment importer, reference
       shipment = nil
-      Lock.acquire("Shipment-#{reference}") do 
+      Lock.acquire("Shipment-#{reference}") do
         shipment = Shipment.where(importer_id: importer.id, reference: reference).first_or_create!
       end
 

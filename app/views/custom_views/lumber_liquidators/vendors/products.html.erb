@@ -1,0 +1,188 @@
+<%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
+<%risk_def = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk])[:prodven_risk]%>
+<div class='container-fluid'>
+  <div class='row'>
+    <select id='ll-pva-filter' class='form-control'>
+      <option value='all' selected='selected'>All Products</option>
+      <option value='risk-blank-all'>No Risk Assigned (All)</option>
+      <option value='risk-blank-ordered'>No Risk Assigned (Ordered)</option>
+      <option value='risk-high'>High Risk</option>
+      <option value='risk-medium'>Medium</option>
+      <option value='risk-low'>Low</option>
+      <option value='risk-grandfathered'>Grandfathered</option>
+    </select>
+  </div>
+  <div class='row' id='ll-product-panel-row'>
+    <div class='loader'>
+      loading
+    </div>
+  </div>
+  <%if risk_def.model_field.can_edit?(current_user)%>
+  <div class="row">
+    <button class="btn btn-default" id="ll-load-more">Load More</button>
+    <button class="btn btn-primary" data-toggle="modal" data-target="#ll-risk-edit" disabled="disabled" id='ll-risk-modal-activate'>
+      Edit Risk
+    </button>
+  </div>
+  <%end%>
+</div>
+<div class="modal fade" id="ll-risk-edit" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Edit Risk</h4>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">You have <span id='ll-risk-checked-count'>0</span> products selected.</div>
+        <select id='ll-risk-select' class='form-control'>
+          <option value=''>Clear</option>
+          <%risk_def.model_field.field_validator_rule.one_of_array.each do |so|%>
+            <option><%=so%></option>
+          <%end%>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" id='ll-risk-save'>Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  function LLProductVariantAssignmentGetPage(page,callback) {
+    filterOptions = {
+      'risk-high':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'High'},
+      'risk-medium':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'Medium'},
+      'risk-low':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'Low'},
+      'risk-grandfathered':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'Grandfathered'},
+      'risk-blank-all':{sid1:'<%=risk_def.model_field_uid%>',sop1:'null'},
+      'risk-blank-ordered':{
+        sid1:'<%=risk_def.model_field_uid%>',
+        sop1:'null',
+        sid2:'prodven_prod_ord_count',
+        sop2:'gt',
+        sv2:'0'
+      }
+    };
+    filterOpts = function() {
+      optionVal = filterOptions[$('#ll-pva-filter').val()]
+      return optionVal ? optionVal : {}
+    }
+    data = filterOpts()
+    if(page) {
+      data.page = page;
+    }
+    $('#ll-load-more').hide();
+    $.ajax('/api/v1/product_vendor_assignments.json', {
+      method:'GET',
+      headers: {
+        Accept : "application/json",
+        "Content-Type": "application/json"
+      },
+      data:data,
+      success: function(response) {
+        var i, pva, html, riskHtmlFn;
+        riskHtmlFn = function(obj) {
+          var riskDefUid = '<%=risk_def.model_field_uid%>';
+          return writeVal(obj,riskDefUid);
+        }
+        writeVal = function(obj,field) {
+          return obj[field] ? obj[field] : '';
+        }
+        var canEditRisk = <%=risk_def.model_field.can_edit?(current_user) ? 'true' : 'false'%>;
+        console.log(response);
+
+        if(response.results.length==10) {
+          $('#ll-load-more').show();
+        }
+
+        html = '';
+        if(response.results.length==0) {
+          html+="<tr><td colspan='5'><div class='alert alert-info'>No products found.</div></td></tr>"
+        }
+        for (i = 0; i < response.results.length; i++) {
+          pva = response.results[i];
+          html += "<tr><td><input type='checkbox' data-pva-id='"+pva.id+"'/></td><td><a href='/products/"+pva.product_id+"'>View</a></td>";
+          html += "<td>"+writeVal(pva,'prodven_puid')+"</td>";
+          html += "<td>"+writeVal(pva,'prodven_pname')+"</td>";
+          html += "<td>"+riskHtmlFn(pva)+"</td></tr>";
+        }
+        callback(html);
+      }
+    });
+  }
+  function LLProductVariantAssignmentLoad() {
+    $('#ll-product-panel-row').html("<div class='loader'>loading</div>");
+    LLProductVariantAssignmentGetPage(1,function(rowHtml) {
+      html = "<div><table class='table table-condensed table-striped'>";
+      html += "<thead><tr><th></th><th></th><th>Article #</th><th>Name</th><th>Risk</th></tr></thead>";
+      html += "<tbody id='ll-product-panel-body' data-page='1'>";
+      html += rowHtml;
+      html += "</tbody></table></div>";
+      LLProductVariantAssignmentUpdateChecked();
+      $('#ll-product-panel-row').html(html);
+    });
+  };
+  function LLProductVariantAssignmentLoadMore() {
+    var bod = $('#ll-product-panel-body');
+    var nextPage = 1;
+    var lastPage = bod.attr('data-page');
+    if(lastPage) {
+      nextPage = parseInt(lastPage) + 1;
+    }
+    bod.attr('data-page',nextPage)
+    LLProductVariantAssignmentGetPage(nextPage,function(rowHtml) {
+      bod.append(rowHtml);
+    });
+  }
+  function LLProductVariantAssignmentUpdateChecked() {
+    var checkedCount = $('input[data-pva-id]:checked').length
+    if(checkedCount > 0) {
+      $('#ll-risk-modal-activate').removeAttr('disabled');
+    } else {
+      $('#ll-risk-modal-activate').attr('disabled','disabled');
+    }
+    $('#ll-risk-checked-count').html(checkedCount);
+  };
+  $(function() {
+    if(!window.llProductVariantAssignmentCallbacksSet) {
+      $(document).on('click','#ll-load-more',LLProductVariantAssignmentLoadMore);
+      $(document).on('change','#ll-pva-filter',LLProductVariantAssignmentLoad);
+      $(document).on('change','input[data-pva-id]',LLProductVariantAssignmentUpdateChecked);
+      $(document).on('click','#ll-risk-save',function() {
+        var checked = $('input[data-pva-id]:checked')
+        if(checked.length==0) {
+          window.alert('You must select at least one product to save.');
+          return;
+        }
+        var riskVal = $('#ll-risk-select').val();
+        var submitArray = [];
+        for (var i = 0; i < checked.length; i++) {
+          dbId = $(checked[i]).attr('data-pva-id');
+          obj = {id:dbId};
+          obj['<%=risk_def.model_field_uid%>'] = riskVal;
+          submitArray.push(obj);
+        }
+        $('#ll-product-panel-row').html("<div class='loader'>loading</div>");
+        $.ajax('/api/v1/product_vendor_assignments/bulk_update.json', {
+          type:'PUT',
+          headers: {
+            Accept : "application/json",
+            "Content-Type": "application/json"
+          },
+          data: JSON.stringify({product_vendor_assignments:submitArray}),
+          success: function(response) {
+            LLProductVariantAssignmentLoad();
+            window.alert('Products saved successfully.')
+          },
+          error: function() {
+            window.alert('Save failed. Please reload and try again.');
+          }
+        });
+      });
+      window.llProductVariantAssignmentCallbacksSet = true;
+    }
+    LLProductVariantAssignmentLoad();
+  });
+</script>

@@ -19,7 +19,7 @@
       </tr>
     </thead>
     <tbody>
-        <%=render :partial=>'product_rows', locals:{products:@products}%>
+        <%=render :partial=>@partial_template, locals:{products:@products}%>
     </tbody>
   </table>
   <div><button data-infinite-table-target='#product-rows' class='btn btn-link btn-lg btn-block'>Load More</button></div>

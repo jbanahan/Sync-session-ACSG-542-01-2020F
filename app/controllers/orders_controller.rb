@@ -23,10 +23,11 @@ class OrdersController < ApplicationController
         respond_to do |format|
             format.html {
               freeze_custom_values @order
-              if @order.importer.try(:order_view_template).blank?
+              custom_template = CustomViewTemplate.for_object('order_view',@order)
+              if custom_template.blank?
                 render
               else
-                render template: @order.importer.order_view_template.to_s
+                render template: custom_template
               end
             }
             format.xml  { render :xml => @order }

@@ -53,14 +53,14 @@ OpenChain::Application.routes.draw do
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
-        collection do 
+        collection do
           post :login
           post :google_oauth2
           get :me
           post 'me/toggle_email_new_messages' => 'users#toggle_email_new_messages'
           post :change_my_password
         end
-        
+
       end
 
       resources :official_tariffs, only: [] do
@@ -73,7 +73,7 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
       resources :variants, only: [:show] do
-        
+
       end
 
       resources :plants, only: [] do
@@ -84,6 +84,10 @@ OpenChain::Application.routes.draw do
       resources :plant_product_group_assignments, only: [] do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
+      end
+
+      resources :product_vendor_assignments, only: [:index] do
+        put :bulk_update, on: :collection
       end
 
       resources :model_fields, only: [:index] do
@@ -133,7 +137,7 @@ OpenChain::Application.routes.draw do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
         match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
         resources :users, only: [] do
-          member do 
+          member do
             post :add_templates
             post :change_user_password
           end
@@ -145,7 +149,7 @@ OpenChain::Application.routes.draw do
       end
 
       resources :fenix_postbacks, only: [] do
-        collection do 
+        collection do
           post :receive_lvs_results
         end
       end
@@ -817,13 +821,6 @@ OpenChain::Application.routes.draw do
 
   match "/vendor_portal" => "vendor_portal#index", via: :get
 
-  #Griddler inbound email processing
-  mount_griddler
-
-  #Jasmine test runner
-  mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
-
-  root :to => "home#index"
 
   resources :groups, except: [:show]
 
@@ -834,4 +831,14 @@ OpenChain::Application.routes.draw do
   resources :user_manuals, except: [:show] do
     get :download, on: :member
   end
+
+  resources :custom_view_templates, except: [:show]
+
+  #Griddler inbound email processing
+  mount_griddler
+
+  #Jasmine test runner
+  mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
+
+  root :to => "home#index"
 end
