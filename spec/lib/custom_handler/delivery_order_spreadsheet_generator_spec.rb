@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
     let (:lading_port) { Port.new name: "lading_port"}
     let (:unlading_port) { Port.new name: "unlading_port"}
     let (:entry) {
-      Entry.new broker_reference: "reference", vessel: "vessel", voyage: "voy", location_of_goods_description: "loc", carrier_code: "CODE", master_bills_of_lading: "ABC", arrival_date: Date.new(2016, 2, 16), total_packages: 20, total_packages_uom: 'CTNS', gross_weight: 10, lading_port: lading_port, unlading_port: unlading_port
+      Entry.new broker_reference: "reference", vessel: "vessel", voyage: "voy", location_of_goods_description: "loc", carrier_code: "CODE", master_bills_of_lading: "ABC", arrival_date: DateTime.new(2016, 2, 16, 12, 00), total_packages: 20, total_packages_uom: 'CTNS', gross_weight: 10, lading_port: lading_port, unlading_port: unlading_port
     }
 
     it "generates delivery order data" do
