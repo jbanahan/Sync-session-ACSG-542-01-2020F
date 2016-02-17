@@ -73,6 +73,14 @@ $(document).ready( function() {
 		<%= f.label :shipping %>
 		<%= f.check_box :shipping %>
 	</div>
+  <div class="field">
+    <%= f.label :phone_number %>
+    <%= f.text_field :phone_number %>
+  </div>
+  <div class="field">
+    <%= f.label :fax_number %>
+    <%= f.text_field :fax_number %>
+  </div>
   <div class="actions">
     <%= f.submit :class=>'btn' %>
   </div>
@@ -91,6 +99,8 @@ $(document).ready( function() {
     <%=field_row "Postal Code", edit_add.postal_code %>
     <%=field_row "Country", edit_add.country.name %>
     <%=field_row "Shipping", bool_txt(edit_add.shipping) %>
+    <%=field_row "Phone #", edit_add.phone_number %>
+    <%=field_row "Fax #", edit_add.fax_number %>
   </table>
 </div>
 <%end%>

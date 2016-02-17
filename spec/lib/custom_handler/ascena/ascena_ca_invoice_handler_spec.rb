@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
       end
       
       it "throws exception if Fenix ID not found" do
-        expect{ @handler.get_importer_id("111111111") }.to raise_error("Fenix ID not found!")
+        expect{ @handler.get_importer_id("111111111") }.to raise_error("Fenix ID 111111111 not found!")
       end
     end
   

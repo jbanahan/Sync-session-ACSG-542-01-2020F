@@ -195,15 +195,24 @@ OpenChain::Application.routes.draw do
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
   resources :entries, :only => [:index,:show] do
-    get 'reprocess', :on=>:collection
-    post 'bulk_get_images', :on=>:collection
-    post 'get_images', :on=>:member
-    resources :broker_invoices, :only=>[:create]
-    get 'validation_results', on: :member
-    get 'sync_records', on: :member
-    post 'request_entry_data', on: :member
-    post 'bulk_request_entry_data', on: :collection
-    post 'purge', on: :member
+    member do
+      get 'validation_results'
+      get 'sync_records'
+
+      post 'request_entry_data'
+      post 'get_images'
+      post 'purge'
+      post 'generate_delivery_order'
+    end
+
+    collection do 
+      get 'reprocess'
+
+      post 'bulk_get_images'
+      post 'bulk_request_entry_data'
+    end
+
+    resources :broker_invoices, :only=>[:create]  
   end
 
   resources :business_validation_templates do

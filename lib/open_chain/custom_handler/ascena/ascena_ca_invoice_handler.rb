@@ -1,6 +1,5 @@
 module OpenChain; module CustomHandler; module Ascena
   class AscenaCaInvoiceHandler
-    FENIX_ID = "858053119RM0001"
 
     def initialize custom_file
       @custom_file = custom_file
@@ -58,7 +57,7 @@ module OpenChain; module CustomHandler; module Ascena
         if existing_invoice
           existing_invoice.commercial_invoice_lines.destroy_all
         else
-          importer_id = get_importer_id FENIX_ID
+          importer_id = get_importer_id "858053119RM0001"
           existing_invoice = CommercialInvoice.new(invoice_number: invoice_number, importer_id: importer_id)
         end
 
@@ -92,7 +91,7 @@ module OpenChain; module CustomHandler; module Ascena
 
     def get_importer_id fenix_id
       co = Company.where(fenix_customer_number: fenix_id).first
-      raise "Fenix ID not found!" unless co
+      raise "Fenix ID #{fenix_id} not found!" unless co
       co.id
     end
    
