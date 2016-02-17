@@ -21,32 +21,33 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
     delivery_orders = []
     
     destination_data.each_pair do |destination, data|
-      del = base_do.dup
-      del.tab_title = destination
-
-      bill_of_ladings = Set.new
-
-      # Make sure to clone the body array as well, since we're going to be modifiying it.
-      del.body = base_do.body.deep_dup
+      header_base = clone_delivery_order(base_do)
 
       address = entry.importer.addresses.where(name: destination).first
       if address
         addr = ["PVH CORP", address.line_1, address.line_2, "#{address.city}, #{address.state} #{address.postal_code}", "#{address.phone_number.blank? ? "" : "PH: #{address.phone_number}"} #{address.fax_number.blank? ? "" : "FAX: #{address.fax_number}"}"]
-        del.for_delivery_to = addr.reject {|v| v.blank? }
+        header_base.for_delivery_to = addr.reject {|v| v.blank? }
       else
-        del.for_delivery_to = [destination]
+        header_base.for_delivery_to = [destination]
       end
 
-      del.no_cartons = "#{data[:cartons]} CTNS"
-
+      # We need to make distinct delivery orders for every 4 sets of containers, since only that many fit on a single Delivery Order page.
+      container_count = 0
+      carton_count = 0
+      bill_of_ladings = Set.new
+      body = []
+      containers_per_page = 4
+      do_count = 0
+      
       data[:containers].each do |container_data|
+        carton_count += container_data[:cartons]
         container_line = "#{container_data[:cartons]} CTNS"
         container_line += " **#{container_data[:priority]}**" unless container_data[:priority].blank?
         container_line += " #{container_data[:container_number]} #{container_data[:container_type]}"
         container_line += " SEAL# #{container_data[:seal_number]}"
 
-        del.body << ""
-        del.body << container_line
+        body << ""
+        body << container_line
 
         division_line = ""
         container_data[:divisions].each do |division_data|
@@ -54,20 +55,38 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
         end
 
         if !division_line.blank?
-          del.body << "DIVISION #{division_line}".strip
+          body << "DIVISION #{division_line}".strip
         end
 
         container_data[:bols].each {|b| bill_of_ladings << b }
         bols = container_data[:bols].join " "
-        del.body << "B/L# #{bols}" unless bols.blank?
-      end
+        body << "B/L# #{bols}" unless bols.blank?
 
-      # Set the BOL indicator 
-      del.bill_of_lading = (bill_of_ladings.size > 1) ? "MULTIPLE - SEE BELOW" : bill_of_ladings.first
-      delivery_orders << del
+        if (container_count += 1) % containers_per_page == 0 || data[:containers].size == container_count
+          do_count += 1
+
+          del = clone_delivery_order header_base
+          del.no_cartons = "#{carton_count} CTNS"
+          del.bill_of_lading = (bill_of_ladings.size > 1) ? "MULTIPLE - SEE BELOW" : bill_of_ladings.first
+          del.body.push *body
+          del.tab_title = destination + (do_count > 1 ? " (#{do_count})" : "")
+          delivery_orders << del
+
+          carton_count = 0
+          bill_of_ladings.clear
+          body = []
+        end
+      end      
     end
 
     delivery_orders
+  end
+
+  def clone_delivery_order del
+    clone = del.dup
+    # Make sure to clone the body array as well, since we're going to be modifiying it.
+    clone.body = del.body.deep_dup
+    clone
   end
 
 

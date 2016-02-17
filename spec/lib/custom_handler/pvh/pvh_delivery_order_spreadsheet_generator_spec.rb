@@ -134,5 +134,67 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
       expect(del.body[9]).to eq "DIVISION DIV2 - 20 CTNS"
       expect(del.body[10]).to eq "B/L# ABC"
     end
+
+    it "shows at most 4 containers on a single delivery order" do
+      shipment
+      order_line = order1.order_lines.first
+      inv_cd = custom_defintions[:shpln_invoice_number]
+
+      container = shipment.containers.create! container_number: "ABC123"
+      line = shipment.shipment_lines.create! carton_qty: 30, product: product, container: container
+      line.update_custom_value! inv_cd, "INV1"
+      ps = line.piece_sets.create! order_line: order_line, quantity: 30
+
+      container = shipment.containers.create! container_number: "DEF123"
+      line = shipment.shipment_lines.create! carton_qty: 40, product: product, container: container
+      line.update_custom_value! inv_cd, "INV1"
+      ps = line.piece_sets.create! order_line: order_line, quantity: 40
+
+      container = shipment.containers.create! container_number: "HIJ123"
+      line = shipment.shipment_lines.create! carton_qty: 50, product: product, container: container
+      line.update_custom_value! inv_cd, "INV1"
+      ps = line.piece_sets.create! order_line: order_line, quantity: 50
+
+      entry.containers.create! container_number: "ABC123", container_size: "40", size_description: "DRY VAN", seal_number: "SEAL678"
+      entry.containers.create! container_number: "DEF123", container_size: "45", size_description: "HIGH Cube", seal_number: "SEAL789"
+      entry.containers.create! container_number: "HIJ123", container_size: "40", size_description: "DRY VAN", seal_number: "SEAL890"
+
+      # Put all the lines going to a single destination so, we make sure the only new delivery orders created are due to the container split
+      order2.order_lines.first.update_custom_value! custom_defintions[:ord_line_destination_code], "DEST1"
+
+      delivery_orders = subject.generate_delivery_order_data entry
+      expect(delivery_orders.size).to eq 2
+
+      del = delivery_orders.first
+      validate_base del
+
+      expect(del.tab_title).to eq "DEST1"
+      expect(del.no_cartons).to eq "100 CTNS"
+      expect(del.for_delivery_to).to eq ["PVH CORP", "ADDR1", "CITY, ST 12345", "PH: 123-456-7890 FAX: 098-765-4321"]
+      expect(del.body[4]).to eq "10 CTNS **HOT** 12345 20' SEAL# SEAL123"
+      expect(del.body[5]).to eq "DIVISION DIV1 - 10 CTNS"
+      expect(del.body[6]).to eq "B/L# ABC"
+      expect(del.body[7]).to eq ""
+      expect(del.body[8]).to eq "20 CTNS **HOT** 67890 40'HC SEAL# SEAL345"
+      expect(del.body[9]).to eq "DIVISION DIV2 - 20 CTNS"
+      expect(del.body[10]).to eq "B/L# ABC"
+      expect(del.body[11]).to eq ""
+      expect(del.body[12]).to eq "30 CTNS **HOT** ABC123 40' SEAL# SEAL678"
+      expect(del.body[13]).to eq "DIVISION DIV1 - 30 CTNS"
+      expect(del.body[14]).to eq "B/L# ABC"
+      expect(del.body[15]).to eq ""
+      expect(del.body[16]).to eq "40 CTNS **HOT** DEF123 45'HC SEAL# SEAL789"
+      expect(del.body[17]).to eq "DIVISION DIV1 - 40 CTNS"
+      expect(del.body[18]).to eq "B/L# ABC"
+
+
+      del = delivery_orders.second
+      expect(del.tab_title).to eq "DEST1 (2)"
+      expect(del.no_cartons).to eq "50 CTNS"
+      expect(del.for_delivery_to).to eq ["PVH CORP", "ADDR1", "CITY, ST 12345", "PH: 123-456-7890 FAX: 098-765-4321"]
+      expect(del.body[4]).to eq "50 CTNS **HOT** HIJ123 40' SEAL# SEAL890"
+      expect(del.body[5]).to eq "DIVISION DIV1 - 50 CTNS"
+      expect(del.body[6]).to eq "B/L# ABC"
+    end
   end
 end

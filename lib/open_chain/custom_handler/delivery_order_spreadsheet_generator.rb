@@ -105,7 +105,7 @@ module OpenChain; module CustomHandler; class DeliveryOrderSpreadsheetGenerator
     files = []
     begin
       files = delivery_order_files.map {|f| OpenChain::S3.download_to_tempfile(f[:bucket], f[:path], original_filename: File.basename(f[:path])) }
-      body = "Attached #{files.size > 1 ? "are" : "is"} the Delivery Order #{"file".pluralize(files)} for File # #{file_number}."
+      body = "Attached #{files.size > 1 ? "are" : "is"} the Delivery Order #{"file".pluralize(files.size)} for File # #{file_number}."
       OpenMailer.send_simple_html(user.email, "Delivery Order for File # #{file_number}", body,files).deliver!
     ensure
       files.each {|f| f.close! unless f.closed? }
