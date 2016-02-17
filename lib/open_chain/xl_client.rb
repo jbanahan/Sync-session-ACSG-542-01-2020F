@@ -1,3 +1,5 @@
+require 'digest'
+
 module OpenChain
   # Client to communicate with XLServer
   class XLClient
@@ -15,7 +17,7 @@ module OpenChain
       @options = {scheme: "s3", bucket: Rails.configuration.paperclip_defaults[:bucket]}.merge options
 
       @path = assemble_file_path path, @options
-      @session_id = "#{MasterSetup.get.uuid}-#{Process.pid}" #should be unqiue enough
+      @session_id = Digest::SHA1.hexdigest "#{MasterSetup.get.uuid}-#{Time.now.to_f}-#{@path}" #should be unqiue enough
       base_url = "#{YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']}/process"
       @uri = URI(base_url)
     end
@@ -62,6 +64,29 @@ module OpenChain
       send c
     end
 
+    def clone_sheet source_sheet_index, sheet_name=nil
+      payload = {"source_index" => source_sheet_index}
+      payload['name'] = sheet_name unless sheet_name.blank?
+      c = {"command"=>"clone_sheet","path"=>@path,"payload"=>payload}
+      response = send c
+      validate_response response
+      response['sheet_index']
+    end
+
+    def delete_sheet index
+      c = {"command"=>"delete_sheet","path"=>@path,"payload"=>{"index"=>index}}
+      response = send c
+      validate_response response
+      nil
+    end
+
+    def delete_sheet_by_name name
+      c = {"command"=>"delete_sheet","path"=>@path,"payload"=>{"name"=>name}}
+      response = send c
+      validate_response response
+      nil
+    end
+
     # wraps the last_row_number command, converting result into integer or throwing exception
     def last_row_number sheet_number
       c = {"command"=>"last_row_number","path"=>@path,"payload"=>{"sheet_index"=>sheet_number}}
@@ -76,32 +101,61 @@ module OpenChain
       process_row_response r
     end
 
+    def get_rows sheet: 0, number_of_rows: 50, row: 
+      c = {"command"=>"get_rows", "path"=>@path, "payload"=>{"sheet"=>sheet, "row"=>row, "range"=>number_of_rows}}
+      r = send c
+      validate_response r
+      # The response should be a 2 dimensional array, each row should be parsable as a standard "get_row" response value
+      r.map {|row| parse_row_values_to_array(row) }
+    end
+
     def get_row_as_column_hash sheet, row
-      resp = get_row sheet, row
-      r = {}
-      resp.each do |c|
-        col = c['position']['column']
-        r[col] = c['cell']
-      end
-      r
+      parse_row_values_to_hash(get_row(sheet, row))
     end
 
     # call get_row_values for all rows in sheet and yield each row's resulting array
-    def all_row_values sheet_number=0, starting_row_number = 0
+    def all_row_values sheet_number=0, starting_row_number = 0, chunk_size = 50
       r = block_given? ? nil : []
-      lrn = last_row_number(sheet_number) 
-      (starting_row_number..lrn).each do |i|
+      lrn = last_row_number(sheet_number)
+      # Last row number is actually the zero indexed row to retrieve, so make sure we're including that as part of the
+      # row counts we need to grab
+      rows_to_retrieve = (lrn + 1) - starting_row_number
+      rows_retrieved = 0
+      begin
+        to_retrieve = [chunk_size, (rows_to_retrieve - rows_retrieved)].min
+
+        rows = get_rows(row: starting_row_number, sheet: sheet_number, number_of_rows: to_retrieve)
+        rows_retrieved += to_retrieve
+        starting_row_number += to_retrieve
+
         if block_given?
-          yield get_row_values(sheet_number,i)
+          rows.each {|row| yield row }
         else
-          r << get_row_values(sheet_number,i)
+          rows.each {|row| r << row }
         end
-      end
+      end while rows_retrieved < rows_to_retrieve
+
       r
     end
 
     def get_row_values sheet, row
-      r = get_row_as_column_hash sheet, row
+      parse_row_values_to_array(get_row(sheet, row))
+    end
+
+    def parse_row_values_to_hash response
+      r = {}
+      response.each do |c|
+        c = process_cell_response c
+        col = c['position']['column']
+        r[col] =  c['cell']
+      end
+      r
+    end
+    private :parse_row_values_to_hash
+
+    def parse_row_values_to_array response
+      r = parse_row_values_to_hash(response)
+
       return [] if r.blank?
       # I think, technically, there can be missing index values here (.ie 0,1,2,5), which we'll will want to set as as null values
       # for the index is the array so its a true representation of the grid in the spreadsheet.
@@ -112,6 +166,7 @@ module OpenChain
 
       values
     end
+    private :parse_row_values_to_array
 
     def copy_row sheet, source_row, destination_row
       cmd = {'command'=>'copy_row','path'=>@path,'payload'=>{'sheet'=>sheet,'source_row'=>source_row,'destination_row'=>destination_row}}
@@ -120,8 +175,8 @@ module OpenChain
     end
 
     # wraps the save command
-    def save alternate_location=nil
-      alternate_path = (alternate_location.blank? ? @path : assemble_file_path(alternate_location, @options))
+    def save alternate_location=nil, alternate_location_options = {}
+      alternate_path = (alternate_location.blank? ? @path : assemble_file_path(alternate_location, @options.merge(alternate_location_options)))
       c = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>alternate_path}}
       send c
     end
@@ -223,6 +278,12 @@ module OpenChain
       else
         cell['cell']['value'] = Time.at(cell['cell']['value']) if cell && cell['cell'] && cell['cell']['datatype'] == "datetime"
         cell
+      end
+    end
+
+    def validate_response response
+      if response.is_a?(Hash) && response['errors']
+        raise_error response
       end
     end
 

@@ -1,5 +1,6 @@
 require 'open_chain/xl_client'
 require 'open_chain/custom_handler/mass_order_creator'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowParser
   include OpenChain::CustomHandler::MassOrderCreator
