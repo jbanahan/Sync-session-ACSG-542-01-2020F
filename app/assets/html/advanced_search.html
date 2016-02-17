@@ -357,8 +357,39 @@
       </div>
     </div>
   </div>
+  <div class="modal" id="email-modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Email Search Results</h4>
+          </div>
+          <div class="modal-body" id="email-modal-container">
+            <form>
+              <div class='form-group'>
+                <label for='email-to'>To</label>
+                <input id='email-to' type='text' class='form-control' ng-model= 'mailFields.to' />
+              </div>
+              <div class='form-group'>
+                <label for='email-subject'>Subject</label>
+                <input id='email-subject' type='text' class='form-control' ng-model= 'mailFields.subject' />
+              </div>
+              <div class="form-group">
+                <label for="comment">Body</label>
+                <textarea class="form-control" rows="5" id="email-body" ng-model = 'mailFields.body'></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-default" ng-click="sendEmail(mailFields)">Send</button>
+          </div>
+        </div>
+      </div>
+  </div>
   <div chain-search-result='searchResult' page='page' errors='errors' src='/advanced_search/'>
     <button class='btn btn-default navbar-btn' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
+    <a class='btn btn-default navbar-btn' ng-click="showEmailModal()" title='Email'><i class='fa fa-envelope'></i></a>
     <button class='btn btn-default navbar-btn' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()' title='Download'><i class='fa fa-download'></i></button> 
     <a class='btn btn-default navbar-btn' ng-show='searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls' title='Download'><i class='fa fa-download'></i></a>
     <a class='btn btn-default navbar-btn' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new' title='Upload'><i class='fa fa-upload'></i></a>
