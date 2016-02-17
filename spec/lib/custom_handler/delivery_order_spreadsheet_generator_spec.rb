@@ -6,11 +6,11 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
     subject { described_class }
 
     it "returns default generator for random customers" do
-      expect(described_class.get_generator "RNDM").to eq(OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator)
+      expect(described_class.get_generator "RNDM").to be_a(OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator)
     end
 
     it "returns pvh specific generator" do
-      expect(described_class.get_generator "PVH").to eq(OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator)
+      expect(described_class.get_generator "PVH").to be_a(OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator)
     end
   end
 
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
     end
 
     it "generates different message for multiple bills of lading" do
-      entry.master_bills_of_lading "ABC\nDEF"
+      entry.master_bills_of_lading = "ABC\nDEF"
       data = subject.generate_delivery_order_data(entry).first
       expect(data.bill_of_lading).to eq "MULTIPLE - SEE BELOW"
     end

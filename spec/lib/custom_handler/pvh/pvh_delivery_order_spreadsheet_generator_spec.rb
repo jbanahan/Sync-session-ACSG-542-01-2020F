@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
   let (:unlading_port) { Factory(:port, name: "unlading_port")}
 
   let (:entry) {
-    e = Factory(:entry, customer_number: importer.alliance_customer_number, importer: importer, master_bills_of_lading: "ABC\nDEF", broker_reference: "REF", vessel: "VESS", voyage: "123", location_of_goods_description: "TERMINAL", carrier_code: "CODE", arrival_date: Date.new(2016, 02, 16), export_country_codes: "CN", lading_port: lading_port, unlading_port: unlading_port)
+    e = Factory(:entry, customer_number: importer.alliance_customer_number, importer: importer, master_bills_of_lading: "ABC\nDEF", broker_reference: "REF", vessel: "VESS", voyage: "123", location_of_goods_description: "TERMINAL", carrier_code: "CODE", arrival_date: DateTime.new(2016, 02, 16, 12, 00), export_country_codes: "CN", lading_port: lading_port, unlading_port: unlading_port)
     e.containers.create! container_number: "12345", container_size: "20'", size_description: "DRY VAN", seal_number: "SEAL123"
     e.containers.create! container_number: "67890", container_size: "40", size_description: "HIGH Cube", seal_number: "SEAL345"
     e.commercial_invoices.create! invoice_number: "INV1"
