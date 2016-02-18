@@ -245,6 +245,42 @@ describe ReportsController do
     end
   end
 
+  describe "LL Product Risk Report" do
+    context 'show' do
+      it 'renders page for LL user' do
+        MasterSetup.create!(system_code: 'll')
+        @u = Factory(:master_user)
+        @u.stub(:view_products?).and_return true
+        sign_in_as @u
+
+        get :show_ll_prod_risk_report
+        expect(response).to be_success
+      end
+
+      it "doesn't render page for non-LL user" do
+        get :show_ll_prod_risk_report
+        expect(response).to_not be_success
+      end
+    end
+
+    context 'run' do
+      it 'runs report for LL user' do
+        MasterSetup.create!(system_code: 'll')
+        @u = Factory(:master_user)
+        @u.stub(:view_products?).and_return true
+        sign_in_as @u
+
+        ReportResult.should_receive(:run_report!).with("Lumber Liquidators Product Risk Report", @u, OpenChain::Report::LlProdRiskReport, :settings=>{}, :friendly_settings=>[])
+        post :run_ll_prod_risk_report
+      end
+
+      it "doesn't run report for non-LL user" do
+        ReportResult.should_not_receive(:run_report!)
+        post :run_ll_prod_risk_report
+      end
+    end
+  end
+
   describe "PVH Billing Summary Report" do
     context "show" do
       it "renders page for Vandegrift user" do

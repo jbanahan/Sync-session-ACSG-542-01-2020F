@@ -122,6 +122,10 @@
     <tr class='hover'><td><%=link_to "Eddie Bauer CA K84 Summary", reports_show_eddie_bauer_ca_k84_summary_path%></td>
     <td>Shows Eddie Bauer Canadian K84 purchase orders.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::LlProdRiskReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Lumber Liquidators Product Risk Report", reports_show_ll_prod_risk_report_path%></td>
+    <td>Shows all products requiring a risk assignment.</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>
