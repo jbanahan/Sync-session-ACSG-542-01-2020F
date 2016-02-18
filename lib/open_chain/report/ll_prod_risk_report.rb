@@ -5,8 +5,6 @@ module OpenChain
     class LlProdRiskReport
       include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
       include OpenChain::Report::ReportHelper
-
-      LINK_STEM ||= "#{Rails.env.production? ? "https" : "http"}://#{MasterSetup.get.request_host}/vendors/"
       
       def self.permission? user
         user.view_products? && user.company.master? && MasterSetup.get.system_code=='ll'
@@ -33,11 +31,12 @@ module OpenChain
 
       def compile_rows(search_criterion, custom_definitions)
         rows = []; count = 0
+        link_stem = "#{Rails.env.production? ? "https" : "http"}://#{MasterSetup.get.request_host}/vendors/"
         search_criterion.apply(ProductVendorAssignment).limit(25000).each do |pva|
           vendor_sap = custom_definitions[:cmp_sap_company].model_field.process_export(pva.vendor,nil,true)
           count += 1
           row = []
-          row << (vendor_sap ? XlsMaker.create_link_cell(LINK_STEM + pva.vendor_id.to_s, vendor_sap) : "")
+          row << (vendor_sap ? XlsMaker.create_link_cell(link_stem + pva.vendor_id.to_s, vendor_sap) : "")
           row << ModelField.find_by_uid(:cmp_name).process_export(pva.vendor,nil,true)
           row << ModelField.find_by_uid(:prod_uid).process_export(pva.product,nil,true)
           row << ModelField.find_by_uid(:prod_name).process_export(pva.product,nil,true)
