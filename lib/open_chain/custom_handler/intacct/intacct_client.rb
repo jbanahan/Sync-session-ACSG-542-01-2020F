@@ -242,6 +242,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       # if we're just reading information from Intacct there's no point to requiring a unique transaction control
       # identifier.
       control_id = Digest::SHA1.hexdigest intacct_content_xml
+
+      # The Thread.current below is a means of allowing code to force the usage of non-unique controld ids
+      # This is solely for use when there's a hash collision with pushing data and it must be overridden.
+      # This should ONLY ever be utilized from the command line.
       xml = <<-XML
 <?xml version="1.0" encoding="UTF-8"?>
 <request>
@@ -249,7 +253,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     <senderid>#{connection_options[:sender_id]}</senderid>
     <password>#{connection_options[:sender_password]}</password>
     <controlid>#{control_id}</controlid>
-    <uniqueid>#{((production? && unique_content == true) ? "true" : "false")}</uniqueid>
+    <uniqueid>#{((production? && unique_content == true && !Thread.current.thread_variable_get(:force_non_unique_intacct_request)) ? "true" : "false")}</uniqueid>
     <dtdversion>#{connection_options[:api_version]}</dtdversion>
   </control>
   <operation#{((transaction == true) ? ' transaction="true"' : "" )}>

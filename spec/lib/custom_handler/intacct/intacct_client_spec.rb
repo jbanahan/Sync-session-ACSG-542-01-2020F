@@ -302,6 +302,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       end
     end
 
+    after :each do
+      Thread.current.thread_variable_get(:force_non_unique_intacct_request)
+    end
+
     it "posts xml to the intacct API" do
       function_content = "<content>function</content>"
       outer_control_id = Digest::SHA1.hexdigest function_content
@@ -403,6 +407,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Other Error\nCorrection: \nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: "
 
       expect{@c.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
+    end
+
+    it "allows overriding unique request option" do
+      Thread.current.thread_variable_set(:force_non_unique_intacct_request, true)
+      expect(@c.post_xml "location", true, true, "<content>function</content>", "controlid").to eq @resp
+      x = REXML::Document.new(@post.body)
+      expect(x.text "/request/control/uniqueid").to eq "false"
     end
   end
 
