@@ -23,7 +23,7 @@ class ModelField
               :import_lambda, :export_lambda,
               :custom_id, :data_type, :core_module,
               :join_statement, :join_alias, :qualified_field_name, :uid,
-              :public, :public_searchable, :definition, :disabled, :field_validator_rule, 
+              :public, :public_searchable, :definition, :disabled, :field_validator_rule,
               :user_accessible, :autocomplete
 
   def initialize(rank, uid, core_module, field_name, options={})

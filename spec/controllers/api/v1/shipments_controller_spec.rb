@@ -331,7 +331,8 @@ describe Api::V1::ShipmentsController do
     before(:each) do
       @ven = Factory(:company,vendor:true,system_code:'VC')
       @imp = Factory(:company,importer:true,system_code:'IMP')
-      @product = Factory(:product,vendor:@ven,unique_identifier:'PUID1')
+      @product = Factory(:product,unique_identifier:'PUID1')
+      @ven.products_as_vendor << @product
       @s_hash = {'shipment'=>{'shp_ref'=>'MYREF',
         'shp_mode'=>'Sea',
         'shp_ven_syscode'=>'VC',
@@ -462,7 +463,8 @@ describe Api::V1::ShipmentsController do
     before :each do
       @ven = Factory(:company,vendor:true,system_code:'VC')
       @imp = Factory(:company,importer:true,system_code:'IMP')
-      @product = Factory(:product,vendor:@ven,unique_identifier:'PUID1')
+      @product = Factory(:product,unique_identifier:'PUID1')
+      @ven.products_as_vendor << @product
       @shipment = Factory(:shipment,importer:@imp,mode:'Air')
       @s_hash = {
         'id'=>@shipment.id,
@@ -603,7 +605,7 @@ describe Api::V1::ShipmentsController do
 
     it "lines_available is true if any lines are booked at the order_line_id level" do
       Factory :booking_line, shipment_id:@shipment.id, order_line_id:99
-      
+
       get :booked_orders, id:@shipment.id
       expect(response).to be_success
       result = JSON.parse(response.body)['lines_available']
@@ -693,7 +695,7 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "autocomplete_address" do
-    before :each do 
+    before :each do
       @u = Factory(:user, shipment_edit:true,shipment_view:true,order_view:true,product_view:true)
       @importer = Factory(:importer)
       @s = Factory(:shipment, importer: @importer)
@@ -730,7 +732,7 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "create_address" do
-    before :each do 
+    before :each do
       @importer = Factory(:importer)
       @s = Factory(:shipment, importer: @importer)
     end

@@ -17,7 +17,7 @@ class OrderLinesController < LinesController
   end
 
   def set_products_variable parent_obj
-    @products = Product.where(:vendor_id=>parent_obj.vendor)
+    @products = parent_obj.vendor.products_as_vendor
   end
 
   def set_parent_variable obj
@@ -29,7 +29,7 @@ class OrderLinesController < LinesController
   end
 
   def edit_line_path parent, line
-    edit_order_order_line_path parent, line 
+    edit_order_order_line_path parent, line
   end
 
   def update_symbol
@@ -38,5 +38,5 @@ class OrderLinesController < LinesController
   def update_custom_field_symbol
     :orderline_cf
   end
-  
+
 end

@@ -3,7 +3,7 @@ require 'open_chain/business_rule_validation_results_support'
 class VendorsController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
   around_filter :view_vendors_filter, only: [:index, :matching_vendors]
-  
+
   def index
     flash.keep
     redirect_to advanced_search CoreModule::COMPANY, params[:force_search]
@@ -59,7 +59,7 @@ class VendorsController < ApplicationController
   end
 
   def orders
-    render_infinite('orders','order_rows',:orders) do |c|
+    render_infinite('orders','/vendors/orders','order_rows',:orders) do |c|
       @orders = Order.search_secure(current_user,c.vendor_orders.order('orders.order_date desc'))
       @orders = @orders.where('customer_order_number like ?',"%#{params[:q]}%") if params[:q]
       @orders = @orders.paginate(:per_page => 20, :page => params[:page])
@@ -68,7 +68,7 @@ class VendorsController < ApplicationController
   end
 
   def survey_responses
-    render_infinite('surveys','survey_response_rows',:survey_responses) do |c|
+    render_infinite('surveys','/vendors/survey_responses', 'survey_response_rows',:survey_responses) do |c|
       @survey_responses = SurveyResponse.search_secure(current_user,c.survey_responses)
       @survey_responses = @survey_responses.joins(:survey).where('surveys.name like ?',"%#{params[:q]}%") if params[:q]
       @survey_responses = @survey_responses.paginate(:per_page=>20, :page=>params[:page])
@@ -77,8 +77,14 @@ class VendorsController < ApplicationController
   end
 
   def products
-    render_infinite('products','product_rows',:products) do |c|
-      @products = Product.search_secure(current_user,Product.where(vendor_id:c.id).order('unique_identifier'))
+    vendor = Company.find(params[:id])
+    view_template = CustomViewTemplate.for_object 'vendor_products', vendor, '/vendors/products'
+    @partial_template = CustomViewTemplate.for_object 'vendor_product_rows', vendor, 'product_rows'
+    render_infinite('products',view_template,@partial_template,:products) do |c|
+      p = Product.joins(:product_vendor_assignments).where('product_vendor_assignments.vendor_id = ?',c.id)
+      @products = Product.search_secure(
+        current_user,p
+        ).order('unique_identifier')
       @products = @products.where('unique_identifier like ?',"%#{params[:q]}%") if params[:q]
       @products = @products.paginate(:per_page=>20,:page => params[:page])
       @products
@@ -96,19 +102,19 @@ class VendorsController < ApplicationController
   end
 
   private
-  def render_infinite noun, partial, partial_local_name
+  def render_infinite noun, main_template, partial, partial_local_name
     secure_company_view do |c|
       collection = yield(c)
       if !render_infinite_empty(collection,noun)
-        render_layout_or_partial partial, {partial_local_name=>collection}, true
+        render_layout_or_partial main_template, partial, {partial_local_name=>collection}
       end
     end
   end
-  def render_layout_or_partial partial, partial_locals, is_embedded_pane
+  def render_layout_or_partial main_template, partial, partial_locals
     if params[:page]
       render partial: partial, locals:partial_locals
     else
-      render layout: !is_embedded_pane
+      render template: main_template, layout: false
     end
   end
   def render_infinite_empty collection, noun
@@ -123,8 +129,8 @@ class VendorsController < ApplicationController
       return false
     end
   end
-  def secure_company_view param=:id
-    @company = Company.find params[param]
+  def secure_company_view
+    @company = Company.find params[:id]
     action_secure(@company.can_view_as_vendor?(current_user), @company, {:verb => "view", :lock_check => true, :module_name=>"vendor"}) {
       enable_workflow @company
       yield @company if block_given?

@@ -12,10 +12,10 @@ class Order < ActiveRecord::Base
   belongs_to :agent, :class_name=>"Company"
   belongs_to :closed_by, :class_name=>'User'
   belongs_to :factory, :class_name=>'Company'
-	
+
 	validates  :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
-	
+
 	has_many	 :order_lines, dependent: :destroy, order: 'line_number', autosave: true, inverse_of: :order
 	has_many   :piece_sets, :through => :order_lines
 
@@ -70,9 +70,9 @@ class Order < ActiveRecord::Base
     self.unaccept! user, true
   end
   def can_accept? u
-    u.admin? || 
+    u.admin? ||
     (
-      (u.company == self.vendor || u.company == self.agent)  && 
+      (u.company == self.vendor || u.company == self.agent)  &&
       u.in_group?('ORDERACCEPT')
     )
   end
@@ -116,6 +116,20 @@ class Order < ActiveRecord::Base
     user.edit_orders? && (user.company == self.importer || user.company.master?)
   end
 
+  def associate_vendor_and_products! user
+    return unless self.vendor
+    return if self.order_lines.empty?
+
+    already_assigned = self.vendor.products_as_vendor.pluck(:product_id)
+    products_on_order = Set.new(self.order_lines.collect {|ol| ol.product_id}.compact).to_a
+
+    needs_assignment = products_on_order - already_assigned
+
+    needs_assignment.each do |product_id|
+      self.vendor.product_vendor_assignments.create!(product_id:product_id).create_snapshot(user)
+    end
+  end
+
   #get Enumerable of agents that are shared between the vendor and importer
   def available_agents
     vendor_agents = []
@@ -141,16 +155,16 @@ class Order < ActiveRecord::Base
   def shipping?
     self.piece_sets.where("shipment_line_id is not null").count > 0
   end
-	
+
 	def can_view?(user)
 	  return user.view_orders? &&
       (
-        user.company.master || 
-        (user.company_id == self.vendor_id) || 
+        user.company.master ||
+        (user.company_id == self.vendor_id) ||
         (user.company_id == self.importer_id) ||
         (user.company_id == self.agent_id) ||
         (user.company_id == self.factory_id) ||
-        user.company.linked_companies.include?(importer) || 
+        user.company.linked_companies.include?(importer) ||
         user.company.linked_companies.include?(vendor)
       )
 	end
@@ -158,7 +172,7 @@ class Order < ActiveRecord::Base
   def can_view_business_validation_results? u
     self.can_view?(u) && u.view_business_validation_results?
   end
-	
+
   def self.search_where user
     return "1=1" if user.company.master?
     cid = user.company_id
@@ -177,23 +191,23 @@ class Order < ActiveRecord::Base
   def can_attach? user
     return user.attach_orders? && self.can_view?(user)
   end
-  
+
   def self.find_by_vendor(vendor)
     return Order.where({:vendor_id => vendor})
   end
-  
+
   def find_same
     found = self.order_number.nil? ? [] : Order.where({:order_number => self.order_number.to_s})
     raise "Found multiple orders with the same order number #{self.order_number}" if found.size > 1
     return found.empty? ? nil : found.first
   end
-  
+
   def locked?
     !self.vendor.nil? && self.vendor.locked?
   end
-  
+
   dont_shallow_merge :Order, ['id','created_at','updated_at','order_number']
-  
+
   def shipped_qty
     q = 0
     self.order_lines.each do |line|
@@ -201,7 +215,7 @@ class Order < ActiveRecord::Base
     end
     return q
   end
-  
+
   def ordered_qty
     #optimize with a single query
     q = 0
@@ -210,7 +224,7 @@ class Order < ActiveRecord::Base
     end
     return q
   end
- 
+
   def self.search_secure user, base_object
     base_object.where search_where user
   end
@@ -254,7 +268,7 @@ class Order < ActiveRecord::Base
     "#{company_identifer}-#{order_number}"
   end
 
-  private 
+  private
     def has_importer?
       self.importer.present?
     end

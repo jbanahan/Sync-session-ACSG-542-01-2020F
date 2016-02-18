@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
 
   # use with CustomFile.process
   def initialize custom_file
-    @custom_file = custom_file 
+    @custom_file = custom_file
   end
 
   # use with CustomFile.process
@@ -17,13 +17,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
   end
 
   def self.can_view? user
-    return MasterSetup.get.custom_feature?('Lumber EPD') && 
-      user.company.master? && 
-      user.edit_variants? && 
+    return MasterSetup.get.custom_feature?('Lumber EPD') &&
+      user.company.master? &&
+      user.edit_variants? &&
       user.in_group?('PRODUCTCOMP')
   end
 
-  # Parse an S3 file 
+  # Parse an S3 file
   #
   # uses primitives instead of objects to help DelayedJob serialization
   def self.parse_xlsx file_path, user_id
@@ -39,7 +39,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
   end
 
   def self.parse_row_arrays row_arrays
-    row_struct = Struct.new(:article_num, :variant_id, 
+    row_struct = Struct.new(:article_num, :variant_id,
       :vendor_num, :component, :component_thickness,
       :genus, :species, :coo, :row_num)
     rows = []
@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
 
     row_arrays.each_with_index do |r, row_num|
       user_row = row_num+2 #show the user the row number as it appears in the excel sheet
-      r_struct, err = parse_row_array(row_struct,r,user_row) 
+      r_struct, err = parse_row_array(row_struct,r,user_row)
       rows << r_struct if r_struct
       errors << err if err
     end
@@ -102,7 +102,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
 
           cv_val = variant.get_custom_value(cdefs[:var_recipe]).value
           if cv_val!=recipe
-            variant.update_custom_value!(cdefs[:var_recipe],recipe) 
+            variant.update_custom_value!(cdefs[:var_recipe],recipe)
             needs_snapshot = true
           end
 
@@ -110,7 +110,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
           if vendor.nil?
             return ["Vendor \"#{vendor_num}\" not found for row #{va.first.row_num}."]
           end
-          
+
+          pva_search = ProductVendorAssignment.where(vendor_id:vendor.id,product_id:prod.id)
+          if !pva_search.first
+            pva = pva_search.first_or_create!
+            pva.create_snapshot(user)
+          end
+
           plant = vendor.plants.first_or_create!(name:vendor.name)
 
           pva = variant.plant_variant_assignments.where(plant_id:plant.id).first_or_create!
@@ -132,7 +138,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
     end
   end
 
-  def self.write_results_message(user, errors) 
+  def self.write_results_message(user, errors)
     subject = "EPD Processing Complete"
     body = "<p>EPD Processing has finished.</p>"
     if !errors.blank?
@@ -150,8 +156,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
     # skip blank row
     return [nil,nil] if row.length == 0
 
-    if row.length < 33
-      return [nil,"Row #{row_num} failed because it only has #{row.length} columns. All rows must have at least 33 columns."] 
+    if row.length < 32
+      return [nil,"Row #{row_num} failed because it only has #{row.length} columns. All rows must have at least 32 columns."]
     end
 
     rs = struct.new

@@ -9,6 +9,7 @@ class SearchCriterion < ActiveRecord::Base
   belongs_to :business_validation_rule
   belongs_to :business_validation_template
   belongs_to :state_toggle_button, inverse_of: :search_criterions
+  belongs_to :custom_view_template, inverse_of: :search_criterions
 
   validates  :model_field_uid, :presence => true
   validates  :operator, :presence => true

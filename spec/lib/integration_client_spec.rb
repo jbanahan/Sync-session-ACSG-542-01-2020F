@@ -29,7 +29,7 @@ describe OpenChain::IntegrationClient do
       @queue.should_receive(:receive_messages).with(visibility_timeout: 63, limit:10, attributes: [:sent_at], wait_time_seconds: 0).and_return [c1_mock]
       @queue.should_receive(:receive_messages).with(visibility_timeout: 63, limit:10, attributes: [:sent_at], wait_time_seconds: 0).and_return [c_shutdown_mock]
 
-      
+
       remote_file_response = {'response_type'=>'remote_file','status'=>'ok'}
       OpenChain::IntegrationClientCommandProcessor.should_receive(:process_remote_file).and_return(remote_file_response)
       expect(OpenChain::IntegrationClient.process_queue @system_code, 3).to eq 2
@@ -173,6 +173,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
         k.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq @success_hash
       end
+      it "should send data to LL PIR parser" do
+        cmd = {'request_type'=>'remote_file','path'=>'/_sap_pir_xml/x.xml','remote_path'=>'12345'}
+        k = OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser
+        k.should_receive(:delay).and_return k
+        k.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq @success_hash
+      end
+
       it "should send data to LL Article parser" do
         cmd = {'request_type'=>'remote_file','path'=>'/_sap_article_xml/x.xml','remote_path'=>'12345'}
         k = OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser
@@ -224,25 +232,25 @@ describe OpenChain::IntegrationClientCommandProcessor do
       OpenChain::CustomHandler::PoloCsmSyncHandler.should_receive(:delay).and_return OpenChain::CustomHandler::PoloCsmSyncHandler
       OpenChain::CustomHandler::PoloCsmSyncHandler.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345', original_filename: 'a.xls')
       cmd = {'request_type'=>'remote_file','path'=>'/_csm_sync/a.xls','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should send data to Kewill parser if Alliance is enabled and path contains _kewill_isf' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
       OpenChain::CustomHandler::KewillIsfXmlParser.should_receive(:delay).and_return  OpenChain::CustomHandler::KewillIsfXmlParser
       OpenChain::CustomHandler::KewillIsfXmlParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_kewill_isf/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should send data to Fenix parser if custom feature enabled and path contains _fenix but not _fenix_invoices' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
       OpenChain::FenixParser.should_receive(:delay).and_return OpenChain::FenixParser
       OpenChain::FenixParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should not send data to Fenix parser if custom feature is not enabled' do
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix/x.y"} 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix/x.y"}
     end
     it 'should send data to Fenix invoice parser if feature enabled and path contains _fenix_invoices' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
@@ -250,43 +258,43 @@ describe OpenChain::IntegrationClientCommandProcessor do
       OpenChain::CustomHandler::FenixInvoiceParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       OpenChain::FenixParser.should_not_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix_invoices/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should not send data to Fenix invoice parser if custom feature is not enabled' do
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix_invoices/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix_invoices/x.y"} 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix_invoices/x.y"}
     end
     it 'should send data to Alliance parser if custom feature enabled and path contains _alliance' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
       # This path is a no-op now.
       OpenChain::AllianceParser.should_not_receive(:delay)
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should not send data to alliance parser if custom feature is not enabled' do
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_alliance/x.y"} 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_alliance/x.y"}
     end
     it 'should send data to Alliance Day End Invoice parser if custom feature enabled and path contains _alliance_day_end_invoices' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
       OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser
       OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345', original_filename: "x.y")
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance_day_end_invoices/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should send data to Alliance Day End Check parser if custom feature enabled and path contains _alliance_day_end_invoices' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345', original_filename: "x.y")
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance_day_end_checks/x.y','remote_path'=>'12345'}
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should create linkable attachment if linkable attachment rule match' do
       LinkableAttachmentImportRule.create!(:path=>'/path/to',:model_field_uid=>'prod_uid')
       cmd = {'request_type'=>'remote_file','path'=>'/path/to/this.csv','remote_path'=>'12345'}
       LinkableAttachmentImportRule.should_receive(:delay).and_return LinkableAttachmentImportRule
       LinkableAttachmentImportRule.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345', original_filename: 'this.csv', original_path: '/path/to')
-      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it "should send to VF 850 Parser" do
       p = double("parser")
@@ -296,7 +304,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
 
-    it "should send efocus ack files to ack handler" do 
+    it "should send efocus ack files to ack handler" do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('e-Focus Products').and_return(true)
       p = double("parser")
       OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:delay).and_return p

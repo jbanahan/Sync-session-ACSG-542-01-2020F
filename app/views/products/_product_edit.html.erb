@@ -9,7 +9,6 @@ $(function() {
 <table id='product_header'>
   <%unless hide_no_bulk_fields%>
     <%= show_model_fields form_obj, :prod_uid, table: true %>
-    <%= show_model_fields form_obj, :prod_ven_id, {table: true, prod_ven_id: {prompt: "Select a vendor", select_options: lambda {|value| options_from_collection_for_select(Company.vendors.not_locked.order('companies.name ASC'), :id, :name, value)}}} %>
   <%end%>
   <%= show_model_fields form_obj, :prod_name, table: true %>
   <%imps = []-%>
@@ -28,4 +27,4 @@ $(function() {
   <%= show_model_fields form_obj, :prod_div_id, {table: true, prod_div_id: {prompt: "Select a division", select_options: lambda {|value| options_from_collection_for_select(Division.all, :id, :name, value)}}} %>
   <%= show_custom_fields form_obj, {:table=>true, :display_read_only=>!(hide_no_bulk_fields == true)}%>
   <%= show_model_fields(form_obj, :prod_changed_at, table: true) unless hide_no_bulk_fields %>
-</table>	
+</table>

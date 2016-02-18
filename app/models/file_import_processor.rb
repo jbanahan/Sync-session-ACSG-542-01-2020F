@@ -1,4 +1,4 @@
-class FileImportProcessor 
+class FileImportProcessor
   require 'open_chain/field_logic.rb'
 
 #YOU DON'T NEED TO CALL ANY INSTANCE METHODS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
@@ -17,8 +17,8 @@ class FileImportProcessor
     @data = data
     @listeners = listeners
   end
-  
-  
+
+
   def process_file
     begin
       fire_start
@@ -39,9 +39,9 @@ class FileImportProcessor
       @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
     ensure
       fire_end
-    end 
+    end
   end
-  
+
   def preview_file
     get_rows do |row|
       do_row @import_file.starting_row, row, false, @import_file.starting_column - 1, @import_file.user
@@ -71,7 +71,7 @@ class FileImportProcessor
         messages << key_model_field_value
       end
 
-      # The following lock prevents any other process from attempting a concurrent data import on the same 
+      # The following lock prevents any other process from attempting a concurrent data import on the same
       # Core Module + Key combination.  The process attempts to retry the lock wait up to 5 times (default aquire time
       # is 60 seconds, so that's waiting up to 5 minutes for the lock to clear across other processes).
 
@@ -85,7 +85,7 @@ class FileImportProcessor
         @module_chain.to_a.each do |mod|
           if fields_for_me_or_children? data_map, mod
             parent_mod = @module_chain.parent mod
-            obj = find_or_build_by_unique_field data_map, object_map, mod 
+            obj = find_or_build_by_unique_field data_map, object_map, mod
             @core_object = obj if parent_mod.nil? #this is the top level object
             object_map[mod] = obj
             custom_fields = {}
@@ -108,7 +108,7 @@ class FileImportProcessor
                 orig_value = cv.value
                 # If field is a boolean and the value is not nil OR
                 # if either of the original or new value is not blank.
-                if (is_boolean && !val.nil?) || !(orig_value.blank? && val.blank?) 
+                if (is_boolean && !val.nil?) || !(orig_value.blank? && val.blank?)
                   process_import mf, cv, val, user, messages, error_messages
                 else
                   # Don't think this condition ever actually happens since we're already skipping blank values above
@@ -131,7 +131,7 @@ class FileImportProcessor
             end
           end
         end
-        
+
         # If we get blank rows in here somehow (should be prevented elsewhere) it's possible that the object map will be
         # blank, in which case we don't want to do anything of the following
         if object_map[@core_module]
@@ -140,7 +140,7 @@ class FileImportProcessor
           # Add our object errors before validating since the validator may raise an error and we want our
           # process_import errors included in the object too.
           object.errors[:base].push(*error_messages) unless error_messages.blank?
-          
+
           # Reload and freeze all custom values
           if object.respond_to?(:freeze_all_custom_values_including_children)
             CoreModule.walk_object_heirarchy(object) {|cm, obj| obj.custom_values.reload if obj.respond_to?(:custom_values)}
@@ -153,7 +153,7 @@ class FileImportProcessor
           raise OpenChain::ValidationLogicError.new(nil, object) unless object.errors[:base].empty?
           fire_row row_number, object, messages
         end
-        
+
       end
     rescue OpenChain::ValidationLogicError, MissingCoreModuleFieldError => e
       my_base = e.base_object if e.respond_to?(:base_object)
@@ -162,9 +162,9 @@ class FileImportProcessor
       # Put the major error (missing fields) first here
       messages << "ERROR: #{e.message}" if e.is_a? MissingCoreModuleFieldError
       if my_base
-        my_base.errors.full_messages.each {|m| 
+        my_base.errors.full_messages.each {|m|
           messages << "ERROR: #{m}"
-        } 
+        }
       end
       fire_row row_number, nil, messages, true #true = failed
     rescue => e
@@ -182,7 +182,7 @@ class FileImportProcessor
     message = mf.process_import(obj, data, user)
     unless message.blank?
       if message.error?
-        error_messages << message 
+        error_messages << message
       else
         messages << message
       end
@@ -200,7 +200,7 @@ class FileImportProcessor
       FileImportProcessor.raise_validation_exception obj, "Cannot add a record when Update Mode is set to \"Update Only\"." if was_new
     end
   end
-  
+
   def get_boolean_value  data
     if !data.nil? && data.to_s.length>0
       dstr = data.to_s.downcase.strip
@@ -214,7 +214,7 @@ class FileImportProcessor
   end
 
   def fields_for_me_or_children? data_map, cm
-    return true if data_map_has_values? data_map[cm] 
+    return true if data_map_has_values? data_map[cm]
     @module_chain.child_modules(cm).each do |child|
       return true if data_map_has_values? data_map[child]
     end
@@ -227,7 +227,7 @@ class FileImportProcessor
     end
     return false
   end
-  
+
   def merge_or_create(base,save,is_top_level,options={})
     dest = base
     is_new = dest.new_record?
@@ -237,11 +237,11 @@ class FileImportProcessor
     update_mode_check(dest,@import_file.update_mode,is_new) if is_top_level
     return dest
   end
-  
+
   def before_save(dest)
     get_rules_processor.before_save dest, @core_object
   end
-  
+
   def before_merge(shell,database_object)
     get_rules_processor.before_merge shell, database_object, @core_object
   end
@@ -266,7 +266,7 @@ class FileImportProcessor
 
   class CSVImportProcessor < FileImportProcessor
 
-    def row_count 
+    def row_count
       @data.lines.count - (@import_file.starting_row - 1)
     end
     def get_rows &block
@@ -301,9 +301,9 @@ class FileImportProcessor
         yield row if process
       end
     end
-    
+
   end
-    
+
   class RulesProcessor
     def before_save obj, top_level_object
       #stub
@@ -320,11 +320,11 @@ class FileImportProcessor
         country_id = obj.classification.country_id
         [obj.hts_1,obj.hts_2,obj.hts_3].each_with_index do |h,i|
           unless h.blank?
-            ot = OfficialTariff.find_cached_by_hts_code_and_country_id h.strip, country_id 
+            ot = OfficialTariff.find_cached_by_hts_code_and_country_id h.strip, country_id
             if ot.nil?
               @countries_without_hts ||= []
               if !@countries_without_hts.include?(country_id) && !Country.find(country_id).official_tariffs.empty?
-                FileImportProcessor.raise_validation_exception top_level_object, "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." 
+                FileImportProcessor.raise_validation_exception top_level_object, "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}."
               elsif !@countries_without_hts.include?(country_id)
                 @countries_without_hts << country_id
               end
@@ -340,16 +340,13 @@ class FileImportProcessor
         end
       end
     end
-    
+
     def before_merge(shell,database_object,top_level_object)
-      if shell.class==Product && !shell.vendor_id.nil? && !database_object.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
-          FileImportProcessor.raise_validation_exception top_level_object, "An product's vendor cannot be changed via a file upload."
-      end
     end
   end
 
   class OrderRulesProcessor < RulesProcessor
-    
+
     def before_merge(shell,database_object,top_level_object)
       if shell.class == Order && !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
           FileImportProcessor.raise_validation_exception top_level_object, "An order's vendor cannot be changed via a file upload."
@@ -395,7 +392,7 @@ class FileImportProcessor
     if parent_core_module
       parent_object = object_map[parent_core_module]
       search_scope = parent_core_module.child_objects my_core_module, parent_object
-    end    
+    end
 
     key_model_field, key_model_field_value = find_module_key_field(data_map, my_core_module)
 
@@ -444,10 +441,10 @@ class FileImportProcessor
 
   def sanitize_file_data value, mf
     # Primarily we're concerned here when the data type is a string and we get back a numeric from the file reader.
-    # What seems to happen is that the rails query interface handles taking the numeric value, say 1.0, 
+    # What seems to happen is that the rails query interface handles taking the numeric value, say 1.0,
     # and when used in a where clause for something like a find_by_unique_identifier clause produces
     # "where unique_identifier = 1.0", but then when you actually go to save the product record,
-    # the data is converted to a string to be "1" and used in an insert caluse, which can end up causing primary 
+    # the data is converted to a string to be "1" and used in an insert caluse, which can end up causing primary
     # key validation errors.
     # We'll handle turning decimal -> string data here by trimming out any trailing zeros / decimal points.
     if value
@@ -455,7 +452,7 @@ class FileImportProcessor
         # BigDecimal to_s uses engineering notation (stupidly) by default
         value = value.is_a?(BigDecimal) ? value.to_s("F") : value.to_s
         trailing_zeros = value.index /\.0+$/
-        if trailing_zeros 
+        if trailing_zeros
           value = value[0, trailing_zeros]
         end
       elsif model_field_integer_type?(mf) && value.is_a?(Numeric)
@@ -491,10 +488,8 @@ class FileImportProcessor
     fire_event :process_end, Time.now
   end
 
-  def fire_event method, data 
+  def fire_event method, data
     @listeners.each {|ls| ls.send method, data if ls.respond_to?(method) }
   end
 
 end
-
-

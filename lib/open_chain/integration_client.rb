@@ -14,6 +14,7 @@ require 'open_chain/custom_handler/lenox/lenox_po_parser'
 require 'open_chain/custom_handler/lenox/lenox_product_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_article_xml_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_order_xml_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_pir_xml_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_vendor_xml_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
@@ -55,7 +56,7 @@ module OpenChain
           m.delete
         end
       end
-      
+
       messages_processed
     end
 
@@ -63,9 +64,9 @@ module OpenChain
       sqs = AWS::SQS.new(YAML::load_file 'config/s3.yml')
       queue = sqs.queues.create queue_name
       available_messages = []
-      # The max message count is just to try and avoid a situation where the 
+      # The max message count is just to try and avoid a situation where the
       # message count gets out of control (due to something queueing files like crazy).
-      
+
       # Considering the integration client should be set up to run every minute, limiting the
       # number of messages received per run shouldn't be an issue.
       while available_messages.length < max_message_count && queue.visible_messages > 0
@@ -127,6 +128,8 @@ module OpenChain
         OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_sap_article_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_sap_pir_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
         if fname.to_s.match /-ack/
           OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
@@ -183,7 +186,7 @@ module OpenChain
       return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
     rescue => e
       raise e unless Rails.env.production?
-      
+
       total_attempts -= 1
       if total_attempts > 0
         sleep 0.25

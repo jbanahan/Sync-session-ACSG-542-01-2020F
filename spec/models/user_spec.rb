@@ -149,6 +149,26 @@ describe User do
         expect(User.new.comment_vendors?).to be_false
       end
     end
+    context "product_vendor_assignments" do
+      it "should allow if corresponding vendor value is true" do
+        u = User.new
+        u.stub(:view_vendors?).and_return true
+        u.stub(:edit_vendors?).and_return true
+        u.stub(:create_vendors?).and_return true
+        expect(u.view_product_vendor_assignments?).to be_true
+        expect(u.edit_product_vendor_assignments?).to be_true
+        expect(u.create_product_vendor_assignments?).to be_true
+      end
+      it "should not allow if corresponding vendor value is false" do
+        u = User.new
+        u.stub(:view_vendors?).and_return false
+        u.stub(:edit_vendors?).and_return false
+        u.stub(:create_vendors?).and_return false
+        expect(u.view_product_vendor_assignments?).to be_false
+        expect(u.edit_product_vendor_assignments?).to be_false
+        expect(u.create_product_vendor_assignments?).to be_false
+      end
+    end
     context "official tariffs" do
       it "should allow master company user" do
         Factory(:master_user).should be_view_official_tariffs
@@ -708,7 +728,7 @@ describe User do
       expect(u.email).to eq "default@vandegriftinc.com"
       expect(u.errors.full_messages).to eq ["Email invalid: abc@example.*et, nbc123grifter.com"]
     end
-  
+
     it "should have a different error for one invalid email" do
       u = Factory(:user, email: "default@vandegriftinc.com")
       addr = "abc@example.*et"

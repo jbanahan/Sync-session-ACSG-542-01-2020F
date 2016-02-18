@@ -11,7 +11,6 @@ class Company < ActiveRecord::Base
   has_many  :importer_orders, :class_name => 'Order', :foreign_key => 'importer_id', :dependent => :destroy
   has_many  :factory_orders, :class_name => 'Order', :foreign_key => 'factory_id'
 	has_many	:vendor_orders, :class_name => "Order", :foreign_key => "vendor_id", :dependent => :destroy
-	has_many	:vendor_products, :class_name => "Product", :foreign_key => "vendor_id", :dependent => :destroy
 	has_many  :vendor_shipments, :class_name => "Shipment", :foreign_key => "vendor_id", :dependent => :destroy
 	has_many  :carrier_shipments, :class_name => "Shipment", :foreign_key => "carrier_id", :dependent => :destroy
 	has_many  :carrier_deliveries, :class_name => "Delivery", :foreign_key => "carrier_id", :dependent => :destroy
@@ -30,6 +29,8 @@ class Company < ActiveRecord::Base
   has_many  :attachments, as: :attachable, dependent: :destroy
   has_many  :plants, dependent: :destroy, inverse_of: :company
   has_many  :summary_statements, :foreign_key => :customer_id
+  has_many  :product_vendor_assignments, dependent: :destroy, foreign_key: :vendor_id
+  has_many  :products_as_vendor, through: :product_vendor_assignments, source: :product
 
   has_one :attachment_archive_setup, :dependent => :destroy
 
@@ -69,7 +70,7 @@ class Company < ActiveRecord::Base
     if user.company.master?
       '1=1'
     else
-      "companies.id = #{user.company_id} OR (companies.id IN (SELECT linked_companies.child_id FROM linked_companies WHERE linked_companies.parent_id = #{user.company_id}))"  
+      "companies.id = #{user.company_id} OR (companies.id IN (SELECT linked_companies.child_id FROM linked_companies WHERE linked_companies.parent_id = #{user.company_id}))"
     end
   end
 
