@@ -52,7 +52,11 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   def delete_parent_bvre rr
     bvre_id = rr.business_validation_result_id
     total = BusinessValidationRuleResult.where(business_validation_result_id: bvre_id).count
-    rr.business_validation_result.destroy if total.zero?
+    if total.zero?
+      # Have to look this up from DB to prevent a vicious in-memory, recursive after_delete callback loop
+      validation_result = BusinessValidationResult.where(id: bvre_id).first
+      validation_result.destroy if validation_result
+    end
   end
 
 end
