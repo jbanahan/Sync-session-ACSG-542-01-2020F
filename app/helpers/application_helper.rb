@@ -619,4 +619,15 @@ module ApplicationHelper
 
     tags.join("\n").html_safe
   end
+
+  def state_toggle_buttons obj, user, button_class: 'btn btn-default'
+    buttons = StateToggleButton.for_core_object_user(obj,user).collect do |b|
+      path = CoreModule.find_by_object(obj).class_name.tableize
+      show_activate = b.to_be_activated?(obj)
+      btn_text = show_activate ? b.activate_text : b.deactivate_text
+      btn_confirmation = show_activate ? b.activate_confirmation_text : b.deactivate_confirmation_text
+      return "<button class='#{button_class}' state-toggle-confirmation='#{btn_confirmation}' state-toggle-id='#{b.id}' state-toggle-path='#{path}' state-toggle-obj-id='#{obj.id}'>#{btn_text}</button>".html_safe
+    end
+    buttons.join.html_safe
+  end
 end
