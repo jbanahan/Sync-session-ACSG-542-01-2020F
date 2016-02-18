@@ -83,7 +83,7 @@ class CoreModule
     @business_logic_validations = o[:business_logic_validations]
     @key_model_field_uids = o[:key_model_field_uids]
     if o[:edit_path_proc].nil?
-      # The result handles cases where the path doesn't exist.  This code was largely hoisted from search_query_controller_helper 
+      # The result handles cases where the path doesn't exist.  This code was largely hoisted from search_query_controller_helper
       # which did basically the same thing...so we don't care if we get objects that don't have edit paths.
       @edit_path_proc = Proc.new {|obj| edit_polymorphic_path(obj) rescue nil }
     else
@@ -109,7 +109,7 @@ class CoreModule
     @available_addresses_lambda = o[:available_addresses_lambda]
 
     @logical_key_lambda = o[:logical_key_lambda]
-  
+
   end
 
   def quicksearch_sort_by  #returns qualified field name. Getter avoids circular dependency during init

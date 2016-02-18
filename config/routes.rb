@@ -88,6 +88,7 @@ OpenChain::Application.routes.draw do
 
       resources :product_vendor_assignments, only: [:index] do
         put :bulk_update, on: :collection
+        post :bulk_create, on: :collection
       end
 
       resources :model_fields, only: [:index] do

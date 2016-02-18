@@ -23,8 +23,35 @@
     <button class="btn btn-primary" data-toggle="modal" data-target="#ll-risk-edit" disabled="disabled" id='ll-risk-modal-activate'>
       Edit Risk
     </button>
+    <button class="btn btn-success" data-toggle="modal" data-target="#ll-product-add">
+      <i class='fa fa-plus'></i>
+    </button>
   </div>
   <%end%>
+</div>
+<div class="modal fade" id="ll-product-add" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Add Products</h4>
+      </div>
+      <div class="modal-body">
+        <textarea id='ll-products-to-add' class='form-control' placeholder='One article # per line.'></textarea>
+        <label for='ll-add-risk-select'>Risk Level</label>
+        <select id='ll-add-risk-select' class='form-control'>
+          <option value=''></option>
+          <%risk_def.model_field.field_validator_rule.one_of_array.each do |so|%>
+            <option><%=so%></option>
+          <%end%>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id='ll-add-products'>Add</button>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="modal fade" id="ll-risk-edit" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
   <div class="modal-dialog">
@@ -147,6 +174,49 @@
   };
   $(function() {
     if(!window.llProductVariantAssignmentCallbacksSet) {
+      $(document).on('click','#ll-add-products',function(evt) {
+        uidsToAdd = function(str) {
+          var rv;
+          var rows = str.split(/\r\n|\r|\n/);
+          var toReturn = [];
+          for (var i = 0; i < rows.length; i++) {
+            rv = rows[i].trim();
+            if(rv.length > 0) {
+              rv = ("000000000000000000"+rv).substring(rv.length);
+              toReturn.push(rv);
+            }
+          }
+          return toReturn;
+        };
+        var prod_uids = uidsToAdd($('#ll-products-to-add').val());
+        var vendor_ids = [<%=@company.id%>];
+        var product_vendor_assignment = {}
+        product_vendor_assignment["<%=risk_def.model_field_uid%>"] = $('#ll-add-risk-select').val();
+
+        if(prod_uids.length>100) {
+          window.alert("You can only enter 100 products at a time. You've entered "+prod_uids.length+".");
+          return;
+        }
+
+        $('#ll-product-add').modal('hide');
+        $('#ll-product-panel-row').html("<div class='loader'>loading</div>");
+        $.ajax('/api/v1/product_vendor_assignments/bulk_create',{
+          type:'POST',
+          headers: {
+            Accept : "application/json",
+            "Content-Type": "application/json"
+          },
+          data: JSON.stringify({prod_uids:prod_uids,vendor_ids:vendor_ids,product_vendor_assignment:product_vendor_assignment}),
+          success: function(response) {
+            $('#ll-products-to-add').val('');
+            LLProductVariantAssignmentLoad();
+            window.alert("Save successful.\n"+response.messages.join("\n"));
+          },
+          error: function() {
+            window.alert('Save failed. Please reload and try again.');
+          }
+        });
+      });
       $(document).on('click','#ll-load-more',LLProductVariantAssignmentLoadMore);
       $(document).on('change','#ll-pva-filter',LLProductVariantAssignmentLoad);
       $(document).on('change','input[data-pva-id]',LLProductVariantAssignmentUpdateChecked);
