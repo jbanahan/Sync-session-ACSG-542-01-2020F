@@ -191,29 +191,6 @@ describe VendorsController do
       expect(response).to be_success
       expect(response).to render_template 'custom_views/lumber_liquidators/vendors/products'
     end
-    it "should render default product partial" do
-      @u.update_attributes(product_view:true)
-      @u.company.update_attributes(vendor:true)
-      User.any_instance.stub(:view_products?).and_return true
-      Company.any_instance.stub(:can_view_as_vendor?).and_return true
-      p = Factory(:product)
-      p.vendors << @u.company
-      get :products, id: @u.company_id.to_s, page:1
-      expect(response).to be_success
-      expect(response).to render_template(:partial => 'vendors/_product_rows')
-    end
-    it "should render custom product partial" do
-      CustomViewTemplate.create!(template_identifier:'vendor_product_rows',template_path:'custom_views/lumber_liquidators/vendors/product_rows')
-      @u.update_attributes(product_view:true)
-      @u.company.update_attributes(vendor:true)
-      User.any_instance.stub(:view_products?).and_return true
-      Company.any_instance.stub(:can_view_as_vendor?).and_return true
-      p = Factory(:product)
-      p.vendors << @u.company
-      get :products, id: @u.company_id.to_s, page:1
-      expect(response).to be_success
-      expect(response).to render_template(:partial => 'custom_views/lumber_liquidators/vendors/_product_rows')
-    end
   end
 
   describe :plants do
