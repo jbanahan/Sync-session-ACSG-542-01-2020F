@@ -16,7 +16,7 @@ module LinesSupport
       belongs_to :product
       before_validation :default_quantity
       validates :product, :presence => true
-      
+
       unless self.name == "DrawbackImportLine"
         before_validation :default_line_number
       end
@@ -41,7 +41,7 @@ module LinesSupport
       max = p.send(my_association.to_sym).collect {|o| o.line_number}.compact.sort.last unless p.nil?
       self.line_number = (max.nil? || max < 1) ? 1 : (max + 1)
     end
-  end 
+  end
 
   def default_quantity
     self.quantity = 0 if self.quantity.nil?
@@ -93,6 +93,18 @@ module LinesSupport
       ps.update_attributes(self.class.reflections[:piece_sets].foreign_key=>nil)
       PieceSet.merge_duplicates! ps
     end
+  end
+
+  def create_snapshot_with_async_option async, user=User.current, imported_file=nil
+    parent_obj.create_snapshot_with_async_option async, user, imported_file
+  end
+
+  def create_snapshot user=User.current, imported_file=nil
+    parent_obj.create_snapshot user, imported_file
+  end
+
+  def create_async_snapshot user=User.current, imported_file=nil
+    parent_obj.create_async_snapshot user, imported_file
   end
 
   private

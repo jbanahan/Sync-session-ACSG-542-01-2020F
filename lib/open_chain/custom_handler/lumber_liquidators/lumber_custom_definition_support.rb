@@ -28,7 +28,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     cmp_pc_approved_by_executive: {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'Company'},
     cmp_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :date, module_type: 'Company'},
     cmp_vendor_agreement_review: {label: 'Vendor Agreement Review', data_type: :string, module_type: 'Company'},
-    cmp_risk: {label: 'Risk', data_type: :string, module_type: 'Company'},
     cmp_po_blocked: {label: 'PO Blocked', data_type: :boolean, module_type: 'Company'},
     plnt_country_iso_code: {label: 'Country ISO Code', data_type: :string, module_type: 'Plant'},
     plnt_sap_coo_abbreviation: {label: 'SAP COO Abbreviation', data_type: :string, module_type: 'Plant'},
@@ -94,11 +93,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     prodven_risk: {label:'Risk',data_type: :string, module_type:'ProductVendorAssignment'},
     pva_pc_approved_by: {label: 'PC Approved By', data_type: :integer, module_type: 'PlantVariantAssignment'},
     pva_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'PlantVariantAssignment'},
-    ord_approval_level: {label: 'Approval Level', data_type: :string, module_type: 'Order'},
     ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'},
     ord_type: {label: 'Order Type', data_type: :string, module_type: 'Order'},
     ord_buyer_name: {label: 'Buyer Name', data_type: :string, module_type: 'Order'},
     ord_buyer_phone: {label: 'Buyer Phone', data_type: :string, module_type: 'Order'},
+    ordln_pc_approved_by:  {label: 'PC Approved By', data_type: :integer, module_type: 'OrderLine'},
+    ordln_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'OrderLine'},
+    ordln_pc_approved_by_executive:  {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'OrderLine'},
+    ordln_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :datetime, module_type: 'OrderLine'},
     var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant'}
   }
 
