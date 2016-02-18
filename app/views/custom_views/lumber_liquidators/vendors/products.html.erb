@@ -17,17 +17,19 @@
       loading
     </div>
   </div>
-  <%if risk_def.model_field.can_edit?(current_user)%>
   <div class="row">
     <button class="btn btn-default" id="ll-load-more">Load More</button>
-    <button class="btn btn-primary" data-toggle="modal" data-target="#ll-risk-edit" disabled="disabled" id='ll-risk-modal-activate'>
-      Edit Risk
-    </button>
-    <button class="btn btn-success" data-toggle="modal" data-target="#ll-product-add">
-      <i class='fa fa-plus'></i>
-    </button>
+    <%if risk_def.model_field.can_edit?(current_user)%>
+      <button class="btn btn-primary" data-toggle="modal" data-target="#ll-risk-edit" disabled="disabled" id='ll-risk-modal-activate'>
+        Edit Risk
+      </button>
+    <%end%>
+    <%if @company.can_edit?(current_user) %>
+      <button class="btn btn-success" data-toggle="modal" data-target="#ll-product-add">
+        <i class='fa fa-plus'></i>
+      </button>
+    <%end%>
   </div>
-  <%end%>
 </div>
 <div class="modal fade" id="ll-product-add" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
   <div class="modal-dialog">
