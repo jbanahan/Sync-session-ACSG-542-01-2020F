@@ -166,6 +166,8 @@ OpenChain::Application.routes.draw do
       resources :countries, only: [:index]
 
       resources :support_requests, only: [:create]
+
+      resources :search_criterions, only: [:index, :create, :update, :destroy]
     end
   end
 

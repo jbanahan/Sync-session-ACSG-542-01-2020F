@@ -1,6 +1,7 @@
 require 'open_chain/workflow_processor'
 
 module Api; module V1; class AttachmentsController < Api::V1::ApiController
+  include PolymorphicFinders
 
   # The create call is done via a multipart/form posting..so don't check for json
   skip_before_filter :validate_format, only: [:create]
@@ -99,10 +100,8 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
 
     def validate_attachable_class_name class_name
       begin
-        klass = class_name.constantize
-        # If < is true, it means class inherits from ActiveRecord::Base
-        return klass < ActiveRecord::Base ? klass.name : nil
-      rescue NameError
+        constantize(class_name) ? class_name : nil
+      rescue
         nil
       end
     end

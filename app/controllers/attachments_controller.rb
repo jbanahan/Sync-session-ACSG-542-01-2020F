@@ -1,6 +1,8 @@
 require 'open_chain/workflow_processor'
 
 class AttachmentsController < ApplicationController
+  include PolymorphicFinders
+
   skip_before_filter :portal_redirect, only: [:download]
   def create
     if params[:attachment][:attached].nil?
@@ -132,7 +134,7 @@ class AttachmentsController < ApplicationController
   end
 
   def get_attachable type, id
-    attachable = type.to_s.camelize.constantize.where(id: id).first
+    attachable = polymorphic_scope(type).where(id: id).first
   end
 
 end
