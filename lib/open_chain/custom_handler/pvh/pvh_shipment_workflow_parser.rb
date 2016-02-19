@@ -194,7 +194,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         shipment_line.find_and_set_custom_value(@cdefs[:shpln_invoice_number], v(line, 11))
       end
 
-      saved = shipment.changed? && shipment.save
+      saved = changed?(shipment) && shipment.save
     end
 
     if saved
@@ -273,6 +273,24 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
       headers = Set.new ["ETA", "REFERENCE #", "WORKSHEET", "VESSEL", "SHIPMENT", "SCAC", "B/L#", "PRIORITY", "WHSE", "COO", "INVOICE #", "CO", "DIV", "PO", "STYLE", "TH STYLE", "COLOR", "SHIPPED QUANTITY", "STYLE DESCRIPTION", "COST / PC", "CARTONS", "NEED BY DATE", "PORT OF ENTRY", "VOYAGE", "PORT OF DEPARTURE", "ETD"]
 
       (headers & Set.new(row.map {|r| r.to_s.upcase})).length > 4
+    end
+
+    def changed? shipment
+      # Apparently we can't rely on the "changed?" flag in active record to accurately report if anything other than the object
+      # itself has changed - .ie shipment.changed? can't tell if any shipments lines have changed or have been added
+      changed = shipment_heirarchy_changed?(shipment)
+
+      # Check if any containers changed (containers aren't part of the core module heirarchy).
+      if !changed
+        changed = shipment.containers.map(&:changed?).uniq.any? {|v| v }
+      end
+
+      changed
+    end
+
+    def shipment_heirarchy_changed? shipment
+      CoreModule.walk_object_heirarchy(shipment) {|cm, object| return true if object.changed?}
+      false
     end
 
 end; end; end; end;

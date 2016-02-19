@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
 
     it "updates an existing order" do
       product = Factory(:product, importer: importer)
-      order = Order.create! order_number: "12345", importer: importer
+      order = Order.create! order_number: "12345", importer: importer, order_date: Date.new(2016, 2, 1)
       order.order_lines.create! product: product, quantity: 20
 
       orders = subject.create_orders user, [order_attributes]

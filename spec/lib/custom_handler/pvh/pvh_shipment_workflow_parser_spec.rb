@@ -185,6 +185,22 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(shipment.shipment_lines.first.product.entity_snapshots.length).to eq 1
       expect(shipment.shipment_lines.first.piece_sets.first.order_line.order.entity_snapshots.size).to eq 1
     end
+
+    it "handles updating shipments with new lines" do
+      existing_shipment.shipment_lines.first.destroy
+
+      result = subject.process_shipment_lines user, "OOLU2567813300", [workflow_file_line]
+
+      expect(result[:errors]).to eq []
+      expect(result[:shipment]).not_to be_blank
+      shipment = result[:shipment]
+
+      # Just make sure the shipment line is created and it's not equal to the one we destroyed
+      expect(shipment).to eq existing_shipment
+      expect(shipment.shipment_lines.length).to eq 1
+      expect(shipment.shipment_lines.first).not_to eq existing_shipment.shipment_lines.first
+      expect(shipment.shipment_lines.first.product).to eq existing_product
+    end
   end
 
   describe "can_view?" do

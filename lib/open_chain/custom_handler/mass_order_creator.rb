@@ -183,7 +183,7 @@ module OpenChain; module CustomHandler; module MassOrderCreator
     end
 
     def apply_attributes_and_save obj, obj_attributes, user
-      if obj.assign_model_field_attributes(obj_attributes, user: user) && obj.changed?
+      if obj.assign_model_field_attributes(obj_attributes, user: user) && changed?(obj)
         if obj.save
           # Load all custom values to optimize snapshot speed
           obj.freeze_all_custom_values_including_children
@@ -191,6 +191,15 @@ module OpenChain; module CustomHandler; module MassOrderCreator
         end
       end
     end
+
+
+    def changed? obj
+      # Apparently we can't rely on the "changed?" flag in active record to accurately report if anything other than the object
+      # itself has changed - .ie order.changed? can't tell if any order lines have changed.
+      CoreModule.walk_object_heirarchy(obj) {|cm, object| return true if object.changed?}
+      false
+    end
+
 
   end
 end; end; end;
