@@ -7,7 +7,7 @@ require 'open_chain/custom_handler/polo/polo_validation_rule_entry_invoice_line_
 require 'open_chain/custom_handler/ascena/validation_rule_ascena_invoice_audit'
 
 class BusinessValidationTemplate < ActiveRecord::Base
-  attr_accessible :description, :module_type, :name
+  attr_accessible :description, :module_type, :name, :delete_pending
   validates :module_type, presence: true
   
   has_many :business_validation_rules, dependent: :destroy, inverse_of: :business_validation_template
@@ -90,7 +90,9 @@ class BusinessValidationTemplate < ActiveRecord::Base
       bvr.save!
 
       self.business_validation_rules.each do |rule|
-        bvr.business_validation_rule_results.where(business_validation_rule_id:rule.id).first_or_create!
+        unless rule.delete_pending?
+          bvr.business_validation_rule_results.where(business_validation_rule_id:rule.id).first_or_create!
+        end
       end
 
       if run_validation
@@ -101,5 +103,10 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
     
     bvr
+  end
+
+  def self.async_destroy id
+    template = find_by_id id
+    template.destroy if template
   end
 end
