@@ -151,14 +151,18 @@ class AdvancedSearchController < ApplicationController
       mail_fields = params[:mail_fields] || {}
       email_to = mail_fields[:to]
       if email_to.blank?
-        render_json_error "Email address is required."
+        render_json_error "Please enter an email address."
       else
-        email_list = email_to.split(',')
-        unless email_list.map{ |e| EmailValidator.valid? e }.all?
-          render_json_error "Invalid email. Be sure to separate multiple addresses with commas."
+        email_list = email_to.delete(' ').split(',')
+        if email_list.count > 10
+          render_json_error "Cannot accept more than 10 email addresses."
         else
-          OpenChain::Report::XLSSearch.delay.run_and_email_report current_user, ss.id, mail_fields
-          render :json=>{:ok=>:ok}
+          unless email_list.map{ |e| EmailValidator.valid? e }.all?
+            render_json_error "Please ensure all email addresses are valid and separated by commas."
+          else
+            OpenChain::Report::XLSSearch.delay.run_and_email_report current_user, ss.id, mail_fields
+            render :json=>{:ok=>:ok}
+          end
         end
       end
     else

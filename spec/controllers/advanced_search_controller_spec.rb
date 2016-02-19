@@ -480,14 +480,22 @@ describe AdvancedSearchController do
       OpenChain::Report::XLSSearch.should_not_receive(:delay)
       
       post :send_email, :id=>@ss.id, :mail_fields=> {}
-      expect(JSON.parse(response.body)['error']).to eq "Email address is required."
+      expect(JSON.parse(response.body)['error']).to eq "Please enter an email address."
     end
 
     it "errors if one or more emails aren't valid" do
       OpenChain::Report::XLSSearch.should_not_receive(:delay)
       
       post :send_email, :id=>@ss.id, :mail_fields=> {'to' => 'tufnel@stonehenge.biz, st-hubbins.com'}
-      expect(JSON.parse(response.body)['error']).to eq "Invalid email. Be sure to separate multiple addresses with commas."
+      expect(JSON.parse(response.body)['error']).to eq "Please ensure all email addresses are valid."
+    end
+
+    it "errors if there are more than 10 email addresses" do
+      OpenChain::Report::XLSSearch.should_not_receive(:delay)
+
+      email_list = Array.new(11){|i| "address#{i}@vandegriftinc.com"}.join(', ')
+      post :send_email, :id=>@ss.id, :mail_fields=> {'to' => email_list}
+      expect(JSON.parse(response.body)['error']).to eq "Cannot accept more than 10 email addresses."
     end
 
     it "errors if search not found" do
