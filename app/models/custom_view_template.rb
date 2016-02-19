@@ -1,5 +1,5 @@
 class CustomViewTemplate < ActiveRecord::Base
-  has_many :search_criterions
+  has_many :search_criterions, dependent: :destroy
 
   def self.for_object template_identifier, base_object, default=nil
     CustomViewTemplate.includes(:search_criterions).where(template_identifier:template_identifier).each do |cvt|

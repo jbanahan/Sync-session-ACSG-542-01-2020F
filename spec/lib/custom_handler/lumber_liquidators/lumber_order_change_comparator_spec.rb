@@ -19,6 +19,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       described_class.should_receive(:fingerprint).with(new_h).and_return 'newfp'
 
       described_class.should_receive(:run_changes).with('Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv')
+      described_class.should_receive(:compare_lines)
       described_class.compare 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
     it 'should not call run_changes if both versions have the same fingerprint' do
@@ -42,7 +43,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       o.update_attributes(order_number:'ON1',ship_window_start:Date.new(2015,1,1),ship_window_end:Date.new(2015,1,10),currency:'USD',terms_of_payment:'NT30',terms_of_sale:'FOB')
       o.reload
 
-      expected_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~1~px~10.0~EA~5.0~2~px~50.0~FT~7.0"
+      expected_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0"
 
       h = JSON.parse(CoreModule::ORDER.entity_json(o))
 
@@ -82,6 +83,35 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       @o.should_receive(:unaccept!).with(@u)
       @o.should_receive(:approval_status).and_return 'Approved'
       described_class.run_changes 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
+    end
+  end
+
+  describe '#compare_lines' do
+    it "should only run lines changes for lines that changed" do
+      fingerprint_1 = 'ON1~2015-01-01~2015-01-10~USD~NT30~FOB~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~ab~19.2~FT~8.4'
+      fingerprint_2 = 'ON1~2015-01-01~2015-01-10~USD~NT30~FOB~~1~px~10.1~EA~5.0~~2~px~50.0~FT~7.0'
+      order_id = 10
+      described_class.should_receive(:run_line_changes).with(10,'1',instance_of(Hash))
+      described_class.should_receive(:run_line_changes).with(10,'3',instance_of(Hash))
+      described_class.compare_lines(order_id,fingerprint_1,fingerprint_2)
+    end
+  end
+  describe '#run_line_changes' do
+    it "should unapprove for both PC & Exec PC" do
+      cdefs = described_class.prep_custom_definitions([:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])
+      u = Factory(:user)
+      ol = Factory(:order_line,line_number:3)
+      ol.update_custom_value!(cdefs[:ordln_pc_approved_by],u.id)
+      ol.update_custom_value!(cdefs[:ordln_pc_approved_date],Time.now)
+      ol.update_custom_value!(cdefs[:ordln_pc_approved_by_executive],u.id)
+      ol.update_custom_value!(cdefs[:ordln_pc_approved_date_executive],Time.now)
+
+      described_class.run_line_changes(ol.order_id,'3')
+
+      ol.reload
+      [:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive].each do |uid|
+        expect(ol.get_custom_value(cdefs[uid]).value).to be_blank
+      end
     end
   end
 end

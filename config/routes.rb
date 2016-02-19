@@ -50,6 +50,10 @@ OpenChain::Application.routes.draw do
         post :accept, on: :member
         post :unaccept, on: :member
       end
+      resources :order_lines, only: [] do
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
+      end
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
@@ -210,14 +214,14 @@ OpenChain::Application.routes.draw do
       post 'generate_delivery_order'
     end
 
-    collection do 
+    collection do
       get 'reprocess'
 
       post 'bulk_get_images'
       post 'bulk_request_entry_data'
     end
 
-    resources :broker_invoices, :only=>[:create]  
+    resources :broker_invoices, :only=>[:create]
   end
 
   resources :business_validation_templates do
@@ -312,7 +316,7 @@ OpenChain::Application.routes.draw do
 
   resources :status_rules
   resources :attachments do
-    member do 
+    member do
       get 'download'
     end
 

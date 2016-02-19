@@ -145,7 +145,7 @@
     $('#ll-product-panel-row').html("<div class='loader'>loading</div>");
     LLProductVariantAssignmentGetPage(1,function(rowHtml) {
       html = "<div><table class='table table-condensed table-striped'>";
-      html += "<thead><tr><th></th><th></th><th>Article #</th><th>Name</th><th>Risk</th></tr></thead>";
+      html += "<thead><tr><th><input type='checkbox' id='ll-product-select-all' /></th><th></th><th>Article #</th><th>Name</th><th>Risk</th></tr></thead>";
       html += "<tbody id='ll-product-panel-body' data-page='1'>";
       html += rowHtml;
       html += "</tbody></table></div>";
@@ -176,6 +176,11 @@
   };
   $(function() {
     if(!window.llProductVariantAssignmentCallbacksSet) {
+      $(document).on('change','#ll-product-select-all',function(evt) {
+        checkAll = $(this).prop('checked');
+        $('input[data-pva-id]').prop('checked',checkAll);
+        $('input[data-pva-id]:first').change(); //changing property doesn't fire change event which we need to activate the edit risk button
+      });
       $(document).on('click','#ll-add-products',function(evt) {
         uidsToAdd = function(str) {
           var rv;
