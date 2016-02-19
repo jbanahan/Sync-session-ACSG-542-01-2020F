@@ -179,6 +179,7 @@
       $(document).on('change','#ll-product-select-all',function(evt) {
         checkAll = $(this).prop('checked');
         $('input[data-pva-id]').prop('checked',checkAll);
+        $('input[data-pva-id]:first').change(); //changing property doesn't fire change event which we need to activate the edit risk button
       });
       $(document).on('click','#ll-add-products',function(evt) {
         uidsToAdd = function(str) {
