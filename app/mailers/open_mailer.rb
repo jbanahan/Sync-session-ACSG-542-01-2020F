@@ -144,7 +144,7 @@ EOS
 
   def send_search_result_manually(to, subject, body, file_path, current_user)
     @user = current_user 
-    @body_text = ERB::Util.html_escape(body).html_safe
+    @body_text = body
     attachment_saved = save_large_attachment(file_path, to)
     m = mail(:to => to,
       :reply_to => @user.email,

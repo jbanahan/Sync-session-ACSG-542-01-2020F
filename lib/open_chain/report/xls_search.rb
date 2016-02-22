@@ -8,7 +8,7 @@ module OpenChain
 
       def self.run_and_email_report run_by, search_setup_id, mail_fields
         report = run(run_by, search_setup_id)
-        OpenMailer.send_search_result_manually(mail_fields[:to], mail_fields[:subject], mail_fields[:body], report.path, run_by).deliver!
+        OpenMailer.send_search_result_manually(mail_fields[:to], mail_fields[:subject], ERB::Util.html_escape(mail_fields[:body]), report.path, run_by).deliver!
       rescue => e
         e.log_me
         run_by.messages.create!(:subject=>"Report FAILED: Search-results email",:body=>"<p>Your report failed to run due to a system error.</p>")
