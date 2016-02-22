@@ -58,7 +58,8 @@ class BusinessValidationRulesController < ApplicationController
     admin_secure do 
       @bvr = BusinessValidationRule.find(params[:id])
       @bvt = @bvr.business_validation_template
-      @bvr.destroy
+      @bvr.update_attribute(:delete_pending, true)
+      BusinessValidationRule.delay.async_destroy @bvr.id
       redirect_to edit_business_validation_template_path(@bvt)
     end
   end
