@@ -28,7 +28,7 @@
     <div class="col-md-12">
       <h2>Rules</h2>
     </div>
-    <%@bv_template.business_validation_rules.each do |bvr|%>
+    <%@bv_template.business_validation_rules.reject(&:delete_pending?).each do |bvr|%>
     <div class='col-md-12 rule-container'>
       <h3><%=bvr.name%> (<%=BusinessValidationRule::SUBCLASSES[bvr.type.to_sym][:label]%>)</h3>
       <div><strong>Description: </strong><%=bvr.description%></div>
