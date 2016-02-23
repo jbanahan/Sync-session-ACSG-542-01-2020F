@@ -196,5 +196,13 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
       expect(del.body[5]).to eq "DIVISION DIV1 - 50 CTNS"
       expect(del.body[6]).to eq "B/L# ABC"
     end
+
+    it "matches entry to shipment with house bill" do
+      entry.update_attributes! house_bills_of_lading: "ABC", master_bills_of_lading: ""
+
+      shipment
+      delivery_orders = subject.generate_delivery_order_data entry
+      expect(delivery_orders.size).to eq 2
+    end
   end
 end

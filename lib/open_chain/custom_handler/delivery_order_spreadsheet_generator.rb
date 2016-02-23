@@ -94,18 +94,27 @@ module OpenChain; module CustomHandler; class DeliveryOrderSpreadsheetGenerator
     end
     
     # Clear the primary "template" tab from the spreadsheet - which will always be index 0
-    xl.delete_sheet 0
-    path = s3_file_path(Array.wrap(delivery_orders))
-    xl.save path, bucket: s3_destination_bucket
-
-    [{bucket: s3_destination_bucket, path: path}]
+    if Array.wrap(delivery_orders).length > 0
+      xl.delete_sheet 0
+      path = s3_file_path(Array.wrap(delivery_orders))
+      xl.save path, bucket: s3_destination_bucket
+      [{bucket: s3_destination_bucket, path: path}]
+    else
+      []
+    end
+    
   end
 
   def send_delivery_order user, file_number, delivery_order_files
     files = []
     begin
       files = delivery_order_files.map {|f| OpenChain::S3.download_to_tempfile(f[:bucket], f[:path], original_filename: File.basename(f[:path])) }
-      body = "Attached #{files.size > 1 ? "are" : "is"} the Delivery Order #{"file".pluralize(files.size)} for File # #{file_number}."
+      if files.length == 0
+        body = "No Delivery Orders were generated for File # #{file_number}."
+      else
+        body = "Attached #{files.size > 1 ? "are" : "is"} the Delivery Order #{"file".pluralize(files.size)} for File # #{file_number}."
+      end
+      
       OpenMailer.send_simple_html(user.email, "Delivery Order for File # #{file_number}", body,files).deliver!
     ensure
       files.each {|f| f.close! unless f.closed? }

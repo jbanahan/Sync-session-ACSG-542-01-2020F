@@ -103,6 +103,11 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
       expect(files.length).to eq 1
       expect(files.first).to eq({bucket: 'chainio-temp', path: "#{MasterSetup.get.uuid}/delivery_orders/REF.xlsx"})
     end
+
+    it "handles no delivery order files" do
+      files = subject.generate_delivery_order_spreadsheets []
+      expect(files).to be_empty
+    end
   end
 
   describe "send_delivery_order" do
@@ -141,6 +146,16 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
       expect(m.body.raw_source).to include "Attached are the Delivery Order files for File # 12345."
       expect(m.attachments["file.xlsx"]).not_to be_nil
       expect(m.attachments["file-b.xls"]).not_to be_nil
+    end
+
+    it "sends different message to user if there are no delivery orders generated" do
+      subject.send_delivery_order user, "12345", []
+
+      expect(ActionMailer::Base.deliveries.size).to eq 1
+      m = ActionMailer::Base.deliveries.first
+      expect(m.to).to eq ["me@there.com"]
+      expect(m.subject).to eq "Delivery Order for File # 12345"
+      expect(m.body.raw_source).to include "No Delivery Orders were generated for File # 12345."
     end
   end
 

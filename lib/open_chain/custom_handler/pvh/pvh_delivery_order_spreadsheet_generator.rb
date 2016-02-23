@@ -159,7 +159,10 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
   def get_shipment_lines entry
     invoice_numbers = entry.commercial_invoices.map {|inv| inv.invoice_number.blank? ? nil : inv.invoice_number.strip }.uniq
     containers = entry.containers.map {|c| c.container_number.blank? ? nil : c.container_number.strip }.uniq
-    master_bills = entry.master_bills_of_lading.split(/\s*\n\s*/)
+    # For air shipments, the master bill on the shipment matches to the entry's house bill (we don't know in the shipment parser if the 
+    # the shipment is air or ocean, so we just put the bol in master bill)
+    bills = entry.master_bills_of_lading.split(/\s*\n\s*/) + entry.house_bills_of_lading.split(/\s*\n\s*/)
+
 
     shipment_lines = ShipmentLine.select("DISTINCT shipment_lines.*").
                         joins("INNER JOIN shipments ON shipments.id = shipment_lines.shipment_id").
@@ -169,7 +172,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
                         where("companies.alliance_customer_number = ? ", entry.customer_number).
                         where("containers.container_number IN (?)", containers).
                         where("custom_values.string_value IN (?)", invoice_numbers).
-                        where("shipments.master_bill_of_lading IN (?)", master_bills)
+                        where("shipments.master_bill_of_lading IN (?)", bills)
 
     shipment_lines
   end
