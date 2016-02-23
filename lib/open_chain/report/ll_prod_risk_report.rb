@@ -19,7 +19,7 @@ module OpenChain
       end
 
       def create_workbook
-        headers = ["Vendor SAP #", "Vendor Name", "Product SAP #", "Product Name", "Order Count"]
+        headers = ["Vendor SAP #", "Vendor Name", "Product SAP #", "Product Name"]
         wb, sheet = XlsMaker.create_workbook_and_sheet "Products Needing Risk Assignment"
         
         custom_defs = self.class.prep_custom_definitions([:prodven_risk,:cmp_sap_company])
@@ -31,18 +31,17 @@ module OpenChain
 
       def compile_rows(search_criterion, custom_definitions)
         rows = []; count = 0
-        link_stem = "#{Rails.env.production? ? "https" : "http"}://#{MasterSetup.get.request_host}/vendors/"
         search_criterion.apply(ProductVendorAssignment).limit(25000).each do |pva|
-          vendor_sap = custom_definitions[:cmp_sap_company].model_field.process_export(pva.vendor,nil,true)
+          vendor_sap = custom_definitions[:cmp_sap_company].model_field.process_export(pva.vendor,nil,true) || "None"
+          vendor_sap_link = XlsMaker.excel_url("/vendors/" + pva.vendor_id.to_s)
           count += 1
           row = []
-          row << (vendor_sap ? XlsMaker.create_link_cell(link_stem + pva.vendor_id.to_s, vendor_sap) : "")
+          row << XlsMaker.create_link_cell(vendor_sap_link, vendor_sap)
           row << ModelField.find_by_uid(:cmp_name).process_export(pva.vendor,nil,true)
           row << ModelField.find_by_uid(:prod_uid).process_export(pva.product,nil,true)
           row << ModelField.find_by_uid(:prod_name).process_export(pva.product,nil,true)
-          row << ModelField.find_by_uid(:prodven_prod_ord_count).process_export(pva,nil,true)
           rows << row
-          rows << ['This report is limited to 25,000 lines.','','','',''] if count >= 25000
+          rows << ['This report is limited to 25,000 lines.','','',''] if count >= 25000
         end
         rows.sort!{|a, b| a[1] <=> b[1]}
       end
