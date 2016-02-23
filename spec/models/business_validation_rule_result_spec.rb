@@ -85,6 +85,19 @@ describe BusinessValidationRuleResult do
       rule.run_validation(Order.new)
       expect(rule.state).to eq 'X'
     end
+
+    it "should not do anything if validation rule has delete_pending" do
+      json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
+      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+      rule = Factory(:business_validation_rule_result)
+      rule.business_validation_rule = vr
+      rule.state = 'X'
+      rule.business_validation_rule.delete_pending = true
+      rule.business_validation_rule.save!
+      rule.save!
+      rule.run_validation(Order.new)
+      expect(rule.state).to eq 'X'
+    end
   end
   describe :override do
     it "should set overriden_at and overriden_by" do

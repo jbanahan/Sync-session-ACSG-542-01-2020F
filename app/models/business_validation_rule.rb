@@ -1,7 +1,7 @@
 class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   belongs_to :group
-  attr_accessible :description, :name, :rule_attributes_json, :type, :group_id, :fail_state
+  attr_accessible :description, :name, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending
 
   has_many :search_criterions, dependent: :destroy
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_rule
@@ -66,6 +66,11 @@ class BusinessValidationRule < ActiveRecord::Base
   # override to turn off the rule for subclasses_array
   def self.enabled?
     true
+  end
+
+  def self.async_destroy id
+    rule = find_by_id id
+    rule.destroy if rule
   end
 end
 

@@ -19,7 +19,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   end
 
   def run_validation obj
-    return if self.overridden_at
+    return if self.overridden_at || self.business_validation_rule.delete_pending?
     if self.business_validation_rule.should_skip? obj
       self.message = nil
       self.state = 'Skipped'
