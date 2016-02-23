@@ -161,7 +161,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
     containers = entry.containers.map {|c| c.container_number.blank? ? nil : c.container_number.strip }.uniq
     # For air shipments, the master bill on the shipment matches to the entry's house bill (we don't know in the shipment parser if the 
     # the shipment is air or ocean, so we just put the bol in master bill)
-    bills = entry.master_bills_of_lading.split(/\s*\n\s*/) + entry.house_bills_of_lading.split(/\s*\n\s*/)
+    bills = entry.master_bills_of_lading.to_s.split(/\s*\n\s*/) + entry.house_bills_of_lading.to_s.split(/\s*\n\s*/)
 
 
     shipment_lines = ShipmentLine.select("DISTINCT shipment_lines.*").
