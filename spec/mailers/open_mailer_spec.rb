@@ -692,6 +692,33 @@ EMAIL
 
   end
 
+  describe :send_search_result_manually do
+    before(:each) { @u = Factory(:user, email: "me@here.com")}
+
+    it "sends email with to, reply_to, subject, body, and attachment" do
+       Tempfile.open(["file", "txt"]) do |f|
+        f.binmode
+        f << "Content"
+
+        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+        OpenMailer.send_search_result_manually("you@there.com", "Subject", "<p>Body</p>", f.path, @u).deliver!
+
+        mail = ActionMailer::Base.deliveries.pop
+        mail.to.should == ["you@there.com"]
+        mail.reply_to.should == ["me@here.com"]
+        mail.subject.should == "Subject"
+        mail.body.raw_source.should match("&lt;p&gt;Body&lt;/p&gt;")
+
+        pa = mail.attachments[File.basename(f)]
+        pa.should_not be_nil
+        pa.read.should == File.read(f)
+        pa.content_type.should == "application/octet-stream"
+      end
+
+    end
+
+  end
+
   describe :log_email, email_log: true do
 
     it "saves outgoing e-mail fields and attachments" do   

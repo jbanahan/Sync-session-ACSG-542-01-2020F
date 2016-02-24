@@ -142,6 +142,36 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.errors = []
   $scope.notices = []
 
+  #email and status panels
+  $scope.sendEmail = (mailFields) ->
+    $http.post('/advanced_search/'+$scope.searchSetup.id+'/send_email',{'mail_fields':mailFields}).success((data) ->
+      $('#email-modal').modal 'hide'
+      $scope.clearPanels
+      $scope.setSuccessPanel "Email sent"
+      window.scrollTo(0,0)
+      ).error((data, status) ->
+        if data.error
+            $scope.setErrorPanel data.error
+        else
+          $scope.setErrorPanel 'Server temporarily unavailable. Please try again later.')
+
+  $scope.setErrorPanel = (message) ->
+    panel = Chain.makeErrorPanel(message, false)
+    $scope.clearPanels()
+    $('#email-modal-container').prepend(panel)
+    true
+
+  $scope.setSuccessPanel = (message) ->
+    panel = Chain.makeSuccessPanel(message, true)
+    $scope.clearPanels()
+    $('#advanced_search_wrapper').prepend(panel)
+    true
+
+  $scope.clearPanels = () ->
+    $('.panel-success').remove()
+    $('.panel-danger').remove()
+    true
+
   #give functionality
   $scope.giveUserId = null
   $scope.givePrompt = false
@@ -187,6 +217,11 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #stateful view settings
   $scope.showSetup = false
+
+  $scope.showEmailModal = () ->
+    $scope.mailFields = {'to': $scope.searchSetup.user.email}
+    $('#email-modal').modal 'show'
+    true
 
   #save the search setup and reload the results on after save
   $scope.saveSetup = () ->

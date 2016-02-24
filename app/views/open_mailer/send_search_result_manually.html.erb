@@ -1,0 +1,9 @@
+<% if @body_text %>
+  <p><%= @body_text %></p>
+<% end %>
+
+<p>
+--- <br>
+This message was generated from VFI Track by <%= @user.full_name %> <%= @user.email %>.<br>
+Reply to this email to contact <%= @user.full_name %> about the attached document.
+</p>
