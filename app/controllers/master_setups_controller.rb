@@ -1,4 +1,5 @@
 require 'open_chain/slack_client'
+require 'open_chain/delayed_job_extensions'
 class MasterSetupsController < ApplicationController
   def perf
     t = Time.now
@@ -26,6 +27,7 @@ class MasterSetupsController < ApplicationController
   def edit
     sys_admin_secure("Only sys admins can edit the master setup.") {
       @ms = MasterSetup.get
+      @job_groups = OpenChain::DelayedJobExtensions.group_jobs
     }
   end
 
