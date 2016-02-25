@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions [:ord_division, :ord_line_destination_code, :shp_priority, :shpln_invoice_number]
+    @cdefs = self.class.prep_custom_definitions [:ord_line_division, :ord_line_destination_code, :shpln_priority, :shpln_invoice_number]
   end
 
   def generate_delivery_order_data entry
@@ -19,7 +19,9 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
 
   def build_delivery_orders base_do, destination_data, entry
     delivery_orders = []
-    
+    max_container_lines_per_page = 16
+    max_line_length = 75
+
     destination_data.each_pair do |destination, data|
       header_base = clone_delivery_order(base_do)
 
@@ -36,45 +38,79 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
       carton_count = 0
       bill_of_ladings = Set.new
       body = []
-      containers_per_page = 4
+      container_weight = 0
       do_count = 0
-      
+
       data[:containers].each do |container_data|
-        carton_count += container_data[:cartons]
+        container_count += 1
+
+        # We can use a total of 16 container lines per tab, after that we need to 
+        # start a new tab
+        current_container_lines = [""]
+
         container_line = "#{container_data[:cartons]} CTNS"
         container_line += " **#{container_data[:priority]}**" unless container_data[:priority].blank?
         container_line += " #{container_data[:container_number]} #{container_data[:container_type]}"
         container_line += " SEAL# #{container_data[:seal_number]}"
+        container_line += " #{container_data[:weight]} LBS"
 
-        body << ""
-        body << container_line
+        current_container_lines << container_line
 
         division_line = ""
         container_data[:divisions].each do |division_data|
-          division_line += "#{division_data[:division_number]} - #{division_data[:cartons]} CTNS "
+          division_line += " / " if division_line.length > 0
+          division_line += "#{division_data[:division_number]} - #{division_data[:cartons]} CTNS"
         end
 
         if !division_line.blank?
-          body << "DIVISION #{division_line}".strip
+          division_lines = split_line division_line.strip, max_line_length, / \/ /, "DIVISION ", ""
+          current_container_lines.push *division_lines
         end
 
-        container_data[:bols].each {|b| bill_of_ladings << b }
         bols = container_data[:bols].join " "
-        body << "B/L# #{bols}" unless bols.blank?
+        if !bols.blank?
+          bol_lines = split_line(bols, max_line_length, / /, "B/L# ", "")
+          current_container_lines.push *bol_lines
+        end
 
-        if (container_count += 1) % containers_per_page == 0 || data[:containers].size == container_count
-          do_count += 1
+        update_tab_info = lambda do
+          carton_count += container_data[:cartons]
+          container_data[:bols].each {|b| bill_of_ladings << b }
+          container_weight += container_data[:weight]
+        end
 
-          del = clone_delivery_order header_base
-          del.no_cartons = "#{carton_count} CTNS"
-          del.bill_of_lading = (bill_of_ladings.size > 1) ? "MULTIPLE - SEE BELOW" : bill_of_ladings.first
-          del.body.push *body
-          del.tab_title = destination + (do_count > 1 ? " (#{do_count})" : "")
-          delivery_orders << del
+        if (current_container_lines.length + body.length > max_container_lines_per_page) || data[:containers].size == container_count
 
-          carton_count = 0
-          bill_of_ladings.clear
-          body = []
+          new_tab = lambda do |body_lines|
+            do_count +=1
+
+            del = clone_delivery_order header_base
+            del.no_cartons = "#{carton_count} CTNS"
+            del.bill_of_lading = (bill_of_ladings.size > 1) ? "MULTIPLE - SEE BELOW" : bill_of_ladings.first
+            del.body.push *body_lines
+            del.tab_title = destination + (do_count > 1 ? " (#{do_count})" : "")
+            del.weight = "#{container_weight} LBS"
+            delivery_orders << del
+
+            carton_count = 0
+            bill_of_ladings.clear
+            container_weight = 0
+            body = []
+          end
+
+          if current_container_lines.length + body.length > max_container_lines_per_page
+            new_tab.call body
+          end
+
+          update_tab_info.call
+          body.push *current_container_lines
+
+          if data[:containers].size == container_count
+            new_tab.call body
+          end
+        else
+          update_tab_info.call
+          body.push *current_container_lines
         end
       end      
     end
@@ -111,6 +147,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
   def delivery_order_destination_data entry
     shipment_lines = get_shipment_lines(entry).includes(:shipment, :container)
     data = {}
+    container_priorities = Hash.new {|h, k| h[k] = [] }
     shipment_lines.each do |line|
       order_line = line.piece_sets.first.try(:order_line)
       next unless order_line
@@ -124,23 +161,23 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
         data[destination] = dst_data
       end
 
-      dst_data[:cartons] += line.carton_qty
-
       container_number = line.container.try(:container_number)
       next if container_number.blank?
+
+      if !line.custom_value(@cdefs[:shpln_priority]).blank?
+        container_priorities[container_number] << line.custom_value(@cdefs[:shpln_priority])
+      end
 
       container_data = dst_data[:containers].find {|c| c[:container_number] == container_number}
       if container_data.nil?
         container = entry.containers.find {|c| container_number == c.container_number}
-        container_data = {cartons: 0, priority: line.shipment.custom_value(@cdefs[:shp_priority]), container_number: container_number, container_type: entry_container_type(container), seal_number: container.try(:seal_number), divisions: [], bols: [] }
+        container_data = {cartons: 0, priority: nil, container_number: container_number, container_type: entry_container_type(container), seal_number: container.try(:seal_number), weight: container_weight(container), divisions: [], bols: [] }
         dst_data[:containers] << container_data
       end
 
-      container_data[:cartons] += line.carton_qty
       container_data[:bols] << line.shipment.master_bill_of_lading unless line.shipment.master_bill_of_lading.blank? || container_data[:bols].include?(line.shipment.master_bill_of_lading)
 
-
-      division = order_line.order.custom_value(@cdefs[:ord_division])
+      division = order_line.custom_value(@cdefs[:ord_line_division])
       next if division.blank?
 
       division_data = container_data[:divisions].find {|d| d[:division_number] == division }
@@ -150,28 +187,31 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
       end
 
       division_data[:cartons] += line.carton_qty
-      
+      dst_data[:cartons] += line.carton_qty
+      container_data[:cartons] += line.carton_qty
     end
 
+    # Backfill the container's priority based on the priority value associated with the first shipment line that actually had a non-blank priority
+    data.each_pair do |destination, dst_data|
+      dst_data[:containers].each do |cnt_data|
+        cnt_data[:priority] = container_priorities[cnt_data[:container_number]].first
+      end
+    end
     data
   end 
 
   def get_shipment_lines entry
-    invoice_numbers = entry.commercial_invoices.map {|inv| inv.invoice_number.blank? ? nil : inv.invoice_number.strip }.uniq
     containers = entry.containers.map {|c| c.container_number.blank? ? nil : c.container_number.strip }.uniq
     # For air shipments, the master bill on the shipment matches to the entry's house bill (we don't know in the shipment parser if the 
     # the shipment is air or ocean, so we just put the bol in master bill)
     bills = entry.master_bills_of_lading.to_s.split(/\s*\n\s*/) + entry.house_bills_of_lading.to_s.split(/\s*\n\s*/)
 
-
     shipment_lines = ShipmentLine.select("DISTINCT shipment_lines.*").
                         joins("INNER JOIN shipments ON shipments.id = shipment_lines.shipment_id").
                         joins("INNER JOIN containers ON containers.id = shipment_lines.container_id").
                         joins("INNER JOIN companies on companies.id = shipments.importer_id").
-                        joins("INNER JOIN custom_values on custom_values.customizable_id = shipment_lines.id AND custom_values.customizable_type = 'ShipmentLine' and custom_values.custom_definition_id = " + @cdefs[:shpln_invoice_number].id.to_s).
                         where("companies.alliance_customer_number = ? ", entry.customer_number).
                         where("containers.container_number IN (?)", containers).
-                        where("custom_values.string_value IN (?)", invoice_numbers).
                         where("shipments.master_bill_of_lading IN (?)", bills)
 
     shipment_lines
@@ -195,5 +235,65 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
     desc.blank? ? size : (size + desc)
   end
 
+  def container_weight container
+    # Convert the KG weight of the container to LBS
+    weight_kgs = container.weight.to_i
+
+    (BigDecimal(weight_kgs) * BigDecimal("2.20462")).round.to_i
+  end
+
+  # This method splits lines so that their at most max_line_length long.
+  # If they are over that lenght, then it finds the rightmost occurrence of 
+  # the supplied regex as the cutoff point for the string.
+  # 
+  # Returns an array of the split lines.
+  def split_line starting_line, max_line_length, separator_regex, prefix, continued_prefix
+    next_line = starting_line
+    lines = []
+
+    begin
+      line_prefix = lines.length == 0 ? prefix : continued_prefix
+
+      if (next_line.length + line_prefix.length) > max_line_length
+        current_line = next_line[0, max_line_length - line_prefix.length].strip
+        next_line = next_line[current_line.length..-1]
+
+        # Find the nearest space prior to current_lines end, that's where we want to chop off at (or if next_line starts
+        # with the separator, then we by chance chopped at the exact correct spot)
+        if next_line[separator_regex] == 0
+          lines << "#{line_prefix}#{current_line.strip}"
+        else
+          match_data = last_match_data(current_line, separator_regex)
+          if match_data.nil?
+            # If the separator is not found, just use the whole line as is
+            lines << "#{line_prefix}#{current_line}"
+          else
+            lines << "#{line_prefix}#{match_data.pre_match.strip}"
+            next_line = (match_data.post_match + next_line).strip
+          end
+        end
+      else
+        lines << "#{line_prefix}#{next_line.strip}"
+        next_line = nil
+      end
+    end while !next_line.blank?
+
+    lines
+  end
+
+  def last_match_data string, regex
+    match = nil
+    current_match = nil
+    index = 0
+    begin
+      current_match = string.match regex, index
+      if current_match 
+        match = current_match
+        index = match.pre_match.length + match.to_s.length
+      end
+    end while !current_match.nil?
+
+    match
+  end
 
 end; end; end; end;

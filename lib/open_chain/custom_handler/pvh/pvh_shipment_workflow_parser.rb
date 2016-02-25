@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
 
   def initialize file
     @custom_file = file
-    @cdefs = self.class.prep_custom_definitions [:ord_division, :ord_line_color, :ord_line_destination_code, :prod_part_number, :prod_short_description, :shp_priority, :shpln_invoice_number]
+    @cdefs = self.class.prep_custom_definitions [:ord_line_division, :ord_line_color, :ord_line_destination_code, :prod_part_number, :prod_short_description, :shpln_priority, :shpln_invoice_number]
   end
 
   def self.can_view? user
@@ -107,7 +107,6 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         order['ord_ord_num'] = "PVH-#{order_number}"
         order['ord_cust_ord_no'] = order_number
         order['ord_imp_id'] = importer.id
-        order[uid(:ord_division)] = v(line, 12) + v(line, 13)
       end
 
       style = "#{pvh_importer.system_code}-#{v(line, 15)}"
@@ -120,6 +119,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         order_line['ordln_country_of_origin'] = v(line, 9)
         order_line[uid(:ord_line_destination_code)] = v(line, 8)
         order_line[uid(:ord_line_color)] = v(line, 17)
+        order_line[uid(:ord_line_division)] = v(line, 12) + v(line, 13)
 
         product = {}
         order_line['product'] = product
@@ -152,7 +152,6 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
       shipment.est_departure_date = parse_date(fl, 35)
       shipment.destination_port = parse_port(fl, 31)
       shipment.lading_port = parse_port(fl, 34)
-      shipment.find_and_set_custom_value(@cdefs[:shp_priority], v(fl, 7))
 
       file_lines.each do |line|
         # Find or create the container line this refers to
@@ -167,14 +166,15 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         # The uniqueness factor of the order lines in the pvh file is the order / style / color (whish they'd send a sku)
         ol_style = "PVH-#{v(line, 15)}"
         ol_color = v(line, 17)
+        ol_division = v(line, 12) + v(line, 13)
         # Since we're working with object that may not have been saved, we need to use the actual attribute matches on these rather than the ==
         # equality.  Since id is going to be zero quite a bit (haven't been saved yet)
-        order_line = order.order_lines.find {|ol| ol.product.unique_identifier == ol_style && ol.custom_value(@cdefs[:ord_line_color]) == ol_color}
+        # Matching needs to be Style / Color / Division
+        order_line = find_matching_order_line(order.order_lines, order.order_number, ol_style, ol_color, ol_division)
         shipment_line = shipment.shipment_lines.find do |sl|
-
           match = sl.container && (sl.container.container_number == container.container_number)
           if match
-            match = !sl.order_lines.find {|ol| ol.order.order_number ==  order.order_number && ol.product.unique_identifier == ol_style && ol.custom_value(@cdefs[:ord_line_color]) == ol_color}.nil?
+            match = !find_matching_order_line(sl.order_lines, order.order_number, ol_style, ol_color, ol_division).nil?
           end
           match
         end
@@ -192,6 +192,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         shipment_line.carton_qty = v(line, 25).to_i
         shipment_line.product = order_line.product
         shipment_line.find_and_set_custom_value(@cdefs[:shpln_invoice_number], v(line, 11))
+        shipment_line.find_and_set_custom_value(@cdefs[:shpln_priority], v(fl, 7))
       end
 
       saved = changed?(shipment) && shipment.save
@@ -204,15 +205,17 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
     shipment
   end
 
-  # Override the method from the mass_order_creator to match on style AND color.
+  # Override the method from the mass_order_creator to match on style, color AND division
   def find_existing_order_line_for_update order, order_line_attributes
     # Name is intentionally long/obscure to prevent accidental override
     order_line = nil
     style = order_line_attributes['ordln_puid']
     color = order_line_attributes[uid(:ord_line_color)]
+    division = order_line_attributes[uid(:ord_line_division)]
+
     # Style can't be blank and if it is, it'll fail a product presence validation later, so just ignore this issue for now.
     if !style.blank?
-      order_line = order.order_lines.find {|ol| ol.product.try(:unique_identifier) == style && ol.custom_value(@cdefs[:ord_line_color]).to_s == color}
+      order_line = order.order_lines.find {|ol| ol.product.try(:unique_identifier) == style && ol.custom_value(@cdefs[:ord_line_color]).to_s == color && ol.custom_value(@cdefs[:ord_line_division]).to_s == division}
     end
 
     order_line
@@ -291,6 +294,10 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
     def shipment_heirarchy_changed? shipment
       CoreModule.walk_object_heirarchy(shipment) {|cm, object| return true if object.changed?}
       false
+    end
+
+    def find_matching_order_line order_lines, order_number, style, color, division
+      order_lines.find {|ol| ol.order.order_number == order_number && ol.product.unique_identifier == style && ol.custom_value(@cdefs[:ord_line_color]) == color && ol.custom_value(@cdefs[:ord_line_division]) == division}
     end
 
 end; end; end; end;

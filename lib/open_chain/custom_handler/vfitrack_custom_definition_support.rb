@@ -2,7 +2,7 @@ require 'open_chain/custom_handler/custom_definition_support'
 
 module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
   CUSTOM_DEFINITION_INSTRUCTIONS = {
-    shp_priority: {label: "Priority", data_type: :string, module_type: "Shipment"},
+    shpln_priority: {label: "Priority", data_type: :string, module_type: "ShipmentLine"},
     shpln_po: {label:'PO Number',data_type: :string, module_type: 'ShipmentLine'},
     shpln_sku: {label:'SKU',data_type: :string, module_type: 'ShipmentLine'},
     shpln_coo: {label:'Country of Origin ISO',data_type: :string, module_type: 'ShipmentLine'},
@@ -38,7 +38,8 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_division: {label: "Division", data_type: :string, module_type: "Order"},
     ord_line_ex_factory_date: {label: "Planned Ex-Factory", data_type: :date, module_type: "OrderLine"},
     ord_line_color: {label: "Color", data_type: :string, module_type: "OrderLine"},
-    ord_line_destination_code: {label: "Destination Code", data_type: :string, module_type: "OrderLine"}
+    ord_line_destination_code: {label: "Destination Code", data_type: :string, module_type: "OrderLine"},
+    ord_line_division: {label: "Division", data_type: :string, module_type: "OrderLine"}
   } 
   
   def self.included(base)

@@ -20,6 +20,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
     order = Factory(:order, importer: pvh, order_number: "#{pvh.system_code}-315605")
     order_line = order.order_lines.create! product: existing_product
     order_line.update_custom_value! cdefs[:ord_line_color], "025"
+    order_line.update_custom_value! cdefs[:ord_line_division], "A34W"
     order
   }
   let (:existing_shipment) {
@@ -65,7 +66,6 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(s.est_departure_date).to eq Date.new(2015, 12,20)
       expect(s.destination_port).to eq unlading_port
       expect(s.lading_port).to eq lading_port
-      expect(s.custom_value(cdefs[:shp_priority])).to eq "HOT"
 
       expect(s.entity_snapshots.length).to eq 1
 
@@ -81,6 +81,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(line.piece_sets.length).to eq 1
       expect(line.piece_sets.first.quantity).to eq 2394
       expect(line.custom_value(cdefs[:shpln_invoice_number])).to eq "0159419203"
+      expect(line.custom_value(cdefs[:shpln_priority])).to eq "HOT"
 
       ol1 = line.piece_sets.first.order_line
 
@@ -89,6 +90,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(ol1.country_of_origin).to eq "CN"
       expect(ol1.custom_value(cdefs[:ord_line_destination_code])).to eq "JONESVILLE"
       expect(ol1.custom_value(cdefs[:ord_line_color])).to eq "025"
+      expect(ol1.custom_value(cdefs[:ord_line_division])).to eq "A34W"
 
       product = ol1.product
       expect(product.unique_identifier).to eq "PVH-F3646"
@@ -100,7 +102,6 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(oh.order_number).to eq "PVH-315605"
       expect(oh.customer_order_number).to eq "315605"
       expect(oh.importer).to eq pvh
-      expect(oh.custom_value(cdefs[:ord_division])).to eq "A34W"
 
       line = s.shipment_lines.second
       expect(line.quantity).to eq 2394
@@ -115,6 +116,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(ol2.country_of_origin).to eq "CN"
       expect(ol2.custom_value(cdefs[:ord_line_destination_code])).to eq "JONESVILLE"
       expect(ol2.custom_value(cdefs[:ord_line_color])).to eq "460"
+      expect(ol2.custom_value(cdefs[:ord_line_division])).to eq "A34W"
 
       product2 = ol2.product
       expect(product2).to eq product
@@ -135,6 +137,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(ol.country_of_origin).to eq "CN"
       expect(ol.custom_value(cdefs[:ord_line_destination_code])).to eq "JONESVILLE"
       expect(ol.custom_value(cdefs[:ord_line_color])).to eq "025"
+      expect(ol.custom_value(cdefs[:ord_line_division])).to eq "A34W"
 
       product = ol.product
       expect(product.unique_identifier).to eq "PVH-F3647"
@@ -146,7 +149,6 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(oh.order_number).to eq "PVH-315607"
       expect(oh.customer_order_number).to eq "315607"
       expect(oh.importer).to eq pvh
-      expect(oh.custom_value(cdefs[:ord_division])).to eq "A34W"
     end
 
     it "updates an existing shipment, order and product" do
