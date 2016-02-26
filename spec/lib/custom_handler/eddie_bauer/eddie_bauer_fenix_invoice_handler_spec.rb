@@ -28,24 +28,38 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
   end
 
   describe "parse" do
-    before :each do
-      @importer = Factory(:company, fenix_customer_number: "855157855RM0001", importer: true)
-      @tempfile = Tempfile.new ['temp', '.txt']
-      @tempfile.binmode 
-      # Add a quotation mark to make sure we're disabling the quote handling
-      @tempfile << " |0309018      |2014-03-10| |001-5434 |BD| |MENS WVN LAMINATED POLY JKT 1\"                                         |0000010|000022.62|0309018| | | | | | | |     \n"
-      @tempfile.flush
-      @tempfile.rewind
+    let (:custom_file) { 
+      cf = double("Custom File")
+      cf.stub(:attached).and_return cf
+      cf.stub(:path).and_return "file.txt"
+      cf.stub(:bucket).and_return "bucket"
+      cf.stub(:attached_file_name).and_return "file.txt"
 
-      OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', "path/to/file.txt").and_yield @tempfile
+      cf
+    }
+    let (:importer) { Factory(:company, fenix_customer_number: "855157855RM0001", importer: true) }
+    let (:tempfile) {
+      tempfile = Tempfile.new ['temp', '.txt']
+      tempfile.binmode 
+      # Add a quotation mark to make sure we're disabling the quote handling
+      tempfile << " |0309018      |2014-03-10| |001-5434 |BD| |MENS WVN LAMINATED POLY JKT 1\"                                         |0000010|000022.62|0309018| | | | | | | |     \n"
+      tempfile.flush
+      tempfile.rewind
+      tempfile
+    }
+    subject { described_class.new(nil) }
+
+    before :each do
+      importer
     end
 
     after :each do 
-      @tempfile.close!
+      tempfile.close! if tempfile && !tempfile.closed?
     end
 
     it "parses an Eddie pipe delimited file and creates an invoice" do
-      described_class.new(nil).parse "path/to/file.txt", true
+      OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', "file.txt").and_yield tempfile
+      subject.parse custom_file, true
       # all we really care about is that an invoice was created, the rest is tested in the actual fenix handler
       expect(CommercialInvoice.where(invoice_number: "0309018").first).to_not be_nil
     end

@@ -1,8 +1,10 @@
 require 'open_chain/custom_handler/kewill_commercial_invoice_generator'
 require 'open_chain/s3'
 require 'open_chain/xl_client'
+require 'open_chain/custom_handler/custom_file_csv_excel_parser'
 
 module OpenChain; module CustomHandler; class CiLoadHandler
+  include CustomFileCsvExcelParser
 
   def initialize file
     @custom_file = file
@@ -55,37 +57,44 @@ module OpenChain; module CustomHandler; class CiLoadHandler
   end
 
   def parse custom_file
+    # We may want to eventually retain the header so we can allow for "fluid" layouts based on the header names, or 
+    # use the header row to determine what layout to use, but for now, we can skip it
+    rows = foreach(custom_file, skip_headers: true, skip_blank_lines: true)
+
     parser = file_parser custom_file
-    # Return all rows, stripping any rows that have no values in them
-    rows = parser.parse_file(custom_file).select {|r| !r.blank? && !r.find {|v| !v.blank? }.nil? }
 
-    # Strip row 0, it's the headers
-    rows.shift
-
-    # Remove any row without a File #, Customer # and Invoice # (we'll report the number of bad lines back to the user)
-    bad_rows, rows = rows.partition {|row| row[0].to_s.blank? || row[1].to_s.blank? || row[2].to_s.blank? }
+    # Remove any row the parser considers invalid (we'll report the number of bad lines back to the user)
+    bad_rows, rows = rows.partition {|row| parser.invalid_row? row }
+    file_column = parser.file_number_invoice_number_columns[:file_number]
+    invoice_column = parser.file_number_invoice_number_columns[:invoice_number]
 
     entry_files = {}
-
     rows.each do |row|
       data = preprocess_row row
 
-      file_number = string_value(data[0])
+      # This should be getting verified by the invalid_row? in the parser implementation, but it's important
+      # enough that we should also be handling it here too
+      if data[file_column].blank? || data[invoice_column].blank?
+        bad_rows << row
+        next
+      end
+
+      file_number = text_value(data[file_column]).to_s
       entry = entry_files[file_number]
 
       if entry.nil?
-        entry = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new file_number, string_value(data[1]), []
+        entry = parser.parse_entry_header row
         entry_files[file_number] = entry
       end
 
-      invoice_number = string_value(data[2])
+      invoice_number = text_value(data[invoice_column]).to_s
       invoice = entry.invoices.find {|i| i.invoice_number == invoice_number}
       if invoice.nil?
-        invoice = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new invoice_number, date_value(data[3]), []
+        invoice = parser.parse_invoice_header entry, row
         entry.invoices << invoice
       end
 
-      invoice.invoice_lines << parse_invoice_line_values(row)
+      invoice.invoice_lines << parser.parse_invoice_line(entry, invoice, row)
     end
 
     files = entry_files.values
@@ -93,49 +102,19 @@ module OpenChain; module CustomHandler; class CiLoadHandler
   end
 
   def file_parser custom_file
-    extension = File.extname(custom_file.attached_file_name).downcase
-    case extension
-    when ".csv", ".txt"
-      return CsvParser.new
-    when ".xls", ".xlsx"
-      return ExcelParser.new
+    case custom_file.attached_file_name
+    when /^HMCI\./
+      HmCiLoadParser.new nil
     else
-      raise "No CI Upload processor exists for #{extension} file types."
+      StandardCiLoadParser.new nil
     end
   end
 
   private
 
-    def parse_invoice_line_values row
-      l = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
-      l.country_of_origin = string_value row[4]
-      l.part_number = string_value row[5]
-      l.gross_weight = decimal_value(row[13])
-      l.pieces = decimal_value(row[6])
-      l.hts = string_value row[8].to_s.gsub(".", "")
-      l.foreign_value = decimal_value(row[10])
-      l.quantity_1 = decimal_value(row[11])
-      l.quantity_2 = decimal_value(row[12])
-      l.po_number = string_value(row[14])
-      l.first_sale = decimal_value row[16]
-      l.department = decimal_value(row[18])
-      l.spi = string_value(row[19])
-      l.ndc_mmv = decimal_value(row[17])
-      l.cotton_fee_flag = string_value row[9]
-      l.mid = string_value row[7]
-      l.cartons = decimal_value(row[15])
-
-      l
-    end
-
     def preprocess_row row
       # change blank values to nil and strip whitespace from all String values
       row.map {|v| v.to_s.blank? ? nil : (v.is_a?(String) ? v.strip : v)}
-    end
-
-    def decimal_value d
-      # use space character set since that handles all UTF-8 whitespace too, not just ascii 33 (space bar)
-      d.blank? ? nil : BigDecimal(d.to_s.gsub(/\$[[:space:]]/, ""))
     end
 
     def date_value d
@@ -190,37 +169,89 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       nil
     end
 
-    def string_value d
-      OpenChain::XLClient.string_value d
-    end
-
     def kewill_generator
       OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.new
     end
 
-    class CsvParser
+    # At some point, we may want to move these classes out to their own files (perhaps in a new ci_load subdirectory)
+    class StandardCiLoadParser < CiLoadHandler
 
-      def parse_file custom_file, parser_options = {}
-        rows = []
-        OpenChain::S3.download_to_tempfile(custom_file.bucket, custom_file.path) do |file|
-          CSV.foreach(file, parser_options) do |row|
-            rows << row
-          end
-        end
-        rows
+      def invalid_row? row
+        row[0].to_s.blank? || row[1].to_s.blank? || row[2].to_s.blank?
+      end
+
+      def file_number_invoice_number_columns
+        {file_number: 0, invoice_number: 2}
+      end
+
+      def parse_entry_header row
+        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new text_value(row[0]), text_value(row[1]), []
+      end
+
+      def parse_invoice_header entry, row
+        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new text_value(row[2]), date_value(row[3]), []
+      end
+
+      def parse_invoice_line entry, invoice, row
+        l = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+        l.country_of_origin = text_value row[4]
+        l.part_number = text_value row[5]
+        l.gross_weight = decimal_value(row[13])
+        l.pieces = decimal_value(row[6])
+        l.hts = text_value row[8].to_s.gsub(".", "")
+        l.foreign_value = decimal_value(row[10])
+        l.quantity_1 = decimal_value(row[11])
+        l.quantity_2 = decimal_value(row[12])
+        l.po_number = text_value(row[14])
+        l.first_sale = decimal_value row[16]
+        l.department = decimal_value(row[18])
+        l.spi = text_value(row[19])
+        l.add_to_make_amount = decimal_value(row[17])
+        l.cotton_fee_flag = text_value row[9]
+        l.mid = text_value row[7]
+        l.cartons = decimal_value(row[15])
+
+        l
       end
     end
 
+    # At some point, we may want to move these classes out to their own files (perhaps in a new ci_load subdirectory)
+    class HmCiLoadParser < CiLoadHandler
 
-    class ExcelParser
-
-      def parse_file custom_file, parser_options = {}
-        client = xl_client custom_file.path
-        client.all_row_values
+      def invalid_row? row
+        row[0].to_s.blank? || row[2].to_s.blank?
       end
 
-      def xl_client s3_path
-        OpenChain::XLClient.new s3_path
+      def file_number_invoice_number_columns
+        {file_number: 0, invoice_number: 2}
+      end
+
+      def parse_entry_header row
+        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new text_value(row[0]), "HENNE", []
+      end
+
+      def parse_invoice_header entry, row
+        inv = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new text_value(row[2]), nil, []
+        inv.non_dutiable_amount = (decimal_value(row[4]).presence || 0).abs
+        if inv.non_dutiable_amount
+          inv.non_dutiable_amount = inv.non_dutiable_amount.abs
+        end
+        inv.add_to_make_amount = decimal_value(row[5])
+
+        inv
+      end
+
+      def parse_invoice_line entry, invoice, row
+        l = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+        l.foreign_value = decimal_value(row[3])
+        l.hts = text_value row[7].to_s.gsub(".", "")
+        l.country_of_origin = text_value row[8]
+        l.quantity_1 = decimal_value(row[9])
+        l.quantity_2 = decimal_value(row[10])
+        l.cartons = decimal_value(row[11])
+        l.gross_weight = decimal_value(row[12])
+        l.mid = text_value row[13]
+        l
       end
     end
 
