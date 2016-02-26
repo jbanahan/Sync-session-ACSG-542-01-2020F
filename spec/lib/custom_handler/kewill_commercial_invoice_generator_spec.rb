@@ -5,6 +5,8 @@ describe OpenChain::CustomHandler::KewillCommercialInvoiceGenerator do
   let(:entry_data) {
     e = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new '597549', 'SALOMON', []
     i = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new '15MSA10', Date.new(2015,11,1), []
+    i.non_dutiable_amount = BigDecimal("5")
+    i.add_to_make_amount = BigDecimal("25")
     e.invoices << i
     l = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
     l.part_number = "1"
@@ -18,7 +20,8 @@ describe OpenChain::CustomHandler::KewillCommercialInvoiceGenerator do
     l.po_number = "5301195481"
     l.first_sale = BigDecimal("218497.20")
     l.department = "1"
-    l.ndc_mmv = BigDecimal("15")
+    l.add_to_make_amount = BigDecimal("15")
+    l.non_dutiable_amount = BigDecimal("20")
     l.cotton_fee_flag = ""
     l.mid = "PHMOUINS2106BAT"
     l.cartons = BigDecimal("10")
