@@ -38,6 +38,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
       carton_count = 0
       bill_of_ladings = Set.new
       body = []
+      body << "LCL" if lcl?(entry)
+
       container_weight = 0
       do_count = 0
 
@@ -46,15 +48,16 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
 
         # We can use a total of 16 container lines per tab, after that we need to 
         # start a new tab
-        current_container_lines = [""]
+        current_container_lines = (lcl?(entry) && body.length < 2) ? [] : [""]
 
-        container_line = "#{container_data[:cartons]} CTNS"
+        container_line = "#{container_data[:cartons].to_i} CTNS"
         container_line += " **#{container_data[:priority]}**" unless container_data[:priority].blank?
-        container_line += " #{container_data[:container_number]} #{container_data[:container_type]}"
-        container_line += " SEAL# #{container_data[:seal_number]}"
-        container_line += " #{container_data[:weight]} LBS"
+        container_line += " #{container_data[:container_number]}" unless container_data[:container_number].blank?
+        container_line += " #{container_data[:container_type]}" unless container_data[:container_type].blank?
+        container_line += " SEAL# #{container_data[:seal_number]}" unless container_data[:seal_number].blank?
+        container_line += " #{to_lbs(container_data[:weight])} LBS" unless container_data[:weight].to_i == 0
 
-        current_container_lines << container_line
+        current_container_lines << container_line.strip
 
         division_line = ""
         container_data[:divisions].each do |division_data|
@@ -65,16 +68,22 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
         if !division_line.blank?
           division_lines = split_line division_line.strip, max_line_length, / \/ /, "DIVISION ", ""
           current_container_lines.push *division_lines
+        else
+          # If we don't have any divisions, leave a blank line for them, user will have to manually add them
+          current_container_lines << "DIVISION "
         end
 
         bols = container_data[:bols].join " "
         if !bols.blank?
-          bol_lines = split_line(bols, max_line_length, / /, "B/L# ", "")
+          bol_lines = split_line(bols, max_line_length, / /, (container_data[:house_bills] ? "HOUSE BILL# " : "B/L# "), "")
           current_container_lines.push *bol_lines
+        else
+          # If we don't have any bols, leave a blank line for them, user will have to manually add them
+          current_container_lines << (container_data[:house_bills] ? "HOUSE BILL# " : "B/L# ")
         end
 
         update_tab_info = lambda do
-          carton_count += container_data[:cartons]
+          carton_count += container_data[:cartons].to_i
           container_data[:bols].each {|b| bill_of_ladings << b }
           container_weight += container_data[:weight]
         end
@@ -86,10 +95,16 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
 
             del = clone_delivery_order header_base
             del.no_cartons = "#{carton_count} CTNS"
-            del.bill_of_lading = (bill_of_ladings.size > 1) ? "MULTIPLE - SEE BELOW" : bill_of_ladings.first
+
+            if Array.wrap(data[:master_bills_of_lading]).length > 0
+              del.bill_of_lading = (data[:master_bills_of_lading].size > 1) ? "MULTIPLE - SEE BELOW" : data[:master_bills_of_lading].first
+            else
+              del.bill_of_lading = (bill_of_ladings.size > 1) ? "MULTIPLE - SEE BELOW" : bill_of_ladings.first
+            end
+            
             del.body.push *body_lines
             del.tab_title = destination + (do_count > 1 ? " (#{do_count})" : "")
-            del.weight = "#{container_weight} LBS"
+            del.weight = "#{to_lbs(container_weight)} LBS"
             delivery_orders << del
 
             carton_count = 0
@@ -112,7 +127,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
           update_tab_info.call
           body.push *current_container_lines
         end
-      end      
+      end
     end
 
     delivery_orders
@@ -131,10 +146,17 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
 
     del.date = Time.zone.now.in_time_zone("America/New_York").to_date
     del.vfi_reference = entry.broker_reference
-    del.vessel_voyage = "#{entry.vessel} V#{entry.voyage}"
+    if entry.air?
+      del.vessel_voyage = "#{entry.carrier_code} FLT: #{entry.voyage}"
+      del.importing_carrier = entry.carrier_name
+    else
+      del.vessel_voyage = "#{entry.vessel} V#{entry.voyage}"
+      del.importing_carrier = entry.carrier_code
+    end
+    
     del.freight_location = entry.location_of_goods_description
     del.port_of_origin = entry.lading_port.try(:name)
-    del.importing_carrier = entry.carrier_code
+    
     del.arrival_date = entry.arrival_date ? entry.arrival_date.in_time_zone("America/New_York").to_date : nil
     del.instruction_provided_by = ["PVH CORP", "200 MADISON AVE", "NEW YORK, NY 10016-3903"]
     # Reference number has Country of Export prefaced on it.  For PVH, this will only ever be a single country.
@@ -158,6 +180,9 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
       dst_data = data[destination]
       if dst_data.nil?
         dst_data = {cartons: 0, containers: []}
+        if lcl?(entry)
+          dst_data[:master_bills_of_lading] = entry.split_master_bills_of_lading
+        end
         data[destination] = dst_data
       end
 
@@ -171,7 +196,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
       container_data = dst_data[:containers].find {|c| c[:container_number] == container_number}
       if container_data.nil?
         container = entry.containers.find {|c| container_number == c.container_number}
-        container_data = {cartons: 0, priority: nil, container_number: container_number, container_type: entry_container_type(container), seal_number: container.try(:seal_number), weight: container_weight(container), divisions: [], bols: [] }
+        container_data = {cartons: 0, priority: nil, container_number: container_number, container_type: entry_container_type(container), seal_number: container.try(:seal_number), weight: container.weight.to_i, divisions: [], bols: [], house_bills: lcl?(entry) }
         dst_data[:containers] << container_data
       end
 
@@ -197,8 +222,52 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
         cnt_data[:priority] = container_priorities[cnt_data[:container_number]].first
       end
     end
+
+    # If we don't have any data at all that matched to shipments from the PVH workflow spreadsheet, then we'll try our best 
+    # to at least just populate the data that we can from the entry onto the delivery order
+    if data.length == 0
+      # Yes, technically anything that's not an ocean mode we're considering air, which is fine for this case
+      air_shipment = !entry.transport_mode_code.blank? && !entry.ocean?
+      lcl_shipment = lcl?(entry)
+
+      dst_data = {containers: []}
+
+      if air_shipment || lcl_shipment
+        dst_data[:master_bills_of_lading] = entry.split_master_bills_of_lading.map {|bol| air_shipment ? "MAWB: #{bol}" : bol}
+      end
+
+      data['PVH'] = dst_data
+
+      entry.containers.each do |c|
+        container_data = {cartons: c.quantity.to_i, priority: nil, container_number: c.container_number, container_type: entry_container_type(c), seal_number: c.seal_number, weight: c.weight.to_i, divisions: [], bols: entry.split_master_bills_of_lading, house_bills: false }
+        dst_data[:containers] << container_data
+
+        if lcl_shipment || air_shipment
+          container_data[:bols] = entry.split_house_bills_of_lading
+          container_data[:house_bills] = true
+        end
+      end
+      
+      # If there are no containers on here, create a dummy container record (this will be likely for air shipments)
+      if entry.containers.length == 0
+        container_data = {cartons: entry.total_packages.to_i, priority: nil, container_number: "", container_type: "", seal_number: "", weight: entry.gross_weight.to_i, divisions: [], bols: entry.split_master_bills_of_lading, house_bills: false}
+        dst_data[:containers] << container_data 
+
+        if lcl_shipment || air_shipment
+          container_data[:bols] = entry.split_house_bills_of_lading
+          container_data[:house_bills] = true
+        end
+        
+        
+      end
+    end
+
     data
-  end 
+  end
+
+  def lcl? entry
+    entry.fcl_lcl.to_s =~ /LCL/i
+  end
 
   def get_shipment_lines entry
     containers = entry.containers.map {|c| c.container_number.blank? ? nil : c.container_number.strip }.uniq
@@ -235,10 +304,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
     desc.blank? ? size : (size + desc)
   end
 
-  def container_weight container
-    # Convert the KG weight of the container to LBS
-    weight_kgs = container.weight.to_i
-
+  def to_lbs weight_kgs
     (BigDecimal(weight_kgs) * BigDecimal("2.20462")).round.to_i
   end
 

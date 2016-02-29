@@ -80,6 +80,20 @@ describe Entry do
       Entry.new(:transport_mode_code=>"40").should_not be_ocean
     end
   end
+  describe 'air?' do
+    it "should return false for nil transport mode" do
+      expect(subject).not_to be_air
+    end
+    it "should return true for 10" do
+      expect(Entry.new(transport_mode_code: "40")).to be_air
+    end
+    it "should return true for 11" do
+      expect(Entry.new(transport_mode_code: "41")).to be_air
+    end
+    it "should return false for any other value" do
+      expect(Entry.new(transport_mode_code: "10")).not_to be_air
+    end
+  end
   context 'security' do
     before :each do
       MasterSetup.get.update_attributes(:entry_enabled=>true)

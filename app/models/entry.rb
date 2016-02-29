@@ -51,6 +51,10 @@ class Entry < ActiveRecord::Base
     ['10','11'].include? self.transport_mode_code
   end
 
+  def air?
+    ['40', '41'].include? self.transport_mode_code
+  end
+
   def canadian?
     import_country && import_country.iso_code == "CA"
   end

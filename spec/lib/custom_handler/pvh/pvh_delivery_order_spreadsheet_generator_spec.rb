@@ -44,9 +44,9 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
   let (:unlading_port) { Factory(:port, name: "unlading_port")}
 
   let (:entry) {
-    e = Factory(:entry, customer_number: importer.alliance_customer_number, importer: importer, master_bills_of_lading: "ABC\nDEF", broker_reference: "REF", vessel: "VESS", voyage: "123", location_of_goods_description: "TERMINAL", carrier_code: "CODE", arrival_date: DateTime.new(2016, 02, 16, 12, 00), export_country_codes: "CN", lading_port: lading_port, unlading_port: unlading_port)
-    e.containers.create! container_number: "12345", container_size: "20'", size_description: "DRY VAN", seal_number: "SEAL123", weight: 10
-    e.containers.create! container_number: "67890", container_size: "40", size_description: "HIGH Cube", seal_number: "SEAL345", weight: 10
+    e = Factory(:entry, customer_number: importer.alliance_customer_number, importer: importer, master_bills_of_lading: "ABC", broker_reference: "REF", vessel: "VESS", voyage: "123", location_of_goods_description: "TERMINAL", carrier_code: "CODE", arrival_date: DateTime.new(2016, 02, 16, 12, 00), export_country_codes: "CN", lading_port: lading_port, unlading_port: unlading_port, carrier_name: "CARRIER NAME")
+    e.containers.create! container_number: "12345", container_size: "20'", size_description: "DRY VAN", seal_number: "SEAL123", weight: 10, quantity: 20
+    e.containers.create! container_number: "67890", container_size: "40", size_description: "HIGH Cube", seal_number: "SEAL345", weight: 10, quantity: 30
     e.commercial_invoices.create! invoice_number: "INV1"
     e.commercial_invoices.create! invoice_number: "INV2"
 
@@ -79,13 +79,19 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
 
   describe "generate_delivery_order_data" do
 
-    def validate_base del
+    def validate_base del, air_shipment = false
       expect(del.date).to eq Time.zone.now.in_time_zone("America/New_York").to_date
       expect(del.vfi_reference).to eq "REF"
-      expect(del.vessel_voyage).to eq "VESS V123"
+      if air_shipment
+        expect(del.vessel_voyage).to eq "CODE FLT: 123"
+        expect(del.importing_carrier).to eq "CARRIER NAME"
+      else
+        expect(del.vessel_voyage).to eq "VESS V123"
+        expect(del.importing_carrier).to eq "CODE"
+      end
       expect(del.freight_location).to eq "TERMINAL"
       expect(del.port_of_origin).to eq lading_port.name
-      expect(del.importing_carrier).to eq "CODE"
+      
       expect(del.arrival_date).to eq Date.new(2016, 2, 16)
       expect(del.instruction_provided_by).to eq ["PVH CORP", "200 MADISON AVE", "NEW YORK, NY 10016-3903"]
       expect(del.body[0..2]).to eq ["PORT OF DISCHARGE: #{unlading_port.name}", "REFERENCE: CNREF", ""]
@@ -233,6 +239,65 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
       shipment
       delivery_orders = subject.generate_delivery_order_data entry
       expect(delivery_orders.size).to eq 2
+    end
+
+    it "generates data from entry data when no shipments are found to match to" do
+      delivery_orders = subject.generate_delivery_order_data entry
+      expect(delivery_orders.size).to eq 1
+      del = delivery_orders.first
+      validate_base(del)
+      expect(del.tab_title).to eq "PVH"
+      expect(del.bill_of_lading).to eq "ABC"
+      expect(del.weight).to eq "44 LBS"
+      expect(del.no_cartons).to eq "50 CTNS"
+
+      expect(del.body[4]).to eq "20 CTNS 12345 20' SEAL# SEAL123 22 LBS"
+      expect(del.body[5]).to eq "DIVISION "
+      expect(del.body[6]).to eq "B/L# ABC"
+      expect(del.body[7]).to eq ""
+      expect(del.body[8]).to eq "30 CTNS 67890 40'HC SEAL# SEAL345 22 LBS"
+      expect(del.body[9]).to eq "DIVISION "
+      expect(del.body[10]).to eq "B/L# ABC"
+    end
+
+    it "generates data for air shipments" do
+      entry.containers.destroy_all
+      entry.update_attributes! house_bills_of_lading: "HAWB", gross_weight: 10, total_packages: 20, transport_mode_code: "40"
+
+      delivery_orders = subject.generate_delivery_order_data entry
+      expect(delivery_orders.size).to eq 1
+      del = delivery_orders.first
+      validate_base(del, true)
+      expect(del.tab_title).to eq "PVH"
+      expect(del.bill_of_lading).to eq "MAWB: ABC"
+      expect(del.weight).to eq "22 LBS"
+      expect(del.no_cartons).to eq "20 CTNS"
+
+      expect(del.body[4]).to eq "20 CTNS 22 LBS"
+      expect(del.body[5]).to eq "DIVISION "
+      expect(del.body[6]).to eq "HOUSE BILL# HAWB"
+    end
+
+    it "generates data for LCL shipments" do
+      entry.update_attributes! house_bills_of_lading: "HAWB", gross_weight: 10, total_packages: 20, transport_mode_code: "10", fcl_lcl: "LCL"
+
+      delivery_orders = subject.generate_delivery_order_data entry
+      expect(delivery_orders.size).to eq 1
+      del = delivery_orders.first
+      validate_base(del)
+      expect(del.tab_title).to eq "PVH"
+      expect(del.bill_of_lading).to eq "ABC"
+      expect(del.weight).to eq "44 LBS"
+      expect(del.no_cartons).to eq "50 CTNS"
+
+      expect(del.body[3]).to eq "LCL"
+      expect(del.body[4]).to eq "20 CTNS 12345 20' SEAL# SEAL123 22 LBS"
+      expect(del.body[5]).to eq "DIVISION "
+      expect(del.body[6]).to eq "HOUSE BILL# HAWB"
+      expect(del.body[7]).to eq ""
+      expect(del.body[8]).to eq "30 CTNS 67890 40'HC SEAL# SEAL345 22 LBS"
+      expect(del.body[9]).to eq "DIVISION "
+      expect(del.body[10]).to eq "HOUSE BILL# HAWB"
     end
   end
 end
