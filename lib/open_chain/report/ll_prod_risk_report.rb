@@ -24,16 +24,15 @@ module OpenChain
         
         custom_defs = self.class.prep_custom_definitions([:prodven_risk,:cmp_sap_company])
         sc = SearchCriterion.new(model_field_uid:custom_defs[:prodven_risk].model_field_uid, operator:"null")
-        rows = compile_rows(sc, custom_defs)
+        rows = compile_rows(sc, custom_defs[:cmp_sap_company])
         table_from_query_result sheet, rows, {}, {column_names: headers}
         wb
       end
 
-      def compile_rows(search_criterion, custom_definitions)
+      def compile_rows(search_criterion, cust_def)
         rows = []; count = 0
         search_criterion.apply(ProductVendorAssignment).limit(25000).each do |pva|
-          vendor_sap = custom_definitions[:cmp_sap_company].model_field.process_export(pva.vendor,nil,true) || "None"
-          vendor_sap_link = XlsMaker.excel_url("/vendors/" + pva.vendor_id.to_s)
+          vendor_sap, vendor_sap_link = get_vendor_sap(cust_def.model_field, pva.vendor)
           count += 1
           row = []
           row << XlsMaker.create_link_cell(vendor_sap_link, vendor_sap)
@@ -44,6 +43,13 @@ module OpenChain
           rows << ['This report is limited to 25,000 lines.','','',''] if count >= 25000
         end
         rows.sort!{|a, b| a[1] <=> b[1]}
+      end
+
+      def get_vendor_sap mf, vendor
+        raw_vendor_sap = mf.process_export(vendor,nil,true)
+        vendor_sap = raw_vendor_sap.blank? ? "None" : raw_vendor_sap
+        vendor_sap_link = XlsMaker.excel_url("/vendors/" + vendor.id.to_s)
+        [vendor_sap, vendor_sap_link]
       end
 
       def run
