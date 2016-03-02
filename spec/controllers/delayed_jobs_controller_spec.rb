@@ -51,6 +51,18 @@ describe DelayedJobsController do
       expect(Delayed::Job.count).to eq 1
       expect(response).to redirect_to request.referrer
     end
+
+    it "skips jobs that are locked" do
+      dj_4 = Delayed::Job.create!
+      dj_4.handler = "--- !ruby/object:Delayed::PerformableMethod\nobject: !ruby/ActiveRecord:ReportResult"
+      dj_4.last_error = "Error!"
+      dj_4.locked_at = DateTime.now
+      dj_4.save!
+
+      delete :bulk_destroy, :id => @dj_1.id
+      expect(Delayed::Job.count).to eq 2
+      expect(response).to redirect_to request.referrer
+    end
   end
 
 end

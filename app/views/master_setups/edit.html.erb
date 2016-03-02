@@ -117,7 +117,7 @@ $(function() {
         </thead>
         <% Delayed::Job.order("created_at ASC").limit(100).each do |dj| %>
           <tr>
-            <%-if dj.last_error && @job_groups[dj.id].count > 1 -%>
+            <%-if dj.last_error && dj.locked_at.blank? && @job_groups[dj.id].count > 1 -%>
               <td><button class='btn btn-sm btn-danger btn-bulk-destroy' data-id='<%=dj.id%>' data-count='<%=@job_groups[dj.id].count%>'>Delete</button></td>
             <%-else-%>
               <td><%= link_to "Delete", delayed_job_path(dj), :confirm => 'Are you sure you want to delete this item?', :method => :delete, :class=>'btn btn-sm btn-danger' %></td>

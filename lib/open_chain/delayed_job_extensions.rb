@@ -1,13 +1,12 @@
 module OpenChain::DelayedJobExtensions
   def self.get_class dj
-    h = dj.handler.split("\n")[1]
+    h = dj.handler.to_s.split("\n")[1]
     return h if h =~ /object: !ruby\/ActiveRecord\:/
-    raise "Unexpected format in Delayed::Job handler field!"
   end
 
   def self.group_jobs
     by_class = Hash.new {|k,v| k[v] = []}
-    error_jobs = Delayed::Job.where("last_error IS NOT NULL")
+    error_jobs = Delayed::Job.where("last_error IS NOT NULL AND locked_at IS NULL")
     error_jobs.each do |job|
       klass = get_class job
       by_class[klass] << job.id
