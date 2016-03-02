@@ -19,37 +19,18 @@ module OpenChain
       end
 
       def create_workbook
-        headers = ["Vendor SAP #", "Vendor Name", "Product SAP #", "Product Name"]
-        wb, sheet = XlsMaker.create_workbook_and_sheet "Products Needing Risk Assignment"
-        
+        wb = XlsMaker.create_workbook "Products Needing Risk Assignment"
         custom_defs = self.class.prep_custom_definitions([:prodven_risk,:cmp_sap_company])
-        sc = SearchCriterion.new(model_field_uid:custom_defs[:prodven_risk].model_field_uid, operator:"null")
-        rows = compile_rows(sc, custom_defs[:cmp_sap_company])
-        table_from_query_result sheet, rows, {}, {column_names: headers}
+        table_from_query wb.worksheet(0), query(custom_defs[:prodven_risk], custom_defs[:cmp_sap_company]), {'Vendor SAP #' => link_lambda} 
         wb
       end
 
-      def compile_rows(search_criterion, cust_def)
-        rows = []; count = 0
-        search_criterion.apply(ProductVendorAssignment).limit(25000).each do |pva|
-          vendor_sap, vendor_sap_link = get_vendor_sap(cust_def.model_field, pva.vendor)
-          count += 1
-          row = []
-          row << XlsMaker.create_link_cell(vendor_sap_link, vendor_sap)
-          row << ModelField.find_by_uid(:cmp_name).process_export(pva.vendor,nil,true)
-          row << ModelField.find_by_uid(:prod_uid).process_export(pva.product,nil,true)
-          row << ModelField.find_by_uid(:prod_name).process_export(pva.product,nil,true)
-          rows << row
-          rows << ['This report is limited to 25,000 lines.','','',''] if count >= 25000
+      def link_lambda
+        lambda do |result_set_row, raw_column_value| 
+          vendor_sap, vendor_id = raw_column_value.split("~*~")
+          vendor_sap_link = XlsMaker.excel_url("/vendors/" + vendor_id)
+          XlsMaker.create_link_cell(vendor_sap_link, vendor_sap)
         end
-        rows.sort!{|a, b| a[1] <=> b[1]}
-      end
-
-      def get_vendor_sap mf, vendor
-        raw_vendor_sap = mf.process_export(vendor,nil,true)
-        vendor_sap = raw_vendor_sap.blank? ? "None" : raw_vendor_sap
-        vendor_sap_link = XlsMaker.excel_url("/vendors/" + vendor.id.to_s)
-        [vendor_sap, vendor_sap_link]
       end
 
       def run
@@ -62,9 +43,30 @@ module OpenChain
         
         workbook_to_tempfile wb, 'LlProdRiskReport-' do |t|
           subject = "Products Needing Risk Assignment"
-          body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
+          body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
           OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
         end
+      end
+
+      def query(cd_prodven_risk, cd_cmp_sap_company)
+        <<-SQL
+          SELECT (CASE 
+                  WHEN cv_ven.string_value IS NULL OR cv_ven.string_value = '' THEN CONCAT("None","~*~",c.id)
+                  ELSE CONCAT(cv_ven.string_value,"~*~",c.id)
+                  END) AS "Vendor SAP #", 
+            c.name AS "Vendor Name", 
+            p.unique_identifier AS "Product SAP #", 
+            p.name AS "Product Name"
+          FROM companies as c
+            INNER JOIN product_vendor_assignments AS pva ON c.id = pva.vendor_id
+            INNER JOIN products AS p on p.id = pva.product_id
+            LEFT OUTER JOIN custom_values AS cv_ven ON (cv_ven.customizable_type = "company" AND cv_ven.customizable_id = c.id 
+                                                        AND cv_ven.custom_definition_id = #{cd_cmp_sap_company.id})
+            LEFT OUTER JOIN custom_values AS cv_prodven ON (cv_prodven.customizable_type = "ProductVendorAssignment" AND cv_prodven.customizable_id = pva.id
+                                                        AND cv_prodven.custom_definition_id = #{cd_prodven_risk.id})
+          WHERE cv_prodven.string_value IS NULL OR cv_prodven.string_value = ''
+          ORDER BY c.name
+        SQL
       end
     end
   end
