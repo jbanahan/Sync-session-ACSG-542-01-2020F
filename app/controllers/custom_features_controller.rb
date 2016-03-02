@@ -21,6 +21,7 @@ require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_
 require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
 require 'open_chain/custom_handler/pvh/pvh_shipment_workflow_parser'
+require 'open_chain/custom_handler/advance/advance_parts_upload_parser'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -43,6 +44,7 @@ class CustomFeaturesController < ApplicationController
   ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler'
   CREW_RETURNS ||= 'OpenChain::CustomHandler::JCrew::JCrewReturnsParser'
   PVH_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser'
+  ADVAN_PART_UPLOAD ||= 'OpenChain::CustomHandler::Advance::AdvancePartsUploadParser'
 
   def index
     render :layout=>'one_col'
@@ -710,4 +712,34 @@ class CustomFeaturesController < ApplicationController
     }
   end
 
+  def advan_parts_index
+    action_secure(OpenChain::CustomHandler::Advance::AdvancePartsUploadParser.can_view?(current_user),Product,{:verb=>"view",:module_name=>"Advance Parts",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>ADVAN_PART_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+    }
+  end
+
+  def advan_parts_upload
+    f = CustomFile.new(:file_type=>ADVAN_PART_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Advance Parts",:lock_check=>false}) {
+     
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload."
+      end
+
+      if !has_errors? && f.save
+        CustomFile.delay.process f.id, current_user.id
+        add_flash :notices, "Your file is being processed.  You'll receive a VFI Track message when it completes."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/advan_parts'
+    }
+  end
+  
+  def advan_parts_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"Advance Parts",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
 end
