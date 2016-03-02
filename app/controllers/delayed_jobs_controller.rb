@@ -1,6 +1,6 @@
-require 'open_chain/delayed_job_extensions'
-
 class DelayedJobsController < ApplicationController
+  include OpenChain::DelayedJobExtensions
+
   def destroy
     @delayed_job = Delayed::Job.find(params[:id])
     sys_admin_secure {
@@ -14,7 +14,7 @@ class DelayedJobsController < ApplicationController
   end
 
   def bulk_destroy
-    ids_to_destroy = OpenChain::DelayedJobExtensions.group_jobs[params[:id].to_i]
+    ids_to_destroy = group_jobs[params[:id].to_i]
     sys_admin_secure {
       Delayed::Job.transaction do
         djs_to_destroy = Delayed::Job.where(id: ids_to_destroy, locked_at: nil)
