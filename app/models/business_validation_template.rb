@@ -49,15 +49,15 @@ class BusinessValidationTemplate < ActiveRecord::Base
     klass = cm.klass 
     # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be 
     # distinct is the core module's id.
-    srch = klass.select("DISTINCT #{cm.table_name}.*").where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
+    srch = klass.select("DISTINCT #{cm.table_name}.id").where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
     srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id AND business_validation_results.business_validation_template_id = #{self.id}")
     self.search_criterions.each {|sc| srch = sc.apply(srch)}
     srch.each do |id|
       obj = nil
       begin
         # Use this rather than find, since it's possible, though unlikely, that the obj has been removed from the system since being returned from the query above
-        obj = klass.where(id: id).first
-        self.create_result!(id, run_validation) unless obj.nil?
+        obj = klass.where(id: id.id).first
+        self.create_result!(obj, run_validation) unless obj.nil?
       rescue => e
         # Don't let one bad object spoil the whole rule run
         if obj
