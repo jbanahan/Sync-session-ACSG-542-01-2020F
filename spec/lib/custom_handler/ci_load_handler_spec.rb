@@ -486,4 +486,19 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       end
     end
   end
+
+  describe "file_parser" do
+
+    subject {
+      described_class.new nil
+    }
+
+    it "returns HM parser for files named like HMCI" do
+      expect(subject.file_parser(CustomFile.new attached_file_name: "HmCi.csv")).to be_a OpenChain::CustomHandler::CiLoadHandler::HmCiLoadParser
+    end
+
+    it "returns standard parser for all other files" do
+      expect(subject.file_parser(CustomFile.new attached_file_name: "other.csv")).to be_a OpenChain::CustomHandler::CiLoadHandler::StandardCiLoadParser
+    end
+  end
 end

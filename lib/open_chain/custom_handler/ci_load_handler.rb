@@ -103,7 +103,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
 
   def file_parser custom_file
     case custom_file.attached_file_name
-    when /^HMCI\./
+    when /^HMCI\./i
       HmCiLoadParser.new nil
     else
       StandardCiLoadParser.new nil
