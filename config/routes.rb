@@ -172,7 +172,11 @@ OpenChain::Application.routes.draw do
   namespace :customer do
     match '/lumber_liquidators/sap_vendor_setup_form/:vendor_id' => 'lumber_liquidators#sap_vendor_setup_form', via: :get
   end
-  resources :delayed_jobs, :only => [:destroy]
+  resources :delayed_jobs, :only => [:destroy] do
+    member do 
+      delete :bulk_destroy
+    end
+  end
   resources :ftp_sessions, :only => [:index, :show] do
     member do
       get 'download'
