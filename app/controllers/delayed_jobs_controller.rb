@@ -1,3 +1,5 @@
+require 'open_chain/delayed_job_extensions'
+
 class DelayedJobsController < ApplicationController
   include OpenChain::DelayedJobExtensions
 
