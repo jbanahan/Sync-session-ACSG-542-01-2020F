@@ -66,13 +66,20 @@ module OpenChain; module CustomHandler; class Generic315Generator
       d.carrier_code = v(:ent_carrier_code, entry)
       d.vessel = v(:ent_vessel, entry)
       d.voyage_number = v(:ent_voyage, entry)
-      d.port_of_entry = v(:ent_entry_port_code, entry)
+      # Load the Locode if the entry is non-US
+      if entry.canadian?
+        d.port_of_entry = entry.ca_entry_port.try(:unlocode)
+        raise "Missing UN Locode for Canadian Port Code #{entry.entry_port_code}." if entry.ca_entry_port && d.port_of_entry.blank?
+      else
+        d.port_of_entry = v(:ent_entry_port_code, entry)
+      end
+      
       d.port_of_lading = v(:ent_lading_port_code, entry)
       d.cargo_control_number = v(:ent_cargo_control_number, entry)
       d.master_bills = data[:master_bills]
       d.container_numbers = data[:container_numbers]
       d.house_bills = data[:house_bills]
-      d.po_numbers = v(:ent_po_numbers, entry)
+      d.po_numbers = v(:ent_po_numbers, entry).to_s.split(/\n\s*/)
       d.event_code = milestone.code
       d.event_date = milestone.date
       d.sync_record = milestone.sync_record
