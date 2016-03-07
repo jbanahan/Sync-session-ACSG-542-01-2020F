@@ -1,5 +1,3 @@
 // Manifest file for the login screen
-//= require jquery
-//= require jquery.cookie.js
-//= require bootstrap
-//= require chain.js.coffee
+//= require_directory ./login/lib
+//= require_directory ./login/app
