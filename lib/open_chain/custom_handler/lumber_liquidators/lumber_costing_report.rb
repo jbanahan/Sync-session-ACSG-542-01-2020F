@@ -147,7 +147,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
         row = [
               line[:entry_number], line[:bol], line[:container], line[:po], line[:line_number], line[:part], line[:quantity], line[:vendor_code], line[:value],
               line[:ocean_rate], line[:duty], line[:add], line[:cvd], line[:brokerage], line[:acessorial], line[:isc_management], line[:isf], line[:blp_handling], 
-              line[:blp], line[:pier_pass], line[:hmf], line[:mpf], line[:inland_freight], line[:courier], line[:oga], line[:clean_truck], line[:other]
+              line[:blp], line[:pier_pass], line[:hmf], line[:mpf], line[:inland_freight], line[:courier], line[:oga], line[:clean_truck], line[:other], line[:currency]
             ]
 
         # Since we're aping an existing feed, which doesn't send zeros, for some reason, remove them here too
@@ -230,7 +230,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
       '0176' => :acessorial,
       '0050' => :acessorial,
       '0142' => :acessorial,
-      '0186' => :isc_management,
+      '0235' => :isc_management,
       '0191' => :isf,
       '0189' => :pier_pass,
       '0720' => :pier_pass,
