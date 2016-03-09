@@ -6,10 +6,11 @@
       <option value='all' selected='selected'>All Products</option>
       <option value='risk-blank-all'>No Risk Assigned (All)</option>
       <option value='risk-blank-ordered'>No Risk Assigned (Ordered)</option>
-      <option value='risk-high'>High Risk</option>
+      <option value='risk-high'>High</option>
       <option value='risk-medium'>Medium</option>
       <option value='risk-low'>Low</option>
       <option value='risk-grandfathered'>Grandfathered</option>
+      <option value='risk-autoflow'>Auto-Flow</option>
     </select>
   </div>
   <div class='row' id='ll-product-panel-row'>
@@ -85,6 +86,7 @@
       'risk-medium':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'Medium'},
       'risk-low':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'Low'},
       'risk-grandfathered':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'Grandfathered'},
+      'risk-autoflow':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'Auto-Flow'},
       'risk-blank-all':{sid1:'<%=risk_def.model_field_uid%>',sop1:'null'},
       'risk-blank-ordered':{
         sid1:'<%=risk_def.model_field_uid%>',

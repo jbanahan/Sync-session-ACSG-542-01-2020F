@@ -2,38 +2,74 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator do
   describe '#compare' do
-    it 'should do nothing if not an Order type' do
-      described_class.should_not_receive(:run_changes)
-      described_class.compare 'Product', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
-    end
-    it 'should call run_changes if no old version' do
-      described_class.should_receive(:run_changes)
-      described_class.compare 'Order', 1, nil, nil, nil, 'nb', 'np', 'nv'
-    end
-    it 'should get fingerprints for both versions and call run_changes if they are different' do
-      old_h = {'a'=>'b'}
-      new_h = {'c'=>'d'}
-      described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
-      described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
-      described_class.should_receive(:fingerprint).with(old_h).and_return 'oldfp'
-      described_class.should_receive(:fingerprint).with(new_h).and_return 'newfp'
+    context 'no auto flow' do
+      before :each do
+        OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.stub(:process)
+      end
+      it 'should do nothing if not an Order type' do
+        described_class.should_not_receive(:run_changes)
+        described_class.compare 'Product', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
+      end
+      it 'should call run_changes if no old version' do
+        described_class.should_receive(:run_changes)
+        described_class.compare 'Order', 1, nil, nil, nil, 'nb', 'np', 'nv'
+      end
+      it 'should get fingerprints for both versions and call run_changes if they are different' do
+        old_h = {'a'=>'b'}
+        new_h = {'c'=>'d'}
+        described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
+        described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
+        described_class.should_receive(:fingerprint).with(old_h).and_return 'oldfp'
+        described_class.should_receive(:fingerprint).with(new_h).and_return 'newfp'
 
-      described_class.should_receive(:run_changes).with('Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv')
-      described_class.should_receive(:compare_lines)
-      described_class.compare 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
-    end
-    it 'should not call run_changes if both versions have the same fingerprint' do
-      old_h = {'a'=>'b'}
-      new_h = {'c'=>'d'}
-      described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
-      described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
-      described_class.should_receive(:fingerprint).with(old_h).and_return 'fp'
-      described_class.should_receive(:fingerprint).with(new_h).and_return 'fp'
+        described_class.should_receive(:run_changes).with('Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv')
+        described_class.should_receive(:compare_lines)
+        described_class.compare 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
+      end
+      it 'should not call run_changes if both versions have the same fingerprint' do
+        old_h = {'a'=>'b'}
+        new_h = {'c'=>'d'}
+        described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
+        described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
+        described_class.should_receive(:fingerprint).with(old_h).and_return 'fp'
+        described_class.should_receive(:fingerprint).with(new_h).and_return 'fp'
 
-      described_class.should_not_receive(:run_changes)
-      described_class.compare 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
+        described_class.should_not_receive(:run_changes)
+        described_class.compare 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
+      end
+    end
+    context "auto flow" do
+      before :each do
+        @ord = double('order')
+        Order.should_receive(:find_by_id).with(1).and_return @ord
+        OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.should_receive(:process).with(@ord)
+      end
+      it "should run AutoFlow if there are changes" do
+        old_h = {'a'=>'b'}
+        new_h = {'c'=>'d'}
+        described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
+        described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
+        described_class.should_receive(:fingerprint).with(old_h).and_return 'oldfp'
+        described_class.should_receive(:fingerprint).with(new_h).and_return 'newfp'
+
+        described_class.should_receive(:run_changes).with('Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv')
+        described_class.should_receive(:compare_lines)
+        described_class.compare 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
+      end
+      it "should run AutoFlow even if no fingerprint changes" do
+        old_h = {'a'=>'b'}
+        new_h = {'c'=>'d'}
+        described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
+        described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
+        described_class.should_receive(:fingerprint).with(old_h).and_return 'fp'
+        described_class.should_receive(:fingerprint).with(new_h).and_return 'fp'
+
+        described_class.should_not_receive(:run_changes)
+        described_class.compare 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
+      end
     end
   end
+
   describe '#fingerprint' do
     it 'should generate from JSON hash' do
       p = Factory(:product,unique_identifier:'px')
@@ -58,11 +94,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
   end
   describe '#get_json_hash' do
-    it 'should get JSON hash from s3 data' do
-      h = {'a'=>'b'}
-      json = h.to_json
-      OpenChain::S3.should_receive(:get_versioned_data).with('b','k','v').and_return json
-      expect(described_class.get_json_hash('b','k','v')).to eq h
+    it 'should exist on object' do
+      # confirming that we're extending the right module to get the get_json_hash method
+      expect(described_class.methods).to include(:get_json_hash)
     end
   end
   describe '#run_changes' do
