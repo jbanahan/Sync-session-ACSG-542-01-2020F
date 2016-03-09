@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
   end
 
   def self.get_risk_value cdef, hash
-    return if hash.nil?
+    return if hash.blank?
     entity = hash['entity']
     return if entity.nil?
     model_fields = entity['model_fields']
