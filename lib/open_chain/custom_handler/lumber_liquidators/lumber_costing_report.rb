@@ -32,26 +32,29 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
   end
 
   def generate_and_send_entry_data id
-    entry, data, fingerprint = generate_entry_data(id)
+    entry, data = generate_entry_data(id)
     if !data.blank?
       sync_record = entry.sync_records.where(trading_partner: "LL_COST_REPORT").first_or_initialize
-      if sync_record.fingerprint != fingerprint
-        Tempfile.open(["Cost_", ".txt"]) do |temp|
-          data.each do |row|
-            temp << row.to_csv(col_sep: "|")
-          end
-          temp.flush
-          temp.rewind
 
-          SyncRecord.transaction do
-            ftp_file temp
-            sync_record.sent_at = Time.zone.now
-            sync_record.confirmed_at = Time.zone.now + 1.minute
-            sync_record.fingerprint = fingerprint
-            sync_record.save!
-          end
-          
+      # There should never be a sync record already existing, since we should NEVER send data for invoices that we've already sent data for
+      return if sync_record.persisted?
+
+      Tempfile.open(["Cost_", ".txt"]) do |temp|
+        Attachment.add_original_filename_method temp, "Cost_#{entry.broker_reference}_#{ActiveSupport::TimeZone["America/New_York"].now.strftime("%Y-%m-%d")}.txt"
+        
+        data.each do |row|
+          temp << row.to_csv(col_sep: "|")
         end
+        temp.flush
+        temp.rewind
+
+        SyncRecord.transaction do
+          ftp_file temp
+          sync_record.sent_at = Time.zone.now
+          sync_record.confirmed_at = Time.zone.now + 1.minute
+          sync_record.save!
+        end
+        
       end
     end
   rescue => e
@@ -61,7 +64,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
 
   def find_entry_ids start_time
     # Data should be sent ONLY ONCE and not sent until Arrival Date - 3 days.
-
     v = Entry.select("DISTINCT entries.id").
           # We have to have broker invoices before we send this data
           joins(:broker_invoices).
@@ -108,7 +110,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
           line_values[:line_number] = line_number
           line_values[:part] = line.part_number
           line_values[:quantity] = (line.quantity.try(:nonzero?) ? line.quantity : "")
-          line_values[:vendor_code] = (@env == :production ? "400235" : "400185")
+          line_values[:vendor_code] = "802542"
           line_values[:value] = line.value
           line_values[:other] = ""
           line_values[:currency] = "USD"
@@ -168,11 +170,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
 
     end
 
-    [entry, entry_data, (entry_data.blank? ? "" : generate_fingerprint(entry_data))]
-  end
-
-  def generate_fingerprint data
-    Digest::SHA1.hexdigest(data.map {|row| row.join("*~*")}.join("*~*"))
+    [entry, entry_data]
   end
 
   def line_charge_values line, total_entered_value, charge_totals, charge_buckets

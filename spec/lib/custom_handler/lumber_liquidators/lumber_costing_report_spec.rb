@@ -39,16 +39,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     end
 
     it "generates invoice data for an entry id" do
-      e, data, fingerprint = subject.generate_entry_data entry.id
+      e, data = subject.generate_entry_data entry.id
       expect(e).not_to be_nil
       expect(data.size).to eq 1
-      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "400235", "100.000", nil, "200.000", "110.000", "120.000", "100.000", nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil]
-      expect(fingerprint).to eq Digest::SHA1.hexdigest(data.first.join("*~*"))
-    end
-
-    it "generates with non-production vendor code" do
-      e, data, fingerprint = described_class.new(env: :test, api_client: api).generate_entry_data entry.id
-      expect(data.first[7]).to eq "400185"
+      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "802542", "100.000", nil, "200.000", "110.000", "120.000", "100.000", nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil]
     end
 
     context "with prorated amounts" do
@@ -64,7 +58,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       end
 
       it "prorates charge values" do
-        e, data, fingerprint = subject.generate_entry_data entry.id
+        e, data = subject.generate_entry_data entry.id
         expect(data.first[13]).to eq "33.334"
         expect(data[1][13]).to eq "33.333"
         expect(data[2][13]).to eq "33.333"
@@ -73,7 +67,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       it "does not add prorated amounts to lines with no entred value" do
         line = invoice.commercial_invoice_lines.create! po_number: "PO", part_number: "000123", quantity: 10, value: 100
 
-        e, data, fingerprint = subject.generate_entry_data entry.id
+        e, data = subject.generate_entry_data entry.id
         expect(data.first[13]).to eq "33.334"
         expect(data[1][13]).to eq "33.333"
         expect(data[2][13]).to eq "33.333"
@@ -86,7 +80,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       it "uses the correct output charge column for code #{charge.keys.first}" do
         entry.broker_invoices.first.broker_invoice_lines.first.update_attributes! charge_code: charge.keys.first
 
-        e, data, fingerprint = subject.generate_entry_data entry.id
+        e, data = subject.generate_entry_data entry.id
         expect(data.first[charge.values.first]).to eq "100.000"
       end
     end
@@ -100,10 +94,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     it "does not generate data if validation rules have failures" do
       entry.business_validation_results.create! state: "Fail"
 
-      e, data, fingerprint = subject.generate_entry_data entry.id
+      e, data = subject.generate_entry_data entry.id
       expect(e).to eq entry
       expect(data).to be_blank
-      expect(fingerprint).to eq ""
     end
   end
 
@@ -153,29 +146,24 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
   describe "generate_and_send_entry_data" do
     let(:ftped_file) { StringIO.new }
+    let(:ftped_filenames) { [] }
 
     before :each do
-      subject.stub(:generate_entry_data).with(entry.id).and_return([entry, [["data", "data"],["d", "d"]], "fingerprint"])
-      subject.stub(:ftp_file) {|file| ftped_file << file.read }
+      subject.stub(:generate_entry_data).with(entry.id).and_return([entry, [["data", "data"],["d", "d"]]])
+      subject.stub(:ftp_file) {|file| ftped_file << file.read; ftped_filenames << file.original_filename }
     end
 
     it "generates and sends entry data for given id" do
       subject.generate_and_send_entry_data entry.id
       ftped_file.rewind
       expect(ftped_file.read).to eq "data|data\nd|d\n"
+      expect(ftped_filenames.first).to eq "Cost_#{entry.broker_reference}_#{ActiveSupport::TimeZone["America/New_York"].now.strftime("%Y-%m-%d")}.txt"
       entry.reload
       expect(entry.sync_records.size).to eq 1
       sr = entry.sync_records.first
       expect(sr.sent_at).to be_within(1.minute).of(Time.zone.now)
       expect(sr.trading_partner).to eq "LL_COST_REPORT"
       expect(sr.confirmed_at).to be_within(2.minutes).of(Time.zone.now)
-      expect(sr.fingerprint).to eq "fingerprint"
-    end
-
-    it "doesn't send file if fingerpint is unchanged" do
-      subject.should_not_receive(:ftp_file)
-      entry.sync_records.create! trading_partner: "LL_COST_REPORT", fingerprint: "fingerprint"
-      subject.generate_and_send_entry_data entry.id
     end
   end
 
