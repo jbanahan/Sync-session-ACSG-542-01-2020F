@@ -463,6 +463,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/advan_parts/upload" => "custom_features#advan_parts_upload"
   get "/custom_features/advan_parts/:id/download" => "custom_features#advan_parts_download"
 
+  get "/custom_features/cq_origin" => "custom_features#cq_origin_index"
+  post "/custom_features/cq_origin/upload" => "custom_features#cq_origin_upload"
+  get "/custom_features/cq_origin/:id/download" => "custom_features#cq_origin_download"
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get

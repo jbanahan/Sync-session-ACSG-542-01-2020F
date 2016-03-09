@@ -379,4 +379,28 @@ describe OpenChain::XLClient do
     end
   end
 
+  describe "set_row_color" do
+    it "sends correct command" do
+      subject.should_receive(:send).with({"command" => 'set_color', "path" => path, "payload" => {"position" => {"sheet" => 0, "row" => 1}, "color" => "BLUE"}}).and_return({"result" => "success"})
+      subject.set_row_color 0, 1, "blue"
+    end
+
+    it "handles errors" do
+      subject.should_receive(:send).with({"command" => 'set_color', "path" => path, "payload" => {"position" => {"sheet" => 0, "row" => 1}, "color" => "BLUE"}}).and_return error_response
+      expect {subject.set_row_color 0, 1, "blue"}.to raise_error "Error"
+    end
+  end
+
+  describe "set_cell_color" do
+    it "sends correct command" do
+      subject.should_receive(:send).with({"command" => 'set_color', "path" => path, "payload" => {"position" => {"sheet" => 0, "row" => 1, "column" => 2}, "color" => "BLUE"}}).and_return({"result" => "success"})
+      subject.set_cell_color 0, 1, 2, "blue"
+    end
+
+    it "handles errors" do
+      subject.should_receive(:send).with({"command" => 'set_color', "path" => path, "payload" => {"position" => {"sheet" => 0, "row" => 1, "column" => 2}, "color" => "BLUE"}}).and_return error_response
+      expect {subject.set_cell_color 0, 1, 2, "blue"}.to raise_error "Error"
+    end
+  end
+
 end

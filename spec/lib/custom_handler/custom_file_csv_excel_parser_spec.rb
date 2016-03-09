@@ -34,6 +34,27 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
       file_reader.should_receive(:foreach).and_yield(["    ", "", "    "]).and_yield([nil, nil, nil])
       expect(subject.foreach(custom_file, skip_blank_lines: true)).to be_blank
     end
+
+    it "receives yielded values" do
+      file_reader.should_receive(:foreach).and_yield(["a", "b", "c"]).and_yield([1, 2, 3])
+      rows = []
+      subject.foreach(custom_file) do |row|
+        rows << row
+      end
+      expect(rows).to eq([["a", "b", "c"], [1, 2, 3]])
+    end
+
+    it "receives yielded values and row_number" do
+      file_reader.should_receive(:foreach).and_yield(["a", "b", "c"]).and_yield([1, 2, 3])
+      rows = []
+      row_numbers = []
+      subject.foreach(custom_file) do |row, row_number|
+        rows << row
+        row_numbers << row_number
+      end
+      expect(rows).to eq([["a", "b", "c"], [1, 2, 3]])
+      expect(row_numbers).to eq [0, 1]
+    end
   end
 
   describe "blank_row?" do

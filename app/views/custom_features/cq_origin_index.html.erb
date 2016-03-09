@@ -1,0 +1,36 @@
+<% content_for :head_tags do %>
+<style type="text/css">
+  #layout thead td {padding-left: 3px; padding-right: 3px; font-size: 75%; border: 1px solid black;}
+  #layout {margin-top: 20px; margin-bottom: 25px;}
+</style>
+<% end %>
+
+<% content_for :upload_form do %>
+<h2>Upload ONLY CQ Origin Files in Excel format.</h2>
+<h4>The following data columns should be present in your file in the <b>same order</b> as listed below.</h4>
+<table id="layout">
+  <thead>
+    <tr>
+      <td>DC#</td>
+      <td>PO No</td>
+      <td>Warehouse#</td>
+      <td>Warehouse Name</td>
+      <td>Vendor ID</td>
+      <td>Vendor Name</td>
+      <td>Sku#</td>
+      <td>MFG NO</td>
+      <td>Description</td>
+      <td>HTS#</td>
+      <td>ORD Qty</td>
+      <td>SHIP Qty</td>
+      <td>Cost</td>
+      <td>Loading Port</td>
+      <td>Issue Date</td>
+      <td>DC Due Date</td>
+      <td><i>Any columns after this can be present in the file<i></td>
+    </tr>
+  </thead>
+</table>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "CQ Origin PO Report Upload", custom_feature: "cq_origin"} %>

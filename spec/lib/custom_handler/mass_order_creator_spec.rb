@@ -235,5 +235,15 @@ describe OpenChain::CustomHandler::MassOrderCreator do
       expect(p.classifications.first.tariff_records.first.line_number).to eq 1
       expect(p.classifications.first.tariff_records.first.hts_1).to eq "1234567890"
     end
+
+    it "allows using product id to identify product at order line level" do
+      product = Factory(:product, importer: importer)
+
+      order_attributes[:order_lines_attributes].first.delete :product
+      order_attributes[:order_lines_attributes].first[:product] = {id: product.id}
+
+      orders = subject.create_orders user, [order_attributes]
+      expect(orders['12345'].order_lines.first.product).to eq product
+    end
   end
 end
