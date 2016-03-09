@@ -1,5 +1,6 @@
 require 'open_chain/custom_handler/custom_file_csv_excel_parser.rb'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
+require 'open_chain/custom_handler/mass_order_creator'
 require 'spreadsheet'
 
 module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginReportParser
