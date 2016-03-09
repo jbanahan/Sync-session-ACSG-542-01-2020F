@@ -34,6 +34,27 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
       file_reader.should_receive(:foreach).and_yield(["    ", "", "    "]).and_yield([nil, nil, nil])
       expect(subject.foreach(custom_file, skip_blank_lines: true)).to be_blank
     end
+
+    it "receives yielded values" do
+      file_reader.should_receive(:foreach).and_yield(["a", "b", "c"]).and_yield([1, 2, 3])
+      rows = []
+      subject.foreach(custom_file) do |row|
+        rows << row
+      end
+      expect(rows).to eq([["a", "b", "c"], [1, 2, 3]])
+    end
+
+    it "receives yielded values and row_number" do
+      file_reader.should_receive(:foreach).and_yield(["a", "b", "c"]).and_yield([1, 2, 3])
+      rows = []
+      row_numbers = []
+      subject.foreach(custom_file) do |row, row_number|
+        rows << row
+        row_numbers << row_number
+      end
+      expect(rows).to eq([["a", "b", "c"], [1, 2, 3]])
+      expect(row_numbers).to eq [0, 1]
+    end
   end
 
   describe "blank_row?" do
@@ -224,7 +245,7 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
     describe "foreach" do
       it "yields all row values from a sheet" do
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::ExcelReader.new(custom_file, {})
-        r.should_receive(:xl_client).with("path", {bucket: "bucket"}).and_return xl_client
+        r.should_receive(:get_xl_client).with("path", {bucket: "bucket"}).and_return xl_client
         xl_client.should_receive(:all_row_values).with(0).and_yield([1,2]).and_yield([3,4])
 
         rows = []
@@ -235,7 +256,7 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
 
       it "utilizes reader options" do
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::ExcelReader.new(custom_file, {sheet_number: 1, bucket: "different_bucket", opt: "opt"})
-        r.should_receive(:xl_client).with("path", {bucket: "different_bucket", opt: "opt"}).and_return xl_client
+        r.should_receive(:get_xl_client).with("path", {bucket: "different_bucket", opt: "opt"}).and_return xl_client
         xl_client.should_receive(:all_row_values).with(1).and_yield([1,2]).and_yield([3,4])
 
         rows = []

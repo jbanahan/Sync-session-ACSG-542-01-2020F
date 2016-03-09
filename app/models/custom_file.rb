@@ -14,6 +14,9 @@ require 'open_chain/custom_handler/ci_load_handler'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
 require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
+require 'open_chain/custom_handler/pvh/pvh_shipment_workflow_parser'
+require 'open_chain/custom_handler/advance/advance_parts_upload_parser'
+require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records

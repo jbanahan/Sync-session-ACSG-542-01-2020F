@@ -8,7 +8,9 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
     reader = file_reader(custom_file)
     rows = block_given? ? nil : []
     headers = false
+    row_number = -1
     reader.foreach do |row|
+      row_number += 1
       if skip_headers && !headers
         headers = true
         next
@@ -19,7 +21,7 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
       if rows
         rows << row
       else
-        yield row
+        yield row, row_number
       end
     end
 
@@ -37,7 +39,7 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
     date = nil
     if value.is_a? String
       #Convert any / to a hypehn
-      value = value.gsub('/', '-')
+      value = value.gsub('/', '-').strip
       # Try yyyy-mm-dd then mm-dd-yyyy then mm-dd-yy
       date = parse_and_validate_date(value, "%Y-%m-%d")
       unless date
@@ -84,17 +86,27 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
       if respond_to?(:csv_reader_options)
         options = csv_reader_options.with_indifferent_access
       end
-      CsvReader.new(custom_file, options)
+      csv_reader custom_file, options
     when ".xls", ".xlsx"
       options = {}
       if respond_to?(:excel_reader_options)
         options = excel_reader_options.with_indifferent_access
       end
-      ExcelReader.new(custom_file, options)
+      excel_reader custom_file, options
     else
       raise "No file reader exists for #{File.extname(custom_file.path).downcase} file types."
     end
 
+  end
+
+  # Convenience method for any extending classes that wish to get to a lower
+  # level of access and use the reader directly.
+  def excel_reader custom_file, options = {}
+    ExcelReader.new(custom_file, options)
+  end
+
+  def csv_reader custom_file, options = {}
+    CsvReader.new(custom_file, options)
   end
 
   class CsvReader
@@ -120,7 +132,7 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
 
   class ExcelReader
 
-    attr_reader :reader_options
+    attr_reader :reader_options, :xl_client
 
     def initialize custom_file, reader_options
       @custom_file = custom_file
@@ -133,14 +145,14 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
 
       # Make sure bucket always comes from the custom file, not based on the xl client default
       opts = {bucket: @custom_file.bucket}.merge @reader_options
-      c = xl_client(@custom_file.path, opts)
-      c.all_row_values(sheet_number) do |row|
+      @xl_client = get_xl_client(@custom_file.path, opts)
+      @xl_client.all_row_values(sheet_number) do |row|
         yield row
       end
       nil
     end
 
-    def xl_client path, opts
+    def get_xl_client path, opts
       OpenChain::XLClient.new(path, opts)
     end
   end

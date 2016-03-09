@@ -181,6 +181,32 @@ module OpenChain
       send c
     end
 
+    def set_row_color sheet, row, color
+      # Color must be one of the following values (these come from the IndexedColors java class in the POI library used by xlserver )
+      # AQUA, AUTOMATIC, BLACK, BLUE, BLUE_GREY, BRIGHT_GREEN, BROWN, CORAL, CORNFLOWER_BLUE, DARK_BLUE, DARK_GREEN, DARK_RED, DARK_TEAL, DARK_YELLOW, 
+      # GOLD, GREEN, GREY_25_PERCENT, GREY_40_PERCENT, GREY_50_PERCENT, GREY_80_PERCENT, INDIGO, LAVENDER, LEMON_CHIFFON, LIGHT_BLUE, LIGHT_CORNFLOWER_BLUE, 
+      # LIGHT_GREEN, LIGHT_ORANGE, LIGHT_TURQUOISE, LIGHT_YELLOW, LIME, MAROON, OLIVE_GREEN, ORANGE, ORCHID, PALE_BLUE, PINK, PLUM, RED, ROSE, ROYAL_BLUE, 
+      # SEA_GREEN, SKY_BLUE, TAN, TEAL, TURQUOISE, VIOLET, WHITE, YELLOW
+      
+      cmd = {'command' => 'set_color', 'path' => @path, "payload" => {"position"=> {"sheet"=>sheet,"row"=>row}, "color" => color.to_s.upcase}}
+      r = send cmd
+      process_cell_response r
+      nil
+    end
+
+    def set_cell_color sheet, row, column, color
+      # Color must be one of the following values (these come from the IndexedColors java class in the POI library used by xlserver )
+      # AQUA, AUTOMATIC, BLACK, BLUE, BLUE_GREY, BRIGHT_GREEN, BROWN, CORAL, CORNFLOWER_BLUE, DARK_BLUE, DARK_GREEN, DARK_RED, DARK_TEAL, DARK_YELLOW, 
+      # GOLD, GREEN, GREY_25_PERCENT, GREY_40_PERCENT, GREY_50_PERCENT, GREY_80_PERCENT, INDIGO, LAVENDER, LEMON_CHIFFON, LIGHT_BLUE, LIGHT_CORNFLOWER_BLUE, 
+      # LIGHT_GREEN, LIGHT_ORANGE, LIGHT_TURQUOISE, LIGHT_YELLOW, LIME, MAROON, OLIVE_GREEN, ORANGE, ORCHID, PALE_BLUE, PINK, PLUM, RED, ROSE, ROYAL_BLUE, 
+      # SEA_GREEN, SKY_BLUE, TAN, TEAL, TURQUOISE, VIOLET, WHITE, YELLOW
+
+      cmd = {'command' => 'set_color', 'path' => @path, "payload" => {"position"=> {"sheet"=>sheet,"row"=>row, "column"=>column}, "color" => color.to_s.upcase}}
+      r = send cmd
+      process_cell_response r
+      nil
+    end
+
     # helper method to find a cell in a row hash by column number
     def self.find_cell_in_row row, column_number
       row.each do |r|

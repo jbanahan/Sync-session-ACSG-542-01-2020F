@@ -161,10 +161,19 @@ module OpenChain; module CustomHandler; module MassOrderCreator
 
     def find_and_create_product product_attributes, user
       product = nil
-      Lock.acquire("Product-#{product_attributes['prod_uid']}") do 
-        product = Product.where(unique_identifier: product_attributes['prod_uid']).first_or_create!
+      # If the product id is present, then use it directly.
+      if product_attributes['id']
+        product = Product.where(id: product_attributes['id'].to_i).first
       end
 
+      if product.nil? && !product_attributes['prod_uid'].blank?
+        Lock.acquire("Product-#{product_attributes['prod_uid']}") do 
+          product = Product.where(unique_identifier: product_attributes['prod_uid']).first_or_create!
+        end
+      end
+
+      raise "Failed to locate or create product with attributes: #{product_attributes}." unless product
+      
       Lock.with_lock_retry(product) do
         apply_attributes_and_save(product, product_attributes, user)
       end
