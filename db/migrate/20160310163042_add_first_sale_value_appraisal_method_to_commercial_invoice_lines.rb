@@ -1,6 +1,14 @@
 class AddFirstSaleValueAppraisalMethodToCommercialInvoiceLines < ActiveRecord::Migration
-  def change
-    add_column :commercial_invoice_lines, :first_sale, :boolean
-    add_column :commercial_invoice_lines, :value_appraisal_method, :string
+  def up
+    change_table(:commercial_invoice_lines, bulk: true) do |t|
+      t.boolean :first_sale
+      t.string :value_appraisal_method
+    end
+  end
+
+  def down
+    change_table(:commercial_invoice_lines, bulk: true) do |t|
+      t.remove :first_sale, :value_appraisal_method
+    end
   end
 end
