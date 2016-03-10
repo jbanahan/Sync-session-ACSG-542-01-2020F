@@ -21,4 +21,13 @@ describe Country do
       Country.find_by_iso_code('VN').name.should == 'OVN'
     end
   end
+  describe :quicksearch_importers_only do
+    it "validates that if quicksearch_view is enabled import_location is also set" do
+      Country.load_default_countries
+      c = Country.first
+      c.quicksearch_show = true
+      expect(c.valid?).to eq false
+      expect(c.errors).to have_key :quicksearch_show
+    end
+  end
 end
