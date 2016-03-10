@@ -206,7 +206,7 @@ end
     if filename.blank? && defined?(@destroyed_filename)
       filename = @destroyed_filename
     end
-    Attachment.stitchable_attachment_extensions.include? File.extname(filename).try(:downcase)
+    !self.is_private? && Attachment.stitchable_attachment_extensions.include?(File.extname(filename).try(:downcase))
   end
 
   def record_filename

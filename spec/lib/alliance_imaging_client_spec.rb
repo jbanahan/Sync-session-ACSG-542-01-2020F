@@ -453,6 +453,12 @@ ERR
       OpenChain::AllianceImagingClient.should_not_receive(:send_entry_stitch_request).with @entry.id
       expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
     end
+
+    it "does not send stitch request if only attachment is private" do
+      @attachment.update_attributes! is_private: true
+      OpenChain::AllianceImagingClient.should_not_receive(:send_entry_stitch_request).with @entry.id
+      expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
+    end
   end
 
   describe "run_schedulable" do
