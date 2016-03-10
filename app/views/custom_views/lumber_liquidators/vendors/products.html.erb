@@ -104,6 +104,10 @@
     if(page) {
       data.page = page;
     }
+    data.per_page = 50;
+    data.sid99 = 'prodven_vend_dbid';
+    data.sop99 = 'eq';
+    data.sv99 = '<%=@company.id%>';
     $('#ll-load-more').hide();
     $.ajax('/api/v1/product_vendor_assignments.json', {
       method:'GET',
