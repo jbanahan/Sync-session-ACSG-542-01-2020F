@@ -192,7 +192,9 @@ module CoreModuleDefinitions
                :unique_id_field_name=>:prod_uid,
                :key_model_field_uids => [:prod_uid],
                :quicksearch_fields => [:prod_uid,:prod_name],
-               :quicksearch_extra_fields => [ lambda { us = Country.where(iso_code: 'US', import_location:true).first;  us ? "*fhts_1_#{us.id}".to_sym : nil }]
+               :quicksearch_extra_fields => lambda do
+                  Country.select("id").show_quicksearch.order(:classification_rank => :asc, :name => :asc).map{ |c| "*fhts_1_#{c.id}".to_sym }
+               end
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
        :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
