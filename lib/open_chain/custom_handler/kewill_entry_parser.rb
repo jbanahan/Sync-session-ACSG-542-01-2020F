@@ -634,6 +634,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.computed_adjustments = parse_decimal(l[:non_dutiable_amt]) + parse_decimal(l[:add_to_make_amt]) + parse_decimal(l[:other_amt]) +
                                      parse_decimal(l[:misc_discount]) + parse_decimal(l[:cash_discount]) + parse_decimal(l[:freight_amount])
       line.computed_net_value = parse_decimal(l[:value_tot]) - line.computed_adjustments
+      line.first_sale = l[:value_appraisal_method].to_s.upcase == "F"
+      line.value_appraisal_method = l[:value_appraisal_method]
 
       Array.wrap(l[:fees]).each do |fee|
         case fee[:customs_fee_code].to_i
