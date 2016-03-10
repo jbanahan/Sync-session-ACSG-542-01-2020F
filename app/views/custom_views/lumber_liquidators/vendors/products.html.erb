@@ -81,6 +81,7 @@
 </div>
 <script type="text/javascript">
   function LLProductVariantAssignmentGetPage(page,callback) {
+    pageSize = 50;
     filterOptions = {
       'risk-high':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'High'},
       'risk-medium':{sid1:'<%=risk_def.model_field_uid%>',sop1:'eq',sv1:'Medium'},
@@ -104,7 +105,7 @@
     if(page) {
       data.page = page;
     }
-    data.per_page = 50;
+    data.per_page = pageSize;
     data.sid99 = 'prodven_vend_dbid';
     data.sop99 = 'eq';
     data.sv99 = '<%=@company.id%>';
@@ -128,7 +129,7 @@
         var canEditRisk = <%=risk_def.model_field.can_edit?(current_user) ? 'true' : 'false'%>;
         console.log(response);
 
-        if(response.results.length==10) {
+        if(response.results.length==pageSize) {
           $('#ll-load-more').show();
         }
 
