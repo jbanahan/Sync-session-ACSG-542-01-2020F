@@ -7,7 +7,7 @@ describe AttachmentArchiveSetup do
     @invoice = Factory(:broker_invoice, :entry => @entry, :invoice_date => (Time.current.midnight - 30.days) - 1.second)
     @setup = @c.create_attachment_archive_setup(:start_date=>1.year.ago)
     @att = @entry.attachments.create!(:attached_file_name=>'a.pdf',:attached_file_size=>100)
-    @att2 = @entry.attachments.create!(:attached_file_name=>'b.pdf',:attached_file_size=>100)
+    @att2 = @entry.attachments.create!(:attached_file_name=>'b.pdf',:attached_file_size=>100, is_private: false)
   end
   describe "create_entry_archive!" do
     it "should include relevant attachments" do
@@ -88,6 +88,11 @@ describe AttachmentArchiveSetup do
     it "excludes invoices that occur after the end date" do
       @setup.update_attributes! end_date: Date.new(2013, 1, 1)
       expect(@setup).not_to be_entry_attachments_available
+    end
+    it "excludes private attachments" do
+      @att.update_attributes! is_private: true
+      archive = @setup.create_entry_archive! "my name", 5.megabytes
+      expect(archive.attachments).not_to include(@att)
     end
   end
   describe "entry_attachments_available?" do
