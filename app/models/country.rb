@@ -81,7 +81,7 @@ class Country < ActiveRecord::Base
   scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
 
 	validates_uniqueness_of :iso_code
-  validate :quicksearch_importers_only
+  validate :quicksearch_only_for_import_locations
 
   def self.find_cached_by_id country_id
     c = CACHE.get("Country:id:#{country_id}")
@@ -108,7 +108,7 @@ class Country < ActiveRecord::Base
     return nil
 	end
 
-  def quicksearch_importers_only
+  def quicksearch_only_for_import_locations
     if quicksearch_show && !import_location
       errors.add(:quicksearch_show, "can only be set on an import location!")
     end
