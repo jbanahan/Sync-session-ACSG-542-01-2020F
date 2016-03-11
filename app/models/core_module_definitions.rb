@@ -249,7 +249,7 @@ module CoreModuleDefinitions
        :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
        :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"},
        :quicksearch_fields => [:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums,:ent_cargo_control_number,:ent_hbols,:ent_commercial_invoice_numbers],
-       :quicksearch_extra_fields => [:ent_cust_num, :ent_release_cert_message],
+       :quicksearch_extra_fields => [:ent_cust_num, :ent_release_cert_message, :ent_fda_message],
        :quicksearch_sort_by_mf => :ent_file_logged_date,
        :logical_key_lambda => lambda {|obj| "#{obj.source_system}_#{obj.broker_reference}"}
    })
