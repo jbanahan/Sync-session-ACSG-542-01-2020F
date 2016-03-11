@@ -27,7 +27,7 @@ class AttachmentsController < ApplicationController
         add_flash :errors, "You do not have permission to attach items to this object."
       end
 
-      if saved 
+      if saved
         respond_to do |format|
           format.html {redirect_to redirect_location(attachable)}
           format.json {render json: Attachment.attachments_as_json(attachable)}
@@ -46,7 +46,7 @@ class AttachmentsController < ApplicationController
     attachable = att.attachable
     if attachable.can_attach?(current_user)
       deleted = false
-      Attachment.transaction do 
+      Attachment.transaction do
         deleted = att.destroy
         att.rebuild_archive_packet if deleted
       end
@@ -63,7 +63,14 @@ class AttachmentsController < ApplicationController
     att = Attachment.find(params[:id])
     att.attachable
     if att.can_view?(current_user)
-      redirect_to att.secure_url
+      if MasterSetup.get.custom_feature?('Attachment Mask')
+        data = open(att.secure_url)
+        send_data data.read, stream: true,
+          buffer_size: 4096, filename: att.attached_file_name,
+          disposition: 'attachment', type: att.attached_content_type
+      else
+        redirect_to att.secure_url
+      end
     else
       error_redirect "You do not have permission to download this attachment."
     end
@@ -85,7 +92,7 @@ class AttachmentsController < ApplicationController
         #don't care...user will redirect to error below if this happens
       end
     end
-    
+
     if !downloaded
       error_redirect "You do not have permission to download this attachment."
     end
