@@ -193,7 +193,14 @@ module CoreModuleDefinitions
                :key_model_field_uids => [:prod_uid],
                :quicksearch_fields => [:prod_uid,:prod_name],
                :quicksearch_extra_fields => [lambda do
-                  Country.select("id").show_quicksearch.order(:classification_rank, :name).map{ |c| "*fhts_1_#{c.id}".to_sym }
+                  # This is here SOLELY for the case where we're running the migration to actually create 
+                  # the show_quicksearch field (since this code is referenced from an initializer and will load
+                  # when migrations run)
+                  if Country.new.respond_to?(:quicksearch_show?)
+                    Country.select("id").show_quicksearch.order(:classification_rank, :name).map{ |c| "*fhts_1_#{c.id}".to_sym }
+                  else
+                    []
+                  end
                end]
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
