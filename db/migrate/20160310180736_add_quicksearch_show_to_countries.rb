@@ -1,4 +1,4 @@
-class AddQuickSearchShowToCountries < ActiveRecord::Migration
+class AddQuicksearchShowToCountries < ActiveRecord::Migration
   def self.up
     add_column :countries, :quicksearch_show, :boolean
   end

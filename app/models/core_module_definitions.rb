@@ -193,7 +193,7 @@ module CoreModuleDefinitions
                :key_model_field_uids => [:prod_uid],
                :quicksearch_fields => [:prod_uid,:prod_name],
                :quicksearch_extra_fields => [lambda do
-                  Country.select("id").show_quicksearch.order(:classification_rank => :asc, :name => :asc).map{ |c| "*fhts_1_#{c.id}".to_sym }
+                  Country.select("id").show_quicksearch.order(:classification_rank, :name).map{ |c| "*fhts_1_#{c.id}".to_sym }
                end]
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
