@@ -251,6 +251,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
         l.cartons = decimal_value(row[11])
         l.gross_weight = decimal_value(row[12])
         l.mid = text_value row[13]
+        l.part_number = text_value row[14]
         l
       end
     end
