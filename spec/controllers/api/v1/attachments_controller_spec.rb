@@ -118,6 +118,18 @@ describe Api::V1::AttachmentsController do
         get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
         expect(response.status).to eq 404
       end
+
+      it "uses internal download link for setups where download proxying is active" do
+        ms = double("MasterSetup")
+        MasterSetup.stub(:get).and_return ms
+        ms.stub(:request_host).and_return "localhost"
+        ms.stub(:custom_feature?).with("Attachment Mask").and_return true
+
+        get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
+        expect(response).to be_success
+        j = JSON.parse response.body
+        expect(j['url']).to eq "http://localhost/attachments/#{@attachment.id}/download"
+      end
     end
 
     describe "destroy" do
