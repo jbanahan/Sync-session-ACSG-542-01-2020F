@@ -9,7 +9,6 @@ require 'open_chain/custom_handler/lands_end/le_returns_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 require 'open_chain/custom_handler/lenox/lenox_shipment_status_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_epd_parser'
-require 'open_chain/custom_handler/polo_ca_entry_parser'
 require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/polo/polo_fiber_content_parser'
@@ -25,7 +24,6 @@ require 'open_chain/custom_handler/advance/advance_parts_upload_parser'
 require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 
 class CustomFeaturesController < ApplicationController
-  CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   ECELLERATE_SHIPMENT_ACTIVITY = 'OpenChain::CustomHandler::EcellerateShipmentActivityParser'
   EDDIE_CI_UPLOAD = 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
@@ -108,18 +106,6 @@ class CustomFeaturesController < ApplicationController
 
   def ua_tbd_report_download
     generic_download "UA TBD Reports"
-  end
-
-  def polo_efocus_index
-    generic_index OpenChain::CustomHandler::PoloCaEntryParser.new(nil), CA_EFOCUS, "Polo Canada Entry Worksheets"
-  end
-
-  def polo_efocus_upload
-    generic_upload CA_EFOCUS, "Polo Canada Entry Worksheets", "polo_canada"
-  end
-
-  def polo_efocus_download
-    generic_download "Polo Canada Entry Worksheets"
   end
   
   def kewill_isf_index

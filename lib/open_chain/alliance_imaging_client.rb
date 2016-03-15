@@ -324,6 +324,7 @@ class OpenChain::AllianceImagingClient
       # By waiting till after we have invoices it also adds a period of delay where the entry info / attachments are likely to 
       # be their most volatile
       where("broker_invoices.invoice_date >= attachment_archive_setups.start_date").
+      where("a.is_private IS NULL or a.is_private = 0").
       order("entries.release_date ASC").
       pluck("entries.id").each do |id|
 

@@ -45,10 +45,16 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
       resources :orders, only: [:index,:show] do
-        get :state_toggle_buttons, on: :member
-        post :toggle_state_button, on: :member
-        post :accept, on: :member
-        post :unaccept, on: :member
+        member do 
+          get :state_toggle_buttons
+          post :toggle_state_button
+          post :accept
+          post :unaccept
+          get :by_order_number
+        end
+        collection do
+          get :by_order_number
+        end
       end
       resources :order_lines, only: [] do
         get :state_toggle_buttons, on: :member
@@ -399,9 +405,6 @@ OpenChain::Application.routes.draw do
   match "/custom_features/polo_sap_bom/upload" => "custom_features#polo_sap_bom_upload", :via=>:post
   match "/custom_features/polo_sap_bom/:id/download" => "custom_features#polo_sap_bom_download", :via=>:get
   match "/custom_features/polo_sap_bom/:id/reprocess" => "custom_features#polo_sap_bom_reprocess", :via=>:get
-  match "/custom_features/polo_canada" => "custom_features#polo_efocus_index", :via=>:get
-  match "/custom_features/polo_canada/upload" => "custom_features#polo_efocus_upload", :via => :post
-  match "/custom_features/polo_canada/:id/download" => "custom_features#polo_efocus_download", :via => :get
   match "/custom_features/jcrew_parts" => "custom_features#jcrew_parts_index", :via=>:get
   match "/custom_features/jcrew_parts/upload" => "custom_features#jcrew_parts_upload", :via => :post
   match "/custom_features/jcrew_parts/:id/download" => "custom_features#jcrew_parts_download", :via => :get

@@ -10,7 +10,7 @@ describe SyncRecordsController do
 
   it "should mark a sync record to be resent" do
     p = Factory(:product)
-    p.sync_records.create! sent_at: Time.zone.now, confirmed_at: Time.zone.now + 1.minute, confirmation_file_name: "file.txt", failure_message: "Message!", :trading_partner => "Testing"
+    p.sync_records.create! sent_at: Time.zone.now, confirmed_at: Time.zone.now + 1.minute, confirmation_file_name: "file.txt", failure_message: "Message!", :trading_partner => "Testing", :fingerprint => "fingerprint", ignore_updates_before: Time.zone.now
 
     post :resend, :id=>p.sync_records.first.id
     response.should redirect_to request.referrer
@@ -23,6 +23,8 @@ describe SyncRecordsController do
     sr.confirmed_at.should be_nil
     sr.confirmation_file_name.should be_nil
     sr.failure_message.should be_nil
+    sr.fingerprint.should be_nil
+    sr.ignore_updates_before.should be_nil
 
     flash[:notices].include?("This record will be resent the next time the sync program is executed for Testing.").should be_true
   end

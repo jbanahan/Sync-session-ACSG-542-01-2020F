@@ -47,7 +47,7 @@ describe OpenChain::Api::ProductApiClient do
 
     it "errors if no id attribute is found" do
       create_hash = {}
-      expect{@c.update(create_hash)}.to raise_error "All product update calls require an 'id' in the attribute hash."
+      expect{@c.update(create_hash)}.to raise_error "All API update calls require an 'id' in the attribute hash."
     end
   end
 end

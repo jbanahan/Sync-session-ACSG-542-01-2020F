@@ -38,4 +38,8 @@ class BusinessValidationResult < ActiveRecord::Base
     end
     r.first
   end
+
+  def failed?
+    self.state == "Fail"
+  end
 end

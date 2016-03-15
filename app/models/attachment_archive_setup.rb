@@ -59,6 +59,7 @@ class AttachmentArchiveSetup < ActiveRecord::Base
       where("broker_invoices.invoice_date <= ?", days_ago).
       where("broker_invoices.invoice_date >= ?",self.start_date).
       where("entries.importer_id = ?",self.company_id).
+      where("attachments.is_private IS NULL OR attachments.is_private = 0").
       order("entries.arrival_date ASC")
   end
 end

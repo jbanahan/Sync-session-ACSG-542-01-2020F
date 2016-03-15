@@ -178,6 +178,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "uscs_line_no" => 1,
                 "value_foreign" => 99999,
                 "container_no" => "CONT1",
+                'value_appraisal_method' => "F",
                 'fees' => [
                   {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
                   {'customs_fee_code'=>501, 'amt_fee'=>345},
@@ -277,6 +278,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "uscs_line_no" => 2,
                 "value_foreign" => 99999,
                 "container_no" => "NOTACONTAINER",
+                "value_appraisal_method" => "A",
                 'tariffs' => [
                   {
                     'tariff_no' => '1234567890',
@@ -541,6 +543,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.fda_review_date).to be_nil
       expect(line.fda_hold_date).to be_nil
       expect(line.fda_release_date).to be_nil
+      expect(line.value_appraisal_method).to eq "F"
+      expect(line.first_sale).to be_true
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
@@ -568,6 +572,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # This used to parse as 99.99 because it assumed missing decimal points meant there was an implied decimal point, 
       # which was wrong and has since been fixed.
       expect(line.contract_amount).to eq BigDecimal.new("9999.00")
+      expect(line.value_appraisal_method).to eq "A"
+      expect(line.first_sale).to be_false
 
       # If we didn't get a matching container record, then we want to make sure the line level linkage
       # is nil

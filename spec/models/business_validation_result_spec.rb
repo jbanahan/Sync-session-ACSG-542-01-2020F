@@ -65,4 +65,16 @@ describe BusinessValidationResult do
       expect(bvr.state).to eq 'Pass'
     end
   end
+
+  describe "failed?" do
+    it "identfies failed state" do
+      subject.state = "Fail"
+      expect(subject).to be_failed
+    end
+
+    it "identifies non-failed state" do
+      subject.state = "Literally anything else"
+      expect(subject).not_to be_failed
+    end
+  end
 end

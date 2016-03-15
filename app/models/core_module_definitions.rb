@@ -192,7 +192,16 @@ module CoreModuleDefinitions
                :unique_id_field_name=>:prod_uid,
                :key_model_field_uids => [:prod_uid],
                :quicksearch_fields => [:prod_uid,:prod_name],
-               :quicksearch_extra_fields => [ lambda { us = Country.where(iso_code: 'US', import_location:true).first;  us ? "*fhts_1_#{us.id}".to_sym : nil }]
+               :quicksearch_extra_fields => [lambda do
+                  # This is here SOLELY for the case where we're running the migration to actually create 
+                  # the show_quicksearch field (since this code is referenced from an initializer and will load
+                  # when migrations run)
+                  if Country.new.respond_to?(:quicksearch_show?)
+                    Country.select("id").show_quicksearch.order(:classification_rank, :name).map{ |c| "*fhts_1_#{c.id}".to_sym }
+                  else
+                    []
+                  end
+               end]
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
        :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
@@ -249,7 +258,7 @@ module CoreModuleDefinitions
        :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
        :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"},
        :quicksearch_fields => [:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums,:ent_cargo_control_number,:ent_hbols,:ent_commercial_invoice_numbers],
-       :quicksearch_extra_fields => [:ent_cust_num, :ent_release_cert_message],
+       :quicksearch_extra_fields => [:ent_cust_num, :ent_release_cert_message, :ent_fda_message],
        :quicksearch_sort_by_mf => :ent_file_logged_date,
        :logical_key_lambda => lambda {|obj| "#{obj.source_system}_#{obj.broker_reference}"}
    })

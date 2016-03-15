@@ -64,14 +64,10 @@ class AttachmentsController < ApplicationController
     att.attachable
     if att.can_view?(current_user)
       if MasterSetup.get.custom_feature?('Attachment Mask')
-        # This is a sub-optimal method for sending the files.  We're now buffering the entire file's contents into memory.
-        # Unfortunately, rails 3 doesn't really give us many options for doing anything else besides short-circuiting the
-        # render pipeline and writing an object directly to the response_body that answers to :each.  I'll take the rails
-        # send_data option first.  If it becomes an issue, rails 4 has better streaming support or we can use the direct
-        # write to response_body instead.
-        att.download_to_tempfile do |data|
-          send_data data.read, stream: true, buffer_size: 4096, disposition: 'attachment', filename: att.attached_file_name, type: att.attached_content_type
-        end
+        data = open(att.secure_url)
+        send_data data.read, stream: true,
+          buffer_size: 4096, filename: att.attached_file_name,
+          disposition: 'attachment', type: att.attached_content_type
       else
         redirect_to att.secure_url
       end

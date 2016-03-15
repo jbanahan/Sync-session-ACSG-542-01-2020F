@@ -33,4 +33,14 @@ describe CommercialInvoiceLine do
       expect(CommercialInvoiceLine.new(prorated_mpf: BigDecimal.new("1"), hmf: BigDecimal.new("2"), cotton_fee: BigDecimal.new("3")).total_fees).to eq BigDecimal.new("6")
     end
   end
+
+  describe "total_entered_value" do
+    it "sums entered value for all tariff lines" do
+      line = CommercialInvoiceLine.new 
+      line.commercial_invoice_tariffs.build entered_value: BigDecimal.new("4")
+      line.commercial_invoice_tariffs.build entered_value: BigDecimal.new("5")
+
+      expect(line.total_entered_value).to eq BigDecimal("9")
+    end
+  end
 end

@@ -146,6 +146,21 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
 
         expect(sheet.row(3)).to be_blank
       end
+
+      it "adds only a single line to product file, even when product is missing multiple times" do
+        # Just yield the same line multiple times, and we should only see the part on the product file once
+        subject.should_receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[2], 2).and_yield(file_contents[2], 2)
+        subject.process user
+
+        mail = ActionMailer::Base.deliveries.first
+        expect(mail.attachments["file - Missing Products.xls"]).not_to be_nil
+
+        # Make sure the missing products file is as expected (just make sure the sku number got placed correctly)
+        wb = Spreadsheet.open(StringIO.new(mail.attachments["file - Missing Products.xls"].read))
+        sheet = wb.worksheet 0
+        expect(sheet.row(1)[0]).to eq "20671580"
+        expect(sheet.row(2)).to be_blank
+      end
     end
   end
 

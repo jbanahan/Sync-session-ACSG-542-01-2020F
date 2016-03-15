@@ -152,16 +152,17 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     end
 
     def create_spreadsheets orders_missing_products, header_row
-      missing_products = orders_missing_products.map do |row|
-        missing_product?(row) ? row[0..-2] : nil
-      end.compact
+      missing_products = Set.new
+      orders_missing_products.each do |row|
+        missing_products << text_value(row[6]) if missing_product?(row) && !text_value(row[6]).blank?
+      end
 
       product_wb, sheet = XlsMaker.create_workbook_and_sheet 'Missing Products', ["AAP SKU (Item Number)", "Part Number", "CQ Line Code", "CQ SKU", "Merchandise Group Description", 
         "Merchandise Department Description", "Merchandise Class Description", "Merchandise Sub-Class Description", "Item Description", "US HTS Code", "US Duty", 
         "CAN HS Code", "CAN Duty", "Freight Cost", "Piece Per Set", "Comments"]
 
-      missing_products.each_with_index do |row, i|
-        XlsMaker.add_body_row sheet, (i+1), [text_value(row[6]), nil, nil, nil]
+      missing_products.to_a.each_with_index do |part_number, i|
+        XlsMaker.add_body_row sheet, (i+1), [part_number, nil, nil, nil]
       end
 
       order_wb, sheet = XlsMaker.create_workbook_and_sheet "Orders Missing Products", header_row

@@ -41,11 +41,23 @@ class UserManualsController < ApplicationController
     um = UserManual.find params[:id]
     return error_redirect "This Manual does not have an attachment." unless um.attachment
     if um.can_view?(current_user)
-      redirect_to um.attachment.secure_url
+      send_manual(um)
     else
       admin_secure do
-        redirect_to um.attachment.secure_url
+        send_manual(um)
       end
     end
   end
+
+  def send_manual um
+    if MasterSetup.get.custom_feature?('Attachment Mask')
+      data = open(um.attachment.secure_url)
+      send_data data.read, stream: true,
+        buffer_size: 4096, filename: att.attached_file_name,
+        disposition: 'attachment', type: att.attached_content_type
+    else
+      redirect_to um.attachment.secure_url
+    end
+  end
+  private :send_manual
 end

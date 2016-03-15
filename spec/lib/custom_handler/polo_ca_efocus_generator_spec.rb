@@ -3,7 +3,7 @@ require 'rexml/document'
 
 describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
   before :each do
-    @tax_ids = OpenChain::CustomHandler::PoloCaEntryParser::POLO_IMPORTER_TAX_IDS
+    @tax_ids = ['806167003RM0001','871349163RM0001','866806458RM0001']
     @e1 = Factory(:entry,:importer_tax_id=>@tax_ids[0],
       :entry_number=>'123456789',
       :broker_reference=>'666666',

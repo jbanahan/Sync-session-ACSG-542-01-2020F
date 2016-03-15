@@ -10,6 +10,11 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     render_show CoreModule::ORDER
   end
 
+  def by_order_number
+    obj = Order.where(order_number: params[:order_number]).first
+    render_obj obj
+  end
+
   def accept
     o = Order.find params[:id]
     raise StatusableError.new("Access denied.", :unauthorized) unless o.can_view?(current_user) && o.can_accept?(current_user)
