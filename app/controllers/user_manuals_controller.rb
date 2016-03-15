@@ -1,4 +1,6 @@
 class UserManualsController < ApplicationController
+  include DownloadS3ObjectSupport
+
   around_filter :admin_secure, except: [:download]
   def index
     @user_manuals = UserManual.order(:name)
@@ -41,10 +43,10 @@ class UserManualsController < ApplicationController
     um = UserManual.find params[:id]
     return error_redirect "This Manual does not have an attachment." unless um.attachment
     if um.can_view?(current_user)
-      send_manual(um)
+      download_attachment att
     else
       admin_secure do
-        send_manual(um)
+        download_attachment att
       end
     end
   end

@@ -1,6 +1,8 @@
 require 'open_chain/workflow_processor'
 
 class AttachmentsController < ApplicationController
+  include DownloadS3ObjectSupport
+
   skip_before_filter :portal_redirect, only: [:download]
   def create
     if params[:attachment][:attached].nil?
@@ -61,16 +63,8 @@ class AttachmentsController < ApplicationController
 
   def download
     att = Attachment.find(params[:id])
-    att.attachable
     if att.can_view?(current_user)
-      if MasterSetup.get.custom_feature?('Attachment Mask')
-        data = open(att.secure_url)
-        send_data data.read, stream: true,
-          buffer_size: 4096, filename: att.attached_file_name,
-          disposition: 'attachment', type: att.attached_content_type
-      else
-        redirect_to att.secure_url
-      end
+      download_attachment att
     else
       error_redirect "You do not have permission to download this attachment."
     end

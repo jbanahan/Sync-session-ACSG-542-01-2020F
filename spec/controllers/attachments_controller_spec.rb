@@ -119,4 +119,49 @@ describe AttachmentsController do
       expect(flash[:errors]).to include "You do not have permission to download this attachment."
     end
   end
+
+  describe "download" do
+    let (:secure_url) { "http://my.secure.url"}
+    let (:attachment) { double(:attachment, secure_url: secure_url) }
+    let (:user) { Factory(:user) }
+
+    it "downloads an attachment via s3 redirect" do
+      sign_in_as user
+      Attachment.should_receive(:find).with("1").and_return attachment
+      attachment.should_receive(:can_view?).with(user).and_return true
+
+      get :download, id: 1
+      expect(response).to redirect_to secure_url
+    end
+
+    it "directly downloads an attachment when master setup is proxying downloads" do
+      sign_in_as user
+
+      ms = double("MasterSetup")
+      ms.stub(:custom_feature?).with("Attachment Mask").and_return true
+      MasterSetup.stub(:get).and_return ms
+      Attachment.should_receive(:find).with("1").and_return attachment
+      attachment.should_receive(:can_view?).with(user).and_return true
+      attachment.stub(:attached_file_name).and_return "file.txt"
+      attachment.stub(:attached_content_type).and_return "text/plain"
+
+      tf = double("Tempfile")
+      tf.should_receive(:read).and_return "data"
+      attachment.should_receive(:download_to_tempfile).and_yield tf
+
+      get :download, id: 1
+      expect(response).to be_success
+      expect(response.body).to eq "data"
+    end
+
+    it "redirects if user can't access attachment" do
+      sign_in_as user
+      Attachment.should_receive(:find).with("1").and_return attachment
+      attachment.should_receive(:can_view?).with(user).and_return false
+
+      get :download, id: 1
+      expect(response).to redirect_to root_path
+      expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+  end
 end

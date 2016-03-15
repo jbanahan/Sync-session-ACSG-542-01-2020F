@@ -96,15 +96,14 @@ describe Api::V1::AttachmentsController do
 
     describe "download" do
       it "retrieves download information for attachment" do
-        MasterSetup.get.update_attributes(request_host:'https://sample.com')
-
+        Attachment.any_instance.should_receive(:secure_url).and_return "https://my.secure.url"
         get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
 
         expect(response).to be_success
         j = JSON.parse response.body
         expect(j.delete('expires_at')).to be_true
         expect(j).to eq({
-          url: "https://sample.com/attachments/#{@attachment.id}/download",
+          url: "https://my.secure.url",
           name: @attachment.attached_file_name
         }.with_indifferent_access)
       end

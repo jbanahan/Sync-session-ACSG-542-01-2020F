@@ -100,8 +100,8 @@ describe UserManualsController do
     before :each do
       @um = Factory(:user_manual)
       @secure_url = 'abc'
-      att = double(:attachment, secure_url: @secure_url)
-      UserManual.any_instance.stub(:attachment).and_return(att)
+      @att = double(:attachment, secure_url: @secure_url)
+      UserManual.any_instance.stub(:attachment).and_return(@att)
     end
     it "should allow admins" do
       sign_in_as Factory(:admin_user)
@@ -119,6 +119,23 @@ describe UserManualsController do
       check_admin_secured do
         get :download, id: @um.id
       end
+    end
+
+    it "uses alternate download approach" do
+      sign_in_as Factory(:user)
+      ms = double("MasterSetup")
+      ms.stub(:custom_feature?).with("Attachment Mask").and_return true
+      MasterSetup.stub(:get).and_return ms
+
+      @att.stub(:attached_file_name).and_return "file.txt"
+      @att.stub(:attached_content_type).and_return "text/plain"
+      tf = double("Tempfile")
+      tf.should_receive(:read).and_return "123"
+      @att.stub(:download_to_tempfile).and_yield tf
+
+      get :download, id: @um.id
+      expect(response).to be_success
+      expect(response.body).to eq "123"
     end
   end
 end
