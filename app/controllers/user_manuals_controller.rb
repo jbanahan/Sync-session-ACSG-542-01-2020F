@@ -43,10 +43,10 @@ class UserManualsController < ApplicationController
     um = UserManual.find params[:id]
     return error_redirect "This Manual does not have an attachment." unless um.attachment
     if um.can_view?(current_user)
-      download_attachment att
+      download_attachment um.attachment
     else
       admin_secure do
-        download_attachment att
+        download_attachment um.attachment
       end
     end
   end
