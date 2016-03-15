@@ -360,7 +360,7 @@ class ApplicationController < ActionController::Base
       end
       cookies['AUTH-TOKEN'] = {value:u.user_auth_token}
     end
-  endz
+  end
 
   def portal_redirect
     return unless @require_user_run
