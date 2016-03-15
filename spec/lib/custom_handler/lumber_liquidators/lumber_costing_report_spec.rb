@@ -118,6 +118,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       it "finds entry and generates and sends results" do 
 
       end
+
+      it "finds entry, generates and sends results when sync record has been marked for resend" do
+        entry.sync_records.create! trading_partner: "LL_COST_REPORT"
+      end
     end
 
     context "with entries that should not be found" do
@@ -139,7 +143,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       end
 
       it "does not find previously synced entries" do
-        entry.sync_records.create! trading_partner: "LL_COST_REPORT"
+        entry.sync_records.create! trading_partner: "LL_COST_REPORT", sent_at: Time.zone.now
       end
     end
   end

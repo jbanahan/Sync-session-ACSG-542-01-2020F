@@ -71,8 +71,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
           where(source_system: "Alliance", customer_number: "LUMBER").
           # Lumber wants these when Arrival Date is 3 days out (.ie Arrival Date minus 3)
           where("entries.arrival_date IS NOT NULL AND date_sub(date(entries.arrival_date), interval 3 day) <= date(?)", start_time).
-          # If we haven't sent the file already we should send it...no updates.
-          where("sync.id IS NULL")
+          # If we haven't sent the file already we should send it OR if someone marks the sync record as needing to be resent (.ie sent_at is null)
+          # This happens in cases where the file is audited and something is wrong in it.  The person auditing the file needs to correct the file / invoice
+          # data and mark the sync record for resend.  Then the automated process will pick up the file again and regenerate it with the fixed data.
+          where("sync.id IS NULL OR sync.sent_at IS NULL")
     v.pluck :id
   end
 
