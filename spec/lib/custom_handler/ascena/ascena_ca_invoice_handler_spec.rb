@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe OpenChain::CustomHandler::AscenaCaInvoiceHandler do
+describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
   describe 'process' do
     before :each do 
       @cf = double("Custom File")
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::AscenaCaInvoiceHandler do
       end
       
       it "throws exception if Fenix ID not found" do
-        expect{ @handler.get_importer_id("111111111") }.to raise_error("Fenix ID not found!")
+        expect{ @handler.get_importer_id("111111111") }.to raise_error("Fenix ID 111111111 not found!")
       end
     end
   

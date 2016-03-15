@@ -18,11 +18,22 @@ class BusinessValidationRuleResultsController < ApplicationController
         render json: {save_response:{
           validatable_state:bvr.validatable.business_rules_state,
           result_state:bvr.state,
-          rule_result:business_validation_rule_result_json(rr)
+          rule_result:business_validation_rule_result_json(rr, current_user)
         }} 
 
       }
     end
+  end
+  def cancel_override
+    rr = BusinessValidationRuleResult.find params[:id]
+    unless rr.can_edit? current_user
+      render_json_error "You do not have permission to perform this activity."
+      return
+    end
+    rr.cancel_override
+    obj = rr.business_validation_result.validatable
+    BusinessValidationTemplate.create_results_for_object! obj
+    render json: {ok:'ok'}
   end
 
   private

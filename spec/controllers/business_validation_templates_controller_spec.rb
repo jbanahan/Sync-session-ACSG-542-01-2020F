@@ -7,6 +7,8 @@ describe BusinessValidationTemplatesController do
   describe :index do
     before :each do
       @bv_templates = [Factory(:business_validation_template)]
+      u = Factory(:admin_user)
+      sign_in_as u
     end
     it "should require admin" do
       u = Factory(:user)
@@ -16,11 +18,15 @@ describe BusinessValidationTemplatesController do
       expect(assigns(:bv_templates)).to be_nil
     end
     it "should load templates" do
-      u = Factory(:admin_user)
-      sign_in_as u
       get :index
       expect(response).to be_success
       expect(assigns(:bv_templates)).to eq @bv_templates
+    end
+    it "should skip templates with delete_pending flag set" do
+      Factory(:business_validation_template, delete_pending: true)
+      get :index
+      expect(response).to be_success
+      expect(assigns(:bv_templates).count).to eq 1
     end
   end
   describe :show do 
@@ -148,6 +154,8 @@ describe BusinessValidationTemplatesController do
 
     before :each do
       @t = Factory(:business_validation_template)
+      u = Factory(:admin_user)
+      sign_in_as u
     end
 
     it "should require admin" do
@@ -158,12 +166,20 @@ describe BusinessValidationTemplatesController do
       expect(assigns(:bv_template)).to be_nil
     end
 
-    it "should destroy the BVT" do
-      u = Factory(:admin_user)
-      sign_in_as u
-      previous_id = @t.id
+    it "should call async_destroy on BVT as a Delayed Job and set delete_pending flag" do
+      d = double("delay")
+      BusinessValidationTemplate.should_receive(:delay).and_return d
+      d.should_receive(:async_destroy).with @t.id
       post :destroy, id: @t.id
-      expect { BusinessValidationTemplate.find(previous_id) }.to raise_error
+      @t.reload
+      expect(@t.delete_pending).to eq true
+    end
+
+    it "marks rules as delete_pending" do
+      Factory(:business_validation_rule, business_validation_template: @t)
+      Factory(:business_validation_rule, business_validation_template: @t)
+      post :destroy, id: @t.id
+      expect(BusinessValidationRule.pluck(:delete_pending)).to eq [true, true]
     end
 
   end
@@ -183,7 +199,7 @@ describe BusinessValidationTemplatesController do
       temp = r["business_template"]["business_validation_template"]
       temp.delete("updated_at")
       temp.delete("created_at")
-      temp.should == {"description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", 
+      temp.should == {"delete_pending"=>nil, "description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", 
           "name"=>nil, "search_criterions"=>[{"operator"=>"eq", "value"=>"x", "datatype"=>"string", "label"=>"Unique Identifier", "mfid"=>"prod_uid", "include_empty" => false}]}
     end
   end

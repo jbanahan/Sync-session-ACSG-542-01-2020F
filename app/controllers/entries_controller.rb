@@ -2,6 +2,7 @@ require 'open_chain/alliance_imaging_client'
 require 'open_chain/activity_summary'
 require 'open_chain/kewill_sql_proxy_client'
 require 'open_chain/business_rule_validation_results_support'
+require 'open_chain/custom_handler/delivery_order_spreadsheet_generator'
 
 class EntriesController < ApplicationController
   include EntriesHelper
@@ -17,17 +18,15 @@ class EntriesController < ApplicationController
     redirect_to advanced_search CoreModule::ENTRY, params[:force_search]
   end
   def ca_activity_summary
-    params[:importer_id] ||= current_user.company.master? ? Company.where('length(fenix_customer_number)>0').order(:fenix_customer_number).first.id : current_user.company_id
-    @iso = 'ca'
-    render :activity_summary
+    importers = Company.where('length(fenix_customer_number)>0').order(:fenix_customer_number)
+    activity_summary_select importers, 'ca'
   end
   def ca_activity_summary_content
     activity_summary_content
   end
   def us_activity_summary
-    params[:importer_id] ||= current_user.company.master? ? Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number).first.id : current_user.company_id
-    @iso = 'us'
-    render :activity_summary
+    importers = Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number)
+    activity_summary_select importers, 'us'
   end
   def us_activity_summary_content
     activity_summary_content
@@ -194,7 +193,7 @@ class EntriesController < ApplicationController
   def purge
     sys_admin_secure do
       Entry.find(params[:id]).purge!
-      flash[:notice] = "Entry purged"
+      add_flash :notices, "Entry purged"
       redirect_to entries_path
     end
   end
@@ -209,6 +208,17 @@ class EntriesController < ApplicationController
     @reports = [OpenChain::ActivitySummary::DutyDetail.create_digest(current_user, @imp)]
     @reports.push(*OpenChain::ActivitySummary::DutyDetail.create_linked_digests(current_user, @imp))
     @reports.compact!
+  end
+
+  def generate_delivery_order
+    entry = Entry.find params[:id]
+    if current_user.company.master? && entry.can_view?(current_user) && !entry.canadian?
+      OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator.delay.generate_and_send_delivery_orders current_user.id, entry.id
+      add_flash :notices, "The Delivery Order will be generated shortly and emailed to #{current_user.email}."
+    else
+      add_flash :errors, "You do not have permission to view this report."
+    end
+    redirect_to entry
   end
 
   private
@@ -240,6 +250,21 @@ class EntriesController < ApplicationController
     end
     @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first
     render layout: false
+  end
+
+  def activity_summary_select importer_list, iso
+    @iso = iso
+    if params[:importer_id]
+      render :activity_summary
+    else
+      @importers = current_user.company.master? ? importer_list : []
+      if @importers.count > 1
+        render :act_summary_portal
+      else
+        importer_id = (@importers.count == 1) ? @importers.first.id : current_user.company.id
+        redirect_to "/entries/importer/#{importer_id}/activity_summary/#{@iso}"
+      end
+    end
   end
 
 end

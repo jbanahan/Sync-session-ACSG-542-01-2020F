@@ -3,11 +3,11 @@
 <%end%>
 <%content_for :javascript do%>
   $(function() {
+
     $("#mod_copy").dialog({autoOpen:false,title:"Confirm Copy",buttons:{
       "OK":function() {window.location="/surveys/<%=@survey.id%>/copy"},"Cancel":function() {$("#mod_copy").dialog('close');}
     }}); 
     $("#btn_cpy").click(function() {$("#mod_copy").dialog('open');});
-    $("#btn_show_archived").click(function() {window.location="<%=survey_path @survey%>?show_archived_responses=true"});
   });
   google.load('visualization', '1.0', {'packages':['corechart']});
   var respC = function drawChart() {
@@ -65,9 +65,12 @@
   <% elsif @survey.can_edit?(current_user) %>
       <%= button_to "Restore Survey", {action: :restore, id: @survey.id}, method: :put, class:'btn navbar-btn btn-default', form_class:'inline-button-to'%>
   <% end %>
-  
   <% if @survey.can_edit?(current_user) && @survey.survey_responses.was_archived(true).count > 0 %>
-    <button id='btn_show_archived'>Show Archived Responses</button>
+    <% if @show_archived %>
+      <%= link_to "Hide Archived Responses", survey_path(@survey, show_archived_responses: "false"), class:'btn navbar-btn btn-default', form_class:'inline-button-to' %>
+    <% else %>
+      <%= link_to "Show Archived Responses", survey_path(@survey, show_archived_responses: "true"), class:'btn navbar-btn btn-default', form_class:'inline-button-to' %>
+    <% end %>
   <% end %>
 <%end%>
 <% if @survey.archived? %>

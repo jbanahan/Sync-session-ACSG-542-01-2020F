@@ -4,7 +4,7 @@ class OrderLine < ActiveRecord::Base
   include ShallowMerger
   include UpdateModelFieldsSupport
   
-  belongs_to :order
+  belongs_to :order, inverse_of: :order_lines
   belongs_to :ship_to, :class_name => 'Address'
 
   has_many  :histories, :dependent => :destroy
@@ -12,9 +12,12 @@ class OrderLine < ActiveRecord::Base
 	
   validates_uniqueness_of :line_number, :scope => :order_id	
 
+  TOTAL_COST_SUBQUERY ||= 'IFNULL(IF(order_lines.total_cost_digits IS NULL,(order_lines.price_per_unit * order_lines.quantity),ROUND(order_lines.price_per_unit * order_lines.quantity,total_cost_digits)), 0)'
   def total_cost 
     return 0 if self.price_per_unit.blank? || self.quantity.blank?
-    self.price_per_unit * self.quantity
+    total_cost = self.price_per_unit * self.quantity
+    total_cost = BigDecimal(total_cost).round(total_cost_digits) unless self.total_cost_digits.nil?
+    total_cost
   end
 
 	def related_shipments
@@ -47,6 +50,9 @@ class OrderLine < ActiveRecord::Base
     }
   end
 
+  def shipping?
+    self.piece_sets.where("shipment_line_id is not null").count > 0
+  end
 	
 	def find_same
     found = OrderLine.where({:order_id => self.order_id, :line_number => self.line_number})

@@ -82,7 +82,7 @@ module CoreModuleDefinitions
     :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.shipment},
     :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
     :key_model_field_uids => [:shp_ref],
-    :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number]
+    :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number, :shp_importer_reference]
     })
   SALE_LINE = CoreModule.new("SalesOrderLine","Sale Line",{
     :show_field_prefix=>true,
@@ -175,7 +175,7 @@ module CoreModuleDefinitions
                   CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id",
                   VARIANT => "LEFT OUTER JOIN variants ON products.id = variants.product_id"
                 },
-               :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts,:prod_ven_name],
+               :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts],
                :bulk_actions_lambda => lambda {|current_user|
                  bulk_actions = {}
                  bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products? || current_user.edit_classifications?
@@ -191,7 +191,17 @@ module CoreModuleDefinitions
                },
                :unique_id_field_name=>:prod_uid,
                :key_model_field_uids => [:prod_uid],
-               :quicksearch_fields => [:prod_uid,:prod_name]
+               :quicksearch_fields => [:prod_uid,:prod_name],
+               :quicksearch_extra_fields => [lambda do
+                  # This is here SOLELY for the case where we're running the migration to actually create 
+                  # the show_quicksearch field (since this code is referenced from an initializer and will load
+                  # when migrations run)
+                  if Country.new.respond_to?(:quicksearch_show?)
+                    Country.select("id").show_quicksearch.order(:classification_rank, :name).map{ |c| "*fhts_1_#{c.id}".to_sym }
+                  else
+                    []
+                  end
+               end]
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
        :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
@@ -248,13 +258,18 @@ module CoreModuleDefinitions
        :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
        :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"},
        :quicksearch_fields => [:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums,:ent_cargo_control_number,:ent_hbols,:ent_commercial_invoice_numbers],
+       :quicksearch_extra_fields => [:ent_cust_num, :ent_release_cert_message, :ent_fda_message],
        :quicksearch_sort_by_mf => :ent_file_logged_date,
        :logical_key_lambda => lambda {|obj| "#{obj.source_system}_#{obj.broker_reference}"}
    })
-  OFFICIAL_TARIFF = CoreModule.new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate], :quicksearch_fields=> [:ot_hts_code,:ot_full_desc])
+  OFFICIAL_TARIFF = CoreModule.new("OfficialTariff","HTS Regulation",{
+       :default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate], 
+       :quicksearch_fields=> [:ot_hts_code,:ot_full_desc],
+       :quicksearch_extra_fields => [:ot_cntry_name]
+   })
   PLANT_PRODUCT_GROUP_ASSIGNMENT = CoreModule.new('PlantProductGroupAssignment','Plant Product Group Assignment',
     unique_id_field_name: :ppga_pg_name,
-    default_search_columns:[:ppga_pg_name], 
+    default_search_columns:[:ppga_pg_name],
     key_model_field_uids: [:ppga_pg_name],
     show_field_prefix: true)
   PLANT = CoreModule.new("Plant","Plant",
@@ -304,6 +319,11 @@ module CoreModuleDefinitions
     quicksearch_fields: [:sum_statement_num],
     :quicksearch_sort_by_mf => :sum_statement_num,
     enabled_lambda: lambda { MasterSetup.get.broker_invoice_enabled? }
+  })
+
+  PRODUCT_VENDOR_ASSIGNMENT = CoreModule.new("ProductVendorAssignment","Product Vendor Assignment", {
+    default_search_columns: [:pva_ven_name, :pva_puid, :pva_pname],
+    key_model_field_uids: [:pva_ven_name, :pva_puid]
   })
 
   def self.set_default_module_chain(core_module, core_module_array)

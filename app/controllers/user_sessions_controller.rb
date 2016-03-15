@@ -15,7 +15,7 @@ class UserSessionsController < ApplicationController
     if current_user
       redirect_to root_path
     else
-      render
+      render layout: false
     end
   end
 

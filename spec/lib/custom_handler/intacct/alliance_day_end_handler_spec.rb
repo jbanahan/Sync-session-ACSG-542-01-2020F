@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       @h.should_receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [["Check Error"], nil]
       @h.should_receive(:read_invoices).with(@invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [["Invoice Error"], nil]
 
-      @h.should_receive(:send_parser_errors).with(@check_file.attached_file_name, ["Check Error"], @invoice_file.attached_file_name, ["Invoice Error"], [user.email], Time.zone.now.in_time_zone("Hawaii").to_date)
+      @h.should_receive(:send_parser_errors).with(@check_file.attached_file_name, ["Check Error"], @invoice_file.attached_file_name, ["Invoice Error"], [user.email], Time.zone.now.in_time_zone("America/New_York").to_date)
 
       @h.process user
 

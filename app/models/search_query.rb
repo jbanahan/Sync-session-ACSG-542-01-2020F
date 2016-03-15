@@ -191,7 +191,11 @@ class SearchQuery
         else
           v = ActiveRecord::Base.sanitize v
         end
-        sc.where_clause(v).gsub("?",v)
+        # Have to use the block form of gsub because if there are any backslashes in v, they will be interpretted as a special
+        # character sequence, rather than just a literal.  Using block form keeps everything as a literal (which is what we want)
+        # "field IN (?)".gsub("?", "'test\\testing', 'test'") => "field IN ('test\testing', 'test')" # WRONG!!!
+        # "field IN (?)".gsub("?") {"'test\\testing', 'test'"} => "field IN ('test\\testing', 'test')" # Correct
+        sc.where_clause(v).gsub("?") {v}
       end
       
     end

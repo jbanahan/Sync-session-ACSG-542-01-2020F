@@ -28,3 +28,4 @@
 //= stub legacy
 //= stub html5shim
 //= stub vendor_portal
+//= stub login

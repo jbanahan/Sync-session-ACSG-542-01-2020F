@@ -26,10 +26,14 @@ class CountriesController < ApplicationController
   def update
     admin_secure("Only administrators can edit countries.") {
       @country = Country.find(params[:id])
+      quicksearch_show = @country.quicksearch_show
 
       respond_to do |format|
         if @country.update_attributes(params[:country])
           add_flash :notices, "#{@country.name} was successfully updated."
+          if quicksearch_show != @country.quicksearch_show
+            add_flash :notices, "Your change to 'View in QuickSearch' will be reflected after the next server restart."
+          end
           format.html { redirect_to(countries_path) }
           format.xml  { head :ok }
         else

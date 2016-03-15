@@ -39,10 +39,10 @@ module OpenChain; module CustomHandler; module Fisher; class FisherCommercialInv
     line_row[4] = row[14] # Part number
     line_row[5] = row[23] # Country of Origin
     line_row[7] = row[15] # Description
-    line_row[8] = decimal_value(row[12], 5).to_s # Quantity
+    line_row[8] = decimal_value(row[12], decimal_places: 5).to_s # Quantity
 
-    total_price = decimal_value(row[20], 5) # Total Value
-    quantity = decimal_value(row[12], 5)
+    total_price = decimal_value(row[20], decimal_places: 5) # Total Value
+    quantity = decimal_value(row[12], decimal_places: 5)
     unit_price = "0"
     if quantity.nonzero?
       unit_price = (total_price / quantity).to_s

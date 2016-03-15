@@ -4,13 +4,14 @@ require 'open_chain/stat_client'
 require 'business_validation_rule'
 # Any customer specific business rule should be required below here
 require 'open_chain/custom_handler/polo/polo_validation_rule_entry_invoice_line_matches_po_line'
+require 'open_chain/custom_handler/ascena/validation_rule_ascena_invoice_audit'
 
 class BusinessValidationTemplate < ActiveRecord::Base
-  attr_accessible :description, :module_type, :name
+  attr_accessible :description, :module_type, :name, :delete_pending
   validates :module_type, presence: true
   
   has_many :business_validation_rules, dependent: :destroy, inverse_of: :business_validation_template
-  has_many :business_validation_results, inverse_of: :business_validation_template
+  has_many :business_validation_results, dependent: :destroy, inverse_of: :business_validation_template
   has_many :search_criterions, dependent: :destroy
 
   def self.run_schedulable opts = {}
@@ -39,17 +40,31 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
   #run create
   def create_results! run_validation = false
+    # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
+    # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
+    # never be false associated with the template
+    return if self.search_criterions.length == 0
+    
     cm = CoreModule.find_by_class_name(self.module_type)
     klass = cm.klass 
-    srch = klass.select("DISTINCT #{cm.table_name}.*").where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
-    srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id")
+    # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be 
+    # distinct is the core module's id.
+    srch = klass.select("DISTINCT #{cm.table_name}.id").where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
+    srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id AND business_validation_results.business_validation_template_id = #{self.id}")
     self.search_criterions.each {|sc| srch = sc.apply(srch)}
-    srch.each do |obj|
+    srch.each do |id|
+      obj = nil
       begin
-        self.create_result! obj, run_validation
+        # Use this rather than find, since it's possible, though unlikely, that the obj has been removed from the system since being returned from the query above
+        obj = klass.where(id: id.id).first
+        self.create_result!(obj, run_validation) unless obj.nil?
       rescue => e
         # Don't let one bad object spoil the whole rule run
-        e.log_me ["Failed to generate rule results for #{obj.class} id #{obj.id}"]
+        if obj
+          e.log_me ["Failed to generate rule results for #{obj.class} id #{obj.id}"]
+        else
+          e.log_me
+        end
       end
     end
   end
@@ -75,7 +90,9 @@ class BusinessValidationTemplate < ActiveRecord::Base
       bvr.save!
 
       self.business_validation_rules.each do |rule|
-        bvr.business_validation_rule_results.where(business_validation_rule_id:rule.id).first_or_create!
+        unless rule.delete_pending?
+          bvr.business_validation_rule_results.where(business_validation_rule_id:rule.id).first_or_create!
+        end
       end
 
       if run_validation
@@ -86,5 +103,10 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
     
     bvr
+  end
+
+  def self.async_destroy id
+    template = find_by_id id
+    template.destroy if template
   end
 end

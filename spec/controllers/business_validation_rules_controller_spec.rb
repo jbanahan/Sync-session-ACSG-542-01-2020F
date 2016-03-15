@@ -1,10 +1,6 @@
 require 'spec_helper'
 
 describe BusinessValidationRulesController do
-  before :each do
-
-  end
-
   describe :create do
     before :each do
       @bvr = Factory(:business_validation_rule)
@@ -22,19 +18,22 @@ describe BusinessValidationRulesController do
       expect(response).to be_redirect
     end
 
-    it "should create the correct rule" do
+    it "should create the correct rule and assign an override group if specified" do
+      group = Factory(:group)
       u = Factory(:admin_user)
       sign_in_as u
       post :create, 
             business_validation_template_id: @bvt.id, 
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-2"}',
-              "type" => "ValidationRuleManual"
+              "type" => "ValidationRuleManual",
+              "group_id" => group.id
             }
       expect(response).to be_redirect
       new_rule = BusinessValidationRule.last
       new_rule.business_validation_template.id.should == @bvt.id
       new_rule.rule_attributes_json.should == '{"valid":"json-2"}'
+      expect(new_rule.group).to eq group
     end
 
     it "should only save for valid JSON" do
@@ -159,21 +158,35 @@ describe BusinessValidationRulesController do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template
+      @u = Factory(:admin_user)
+      sign_in_as @u
     end
 
     it 'should require admin' do
-      u = Factory(:user)
-      sign_in_as u
+      @u.admin = false
+      @u.save!
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
-      expect { BusinessValidationRule.find(@bvr.id) }.to_not raise_error
+      BusinessValidationRule.any_instance.should_not_receive(:delay)
       expect(response).to be_redirect
     end
 
     it "should delete the correct rule" do
-      u = Factory(:admin_user)
-      sign_in_as u
+      dj_status = Delayed::Worker.delay_jobs
+      Delayed::Worker.delay_jobs = false
+
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
       expect { BusinessValidationRule.find(@bvr.id) }.to raise_error
+
+      Delayed::Worker.delay_jobs = dj_status
+    end
+
+    it "sets delete_pending flag and executes destroy as a delayed job" do
+      d = double("delay")
+      BusinessValidationRule.should_receive(:delay).and_return d
+      d.should_receive(:async_destroy).with @bvr.id
+      post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
+      @bvr.reload
+      expect(@bvr.delete_pending).to eq true
     end
 
   end

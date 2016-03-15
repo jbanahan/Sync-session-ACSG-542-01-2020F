@@ -22,7 +22,7 @@ class Attachment < ActiveRecord::Base
     return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image") && !self.attached_content_type.ends_with?('tiff')
   end
   
-  def secure_url(expires_in=10.seconds)
+  def secure_url(expires_in=90.seconds)
     OpenChain::S3.url_for attached.options[:bucket], attached.path, expires_in
   end
 
@@ -206,7 +206,7 @@ end
     if filename.blank? && defined?(@destroyed_filename)
       filename = @destroyed_filename
     end
-    Attachment.stitchable_attachment_extensions.include? File.extname(filename).try(:downcase)
+    !self.is_private? && Attachment.stitchable_attachment_extensions.include?(File.extname(filename).try(:downcase))
   end
 
   def record_filename

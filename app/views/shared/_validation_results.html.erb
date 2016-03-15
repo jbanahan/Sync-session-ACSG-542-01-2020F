@@ -35,8 +35,11 @@
         <div ng-show='ruleResultToEdit' class='panel' ng-class='svc.stateToBootstrap("panel",ruleResultToEdit.state)'>
           <div class="panel-heading">
             <h3 class='panel-title'>
-              <state-icon state='ruleResultToEdit.state'></state-icon>
-              {{ruleResultToEdit.rule.name}}
+              <span>
+                <state-icon state='ruleResultToEdit.state'></state-icon>
+                {{ruleResultToEdit.rule.name}}
+              </span>
+              <span class='label label-info pull-right' ng-show='ruleResultToEdit.overridden_at' style="padding-bottom: 0.2em; padding-top: 0.2em;">Overridden&nbsp;&nbsp;</span>
             </h3>
           </div>
           <div class='panel-body'>
@@ -49,14 +52,24 @@
               <br>
               <pre>{{ruleResultToEdit.message}}</pre>
             </div>
-            <select ng-model='ruleResultToEdit.state' ng-options='s for s in svc.states' class='form-control'>
+            <select ng-model='ruleResultToEdit.state' ng-change='markRuleResultChanged()' ng-disabled='!ruleResultToEdit.editable' ng-options='s for s in svc.states' class='form-control'>
             </select>
-            <textarea ng-model='ruleResultToEdit.note' class='form-control'></textarea>
-            <div ng-show='ruleResultToEdit.overridden_at' class='text-right text-muted'>
-              Last Edited By {{ruleResultToEdit.overridden_by.full_name}} <span am-time-ago='ruleResultToEdit.overridden_at' title="{{ruleResultToEdit.overridden_at | amDateFormat:' MMMM Do YYYY, h:mm a'}}"></span>
+            <textarea ng-model='ruleResultToEdit.note' ng-change='markRuleResultChanged()' ng-show='ruleResultToEdit.note || ruleResultChanged || (ruleResultToEdit.editable && ruleResultToEdit.overridden_at)' ng-disabled='!ruleResultToEdit.editable' class='form-control'></textarea>
+            <div ng-show='ruleResultToEdit.overridden_at'><br>
+              <div class="alert alert-info">
+                This business rule has been manually overridden. The rule's status will no longer update unless the override is cleared.<br>
+                <span>
+                  <span class='small text-muted'>
+                    <br>Overridden by {{ruleResultToEdit.overridden_by.full_name}} <span am-time-ago='ruleResultToEdit.overridden_at' title="{{ruleResultToEdit.overridden_at | amDateFormat:' MMMM Do YYYY, h:mm a'}}"></span>
+                  </span>
+                  <span class='pull-right label label-info' style='font-size: 100%' ng-show="ruleResultToEdit.editable" ng-click="cancelOverride(ruleResultToEdit)">
+                    <i class="fa fa-trash"></i>
+                  </span>
+                </span>
+              </div>
             </div>
           </div>
-          <div class='panel-footer text-right'>
+          <div class='panel-footer text-right' ng-show='ruleResultToEdit.editable && ruleResultChanged'>
             <button ng-click='saveRuleResult(ruleResultToEdit)' class='btn btn-primary'>Save</button>
           </div>
         </div>

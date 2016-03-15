@@ -1,9 +1,11 @@
 require 'open_chain/xl_client'
 require 'open_chain/custom_handler/fenix_nd_invoice_generator'
+require 'open_chain/custom_handler/custom_file_csv_excel_parser'
 
 module OpenChain; module CustomHandler
   class FenixCommercialInvoiceSpreadsheetHandler
     include ActionView::Helpers::NumberHelper
+    include OpenChain::CustomHandler::CustomFileCsvExcelParser
 
     def initialize custom_file
       @custom_file = custom_file
@@ -13,7 +15,7 @@ module OpenChain; module CustomHandler
     def process user
       errors = []
       begin
-        errors = parse @custom_file.attached.path
+        errors = parse @custom_file
       rescue
         errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
         raise 
@@ -34,10 +36,10 @@ module OpenChain; module CustomHandler
       user.company.master?
     end
 
-    def parse s3_path, suppress_fenix_send = false
+    def parse custom_file, suppress_fenix_send = false
       errors = []
       invoices_to_send = []
-      invoices = extract_invoices s3_path
+      invoices = extract_invoices custom_file
       invoices.each do |invoice_number, rows|
         begin
           invoice = parse_header rows[0]
@@ -62,7 +64,7 @@ module OpenChain; module CustomHandler
       end
       invoice = find_invoice text_value(row[0]), text_value(row[1])
 
-      invoice.invoice_date = parse_date row[2]
+      invoice.invoice_date = date_value row[2]
       invoice.country_origin_code = text_value row[3]
       invoice.currency = 'CAD'
       
@@ -95,57 +97,9 @@ module OpenChain; module CustomHandler
       end
     end
 
-    class CsvClient
-
-      def initialize s3_path, csv_options = {}
-        @file_path = s3_path
-        @options = csv_options
-      end
-
-      def all_row_values sheet_number
-        r = block_given? ? nil : []
-        OpenChain::S3.download_to_tempfile('chain-io', @file_path) do |file|
-          CSV.foreach(file, @options) do |row|
-            if block_given?
-              yield row
-            else
-              r << row
-            end
-          end
-        end
-        r
-      end
-      
-    end
-
     protected 
 
-      def file_reader s3_path
-        case File.extname(s3_path).downcase
-        when ".csv", ".txt"
-          options = nil
-          if respond_to?(:csv_client_options)
-            options = csv_client_options
-          end
-          return CsvClient.new(s3_path, options ? options : {})
-        when ".xls", ".xlsx"
-          return OpenChain::XLClient.new(s3_path)
-        else
-          raise "No CI Upload processor exists for #{File.extname(s3_path).downcase} file types."
-        end
-      end
-
-      # Returns false if any any non-blank value is found in the row
-      def blank_row row
-        return true if row.blank?
-        row.each {|v| return false unless v.blank?}
-        return true
-      end
-
-      def extract_invoices s3_path
-        # Abstract out all the file reading, so we can just deal w/ the actual row data regardless of the file source
-        reader = file_reader s3_path
-
+      def extract_invoices custom_file
         invoice_data = {}
 
         # We allow multiple invoices per file, so we need to track the invoice number
@@ -154,11 +108,11 @@ module OpenChain; module CustomHandler
         previous_invoice_number = nil
         current_invoice_rows = []
         row_number = 0
-        reader.all_row_values(0) do |row|
+        foreach(custom_file) do |row|
           #skip the first line if it's the column headings
           next if (row_number +=1) == 1 && has_header_line?
 
-          blank = blank_row row
+          blank = blank_row? row
           invoice_number = parse_invoice_number_from_row row
 
           # If we hit a blank row and we have accumulated invoice data
@@ -189,37 +143,6 @@ module OpenChain; module CustomHandler
 
       def parse_invoice_number_from_row row
         row[1]
-      end
-
-      def parse_date value
-        date = nil
-        if value.is_a? String
-          #Convert any / to a hypehn
-          value = value.gsub('/', '-')
-          # Try yyyy-mm-dd then mm-dd-yyyy then mm-dd-yy
-          date = Date.strptime(value, "%Y-%m-%d") rescue nil
-          unless date
-            if value.split("-")[2].try(:length) == 4
-              date = Date.strptime(value, "%m-%d-%Y") rescue nil
-            else
-              date = Date.strptime(value, "%m-%d-%y") rescue nil
-            end
-          end
-        elsif value.acts_like?(:date) || value.acts_like?(:time)
-          date = value
-        end
-
-        date
-      end
-
-      def text_value value
-        OpenChain::XLClient.string_value value
-      end
-
-      def decimal_value value, decimal_places = 3
-        v = BigDecimal(value.to_s)
-        # Round to t decimal places
-        v.round(decimal_places, BigDecimal::ROUND_HALF_UP)
       end
 
       def find_invoice fenix_importer, invoice_number

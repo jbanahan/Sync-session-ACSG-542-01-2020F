@@ -36,36 +36,15 @@
             <%=current_user.full_name%> - 
             <chain-messages-link></chain-messages-link> - 
             <button id='support-link' title='Help' class='btn btn-link'><i class="fa fa-question-circle"></i></button> - 
+            <%if current_user.portal_mode != 'vendor'%><a href='/'>Leave Portal Mode</a> -<%end%>
             <a href='/logout'>Log Out</a>
           </div>
         </div>
       </div>
     </div>
     <div ui-view></div>
-    <div class="modal fade" id="modal-help">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h4 class="modal-title">Help</h4>
-          </div>
-          <div class="modal-body">
-            <!-- <div class="form-group">
-              <label>Message:</label>
-              <textarea class='form-control'></textarea>
-             </div>-->
-             <div class="alert alert-success">
-               Your ticket number is <strong>123456</strong>
-             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Send</button>
-          </div>
-        </div>
-      </div>
-    </div>
     <chain-support-modal></chain-support-modal>
+    <chain-errors></chain-errors>
   </div>
 </body>
 </html>

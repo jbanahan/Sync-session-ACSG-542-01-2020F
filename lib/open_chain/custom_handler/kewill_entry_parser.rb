@@ -21,7 +21,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     9 => {attribute: :first_it_date, datatype: :date, directive: :first},
     11 => {attribute: :eta_date, datatype: :date},
     12 => :arrival_date,
-    16 => {attribute: :entry_filed_date, datatype: :datetime},
     19 => :release_date,
     20 => :fda_release_date,
     24 => :trucker_called_date,
@@ -270,6 +269,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.voyage = e[:voyage_flight_no]
       entry.vessel = e[:vessel_airline_name]
       entry.location_of_goods = e[:location]
+      entry.location_of_goods_description = e[:location_of_goods]
 
       entry.ult_consignee_code = e[:uc_no]
       entry.ult_consignee_name = e[:uc_name]
@@ -474,6 +474,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def process_notes e, entry
       entry.entry_comments.each {|c| c.mark_for_destruction}
 
+      customs_response_times = []
       Array.wrap(e[:notes]).each do |n|
         note = n[:note]
         generated_at = parse_numeric_datetime(n[:date_updated])
@@ -489,7 +490,12 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.first_7501_print = earliest_date(entry.first_7501_print, generated_at)
           entry.last_7501_print = latest_date(entry.first_7501_print, generated_at)
         end
+
+        # We're recording the Entry Filed Date as time of the first reponse from customs
+        customs_response_times << generated_at if comment.username.to_s.upcase == "CUSTOMS"
       end
+
+      entry.entry_filed_date = (customs_response_times.size > 0 ? customs_response_times.sort.first : nil)
 
       nil
     end
@@ -628,6 +634,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.computed_adjustments = parse_decimal(l[:non_dutiable_amt]) + parse_decimal(l[:add_to_make_amt]) + parse_decimal(l[:other_amt]) +
                                      parse_decimal(l[:misc_discount]) + parse_decimal(l[:cash_discount]) + parse_decimal(l[:freight_amount])
       line.computed_net_value = parse_decimal(l[:value_tot]) - line.computed_adjustments
+      line.first_sale = l[:value_appraisal_method].to_s.upcase == "F"
+      line.value_appraisal_method = l[:value_appraisal_method]
 
       Array.wrap(l[:fees]).each do |fee|
         case fee[:customs_fee_code].to_i
@@ -665,7 +673,19 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         end
       end
 
-      if !l[:container_no].blank?
+      # Prefer the container sub-element to the actual container_no on the line level.
+      # There's actually two ways to key containers on the invoice line.  The sub-element way
+      # is accessed through a dropdown list in KEC so it should be more accurate than
+      # the one on the line, which is just keyed into a textbox.
+      Array.wrap(l[:containers]).each do |cont|
+        container_number = cont[:container_no].to_s.strip
+        next if container_number.blank?
+
+        container = entry.containers.find {|c| c.container_number == container_number}
+        line.container = container if container
+      end
+
+      if line.container.nil? && !l[:container_no].blank?
         container_number = l[:container_no].strip
         container = entry.containers.find {|c| c.container_number == container_number}
         line.container = container if container

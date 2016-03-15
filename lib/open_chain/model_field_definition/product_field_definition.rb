@@ -141,10 +141,18 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         :qualified_field_name=>"((select count(*) from variants where variants.product_id = products.id))",
         :data_type=>:integer,
         :read_only => true
-      }]
+      }],
+      [21, :prod_order_count, :order_count, "Order Count", {
+        :import_lambda=>lambda {|obj,data| "Order Count ignored. (read only)"},
+        # can't think of a way to export this without going back to the database
+        :export_lambda=>lambda {|obj| OrderLine.select('distinct order_lines.order_id').where('order_lines.product_id = ?',obj.id).count},
+        :qualified_field_name=>"(select count(*) from (select distinct order_lines.order_id, order_lines.product_id from order_lines) x where x.product_id = products.id)",
+        :data_type=>:integer,
+        :read_only=>true,
+        :history_ignore=>true
+        }]
     ]
     add_fields CoreModule::PRODUCT, make_last_changed_by(12,'prod',Product)
-    add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")
     add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
     add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
     add_fields CoreModule::PRODUCT, make_importer_arrays(250,"prod","products")

@@ -849,7 +849,7 @@ module OpenChain
           # The easiest way for us to send an email to the appropriate people to handle
           # this issue now is just to raise and log an exception
           begin
-            raise "Failed to generate #{broker_invoice_data.length} #{@config[:name]} invoices."
+            raise "Failed to generate #{@broker_invoice_data.length} #{@config[:name]} invoices."
           rescue 
             $!.log_me ["See attached spreadsheet for full list of invoice numbers that could not be generated."], [file.path]
           end

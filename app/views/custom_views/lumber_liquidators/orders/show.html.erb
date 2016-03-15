@@ -1,0 +1,202 @@
+<%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
+<%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk,:prod_old_article,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])%>
+<%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
+<script type='text/javascript'>
+
+  $("window").ready(function() {
+    $("[data-toggle='popover']").popover({html:true});
+  });
+  $(function() {
+
+    $(document).on('click','[state-toggle-id]',function(evt) {
+      var t = $(this);
+      var dataHash = {button_id:t.attr('state-toggle-id')};
+      $.ajax('/api/v1/'+t.attr('state-toggle-path')+'/'+t.attr('state-toggle-obj-id')+'/toggle_state_button',{
+        type:'POST',
+        headers: {
+          Accept : "application/json",
+          "Content-Type": "application/json"
+        },
+        data: JSON.stringify(dataHash),
+        success: function(response) {
+          t.parent().html("<small>Update sucessful. Reload to see data.</small>");
+        },
+        error: function() {
+          window.alert('Update failed. Please reload and try again.');
+        }
+      });
+    });
+
+    $("[id^=lnk_det_s_]").click(function(e) {
+      e.preventDefault();
+      var lineId = e.currentTarget.id.split('_')[3]
+      OpenChain.showOrderLineDetail(lineId,<%=current_user.admin? ? 'true' : 'false' %>);
+      $('#lnk_det_h_' + lineId).show();
+      $('#lnk_det_s_' + lineId).hide();
+      return false;
+    });
+
+    $("[id^=lnk_det_h_]").click(function(e) {
+      e.preventDefault();
+      var lineId = e.currentTarget.id.split('_')[3]
+      $('#det_' + lineId).fadeOut('slow');
+      $('#lnk_det_s_' + lineId).show();
+      $('#lnk_det_h_' + lineId).hide();
+      return false;
+    });
+
+  });
+</script>
+
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
+  <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
+<% end %>
+
+<div class="container">
+  <%=render partial: '/shared/business_rules', locals:{base_object:@order,rule_state_field:rule_state_field,validation_path:validation_results_order_path(@order)}%>
+  <% if @order.closed? %>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+              <h3 class="panel-title">Order Closed</h3>
+            </div>
+            <div class="panel-body">
+              Order closed <%=@order.closed_at%> <%if @order.closed_by%>by <%=@order.closed_by.full_name%><%end%>
+            </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  <div class="row">
+    <div class="col-md-6">
+      <% if @order.vendor %>
+        <%vendor_name_fld = ModelField.find_by_uid(:ord_ven_name)%>
+        <%=field_bootstrap vendor_name_fld.label, link_to(vendor_name_fld.process_export(@order, User.current), vendor_path(@order.vendor)) %>
+      <% end %>
+      <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_imp_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_fob_point] %>
+    </div>
+    <div class="col-md-6">
+      <%= show_model_fields @order, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
+      <hr />
+      <%=show_custom_fields @order%>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#main" aria-controls="main" role="tab" data-toggle="tab">Main</a></li>
+        <li role="presentation"><a href="#compliance" aria-controls="compliance" role="tab" data-toggle="tab">Compliance</a></li>
+      </ul>
+
+      <!-- Tab panes -->
+      <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="main">
+          <table class="table table-condensed table-bordered">
+            <thead>
+              <tr>
+                <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_ordered_qty, :prod_uom, :ordln_ppu, :ordln_total_cost], table:true, heading:true) %>
+                <th>&nbsp;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @order.order_lines.each do |line| %>
+                <tr class='ord_det_row'>
+                  <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
+                  <td>
+                    <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
+                    <small><%=cdefs[:prod_old_article].model_field.process_export(line.product,User.current)%></small><br />
+                    <%=ModelField.find_by_uid(:prod_name).process_export(line.product,User.current)%>
+                  </td>
+                  <%= show_model_fields(line, [:ordln_ordered_qty], table: true, editor_only: true) %>
+                  <%= show_model_fields(line.product, :prod_uom, table: true, editor_only: true) %>
+                  <%= show_model_fields(line, [:ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
+                  <td>
+                    <a id='lnk_det_s_<%=line.id%>' href="#">Detail</a>
+                    <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="#">Detail</a>
+                  </td>
+                </tr>
+                <tr style='display:none;' id='det_<%=line.id%>'>
+                  <td>&nbsp;</td>
+                  <td colspan='<%=ModelField.viewable_model_fields(User.current, [:ordln_line_number, :prod_uid, :ordln_sku, :ordln_ordered_qty, :prod_uom, :ordln_ppu, :ordln_currency, :ordln_total_cost]).size + 4%>' >
+                    <div class="container col-md-6">
+                      <%= show_model_fields line, [:ordln_country_of_origin, :ordln_hts] %>
+                      <%= show_custom_fields line %>
+                      <% if ModelField.find_by_uid(:shp_ref).can_view?(User.current) %>
+                      <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
+                      <% next unless s.can_view?(User.current) %>
+                      <%=field_bootstrap "Shipment", link_to(ModelField.find_by_uid(:shp_ref).process_export(s, User.current), s) %>
+                      <%end%>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <%end %>
+            </tbody>
+          </table>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="compliance">
+          <table class="table table-condensed table-striped table-bordered">
+            <thead>
+              <tr>
+                <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_ordered_qty, :prod_uom, :ordln_ppu, :ordln_total_cost,
+                  cdefs[:prodven_risk].model_field_uid,
+                  cdefs[:ordln_pc_approved_by].model_field_uid
+                ], table:true, heading:true) %>
+                <th>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @order.order_lines.each do |line| %>
+                <%exec_pc_approved = !line.get_custom_value(cdefs[:ordln_pc_approved_date_executive]).value.blank?%>
+                <tr>
+                  <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
+                  <td>
+                    <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
+                    <small><%=cdefs[:prod_old_article].model_field.process_export(line.product,User.current)%></small><br />
+                    <%=ModelField.find_by_uid(:prod_name).process_export(line.product,User.current)%>
+                  </td>
+                  <%= show_model_fields(line, [:ordln_ordered_qty], table: true, editor_only: true) %>
+                  <%= show_model_fields(line.product, :prod_uom, table: true, editor_only: true) %>
+                  <%= show_model_fields(line, [:ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
+                  <%line_risk = cdefs[:prodven_risk].model_field.process_export(line.product.product_vendor_assignments.where(vendor_id:@order.vendor_id).first, User.current)%>
+                  <td class='<%=line_risk.blank? ? "danger" : ""%>'>
+                    <%=line_risk%>
+                  </td>
+                  <td>
+                    <%if exec_pc_approved%>
+                      <%=ModelField.find_by_uid("*uf_#{cdefs[:ordln_pc_approved_by_executive].id}_fullname".to_sym).process_export(line,User.current)%><br />
+                      <small><%=cdefs[:ordln_pc_approved_date_executive].model_field.process_export(line,User.current)%></small>
+                    <% else %>
+                      <%=ModelField.find_by_uid("*uf_#{cdefs[:ordln_pc_approved_by].id}_fullname".to_sym).process_export(line,User.current)%><br />
+                      <small><%=cdefs[:ordln_pc_approved_date].model_field.process_export(line,User.current)%></small>
+                    <% end %>
+                  </td>
+                  <td>
+                    <%=state_toggle_buttons(line,User.current,button_class:'btn btn-default btn-xs')%>
+                  </td>
+                </tr>
+              <%end %>
+            </tbody>
+          </table>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="messages">...</div>
+        <div role="tabpanel" class="tab-pane" id="settings">...</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
+    </div>
+    <div class="col-md-6">
+      <%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
+    </div>
+  </div>
+</div>
+
+<%=secure_link @order, current_user%>

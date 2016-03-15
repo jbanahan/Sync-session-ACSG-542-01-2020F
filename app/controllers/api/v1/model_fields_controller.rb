@@ -4,7 +4,8 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
   API_MODULES ||= [CoreModule::PRODUCT, 
     CoreModule::CLASSIFICATION, 
     CoreModule::TARIFF, 
-    CoreModule::ORDER, 
+    CoreModule::ORDER,
+    CoreModule::ORDER_LINE,
     CoreModule::ENTRY, 
     CoreModule::OFFICIAL_TARIFF, 
     CoreModule::VARIANT]

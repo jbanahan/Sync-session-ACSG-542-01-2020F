@@ -7,6 +7,6 @@
 <% if product.entity_type_id -%>
   <%= show_model_fields product, :prod_ent_type %>
 <% end -%>
-<%= show_model_fields product, [:prod_uom, :prod_ven_name, :prod_div_name] %>
+<%= show_model_fields product, [:prod_uom, :prod_div_name] %>
 <%=show_custom_fields product %>
 <%= show_model_fields product, [:prod_changed_at, :prod_last_changed_by] %>

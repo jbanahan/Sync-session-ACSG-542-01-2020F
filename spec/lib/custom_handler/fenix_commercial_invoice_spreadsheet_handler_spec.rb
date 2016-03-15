@@ -2,73 +2,70 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
-  describe 'process' do
-    before :each do 
-      @cf = double("Custom File")
-      @cf.stub(:attached).and_return @cf
-      @cf.stub(:path).and_return "path/to/file.xlsx"
-      @cf.stub(:attached_file_name).and_return "file.xlsx"
+  let (:custom_file) { 
+    cf = double("Custom File")
+    cf.stub(:attached).and_return cf
+    cf.stub(:path).and_return "path/to/file.xlsx"
+    cf.stub(:attached_file_name).and_return "file.xlsx"
 
-      @user = Factory(:master_user)
-      @h = described_class.new @cf
-    end
+    cf
+  }
+  let(:user) { Factory(:master_user) }
+  subject { described_class.new custom_file }
+
+  describe 'process' do
 
     it "should parse the file" do
-      @h.should_receive(:parse).with(@cf.attached.path).and_return []
-      @h.process @user
+      subject.should_receive(:parse).with(custom_file).and_return []
+      subject.process user
 
-      @user.messages.length.should eq 1
-      @user.messages.first.subject.should eq "Fenix Invoice File Processing Completed"
-      @user.messages.first.body.should eq "Fenix Invoice File '#{@cf.attached_file_name}' has finished processing."
+      user.messages.length.should eq 1
+      user.messages.first.subject.should eq "Fenix Invoice File Processing Completed"
+      user.messages.first.body.should eq "Fenix Invoice File '#{custom_file.attached_file_name}' has finished processing."
     end
 
     it "should put errors into the user messages" do
-      @h.should_receive(:parse).with(@cf.attached.path).and_return ["Error1", "Error2"]
+      subject.should_receive(:parse).with(custom_file).and_return ["Error1", "Error2"]
 
-      @h.process @user
+      subject.process user
 
-      @user.messages.length.should eq 1
-      @user.messages.first.subject.should eq "Fenix Invoice File Processing Completed With Errors"
-      @user.messages.first.body.should eq "Fenix Invoice File '#{@cf.attached_file_name}' has finished processing.\n\nError1\nError2"
+      user.messages.length.should eq 1
+      user.messages.first.subject.should eq "Fenix Invoice File Processing Completed With Errors"
+      user.messages.first.body.should eq "Fenix Invoice File '#{custom_file.attached_file_name}' has finished processing.\n\nError1\nError2"
     end
 
     it "should handle uncaught errors" do
-      @h.should_receive(:parse).with(@cf.attached.path).and_raise "Error"
+      subject.should_receive(:parse).with(custom_file).and_raise "Error"
 
-      expect {@h.process(@user)}.to raise_error "Error"
+      expect {subject.process(user)}.to raise_error "Error"
 
-      @user.messages.first.subject.should eq "Fenix Invoice File Processing Completed With Errors"
-      @user.messages.first.body.should eq "Fenix Invoice File '#{@cf.attached_file_name}' has finished processing.\n\nUnrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
+      user.messages.first.subject.should eq "Fenix Invoice File Processing Completed With Errors"
+      user.messages.first.body.should eq "Fenix Invoice File '#{custom_file.attached_file_name}' has finished processing.\n\nUnrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
     end
   end
 
   describe 'parse' do
+    let(:importer) { Factory(:company, importer: true, fenix_customer_number: "CUST1") }
 
-    before :each do
-      @user = Factory(:master_user)
-      @h = described_class.new @cf
 
-      @importer = Factory(:company, importer: true, fenix_customer_number: "CUST1")
-
-      @xl_client = double("XLClient")
-      @h.stub(:file_reader).and_return @xl_client
-    end
-
-    it "should parse a file using the xlcient" do
+    it "should parse a file" do
       # Using dots in hts numbers here to ensure they're stripped, make sure we
       # also test the alternate date formats here too
+      date = Time.zone.now.to_date
+
       file_contents = [
         ["Column", "Heading"],
-        [@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"],
-        [@importer.fenix_customer_number, "INV1", "2013-10-29", "UPA", "Part2", "HK", "9876543210", "Some Part 2", "20", "1.50", "PO#", "2"],
-        [@importer.fenix_customer_number, "INV2", "10/29/2013", "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"],
-        [@importer.fenix_customer_number, "INV3", "10/30/13", "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
+        [importer.fenix_customer_number, "INV1", date.strftime("%Y-%m-%d"), "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"],
+        [importer.fenix_customer_number, "INV1", date.strftime("%Y-%m-%d"), "UPA", "Part2", "HK", "9876543210", "Some Part 2", "20", "1.50", "PO#", "2"],
+        [importer.fenix_customer_number, "INV2", date.strftime("%m/%d/%Y"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"],
+        [importer.fenix_customer_number, "INV3", date.strftime("%m/%d/%y"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
       ]
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])
+
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])
 
       OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate).exactly(3).times
 
-      errors = @h.parse "file.xlsx"
+      errors = subject.parse custom_file
       errors.length.should eq 0
 
       invoices = CommercialInvoice.where("invoice_number in (?)", ["INV1", "INV2", "INV3"]).order("commercial_invoices.id ASC").all
@@ -76,7 +73,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
       invoice = invoices.first
 
-      invoice.invoice_date.should eq Date.new(2013, 10, 28)
+      invoice.invoice_date.should eq date
       invoice.country_origin_code.should eq "UIL"
       invoice.currency.should eq 'CAD'
 
@@ -105,7 +102,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
       invoice = invoices.second
 
-      invoice.invoice_date.should eq Date.new(2013, 10, 29)
+      invoice.invoice_date.should eq date
       invoice.country_origin_code.should eq "UPA"
       invoice.currency.should eq 'CAD'
 
@@ -121,23 +118,23 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       t.tariff_provision.should eq "1"
 
       invoice = invoices[2]
-      invoice.invoice_date.should eq Date.new(2013, 10, 30)
+      invoice.invoice_date.should eq date
     end
 
     it "should create multiple invoices if blank rows are between each" do
       file_contents = [
         ["Column", "Heading"],
-        [@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"],
+        [importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"],
         [],
         ['', '', ' '],
-        [@importer.fenix_customer_number, "INV2", "2013-10-29", "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
+        [importer.fenix_customer_number, "INV2", "2013-10-29", "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
       ]
 
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])
 
       OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate).twice
 
-      errors = @h.parse "file.xlsx"
+      errors = subject.parse "file.xlsx"
       errors.length.should eq 0
 
       invoices = CommercialInvoice.where("invoice_number in (?)", ["INV1", "INV2"]).order("commercial_invoices.id ASC").all
@@ -146,31 +143,31 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
     it "should error if importer is not found" do
       file_contents = [["Column", "Heading"],["NOIMPORTER", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_not_receive(:generate)
 
-      errors = @h.parse "file.xlsx"
+      errors = subject.parse "file.xlsx"
       errors.length.should eq 1
       errors[0].should include("No Fenix Importer associated with the Tax ID 'NOIMPORTER'.")
     end
 
     it "should error if importer is blank" do
-      @importer = Factory(:company, importer: true, fenix_customer_number: "  ")
+      importer = Factory(:company, importer: true, fenix_customer_number: "  ")
       file_contents = [["Column", "Heading"],["  ", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_not_receive(:generate)
 
-      errors = @h.parse "file.xlsx"
+      errors = subject.parse "file.xlsx"
       errors.length.should eq 1
       errors[0].should include("No Fenix Importer associated with the Tax ID '  '.")
     end
 
     it "should not send invoices if suppressed" do
-      file_contents = [["Column", "Heading"],[@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
+      file_contents = [["Column", "Heading"],[importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_not_receive(:generate)
 
-      errors = @h.parse "file.xlsx", true
+      errors = subject.parse "file.xlsx", true
       errors.length.should eq 0
 
       CommercialInvoice.where(invoice_number: "INV1").first.should_not be_nil
@@ -179,13 +176,13 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     it "should update existing invoices" do
       line = Factory(:commercial_invoice_line)
       inv = line.commercial_invoice
-      inv.update_attributes importer_id: @importer.id
+      inv.update_attributes importer_id: importer.id
       id = inv.id
 
-      file_contents = [["Column", "Heading"],[@importer.fenix_customer_number, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
+      file_contents = [["Column", "Heading"],[importer.fenix_customer_number, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
 
-      errors = @h.parse "file.xlsx", true
+      errors = subject.parse "file.xlsx", true
       errors.length.should eq 0
 
       invoice = CommercialInvoice.where(invoice_number: inv.invoice_number).first
@@ -197,13 +194,13 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     it "should not update existing invoices with a blank invoice number" do
       line = Factory(:commercial_invoice_line)
       inv = line.commercial_invoice
-      inv.update_attributes importer_id: @importer.id, invoice_number: ""
+      inv.update_attributes importer_id: importer.id, invoice_number: ""
       id = inv.id
 
-      file_contents = [["Column", "Heading"],[@importer.fenix_customer_number, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
+      file_contents = [["Column", "Heading"],[importer.fenix_customer_number, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
 
-      errors = @h.parse "file.xlsx", true
+      errors = subject.parse "file.xlsx", true
       errors.length.should eq 0
 
       invoices = CommercialInvoice.where(invoice_number: "").order("commercial_invoices.id ASC").all
@@ -217,10 +214,10 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     it "should properly translate numeric values to text for text model attributes" do
       file_contents = [
         ["Column", "Heading"],
-        [@importer.fenix_customer_number, 123.0, "2013-10-28", "UIL", BigDecimal.new("1234.0"), "CN", 12345, "Some Part", "10", "1.25", 1234.1, 1],
+        [importer.fenix_customer_number, 123.0, "2013-10-28", "UIL", BigDecimal.new("1234.0"), "CN", 12345, "Some Part", "10", "1.25", 1234.1, 1],
       ]
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
-      errors = @h.parse "file.xlsx", true
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
+      errors = subject.parse "file.xlsx", true
   
       errors.length.should eq 0
 
@@ -249,71 +246,14 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       # also test the alternate date formats here too
       file_contents = [
         ["Column", "Heading"],
-        [@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"]
+        [importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"]
       ]
-      @xl_client.should_receive(:all_row_values).and_yield(file_contents[0]).and_yield(file_contents[1])
+      subject.should_receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
 
       OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate).exactly(1).times
 
-      @h.parse "file.xlsx"
+      subject.parse "file.xlsx"
     end
   end
 
-  describe "file_reader" do
-    it "uses csvclient for csv files" do
-      expect(described_class.new(nil).send(:file_reader, "path/to/file.csv").class).to eq OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler::CsvClient
-    end
-
-    it "uses csvclient for txt files" do
-      expect(described_class.new(nil).send(:file_reader, "path/to/file.txt").class).to eq OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler::CsvClient
-    end
-
-    it "uses xlclient for xls files" do
-      expect(described_class.new(nil).send(:file_reader, "path/to/file.xls").class).to eq OpenChain::XLClient
-    end
-
-    it "uses xlclient for xlsx files" do
-      expect(described_class.new(nil).send(:file_reader, "path/to/file.xlsx").class).to eq OpenChain::XLClient
-    end
-
-    it "raies an error on other file types" do
-      expect {described_class.new(nil).send(:file_reader, "path/to/file.blah")}.to raise_error
-    end
-  end
-
-  describe "CsvClient" do
-    before :each do
-      @tempfile = Tempfile.new ['temp', '.csv']
-      @tempfile.binmode 
-      @tempfile << "header1,header2\ndata1,data2"
-      @tempfile.flush
-      @tempfile.rewind
-
-      @client = described_class.new(nil).send(:file_reader, "path/to/file.csv")
-      OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', "path/to/file.csv").and_yield @tempfile
-    end
-
-    after :each do
-      @tempfile.close!
-    end
-
-    it "yields each row to a block" do
-      rows = []
-      @client.all_row_values(0) do |row|
-        rows << row
-      end
-
-      expect(rows).to eq [
-        ["header1", "header2"],
-        ["data1", "data2"]
-      ]
-    end
-
-    it "passes back all rows" do
-      expect(@client.all_row_values(0)).to eq [
-        ["header1", "header2"],
-        ["data1", "data2"]
-      ]
-    end
-  end
 end

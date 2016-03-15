@@ -22,9 +22,10 @@ class BusinessValidationTemplatesController < ApplicationController
     admin_secure {
       @bvt = BusinessValidationTemplate.find(params[:id])
       @criteria = @bvt.search_criterions
-      @rules = @bvt.business_validation_rules
+      @rules = @bvt.business_validation_rules.reject(&:delete_pending)
       @new_criterion = SearchCriterion.new
       @new_rule = BusinessValidationRule.new
+      @groups = Group.all
     }
   end
 
@@ -53,7 +54,7 @@ class BusinessValidationTemplatesController < ApplicationController
 
   def index
     admin_secure {
-      @bv_templates = BusinessValidationTemplate.all
+      @bv_templates = BusinessValidationTemplate.all.reject(&:delete_pending)
     }
   end
 
@@ -66,7 +67,9 @@ class BusinessValidationTemplatesController < ApplicationController
   def destroy
     admin_secure{
       @bv_template = BusinessValidationTemplate.find params[:id]
-      @bv_template.destroy
+      @bv_template.update_attribute(:delete_pending, true)
+      @bv_template.business_validation_rules.update_all(delete_pending: true)
+      BusinessValidationTemplate.delay.async_destroy @bv_template.id
 
       redirect_to business_validation_templates_path
     }

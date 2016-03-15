@@ -56,6 +56,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_module?(CoreModule::COMPANY)
     when CoreModule::PLANT_PRODUCT_GROUP_ASSIGNMENT
       return self.view_module?(CoreModule::PLANT)
+    when CoreModule::PRODUCT_VENDOR_ASSIGNMENT
+      return self.view_product_vendor_assignments?
     when CoreModule::DRAWBACK_CLAIM
       return self.view_drawback?
     when CoreModule::VARIANT
@@ -277,6 +279,16 @@ module OpenChain; module UserSupport; module UserPermissions
   end
   def comment_vendors?
     self.vendor_comment && master_setup.vendor_management_enabled?
+  end
+
+  def view_product_vendor_assignments?
+    self.view_vendors?
+  end
+  def edit_product_vendor_assignments?
+    self.edit_vendors?
+  end
+  def create_product_vendor_assignments?
+    self.create_vendors?
   end
 
   def edit_milestone_plans?

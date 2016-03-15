@@ -3,13 +3,12 @@ require 'spec_helper'
 
 describe OpenChain::XLClient do
 
-  before :each do 
-    @init_path = 'somepath'
-    @dummy_response = {"cell"=>{"my"=>"response"}}
-    @client = OpenChain::XLClient.new @init_path, {scheme: "s3", bucket: "bucket"}
+  let (:error_response) { {"errors" => "Error"} }
+  let (:dummy_response) { {"cell"=>{"my"=>"response"}} }
+  let (:init_path) { 'somepath' }
+  let (:path) { "s3://bucket.s3.amazonaws.com/somepath" }
 
-    @path = "s3://bucket.s3.amazonaws.com/#{@init_path}"
-  end
+  subject { OpenChain::XLClient.new "somepath", {scheme: "s3", bucket: "bucket"} }
 
   describe "initialize" do
     it "modifies plain paths to an s3 one" do
@@ -35,16 +34,16 @@ describe OpenChain::XLClient do
 
   context "error handling" do
     it "should raise error if raise_errors is enabled" do
-      cmd = {"command"=>"new","path"=>@path}
-      @client.raise_errors = true
-      @client.should_receive(:private_send).with(cmd).and_return("errors"=>["BAD"])
-      lambda {@client.send(cmd)}.should raise_error OpenChain::XLClientError
+      cmd = {"command"=>"new","path"=>path}
+      subject.raise_errors = true
+      subject.should_receive(:private_send).with(cmd).and_return("errors"=>["BAD"])
+      lambda {subject.send(cmd)}.should raise_error OpenChain::XLClientError
     end
     it "should not raise error if raise_errors is not enabled" do
-      cmd = {"command"=>"new","path"=>@path}
+      cmd = {"command"=>"new","path"=>path}
       resp = {'errors'=>'BAD'}
-      @client.should_receive(:private_send).with(cmd).and_return(resp)
-      @client.send(cmd).should == resp
+      subject.should_receive(:private_send).with(cmd).and_return(resp)
+      subject.send(cmd).should == resp
     end
   end
   describe :new_from_attachable do
@@ -60,63 +59,76 @@ describe OpenChain::XLClient do
   end
   describe :all_row_values do
     it "should yield for all rows based on last_row_number" do
-      @client.should_receive(:last_row_number).with(0).and_return(2)
-      @client.should_receive(:get_row_values).with(0,0).and_return('a')
-      @client.should_receive(:get_row_values).with(0,1).and_return('b')
-      @client.should_receive(:get_row_values).with(0,2).and_return('c')
+      subject.should_receive(:last_row_number).with(0).and_return(2)
+      subject.should_receive(:get_rows).with(row:0, sheet: 0, number_of_rows: 1).and_return([['a']])
+      subject.should_receive(:get_rows).with(row:1, sheet: 0, number_of_rows: 1).and_return([['b']])
+      subject.should_receive(:get_rows).with(row:2, sheet: 0, number_of_rows: 1).and_return([['c']])
       v = []
-      @client.all_row_values(0) do |r|
+      subject.all_row_values(0, 0, 1) do |r|
         v << r
       end
-      v.should == ['a','b','c']
+      expect(v).to eq [['a'], ['b'], ['c']]
     end
+
     it "should return array of arrays if no block given" do
-      @client.should_receive(:last_row_number).with(0).and_return(2)
-      @client.should_receive(:get_row_values).with(0,0).and_return(['a'])
-      @client.should_receive(:get_row_values).with(0,1).and_return(['b'])
-      @client.should_receive(:get_row_values).with(0,2).and_return(['c'])
-      @client.all_row_values(0).should == [['a'],['b'],['c']]
+      subject.should_receive(:last_row_number).with(0).and_return(2)
+      subject.should_receive(:get_rows).with(row:0, sheet: 0, number_of_rows: 1).and_return([['a']])
+      subject.should_receive(:get_rows).with(row:1, sheet: 0, number_of_rows: 1).and_return([['b']])
+      subject.should_receive(:get_rows).with(row:2, sheet: 0, number_of_rows: 1).and_return([['c']])
+      v = subject.all_row_values(0, 0, 1)
+      expect(v).to eq [['a'], ['b'], ['c']]
+    end
+
+    it "steps does not over-request rows" do
+      # returning 10 here means there's actually 11 rows of data to grab
+      subject.should_receive(:last_row_number).with(0).and_return(10) 
+      subject.should_receive(:get_rows).with(row:0, sheet: 0, number_of_rows: 3).and_return([['a']])
+      subject.should_receive(:get_rows).with(row:3, sheet: 0, number_of_rows: 3).and_return([['b']])
+      subject.should_receive(:get_rows).with(row:6, sheet: 0, number_of_rows: 3).and_return([['c']])
+      subject.should_receive(:get_rows).with(row:9, sheet: 0, number_of_rows: 2).and_return([['d']])
+      v = subject.all_row_values(0, 0, 3)
+      expect(v).to eq [['a'], ['b'], ['c'], ['d']]
     end
   end
   it 'should send a new command' do
-    cmd = {"command"=>"new","path"=>@path}
-    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-    @client.new.should == @dummy_response
+    cmd = {"command"=>"new","path"=>path}
+    subject.should_receive(:send).with(cmd).and_return(dummy_response)
+    subject.new.should == dummy_response
   end
 
   it 'should send a get cell command' do
     cell_response = {"cell"=>{"value"=>"val", "datatype"=>"string"}}
-    cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
-    @client.should_receive(:send).with(cmd).and_return(cell_response)
-    @client.get_cell( 0, 1, 2 ).should == "val"
+    cmd = {"command"=>"get_cell","path"=>path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
+    subject.should_receive(:send).with(cmd).and_return(cell_response)
+    subject.get_cell( 0, 1, 2 ).should == "val"
   end
 
   it 'should send a get cell command and return raw response' do
-    cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
-    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-    @client.get_cell( 0, 1, 2, false ).should == @dummy_response["cell"]
+    cmd = {"command"=>"get_cell","path"=>path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
+    subject.should_receive(:send).with(cmd).and_return(dummy_response)
+    subject.get_cell( 0, 1, 2, false ).should == dummy_response["cell"]
   end
 
   it 'should send a get cell command and handle errors' do
     cell_response = {"errors"=>["Error 1", "Error 2"]}
-    cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
-    @client.should_receive(:send).with(cmd).and_return(cell_response)
-    expect{@client.get_cell( 0, 1, 2 )}.to raise_error "Error 1\nError 2"
+    cmd = {"command"=>"get_cell","path"=>path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
+    subject.should_receive(:send).with(cmd).and_return(cell_response)
+    expect{subject.get_cell( 0, 1, 2 )}.to raise_error "Error 1\nError 2"
   end
 
   it "should send a get cell command and handle datetime translation" do
     now = Time.now
     cell_response = {"cell"=>{"value"=>now.to_i, "datatype"=>"datetime"}}
-    cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
-    @client.should_receive(:send).with(cmd).and_return(cell_response)
-    @client.get_cell( 0, 1, 2 ).to_s.should == now.to_s
+    cmd = {"command"=>"get_cell","path"=>path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
+    subject.should_receive(:send).with(cmd).and_return(cell_response)
+    subject.get_cell( 0, 1, 2 ).to_s.should == now.to_s
   end
 
   describe "set_cell" do
     after :each do
-      cmd = {"command"=>"set_cell","path"=>@path,"payload"=>{"position"=>{"sheet"=>0,"row"=>1,"column"=>2},"cell"=>{"value"=>@value_content,"datatype"=>@datatype}}}
-      @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-      @client.set_cell(  0, 1, 2, @value ).should == @dummy_response
+      cmd = {"command"=>"set_cell","path"=>path,"payload"=>{"position"=>{"sheet"=>0,"row"=>1,"column"=>2},"cell"=>{"value"=>@value_content,"datatype"=>@datatype}}}
+      subject.should_receive(:send).with(cmd).and_return(dummy_response)
+      subject.set_cell(  0, 1, 2, @value ).should == dummy_response
 
     end
     it 'should handle strings' do
@@ -144,46 +156,46 @@ describe OpenChain::XLClient do
     end
   end
   it 'should send a create_sheet command' do
-    cmd = {"command"=>"create_sheet","path"=>@path,"payload"=>{"name"=>"a name"}}
-    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-    @client.create_sheet(  "a name" ).should == @dummy_response
+    cmd = {"command"=>"create_sheet","path"=>path,"payload"=>{"name"=>"a name"}}
+    subject.should_receive(:send).with(cmd).and_return(dummy_response)
+    subject.create_sheet(  "a name" ).should == dummy_response
   end
   it 'should send a save command without alternate location' do
-    cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>@path}}
-    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-    @client.save.should == @dummy_response
+    cmd = {"command"=>"save","path"=>path,"payload"=>{"alternate_location"=>path}}
+    subject.should_receive(:send).with(cmd).and_return(dummy_response)
+    subject.save.should == dummy_response
   end
   it 'should send a save command with alternate location' do
-    cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>'s3://bucket.s3.amazonaws.com/another/location'}}
-    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-    @client.save(  'another/location' ).should == @dummy_response
+    cmd = {"command"=>"save","path"=>path,"payload"=>{"alternate_location"=>'s3://bucket.s3.amazonaws.com/another/location'}}
+    subject.should_receive(:send).with(cmd).and_return(dummy_response)
+    subject.save(  'another/location' ).should == dummy_response
   end
   it 'should send a save command with alternate location using a URI' do
-    cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>'file:///another/location'}}
-    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-    @client.save('file:///another/location').should == @dummy_response
+    cmd = {"command"=>"save","path"=>path,"payload"=>{"alternate_location"=>'file:///another/location'}}
+    subject.should_receive(:send).with(cmd).and_return(dummy_response)
+    subject.save('file:///another/location').should == dummy_response
   end
   it 'should copy a row' do
-    cmd = {"command"=>"copy_row","path"=>@path,"payload"=>{"sheet"=>0,"source_row"=>1,"destination_row"=>3}}
-    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-    @client.should_receive(:process_row_response).with(@dummy_response).and_return(@dummy_response)
-    @client.copy_row 0, 1, 3
+    cmd = {"command"=>"copy_row","path"=>path,"payload"=>{"sheet"=>0,"source_row"=>1,"destination_row"=>3}}
+    subject.should_receive(:send).with(cmd).and_return(dummy_response)
+    subject.should_receive(:process_row_response).with(dummy_response).and_return(dummy_response)
+    subject.copy_row 0, 1, 3
   end
   it 'should get a row as column hash' do
     t = Time.now
     row_response = [{"position"=>{"sheet"=>0,"row"=>10,"column"=>0},"cell"=>{"value"=>"abc","datatype"=>"string"}},
-                    {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t.to_i,"datatype"=>"datetime"}}]
-    expected_val = {0=>{"value"=>"abc","datatype"=>"string"},3=>{"value"=>t.to_i,"datatype"=>"datetime"}}
-    @client.should_receive(:get_row).with(0,1).and_return(row_response)
-    @client.get_row_as_column_hash(0,1).should == expected_val
+                    {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t,"datatype"=>"datetime"}}]
+    expected_val = {0=>{"value"=>"abc","datatype"=>"string"},3=>{"value"=>t,"datatype"=>"datetime"}}
+    subject.should_receive(:get_row).with(0,1).and_return(row_response)
+    subject.get_row_as_column_hash(0,1).should == expected_val
   end
   it 'should get a row' do
     t = Time.now
-    cmd = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>0,"row"=>10}}
+    cmd = {"command"=>"get_row","path"=>path,"payload"=>{"sheet"=>0,"row"=>10}}
     return_array = [{"position"=>{"sheet"=>0,"row"=>10,"column"=>0},"cell"=>{"value"=>"abc","datatype"=>"string"}},
                     {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t.to_i,"datatype"=>"datetime"}}]
-    @client.should_receive(:send).with(cmd).and_return(return_array)
-    r = @client.get_row(0, 10 )
+    subject.should_receive(:send).with(cmd).and_return(return_array)
+    r = subject.get_row(0, 10 )
     r.should have(2).results
     first_cell = r[0]
     first_cell['position']['column'].should == 0
@@ -191,34 +203,34 @@ describe OpenChain::XLClient do
     first_cell['cell']['datatype'].should == "string"
     second_cell = r[1]
     second_cell['position']['column'].should == 3
-    second_cell['cell']['value'].to_i.should == t.to_i
+    second_cell['cell']['value'].should == Time.at(t.to_i)
     second_cell['cell']['datatype'].should == "datetime"
   end
 
   it "should return a row's cell values as an array" do
     t = Time.now
-    cmd = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>0,"row"=>10}}
+    cmd = {"command"=>"get_row","path"=>path,"payload"=>{"sheet"=>0,"row"=>10}}
     return_array = [{"position"=>{"sheet"=>0,"row"=>10,"column"=>0},"cell"=>{"value"=>"abc","datatype"=>"string"}},
                     {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t.to_i,"datatype"=>"datetime"}}]
-    @client.should_receive(:send).with(cmd).and_return(return_array)
-    r = @client.get_row_values(0, 10)
+    subject.should_receive(:send).with(cmd).and_return(return_array)
+    r = subject.get_row_values(0, 10)
     r.should == ["abc", nil, nil, Time.at(t.to_i)]
   end
   it "should return empty array if get_row_as_column_hash returns empty hash" do
-    @client.should_receive(:get_row_as_column_hash).with(0,10).and_return({})
-    @client.get_row_values(0,10).should == []
+    subject.should_receive(:get_row).with(0,10).and_return({})
+    subject.get_row_values(0,10).should == []
   end
 
   describe 'last_row_number' do
     it 'should return the integer response' do
-      cmd = {"command"=>"last_row_number","path"=>@path,"payload"=>{"sheet_index"=>0}}
-      @client.should_receive(:send).with(cmd).and_return({'result'=>10})
-      @client.last_row_number(0).should == 10
+      cmd = {"command"=>"last_row_number","path"=>path,"payload"=>{"sheet_index"=>0}}
+      subject.should_receive(:send).with(cmd).and_return({'result'=>10})
+      subject.last_row_number(0).should == 10
     end
     it 'should raise error' do
       err = {"errors"=>["msg1","msg2"]}
-      @client.should_receive(:send).and_return(err)
-      lambda {@client.last_row_number(0)}.should raise_error "msg1\nmsg2"
+      subject.should_receive(:send).and_return(err)
+      lambda {subject.last_row_number(0)}.should raise_error "msg1\nmsg2"
     end
   end
 
@@ -268,7 +280,7 @@ describe OpenChain::XLClient do
       ct = "application/json; charset=UTF-8"
       response.should_receive(:[]).with('content-type').and_return ct
 
-      r = @client.send command
+      r = subject.send command
 
       # response_body should have been forced to UTF-8 encoding since that's the content type
       # charset sent in of the response (it's originally set to binary above)
@@ -283,7 +295,7 @@ describe OpenChain::XLClient do
       response_body = '{"response": "31¢"}'.force_encoding Encoding::BINARY
       response.stub(:body).and_return response_body
 
-      r = @client.send({"test" => "test"})
+      r = subject.send({"test" => "test"})
 
       # The response charset should just be left alone
       response_body.encoding.to_s.should == Encoding::BINARY.to_s
@@ -296,7 +308,7 @@ describe OpenChain::XLClient do
       response_body = '{"response": "31¢"}'.force_encoding Encoding::BINARY
       response.stub(:body).and_return response_body
 
-      r = @client.send({"test" => "test"})
+      r = subject.send({"test" => "test"})
 
       # The response charset should just be left alone
       response_body.encoding.to_s.should == Encoding::BINARY.to_s
@@ -323,6 +335,71 @@ describe OpenChain::XLClient do
     it "should to_s non-Numeric/non-String values" do
       OpenChain::XLClient.string_value(Date.new(2013,8,10)).should eq Date.new(2013,8,10).to_s
       OpenChain::XLClient.string_value({:test=>"test"}).should eq ({:test=>"test"}).to_s
+    end
+  end
+
+  describe "clone_sheet" do
+    it "sends clone_sheet command" do
+      subject.should_receive(:send).with({"command"=>"clone_sheet", "path"=>path, "payload"=>{"source_index"=>1}}).and_return({'sheet_index' => 10})
+      expect(subject.clone_sheet 1).to eq 10
+    end
+
+    it "sends clone_sheet command with sheet name" do
+      subject.should_receive(:send).with({"command"=>"clone_sheet", "path"=>path, "payload"=>{"source_index"=>1, "name"=>"Sheet Name"}}).and_return({'sheet_index' => 2})
+      expect(subject.clone_sheet 1, "Sheet Name").to eq 2
+    end
+
+    it "raises an error if errors are returned" do
+      subject.should_receive(:send).with({"command"=>"clone_sheet", "path"=>path, "payload"=>{"source_index"=>1}}).and_return error_response
+      expect{subject.clone_sheet 1}.to raise_error "Error"
+    end
+  end
+
+  describe "delete_sheet" do
+    it "sends delete sheet command" do
+      subject.should_receive(:send).with({"command"=>"delete_sheet", "path"=>path, "payload"=>{"index"=>1}})
+      expect(subject.delete_sheet 1).to be_nil
+    end
+
+    it "handles error responses" do
+      subject.should_receive(:send).and_return error_response
+      expect{subject.delete_sheet 1}.to raise_error "Error"
+    end
+  end
+
+  describe "delete_sheet_by_name" do
+    it "sends delete sheet command" do
+      subject.should_receive(:send).with({"command"=>"delete_sheet", "path"=>path, "payload"=>{"name"=>"Sheet Name"}})
+      expect(subject.delete_sheet_by_name 'Sheet Name').to be_nil
+    end
+
+    it "handles error responses" do
+      subject.should_receive(:send).and_return error_response
+      expect{subject.delete_sheet_by_name 'Sheet Name'}.to raise_error "Error"
+    end
+  end
+
+  describe "set_row_color" do
+    it "sends correct command" do
+      subject.should_receive(:send).with({"command" => 'set_color', "path" => path, "payload" => {"position" => {"sheet" => 0, "row" => 1}, "color" => "BLUE"}}).and_return({"result" => "success"})
+      subject.set_row_color 0, 1, "blue"
+    end
+
+    it "handles errors" do
+      subject.should_receive(:send).with({"command" => 'set_color', "path" => path, "payload" => {"position" => {"sheet" => 0, "row" => 1}, "color" => "BLUE"}}).and_return error_response
+      expect {subject.set_row_color 0, 1, "blue"}.to raise_error "Error"
+    end
+  end
+
+  describe "set_cell_color" do
+    it "sends correct command" do
+      subject.should_receive(:send).with({"command" => 'set_color', "path" => path, "payload" => {"position" => {"sheet" => 0, "row" => 1, "column" => 2}, "color" => "BLUE"}}).and_return({"result" => "success"})
+      subject.set_cell_color 0, 1, 2, "blue"
+    end
+
+    it "handles errors" do
+      subject.should_receive(:send).with({"command" => 'set_color', "path" => path, "payload" => {"position" => {"sheet" => 0, "row" => 1, "column" => 2}, "color" => "BLUE"}}).and_return error_response
+      expect {subject.set_cell_color 0, 1, 2, "blue"}.to raise_error "Error"
     end
   end
 

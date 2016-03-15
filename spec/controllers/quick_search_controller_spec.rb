@@ -25,6 +25,7 @@ describe QuickSearchController do
 
   context :by_module do
     it "should return result for core module" do
+      CoreModule.any_instance.stub(:quicksearch_extra_fields).and_return []
       cd_1 = Factory(:custom_definition, :module_type=>"Entry", :quick_searchable => true, :label=>'cfield')
       ent = Factory(:entry,:entry_number=>'12345678901')
       ent.update_custom_value! cd_1, "Test"
@@ -33,7 +34,9 @@ describe QuickSearchController do
         'qs_result'=>{
           'module_type'=>'Entry',
           'fields'=>{},
-          'vals'=>[{'id'=>ent.id}]
+          'vals'=>[{'id'=>ent.id}],
+          'extra_fields'=>{},
+          'extra_vals'=>{ent.id.to_s => {}}
         }
       }
       CoreModule::ENTRY.quicksearch_fields.each do |uid|
@@ -68,6 +71,7 @@ describe QuickSearchController do
     end
 
     it "should return a result for Vendor" do
+      CoreModule.any_instance.stub(:quicksearch_extra_fields).and_return []
       vendor = Factory(:company, :name=>'Company', vendor: true, system_code: "CODE")
       get :by_module, module_type: "Company", v: 'Co'
       expect(response).to be_success
@@ -79,12 +83,15 @@ describe QuickSearchController do
             "cmp_name" => "Name"
           },
           'vals' => [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name}],
+          'extra_fields' => {},
+          'extra_vals' => {vendor.id.to_s => {}},
           'search_term' => "Co"
         }
       })
     end
 
     it "should return a result for BrokerInvoice for an importer company" do
+      CoreModule.any_instance.stub(:quicksearch_extra_fields).and_return []
       c = Factory(:company, importer: true)
       user = Factory(:user, company: c, broker_invoice_view: true)
       sign_in_as user
@@ -103,9 +110,36 @@ describe QuickSearchController do
             "bi_brok_ref" => "Broker Reference"
           },
           'vals' => [{'id' => broker_invoice.id, 'view_url' => "/broker_invoices/#{broker_invoice.id}", "bi_brok_ref" => "REFERENCE", "bi_invoice_number" => "INV#"}],
+          'extra_fields' => {},
+          'extra_vals' => {broker_invoice.id.to_s => {}},
           'search_term' => "INV#"
         }
       })
+    end
+
+    it "returns extra fields" do
+      e = Factory(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 1")
+      e2 = Factory(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 2")
+      Entry.stub(:can_view_importer?).and_return true
+      CoreModule.any_instance.stub(:quicksearch_fields).and_return [:ent_location_of_goods]
+      CoreModule.any_instance.stub(:quicksearch_extra_fields).and_return [:ent_importer_tax_id]
+      get :by_module, module_type: "Entry", v: "Cleveland"
+      expect(response).to be_success
+      r = JSON.parse response.body
+      
+      expect(r).to eq({
+        'qs_result' => {
+          'module_type' => 'Entry',
+          'fields' => {
+            "ent_location_of_goods" => "Location Of Goods"
+            },
+          'vals' => [{'id' => e.id, 'view_url' => "/entries/#{e.id}", 'ent_location_of_goods' => "Cleveland"},
+                     {'id' => e2.id, 'view_url' => "/entries/#{e2.id}", 'ent_location_of_goods' => "Cleveland"}],
+          'search_term' => "Cleveland",
+          'extra_fields' => {'ent_importer_tax_id' => "Importer Tax ID"},
+          'extra_vals' => { e.id.to_s => {'ent_importer_tax_id' => "TAX_ID 1"}, e2.id.to_s => {'ent_importer_tax_id' => "TAX_ID 2"}}
+          }
+        })
     end
 
     it "should 404 if user doesn't have permission" do

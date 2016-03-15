@@ -9,9 +9,35 @@
   <%if current_user.sys_admin?-%>    
     <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Purge' %>
   <%end-%>
+  <%if current_user.company.master?-%>
+    <%= link_to raw("<i class='fa fa-truck'></i>"), generate_delivery_order_entry_path(@entry), title:'Generate Delivery Order', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+  <% end-%>
   <button title='Download' id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>"><i class='fa fa-download'></i></button>
   <button class="btn_link" title='Sync Records' link_to='<%=sync_records_entry_path(@entry)%>'><i class='fa fa-exchange'></i></button>
 <%end-%>
+<%content_for :javascript do %>
+$(function() {
+  toggleComments = function(link) {
+    toggleType = link.attr('data-message-toggle-type');
+    isOn = link.attr('data-message-toggle-val')=="on";
+    comments = $("[data-comment-type='"+toggleType+"']");
+    if(isOn) {
+      comments.hide();
+      link.attr('data-message-toggle-val','off');
+      link.find('i.fa').removeClass('fa-check-square-o').addClass('fa-square-o');
+    } else {
+      comments.show();
+      link.attr('data-message-toggle-val','on');
+      link.find('i.fa').removeClass('fa-square-o').addClass('fa-check-square-o');
+    }
+  }
+  $("[data-message-toggle-type]").click(function(evt) {
+    evt.preventDefault();
+    link = $(this);
+    toggleComments(link);
+  });
+});
+<%end%>
 <div class='container'>
   <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
 </div>
@@ -115,11 +141,26 @@
   <hr />
   <% entry_comments = @entry.entry_comments.order("generated_at ASC").select {|c| c.can_view? current_user} -%>
   <% if !entry_comments.empty? -%>
-  <h2>Notes</h2>
-  <table class='detail_table'>
+  <h2>
+    Notes
+    <div class="pull-right">
+      <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Filter <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a href="#" data-message-toggle-type='ABI' data-message-toggle-val='on'><i class='fa fa-check-square-o'></i> CBP</a></li>
+          <li><a href="#" data-message-toggle-type='ISF' data-message-toggle-val='on'><i class='fa fa-check-square-o'></i> ISF</a></li>
+          <li><a href="#" data-message-toggle-type='SYSTEM' data-message-toggle-val='on'><i class='fa fa-check-square-o'></i> System</a></li>
+          <li><a href="#" data-message-toggle-type='USER' data-message-toggle-val='on'><i class='fa fa-check-square-o'></i> User</a></li>
+        </ul>
+      </div>
+    </div>
+  </h2>
+  <table class='table table-condensed'>
     <%entry_comments.each do |c|
       if c.can_view? current_user -%>
-        <tr class='hover'><td><%=c.body%></td><td><%=c.generated_at%></td><td><%=c.username%></td></tr>
+        <tr class='hover' data-comment-type='<%=c.comment_type%>'><td><%=c.body%></td><td><%=c.generated_at%></td><td><%=c.username%></td></tr>
       <%end-%>
     <%end-%>
   </table>

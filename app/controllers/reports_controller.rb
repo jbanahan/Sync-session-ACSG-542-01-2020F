@@ -420,13 +420,29 @@ class ReportsController < ApplicationController
 
   def run_eddie_bauer_ca_k84_summary
     if OpenChain::Report::EddieBauerCaK84Summary.permission?(current_user)
-      if params[:start_date].blank? || params[:end_date].blank?
-        add_flash :errors, "Please enter a start and end date."
+      if params[:date].blank?
+        add_flash :errors, "Please enter a K84 due date."
         redirect_to request.referrer
         return
       end
-      settings = {start_date: params[:start_date].to_date, end_date: params[:end_date].to_date}
+      settings = {date: params[:date].to_date}
       run_report "Eddie Bauer CA K84 Summary", OpenChain::Report::EddieBauerCaK84Summary, settings, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def show_ll_prod_risk_report
+    if OpenChain::Report::LlProdRiskReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_ll_prod_risk_report
+    if OpenChain::Report::LlProdRiskReport.permission? current_user
+      run_report "Lumber Liquidators Product Risk Report", OpenChain::Report::LlProdRiskReport, {}, []
     else
       error_redirect "You do not have permission to view this report"
     end

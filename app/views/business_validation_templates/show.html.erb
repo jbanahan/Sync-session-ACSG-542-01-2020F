@@ -28,11 +28,12 @@
     <div class="col-md-12">
       <h2>Rules</h2>
     </div>
-    <%@bv_template.business_validation_rules.each do |bvr|%>
+    <%@bv_template.business_validation_rules.reject(&:delete_pending?).each do |bvr|%>
     <div class='col-md-12 rule-container'>
       <h3><%=bvr.name%> (<%=BusinessValidationRule::SUBCLASSES[bvr.type.to_sym][:label]%>)</h3>
       <div><strong>Description: </strong><%=bvr.description%></div>
       <div><strong>Status If Failed: </strong><%=bvr.fail_state.blank? ? 'Fail' : bvr.fail_state%></div>
+      <div><strong>Override Group: </strong><%= bvr.group.name if bvr.group %></div>
       <h4>Criteria</h4>
       <ul>
         <%bvr.search_criterions.each do |sc|%>

@@ -155,7 +155,7 @@ describe Order do
     it 'should close async' do
       @o.async_close! @u
       expect(@o.closed_at).to eq @t
-      expect(@o.closed_by).to eq @u      
+      expect(@o.closed_by).to eq @u
       expect(@o.entity_snapshots.count).to eq 1
     end
   end
@@ -270,8 +270,8 @@ describe Order do
   describe "can_view?" do
     let (:order) { Order.new }
 
-    context :importer do 
-      before :each do 
+    context :importer do
+      before :each do
         @importer = Factory(:company, importer: true)
         order.importer = @importer
         @user = Factory(:user, company: @importer)
@@ -306,8 +306,8 @@ describe Order do
       end
     end
 
-    context :vendor do 
-      before :each do 
+    context :vendor do
+      before :each do
         @vendor = Factory(:company, vendor: true)
         order.vendor = @vendor
         @user = Factory(:user, company: @vendor)
@@ -338,7 +338,7 @@ describe Order do
         expect(order.can_view? @user).to be_true
       end
     end
-    
+
   end
 
   describe :compose_po_number do
@@ -368,6 +368,27 @@ describe Order do
       o = Order.new
       o.mark_order_as_accepted
       expect(o.approval_status).to eq "Accepted"
+    end
+  end
+
+  require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+
+  describe "associate_vendor_and_products!" do
+    it "should create assignments for records where they don't already exist" do
+      ProductVendorAssignment.any_instance.should_receive(:create_snapshot).once
+      ol = Factory(:order_line)
+      ol2 = Factory(:order_line,order:ol.order)
+
+      expect(ol.order.vendor).to_not be_nil
+
+      associated_product = ol.product
+      Factory(:product_vendor_assignment,vendor:ol.order.vendor,product:associated_product)
+
+      expect{ol.order.associate_vendor_and_products!(Factory(:user))}.to change(ProductVendorAssignment,:count).from(1).to(2)
+
+      pva = ProductVendorAssignment.last
+      expect(pva.vendor).to eq ol.order.vendor
+      expect(pva.product).to eq ol2.product
     end
   end
 end

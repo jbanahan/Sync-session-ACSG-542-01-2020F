@@ -122,6 +122,7 @@
               <td>{{ol.ordln_line_number}}</td>
               <td>
                 <small>{{ol.ordln_puid}}</small><br />
+                <small>{{ol[dictionary.fieldsByAttribute('label','Product - Old Article #',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</small><br />
                 {{ol.ordln_pname}}
               </td>
               <td ng-if='order.ord_ship_to_count > 1'>

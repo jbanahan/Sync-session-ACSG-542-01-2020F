@@ -145,7 +145,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews
       find_order(order_id) do |existing_order, order|
         po = order
 
-        order.customer_order_number = order_number
+        order.customer_order_number = order_id
         order.order_date = parse_date(data[:order_date])
         order.mode = data[:ship_via]
         order.first_expected_delivery_date = parse_date(data[:expected_delivery_date])

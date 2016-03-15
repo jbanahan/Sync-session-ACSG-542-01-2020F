@@ -23,7 +23,7 @@ class ModelField
               :import_lambda, :export_lambda,
               :custom_id, :data_type, :core_module,
               :join_statement, :join_alias, :qualified_field_name, :uid,
-              :public, :public_searchable, :definition, :disabled, :field_validator_rule, 
+              :public, :public_searchable, :definition, :disabled, :field_validator_rule,
               :user_accessible, :autocomplete
 
   def initialize(rank, uid, core_module, field_name, options={})
@@ -737,7 +737,7 @@ class ModelField
     uid = "#{custom_definition.model_field_uid}_#{core_module.table_name}".to_sym
     mf = ModelField.new(index,uid,core_module,uid,{
       custom_id: custom_definition.id,
-      label_override: custom_definition.label.to_s,
+      label_override: "Product - #{custom_definition.label.to_s}",
       qualified_field_name: "(SELECT #{custom_definition.data_column} FROM products INNER JOIN custom_values ON custom_values.customizable_id = products.id AND custom_values.customizable_type = 'Product' and custom_values.custom_definition_id = #{custom_definition.id} WHERE products.id = #{core_module.table_name}.product_id)",
       definition: custom_definition.definition,
       default_label: custom_definition.label.to_s,

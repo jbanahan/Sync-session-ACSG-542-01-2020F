@@ -64,7 +64,7 @@ module OpenChain
       private
 
       def self.unfreeze str
-        str.frozen? ? str.dup : str
+        !str.nil? && str.frozen? ? str.dup : str.to_s
       end
 
       def self.make_list_sheet sheet, collection

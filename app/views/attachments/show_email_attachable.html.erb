@@ -11,7 +11,7 @@
       <div class="col-md-4 col-md-offset-4">
         <div class="form-group">
           <label>Send to:</label>
-          <input type="email" class="form-control" id="send_to_address" placeholder="Enter email address..." value="<%=current_user.email%>" autofocus=true>
+          <textarea class='form-control' id="send_to_address" placeholder="Enter up to 10 comma-separated email addresses..." autofocus=true rows=4><%=current_user.email%></textarea>
         </div>
 
         <div class="form-group">
@@ -47,26 +47,35 @@
       <% end %>
     <% end %>
 
-    <% @attachments_array.each do |single_attachment| %>
-      <div class="row">
-        <div class="col-md-4 col-md-offset-4">
-          <div class="checkbox">
-            <label>
-              <% if number_of_attachments == 1 %>
-                <!-- If there's only one, it has to be attached, so attach it by default -->
-                <input type="checkbox" value="" checked=true>
-              <% else %>
-                <input type="checkbox" value="">
-              <% end %>
-              <%= single_attachment.attached_file_name %> <%unless single_attachment.attachment_type.blank?%>(<%=single_attachment.attachment_type%>)<%end%>
-              <div style="display: none" class="attachment_id_container">
-                <%= single_attachment.id %>
-              </div>
-            </label>
-          </div>
+    <div class="col-md-4 col-md-offset-4">                
+      <% @attachments_array.each do |single_attachment| %>
+        <div class="row">
+            <div class="checkbox att-checkbox">
+              <div class="col-md-8">
+                  <label>
+                    <% if number_of_attachments == 1 %>
+                      <!-- If there's only one, it has to be attached, so attach it by default -->
+                      <input type="checkbox" value="" checked=true>
+                    <% else %>
+                      <input type="checkbox" value="">
+                    <% end %>
+                    <%= single_attachment.attached_file_name %> <%unless single_attachment.attachment_type.blank?%>(<%=single_attachment.attachment_type%>)<%end%>
+                    <div style="display: none" class="attachment_id_container">
+                      <%= single_attachment.id %>
+                    </div>
+                  </label>
+                </div>
+              <div class="col-md-4" data-file-size="<%=single_attachment.attached_file_size%>"><%=number_to_human_size(single_attachment.attached_file_size)%></div>
+            </div>                
         </div>
+      <% end %>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-5 col-md-offset-4"
+        <br><br><p>Total Size of Selected Attachments (limit 10 MB):&nbsp;&nbsp;&nbsp;<span id="total-file-size"></span></p>
       </div>
-    <% end %>
+    </div>
 
     <div class="row">
       <div class="col-md-4 col-md-offset-4" align="center">
@@ -80,28 +89,51 @@
 
   $(function(){
 
-    var email_check = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$/i
+    updateTotalSize();
+
+    function bytesToSize(bytes) {
+     var sizes = ['Bytes', 'KB', 'MB'];
+     if (bytes == 0) return '0 Bytes';
+     var i = parseInt(Math.log(bytes) / Math.log(1024));
+     return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
+    }; //based on http://stackoverflow.com/a/18650828
+
+    function updateTotalSize() {
+      var selectedAttachments = $('.att-checkbox').filter(function(i) { return $(this).find('input').is(':checked'); });
+      var attachmentSizes = selectedAttachments.map(function() { return $(this).find("[data-file-size]").data().fileSize; });
+      var total = jQuery.makeArray(attachmentSizes).reduce(function(acc, nxt) { return acc += nxt; }, 0);
+      var totalTag = $('#total-file-size')
+      
+      totalTag.text(bytesToSize(total));
+      if (total > 10485760){
+        totalTag.css('color', 'red');
+        $('#submit_attachment_email').prop('disabled', true);
+      }
+      else {
+        totalTag.css('color', '');
+        $('#submit_attachment_email').prop('disabled', false);
+      }
+    }
+
+    $("input[type='checkbox']").on('change', function() { 
+      updateTotalSize();
+    });
 
     $("#select_all_button").click(function(){
-      $('input[type=checkbox]').prop("checked",true)
+      $('input[type=checkbox]').prop("checked",true);
+      $('input[type=checkbox]').triggerHandler('change');
     });
 
     $("#select_none_button").click(function(){
-      $('input[type=checkbox]').prop("checked",false)
+      $('input[type=checkbox]').prop("checked",false);
+      $('input[type=checkbox]').triggerHandler('change');
     });
 
     $("#submit_attachment_email").click(function(){
-      if ($("#send_to_address").val()==""){
-        alert("Please enter an email address")
-      }
-      else if (email_check.test($("#send_to_address").val()) == false){
-        alert("Please ensure the email address is valid.");
-      }
-      else if ($("input:checked").length == 0){
+      if ($("input:checked").length == 0){
         alert("Please select at least one attachment to send.");
       }
       else {
-        //so things are good to go
         attachable_id = <%= @attachable.id %>
         controller_name = "<%= @attachable.class.to_s %>"
         to_address = $("#send_to_address").val();
@@ -115,13 +147,16 @@
 
         Chain.sendEmailAttachments(controller_name, attachable_id, to_address, email_subject, email_body, ids_to_include)       
         .fail(function(data){
-            alert("We were unable to send your attachments.  Please try sending fewer attachments at once or try again after reloading the page.");
+          if (data.responseJSON)
+            alert(data.responseJSON.error);
+          else 
+          alert("We were unable to send your attachments.  Please try sending fewer attachments at once or try again after reloading the page.");
         })
         .done(function(data){
-            if(confirm("Your email has been sent successfully.  Click OK to return to the previous page."))
-            {
-              history.go(-1);
-            }
+          if(confirm("Your email has been sent successfully.  Click OK to return to the previous page."))
+          {
+            history.go(-1);
+          }
         });
 
       }

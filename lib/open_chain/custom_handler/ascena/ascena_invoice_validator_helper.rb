@@ -1,4 +1,4 @@
-module OpenChain
+module OpenChain; module CustomHandler; module Ascena
   class AscenaInvoiceValidatorHelper
 
     # run first
@@ -153,4 +153,4 @@ module OpenChain
     end
 
   end
-end
+end; end; end

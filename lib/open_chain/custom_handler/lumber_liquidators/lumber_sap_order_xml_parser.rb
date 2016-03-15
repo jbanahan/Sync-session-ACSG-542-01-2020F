@@ -5,7 +5,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlParser
   include OpenChain::CustomHandler::XmlHelper
-  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport  
+  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
 
   def self.parse data, opts={}
@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
       vend = nil
-      Lock.acquire("Vendor-#{vendor_system_code}") do 
+      Lock.acquire("Vendor-#{vendor_system_code}") do
         vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
         @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
       end
@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       order_lines_processed = []
       REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to).line_number.to_i}
-      o.order_lines.each {|ol| 
+      o.order_lines.each {|ol|
         ol.mark_for_destruction unless order_lines_processed.include?(ol.line_number.to_i)
       }
 
@@ -77,10 +77,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       buyer_name, buyer_phone = buyer_info(base)
       o.update_custom_value!(@cdefs[:ord_buyer_name],buyer_name)
       o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
+      o.associate_vendor_and_products! @user
 
       o.reload
       validate_line_totals(o,base)
-      
+
       o.create_snapshot @user
     end
   end
@@ -120,7 +121,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       line_number = et(line_el,'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
-      ol = order.order_lines.build(line_number:line_number) unless ol
+      ol = order.order_lines.build(line_number:line_number,total_cost_digits:2) unless ol
 
       ol.product = find_product(line_el)
       ol.quantity = BigDecimal(et(line_el,'MENGE'),4)
@@ -133,7 +134,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         extended_cost = BigDecimal(extended_cost_text,4)
         price_per_unit = extended_cost / ol.quantity
       end
-      ol.price_per_unit = price_per_unit 
+      ol.price_per_unit = price_per_unit
 
       exp_del = expected_delivery_date(line_el)
       if !@first_expected_delivery_date || (exp_del && exp_del < @first_expected_delivery_date)
@@ -191,11 +192,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       return nil unless el
       my_addr = Address.new
       my_addr.company_id = company.id
-      
+
       name1 = et(el,'NAME1')
       name2 = et(el,'NAME2')
       my_addr.name = name2.blank? ? name1 : name2
-      
+
       my_addr.line_1 = et(el,'STRAS')
       my_addr.line_2 = et(el,'STRS2')
       my_addr.city = et(el,'ORT01')
@@ -227,30 +228,43 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def payment_terms_description base
-      elements = REXML::XPath.match(base,"./E1EDK18")
-      # According to the doc from LL, If no E1DK18 is present, then order is due immediately.
-      return "Due Immediately" unless elements.try(:size) > 0
+      # Use the ZTERM element to determine if there a special term codes that we need to handle
+      # outside of the standard path of parsing the terms elements into a terms description.
+      # Special Terms don't have these elements.
+      zterm = REXML::XPath.first(base, "./E1EDK01/ZTERM").try(:text)
+      if special_payment_terms[zterm]
+        special_payment_terms[zterm]
+      else
+        elements = REXML::XPath.match(base,"./E1EDK18")
 
-      values = []
-      elements.each do |el|
-        days = et(el, 'TAGE')
-        percent = et(el, 'PRZNT')
+        # According to the doc from LL, If no E1DK18 is present, then order is due immediately.
+        return "Due Immediately" unless elements.try(:size) > 0
 
-        next if days.blank?
+        values = []
+        elements.each do |el|
+          days = et(el, 'TAGE')
+          percent = et(el, 'PRZNT')
 
-        if percent.blank?
-          values << "Net #{days}"
-        else
-          # Strip trailing insignificant digits
-          if percent =~ /\.\d*[0]+$/
-            percent.sub!(/0+$/, "")
-            percent = percent[0..-2] if percent.ends_with?(".")
+          next if days.blank?
+
+          if percent.blank?
+            values << "Net #{days}"
+          else
+            # Strip trailing insignificant digits
+            if percent =~ /\.\d*[0]+$/
+              percent.sub!(/0+$/, "")
+              percent = percent[0..-2] if percent.ends_with?(".")
+            end
+            values << "#{percent}% #{days} Days"
           end
-          values << "#{percent}% #{days} Days"
         end
-      end
 
-      values.join(", ")
+        values.join(", ")
+      end
+    end
+
+    def special_payment_terms
+      {"TT00" => "T/T At Sight", "TT30" => "T/T Net 30"}
     end
 
     def parse_date str

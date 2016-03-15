@@ -16,15 +16,26 @@ class TariffSetRecord < ActiveRecord::Base
     r = [{},{}]
     comparison_attributes.keys.each do |k|
       my_val = comparison_attributes[k]
-      my_val_c = my_val.respond_to?('downcase') ? my_val.downcase : my_val
+      my_val_c = prep_tariff_attribute_for_comparison(k, my_val)
       o_val = o_attributes[k]
-      o_val_c = o_val.respond_to?('downcase') ? o_val.downcase : o_val
+      o_val_c = prep_tariff_attribute_for_comparison(k, o_val)
       if my_val_c != o_val_c
         r[0][k]= my_val
         r[1][k]= o_val
       end
     end
     r
+  end
+
+  def prep_tariff_attribute_for_comparison attribute, value
+    val = value.to_s.downcase.strip
+
+    # Don't compare against punctuation, whitespace for comparison sake for a couple attributes.  These values tend to get mixed around between versions.
+    # Basically, this is all the non-rate columns we're comparing against.
+    if ['full_description', 'chapter', 'heading', 'sub_heading', 'remaining_description', 'unit_of_measure']
+      val = val.gsub(/[[[:punct:]]\s]/, "")
+    end
+    val
   end
 
 end

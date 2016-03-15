@@ -105,7 +105,6 @@ class CommercialInvoiceMap < ActiveRecord::Base
       when CoreModule::COMMERCIAL_INVOICE_TARIFF
         map_to_use = tariff_map
       else
-        byebug
         raise "Cannot map when destination is not a commercial invoice field #{m.destination_mfid}"
       end
       source = ModelField.find_by_uid(m.source_mfid)

@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract]
+    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract, :prod_old_article]
   end
 
   def parse_dom dom
@@ -50,19 +50,50 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       p.importer = Company.where(master: true).first
       p.name = name
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], ext_time)
+      p.find_and_set_custom_value(@cdefs[:prod_old_article], et(REXML::XPath.first(root,'//IDOC/E1BPE1MARART'),'OLD_MAT_NO'))
+      hts_parent = REXML::XPath.first(root, '//IDOC/E1BPE1MAW1RT[@SEGMENT="1"]')
+      hts = hts_parent.nil? ? "" : et(hts_parent, "COMM_CODE")
+      set_us_hts p, hts
+
       p.save!
       p.create_snapshot(@user)
     end
   end
 
-  def extract_time envelope_element
-    date_part = et(envelope_element,'CREDAT')
-    time_part = et(envelope_element,'CRETIM')
+  private
+    def extract_time envelope_element
+      date_part = et(envelope_element,'CREDAT')
+      time_part = et(envelope_element,'CRETIM')
 
-    # match ActiveSupport::TimeZone.parse
-    formatted_date = "#{date_part[0,4]}-#{date_part[4,2]}-#{date_part[6,2]} #{time_part[0,2]}:#{time_part[2,2]}:#{time_part[4,2]}"
+      # match ActiveSupport::TimeZone.parse
+      formatted_date = "#{date_part[0,4]}-#{date_part[4,2]}-#{date_part[6,2]} #{time_part[0,2]}:#{time_part[2,2]}:#{time_part[4,2]}"
 
-    ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
-  end
-  private :extract_time
+      ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
+    end
+
+    def set_us_hts product, hts
+      usa = us
+      classification = product.classifications.find {|c| c.country_id = usa.id }
+
+      # Don't bother building a classification if HTS is blank and the classification hasn't been created yet
+      return if hts.blank? && classification.nil?
+
+      if classification.nil?
+        classification = product.classifications.build country_id: usa.id
+      end
+
+      tariff_record = classification.tariff_records.to_a.sort_by {|t| t.line_number }.first
+
+      if tariff_record.nil?
+        tariff_record = classification.tariff_records.build
+      end
+
+      tariff_record.hts_1 = hts
+    end
+
+    def us
+      @us ||= Country.where(iso_code: "US").first
+      raise "No Country found for iso code 'US'." unless @us
+      @us
+    end
 end; end; end; end;

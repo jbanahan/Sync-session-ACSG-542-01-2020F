@@ -17,8 +17,15 @@ module OpenChain; module Events; module EntryEvents
 
     def receive event, entry
       landed_cost_data = OpenChain::Report::LandedCostDataGenerator.new.landed_cost_data_for_entry entry
-      landed_cost_checksum = calculate_landed_cost_checksum landed_cost_data
 
+      # This is here since we're changing the checksum algorithm.  I don't want older files
+      # to be affected by the change.  So anything logged after 2016-3-6 will get the new style calculations.
+      if entry.file_logged_date.nil? || entry.file_logged_date.to_date >= Date.new(2016, 3, 6)
+        landed_cost_checksum = calculate_landed_cost_checksum_v2 landed_cost_data
+      else
+        landed_cost_checksum = calculate_landed_cost_checksum landed_cost_data
+      end
+      
       attachment_type = "Landed Cost Report"
 
       # See if we have another landed cost file that matches this checksum, if we do, then 
@@ -66,9 +73,6 @@ module OpenChain; module Events; module EntryEvents
       # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before 
       # processing a checksum for them.
 
-      # We should then be able to keep the data formats consistent by extracting the values we want
-      # and making json from it and calculating a SHA-1 hash from the resulting json string.
-
       per_unit_columns_to_copy = [:entered_value, :duty, :fee, :international_freight, :inland_freight, :brokerage, :other].sort
 
       # First, copy all the data we're after to a new structure.
@@ -86,6 +90,55 @@ module OpenChain; module Events; module EntryEvents
       end
 
       Digest::SHA1.hexdigest(lc_data)
+    end
+
+    def calculate_landed_cost_checksum_v2 landed_cost_data
+      # Ultimately, what we care about checksum'ing is the data that's ACTUALLY on the report we're generating.
+      # The data in the landed_cost_data variable is from the backend generator that generates generic data used on multiple
+      # different reports that pick and choose what data to present.  We could just to_json the hash and make a sha 
+      # hash from that, BUT, then if we add an data elements for some other report to the backend hash, we'll instantly invalidate 
+      # the hashes for this attachment printout and cause a ton of extra files to generate, which will cause a bunch of extra work
+      # for our desk clerks.
+
+      # We have to make sure that we always process the data in the same order (regardless of how the actual backend
+      # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before 
+      # processing a checksum for them.
+
+      entry_level = [:entry_number, :broker_reference, :customer_references]
+      invoice_level = [:invoice_number]
+      line_level = [:part_number, :po_number, :country_origin_code, :mid, :quantity]
+      per_unit_level = [:entered_value, :duty, :fee, :international_freight, :inland_freight, :brokerage, :other]
+
+      lc_data = []
+      landed_cost_data[:entries].sort_by{|e| e[:broker_reference]}.each do |entry_data|
+        lc_data.push *collect_fingerprint_field(entry_data, entry_level)
+        entry_data[:commercial_invoices].sort_by{|ci| ci[:invoice_number]}.each do |invoice_data|
+          lc_data.push *collect_fingerprint_field(invoice_data, invoice_level)
+          invoice_data[:commercial_invoice_lines].sort_by {|l| l[:po_number].to_s + l[:part_number].to_s + l[:quantity].to_s}.each do |line_data|
+            lc_data.push *collect_fingerprint_field(line_data, line_level)
+            lc_data.push *collect_fingerprint_field(line_data[:per_unit], per_unit_level)
+          end
+        end
+      end
+
+      Digest::SHA1.hexdigest(lc_data.join("***"))
+    end
+
+    def collect_fingerprint_field data_hash, fields
+      values = []
+      fields.each do |field|
+        value = data_hash[field]
+        if value.respond_to?(:join)
+          value = value.join("***")
+        elsif value.respond_to?(:round)
+          value = value.round(2).to_s("F")
+        else
+          value = value.to_s
+        end
+        values << value
+      end
+
+      values
     end
 
     private 

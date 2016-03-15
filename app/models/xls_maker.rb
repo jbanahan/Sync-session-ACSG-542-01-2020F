@@ -144,6 +144,7 @@ class XlsMaker
 
   def self.add_header_row sheet, row_number, header_labels, column_widths = []
     header_labels.each_with_index do |label, i|
+      label = label.to_s
       sheet.row(row_number).default_format = HEADER_FORMAT
       sheet.row(row_number).push(label)
       width = (label.size + 3 > 23 ? 23 : label.size + 3)

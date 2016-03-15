@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module EddieBauer
       add_default_line_level_info row
     end
 
-    def csv_client_options
+    def csv_reader_options
       # Disable quoting
       {col_sep: "|", quote_char: "\007"}
     end

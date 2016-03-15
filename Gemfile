@@ -57,9 +57,9 @@ gem "mono_logger", '1.1.0'
 gem "net-sftp", '2.1.2'
 gem "clearance", '1.3.0'
 
-gem 'redis-semaphore', '~> 0.2'
+gem 'redis-semaphore', '~> 0.3'
 gem 'redis-namespace', '~> 1.5'
-gem 'connection_pool', '~> 2.1'
+gem 'connection_pool', '~> 2.2'
 
 gem 'jsonpath', '~> 0.5.6'
 gem 'rgpg'

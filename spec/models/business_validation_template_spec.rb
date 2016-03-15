@@ -56,58 +56,72 @@ describe BusinessValidationTemplate do
       RuntimeError.any_instance.should_receive(:log_me).with ["Failed to generate rule results for Entry id #{match.id}"]
       @bvt.create_results!
     end
+    it "limits query results to only those associated w/ the current template" do
+      # This makes sure we're not getting results back from other templates that have outdated rule results...bug resolution
+      entry = Factory(:entry,customer_number:'12345')
+      @bvt.business_validation_results.create! validatable: entry, state: "Pass", updated_at: (entry.updated_at - 1.hour)
+
+      template = Factory(:business_validation_template)
+      template.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
+      template.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'12345'}.to_json)
+      template.business_validation_results.create! validatable: entry, state: "Pass", updated_at: (entry.updated_at + 1.hour)
+      template.reload
+
+      template.should_not_receive(:create_result!)
+
+      template.create_results!
+    end
+    it "does not evaulate anything if there are no criterions associated with the template" do
+      @bvt.search_criterions.destroy_all
+
+      @bvt.create_results!
+      expect(BusinessValidationResult.count).to eq 0
+    end
   end
   describe :create_result! do
+    before :each do
+      @o = Order.new
+      @bvt = described_class.create!(module_type:'Order')
+      @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      @bvt.reload
+    end
+
     it "should create result based on rules" do
-      o = Order.new
-      bvt = described_class.create!(module_type:'Order')
-      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
-      bvt.reload
-      bvr = bvt.create_result! o
-      expect(bvr.validatable).to eq o
+      bvr = @bvt.create_result! @o
+      expect(bvr.validatable).to eq @o
       expect(bvr.business_validation_rule_results.count).to eq 1
-      expect(bvr.business_validation_rule_results.first.business_validation_rule).to eq bvt.business_validation_rules.first
+      expect(bvr.business_validation_rule_results.first.business_validation_rule).to eq @bvt.business_validation_rules.first
       expect(bvr.state).to be_nil #doesn't run validations
     end
     it "should return nil if object doeesn't pass search criterions" do
-      o = Order.new(order_number:'DontMatch')
-      bvt = described_class.create!(module_type:'Order')
-      bvt.search_criterions.create!(model_field_uid:'ord_ord_num',operator:'eq',value:'xx')
-      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
-      bvt.reload
-      bvr = bvt.create_result! o
+      @o.update_attribute(:order_number, 'DontMatch')
+      @bvt.search_criterions.create!(model_field_uid:'ord_ord_num',operator:'eq',value:'xx')
+      bvr = @bvt.create_result! @o
       expect(bvr).to be_nil
       expect(BusinessValidationResult.count).to eq 0
     end
     it "should not duplicate rules that already exist" do
-      o = Order.new
-      bvt = described_class.create!(module_type:'Order')
-      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
-      bvt.reload
-      bvt.create_result! o
-      bvt.create_result! o
+      @bvt.create_result! @o
+      @bvt.create_result! @o
       expect(BusinessValidationResult.count).to eq 1
       expect(BusinessValidationRuleResult.count).to eq 1
     end
+    it "doesn't create rule results if the rule has delete_pending" do
+      @bvt.business_validation_rules.first.update_attribute(:delete_pending, true)
+      @bvt.create_result! @o
+      expect(BusinessValidationRuleResult.count).to eq 0
+    end
     it "should run validation if attribute passed" do
-      o = Order.new
-      bvt = described_class.create!(module_type:'Order')
-      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'X'}.to_json)
-      bvt.reload
-      bvr = bvt.create_result! o, true
-      expect(bvr.validatable).to eq o
+      @bvt.business_validation_rules.first.update_attribute(:rule_attributes_json, {model_field_uid:'ord_ord_num',regex:'X'}.to_json)
+      bvr = @bvt.create_result! @o, true
+      expect(bvr.validatable).to eq @o
       expect(bvr.state).not_to be_nil
     end
     it "utilizes database locking while creating and validating objects" do
-      o = Order.new
-      bvt = described_class.create!(module_type:'Order')
-      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
-      bvt.reload
-
-      Lock.should_receive(:with_lock_retry).with(bvt).and_yield
+      Lock.should_receive(:with_lock_retry).with(@bvt).and_yield
       Lock.should_receive(:with_lock_retry).with(instance_of(BusinessValidationResult)).and_yield
 
-      bvt.create_result! o
+      @bvt.create_result! @o
     end
   end
 
@@ -136,6 +150,13 @@ describe BusinessValidationTemplate do
     it "allows setting run_validation param via opts to false" do
       BusinessValidationTemplate.should_receive(:create_all!).with false
       BusinessValidationTemplate.run_schedulable 'run_validation' => false
+    end
+  end
+  describe "async_destroy" do
+    it "destroys record" do
+      template = Factory(:business_validation_template)
+      described_class.async_destroy template.id
+      expect(described_class.count).to eq 0
     end
   end
 end

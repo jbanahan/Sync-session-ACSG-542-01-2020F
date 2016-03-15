@@ -1,5 +1,5 @@
 module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControllerBase
-  
+
   def core_module
     CoreModule::PRODUCT
   end
@@ -23,7 +23,7 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
     render_model_field_list CoreModule::PRODUCT
   end
 
-  def index 
+  def index
     render_search core_module
   end
 
@@ -54,7 +54,7 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
 
   def obj_to_json_hash obj
     product_fields = limit_fields(
-      [:prod_uid, :prod_ent_type, :prod_name, :prod_uom, :prod_changed_at, :prod_last_changed_by, :prod_created_at, :prod_ven_name, :prod_ven_syscode, 
+      [:prod_uid, :prod_ent_type, :prod_name, :prod_uom, :prod_changed_at, :prod_last_changed_by, :prod_created_at,
        :prod_div_name, :prod_imp_name, :prod_imp_syscode] + 
       custom_field_keys(CoreModule::PRODUCT)
     )
@@ -64,7 +64,7 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
     )
 
     tariff_fields = limit_fields(
-      [:hts_line_number, :hts_hts_1, :hts_hts_1_schedb, :hts_hts_2, :hts_hts_2_schedb, :hts_hts_3, :hts_hts_3_schedb] + 
+      [:hts_line_number, :hts_hts_1, :hts_hts_1_schedb, :hts_hts_2, :hts_hts_2_schedb, :hts_hts_3, :hts_hts_3_schedb] +
       custom_field_keys(CoreModule::TARIFF)
     )
 
@@ -87,7 +87,7 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
 
   def render_permissions product
     cu = current_user #current_user is method, so saving as variable to prevent multiple calls
-    {      
+    {
       can_view: product.can_view?(cu),
       can_edit: product.can_edit?(cu),
       can_classify: product.can_classify?(cu),
@@ -96,5 +96,5 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
       can_manage_variants: product.can_manage_variants?(cu)
     }
   end
-  
+
 end; end; end

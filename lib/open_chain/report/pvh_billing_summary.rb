@@ -21,11 +21,14 @@ module OpenChain
       def create_workbook(invoice_numbers)        
         wb, lvs_sheet = XlsMaker.create_workbook_and_sheet 'LVS Billing', numeric_headers
         hvs_sheet = XlsMaker.create_sheet wb, 'HVS Billing', numeric_headers
+        v_sheet = XlsMaker.create_sheet wb, 'V Billing', numeric_headers
         lvs = combined_query(:lvs, invoice_numbers)
         hvs = combined_query(:hvs, invoice_numbers)
+        v = combined_query(:v, invoice_numbers)
 
         table_from_query_result lvs_sheet, lvs[:results], {}, {column_names: lvs[:header], header_row: 1}
         table_from_query_result hvs_sheet, hvs[:results], {}, {column_names: hvs[:header], header_row: 1}
+        table_from_query_result v_sheet, v[:results], {}, {column_names: v[:header], header_row: 1}
 
         wb
       end
@@ -51,6 +54,7 @@ module OpenChain
       def query(report_type, brokerage_duty, invoice_numbers)
         type = "LV" if report_type == :lvs
         type = "AB" if report_type == :hvs
+        type = "V" if report_type == :v
         safe_invoice_numbers = invoice_numbers.map{ |inv| ActiveRecord::Base.sanitize inv }.join(',')
 
         <<-SQL

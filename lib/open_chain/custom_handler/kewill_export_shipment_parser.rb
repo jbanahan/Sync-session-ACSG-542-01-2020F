@@ -225,7 +225,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     order_line = find_order_line(s.importer, po_number, product, schedule_b)
     line.linked_order_line_id = order_line.id unless order_line.nil?
 
-    line.gross_kgs = BigDecimal(row[9])
+    line.gross_kgs = BigDecimal(row[9].to_s)
   end
 
   def find_buyer_address address_lines, s

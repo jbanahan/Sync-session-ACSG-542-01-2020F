@@ -22,6 +22,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::PlantProductGroupAssignmentFieldDefinition
   include OpenChain::ModelFieldDefinition::PlantVariantAssignmentFieldDefinition
   include OpenChain::ModelFieldDefinition::ProductFieldDefinition
+  include OpenChain::ModelFieldDefinition::ProductVendorAssignmentFieldDefinition
   include OpenChain::ModelFieldDefinition::SaleFieldDefinition
   include OpenChain::ModelFieldDefinition::SaleLineFieldDefinition
   include OpenChain::ModelFieldDefinition::SecurityFilingFieldDefinition
@@ -59,6 +60,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_plant_fields
     add_plant_product_group_assignment_fields
     add_plant_variant_assignment_fields
+    add_product_vendor_assignment_fields
     add_drawback_claim_fields
     add_booking_line_fields
     add_variant_fields

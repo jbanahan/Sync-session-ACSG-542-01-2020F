@@ -8,7 +8,7 @@ root.OCQuickSearch =
     html = ''
     if qs.vals.length == 10
       html += "<div class='alert alert-warning' role='alert'>Only the first 10 results are shown.</div>"
-    html += OCQuickSearch.makeCard(qs.fields,obj,qs.search_term) for obj, idx in qs.vals
+    html += OCQuickSearch.makeCard(qs.fields,obj,qs.extra_fields,qs.extra_vals,qs.search_term) for obj, idx in qs.vals
 
     html = '<div class="text-muted">No results found for this search.</div>' if html == ''
 
@@ -17,7 +17,35 @@ root.OCQuickSearch =
   findDivWrapper: (moduleType) ->
     $('#modwrap_'+moduleType)
 
-  makeCard: (fields, obj, searchTerm) ->
+  makeCard: (fields, obj, extraFields, extraVals, searchTerm) ->
+    showSearchFields = (fields, obj, searchTerm) ->   
+      fieldCounter = 0
+      html = ""
+      for id, lbl of fields
+        val = obj[id]
+        if val && val.length > 0
+          htmlVal = getHtmlVal(val,searchTerm)
+          if fieldCounter == 0
+            html += "<div class='panel-heading'><h3 class='panel-title'><a href='"+obj['view_url']+"'>"+val+"</a></h3></div><table class='table table-hover'>"
+          html += "<tr><td class='qs-td-label'><strong>"+lbl+":</strong></td><td>"+htmlVal+"</td></tr>"
+          fieldCounter++
+      html
+    
+    showExtraFields = (extraFields, extraVals, obj) ->
+      hasExtraVals = (ev) ->
+        for k,v of ev
+            return true if !!v
+        false
+      html = ""
+      extraValsForObj = extraVals[obj.id]
+      if hasExtraVals extraValsForObj
+        html = '<tr class="divider"><td><small>More Info</small></td><td></td></tr>'
+        for id, lbl of extraFields
+          val = extraValsForObj[id]
+          if !!val
+            html += "<tr><td class='qs-td-label'><strong>"+lbl+":</strong></td><td>"+val+"</td></tr>"
+      html
+      
     getHtmlVal = (val, searchTerm) ->
       highlightVal = (str, startIdx, searchTerm) ->
         index = str.toLowerCase().indexOf(searchTerm.toLowerCase(),startIdx)
@@ -38,16 +66,8 @@ root.OCQuickSearch =
       return highlighted.str
 
     h = "<div class='panel panel-primary qs-card'>"
-    fieldCounter = 0
-    for id, lbl of fields
-      val = obj[id]
-      if val && val.length > 0
-        htmlVal = getHtmlVal(val,searchTerm)
-        if fieldCounter == 0
-          h += "<div class='panel-heading'><h3 class='panel-title'><a href='"+obj['view_url']+"'>"+val+"</a></h3></div><table class='table table-hover'>"
-        h += "<tr><td class='qs-td-label'><strong>"+lbl+":</strong></td><td>"+htmlVal+"</td></tr>"
-        fieldCounter++
+    h += showSearchFields(fields, obj, searchTerm)
+    h += showExtraFields(extraFields, extraVals, obj)
     h += "</table>"
     h += "<div class='panel-footer text-right'><a href='"+obj['view_url']+"' class='btn btn-sm btn-default'><i class='fa fa-link'></i></a></div>"
     h += "</div>"
-    h

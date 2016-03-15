@@ -183,45 +183,55 @@ class OpenChain::AllianceImagingClient
     entry = Entry.where(id: entry_id).first
     sent = false
     if entry && entry.importer.try(:attachment_archive_setup).try(:combine_attachments)
-      attachment_order = "#{entry.importer.attachment_archive_setup.combined_attachment_order}".split("\n").collect {|n| n.strip.upcase}
+      stitch_request = generate_stitch_request_for_entry(entry)
 
-      unordered_attachments = []
-      ordered_attachments = []
-
-      # We need to record the approximate moment in time when we assembled the stitch request so that can be used on the backend to determine
-      # if there have been any updates to the attachments after this time.
-      stitch_time = Time.now.iso8601
-
-      entry.attachments.select {|a| a.attachment_type != Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE && a.stitchable_attachment?}.each do |a|
-        if attachment_order.include? a.attachment_type.try(:upcase)
-          ordered_attachments << a
-        else
-          unordered_attachments << a
-        end
-      end
-
-      # Just sort unordered attachments by the updated_date in ascending order, we'll plop them onto the request after the ordered ones
-      unordered_attachments = unordered_attachments.sort_by {|a| a.updated_at}
-      sort_order = {}
-      attachment_order.each_with_index {|o, x| sort_order[o] = x}
-
-      # All we're doing here is using the attachment_order index from above as the ranking for the sort order (lowest to highest)
-      # and the falling back to the update date if the doc types are the same
-      ordered_attachments = ordered_attachments.sort do |a, b|
-        s = sort_order[a.attachment_type.upcase] <=> sort_order[b.attachment_type.upcase]
-        if s == 0
-          s = a.updated_at <=> b.updated_at
-        end
-        s
-      end
-
-      if ordered_attachments.length > 0 || unordered_attachments.length > 0
+      if !stitch_request.blank?
         StitchQueueItem.create! stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: Entry.name, stitch_queuable_id: entry.id
-        OpenChain::SQS.send_json stitcher_info('request_queue'), generate_stitch_request(entry, (ordered_attachments + unordered_attachments), {'time' => stitch_time})
+        OpenChain::SQS.send_json stitcher_info('request_queue'), stitch_request
         sent = true
       end
     end
     sent
+  end
+
+  def self.generate_stitch_request_for_entry entry
+    attachment_order = "#{entry.importer.attachment_archive_setup.combined_attachment_order}".split("\n").collect {|n| n.strip.upcase}
+
+    unordered_attachments = []
+    ordered_attachments = []
+
+    # We need to record the approximate moment in time when we assembled the stitch request so that can be used on the backend to determine
+    # if there have been any updates to the attachments after this time.
+    stitch_time = Time.now.iso8601
+
+    entry.attachments.select {|a| a.attachment_type != Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE && a.stitchable_attachment?}.each do |a|
+      if attachment_order.include? a.attachment_type.try(:upcase)
+        ordered_attachments << a
+      else
+        unordered_attachments << a
+      end
+    end
+
+    # Just sort unordered attachments by the updated_date in ascending order, we'll plop them onto the request after the ordered ones
+    unordered_attachments = unordered_attachments.sort_by {|a| a.updated_at}
+    sort_order = {}
+    attachment_order.each_with_index {|o, x| sort_order[o] = x}
+
+    # All we're doing here is using the attachment_order index from above as the ranking for the sort order (lowest to highest)
+    # and the falling back to the update date if the doc types are the same
+    ordered_attachments = ordered_attachments.sort do |a, b|
+      s = sort_order[a.attachment_type.upcase] <=> sort_order[b.attachment_type.upcase]
+      if s == 0
+        s = a.updated_at <=> b.updated_at
+      end
+      s
+    end
+
+    if ordered_attachments.length > 0 || unordered_attachments.length > 0
+      generate_stitch_request(entry, (ordered_attachments + unordered_attachments), {'time' => stitch_time})
+    else
+      {}
+    end
   end
 
   def self.generate_stitch_request attachable, attachments, reference_hash
@@ -314,6 +324,7 @@ class OpenChain::AllianceImagingClient
       # By waiting till after we have invoices it also adds a period of delay where the entry info / attachments are likely to 
       # be their most volatile
       where("broker_invoices.invoice_date >= attachment_archive_setups.start_date").
+      where("a.is_private IS NULL or a.is_private = 0").
       order("entries.release_date ASC").
       pluck("entries.id").each do |id|
 
