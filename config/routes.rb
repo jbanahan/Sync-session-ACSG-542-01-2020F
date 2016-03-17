@@ -45,7 +45,7 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
       resources :orders, only: [:index,:show] do
-        member do 
+        member do
           get :state_toggle_buttons
           post :toggle_state_button
           post :accept
@@ -179,7 +179,7 @@ OpenChain::Application.routes.draw do
     match '/lumber_liquidators/sap_vendor_setup_form/:vendor_id' => 'lumber_liquidators#sap_vendor_setup_form', via: :get
   end
   resources :delayed_jobs, :only => [:destroy] do
-    member do 
+    member do
       delete :bulk_destroy
     end
   end
@@ -813,6 +813,8 @@ OpenChain::Application.routes.draw do
     post 'process_report', on: :member
     post 'audit_report', on: :member
     get 'validation_results', on: :member
+    delete 'clear_claim_audits', on: :member
+    delete 'clear_export_histories', on: :member
   end
 
   resources :error_log_entries, :only => [:index, :show]

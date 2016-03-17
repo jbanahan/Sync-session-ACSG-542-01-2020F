@@ -92,9 +92,9 @@ describe DrawbackClaimsController do
       response.should redirect_to DrawbackClaim
       flash[:notices].should have(1).message
       d = DrawbackClaim.first
-      d.importer.should == @c
-      d.name.should == 'nm'
-      d.hmf_claimed.should == 10.04
+      expect(d.importer).to eq @c
+      expect(d.name).to eq 'nm'
+      expect(d.hmf_claimed).to eq 10.04
     end
     it "should fail if user cannot edit drawback" do
       User.any_instance.stub(:edit_drawback?).and_return(false)
@@ -139,7 +139,7 @@ describe DrawbackClaimsController do
       post :audit_report, id: @claim.id
       expect(flash[:errors].count).to eq 1
     end
-  
+
     it "runs report" do
       @u.stub(:view_drawback?).and_return true
       OpenChain::Report::DrawbackAuditReport.any_instance.should_receive(:run_and_attach).with(@u, @claim.id)
@@ -148,8 +148,8 @@ describe DrawbackClaimsController do
     end
   end
 
-    describe 'validation_results' do 
-    before :each do     
+    describe 'validation_results' do
+    before :each do
       MasterSetup.get.update_attributes(:drawback_enabled => true)
       @u = Factory(:drawback_user)
       @u.company.update_attributes! master: true
@@ -198,5 +198,43 @@ describe DrawbackClaimsController do
       expect(Time.parse(rr['overridden_at'])).to eq @rule_result.overridden_at
     end
 
+  end
+  describe 'clear_claim_audits' do
+    before :each do
+      @u = Factory(:drawback_user)
+      sign_in_as @u
+      @c = Factory(:drawback_claim)
+      @ca = @c.drawback_claim_audits.create!
+    end
+    it "should restrict to edit_drawback?" do
+      DrawbackClaim.any_instance.stub(:can_edit?).and_return false
+      expect{delete :clear_claim_audits, id: @c.id}.to_not change(DrawbackClaimAudit,:count)
+      expect(flash[:errors].size).to eq 1
+    end
+    it "should clear claim audit" do
+      DrawbackClaim.any_instance.stub(:can_edit?).and_return true
+      expect{
+        delete :clear_claim_audits, id: @c.id
+      }.to change(DrawbackClaimAudit,:count).from(1).to(0)
+    end
+  end
+  describe 'clear_export_histories' do
+    before :each do
+      @u = Factory(:drawback_user)
+      sign_in_as @u
+      @c = Factory(:drawback_claim)
+      @ca = @c.drawback_export_histories.create!
+    end
+    it "should restrict to edit_drawback?" do
+      DrawbackClaim.any_instance.stub(:can_edit?).and_return false
+      expect{delete :clear_export_histories, id: @c.id}.to_not change(DrawbackExportHistory,:count)
+      expect(flash[:errors].size).to eq 1
+    end
+    it "should clear claim audit" do
+      DrawbackClaim.any_instance.stub(:can_edit?).and_return true
+      expect{
+        delete :clear_export_histories, id: @c.id
+      }.to change(DrawbackExportHistory,:count).from(1).to(0)
+    end
   end
 end
