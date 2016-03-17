@@ -189,7 +189,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   end
 
   def is_not_total(row)
-    !(row[file_layout[:total_column]] && row[file_layout[:total_column]].match(/total/i))
+    !(row[file_layout[:total_column]] && row[file_layout[:total_column]].to_s.match(/total/i))
   end
 
   ##
