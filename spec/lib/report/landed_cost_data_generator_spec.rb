@@ -229,5 +229,28 @@ describe OpenChain::Report::LandedCostDataGenerator do
       e[:totals][:international_freight].should == BigDecimal.new("400")
       e[:percentage][:international_freight].should == (BigDecimal.new("400") / e[:totals][:landed_cost]) * BigDecimal.new("100")
     end
+
+    it "handles cotton fee specified only at the header" do
+      @ci.commercial_invoice_lines.each {|l| l.update_attributes! cotton_fee: 0}
+      @entry.update_attributes! cotton_fee: BigDecimal("5")
+
+      lc = described_class.new.landed_cost_data_for_entry @entry.id
+      invoice = lc[:entries].first[:commercial_invoices].first
+
+      line = invoice[:commercial_invoice_lines].first
+      expect(line[:cotton_fee]).to eq BigDecimal("1.82")
+      expect(line[:fee]).to eq BigDecimal("51.82")
+      expect(line[:per_unit][:fee].round(2)).to eq BigDecimal("4.71")
+
+      line = invoice[:commercial_invoice_lines].second
+      expect(line[:cotton_fee]).to eq BigDecimal("1.36")
+      expect(line[:fee]).to eq BigDecimal("1.36")
+      expect(line[:per_unit][:fee].round(2)).to eq BigDecimal("0.12")
+
+      line = invoice[:commercial_invoice_lines][2]
+      expect(line[:cotton_fee]).to eq BigDecimal("1.82")
+      expect(line[:fee]).to eq BigDecimal("1.82")
+      expect(line[:per_unit][:fee].round(2)).to eq BigDecimal("0.17")
+    end
   end
 end

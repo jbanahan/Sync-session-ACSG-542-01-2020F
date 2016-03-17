@@ -85,6 +85,16 @@ module OpenChain; module Report
           ed[:per_unit][:international_freight] = intl_freight_proration unless invoice_specific_freight_lines.length > 0
 
           ed[:number_of_invoice_lines] = 0
+
+          # Apparently with cotton fees, if the total amount is under a couple dollars, then you don't get per invoice line level amounts.  Which means
+          # we need to prorate the value ourselves across the lines.
+          cotton_fee_lines = sum_invoice_line_values entry, :cotton_fee
+          cotton_fee_prorations = {}
+          if cotton_fee_lines.zero? && entry.cotton_fee.to_f > 0
+            cotton_fee_prorations = calculate_proration_by_entered_value entry.cotton_fee, entry
+          end
+
+          byebug
           entry.commercial_invoices.each do |inv|
             i = {}
             ed[:commercial_invoices] << i
@@ -120,8 +130,12 @@ module OpenChain; module Report
               l[:duty] = calculate_duty_per_line line
               l[:hmf] = line.hmf ? line.hmf : BigDecimal.new("0")
               l[:mpf] = line.prorated_mpf ? line.prorated_mpf : BigDecimal.new("0")
-              l[:cotton_fee] = line.cotton_fee ? line.cotton_fee : BigDecimal.new("0")
-              l[:fee] = calculate_fees_per_line line
+
+              additional_fee_amount = BigDecimal("0")
+              cotton_fee = cotton_fee_prorations[line.id].presence || (line.cotton_fee ? line.cotton_fee : BigDecimal.new("0"))
+
+              l[:cotton_fee] = cotton_fee
+              l[:fee] = calculate_fees_per_line line, cotton_fee
               l[:brokerage] = invoice_line_prorations[line.id][:brokerage] ? invoice_line_prorations[line.id][:brokerage] : BigDecimal.new("0")
               l[:inland_freight] = invoice_line_prorations[line.id][:inland_freight] ? invoice_line_prorations[line.id][:inland_freight] : BigDecimal.new("0")
               l[:other] = invoice_line_prorations[line.id][:other] ? invoice_line_prorations[line.id][:other] : BigDecimal.new("0")
@@ -207,11 +221,11 @@ module OpenChain; module Report
         data
       end
 
-      def calculate_fees_per_line line
+      def calculate_fees_per_line line, cotton_fee
         fee = BigDecimal.new "0"
         fee += line.hmf if line.hmf
         fee += line.prorated_mpf if line.prorated_mpf
-        fee += line.cotton_fee if line.cotton_fee
+        fee += cotton_fee
 
         fee
       end
@@ -228,8 +242,54 @@ module OpenChain; module Report
         total
       end
 
+      def sum_invoice_line_values entry, fee_type
+        entry.commercial_invoices.map {|i| i.commercial_invoice_lines }.flatten.map {|l| l.send(fee_type).presence || BigDecimal(0)}.sum
+      end
+
       def calculate_landed_cost l
         l[:entered_value] + l[:duty] + l[:fee] + l[:international_freight] + l[:inland_freight] + l[:brokerage]  + l[:other]
+      end
+
+      def calculate_proration_by_entered_value amount_to_prorate, entry
+        # Prorate the amount by entered value
+        invoice_lines = entry.commercial_invoices.map {|i| i.commercial_invoice_lines }.flatten
+        total_entered_value = invoice_lines.map {|l| calculate_entered_value_per_line(l)}.sum
+        proration_left = amount_to_prorate
+
+        prorations = {}
+        invoice_lines.each do |l|
+          entered_value = l.commercial_invoice_tariffs.map {|t| t.entered_value.presence || BigDecimal(0)}.sum
+
+          proration_percentage = safe_divide(entered_value, total_entered_value).round(5, BigDecimal::ROUND_HALF_UP)
+          
+          amount = (amount_to_prorate * proration_percentage).round(2, BigDecimal::ROUND_HALF_UP)
+
+          if proration_left - amount > 0
+            prorations[l.id] = amount
+            proration_left -= amount
+          else
+            prorations[l.id] = proration_left
+            proration_left = 0
+          end
+        end
+
+        # At this point, just equally distribute the proration amounts left one penny at a time
+        if proration_left > 0
+          begin
+            prorations.each_pair do |k, v|
+              # Don't add leftover proration amounts into buckets that have no existing value, it basically means that 
+              # there was no entered value on them so they shouldn't have any of the leftover amount dropped back into them.
+              next if v.zero?
+
+              prorations[k] = (v + BigDecimal("0.01"))
+              proration_left -= BigDecimal("0.01")
+
+              break if proration_left <= 0
+            end
+          end while proration_left > 0
+        end
+        
+        prorations
       end
 
       def calculate_broker_invoice_charge_proration total_units, entry, invoice_lines, charge_id, *charge_types
