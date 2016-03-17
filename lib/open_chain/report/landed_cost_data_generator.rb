@@ -94,7 +94,6 @@ module OpenChain; module Report
             cotton_fee_prorations = calculate_proration_by_entered_value entry.cotton_fee, entry
           end
 
-          byebug
           entry.commercial_invoices.each do |inv|
             i = {}
             ed[:commercial_invoices] << i
@@ -279,7 +278,11 @@ module OpenChain; module Report
             prorations.each_pair do |k, v|
               # Don't add leftover proration amounts into buckets that have no existing value, it basically means that 
               # there was no entered value on them so they shouldn't have any of the leftover amount dropped back into them.
-              next if v.zero?
+
+              # Since we're only adding the proration amounts to lines with entered value, make sure that there's at least one
+              # line with entered value (should ONLY ever happen in a testing scenario since I don't know how an entry could have
+              # have a cotton fee without any lines with entered values), but it'll hang here if that does happen
+              next if v.zero? && total_entered_value.nonzero?
 
               prorations[k] = (v + BigDecimal("0.01"))
               proration_left -= BigDecimal("0.01")

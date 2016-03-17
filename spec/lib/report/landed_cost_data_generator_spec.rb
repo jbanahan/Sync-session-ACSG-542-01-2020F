@@ -252,5 +252,12 @@ describe OpenChain::Report::LandedCostDataGenerator do
       expect(line[:fee]).to eq BigDecimal("1.82")
       expect(line[:per_unit][:fee].round(2)).to eq BigDecimal("0.17")
     end
+
+    it "doesn't hang if no lines have an entered_value and there is a header level cotton fee" do
+      @ci.commercial_invoice_lines.each {|l| l.update_attributes! cotton_fee: 0; l.commercial_invoice_tariffs.update_all(entered_value: 0)}
+      @entry.update_attributes! cotton_fee: BigDecimal("5")
+      lc = described_class.new.landed_cost_data_for_entry @entry.id
+      # by virtue of not hanging...this spec passes
+    end
   end
 end
