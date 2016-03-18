@@ -171,32 +171,3 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
     end
   end
 end
-
-describe OpenChain::CustomHandler::Hm::HmI1Validator do
-  describe :filter do
-    it "returns the value for assignment if the input field is valid" do
-      row = ["182909","01/02/2016","01/02/2016","0148762001002","201501","Large Blue Hooded Sweatshirt","61101190","US"]
-      valid = described_class.new row
-      results = []
-      (0..7).each{ |i| results << valid.filter(i, "yay") }
-      expect(results).to eq ["yay", "yay", "yay", "yay", "yay", "yay", "yay", "yay"]
-    end
-
-    it "returns nil if the input field is invalid" do
-      row = ["18290","1/02/2016","01/2/2016","014876200100","20150","Large Blue Hooded Sweatshirt","6110119","USA"]
-      valid = described_class.new row
-      results = []
-      (0..7).each{ |i| results << valid.filter(i, "yay") }
-      expect(results).to eq [nil, nil, nil, nil, nil, "yay", nil, nil]
-    end
-  end
-
-  describe :check do
-    it "returns true if the field is valid and false otherwise" do
-      row = ["182909","1/02/2016","01/02/2016","0148762001002","201501","Large Blue Hooded Sweatshirt","61101190","US"]
-      valid = described_class.new row
-      expect(valid.check 0).to eq true
-      expect(valid.check 1).to eq false
-    end
-  end
-end
