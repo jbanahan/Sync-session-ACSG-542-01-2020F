@@ -4,6 +4,7 @@ module OpenChain
     module Hm
       class HmI1Interface
         include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+        extend OpenChain::IntegrationClientParser
         
         def initialize
            @cust_id = Company.where(alliance_customer_number: 'HENNE').first.id
