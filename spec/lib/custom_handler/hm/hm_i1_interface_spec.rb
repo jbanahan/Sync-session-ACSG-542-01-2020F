@@ -58,6 +58,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect((p1.get_custom_value @cdefs[:prod_season]).value).to eq "201501"
       expect((p1.get_custom_value @cdefs[:prod_suggested_tariff]).value).to eq "61101190"
       expect((p1.get_custom_value @cdefs[:prod_countries_of_origin]).value).to eq "US"
+      expect(p1.entity_snapshots.count).to eq 1
 
       expect(p2.unique_identifier).to eq "HENNE-2001002"
       expect(p2.name).to eq "Small Red T-Shirt"
@@ -70,6 +71,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect((p2.get_custom_value @cdefs[:prod_season]).value).to eq "105102"
       expect((p2.get_custom_value @cdefs[:prod_suggested_tariff]).value).to eq "09110116"
       expect((p2.get_custom_value @cdefs[:prod_countries_of_origin]).value).to eq "CA"
+      expect(p2.entity_snapshots.count).to eq 1
 
       expect(p3.unique_identifier).to eq "HENNE-1259873"
       expect(p3.name).to eq "Large Black Sweatpants"
@@ -82,6 +84,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect((p3.get_custom_value @cdefs[:prod_season]).value).to eq "312612\n 216213"
       expect((p3.get_custom_value @cdefs[:prod_suggested_tariff]).value).to eq "10221227"
       expect((p3.get_custom_value @cdefs[:prod_countries_of_origin]).value).to eq "US\n CA"
+      expect(p3.entity_snapshots.count).to eq 2
 
       @t.unlink
     end
