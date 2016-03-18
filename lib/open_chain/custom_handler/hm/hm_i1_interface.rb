@@ -5,7 +5,7 @@ module OpenChain
       class HmI1Interface
         include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
         extend OpenChain::IntegrationClientParser
-        
+
         def initialize
            @cust_id = Company.where(alliance_customer_number: 'HENNE').first.id
            @cdefs = (self.class.prep_custom_definitions [:prod_po_numbers, :prod_sku_number, :prod_earliest_ship_date, :prod_earliest_arrival_date, 
@@ -25,37 +25,27 @@ module OpenChain
                 next
               end
               *, uid = get_part_number_and_uid(row[3])
-              p = Product.where(unique_identifier: uid).first
-              p ? (update_product p, row, @cdefs) : (create_product row, @cdefs, @cust_id)
+              p = nil
+              Lock.acquire("Product-#{uid}") { p = Product.where(unique_identifier: uid).first_or_create! }
+              Lock.with_lock_retry(p) do 
+                update_product p, row, @cdefs, @cust_id
+                p.create_snapshot User.integration
+              end
             end
           end        
         end
 
-        def create_product row, cdefs, cust_id
-          valid = HmI1Validator.new row
-          p = Product.new
-          part_number, uid = (valid.check(3) ? get_part_number_and_uid(row[3]) : nil)
-          p.unique_identifier = uid
-          p.name = row[5]
-          p.importer_id = cust_id
-          p.save!
-          p.update_custom_value! cdefs[:prod_po_numbers], valid.filter(0, row[0])
-          p.update_custom_value! cdefs[:prod_earliest_ship_date], valid.filter(1, Date.strptime(row[1], '%m/%d/%Y'))
-          p.update_custom_value! cdefs[:prod_earliest_arrival_date], valid.filter(2, Date.strptime(row[2], '%m/%d/%Y'))
-          p.update_custom_value! cdefs[:prod_sku_number], valid.filter(3, row[3])
-          p.update_custom_value! cdefs[:prod_part_number], part_number
-          p.update_custom_value! cdefs[:prod_season], valid.filter(4, row[4])
-          p.update_custom_value! cdefs[:prod_suggested_tariff], valid.filter(6, row[6])
-          p.update_custom_value! cdefs[:prod_countries_of_origin], valid.filter(7, row[7])
-          p
-        end
-
-        def update_product product, row, cdefs
+        def update_product product, row, cdefs, cust_id
           valid = HmI1Validator.new row
           unless product.name == row[5]
-            product.name = valid.filter(5, row[5])
+            product.name = row[5]
             product.save!
           end
+          part_number, * = (valid.check(3) ? get_part_number_and_uid(row[3]) : nil)
+          product.find_and_set_custom_value cdefs[:prod_part_number], part_number
+          product.importer_id = cust_id
+          product.save!
+
           cv_concat product, :prod_po_numbers, valid.filter(0, row[0]), cdefs
           assign_earlier product, :prod_earliest_ship_date, valid.filter(1, row[1]), cdefs
           assign_earlier product, :prod_earliest_arrival_date, valid.filter(2, row[2]), cdefs

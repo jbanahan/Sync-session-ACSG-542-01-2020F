@@ -86,27 +86,6 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       @t.unlink
     end
   end
-  
-  describe :create_product do
-    it "creates a new Product from a CSV row" do
-      parser = described_class.new
-      load_cdefs
-      parser.create_product CSV.parse_line(@lines[1]), @cdefs, @cust_id
-      prod = Product.first
-      
-      expect(prod.unique_identifier).to eq "HENNE-0148762"
-      expect(prod.name).to eq "Large Blue Hooded Sweatshirt"
-      expect(prod.importer_id).to eq @cust_id
-      expect((prod.get_custom_value @cdefs[:prod_po_numbers]).value).to eq "182909"
-      expect((prod.get_custom_value @cdefs[:prod_earliest_ship_date]).value).to eq Date.new(2016,1,2)
-      expect((prod.get_custom_value @cdefs[:prod_earliest_arrival_date]).value).to eq Date.new(2016,1,2)
-      expect((prod.get_custom_value @cdefs[:prod_part_number]).value).to eq "0148762" 
-      expect((prod.get_custom_value @cdefs[:prod_sku_number]).value).to eq "0148762001002"
-      expect((prod.get_custom_value @cdefs[:prod_season]).value).to eq "201501"
-      expect((prod.get_custom_value @cdefs[:prod_suggested_tariff]).value).to eq "61101190"
-      expect((prod.get_custom_value @cdefs[:prod_countries_of_origin]).value).to eq "US"
-    end
-  end
 
   describe :update_product do
     it "updates an existing Product from a CSV row" do
@@ -125,7 +104,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
 
       line = CSV.parse_line(@lines[2])
       line[3] = "0148762001002" #uid of @lines[1]
-      parser.update_product prod, line, @cdefs
+      parser.update_product prod, line, @cdefs, @cust_id
 
       expect(prod.unique_identifier).to eq "HENNE-0148762"
       expect(prod.name).to eq "Small Red T-Shirt"
