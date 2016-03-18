@@ -93,14 +93,15 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       load_cdefs
 
       prod = Factory(:product, unique_identifier: "HENNE-0148762", name: "Large Blue Hooded Sweatshirt", importer_id: @cust_id)
-      prod.update_custom_value! @cdefs[:prod_po_numbers], "182909"
-      prod.update_custom_value! @cdefs[:prod_earliest_ship_date], Date.new(2016,1,2)
-      prod.update_custom_value! @cdefs[:prod_earliest_arrival_date], Date.new(2016,1,2)
-      prod.update_custom_value! @cdefs[:prod_part_number], "0148762"
-      prod.update_custom_value! @cdefs[:prod_sku_number], "0148762001002"
-      prod.update_custom_value! @cdefs[:prod_season], "201501"
-      prod.update_custom_value! @cdefs[:prod_suggested_tariff], "61101190"
-      prod.update_custom_value! @cdefs[:prod_countries_of_origin], "US"
+      prod.find_and_set_custom_value @cdefs[:prod_po_numbers], "182909"
+      prod.find_and_set_custom_value @cdefs[:prod_earliest_ship_date], Date.new(2016,1,2)
+      prod.find_and_set_custom_value @cdefs[:prod_earliest_arrival_date], Date.new(2016,1,2)
+      prod.find_and_set_custom_value @cdefs[:prod_part_number], "0148762"
+      prod.find_and_set_custom_value @cdefs[:prod_sku_number], "0148762001002"
+      prod.find_and_set_custom_value @cdefs[:prod_season], "201501"
+      prod.find_and_set_custom_value @cdefs[:prod_suggested_tariff], "61101190"
+      prod.find_and_set_custom_value @cdefs[:prod_countries_of_origin], "US"
+      prod.save!
 
       line = CSV.parse_line(@lines[2])
       line[3] = "0148762001002" #uid of @lines[1]

@@ -36,22 +36,19 @@ module OpenChain
         end
 
         def update_product product, row, cdefs, cust_id
-          unless product.name == row[5]
-            product.name = row[5]
-            product.save!
-          end
           part_number, * = get_part_number_and_uid(row[3])
-          product.find_and_set_custom_value cdefs[:prod_part_number], part_number
+          
           product.importer_id = cust_id
-          product.save!
-
+          product.find_and_set_custom_value cdefs[:prod_part_number], part_number
           cv_concat product, :prod_po_numbers, row[0], cdefs
           assign_earlier product, :prod_earliest_ship_date, filter_date(row[1]), cdefs
           assign_earlier product, :prod_earliest_arrival_date, filter_date(row[2]), cdefs
-          product.update_custom_value! cdefs[:prod_sku_number], row[3]
+          product.find_and_set_custom_value cdefs[:prod_sku_number], row[3]
           cv_concat product, :prod_season, row[4], cdefs
-          product.update_custom_value! cdefs[:prod_suggested_tariff], row[6]
+          product.name = row[5]
+          product.find_and_set_custom_value cdefs[:prod_suggested_tariff], row[6]
           cv_concat product, :prod_countries_of_origin, row[7], cdefs
+          product.save!
           product
         end
 
@@ -60,14 +57,14 @@ module OpenChain
           arr = old_str.blank? ? [] : old_str.split("\n ")
           arr << str unless arr.include? str
           new_str = arr.join("\n ")
-          product.update_custom_value! cdefs[cv_uid], new_str unless new_str == old_str
+          product.find_and_set_custom_value cdefs[cv_uid], new_str unless new_str == old_str
           product
         end
 
         def assign_earlier product, cv_uid, date_str, cdefs
           current_date = (product.get_custom_value cdefs[cv_uid]).value
           parsed_date = Date.strptime(date_str,'%m/%d/%Y')
-          product.update_custom_value!(cdefs[cv_uid], parsed_date) if current_date.nil? || parsed_date < current_date
+          product.find_and_set_custom_value(cdefs[cv_uid], parsed_date) if current_date.nil? || parsed_date < current_date
           product
         end   
       
