@@ -63,15 +63,6 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
 
   def self.process_data data_structure, user
     log = []
-    used_entries = find_used_entries(data_structure.keys)
-    if !used_entries.blank?
-      if used_entries.size > 10
-        log << "#{used_entries.size} entries already have drawback lines."
-      else
-        log << "Entries already have drawback lines: #{used_entries}."
-      end
-    end
-
     if log.empty?
       data_structure.each do |entry_number,po_part_hash|
         begin
@@ -90,6 +81,9 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
       ent = Entry.where('entries.customer_number IN (?)',['JCREW','J0000']).where(entry_number:entry_number).first
       if ent.blank?
         raise "Entry #{entry_number} not found."
+      end
+      if DrawbackImportLine.where(entry_number:entry_number).count > 0
+        raise "Entry #{entry_number} already has drawback lines."
       end
       po_part_hash.values.each do |structs|
         base_struct = structs.first

@@ -45,34 +45,11 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       content_2 = double('hash content 2')
       h = {'12345678900'=>content_1,'99999999999'=>content_2}
       u = double('user')
-      described_class.should_receive(:find_used_entries).with(h.keys).and_return []
       described_class.should_receive(:process_entry).with(h.keys.first,h.values.first)
       described_class.should_receive(:process_entry).with(h.keys.last,h.values.last)
-
       expect(described_class.process_data(h,u)).to be_empty
-
     end
-    it 'should fail on used entries' do
-      h = {'12345678900'=>{},'99999999999'=>{}}
-      u = double('user')
-      described_class.should_receive(:find_used_entries).with(h.keys).and_return ['12345678900']
 
-      expect(described_class.process_data(h,u)).to eq ['Entries already have drawback lines: ["12345678900"].']
-    end
-    it 'should fail with compact message if more than 10 entries used' do
-      h = {'12345678900'=>{},'99999999999'=>{}}
-      u = double('user')
-      described_class.should_receive(:find_used_entries).with(h.keys).and_return (1..11).to_a.collect {|x| x.to_s}
-
-      expect(described_class.process_data(h,u)).to eq ['11 entries already have drawback lines.']
-    end
-  end
-
-  describe '#find_used_entries' do
-    it 'should find used entries' do
-      Factory(:drawback_import_line,entry_number:'12345678901')
-      expect(described_class.find_used_entries(['12345678901','10987654321'])).to eq ['12345678901']
-    end
   end
 
   describe '#process_entry' do
@@ -146,6 +123,14 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'),u)
       expect(log).to eq ['Entry 31604364559, PO 4016516, Part 24892, Quantity 340 not found.']
       expect(DrawbackImportLine.count).to eq 0
+    end
+
+    it 'should fail on used entries' do
+      u = Factory(:master_user)
+      Factory(:drawback_import_line,entry_number:Entry.last.entry_number)
+      log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'),u)
+      expect(log).to eq ['Entry 31604364559 already has drawback lines.']
+      expect(DrawbackImportLine.count).to eq 1
     end
   end
 
