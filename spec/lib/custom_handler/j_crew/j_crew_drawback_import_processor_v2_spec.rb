@@ -197,12 +197,12 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       )
       expect{described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Expected Master Bill APLU031970557 found APLU03197055X."
     end
-    it 'should fail if POShipDate is not less than Arrival Date and mode is sea' do
-      @data.gsub!(
-        '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
-        '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2009,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48'
-      )
-      expect{described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Ship date 2009-12-23 is after arrival date 2009-01-10."
-    end
+    # it 'should fail if POShipDate is not less than Arrival Date and mode is sea' do
+    #   @data.gsub!(
+    #     '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
+    #     '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2009,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48'
+    #   )
+    #   expect{described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Ship date 2009-12-23 is after arrival date 2009-01-10."
+    # end
   end
 end

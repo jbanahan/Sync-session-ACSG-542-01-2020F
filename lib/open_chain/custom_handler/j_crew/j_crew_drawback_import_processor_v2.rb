@@ -29,9 +29,9 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
       validate_equality!('PO',self.entry_po,self.crew_po)
       validate_equality!('Style',self.entry_part,self.crew_style)
       validate_equality!('Master Bill',self.entry_mbol,self.crew_mbol)
-      if self.crew_asn_ship_mode=='Sea' && self.crew_ship_date > self.entry_arrival_date
-        raise "Error on line #{file_line_number}: Ship date #{self.crew_ship_date.strftime('%Y-%m-%d')} is after arrival date #{self.entry_arrival_date.strftime('%Y-%m-%d')}."
-      end
+      # if self.crew_asn_ship_mode=='Sea' && self.crew_ship_date > self.entry_arrival_date
+      #   raise "Error on line #{file_line_number}: Ship date #{self.crew_ship_date.strftime('%Y-%m-%d')} is after arrival date #{self.entry_arrival_date.strftime('%Y-%m-%d')}."
+      # end
     end
     def po_style
       "#{self.entry_po}~#{self.entry_part}"
