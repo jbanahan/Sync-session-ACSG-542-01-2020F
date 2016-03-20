@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser do
       r[105] = inner_opts[:ship_date]
       r[106] = inner_opts[:export_date]
       r[120] = inner_opts[:hts]
-      r[121] = inner_opts[:quantity] 
+      r[121] = inner_opts[:quantity]
       r[122] = inner_opts[:desc]
       r[164] = inner_opts[:part_number]
       r
@@ -33,25 +33,25 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser do
     it 'should check for 167 columns' do
       r = make_row
       r << 'another column'
-      lambda {described_class.parse_csv_line r, 1, @imp}.should raise_error /Line 1 had 168 elements/
+      lambda {described_class.parse_csv_line r, 1, @imp}.should raise_error(/Line 1 had 168 elements/)
     end
     it "should create line" do
       vals = default_vals
       d = described_class.parse_csv_line(make_row,1,@imp)
-      d.class.should == DutyCalcExportFileLine
-      d.export_date.strftime("%m/%d/%Y").should == vals[:export_date]
-      d.ship_date.strftime("%m/%d/%Y").should == vals[:ship_date]
-      d.part_number.should == vals[:part_number]
-      d.ref_1.should == vals[:ref_1]
-      d.ref_2.should == vals[:ref_2]
-      d.quantity.to_s.should == vals[:quantity]
-      d.description.should == vals[:desc]
-      d.uom.should == 'EA'
-      d.destination_country.should == 'CA'
-      d.exporter.should == 'J Crew'
-      d.action_code.should == 'E'
-      d.hts_code.should == vals[:hts]
-      d.importer.should == @imp
+      expect(d.class).to eq DutyCalcExportFileLine
+      expect(d.export_date.strftime("%m/%d/%Y")).to eq vals[:export_date]
+      expect(d.ship_date.strftime("%m/%d/%Y")).to eq vals[:ship_date]
+      expect(d.part_number).to eq vals[:part_number]
+      expect(d.ref_1).to eq vals[:ref_1]
+      expect(d.ref_2).to eq vals[:ref_2]
+      expect(d.quantity.to_s).to eq vals[:quantity]
+      expect(d.description).to eq vals[:desc]
+      expect(d.uom).to eq 'EA'
+      expect(d.destination_country).to eq 'CA'
+      expect(d.exporter).to eq 'J Crew'
+      expect(d.action_code).to eq 'E'
+      expect(d.hts_code).to eq vals[:hts]
+      expect(d.importer).to eq @imp
     end
   end
 end
