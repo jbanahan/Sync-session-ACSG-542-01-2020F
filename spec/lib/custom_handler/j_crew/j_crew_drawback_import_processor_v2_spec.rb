@@ -128,6 +128,18 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(log).to eq ['Entry 31604364559, PO 4016516, Part 24892, Quantity 341 not found.']
       expect(DrawbackImportLine.count).to eq 0
     end
+    it 'should fail if Sum of line quantities grouped by style/po does not match Invoice Line Units' do
+      u = Factory(:master_user)
+      data = IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv')
+      data.gsub!(
+        '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
+        '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,41,50,12/23/2009,Sea,Sea,$14.48'
+      )
+      log = described_class.parse(data,u)
+      expect(log).to eq ['Entry 31604364559, PO 4016516, Part 24892 should have had 340 pieces but found 341.']
+      expect(DrawbackImportLine.count).to eq 0
+    end
+
     it "should fail if line isn't found" do
       u = Factory(:master_user)
       CommercialInvoiceLine.where(part_number:'24892',po_number:'4016516').first.destroy
@@ -171,10 +183,6 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(struct_1.crew_order_pieces).to eq 50
       expect(struct_1.crew_ship_date).to eq Date.new(2009,12,23)
       expect(struct_1.crew_unit_cost).to eq BigDecimal('14.48')
-    end
-    it 'should fail if Sum of line quantities grouped by style/po does not match Invoice Line Units' do
-      @data.gsub!('24892BR58040,102,40','24892BR58040,102,41')
-      expect{described_class.build_data_structure(@data)}.to raise_error "Expected entry 31604364559 PO 4016516 Style 24892 to have 340 pieces but found 341."
     end
     it 'should fail if Invoice Line PO Number does not match PO number' do
       @data.gsub!(

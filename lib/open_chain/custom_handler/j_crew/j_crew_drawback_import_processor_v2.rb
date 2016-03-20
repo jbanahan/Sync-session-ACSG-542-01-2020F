@@ -92,6 +92,14 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
         raise "Entry #{entry_number} not found."
       end
       po_part_hash.values.each do |structs|
+        base_struct = structs.first
+        target = base_struct.entry_units
+        found = structs.inject(0) {|mem,s| mem + s.crew_asn_pieces}
+        if target != found
+          raise "Entry #{entry_number}, PO #{base_struct.entry_po}, Part #{base_struct.entry_part} should have had #{base_struct.entry_units} pieces but found #{found}."
+        end
+      end
+      po_part_hash.values.each do |structs|
         first_struct = structs.first
         ci_lines = ent.commercial_invoice_lines.where(
           part_number:first_struct.entry_part,
@@ -163,22 +171,9 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
       po_part_hash[struct.po_style] ||= []
       po_part_hash[struct.po_style] << struct
     end
-    validate_quantities h
     return h
   end
 
-  def self.validate_quantities data_hash
-    data_hash.values.each do |po_part_hash|
-      po_part_hash.values.each do |struct_array|
-        base_struct = struct_array.first
-        target = base_struct.entry_units
-        found = struct_array.inject(0) {|mem,s| mem + s.crew_asn_pieces}
-        if target != found
-          raise "Expected entry #{base_struct.entry_number} PO #{base_struct.entry_po} Style #{base_struct.entry_part} to have #{target} pieces but found #{found}."
-        end
-      end
-    end
-  end
   def self.parse_line row_number, line
     DATA_ROW_STRUCT.new(
       row_number,
