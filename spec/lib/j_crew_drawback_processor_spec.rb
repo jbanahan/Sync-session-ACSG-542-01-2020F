@@ -1,9 +1,9 @@
 require 'spec_helper'
 
 describe OpenChain::JCrewDrawbackProcessor do
-  
+
   describe :process_entries do
-    before :each do 
+    before :each do
       @cd_po = Factory(:custom_definition,:label=>"PO Number",:module_type=>"ShipmentLine",:data_type=>"string")
       @cd_del = Factory(:custom_definition,:label=>"Delivery Date",:module_type=>"Shipment",:data_type=>"date")
       @cd_size = Factory(:custom_definition,:label=>"Size",:module_type=>"ShipmentLine",:data_type=>"string")
@@ -45,25 +45,25 @@ describe OpenChain::JCrewDrawbackProcessor do
       d = DrawbackImportLine.first
       @shipment = Shipment.find @shipment.id
       @entry = Entry.find @entry.id
-      d.entry_number.should == @entry.entry_number
-      d.import_date.should == @entry.arrival_date.to_date
-      d.received_date.should == @shipment.get_custom_value(@cd_del).value
-      d.port_code.should == @entry.entry_port_code
-      d.box_37_duty.should == @entry.total_duty
-      d.box_40_duty.should == @entry.total_duty_direct
-      d.country_of_origin_code.should == @c_line.country_origin_code
-      d.part_number.should == "#{@product.name}#{@s_line.get_custom_value(@cd_color).value}#{@s_line.get_custom_value(@cd_size).value}"
-      d.hts_code.should == @c_tar.hts_code
-      d.description.should == @entry.merchandise_description 
-      d.unit_of_measure.should == "EA" #hard code to eaches
-      d.quantity.should == @s_line.quantity
-      d.unit_price.should == BigDecimal("14.40") #entered value / total units
-      d.rate.should == BigDecimal("0.1") # duty amount / entered value
-      d.duty_per_unit.should == BigDecimal("1.44") #unit price * rate
-      d.compute_code.should == "7" #hard code
-      d.ocean.should == true #mode 10 or 11
-      d.importer_id.should == @entry.importer_id
-      d.total_mpf.should == @entry.mpf
+      expect(d.entry_number).to eq @entry.entry_number
+      expect(d.import_date).to eq @entry.arrival_date.to_date
+      expect(d.received_date).to eq @shipment.get_custom_value(@cd_del).value
+      expect(d.port_code).to eq @entry.entry_port_code
+      expect(d.box_37_duty).to eq @entry.total_duty
+      expect(d.box_40_duty).to eq @entry.total_duty_direct
+      expect(d.country_of_origin_code).to eq @c_line.country_origin_code
+      expect(d.part_number).to eq "#{@product.name}#{@s_line.get_custom_value(@cd_color).value}#{@s_line.get_custom_value(@cd_size).value}"
+      expect(d.hts_code).to eq @c_tar.hts_code
+      expect(d.description).to eq @entry.merchandise_description
+      expect(d.unit_of_measure).to eq "EA" #hard code to eaches
+      expect(d.quantity).to eq @s_line.quantity
+      expect(d.unit_price).to eq BigDecimal("14.40") #entered value / total units
+      expect(d.rate).to eq BigDecimal("0.1") # duty amount / entered value
+      expect(d.duty_per_unit).to eq BigDecimal("1.44") #unit price * rate
+      expect(d.compute_code).to eq "7" #hard code
+      expect(d.ocean).to eq true #mode 10 or 11
+      expect(d.importer_id).to eq @entry.importer_id
+      expect(d.total_mpf).to eq @entry.mpf
       PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).should have(1).result
     end
     it "should only match shipments received after import" do
