@@ -77,7 +77,9 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
 
   describe '#process_entry' do
     before :each do
-      OpenMailer.stub(:send_simple_text)
+      mo = double('mail_obj')
+      mo.stub(:deliver!)
+      OpenMailer.stub(:send_simple_text).and_return(mo)
       @crew = Factory(:company,alliance_customer_number:'JCREW')
       # create underlying entry
       OpenChain::CustomHandler::KewillEntryParser.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_entry.json'),imaging: false)
