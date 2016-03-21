@@ -49,8 +49,10 @@
 </script>
 
 <% content_for :action_bar do %>
-  <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
-  <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
+  <%if @order.can_edit?(current_user)%>
+    <button class='btn_link' link_to='<%=edit_order_path(@order)%>' title='Edit'><i class='fa fa-pencil'></i></button>
+  <%end%>
+  <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
 <% end %>
 
 <div class="container">
