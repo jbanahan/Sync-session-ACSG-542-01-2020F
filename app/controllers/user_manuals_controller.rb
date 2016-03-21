@@ -1,6 +1,7 @@
 class UserManualsController < ApplicationController
   include DownloadS3ObjectSupport
 
+  skip_before_filter :portal_redirect, only: [:download]
   around_filter :admin_secure, except: [:download]
   def index
     @user_manuals = UserManual.order(:name)
