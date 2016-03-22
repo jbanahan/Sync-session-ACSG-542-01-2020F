@@ -1,6 +1,10 @@
 require 'open_chain/s3'
 require 'open_chain/entity_compare/comparator_helper'
+<<<<<<< ad99d1b69f414c56b7772365e7d25e6b4aae2f5f
 require 'open_chain/entity_compare/order_comparator'
+=======
+require 'open_chain/custom_handler/lumber_liquidators/lumber_order_default_value_setter'
+>>>>>>> lumber sow 17.1: default field values
 require 'open_chain/custom_handler/lumber_liquidators/lumber_order_pdf_generator'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_autoflow_order_approver'
@@ -8,17 +12,22 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_autoflow_order_appr
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderChangeComparator
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::EntityCompare::ComparatorHelper
+<<<<<<< ad99d1b69f414c56b7772365e7d25e6b4aae2f5f
   extend OpenChain::EntityCompare::OrderComparator
 
   ORDER_MODEL_FIELDS ||= [:ord_ord_num,:ord_window_start,:ord_window_end,:ord_currency,:ord_payment_terms,:ord_terms]
+=======
+  ORDER_MODEL_FIELDS ||= [:ord_ord_num,:ord_window_start,:ord_window_end,:ord_currency,:ord_payment_terms,:ord_terms,:ord_fob_point]
+  ORDER_CUSTOM_FIELDS ||= []
+>>>>>>> lumber sow 17.1: default field values
   ORDER_LINE_MODEL_FIELDS ||= [:ordln_line_number,:ordln_puid,:ordln_ordered_qty,:ordln_unit_of_measure,:ordln_ppu]
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type=='Order'
+    new_fingerprint = get_fingerprint(new_bucket, new_path, new_version)
     if old_bucket.nil?
       run_changes type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     else
       old_fingerprint = get_fingerprint(old_bucket, old_path, old_version)
-      new_fingerprint = get_fingerprint(new_bucket, new_path, new_version)
       if old_fingerprint!=new_fingerprint
         run_changes type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
         compare_lines(id,new_fingerprint,old_fingerprint)
@@ -26,7 +35,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
     o = Order.find_by_id(id)
     if o
+      set_defaults o, new_fingerprint
       OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.process(o)
+    end
+  end
+
+  # set default values based on the vendor setup if they're blank
+  def self.set_defaults ord, new_fingerprint
+    fingerprint_elements = new_fingerprint.split('~')
+    if [5,6,7].find {|pos| fingerprint_elements[pos].blank? }
+      OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSetter.set_defaults(ord)
     end
   end
 
@@ -59,9 +77,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.fingerprint entity_hash
+    if ORDER_CUSTOM_FIELDS.empty?
+      ORDER_CUSTOM_FIELDS << prep_custom_definitions([:ord_country_of_origin]).values.first.model_field_uid.to_sym
+    end
     elements = []
     order_hash = entity_hash['entity']['model_fields']
-    ORDER_MODEL_FIELDS.each do |uid|
+    (ORDER_MODEL_FIELDS + ORDER_CUSTOM_FIELDS).each do |uid|
       elements << order_hash[uid.to_s]
     end
     if entity_hash['entity']['children']
