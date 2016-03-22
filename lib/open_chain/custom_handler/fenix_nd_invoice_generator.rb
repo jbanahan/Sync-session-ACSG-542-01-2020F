@@ -63,11 +63,9 @@ module OpenChain; module CustomHandler
 
         #File should use \r\n newlines and be straight ASCII chars
         #Ack: MRI Ruby 1.9 has a bug in tempfile that doesn't allow you to use string :mode option here
-        customer_code = fenix_customer_code(invoice)
-        raise "No customer code found for importer #{invoice.importer.try(:fenix_customer_number)}." if customer_code.blank?
+        importer_tax_id = invoice.importer.try(:fenix_customer_number)
 
-
-        Tempfile.open(["#{customer_code}_fenix_invoice",'.txt'], {:external_encoding =>"ASCII"}) do |t|
+        Tempfile.open(["#{importer_tax_id}_fenix_invoice",'.txt'], {:external_encoding =>"ASCII"}) do |t|
           # Write out the header information
           write_fields t, "H", FenixNdInvoiceGenerator::HEADER_OUTPUT_FORMAT, header_map, invoice
 
@@ -90,14 +88,14 @@ module OpenChain; module CustomHandler
             raise "Invoice # #{invoice.invoice_number} generated a Fenix invoice file containing #{line_count} lines.  Invoice's over 999 lines are not supported and must have detail lines consolidated or the invoice must be split into multiple pieces."
           end
 
-          yield(t, customer_code) if block_given?
+          yield(t) if block_given?
         end
       end
     end
 
     def generate_and_send id
-      generate_file(id) do |file, customer_code|
-        ftp_file file, folder: ftp_folder(customer_code)
+      generate_file(id) do |file|
+        ftp_file file, folder: ftp_folder
       end
     end
 
@@ -105,9 +103,7 @@ module OpenChain; module CustomHandler
       connect_vfitrack_net nil
     end
 
-    def ftp_folder(customer_code)
-      # For the momemnt (and possibly forever), due to issues with Fenix ND, we're going to just ignore the customer specfic sub-directories
-      # and load them all through to the "GENERIC" 810 mapping in Fenix ND by putting the files directly in the fenix_invoices directory
+    def ftp_folder
       "to_ecs/fenix_invoices"
     end
 
@@ -172,14 +168,6 @@ module OpenChain; module CustomHandler
         :po_number => lambda {|i, line, tariff| line.po_number},
         :tariff_treatment => lambda {|i, line, tariff| tariff.tariff_provision.blank? ? "2" : tariff.tariff_provision }
       }
-    end
-
-    def fenix_customer_code invoice
-      # Use the importer id associated w/ the invoice and then find the most recent fenix entry associated w/ that importer and pull the fenix customer number
-      # from there.  We want the actual customer number, not the tax id, which is unfortunately what's stored in the importer company record under fenix_customer_number
-      code = Entry.where(importer_id: invoice.importer_id, source_system: OpenChain::FenixParser::SOURCE_CODE).where("customer_number IS NOT NULL").limit(1).order("id DESC").pluck(:customer_number).first
-
-      return code.presence || nil
     end
 
     def convert_company_to_hash company, address = nil
