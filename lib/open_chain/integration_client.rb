@@ -121,7 +121,7 @@ module OpenChain
         OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
         OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_hm_i1') && MasterSetup.get.custom_feature?('H&M I1 Interface')
+      elsif command['path'].include?('_hm_i1/') && MasterSetup.get.custom_feature?('H&M I1 Interface')
         OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_kewill_isf/') && MasterSetup.get.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
