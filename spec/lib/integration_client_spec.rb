@@ -92,6 +92,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
     end
+    context :hm do
+      it "should send data to H&M I1 Interface if feature enabled and path contains _hm_i1" do
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('H&M I1 Interface').and_return(true)
+        OpenChain::CustomHandler::Hm::HmI1Interface.should_receive(:delay).and_return OpenChain::CustomHandler::Hm::HmI1Interface
+        OpenChain::CustomHandler::Hm::HmI1Interface.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name, '12345')
+        cmd = {'request_type'=>'remote_file','path'=>'/_hm_i1/a.csv','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+    end
     context :lands_end do
       it "should send data to Lands End Parts parser" do
         u = Factory(:user,:username=>'integration')
