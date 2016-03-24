@@ -43,8 +43,8 @@ criterion_fields = current_search.criterion_fields_available(current_user) if cu
         <tr>
           <td>
             <select id='unused_sorts' size='10' multiple='multiple'>
-              <%current_search.unused_sort_fields(current_user).each do |mf|-%>
-                <option value='<%=mf.uid%>'><%=mf.label%></option>
+              <%current_search.unused_sort_fields(current_user, true).each do |mf|-%>
+                <option value='<%=mf.uid%>'><%=mf.label(true)%></option>
               <%end-%>
             </select>
           </td>
@@ -53,7 +53,7 @@ criterion_fields = current_search.criterion_fields_available(current_user) if cu
               <%current_search.sort_criterions.each do |sc|-%>
                 <%mf = ModelField.find_by_uid(sc.model_field_uid)%>
                 <% next if mf.blank? %>
-                <option value='<%=mf.uid%>' ord='<%=sc.descending? ? "d" : "a"%>'><%=mf.label%> <%=sc.descending? ? " [Z > A]" : " [A > Z]" %></option>
+                <option value='<%=mf.uid%>' ord='<%=sc.descending? ? "d" : "a"%>'><%=mf.label(true)%> <%=sc.descending? ? " [Z > A]" : " [A > Z]" %></option>
               <%end-%>
             </select>
           </td>
@@ -74,8 +74,8 @@ criterion_fields = current_search.criterion_fields_available(current_user) if cu
           <tr>
             <td>
               <select id='unused_columns' size='10' multiple='multiple'>
-                <%current_search.unused_column_fields(current_user).each do |mf|-%>
-                <option value='<%=mf.uid%>'><%=mf.label%></option>
+                <%current_search.unused_column_fields(current_user, true).each do |mf|-%>
+                <option value='<%=mf.uid%>'><%=mf.label(true)%></option>
                 <%end-%>
               </select>
             </td>
@@ -83,7 +83,7 @@ criterion_fields = current_search.criterion_fields_available(current_user) if cu
               <select id='used_columns' size='10' multiple='multiple'>
                 <%current_search.sorted_columns.each do |sc|-%>
                   <%mf = ModelField.find_by_uid(sc.model_field_uid)%>
-                  <option value='<%=mf.uid%>'><%=mf.can_view?(User.current) ? mf.label: ModelField.disabled_label%></option>
+                  <option value='<%=mf.uid%>'><%=mf.can_view?(User.current) ? mf.label(true) : ModelField.disabled_label%></option>
                 <%end-%>
               </select>
             </td>

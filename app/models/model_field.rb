@@ -945,8 +945,15 @@ class ModelField
     return nil
   end
 
-  def self.sort_by_label(mf_array)
-    return mf_array.sort { |a,b| a.label <=> b.label }
+  def self.sort_by_label(mf_array, show_prefix = nil)
+    # As any actual parameter to label actually means somehting (.ie nil is NOT the same as false)
+    # break out the calls this way
+    if show_prefix.nil?
+      return mf_array.sort { |a,b| a.label <=> b.label }
+    else
+      return mf_array.sort { |a,b| a.label(show_prefix) <=> b.label(show_prefix) }
+    end
+    
   end
 
   def self.disabled_label
