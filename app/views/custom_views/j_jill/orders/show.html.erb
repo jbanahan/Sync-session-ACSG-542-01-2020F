@@ -23,7 +23,11 @@
 # a full table scan is invoked when no piece sets exist for this order.  
 
 # Adding the where causes the query to jump in speed from around 30s to 1s.
-cache [@order, @order.piece_sets.where("piece_sets.order_line_id is not null").order('piece_sets.updated_at DESC').first, 'jjillorder'] do%>
+
+# Adding most updated product record because we pull data directly from products below, so if a product is updated on the backend (like via a product upload)
+# that info must show here too (this happened recently with F/W being updated and not causing this screen to reload)
+most_recently_updated_product = Product.joins(:order_lines).where(order_lines: {order_id: @order.id}).order("products.updated_at DESC").first
+cache [@order, @order.piece_sets.where("piece_sets.order_line_id is not null").order('piece_sets.updated_at DESC').first, most_recently_updated_product, 'jjillorder'] do%>
 <% 
 require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 my_k = Class.new do
