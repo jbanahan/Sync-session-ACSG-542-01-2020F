@@ -23,4 +23,8 @@ class CommercialInvoiceLine < ActiveRecord::Base
   def total_entered_value
     BigDecimal.new(self.commercial_invoice_tariffs.map(&:entered_value).compact.sum)
   end
+
+  def duty_plus_fees_add_cvd_amounts
+    self.duty_plus_fees_amount + ([add_duty_amount, cvd_duty_amount]).compact.sum
+  end
 end

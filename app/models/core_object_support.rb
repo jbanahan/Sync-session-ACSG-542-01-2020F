@@ -20,7 +20,7 @@ module CoreObjectSupport
     base.instance_eval("has_many   :linked_attachments, :as => :attachable, :dependent => :destroy")
     base.instance_eval("has_many   :linkable_attachments, :through => :linked_attachments")
     base.instance_eval("has_many   :change_records, :as => :recordable")
-    base.instance_eval("has_many :sync_records, :as => :syncable, :dependent=>:destroy")
+    base.instance_eval("has_many :sync_records, :as => :syncable, :dependent=>:destroy, :autosave=>true, :inverse_of => :syncable")
     base.instance_eval("has_many :business_validation_results, as: :validatable, dependent: :destroy")
     base.instance_eval("has_many :workflow_instances, as: :base_object, dependent: :destroy, inverse_of: :base_object")
     base.instance_eval("has_one :workflow_processor_run, as: :base_object, dependent: :destroy, inverse_of: :base_object")
@@ -50,6 +50,10 @@ module CoreObjectSupport
       uniq.
       order("business_validation_rules.name").
       pluck("business_validation_rules.name")
+  end
+
+  def any_failed_rules?
+    self.business_validation_results.any? {|r| r.failed? }
   end
 
   def attachment_types

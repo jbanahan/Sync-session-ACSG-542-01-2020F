@@ -1,8 +1,6 @@
 class SyncRecord < ActiveRecord::Base
-  belongs_to :syncable, :polymorphic => true
+  belongs_to :syncable, polymorphic: true, inverse_of: :sync_records
   validates :trading_partner, :presence=>true
-  validates :syncable_id, :presence=>true
-  validates :syncable_type, :presence=>true
 
   scope :problems, lambda { where(self.problems_clause()) }
 
@@ -15,5 +13,15 @@ class SyncRecord < ActiveRecord::Base
 
   def self.problems_clause clause_alias = ""
     "LENGTH(IFNULL(#{clause_alias}failure_message,\"\")) > 0 OR (#{clause_alias}sent_at < NOW() - INTERVAL 1 HOUR AND #{clause_alias}sent_at > IFNULL(#{clause_alias}confirmed_at,NOW() - INTERVAL 100 YEAR) )"
+  end
+
+  def copy_attributes_to sr
+    copy_attrs = self.attributes.keys - ['id', 'syncable_id', 'syncable_type', 'created_at', 'updated_at']
+    attrs = {}
+    copy_attrs.each do |k|
+      attrs[k] = self[k]
+    end
+    sr.assign_attributes attrs
+    nil
   end
 end

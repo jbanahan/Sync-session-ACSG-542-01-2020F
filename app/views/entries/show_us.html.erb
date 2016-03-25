@@ -351,7 +351,12 @@ $(function() {
       <a href='#c_invoices'>Commercial Invoices</a>
     </div>
     <h1>Broker Invoices</h1>
-    <%fields = [:bi_invoice_number,:bi_invoice_date,:bi_suffix,:bi_invoice_total,:bi_currency]%>
+    <%
+      fields = [:bi_invoice_number,:bi_invoice_date,:bi_suffix,:bi_invoice_total,:bi_currency]
+      # The need for the order by here is due to the possibility of updating invoices in the kewill parser, which will mean that
+      # invoices may be out of chronological order if we just showed them in order by database id.
+      broker_invoices = @entry.broker_invoices.order(:invoice_date, :invoice_number).to_a
+    %>
     <table class='detail_table'>
       <thead>
         <tr>
@@ -359,7 +364,7 @@ $(function() {
         </tr>
       </thead>
       <tbody>
-        <%@entry.broker_invoices.each do |line|%>
+        <%broker_invoices.each do |line|%>
           <%if line.can_view? current_user %>
             <tr class='hover'>
               <%= show_model_fields line, fields, table: true, editor_only: true, bi_invoice_number: {wrap_with: lambda{|mf, value| link_to(value, "#bi_#{line.id}")}} %>
@@ -369,7 +374,7 @@ $(function() {
       </tbody>
     </table>
     <hr />
-    <%@entry.broker_invoices.each do |bi|%>
+    <%broker_invoices.each do |bi|%>
       <% if bi.can_view? current_user%>
         <a name='bi_<%=bi.id%>'></a>
         <table class='ent_columns'>

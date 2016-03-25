@@ -188,13 +188,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def preprocess entry
-      # Delete all the dependent components of the entry, we'll recreate
-      # them all from the data we're parsing
-      entry.commercial_invoices.destroy_all
-      entry.broker_invoices.destroy_all
-      entry.entry_comments.destroy_all
-      entry.containers.destroy_all
-
       entry.total_invoiced_value = 0
       entry.broker_invoice_total = 0
       entry.total_units = 0
@@ -213,6 +206,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         attributes[c[:attribute]] = nil
       end
       entry.assign_attributes attributes
+      nil
     end
 
     # Any sort of post-handling of the data that needs to be done prior to saving belongs in this method
@@ -472,7 +466,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_notes e, entry
-      entry.entry_comments.each {|c| c.mark_for_destruction}
+      entry.entry_comments.destroy_all
 
       customs_response_times = []
       Array.wrap(e[:notes]).each do |n|
@@ -568,6 +562,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_commercial_invoices e, entry
+      entry.commercial_invoices.destroy_all
+
       Array.wrap(e[:commercial_invoices]).each do |i|
         invoice = entry.commercial_invoices.build
         set_invoice_header_data i, invoice
@@ -713,6 +709,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_containers e, entry
+      entry.containers.destroy_all
+
       Array.wrap(e[:containers]).each do |c|
         container = entry.containers.build
         set_container_data c, container
@@ -735,17 +733,73 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_broker_invoices e, entry
+      # Don't destroy the invoices where the incoming data has the same fingerprint as the existing
+      # invoice, we want to retain any sync records that might be associated with existing invoices
+      fingerprint_user = User.integration
+      fingerprints = {}
+      entry.broker_invoices.each do |bi|
+        fingerprints[bi.invoice_number] = fingerprint_invoice(bi, fingerprint_user)
+      end
+
+      invoices_saved = Set.new
+
       Array.wrap(e[:broker_invoices]).each do |bi|
-        invoice = entry.broker_invoices.build
+        invoice_number = bi[:file_no].to_s + bi[:suffix].to_s
+
+        # Migrate any existing invoice's sync records to the new invoice record we're creating
+        existing_invoice = entry.broker_invoices.find {|inv| inv.invoice_number == invoice_number } 
+
+        if existing_invoice
+          invoice = BrokerInvoice.new entry: entry
+        else
+          invoice = entry.broker_invoices.build
+        end
+
         set_broker_invoice_header_data bi, invoice
 
         Array.wrap(bi[:lines]).each do |bl|
           line = invoice.broker_invoice_lines.build
           set_broker_invoice_line_data bl, line
         end
+
+        if existing_invoice
+          existing_invoice.sync_records.each do |existing_sync|
+            sr = invoice.sync_records.build 
+            existing_sync.copy_attributes_to sr
+          end
+          # Delete the existing invoice and then add the new invoice to the entry
+          # We have to destroy and not just mark as destroyed, otherwise the validation
+          # later that ensures the same invoice number is used will trip
+          existing_invoice.destroy
+          # Add to the entry WITHOUT triggering a database insert (the save at the end on the entry
+          # should trigger the database insert).
+          # This is literally the least hacky way I could see to add an object onto a relation that
+          # doesn't do a insert right away (stupid rails)
+          entry.association(:broker_invoices).add_to_target(invoice)
+        end
+
+        invoices_saved << invoice_number
       end
 
+      # Now delete all invoices that were already persisted but not referenced in the invoices_saved
+      entry.broker_invoices.each do |inv|
+        next if inv.marked_for_destruction? || invoices_saved.include?(inv.invoice_number) || !inv.persisted?
+
+        inv.mark_for_destruction
+      end
       nil
+    end
+
+    def fingerprint_invoice broker_invoice, user
+      fingerprint_setup = {
+        model_fields: [:bi_invoice_number, :bi_customer_number, :bi_invoice_date, :bi_invoice_total],
+        broker_invoice_lines: {
+          model_fields: [:bi_line_charge_code, :bi_line_charge_description, :bi_line_charge_amount, :bi_line_vendor_name, :bi_line_vendor_reference, :bi_line_charge_type]
+        }
+
+      }
+
+      broker_invoice.generate_fingerprint fingerprint_setup, user
     end
 
     def set_broker_invoice_header_data bi, invoice
