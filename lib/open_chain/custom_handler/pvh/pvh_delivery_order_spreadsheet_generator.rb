@@ -160,7 +160,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
     del.arrival_date = entry.arrival_date ? entry.arrival_date.in_time_zone("America/New_York").to_date : nil
     del.instruction_provided_by = ["PVH CORP", "200 MADISON AVE", "NEW YORK, NY 10016-3903"]
     # Reference number has Country of Export prefaced on it.  For PVH, this will only ever be a single country.
-    country_export = entry.export_country_codes.split("\n").first.strip
+    country_export = entry.export_country_codes.to_s.split("\n").first.strip
     del.body = ["PORT OF DISCHARGE: #{entry.unlading_port.try(:name)}", "REFERENCE: #{country_export}#{entry.broker_reference}", ""]
 
     del
