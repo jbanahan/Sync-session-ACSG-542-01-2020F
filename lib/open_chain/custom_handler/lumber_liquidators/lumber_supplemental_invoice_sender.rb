@@ -24,8 +24,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSu
   end
 
   def send_invoice invoice
-    wb, sheet = XlsMaker.create_workbook_and_sheet invoice.invoice_number, []
-    generate_supplemental_summary_page sheet, invoice
+    wb = generate_invoice invoice
 
     Tempfile.open([invoice.invoice_number, ".xls"]) do |file|
       Attachment.add_original_filename_method file, "VFI Supplemental Invoice #{invoice.invoice_number}.xls"
@@ -43,6 +42,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSu
         OpenMailer.send_simple_html("otwap@lumberliquidators.com", "Supplemental Invoice #{invoice.invoice_number}", "Attached is the supplemental invoice # #{invoice.invoice_number}.", file).deliver!
       end
     end
+  end
+
+  def generate_invoice invoice
+    wb, sheet = XlsMaker.create_workbook_and_sheet invoice.invoice_number, []
+    generate_supplemental_summary_page sheet, invoice
+    wb
   end
 
 end; end; end; end

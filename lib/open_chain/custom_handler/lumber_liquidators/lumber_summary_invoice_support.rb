@@ -34,7 +34,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberS
       inv_total = invoice.invoice_total.presence || BigDecimal("0")
       total += inv_total
 
-      XlsMaker.add_body_row sheet, (row += 1), [invoice.invoice_number, invoice.invoice_date], column_widths
+      invoice_cell = invoice.entry ? XlsMaker.create_link_cell(invoice.entry.excel_url, invoice.invoice_number.to_s) : invoice.invoice_number
+      XlsMaker.add_body_row sheet, (row += 1), [invoice_cell, invoice.invoice_date], column_widths
       XlsMaker.insert_body_row sheet, (row), 2, [inv_total], column_widths, true, format: invoice_amount_format
     end
 

@@ -62,7 +62,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
       total = amounts.delete :total
       grand_total += total
 
-      first_row = [inv.invoice_number, inv.invoice_date, total]
+      invoice_cell = inv.entry ? XlsMaker.create_link_cell(inv.entry.excel_url, inv.invoice_number.to_s) : inv.invoice_number
+      first_row = [invoice_cell, inv.invoice_date, total]
 
       rows = 0
       amounts.each_pair do |po_cont, values|

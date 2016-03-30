@@ -36,6 +36,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
 
     invoice.reload
   }
+  before :each do
+    ms = double("MasterSetup")
+    ms.stub(:request_host).and_return "http://localhost"
+    MasterSetup.stub(:get).and_return ms
+  end
 
   describe "generate_report" do
     it "creates xls file with invoice data" do
@@ -48,13 +53,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       sheet = wb.worksheet "Details"
 
       expect(sheet.row(0)).to eq ["VFI Invoice Number", "Invoice Date", "Invoice Total", "PO Number", "Container Number", "Ocean Freight", "Duty", "Fees", "PO Total"]
-      expect(sheet.row(1)).to eq ["INV123", Date.new(2016, 3, 1), 540.0, "PO1", "12345", 66.67, 140.0, 100.0, 306.67]
+      expect(sheet.row(1)).to eq [Spreadsheet::Link.new(invoice.entry.excel_url, "INV123"), Date.new(2016, 3, 1), 540.0, "PO1", "12345", 66.67, 140.0, 100.0, 306.67]
       expect(sheet.row(2)).to eq ["", "", "", "PO2", "98765", 33.33, 150.0, 50.0, 233.33]
 
       # What this is testing is that we're prorating the duty amounts IF the duty amount listed on the broker invoice is not the same as the amount
       # on the actual entry (.ie cases where we back out duty amounts or the original billed amount was wrong).
       # We're also testing the proration on negative amounts (which has some slight nuance to handling it)
-      expect(sheet.row(3)).to eq ["INV123A", Date.new(2016, 3, 2), -150.0, "PO1", "12345", 0.0, -100, 0.0, -100]
+      expect(sheet.row(3)).to eq [Spreadsheet::Link.new(invoice_2.entry.excel_url, "INV123A"), Date.new(2016, 3, 2), -150.0, "PO1", "12345", 0.0, -100, 0.0, -100]
       expect(sheet.row(4)).to eq ["", "", "", "PO2", "98765", 0, -50, 0, -50]
       expect(sheet.row(5)).to eq []
       expect(sheet.row(6)).to eq ["GRAND TOTAL", "", 390.0]
