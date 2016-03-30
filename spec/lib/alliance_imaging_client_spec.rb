@@ -36,7 +36,7 @@ describe OpenChain::AllianceImagingClient do
         @tempfile << f.read
       end
       @hash = {"file_name"=>"file.pdf", "file_number"=>"123456", "doc_desc"=>"Testing", 
-                "suffix"=>"123456", "doc_date"=>Time.now}
+                "suffix"=>"123456", "doc_date"=>"2016-01-01 00:00"}
     end
 
     after :each do
@@ -120,6 +120,33 @@ describe OpenChain::AllianceImagingClient do
       @e1.reload
       expect(@e1.attachments.size).to eq 1
       expect(@e1.attachments.first.alliance_revision).to eq 1
+    end
+
+    it "if suffix and revision are the same, it keeps the newest document" do
+      @hash['suffix'] = '01000'
+
+      # The existing document is newer, so it should be kept
+      existing = @e1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: @hash['doc_desc'], source_system_timestamp: Time.zone.parse("2016-03-01 00:00")
+
+      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+      @e1.reload
+      expect(@e1.attachments.size).to eq 1
+      expect(@e1.attachments.first).to eq existing
+    end
+
+    it "keeps the image from the request if its newer than an existing document with the same type/revision" do
+      @hash['suffix'] = '01000'
+
+      # The existing document is newer, so it should be kept
+      existing = @e1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: @hash['doc_desc'], source_system_timestamp: Time.zone.parse("2015-03-01 00:00")
+
+      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+      @e1.reload
+      expect(@e1.attachments.size).to eq 1
+      expect(@e1.attachments.first).not_to eq existing
+      expect(@e1.attachments.first.attached_file_name).to eq "file.pdf"
     end
 
     context "Fenix B3 Files" do

@@ -97,8 +97,17 @@ class OpenChain::AllianceImagingClient
         # info comes out of order (.ie revision 1 is sent to VFI Track prior to revision 0).  There's no real ordering of the data in Kewill Imaging either
         # so we don't actually get the document lists from them based on the order they're attached as well, so it's very possible the message queue ordering
         # is not ordered correctly by revision
-        return if !att.alliance_revision.blank? && !att.alliance_suffix.blank? &&
-            att.attachable.attachments.where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision > ?",att.alliance_revision).size > 0
+
+        # We also need to make sure that if there are other files with the same revision/suffix that we are keeping the document with the newest source system timestamp
+        if !att.alliance_revision.blank? && !att.alliance_suffix.blank?
+          other_attachments = att.attachable.attachments.where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision >= ?",att.alliance_revision)
+
+          highest_revision = other_attachments.sort_by {|a| a.alliance_revision }.last
+          return if highest_revision && highest_revision.alliance_revision > att.alliance_revision
+
+          most_recent = other_attachments.sort_by {|a| a.source_system_timestamp }.last          
+          return if most_recent && most_recent.source_system_timestamp && most_recent.source_system_timestamp > att.source_system_timestamp
+        end
 
         att.save!
         
