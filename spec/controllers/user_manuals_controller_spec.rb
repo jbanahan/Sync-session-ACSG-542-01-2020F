@@ -96,6 +96,30 @@ describe UserManualsController do
       expect(assigns(:user_manual)).to eq @um
     end
   end
+  describe '#for_referer' do
+    it "should return page" do
+      u = Factory(:user)
+      sign_in_as u
+      # setup dummy data
+      m1 = double('manual1')
+      m2 = double('manual2')
+      [m1,m2].each_with_index do |m,i|
+        m.stub(:name).and_return "manual#{i+1}"
+        m.stub(:id).and_return(i+1)
+      end
+
+      request.env['HTTP_REFERER'] = 'http://example.com/my_page'
+
+      UserManual.should_receive(:for_user_and_page).
+        with(u,'http://example.com/my_page').
+        and_return [m2,m1] #returning in reverse order to confirm that sorting works
+
+      get :for_referer
+
+      expect(response).to be_success
+      expect(assigns(:manuals)).to eq [m1,m2]
+    end
+  end
   describe '#download' do
     before :each do
       @um = Factory(:user_manual)
