@@ -3,7 +3,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_h
 module ConfigMigrations; module LL; class Sow171
   def up
     create_fields
-    run_change_comparator
+    update_defaults
   end
   def down
     ActiveRecord::Base.transaction do
