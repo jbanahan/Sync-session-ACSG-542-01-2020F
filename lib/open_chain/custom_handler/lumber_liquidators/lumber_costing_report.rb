@@ -259,10 +259,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     order = @order_cache[po]
     if order.nil?
       order = order_api_client.find_by_order_number po, [:ord_ord_num, :ordln_line_number, :ordln_puid]
-      if order.nil?
+      if order['order'].nil? || Array.wrap(order['order']['order_lines']).length == 0
         order = {}
       else
         # Normalize the part number - Lumber sends a ton of leading zeros which we don't have in the entry.
+        order = order['order']
+        
         order['order_lines'].each do |ol|
           ol['ordln_puid'] = normalize_part_number(ol['ordln_puid'])
         end

@@ -20,17 +20,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     
     let (:valid_api_response) {
       {
-        'order_lines' => [
-          {'ordln_puid' => "00123", "ordln_line_number" => 5}
-        ]
+        'order' => {
+          'order_lines' => [
+            {'ordln_puid' => "00123", "ordln_line_number" => 5}
+          ]  
+        }
       }
     }
 
     let (:invalid_api_response) {
       {
-        'order_lines' => [
-          {'ordln_puid' => "UID", "ordln_line_number" => 5}
-        ]
+        'order' => {
+          'order_lines' => [
+            {'ordln_puid' => "UID", "ordln_line_number" => 5}
+          ]  
+        }
       }
     }
 
