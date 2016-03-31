@@ -2,7 +2,7 @@ class UserManualsController < ApplicationController
   include DownloadS3ObjectSupport
 
   skip_before_filter :portal_redirect, only: [:download]
-  around_filter :admin_secure, except: [:download]
+  around_filter :admin_secure, except: [:download,:for_referer]
   def index
     @user_manuals = UserManual.order(:name)
   end
@@ -50,6 +50,13 @@ class UserManualsController < ApplicationController
         download_attachment um.attachment
       end
     end
+  end
+
+  def for_referer
+    ref = request.referer
+    ref = '' if request.referer.blank?
+    @manuals = UserManual.for_user_and_page(current_user,ref).sort {|a,b| a.name.downcase <=> b.name.downcase}
+    render layout: false
   end
 
   def send_manual um

@@ -872,6 +872,7 @@ OpenChain::Application.routes.draw do
 
   resources :user_manuals, except: [:show] do
     get :download, on: :member
+    get :for_referer, on: :collection
   end
 
   resources :custom_view_templates, except: [:show]

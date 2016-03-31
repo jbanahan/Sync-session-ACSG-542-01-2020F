@@ -95,11 +95,13 @@
                 <div class="btn-group">
                   <button type="button" class="btn btn-default" notification-center-toggle-target='messages'>Messages</button>
                   <button type="button" class="btn btn-default" notification-center-toggle-target='tasks'>Tasks</button>
+                  <button type="button" class="btn btn-default" notification-center-toggle-target='manuals'>Manuals</button>
                 </div>
               </div>
               <div class="modal-body" id='notification-center-body'>
                 <div notification-center-pane='messages' content-url='/messages'></div>
                 <div notification-center-pane='tasks' content-url='/my_tasks' data-load-trigger='chain:workflow-load'></div>
+                <div notification-center-pane='manuals' content-url='/user_manuals/for_referer'></div>
               </div>
             </div><!-- /.modal-content -->
           </div><!-- /.modal-dialog -->
@@ -140,10 +142,10 @@
           <%end%>
           <%=nav_section 'binv-sec', 'Broker Invoice', current_user.view_broker_invoices? do%>
             <%=nav_item 'Search', '/broker_invoices?force_search=true'%>
-            <% if current_user.view_summary_statements?%> 
+            <% if current_user.view_summary_statements?%>
               <%=nav_item 'Summary Statements', '/summary_statements'%>
             <% end %>
-            <%if current_user.edit_summary_statements?%> 
+            <%if current_user.edit_summary_statements?%>
               <%=nav_item 'New Statement', '/summary_statements/new'%>
             <%end%>
           <%end%>
