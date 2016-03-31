@@ -277,7 +277,7 @@ describe EntitySnapshot do
 
     it "should call EntityCompare.process with snapshot" do
       described_class.any_instance.stub(:write_s3)
-      OpenChain::EntityCompare::EntityComparator.should_receive(:delay).and_return(OpenChain::EntityCompare::EntityComparator)
+      OpenChain::EntityCompare::EntityComparator.should_receive(:delay).with(priority: 10).and_return(OpenChain::EntityCompare::EntityComparator)
       OpenChain::EntityCompare::EntityComparator.should_receive(:process_by_id)
 
       ent = Factory(:entry)

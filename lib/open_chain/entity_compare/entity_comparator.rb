@@ -35,7 +35,7 @@ module OpenChain; module EntityCompare; class EntityComparator
 
 
       OpenChain::EntityCompare::ComparatorRegistry.registered.each do |comp|
-        comp.delay.compare(rec_type, rec_id, 
+        comp.delay(priority: 10).compare(rec_type, rec_id, 
           old_bucket, old_path, old_version, 
           newest_unprocessed.bucket, newest_unprocessed.doc_path, newest_unprocessed.version
         )

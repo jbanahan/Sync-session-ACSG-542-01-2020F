@@ -18,7 +18,9 @@ class EntitySnapshot < ActiveRecord::Base
     es = EntitySnapshot.new(:recordable=>entity,:user=>user,:snapshot=>json,:imported_file=>imported_file)
     es.write_s3 json
     es.save
-    OpenChain::EntityCompare::EntityComparator.delay.process_by_id(es.id)
+    # Make these a lower queue priority..when uploading large numbers of orders/products these can choke out
+    # reports and such if they're running at a lower priority
+    OpenChain::EntityCompare::EntityComparator.delay(priority: 10).process_by_id(es.id)
     es
   end
 

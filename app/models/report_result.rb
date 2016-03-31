@@ -38,10 +38,11 @@ class ReportResult < ActiveRecord::Base
       :friendly_settings_json=>inner_opts[:friendly_settings].to_json,:settings_json=>inner_opts[:settings].to_json,
       :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id, :custom_report_id=>inner_opts[:custom_report_id]
     )
+    # The lower the priority the quicker dj picks these up from the queue - we want these done right away since they're user init'ed.
     if report_class.respond_to?(:alliance_report?) && report_class.alliance_report?
-      rr.delay(:priority=>100).execute_alliance_report
+      rr.delay(:priority=>-1).execute_alliance_report
     else
-      rr.delay(:priority=>100).execute_report
+      rr.delay(:priority=>-1).execute_report
     end
     
   end
