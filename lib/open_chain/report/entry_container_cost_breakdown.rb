@@ -23,8 +23,9 @@ module OpenChain; module Report; class EntryContainerCostBreakdown
 
     entries = find_entries run_by, settings['customer_number'], start_date, end_date
     row_number = 0
-    entries.each do |entry|
-      next unless entry.can_view?(run_by)
+    entries.each do |id|
+      entry = load_entry(id)
+      next if entry.nil? || !entry.can_view?(run_by)
 
       freight_amounts = container_invoice_amounts entry, '0600'
       brokerage_amounts = container_invoice_amounts entry
@@ -53,7 +54,11 @@ module OpenChain; module Report; class EntryContainerCostBreakdown
   end
 
   def find_entries run_by, customer, start_date, end_date
-    Entry.search_secure(run_by, Entry.scoped).where(customer_number: customer).where("release_date >= ? and release_date < ?", start_date, end_date).includes([:containers => [:commercial_invoice_lines => [:commercial_invoice_tariffs]], :commercial_invoices => [:commercial_invoice_lines => [:commercial_invoice_tariffs]], :broker_invoices => [:broker_invoice_lines]]).order(:release_date)
+    Entry.search_secure(run_by, Entry.scoped).where(customer_number: customer).where("release_date >= ? and release_date < ?", start_date, end_date).order(:release_date)
+  end
+
+  def load_entry id
+    Entry.where(id: id).includes([:containers => [:commercial_invoice_lines => [:commercial_invoice_tariffs]], :commercial_invoices => [:commercial_invoice_lines => [:commercial_invoice_tariffs]], :broker_invoices => [:broker_invoice_lines]]).first
   end
 
   def headers 
