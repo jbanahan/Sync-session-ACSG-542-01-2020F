@@ -14,13 +14,22 @@ module OpenChain
       # These are the ONLY the RL Canada importer accounts we're doing automatically, other RL accounts are done by hand for now
       RL_INVOICE_CONFIGS ||= {
         :rl_canada => {name: "RL Canada", tax_id: '806167003RM0001', start_date: Date.new(2013, 6, 01), 
-          email_to: ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "paula.mildon@ralphlauren.com", "brian.fenelli@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
-          unallocated_profit_center: "19999999", company_code: "1017", filename_prefix: "RL"
+          email_to: ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "accounting-ca@vandegriftinc.com"],
+          unallocated_profit_center: "19999999", company_code: "1017", filename_prefix: "RL", brokerage_gl_account: "52111300", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", invoice_total_profit_center: "49999999",
+          deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
         }, 
-        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["joanne.pauta@ralphlauren.com", "matthew.dennis@ralphlauren.com", "jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "paula.mildon@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
-          unallocated_profit_center: "20399999", company_code: "1710", filename_prefix: "CM"
+        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
+          unallocated_profit_center: "20399999", company_code: "1710", filename_prefix: "CM", brokerage_gl_account: "52111300", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", invoice_total_profit_center: "49999999",
+          deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
+        },
+        :factory_stores => {name: "Polo Factory Stores", tax_id: '806167003RM0002', start_date: Date.new(2016,3,25),
+          email_to: ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
+          unallocated_profit_center: "20299699", company_code: "1540", filename_prefix: "PFS", brokerage_gl_account: "50960180", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", nvoice_total_profit_center: nil,
+          deployed_brand_gl_account: "", non_deployed_brand_gl_account: "", duty_gl_account: "", business_area: "1115"
         }
       }
+
+      
 
       def initialize env = :prod, custom_where = nil
         # you can use a non-:prod env to prevent the documents from being emailed / ftp'ed and then use the export job attachments created
@@ -165,6 +174,8 @@ module OpenChain
       end
 
       def find_profit_center entry, rl_company
+        return nil if rl_company == :factory_stores
+
         brand = find_rl_brand entry
 
         if brand
@@ -736,9 +747,10 @@ module OpenChain
             profit_center = raw_profit_center.blank? ? @config[:unallocated_profit_center] : raw_profit_center
 
             # We only need to output the Duty and GST lines if this entry hasn't already been invoiced.
-            unless @inv_generator.previously_invoiced? broker_invoice.entry
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "23109000", profit_center, broker_invoice.entry.total_duty, "Duty", :duty, broker_invoice.entry.entry_number)
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", @config[:unallocated_profit_center], broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
+            # Factory Stores doesn't need these lines since we bill them seperated since everything is K84 for them.
+            if @rl_company != :factory_stores && !@inv_generator.previously_invoiced?(broker_invoice.entry)
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, @config[:duty_gl_account], profit_center, broker_invoice.entry.total_duty, "Duty", :duty, broker_invoice.entry.entry_number, nil)
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, @config[:gst_hst_gl_account], @config[:unallocated_profit_center], broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number, nil)
             end
 
             broker_invoice.broker_invoice_lines.each do |line|
@@ -746,26 +758,34 @@ module OpenChain
               next if line.duty_charge_type?
 
               if line.hst_gst_charge_code?
-                gl_account = "14311000"
+                gl_account = @config[:gst_hst_gl_account]
               elsif line.charge_code == "22"
                 # 22 is the Brokerage charge code.  RL stated they only wanted us to send this account for the $55 brokerage
                 # fee - which is all we currently bill for under the 22 code. So rather than tie the code to a billing amount that 
                 # will probably change at some point in the future, I'm using the code.
-                gl_account = "52111300"
+                gl_account = @config[:brokerage_gl_account]
               else
-                # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
-                gl_account = raw_profit_center.blank? ? "23101900" : "52111200"
+                # Technically, this shouldn't happen.  The invoices for PFS should only include brokerage and hst/gst on the brokerage invoice.
+                # But, since it's technically possible that another charge will show on the invoice, we'll just bill it to the brokerage
+                # account too.
+                if @rl_company == :factory_stores
+                  gl_account = @config[:brokerage_gl_account]
+                else
+                  # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
+                  gl_account = raw_profit_center.blank? ? @config[:non_deployed_brand_gl_account] : @config[:deployed_brand_gl_account]
+                end
+                
               end
 
               local_profit_center = (line.hst_gst_charge_code? ? @config[:unallocated_profit_center] : profit_center)
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, gl_account, local_profit_center, line.charge_amount, line.charge_description, :brokerage, broker_invoice.entry.entry_number)
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, gl_account, local_profit_center, line.charge_amount, line.charge_description, :brokerage, broker_invoice.entry.entry_number, @config[:business_area])
             end
 
             # There always needs to be a "total" line, regardless of whether there's duty / gst listed or not,
             # It needs to be the sum of all the brokerage charge and duty/gst lines
             total_amount = rows.inject(BigDecimal.new("0.00")) {|sum, row| sum + row[12]}
 
-            rows.insert(0, create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "100023825", "49999999", total_amount, "", :total, broker_invoice.entry.entry_number))
+            rows.insert(0, create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, @config[:invoice_total_gl_account], @config[:invoice_total_profit_center], total_amount, "", :total, broker_invoice.entry.entry_number, nil))
 
             # For any invoices where the total invoice amount is a credit (ie. total_amount < 0) we need to assign different document types and posting keys
             # and ensure all amounts are positive values
@@ -780,7 +800,7 @@ module OpenChain
             rows
           end
 
-          def create_line invoice_number, invoice_date, gl_account, profit_center, amount, description, line_type, entry_number
+          def create_line invoice_number, invoice_date, gl_account, profit_center, amount, description, line_type, entry_number, business_area
             now = Time.zone.now
 
             row = []
@@ -809,7 +829,7 @@ module OpenChain
             row << nil
             row << nil
             row << profit_center
-            row << nil
+            row << business_area
             row << entry_number
             row << (description.blank?  ? nil : description[0,50]) #Only allows 50 chars max (blank/nil is just to make output between xls and txt easier to test)
 
@@ -944,7 +964,8 @@ module OpenChain
 
           # Because RL can't consistently supply us with PO data for stock transfers between 
           # US and Canada we're going to force all their invoices to use the ffi format.
-          if rl_company == :rl_canada && entry.vendor_names.to_s.strip =~ /^Ralph Lauren/i
+          # We're only invoicing the brokerage for factory stores, so they should only ever get the FF format
+          if rl_company == :factory_stores || (rl_company == :rl_canada && entry.vendor_names.to_s.strip =~ /^Ralph Lauren/i)
             output_format = :ffi
           else
             # Can we find an actual Brand?
