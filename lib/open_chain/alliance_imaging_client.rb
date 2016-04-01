@@ -1,12 +1,20 @@
 require 'open_chain/sqs'
 require 'open_chain/field_logic'
+require 'open_chain/delayed_job_extensions'
 
-class OpenChain::AllianceImagingClient 
+class OpenChain::AllianceImagingClient
+  extend OpenChain::DelayedJobExtensions
 
   def self.run_schedulable
     # Rather than add error handlers to ensure every call below runs even if the previous fails
     # just delay them all even though this method is more than likely being already run in a delayed job queue
-    self.delay.consume_images
+
+    # Don't delay the consume images job if there's already 2 in the queue...don't want to monopolize the queue with these
+    # if we get a large backlog
+    if queued_jobs_for_method(self, :consume_images) < 2
+      self.delay.consume_images
+    end
+    
     self.delay.consume_stitch_responses
     self.delay.send_outstanding_stitch_requests
   end

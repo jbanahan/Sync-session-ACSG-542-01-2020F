@@ -1,4 +1,4 @@
-module OpenChain::DelayedJobExtensions
+module OpenChain; module DelayedJobExtensions
   extend ActiveSupport::Concern
 
   def get_class dj
@@ -19,4 +19,13 @@ module OpenChain::DelayedJobExtensions
     end
     by_dj_id
   end
-end
+
+  def queued_jobs_for_method klass, method_name, only_include_running_jobs = false
+    query = Delayed::Job.where("handler like ?", "%object:%'#{klass.name}'\n%").where("handler LIKE ?", "%method_name:%:#{method_name.to_s}%\n")
+    if only_include_running_jobs
+      query = query.where("locked_by IS NOT NULL")
+    end
+    query.count
+  end
+
+end; end

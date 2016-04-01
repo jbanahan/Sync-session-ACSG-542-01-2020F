@@ -497,6 +497,17 @@ ERR
 
       OpenChain::AllianceImagingClient.run_schedulable
     end
+
+    it "does not call consume_images if 2 jobs are already running" do
+      OpenChain::AllianceImagingClient.should_receive(:queued_jobs_for_method).with(OpenChain::AllianceImagingClient, :consume_images).and_return 2
+
+      OpenChain::AllianceImagingClient.stub(:delay).and_return OpenChain::AllianceImagingClient
+      OpenChain::AllianceImagingClient.should_not_receive(:consume_images)
+      OpenChain::AllianceImagingClient.should_receive(:consume_stitch_responses)
+      OpenChain::AllianceImagingClient.should_receive(:send_outstanding_stitch_requests)
+
+      OpenChain::AllianceImagingClient.run_schedulable
+    end
   end
 
   describe "process_fenix_nd_image_file" do
