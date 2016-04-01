@@ -13,10 +13,5 @@ if !Rails.env.test? && ActiveRecord::Base.connection.table_exists?('master_setup
     comparators_to_register << OpenChain::EntityCompare::RunBusinessValidations
   end
 
-  if MasterSetup.get.system_code == 'll'
-    comparators_to_register << OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator
-    comparators_to_register << OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignmentChangeComparator
-  end
-
   comparators_to_register.each {|c| OpenChain::EntityCompare::ComparatorRegistry.register c}
 end
