@@ -14,20 +14,36 @@ module OpenChain; module Report; class SgDutyDueReport
     self.new.run(run_by)
   end
 
-  def run(run_by)
-    company = Company.where(alliance_customer_number: 'sgold').first
-    pdf = generate_pdf(run_by, company)
-    pdf_to_tempfile pdf, 'SgDutyDueReport-'
+  def self.run_schedulable opts_hash={}
+    self.new.send_email('email' => opts_hash['email'])
   end
 
-  def generate_pdf(user, company)
+  def run(run_by)
+    pdf = generate_pdf(run_by)
+    pdf_to_tempfile pdf, 'SgDutyDueReport-', file_name: file_name
+  end
+
+  def send_email(settings)
+    pdf = generate_pdf(User.integration)
+    pdf_to_tempfile pdf, 'SgDutyDueReport-', file_name: file_name do |t|
+      subject = "Duty Due Report"
+      body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
+      OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
+    end
+  end
+
+  def file_name
+    "Duty Due Report - #{Date.today.strftime('%Y-%m-%d')}.pdf"
+  end
+
+  def generate_pdf(user)
     Prawn::Font::AFM.hide_m17n_warning = true #suppress warning triggered by #indent
     d = Prawn::Document.new page_size: "LETTER", page_layout: :landscape, margin: [36, 20, 36, 20]
     d.font("Courier", :size => 10)
     d.repeat(:all, :dynamic => true) { d.text_box header(d.page_number), :at => [0, d.bounds.top] }
     d.bounding_box([-5, 510], :width => d.bounds.width) do
       content = [col_names]
-      write_body content, create_digest(get_entries(user, company))
+      write_body content, create_digest(get_entries user)
       d.table(content, header: true, cell_style: { borders: []}, width: table_width, column_widths: column_widths) do |t|
         t.columns(5).style(align: :right)
         t.rows(0..-1).style(padding: [0,5,0,5])
@@ -54,7 +70,8 @@ module OpenChain; module Report; class SgDutyDueReport
     content << space << footer
   end
 
-  def get_entries user, company
+  def get_entries user
+    company = Company.where(alliance_customer_number: 'sgold').first
     if user.view_entries? && company.can_view?(user)
       Entry.search_secure(user, Entry.select("entries.id, entry_number, arrival_date, daily_statement_approved_date, daily_statement_number, "\
                                              "broker_reference, duty_due_date, ports.name AS port_name, ports.schedule_d_code AS port_sched_d,"\

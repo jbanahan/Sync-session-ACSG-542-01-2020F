@@ -5,7 +5,7 @@ describe OpenChain::Report::SgDutyDueReport do
 
   describe :get_entries do
     it "returns results of query" do
-      co = Factory(:company)
+      co = Factory(:company, alliance_customer_number: 'sgold')
       duty_due = Date.today + 1
 
       port = Factory(:port, schedule_d_code: "1234", name: "Boston")
@@ -24,7 +24,7 @@ describe OpenChain::Report::SgDutyDueReport do
        u.stub(:view_entries?).and_return true
        co.stub(:can_view?).with(u).and_return true
        parser = described_class.new
-       results = parser.get_entries u, co
+       results = parser.get_entries u
        expect(results.count).to eq 2
        expect(results[0][:arrival_date].to_date.to_s).to eq '2016-03-01'
        expect(results[0][:daily_statement_approved_date].to_date.to_s).to eq '2016-03-02'
