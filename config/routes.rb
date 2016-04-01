@@ -529,6 +529,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_eddie_bauer_ca_k84_summary" => "reports#run_eddie_bauer_ca_k84_summary", :via=>:post
   match "/reports/show_pvh_billing_summary" => "reports#show_pvh_billing_summary", :via => :get
   match "/reports/run_pvh_billing_summary" => "reports#run_pvh_billing_summary", :via => :post
+  match "/reports/show_sg_duty_due_report" => "reports#show_sg_duty_due_report", :via => :get
+  match "/reports/run_sg_duty_due_report" => "reports#run_sg_duty_due_report", :via => :post
   match "/reports/show_ll_prod_risk_report" => "reports#show_ll_prod_risk_report", :via => :get
   match "/reports/run_ll_prod_risk_report" => "reports#run_ll_prod_risk_report", :via => :post
   get "/reports/show_pvh_container_log" => "reports#show_pvh_container_log"
