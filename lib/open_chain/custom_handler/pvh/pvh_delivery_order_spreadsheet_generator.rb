@@ -103,7 +103,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
             end
             
             del.body.push *body_lines
-            del.tab_title = destination + (do_count > 1 ? " (#{do_count})" : "")
+            del.tab_title = make_tab_title(destination, do_count)
+
             del.weight = "#{to_lbs(container_weight)} LBS"
             delivery_orders << del
 
@@ -360,6 +361,27 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
     end while !current_match.nil?
 
     match
+  end
+
+  def make_tab_title title, index
+    # Excel limits tab lengths to 31 chars max, so we can end up in a situation where the drop ship
+    # name is really long and excel trims to 31 chars.  However, if we have multiple tabs to make
+    # for the drop ship location, then we end up having the index cut off from the tab and try
+    # and make multiple sheets in excel with the same tab name...which excel (xlserver) doesn't like and barfs.
+    max_length = 30
+
+    tab_title = (title.length > max_length) ? title[0, max_length] : title
+    if index > 1
+      suffix = "(#{index})"
+      new_title = tab_title + " " + suffix
+      if new_title.length > max_length
+        new_title = tab_title[0, ((max_length - 1) - suffix.length)] + " " + suffix
+      end
+
+      tab_title = new_title
+    end
+
+    tab_title
   end
 
 end; end; end; end;

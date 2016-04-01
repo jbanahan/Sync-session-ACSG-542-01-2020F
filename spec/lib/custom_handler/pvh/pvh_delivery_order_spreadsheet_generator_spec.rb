@@ -299,5 +299,43 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
       expect(del.body[9]).to eq "DIVISION "
       expect(del.body[10]).to eq "HOUSE BILL# HAWB"
     end
+
+    it "handles really long tab names" do
+      importer.addresses.first.update_attributes! name: "1234567890123456789012345678901234567890"
+
+      # Generate enough data so it overflows to a second sheet
+      shipment
+      order_line = order1.order_lines.first
+      inv_cd = custom_defintions[:shpln_invoice_number]
+
+      container = shipment.containers.create! container_number: "ABC123"
+      line = shipment.shipment_lines.create! carton_qty: 30, product: product, container: container
+      line.update_custom_value! inv_cd, "INV1"
+      ps = line.piece_sets.create! order_line: order_line, quantity: 30
+
+      container = shipment.containers.create! container_number: "DEF123"
+      line = shipment.shipment_lines.create! carton_qty: 40, product: product, container: container
+      line.update_custom_value! inv_cd, "INV1"
+      ps = line.piece_sets.create! order_line: order_line, quantity: 40
+
+      container = shipment.containers.create! container_number: "HIJ123"
+      line = shipment.shipment_lines.create! carton_qty: 50, product: product, container: container
+      line.update_custom_value! inv_cd, "INV1"
+      ps = line.piece_sets.create! order_line: order_line, quantity: 50
+
+      entry.containers.create! container_number: "ABC123", container_size: "40", size_description: "DRY VAN", seal_number: "SEAL678", weight: 10
+      entry.containers.create! container_number: "DEF123", container_size: "45", size_description: "HIGH Cube", seal_number: "SEAL789", weight: 10
+      entry.containers.create! container_number: "HIJ123", container_size: "40", size_description: "DRY VAN", seal_number: "SEAL890", weight: 10
+
+      # Put all the lines going to a single destination so, we make sure the only new delivery orders created are due to the container split
+      order1.order_lines.first.update_custom_value! custom_defintions[:ord_line_destination_code], "1234567890123456789012345678901234567890"
+      order2.order_lines.first.update_custom_value! custom_defintions[:ord_line_destination_code], "1234567890123456789012345678901234567890"
+
+      delivery_orders = subject.generate_delivery_order_data entry
+      expect(delivery_orders.length).to eq 2
+
+      expect(delivery_orders.first.tab_title).to eq "123456789012345678901234567890"
+      expect(delivery_orders.second.tab_title).to eq "12345678901234567890123456 (2)"      
+    end
   end
 end
