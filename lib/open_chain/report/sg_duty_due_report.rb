@@ -56,11 +56,10 @@ module OpenChain; module Report; class SgDutyDueReport
 
   def get_entries user, company
     if user.view_entries? && company.can_view?(user)
-      Entry.search_secure(user, Entry.select("DISTINCT entry_number, arrival_date, daily_statement_approved_date, daily_statement_number, "\
+      Entry.search_secure(user, Entry.select("entries.id, entry_number, arrival_date, daily_statement_approved_date, daily_statement_number, "\
                                              "broker_reference, duty_due_date, ports.name AS port_name, ports.schedule_d_code AS port_sched_d,"\
                                              "entry_type, customer_references, release_date, (total_duty + total_fees) AS total_duties_and_fees")
                                              .joins(:us_entry_port)
-                                             .joins(:importer)
                                              .where("importer_id = ? ", company.id)
                                              .where("release_date IS NOT NULL")
                                              .where("duty_due_date >= ?", Time.zone.now.in_time_zone(user.time_zone).to_date)

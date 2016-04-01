@@ -8,12 +8,14 @@ describe OpenChain::Report::SgDutyDueReport do
       co = Factory(:company)
       duty_due = Date.today + 1
 
-      Factory(:entry, importer: co, us_entry_port: Factory(:port, schedule_d_code: "1234", name: "Boston"), arrival_date: '2016-03-01', 
+      port = Factory(:port, schedule_d_code: "1234", name: "Boston")
+
+      Factory(:entry, importer: co, us_entry_port: port, arrival_date: '2016-03-01', 
               daily_statement_approved_date: '2016-03-02', daily_statement_number: '12345678AB', broker_reference: "12345", 
               customer_references: "123AB\n 456CD", release_date: "2016-03-02", total_duty: 60 ,total_fees: 40, entry_number: "22212345666", 
               entry_type: "01", duty_due_date: duty_due)
 
-      Factory(:entry, importer: co, us_entry_port: Factory(:port, schedule_d_code: "1234", name: "Boston"), arrival_date: '2016-03-01', 
+      Factory(:entry, importer: co, us_entry_port: port, arrival_date: '2016-03-01', 
               daily_statement_approved_date: '2016-03-02', daily_statement_number: '87654321CD', broker_reference: "54321", 
               customer_references: "321AB\n 654CD", release_date: "2016-03-01", total_duty: 30 ,total_fees: 20, entry_number: "22254321666", 
               entry_type: "01", duty_due_date: duty_due)
@@ -23,7 +25,7 @@ describe OpenChain::Report::SgDutyDueReport do
        co.stub(:can_view?).with(u).and_return true
        parser = described_class.new
        results = parser.get_entries u, co
-       expect(results[2]).to be_nil #count shows '4' for some reason
+       expect(results.count).to eq 2
        expect(results[0][:arrival_date].to_date.to_s).to eq '2016-03-01'
        expect(results[0][:daily_statement_approved_date].to_date.to_s).to eq '2016-03-02'
        expect(results[0][:daily_statement_number]).to eq '87654321CD'
