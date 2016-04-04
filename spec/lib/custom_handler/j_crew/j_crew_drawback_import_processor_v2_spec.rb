@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(dil.duty_per_unit).to eq BigDecimal("1.89904")
       expect(dil.compute_code).to eq '7'
       expect(dil.ocean).to eq true
-      expect(dil.total_invoice_value).to eq BigDecimal("3889.6")
+      expect(dil.total_invoice_value).to eq BigDecimal("345909.00")
       expect(dil.importer_id).to eq @crew.id
     end
     it "should fail if units don't match entry" do

@@ -135,7 +135,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
             duty_per_unit: (unit_price * tariff_line.duty_rate).round(5),
             compute_code: '7',
             ocean: ent.transport_mode_code=='11',
-            total_invoice_value: ci_line.commercial_invoice.invoice_value,
+            total_invoice_value: ent.entered_value,
             quantity: s.crew_asn_pieces,
             importer_id: crew.id,
             product_id: p.id
