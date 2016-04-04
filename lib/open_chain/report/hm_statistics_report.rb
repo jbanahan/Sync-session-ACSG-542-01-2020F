@@ -24,8 +24,8 @@ module OpenChain; module Report; class HmStatisticsReport
   end
 
   def run run_by, settings
-    start_date = sanitize_date_string settings['start_date']
-    end_date = sanitize_date_string settings['end_date']
+    start_date = sanitize_date_string settings['start_date'], run_by.time_zone
+    end_date = sanitize_date_string settings['end_date'], run_by.time_zone
 
     wb = Spreadsheet::Workbook.new
     sheet = wb.create_worksheet :name=>'Statistics'
@@ -118,7 +118,7 @@ QRY
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
         INNER JOIN containers c ON e.id = c.entry_id
       WHERE e.customer_number = 'HENNE'
-        AND e.transport_mode_code IN (11, 30, 21)
+        AND e.transport_mode_code IN (10, 11)
         AND LENGTH(ci.invoice_number) IN (6,7)
         AND e.release_date BETWEEN '#{start_date}' AND '#{end_date}'
       GROUP BY ecc
@@ -140,12 +140,14 @@ QRY
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
       WHERE e.customer_number = 'HENNE'
-        AND e.transport_mode_code = 40
+        AND e.transport_mode_code IN (40, 41)
         AND LENGTH(ci.invoice_number) in (6,7)
         AND e.release_date BETWEEN '#{start_date}' and '#{end_date}'
     SQL
     
-    bills = Hash.new { |hash, key| hash[key] = Hash.new([]) }
+    bills = Hash.new do |hash, key| 
+      hash[key] = Hash.new{ |h, k| h[k] = [] }
+    end
     result_set = ActiveRecord::Base.connection.execute air_tu_query
     result_set.each { |row| row[1].blank? ? bills[row[0]][:master].concat(row[2].split "\n ") : bills[row[0]][:house].concat(row[1].split "\n ") }
     bills.each do |ctry, blz| 
