@@ -333,6 +333,46 @@ describe ReportsController do
     end
   end
 
+  describe "SG Duty Due Report" do
+    before :each do  
+      MasterSetup.create(system_code: 'www-vfitrack-net')
+      @u = Factory(:master_user)
+      @u.stub(:view_entries?).and_return true
+      sign_in_as @u
+    end
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        OpenChain::Report::SgDutyDueReport.should_receive(:permission?).and_return false
+        get :show_sg_duty_due_report
+        response.should_not be_success
+      end
+      
+      it "renders page for authorized users" do
+        sign_in_as @u
+        get :show_sg_duty_due_report
+        response.should be_success
+      end
+    end
+
+    context "run" do
+      it "doesn't run report for unauthorized users" do
+        OpenChain::Report::SgDutyDueReport.should_receive(:permission?).and_return false
+        ReportResult.should_not_receive(:run_report!)
+        post :run_sg_duty_due_report
+        expect(flash[:errors].first).to eq "You do not have permission to view this report."
+        expect(response).to be_redirect
+      end
+
+      it "runs report for authorized users" do
+        ReportResult.should_receive(:run_report!).with("SG Duty Due Report", @u, OpenChain::Report::SgDutyDueReport, {:settings => {}, :friendly_settings=>[]})
+        post :run_sg_duty_due_report
+        expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
+        expect(response).to be_redirect
+      end
+    end
+  end
+
   describe "Eddie Bauer CA K84 Summary" do
     before :each do
       MasterSetup.create!(system_code: 'www-vfitrack-net')

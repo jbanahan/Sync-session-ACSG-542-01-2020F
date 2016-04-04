@@ -388,6 +388,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_sg_duty_due_report
+    if OpenChain::Report::SgDutyDueReport.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_sg_duty_due_report
+    if OpenChain::Report::SgDutyDueReport.permission?(current_user)
+      run_report "SG Duty Due Report", OpenChain::Report::SgDutyDueReport, {}, []
+    else
+      error_redirect "You do not have permission to view this report."
+      return
+    end
+  end
+
   def show_monthly_entry_summation
     if OpenChain::Report::MonthlyEntrySummation.permission? current_user
       render
@@ -395,6 +412,7 @@ class ReportsController < ApplicationController
       error_redirect "You do not have permission to view this report"
     end
   end
+  
   def run_monthly_entry_summation
     run_report "Monthly Entry Summation", OpenChain::Report::MonthlyEntrySummation, params.slice(:start_date, :end_date, :customer_number), []
   end

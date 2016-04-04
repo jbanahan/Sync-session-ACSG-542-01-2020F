@@ -61,29 +61,12 @@ module OpenChain
         row_number - initial_row
       end
 
-      def workbook_to_tempfile wb, prefix, opts = {}
-        if block_given?
-          Tempfile.open([prefix,'.xls']) do |t|
-            t.binmode
-            if opts[:file_name]
-              Attachment.add_original_filename_method t
-              t.original_filename = opts[:file_name]
-            end
-            wb.write t
-            # Rewind to beginnging to IO stream so the tempfile can be read 
-            # from the start
-            t.rewind
-            yield t
-          end
-        else
-          t = Tempfile.new([prefix,'.xls'])
-          if opts[:file_name]
-            Attachment.add_original_filename_method t
-            t.original_filename = opts[:file_name]
-          end
-          wb.write t.path
-          t
-        end
+      def workbook_to_tempfile wb, prefix, opts={}, &proc
+        write_tempfile wb, prefix, '.xls', opts, proc
+      end
+
+      def pdf_to_tempfile doc, prefix, opts={}, &proc
+        write_tempfile doc, prefix, '.pdf', opts, proc
       end
 
       # Validates and returns a date string value suitable to be directly utilized in a SQL query string.
@@ -177,6 +160,34 @@ module OpenChain
         
         translation
       end
+
+      def write_tempfile obj, prefix, ext, opts={}, proc
+        if proc
+          Tempfile.open([prefix, ext]) do |t|
+            t.binmode
+            if opts[:file_name]
+              Attachment.add_original_filename_method t
+              t.original_filename = opts[:file_name]
+            end
+            obj.respond_to?(:write) ? (obj.write t) : (obj.render t)
+            # Rewind to beginning to IO stream so the tempfile can be read 
+            # from the start
+            t.flush
+            t.rewind
+            proc.call t
+          end
+        else
+          t = Tempfile.new([prefix, ext])
+          if opts[:file_name]
+            Attachment.add_original_filename_method t
+            t.original_filename = opts[:file_name]
+          end
+          obj.respond_to?(:write) ? (obj.write t) : (obj.render t)
+          t.flush
+          t
+        end
+      end
+
     end
   end
 end

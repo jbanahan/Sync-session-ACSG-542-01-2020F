@@ -1,0 +1,8 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>SG Duty Due Report</h2>
+<p>This report doesn't have any parameters to set. Click the Run Report button to continue.</p>
+<%=form_tag reports_run_sg_duty_due_report_path, :id=>'frm_run' do -%>
+<%end%>
