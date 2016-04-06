@@ -4,7 +4,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 require 'open_chain/workflow_processor'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapVendorXmlParser
   include OpenChain::CustomHandler::XmlHelper
-  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport  
+  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
 
   def self.parse data, opts={}
@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize opts={}
     inner_opts = {workflow_processor:WorkflowProcessor.new}.merge opts
-    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company,:cmp_po_blocked]
+    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company,:cmp_po_blocked,:cmp_sap_blocked_status]
     @wfp = inner_opts[:workflow_processor]
     @user = User.integration
   end
@@ -35,13 +35,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     name = et(base,'NAME1')
     ActiveRecord::Base.transaction do
       c = Company.where(system_code:sap_code).first_or_create!(name:name,vendor:true)
-      
+
       master = Company.find_by_master(true)
       master.linked_companies << c unless master.linked_companies.include?(c)
-      
+
       sap_num_cv = c.get_custom_value(@cdefs[:cmp_sap_company])
-      
-      attributes_to_update = {}      
+
+      attributes_to_update = {}
       attributes_to_update[:vendor] = true unless c.vendor?
       attributes_to_update[:name] = name unless c.name == name
       c.update_attributes(attributes_to_update) unless attributes_to_update.empty?
@@ -55,6 +55,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       update_address c, sap_code, base
       lock_or_unlock_vendor c, base
 
+      c.create_snapshot User.integration
+
       @wfp.process! c, @user
     end
   end
@@ -62,7 +64,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   private
   def lock_or_unlock_vendor company, el
     lock_code = et(el,'SPERM')
-    company.update_custom_value!(@cdefs[:cmp_po_blocked],(lock_code=='X'))
+    is_locked = lock_code=='X'
+
+    # we always write the SAP value to the SAP Blocked Status field for tracking purposes
+    company.update_custom_value!(@cdefs[:cmp_sap_blocked_status],is_locked)
+
+    # we only set the actual PO Blocked field if the vendor is Blocked
+    # per LL SOW #2.36, we don't want to clear the blocked status if it's cleared in SAP since
+    # it might be overridden on the screens.
+    #
+    # https://docs.google.com/document/d/1PX80pIkNiCnNRFtCaGrVhKVi5ubdI30GgqlnzDDU5LA/edit#heading=h.sqrtf262xrei
+    if is_locked
+      company.update_custom_value!(@cdefs[:cmp_po_blocked],true)
+    end
   end
   def update_address company, sap_code, el
     add_sys_code = "#{sap_code}-CORP"
@@ -70,7 +84,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     country_iso = et(el,'LAND1')
     country = Country.find_by_iso_code country_iso
     raise "Invalid country code #{country_iso}." unless country
-    attributes_to_update = {}      
+    attributes_to_update = {}
     add_if_change attributes_to_update, add.line_1, et(el,'STRAS'), :line_1
     add_if_change attributes_to_update, add.city, et(el,'ORT01'), :city
     add_if_change attributes_to_update, add.state, et(el,'REGIO'), :state
