@@ -1,33 +1,6 @@
 require 'spec_helper'
 
 describe EntitySnapshot do
-  let (:datastore) { {} }
-
-  before :each do
-    @version = 0
-
-    # Mock out the S3 interaction...the default mock S3 is not sufficient.
-    OpenChain::S3.stub(:upload_data) do |bucket_name, path, json|
-      v = @version += 1
-      datastore[bucket_name+path+v.to_s] = json
-      obj = double("AWS::S3Object")
-      bucket = double("AWS::Bucket")
-      obj.stub(:bucket).and_return bucket
-      obj.stub(:key).and_return path
-      bucket.stub(:name).and_return bucket_name
-      
-      version = double("AWS:Version")
-      version.stub(:version_id).and_return v.to_s
-
-      [obj, version]
-    end
-
-    OpenChain::S3.stub(:get_versioned_data) do |bucket, path, version, data|
-      json = datastore[bucket+path+version]
-      data.write json unless json.nil?
-      nil
-    end
-  end
 
   describe :diff do
     before :each do
