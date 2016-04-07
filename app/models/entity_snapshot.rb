@@ -15,22 +15,29 @@ class EntitySnapshot < ActiveRecord::Base
     cm = CoreModule.find_by_class_name entity.class.to_s
     raise "CoreModule could not be found for class #{entity.class.to_s}." if cm.nil?
     json = cm.entity_json(entity)
-    es = EntitySnapshot.new(:recordable=>entity,:user=>user,:snapshot=>json,:imported_file=>imported_file)
+    es = EntitySnapshot.new(:recordable=>entity,:user=>user,:imported_file=>imported_file)
     es.write_s3 json
     es.save
-    # Make these a lower queue priority..when uploading large numbers of orders/products these can choke out
-    # reports and such if they're running at a lower priority
-    OpenChain::EntityCompare::EntityComparator.delay(priority: 10).process_by_id(es.id)
+    OpenChain::EntityCompare::EntityComparator.handle_snapshot es
     es
   end
 
   def snapshot_json
-    return nil if self.snapshot.nil?
-    ActiveSupport::JSON.decode self.snapshot
+    json_text = nil
+    # If we haven't persisted the snapshot and written the doc_path for it, then
+    # there's no snapshot data yet..return nil
+    if self.snapshot.nil? && !self.doc_path.blank?
+      json_text = self.class.retrieve_snapshot_data_from_s3(self)
+    else
+      json_text = self.snapshot
+    end
+
+    return nil if json_text.blank?
+    ActiveSupport::JSON.decode json_text
   end
   
   def restore user
-    o = recursive_restore JSON.parse(self.snapshot)['entity'], user
+    o = recursive_restore snapshot_json, user
     o.create_snapshot user
     o
   end
@@ -52,6 +59,13 @@ class EntitySnapshot < ActiveRecord::Base
     my_json = self.snapshot_json
     old_json = older_snapshot.snapshot_json
     diff_json old_json, my_json
+  end
+
+  def self.retrieve_snapshot_data_from_s3 snapshot
+    data = StringIO.new 
+    OpenChain::S3.get_versioned_data snapshot.bucket, snapshot.doc_path, snapshot.version, data
+    data.rewind
+    data.read
   end
 
 
@@ -107,6 +121,11 @@ class EntitySnapshot < ActiveRecord::Base
   private
 
   def recursive_restore obj_hash, user, parent = nil
+    # unwrap the outer hash
+    if obj_hash['entity']
+      obj_hash = obj_hash['entity']
+    end
+
     core_module = CoreModule.find_by_class_name obj_hash['core_module']
     obj = core_module.klass.find_by_id obj_hash['record_id']
     obj = core_module.klass.new unless obj

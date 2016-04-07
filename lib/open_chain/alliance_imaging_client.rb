@@ -22,7 +22,7 @@ class OpenChain::AllianceImagingClient
   # takes request for either search results or a set of primary keys and requests images for all entries
   def self.bulk_request_images search_run_id, primary_keys
     OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::ENTRY,search_run_id,primary_keys) do |good_count, entry|
-      OpenChain::AllianceImagingClient.request_images entry.broker_reference if entry.source_system=='Alliance'
+      request_images(entry.broker_reference) if entry.source_system=='Alliance'
     end
   end
   
@@ -36,11 +36,14 @@ class OpenChain::AllianceImagingClient
     OpenChain::SQS.retrieve_messages_as_hash "https://queue.amazonaws.com/468302385899/alliance-img-doc-#{get_env}" do |hsh|
       t = OpenChain::S3.download_to_tempfile hsh["s3_bucket"], hsh["s3_key"]
       begin
+        entry = nil
         if hsh["source_system"] == OpenChain::FenixParser::SOURCE_CODE && hsh["export_process"] == "sql_proxy"
-          process_fenix_nd_image_file t, hsh
+          entry = process_fenix_nd_image_file t, hsh
         else
-          OpenChain::AllianceImagingClient.process_image_file t, hsh
+          entry = process_image_file t, hsh
         end
+
+        entry.create_snapshot(entry, User.integration) if entry
       rescue => e
         # If there's an error we should catch it, otherwise the message won't get pulled from the message queue
         raise e unless Rails.env.production?
@@ -127,7 +130,11 @@ class OpenChain::AllianceImagingClient
           att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
         end
       end
+
+      return entry
     end
+
+    nil
   end
 
   def self.process_fenix_nd_image_file t, file_data
@@ -185,7 +192,11 @@ class OpenChain::AllianceImagingClient
           end
         end
       end
+
+      return entry
     end
+
+    nil
   end
 
   def self.other_attachments_query attachment, replacement_algorithm

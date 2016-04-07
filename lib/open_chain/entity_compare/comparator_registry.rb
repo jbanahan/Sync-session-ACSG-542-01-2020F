@@ -9,14 +9,14 @@ module OpenChain; module EntityCompare; class ComparatorRegistry
     unless comparator_class.respond_to?(:compare)
       raise "All comparators must respond to #compare"
     end
+    unless comparator_class.respond_to?(:accept?)
+      raise "All comparators must respond to #accept?"
+    end
+    
     REGISTERED_ITEMS << comparator_class
     nil
   end
 
-  # get an Enumerable of all comparators
-  #
-  # Intended usage is `OpenChain::EntityCompare::ComparatorRegistry.registered.each {|c| c.compare ...}`
-  #
   def self.registered
     REGISTERED_ITEMS.clone
   end
@@ -29,4 +29,13 @@ module OpenChain; module EntityCompare; class ComparatorRegistry
   def self.clear
     REGISTERED_ITEMS.clear
   end
+
+  # get an Enumerable of all comparators that will accept the given snapshot
+  #
+  # Intended usage is `OpenChain::EntityCompare::ComparatorRegistry.registered_for(snapshot) {|c| c.compare ...}`
+  #
+  def self.registered_for snapshot
+    registered.find_all {|r| r.respond_to?(:accept?) && r.accept?(snapshot)}
+  end
+
 end; end; end;

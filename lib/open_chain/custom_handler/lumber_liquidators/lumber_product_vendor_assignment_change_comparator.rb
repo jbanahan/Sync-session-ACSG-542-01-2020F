@@ -1,8 +1,11 @@
 require 'open_chain/entity_compare/comparator_helper'
+require 'open_chain/entity_compare/product_vendor_assignment_comparator'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberProductVendorAssignmentChangeComparator
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::EntityCompare::ComparatorHelper
+  extend OpenChain::EntityCompare::ProductVendorAssignmentComparator
+
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type=='ProductVendorAssignment'
     risk_cdef = prep_custom_definitions([:prodven_risk])[:prodven_risk]

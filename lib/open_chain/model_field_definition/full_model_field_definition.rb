@@ -32,6 +32,8 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
   include OpenChain::ModelFieldDefinition::VariantFieldDefinition
   include OpenChain::ModelFieldDefinition::SummaryStatementFieldDefinition
+  include OpenChain::ModelFieldDefinition::AttachmentFieldDefinition
+  include OpenChain::ModelFieldDefinition::EntryCommentFieldDefinition
 
   def add_field_definitions
     add_company_fields
@@ -65,5 +67,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_booking_line_fields
     add_variant_fields
     add_summary_statement_fields
+    add_attachment_fields
+    add_entry_comment_fields
   end
 end; end; end

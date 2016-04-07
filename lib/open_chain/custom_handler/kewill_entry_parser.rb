@@ -89,6 +89,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
   def process_entry json, opts={}
     start_time = Time.zone.now
+    user = User.integration
     entry = find_and_process_entry(json.with_indifferent_access) do |e, entry|
       begin
         preprocess entry
@@ -114,6 +115,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         
         entry.save!
         entry.update_column :time_to_process, ((Time.now-start_time) * 1000)
+
+        entry.create_snapshot user
         entry
       rescue => e
         raise e unless Rails.env.production?

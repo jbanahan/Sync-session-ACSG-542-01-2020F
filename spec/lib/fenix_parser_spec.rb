@@ -247,6 +247,8 @@ describe OpenChain::FenixParser do
     tar.special_authority.should == @special_authority
 
     @broadcasted_event.should == :save
+
+    expect(ent.entity_snapshots.length).to eq 1
     ent
   end
 

@@ -4,8 +4,6 @@ class Product < ActiveRecord::Base
   include StatusableSupport
   include TouchesParentsChangedAt
 
-  CORE_MODULE = CoreModule::PRODUCT
-
   belongs_to :importer, :class_name => "Company"
   belongs_to :division
   belongs_to :status_rule
