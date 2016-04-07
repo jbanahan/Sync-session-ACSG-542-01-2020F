@@ -626,5 +626,17 @@ ERR
       expect(e.attachments).not_to include a1
     end
 
+    it "replaces previous versions of B3 Recap attachment" do
+      @message['doc_desc'] = "Cartage Slip"
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e.attachments.create! attachment_type: "Cartage Slip", source_system_timestamp: "2015-09-04T04:30:35-10:00"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      e.reload
+      expect(e.attachments.size).to eq 1
+      expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
+    end
+
   end
 end

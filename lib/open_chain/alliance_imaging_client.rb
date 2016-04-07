@@ -161,7 +161,7 @@ class OpenChain::AllianceImagingClient
 
         delete_other_file_algorithm = nil
         case att.attachment_type.to_s.upcase
-        when "B3", "B3 RECAP", "RNS"
+        when "B3", "B3 RECAP", "RNS", "CARTAGE SLIP"
           delete_other_file_algorithm = :attachment_type
         when "INVOICE"
           delete_other_file_algorithm = :attachment_type_and_filename
