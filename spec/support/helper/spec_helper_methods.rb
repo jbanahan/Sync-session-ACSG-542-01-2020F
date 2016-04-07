@@ -20,6 +20,74 @@ module Helpers
     Paperclip::Attachment.any_instance.stub(:destroy).and_return true
   end
 
+  class MockS3
+    def self.parse_full_s3_path path
+      # We're expecting the path to be like "/bucket/path/to/file.pdf"
+      # The first path segment of the file is the bucket, everything after that is the path to the actual file
+      split_path = path.split("/")
+      
+      # If the path started with a / the first index is blank
+      split_path.shift if split_path[0].strip.length == 0
+
+      [split_path[0], split_path[1..-1].join("/")]
+    end
+    def self.bucket_name name = Rails.env
+      h = {:production=>"prodname", :development=>'devname', :test=>'testname'}
+      h[name]
+    end
+    def self.integration_bucket_name
+      "mock_bucket_name"
+    end
+    def self.method_missing(sym, *args, &block)
+      raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
+    end
+    def method_missing(sym, *args, &block)
+      raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
+    end
+    
+    def self.upload_data bucket_name, path, data
+      # Handle a couple different valid data objects
+      local_data = nil
+      if data.respond_to?(:read)
+        local_data = data.read
+      elsif data.is_a?(Pathname)
+        local_data = IO.read data.to_s
+      else
+        local_data = data
+      end
+
+      @version_id += 1
+      @datastore[key(bucket_name, path, @version_id)] = local_data
+
+      bucket = Struct.new(:name).new(bucket_name)
+      s3obj = Struct.new(:bucket, :key).new(bucket,path)
+      vers = Struct.new(:version_id).new(@version_id.to_s)
+      return [s3obj,vers]
+    end
+
+    def self.get_versioned_data bucket, path, version, io = nil
+      local_data = @datastore[key(bucket, path, version)]
+
+      if io
+        io.write local_data
+        io.flush
+        io.rewind
+        nil
+      else
+        local_data
+      end
+    end
+
+    def self.key bucket, path, version
+      "#{bucket}~#{path}~#{version}"
+    end
+
+    def self.reset
+      @datastore = {}
+      @version_id = 0
+    end
+  end
+
   # Stub out the S3 methods
   def stub_s3
     #hold the old S3 class for later
@@ -27,77 +95,11 @@ module Helpers
     
     # First, completely undefine the class
     OpenChain.send(:remove_const,:S3)
-
-    mock_s3 = Class.new do
-      def self.parse_full_s3_path path
-        # We're expecting the path to be like "/bucket/path/to/file.pdf"
-        # The first path segment of the file is the bucket, everything after that is the path to the actual file
-        split_path = path.split("/")
-        
-        # If the path started with a / the first index is blank
-        split_path.shift if split_path[0].strip.length == 0
-
-        [split_path[0], split_path[1..-1].join("/")]
-      end
-      def self.bucket_name name = Rails.env
-        h = {:production=>"prodname", :development=>'devname', :test=>'testname'}
-        h[name]
-      end
-      def self.integration_bucket_name
-        "mock_bucket_name"
-      end
-      def self.method_missing(sym, *args, &block)
-        raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
-      end
-      def method_missing(sym, *args, &block)
-        raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
-      end
-      
-      def self.upload_data bucket_name, path, data
-        # Handle a couple different valid data objects
-        local_data = nil
-        if data.respond_to?(:read)
-          local_data = data.read
-        elsif data.is_a?(Pathname)
-          local_data = IO.read data.to_s
-        else
-          local_data = data
-        end
-
-        @@version_id ||= 0
-        @@version_id += 1
-        datastore[key(bucket_name, path, @@version_id)] = local_data
-
-        bucket = Struct.new(:name).new(bucket_name)
-        s3obj = Struct.new(:bucket, :key).new(bucket,path)
-        vers = Struct.new(:version_id).new(@@version_id.to_s)
-        return [s3obj,vers]
-      end
-
-      def self.get_versioned_data bucket, path, version, io = nil
-        local_data = datastore[key(bucket, path, version)]
-
-        if io
-          io.write local_data
-          io.flush
-          io.rewind
-          nil
-        else
-          local_data
-        end
-      end
-
-      def self.key bucket, path, version
-        "#{bucket}~#{path}~#{version}"
-      end
-
-      def self.datastore
-        @@datastore ||= {}
-      end
-    end
+  
+    MockS3.reset
 
     # set the new constant in the module
-    OpenChain.const_set(:S3,mock_s3)
+    OpenChain.const_set(:S3,MockS3)
   end
 
   def stub_email_logging
@@ -105,6 +107,8 @@ module Helpers
   end
 
   def unstub_s3
+    MockS3.reset
+
     OpenChain.send(:remove_const,:S3)
     OpenChain.const_set(:S3,@old_stub_s3_class)
   end

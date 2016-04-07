@@ -22,7 +22,7 @@ class EntitySnapshot < ActiveRecord::Base
     es
   end
 
-  def snapshot_json
+  def snapshot_json as_string = false
     json_text = nil
     # If we haven't persisted the snapshot and written the doc_path for it, then
     # there's no snapshot data yet..return nil
@@ -33,7 +33,7 @@ class EntitySnapshot < ActiveRecord::Base
     end
 
     return nil if json_text.blank?
-    ActiveSupport::JSON.decode json_text
+    as_string ? json_text : ActiveSupport::JSON.decode(json_text)
   end
   
   def restore user

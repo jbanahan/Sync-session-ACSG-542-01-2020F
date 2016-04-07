@@ -322,4 +322,36 @@ describe EntitySnapshot do
       expect(EntitySnapshot.retrieve_snapshot_data_from_s3 snapshot).to eq "Testing"
     end
   end
+
+  describe "snapshot_json" do
+    let (:json) {  }
+
+    before :each do
+      EntitySnapshot.stub(:retrieve_snapshot_data_from_s3).and_return json
+    end
+
+    it "retrieves snapshot from s3" do
+      s = EntitySnapshot.new doc_path: "path/to/file.txt"
+      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '{"OK": "OK"}'
+      expect(s.snapshot_json).to eq({"OK" => "OK"})
+    end
+
+    it "retrieves snapshot from snapshot attribute" do
+      s = EntitySnapshot.new snapshot: '{"OK": ""}'
+      EntitySnapshot.should_not_receive(:retrieve_snapshot_data_from_s3)
+      expect(s.snapshot_json).to eq({"OK"=> ""})
+    end
+
+    it "returns raw json" do
+      s = EntitySnapshot.new doc_path: "path/to/file.txt"
+      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '{"OK": "OK"}'
+      expect(s.snapshot_json(true)).to eq '{"OK": "OK"}'
+    end
+
+    it "returns nil if json is blank" do
+      s = EntitySnapshot.new doc_path: "path/to/file.txt"
+      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '     '
+      expect(s.snapshot_json(true)).to be_nil
+    end
+  end
 end
