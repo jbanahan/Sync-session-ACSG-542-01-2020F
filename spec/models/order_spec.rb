@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe Order do
+  before :each do
+    OpenChain::OrderAcceptanceRegistry.clear
+  end
   describe 'post_create_logic' do
     before :each do
       @u = Factory(:master_user)
@@ -50,19 +53,38 @@ describe Order do
       Time.stub(:now).and_return @t
       OpenChain::EventPublisher.should_receive(:publish).with(:order_accept,@o)
     end
-
     it 'should accept' do
       @o.should_receive(:create_snapshot_with_async_option).with false, @u
       @o.accept! @u
       @o.reload
       expect(@o.approval_status).to eq 'Accepted'
     end
-
     it 'should accept async' do
       @o.should_receive(:create_snapshot_with_async_option).with true, @u
       @o.async_accept! @u
       @o.reload
       expect(@o.approval_status).to eq 'Accepted'
+    end
+  end
+  describe 'can_be_accepted?' do
+    it 'should return true if all OrderAcceptanceRegistry tests returns true' do
+      o = Order.new
+      d1 = double('oa1')
+      d2 = double('oa2')
+      [d1,d2].each {|d| d.should_receive(:can_be_accepted?).with(o).and_return true}
+      OpenChain::OrderAcceptanceRegistry.should_receive(:registered).and_return [d1,d2]
+
+      expect(o.can_be_accepted?).to be true
+    end
+    it 'should return false if any OrderAcceptanceRegistry test returns false' do
+      o = Order.new
+      d1 = double('oa1')
+      d2 = double('oa2')
+      d1.should_receive(:can_be_accepted?).with(o).and_return true
+      d2.should_receive(:can_be_accepted?).with(o).and_return false
+      OpenChain::OrderAcceptanceRegistry.should_receive(:registered).and_return [d1,d2]
+
+      expect(o.can_be_accepted?).to be false
     end
   end
   describe 'unaccept' do
@@ -90,51 +112,67 @@ describe Order do
     end
   end
   describe 'can_accept' do
-    before :each do
-      @g = Group.new(system_code:'ORDERACCEPT')
+    context 'default behavior' do
+      before :each do
+        @g = Group.new(system_code:'ORDERACCEPT')
+      end
+      it "should not allow if user not in 'ORDERACCEPT' group" do
+        v = Company.new(vendor:true)
+        u = User.new
+        u.company = v
+        o = Order.new(vendor:v)
+        expect(o.can_accept?(u)).to be_false
+      end
+      it "should allow vendor user to accept" do
+        v = Company.new(vendor:true)
+        u = User.new
+        u.add_to_group_cache @g
+        u.company = v
+        o = Order.new(vendor:v)
+        expect(o.can_accept?(u)).to be_true
+      end
+      it "should allow agent to accept" do
+        a = Company.new(agent:true)
+        u = User.new
+        u.add_to_group_cache @g
+        u.company = a
+        o = Order.new(agent:a)
+        expect(o.can_accept?(u)).to be_true
+      end
+      it "should allow admin user to accept" do
+        c = Company.new(vendor:true)
+        u = User.new
+        u.add_to_group_cache @g
+        u.company = c
+        u.admin = true
+        o = Order.new
+        o.stub(:can_edit?).and_return true
+        expect(o.can_accept?(u)).to be_true
+      end
+      it "should not allow user who is not admin to accept" do
+        c = Company.new(vendor:true)
+        u = User.new
+        u.add_to_group_cache @g
+        u.company = c
+        u.admin = false
+        o = Order.new
+        o.stub(:can_edit?).and_return true
+        expect(o.can_accept?(u)).to be_false
+      end
     end
-    it "should not allow if user not in 'ORDERACCEPT' group" do
+    it 'should not call default behavior if acceptance registry has values' do
+      c = Class.new do
+        def self.can_accept? ord, user
+          return true
+        end
+      end
+      OpenChain::OrderAcceptanceRegistry.register(c)
+      # This would fail under default behavior
       v = Company.new(vendor:true)
       u = User.new
       u.company = v
       o = Order.new(vendor:v)
-      expect(o.can_accept?(u)).to be_false
-    end
-    it "should allow vendor user to accept" do
-      v = Company.new(vendor:true)
-      u = User.new
-      u.add_to_group_cache @g
-      u.company = v
-      o = Order.new(vendor:v)
       expect(o.can_accept?(u)).to be_true
-    end
-    it "should allow agent to accept" do
-      a = Company.new(agent:true)
-      u = User.new
-      u.add_to_group_cache @g
-      u.company = a
-      o = Order.new(agent:a)
-      expect(o.can_accept?(u)).to be_true
-    end
-    it "should allow admin user to accept" do
-      c = Company.new(vendor:true)
-      u = User.new
-      u.add_to_group_cache @g
-      u.company = c
-      u.admin = true
-      o = Order.new
-      o.stub(:can_edit?).and_return true
-      expect(o.can_accept?(u)).to be_true
-    end
-    it "should not allow user who is not admin to accept" do
-      c = Company.new(vendor:true)
-      u = User.new
-      u.add_to_group_cache @g
-      u.company = c
-      u.admin = false
-      o = Order.new
-      o.stub(:can_edit?).and_return true
-      expect(o.can_accept?(u)).to be_false
     end
   end
   describe 'close' do
@@ -207,7 +245,7 @@ describe Order do
     it 'should have linkable attachments' do
       o = Factory(:order,:order_number=>'ordn')
       linkable = Factory(:linkable_attachment,:model_field_uid=>'ord_ord_num',:value=>'ordn')
-      linked = LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>o)
+      LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>o)
       o.reload
       o.linkable_attachments.first.should == linkable
     end

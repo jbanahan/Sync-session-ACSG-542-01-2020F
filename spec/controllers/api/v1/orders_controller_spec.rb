@@ -8,8 +8,8 @@ describe Api::V1::OrdersController do
   end
   describe :index do
     it 'should list orders' do
-      o1 = Factory(:order,order_number:'123')
-      o2 = Factory(:order,order_number:'ABC')
+      Factory(:order,order_number:'123')
+      Factory(:order,order_number:'ABC')
       get :index
       expect(response).to be_success
       j = JSON.parse response.body
@@ -30,6 +30,7 @@ describe Api::V1::OrdersController do
       Order.any_instance.stub(:can_view?).and_return true
       Order.any_instance.stub(:can_edit?).and_return true
       Order.any_instance.stub(:can_accept?).and_return false
+      Order.any_instance.stub(:can_be_accepted?).and_return true
       Order.any_instance.stub(:can_attach?).and_return true
       Order.any_instance.stub(:can_comment?).and_return false
 
@@ -37,6 +38,7 @@ describe Api::V1::OrdersController do
         'can_view'=>true,
         'can_edit'=>true,
         'can_accept'=>false,
+        'can_be_accepted'=>true,
         'can_attach'=>true,
         'can_comment'=>false
       }
@@ -57,6 +59,14 @@ describe Api::V1::OrdersController do
     end
     it "should fail if user does not have permission" do
       Order.any_instance.stub(:can_accept?).and_return false
+      Order.any_instance.should_not_receive(:async_accept!)
+      o = Factory(:order)
+      post :accept, id: o.id
+      expect(response.status).to eq 401
+    end
+    it "should fail if order cannot be accepted" do
+      Order.any_instance.stub(:can_be_accepted?).and_return false
+      Order.any_instance.stub(:can_accept?).and_return true
       Order.any_instance.should_not_receive(:async_accept!)
       o = Factory(:order)
       post :accept, id: o.id

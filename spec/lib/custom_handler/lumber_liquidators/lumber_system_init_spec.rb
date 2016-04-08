@@ -28,6 +28,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit do
         cr.should_receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignmentChangeComparator)
         OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit.init
       end
+      it 'should register order acceptance' do
+        oar = OpenChain::OrderAcceptanceRegistry
+        oar.should_receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance)
+        OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit.init
+      end
+
     end
   end
 end

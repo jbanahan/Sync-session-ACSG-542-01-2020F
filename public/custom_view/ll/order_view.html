@@ -45,6 +45,10 @@
               Terms of Delivery
               <span class="pull-right">{{order.ord_terms}}</span>
             </li>
+            <li class="list-group-item">
+              Delivery Location
+              <span class="pull-right">{{order.ord_fob_point}}</span>
+            </li>
           </ul>
       </div>
       <div class="panel panel-primary">
@@ -54,7 +58,12 @@
           <ul class='list-group'>
             <li class='list-group-item'>
               Vendor Approval Status
-              <span class='pull-right'>{{order.ord_approval_status}} <order-accept-button></order-accept-button></span>
+              <span class='pull-right'>{{order.ord_approval_status}}
+                <a class='label label-default' ng-if='!order.permissions.can_be_accepted && order.ord_approval_status!="Accepted"' data-toggle="modal" data-target="#mod_cant_be_accepted">
+                  Needs LL Update
+                </a>
+                <order-accept-button></order-accept-button>
+              </span>
             </li>
           </ul>
       </div>
@@ -159,6 +168,22 @@
             by the Purchase Order Terms and Conditions. The Terms and Conditions may not be modified, altered, amended or edited in any
             way without the express written consent of Lumber Liquidators' Chief Merchandising Officer.
           </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="mod_cant_be_accepted" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="">Pending Lumber Liquidators Update</h4>
+      </div>
+      <div class="modal-body">
+        This order is waiting for more information from Lumber Liquidators and cannot be accepted.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

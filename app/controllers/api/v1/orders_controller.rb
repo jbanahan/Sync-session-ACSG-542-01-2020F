@@ -17,7 +17,9 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
 
   def accept
     o = Order.find params[:id]
-    raise StatusableError.new("Access denied.", :unauthorized) unless o.can_view?(current_user) && o.can_accept?(current_user)
+    unless o.can_be_accepted? && o.can_view?(current_user) && o.can_accept?(current_user)
+      raise StatusableError.new("Access denied.", :unauthorized)
+    end
     o.async_accept! current_user
     redirect_to "/api/v1/orders/#{o.id}"
   end
@@ -83,10 +85,11 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
   end
   def render_permissions order
     cu = current_user #current_user is method, so saving as variable to prevent multiple calls
-    {      
+    {
       can_view: order.can_view?(cu),
       can_edit: order.can_edit?(cu),
       can_accept: order.can_accept?(cu),
+      can_be_accepted: order.can_be_accepted?,
       can_attach: order.can_attach?(cu),
       can_comment: order.can_comment?(cu)
     }

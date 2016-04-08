@@ -41,6 +41,13 @@ describe OrdersController do
       o = Factory(:order)
       post :accept, id: o.id
     end
+    it "should error if order cannot be accepted" do
+      Order.any_instance.should_not_receive(:async_accept!)
+      Order.any_instance.stub(:can_accept?).and_return true
+      Order.any_instance.stub(:can_be_accepted?).and_return false
+      o = Factory(:order)
+      post :accept, id: o.id
+    end
   end
 
   describe :unaccept do

@@ -133,7 +133,7 @@ class OrdersController < ApplicationController
 
   def accept
     o = Order.find params[:id]
-    action_secure(o.can_accept?(current_user),o,{:verb => "accept", :module_name=>"order"}) {
+    action_secure(o.can_be_accepted? && o.can_accept?(current_user),o,{:verb => "accept", :module_name=>"order"}) {
       o.async_accept! current_user
       add_flash :notices, "Order has been accepted."
       redirect_to o

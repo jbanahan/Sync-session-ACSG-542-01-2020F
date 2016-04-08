@@ -26,11 +26,11 @@
 <div class="container">
   <div class="row">
     <div class="col-md-6">
-      <%= show_model_fields(f, :ord_imp_name) do |mf, field_name, value, attributes| 
+      <%= show_model_fields(f, :ord_imp_name) do |mf, field_name, value, attributes|
             # If an importer is already set, the field should be read only
             field = nil
             if @order.importer
-              field = field_value(@order, :ord_imp_name) 
+              field = field_value(@order, :ord_imp_name)
             else
               attributes[:select_options] = options_from_collection_for_select(current_user.available_importers.select("companies.id, companies.name").order(:name), :name, :name, value)
               attributes[:prompt] = "Select an importer"
@@ -45,11 +45,11 @@
       <%= show_model_fields f, :ord_ven_name, ord_ven_name: {prompt: "Select a vendor", select_options: lambda {|v| options_from_collection_for_select( (@order.importer ? @order.importer.linked_companies.vendors : []), :name, :name, v)}} %>
       <%= show_model_fields f, :ord_agent_name, ord_agent_name: {prompt: "Select an agent", select_options: lambda {|v| options_from_collection_for_select( @order.available_agents, :name, :name, v)}} %>
       <%= show_model_fields f, :ord_div_name, ord_div_name: {prompt: "Select a division", select_options: lambda {|v| options_from_collection_for_select( (@order.importer ? @order.importer.divisions.order(:name) : []), :name, :name, v)}} %>
-      <%= show_model_fields f, :ord_fob_point %>
+      <%= show_model_fields f, [:ord_terms, :ord_fob_point, :ord_payment_terms] %>
     </div>
     <div class="col-md-6">
       <%= show_model_fields f, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
-      <%= show_model_fields(f, :ord_ship_to_id) do |mf, field_name, value, attributes| 
+      <%= show_model_fields(f, :ord_ship_to_id) do |mf, field_name, value, attributes|
             attributes[:select_options] = options_for_select(["...Loading..."], value)
             attributes[:id] = "order_ship_to_id"
             field = model_select_field_tag field_name, mf, value, attributes

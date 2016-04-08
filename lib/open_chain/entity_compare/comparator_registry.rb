@@ -1,10 +1,10 @@
+require 'open_chain/service_locator'
 module OpenChain; module EntityCompare; class ComparatorRegistry
-  REGISTERED_ITEMS ||= Set.new
+  extend OpenChain::ServiceLocator
 
-  # register a new comparator.  Must be a class that responds to #compare
-  def self.register comparator_class
+  def self.check_validity comparator_class
     unless comparator_class.is_a?(Class)
-      raise "Comparator must be a class so that cloning and calling objects across instances doesn't cause side effects."
+      raise "All comparators must be a class"
     end
     unless comparator_class.respond_to?(:compare)
       raise "All comparators must respond to #compare"
@@ -12,7 +12,7 @@ module OpenChain; module EntityCompare; class ComparatorRegistry
     unless comparator_class.respond_to?(:accept?)
       raise "All comparators must respond to #accept?"
     end
-    
+
     REGISTERED_ITEMS << comparator_class
     nil
   end

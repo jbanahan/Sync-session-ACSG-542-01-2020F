@@ -10,7 +10,7 @@
   <% if @order.can_accept?(current_user)%>
     <% if @order.approval_status=='Accepted' %>
       <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
-    <% else %>
+    <% elsif @order.can_be_accepted? %>
       <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
     <% end %>
   <% end %>
@@ -19,8 +19,8 @@
 <% end %>
 <%
 # The where clause below is here to force a mysql query optimization that for some reason related to the first/limit used in the query
-# gives the DB enough of a hint that allows it to use the order_line_id index, where if it's not here, then the index is not used and 
-# a full table scan is invoked when no piece sets exist for this order.  
+# gives the DB enough of a hint that allows it to use the order_line_id index, where if it's not here, then the index is not used and
+# a full table scan is invoked when no piece sets exist for this order.
 
 # Adding the where causes the query to jump in speed from around 30s to 1s.
 
@@ -28,7 +28,7 @@
 # that info must show here too (this happened recently with F/W being updated and not causing this screen to reload)
 most_recently_updated_product = Product.joins(:order_lines).where(order_lines: {order_id: @order.id}).order("products.updated_at DESC").first
 cache [@order, @order.piece_sets.where("piece_sets.order_line_id is not null").order('piece_sets.updated_at DESC').first, most_recently_updated_product, 'jjillorder'] do%>
-<% 
+<%
 require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 my_k = Class.new do
   include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
@@ -89,7 +89,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
       <h1 class='text-center'>J. Jill Purchase Order</h1>
     </div>
   </div>
-  <div class="row">    
+  <div class="row">
     <div class="col-md-12">
       <label>Ship To</label>
       <div>
@@ -209,7 +209,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
             <button id='hide-all-detail' class='btn btn-xs btn-default' onclick="$('.order-detail-line').hide();$('#show-all-detail').show();$('#hide-all-detail').hide();" style='display:none;'>Hide All</button>
           </th>
         </thead>
-        
+
         <tbody>
           <% @order.order_lines.each do |line| %>
             <tr class='hover ord_det_row'>
@@ -245,7 +245,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
                   <%end%>
                 </td>
             </tr>
-          <%end %> 
+          <%end %>
           <tr>
             <td colspan='6'>
               <label>Total Lines:</label> <%=@order.order_lines.size%>

@@ -1,4 +1,5 @@
 require 'open_chain/event_publisher'
+require 'open_chain/order_acceptance_registry'
 class Order < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
@@ -69,12 +70,25 @@ class Order < ActiveRecord::Base
   def async_unaccept! user
     self.unaccept! user, true
   end
+  # can the order be accepted (regardless of user permissions)
+  def can_be_accepted?
+    OpenChain::OrderAcceptanceRegistry.registered_for_can_be_accepted.each do |oa|
+      return false unless oa.can_be_accepted?(self)
+    end
+    true
+  end
   def can_accept? u
-    u.admin? ||
-    (
-      (u.company == self.vendor || u.company == self.agent)  &&
-      u.in_group?('ORDERACCEPT')
-    )
+    registered = OpenChain::OrderAcceptanceRegistry.registered_for_can_accept
+    return default_can_accept_behavior(u) if registered.empty?
+    registered.each {|oa| return false unless oa.can_accept?(self,u)}
+    return true
+  end
+  def default_can_accept_behavior u
+    return u.admin? ||
+      (
+        (u.company == self.vendor || u.company == self.agent)  &&
+        u.in_group?('ORDERACCEPT')
+      )
   end
 
   # Don't use this method directly unless you know there is no acceptance
