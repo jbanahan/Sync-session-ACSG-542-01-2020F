@@ -603,7 +603,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.importer.importer).to be_true
 
       # Uncomment this once this feed is the "One True Source" instead of the AllianceParser
-      #expect(entry.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-12T13:26:20-04:00"
+      expect(entry.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-12T13:26:20-04:00"
 
       # This should all be nil because the liquidation date is not set
       expect(entry.liquidation_type_code).to be_nil
@@ -619,6 +619,10 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.liquidation_ada).to be_nil
       expect(entry.liquidation_cvd).to be_nil
       expect(entry.liquidation_total).to be_nil
+
+      expect(entry.entity_snapshots.length).to eq 1
+      snapshot = entry.entity_snapshots.first
+      expect(snapshot.user).to eq User.integration
     end
 
     it "processes liquidation information if liquidation date is not in the future" do

@@ -1,10 +1,12 @@
 require 'spec_helper'
 
 describe EntitySnapshot do
+
   describe :diff do
     before :each do
       @u = Factory(:user)
     end
+
     it "should return empty diff for identical snapshots" do
       ol = Factory(:order_line)
       o = ol.order
@@ -204,7 +206,7 @@ describe EntitySnapshot do
       end
 
       it "should skip child records with blank record ids" do
-        j = JSON.parse @first_snapshot.snapshot
+        j = @first_snapshot.snapshot_json
         j['entity']['children'][0]['entity']['record_id'] = nil
         @first_snapshot.snapshot = j.to_json
         restored = @first_snapshot.restore @u
@@ -212,6 +214,15 @@ describe EntitySnapshot do
       end
     end
 
+    it "retrieves snapshot data from snapshot field if it is not null" do
+      first_snapshot = @first_snapshot.snapshot_json
+      @first_snapshot.update_attributes! snapshot: ActiveSupport::JSON.encode(first_snapshot)
+      EntitySnapshot.should_not_receive(:retrieve_snapshot_data_from_s3)
+
+      restored = @first_snapshot.restore (@u)
+      expect(restored).to eq @p
+      expect(restored.name).to eq "nm"
+    end
   end
 
   describe :bucket_name do
@@ -275,10 +286,9 @@ describe EntitySnapshot do
       expect(es.compared_at).to be_nil
     end
 
-    it "should call EntityCompare.process with snapshot" do
+    it "should call EntityCompare.handle_snapshot with snapshot" do
       described_class.any_instance.stub(:write_s3)
-      OpenChain::EntityCompare::EntityComparator.should_receive(:delay).with(priority: 10).and_return(OpenChain::EntityCompare::EntityComparator)
-      OpenChain::EntityCompare::EntityComparator.should_receive(:process_by_id)
+      OpenChain::EntityCompare::EntityComparator.should_receive(:handle_snapshot)
 
       ent = Factory(:entry)
       u = Factory(:user)
@@ -292,6 +302,56 @@ describe EntitySnapshot do
       es = EntitySnapshot.new
       es.recordable = ent
       expect(es.expected_s3_path).to eq "entry/#{ent.id}.json"
+    end
+  end
+
+  describe "retrieve_snapshot_data_from_s3" do 
+    let (:snapshot) {
+      EntitySnapshot.new bucket: "bucket", doc_path: "test/doc-1.json", version: "1"
+    }
+
+    it "retrieves versioned data for snapshot" do
+      OpenChain::S3.should_receive(:get_versioned_data) do |bucket, path, version, io|
+        expect(bucket).to eq "bucket"
+        expect(path).to eq "test/doc-1.json"
+        expect(version).to eq "1"
+
+        io.write "Testing"
+      end
+
+      expect(EntitySnapshot.retrieve_snapshot_data_from_s3 snapshot).to eq "Testing"
+    end
+  end
+
+  describe "snapshot_json" do
+    let (:json) {  }
+
+    before :each do
+      EntitySnapshot.stub(:retrieve_snapshot_data_from_s3).and_return json
+    end
+
+    it "retrieves snapshot from s3" do
+      s = EntitySnapshot.new doc_path: "path/to/file.txt"
+      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '{"OK": "OK"}'
+      expect(s.snapshot_json).to eq({"OK" => "OK"})
+    end
+
+    it "retrieves snapshot from snapshot attribute" do
+      s = EntitySnapshot.new snapshot: '{"OK": ""}'
+      EntitySnapshot.should_not_receive(:retrieve_snapshot_data_from_s3)
+      expect(s.snapshot_json).to eq({"OK"=> ""})
+    end
+
+    it "returns raw json" do
+      s = EntitySnapshot.new doc_path: "path/to/file.txt"
+      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '{"OK": "OK"}'
+      expect(s.snapshot_json(true)).to eq '{"OK": "OK"}'
+    end
+
+    it "returns nil if json is blank" do
+      s = EntitySnapshot.new doc_path: "path/to/file.txt"
+      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '     '
+      expect(s.snapshot_json(true)).to be_nil
     end
   end
 end

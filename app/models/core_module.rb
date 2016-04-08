@@ -19,50 +19,26 @@ class CoreModule
       :edit_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
       :quicksearch_lambda, # Scope for quick searching
       :quicksearch_fields, # List of field / field definitions for quicksearching
-      :quicksearch_extra_fields # List of field / field definitions for displaying along with quicksearch terms
-  attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
+      :quicksearch_extra_fields, # List of field / field definitions for displaying along with quicksearch terms
+      :module_chain, #default module chain for searches
+      :snapshot_module_chain # the module chain to use for taking snapshots of the core module (might include other items like comments / attachments)
 
   def initialize(class_name,label,opts={})
-    o = {:worksheetable => false, :statusable=>false, :file_format=>false,
-        :new_object => lambda {Kernel.const_get(class_name).new},
-        :children => [], :make_default_search => lambda {|user|
-          ss = SearchSetup.create(:name=>"Default",:user => user,:module_type=>class_name,:simple=>false)
-          model_fields.keys.each_with_index do |uid,i|
-            ss.search_columns.create(:rank=>i,:model_field_uid=>uid) if i < 3
-          end
-          ss
-        },
-        :business_logic_validations => lambda {|base_object| true},
-        :bulk_actions_lambda => lambda {|current_user| return Hash.new},
-        :changed_at_parents_lambda => lambda {|base_object| []},
-        :show_field_prefix => false,
-        :entity_json_lambda => lambda { |entity,module_chain|
-          master_hash = {'entity'=>{'core_module'=>self.class_name,'record_id'=>entity.id,'model_fields'=>{}}}
-          mf_hash = master_hash['entity']['model_fields']
-          self.model_fields.values.each do |mf|
-            unless mf.history_ignore?
-              v = mf.process_export entity, nil, true
-              mf_hash[mf.uid] = v unless v.nil?
-            end
-          end
-          child_mc = module_chain.child self
-          unless child_mc.nil?
-            child_objects = self.child_objects(child_mc,entity)
-            unless child_objects.blank?
-              eca = []
-              master_hash['entity']['children'] = eca
-              child_objects.each do |c|
-                eca << child_mc.entity_json_lambda.call(c,module_chain)
-              end
-            end
-          end
-          master_hash
-        },
-        :object_from_piece_set_lambda => lambda {|ps| nil},
-        :enabled_lambda => lambda { true },
-        :key_model_field_uids => []
-      }.
-      merge(opts)
+    o = {:worksheetable => false, 
+          :statusable=>false, 
+          :file_format=>false,
+          :new_object => lambda {Kernel.const_get(class_name).new},
+          :children => [], 
+          :make_default_search => self.class.default_search_lambda(self),
+          :entity_json_lambda => self.class.snapshot_lambda(self),
+          :business_logic_validations => lambda {|base_object| true},
+          :bulk_actions_lambda => lambda {|current_user| return Hash.new},
+          :changed_at_parents_lambda => lambda {|base_object| []},
+          :show_field_prefix => false,
+          :object_from_piece_set_lambda => lambda {|ps| nil},
+          :enabled_lambda => lambda { true },
+          :key_model_field_uids => []
+        }.merge(opts)
     @class_name = class_name
     @label = label
     @table_name = class_name.underscore.pluralize
@@ -111,7 +87,8 @@ class CoreModule
     @available_addresses_lambda = o[:available_addresses_lambda]
 
     @logical_key_lambda = o[:logical_key_lambda]
-
+    @module_chain = o[:module_chain]
+    @snapshot_descriptor = o[:snapshot_descriptor]
   end
 
   def quicksearch_sort_by  #returns qualified field name. Getter avoids circular dependency during init
@@ -148,8 +125,13 @@ class CoreModule
 
   #returns a json representation of the entity and all of it's children
   def entity_json base_object
-    j = @entity_json_lambda.call(base_object,default_module_chain)
-    ActiveSupport::JSON.encode j
+    json = nil
+    if @snapshot_descriptor
+      json = @snapshot_descriptor.entity_json base_object
+    else
+      j = @entity_json_lambda.call(base_object, default_module_chain)
+      ActiveSupport::JSON.encode j
+    end
   end
 
   #find's the given objects parents that should have their changed_at values updated, updates them, and saves them.
@@ -284,27 +266,9 @@ class CoreModule
     @available_addresses_lambda ? @available_addresses_lambda.call(obj) : []
   end
 
-  include CoreModuleDefinitions
-
   def self.all
     self.constants.map{|c| self.const_get(c)}.select{|c| c.is_a? CoreModule} || []
   end
-
-  CORE_MODULES = CoreModule.all
-
-  def self.add_virtual_identifier
-    # Add in the virtual_identifier field that is needed for update_model_field_attribute support
-    # This field is explained in the UpdateModelFieldsSupport module.
-    # It's only here becuase I couldn't figure out a way to meta-program it into that module and make sure
-    # the field was added to all child core modules as well.
-
-    # This appears to have to be done outside the CoreModule constructors becuase of the circular reference
-    # to CoreModule inside the core module classes (.ie Product, Entry, etc)
-    self.all.each {|cm| cm.klass.class_eval{attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)}}
-  end
-  private_class_method :add_virtual_identifier
-
-  add_virtual_identifier
 
   def self.find_by_class_name(c,case_insensitive=false)
     self.all.each do|m|
@@ -368,6 +332,42 @@ class CoreModule
   end
 
   private
+
+  def self.snapshot_lambda core_module
+    lambda do |entity,module_chain|
+      master_hash = {'entity'=>{'core_module'=>core_module.class_name,'record_id'=>entity.id,'model_fields'=>{}}}
+      mf_hash = master_hash['entity']['model_fields']
+      core_module.model_fields.values.each do |mf|
+        unless mf.history_ignore?
+          v = mf.process_export entity, nil, true
+          mf_hash[mf.uid] = v unless v.nil?
+        end
+      end
+      child_mc = module_chain.child core_module
+      unless child_mc.nil?
+        child_objects = core_module.child_objects(child_mc,entity)
+        unless child_objects.blank?
+          eca = []
+          master_hash['entity']['children'] = eca
+          child_objects.each do |c|
+            eca << child_mc.entity_json_lambda.call(c,module_chain)
+          end
+        end
+      end
+      master_hash
+    end
+  end
+
+  def self.default_search_lambda core_module
+    lambda do |user|
+      ss = SearchSetup.create(:name=>"Default",:user => user,:module_type=>core_module.class_name,:simple=>false)
+      core_module.model_fields.keys.each_with_index do |uid,i|
+        ss.search_columns.create(:rank=>i,:model_field_uid=>uid) if i < 3
+      end
+      ss
+    end
+  end
+
   def self.test_to_array
     r = []
     self.all.each {|c| r << c if yield c}
@@ -387,4 +387,98 @@ class CoreModule
       return r_val
     end
   end
+
+  def self.initialize_core_module_dependencies
+    # Basically, what we're doing here is turning class references from the module definitions into 
+    # actual core modules.  Doing it this way frees us from having to worry about the lexical load
+    # order in core module definitions forcing us into declaring core modules in a load specific order to prevent
+    # circular references from happening.
+    cm_object_map = Hash[CORE_MODULES.map {|cm| [cm.class_name, cm] }]
+    CORE_MODULES.each do |cm|
+
+      if cm.module_chain.respond_to?(:map)
+        mc = ModuleChain.new
+        mc.add_array remap_core_modules(cm, cm.module_chain, cm_object_map, "module chain")
+        cm.send(:set_default_module_chain, mc)
+      end
+
+      if cm.snapshot_module_chain.respond_to?(:map)
+        mc = ModuleChain.new
+        mc.add_array remap_core_modules(cm, cm.snapshot_module_chain, cm_object_map, "module chain")
+        cm.send(:set_snapshot_module_chain, mc)
+      end
+
+      if cm.children.respond_to?(:map)
+        cm.send(:set_children, remap_core_modules(cm, cm.children, cm_object_map, "child mapping"))
+      end
+
+      if cm.child_lambdas.respond_to? (:each_pair)
+        cm.send(:set_child_lambdas, remap_core_modules(cm, cm.child_lambdas, cm_object_map, "child lambdas"))
+      end
+
+      if cm.child_joins.respond_to?(:each_pair)
+        cm.send(:set_child_joins, remap_core_modules(cm, cm.child_joins, cm_object_map, "child joins"))
+      end
+      
+    end
+  end
+  private_class_method :initialize_core_module_dependencies
+
+  def self.remap_core_modules cm, child_core_modules, cm_object_map, descriptor
+    if child_core_modules.respond_to?(:each_key)
+      values = {}
+      child_core_modules.each_pair do |child_class, value|
+        child_cm = cm_object_map[child_class.name]
+        raise "#{cm.name} is using an invalid child CoreModule class of #{child_class.name} in #{descriptor}." if child_cm.nil?
+          values[child_cm] = value
+      end
+    else
+      values = child_core_modules.map do |child_class| 
+        child_cm = cm_object_map[child_class.name]
+        raise "#{cm.name} is using an invalid child CoreModule class of #{child_class.name} in its #{descriptor}." if child_cm.nil?
+        child_cm
+      end
+    end
+
+    values
+  end
+  private_class_method :remap_core_modules
+
+  def self.add_virtual_identifier
+    # Add in the virtual_identifier field that is needed for update_model_field_attribute support
+    # This field is explained in the UpdateModelFieldsSupport module.
+    # It's only here becuase I couldn't figure out a way to meta-program it into that module and make sure
+    # the field was added to all child core modules as well.
+
+    # This appears to have to be done outside the CoreModule constructors becuase of the circular reference
+    # to CoreModule inside the core module classes (.ie Product, Entry, etc)
+    self.all.each {|cm| cm.klass.class_eval{attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)}}
+  end
+  private_class_method :add_virtual_identifier
+
+  def set_children children
+    @children = children
+  end
+
+  def set_child_lambdas child_lambdas
+    @child_lambdas = child_lambdas
+  end
+
+  def set_child_joins child_joins
+    @child_joins = child_joins
+  end
+
+  def set_default_module_chain chain
+    @default_module_chain = chain
+  end
+
+  def set_snapshot_module_chain chain
+    @snapshot_module_chain = chain
+  end
+
+  include CoreModuleDefinitions
+  CORE_MODULES = CoreModule.all
+  initialize_core_module_dependencies
+  add_virtual_identifier
+
 end

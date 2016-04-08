@@ -1,5 +1,6 @@
 require 'open_chain/s3'
 require 'open_chain/entity_compare/comparator_helper'
+require 'open_chain/entity_compare/order_comparator'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_order_pdf_generator'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_autoflow_order_approver'
@@ -7,6 +8,8 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_autoflow_order_appr
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderChangeComparator
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::EntityCompare::ComparatorHelper
+  extend OpenChain::EntityCompare::OrderComparator
+
   ORDER_MODEL_FIELDS ||= [:ord_ord_num,:ord_window_start,:ord_window_end,:ord_currency,:ord_payment_terms,:ord_terms]
   ORDER_LINE_MODEL_FIELDS ||= [:ordln_line_number,:ordln_puid,:ordln_ordered_qty,:ordln_unit_of_measure,:ordln_ppu]
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
