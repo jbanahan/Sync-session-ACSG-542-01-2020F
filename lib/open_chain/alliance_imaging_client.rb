@@ -43,7 +43,7 @@ class OpenChain::AllianceImagingClient
           entry = process_image_file t, hsh
         end
 
-        entry.create_snapshot(entry, User.integration) if entry
+        entry.create_snapshot(User.integration) if entry
       rescue => e
         # If there's an error we should catch it, otherwise the message won't get pulled from the message queue
         raise e unless Rails.env.production?
