@@ -147,32 +147,67 @@ describe EntitySnapshot do
     end
 
     context :custom_values do
-      before :each do 
-        @cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
-        ModelField.reload
-        @p.update_custom_value! @cd, 'x'
-        @first_snapshot = @p.create_snapshot @u
+      context "with standard custom field" do
+        
+        before :each do 
+          @cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
+          ModelField.reload
+          @p.update_custom_value! @cd, 'x'
+          @first_snapshot = @p.create_snapshot @u
+        end
+
+        it "should replace custom fields" do
+          @p.update_custom_value! @cd, 'y'
+          restored = @first_snapshot.restore(@u)
+          restored.get_custom_value(@cd).value.should == 'x'
+        end
+        it "should erase custom fields that have been added" do
+          cd2 = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
+          @p.update_custom_value! cd2, 'y'
+          restored = @first_snapshot.restore(@u)
+          restored.get_custom_value(cd2).value.should be_blank
+        end
+        it "should insert custom fields that have been removed" do
+           @p.get_custom_value(@cd).destroy 
+          restored = @first_snapshot.restore(@u)
+          restored.get_custom_value(@cd).value.should == 'x'
+        end
+        it "should leave custom fields that haven't changed alone" do
+          restored = @first_snapshot.restore(@u)
+          restored.get_custom_value(@cd).value.should == 'x'
+        end
       end
-      it "should replace custom fields" do
-        @p.update_custom_value! @cd, 'y'
-        restored = @first_snapshot.restore(@u)
-        restored.get_custom_value(@cd).value.should == 'x'
+      
+      context "with special custom fields" do
+        it "handles user custom value fields" do
+          user_def = Factory(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true)
+          ModelField.reload
+          @p.update_custom_value! user_def, @u
+          snapshot = @p.create_snapshot @u
+          user2 = Factory(:user)
+          @p.update_custom_value! user_def, user2
+          snapshot.restore @u
+          @p.reload
+          expect(@p.custom_value(user_def)).to eq @u.id
+        end
+
+        it "handles address fields" do
+          addr_def = Factory(:custom_definition, label: "Testing Address", module_type: "Product", data_type: 'integer', is_address: true)
+          ModelField.reload
+
+          address = Factory(:full_address)
+          address_2 = Factory(:full_address)
+
+          @p.update_custom_value! addr_def, address
+          snapshot = @p.create_snapshot @u
+          @p.update_custom_value! addr_def, address_2
+
+          snapshot.restore @u
+          @p.reload
+          expect(@p.custom_value(addr_def)).to eq address.id
+        end
       end
-      it "should erase custom fields that have been added" do
-        cd2 = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
-        @p.update_custom_value! cd2, 'y'
-        restored = @first_snapshot.restore(@u)
-        restored.get_custom_value(cd2).value.should be_blank
-      end
-      it "should insert custom fields that have been removed" do
-         @p.get_custom_value(@cd).destroy 
-        restored = @first_snapshot.restore(@u)
-        restored.get_custom_value(@cd).value.should == 'x'
-      end
-      it "should leave custom fields that haven't changed alone" do
-        restored = @first_snapshot.restore(@u)
-        restored.get_custom_value(@cd).value.should == 'x'
-      end
+      
     end
 
     context "children" do

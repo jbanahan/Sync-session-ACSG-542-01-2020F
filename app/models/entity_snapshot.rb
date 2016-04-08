@@ -130,10 +130,12 @@ class EntitySnapshot < ActiveRecord::Base
     obj = core_module.klass.find_by_id obj_hash['record_id']
     obj = core_module.klass.new unless obj
     custom_values = []
+    @cm_cache ||= Hash.new do |h, k|
+      h[k] = k.model_fields {|mf| mf.restore_field? }.values
+    end
 
     if !obj.respond_to?(:can_edit?) || obj.can_edit?(user)
-      model_fields = ModelField.find_by_core_module(core_module)
-      model_fields.each do |mf|
+      @cm_cache[core_module].each do |mf|
         v = obj_hash['model_fields'][mf.uid]
         v = obj_hash['model_fields'][mf.uid.to_s]
         v = "" if v.nil?

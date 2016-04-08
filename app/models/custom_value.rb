@@ -82,6 +82,9 @@ class CustomValue < ActiveRecord::Base
     d = self.custom_definition
     raise "Cannot set custom value without a custom definition" if d.nil?
     v = d.date? ? parse_date(val) : val
+    if (d.is_user? || d.is_address?) && val.respond_to?(:id)
+      v = val.id
+    end
     self.send "#{d.data_type}_value=", v
   end
 

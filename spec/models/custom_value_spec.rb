@@ -202,5 +202,21 @@ describe CustomValue do
       p.reload
       expect(p.get_custom_value(cd).value).to be_same_second_as t
     end
+
+    it "handles user objects" do
+      user = Factory(:user)
+      user_def = Factory(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true)
+      cv = CustomValue.new custom_definition: user_def
+      cv.value = user
+      expect(cv.value).to eq user.id
+    end
+
+    it "handles address objects" do
+      addr = Factory(:address)
+      addr_def = Factory(:custom_definition, label: "Testing Address", module_type: "Product", data_type: 'integer', is_address: true)
+      cv = CustomValue.new custom_definition: addr_def
+      cv.value = addr
+      expect(cv.value).to eq addr.id
+    end
   end
 end

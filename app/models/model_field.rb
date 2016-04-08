@@ -27,7 +27,7 @@ class ModelField
               :user_accessible, :autocomplete
 
   def initialize(rank, uid, core_module, field_name, options={})
-    o = {entity_type_field: false, history_ignore: false, read_only: false, user_accessible: true}.merge(options)
+    o = {entity_type_field: false, history_ignore: false, read_only: false, user_accessible: true, restore_field: true}.merge(options)
     @uid = uid
     @core_module = core_module
     @sort_rank = rank
@@ -78,6 +78,7 @@ class ModelField
     @address_field = o[:address_field]
     @select_options_lambda = o[:select_options_lambda]
     @autocomplete = o[:autocomplete]
+    @restore_field = o[:restore_field]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -134,6 +135,10 @@ class ModelField
 
   def address_field?
     @address_field
+  end
+
+  def restore_field?
+    @restore_field
   end
 
   def select_options
@@ -511,7 +516,8 @@ class ModelField
           r = a.name if a
         end
         return r
-      }
+      },
+      restore_field: false
     })
 
     #city
@@ -532,7 +538,8 @@ class ModelField
           r = a.city if a
         end
         return r
-      }
+      },
+      restore_field: false
     })
 
     #state
@@ -553,7 +560,8 @@ class ModelField
           r = a.state if a
         end
         return r
-      }
+      },
+      restore_field: false
     })
 
     #postal code
@@ -574,7 +582,8 @@ class ModelField
           r = a.postal_code if a
         end
         return r
-      }
+      },
+      restore_field: false
     })
 
     #country iso code
@@ -598,7 +607,8 @@ class ModelField
           end
         end
         return r
-      }
+      },
+      restore_field: false
     })
 
     #add the street field, concatenating lines 1 -3
@@ -623,7 +633,8 @@ class ModelField
           end
         end
         return r
-      }
+      },
+      restore_field: false
     })
 
     #add the base field
@@ -664,7 +675,8 @@ class ModelField
       },
       data_type: :string,
       field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
-      user_field: true
+      user_field: true,
+      restore_field: false
     })
     fields_to_add << ModelField.new(index, "#{uid_prefix}fullname", core_module, "#{uid_prefix}fullname", {
       custom_id: custom_definition.id,
@@ -688,7 +700,8 @@ class ModelField
       field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
       read_only: true,
       user_field: true,
-      user_full_name_field: true
+      user_full_name_field: true,
+      restore_field: false
     })
     fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
       :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
