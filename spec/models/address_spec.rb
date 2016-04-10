@@ -1,6 +1,27 @@
 require "spec_helper"
 
 describe Address do
+
+  describe '#can_view?' do
+    before :each do
+      @a = Factory(:address)
+      @c = @a.company
+    end
+    it "should be visible if linked to my company" do
+      u = Factory(:user,company:@c)
+      expect(@a.can_view?(u)).to be_true
+    end
+    it "should be visible if linked to a company I'm linked to" do
+      u = Factory(:user)
+      u.company.linked_companies << @c
+      expect(@a.can_view?(u)).to be_true
+    end
+    it "should not be visible if not linked to my company or a company I'm linked to" do
+      u = Factory(:user)
+      expect(@a.can_view?(u)).to be_false
+    end
+  end
+
   context :address_hash do
     it "sets an address hash on save" do
       a = Factory(:address,name:'myname',line_1:'l1',line_2:'l2',city:'Jakarta')
@@ -33,7 +54,7 @@ describe Address do
   context :validations do
     it "should not allow destroy if in use" do
       a = Factory(:address)
-      s = Factory(:shipment,ship_to_id:a.id)
+      Factory(:shipment,ship_to_id:a.id)
 
       expect {a.destroy}.to_not change(Address,:count)
 
@@ -47,38 +68,6 @@ describe Address do
     end
   end
 
-  # describe "full_address" do
-  #   before :each do
-  #     @country = Factory(:country)
-  #     @address = Address.new line_1: "Line 1", line_2: "Line 2", line_3: "Line 3", city: "City", state: "ST", postal_code: "1234N", country: @country
-  #   end
-
-  #   it "prints out full address on single line" do
-  #     expect(@address.full_address).to eq "Line 1 Line 2 Line 3, City ST 1234N, #{@country.iso_code}"
-  #   end
-
-  #   it "handles missing address lines without printing extra spaces" do
-  #     @address.assign_attributes line_2: " ", line_3: " "
-
-  #     expect(@address.full_address).to eq "Line 1, City ST 1234N, #{@country.iso_code}"
-  #   end
-
-  #   it "handles missing address lines without priting leading spaces / comma" do
-  #     @address.assign_attributes line_1: " ", line_2: " ", line_3: " "
-
-  #     expect(@address.full_address).to eq "City ST 1234N, #{@country.iso_code}"
-  #   end
-
-  #   it "handles missing city lines without priting leading spaces" do
-  #     @address.assign_attributes city: " ", state: "", postal_code: " "
-
-  #     expect(@address.full_address).to eq "Line 1 Line 2 Line 3, #{@country.iso_code}"
-  #   end
-
-  #   it "prints nothing if everything is missing" do
-  #     expect(Address.new.full_address).to eq ""
-  #   end
-  # end
 
   describe :in_use do
     before :each do
@@ -86,7 +75,7 @@ describe Address do
       @a = Factory(:address,company:@c)
     end
     it "should return false if not in use" do
-      expect(@a).to_not be_in_use      
+      expect(@a).to_not be_in_use
     end
     it "should return true for address linked to custom value" do
       cd = Factory(:custom_definition, data_type: :integer, module_type: 'Company', is_address: true)

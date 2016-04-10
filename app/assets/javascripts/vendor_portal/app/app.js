@@ -19,6 +19,10 @@
         url: '/orders/:id',
         template: "<chain-loading-wrapper loading-flag='{{loading}}'><dynamic-show-order></dynamic-show-order></chain-loading-wrapper>",
         controller: "ShowOrderCtrl"
+      }).state('selectShipFrom', {
+        url: '/orders/:id/select_ship_from',
+        templateUrl: "vendor_portal/partials/select_ship_from.html",
+        controller: 'SelectShipFromCtrl'
       });
     }
   ]);
@@ -192,7 +196,7 @@
 
 }).call(this);
 
-angular.module('VendorPortal-Templates', ['vendor_portal/partials/chain_vp_order_panel.html', 'vendor_portal/partials/main.html', 'vendor_portal/partials/standard_order_template.html']);
+angular.module('VendorPortal-Templates', ['vendor_portal/partials/chain_vp_order_panel.html', 'vendor_portal/partials/main.html', 'vendor_portal/partials/select_ship_from.html', 'vendor_portal/partials/standard_order_template.html']);
 
 angular.module("vendor_portal/partials/chain_vp_order_panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_order_panel.html",
@@ -205,6 +209,11 @@ angular.module("vendor_portal/partials/main.html", []).run(["$templateCache", fu
     "      $('chain-change-password-modal .modal').modal('show');\n" +
     "      return false;\n" +
     "    });</script></div>");
+}]);
+
+angular.module("vendor_portal/partials/select_ship_from.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("vendor_portal/partials/select_ship_from.html",
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\"><a ui-sref=\"showOrder({id:order.id})\"><i class=\"fa fa-arrow-left\"></i></a>&nbsp;Select Ship From Address</h3></div><div class=\"panel-body\"><div class=\"row\" ng-repeat=\"ag in addressGroups\"><div class=\"col-md-4\" ng-repeat=\"a in ag track by a.id\"><div class=\"thumbnail\"><iframe ng-src=\"{{a.map_url}}\" style=\"width:100%\"></iframe><div class=\"caption\"><div class=\"text-right text-warning\"><small>Map locations are approximate based on the address text provided.</small></div><div><chain-address address=\"{{a.add_full_address}}\"></chain-address></div><div class=\"text-right\"><button ng-click=\"select(order,a)\" class=\"btn btn-success\" role=\"button\">Select</button></div></div></div></div></div></div></div>");
 }]);
 
 angular.module("vendor_portal/partials/standard_order_template.html", []).run(["$templateCache", function($templateCache) {
@@ -224,6 +233,80 @@ angular.module("vendor_portal/partials/standard_order_template.html", []).run(["
 }).call(this);
 
 (function() {
+  angular.module('VendorPortal').controller('SelectShipFromCtrl', [
+    '$scope', '$stateParams', '$state', 'chainApiSvc', 'chainDomainerSvc', function($scope, $stateParams, $state, chainApiSvc, chainDomainerSvc) {
+      var addressesInGroups;
+      $scope.init = function(id) {
+        $scope.loading = 'loading';
+        return chainDomainerSvc.withDictionary().then(function(dict) {
+          $scope.dictionary = dict;
+          return chainApiSvc.Order.get(id).then(function(order) {
+            $scope.order = order;
+            return chainApiSvc.Address.search({
+              per_page: 50,
+              page: 1,
+              criteria: [
+                {
+                  field: 'add_shipping',
+                  operator: 'eq',
+                  val: 'true'
+                }, {
+                  field: 'add_comp_syscode',
+                  operator: 'eq',
+                  val: order.ord_ven_syscode
+                }
+              ]
+            }).then(function(addresses) {
+              $scope.addresses = addresses;
+              $scope.addressGroups = addressesInGroups(addresses);
+              return delete $scope.loading;
+            });
+          });
+        });
+      };
+      $scope.select = function(order, address) {
+        var simplifiedOrderSaveObject;
+        $scope.loading = 'loading';
+        simplifiedOrderSaveObject = {
+          id: order.id,
+          ord_ship_from_id: address.id
+        };
+        chainApiSvc.Order.save(simplifiedOrderSaveObject).then(function(ord) {
+          return $state.transitionTo('showOrder', {
+            id: ord.id
+          });
+        });
+        return null;
+      };
+      addressesInGroups = function(addresses) {
+        var a, i, innerArray, j, len, r;
+        if (!(addresses && addresses.length > 0)) {
+          return [];
+        }
+        r = [];
+        innerArray = [];
+        for (i = j = 0, len = addresses.length; j < len; i = ++j) {
+          a = addresses[i];
+          if (i % 4 === 0) {
+            r.push(innerArray);
+            innerArray = [];
+          }
+          innerArray.push(a);
+        }
+        if (innerArray.length !== 0) {
+          r.push(innerArray);
+        }
+        return r;
+      };
+      if (!$scope.$root.isTest) {
+        return $scope.init($stateParams.id);
+      }
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   var app;
 
   app = angular.module('VendorPortal');
@@ -234,9 +317,12 @@ angular.module("vendor_portal/partials/standard_order_template.html", []).run(["
         $scope.loading = 'loading';
         return chainDomainerSvc.withDictionary().then(function(dict) {
           $scope.dictionary = dict;
-          return chainApiSvc.Order.get(id).then(function(order) {
-            $scope.order = order;
-            return delete $scope.loading;
+          return chainApiSvc.User.me().then(function(me) {
+            $scope.me = me;
+            return chainApiSvc.Order.get(id).then(function(order) {
+              $scope.order = order;
+              return delete $scope.loading;
+            });
           });
         });
       };

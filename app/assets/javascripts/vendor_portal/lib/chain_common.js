@@ -7,11 +7,11 @@
     '$httpProvider', function($httpProvider) {
       $httpProvider.defaults.headers.common['Accept'] = 'application/json';
       return $httpProvider.interceptors.push([
-        '$q', 'chainErrorSvc', function($q, chainErrorSvc) {
+        '$q', 'chainErrorSvc', '$log', function($q, chainErrorSvc, $log) {
           return {
             responseError: function(rejection) {
               var data;
-              console.log(rejection);
+              $log.log(rejection);
               data = rejection.data;
               if (data && data.errors && data.errors.length > 0) {
                 chainErrorSvc.addErrors(data.errors);
@@ -155,6 +155,15 @@
           }
         };
       };
+      publicMethods.Address = newCoreModuleClient('addresses', 'address', function(a) {
+        if (a.map_url) {
+          a.map_url = $sce.trustAsResourceUrl(a.map_url);
+        }
+        return a;
+      });
+      delete publicMethods.Address.get;
+      delete publicMethods.Address.load;
+      delete publicMethods.Address.save;
       publicMethods.Product = newCoreModuleClient('products', 'product', function(product) {
         delete product.prod_ent_type_id;
         return product;

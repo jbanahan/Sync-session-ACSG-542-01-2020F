@@ -16,8 +16,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
       # need to delay this so it runs in a different transaction than the
       # change comparator that calls this class
       order.delay.create_snapshot(u)
+
+      return true
+    else
+      return false
     end
-    order
+
   end
 
   def self.find_or_create_autoflow_user

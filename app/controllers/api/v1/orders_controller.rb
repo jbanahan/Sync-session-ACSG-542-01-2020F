@@ -10,6 +10,10 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     render_show CoreModule::ORDER
   end
 
+  def update
+    do_update CoreModule::ORDER
+  end
+
   def by_order_number
     obj = Order.where(order_number: params[:order_number]).first
     render_obj obj
@@ -29,6 +33,18 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     raise StatusableError.new("Access denied.", :unauthorized) unless o.can_view?(current_user) && o.can_accept?(current_user)
     o.async_unaccept! current_user
     redirect_to "/api/v1/orders/#{o.id}"
+  end
+
+  def save_object h
+    ord = h['id'].blank? ? Order.new : Order.includes([
+      {order_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
+      {custom_values:[:custom_definition]}
+    ]).find_by_id(h['id'])
+    raise StatusableError.new("Object with id #{h['id']} not found.",404) if ord.nil?
+    import_fields h, ord, CoreModule::ORDER
+    raise StatusableError.new("You do not have permission to save this Order.",:forbidden) unless ord.can_edit?(current_user)
+    ord.save if ord.errors.full_messages.blank?
+    ord
   end
 
   def obj_to_json_hash o
@@ -53,6 +69,9 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       :ord_order_from_address_name,
       :ord_order_from_address_full_address,
       :ord_ship_to_count,
+      :ord_ship_from_id,
+      :ord_ship_from_full_address,
+      :ord_ship_from_name,
       :ord_rule_state,
       :ord_closed_at
     ] + custom_field_keys(CoreModule::ORDER))

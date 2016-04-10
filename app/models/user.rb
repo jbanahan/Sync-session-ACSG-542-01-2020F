@@ -137,7 +137,7 @@ class User < ActiveRecord::Base
         user.oauth_expires_at = Time.at(auth_info.credentials.expires_at)
         user.save!
       else
-        errors << "Google email account #{auth_info[:info][:email]} has not been set up in VFI Track." + 
+        errors << "Google email account #{auth_info[:info][:email]} has not been set up in VFI Track." +
                   " If you would like to request an account, please click the 'Need an account?' link below."
       end
     end
@@ -230,7 +230,8 @@ class User < ActiveRecord::Base
       email: self.email,
       email_new_messages: self.email_new_messages,
       username: self.username,
-      permissions: permissions_hash
+      permissions: permissions_hash,
+      company_id: self.company_id
     }
   end
 
@@ -387,7 +388,7 @@ class User < ActiveRecord::Base
   end
 
   def valid_email
-    rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| EmailValidator.valid? e } 
+    rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| EmailValidator.valid? e }
     error_message = rejected.count > 1 ? "invalid: #{rejected.join(', ')}" : "invalid"
     errors.add(:email, error_message) unless rejected.empty?
   end

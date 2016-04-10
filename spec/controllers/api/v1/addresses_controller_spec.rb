@@ -2,54 +2,34 @@ require 'spec_helper'
 
 describe Api::V1::AddressesController do
 
-  describe "autocomplete" do
-    before :each do
-      @address = Factory(:full_address, in_address_book: true, name: "Test Address")
-      @user = Factory(:user, company: @address.company)
-      allow_api_access @user
+  describe '#index' do
+    it 'should get addresses that user can view' do
+      c = Factory(:company)
+      Factory(:address,system_code:'ABCD',company:c)
+      Factory(:address) # don't find this one
+
+      allow_api_access Factory(:user,company:c)
+
+      get :index
+      expect(response).to be_success
+      h = JSON.parse(response.body)
+      expect(h['results']).to have(1).result
+      expect(h['results'][0]['add_syscode']).to eq 'ABCD'
     end
+    it 'should apply filters' do
+      c = Factory(:company)
+      Factory(:address,system_code:'ABCD',company:c)
+      Factory(:address,system_code:'DEFG',company:c)
+      Factory(:address) # don't find this one
 
-    it "returns address json if name matches request" do
-      # Make sure we skip addresses not in the address book
-      address2 = Factory(:full_address, in_address_book: false, name: "Test Address 2")
-      get :autocomplete, n: "add"
-      expect(response.status).to eq 200
+      allow_api_access Factory(:user,company:c)
 
-      r = JSON.parse(response.body)
-      expect(r.length).to eq 1
-      expect(r.first).to eq( {"name"=> @address.name, "full_address"=> @address.full_address, "id"=> @address.id} )
+      get :index, sid1:'add_sys_code', sop1: 'eq', sv1:'ABCD'
+      expect(response).to be_success
+      h = JSON.parse(response.body)
+      expect(h['results']).to have(1).result
+      expect(h['results'][0]['add_syscode']).to eq 'ABCD'
     end
-
-    it "returns addresses in linked companies" do
-      user = Factory(:user)
-      allow_api_access user
-      user.company.linked_companies << @address.company
-
-      get :autocomplete, n: "add"
-      expect(response.status).to eq 200
-
-      r = JSON.parse(response.body)
-      expect(r.length).to eq 1
-    end
-
-    it "returns nothing if search term is blank" do
-      get :autocomplete, n: ""
-      expect(response.status).to eq 200
-
-      r = JSON.parse(response.body)
-      expect(r.length).to eq 0
-    end
-
-    it "limits results by company" do
-      user = Factory(:user)
-      allow_api_access user
-
-      get :autocomplete, n: "add"
-      expect(response.status).to eq 200
-
-      r = JSON.parse(response.body)
-      expect(r.length).to eq 0
-    end
-
   end
+
 end

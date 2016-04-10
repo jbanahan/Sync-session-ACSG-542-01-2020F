@@ -7,11 +7,26 @@ class Address < ActiveRecord::Base
   before_destroy :check_in_use
   has_and_belongs_to_many :products, :join_table=>"product_factories", :foreign_key=>'address_id', :association_foreign_key=>'product_id'
 
+  def can_view? user
+    return user.company.master? ||
+      user.company_id == self.company_id ||
+      user.company.linked_companies.include?(self.company)
+  end
+
+  def self.search_where user
+    return "1=1" if user.company.master?
+    return "(addresses.company_id = #{user.company_id} OR addresses.company_id IN (select child_id from linked_companies where parent_id = #{user.company_id}))"
+  end
+
+  def self.search_secure user, base_object
+    base_object.where search_where user
+  end
+
   #make a key that will match the #address_hash if the two addresses are the same
   def self.make_hash_key a
     base = "#{a.name}#{a.line_1}#{a.line_2}#{a.line_3}#{a.city}#{a.state}#{a.postal_code}#{a.country_id}#{a.system_code}"
     Digest::MD5.hexdigest base
-  end	
+  end
 
   def google_maps_url query_options={}
     inner_opts = {q:"#{self.line_1} #{self.line_2} #{self.line_3}, #{self.city} #{self.state}, #{self.country.try(:iso_code)}",
@@ -57,16 +72,20 @@ LEFT OUTER JOIN shipments ship_from ON ship_from.ship_from_id = addresses.id
 LEFT OUTER JOIN deliveries deliver_to ON deliver_to.ship_to_id = addresses.id
 LEFT OUTER JOIN deliveries deliver_from ON deliver_from.ship_from_id = addresses.id
 LEFT OUTER JOIN orders order_to ON order_to.ship_to_id = addresses.id
+LEFT OUTER JOIN orders order_ship_from ON order_ship_from.ship_from_id = addresses.id
+LEFT OUTER JOIN order_lines order_line_ship_to ON order_line_ship_to.ship_to_id = addresses.id
 LEFT OUTER JOIN sales_orders sale_to ON sale_to.ship_to_id = addresses.id
 LEFT OUTER JOIN product_factories ON product_factories.address_id = addresses.id
 WHERE addresses.id = #{self.id}
 AND (
-  custom_values.id is not null 
-  OR ship_to.id is not null 
+  custom_values.id is not null
+  OR ship_to.id is not null
   OR ship_from.id is not null
-  OR deliver_to.id is not null 
+  OR deliver_to.id is not null
   OR deliver_from.id is not null
-  OR order_to.id is not null 
+  OR order_to.id is not null
+  OR order_ship_from.id is not null
+  OR order_line_ship_to.id is not null
   OR sale_to.id is not null
   OR product_factories.product_id is not null
 ) LIMIT 1

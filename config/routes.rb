@@ -44,7 +44,7 @@ OpenChain::Application.routes.draw do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
       end
-      resources :orders, only: [:index,:show] do
+      resources :orders, only: [:index,:show,:update] do
         member do
           get :state_toggle_buttons
           post :toggle_state_button
@@ -165,9 +165,7 @@ OpenChain::Application.routes.draw do
         end
       end
 
-      resources :addresses, only: [:create] do
-        get :autocomplete, on: :collection
-      end
+      resources :addresses, only: [:index]
 
       resources :countries, only: [:index]
 

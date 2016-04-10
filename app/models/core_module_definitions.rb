@@ -198,7 +198,7 @@ module CoreModuleDefinitions
        :key_model_field_uids => [:prod_uid],
        :quicksearch_fields => [:prod_uid,:prod_name],
        :quicksearch_extra_fields => [lambda do
-          # This is here SOLELY for the case where we're running the migration to actually create 
+          # This is here SOLELY for the case where we're running the migration to actually create
           # the show_quicksearch field (since this code is referenced from an initializer and will load
           # when migrations run)
           if Country.new.respond_to?(:quicksearch_show?)
@@ -208,7 +208,6 @@ module CoreModuleDefinitions
           end
        end],
        :module_chain => [Product, Classification, TariffRecord]
-
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
        :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
@@ -276,7 +275,7 @@ module CoreModuleDefinitions
           # the attachment id, so trying to restore deleted attachments would also not work due to the ids misaligning.
           # If we do true snapshot restores for entries (which I don't think we ever should since VFI Track is not the datasource of record for
           # entries) we will have to make a custom way for entry to deal with attachments - poentially just retaining the attachments.
-          CommercialInvoice => lambda {|ent| ent.commercial_invoices}, 
+          CommercialInvoice => lambda {|ent| ent.commercial_invoices},
           BrokerInvoice => lambda {|ent| ent.broker_invoices },
           Container => lambda {|ent| ent.containers },
           EntryComment => lambda {|ent| ent.entry_comments }
@@ -307,12 +306,12 @@ module CoreModuleDefinitions
   # ENTRY_COMMENT core module is present solely for use in snapshotting, it is not meant to be used
   # as a module.  The only thing set up for it is model fields.
   # Entry Comment has no field that is really suitable for use in key_model_field_uids or in unique_id_field,
-  # as such comments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so 
+  # as such comments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so
   # that's not a big deal.
   ENTRY_COMMENT = CoreModule.new("EntryComment", "Entry Note", {})
 
   OFFICIAL_TARIFF = CoreModule.new("OfficialTariff","HTS Regulation",{
-       :default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate], 
+       :default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate],
        :quicksearch_fields=> [:ot_hts_code,:ot_full_desc],
        :quicksearch_extra_fields => [:ot_cntry_name]
    })
@@ -377,11 +376,35 @@ module CoreModuleDefinitions
     key_model_field_uids: [:pva_ven_name, :pva_puid]
   })
 
+<<<<<<< a08fef673c1b4fd056466cdafda55831b2d074d2
   # ATTACHMENT core module is present solely for use in snapshotting, it is not meant to be used
   # as a module.  The only thing set up for it is model fields.
   # Attachment has no field that is really suitable for use in key_model_field_uids or in unique_id_field,
-  # as such attachments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so 
+  # as such attachments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so
   # that's not a big deal.
   ATTACHMENT = CoreModule.new("Attachment", "Attachment", {})
+=======
+  ADDRESS = CoreModule.new("Address","Address",{
+    unique_id_field_name: :add_sys_code,
+    enabled_lambda: lambda {true}
+  })
+
+  def self.set_default_module_chain(core_module, core_module_array)
+    mc = ModuleChain.new
+    mc.add_array core_module_array
+    core_module.default_module_chain = mc
+  end
+
+  set_default_module_chain ORDER, [ORDER,ORDER_LINE]
+  set_default_module_chain SHIPMENT, [SHIPMENT,SHIPMENT_LINE,BOOKING_LINE]
+  set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
+  set_default_module_chain SALE, [SALE,SALE_LINE]
+  set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
+  set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
+  set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
+  set_default_module_chain SECURITY_FILING, [SECURITY_FILING,SECURITY_FILING_LINE]
+  set_default_module_chain COMPANY, [COMPANY, PLANT, PLANT_PRODUCT_GROUP_ASSIGNMENT]
+  set_default_module_chain SUMMARY_STATEMENT, [SUMMARY_STATEMENT, BROKER_INVOICE, BROKER_INVOICE_LINE]
+>>>>>>> Lumber Liquidators SOW 17.2 interim commit
 
 end

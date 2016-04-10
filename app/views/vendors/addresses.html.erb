@@ -47,7 +47,11 @@
         </div>
         <div class='form-group'>
           <%= f.label :country %>
-          <%= f.collection_select :country_id, Country.order(:name), :id, :name, options ={:prompt => "-Select a country"}, class: 'form-control' %> 
+          <%= f.collection_select :country_id, Country.order(:name), :id, :name, options ={:prompt => "-Select a country"}, class: 'form-control' %>
+        </div>
+        <div class='form-group'>
+          <%= f.label :shipping%>
+          <%= f.check_box :shipping %>
         </div>
         <div class="actions">
           <%= f.submit :class=>'btn' %>

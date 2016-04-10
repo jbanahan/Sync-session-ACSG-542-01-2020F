@@ -8,7 +8,7 @@ module Api; module V1; class AddressesController < ApiController
       result = result.limit(10)
       json = result.map {|address| {name:address.name, full_address:address.full_address, id:address.id} }
     end
-    
+
     render json: json
   end
 

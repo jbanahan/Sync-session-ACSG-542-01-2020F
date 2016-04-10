@@ -49,6 +49,28 @@ describe Api::V1::OrdersController do
 
     end
   end
+
+  describe :update do
+    before :each do
+      @order = Factory(:order,order_number:'oldordnum')
+    end
+    it 'should fail if user cannot edit' do
+      Order.any_instance.stub(:can_edit?).and_return false
+      h = {'id'=>@order.id,'ord_ord_num'=>'newordnum'}
+      put :update, id:@order.id, order:h
+      expect(response.status).to eq 403
+      @order.reload
+      expect(@order.order_number).to eq 'oldordnum'
+    end
+    it 'should save' do
+      h = {'id'=>@order.id,'ord_ord_num'=>'newordnum'}
+      put :update, id:@order.id, order:h
+      expect(response).to be_success
+      @order.reload
+      expect(@order.order_number).to eq 'newordnum'
+    end
+  end
+
   describe :accept do
     it "should accept order if user has permission" do
       Order.any_instance.stub(:can_accept?).and_return true

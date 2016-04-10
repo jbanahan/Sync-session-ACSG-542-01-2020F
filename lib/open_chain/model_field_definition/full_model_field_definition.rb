@@ -1,6 +1,7 @@
 Dir[__dir__ + '/*'].each {|file| require file } #Require all files in this directory
 
 module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
+  include OpenChain::ModelFieldDefinition::AddressFieldDefinition
   include OpenChain::ModelFieldDefinition::BookingLineFieldDefinition
   include OpenChain::ModelFieldDefinition::BrokerInvoiceFieldDefinition
   include OpenChain::ModelFieldDefinition::BrokerInvoiceLineFieldDefinition
@@ -37,6 +38,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::CommercialInvoiceLaceyComponentFieldDefinition
 
   def add_field_definitions
+    add_address_fields
     add_company_fields
     add_entry_fields
     add_security_filing_line_fields

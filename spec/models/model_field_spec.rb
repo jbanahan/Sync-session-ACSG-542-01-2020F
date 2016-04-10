@@ -18,8 +18,8 @@ describe ModelField do
       u = Factory(:master_user,order_view:true)
       h = SearchQuery.new(ss,u).execute
       h.should have(1).record
-      h.first[:row_key].should == @order_line.order.id
-      h.first[:result].first.should == 'ABC'
+      expect(h.first[:row_key]).to eq @order_line.order.id
+      expect(h.first[:result].first).to eq 'ABC'
     end
     it "should be read only" do
       expect(@mf.process_import(@order_line,'DEF',Factory(:user))).to eq "Value ignored. #{@mf.label} is read only."
@@ -69,7 +69,7 @@ describe ModelField do
       mf.should_not be_read_only
       p = Product.new
       mf.process_import p, "n", User.new
-      p.name.should == 'n'
+      expect(p.name).to eq 'n'
     end
     it "should not write if read only" do
       FieldLabel.set_label :x, "PLBL"
@@ -77,8 +77,8 @@ describe ModelField do
       mf.should be_read_only
       p = Product.new(:name=>'x')
       r = mf.process_import p, 'n', User.new
-      p.name.should == 'x'
-      r.should == "Value ignored. PLBL is read only."
+      expect(p.name).to eq 'x'
+      expect(r).to eq "Value ignored. PLBL is read only."
     end
     it "should set read_only for custom_defintion that is read only" do
       cd = Factory :custom_definition
@@ -363,10 +363,10 @@ describe ModelField do
 
   it "should get uid for region" do
     r = Factory(:region)
-    ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
+    expect(ModelField.uid_for_region(r,"x")).to eq "*r_#{r.id}_x"
   end
   context "special cases" do
-    context 'ports' do
+    describe 'ports' do
       before :each do
         @port = Factory(:port,name:'MyName')
         @u = Factory(:master_user,shipment_view:true)
@@ -440,9 +440,9 @@ describe ModelField do
         ModelField.reload true
         (1..3).each do |i|
           c_mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
-          c_mf.label.should == "First HTS #{i} (ZY)"
+          expect(c_mf.label).to eq "First HTS #{i} (ZY)"
           c2_mf = ModelField.find_by_uid "*fhts_#{i}_#{c2.id}"
-          c2_mf.label.should == "First HTS #{i} (ZZ)"
+          expect(c2_mf.label).to eq "First HTS #{i} (ZZ)"
           expect(ModelField.model_field_loaded?("*fhts_#{i}_#{c3.id}")).to be_false #don't create because not an import location
         end
       end
@@ -453,16 +453,16 @@ describe ModelField do
           Factory(:official_tariff,:country=>@c,:hts_code=>"123456789#{i}")
           mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
           r = mf.process_import(p, "123456789#{i}", User.new)
-          r.should == "ZY HTS #{i} set to 1234.56.789#{i}"
+          expect(r).to eq "ZY HTS #{i} set to 1234.56.789#{i}"
         end
         p.save!
         p.should have(1).classifications
         cls = p.classifications.find_by_country_id(@c.id)
         cls.should have(1).tariff_records
         tr = cls.tariff_records.find_by_line_number 1
-        tr.hts_1.should == "1234567891"
-        tr.hts_2.should == "1234567892"
-        tr.hts_3.should == "1234567893"
+        expect(tr.hts_1).to eq "1234567891"
+        expect(tr.hts_2).to eq "1234567892"
+        expect(tr.hts_3).to eq "1234567893"
       end
       it "should update existing hts" do
         Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
@@ -471,32 +471,32 @@ describe ModelField do
         mf.process_import tr.product, '1234567899', User.new
         tr.product.save!
         tr.reload
-        tr.hts_1.should == '1234567899'
+        expect(tr.hts_1).to eq '1234567899'
       end
       it "should strip non numerics from hts" do
         Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
         p = Factory(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         mf.process_import p, '1234.567-899 ', User.new
-        p.classifications.first.tariff_records.first.hts_1.should == '1234567899'
+        expect(p.classifications.first.tariff_records.first.hts_1).to eq '1234567899'
       end
       it "should not allow import of invalid HTS" do
         Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
         p = Factory(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         r = mf.process_import p, '0000000000', User.new
-        r.should == "0000000000 is not valid for ZY HTS 1"
+        expect(r).to eq "0000000000 is not valid for ZY HTS 1"
       end
       it "should allow any HTS for country withouth official tariffs" do
         p = Factory(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         r = mf.process_import p, '0000000000', User.new
-        p.classifications.first.tariff_records.first.hts_1.should == '0000000000'
+        expect(p.classifications.first.tariff_records.first.hts_1).to eq '0000000000'
       end
       it "should format export" do
         tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
-        mf.process_export(tr.product,nil,true).should == '0000000000'.hts_format
+        expect(mf.process_export(tr.product,nil,true)).to eq '0000000000'.hts_format
       end
       it "should work with query" do
         u = Factory(:master_user)
@@ -506,8 +506,8 @@ describe ModelField do
         ss.search_criterions.build(model_field_uid:"*fhts_1_#{@c.id}",operator:'eq',value:'0000000000')
         h = SearchQuery.new(ss,u).execute
         h.should have(1).record
-        h.first[:row_key].should == tr.product.id
-        h.first[:result].first.should == '0000000000'.hts_format
+        expect(h.first[:row_key]).to eq tr.product.id
+        expect(h.first[:result].first).to eq '0000000000'.hts_format
       end
     end
     context "bill of materials" do
@@ -528,7 +528,7 @@ describe ModelField do
         child.bill_of_materials_parents.create!(:parent_product_id=>parent1.id,:quantity=>1)
         child.bill_of_materials_parents.create!(:parent_product_id=>parent2.id,:quantity=>1)
         output = @parent_mf.process_export child, nil, true
-        output.should == "#{parent1.unique_identifier},#{parent2.unique_identifier}"
+        expect(output).to eq "#{parent1.unique_identifier},#{parent2.unique_identifier}"
       end
       it "qualified_field_name should return csv of BOM parents" do
         parent1 = Factory(:product,:unique_identifier=>'bomc1')
@@ -537,7 +537,7 @@ describe ModelField do
         child.bill_of_materials_parents.create!(:parent_product_id=>parent1.id,:quantity=>1)
         child.bill_of_materials_parents.create!(:parent_product_id=>parent2.id,:quantity=>1)
         r = ActiveRecord::Base.connection.execute "SELECT #{@parent_mf.qualified_field_name} FROM products where id = #{child.id}"
-        r.first.first.should == "#{parent1.unique_identifier},#{parent2.unique_identifier}"
+        expect(r.first.first).to eq "#{parent1.unique_identifier},#{parent2.unique_identifier}"
       end
       it "should not allow imports for children" do
         p = Factory(:product)
@@ -552,7 +552,7 @@ describe ModelField do
         parent.bill_of_materials_children.create!(:child_product_id=>child1.id,:quantity=>1)
         parent.bill_of_materials_children.create!(:child_product_id=>child2.id,:quantity=>1)
         output = @child_mf.process_export parent, nil, true
-        output.should == "#{child1.unique_identifier},#{child2.unique_identifier}"
+        expect(output).to eq "#{child1.unique_identifier},#{child2.unique_identifier}"
       end
       it "qualified_field_name should return csv of BOM children" do
         child1 = Factory(:product,:unique_identifier=>'bomc1')
@@ -561,7 +561,7 @@ describe ModelField do
         parent.bill_of_materials_children.create!(:child_product_id=>child1.id,:quantity=>1)
         parent.bill_of_materials_children.create!(:child_product_id=>child2.id,:quantity=>1)
         r = ActiveRecord::Base.connection.execute "SELECT #{@child_mf.qualified_field_name} FROM products where id = #{parent.id}"
-        r.first.first.should == "#{child1.unique_identifier},#{child2.unique_identifier}"
+        expect(r.first.first).to eq "#{child1.unique_identifier},#{child2.unique_identifier}"
       end
     end
     context "classification count" do
@@ -575,24 +575,24 @@ describe ModelField do
         @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
         sq = SearchQuery.new(@ss,@user)
         r = sq.execute
-        r.size.should == 1
-        r.first[:row_key].should == @p.id
+        expect(r.size).to eq 1
+        expect(r.first[:row_key]).to eq @p.id
       end
       it "should reflect 0 with classificaton and no tariff record" do
         @p.classifications.create!(:country_id=>@country.id)
         @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
         sq = SearchQuery.new(@ss,@user)
         r = sq.execute
-        r.size.should == 1
-        r.first[:row_key].should == @p.id
+        expect(r.size).to eq 1
+        expect(r.first[:row_key]).to eq @p.id
       end
       it "should reflect 0 with no hts_1" do
         @p.classifications.create!(:country_id=>@country.id).tariff_records.create!
         @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
         sq = SearchQuery.new(@ss,@user)
         r = sq.execute
-        r.size.should == 1
-        r.first[:row_key].should == @p.id
+        expect(r.size).to eq 1
+        expect(r.first[:row_key]).to eq @p.id
       end
       it "should reflect proper count with mixed bag" do
         @p.classifications.create!(:country_id=>@country.id).tariff_records.create! # = 0
@@ -603,8 +603,8 @@ describe ModelField do
         @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'2')
         sq = SearchQuery.new(@ss,@user)
         r = sq.execute
-        r.size.should == 1
-        r.first[:row_key].should == @p.id
+        expect(r.size).to eq 1
+        expect(r.first[:row_key]).to eq @p.id
       end
     end
     context "class_comp_cnt" do
@@ -642,20 +642,20 @@ describe ModelField do
           Factory(:tariff_record,:hts_1=>'12345678',:classification=>Factory(:classification,:country=>@c2))
         end
         it "should have proper label" do
-          @mf.label.should == "Classification Count - EMEA"
+          expect(@mf.label).to eq "Classification Count - EMEA"
         end
         it "should only count countries in region" do
-          @mf.process_export(@p,User.new,true).should == 1
+          expect(@mf.process_export(@p,User.new,true)).to eq 1
           x = @sc.apply(Product.where("1"))
           x = x.uniq
           x.should have(1).product
-          x.first.should == @p
+          expect(x.first).to eq @p
         end
         it "should return products without classification for eq 0" do
           @p.classifications.destroy_all
           @sc.value = "0"
           x = @sc.apply(Product.where("1"))
-          x.first.should == @p
+          expect(x.first).to eq @p
         end
         it "should not import" do
           expect(@mf.process_import(@p,1, User.new)).to match(/ignored/)
@@ -668,7 +668,7 @@ describe ModelField do
           @p.classifications.find_by_country_id(@c1.id).tariff_records.create!(:hts_1=>'987654321')
           x = @sc.apply(Product.where("1")).uniq
           x.should have(1).product
-          x.first.should == @p
+          expect(x.first).to eq @p
         end
       end
     end
@@ -678,14 +678,14 @@ describe ModelField do
         @mf = ModelField.find_by_uid :ent_statement_month
       end
       it "should export month" do
-        @mf.process_export(@ent,nil,true).should == 9
+        expect(@mf.process_export(@ent,nil,true)).to eq 9
       end
       it "should work as search criterion" do
         sc = SearchCriterion.new(:model_field_uid=>'ent_statement_month',:operator=>'eq',:value=>'9')
         Factory(:entry,:monthly_statement_due_date=>Date.new(2012,10,1))
         r = sc.apply(Entry.where('1=1'))
         r.should have(1).entry
-        r.first.should == @ent
+        expect(r.first).to eq @ent
       end
     end
     context "Sync Records" do
@@ -739,28 +739,28 @@ describe ModelField do
         @mf = ModelField.find_by_uid :ent_duty_billed
       end
       it "should total D records at broker invoice line" do
-        @mf.process_export(@line1.broker_invoice.entry,nil,true).should == 15
+        expect(@mf.process_export(@line1.broker_invoice.entry,nil,true)).to eq 15
       end
       it "should not include records without an 0001 charge code" do
         line3 = Factory(:broker_invoice_line,:charge_amount=>7,:charge_code=>'0099',:broker_invoice=>@line1.broker_invoice)
-        @mf.process_export(@line1.broker_invoice.entry,nil,true).should == 15
+        expect(@mf.process_export(@line1.broker_invoice.entry,nil,true)).to eq 15
       end
       it "should work as search criterion" do
         sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed',:operator=>'eq',:value=>'15')
-        sc.apply(Entry.where('1=1')).first.should == @line1.broker_invoice.entry
+        expect(sc.apply(Entry.where('1=1')).first).to eq @line1.broker_invoice.entry
       end
       it "should total across multiple broker invoices for same entry" do
         ent = @line1.broker_invoice.entry
         line3 = Factory(:broker_invoice_line,:charge_amount=>20,:charge_code=>'0001',:broker_invoice=>Factory(:broker_invoice,:entry=>ent,:suffix=>'B'))
-        @mf.process_export(@line1.broker_invoice.entry,nil,true).should == 35
+        expect(@mf.process_export(@line1.broker_invoice.entry,nil,true)).to eq 35
         sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed',:operator=>'eq',:value=>'35')
-        sc.apply(Entry.where('1=1')).first.should == @line1.broker_invoice.entry
+        expect(sc.apply(Entry.where('1=1')).first).to eq @line1.broker_invoice.entry
       end
       it "should only include broker invoices on the entry in question" do
         line3 = Factory(:broker_invoice_line,:charge_amount=>3,:charge_code=>'0001') #will be on different entry
-        @mf.process_export(@line1.broker_invoice.entry,nil,true).should == 15
+        expect(@mf.process_export(@line1.broker_invoice.entry,nil,true)).to eq 15
         sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed',:operator=>'eq',:value=>'15')
-        sc.apply(Entry.where('1=1')).first.should == @line1.broker_invoice.entry
+        expect(sc.apply(Entry.where('1=1')).first).to eq @line1.broker_invoice.entry
       end
       it "should view if broker and can view broker invoices" do
         u = Factory(:broker_user)
@@ -803,12 +803,12 @@ describe ModelField do
         @mf = ModelField.find_by_uid :prod_first_hts
       end
       it "process_export should match first hts code for first country" do
-        @mf.process_export(@p, nil, true).should == '1234.56.7890'
+        expect(@mf.process_export(@p, nil, true)).to eq '1234.56.7890'
       end
       it "should match on search criterion" do
         sc = SearchCriterion.new(:model_field_uid=>'prod_first_hts',:operator=>'sw',:value=>'123456')
         r = sc.apply Product.where('1=1')
-        r.first.should == @p
+        expect(r.first).to eq @p
       end
     end
     context "hts formatting" do
@@ -820,14 +820,14 @@ describe ModelField do
           exp_for_qry = mf.process_query_parameter tr
           case mfuid
             when :hts_hts_1
-              export.should == "1234.56.7890"
-              exp_for_qry.should == "1234567890"
+              expect(export).to eq "1234.56.7890"
+              expect(exp_for_qry).to eq "1234567890"
             when :hts_hts_2
-              export.should == "0987.65.4321"
-              exp_for_qry.should == "0987654321"
+              expect(export).to eq "0987.65.4321"
+              expect(exp_for_qry).to eq "0987654321"
             when :hts_hts_3
-              export.should == "1234.56"
-              exp_for_qry.should == "123456"
+              expect(export).to eq "1234.56"
+              expect(exp_for_qry).to eq "123456"
             else
               fail "Should have hit one of the tests"
           end
@@ -835,8 +835,10 @@ describe ModelField do
       end
     end
     describe :process_query_parameter do
-      p = Product.new(:unique_identifier=>"abc")
-      ModelField.find_by_uid(:prod_uid).process_query_parameter(p).should == "abc"
+      it "should prcoess query parameters" do
+        p = Product.new(:unique_identifier=>"abc")
+        expect(ModelField.find_by_uid(:prod_uid).process_query_parameter(p)).to eq "abc"
+      end
     end
 
     context "shipment_lines" do
@@ -953,7 +955,7 @@ describe ModelField do
           :operator=>'sw',:value=>'ghi')
         found = ss.search.to_a
         found.should have(1).product
-        found.first.should == p
+        expect(found.first).to eq p
       end
     end
     context :ent_rule_state do
@@ -986,13 +988,13 @@ describe ModelField do
         @u = Factory(:user,:company=>Factory(:company,:broker=>true))
       end
       it "should process_export" do
-        @mf.process_export(@with_pdf, @u).should == 1
-        @mf.process_export(@without_attachments, @u).should == 0
-        @mf.process_export(@with_tif, @u).should == 0
-        @mf.process_export(@with_tif_and_2_pdf, @u).should == 2
+        expect(@mf.process_export(@with_pdf, @u)).to eq 1
+        expect(@mf.process_export(@without_attachments, @u)).to eq 0
+        expect(@mf.process_export(@with_tif, @u)).to eq 0
+        expect(@mf.process_export(@with_tif_and_2_pdf, @u)).to eq 2
 
         @with_pdf.attachments.create!(:attached_content_type=>"application/notapdf", :attached_file_name=>"test.PDF")
-        @mf.process_export(@with_pdf, @u).should == 2
+        expect(@mf.process_export(@with_pdf, @u)).to eq 2
       end
       it "should search with greater than" do
         sc = SearchCriterion.new(:model_field_uid=>:ent_pdf_count,:operator=>'gt',:value=>0)
@@ -1189,7 +1191,7 @@ describe ModelField do
       search_result = sc.apply(Company.scoped)
       expect(search_result.to_a).to eq [@ad.company]
     end
-    
+
     it "should add city field" do
       mf = ModelField.find_by_uid("*af_#{@cd.id}_city")
       expect(mf.label).to eq "#{@cd.label} (City)"
@@ -1203,7 +1205,7 @@ describe ModelField do
       search_result = sc.apply(Company.scoped)
       expect(search_result.to_a).to eq [@ad.company]
     end
-    
+
     it "should add state field" do
       mf = ModelField.find_by_uid("*af_#{@cd.id}_state")
       expect(mf.label).to eq "#{@cd.label} (State)"
@@ -1217,7 +1219,7 @@ describe ModelField do
       search_result = sc.apply(Company.scoped)
       expect(search_result.to_a).to eq [@ad.company]
     end
-    
+
     it "should add postal code field" do
       mf = ModelField.find_by_uid("*af_#{@cd.id}_postal_code")
       expect(mf.label).to eq "#{@cd.label} (Postal Code)"

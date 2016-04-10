@@ -45,6 +45,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
     end
 
-    ord.create_snapshot(User.integration) if run_snapshot
+    if run_snapshot
+      ord.create_snapshot(User.integration)
+      return true
+    else
+      return false
+    end
   end
 end; end; end; end
