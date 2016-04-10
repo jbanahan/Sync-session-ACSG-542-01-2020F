@@ -396,14 +396,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         @nd = double('new_data')
       end
       it 'should return true if fingerprints are different' do
-        [@od,@nd].each_with_index {|d,i| d.stub(:fingerprint).and_return(i.to_s)}
+        [@od,@nd].each_with_index {|d,i| d.stub(:fingerprint).and_return(i.to_s); d.stub(:ship_from_address).and_return('sf')}
+        expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_true
+      end
+      it 'should return true if ship from addresses are different' do
+        [@od,@nd].each_with_index {|d,i| d.stub(:fingerprint).and_return('x'); d.stub(:ship_from_address).and_return(i.to_s)}
         expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_true
       end
       it 'should return true if old_data is nil' do
         expect(described_class::OrderData.needs_new_pdf?(nil,@nd)).to be_true
       end
-      it 'should return false if fingerprints are the same' do
-        [@od,@nd].each {|d,i| d.stub(:fingerprint).and_return('x')}
+      it 'should return false if fingerprints are the same and the ship from addresss are the same' do
+        [@od,@nd].each {|d,i| d.stub(:fingerprint).and_return('x'); d.stub(:ship_from_address).and_return('sf')}
         expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_false
       end
     end

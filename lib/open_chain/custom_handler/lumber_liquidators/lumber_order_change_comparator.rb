@@ -161,7 +161,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     def self.needs_new_pdf? old_data, new_data
       return true if old_data.nil?
-      return old_data.fingerprint != new_data.fingerprint
+      return (old_data.fingerprint != new_data.fingerprint) || (old_data.ship_from_address != new_data.ship_from_address)
     end
   end
 end; end; end; end
