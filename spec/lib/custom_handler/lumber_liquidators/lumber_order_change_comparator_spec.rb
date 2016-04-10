@@ -370,12 +370,23 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       it 'should return lines in both hashes with different key values' do
         old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
         old_data = described_class::OrderData.new(old_fingerprint)
+        old_data.ship_from_address = 'abc'
         new_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~22.0~FT~7.0~~4~px~50.0~FT~7.0"
         new_data = described_class::OrderData.new(new_fingerprint)
+        new_data.ship_from_address = old_data.ship_from_address
         # don't return line 1 because it stayed the same
         # don't return line 3 because it was deleted
         # don't return line 4 because it was added
         expect(described_class::OrderData.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['2']
+      end
+      it 'should return all lines in new fingerprint if ship from address changed' do
+        old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
+        old_data = described_class::OrderData.new(old_fingerprint)
+        old_data.ship_from_address = 'abc'
+        new_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~22.0~FT~7.0~~4~px~50.0~FT~7.0"
+        new_data = described_class::OrderData.new(new_fingerprint)
+        new_data.ship_from_address = 'other'
+        expect(described_class::OrderData.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','2','4']
       end
     end
 

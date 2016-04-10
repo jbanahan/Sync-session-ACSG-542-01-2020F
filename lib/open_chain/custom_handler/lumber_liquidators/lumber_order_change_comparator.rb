@@ -98,6 +98,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
     attr_reader :fingerprint
+    attr_accessor :ship_from_address
 
     def initialize fingerprint
       @fingerprint = fingerprint
@@ -122,7 +123,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
           end
         end
       end
-      self.new(elements.join('~'))
+      od = self.new(elements.join('~'))
+      od.ship_from_address = order_hash['ord_ship_from_full_address']
+      return od
     end
 
     def has_blank_defaults?
@@ -144,8 +147,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
 
     def self.lines_needing_pc_approval_reset old_data, new_data
+      return [] unless old_data
+
       old_hash = old_data.line_hash
       new_hash = new_data.line_hash
+
+      # if the ship from changed, then all lines need to be re-approved
+      return new_hash.keys if old_data.ship_from_address!=new_data.ship_from_address
+
       lines_to_check = new_hash.keys & old_hash.keys
       lines_to_check.reject {|line_number| old_hash[line_number] == new_hash[line_number]}
     end
