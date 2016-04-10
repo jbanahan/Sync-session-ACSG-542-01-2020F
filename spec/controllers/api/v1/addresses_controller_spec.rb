@@ -24,7 +24,7 @@ describe Api::V1::AddressesController do
 
       allow_api_access Factory(:user,company:c)
 
-      get :index, sid1:'add_sys_code', sop1: 'eq', sv1:'ABCD'
+      get :index, sid1:'add_syscode', sop1: 'eq', sv1:'ABCD'
       expect(response).to be_success
       h = JSON.parse(response.body)
       expect(h['results']).to have(1).result
