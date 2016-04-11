@@ -32,4 +32,17 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     end
   end
 
+  describe "parse_time" do
+    it "parses time from utc to eastern" do
+      expect(subject.parse_time("2016-04-08 8:44")).to eq ActiveSupport::TimeZone['America/New_York'].parse("2016-04-08 4:44")
+    end
+
+    it "parses time using given timezones" do
+       expect(subject.parse_time("2016-04-08 8:44", input_timezone: 'America/New_York', output_timezone: 'America/Chicago')).to eq ActiveSupport::TimeZone['America/Chicago'].parse("2016-04-08 7:44")
+    end
+
+    it "returns nil if time is blank" do
+      expect(subject.parse_time("   ")).to be_nil
+    end 
+  end
 end
