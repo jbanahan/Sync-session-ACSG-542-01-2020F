@@ -12,23 +12,9 @@ module OpenChain; module EntityCompare; class ComparatorRegistry
     unless comparator_class.respond_to?(:accept?)
       raise "All comparators must respond to #accept?"
     end
-
-    REGISTERED_ITEMS << comparator_class
     nil
   end
 
-  def self.registered
-    REGISTERED_ITEMS.clone
-  end
-
-  # remove a comparator
-  def self.remove comparator_class
-    REGISTERED_ITEMS.delete(comparator_class)
-  end
-
-  def self.clear
-    REGISTERED_ITEMS.clear
-  end
 
   # get an Enumerable of all comparators that will accept the given snapshot
   #
