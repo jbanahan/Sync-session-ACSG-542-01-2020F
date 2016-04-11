@@ -146,4 +146,12 @@ module Helpers
     end
   end
 
+  def stub_master_setup_request_host
+    ms = double("MasterSetup")
+    ms.stub(:request_host).and_return "http://localhost:3000"
+    ms.stub(:system_code).and_return "test"
+    MasterSetup.stub(:get).and_return ms
+    ms
+  end
+
 end

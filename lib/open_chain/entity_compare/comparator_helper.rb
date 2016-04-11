@@ -7,10 +7,18 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     json = {}
     if !bucket.blank? && !key.blank? && !version.blank?
       data = OpenChain::S3.get_versioned_data(bucket, key, version)
-      json = JSON.parse data unless data.blank?
+      json = ActiveSupport::JSON.decode(data) unless data.blank?
     end
 
     json
+  end
+
+  def parse_time time, input_timezone: 'UTC', output_timezone: "America/New_York"
+    if !time.blank?
+      ActiveSupport::TimeZone[input_timezone].parse(time).in_time_zone(output_timezone)
+    else
+      nil
+    end
   end
 
 end; end; end
