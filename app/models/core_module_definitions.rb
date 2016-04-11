@@ -386,22 +386,4 @@ module CoreModuleDefinitions
     unique_id_field_name: :add_sys_code,
     enabled_lambda: lambda {true}
   })
-
-  def self.set_default_module_chain(core_module, core_module_array)
-    mc = ModuleChain.new
-    mc.add_array core_module_array
-    core_module.default_module_chain = mc
-  end
-
-  set_default_module_chain ORDER, [ORDER,ORDER_LINE]
-  set_default_module_chain SHIPMENT, [SHIPMENT,SHIPMENT_LINE,BOOKING_LINE]
-  set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
-  set_default_module_chain SALE, [SALE,SALE_LINE]
-  set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
-  set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
-  set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
-  set_default_module_chain SECURITY_FILING, [SECURITY_FILING,SECURITY_FILING_LINE]
-  set_default_module_chain COMPANY, [COMPANY, PLANT, PLANT_PRODUCT_GROUP_ASSIGNMENT]
-  set_default_module_chain SUMMARY_STATEMENT, [SUMMARY_STATEMENT, BROKER_INVOICE, BROKER_INVOICE_LINE]
-
 end
