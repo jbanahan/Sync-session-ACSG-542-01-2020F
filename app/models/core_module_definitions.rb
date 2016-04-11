@@ -376,14 +376,12 @@ module CoreModuleDefinitions
     key_model_field_uids: [:pva_ven_name, :pva_puid]
   })
 
-<<<<<<< a08fef673c1b4fd056466cdafda55831b2d074d2
   # ATTACHMENT core module is present solely for use in snapshotting, it is not meant to be used
   # as a module.  The only thing set up for it is model fields.
   # Attachment has no field that is really suitable for use in key_model_field_uids or in unique_id_field,
   # as such attachments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so
   # that's not a big deal.
   ATTACHMENT = CoreModule.new("Attachment", "Attachment", {})
-=======
   ADDRESS = CoreModule.new("Address","Address",{
     unique_id_field_name: :add_sys_code,
     enabled_lambda: lambda {true}
@@ -405,6 +403,5 @@ module CoreModuleDefinitions
   set_default_module_chain SECURITY_FILING, [SECURITY_FILING,SECURITY_FILING_LINE]
   set_default_module_chain COMPANY, [COMPANY, PLANT, PLANT_PRODUCT_GROUP_ASSIGNMENT]
   set_default_module_chain SUMMARY_STATEMENT, [SUMMARY_STATEMENT, BROKER_INVOICE, BROKER_INVOICE_LINE]
->>>>>>> Lumber Liquidators SOW 17.2 interim commit
 
 end
