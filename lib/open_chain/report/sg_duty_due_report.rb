@@ -168,7 +168,7 @@ module OpenChain; module Report; class SgDutyDueReport
   end
 
   def sub_total(city, sched_d, due, daily, debit, statement)
-    statement_number_str = statement ? "\nSTATEMENT: #{statement.to_a.join(", ")}" : ""
+    statement_number_str = statement.presence ? "\nSTATEMENT: #{statement.to_a.join(", ")}" : ""
     [{ content: "#{indent 5}SUB-TOTAL FOR #{sched_d}-#{city.upcase}", colspan: 5 }, number_to_currency(due), "REGULAR DAILY: #{date(daily)}  EST. DEBIT DATE: #{date(debit)}#{statement_number_str}" ]
   end
 
