@@ -18,6 +18,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAceEn
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     json = get_json_hash new_bucket, new_path, new_version
+
+    # Don't send for FDA entries, per Mike McCullough April 11, 2016
+    return unless json['entity']['model_fields']['ent_fda_transmit_date'].blank?
+
+
     new_comments = entry_comments(json)
     non_ace_comment = find_non_ace_entry_comment new_comments
 
@@ -32,7 +37,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAceEn
         send_notification json['entity'], non_ace_comment
       end
     end
-    
+
   end
 
   def self.entry_comments json
@@ -59,16 +64,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAceEn
 
   def self.non_ace_comment? comment
     body = comment['model_fields'].try(:[], 'ent_com_body')
-    body = body.to_s.upcase 
-    body.starts_with?("ACE ENTRY SUMMARY QUEUED TO SEND") || body.starts_with?("ENTRY SUMMARY QUEUED TO SEND")    
+    body = body.to_s.upcase
+    body.starts_with?("ACE ENTRY SUMMARY QUEUED TO SEND") || body.starts_with?("ENTRY SUMMARY QUEUED TO SEND")
   end
 
   def self.after_ace_changeover? comment
-    # just make this after April 9 (changeover was 1st, but 
+    # just make this after April 9 (changeover was 1st, but
     # we were manually checking these prior to that)
     @ace_changeover ||= parse_time('2016-04-09 04:00')
 
-    # Created at is UTC...just make this after April 8 (changeover was 1st, but 
+    # Created at is UTC...just make this after April 8 (changeover was 1st, but
     # we were manually checking these prior to that and don't need to notify people
     # prior to this)
     created_at = parse_time comment['model_fields'].try(:[], 'ent_com_created_at')
@@ -83,7 +88,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAceEn
     body_text << "Entry Type: #{entry_hash['model_fields']['ent_type']}"
     body_text << "User: #{non_ace_comment['model_fields']['ent_com_username']}"
     body_text << "Summary Transmit Date: #{parse_time(non_ace_comment['model_fields']['ent_com_created_at']).strftime "%Y-%m-%d %H:%M"}"
-    body_text << "FDA Transmit Date: #{parse_time(entry_hash['model_fields']['ent_fda_transmit_date']).try(:strftime, "%Y-%m-%d %H:%M") }"
 
     body = "<p>".html_safe
     body_text.each do |t|

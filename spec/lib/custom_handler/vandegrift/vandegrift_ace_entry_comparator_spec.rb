@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator do
   subject { described_class }
   let(:non_ace_comment) { EntryComment.new body: "Entry Summary queued to send", username: "TESTING", generated_at: "2016-04-09 04:00" }
   let(:ace_comment) { EntryComment.new body: "Ace Certified Entry Summary queued to send", username: "TESTING", generated_at: "2016-04-16 00:00" }
-  let(:entry) { Factory(:entry, source_system: "Alliance", broker_reference: "REF", entry_type: "TYPE", fda_transmit_date: "2016-04-17 00:00") }
+  let(:entry) { Factory(:entry, source_system: "Alliance", broker_reference: "REF", entry_type: "TYPE") }
   let(:snapshot) { entry.create_snapshot user }
   let(:user) {Factory(:user)}
 
@@ -14,8 +14,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator do
   end
 
   describe "compare" do
-    
-    let (:group) { 
+
+    let (:group) {
       g = Group.use_system_group("entry_reviewers", name: "Entry Reviewers")
       g.users << user
       g
@@ -40,7 +40,6 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator do
         expect(m.body.raw_source).to include "User: TESTING"
         # Note the timezone adjustment
         expect(m.body.raw_source).to include "Summary Transmit Date: 2016-04-09 00:00"
-        expect(m.body.raw_source).to include "FDA Transmit Date: 2016-04-16 20:00"
       end
 
       it "does not send email if comment made prior to changeover" do
@@ -57,6 +56,15 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator do
 
         # can actually just use the same snapshot here
         subject.compare nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version, snapshot.bucket, snapshot.doc_path, snapshot.version
+        expect(ActionMailer::Base.deliveries.length).to eq 0
+      end
+
+      it "does not send email for FDA entries" do
+        entry.update_attributes(fda_transmit_date: "2016-04-17 00:00")
+        snapshot
+
+        subject.compare nil, nil, nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
+
         expect(ActionMailer::Base.deliveries.length).to eq 0
       end
     end
