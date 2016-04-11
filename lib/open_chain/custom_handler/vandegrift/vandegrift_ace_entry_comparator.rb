@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAceEn
     accept = super
     # Only review Kewill entries
     if accept
-      accept = snapshot.recordable.source_system == OpenChain::CustomHandler::KewillEntryParser::SOURCE_SYSTEM
+      accept = snapshot.recordable.try(:source_system) == OpenChain::CustomHandler::KewillEntryParser::SOURCE_SYSTEM
     end
 
     accept
