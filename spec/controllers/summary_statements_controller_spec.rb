@@ -81,13 +81,17 @@ describe SummaryStatementsController do
       expect(flash[:errors]).to include "You do not have permission to create summary statements."
     end
 
-    it "filters the choice of companies" do
-      c1 = Factory(:company, importer: true)
-      c2 = Factory(:company, importer: true)
-      Factory(:company)
+    it "limits the choice of companies to those with entries, sorts by name" do
+      c1 = Factory(:company, name: "B")
+      c2 = Factory(:company, name: "A")
+      Factory(:company, name: "D")
+      Factory(:entry, importer: c1)
+      Factory(:entry, importer: c2)
 
       get :new
-      expect(assigns(:companies).sort).to eq [c1, c2].sort
+      assigned_companies = []
+      assigns(:companies).each{|c| assigned_companies << {name: c["name"], id: c["id"] } }
+      expect(assigned_companies).to eq [{name: "A", id: c2.id }, {name: "B", id: c1.id}]
     end
 
     it "renders" do
