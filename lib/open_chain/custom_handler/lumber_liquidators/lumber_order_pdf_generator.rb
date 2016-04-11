@@ -10,17 +10,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   def self.create! order, user
     Tempfile.open(['foo', '.pdf']) do |file|
+      existing_printout_count = order.attachments.where(attachment_type: "Order Printout").count
+
       file.binmode
-      self.new.render order, user, file
+      g = self.new
+      g.render order, user, file
       Attachment.add_original_filename_method file, "order_#{order.order_number}_#{Time.now.strftime('%Y%m%d%H%M%S%L')}.pdf"
       att = order.attachments.new(attachment_type:'Order Printout')
       att.attached = file
       att.save!
+
+      file.rewind
+      g.email_pdf order, file, user, (existing_printout_count == 0)
     end
   end
 
   def initialize
-    @old_article_uid = self.class.prep_custom_definitions([:prod_old_article])[:prod_old_article].model_field_uid
+    @cdefs = self.class.prep_custom_definitions([:prod_old_article, :cmp_purchasing_contact_email])
   end
 
   def render order, user, open_file_object
@@ -45,7 +51,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     d.move_down 10
     d.text "Purchase Order", size: 18, align: :center
     d.text v(order, user, :ord_ord_num), size: 18, align: :center
-    # TODO Figure out how to do a page counter
 
     y_pos = d.cursor
 
@@ -54,11 +59,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
 
     vendor_order_table = make_caption_table(d, "<b>Vendor Order Address</b>", address_lines(order, user, :ord_order_from_address_full_address), width: left_table_width, cell_style: {inline_format: true,  border_width: 0, padding: 1})
-    vend_ship_from_table = make_caption_table(d, "<b>Vendor Ship From Address</b>", "As dictated by supplier reference manual, the manufacturer must ship from previously approved facilities.", width: left_table_width, cell_style: {inline_format: true,  border_width: 0, padding: 1})
+    vend_ship_from_table = make_caption_table(d, "<b>Vendor Ship From Address</b>", address_lines(order, user, :ord_ship_from_full_address), width: left_table_width, cell_style: {inline_format: true,  border_width: 0, padding: 1})
 
-    d.table([[vendor_order_table], [vend_ship_from_table]], cell_style: {padding: caption_padding}) do |t|
+    d.table([[vendor_order_table], [vend_ship_from_table]], cell_style: {padding: caption_padding, height: 65}) do |t|
       t.row(0).borders = [:left, :top, :right]
-      t.row(0).height = 65
       t.row(1).borders = [:left, :bottom, :right]
     end
 
@@ -84,7 +88,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       general_caption = make_caption_table(d, "<b>General Information</b>", general_table, width: left_table_width, cell_style: {inline_format: true,  border_width: 0, padding: caption_padding})
 
       # This height is aligned with the height of the tables that comprise the left column
-      d.table([[general_caption]], cell_style: {padding: caption_padding, height: 238})
+      d.table([[general_caption]], cell_style: {padding: caption_padding, height: 266})
     end
 
     d.move_down box_margins
@@ -179,7 +183,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       ["<b>Vendor Name</b>", v(order, user, :ord_ven_name)],
       ["<b>Currency</b>", v(order, user, :ord_currency)],
       ["<b>Terms of Payment</b>", v(order, user, :ord_payment_terms)],
-      ["<b>Terms of Delivery</b>", v(order, user, :ord_terms)]
+      ["<b>Terms of Delivery</b>", v(order, user, :ord_terms)],
+      ["<b>Delivery Location</b>", v(order, user, :ord_fob_point)],
     ]
   end
 
@@ -221,7 +226,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     order.order_lines.each do |ol|
       line = []
       line << v(ol, user, :ordln_line_number)
-      line << "<font size='7'>#{v(ol, user, :ordln_puid)}</font>\n#{v(ol.product, user, @old_article_uid)}\n#{v(ol, user, :ordln_pname)}"
+      line << "<font size='7'>#{v(ol, user, :ordln_puid)}</font>\n#{v(ol.product, user, @cdefs[:prod_old_article].model_field_uid)}\n#{v(ol, user, :ordln_pname)}"
       if multi_shipto
         line << address_lines(ol, user, :ordln_ship_to_full_address)
       end
@@ -238,5 +243,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     lines
   end
 
+  def email_pdf order, file, user, initial_pdf
+    # See if there is a purchasing contact email for the vendor, if so, email it to that person.
+    vendor = order.vendor
+    contact_email = vendor ? v(vendor, user, @cdefs[:cmp_purchasing_contact_email].model_field_uid) : nil
+    if !contact_email.blank?
+      host = "https://#{MasterSetup.get.request_host}"
+      subject = "Lumber Liquidators PO #{v(order, user, :ord_ord_num)} - #{initial_pdf ? "NEW" : "UPDATE"}"
+      body = "You have received the attached purchase order from Lumber Liquidators.  If you have a VFI Track account, you may access the order at <a href=\"#{host}\">#{host}</a>".html_safe
+      OpenMailer.send_simple_html(contact_email, subject, body, file).deliver!
+    end
+  end
 
 end; end; end; end
