@@ -28,6 +28,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
     end
 
+    # ship_from
+    current_ship_from = ord.ship_from_id
+    address_search = v.addresses.where(shipping:true)
+    if current_ship_from.blank? && address_search.count == 1
+      ord.ship_from_id = address_search.pluck(:id).first
+      save_order = true
+    end
+
     # done with actual attributes so save them before
     # moving on to custom values
     if save_order
