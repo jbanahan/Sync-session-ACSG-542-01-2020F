@@ -24,8 +24,8 @@ module OpenChain; module Report; class HmStatisticsReport
   end
 
   def run run_by, settings
-    start_date = sanitize_date_string settings['start_date']
-    end_date = sanitize_date_string settings['end_date']
+    start_date = sanitize_date_string settings['start_date'], run_by.time_zone
+    end_date = sanitize_date_string settings['end_date'], run_by.time_zone
 
     wb = Spreadsheet::Workbook.new
     sheet = wb.create_worksheet :name=>'Statistics'
@@ -80,23 +80,30 @@ module OpenChain; module Report; class HmStatisticsReport
           INNER JOIN commercial_invoice_tariffs t ON t.commercial_invoice_line_id = l.id
       WHERE e.customer_number = 'HENNE'
           AND e.release_date BETWEEN '#{start_date}' AND '#{end_date}'
-          AND LENGTH(i.invoice_number) IN (6,7)     
+          AND (LENGTH(i.invoice_number) IN (6,7) OR INSTR(i.invoice_number, '-') IN (7,8))
     SQL
     ActiveRecord::Base.connection.execute(qry).first
   end
+  
   def load_order_data master_hash, start_date, end_date
-     orders_qry = <<QRY
-select 
-if(export_country_codes like '%DE%', 'DE', export_country_codes) as 'ecc',
-(case entries.transport_mode_code when 40 then "AIR" when 11 then "OCEAN" when 30 then 'OCEAN' when 21 then 'OCEAN' else "OTHER" end) as 'Mode', 
-count(*) as 'orders'
-from entries
-inner join commercial_invoices on commercial_invoices.entry_id = entries.id and LENGTH(commercial_invoices.invoice_number) IN (6,7)
-where entries.customer_number = 'HENNE'
-and
-release_date BETWEEN '#{start_date}' and '#{end_date}'
-group by mode, ecc
-QRY
+    orders_qry = <<-SQL
+      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
+        (CASE entries.transport_mode_code 
+          WHEN 40 THEN "AIR" 
+          WHEN 11 THEN "OCEAN" 
+          WHEN 30 THEN 'OCEAN' 
+          WHEN 21 THEN 'OCEAN' 
+          ELSE "OTHER" 
+         END) AS 'Mode', 
+        COUNT(*) AS 'orders'
+      FROM entries
+        INNER JOIN commercial_invoices ci ON ci.entry_id = entries.id 
+          AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
+      WHERE entries.customer_number = 'HENNE'
+        AND release_date BETWEEN '#{start_date}' 
+        AND '#{end_date}'
+      GROUP BY mode, ecc
+    SQL
     result_set = ActiveRecord::Base.connection.execute orders_qry
     result_set.each do |row|
       dh = data_holder master_hash, row[0]
@@ -118,8 +125,8 @@ QRY
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
         INNER JOIN containers c ON e.id = c.entry_id
       WHERE e.customer_number = 'HENNE'
-        AND e.transport_mode_code IN (11, 30, 21)
-        AND LENGTH(ci.invoice_number) IN (6,7)
+        AND e.transport_mode_code IN (10, 11)
+        AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
         AND e.release_date BETWEEN '#{start_date}' AND '#{end_date}'
       GROUP BY ecc
     SQL
@@ -140,12 +147,14 @@ QRY
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
       WHERE e.customer_number = 'HENNE'
-        AND e.transport_mode_code = 40
-        AND LENGTH(ci.invoice_number) in (6,7)
+        AND e.transport_mode_code IN (40, 41)
+        AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
         AND e.release_date BETWEEN '#{start_date}' and '#{end_date}'
     SQL
     
-    bills = Hash.new { |hash, key| hash[key] = Hash.new([]) }
+    bills = Hash.new do |hash, key| 
+      hash[key] = Hash.new{ |h, k| h[k] = [] }
+    end
     result_set = ActiveRecord::Base.connection.execute air_tu_query
     result_set.each { |row| row[1].blank? ? bills[row[0]][:master].concat(row[2].split "\n ") : bills[row[0]][:house].concat(row[1].split "\n ") }
     bills.each do |ctry, blz| 
