@@ -63,18 +63,22 @@
               </span>
             </li>
             <li class='list-group-item'>
-              Ship From Selection
-              <span class='pull-right'>
-                <i class='fa {{order.ord_ship_from_id ? "fa-check-square text-success" : "fa-clock-o" }}'></i>
-              </span>
-            </li>
-            <li class='list-group-item'>
               Vendor Approval
               <span class='pull-right'>{{order.ord_approval_status}}
                 <a class='label label-default' ng-if='!order.permissions.can_be_accepted && order.ord_approval_status!="Accepted"' data-toggle="modal" data-target="#mod_cant_be_accepted">
                   Not Ready
                 </a>
                 <order-accept-button></order-accept-button>
+              </span>
+            </li>
+            <li class='list-group-item'>
+              Ship From Selection
+              <span class='pull-right'>
+                <i class='fa fa-check-square text-success' ng-show='order.ord_ship_from_id>0'></i>
+                <i class="fa fa-clock-o" ng-show='!order.ord_ship_from_id && (!order.permissions.can_edit || order.vendor_id != me.company_id)'></i>
+                <a ui-sref='selectShipFrom({id:order.id})' ng-show='order.permissions.can_edit && order.vendor_id == me.company_id && !order.ord_ship_from_id'>
+                  <i class="fa fa-square-o"></i>
+                </a>
               </span>
             </li>
           </ul>

@@ -22,9 +22,5 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance do
       @o.update_custom_value!(@cdefs[:ord_country_of_origin],'')
       expect(described_class.can_be_accepted?(@o)).to be_false
     end
-    it "should fail if no ship from" do
-      @o.update_attributes(ship_from_id:nil)
-      expect(described_class.can_be_accepted?(@o)).to be_false
-    end
   end
 end
