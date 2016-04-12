@@ -50,7 +50,9 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       :ord_approval_status,
       :ord_order_from_address_name,
       :ord_order_from_address_full_address,
-      :ord_ship_to_count
+      :ord_ship_to_count,
+      :ord_rule_state,
+      :ord_closed_at
     ] + custom_field_keys(CoreModule::ORDER))
     line_fields_to_render = limit_fields([
       :ordln_line_number,
