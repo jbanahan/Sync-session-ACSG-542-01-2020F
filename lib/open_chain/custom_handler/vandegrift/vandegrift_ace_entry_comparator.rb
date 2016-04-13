@@ -1,20 +1,10 @@
-require 'open_chain/entity_compare/entry_comparator'
 require 'open_chain/entity_compare/comparator_helper'
 require 'open_chain/custom_handler/kewill_entry_parser'
+require 'open_chain/custom_handler/vandegrift/kewill_entry_comparator'
 
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAceEntryComparator
-  extend OpenChain::EntityCompare::EntryComparator
+  extend OpenChain::CustomHandler::Vandegrift::KewillEntryComparator
   extend OpenChain::EntityCompare::ComparatorHelper
-
-  def self.accept? snapshot
-    accept = super
-    # Only review Kewill entries
-    if accept
-      accept = snapshot.recordable.try(:source_system) == OpenChain::CustomHandler::KewillEntryParser::SOURCE_SYSTEM
-    end
-
-    accept
-  end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     json = get_json_hash new_bucket, new_path, new_version
