@@ -34,6 +34,11 @@ class BusinessValidationRule < ActiveRecord::Base
                   {
                     label: 'Lumber PO Vendor Variant Assignment',
                     enabled_lambda: lambda {MasterSetup.get.system_code=='ll'}
+                  },
+                'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryInvoicePartMatchesOrder'.to_sym=>
+                  {
+                    label: 'Lumber Entry Invoice Part Matches Order',
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}
                   }
               }
 
