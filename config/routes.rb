@@ -133,6 +133,8 @@ OpenChain::Application.routes.draw do
 
       resources :user_manuals, only: [:index]
 
+      resources :trade_lanes, except: [:destroy]
+
       match "/setup_data" => "setup_data#index", via: :get
 
       match "/ports/autocomplete" => "ports#autocomplete", :via => :get
@@ -909,6 +911,8 @@ OpenChain::Application.routes.draw do
   end
 
   resources :custom_view_templates, except: [:show]
+
+  resources :trade_lanes, only: [:index]
 
   #Griddler inbound email processing
   mount_griddler

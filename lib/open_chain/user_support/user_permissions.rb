@@ -64,6 +64,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_variants?
     when CoreModule::ADDRESS
       return true
+    when CoreModule::TRADE_LANE
+      return self.view_trade_lanes?
     end
     return false
   end

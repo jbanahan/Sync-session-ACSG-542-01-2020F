@@ -10,7 +10,7 @@ module OpenChain; module ModelFieldDefinition; module TradeLaneFieldDefinition
       [3, :lane_updated_at, :updated_at, 'Last Changed', {data_type: :datetime}],
       [4, :lane_created_at, :created_at, 'Created Date', {data_type: :datetime}]
     ]
-    add_fields CoreModule::TRADE_LANE, make_country_arrays(100,'lane_origin','trade_lanes','origin','Origin')
-    add_fields CoreModule::TRADE_LANE, make_country_arrays(200,'lane_destination','trade_lanes','destination','Destination')
+    add_fields CoreModule::TRADE_LANE, make_country_arrays(100,'lane_origin','trade_lanes','origin_country','Origin')
+    add_fields CoreModule::TRADE_LANE, make_country_arrays(200,'lane_destination','trade_lanes','destination_country','Destination')
   end
 end; end; end

@@ -17,6 +17,14 @@ class TradeLane < ActiveRecord::Base
     return u.edit_trade_lanes?
   end
 
+  def can_attach? u
+    return u.attach_trade_lanes?
+  end
+
+  def can_comment? u
+    return u.comment_trade_lanes?
+  end
+
   def self.search_where u
     return u.view_trade_lanes? ? '1=1' : '1=0'
   end
