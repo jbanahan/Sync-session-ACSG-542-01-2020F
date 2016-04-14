@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract, :prod_old_article]
+    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract, :prod_old_article, :class_proposed_hts]
   end
 
   def parse_dom dom
@@ -82,13 +82,18 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         classification = product.classifications.build country_id: usa.id
       end
 
-      tariff_record = classification.tariff_records.to_a.sort_by {|t| t.line_number }.first
+      classification.find_and_set_custom_value(@cdefs[:class_proposed_hts], hts) unless hts.blank?
 
-      if tariff_record.nil?
-        tariff_record = classification.tariff_records.build
-      end
+      # Validate that the HTS is valid...if it is, then use it, if it isn't...don't use it.  Simple.
+      if OfficialTariff.valid_hts?(usa, hts)
+        tariff_record = classification.tariff_records.to_a.sort_by {|t| t.line_number }.first
 
-      tariff_record.hts_1 = hts
+        if tariff_record.nil?
+          tariff_record = classification.tariff_records.build
+        end
+
+        tariff_record.hts_1 = hts
+      end      
     end
 
     def us
