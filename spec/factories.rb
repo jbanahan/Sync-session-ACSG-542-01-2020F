@@ -470,3 +470,9 @@ Factory.define :custom_view_template do |f|
   f.sequence(:template_identifier) {|n| "t_#{n}"}
   f.sequence(:template_path) {|n| "tp_#{n}"}
 end
+
+
+Factory.define :trade_lane do |f|
+  f.association :origin_country, factory: :country
+  f.association :destination_country, factory: :country
+end

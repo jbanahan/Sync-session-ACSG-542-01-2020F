@@ -265,6 +265,38 @@ describe User do
         expect(u.edit_projects?).to be_false
       end
     end
+    context "trade_lanes" do
+      let(:user) do
+        u = User.new(trade_lane_view:true,trade_lane_edit:true,trade_lane_comment:true,trade_lane_attach:true)
+        u.company = Company.new
+        u.company.stub(:view_trade_lanes?).and_return true
+        u.company.stub(:edit_trade_lanes?).and_return true
+        u
+      end
+      it "should allow for user whose company has permission" do
+        u = user
+        expect(u.view_trade_lanes?).to be_true
+        expect(u.edit_trade_lanes?).to be_true
+        expect(u.comment_trade_lanes?).to be_true
+        expect(u.attach_trade_lanes?).to be_true
+      end
+      it "should not allow for user whose company does not have permission" do
+        u = user
+        u.company.stub(:view_trade_lanes?).and_return false
+        u.company.stub(:edit_trade_lanes?).and_return false
+        expect(u.view_trade_lanes?).to be_false
+        expect(u.edit_trade_lanes?).to be_false
+        expect(u.comment_trade_lanes?).to be_false
+        expect(u.attach_trade_lanes?).to be_false
+      end
+      it "should not allow for user who does not have permission" do
+        u = User.new
+        expect(u.view_trade_lanes?).to be_false
+        expect(u.edit_trade_lanes?).to be_false
+        expect(u.comment_trade_lanes?).to be_false
+        expect(u.attach_trade_lanes?).to be_false
+      end
+    end
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))

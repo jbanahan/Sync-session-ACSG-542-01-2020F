@@ -317,6 +317,13 @@ class Company < ActiveRecord::Base
     self.master? && master_setup.project_enabled?
   end
 
+  def view_trade_lanes?
+    self.master? && master_setup.trade_lane_enabled?
+  end
+  def edit_trade_lanes?
+    self.master? && master_setup.trade_lane_enabled?
+  end
+
   def name_with_customer_number
     n = self.name
     n += " (#{self.fenix_customer_number})" unless self.fenix_customer_number.blank?

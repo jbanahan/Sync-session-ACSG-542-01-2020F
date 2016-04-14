@@ -400,4 +400,8 @@ module CoreModuleDefinitions
     unique_id_field_name: :add_sys_code,
     enabled_lambda: lambda {true}
   })
+  TRADE_LANE = CoreModule.new("TradeLane","Trade Lane", {
+    enabled_lambda: lambda { MasterSetup.get.trade_lane_enabled? }
+  })
+
 end

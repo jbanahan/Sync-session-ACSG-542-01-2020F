@@ -11,7 +11,7 @@ $(function() {
     "Cancel":function() {$("#mod_upgrade").dialog('close');}
   }});
   $("#btn_upgrade").click(function(evt) {
-    $("#mod_upgrade").dialog('open');  
+    $("#mod_upgrade").dialog('open');
   });
   $('#usr_head').click(function(evt) {
     $('#usr_tbl').toggle();
@@ -33,7 +33,7 @@ $(function() {
     modal.find('#message').text("Clear " + count + " similar errors?");
     modal.find('#btn-clear-all').attr('href', '/delayed_jobs/' + id + '/bulk_destroy');
     modal.find('#btn-just-one').attr('href', '/delayed_jobs/' + id);
-    modal.modal('show'); 
+    modal.modal('show');
   });
 
 });
@@ -56,7 +56,7 @@ $(function() {
           <%end%>
         </tbody>
       </table>
-      
+
       <h2 id='settings_head' style='cursor:pointer;'>Settings</h2>
       <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
         <%=field_bootstrap "System UUID", @ms.uuid%>
@@ -70,17 +70,19 @@ $(function() {
         <%=field_bootstrap "Custom Features", f.text_area(:custom_features,:class=>'form-control')%>
         <%=field_bootstrap "Workflow Classes", f.text_area(:workflow_classes, :class=>'form-control')%>
         <%=field_bootstrap "FTP Enabled", f.check_box(:ftp_polling_active) %>
-        <%=field_bootstrap "Order Enabled",f.check_box(:order_enabled) %>
-        <%=field_bootstrap "Shipment Enabled", f.check_box(:shipment_enabled)%>
-        <%=field_bootstrap "Sale Enabled", f.check_box(:sales_order_enabled) %>
-        <%=field_bootstrap "Delivery Enabled", f.check_box(:delivery_enabled) %>
+        <hr / />
         <%=field_bootstrap "Classification Enabled", f.check_box(:classification_enabled) %>
-        <%=field_bootstrap "Variant Enabled", f.check_box(:variant_enabled) %>
-        <%=field_bootstrap "Entry Enabled", f.check_box(:entry_enabled)%>
-        <%=field_bootstrap "Security Filing Enabled", f.check_box(:security_filing_enabled)%>
-        <%=field_bootstrap "Invoice Enabled", f.check_box(:broker_invoice_enabled)%>
+        <%=field_bootstrap "Delivery Enabled", f.check_box(:delivery_enabled) %>
         <%=field_bootstrap "Drawback Enabled", f.check_box(:drawback_enabled)%>
+        <%=field_bootstrap "Entry Enabled", f.check_box(:entry_enabled)%>
+        <%=field_bootstrap "Invoice Enabled", f.check_box(:broker_invoice_enabled)%>
+        <%=field_bootstrap "Order Enabled",f.check_box(:order_enabled) %>
         <%=field_bootstrap "Project Enabled", f.check_box(:project_enabled)%>
+        <%=field_bootstrap "Sale Enabled", f.check_box(:sales_order_enabled) %>
+        <%=field_bootstrap "Security Filing Enabled", f.check_box(:security_filing_enabled)%>
+        <%=field_bootstrap "Shipment Enabled", f.check_box(:shipment_enabled)%>
+        <%=field_bootstrap "Trade Lane Enabled", f.check_box(:trade_lane_enabled)%>
+        <%=field_bootstrap "Variant Enabled", f.check_box(:variant_enabled) %>
         <%=field_bootstrap "Vendor Management Enabled", f.check_box(:vendor_management_enabled)%>
       <%end%>
     </div>

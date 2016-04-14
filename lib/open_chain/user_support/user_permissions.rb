@@ -102,6 +102,18 @@ module OpenChain; module UserSupport; module UserPermissions
   def comment_security_filings?
     self.security_filing_comment? && self.company.comment_security_filings?
   end
+  def view_trade_lanes?
+    self.trade_lane_view? && self.company.view_trade_lanes?
+  end
+  def edit_trade_lanes?
+    self.trade_lane_edit? && self.company.edit_trade_lanes?
+  end
+  def comment_trade_lanes?
+    self.trade_lane_comment? && self.company.view_trade_lanes?
+  end
+  def attach_trade_lanes?
+    self.trade_lane_attach? && self.company.view_trade_lanes?
+  end
   def view_drawback?
     self.drawback_view? && MasterSetup.get.drawback_enabled?
   end

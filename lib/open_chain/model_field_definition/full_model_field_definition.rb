@@ -2,6 +2,7 @@ Dir[__dir__ + '/*'].each {|file| require file } #Require all files in this direc
 
 module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::AddressFieldDefinition
+  include OpenChain::ModelFieldDefinition::AttachmentFieldDefinition
   include OpenChain::ModelFieldDefinition::BookingLineFieldDefinition
   include OpenChain::ModelFieldDefinition::BrokerInvoiceFieldDefinition
   include OpenChain::ModelFieldDefinition::BrokerInvoiceLineFieldDefinition
@@ -15,6 +16,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::DeliveryFieldDefinition
   include OpenChain::ModelFieldDefinition::DeliveryLineFieldDefinition
   include OpenChain::ModelFieldDefinition::DrawbackClaimFieldDefinition
+  include OpenChain::ModelFieldDefinition::EntryCommentFieldDefinition
   include OpenChain::ModelFieldDefinition::EntryFieldDefinition
   include OpenChain::ModelFieldDefinition::OfficialTariffFieldDefinition
   include OpenChain::ModelFieldDefinition::OrderFieldDefinition
@@ -31,6 +33,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentLineFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
+  include OpenChain::ModelFieldDefinition::TradeLaneFieldDefinition
   include OpenChain::ModelFieldDefinition::VariantFieldDefinition
   include OpenChain::ModelFieldDefinition::SummaryStatementFieldDefinition
   include OpenChain::ModelFieldDefinition::AttachmentFieldDefinition
@@ -69,9 +72,10 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_drawback_claim_fields
     add_booking_line_fields
     add_variant_fields
-    add_summary_statement_fields
     add_attachment_fields
+    add_summary_statement_fields
     add_entry_comment_fields
     add_commercial_invoice_lacey_fields
+    add_trade_lane_fields
   end
 end; end; end
