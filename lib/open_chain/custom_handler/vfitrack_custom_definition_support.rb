@@ -2,6 +2,7 @@ require 'open_chain/custom_handler/custom_definition_support'
 
 module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
   CUSTOM_DEFINITION_INSTRUCTIONS = {
+    shpln_priority: {label: "Priority", data_type: :string, module_type: "ShipmentLine"},
     shpln_po: {label:'PO Number',data_type: :string, module_type: 'ShipmentLine'},
     shpln_sku: {label:'SKU',data_type: :string, module_type: 'ShipmentLine'},
     shpln_coo: {label:'Country of Origin ISO',data_type: :string, module_type: 'ShipmentLine'},
@@ -10,8 +11,12 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     shpln_received_date: {label:'Received Date',data_type: :date, module_type: 'ShipmentLine'},
     shpln_uom: {label:'UOM',data_type: :string, module_type: 'ShipmentLine'},
     shpln_size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'},
+    shpln_invoice_number: {label: "Invoice #", data_type: :string, module_type: "ShipmentLine"},
     prod_part_number: {label: 'Part Number', data_type: :string, module_type: 'Product'},
     prod_country_of_origin: {label: "Country of Origin", data_type: :string, module_type: "Product"},
+    prod_countries_of_origin: {label: "Countries of Origin", data_type: :text, module_type: "Product"},
+    prod_earliest_ship_date: {label: "Earliest Ship Date", data_type: :date, module_type: "Product"},
+    prod_earliest_arrival_date: {label: "Earliest Arrival Date", data_type: :date, module_type: "Product"},
     prod_fda_product: {label: "FDA Product?", data_type: :boolean, module_type: "Product"},
     prod_fda_product_code: {label: "FDA Product Code", data_type: :string, module_type: "Product"},
     prod_fda_temperature: {label: "FDA Temperature", data_type: :string, module_type: "Product"},
@@ -28,12 +33,21 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_fda_contact_phone: {label: "FDA Contact Phone", data_type: :string, module_type: "Product"},
     prod_fda_affirmation_compliance: {label: "FDA Affirmation of Compliance", data_type: :string, module_type: "Product"},
     prod_import_restricted: {label: "US Import Restricted", data_type: :boolean, module_type: "Product"},
+    prod_po_numbers: {label: "PO Numbers", data_type: :text, module_type: "Product"},
+    prod_season: {label: "Season", data_type: :string, module_type: "Product"},
+    prod_short_description: {label: "Short Description", data_type: :string, module_type: "Product"},
+    prod_sku_number: {label: "SKU Number", data_type: :string, module_type: "Product"},
+    prod_suggested_tariff: {label: "Suggested Tariff", data_type: :string, module_type: "Product"},
+    prod_units_per_set: {label: "Units Per Set", data_type: :integer, module_type: "Product"},
     class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification"},
     class_set_type: {label: "Set Type", data_type: :string, module_type: "Classification"},
     ord_invoicing_system: {label: "Invoicing System", data_type: :string, module_type: "Order"},
     ord_invoiced: {label: "Invoice Received?", data_type: :boolean, module_type: "Order"},
+    ord_division: {label: "Division", data_type: :string, module_type: "Order"},
     ord_line_ex_factory_date: {label: "Planned Ex-Factory", data_type: :date, module_type: "OrderLine"},
-    ord_division: {label: "Division", data_type: :string, module_type: "Order"}
+    ord_line_color: {label: "Color", data_type: :string, module_type: "OrderLine"},
+    ord_line_destination_code: {label: "Destination Code", data_type: :string, module_type: "OrderLine"},
+    ord_line_division: {label: "Division", data_type: :string, module_type: "OrderLine"}
   } 
   
   def self.included(base)

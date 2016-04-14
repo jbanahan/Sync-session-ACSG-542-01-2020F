@@ -480,7 +480,7 @@ describe EntriesController do
 
       it 'should display a confirmation and redirect' do
         get :purge, id: @entry
-        expect(flash[:notice]).to match(/purged/)
+        expect(flash[:notices]).to include("Entry purged")
         expect(response).to redirect_to entries_path
       end  
     end
@@ -539,7 +539,33 @@ describe EntriesController do
       expect(response).to be_success
       expect(assigns(:reports)).to eq [single_company_report].concat(linked_company_reports)
     end
+  end
 
+  describe "generate_delivery_order" do
+    let (:user) { Factory(:master_user) }
+
+    before :each do
+      sign_in_as user
+    end
+
+    it "generates a delivery order for US entry" do
+      entry = Factory(:entry)
+      Entry.any_instance.should_receive(:can_view?).with(user).and_return true
+      OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator.should_receive(:delay).and_return OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator
+      OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator.should_receive(:generate_and_send_delivery_orders).with(user.id, entry.id)
+      post :generate_delivery_order, {id: entry.id}
+      expect(response).to redirect_to(entry)
+      expect(flash[:notices]).to include "The Delivery Order will be generated shortly and emailed to #{user.email}."
+    end
+
+    it "redirects to error for canadian entries" do
+      entry = Factory(:entry, import_country: Factory(:country, iso_code: "CA"))
+      Entry.any_instance.should_receive(:can_view?).with(user).and_return true
+      OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator.should_not_receive(:delay)
+      post :generate_delivery_order, {id: entry.id}
+      expect(response).to redirect_to(entry)
+      expect(flash[:errors]).to include "You do not have permission to view this report."
+    end
   end
 
 end

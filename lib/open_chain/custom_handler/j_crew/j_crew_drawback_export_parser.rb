@@ -4,7 +4,6 @@ module OpenChain; module CustomHandler; module JCrew
     def self.parse_csv_line r, row_number, importer
       return nil if r.size <= 1 && r[0].blank? # stray rows
       raise "Line #{row_number} had #{r.size} elements.  All lines must have 167 elements." unless r.size==167
-      quanity = 
       d = DutyCalcExportFileLine.new
       d.ship_date = Date.strptime(r[105],'%m/%d/%Y')
       d.export_date = Date.strptime(r[106],'%m/%d/%Y')

@@ -19,7 +19,7 @@ describe VendorsController do
 
       get :index
 
-      expect(response.location).to match /advanced_search/
+      expect(response.location).to match(/advanced_search/)
     end
   end
 
@@ -161,11 +161,35 @@ describe VendorsController do
       @u.company.update_attributes(vendor:true)
       User.any_instance.stub(:view_products?).and_return true
       Company.any_instance.stub(:can_view_as_vendor?).and_return true
-      p = Factory(:product,vendor:@u.company)
+      p = Factory(:product)
+      p.vendors << @u.company
       Factory(:product) #don't find this one
       get :products, id: @u.company_id.to_s
       expect(response).to be_success
       expect(assigns(:products).to_a).to eq [p]
+    end
+    it "should render default product view" do
+      @u.update_attributes(product_view:true)
+      @u.company.update_attributes(vendor:true)
+      User.any_instance.stub(:view_products?).and_return true
+      Company.any_instance.stub(:can_view_as_vendor?).and_return true
+      p = Factory(:product)
+      p.vendors << @u.company
+      get :products, id: @u.company_id.to_s
+      expect(response).to be_success
+      expect(response).to render_template :products
+    end
+    it "should render custom product view" do
+      CustomViewTemplate.create!(template_identifier:'vendor_products',template_path:'/custom_views/lumber_liquidators/vendors/products')
+      @u.update_attributes(product_view:true)
+      @u.company.update_attributes(vendor:true)
+      User.any_instance.stub(:view_products?).and_return true
+      Company.any_instance.stub(:can_view_as_vendor?).and_return true
+      p = Factory(:product)
+      p.vendors << @u.company
+      get :products, id: @u.company_id.to_s
+      expect(response).to be_success
+      expect(response).to render_template 'custom_views/lumber_liquidators/vendors/products'
     end
   end
 

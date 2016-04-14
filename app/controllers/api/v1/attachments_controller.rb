@@ -15,7 +15,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
     end
   end
 
-  def index 
+  def index
     att = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type])).order('created_at desc')
 
     attachments = []
@@ -33,11 +33,11 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
 
     if attachment && attachment.attachable.can_attach?(current_user)
       deleted = false
-      Attachment.transaction do 
+      Attachment.transaction do
         deleted = attachment.destroy
         attachment.rebuild_archive_packet if deleted
       end
-      
+
       OpenChain::WorkflowProcessor.async_process(attachment.attachable) if deleted
       render json: {}
     else
@@ -49,8 +49,12 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
     a = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type]), id: params[:id]).first
     if a.can_view? current_user
       expires_in = Time.zone.now + 5.minutes
-      url = a.secure_url expires_in
-
+      if MasterSetup.get.custom_feature?('Attachment Mask')
+        url = download_attachment_url a, protocol: (Rails.env.production? ? "https" : "http"), host: MasterSetup.get.request_host
+      else
+        url = a.secure_url expires_in
+      end        
+      
       render json: {url: url, name: a.attached_file_name, expires_at: expires_in.iso8601}
     else
       raise ActiveRecord::RecordNotFound
@@ -76,7 +80,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
     end
   end
 
-  private 
+  private
     def get_attachable_type type
       # If there's irregular forms of the attachable_type...add translations here
       # We accept two things here..

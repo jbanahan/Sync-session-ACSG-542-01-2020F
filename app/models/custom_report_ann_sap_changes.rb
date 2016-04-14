@@ -67,8 +67,14 @@ INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom
         write row_cursor, col_cursor, sc.model_field.process_query_result(row[idx],run_by)
         col_cursor += 1
       end
-      es_json = row[search_columns.size + rpf.size]
-      es_hash = es_json.blank? ? {'entity'=>{'model_fields'=>{}}} : JSON.parse(es_json)
+
+      snapshot_id = row[search_columns.size + rpf.size]
+      snapshot = EntitySnapshot.where(id: snapshot_id).first if snapshot_id.to_i > 0
+      if snapshot
+        es_json = snapshot.snapshot_json
+      end
+      
+      es_hash = es_json.blank? ? {'entity'=>{'model_fields'=>{}}} : es_json
       rpf.each_with_index do |d,i|
         mf = cdefs[d].model_field
         new_col = left_columns_count+1+(i*2)
@@ -92,7 +98,7 @@ INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom
       mf = cdefs[uid].model_field
       flds << "#{mf.qualified_field_name} AS \"CD#{cdefs[uid].id}\""
     end
-    flds << "(IF(appr.date_value is null,null,(SELECT snapshot FROM entity_snapshots WHERE recordable_id = products.id AND recordable_type = 'Product' AND created_at <= appr.date_value ORDER BY created_at DESC LIMIT 1))) as 'ES'"
+    flds << "(IF(appr.date_value is null,null,(SELECT id FROM entity_snapshots WHERE recordable_id = products.id AND recordable_type = 'Product' AND created_at <= appr.date_value ORDER BY created_at DESC LIMIT 1))) as 'ES'"
     flds << "products.id"
     "SELECT #{flds.join(", ")} "
   end

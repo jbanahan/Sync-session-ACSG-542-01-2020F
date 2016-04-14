@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
   before :each do
-    @base_struct = Struct.new(:article_num, :variant_id, 
+    @base_struct = Struct.new(:article_num, :variant_id,
       :vendor_num, :component, :component_thickness,
       :genus, :species, :coo, :row_num)
   end
@@ -55,12 +55,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       user_id = 10
       u = double(:user)
       User.should_receive(:find).with(10).and_return u
-      
+
       error_messages_1 = ['msg1']
       error_messages_2 = ['msg2']
-      
+
       xlc.should_receive(:all_row_values).with(0,1).and_return row_vals
-      
+
       described_class.should_receive(:parse_row_arrays).with(row_vals).and_return [row_structs,error_messages_1]
       described_class.should_receive(:process_rows).with(row_structs,u).and_return(error_messages_2)
       described_class.should_receive(:write_results_message).with(u,['msg1','msg2'])
@@ -103,11 +103,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       end
 
     end
-    it "should error if row.length > 0 & row.length not >= 33" do
+    it "should error if row.length > 0 & row.length not >= 32" do
       rows = [Array.new(33),Array.new(34),Array.new(0),Array.new(25)]
       structs, errors = described_class.parse_row_arrays(rows)
       expect(structs).to have(2).structs
-      expect(errors).to eq ['Row 5 failed because it only has 25 columns. All rows must have at least 33 columns.']
+      expect(errors).to eq ['Row 5 failed because it only has 25 columns. All rows must have at least 32 columns.']
     end
   end
   describe '#process_rows' do
@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       described_class.should_receive(:process_variant).with([s_a_1_1,s_a_1_2],u,cdefs).and_return nil
       described_class.should_receive(:process_variant).with([s_a_2],u,cdefs).and_return 'emsg'
       described_class.should_receive(:process_variant).with([s_b_1],u,cdefs).and_return 'emsg'
-      
+
       #returns unique array of error messages
       expect(described_class.process_rows [s_a_1_1,s_a_2,s_b_1,s_a_1_2], u).to eq ['emsg']
     end
@@ -133,8 +133,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       @u = Factory(:master_user)
       @cdefs = described_class.prep_my_custom_definitions
     end
-    it "should create plant_variant_assignment" do
+    it "should create plant_variant_assignment and product_vendor_assignment" do
       Product.any_instance.should_receive(:create_snapshot)
+      ProductVendorAssignment.any_instance.should_receive(:create_snapshot)
 
       product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)
@@ -159,6 +160,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(pva.variant).to eq var
       expect(pva.get_custom_value(@cdefs[:pva_pc_approved_by]).value).to eq @u.id
       expect(pva.get_custom_value(@cdefs[:pva_pc_approved_date]).value).to_not be_nil
+
+      expect(ProductVendorAssignment.count).to eq 1
+      prodven = ProductVendorAssignment.first
+      expect(prodven.product).to eq product
+      expect(prodven.vendor).to eq cmp
     end
     it "should not reset approvals" do
       product = Factory(:product,unique_identifier:'000000000000000pid')
@@ -186,7 +192,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
 
     end
     it "should create one variant with multiple plant variant assignments for multiple vendors and same recipe id" do
-      product = Factory(:product,unique_identifier:'000000000000000pid')
+      Factory(:product,unique_identifier:'000000000000000pid')
       cmp = Factory(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
       plnt = Factory(:plant,company:cmp)
@@ -225,7 +231,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       product = Factory(:product,unique_identifier:'000000000000000pid')
       cmp = Factory(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
-      plnt = Factory(:plant,company:cmp)
+      Factory(:plant,company:cmp)
 
       s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
       s2 = @base_struct.new('000000000000000pid','varid','0000000123','top',11.3,'g2','s2','MX',2)
@@ -234,19 +240,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect {errors = described_class.process_variant([s1,s2],@u,@cdefs)}.to change(PlantVariantAssignment,:count).from(0).to(1)
 
       expect(errors).to be_empty
-      
+
       pva = PlantVariantAssignment.first
       var = pva.variant
       expect(var.get_custom_value(@cdefs[:var_recipe]).value).to eq "base: gen/spec - 1 - CN\ntop: g2/s2 - 11.3 - MX"
       expect(var.product).to eq product
-      
+
     end
     it "should create plant if vendor exists and plant doesn't" do
       product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)
       cmp = Factory(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company],'0000000123')
-      
+
       s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
 
       errors = nil
@@ -257,7 +263,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       pva = PlantVariantAssignment.first
       expect(pva.plant.company).to eq cmp
       expect(pva.variant).to eq var
-      
+
     end
     it "should fail if product id is blank" do
       s1 = @base_struct.new('','varid','0000000123','base',1,'gen','spec','CN',2)
@@ -285,8 +291,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
     end
     it "should fail if vendor doesn't exist" do
       product = Factory(:product,unique_identifier:'000000000000000pid')
-      var = Factory(:variant,variant_identifier:'varid',product:product)
-      
+      Factory(:variant,variant_identifier:'varid',product:product)
+
       s1 = @base_struct.new('000000000000000pid','varid','0000000123','base',1,'gen','spec','CN',2)
 
       errors = nil
@@ -323,7 +329,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
 
       msg = Message.first
       expect(msg.subject).to eq "EPD Processing Complete - WITH ERRORS"
-      expect(msg.body).to match /abc/
+      expect(msg.body).to match(/abc/)
 
     end
   end

@@ -33,7 +33,7 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
       :history_ignore => true,
       :read_only => true
     }]
-    r << [rank_start+1, "#{uid_prefix}_prod_id".to_sym, :id,"Product Name", {user_accessible: false, history_ignore: true,
+    r << [rank_start+2, "#{uid_prefix}_prod_id".to_sym, :id,"Product Name", {user_accessible: false, history_ignore: true,
       :import_lambda => lambda {|detail, data, user|
         product_id = data.to_i
         if detail.product_id != product_id && !(prod = Product.where(id: product_id).first).nil?
@@ -42,6 +42,14 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
         ""
       }
     }]
+    r << [rank_start+3, "#{uid_prefix}_prod_ord_count".to_sym, :prod_ord_count, "Product Order Count",
+      history_ignore: true,
+      read_only:true,
+      export_lambda: lambda {|detail|
+        ModelField.find_by_uid(:prod_ord_count).process_export(detail.product,nil,true)
+      },
+      qualified_field_name: "(select count(*) from (select distinct order_lines.order_id, order_lines.product_id from order_lines) x where x.product_id = #{table_name}.product_id)",
+    ]
     r
   end
 end; end; end

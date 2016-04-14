@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
       line_array.each do |ary|
         r_val << {"position"=>{"column"=>ary[0]},"cell"=>{"value"=>ary[1],"datatype"=>ary[2]}}
       end
-      @xl_client.should_receive(:get_row).with(0,line_number).and_return(r_val) 
+      @xl_client.should_receive(:get_row).with(0,line_number).and_return(r_val)
     }
     @line_array = [
       [0,20005,'number'],
@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     vendors = Company.where(:vendor=>true,:system_code=>'20005')
     vendors.should have(1).item
     vendors.first.name.should == 'COACO (PERU)'
-    products = Product.where(:vendor_id=>vendors.first.id,:unique_identifier=>'1100530')
+    products = Product.where(:unique_identifier=>'1100530')
     products.should have(1).item
     s = Shipment.find_by_reference '180075781'
     s.should have(1).shipment_lines

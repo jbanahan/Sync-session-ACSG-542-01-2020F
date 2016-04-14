@@ -102,7 +102,7 @@ describe ReportResult do
     end
     it "delays the report with priority 100" do
       ReportResult.any_instance.stub(:execute_report) #don't need report to run
-      ReportResult.any_instance.should_receive(:delay).with(:priority=>100).and_return(ReportResult.new)
+      ReportResult.any_instance.should_receive(:delay).with(:priority=>-1).and_return(ReportResult.new)
       ReportResult.run_report! 'delay', @u, @report_class
     end
 
@@ -132,7 +132,7 @@ describe ReportResult do
       end
       rr = double("ReportResult") 
       rr.should_receive(:execute_alliance_report)
-      ReportResult.any_instance.should_receive(:delay).with(:priority=>100).and_return(rr)
+      ReportResult.any_instance.should_receive(:delay).with(priority: -1).and_return(rr)
       ReportResult.run_report! 'delay', @u, AllianceReport
     end
 
@@ -150,7 +150,7 @@ describe ReportResult do
       end
       rr = double("ReportResult") 
       rr.should_receive(:execute_report)
-      ReportResult.any_instance.should_receive(:delay).with(:priority=>100).and_return(rr)
+      ReportResult.any_instance.should_receive(:delay).with(priority: -1).and_return(rr)
       ReportResult.run_report! 'delay', @u, NonAllianceReport
     end
 

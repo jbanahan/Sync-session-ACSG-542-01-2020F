@@ -63,9 +63,9 @@ class SearchSetup < ActiveRecord::Base
   end
   
   #get all model fields available to be used as sorts and not already in sort columns
-  def unused_sort_fields user
+  def unused_sort_fields user, label_prefix = nil
     used = self.sort_criterions.collect {|sc| sc.model_field_uid}
-    ModelField.sort_by_label column_fields_available(user).collect {|mf| mf unless used.include? mf.uid.to_s}.compact
+    ModelField.sort_by_label(column_fields_available(user).collect {|mf| mf unless used.include? mf.uid.to_s}.compact, label_prefix)
   end
 
   def search

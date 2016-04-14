@@ -13,7 +13,7 @@ module OpenChain; module Api; class ApiClient
     'jcrew' => 'https://jcrew.vfitrack.net',
     "bdemo" => 'https://bdemo.vfitrack.net',
     "das" => 'https://das.vfitrack.net',
-    "warnaco" => 'https://warnaco.vfitrack.net',
+    "ll"=> "https://ll.vfitrack.net",
     "dev" => "http://localhost:3000",
     "test" => "http://www.notadomain.com"
   }
@@ -65,28 +65,28 @@ module OpenChain; module Api; class ApiClient
   def get path, parameters = {}
     uri_string = construct_path path
     uri_string += "?#{encode_parameters(parameters)}" unless parameters.blank?
-    execute_request {|token| JsonHttpClient.new.get uri_string, {}, token}
+    execute_request {|token| http_client.get uri_string, {}, token}
   end
 
   def delete path, parameters = {}
     uri_string = construct_path path
     uri_string += "?#{encode_parameters(parameters)}" unless parameters.blank?
-    execute_request {|token| JsonHttpClient.new.delete uri_string, {}, token}
+    execute_request {|token| http_client.delete uri_string, {}, token}
   end
 
   def post path, request_body
     uri_string = construct_path path
-    execute_request {|token| JsonHttpClient.new.post uri_string, request_body, {}, token}
+    execute_request {|token| http_client.post uri_string, request_body, {}, token}
   end
 
   def put path, request_body
     uri_string = construct_path path
-    execute_request {|token| JsonHttpClient.new.put uri_string, request_body, {}, token}
+    execute_request {|token| http_client.put uri_string, request_body, {}, token}
   end
 
   def patch path, request_body
     uri_string = construct_path path
-    execute_request {|token| JsonHttpClient.new.patch uri_string, request_body, {}, token}
+    execute_request {|token| http_client.patch uri_string, request_body, {}, token}
   end
 
   def raise_api_error_from_error_response http_status, e
@@ -174,6 +174,13 @@ module OpenChain; module Api; class ApiClient
       e.is_a?(OpenChain::Api::ApiClient::ApiError) && e.http_status.to_s == "404"
     end
 
+    def extract_id_from_params params, entity_name
+      entity = params[entity_name] ? params[entity_name] : params[entity_name.to_sym]
+      id = entity.try(:[], 'id') ? entity['id'] : entity.try(:[], :id)
+      raise "All API update calls require an 'id' in the attribute hash." unless id
+      id
+    end
+
   private 
     def construct_path path
       path = path[1..-1] if path.starts_with? "/"
@@ -191,6 +198,10 @@ module OpenChain; module Api; class ApiClient
 
     def make_errors_json errors
       r = {'errors'=>(errors.is_a?(Array) ? errors : [errors])}
+    end
+
+    def http_client
+      JsonHttpClient.new
     end
 
 end; end; end

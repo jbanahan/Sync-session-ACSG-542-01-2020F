@@ -11,13 +11,22 @@ module OpenChain; module ModelFieldGenerator; module AttachmentGenerator
       can_view_lambda: can_view_lambda_map["#{uid_prefix}_attachment_types".to_sym],
       read_only: true
     }]
-    rank += 1
-    r << [rank,"#{uid_prefix}_attachment_count".to_sym,:attachment_count,"Attachment Count",{
+    r << [rank += 1,"#{uid_prefix}_attachment_count".to_sym,:attachment_count,"Attachment Count",{
       data_type: :integer,
       read_only: true,
       qualified_field_name: "(SELECT COUNT(*) FROM attachments where attachments.attachable_id = #{core_module.table_name}.id AND attachments.attachable_type = '#{core_module.class_name}')",
       export_lambda: lambda {|obj| obj.attachments.size}
     }]
+    r << [rank += 1,"#{uid_prefix}_attachment_filenames".to_sym,:attachment_types,"Attachment Filenames",{
+      data_type: :string,
+      export_lambda: lambda {|obj| obj.attachment_types.join("\n ") },
+      qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT a_files.attached_file_name ORDER BY a_files.attached_file_name SEPARATOR '\n ')
+        FROM attachments a_files
+        WHERE a_files.attachable_id = #{core_module.table_name}.id AND a_files.attachable_type = '#{core_module.class_name}' AND LENGTH(RTRIM(IFNULL(a_files.attached_file_name, ''))) > 0)",
+      can_view_lambda: can_view_lambda_map["#{uid_prefix}_attachment_filenames".to_sym],
+      read_only: true
+    }]
+
     r
   end
 end; end; end

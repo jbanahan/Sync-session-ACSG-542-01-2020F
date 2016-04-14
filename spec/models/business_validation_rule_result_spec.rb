@@ -85,6 +85,19 @@ describe BusinessValidationRuleResult do
       rule.run_validation(Order.new)
       expect(rule.state).to eq 'X'
     end
+
+    it "should not do anything if validation rule has delete_pending" do
+      json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
+      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+      rule = Factory(:business_validation_rule_result)
+      rule.business_validation_rule = vr
+      rule.state = 'X'
+      rule.business_validation_rule.delete_pending = true
+      rule.business_validation_rule.save!
+      rule.save!
+      rule.run_validation(Order.new)
+      expect(rule.state).to eq 'X'
+    end
   end
   describe :override do
     it "should set overriden_at and overriden_by" do
@@ -93,6 +106,35 @@ describe BusinessValidationRuleResult do
       r.override u
       expect(r.overridden_by).to eq u
       expect(r.overridden_at).to be <= Time.now
+    end
+  end
+
+  describe "after_destroy" do
+    before :each do
+      @bvrr_1 = Factory(:business_validation_rule_result)
+      @bvre = @bvrr_1.business_validation_result
+    end
+
+    it "should destroy parent object if destroyed and without siblings" do
+      @bvrr_1.destroy
+      expect(BusinessValidationResult.where(id: @bvre.id).count).to eq 0
+    end
+
+    it "should do nothing if destroyed with at least one sibling" do
+      @bvrr_2 = Factory(:business_validation_rule_result, business_validation_result: @bvre)
+      @bvrr_2.destroy
+      expect(BusinessValidationResult.where(id: @bvre.id).count).to eq 1
+    end
+  end
+
+  describe :cancel_override do
+    it "should set overridden_at, overridden_by, and note to nil" do
+      u = User.new
+      r = Factory(:business_validation_rule_result, overridden_at: Time.now, overridden_by: u, note: "Some message.")
+      r.cancel_override
+      expect(r.overridden_by).to eq nil
+      expect(r.overridden_at).to eq nil
+      expect(r.note).to eq nil
     end
   end
 end

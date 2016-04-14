@@ -27,7 +27,7 @@ class SummaryStatementsController < ApplicationController
     unless current_user.edit_summary_statements?
       error_redirect "You do not have permission to create summary statements."
     end
-    @companies = Company.where(importer: true)
+    @companies = Company.connection.exec_query("SELECT c.id, c.name, COUNT(e.id) FROM companies c INNER JOIN entries e ON e.importer_id = c.id GROUP BY c.id ORDER BY c.name")
   end
 
   def create

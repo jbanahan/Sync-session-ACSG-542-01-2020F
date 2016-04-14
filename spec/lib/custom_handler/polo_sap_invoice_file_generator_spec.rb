@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
-        mail.to.should == ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "paula.mildon@ralphlauren.com", "brian.fenelli@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        mail.to.should == ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "accounting-ca@vandegriftinc.com"]
         mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -291,7 +291,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
-        mail.to.should == ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "paula.mildon@ralphlauren.com", "brian.fenelli@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        mail.to.should == ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "accounting-ca@vandegriftinc.com"]
         mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -331,7 +331,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
-        mail.to.should == ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "paula.mildon@ralphlauren.com", "brian.fenelli@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        mail.to.should == ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "accounting-ca@vandegriftinc.com"]
         mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -435,7 +435,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job = ExportJob.all.first
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).to_not be_nil
-        expect(mail.to).to eq ["joanne.pauta@ralphlauren.com", "matthew.dennis@ralphlauren.com", "jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "paula.mildon@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
         mail.subject.should == "[VFI Track] Vandegrift, Inc. Club Monaco Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for Club Monaco for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -678,6 +678,37 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/AMOUNT")).to eq @broker_invoice_line3.charge_amount.abs.to_s
       end
 
+      it "generates FF invoices for Polo Factory stores" do
+        @broker_invoice_line3.destroy
+        @broker_invoice_line1.update_attributes! charge_code: "22"
+        @broker_invoice_line2.update_attributes! charge_code: "250"
+
+        @gen.generate_and_send_invoices :factory_stores, Time.zone.now, [@broker_invoice]
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        sheet = get_workbook_sheet mail.attachments.first
+        # Just check the columns that should be different than the other documents
+        # .ie most of the account codes
+        expect(sheet.row(1)[2]).to eq "1540"
+        expect(sheet.row(1)[10]).to eq "100023825"
+        expect(sheet.row(1)[12]).to eq 9.0
+        expect(sheet.row(1)[24]).to be_nil
+        expect(sheet.row(1)[25]).to be_nil
+                
+        expect(sheet.row(2)[2]).to eq "1540"
+        expect(sheet.row(2)[10]).to eq "50960180"
+        expect(sheet.row(2)[12]).to eq 5.0
+        expect(sheet.row(2)[24]).to eq "20299699"
+        expect(sheet.row(2)[25]).to eq "1115"
+
+        expect(sheet.row(3)[2]).to eq "1540"
+        expect(sheet.row(3)[10]).to eq "14311000"
+        expect(sheet.row(3)[12]).to eq 4.0
+        expect(sheet.row(3)[24]).to eq "20299699"
+        expect(sheet.row(3)[25]).to eq "1115"
+      end
+
       context "ff send exceptions" do
         before :each do
           # Test with SAP invoices, since these would normally go as MM files...we can show that we're overriding the normal
@@ -861,8 +892,10 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       zone.stub(:now).and_return now
       @gen.should_receive(:find_broker_invoices).with(:rl_canada).and_return([@broker_invoice])
       @gen.should_receive(:find_broker_invoices).with(:club_monaco).and_return([])
+      @gen.should_receive(:find_broker_invoices).with(:factory_stores).and_return([])
       @gen.should_receive(:generate_and_send_invoices).with(:rl_canada, now, [@broker_invoice])
       @gen.should_receive(:generate_and_send_invoices).with(:club_monaco, now, [])
+      @gen.should_receive(:generate_and_send_invoices).with(:factory_stores, now, [])
 
       @gen.find_generate_and_send_invoices
     end

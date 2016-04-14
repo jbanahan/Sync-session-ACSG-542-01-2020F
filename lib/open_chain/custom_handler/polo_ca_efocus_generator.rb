@@ -1,5 +1,4 @@
 require 'rexml/document'
-require 'open_chain/custom_handler/polo_ca_entry_parser'
 require 'digest/sha1'
 
 module OpenChain
@@ -16,6 +15,7 @@ module OpenChain
       # key is fenix code, value is ohl code
       TRANSPORT_MODE_MAP ||= {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
       SYNC_CODE ||= 'polo_ca_efocus'
+      POLO_IMPORTER_TAX_IDS ||= ['806167003RM0001','871349163RM0001','866806458RM0001']
 
       def self.run_schedulable
         self.new.generate
@@ -29,7 +29,7 @@ module OpenChain
       def sync_xml
         files = []
         entries = Entry.
-          where("importer_tax_id IN (?)",OpenChain::CustomHandler::PoloCaEntryParser::POLO_IMPORTER_TAX_IDS).
+          where("importer_tax_id IN (?)", POLO_IMPORTER_TAX_IDS).
           where("length(master_bills_of_lading) > 0").
           where("length(house_bills_of_lading) > 0 OR length(container_numbers) > 0").
           need_sync(SYNC_CODE).uniq

@@ -10,6 +10,12 @@
     <%if include_process_actions %>
       <button data-toggle='modal' data-target='#process_actions_modal'>Process Reports</button>
     <%end%>
+    <%if @claim.drawback_claim_audits.count > 0 %>
+      <%=button_to 'Clear Claim Audits', clear_claim_audits_drawback_claim_path(@claim), :method=>:delete, :form_class=>"inline-button-to", :class=>'btn btn-default', data: { confirm: "Are you sure?" }%>
+    <%end%>
+    <%if @claim.drawback_export_histories.count > 0 %>
+      <%=button_to 'Clear Export Histories', clear_export_histories_drawback_claim_path(@claim), :method=>:delete, :form_class=>"inline-button-to", :class=>'btn btn-default', data: { confirm: "Are you sure?" }%>
+    <%end%>
   <%end-%>
   <%if @claim.drawback_claim_audits.count > 0 && @claim.drawback_export_histories.count > 0%>
     <%= button_to "Audit Report", audit_report_drawback_claim_path(@claim), class: "btn navbar-btn btn-default", form_class: 'inline-button-to' %>

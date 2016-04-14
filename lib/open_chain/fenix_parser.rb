@@ -224,6 +224,7 @@ module OpenChain
             OpenChain::FenixSqlProxyClient.new.delay.request_lvs_child_transactions @entry.entry_number
           end
 
+          @entry.create_snapshot User.integration
         end
         nil
       end

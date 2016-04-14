@@ -21,9 +21,7 @@ module OpenChain; module Api; class ProductApiClient < ApiClient
   end
 
   def update product_hash
-    product = product_hash['product'] ? product_hash['product'] : product_hash[:product]
-    id = product.try(:[], 'id') ? product['id'] : product.try(:[], :id)
-    raise "All product update calls require an 'id' in the attribute hash." unless id
+    id = extract_id_from_params product_hash, 'product'
 
     put("/products/#{id}", product_hash)
   end

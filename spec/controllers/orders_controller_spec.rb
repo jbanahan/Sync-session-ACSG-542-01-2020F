@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe OrdersController do
 
-  before :each do 
+  before :each do
     MasterSetup.get.update_attributes(:order_enabled=>true)
-    c = Factory(:company,:master=>true)
+    c = Factory(:company,:master=>true,system_code:'MSTR')
     @u = Factory(:master_user,order_view:true,:company=>c)
 
     sign_in_as @u
@@ -18,10 +18,11 @@ describe OrdersController do
         expect(response).to render_template :show
       end
       it 'should render custom template' do
-        @u.company.update_attributes(order_view_template:'custom_views/j_jill/orders/show.html.erb')
+        cvt = CustomViewTemplate.create!(template_identifier:'order_view',template_path:'custom_views/j_jill/orders/show')
+        cvt.search_criterions.create!(model_field_uid:'ord_imp_syscode',operator:'eq',value:@u.company.system_code)
         o = Factory(:order,importer:@u.company)
         get :show, id: o.id
-        expect(response).to render_template 'custom_views/j_jill/orders/show.html'
+        expect(response).to render_template 'custom_views/j_jill/orders/show'
       end
     end
   end
@@ -97,7 +98,7 @@ describe OrdersController do
       expect(@o.closed_at).to_not be_nil
     end
   end
-  describe 'validation_results' do 
+  describe 'validation_results' do
     before :each do
       @ord = Factory(:order,order_number:'123456')
       @rule_result = Factory(:business_validation_rule_result)

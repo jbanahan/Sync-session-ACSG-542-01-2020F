@@ -96,12 +96,36 @@ describe UserManualsController do
       expect(assigns(:user_manual)).to eq @um
     end
   end
+  describe '#for_referer' do
+    it "should return page" do
+      u = Factory(:user)
+      sign_in_as u
+      # setup dummy data
+      m1 = double('manual1')
+      m2 = double('manual2')
+      [m1,m2].each_with_index do |m,i|
+        m.stub(:name).and_return "manual#{i+1}"
+        m.stub(:id).and_return(i+1)
+      end
+
+      request.env['HTTP_REFERER'] = 'http://example.com/my_page'
+
+      UserManual.should_receive(:for_user_and_page).
+        with(u,'http://example.com/my_page').
+        and_return [m2,m1] #returning in reverse order to confirm that sorting works
+
+      get :for_referer
+
+      expect(response).to be_success
+      expect(assigns(:manuals)).to eq [m1,m2]
+    end
+  end
   describe '#download' do
     before :each do
       @um = Factory(:user_manual)
       @secure_url = 'abc'
-      att = double(:attachment, secure_url: @secure_url)
-      UserManual.any_instance.stub(:attachment).and_return(att)
+      @att = double(:attachment, secure_url: @secure_url)
+      UserManual.any_instance.stub(:attachment).and_return(@att)
     end
     it "should allow admins" do
       sign_in_as Factory(:admin_user)
@@ -119,6 +143,41 @@ describe UserManualsController do
       check_admin_secured do
         get :download, id: @um.id
       end
+    end
+    it "should allow if user has portal_redirect" do
+      sign_in_as Factory(:user)
+      User.any_instance.stub(:portal_redirect_path).and_return '/abc'
+
+      ms = double("MasterSetup")
+      ms.stub(:custom_feature?).with("Attachment Mask").and_return true
+      MasterSetup.stub(:get).and_return ms
+
+      @att.stub(:attached_file_name).and_return "file.txt"
+      @att.stub(:attached_content_type).and_return "text/plain"
+      tf = double("Tempfile")
+      tf.should_receive(:read).and_return "123"
+      @att.stub(:download_to_tempfile).and_yield tf
+
+      get :download, id: @um.id
+      expect(response).to be_success
+      expect(response.body).to eq "123"
+    end
+
+    it "uses alternate download approach" do
+      sign_in_as Factory(:user)
+      ms = double("MasterSetup")
+      ms.stub(:custom_feature?).with("Attachment Mask").and_return true
+      MasterSetup.stub(:get).and_return ms
+
+      @att.stub(:attached_file_name).and_return "file.txt"
+      @att.stub(:attached_content_type).and_return "text/plain"
+      tf = double("Tempfile")
+      tf.should_receive(:read).and_return "123"
+      @att.stub(:download_to_tempfile).and_yield tf
+
+      get :download, id: @um.id
+      expect(response).to be_success
+      expect(response.body).to eq "123"
     end
   end
 end

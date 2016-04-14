@@ -30,6 +30,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'destination_state' => "PA",
         'entry_type' => 1,
         'voyage_flight_no' => "Voyage",
+        'vessel_airline_name' => "Vessel",
+        'location' => "ABC123",
+        'location_of_goods' => "LOCATION",
         'uc_no' => "UCNO",
         'uc_name' => "UC Name",
         'uc_address_1' => "123 Fake St.",
@@ -175,6 +178,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "uscs_line_no" => 1,
                 "value_foreign" => 99999,
                 "container_no" => "CONT1",
+                'value_appraisal_method' => "F",
                 'fees' => [
                   {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
                   {'customs_fee_code'=>501, 'amt_fee'=>345},
@@ -224,6 +228,15 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                     'tariff_desc' => "OTHER STUFF",
                     'tariff_desc_additional' => "REPLACEMENT DESC"
                   }
+                ],
+                'containers' => [
+                  {
+                    "seq_no": 1,
+                    "container_no": "CONT2",
+                    "cartons": 0,
+                    "qty": 21772800,
+                    "qty_uom": "SQ"
+                  }
                 ]
               }
             ]
@@ -265,6 +278,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "uscs_line_no" => 2,
                 "value_foreign" => 99999,
                 "container_no" => "NOTACONTAINER",
+                "value_appraisal_method" => "A",
                 'tariffs' => [
                   {
                     'tariff_no' => '1234567890',
@@ -317,6 +331,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.destination_state).to eq "PA"
       expect(entry.entry_type).to eq "01"
       expect(entry.voyage).to eq "Voyage"
+      expect(entry.vessel).to eq "Vessel"
+      expect(entry.location_of_goods).to eq "ABC123"
+      expect(entry.location_of_goods_description).to eq "LOCATION"
       expect(entry.ult_consignee_code).to eq "UCNO"
       expect(entry.ult_consignee_name).to eq "UC Name"
       expect(entry.consignee_address_1).to eq "123 Fake St."
@@ -403,7 +420,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.customer_references).to eq "ref1\n ref2\n broker_inv_ref"
 
       expect(entry.containers.size).to eq 2
-      c = entry.containers.first
+      c = entry.containers.find {|co| co.container_number == "CONT1"}
       expect(c.container_number).to eq "CONT1"
       expect(c.goods_description).to eq "DESC 1"
       expect(c.container_size).to eq "20"
@@ -415,7 +432,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(c.size_description).to eq "DRY VAN"
       expect(c.teus).to eq 2
 
-      c = entry.containers.second
+      c = entry.containers.find {|co| co.container_number == "CONT2"}
       expect(c.container_number).to eq "CONT2"
       expect(c.goods_description).to eq "DESC 3\n DESC 4"
       expect(c.container_size).to eq "40"
@@ -522,10 +539,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.cvd_duty_amount).to eq 3.45
       expect(line.cvd_case_value).to eq 4.56
       expect(line.cvd_case_percent).to eq 5.67
-      expect(line.container).to eq entry.containers.first
+      expect(line.container.container_number).to eq "CONT2"
       expect(line.fda_review_date).to be_nil
       expect(line.fda_hold_date).to be_nil
       expect(line.fda_release_date).to be_nil
+      expect(line.value_appraisal_method).to eq "F"
+      expect(line.first_sale).to be_true
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
@@ -553,6 +572,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # This used to parse as 99.99 because it assumed missing decimal points meant there was an implied decimal point, 
       # which was wrong and has since been fixed.
       expect(line.contract_amount).to eq BigDecimal.new("9999.00")
+      expect(line.value_appraisal_method).to eq "A"
+      expect(line.first_sale).to be_false
 
       # If we didn't get a matching container record, then we want to make sure the line level linkage
       # is nil
@@ -582,7 +603,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.importer.importer).to be_true
 
       # Uncomment this once this feed is the "One True Source" instead of the AllianceParser
-      #expect(entry.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-12T13:26:20-04:00"
+      expect(entry.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-12T13:26:20-04:00"
 
       # This should all be nil because the liquidation date is not set
       expect(entry.liquidation_type_code).to be_nil
@@ -598,6 +619,10 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.liquidation_ada).to be_nil
       expect(entry.liquidation_cvd).to be_nil
       expect(entry.liquidation_total).to be_nil
+
+      expect(entry.entity_snapshots.length).to eq 1
+      snapshot = entry.entity_snapshots.first
+      expect(snapshot.user).to eq User.integration
     end
 
     it "processes liquidation information if liquidation date is not in the future" do
@@ -908,6 +933,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       entry = subject.process_entry @e
 
       expect(entry.entry_filed_date).to eq tz.parse("201501191230")
+    end
+
+    it "falls back to line level container_no attribute if no container is found via sub-elements" do
+      @e['commercial_invoices'].first['lines'].first['containers'].first["container_no"] = "NOTACONTAINER"
+      entry = subject.process_entry @e
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.container.container_number).to eq "CONT1"
     end
   end
 

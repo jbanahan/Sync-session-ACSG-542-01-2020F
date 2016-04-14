@@ -59,12 +59,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ship_to.state).to eq 'CA'
       expect(ship_to.postal_code).to eq '90040'
       expect(ship_to.country).to eq @usa
-      expect(ship_to.system_code).to eq '1005'      
+      expect(ship_to.system_code).to eq '1005'
 
       # new product
       new_prod = o.order_lines.find_by_line_number(2).product
       expect(new_prod.unique_identifier).to eq '000000000010003151'
       expect(new_prod.name).to eq 'MS STN Qing Drag Bam 9/16x3-3/4" Str'
+      expect(new_prod.vendors.to_a).to eq [@vendor]
 
       expect(o.entity_snapshots.count).to eq 1
     end

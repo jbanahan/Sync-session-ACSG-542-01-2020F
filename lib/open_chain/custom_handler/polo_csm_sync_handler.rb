@@ -3,6 +3,15 @@ module OpenChain
   module CustomHandler
     # Updates CSM number for existing styles based on spreadsheet sent from team in Italy
     class PoloCsmSyncHandler
+
+      def self.can_view? user
+        MasterSetup.get.custom_feature?("CSM Sync") && user.edit_products?
+      end
+
+      def can_view? user
+        self.class.can_view? user
+      end
+
       def initialize(custom_file,file_received_at=0.seconds.ago)
         @custom_file = custom_file
         @csm_cd = CustomDefinition.find_or_create_by_label("CSM Number",:module_type=>'Product',:data_type=>'text')

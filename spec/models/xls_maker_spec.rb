@@ -110,6 +110,13 @@ describe XlsMaker do
       XlsMaker.add_header_row @sheet, 1, ['This is really long text that will be longer than 23 chars'], col_widths
       col_widths[0].should == 23
     end
+
+    it "handles headers that are not string values" do
+      XlsMaker.add_header_row @sheet, 1, [1, Date.new(2016,1,1)], []
+      expect(@sheet.row(1)[0]).to eq "1"
+      expect(@sheet.row(1)[1]).to eq "2016-01-01"
+      expect(@sheet.row(1).default_format).to eq XlsMaker::HEADER_FORMAT
+    end
   end
 
   context "add_body_row" do

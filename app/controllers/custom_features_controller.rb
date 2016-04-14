@@ -9,7 +9,6 @@ require 'open_chain/custom_handler/lands_end/le_returns_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 require 'open_chain/custom_handler/lenox/lenox_shipment_status_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_epd_parser'
-require 'open_chain/custom_handler/polo_ca_entry_parser'
 require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/polo/polo_fiber_content_parser'
@@ -18,11 +17,13 @@ require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
-require 'open_chain/custom_handler/ascena_ca_invoice_handler'
+require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
+require 'open_chain/custom_handler/pvh/pvh_shipment_workflow_parser'
+require 'open_chain/custom_handler/advance/advance_parts_upload_parser'
+require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 
 class CustomFeaturesController < ApplicationController
-  CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   ECELLERATE_SHIPMENT_ACTIVITY = 'OpenChain::CustomHandler::EcellerateShipmentActivityParser'
   EDDIE_CI_UPLOAD = 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
@@ -39,44 +40,32 @@ class CustomFeaturesController < ApplicationController
   CI_UPLOAD = 'OpenChain::CustomHandler::CiLoadHandler'
   LUMBER_EPD = 'OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser'
   FISHER_CI_UPLOAD = 'OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler'
-  ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::AscenaCaInvoiceHandler'
+  ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler'
   CREW_RETURNS ||= 'OpenChain::CustomHandler::JCrew::JCrewReturnsParser'
+  PVH_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser'
+  ADVAN_PART_UPLOAD ||= 'OpenChain::CustomHandler::Advance::AdvancePartsUploadParser'
+  CQ_ORIGIN ||= 'OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser'
 
   def index
     render :layout=>'one_col'
   end
 
   def lumber_epd_index
-    action_secure(OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser.can_view?(current_user),Product,{:verb=>"view",:module_name=>"EPD Report",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>LUMBER_EPD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser, LUMBER_EPD, "EPD Report"
   end
+
   def lumber_epd_upload
-    f = CustomFile.new(:file_type=>LUMBER_EPD,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"EPD Report",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/lumber_epd'
-    }
+    generic_upload LUMBER_EPD, "EPD Report", "lumber_epd"
   end
+
   def lumber_epd_download
-    f = CustomFile.find params[:id] 
-    action_secure(OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"EPD Report",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "EPD Report"
   end
+
   def ua_winshuttle_b_index
-    action_secure(OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"UA Winshuttle Reports",:lock_check=>false}) {
-      #nothing to do here
-    }
+    generic_index OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.new(nil), nil, "UA Winshuttle Reports", false
   end
+
   def ua_winshuttle_b_send
     action_secure(OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"UA Winshuttle Reports",:lock_check=>false}) {
       eml = params[:email] 
@@ -89,11 +78,11 @@ class CustomFeaturesController < ApplicationController
       redirect_to '/custom_features/ua_winshuttle_b'
     }
   end
+
   def ua_winshuttle_index
-    action_secure(OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"UA Winshuttle Reports",:lock_check=>false}) {
-      #nothing to do here
-    }
+    generic_index OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator.new, nil, "UA Winshuttle Reports", false
   end
+
   def ua_winshuttle_send
     action_secure(OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"UA Winshuttle Reports",:lock_check=>false}) {
       eml = params[:email] 
@@ -106,103 +95,35 @@ class CustomFeaturesController < ApplicationController
       redirect_to '/custom_features/ua_winshuttle'
     }
   end
+
   def ua_tbd_report_index 
-    action_secure(OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(nil).can_view?(current_user),Entry,{:verb=>"view",:module_name=>"UA TBD Reports",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>UA_TBD_REPORT_PARSER).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(nil), UA_TBD_REPORT_PARSER, "UA TBD Reports"
   end
+
   def ua_tbd_report_upload
-    f = CustomFile.new(:file_type=>UA_TBD_REPORT_PARSER,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(f).can_view?(current_user),Entry,{:verb=>"view",:module_name=>"UA TBD Reports",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/ua_tbd'
-    }
+    generic_upload UA_TBD_REPORT_PARSER, "UA TBD Reports", "ua_tbd"
   end
+
   def ua_tbd_report_download
-    f = CustomFile.find params[:id] 
-    action_secure(OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(f).can_view?(current_user),Entry,{:verb=>"view",:module_name=>"UA TBD Reports",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
-  end
-  def polo_efocus_index
-    action_secure(OpenChain::CustomHandler::PoloCaEntryParser.new(nil).can_view?(current_user),Entry,{:verb=>"view",:module_name=>"Polo Canada Entry Worksheets",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>CA_EFOCUS).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
-  end
-  def polo_efocus_upload
-    f = CustomFile.new(:file_type=>CA_EFOCUS,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(OpenChain::CustomHandler::PoloCaEntryParser.new(f).can_view?(current_user),Entry,{:verb=>"view",:module_name=>"Polo Canada Entry Worksheets",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/polo_canada'
-    }
-  end
-  def polo_efocus_download
-    f = CustomFile.find params[:id] 
-    action_secure(OpenChain::CustomHandler::PoloCaEntryParser.new(f).can_view?(current_user),Entry,{:verb=>"view",:module_name=>"Polo Canada Entry Worksheets",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "UA TBD Reports"
   end
   
   def kewill_isf_index
-    action_secure(OpenChain::CustomHandler::KewillIsfManualParser.new(nil).can_view?(current_user),Product,{verb:"view",module_name:"Kewill ISF Manual Parser", lock_check: false}){
-      @files = CustomFile.where(file_type: KEWILL_ISF).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render layout: 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::KewillIsfManualParser.new(nil), KEWILL_ISF, "Kewill ISF Manual Parser"
   end
 
   def kewill_isf_upload
-    f = CustomFile.new(file_type: KEWILL_ISF, uploaded_by: current_user, attached: params[:attached], start_at: 0.seconds.ago)
-    action_secure(OpenChain::CustomHandler::KewillIsfManualParser.new(f).can_view?(current_user),Product,{:verb=>'upload',:module_name=>"Kewill ISF Manual Parser",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/kewill_isf'
-    }
+    generic_upload KEWILL_ISF, "Kewill ISF Manual Parser", "kewill_isf"
   end
 
-  def polo_sap_bom_index 
-    action_secure(OpenChain::CustomHandler::PoloSapBomHandler.new(nil).can_view?(current_user),Product,{:verb=>"view",:module_name=>"SAP Bill of Materials Files",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>POLO_SAP_BOM).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+  def polo_sap_bom_index
+    generic_index OpenChain::CustomHandler::PoloSapBomHandler.new(nil), POLO_SAP_BOM, "SAP Bill of Materials Files"
   end
-
 
   def polo_sap_bom_upload
-    f = CustomFile.new(:file_type=>POLO_SAP_BOM,:uploaded_by=>current_user,:attached=>params[:attached],:start_at=>0.seconds.ago)
-    action_secure(OpenChain::CustomHandler::PoloSapBomHandler.new(f).can_view?(current_user),Product,{:verb=>'upload',:module_name=>"SAP Bill of Materials Files",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/polo_sap_bom'
-    }
+    generic_upload POLO_SAP_BOM, "SAP Bill of Materials Files", "polo_sap_bom"
   end
+
   def polo_sap_bom_reprocess 
     f = CustomFile.find params[:id]
     action_secure(OpenChain::CustomHandler::PoloSapBomHandler.new(f).can_view?(current_user),Product,{:verb=>'reprocess',:module_name=>"SAP Bill of Materials Files",:lock_check=>false}) {
@@ -215,31 +136,17 @@ class CustomFeaturesController < ApplicationController
       redirect_to '/custom_features/polo_sap_bom'
     }
   end
+
   def polo_sap_bom_download
-    f = CustomFile.find params[:id] 
-    action_secure(OpenChain::CustomHandler::PoloSapBomHandler.new(f).can_view?(current_user),Product,{:verb=>'download',:module_name=>"SAP Bill of Materials Files",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "SAP Bill of Materials Files"
   end
+
   def csm_sync_index
-    action_secure(current_user.edit_products?,Product,{:verb=>"view",:module_name=>"CSM Sync Files",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>CSM_SYNC).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::PoloCsmSyncHandler, CSM_SYNC, "CSM Sync Files"
   end
+
   def csm_sync_upload
-    f = CustomFile.new(:file_type=>CSM_SYNC,:uploaded_by=>current_user,:attached=>params[:attached],:start_at=>0.seconds.ago)
-    action_secure(current_user.edit_products?,Product,{:verb=>"upload",:module_name=>"CSM Sync Files",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/csm_sync'
-    }
+    generic_upload CSM_SYNC, "CSM Sync Files", "csm_sync"
   end
   
   def csm_sync_reprocess 
@@ -256,222 +163,99 @@ class CustomFeaturesController < ApplicationController
   end
 
   def csm_sync_download
-    f = CustomFile.find params[:id] 
-    action_secure(current_user.edit_products?,Product,{:verb=>"download",:module_name=>"CSM Sync Files",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "CSM Sync Files"
   end
 
   def jcrew_parts_index
-    action_secure(OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>JCREW_PARTS).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::JCrewPartsExtractParser.new, JCREW_PARTS, "J Crew Parts Extract"
   end
 
   def jcrew_parts_upload
-    f = CustomFile.new(:file_type=>JCREW_PARTS,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/jcrew_parts'
-    }
+    generic_upload JCREW_PARTS, "J Crew Parts Extract", "jcrew_parts"
   end
 
   def jcrew_parts_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),Product,{:verb=>"download",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "J Crew Parts Extract"
   end
 
   def polo_ca_invoices_index
-    action_secure(OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Polo CA Invoices",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>POLO_CA_INVOICES).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler.new(nil), POLO_CA_INVOICES, "Polo CA Invoices"
   end
 
   def polo_ca_invoices_upload
-    f = CustomFile.new(:file_type=>POLO_CA_INVOICES,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Polo CA Invoices",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/polo_ca_invoices'
-    }
+    generic_upload POLO_CA_INVOICES, "Polo CA Invoices", "polo_ca_invoices"
   end
 
   def polo_ca_invoices_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Polo CA Invoices",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Polo CA Invoices"
   end
 
   def ecellerate_shipment_activity_index
-    action_secure(OpenChain::CustomHandler::EcellerateShipmentActivityParser.can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"ECellerate Shipment Activity",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>ECELLERATE_SHIPMENT_ACTIVITY).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::EcellerateShipmentActivityParser, ECELLERATE_SHIPMENT_ACTIVITY, "ECellerate Shipment Activity"
   end
 
   def ecellerate_shipment_activity_upload
-    f = CustomFile.new(:file_type=>ECELLERATE_SHIPMENT_ACTIVITY,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/ecellerate_shipment_activity'
-    }
+    generic_upload ECELLERATE_SHIPMENT_ACTIVITY, "Fenix Commerical Invoice Upload", "ecellerate_shipment_activity"
   end
 
   def ecellerate_shipment_activity_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),Shipment,{:verb=>"download",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Ecellerate Shipment Activity Upload"
   end
 
   def fenix_ci_load_index
-    action_secure(OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>FENIX_CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler.new(nil), FENIX_CI_UPLOAD, "Fenix Commerical Invoice Upload"
   end
 
   def fenix_ci_load_upload
-    f = CustomFile.new(:file_type=>FENIX_CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/fenix_ci_load'
-    }
+    generic_upload FENIX_CI_UPLOAD, "Fenix Commerical Invoice Upload", "fenix_ci_load"
   end
 
   def fenix_ci_load_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Fenix Commerical Invoice Upload"
   end
 
   def lenox_shipment_status_index
-    action_secure(OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser.can_view?(current_user),Shipment,{verb:'view',module_name:"Lenox OOCL Shipment Report Upload",lock_check:false}) {
-      @files = CustomFile.where(file_type:LENOX_SHIPMENT).order('created_at DESC').paginate(per_page:20,page:params[:page])
-    }
+    generic_index OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser, LENOX_SHIPMENT, "Lenox OOCL Shipment Report Upload"
   end
 
   def lenox_shipment_status_upload
-    f = CustomFile.new(:file_type=>LENOX_SHIPMENT,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Lenox OOCL Shipment Report Upload",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/lenox_shipment_status'
-    }
+    generic_upload LENOX_SHIPMENT, "Lenox OOCL Shipment Report Upload", "lenox_shipment_status"
   end
 
   def lenox_shipment_status_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),LENOX_SHIPMENT,{:verb=>"download",:module_name=>"Lenox OOCL Shipment Report Upload",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Lenox OOCL Shipment Report Upload"
   end
 
   def eddie_fenix_ci_load_index
-    action_secure(OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>EDDIE_CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler.new(nil), EDDIE_CI_UPLOAD, "Fenix Commerical Invoice Upload"
   end
 
   def eddie_fenix_ci_load_upload
-    f = CustomFile.new(:file_type=>EDDIE_CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Eddie Bauer Fenix Commerical Invoice Upload",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/eddie_fenix_ci_load'
-    }
+    generic_upload EDDIE_CI_UPLOAD, "Eddie Bauer Fenix Commerical Invoice Upload", "eddie_fenix_ci_load"
   end
 
   def eddie_fenix_ci_load_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),EDDIE_CI_UPLOAD,{:verb=>"download",:module_name=>"Eddie Bauer Fenix Commerical Invoice Upload",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Eddie Bauer Fenix Commerical Invoice Upload"
   end
 
   def le_returns_index
-    action_secure(OpenChain::CustomHandler::LandsEnd::LeReturnsParser.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Lands' End Returns Upload",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>LE_RETURNS_PARSER).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::LandsEnd::LeReturnsParser.new(nil), LE_RETURNS_PARSER, "Lands' End Returns Upload"
   end
 
   def le_returns_upload
-    f = CustomFile.new(:file_type=>LE_RETURNS_PARSER,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Lands' End Returns Upload",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive an email with a merged product worksheet when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/le_returns'
-    }
+    generic_upload LE_RETURNS_PARSER, "Lands' End Returns Upload", "le_returns", flash_notice: "Your file is being processed.  You'll receive an email with a merged product worksheet when it's done."
   end
 
   def le_returns_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),LE_RETURNS_PARSER,{:verb=>"download",:module_name=>"Lands' End Returns Upload",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Lands' End Returns Upload"
   end
 
   def le_ci_load_index
-    action_secure(OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Lands' End Commerical Invoice Upload",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>LE_CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator.new(nil), LE_CI_UPLOAD, "Lands' End Commerical Invoice Upload"
   end
 
   def le_ci_load_upload
+    # Can't use generic since we're running this in a non-standard way
     if params[:file_number].blank?
       add_flash :errors, "You must enter a File Number."
       redirect_to '/custom_features/le_ci_load'
@@ -492,19 +276,15 @@ class CustomFeaturesController < ApplicationController
   end
 
   def le_ci_load_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),LE_CI_UPLOAD,{:verb=>"download",:module_name=>"Lands' End Commerical Invoice Upload",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Lands' End Commerical Invoice Upload"
   end
 
   def rl_fabric_parse_index
-    action_secure(OpenChain::CustomHandler::Polo::PoloFiberContentParser.can_view?(current_user),Product,{:verb=>"view",:module_name=>"MSL Fabric Analyzer",:lock_check=>false}) {
-      #nothing to do here
-    }
+    generic_index OpenChain::CustomHandler::Polo::PoloFiberContentParser, nil, "MSL Fabric Analyzer", false
   end
 
   def rl_fabric_parse_run
+    # Can't use generic, since we're not actually uploading a file here
     action_secure(OpenChain::CustomHandler::Polo::PoloFiberContentParser.can_view?(current_user),Product,{:verb=>"view",:module_name=>"MSL Fabric Analyzer",:lock_check=>false}) {
       styles = params[:styles]
       if styles.blank? || styles.split(/\s*\r?\n\s*/).size == 0
@@ -518,12 +298,11 @@ class CustomFeaturesController < ApplicationController
   end
 
   def alliance_day_end_index
-    action_secure(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"Alliance Day End Processor",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>ALLIANCE_DAY_END).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-    }
+    generic_index OpenChain::CustomHandler::Intacct::AllianceDayEndHandler, ALLIANCE_DAY_END, "Alliance Day End Processor"
   end
 
   def alliance_day_end_upload
+    # Can't use the generic, we're loading two files and doing some other things here
     action_secure(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"Alliance Day End Processor",:lock_check=>false}) {
       check_register = CustomFile.new(:file_type=>ALLIANCE_DAY_END,:uploaded_by=>current_user,:attached=>params[:check_register])
       invoice_file = CustomFile.new(:file_type=>ALLIANCE_DAY_END,:uploaded_by=>current_user,:attached=>params[:invoice_file])
@@ -545,136 +324,141 @@ class CustomFeaturesController < ApplicationController
   end
 
   def alliance_day_end_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),ALLIANCE_DAY_END,{:verb=>"download",:module_name=>"Alliance Day End Processor",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Alliance Day End Processor"
   end
 
   def ci_load_index
-    action_secure(OpenChain::CustomHandler::CiLoadHandler.can_view?(current_user),Entry,{:verb=>"view",:module_name=>"CI Load Upload",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-    }
+    generic_index OpenChain::CustomHandler::CiLoadHandler, CI_UPLOAD, "CI Load Upload"
   end
 
   def ci_load_upload
-    f = CustomFile.new(:file_type=>CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"CI Load Upload",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a VFI Track message when it completes."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/ci_load'
-    }
+    generic_upload CI_UPLOAD, "CI Load Upload", "ci_load"
   end
-  
 
   def ci_load_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"CI Load Upload",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "CI Load Upload"
   end
 
   def fisher_ci_load_index
-    action_secure(OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler.new(nil).can_view?(current_user),Entry,{:verb=>"view",:module_name=>"Fisher CI Load Upload",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>FISHER_CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-    }
+    generic_index OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler.new(nil), FISHER_CI_UPLOAD, "Fisher CI Load Upload"
   end
 
   def fisher_ci_load_upload
-    f = CustomFile.new(:file_type=>FISHER_CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Fisher CI Load Upload",:lock_check=>false}) {
+    generic_upload(FISHER_CI_UPLOAD, "Fisher CI Load Upload", "fisher_ci_load", additional_process_params: {"invoice_date"=>params[:invoice_date]}) do |f|
       # Verify the invoice date was supplied
       invoice_date = Date.strptime(params[:invoice_date].to_s, "%Y-%m-%d") rescue nil
 
       if invoice_date.nil?
         add_flash :errors, "You must enter an Invoice Date." 
       end
-
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload."
-      end
-
-      if !has_errors? && f.save
-        CustomFile.delay.process f.id, current_user.id, {"invoice_date"=>params[:invoice_date]}
-        add_flash :notices, "Your file is being processed.  You'll receive a VFI Track message when it completes."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/fisher_ci_load'
-    }
+    end
   end
   
   def fisher_ci_load_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"Fisher CI Load Upload",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Fisher CI Load Upload"
   end
 
   def ascena_ca_invoices_index
-    action_secure(OpenChain::CustomHandler::AscenaCaInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Ascena CA Invoices",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>ASCENA_CA_INVOICES).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-      render :layout => 'one_col'
-    }
+    generic_index OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler.new(nil), ASCENA_CA_INVOICES, "Ascena CA Invoices"
   end
 
   def ascena_ca_invoices_upload
-    f = CustomFile.new(:file_type=>ASCENA_CA_INVOICES,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Ascena CA Invoices",:lock_check=>false}) {
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload." 
-      elsif f.save
-        f.delay.process(current_user)
-        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/ascena_ca_invoices'
-    }
+    generic_upload ASCENA_CA_INVOICES, "Ascena CA Invoices", "ascena_ca_invoices"
   end
 
   def ascena_ca_invoices_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Ascena CA Invoices",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "Ascena CA Invoices"
   end
 
   def crew_returns_index
-    action_secure(OpenChain::CustomHandler::JCrew::JCrewReturnsParser.new(nil).can_view?(current_user),Product,{:verb=>"view",:module_name=>"J.Crew Returns",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>CREW_RETURNS).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
-    }
+    generic_index OpenChain::CustomHandler::JCrew::JCrewReturnsParser.new(nil), CREW_RETURNS, "J.Crew Returns"
   end
 
   def crew_returns_upload
-    f = CustomFile.new(:file_type=>CREW_RETURNS,:uploaded_by=>current_user,:attached=>params[:attached])
-    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"J.Crew Returns",:lock_check=>false}) {
-     
-      if params[:attached].nil?
-        add_flash :errors, "You must select a file to upload."
-      end
-
-      if !has_errors? && f.save
-        CustomFile.delay.process f.id, current_user.id
-        add_flash :notices, "Your file is being processed.  You'll receive a VFI Track message when it completes."
-      else
-        errors_to_flash f
-      end
-      redirect_to '/custom_features/crew_returns'
-    }
+    generic_upload CREW_RETURNS, "J.Crew Returns", "crew_returns"
   end
   
   def crew_returns_download
-    f = CustomFile.find params[:id] 
-    action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>"J.Crew Returns",:lock_check=>false}) {
-      redirect_to f.secure_url
-    }
+    generic_download "J.Crew Returns"
   end
 
+  def pvh_workflow_index
+    generic_index OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser, PVH_WORKFLOW, "PVH Workflow"
+  end
+
+  def pvh_workflow_upload
+    generic_upload PVH_WORKFLOW, "PVH Workflow", "pvh_workflow"
+  end
+  
+  def pvh_workflow_download
+    generic_download "PVH Workflow"
+  end
+
+  def advan_parts_index
+    generic_index OpenChain::CustomHandler::Advance::AdvancePartsUploadParser, ADVAN_PART_UPLOAD, "Advance Parts"
+  end
+
+  def advan_parts_upload
+    generic_upload ADVAN_PART_UPLOAD, "Advance Parts", "advan_parts"
+  end
+  
+  def advan_parts_download
+    generic_download "Advance Parts"
+  end
+
+  def cq_origin_index
+    generic_index OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser, CQ_ORIGIN, "Carquest Orders"
+  end
+
+  def cq_origin_upload
+    generic_upload(CQ_ORIGIN, "Carquest Orders", "cq_origin") do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser.new(f).valid_file?
+        add_flash :errors, "You must upload a valid Excel file."
+      end
+    end
+  end
+  
+  def cq_origin_download
+    generic_download "Carquest Orders"
+  end
+
+  private
+    def generic_download mod_name
+      f = CustomFile.find params[:id] 
+      action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>mod_name,:lock_check=>false}) {
+        redirect_to f.secure_url
+      }
+    end
+
+    def generic_index klass, class_name, mod_name, show_file_list = true
+      action_secure(klass.can_view?(current_user),nil,{:verb=>"view",:module_name=>mod_name,:lock_check=>false}) {
+        if show_file_list
+          @files = CustomFile.where(:file_type=>class_name).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+        end
+      }
+    end
+
+    def generic_upload class_name, mod_name, custom_feature_path, additional_process_params: {}, flash_notice: "Your file is being processed.  You'll receive a VFI Track message when it completes."
+      f = CustomFile.new(:file_type=>class_name,:uploaded_by=>current_user,:attached=>params[:attached])
+      action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>mod_name,:lock_check=>false}) {
+       
+        if params[:attached].nil?
+          add_flash :errors, "You must select a file to upload."
+        end
+
+        # Give way for caller to execute extra validations, if you wish to stop the execution of the file
+        # you should add flash errors in the block you pass to this method
+        if block_given?
+          yield f
+        end
+
+        if !has_errors? && f.save
+          CustomFile.delay.process f.id, current_user.id, additional_process_params
+          add_flash :notices, flash_notice
+        else
+          errors_to_flash f
+        end
+        redirect_to "/custom_features/#{custom_feature_path}"
+      }
+    end
 end

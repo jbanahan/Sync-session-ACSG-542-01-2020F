@@ -4,9 +4,6 @@ class Product < ActiveRecord::Base
   include StatusableSupport
   include TouchesParentsChangedAt
 
-  CORE_MODULE = CoreModule::PRODUCT
-
-  belongs_to :vendor, :class_name => "Company"
   belongs_to :importer, :class_name => "Company"
   belongs_to :division
   belongs_to :status_rule
@@ -21,23 +18,25 @@ class Product < ActiveRecord::Base
   has_many   :sales_order_lines, :dependent => :destroy
   has_many   :shipment_lines, :dependent => :destroy
   has_many   :delivery_lines, :dependent => :destroy
-  has_many   :bill_of_materials_children, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink", 
+  has_many   :bill_of_materials_children, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink",
     :foreign_key=>:parent_product_id, :include=>:child_product
   has_many   :bill_of_materials_parents, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink",
     :foreign_key=>:child_product_id, :include=>:parent_product
   has_many   :child_products, :through=>:bill_of_materials_children
   has_many   :parent_products, :through=>:bill_of_materials_parents
   has_and_belongs_to_many :factories, :class_name=>"Address", :join_table=>"product_factories", :foreign_key=>'product_id', :association_foreign_key=>'address_id'
+  has_many :product_vendor_assignments, dependent: :destroy
+  has_many :vendors, through: :product_vendor_assignments
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true
   accepts_nested_attributes_for :variants, :allow_destroy => true
   reject_nested_model_field_attributes_if :missing_classification_country?
 
-  dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
+  dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier']
 
 
   def locked?
-    !self.vendor.nil? && self.vendor.locked?
+    false
   end
 
   # returns a hash of arrays with a key of region and an array of all classifications for that region as value
@@ -139,7 +138,7 @@ class Product < ActiveRecord::Base
   end
 
   def has_sales_orders?
-    !self.sales_order_lines.empty? 
+    !self.sales_order_lines.empty?
   end
 
   #Replace the current classifications with the given collection of classifications and writes this product with the new classifications to the database
@@ -176,7 +175,7 @@ class Product < ActiveRecord::Base
     elsif user.company.importer
       "products.importer_id = #{user.company_id} or products.importer_id IN (select child_id from linked_companies where parent_id = #{user.company_id})"
     elsif user.company.vendor
-      "products.vendor_id = #{user.company_id}"
+      "products.id IN (select product_id from product_vendor_assignments where vendor_id = #{user.company_id})"
     else
       "1=0"
     end
@@ -188,16 +187,16 @@ class Product < ActiveRecord::Base
       country = cls.country
       next if country.official_tariffs.empty? #skip if we don't have the database loaded for this country
       cls.tariff_records.each do |tr|
-        self.errors[:base] << "Tariff number #{tr.hts_1} is invalid for #{country.iso_code}" if !tr.hts_1.blank? && !tr.hts_1_official_tariff 
-        self.errors[:base] << "Tariff number #{tr.hts_2} is invalid for #{country.iso_code}" if !tr.hts_2.blank? && !tr.hts_2_official_tariff 
-        self.errors[:base] << "Tariff number #{tr.hts_3} is invalid for #{country.iso_code}" if !tr.hts_3.blank? && !tr.hts_3_official_tariff 
+        self.errors[:base] << "Tariff number #{tr.hts_1} is invalid for #{country.iso_code}" if !tr.hts_1.blank? && !tr.hts_1_official_tariff
+        self.errors[:base] << "Tariff number #{tr.hts_2} is invalid for #{country.iso_code}" if !tr.hts_2.blank? && !tr.hts_2_official_tariff
+        self.errors[:base] << "Tariff number #{tr.hts_3} is invalid for #{country.iso_code}" if !tr.hts_3.blank? && !tr.hts_3_official_tariff
       end
     end
   end
 
   def self.missing_classification_country? attributes
     return false unless attributes['id'].blank?
-    
+
     attributes[:class_cntry_id].blank? && attributes[:class_cntry_name].blank? && attributes[:class_cntry_iso].blank?
   end
 
@@ -206,18 +205,26 @@ class Product < ActiveRecord::Base
   def default_division
     self.division = Division.first if self.division.nil? && self.division_id.nil?
   end
-  
+
   def company_permission? user
-    self.importer_id==user.company_id || self.vendor_id == user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer) || user.company.linked_companies.include?(self.vendor)
+    return true if  self.importer_id==user.company_id
+    return true if user.company.master?
+
+    linked_company_ids = user.company.linked_companies.collect {|lc| lc.id}
+    return true if linked_company_ids.include?(self.importer_id)
+
+    assignment_ids = linked_company_ids + [user.company_id]
+    return true if (self.product_vendor_assignments.collect {|pva| pva.vendor_id} & assignment_ids).length > 0
   end
 
   def get_wto6_list_from_entity_snapshot es
     r = []
-    json = es.snapshot
+    json = es.snapshot_json(true)
     (1..3).each {|i| r += JsonPath.on(json,"$..hts_hts_#{i}") }
     r.delete_if {|h| h.blank?}
     Set.new(r.collect {|h| h.gsub(/\./,'')[0,6]}).to_a
   end
+  
   def get_wto6_list_from_current_data
     r = Set.new
     self.classifications.each do |cls|

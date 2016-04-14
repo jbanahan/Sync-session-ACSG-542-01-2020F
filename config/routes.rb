@@ -45,22 +45,32 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
       resources :orders, only: [:index,:show] do
+        member do
+          get :state_toggle_buttons
+          post :toggle_state_button
+          post :accept
+          post :unaccept
+          get :by_order_number
+        end
+        collection do
+          get :by_order_number
+        end
+      end
+      resources :order_lines, only: [] do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
-        post :accept, on: :member
-        post :unaccept, on: :member
       end
 
       resources :users, only: [] do
         resources :event_subscriptions, only: [:index,:create]
-        collection do 
+        collection do
           post :login
           post :google_oauth2
           get :me
           post 'me/toggle_email_new_messages' => 'users#toggle_email_new_messages'
           post :change_my_password
         end
-        
+
       end
 
       resources :official_tariffs, only: [] do
@@ -73,7 +83,7 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
       resources :variants, only: [:show] do
-        
+
       end
 
       resources :plants, only: [] do
@@ -84,6 +94,11 @@ OpenChain::Application.routes.draw do
       resources :plant_product_group_assignments, only: [] do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
+      end
+
+      resources :product_vendor_assignments, only: [:index] do
+        put :bulk_update, on: :collection
+        post :bulk_create, on: :collection
       end
 
       resources :model_fields, only: [:index] do
@@ -133,7 +148,7 @@ OpenChain::Application.routes.draw do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
         match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
         resources :users, only: [] do
-          member do 
+          member do
             post :add_templates
             post :change_user_password
           end
@@ -145,7 +160,7 @@ OpenChain::Application.routes.draw do
       end
 
       resources :fenix_postbacks, only: [] do
-        collection do 
+        collection do
           post :receive_lvs_results
         end
       end
@@ -163,7 +178,11 @@ OpenChain::Application.routes.draw do
   namespace :customer do
     match '/lumber_liquidators/sap_vendor_setup_form/:vendor_id' => 'lumber_liquidators#sap_vendor_setup_form', via: :get
   end
-  resources :delayed_jobs, :only => [:destroy]
+  resources :delayed_jobs, :only => [:destroy] do
+    member do
+      delete :bulk_destroy
+    end
+  end
   resources :ftp_sessions, :only => [:index, :show] do
     member do
       get 'download'
@@ -195,15 +214,24 @@ OpenChain::Application.routes.draw do
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
   resources :entries, :only => [:index,:show] do
-    get 'reprocess', :on=>:collection
-    post 'bulk_get_images', :on=>:collection
-    post 'get_images', :on=>:member
+    member do
+      get 'validation_results'
+      get 'sync_records'
+
+      post 'request_entry_data'
+      post 'get_images'
+      post 'purge'
+      post 'generate_delivery_order'
+    end
+
+    collection do
+      get 'reprocess'
+
+      post 'bulk_get_images'
+      post 'bulk_request_entry_data'
+    end
+
     resources :broker_invoices, :only=>[:create]
-    get 'validation_results', on: :member
-    get 'sync_records', on: :member
-    post 'request_entry_data', on: :member
-    post 'bulk_request_entry_data', on: :collection
-    post 'purge', on: :member
   end
 
   resources :business_validation_templates do
@@ -217,7 +245,9 @@ OpenChain::Application.routes.draw do
   match '/business_validation_templates/:id/edit_angular' => 'business_validation_templates#edit_angular', via: :get
   match '/business_validation_rules/:id/edit_angular' => 'business_validation_rules#edit_angular', via: :get
 
-  resources :business_validation_rule_results, only: [:update]
+  resources :business_validation_rule_results, only: [:update] do
+    put 'cancel_override', :on=>:member
+  end
 
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
@@ -296,7 +326,13 @@ OpenChain::Application.routes.draw do
 
   resources :status_rules
   resources :attachments do
-    get 'download', :on => :member
+    member do
+      get 'download'
+    end
+
+    collection do
+      get 'download_last_integration_file'
+    end
   end
   resources :comments do
     post 'send_email', :on => :member
@@ -349,6 +385,7 @@ OpenChain::Application.routes.draw do
     get 'last_search_id', :on=>:collection
     get 'setup', :on=>:member
     get 'download', :on=>:member
+    post 'send_email', :on=>:member
     get 'total_objects', :on=>:member
   end
 
@@ -368,9 +405,6 @@ OpenChain::Application.routes.draw do
   match "/custom_features/polo_sap_bom/upload" => "custom_features#polo_sap_bom_upload", :via=>:post
   match "/custom_features/polo_sap_bom/:id/download" => "custom_features#polo_sap_bom_download", :via=>:get
   match "/custom_features/polo_sap_bom/:id/reprocess" => "custom_features#polo_sap_bom_reprocess", :via=>:get
-  match "/custom_features/polo_canada" => "custom_features#polo_efocus_index", :via=>:get
-  match "/custom_features/polo_canada/upload" => "custom_features#polo_efocus_upload", :via => :post
-  match "/custom_features/polo_canada/:id/download" => "custom_features#polo_efocus_download", :via => :get
   match "/custom_features/jcrew_parts" => "custom_features#jcrew_parts_index", :via=>:get
   match "/custom_features/jcrew_parts/upload" => "custom_features#jcrew_parts_upload", :via => :post
   match "/custom_features/jcrew_parts/:id/download" => "custom_features#jcrew_parts_download", :via => :get
@@ -423,6 +457,18 @@ OpenChain::Application.routes.draw do
   get "/custom_features/crew_returns" => "custom_features#crew_returns_index"
   post "/custom_features/crew_returns/upload" => "custom_features#crew_returns_upload"
   get "/custom_features/crew_returns/:id/download" => "custom_features#crew_returns_download"
+
+  get "/custom_features/pvh_workflow" => "custom_features#pvh_workflow_index"
+  post "/custom_features/pvh_workflow/upload" => "custom_features#pvh_workflow_upload"
+  get "/custom_features/pvh_workflow/:id/download" => "custom_features#pvh_workflow_download"
+
+  get "/custom_features/advan_parts" => "custom_features#advan_parts_index"
+  post "/custom_features/advan_parts/upload" => "custom_features#advan_parts_upload"
+  get "/custom_features/advan_parts/:id/download" => "custom_features#advan_parts_download"
+
+  get "/custom_features/cq_origin" => "custom_features#cq_origin_index"
+  post "/custom_features/cq_origin/upload" => "custom_features#cq_origin_upload"
+  get "/custom_features/cq_origin/:id/download" => "custom_features#cq_origin_download"
 
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
@@ -483,6 +529,10 @@ OpenChain::Application.routes.draw do
   match "/reports/run_eddie_bauer_ca_k84_summary" => "reports#run_eddie_bauer_ca_k84_summary", :via=>:post
   match "/reports/show_pvh_billing_summary" => "reports#show_pvh_billing_summary", :via => :get
   match "/reports/run_pvh_billing_summary" => "reports#run_pvh_billing_summary", :via => :post
+  match "/reports/show_sg_duty_due_report" => "reports#show_sg_duty_due_report", :via => :get
+  match "/reports/run_sg_duty_due_report" => "reports#run_sg_duty_due_report", :via => :post
+  match "/reports/show_ll_prod_risk_report" => "reports#show_ll_prod_risk_report", :via => :get
+  match "/reports/run_ll_prod_risk_report" => "reports#run_ll_prod_risk_report", :via => :post
   get "/reports/show_pvh_container_log" => "reports#show_pvh_container_log"
   post "/reports/run_pvh_container_log" => "reports#run_pvh_container_log"
   get "reports/show_monthly_entry_summation" => "reports#show_monthly_entry_summation"
@@ -765,6 +815,8 @@ OpenChain::Application.routes.draw do
     post 'process_report', on: :member
     post 'audit_report', on: :member
     get 'validation_results', on: :member
+    delete 'clear_claim_audits', on: :member
+    delete 'clear_export_histories', on: :member
   end
 
   resources :error_log_entries, :only => [:index, :show]
@@ -813,13 +865,6 @@ OpenChain::Application.routes.draw do
 
   match "/vendor_portal" => "vendor_portal#index", via: :get
 
-  #Griddler inbound email processing
-  mount_griddler
-
-  #Jasmine test runner
-  mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
-
-  root :to => "home#index"
 
   resources :groups, except: [:show]
 
@@ -829,5 +874,16 @@ OpenChain::Application.routes.draw do
 
   resources :user_manuals, except: [:show] do
     get :download, on: :member
+    get :for_referer, on: :collection
   end
+
+  resources :custom_view_templates, except: [:show]
+
+  #Griddler inbound email processing
+  mount_griddler
+
+  #Jasmine test runner
+  mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
+
+  root :to => "home#index"
 end

@@ -74,7 +74,9 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
       [49,:cil_subheader_number, :subheader_number, "Subheader Number", {datatype: :integer}],
       [50, :cil_fda_review_date, :fda_review_date, "FDA Review Date", {datatype: :datetime}],
       [51, :cil_fda_hold_date, :fda_hold_date, "FDA Hold Date", {datatype: :datetime}],
-      [52, :cil_fda_release_date, :fda_release_date, "FDA Release Date", {datatype: :datetime}]
+      [52, :cil_fda_release_date, :fda_release_date, "FDA Release Date", {datatype: :datetime}],
+      [53, :cil_first_sale, :first_sale, "First Sale", {datatype: :boolean}],
+      [54, :cil_value_appraisal_method, :value_appraisal_method, "Value Appraisal Method", {data_type: :string}]
     ]
   end
 end; end; end

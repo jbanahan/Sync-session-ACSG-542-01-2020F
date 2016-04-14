@@ -5,8 +5,8 @@ module OpenChain; module CustomHandler; class KewillCommercialInvoiceGenerator <
   include OpenChain::FtpFileSupport
 
   CiLoadEntry ||= Struct.new :file_number, :customer, :invoices
-  CiLoadInvoice ||= Struct.new :invoice_number, :invoice_date, :invoice_lines
-  CiLoadInvoiceLine ||= Struct.new :part_number, :country_of_origin, :gross_weight, :pieces, :hts, :foreign_value, :quantity_1, :quantity_2, :po_number, :first_sale, :department, :spi, :ndc_mmv, :cotton_fee_flag, :mid, :cartons
+  CiLoadInvoice ||= Struct.new :invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount
+  CiLoadInvoiceLine ||= Struct.new :part_number, :country_of_origin, :gross_weight, :pieces, :hts, :foreign_value, :quantity_1, :quantity_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount
 
 
   def initialize
@@ -49,7 +49,10 @@ module OpenChain; module CustomHandler; class KewillCommercialInvoiceGenerator <
     io << "".ljust(39) # Location / Location of Goods
     io << "".ljust(83, '0') # Num Inv Lines - Freight Amount
     io << "".ljust(3) # Prorate Freight Amount - Prorate Cash Discount
-    io << "".ljust(30, '0') # Discount % - Add To Make Amount
+    io << "".ljust(3, '0') # Discount %
+    io << "".ljust(3, '0') # Discount Days
+    io << num(invoice.non_dutiable_amount, 12, 2, numeric_strip_decimals: true) # Non Dutiable Amount
+    io << num(invoice.add_to_make_amount, 12, 2, numeric_strip_decimals: true) # Add to Make Amount
     io << "".ljust(245) # Commercial Invoice Desc 1 - Customer Reference
     io << "".ljust(12, '0') # Qty
     io << "".ljust(6) # UOM
@@ -99,12 +102,12 @@ module OpenChain; module CustomHandler; class KewillCommercialInvoiceGenerator <
     io << num(invoice_line.gross_weight, 12)
     io << "      " # Kilos Pounds
     io << "".ljust(11, '0')
-    io << "M3    "
-    io << num(invoice_line.pieces, 12, 3, numeric_strip_decimals: true)
-    io << "PCS   "
+    io << "M3    " # UOM Volume
+    io << num(invoice_line.pieces, 12, 3, numeric_strip_decimals: true) # Quantity Commercial
+    io << "PCS   " # UOM Commercial
     io << "".ljust(15, '0') # Unit Price
     io << "".ljust(56) # UOM Unit Price - Seal Number
-    io << str(invoice_line.hts, 10)
+    io << str(invoice_line.hts.to_s.gsub(".", ""), 10)
     io << num(invoice_line.foreign_value, 13, 2, numeric_strip_decimals: true)
     io << num(invoice_line.quantity_1, 12, 2, numeric_strip_decimals: true)
     io << "   " # UOM 1
@@ -127,8 +130,8 @@ module OpenChain; module CustomHandler; class KewillCommercialInvoiceGenerator <
     io << "".ljust(14) # Penalty Type - User Entered Weight
     io << str(invoice_line.spi, 2)
     io << " " # SPI Secondary
-    io << "".ljust(12, '0') # Non-Dutiable Amount
-    io << num(invoice_line.ndc_mmv, 12, 2, numeric_strip_decimals: true)
+    io << num(invoice_line.non_dutiable_amount, 12, 2, numeric_strip_decimals: true) # Non-Dutiable Amount
+    io << num(invoice_line.add_to_make_amount, 12, 2, numeric_strip_decimals: true) # Add to Make Amount
     io << "".ljust(48, '0') # Other Amount - Freight Amount
     io << "".ljust(32) # Convert Non-Dutiable Amount - Stat Tariff Number
     io << "".ljust(13, '0') # Stat Tariff Value

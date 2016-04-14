@@ -401,5 +401,10 @@ describe Attachment do
       a.attached_file_name = nil
       expect(a.stitchable_attachment?).to be_true
     end
+
+    it "disallows private attachments" do
+      a = Attachment.new attached_file_name: "file.pdf", is_private: true
+      expect(a.stitchable_attachment?).to be_false
+    end
   end
 end

@@ -45,19 +45,17 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
     end
 
     def generate
-      contents, code = nil
-      @generator.generate_file(@i.id) do |file, company_code|
+      contents = nil
+      @generator.generate_file(@i.id) do |file|
         contents = file.read.split("\r\n")
-        code = company_code
       end
-      [contents, code]
+      contents
     end
 
     it "should generate an invoice file" do
       # Tests all the default header / detail mappings
-      contents, code = generate
-      
-      expect(code).to eq "CUSTNO"
+      contents = generate
+
       contents.length.should == 3
       h = contents[0]
       h[0].should == "H"
@@ -104,7 +102,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.save!
       @line_1.commercial_invoice_tariffs.first.update_attributes! hts_code: nil, tariff_provision: nil
 
-      contents, code = generate
+      contents = generate
       h = contents[0]
 
       h[1..25].should == "VFI-#{@i.id}".ljust(25)
@@ -127,7 +125,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.update_attributes! invoice_value: nil
       @line_2.update_attributes! quantity: nil
 
-      contents, code = generate
+      contents = generate
       contents.length.should == 3
       h = contents[0]
 
@@ -141,7 +139,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.update_attributes! invoice_value: nil
       @line_2.update_attributes! unit_price: nil
 
-      contents, code = generate
+      contents = generate
       contents.length.should == 3
       h = contents[0]
 
@@ -159,7 +157,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       l1 = Factory(:commercial_invoice_line, :commercial_invoice => i)
       l1.commercial_invoice_tariffs << CommercialInvoiceTariff.new
 
-      contents, code = generate
+      contents = generate
       contents.length.should == 3
     end
 
@@ -170,7 +168,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
 
       # Verify the correct parameters were fed to the lambdas too
       l_inv = nil
-      map[:invoice_number] = lambda {|h| l_inv = h; fenix_customer_code(h)}
+      map[:invoice_number] = lambda {|h| l_inv = h; ftp_folder}
       map[:invoice_date] = "20130101"
 
       detail_map = @generator.invoice_detail_map
@@ -179,18 +177,18 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       dl_tar = []
 
       call_count = 0;
-      detail_map[:part_number] = lambda {|h, l, t| dl_inv<< h; dl_line<<l; dl_tar<<t; fenix_customer_code(h) + (call_count+=1).to_s}
+      detail_map[:part_number] = lambda {|h, l, t| dl_inv<< h; dl_line<<l; dl_tar<<t; ftp_folder + (call_count+=1).to_s}
 
       @generator.should_receive(:invoice_header_map).and_return map
       @generator.should_receive(:invoice_detail_map).and_return detail_map
 
-      contents, code = generate
+      contents = generate
       contents.length.should == 3
 
-      contents[0][1..25].should == @generator.fenix_customer_code(@i).ljust(25)
+      contents[0][1..25].should == @generator.ftp_folder.ljust(25)
       contents[0][26..35].should == "20130101".ljust(10)
-      contents[1][1..50].should == "#{@generator.fenix_customer_code(@i)}1".ljust(50)
-      contents[2][1..50].should == "#{@generator.fenix_customer_code(@i)}2".ljust(50)
+      contents[1][1..50].should == "#{@generator.ftp_folder}1".ljust(50)
+      contents[2][1..50].should == "#{@generator.ftp_folder}2".ljust(50)
 
       l_inv.should == @i
       dl_inv[0].should == @i
@@ -214,7 +212,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.invoice_number = "Glósóli"
       @i.save
 
-      contents, code = generate
+      contents = generate
       contents.length.should == 3
       h = contents[0]
       h[1..25].should == "Glosoli".ljust(25)
@@ -224,7 +222,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.invoice_number = "℗"
       @i.save
 
-      contents, code = generate
+      contents = generate
       contents.length.should == 3
       h = contents[0]
       h[1..25].should == "?".ljust(25)
@@ -234,7 +232,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.invoice_number = "123456789012345678901234567890"
       @i.save
 
-      contents, code = generate
+      contents = generate
       contents.length.should == 3
       h = contents[0]
       h[1..25].should == "1234567890123456789012345"
@@ -245,10 +243,10 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       # database value isn't updated..that's the sole reason for destroying and recreating the invoice in the test
       @i.commercial_invoice_lines.destroy_all
 
-      @i.commercial_invoice_lines.create
-      @i.commercial_invoice_lines.first.commercial_invoice_tariffs.create :hts_code => nil
+      @i.commercial_invoice_lines.create!
+      @i.commercial_invoice_lines.first.commercial_invoice_tariffs.create! :hts_code => nil
 
-      contents, code = generate
+      contents = generate
       contents.length.should == 2
       h = contents[1]
       h[61..72].should == "0".ljust(12)
@@ -258,16 +256,12 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.invoice_number = "Invoice\r1\n2"
       @i.save
 
-      contents, code = generate
+      contents = generate
       expect(contents.length).to eq 3
       h = contents[0]
       expect(h[1..25]).to eq "Invoice 1 2".ljust(25)
     end
 
-    it "errors if no importer customer code can be found" do
-      @entry.destroy
-      expect{ generate }.to raise_error "No customer code found for importer TAXID."
-    end
   end
 
   context :ftp_credentials do
@@ -281,7 +275,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
   context :generate_and_send do
     it "should generate and ftp the file" do
       file = double("tempfile")
-      @generator.should_receive(:generate_file).with(@i.id).and_yield file, "code"
+      @generator.should_receive(:generate_file).with(@i.id).and_yield file
       @generator.should_receive(:ftp_file).with(file, folder: "to_ecs/fenix_invoices")
 
       @generator.generate_and_send @i.id

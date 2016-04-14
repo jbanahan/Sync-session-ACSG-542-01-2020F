@@ -505,10 +505,8 @@ module ApplicationHelper
   end
 
   def secure_link obj, user
-    return "" unless user.sys_admin?
-    sec_url = obj.last_file_secure_url
-    return "" unless sec_url
-    return content_tag('div', content_tag('b',"Integration File:") + " " + link_to(obj.last_file_path.split("/").last, sec_url)).html_safe
+    return "" unless user.sys_admin? && obj.has_last_file?
+    return content_tag('div', content_tag('b',"Integration File:") + " " + link_to(obj.last_file_path.split("/").last, download_last_integration_file_attachments_path(attachable_id: obj.id, attachable_type: obj.class.to_s))).html_safe
   end
 
   private
@@ -619,5 +617,16 @@ module ApplicationHelper
     tags << tag('meta', name: "theme-color", content: "#ffffff")
 
     tags.join("\n").html_safe
+  end
+
+  def state_toggle_buttons obj, user, button_class: 'btn btn-default'
+    buttons = StateToggleButton.for_core_object_user(obj,user).collect do |b|
+      path = CoreModule.find_by_object(obj).class_name.tableize
+      show_activate = b.to_be_activated?(obj)
+      btn_text = show_activate ? b.activate_text : b.deactivate_text
+      btn_confirmation = show_activate ? b.activate_confirmation_text : b.deactivate_confirmation_text
+      return "<button class='#{button_class}' state-toggle-confirmation='#{btn_confirmation}' state-toggle-id='#{b.id}' state-toggle-path='#{path}' state-toggle-obj-id='#{obj.id}'>#{btn_text}</button>".html_safe
+    end
+    buttons.join.html_safe
   end
 end

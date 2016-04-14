@@ -4,7 +4,7 @@
       <label for="company-drop-down">Customer</label>
       <select id='company-drop-down' name='company' class='form-control'>
         <% @companies.each do |co| %>
-          <option value="<%= co.id %>"><%= co.name %></option>
+          <option value="<%= co['id'] %>"><%= co['name'] %></option>
         <% end %>
       </select>
     </div>

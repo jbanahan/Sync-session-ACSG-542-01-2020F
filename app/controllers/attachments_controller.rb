@@ -1,6 +1,8 @@
 require 'open_chain/workflow_processor'
 
 class AttachmentsController < ApplicationController
+  include DownloadS3ObjectSupport
+
   skip_before_filter :portal_redirect, only: [:download]
   def create
     if params[:attachment][:attached].nil?
@@ -27,7 +29,7 @@ class AttachmentsController < ApplicationController
         add_flash :errors, "You do not have permission to attach items to this object."
       end
 
-      if saved 
+      if saved
         respond_to do |format|
           format.html {redirect_to redirect_location(attachable)}
           format.json {render json: Attachment.attachments_as_json(attachable)}
@@ -46,7 +48,7 @@ class AttachmentsController < ApplicationController
     attachable = att.attachable
     if attachable.can_attach?(current_user)
       deleted = false
-      Attachment.transaction do 
+      Attachment.transaction do
         deleted = att.destroy
         att.rebuild_archive_packet if deleted
       end
@@ -61,10 +63,31 @@ class AttachmentsController < ApplicationController
 
   def download
     att = Attachment.find(params[:id])
-    att.attachable
     if att.can_view?(current_user)
-      redirect_to att.secure_url
+      download_attachment att
     else
+      error_redirect "You do not have permission to download this attachment."
+    end
+  end
+
+  def download_last_integration_file
+    downloaded = false
+    if current_user.sys_admin? && params[:attachable_type].presence && params[:attachable_id].presence
+      begin
+        obj = get_attachable params[:attachable_type], params[:attachable_id]
+        if obj.respond_to?(:last_file_secure_url) && obj.can_view?(current_user)
+          url = obj.last_file_secure_url
+          if url
+            redirect_to url
+            downloaded = true
+          end
+        end
+      rescue
+        #don't care...user will redirect to error below if this happens
+      end
+    end
+
+    if !downloaded
       error_redirect "You do not have permission to download this attachment."
     end
   end
@@ -76,7 +99,7 @@ class AttachmentsController < ApplicationController
     else
       add_flash :errors, "No attachments available to email."
       begin
-        attachable = params[:attachable_type].to_s.camelize.constantize.where(id: params[:attachable_id]).first
+        attachable = get_attachable params[:attachable_type], params[:attachable_id]
         redirect_to redirect_location attachable
       rescue
         redirect_back_or_default :root
@@ -107,6 +130,10 @@ class AttachmentsController < ApplicationController
   private
   def redirect_location attachable
     params[:redirect_to].blank? ? attachable : params[:redirect_to]
+  end
+
+  def get_attachable type, id
+    attachable = type.to_s.camelize.constantize.where(id: id).first
   end
 
 end

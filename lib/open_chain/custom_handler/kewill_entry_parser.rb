@@ -89,6 +89,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
   def process_entry json, opts={}
     start_time = Time.zone.now
+    user = User.integration
     entry = find_and_process_entry(json.with_indifferent_access) do |e, entry|
       begin
         preprocess entry
@@ -114,6 +115,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         
         entry.save!
         entry.update_column :time_to_process, ((Time.now-start_time) * 1000)
+
+        entry.create_snapshot user
         entry
       rescue => e
         raise e unless Rails.env.production?
@@ -269,6 +272,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.voyage = e[:voyage_flight_no]
       entry.vessel = e[:vessel_airline_name]
       entry.location_of_goods = e[:location]
+      entry.location_of_goods_description = e[:location_of_goods]
 
       entry.ult_consignee_code = e[:uc_no]
       entry.ult_consignee_name = e[:uc_name]
@@ -633,6 +637,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.computed_adjustments = parse_decimal(l[:non_dutiable_amt]) + parse_decimal(l[:add_to_make_amt]) + parse_decimal(l[:other_amt]) +
                                      parse_decimal(l[:misc_discount]) + parse_decimal(l[:cash_discount]) + parse_decimal(l[:freight_amount])
       line.computed_net_value = parse_decimal(l[:value_tot]) - line.computed_adjustments
+      line.first_sale = l[:value_appraisal_method].to_s.upcase == "F"
+      line.value_appraisal_method = l[:value_appraisal_method]
 
       Array.wrap(l[:fees]).each do |fee|
         case fee[:customs_fee_code].to_i
@@ -670,7 +676,19 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         end
       end
 
-      if !l[:container_no].blank?
+      # Prefer the container sub-element to the actual container_no on the line level.
+      # There's actually two ways to key containers on the invoice line.  The sub-element way
+      # is accessed through a dropdown list in KEC so it should be more accurate than
+      # the one on the line, which is just keyed into a textbox.
+      Array.wrap(l[:containers]).each do |cont|
+        container_number = cont[:container_no].to_s.strip
+        next if container_number.blank?
+
+        container = entry.containers.find {|c| c.container_number == container_number}
+        line.container = container if container
+      end
+
+      if line.container.nil? && !l[:container_no].blank?
         container_number = l[:container_no].strip
         container = entry.containers.find {|c| c.container_number == container_number}
         line.container = container if container

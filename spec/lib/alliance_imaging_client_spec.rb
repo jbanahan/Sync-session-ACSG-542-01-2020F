@@ -36,7 +36,7 @@ describe OpenChain::AllianceImagingClient do
         @tempfile << f.read
       end
       @hash = {"file_name"=>"file.pdf", "file_number"=>"123456", "doc_desc"=>"Testing", 
-                "suffix"=>"123456", "doc_date"=>Time.now}
+                "suffix"=>"123456", "doc_date"=>"2016-01-01 00:00"}
     end
 
     after :each do
@@ -44,22 +44,20 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it 'should be non-private if doc_desc does not start with "private"' do
-      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-      entry = Entry.find(@e1.id)
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      expect(entry).to eq @e1
       entry.attachments[0].is_private.should be_false
     end
 
     it 'should be private if doc_desc starts with "private"' do
       @hash["doc_desc"] = "private_attachment"
-      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-      entry = Entry.find(@e1.id)
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
       entry.attachments[0].is_private.should be_true
     end
 
     it 'should load an attachment into the entry with the proper content type' do
-      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
 
-      entry = Entry.find(@e1.id)
       entry.attachments.size.should == 1
       entry.attachments[0].attached_content_type.should == "application/pdf"
       entry.attachments[0].attachment_type.should == @hash["doc_desc"]
@@ -72,9 +70,8 @@ describe OpenChain::AllianceImagingClient do
       @hash["source_system"] = 'Fenix'
       @e1.update_attributes :source_system => 'Fenix', :entry_number => "#{@hash['file_number']}", :broker_reference => '654321'
 
-      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
 
-      entry = Entry.find(@e1.id)
       entry.attachments.size.should == 1
       entry.attachments[0].attached_content_type.should == "application/pdf"
       entry.attachments[0].attachment_type.should == @hash["doc_desc"]
@@ -84,10 +81,8 @@ describe OpenChain::AllianceImagingClient do
     it 'should generate shell entry records when an entry is missing and the source system is Fenix' do
       # These are the only hash values we should currently expect from the Fenix imaging monitoring process
       @hash = {"source_system" => "Fenix", "file_number" => "123456", "doc_date" => Time.now, "file_name"=>"file.pdf", "doc_desc" => "Source Testing"}
-      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
       
-      entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
-      entry.should_not be_nil
       entry.entry_number.should == @hash["file_number"]
       entry.source_system.should == 'Fenix'
       entry.file_logged_date.should >= (Time.zone.now - 1.minute)
@@ -104,9 +99,7 @@ describe OpenChain::AllianceImagingClient do
 
       existing = @e1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: @hash['doc_desc']
 
-      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-
-      @e1.reload
+      enry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
       expect(@e1.attachments.size).to eq 1
       expect(@e1.attachments.first).to eq existing
     end
@@ -115,11 +108,32 @@ describe OpenChain::AllianceImagingClient do
       existing = @e1.attachments.create! alliance_suffix: '000', alliance_revision: 0, attachment_type: @hash['doc_desc']
 
       @hash['suffix'] = '01000'
-      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-
-      @e1.reload
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
       expect(@e1.attachments.size).to eq 1
       expect(@e1.attachments.first.alliance_revision).to eq 1
+    end
+
+    it "if suffix and revision are the same, it keeps the newest document" do
+      @hash['suffix'] = '01000'
+
+      # The existing document is newer, so it should be kept
+      existing = @e1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: @hash['doc_desc'], source_system_timestamp: Time.zone.parse("2016-03-01 00:00")
+
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      expect(@e1.attachments.size).to eq 1
+      expect(@e1.attachments.first).to eq existing
+    end
+
+    it "keeps the image from the request if its newer than an existing document with the same type/revision" do
+      @hash['suffix'] = '01000'
+
+      # The existing document is newer, so it should be kept
+      existing = @e1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: @hash['doc_desc'], source_system_timestamp: Time.zone.parse("2015-03-01 00:00")
+
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      expect(@e1.attachments.size).to eq 1
+      expect(@e1.attachments.first).not_to eq existing
+      expect(@e1.attachments.first.attached_file_name).to eq "file.pdf"
     end
 
     context "Fenix B3 Files" do
@@ -131,9 +145,8 @@ describe OpenChain::AllianceImagingClient do
 
       it "should recognize B3 Automated Fenix files and attach the images as B3 records" do
         @hash['file_name'] = "File_cdc_123128.pdf"
-        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-
-        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+        entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+        
         entry.attachments.size.should == 1
         entry.attachments[0].attached_file_name.should == @hash['file_name']
         entry.attachments[0].attachment_type.should == "B3"
@@ -146,9 +159,8 @@ describe OpenChain::AllianceImagingClient do
         existing.save
 
         @hash['file_name'] = "File_cdc_123128.pdf"
-        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+        entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
 
-        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
         entry.attachments.size.should == 1
         entry.attachments[0].attached_file_name.should == @hash['file_name']
         entry.attachments[0].attachment_type.should == "B3"
@@ -156,9 +168,8 @@ describe OpenChain::AllianceImagingClient do
 
       it "should recognize RNS Automated Fenix files and attach the images as RNS records" do
         @hash['file_name'] = "File_rns_123128.pdf"
-        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-
-        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+        entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+        
         entry.attachments.size.should == 1
         entry.attachments[0].attached_file_name.should == @hash['file_name']
         entry.attachments[0].attachment_type.should == "Customs Release Notice"
@@ -171,9 +182,8 @@ describe OpenChain::AllianceImagingClient do
         existing.save
 
         @hash['file_name'] = "File_rns_123128.pdf"
-        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+        entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
 
-        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
         entry.attachments.size.should == 1
         entry.attachments[0].attached_file_name.should == @hash['file_name']
         entry.attachments[0].attachment_type.should == "Customs Release Notice"
@@ -181,9 +191,8 @@ describe OpenChain::AllianceImagingClient do
 
       it "should recognize B3 Recap Automated Fenix files and attach the images as recap records" do
         @hash['file_name'] = "File_recap_123128.pdf"
-        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+        entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
 
-        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
         entry.attachments.size.should == 1
         entry.attachments[0].attached_file_name.should == @hash['file_name']
         entry.attachments[0].attachment_type.should == "B3 Recap"
@@ -196,9 +205,8 @@ describe OpenChain::AllianceImagingClient do
         existing.save
 
         @hash['file_name'] = "File_recap_123128.pdf"
-        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+        entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
 
-        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
         entry.attachments.size.should == 1
         entry.attachments[0].attached_file_name.should == @hash['file_name']
         entry.attachments[0].attachment_type.should == "B3 Recap"
@@ -453,12 +461,29 @@ ERR
       OpenChain::AllianceImagingClient.should_not_receive(:send_entry_stitch_request).with @entry.id
       expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
     end
+
+    it "does not send stitch request if only attachment is private" do
+      @attachment.update_attributes! is_private: true
+      OpenChain::AllianceImagingClient.should_not_receive(:send_entry_stitch_request).with @entry.id
+      expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
+    end
   end
 
   describe "run_schedulable" do
     it "implements SchedulableJob interface" do
       OpenChain::AllianceImagingClient.stub(:delay).and_return OpenChain::AllianceImagingClient
       OpenChain::AllianceImagingClient.should_receive(:consume_images)
+      OpenChain::AllianceImagingClient.should_receive(:consume_stitch_responses)
+      OpenChain::AllianceImagingClient.should_receive(:send_outstanding_stitch_requests)
+
+      OpenChain::AllianceImagingClient.run_schedulable
+    end
+
+    it "does not call consume_images if 2 jobs are already running" do
+      OpenChain::AllianceImagingClient.should_receive(:queued_jobs_for_method).with(OpenChain::AllianceImagingClient, :consume_images).and_return 2
+
+      OpenChain::AllianceImagingClient.stub(:delay).and_return OpenChain::AllianceImagingClient
+      OpenChain::AllianceImagingClient.should_not_receive(:consume_images)
       OpenChain::AllianceImagingClient.should_receive(:consume_stitch_responses)
       OpenChain::AllianceImagingClient.should_receive(:send_outstanding_stitch_requests)
 
@@ -486,10 +511,11 @@ ERR
     it "saves attachment data to entry" do
       Lock.should_receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times: 3).and_yield
       Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_yield
-      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+      entry = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
 
-      entry = Entry.where(source_system: "Fenix", entry_number: "11981001795105").first
       expect(entry).not_to be_nil
+      expect(entry.entry_number).to eq "11981001795105"
+      expect(entry.source_system).to eq "Fenix"
       expect(entry.file_logged_date).to be_within(1.minute).of Time.zone.now
 
       a = entry.attachments.first
@@ -513,8 +539,7 @@ ERR
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "Type", attached_file_name: "11981001795105 _B3_01092015 14.24.42 PM.pdf", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
-      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
-      e.reload
+      e = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
       expect(e.attachments.size).to eq 2
       expect(e.attachments.map {|a| a.attached_file_name }.uniq).to eq ["11981001795105 _B3_01092015 14.24.42 PM.pdf"]
     end
@@ -524,9 +549,7 @@ ERR
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T04:30:35-10:00"
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T03:30:35-10:00"
 
-      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
-
-      e.reload
+      e = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
       expect(e.attachments.size).to eq 1
       expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
     end
@@ -535,8 +558,7 @@ ERR
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-05T04:30:35-10:00", attached_file_name: "file.pdf"
 
-      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
-
+      e = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
       e.reload
       expect(e.attachments.size).to eq 1
       expect(e.attachments.first.attached_file_name).to eq "file.pdf"
@@ -547,9 +569,7 @@ ERR
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "RNS", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
-      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
-
-      e.reload
+      e = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
       expect(e.attachments.size).to eq 1
       expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
     end
@@ -559,9 +579,7 @@ ERR
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "B3 Recap", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
-      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
-
-      e.reload
+      e = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
       expect(e.attachments.size).to eq 1
       expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
     end
@@ -573,13 +591,23 @@ ERR
       a1 = e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 123.pdf"
       e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 345.pdf"
 
-      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
-
-      e.reload
+      e = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
       expect(e.attachments.size).to eq 2
       expect(e.attachments.map {|a| a.attached_file_name}.sort).to eq ["invoice 123.pdf", "invoice 345.pdf"]
       #make sure the new file referenced by message was the one that got created, and the existing one got removed
       expect(e.attachments).not_to include a1
+    end
+
+    it "replaces previous versions of B3 Recap attachment" do
+      @message['doc_desc'] = "Cartage Slip"
+      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e.attachments.create! attachment_type: "Cartage Slip", source_system_timestamp: "2015-09-04T04:30:35-10:00"
+
+      OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message
+
+      e.reload
+      expect(e.attachments.size).to eq 1
+      expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
     end
 
   end

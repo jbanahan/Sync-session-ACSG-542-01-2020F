@@ -2,11 +2,11 @@ module OpenChain
   # ABSTRACT CLASS
   # Subclasses must implement interface:
   # `find_shipment_lines(commercial_invoice_line)` - yielding shipment lines
-  # `get_country_of_origin(shipment_line, commercial_invoice_line)` - returning country of origin that should be written to the DrawbackImportLine 
+  # `get_country_of_origin(shipment_line, commercial_invoice_line)` - returning country of origin that should be written to the DrawbackImportLine
   # `get_part_number(shipment_line, commercial_invoice_line)` - returning part number that should be written to the DrawbackImportLine
   # `get_received_date(shipment_line)` - returning received_date that should be written to DrawbackImportLine
   class DrawbackProcessor
-    
+
     DOZENS_LABELS = ["DOZ","DPR"]
     # Link entries to shipments and create drawback import lines, writing change records for each commercial invoice line
     def self.process_entries entries
@@ -18,7 +18,7 @@ module OpenChain
           if linked.empty?
             cr.add_message "Line wasn't matched to any shipments.", true
           else
-            processor.make_drawback_import_lines ci, cr 
+            processor.make_drawback_import_lines ci, cr
           end
           cr.save!
         end
@@ -30,7 +30,6 @@ module OpenChain
     # Returns an array of ShipmentLines that were matched
     def link_commercial_invoice_line c_line, change_record=nil
       r = []
-      entry = c_line.entry
       cr = change_record.nil? ? ChangeRecord.new : change_record #use a junk change record to make the rest of the coding easier if nil was passed
       unallocated_quantity = (c_line.quantity.nil? ? 0 : c_line.quantity) - c_line.piece_sets.where("shipment_line_id is not null").sum("piece_sets.quantity")
       if unallocated_quantity <= 0
@@ -58,7 +57,7 @@ module OpenChain
     # Makes drawback import lines for all commerical invoice line / shipment line pairs already connected to the given commercial invoice line
     def make_drawback_import_lines c_line, change_record=nil
       cr = change_record.nil? ? ChangeRecord.new : change_record
-      r = [] 
+      r = []
       piece_sets = c_line.piece_sets.where("shipment_line_id is not null and drawback_import_line_id is null")
       if piece_sets.blank?
         cr.add_message "Line does not have any unallocated shipment matches.", true

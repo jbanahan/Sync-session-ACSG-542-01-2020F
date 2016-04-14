@@ -1,5 +1,8 @@
 class UserManualsController < ApplicationController
-  around_filter :admin_secure, except: [:download]
+  include DownloadS3ObjectSupport
+
+  skip_before_filter :portal_redirect, only: [:download]
+  around_filter :admin_secure, except: [:download,:for_referer]
   def index
     @user_manuals = UserManual.order(:name)
   end
@@ -41,11 +44,30 @@ class UserManualsController < ApplicationController
     um = UserManual.find params[:id]
     return error_redirect "This Manual does not have an attachment." unless um.attachment
     if um.can_view?(current_user)
-      redirect_to um.attachment.secure_url
+      download_attachment um.attachment
     else
       admin_secure do
-        redirect_to um.attachment.secure_url
+        download_attachment um.attachment
       end
     end
   end
+
+  def for_referer
+    ref = request.referer
+    ref = '' if request.referer.blank?
+    @manuals = UserManual.for_user_and_page(current_user,ref).sort {|a,b| a.name.downcase <=> b.name.downcase}
+    render layout: false
+  end
+
+  def send_manual um
+    if MasterSetup.get.custom_feature?('Attachment Mask')
+      data = open(um.attachment.secure_url)
+      send_data data.read, stream: true,
+        buffer_size: 4096, filename: att.attached_file_name,
+        disposition: 'attachment', type: att.attached_content_type
+    else
+      redirect_to um.attachment.secure_url
+    end
+  end
+  private :send_manual
 end

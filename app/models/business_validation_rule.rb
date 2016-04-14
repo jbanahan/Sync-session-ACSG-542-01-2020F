@@ -1,7 +1,7 @@
 class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   belongs_to :group
-  attr_accessible :description, :name, :rule_attributes_json, :type, :group_id, :fail_state
+  attr_accessible :description, :name, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending
 
   has_many :search_criterions, dependent: :destroy
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_rule
@@ -23,11 +23,22 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleOrderLineProductFieldFormat: {label:"Order Line's Product Field Format"},
                 ValidationRuleOrderVendorFieldFormat: {label:"Orders Vendor's Field Format"},
                 ValidationRuleEntryDutyFree: {label: "Entry Invoice Tariff SPI Indicates Duty Free"},
-                ValidationRuleAscenaInvoiceAudit: {label: "Ascena Entry Invoice Audit"},
+                ValidationRuleEntryInvoiceValueMatchesDaPercent: {label: "Entry Total Matches Invoice Deduction Additions"},
+                ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
+                'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
+                  {
+                    label: "Ascena Entry Invoice Audit",
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}
+                  },
                 'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant'.to_sym=>
                   {
                     label: 'Lumber PO Vendor Variant Assignment',
                     enabled_lambda: lambda {MasterSetup.get.system_code=='ll'}
+                  },
+                'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryInvoicePartMatchesOrder'.to_sym=>
+                  {
+                    label: 'Lumber Entry Invoice Part Matches Order',
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}
                   }
               }
 
@@ -61,7 +72,13 @@ class BusinessValidationRule < ActiveRecord::Base
   def self.enabled?
     true
   end
+
+  def self.async_destroy id
+    rule = find_by_id id
+    rule.destroy if rule
+  end
 end
 
 # need require statements at end because they depend on the class existing
 require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_order_vendor_variant'
+require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_invoice_audit'

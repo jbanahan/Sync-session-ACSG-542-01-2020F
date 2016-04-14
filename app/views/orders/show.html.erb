@@ -41,6 +41,25 @@
     $("#btn_delete_shell").click(function() {
       $("#btn_delete").click();
     });
+
+    $("[id^=lnk_det_s_]").click(function(e) {
+      e.preventDefault();
+      var lineId = e.currentTarget.id.split('_')[3]
+      OpenChain.showOrderLineDetail(lineId,<%=current_user.admin? ? 'true' : 'false' %>);
+      $('#lnk_det_h_' + lineId).show();
+      $('#lnk_det_s_' + lineId).hide();
+      return false;
+    });
+
+    $("[id^=lnk_det_h_]").click(function(e) {
+      e.preventDefault();
+      var lineId = e.currentTarget.id.split('_')[3]
+      $('#det_' + lineId).fadeOut('slow');
+      $('#lnk_det_s_' + lineId).show();
+      $('#lnk_det_h_' + lineId).hide();
+      return false; 
+    });
+
   });
 <% end %>
 
@@ -149,8 +168,8 @@
               <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
               &nbsp;|&nbsp;
             <% end %> 
-            <a id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
-            <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
+            <a id='lnk_det_s_<%=line.id%>' href="#">Detail</a>
+            <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="#">Detail</a>
           </td>
         </tr>
         <tr style='display:none;' id='det_<%=line.id%>'>

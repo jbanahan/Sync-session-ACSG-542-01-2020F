@@ -16,8 +16,8 @@ class QuickSearchController < ApplicationController
     cm = CoreModule.find_by_class_name(params[:module_type])
     raise ActionController::RoutingError.new('Not Found') unless cm && cm.view?(current_user)
     return error_redirect("Parameter v is required.") if params[:v].blank?
-    r = {module_type: cm.class_name, fields:{}, vals:[], search_term:ActiveSupport::Inflector.transliterate(params[:v].to_s.strip)}
-    with_fields_to_use(cm,current_user) do |field_defs|
+    r = {module_type: cm.class_name, fields:{}, vals:[], extra_fields: {}, extra_vals: {}, search_term:ActiveSupport::Inflector.transliterate(params[:v].to_s.strip)}
+    with_fields_to_use(cm,current_user) do |field_defs, extra_field_defs|
 
       primary_search_clause = nil
       or_clause_array = []
@@ -25,6 +25,7 @@ class QuickSearchController < ApplicationController
       primary_additional_core_modules = []
       secondary_additional_core_modules = []
       uids = []
+      extra_uids = []
       
       field_defs.each_with_index do |field_def, x|
         mf = ModelField.find_by_uid(field_def[:model_field_uid])
@@ -44,14 +45,20 @@ class QuickSearchController < ApplicationController
         end
       end
 
+      extra_field_defs.each do |extra_field_def|
+        mf = ModelField.find_by_uid(extra_field_def[:model_field_uid])
+        extra_uids << mf.uid
+        r[:extra_fields][mf.uid] = mf.label
+      end
+
       if primary_search_clause
         results = build_relations(cm, current_user, [primary_search_clause], primary_additional_core_modules).limit(10)
-        parse_query_results results, r, cm, current_user, uids
+        parse_query_results results, r, cm, current_user, uids, extra_uids
       end
 
       if r[:vals].length < 10 && or_clause_array.length > 0
         results = build_relations(cm, current_user, [or_clause_array], secondary_additional_core_modules, r[:vals]).limit(10 - r[:vals].length)
-        parse_query_results results, r, cm, current_user, uids
+        parse_query_results results, r, cm, current_user, uids, extra_uids
       end
       
     end
@@ -63,10 +70,12 @@ class QuickSearchController < ApplicationController
     def with_fields_to_use core_module, user
       @@custom_def_reset ||= nil
       @@qs_field_cache ||= {}
+      @@qs_extra_field_cache ||= {}
       if @@custom_def_reset.nil? || CustomDefinition.last.pluck(:updated_at) > @@custom_def_reset
         @@qs_field_cache = {}
-        with_core_module_fields(user) do |cm, fields|
+        with_core_module_fields(user) do |cm, fields, extra_fields|
           @@qs_field_cache[cm] = fields.collect {|f| field_definition f}
+          @@qs_extra_field_cache[cm] = extra_fields.collect {|f| field_definition f}
         end
 
         cds = CustomDefinition.find_all_by_quick_searchable true
@@ -75,23 +84,25 @@ class QuickSearchController < ApplicationController
           field_array << field_definition(cd.model_field.uid) if field_array
         end
       end
-
       if @@qs_field_cache[core_module]
-        yield @@qs_field_cache[core_module]
+        yield @@qs_field_cache[core_module], @@qs_extra_field_cache[core_module]
       else
         yield []
       end
       return nil
     end
 
-    def parse_query_results results, r, core_module, user, uids
+    def parse_query_results results, r, core_module, user, uids, extra_uids
       results.each do |obj|
         obj_hash = {
           id:obj.id,
           view_url: instance_exec(obj, &core_module.view_path_proc)
         }
+        extra_obj_hash = {}
         uids.each {|uid| obj_hash[uid] = ModelField.find_by_uid(uid).process_export(obj,user)}
+        extra_uids.each {|extra_uid| extra_obj_hash[extra_uid] = ModelField.find_by_uid(extra_uid).process_export(obj,user)}
         r[:vals] << obj_hash
+        r[:extra_vals][obj.id] = extra_obj_hash
       end
       r
     end
@@ -130,8 +141,9 @@ class QuickSearchController < ApplicationController
       CoreModule.all.each do |cm|
         next unless cm.enabled? && cm.view?(user)
         fields = cm.quicksearch_fields
+        extra_fields = cm.quicksearch_extra_fields || {}
         next if fields.nil?
-        yield cm, fields
+        yield cm, fields, extra_fields
       end
     end
 end

@@ -320,10 +320,12 @@ root.Chain =
     buttons = {
     'Cancel': () ->
       $("#mod_quick_classify").remove()
-    'Save': () ->
+    'Save': (e) ->
       if Classify.hasInvalidTariffs()
         window.alert("Please correct or erase all bad tariff numbers.")
       else
+        # disable the save button, otherwise the user can repeatedly click it while the page loads, resulting in numerous identical http requests
+        $(e.target).attr("disabled", true)
         $("#mod_quick_classify form").submit()
     }
     $("#quick_class_countries a").click((evt) ->

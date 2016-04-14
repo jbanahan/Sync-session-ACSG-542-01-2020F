@@ -107,7 +107,7 @@ module OpenChain; module CustomHandler; module DutyCalc;
     def process_rows rows, claim
       claim_entry_number = claim.entry_number.strip.gsub(/-/,'')
       histories = rows.collect do |r|
-        raise "Claim number in row (#{r[7]}) doesn't match claim (#{claim.entry_number})." unless claim_entry_number == r[7].strip.gsub(/-/,'')
+        raise "Claim number in row (#{r[7]}) doesn't match claim (#{claim.entry_number})." unless claim_entry_number == OpenChain::XLClient.string_value(r[7]).strip.gsub(/-/,'')
         DrawbackExportHistory.new(
           part_number:r[0],
           export_ref_1:r[1],

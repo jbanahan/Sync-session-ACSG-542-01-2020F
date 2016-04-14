@@ -125,7 +125,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
     
     describe :receive do
       before :each do
-        @e = Factory(:entry)
+        @e = Factory(:entry, file_logged_date: '2016-02-01')
       end
 
       it "should generate a report and create an entry attachment" do
@@ -173,6 +173,22 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
 
         OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
         entry = c.receive nil, @e
+
+        entry.attachments.should have(1).item
+        entry.attachments.first.id.should eq att.id
+      end
+
+      it "uses new style checksum when file logged date is on or after 2016-03-06" do
+        # Use the fact that the attachment is not updated if hte checksum is the same to determine which version of the checksum is being used
+        @e.update_attributes! file_logged_date: Date.new(2016, 3, 6)
+        att = @e.attachments.build
+        att.attachment_type = "Landed Cost Report"
+        att.checksum = subject.calculate_landed_cost_checksum_v2 @landed_cost_data
+        att.save!
+        @e.attachments.reload
+
+        OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
+        entry = subject.receive nil, @e
 
         entry.attachments.should have(1).item
         entry.attachments.first.id.should eq att.id

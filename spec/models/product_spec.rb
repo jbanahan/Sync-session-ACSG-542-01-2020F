@@ -7,11 +7,11 @@ describe Product do
     end
     it "should include all classifications even if they are not in a region" do
       region = Factory(:region)
-      
+
       country_in_region = Factory(:country)
       region.countries << country_in_region
       country_not_in_region = Factory(:country)
-      
+
       classification_in_region = @product.classifications.build
       classification_in_region.country = country_in_region
 
@@ -27,7 +27,7 @@ describe Product do
       country_1 = Factory(:country)
       country_2 = Factory(:country)
 
-      expected_array = [country_1,country_2].collect do |cntry| 
+      expected_array = [country_1,country_2].collect do |cntry|
         cls = @product.classifications.build
         cls.country = cntry
         cls
@@ -83,12 +83,12 @@ describe Product do
       expect(@p.wto6_changed_after?(1.day.ago)).to be_true
     end
     it "should return true if record added with new wto6" do
-      tr = Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
+      Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_true
     end
     it "should return false if record added with same wto6" do
-      tr = Factory(:tariff_record,hts_1:'1234560000',classification:Factory(:classification,product:@p))
+      Factory(:tariff_record,hts_1:'1234560000',classification:Factory(:classification,product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_false
     end
@@ -107,7 +107,7 @@ describe Product do
     end
     it "should return true if change happened in same day" do
       @snapshot.update_attributes(created_at:5.minutes.ago)
-      tr = Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
+      Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(3.minutes.ago)).to be_true
     end
@@ -227,9 +227,10 @@ describe Product do
       context "vendor" do
         before :each do
           @vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
-          @vendor_user.company.linked_companies << @linked_importer_user.company 
-          @vendor_product = Factory(:product,:vendor=>@vendor_user.company) 
-          @linked_vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true) 
+          @vendor_user.company.linked_companies << @linked_importer_user.company
+          @vendor_product = Factory(:product)
+          @vendor_product.vendors << @vendor_user.company
+          @linked_vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
           @linked_vendor_user.company.linked_companies << @vendor_user.company
         end
 
@@ -251,7 +252,7 @@ describe Product do
           @linked_product.can_attach?(@vendor_user).should be_true
           @linked_product.can_manage_variants?(@vendor_user).should be_false
         end
-        
+
         it "should allow vendor to handle linked vendor company products" do
           @vendor_product.can_view?(@linked_vendor_user).should be_true
           @vendor_product.can_edit?(@linked_vendor_user).should be_false
@@ -293,11 +294,11 @@ describe Product do
     end
   end
   describe 'linkable attachments' do
-    
+
     it 'should have linkable attachments' do
       product = Factory(:product)
       linkable = Factory(:linkable_attachment,:model_field_uid=>'prod',:value=>'ordn')
-      linked = LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>product)
+      LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>product)
       product.reload
       product.linkable_attachments.first.should == linkable
     end

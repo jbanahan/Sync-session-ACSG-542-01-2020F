@@ -1,7 +1,20 @@
 <%content_for :javascript do %>
 $(function() {
   $("#btn_save").click(function() {$("#frm_c").submit();});
-  $("#btn_cancel").click(function() {window.location = '<%=countries_path%>';})
+  $("#btn_cancel").click(function() {window.location = '<%=countries_path%>';});
+
+  if (!$("#country_import_location").is(':checked'))
+    $("#country_quicksearch_show").attr('disabled', true);
+
+  $("#country_import_location").click(function(e) {
+    var checkBox = $("#country_quicksearch_show");
+    if ($(e.target).is(':checked'))
+      checkBox.attr('disabled', false);
+    else {
+      checkBox.prop('checked', false);
+      checkBox.attr('disabled', true);
+    }
+  });
 });
 <%end%>
 <%content_for :action_bar do %>
@@ -13,6 +26,7 @@ $(function() {
 <%=field_row "Name", @country.name %>
 <%=field_row "ISO Code", @country.iso_code%>
 <%=field_row "Used For Imports", f.check_box(:import_location)%>
+<%=field_row "View in QuickSearch", f.check_box(:quicksearch_show)%>
 <%=field_row "Classification Screen Sort Rank", f.text_field(:classification_rank)%>
 </table>
 <%end%>

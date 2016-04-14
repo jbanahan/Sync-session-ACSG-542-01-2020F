@@ -82,18 +82,9 @@
         <%if MasterSetup.get.custom_feature?("J Crew Drawback")-%>
         <div class='tab-pane' id='j_crew'>
           <div >
-            <h3>PO Correlation File (last 10)</h3>
-            <p><em>.csv file from Frank Genus @ J Crew</em></p>
-            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS}%>
-          </div>
-          <div>
-            <h3>Create Import Lines</h3>
-            <p><em>Trigger entry match processing to generate lines combining entries and the data from the PO Correlation File</em></p>
-            <%=form_tag '/drawback_upload_files/process_j_crew_entries', method: :put do %>
-              <div>Start Date: <input type='date' name='start_date' /></div>
-              <div>End Date: <input type='date' name='end_date' /></div>
-              <input type='submit' value='Go' class='btn btn-primary' />
-            <%-end-%>
+            <h3>Imports File V2 (From Frank Genus - created after Jan 1 2016)</h3>
+            <p><em>You must convert file from xlsx to .csv file.</em></p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_IMPORT_V2}%>
           </div>
           <div >
             <h3>Canada Export File (last 10)</h3>

@@ -24,15 +24,16 @@ module OpenChain; module Report; class HmStatisticsReport
   end
 
   def run run_by, settings
-    start_date = sanitize_date_string settings['start_date']
-    end_date = sanitize_date_string settings['end_date']
+    start_date = sanitize_date_string settings['start_date'], run_by.time_zone
+    end_date = sanitize_date_string settings['end_date'], run_by.time_zone
 
     wb = Spreadsheet::Workbook.new
     sheet = wb.create_worksheet :name=>'Statistics'
     
     mh = Hash.new
     load_order_data mh, start_date, end_date
-    load_tu_data mh, start_date, end_date
+    load_air_tu_data mh, start_date, end_date
+    load_ocean_tu_data mh, start_date, end_date
 
     XlsMaker.add_body_row sheet, 0, ["","Order","","","","Transport Units"]
     XlsMaker.add_body_row sheet, 1, ["Export Country","AIR","OCEAN","Total Orders","","AIR","OCEAN","Total TU"]
@@ -70,30 +71,39 @@ module OpenChain; module Report; class HmStatisticsReport
   private
 
   def total_values start_date, end_date
-    qry = <<QRY
-select sum(entries.entered_value), sum(entries.total_duty_direct)
-from entries
-where entries.customer_number = 'HENNE'
-and
-arrival_date BETWEEN '#{start_date}' and '#{end_date}'
-and
-(select avg(length(commercial_invoices.invoice_number)) from commercial_invoices where commercial_invoices.entry_id = entries.id) = 6    
-QRY
+    qry = <<-SQL
+      SELECT SUM(IFNULL(t.entered_value, 0)), 
+             SUM(IFNULL(t.duty_amount, 0) + IFNULL(l.hmf, 0) + IFNULL(l.prorated_mpf, 0) + IFNULL(l.cotton_fee, 0))
+      FROM entries e
+          INNER JOIN commercial_invoices i ON e.id = i.entry_id
+          INNER JOIN commercial_invoice_lines l ON l.commercial_invoice_id = i.id
+          INNER JOIN commercial_invoice_tariffs t ON t.commercial_invoice_line_id = l.id
+      WHERE e.customer_number = 'HENNE'
+          AND e.release_date BETWEEN '#{start_date}' AND '#{end_date}'
+          AND (LENGTH(i.invoice_number) IN (6,7) OR INSTR(i.invoice_number, '-') IN (7,8))
+    SQL
     ActiveRecord::Base.connection.execute(qry).first
   end
+  
   def load_order_data master_hash, start_date, end_date
-     orders_qry = <<QRY
-select 
-if(export_country_codes like '%DE%', 'DE', export_country_codes) as 'ecc',
-(case entries.transport_mode_code when 40 then "AIR" when 11 then "OCEAN" when 30 then 'OCEAN' when 21 then 'OCEAN' else "OTHER" end) as 'Mode', 
-count(*) as 'orders'
-from entries
-inner join commercial_invoices on commercial_invoices.entry_id = entries.id and NOT LENGTH(commercial_invoices.invoice_number) = 8
-where entries.customer_number = 'HENNE'
-and
-arrival_date BETWEEN '#{start_date}' and '#{end_date}'
-group by mode, ecc
-QRY
+    orders_qry = <<-SQL
+      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
+        (CASE entries.transport_mode_code 
+          WHEN 40 THEN "AIR" 
+          WHEN 11 THEN "OCEAN" 
+          WHEN 30 THEN 'OCEAN' 
+          WHEN 21 THEN 'OCEAN' 
+          ELSE "OTHER" 
+         END) AS 'Mode', 
+        COUNT(*) AS 'orders'
+      FROM entries
+        INNER JOIN commercial_invoices ci ON ci.entry_id = entries.id 
+          AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
+      WHERE entries.customer_number = 'HENNE'
+        AND release_date BETWEEN '#{start_date}' 
+        AND '#{end_date}'
+      GROUP BY mode, ecc
+    SQL
     result_set = ActiveRecord::Base.connection.execute orders_qry
     result_set.each do |row|
       dh = data_holder master_hash, row[0]
@@ -106,33 +116,51 @@ QRY
       dh.total_order = dh.total_order + row[2]
     end       
   end
-  
-  def load_tu_data master_hash, start_date, end_date
-    transport_units_qry = <<QRY
-select ecc, 
-mode, 
-count(*) as 'Transport Units' from (
-select distinct master_bills_of_lading, (case entries.transport_mode_code when 40 then "AIR" when 11 then "OCEAN" when 30 then 'OCEAN' when 21 then 'OCEAN' else "OTHER" end) as 'Mode', 
-if(export_country_codes like '%DE%', 'DE', export_country_codes) as 'ecc'
-from entries 
-where customer_number = 'HENNE' and export_country_codes <> ''
-and 
-arrival_date between '#{start_date}' and '#{end_date}'
-and
-(select count(*) from commercial_invoices where commercial_invoices.entry_id = entries.id and length(commercial_invoices.invoice_number) = 8) = 0 
-) x
-group by mode, ecc
-QRY
-    result_set = ActiveRecord::Base.connection.execute transport_units_qry
+
+  def load_ocean_tu_data master_hash, start_date, end_date
+    ocean_tu_query = <<-SQL
+      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc', 
+        COUNT(DISTINCT c.id)
+      FROM entries e
+        INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
+        INNER JOIN containers c ON e.id = c.entry_id
+      WHERE e.customer_number = 'HENNE'
+        AND e.transport_mode_code IN (10, 11)
+        AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
+        AND e.release_date BETWEEN '#{start_date}' AND '#{end_date}'
+      GROUP BY ecc
+    SQL
+
+    result_set = ActiveRecord::Base.connection.execute ocean_tu_query
     result_set.each do |row|
       dh = data_holder master_hash, row[0]
-      case row[1]
-      when 'AIR'
-        dh.air_unit = row[2]
-      when 'OCEAN'
-        dh.ocean_unit = row[2]
-      end
-      dh.total_unit = dh.total_unit + row[2]
+      dh.ocean_unit = row[1]
+      dh.total_unit += dh.ocean_unit
+    end
+  end
+
+  def load_air_tu_data master_hash, start_date, end_date
+    air_tu_query = <<-SQL
+      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
+        e.house_bills_of_lading AS 'house_bills',
+        e.master_bills_of_lading AS 'master_bills'
+      FROM entries e
+        INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
+      WHERE e.customer_number = 'HENNE'
+        AND e.transport_mode_code IN (40, 41)
+        AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
+        AND e.release_date BETWEEN '#{start_date}' and '#{end_date}'
+    SQL
+    
+    bills = Hash.new do |hash, key| 
+      hash[key] = Hash.new{ |h, k| h[k] = [] }
+    end
+    result_set = ActiveRecord::Base.connection.execute air_tu_query
+    result_set.each { |row| row[1].blank? ? bills[row[0]][:master].concat(row[2].split "\n ") : bills[row[0]][:house].concat(row[1].split "\n ") }
+    bills.each do |ctry, blz| 
+      dh = data_holder master_hash, ctry
+      dh.air_unit = blz[:master].uniq.count + blz[:house].uniq.count
+      dh.total_unit += dh.air_unit
     end
   end
 

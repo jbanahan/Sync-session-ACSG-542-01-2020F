@@ -9,6 +9,9 @@
   <%if current_user.sys_admin?-%>    
     <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Purge' %>
   <%end-%>
+  <%if current_user.company.master?-%>
+    <%= link_to raw("<i class='fa fa-truck'></i>"), generate_delivery_order_entry_path(@entry), title:'Generate Delivery Order', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+  <% end-%>
   <button title='Download' id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>"><i class='fa fa-download'></i></button>
   <button class="btn_link" title='Sync Records' link_to='<%=sync_records_entry_path(@entry)%>'><i class='fa fa-exchange'></i></button>
 <%end-%>

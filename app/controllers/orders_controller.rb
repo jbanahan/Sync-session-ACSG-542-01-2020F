@@ -1,7 +1,7 @@
 require 'open_chain/business_rule_validation_results_support'
 class OrdersController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
-	
+
 	def root_class
 		Order
 	end
@@ -19,19 +19,20 @@ class OrdersController < ApplicationController
         @order = o
         @state_button_path = 'orders'
         @state_button_object_id = @order.id
-        @products = Product.where(["vendor_id = ?",@order.vendor])
+        @products = @order.vendor ? @order.vendor.products_as_vendor : []
         respond_to do |format|
             format.html {
               freeze_custom_values @order
-              if @order.importer.try(:order_view_template).blank?
+              custom_template = CustomViewTemplate.for_object('order_view',@order)
+              if custom_template.blank?
                 render
               else
-                render template: @order.importer.order_view_template.to_s
+                render template: custom_template
               end
             }
             format.xml  { render :xml => @order }
             format.json { render :json => @order.to_json(:only=>[:id,:order_number], :include=>{
-              :order_lines => {:only=>[:line_number,:quantity,:id], :include=>{:product=>{:only=>[:id,:name]}}}  
+              :order_lines => {:only=>[:line_number,:quantity,:id], :include=>{:product=>{:only=>[:id,:name]}}}
             })}
         end
       }
@@ -58,9 +59,9 @@ class OrdersController < ApplicationController
   # POST /orders.xml
   def create
     # Create a dummy order for security validations
-    o = Order.new
-    o.assign_model_field_attributes params[:order], no_validation: true
-    action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
+    ord = Order.new
+    ord.assign_model_field_attributes params[:order], no_validation: true
+    action_secure(current_user.company.master,ord,{:verb => "edit", :module_name=>"order"}) {
       success = lambda {|o|
         add_flash :notices, "Order created successfully."
         redirect_to o

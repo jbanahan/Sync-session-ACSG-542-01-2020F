@@ -17,20 +17,24 @@ describe 'OCQuickSearch', ->
       divWrap = jasmine.createSpyObj('div',['html'])
       spyOn(OCQuickSearch,'findDivWrapper').andReturn(divWrap)
 
-      v1 = {a: 'x'}
-      v2 = {c: 'd'}
       fields = {a: 'b'}
+      val1 = {a: 'x'}
+      val2 = {c: 'd'}
+      extraField = {h: 'i'}
+      extraVal = {'1': {f: 'g'}}
       resp = {
         qs_result: {
           module_type:'Entry'
           fields: fields
-          vals: [v1,v2]
+          vals: [val1,val2]
+          extra_fields: extraField
+          extra_vals: extraVal
           search_term:'zz'
         }
       }
 
       OCQuickSearch.writeModuleResponse(resp)
 
-      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,v1,'zz')
-      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,v2,'zz')
+      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val1, extraField, extraVal,'zz')
+      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val2, extraField, extraVal, 'zz')
       expect(divWrap.html).toHaveBeenCalledWith('BA')

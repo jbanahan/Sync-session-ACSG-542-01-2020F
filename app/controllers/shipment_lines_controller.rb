@@ -9,7 +9,7 @@ class ShipmentLinesController < LinesController
       if !ord_line.nil? && !ord_line.order.can_view?(current_user)
         ok_to_save = false
         add_flash :errors, "You do not have permission to assign values from order \"#{ord_line.order.order_number}\""
-      else 
+      else
         line.linked_order_line_id = ord_line
       end
     end
@@ -34,7 +34,7 @@ class ShipmentLinesController < LinesController
   end
 
   def set_products_variable parent_obj
-    @products = Product.where(:vendor_id=>parent_obj.vendor)
+    @products = parent_obj.vendor ? parent_obj.vendor.products_as_vendor : []
   end
 
   def set_parent_variable obj
@@ -46,7 +46,7 @@ class ShipmentLinesController < LinesController
   end
 
   def edit_line_path parent, line
-    edit_shipment_shipment_line_path parent, line 
+    edit_shipment_shipment_line_path parent, line
   end
 
   def update_symbol
@@ -55,6 +55,5 @@ class ShipmentLinesController < LinesController
   def update_custom_field_symbol
     :shipmentline_cf
   end
-  
-end
 
+end

@@ -102,6 +102,10 @@
     <tr class='hover'><td><%=link_to "PVH Container Log", reports_show_pvh_container_log_path%></td>
     <td>List PVH Container information relative to arrival dates.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::SgDutyDueReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "SG Duty Due Report", reports_show_sg_duty_due_report_path%></td>
+    <td>List all outstanding duty owed (PDF).</td></tr>
+  <%end-%>
   <%if OpenChain::Report::MonthlyEntrySummation.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Monthly Entry Summation", reports_show_monthly_entry_summation_path%></td>
     <td>Sums entry data by month.</td></tr>
@@ -118,13 +122,13 @@
     <tr class='hover'><td><%=link_to "Ralph Lauren Tariff Totals", reports_show_rl_tariff_totals_path%></td>
     <td>Show Ralph Lauren tariff totals over a specified time span.</td></tr>
   <%end-%>
-  <%if OpenChain::Report::RlTariffTotals.permission? current_user-%>
-    <tr class='hover'><td><%=link_to "Ralph Lauren Tariff Totals", reports_show_rl_tariff_totals_path%></td>
-    <td>Show Ralph Lauren tariff totals over a specified time span.</td></tr>
-  <%end-%>
   <%if OpenChain::Report::EddieBauerCaK84Summary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Eddie Bauer CA K84 Summary", reports_show_eddie_bauer_ca_k84_summary_path%></td>
     <td>Shows Eddie Bauer Canadian K84 purchase orders.</td></tr>
+  <%end-%>
+  <%if OpenChain::Report::LlProdRiskReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Lumber Liquidators Product Risk Report", reports_show_ll_prod_risk_report_path%></td>
+    <td>Shows all products requiring a risk assignment.</td></tr>
   <%end-%>
   </table>
 <% end -%>

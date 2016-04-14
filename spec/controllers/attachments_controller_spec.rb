@@ -1,13 +1,14 @@
 require 'spec_helper'
 
 describe AttachmentsController do
-  before :each do 
-    @u = Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz")
-    @e = Factory(:entry)
-    sign_in_as @u 
-  end
 
   describe :send_email_attachable do
+
+    before :each do 
+      @u = Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz")
+      @e = Factory(:entry)
+      sign_in_as @u 
+    end
 
     it "checks that there is at least one email" do
       Attachment.should_not_receive(:delay)
@@ -59,4 +60,108 @@ describe AttachmentsController do
     end
   end
 
+  describe "download_last_integration_file" do
+    let (:user) { Factory(:sys_admin_user) }
+    let (:entry) { Factory(:entry, last_file_path: "path/to/file.json", last_file_bucket: "test") }
+    
+    before :each do 
+      sign_in_as user
+    end
+
+    it "allows sysadmin to download integration file" do
+      Entry.any_instance.should_receive(:last_file_secure_url).and_return "http://redirect.com"
+      Entry.any_instance.should_receive(:can_view?).with(user).and_return true
+
+      get :download_last_integration_file, {attachable_type: "entry", attachable_id: entry.id}
+      expect(response).to redirect_to("http://redirect.com")
+    end
+
+    it "disallows non-sysadmin users" do
+      sign_in_as Factory(:user)
+      Entry.any_instance.stub(:can_view?).with(user).and_return true      
+      get :download_last_integration_file, {attachable_type: "entry", attachable_id: entry.id}
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+
+    it "disallows users that can't view object" do
+      Entry.any_instance.stub(:can_view?).with(user).and_return false      
+      get :download_last_integration_file, {attachable_type: "entry", attachable_id: entry.id}
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+
+    it "handles objects that don't have integration files" do
+      entry.update_attributes! last_file_path: nil
+
+      Entry.any_instance.stub(:can_view?).with(user).and_return true      
+      get :download_last_integration_file, {attachable_type: "entry", attachable_id: entry.id}
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+
+    it "handles classes that don't utilize integration files" do
+      product = Factory(:product)
+      get :download_last_integration_file, {attachable_type: "product", attachable_id: product.id}
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+
+    it "handles classes that don't exist" do
+      get :download_last_integration_file, {attachable_type: "notarealclass", attachable_id: 1}
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+
+    it "handles classes that exist but aren't activerecord objects" do
+      get :download_last_integration_file, {attachable_type: "String", attachable_id: 1}
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+  end
+
+  describe "download" do
+    let (:secure_url) { "http://my.secure.url"}
+    let (:attachment) { double(:attachment, secure_url: secure_url) }
+    let (:user) { Factory(:user) }
+
+    it "downloads an attachment via s3 redirect" do
+      sign_in_as user
+      Attachment.should_receive(:find).with("1").and_return attachment
+      attachment.should_receive(:can_view?).with(user).and_return true
+
+      get :download, id: 1
+      expect(response).to redirect_to secure_url
+    end
+
+    it "directly downloads an attachment when master setup is proxying downloads" do
+      sign_in_as user
+
+      ms = double("MasterSetup")
+      ms.stub(:custom_feature?).with("Attachment Mask").and_return true
+      MasterSetup.stub(:get).and_return ms
+      Attachment.should_receive(:find).with("1").and_return attachment
+      attachment.should_receive(:can_view?).with(user).and_return true
+      attachment.stub(:attached_file_name).and_return "file.txt"
+      attachment.stub(:attached_content_type).and_return "text/plain"
+
+      tf = double("Tempfile")
+      tf.should_receive(:read).and_return "data"
+      attachment.should_receive(:download_to_tempfile).and_yield tf
+
+      get :download, id: 1
+      expect(response).to be_success
+      expect(response.body).to eq "data"
+    end
+
+    it "redirects if user can't access attachment" do
+      sign_in_as user
+      Attachment.should_receive(:find).with("1").and_return attachment
+      attachment.should_receive(:can_view?).with(user).and_return false
+
+      get :download, id: 1
+      expect(response).to redirect_to root_path
+      expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+  end
 end

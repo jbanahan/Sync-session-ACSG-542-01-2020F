@@ -10,7 +10,7 @@ class ReportResultsController < ApplicationController
     @show_basic = current_user.company.master? || current_user.view_entries?
     @customizable_reports = []
     [
-      CustomReportEntryInvoiceBreakdown, CustomReportBillingAllocationByValue, CustomReportBillingStatementByPo, 
+      CustomReportEntryInvoiceBreakdown, CustomReportBillingAllocationByValue, CustomReportBillingStatementByPo, CustomReportEntryBilling,
       CustomReportContainerListing, CustomReportEntryBillingBreakdownByPo, CustomReportAnnSapChanges, CustomReportIsfStatus
     ].each do |rpt|
       @customizable_reports << rpt if rpt.can_view?(current_user)

@@ -22,7 +22,7 @@ describe Api::V1::AttachmentsController do
         j = JSON.parse response.body
 
         expect(j).to eq({
-          id: @attachment.id, 
+          id: @attachment.id,
           name: "file.txt",
           size: "1 KB",
           type: "Attachment Type",
@@ -42,7 +42,7 @@ describe Api::V1::AttachmentsController do
         expect(response).to be_success
         j = JSON.parse response.body
         expect(j).to eq({
-          id: @attachment.id, 
+          id: @attachment.id,
           name: "file.txt",
           size: "1 KB",
           type: "Attachment Type"
@@ -81,7 +81,7 @@ describe Api::V1::AttachmentsController do
         expect(response).to be_success
         j = JSON.parse response.body
         expect(j).to eq([{
-          id: @attachment.id, 
+          id: @attachment.id,
           name: "file.txt",
           size: "1 KB",
           type: "Attachment Type",
@@ -96,20 +96,15 @@ describe Api::V1::AttachmentsController do
 
     describe "download" do
       it "retrieves download information for attachment" do
-        expiration = nil
-        Attachment.any_instance.should_receive(:secure_url) do |time|
-          expiration = time
-          "http://download.image.here/"
-        end
-
+        Attachment.any_instance.should_receive(:secure_url).and_return "https://my.secure.url"
         get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
 
         expect(response).to be_success
         j = JSON.parse response.body
+        expect(j.delete('expires_at')).to be_true
         expect(j).to eq({
-          url: "http://download.image.here/",
-          name: @attachment.attached_file_name,
-          expires_at: expiration.iso8601
+          url: "https://my.secure.url",
+          name: @attachment.attached_file_name
         }.with_indifferent_access)
       end
 
@@ -117,6 +112,18 @@ describe Api::V1::AttachmentsController do
         Product.any_instance.stub(:can_view?).with(@user).and_return false
         get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
         expect(response.status).to eq 404
+      end
+
+      it "uses internal download link for setups where download proxying is active" do
+        ms = double("MasterSetup")
+        MasterSetup.stub(:get).and_return ms
+        ms.stub(:request_host).and_return "localhost"
+        ms.stub(:custom_feature?).with("Attachment Mask").and_return true
+
+        get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
+        expect(response).to be_success
+        j = JSON.parse response.body
+        expect(j['url']).to eq "http://localhost/attachments/#{@attachment.id}/download"
       end
     end
 
@@ -159,7 +166,7 @@ describe Api::V1::AttachmentsController do
     end
   end
 
-  
+
 
   describe "create" do
     before :each do
@@ -180,7 +187,7 @@ describe Api::V1::AttachmentsController do
       att = @attachable.attachments.second
 
       expect(j).to eq({
-        id: att.id, 
+        id: att.id,
         name: "test.txt",
         size: "5 Bytes",
         type: "Testing",

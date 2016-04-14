@@ -9,7 +9,7 @@ describe DrawbackUploadFile do
       @user = Factory(:user)
       @mock_attachment = mock("Attachment")
       @mock_attachment.stub(:attached_file_name).and_return("x")
-      DrawbackUploadFile.any_instance.stub(:attachment).and_return(@mock_attachment) 
+      DrawbackUploadFile.any_instance.stub(:attachment).and_return(@mock_attachment)
       @importer = Factory(:company,:importer=>true)
     end
     it "should set finish_at" do
@@ -69,10 +69,10 @@ describe DrawbackUploadFile do
       OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.should_receive(:parse_fmi_csv_file).with('tmppath').and_return('abc')
       d.process(@user).should == 'abc'
     end
-    it "should route J Crew shipment file" do
-      d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS)
-      OpenChain::CustomHandler::JCrewShipmentParser.should_receive(:parse_merged_entry_file).with('tmppath').and_return('abc')
-      d.process(@user).should == 'abc'
+    it "should route J Crew Import V2 files" do
+      d = DrawbackUploadFile.new(processor:DrawbackUploadFile::PROCESSOR_JCREW_IMPORT_V2)
+      OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2.should_receive(:parse_csv_file).with('tmppath',@user).and_return('abc')
+      expect(d.process(@user)).to eq 'abc'
     end
     it "should route J Crew Canada Export file" do
       imp = Factory(:company,:importer=>true,:alliance_customer_number=>"JCREW")

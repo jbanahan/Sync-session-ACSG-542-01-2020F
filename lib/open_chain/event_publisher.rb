@@ -35,7 +35,11 @@ module OpenChain; class EventPublisher
     MESSAGE_PROCESSORS ||= {
       comment_create: MessageType.new('COMMENT_CREATE',
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/comments/#{obj.id}"},
-        lambda {|obj| "New Comment: #{obj.subject}"},
+        lambda {|obj|
+          commentable = obj.commentable
+          cm = CoreModule.find_by_object(commentable)
+          "Comment: #{cm.label} #{cm.logical_key(commentable)} from #{obj.user.full_name}: #{obj.subject}"
+        },
         lambda {|obj|
           "Comment Added\n\n#{obj.body}"
         }
