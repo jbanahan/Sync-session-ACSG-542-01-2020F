@@ -108,22 +108,6 @@ class User < ActiveRecord::Base
     u
   end
 
-  def self.add_all_permissions_to_hash h
-    [:order_view, :order_edit, :order_delete, :order_attach, :order_comment,
-    :shipment_view, :shipment_edit, :shipment_delete, :shipment_attach, :shipment_comment,
-    :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_attach, :sales_order_comment,
-    :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
-    :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
-    :entry_view, :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
-    :survey_view, :survey_edit,
-    :project_view, :project_edit,
-    :broker_invoice_view, :broker_invoice_edit,
-    :classification_edit,
-    :commercial_invoice_view, :commercial_invoice_edit,
-    :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach].each do |p|
-      h[p] = true
-    end
-  end
 
   # This is overriding the standard clearance email find and replacing with a lookup by username instead
   def self.authenticate username, password
@@ -212,6 +196,42 @@ class User < ActiveRecord::Base
   # Clobber Clearance's normalize_email to prevent it from stripping out spaces from emails.
   def self.normalize_email email
     email.to_s.strip
+  end
+
+  # return hash suitable for api controller (doing it here since we also use it outside of the controller)
+  def api_hash
+    permissions_hash = {
+      view_orders: self.view_orders?,
+      edit_orders: self.edit_orders?,
+      view_vendor_portal: self.view_vendor_portal?,
+      view_products: self.view_products?,
+      edit_products: self.edit_products?,
+      view_official_tariffs: self.view_official_tariffs?,
+      view_shipments: self.view_shipments?,
+      edit_shipments: self.edit_shipments?,
+      view_security_filings: self.view_security_filings?,
+      view_entries: self.view_entries?,
+      view_broker_invoices: self.view_broker_invoices?,
+      view_summary_statements: self.view_summary_statements?,
+      edit_summary_statements: self.edit_summary_statements?,
+      view_drawback: self.view_drawback?,
+      edit_drawback: self.edit_drawback?,
+      upload_drawback: self.edit_drawback?,
+      view_survey_responses: !self.survey_responses.empty? || self.view_surveys?,
+      view_surveys: self.view_surveys?,
+      view_vendors: self.view_vendors?,
+      create_vendors: self.create_vendors?
+    }
+    return {
+      id: self.id,
+      full_name: self.full_name,
+      first_name: self.first_name,
+      last_name: self.last_name,
+      email: self.email,
+      email_new_messages: self.email_new_messages,
+      username: self.username,
+      permissions: permissions_hash
+    }
   end
 
   # override default clearance email authentication
@@ -326,6 +346,25 @@ class User < ActiveRecord::Base
     return '/vendor_portal' if self.portal_mode=='vendor'
     return nil
   end
+
+  # adds all permissions with value set to true
+  def self.add_all_permissions_to_hash h
+    [:order_view, :order_edit, :order_delete, :order_attach, :order_comment,
+    :shipment_view, :shipment_edit, :shipment_delete, :shipment_attach, :shipment_comment,
+    :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_attach, :sales_order_comment,
+    :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
+    :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
+    :entry_view, :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
+    :survey_view, :survey_edit,
+    :project_view, :project_edit,
+    :broker_invoice_view, :broker_invoice_edit,
+    :classification_edit,
+    :commercial_invoice_view, :commercial_invoice_edit,
+    :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach].each do |p|
+      h[p] = true
+    end
+  end
+  private_class_method :add_all_permissions_to_hash
 
   private
   def parse_hidden_messages
