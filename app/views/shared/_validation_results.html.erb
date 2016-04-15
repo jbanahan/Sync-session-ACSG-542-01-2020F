@@ -2,7 +2,10 @@
   <div id='validation_result_wrapper' class="container" ng-controller='coreObjectValidationResultsCtrl'>
     <div class="row" style="margin-bottom:20px;">
       <div class='col-md-12'>
-        <h1 class='page_title' ng-class='svc.stateToBootstrap("text",result.state)'>{{result.single_object}}: {{result.object_number}}</h1>
+        <h1 class='page_title' ng-class='svc.stateToBootstrap("text",result.state)'>
+          {{result.single_object}}: {{result.object_number}}&nbsp;
+          <span class='label label-info' title="Rerun Validations" ng-show='result.can_run_validations' ng-click='rerunValidations()' style="padding-top: 2px; padding-bottom: 3px; padding-left: 4px; padding-right: 4px; font-size: 45%; vertical-align: 40% "><i class="fa fa-refresh"></i></span>
+        </h1>
       </div>
     </div>
     <h3 ng-show='result && result.bv_results.length==0'>No validations have been run for this {{result.single_object.toLowerCase()}}.</h3>

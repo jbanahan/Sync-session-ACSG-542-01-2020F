@@ -55,6 +55,11 @@ describe 'CoreObjectValidationResultsApp', () ->
         svc.cancelOverride rr
         http.flush()
 
+    describe 'rerunValidations', () ->
+      it "calls validate POST route", () ->
+        http.expectPOST('/api/v1/entries/1/validate.json').respond {}
+        svc.rerunValidations 'entries', 1
+        http.flush()
         
   describe 'controller', () ->
     ctrl = svc = $scope = q = null
@@ -120,6 +125,31 @@ describe 'CoreObjectValidationResultsApp', () ->
 
         expect(svc.cancelOverride).not.toHaveBeenCalled()
         expect(console.log).toHaveBeenCalledWith("ERROR: pluralObject or objectId not found in coreObjectValidationResultsSvc!")
+
+    describe 'rerunValidations', () ->
+      it "calls the service's rerunValidations, settings and updating panel", () ->
+        deferredRerun = q.defer()
+        deferredRerun.resolve {a:'a'}
+        spyOn(svc, 'rerunValidations').andReturn deferredRerun.promise
+
+        deferredLoad = q.defer()
+        loadResolution = {b:'b'}
+        deferredLoad.resolve loadResolution
+        spyOn($scope, 'loadObject').andReturn deferredLoad.promise
+
+        spyOn($scope, 'setPanel')
+
+        svc.pluralObject = {c: 'c'}
+        svc.objectId = {d: 'd'}
+        returnVal = null
+        $scope.rerunValidations()
+        $scope.$apply()
+
+        expect(svc.rerunValidations).toHaveBeenCalledWith(svc.pluralObject, svc.objectId)
+        expect($scope.loadObject).toHaveBeenCalledWith(svc.pluralObject, svc.objectId)
+        expect($scope.ruleResultToEdit).toEqual null
+        expect($scope.setPanel).toHaveBeenCalledWith("Validations being rerun...", "info")
+        expect($scope.setPanel).toHaveBeenCalledWith("Finished", "info")
 
     describe 'markRuleResultChanged', () ->
       it "sets ruleResultChanged flag", () ->
