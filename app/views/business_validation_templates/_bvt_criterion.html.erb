@@ -16,5 +16,11 @@
   <div class="col-md-12">
     * <%= link_to "Manage criteria", "/business_validation_templates/#{@bvt.id}/manage_criteria" %>
   </div>
+
 </div>
 <hr>
+<% if @criteria.count.zero? %>
+  <div class="col-md-12 alert alert-warning">
+    The rules on this template will not run without search criteria.
+  </div>
+<% end %>
