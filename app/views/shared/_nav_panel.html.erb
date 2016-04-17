@@ -1,0 +1,17 @@
+  <chain-nav-panel-wrapper></chain-nav-panel-wrapper>
+  <script type="text/javascript" src='/js/chain_nav_panel.min.js'></script>
+  <link rel="stylesheet" media="all" href="/css/chain_nav_panel.min.css">
+  <script type="text/javascript">
+    $(function() {
+      var userPromise = {
+        then: function(callback) {
+          callback(<%=current_user.api_hash.to_json.html_safe%>);
+        }
+      };
+      writeNotificationCenter = function(wrapper) {
+        wrapper.html("<a href='#' data-toggle='notification-center' onclick='return false;' title='shortcut key: n' class='message-envelope-wrapper'><span class='glyphicon glyphicon-bell message_envelope'></span></a>");
+        ChainNotificationCenter.initialize('<%=current_user.id%>', 30);
+      }
+      ChainNavPanel.write(ChainNavPanelHtml,$('chain-nav-panel-wrapper'),userPromise,writeNotificationCenter);
+    });
+  </script>

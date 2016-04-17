@@ -323,6 +323,12 @@ class Company < ActiveRecord::Base
   def edit_trade_lanes?
     self.master? && master_setup.trade_lane_enabled?
   end
+  def attach_trade_lanes?
+    self.master? && master_setup.trade_lane_enabled?
+  end
+  def comment_trade_lanes?
+    self.master? && master_setup.trade_lane_enabled?
+  end
 
   def name_with_customer_number
     n = self.name

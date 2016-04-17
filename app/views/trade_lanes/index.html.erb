@@ -1,1 +1,19 @@
-hello world
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VFI Track - Trade Lanes</title>
+  <%= stylesheet_link_tag    "trade_lanes", :media => "all" -%>
+  <%= javascript_include_tag "trade_lanes" -%>
+  </head>
+<body>
+  <% if @run_as_user %>
+    <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
+  <% end %>
+  <div ng-app='ChainTradeLanes'>
+    <div ui-view></div>
+    <chain-errors></chain-errors>
+  </div>
+</body>
+</html>

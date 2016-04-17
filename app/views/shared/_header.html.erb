@@ -24,7 +24,6 @@
     <![endif]-->
     <script type='text/javascript'>
       <% if current_user %>
-        Chain.messagePoller.initialize('<%=current_user.id%>', 30);
         $(document).ready(function() {
           <% if @state_button_path && @state_button_object_id %>
             ChainStateButtons.initialize('<%=@state_button_path%>',<%=@state_button_object_id%>);
@@ -41,42 +40,9 @@
       <% if @run_as_user %>
         <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
       <% end %>
-      <% if show_navbar -%>
-        <div class="modal fade" id="notification-center">
-          <div class="modal-dialog modal-max-width">
-            <div class="modal-content">
-              <div class="modal-header text-center">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-default" notification-center-toggle-target='messages'>Messages</button>
-                  <button type="button" class="btn btn-default" notification-center-toggle-target='tasks'>Tasks</button>
-                  <button type="button" class="btn btn-default" notification-center-toggle-target='manuals'>Manuals</button>
-                </div>
-              </div>
-              <div class="modal-body" id='notification-center-body'>
-                <div notification-center-pane='messages' content-url='/messages'></div>
-                <div notification-center-pane='tasks' content-url='/my_tasks' data-load-trigger='chain:workflow-load'></div>
-                <div notification-center-pane='manuals' content-url='/user_manuals/for_referer'></div>
-              </div>
-            </div><!-- /.modal-content -->
-          </div><!-- /.modal-dialog -->
-        </div><!-- /.modal -->
-        <chain-nav-panel-wrapper></chain-nav-panel-wrapper>
-        <script type="text/javascript">
-          $(function() {
-            var userPromise = {
-              then: function(callback) {
-                callback(<%=current_user.api_hash.to_json.html_safe%>);
-              }
-            };
-            writeNotificationCenter = function(wrapper) {
-              wrapper.html("<a href='#' data-toggle='notification-center' onclick='return false;' title='shortcut key: n' class='message-envelope-wrapper'><span class='glyphicon glyphicon-bell message_envelope'></span></a>");
-              Chain.messagePoller.initNotificationCenter();
-            }
-            ChainNavPanel.write(ChainNavPanelHtml,$('chain-nav-panel-wrapper'),userPromise,writeNotificationCenter);
-          });
-        </script>
-      <% end -%>
+      <% if show_navbar && current_user -%>
+        <%= render "shared/nav_panel" %>
+      <% end %>
       <%= render "shared/flash_notice" %>
       <div id='main-content'>
         <%=yield%>
