@@ -349,20 +349,6 @@ root.Chain =
       token = $('meta[name="csrf-token"]').attr('content')
     token
 
-  bindBaseKeys : () ->
-    $(document).keyup (e) ->
-      if e.keyCode is 27
-        if $("#notification-center").is(":visible")
-          $("#notification-center button.close").click()
-        if $('.sidebar-offcanvas').hasClass 'active'
-          $('[data-toggle="offcanvas"]').click()
-
-    $(document).on 'keyup', null, "m", () ->
-      $('[data-toggle="offcanvas"]:first').click()
-      $('#sidebar:visible .list-group-item:first').focus()
-    $(document).on 'keyup', null, 'n', () ->
-      $('[data-toggle="notification-center"]:first').click()
-
   tariffPopUp : (htsNumber, country_id, country_iso) ->
     mod = $("#mod_tariff_popup")
     if(mod.length==0)
@@ -449,7 +435,6 @@ $(document).ready () ->
   # Note, this header is included twice, since jquery.form also 'helpfully' reads the crsf token and injects it as well
   $.ajaxSetup({headers: {"X-CRSF-Token": Chain.getAuthToken()}})
 
-  Chain.bindBaseKeys()
   $("#lnk_hide_notice").click (evt) ->
     evt.preventDefault
     $('#notice').hide()

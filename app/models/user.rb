@@ -221,7 +221,9 @@ class User < ActiveRecord::Base
       view_survey_responses: !self.survey_responses.empty? || self.view_surveys?,
       view_surveys: self.view_surveys?,
       view_vendors: self.view_vendors?,
-      create_vendors: self.create_vendors?
+      create_vendors: self.create_vendors?,
+      view_trade_lanes: self.view_trade_lanes?,
+      edit_trade_lanes: self.edit_trade_lanes?
     }
     return {
       id: self.id,
