@@ -43,7 +43,17 @@ OpenChain::Application.routes.draw do
       resources :companies, only: [:index] do
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
+        post :validate, on: :member
       end
+
+      resources :drawback_claims, only: [] do
+        post :validate, on: :member
+      end
+
+      resources :entries, only: [] do
+        post :validate, on: :member
+      end
+      
       resources :orders, only: [:index,:show,:update] do
         member do
           get :state_toggle_buttons
@@ -51,6 +61,7 @@ OpenChain::Application.routes.draw do
           post :accept
           post :unaccept
           get :by_order_number
+          post :validate
         end
         collection do
           get :by_order_number
@@ -81,6 +92,7 @@ OpenChain::Application.routes.draw do
         get 'by_uid(/:path_uid)' => "products#by_uid", on: :collection
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
+        post :validate, on: :member
       end
       resources :variants, only: [:show] do
 
@@ -112,6 +124,10 @@ OpenChain::Application.routes.draw do
           post :checkin
           post :submit
         end
+      end
+
+      resources :vendors, only: [] do
+        post :validate, on: :member
       end
 
       resources :user_manuals, only: [:index]
