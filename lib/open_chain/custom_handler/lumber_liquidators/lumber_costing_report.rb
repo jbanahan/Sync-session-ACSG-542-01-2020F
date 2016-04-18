@@ -211,14 +211,26 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     totals = Hash.new do |h, k|
       h[k] = BigDecimal("0")
     end
-    xref = charge_xref
 
     entry.broker_invoices.each do |inv|
-      inv.broker_invoice_lines.each do |line|
-        rate_type = xref[line.charge_code]
-        if rate_type && line.charge_amount
-          totals[rate_type] += line.charge_amount
-        end
+      calculate_charge_totals_per_invoice inv, totals
+    end
+
+    totals
+  end
+
+  def calculate_charge_totals_per_invoice invoice, totals = nil
+    if totals.nil?
+      totals = Hash.new do |h, k|
+        h[k] = BigDecimal("0")
+      end
+    end
+
+    xref = charge_xref
+    invoice.broker_invoice_lines.each do |line|
+      rate_type = xref[line.charge_code]
+      if rate_type && line.charge_amount
+        totals[rate_type] += line.charge_amount
       end
     end
 

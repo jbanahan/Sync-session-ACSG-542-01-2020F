@@ -1,11 +1,7 @@
 class XlsMaker
   require 'spreadsheet'
   
-  HEADER_FORMAT = Spreadsheet::Format.new :weight => :bold,
-                                          :color => :white,
-                                          :pattern_fg_color => :navy,
-                                          :pattern => 1,
-                                          :name=>"Heading"
+  HEADER_FORMAT = Spreadsheet::Format.new weight: :bold, color: :black,  pattern_fg_color: :xls_color_41, pattern: 1, horizontal_align: :center
   DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'
   DATE_TIME_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD HH:MM'
 
@@ -85,8 +81,8 @@ class XlsMaker
   end
 
   # Method allows insertion of a row data array into a middle column of a spreadsheet row.
-  def self.insert_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], no_time = false
-    make_body_row sheet, row_number, starting_column_number, row_data, column_widths, {:no_time => no_time, :insert=>true}
+  def self.insert_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], no_time = false, options = {}
+    make_body_row sheet, row_number, starting_column_number, row_data, column_widths, {:no_time => no_time, :insert=>true}.merge(options)
   end
 
   def self.insert_cell_value sheet, row_number, column_number, cell_base, column_widths = [], options = {}
@@ -143,6 +139,8 @@ class XlsMaker
   private_class_method :make_body_row
 
   def self.add_header_row sheet, row_number, header_labels, column_widths = []
+    add_vfi_color_to_workbook sheet.workbook
+
     header_labels.each_with_index do |label, i|
       label = label.to_s
       sheet.row(row_number).default_format = HEADER_FORMAT
@@ -152,10 +150,33 @@ class XlsMaker
     end
   end
 
+  def self.add_vfi_color_to_workbook wb
+    # This is kind of a hacky way to remap our company color to a numeric color, but it's the only way I 
+    # saw that we can actually use custom colors in the spreadsheet gem.
+    # RGB(98, 187, 243) -> Hex 0x62BBF3
+    # First 41 param means we're mapping this to xl_color_41 in spreadsheet gem
+    wb.set_custom_color(41, 98, 187, 243) if wb.palette[41] != [98, 187, 243]
+  end
+  private_class_method :add_vfi_color_to_workbook
+
   def self.calc_column_width sheet, col, column_widths, width
     if column_widths[col].nil? || column_widths[col] < width
       sheet.column(col).width = width
       column_widths[col] = width
+    end
+  end
+
+  def self.set_column_widths sheet, column_widths
+    column_widths.each_with_index do |width, x|
+      sheet.column(x).width = width if width && width.to_f >= 0
+    end
+  end
+
+  def self.set_cell_formats sheet, row, column_formats
+    row = sheet.row(row)
+
+    column_formats.each_with_index do |format, x|
+      row.set_format(x, format) if format
     end
   end
 
@@ -181,6 +202,13 @@ class XlsMaker
 
   def self.create_link_cell url, link_text = "Web View"
     Spreadsheet::Link.new(url,link_text)
+  end
+
+  def self.create_format format_name, opts = {}
+    f = Spreadsheet::Format.new opts
+    f.name = format_name
+
+    f
   end
   
   private

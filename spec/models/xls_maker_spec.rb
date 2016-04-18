@@ -346,5 +346,42 @@ describe XlsMaker do
       expect(sheet.row(0).format 0).to eq XlsMaker::HEADER_FORMAT
     end
   end
+
+  describe "set_column_widths" do
+    it "sets the given widths as the columns widths for the sheet" do
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test", ["Header", "Header 2"]
+      col0 = sheet.column(0).width
+      col2 = sheet.column(2).width
+      XlsMaker.set_column_widths sheet, [nil, 1, -1, 0]
+      expect(sheet.column(0).width).to eq col0
+      expect(sheet.column(1).width).to eq 1
+      expect(sheet.column(2).width).to eq col2
+      expect(sheet.column(3).width).to eq 0
+    end
+  end
+
+  describe "set_cell_formats" do
+    it "sets the formats in the array as the cells formats" do
+      wb, sheet = XlsMaker.create_workbook_and_sheet "Test", ["Header", "Header 2"]
+      format = XlsMaker.create_format "Test"
+      XlsMaker.set_cell_formats sheet, 1, [format, nil, format]
+
+      row = sheet.row(1)
+      expect(row.format(0).try :name).to eq "Test"
+      expect(row.format(1).try :name).to be_nil
+      expect(row.format(2).try :name).to eq "Test"
+    end
+  end
+
+  describe "create_format" do
+    it "creates a new spreadsheet format and sets the name" do
+      format = XlsMaker.create_format "Test", weight: :bold, color: :black, name: "Helvetica", number_format: "0.00"
+      expect(format.name).to eq "Test"
+      expect(format.font.name).to eq "Helvetica"
+      expect(format.font.color).to eq :black
+      expect(format.font.weight).to eq :bold
+      expect(format.number_format).to eq "0.00"
+    end
+  end
 end
 

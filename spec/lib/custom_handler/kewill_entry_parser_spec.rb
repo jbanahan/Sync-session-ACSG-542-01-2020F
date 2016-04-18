@@ -136,7 +136,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
             'name'=>'Customer 1', 'address_1' => '123 Fake St.', 'address_2' => 'Ste 22', 'city' => "Fakesville", 'state'=>'PA', 'zip' => 12345, 'country' => 'US',
             'lines' => [
               {'charge' => '1', 'description' => 'DUTY', 'amount'=>-10000, 'vendor'=>'VEND', 'vendor_name' => 'VENDOR NAME', 'vendor_ref'=>'VENDOR', 'charge_type'=>'D'},
-              {'charge' => '100', 'description' => 'OUTLAY', 'amount'=>99, 'vendor'=>'', 'vendor_ref'=>'', 'charge_type'=>'O'}
+              {'charge' => '100', 'description' => 'OUTLAY', 'amount'=>99, 'vendor'=>'', 'vendor_name' => '', 'vendor_ref'=>'', 'charge_type'=>'O'}
             ]
           }
         ],
@@ -700,8 +700,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       e.update_attributes! source_system: "Alliance", broker_reference: "REF"
       @e['file_no'] = e.broker_reference
 
-      Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: e))
-      Factory(:container, entry: e)
+      line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: e, invoice_number: "12345A"))
+      Factory(:container, entry: e, container_number: "CONT1")
       e.entry_comments.create! body: "Testing"
 
 
@@ -709,6 +709,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       # Make sure the exisitng data was wiped and new data populated
       expect(entry).to be_persisted
+      entry.reload
       expect(entry.broker_reference).to eq e.broker_reference
       expect(entry.broker_invoices.size).to eq 1
       expect(entry.broker_invoices.first.invoice_number).to eq "12345A"
@@ -716,7 +717,45 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.commercial_invoices.first.invoice_number).to eq "INV1"
       expect(entry.entry_comments.size).to eq 4
       expect(entry.containers.size).to eq 2
-      expect(entry.containers.first.container_number).to eq "CONT1"
+      expect(entry.containers.map{|c| c.container_number}).to include("CONT1")
+    end
+
+    it "copies sync records from existing broker invoice to newly created one" do
+      e = Factory(:entry, source_system: "Alliance", broker_reference: @e['file_no'])
+      line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: e, invoice_number: "12345A", customer_number: "CUST1", invoice_total: BigDecimal.new("100.99"), invoice_date: Date.new(2015, 4, 1)),
+                        charge_code: "0001", charge_description: "DUTY", charge_amount: BigDecimal("-100.00"), vendor_name: "VENDOR NAME", vendor_reference: "VENDOR", charge_type: "D")
+      line_2 = Factory(:broker_invoice_line, broker_invoice: line.broker_invoice, charge_code: "0100", charge_description: "OUTLAY", charge_amount: BigDecimal("0.99"), vendor_name: "", vendor_reference: "", charge_type: "O")
+      broker_invoice = line.broker_invoice
+      # Ultimately, the reason we're doing this is to make sure we're copying sync records, so bake this into the test case
+      sync_record = broker_invoice.sync_records.create! trading_partner: "TESTING", sent_at: Time.zone.now
+
+      # Create a second invoice and make sure it gets removed, since it won't be in the json
+      Factory(:broker_invoice, entry: e)
+
+      # Create a third invoice just to make sure the s
+      broker_invoice_3 = Factory(:broker_invoice, entry: e, invoice_number: "12345")
+      broker_invoice_3.sync_records.create! trading_partner: "TEST2", sent_at: Time.zone.now, confirmed_at: Time.zone.now, confirmation_file_name: "file.txt", failure_message:"Message", fingerprint: Time.zone.now, ignore_updates_before: Time.zone.now
+
+      @e['broker_invoices'] << {
+        'file_no'=>12345, 'invoice_date'=>20150401, 'total_amount'=>100.99, 'bill_to_cust'=>'CUST1',
+        'lines' => [{'charge' => '1', 'description' => 'DUTY', 'amount'=>-10000, 'vendor'=>'VEND', 'vendor_name' => 'VENDOR NAME', 'vendor_ref'=>'VENDOR', 'charge_type'=>'D'}]
+      }
+
+      entry = described_class.new.process_entry @e
+
+      expect(entry).to be_persisted
+      entry.reload
+      expect(entry.broker_invoices.size).to eq 2
+      expect(entry.broker_invoices.first.id).not_to eq broker_invoice.id
+      expect(entry.broker_invoices.first.invoice_number).to eq "12345A"
+
+      expect(entry.broker_invoices.first.sync_records.first.id).not_to eq sync_record.id
+      # make sure the attributes of the sync record were copied over
+      expect(entry.broker_invoices.first.sync_records.first.trading_partner).to eq "TESTING"
+      expect(entry.broker_invoices.first.sync_records.first.sent_at.to_i).to eq sync_record.sent_at.to_i
+
+      expect(entry.broker_invoices.second.invoice_number).to eq "12345"
+      expect(entry.broker_invoices.second.sync_records.length).to eq 1
     end
 
     it "uses cross process locking / per entry locking" do
