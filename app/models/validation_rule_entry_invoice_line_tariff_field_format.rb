@@ -12,7 +12,7 @@ class ValidationRuleEntryInvoiceLineTariffFieldFormat < BusinessValidationRule
       message = validate_field_format(tariff) do |mf, val, regex|
         stop = true
         stop_validation
-        "All #{mf.label} values do not match '#{regex}' format."
+        "Invoice # #{invoice_line.commercial_invoice.invoice_number} #{mf.label} value '#{val}' does not match '#{regex}' format."
       end
     end
 
