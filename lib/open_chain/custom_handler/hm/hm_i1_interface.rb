@@ -17,13 +17,8 @@ module OpenChain
         end
 
         def process file_content
-          header = true
           ActiveRecord::Base.transaction do
-            CSV.parse(file_content, skip_blanks: true) do |row|
-              if header
-                header = false
-                next
-              end
+            CSV.parse(file_content, skip_blanks: true, :col_sep => ";") do |row|
               *, uid = get_part_number_and_uid(row[3])
               p = nil
               Lock.acquire("Product-#{uid}") { p = Product.where(unique_identifier: uid).first_or_create! }
@@ -41,8 +36,8 @@ module OpenChain
           product.importer_id = cust_id
           product.find_and_set_custom_value cdefs[:prod_part_number], part_number
           cv_concat product, :prod_po_numbers, row[0], cdefs
-          assign_earlier product, :prod_earliest_ship_date, filter_date(row[1]), cdefs
-          assign_earlier product, :prod_earliest_arrival_date, filter_date(row[2]), cdefs
+          assign_earlier product, :prod_earliest_ship_date, format_date(row[1]), cdefs
+          assign_earlier product, :prod_earliest_arrival_date, format_date(row[2]), cdefs
           product.find_and_set_custom_value cdefs[:prod_sku_number], row[3]
           cv_concat product, :prod_season, row[4], cdefs
           product.name = row[5]
@@ -75,8 +70,15 @@ module OpenChain
           [trunc_sku, "HENNE-#{trunc_sku}"]
         end
 
-        def filter_date date
-          (date =~ /^\d{2}\/\d{2}\/\d{4}$/) ? date : nil
+        def format_date date
+          if (date =~ /^\d{8}$/)
+            year = date[0..3]
+            month = date[4..5]
+            day = date[6..7]
+            "#{month}/#{day}/#{year}"
+          else
+            nil
+          end
         end
       end
 
