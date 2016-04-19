@@ -11,7 +11,7 @@ describe User do
         email_new_messages:true)
       u.stub(:view_orders?).and_return true
       h = u.api_hash
-      
+
       expect(h[:permissions][:view_orders]).to eq true
       expect(h[:permissions][:view_shipments]).to be_false
       # not testing every permission
@@ -24,7 +24,8 @@ describe User do
         last_name:u.last_name,
         email:'j@sample.com',
         email_new_messages:true,
-        id:u.id
+        id:u.id,
+        company_id:u.company_id
       }
       expect(h).to eq expected
     end

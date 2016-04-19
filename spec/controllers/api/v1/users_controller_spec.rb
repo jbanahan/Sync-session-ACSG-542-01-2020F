@@ -70,19 +70,19 @@ describe Api::V1::UsersController do
       expect(response.status).to eq 404
     end
 
-    it "returns 404 if client_id is not setup" do 
+    it "returns 404 if client_id is not setup" do
       @config.delete :client_id
       post :google_oauth2
       expect(response.status).to eq 404
     end
 
-    it "returns 404 if client_secret is not setup" do 
+    it "returns 404 if client_secret is not setup" do
       @config.delete :client_secret
       post :google_oauth2
       expect(response.status).to eq 404
     end
 
-    it "returns error if access_token is not present" do 
+    it "returns error if access_token is not present" do
       post :google_oauth2
       expect(response.status).to eq 500
       expect(JSON.parse(response.body)).to eq({'errors'=>["The access_token parameter was missing."]})
@@ -142,7 +142,8 @@ describe Api::V1::UsersController do
         'last_name'=>u.last_name,
         'email'=>'j@sample.com',
         'email_new_messages'=>true,
-        'id'=>u.id}}
+        'id'=>u.id,
+        'company_id'=>u.company_id}}
       response_json = JSON.parse(response.body)
       # not testing every permission
       expect(response_json['user']['permissions'].size).to be > 0
@@ -168,7 +169,7 @@ describe Api::V1::UsersController do
       allow_api_access u
       post :toggle_email_new_messages
       expect(response).to redirect_to '/api/v1/users/me'
-      
+
       u.reload
       expect(u.email_new_messages).to be_false
     end
