@@ -3,5 +3,8 @@ if !Rails.env.test? && ActiveRecord::Base.connection.table_exists?('master_setup
   OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit.init
 
   require 'open_chain/custom_handler/vandegrift/vandegrift_system_init'
-  OpenChain::CustomHandler::Vandegrift::VandegriftSystemInit.init  
+  OpenChain::CustomHandler::Vandegrift::VandegriftSystemInit.init
+
+  require 'open_chain/custom_handler/pepsi/pepsi_system_init'
+  OpenChain::CustomHandler::Pepsi::PepsiSystemInit.init
 end
