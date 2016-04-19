@@ -40,6 +40,7 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
   def up
     et = create_new_entity_type
     create_new_fields et
+    register_existing_fields_for_entity_type
     update_existing_validate_buttons
     update_existing_validation_definitions
     user_cd, date_cd = create_new_validation_definitions
@@ -69,6 +70,12 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     cdefs = self.class.prep_custom_definitions(NEW_FIELDS)
     cdefs.values.each do |cd|
       EntityTypeField.where(model_field_uid:cd.model_field_uid,entity_type_id:entity_type.id).first_or_create!
+    end
+  end
+
+  def register_existing_fields_for_entity_type entity_type
+    [:prod_uid,:prod_name].each do |mfuid|
+      EntityTypeField.where(model_field_uid:mfuid,entity_type_id:entity_type.id).first_or_create!
     end
   end
 
@@ -119,7 +126,12 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
   end
 
   def create_quaker_validate_button user_cd, date_cd
-    stb = StateToggleButton.create!(module_type:'Product',user_custom_definition_id:user_cd.id,date_custom_definition_id:date_cd.id,activate_text:'Validate (Quaker)',deactivate_text:'Revoke Validation (Quaker)',deactivate_confirmation_text:'Are you sure you want to revoke this validation?')
+    stb = StateToggleButton.create!(module_type:'Product',
+      user_custom_definition_id:user_cd.id,date_custom_definition_id:date_cd.id,
+      activate_text:'Validate (Quaker)',deactivate_text:'Revoke Validation (Quaker)',
+      deactivate_confirmation_text:'Are you sure you want to revoke this validation?',
+      permission_group_system_codes:'QUAKER-VALIDATORS'
+    )
     stb.search_criterions.create!(model_field_uid:'prod_ent_type',operator:'eq',value:'Quaker')
   end
   def destroy_quaker_validate_button

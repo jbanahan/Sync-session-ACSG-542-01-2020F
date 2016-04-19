@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module Pepsi; module PepsiCustomDefiniti
     prod_cbp_mid: {label: 'US - CBP MID', data_type: :string, module_type: 'Product'},
     prod_fda_mid: {label: 'US - FDA MID',data_type: :string, module_type: 'Product'},
     prod_quaker_validated_by: {label: 'Validated By (Quaker)', data_type: :integer, module_type:'Product', is_user: true, read_only: true},
-    prod_quaker_validated_date: {label: 'Validated By (Quaker)', data_type: :datetime, module_type:'Product', read_only: true}
+    prod_quaker_validated_date: {label: 'Validated Date (Quaker)', data_type: :datetime, module_type:'Product', read_only: true}
   }
 
   def self.included(base)
