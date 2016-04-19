@@ -15,6 +15,7 @@ class BusinessValidationRule < ActiveRecord::Base
                     enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}},
                 ValidationRuleEntryInvoiceLineTariffFieldFormat: {label:"Entry Invoice Tariff Field Format"},
                 ValidationRuleEntryInvoiceFieldFormat: {label:"Entry Invoice Field Format"},
+                ValidationRuleOrderLineFieldFormat: {label: "Order Line Field Format"},
                 ValidationRuleEntryHtsMatchesPo: {label:"Entry Invoice Line HTS Matches PO HTS"},
                 ValidationRuleAnyEntryInvoiceLineHasFieldFormat: {label:"At Least One Entry Invoice Line Matches Field Format"},
                 ValidationRuleAttachmentTypes: {label:"Has Attachment Types"},
