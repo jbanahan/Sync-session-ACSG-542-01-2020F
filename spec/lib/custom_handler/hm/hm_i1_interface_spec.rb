@@ -17,12 +17,12 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
   before(:each){ @cust_id = Factory(:company, alliance_customer_number: 'HENNE').id }
 
   before(:all) do
+    # HEADERS: hmOrderReferenceNumber, hmOrderDate, expectedReceiptDate, sku, season, skuName, commodityCode, countryOfOrigin
     @lines = [
-      "\"hmOrderReferenceNumber\",\"hmOrderDate\",\"expectedReceiptDate\",\"sku\",\"season\",\"skuName\",\"commodityCode\",\"countryOfOrigin\"",
-      "\"182909\",\"01/02/2016\",\"01/02/2016\",\"0148762001002\",\"201501\",\"Large Blue Hooded Sweatshirt\",\"61101190\",\"US\"",
-      "\"909281\",\"01/12/2015\",\"01/10/2015\",\"2001002678410\",\"105102\",\"Small Red T-Shirt\",\"09110116\",\"CA\"",
-      "\"293010\",\"03/03/2016\",\"03/03/2016\",\"1259873112113\",\"312612\",\"Medium Black Sweatpants\",\"72212201\",\"US\"",
-      "\"293010\",\"03/03/2016\",\"02/15/2016\",\"1259873112113\",\"216213\",\"Large Black Sweatpants\",\"10221227\",\"CA\""
+      "\"182909\";\"20160102\";\"20160102\";\"0148762001002\";\"201501\";\"Large Blue Hooded Sweatshirt\";\"61101190\";\"US\"",
+      "\"909281\";\"20150112\";\"20150110\";\"2001002678410\";\"105102\";\"Small Red T-Shirt\";\"09110116\";\"CA\"",
+      "\"293010\";\"20160303\";\"20160303\";\"1259873112113\";\"312612\";\"Medium Black Sweatpants\";\"72212201\";\"US\"",
+      "\"293010\";\"20160303\";\"20160215\";\"1259873112113\";\"216213\";\"Large Black Sweatpants\";\"10221227\";\"CA\""
     ]
   end
   
@@ -106,8 +106,8 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       prod.find_and_set_custom_value @cdefs[:prod_countries_of_origin], "US"
       prod.save!
 
-      line = CSV.parse_line(@lines[2])
-      line[3] = "0148762001002" #uid of @lines[1]
+      line = CSV.parse_line(@lines[1], :col_sep => ";")
+      line[3] = "0148762001002" #uid of @lines[0]
       parser.update_product prod, line, @cdefs, @cust_id
 
       expect(prod.unique_identifier).to eq "HENNE-0148762"
