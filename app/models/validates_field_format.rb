@@ -3,11 +3,9 @@ module ValidatesFieldFormat
   def validate_field_format obj, opt = {}
     opt = {yield_matches: false, yield_failures: true}.merge opt
 
+    tested = 0
     messages = []
     validation_expressions.each_pair do |model_field, attrs|
-      
-      # Memoize the attributes and model field, there's no need to have to deserialze them and do the model field lookup repeatedly
-      # for any rule that runs over child objects. These values shouldn't change over the validation lifespan of the rule.
       val = model_field.process_export(obj,nil,true)
       reg = attrs['regex']
       allow_blank = attrs['allow_blank'].to_s.to_boolean
@@ -23,9 +21,10 @@ module ValidatesFieldFormat
           yield model_field, val, reg
         end
       end
+      tested += 1
     end
 
-    messages.join("\n").presence if rule_attribute('model_field_uid') || self.rule_attributes.count == messages.count
+    messages.delete_if(&:blank?).join("\n").presence if tested == messages.count
   end
 
   def validation_expressions
