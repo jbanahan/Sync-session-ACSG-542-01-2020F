@@ -17,17 +17,15 @@ module OpenChain
         end
 
         def process file_content
-          ActiveRecord::Base.transaction do
-            CSV.parse(file_content, skip_blanks: true, :col_sep => ";") do |row|
-              *, uid = get_part_number_and_uid(row[3])
-              p = nil
-              Lock.acquire("Product-#{uid}") { p = Product.where(unique_identifier: uid).first_or_create! }
-              Lock.with_lock_retry(p) do 
-                update_product p, row, @cdefs, @cust_id
-                p.create_snapshot User.integration
-              end
+          CSV.parse(file_content, skip_blanks: true, :col_sep => ";") do |row|
+            *, uid = get_part_number_and_uid(row[3])
+            p = nil
+            Lock.acquire("Product-#{uid}") { p = Product.where(unique_identifier: uid).first_or_create! }
+            Lock.with_lock_retry(p) do 
+              update_product p, row, @cdefs, @cust_id
+              p.create_snapshot User.integration
             end
-          end        
+          end
         end
 
         def update_product product, row, cdefs, cust_id
