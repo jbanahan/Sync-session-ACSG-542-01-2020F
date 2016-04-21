@@ -15,4 +15,10 @@ describe ValidationRuleAnyEntryInvoiceLineHasFieldFormat do
     @ci_line.update_attributes! part_number: "XYZ"
     expect(@rule.run_validation(@ci_line.entry)).to eq "At least one #{ModelField.find_by_uid(:cil_part_number).label} value must match 'ABC' format."
   end
+
+  it "raies an error if multiple model fields are configured" do
+    @rule.update_attributes! rule_attributes_json: {'cil_part_number' => {regex: 'ABC'}, 'cil_po_number' => {regex: 'ABC'}}.to_json
+
+    expect {@rule.run_validation(@ci_line.entry)}.to raise_error "Using multiple model fields is not supported with this business rule."
+  end
 end

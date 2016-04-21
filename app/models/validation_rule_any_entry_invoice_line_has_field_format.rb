@@ -1,4 +1,6 @@
-#run a field format validation on every invoice line on the entry and fail if ANY line fails the test
+# This class DOES NOT support the multiple field validation aspect of ValidatesFieldFormat.
+# 
+# If you set up multiple model fields, the validation will raise an error
 class ValidationRuleAnyEntryInvoiceLineHasFieldFormat < BusinessValidationRule
   include ValidatesCommercialInvoiceLine
   include ValidatesFieldFormat  
@@ -21,5 +23,20 @@ class ValidationRuleAnyEntryInvoiceLineHasFieldFormat < BusinessValidationRule
     nil
   end
 
+  # This validation doesn't work with multiple model fields set up...
+  def validation_expressions
+    expressions = super
+    raise "Using multiple model fields is not supported with this business rule." if expressions.size > 1
+    mf = expressions.keys.first
 
+    {mf => expressions[mf]}
+  end
+
+  def model_field
+    validation_expressions.keys.first
+  end
+
+  def match_expression
+    validation_expressions[model_field]['regex']
+  end
 end
