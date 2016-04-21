@@ -22,6 +22,7 @@ require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
 require 'open_chain/custom_handler/pvh/pvh_shipment_workflow_parser'
 require 'open_chain/custom_handler/advance/advance_parts_upload_parser'
 require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_handler'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -45,6 +46,7 @@ class CustomFeaturesController < ApplicationController
   PVH_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser'
   ADVAN_PART_UPLOAD ||= 'OpenChain::CustomHandler::Advance::AdvancePartsUploadParser'
   CQ_ORIGIN ||= 'OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser'
+  LUMBER_PART_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler'
 
   def index
     render :layout=>'one_col'
@@ -420,6 +422,22 @@ class CustomFeaturesController < ApplicationController
   
   def cq_origin_download
     generic_download "Carquest Orders"
+  end
+
+  def lumber_part_index
+    generic_index OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler, LUMBER_PART_UPLOAD, "Lumber Product Upload"
+  end
+
+  def lumber_part_upload
+    generic_upload(LUMBER_PART_UPLOAD, "Lumber Product Upload", "lumber_part") do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file or csv file."
+      end
+    end
+  end
+  
+  def lumber_part_download
+    generic_download "Lumber Product Upload"
   end
 
   private

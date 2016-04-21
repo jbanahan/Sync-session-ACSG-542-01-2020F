@@ -1,0 +1,43 @@
+<% content_for :head_tags do %>
+<style type="text/css">
+  #layout thead td {padding-left: 3px; padding-right: 3px; font-size: 75%; border: 1px solid black;}
+  #layout {margin-top: 20px; margin-bottom: 25px;}
+</style>
+<% end %>
+
+<% content_for :upload_form do %>
+<h2>Upload ONLY Part Files in Excel or CSV format.</h2>
+<h4>The following data columns should be present in your file in the <b>same order</b> as listed below.  The files must have header rows.</h4>
+<p>Use the following layout for US part files:</p>
+<table id="layout">
+  <thead>
+    <tr>
+      <td>Article #</td>
+      <td>Name</td>
+      <td>Old Article #</td>
+      <td>HTS 1</td>
+    </tr>
+  </thead>
+</table>
+<p>Use the following layout for CA part files:</p>
+<table id="layout">
+  <thead>
+    <tr>
+      <td>Shipment #</td>
+      <td>Delivery</td>
+      <td>Item</td>
+      <td>Ship-to Party</td>
+      <td>Article</td>
+      <td>Actual Delivery Qty</td>
+      <td>Description</td>
+      <td>Total Weight</td>
+      <td>Weight Unit</td>
+      <td>Base Unit Of Measure</td>
+      <td>HS Confirmation</td>
+      <td>Comments</td>
+    </tr>
+  </thead>
+</table>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Lumber Liquidators Parts Upload", custom_feature: "lumber_part"} %>

@@ -39,6 +39,7 @@ module OpenChain
                     :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, 
                     :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance]
         @custom_where = custom_where
+        @strip_leading_zeros = @importer.alliance_customer_number == "LUMBER"
       end
 
       def sync
@@ -55,6 +56,10 @@ module OpenChain
       end
 
       def preprocess_row row, opts = {}
+        if @strip_leading_zeros 
+          row[0] = row[0].to_s.gsub(/^0+/, "")
+        end
+
         # We're going to exclude all the FDA columns unless the FDA Product indicator is true
         unless row[4] == "Y"
           (5..18).each {|x| row[x] = ""}

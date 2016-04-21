@@ -92,6 +92,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     prod_old_article: {label: 'Old Article #', data_type: :string, module_type: 'Product'},
     prod_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Product'},
     class_proposed_hts: {label: "Proposed HTS", data_type: :string, module_type: "Classification"},
+    class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification"},
     prodven_risk: {label:'Risk',data_type: :string, module_type:'ProductVendorAssignment'},
     pva_pc_approved_by: {label: 'PC Approved By', data_type: :integer, module_type: 'PlantVariantAssignment'},
     pva_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'PlantVariantAssignment'},

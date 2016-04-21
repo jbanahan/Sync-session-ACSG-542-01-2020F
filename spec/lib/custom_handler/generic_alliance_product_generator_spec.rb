@@ -152,6 +152,15 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         @tmp = described_class.new(@c).sync_fixed_position
         expect(IO.read(@tmp.path)).to start_with "#{@cd[:prod_part_number][0..14]}Test Test"
       end
+      it "strips leading zeros from part number for lumber" do
+        build_custom_fields @standard_custom_fields, @p
+        lumber = Factory(:importer, alliance_customer_number: "LUMBER")
+        @p.update_attributes! importer_id: lumber.id
+        @p.update_custom_value! @custom_definitions[:prod_part_number], "0000000000PARTNUMBER"
+        @tmp = described_class.new(lumber).sync_fixed_position
+        expect(@tmp).not_to be_nil
+        expect(IO.read(@tmp.path)).to start_with "PARTNUMBER"
+      end
     end
     describe "query" do
       before :each do

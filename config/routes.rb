@@ -470,6 +470,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/cq_origin/upload" => "custom_features#cq_origin_upload"
   get "/custom_features/cq_origin/:id/download" => "custom_features#cq_origin_download"
 
+  get "/custom_features/lumber_part" => "custom_features#lumber_part_index"
+  post "/custom_features/lumber_part/upload" => "custom_features#lumber_part_upload"
+  get "/custom_features/lumber_part/:id/download" => "custom_features#lumber_part_download"
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get
