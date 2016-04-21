@@ -337,7 +337,10 @@ module CoreModuleDefinitions
     unique_id_field_name: :cmp_sys_code,
     key_model_field_uids: :cmp_sys_code,
     children: [Plant],
-    child_lambdas: {Plant => lambda {|c| c.plants}},
+    child_lambdas: {
+      Plant => lambda {|c| c.plants},
+      Address => lambda {|c| c.addresses}
+    },
     child_joins: {Plant => "LEFT OUTER JOIN plants plants ON companies.id = plants.company_id"},
     edit_path_proc: Proc.new {|obj| nil},
     view_path_proc: Proc.new {|obj| vendor_path(obj)},
@@ -345,7 +348,18 @@ module CoreModuleDefinitions
     enabled_lambda: lambda { MasterSetup.get.vendor_management_enabled? },
     quicksearch_fields: [:cmp_name],
     available_addresses_lambda: lambda {|company| company.addresses.order(:name, :city, :line_1) },
-    module_chain: [Company, Plant, PlantProductGroupAssignment]
+    module_chain: [Company, Plant, PlantProductGroupAssignment],
+    snapshot_descriptor: SnapshotDescriptor.for(Company,
+      plants: {
+        type:Plant,
+        children: {
+          plant_product_group_assignments:{
+            type: PlantProductGroupAssignment
+          }
+        }
+      },
+      addresses: {type:Address}
+    )
   )
 
   DRAWBACK_CLAIM = CoreModule.new("DrawbackClaim", "Drawback Claim",
