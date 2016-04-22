@@ -257,6 +257,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
+    it 'should send data to Fenix parser if Fenix B3 Files custom feature enabled' do
+      ms = MasterSetup.new
+      ms.custom_features_list = ["Fenix B3 Files"]
+      MasterSetup.stub(:get).and_return ms
+
+      OpenChain::FenixParser.should_receive(:delay).and_return OpenChain::FenixParser
+      OpenChain::FenixParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+      cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+    end
     it 'should not send data to Fenix parser if custom feature is not enabled' do
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix/x.y"}

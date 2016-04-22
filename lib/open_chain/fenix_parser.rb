@@ -1,15 +1,18 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/fenix_sql_proxy_client'
+require 'open_chain/ftp_file_support'
 
 module OpenChain
   class FenixParser
     extend OpenChain::IntegrationClientParser
-    SOURCE_CODE = 'Fenix'
+    include OpenChain::FtpFileSupport
+
+    SOURCE_CODE ||= 'Fenix'
 
     # You can easily add new simple date mappings from the SD records by adding a 
     # Activity # -> method name symbol in the entry.
     # ie. 'ABC' => :abc_date 
-    ACTIVITY_DATE_MAP = {
+    ACTIVITY_DATE_MAP ||= {
       # Because there's special handling associated with these fields, some of these 
       # mapped values intentially use symbols that don't map to actual entry property setter methods
       '180' => :do_issued_date_first,
@@ -32,8 +35,8 @@ module OpenChain
       'B3P' => :b3_print_date=
     }
 
-    SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON', 'BL']
-    LVS_LINE_TYPE = "LVS"
+    SUPPORTING_LINE_TYPES ||= ['SD', 'CCN', 'CON', 'BL']
+    LVS_LINE_TYPE ||= "LVS"
 
     def self.integration_folder
       ["//opt/wftpserver/ftproot/www-vfitrack-net/_fenix", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_fenix"]
@@ -99,11 +102,6 @@ module OpenChain
             current_file_number = file_number
           end
 
-          # The new style header line is exactly the same as the old, except for a leading line identifier
-          # value in the first position.  Shift the identifier off so we don't have to bother with different 
-          # array indexes between line styles when parsing the entry and invoice data from these lines
-          line.shift if line[0] == "B3L"
-
           entry_lines << line
         end
         FenixParser.new.parse_entry entry_lines, opts unless entry_lines.empty?
@@ -139,7 +137,7 @@ module OpenChain
         accumulated_dates = Hash.new {|h, k| h[k] = []}
 
         # Gather entry header information needed to find the entry
-        info = entry_information lines.first
+        info = entry_information strip_b3_from_line(lines.first)
 
         # The very first B3 for an entry record from Fenix appears to have all zeros as the transaction/entry number.
         # This causes issues with our shell image matching, so we'll just skip these as we should be getting B3's
@@ -153,7 +151,7 @@ module OpenChain
           # This whole block is also already inside a transaction, so no need to bother with opening another one
           @entry = entry
 
-          process_header lines.first, entry
+          process_header strip_b3_from_line(lines.first), entry
 
           lines.each do |line| 
 
@@ -166,7 +164,8 @@ module OpenChain
               process_container_line line
             when "BL"
               process_bill_of_lading_line line
-            else 
+            else
+              line = strip_b3_from_line(line)
               process_invoice line
               process_invoice_line line, fenix_nd_entry
             end
@@ -225,6 +224,8 @@ module OpenChain
           end
 
           @entry.create_snapshot User.integration
+
+          forward_entry_data @entry.customer_number, opts[:timestamp], File.basename(s3_path.to_s), lines
         end
         nil
       end
@@ -246,6 +247,11 @@ module OpenChain
       child_entry.save!
     end
 
+    def ftp_credentials
+      # We'll give the actual folder above, so don't bother defining here
+      ecs_connect_vfitrack_net(nil)
+    end
+
     private
 
     def self.parse_timestamp line
@@ -260,6 +266,10 @@ module OpenChain
         :importer_tax_id => str_val(line[3]),
         :importer_name => str_val(line[108])
       }
+    end
+
+    def strip_b3_from_line line
+      line[0].to_s.strip == "B3L" ? line[1..-1] : line
     end
 
     def process_header line, entry
@@ -824,5 +834,51 @@ module OpenChain
         true
       end
     end
+
+    def forward_entry_data customer_number, timestamp, filename, lines
+      # Manually reprocessing could mean these values don't get sent through, in which case skip the forwarding
+      return if timestamp.nil? || filename.blank?
+
+      # The main (www) instance of VFI Track forwards on these B3 files to different systems.
+      # Ideally, this would happen at a higher application stack level than this, by reading the B3 files
+      # determining which customers need the data forwarded and then doing that, but we're kind of stuck doing
+      # it here due to some limitations in our B2B application.
+      ftp_folders = forwarding_config[customer_number]
+
+      # Allow a single string or array of folders to forward the data to
+      if !ftp_folders.nil?
+        # Ideally we can just sent the same tempfile multiple times, if set up to forward,
+        # but something in the ftp process is closing the file (I think it's the paperclip
+        # process when saving the ftp session).  So, just build / recreate the tempfile multiple
+        # times
+        Array.wrap(ftp_folders).each do |folder|
+          Tempfile.open(["fenix-b3", ".csv"]) do |temp|
+            temp << timestamp_csv(timestamp).to_csv
+            lines.each {|line| temp << line.to_csv }
+            temp.flush
+            temp.rewind
+            Attachment.add_original_filename_method(temp, filename)
+            ftp_file temp, folder: folder, keep_local: true
+          end
+        end
+      end
+    end  
+
+    def timestamp_csv timestamp
+      time = timestamp.in_time_zone(time_zone) 
+      ["T", time.strftime("%Y%m%d"), time.strftime("%H%M%S")]
+    end
+
+    def forwarding_config
+      @config ||= begin 
+        # The config should just be a mapping of Importer Tax Ids to FTP folders the data needs to be forwarded to.
+        if File.exists?("config/fenix_b3_forwarding.yml")
+          YAML.load_file "config/fenix_b3_forwarding.yml"
+        else
+          {}
+        end
+      end
+    end
+
   end
 end

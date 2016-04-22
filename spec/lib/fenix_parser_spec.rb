@@ -931,7 +931,42 @@ describe OpenChain::FenixParser do
         expect(Entry.find_by_broker_reference(@file_number)).to be_nil
       end
     end
+
+    context "with entry forwarding" do
+      let (:forwarding_config) {
+        {@importer_number => ["path/to/folder"]}
+      }
+
+      it "ftps file contents if configured to do so" do
+        file_contents = nil
+        ftp_options = nil
+        OpenChain::FenixParser.any_instance.should_receive(:ftp_file) do |file, options|
+          file_contents = file.read
+          ftp_options = options
+        end
+        OpenChain::FenixParser.any_instance.should_receive(:forwarding_config).and_return forwarding_config
+        input = @entry_lambda.call
+        OpenChain::FenixParser.parse input, key: "path/to/file.csv"
+
+        expect(file_contents).not_to be_nil
+        rows = CSV.parse file_contents
+        # Just make sure the same number of rows are in the output as the input.
+        expect(rows.length).to eq (input.split("\n").length)
+        expect(rows.first).to eq @timestamp
+        expect(ftp_options).to eq( folder: "path/to/folder", keep_local: true )
+      end
+    end
   end
+
+  describe "ftp_credentials" do
+    it "uses the correct ftp credentials" do
+      # Just make sure it's using the ecs account one and the folder is blank
+      creds = subject.ftp_credentials
+      expect(creds[:username]).to eq "ecs"
+      expect(creds[:folder]).to be_blank
+    end
+  end
+
   describe 'process_past_days' do
     it "should delay processing" do
       OpenChain::FenixParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::FenixParser)
