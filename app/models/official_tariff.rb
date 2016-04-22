@@ -36,6 +36,11 @@ class OfficialTariff < ActiveRecord::Base
   def self.run_schedulable
     update_use_count
   end
+
+  def self.valid_hts? country, hts
+    country_id = country.respond_to?(:id) ? country.id : country
+    OfficialTariff.where(:country_id=>country_id,:hts_code=>hts).count > 0
+  end
   
   #update the database with the total number of times that each official tariff has been used
   def self.update_use_count

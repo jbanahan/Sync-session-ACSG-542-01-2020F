@@ -187,4 +187,11 @@
     </div>
   </div>
   <%-end%>
+  <%- if OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler.can_view?(current_user) -%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "LL Product Upload", '/custom_features/lumber_part', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
 </div>

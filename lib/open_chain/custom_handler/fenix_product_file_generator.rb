@@ -12,6 +12,7 @@ module OpenChain
         @suppress_country = options['suppress_country']
         @suppress_description = (options['suppress_description'].to_s == "true")
         @output_subdirectory = (options['output_subdirectory'].presence || '')
+        @strip_leading_zeros = (options['strip_leading_zeros'].to_s == "true")
 
         custom_defintions = []
         custom_defintions << :prod_part_number if @use_part_number
@@ -104,11 +105,13 @@ module OpenChain
         end
 
         def identifier_field p
+          value = nil
           if @use_part_number
-            p.get_custom_value(@cdefs[:prod_part_number]).value
+            value = p.get_custom_value(@cdefs[:prod_part_number]).value
           else
-            p.unique_identifier
+            value = p.unique_identifier
           end
+          @strip_leading_zeros ? value.to_s.gsub(/^0+/, "") : value
         end
 
     end

@@ -78,32 +78,6 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
 
       expect(uids).to eq search_column_uids
     end
-
-    it "reuses existing search setup" do
-      ss = SearchSetup.create! name:  "ADVAN/CQ Parts Upload (Do Not Delete or Modify!)", user_id: user.id, module_type: "Product"
-      search_column_uids.each {|uid| ss.search_columns.create! model_field_uid: uid }
-
-      subject.should_receive(:foreach).with(custom_file, skip_headers: true, skip_blank_lines:true).and_yield(file_contents[0])
-      ImportedFile.any_instance.should_receive(:process).with user
-      subject.should_receive(:translate_file_line).with(file_contents[0]).and_return [["line"]]
-
-      subject.process user
-
-      f = ImportedFile.first
-      expect(f.search_setup).to eq ss
-    end
-
-    it "raises an error if the search_setup exists without the expected columns" do
-      ss = SearchSetup.create! name:  "ADVAN/CQ Parts Upload (Do Not Delete or Modify!)", user_id: user.id, module_type: "Product"
-      subject.should_receive(:foreach).with(custom_file, skip_headers: true, skip_blank_lines:true).and_yield(file_contents[0])
-      subject.should_receive(:translate_file_line).with(file_contents[0]).and_return [["line"]]
-
-      subject.process user
-
-      m = user.messages.first
-      expect(m.subject).to eq "File Processing Complete With Errors"
-      expect(m.body).to eq "Unable to process file file.xlsx due to the following error:<br>Expected to find the field 'Importer System Code' in column 1, but found field 'blank' instead."
-    end
   end
 
   describe "translate_file_line" do

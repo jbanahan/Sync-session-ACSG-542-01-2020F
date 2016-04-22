@@ -1,8 +1,8 @@
-require 'open_chain/custom_handler/custom_file_csv_excel_parser'
+require 'open_chain/custom_handler/custom_file_to_imported_file_passthrough_handler'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Advance; class AdvancePartsUploadParser
-  include OpenChain::CustomHandler::CustomFileCsvExcelParser
+  include OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def initialize custom_file
@@ -26,32 +26,12 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
   def process user 
     @cdefs = self.class.prep_custom_definitions [:prod_part_number, :prod_short_description, :prod_units_per_set, :class_customs_description, :prod_sku_number]
     begin
-      process_file @custom_file, user
-    rescue ArgumentError => e
+      process_file @custom_file, user, skip_headers: true
+    rescue => e
       user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")
     end
     nil
   end
-
-  def process_file custom_file, user
-    new_filename = [File.basename(custom_file.path, ".*"), ".csv"]
-    imported_file = nil
-    Tempfile.open(new_filename) do |outfile|
-      Attachment.add_original_filename_method outfile, new_filename.join
-
-      foreach(custom_file, skip_headers: true, skip_blank_lines: true) do |row|
-        lines = translate_file_line row
-        lines.each {|line|  outfile << line.to_csv } 
-      end
-      outfile.flush
-      outfile.rewind
-
-      imported_file = generate_imported_file outfile, user
-    end
-
-    imported_file.process user
-  end
-
 
   def translate_file_line line
     lines = []
@@ -96,52 +76,11 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
     lines
   end
 
-
-  def generate_imported_file file, user
-    search_setup = find_or_create_search_setup user
-    imported_file = search_setup.imported_files.build update_mode: "any", starting_row: 1, starting_column: 1, module_type: search_setup.module_type, user_id: user.id
-    imported_file.attached = file
-    imported_file.save!
-
-    imported_file
+  def search_setup_attributes file, user
+    {name: "ADVAN/CQ Parts Upload (Do Not Delete or Modify!)", user_id: user.id, module_type: "Product"}
   end
 
-  def find_or_create_search_setup user
-    attrs = {name: "ADVAN/CQ Parts Upload (Do Not Delete or Modify!)", user_id: user.id, module_type: "Product"}
-    search_setup = SearchSetup.where(attrs).first
-    if search_setup
-      validate_search_setup(search_setup)
-    else
-      search_setup = create_search_setup attrs
-    end
-
-    search_setup
-  end
-
-  def validate_search_setup search_setup
-    # All we need to do is verify that the expected search columns are in the right order
-    columns = search_setup.search_columns.sort {|a, b| a.rank <=> b.rank }
-    column_uids.each_with_index do |uid, x|
-      if columns[x].nil? || columns[x].model_field_uid.to_s != uid.to_s
-        expected_model_field_label = ModelField.find_by_uid(uid).label
-
-        actual_model_field_label = columns[x].nil? ? "blank" : ModelField.find_by_uid(columns[x].model_field_uid.to_s).label
-
-        raise ArgumentError, "Expected to find the field '#{expected_model_field_label}' in column #{x + 1}, but found field '#{actual_model_field_label}' instead."
-      end
-    end
-  end
-
-  def create_search_setup setup_attributes
-    setup = SearchSetup.new setup_attributes
-    column_uids.each_with_index do |uid, x|
-      setup.search_columns.build rank: x, model_field_uid: uid.to_s
-    end
-    setup.save!
-    setup
-  end
-
-  def column_uids
+  def search_column_uids
     @ca ||= "*fhts_1_#{Country.where(iso_code: "CA").first.id}"
     @us ||= "*fhts_1_#{Country.where(iso_code: "US").first.id}"
     # Validate that @CA and @US are model fields..

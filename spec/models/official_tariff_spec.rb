@@ -140,4 +140,25 @@ describe OfficialTariff do
       OfficialTariff.run_schedulable
     end
   end
+
+  describe "valid_hts?" do
+    let (:country) { Factory(:country) }
+    let (:official_tariff) { OfficialTariff.create! country_id: country.id, hts_code: "1234567890" }
+
+    it "returns true if given country + hts is valid" do
+      official_tariff
+
+      expect(OfficialTariff.valid_hts? country, "1234567890").to be_true
+    end
+
+    it "returns false if hts is not present" do
+      expect(OfficialTariff.valid_hts? country, "1234567890").to be_false
+    end
+
+    it "accepts country id " do
+      official_tariff
+
+      expect(OfficialTariff.valid_hts? country.id, "1234567890").to be_true
+    end
+  end
 end

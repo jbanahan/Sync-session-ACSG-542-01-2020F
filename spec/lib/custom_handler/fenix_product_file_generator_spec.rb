@@ -154,6 +154,14 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @p.reload
       @p.should have(0).sync_records
     end
+
+    it "strips leading zeros if instructed" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'strip_leading_zeros' => true)
+      @p.update_attributes! unique_identifier: "00000#{@p.unique_identifier}"
+      @t = @h.make_file [@p]
+      read = IO.read(@t.path)
+      expect(read[31, 40]).to eq "myuid".ljust(40)
+    end
   end
 
   describe "ftp file" do

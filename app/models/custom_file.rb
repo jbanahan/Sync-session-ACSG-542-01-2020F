@@ -16,6 +16,7 @@ require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
 require 'open_chain/custom_handler/pvh/pvh_shipment_workflow_parser'
 require 'open_chain/custom_handler/advance/advance_parts_upload_parser'
 require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_handler'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
