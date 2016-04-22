@@ -18,6 +18,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleOrderLineFieldFormat: {label: "Order Line Field Format"},
                 ValidationRuleEntryHtsMatchesPo: {label:"Entry Invoice Line HTS Matches PO HTS"},
                 ValidationRuleAnyEntryInvoiceLineHasFieldFormat: {label:"At Least One Entry Invoice Line Matches Field Format"},
+                ValidationRuleEntryInvoiceCooMatchesSpi: {label:"Entry Invoice Line Country of Origin Matches Primary SPI"},
                 ValidationRuleAttachmentTypes: {label:"Has Attachment Types"},
                 ValidationRuleCanadaGpt: {label:"Entry Tariff lines utilize Canadian GPT rates."},
                 ValidationRuleEntryTariffMatchesProduct: {label:"Entry Tariff Numbers Match Parts Database"},
