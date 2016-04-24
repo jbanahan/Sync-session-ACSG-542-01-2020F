@@ -1,14 +1,16 @@
 require 'digest/md5'
 
 module Api; module V1; class ModelFieldsController < Api::V1::ApiController
-  API_MODULES ||= [CoreModule::PRODUCT, 
-    CoreModule::CLASSIFICATION, 
-    CoreModule::TARIFF, 
+  API_MODULES ||= [CoreModule::PRODUCT,
+    CoreModule::CLASSIFICATION,
+    CoreModule::TARIFF,
     CoreModule::ORDER,
     CoreModule::ORDER_LINE,
-    CoreModule::ENTRY, 
-    CoreModule::OFFICIAL_TARIFF, 
-    CoreModule::VARIANT]
+    CoreModule::ENTRY,
+    CoreModule::OFFICIAL_TARIFF,
+    CoreModule::VARIANT,
+    CoreModule::TRADE_LANE
+  ]
 
   def index
     validator_rules = Hash[FieldValidatorRule.all.map{|fvr| [fvr.model_field_uid.to_sym, fvr]}]
