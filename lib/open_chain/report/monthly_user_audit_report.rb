@@ -28,10 +28,14 @@ module OpenChain
       def query
         <<-SQL
           SELECT users.company_id AS 'Company DB ID', 
-            companies.name AS 'Company Name', companies.system_code AS 'Company Code', 
+            companies.name AS 'Company Name', 
+            companies.system_code AS 'Company Code', 
             users.id AS 'User DB ID',
             users.last_request_at AS 'Last Activity',
-            users.first_name AS 'First Name', users.last_name AS 'Last Name', users.username AS 'Username', users.email AS 'Email', 
+            users.first_name AS 'First Name', 
+            users.last_name AS 'Last Name', 
+            users.username AS 'Username', 
+            users.email AS 'Email', 
             IFNULL(portal_mode,'') AS 'Portal Mode', 
             IF(admin=1,'Yes','No') AS 'Admin',
             IF(sys_admin=1,'Yes','No') AS 'Sys Admin',
