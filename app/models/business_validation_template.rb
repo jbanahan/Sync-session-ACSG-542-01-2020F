@@ -71,6 +71,11 @@ class BusinessValidationTemplate < ActiveRecord::Base
   end
 
   def create_result! obj, run_validation = false
+    # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
+    # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
+    # never be false associated with the template
+    return nil if self.search_criterions.length == 0
+
     bvr = nil
     self.search_criterions.each do |sc|
       return nil unless sc.test?(obj)

@@ -83,6 +83,7 @@ describe BusinessValidationTemplate do
       @o = Order.new
       @bvt = described_class.create!(module_type:'Order')
       @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      @bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       @bvt.reload
     end
 
@@ -123,16 +124,25 @@ describe BusinessValidationTemplate do
 
       @bvt.create_result! @o
     end
+
+    it "does not create results if the template has no search_criterions" do
+      @bvt.search_criterions.destroy_all
+
+      expect(@bvt.create_result! @o).to be_nil
+      expect(BusinessValidationResult.first).to be_nil
+    end
   end
 
   describe :create_results_for_object! do
     it "should create results" do
       expect(BusinessValidationTemplate.count).to eq 0
       bvt1 = described_class.create!(module_type:'Order')
+      bvt1.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       bvt2 = described_class.create!(module_type:'Order')
+      bvt2.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       bvt_ignore = described_class.create!(module_type:'Entry')
 
-      ord = Factory(:order)
+      ord = Factory(:order, order_number: "ABCD")
 
       expect{described_class.create_results_for_object!(ord)}.to change(BusinessValidationResult,:count).from(0).to(2)
       [bvt1,bvt2].each do |b|
