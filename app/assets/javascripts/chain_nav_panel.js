@@ -1,3 +1,4 @@
+/*Generated file from the chain_nav_panel project. DO NOT EDIT DIRECTLY*/
 (function() {
   var root;
 
@@ -7,8 +8,24 @@
     write: function(htmlWrapper, elementToReplace, userPromise, notificationCenterCallback) {
       var initNotificationCenter, registerHotKeys, setupHomepageModal, setupOffCanvas, writeMenu;
       registerHotKeys = function() {
-        return $(document).on('keyup', null, '/', function() {
-          return $(".search-query:visible:first").focus();
+        return $(document).on('keyup', function(evt) {
+          if ($(evt.target).is(':input')) {
+            return;
+          }
+          switch (evt.keyCode) {
+            case 191:
+              return $(".search-query:visible:first").focus();
+            case 77:
+              $('[data-toggle="offcanvas"]:first').click();
+              return $('#sidebar:visible .list-group-item:first').focus();
+            case 78:
+              return $('[data-toggle="notification-center"]:first').click();
+            case 27:
+              if ($('#notification-center:visible')) {
+                $('#notification-center').modal('hide');
+              }
+              return $('.sidebar-offcanvas').removeClass('active');
+          }
         });
       };
       setupOffCanvas = function() {
@@ -53,11 +70,11 @@
 }).call(this);
 
 var ChainNavPanelHtml = ChainNavPanelHtml || {};
-ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  <form class=\'form-inline form visible-xs\' role=\'search\' action=\'/quick_search\' method=\'GET\' id=\'mini-qs\'>\n    <div class="container-fluid" id=\'mini-qs-container\'>\n      <div class="row">\n        <div class="col-xs-11">\n          <input type=\'text\' class=\'search-query form-control\' placeholder=\'Quick Search\' data-toggle=\'tooltip\' title=\'press / to jump here\' name=\'v\' />\n        </div>\n        <div class=\'col-xs-1\'>\n          <a href=\'#\' onclick="$(\'#mini-qs\').submit(); return false;">\n            <span class=\'glyphicon glyphicon-search\'></span>\n          </a>\n        </div>\n      </div>\n    </div>\n  </form>\n  <div class=\'navbar\' role=\'navigation\' id=\'topnav\'>\n    <ul class="nav navbar-nav navbar-left pull-left" style=\'margin-left:3px;\'>\n      <li>\n        <button id=\'btn-left-toggle\' class=\'navbar-toggle\' data-toggle="offcanvas" title="shortcut key: m">\n          <span class="sr-only">Toggle navigation</span>\n          <span class="icon-bar"></span>\n          <span class="icon-bar"></span>\n          <span class="icon-bar"></span>\n        </button>\n      </li>\n    </ul>\n    <ul class="nav navbar-nav navbar-right pull-right"  style=\'margin-right:3px;\'>\n      <li id=\'notification-center-wrapper\'>\n        <!--<a href=\'#\' data-toggle=\'notification-center\' onclick="return false;" title=\'shortcut key: n\' class=\'message-envelope-wrapper\'>\n          <span class=\'glyphicon glyphicon-bell message_envelope\'></span>\n        </a>-->\n      </li>\n    </ul>\n    <form class=\'navbar-form hidden-xs\' role=\'search\' action=\'/quick_search\' method=\'GET\' id=\'quicksearch\'>\n      <div class=\'form-group\'>\n        <input type=\'text\' class=\'search-query form-control\' placeholder=\'enter search term\' data-toggle=\'tooltip\' title=\'shortcut key: /\' name=\'v\' id=\'quick_search_input\' />\n        &nbsp;\n        <a href=\'#\' onclick="$(\'#quicksearch\').submit(); return false;">\n          <span class=\'glyphicon glyphicon-search\'></span>\n        </a>\n      </div>\n    </form>\n  </div>\n  <div class="sidebar-offcanvas panel-group" id="sidebar">\n    <a href=\'/\' title=\'Home\' class=\'list-group-item\'>Home</a>\n    <div id=\'sidebar-loading\'>\n      Please wait while your personalized menu is generated.\n    </div>\n  </div>\n</div>\n<div class="modal fade" id="homepage-modal">\n  <div class="modal-dialog">\n    <div class="modal-content">\n      <div class="modal-header"><h4 class="modal-title">Set Homepage To Current Page</h4></div>\n      <div class="modal-body">\n        <p>Click "OK" to make this page the first one you see when you log in to VFI Track.</p>\n        <p>You may also access your homepage at any time by clicking the Home link on the navigation bar.</p>\n      </div>\n      <div class="modal-footer">\n        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>\n        <button type="button" class="btn btn-primary" data-dismiss="modal" id="set-homepage-btn">OK</button>\n      </div>\n    </div>\n  </div>\n</div>';
+ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  <form class=\'form-inline form visible-xs\' role=\'search\' action=\'/quick_search\' method=\'GET\' id=\'mini-qs\'>\n    <div class="container-fluid" id=\'mini-qs-container\'>\n      <div class="row">\n        <div class="col-xs-11">\n          <input type=\'text\' class=\'search-query form-control\' placeholder=\'Quick Search\' data-toggle=\'tooltip\' title=\'press / to jump here\' name=\'v\' />\n        </div>\n        <div class=\'col-xs-1\'>\n          <a href=\'#\' onclick="$(\'#mini-qs\').submit(); return false;">\n            <i class=\'fa fa-search\'></i>\n          </a>\n        </div>\n      </div>\n    </div>\n  </form>\n  <div class=\'navbar\' role=\'navigation\' id=\'topnav\'>\n    <ul class="nav navbar-nav navbar-left pull-left" style=\'margin-left:3px;\'>\n      <li>\n        <button id=\'btn-left-toggle\' class=\'navbar-toggle\' data-toggle="offcanvas" title="shortcut key: m">\n          <span class="sr-only">Toggle navigation</span>\n          <span class="icon-bar"></span>\n          <span class="icon-bar"></span>\n          <span class="icon-bar"></span>\n        </button>\n      </li>\n    </ul>\n    <ul class="nav navbar-nav navbar-right pull-right"  style=\'margin-right:3px;\'>\n      <li id=\'notification-center-wrapper\'>\n      </li>\n    </ul>\n    <form class=\'navbar-form hidden-xs\' role=\'search\' action=\'/quick_search\' method=\'GET\' id=\'quicksearch\'>\n      <div class=\'form-group\'>\n        <input type=\'text\' class=\'search-query form-control\' placeholder=\'enter search term\' data-toggle=\'tooltip\' title=\'shortcut key: /\' name=\'v\' id=\'quick_search_input\' />\n        &nbsp;\n        <a href=\'#\' onclick="$(\'#quicksearch\').submit(); return false;">\n          <i class=\'fa fa-search\'></i>\n        </a>\n      </div>\n    </form>\n  </div>\n  <div class="sidebar-offcanvas panel-group" id="sidebar">\n    <a href=\'/\' title=\'Home\' class=\'list-group-item\'>Home</a>\n    <div id=\'sidebar-loading\'>\n      Please wait while your personalized menu is generated.\n    </div>\n  </div>\n</div>\n<div class="modal fade" id="homepage-modal">\n  <div class="modal-dialog">\n    <div class="modal-content">\n      <div class="modal-header"><h4 class="modal-title">Set Homepage To Current Page</h4></div>\n      <div class="modal-body">\n        <p>Click "OK" to make this page the first one you see when you log in to VFI Track.</p>\n        <p>You may also access your homepage at any time by clicking the Home link on the navigation bar.</p>\n      </div>\n      <div class="modal-footer">\n        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>\n        <button type="button" class="btn btn-primary" data-dismiss="modal" id="set-homepage-btn">OK</button>\n      </div>\n    </div>\n  </div>\n</div>\n<div class="modal fade" id="notification-center">\n  <div class="modal-dialog modal-max-width">\n    <div class="modal-content">\n      <div class="modal-header text-center">\n        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>\n        <div class="btn-group">\n          <button type="button" class="btn btn-default" notification-center-toggle-target=\'messages\'>Messages</button>\n          <button type="button" class="btn btn-default" notification-center-toggle-target=\'tasks\'>Tasks</button>\n          <button type="button" class="btn btn-default" notification-center-toggle-target=\'manuals\'>Manuals</button>\n        </div>\n      </div>\n      <div class="modal-body" id=\'notification-center-body\'>\n        <div notification-center-pane=\'messages\' content-url=\'/messages\'></div>\n        <div notification-center-pane=\'tasks\' content-url=\'/my_tasks\' data-load-trigger=\'chain:workflow-load\'></div>\n        <div notification-center-pane=\'manuals\' content-url=\'/user_manuals/for_referer\'></div>\n      </div>\n    </div>\n  </div>\n</div>\n';
 
 (function() {
   ChainNavPanel.MenuBuilder = function() {
-    var addBrokerInvoiceMenu, addDrawbackMenu, addEntryMenu, addMoreMenu, addOrderMenu, addProductMenu, addSecurityFilingMenu, addShipmentMenu, addSurveyMenu, addVendorMenu, makeItem, makeItemIf, makeMenuIf;
+    var addBrokerInvoiceMenu, addDrawbackMenu, addEntryMenu, addMoreMenu, addOrderMenu, addProductMenu, addSecurityFilingMenu, addShipmentMenu, addSurveyMenu, addTradeLaneMenu, addVendorMenu, makeItem, makeItemIf, makeMenuIf;
     makeItemIf = function(bool, itemArray, id, label, url) {
       if (bool) {
         return itemArray.push(makeItem(id, label, url));
@@ -144,9 +161,16 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
     addVendorMenu = function(cat, u) {
       var items;
       items = [];
-      makeItemIf(u.permissions.view_vendors, items, 'View', '/vendors');
-      makeItemIf(u.permissions.create_vendors, items, 'New', '/vendors/new');
+      makeItemIf(u.permissions.view_vendors, items, 'vendor-view', 'View', '/vendors');
+      makeItemIf(u.permissions.create_vendors, items, 'vendor-new', 'New', '/vendors/new');
       return makeMenuIf(cat, 'nav-cat-vendor', 'Vendor', items);
+    };
+    addTradeLaneMenu = function(cat, u) {
+      var items;
+      items = [];
+      makeItemIf(u.permissions.view_trade_lanes, items, 'trade-lane-view', 'View', '/trade_lanes');
+      makeItemIf(u.permissions.edit_trade_lanes, items, 'trade-lane-new', 'New', '/trade_lanes#/new');
+      return makeMenuIf(cat, 'nav-cat-trade-lane', 'Trade Lane', items);
     };
     addMoreMenu = function(categories, user) {
       var items;
@@ -178,6 +202,8 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
         addBrokerInvoiceMenu(categories, user);
         addDrawbackMenu(categories, user);
         addSurveyMenu(categories, user);
+        addVendorMenu(categories, user);
+        addTradeLaneMenu(categories, user);
         addMoreMenu(categories, user);
         return {
           categories: categories
@@ -199,7 +225,7 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
           cat = ref[i];
           navTarget = '#' + cat.id;
           html = html + "<div class='panel'>";
-          html = html + "<div class='panel-heading'><h3 class='panel-title' data-toggle='collapse' data-target='" + navTarget + "'><a href='#' on-click='return false;'>" + cat.label + "</a></h3></div><div class='panel-collapse collapse' id='" + cat.id + "'><div class='list-group'>";
+          html = html + "<div class='panel-heading'><h3 class='panel-title' data-toggle='collapse' data-target='" + navTarget + "'><a href='javascript:void(0)'>" + cat.label + "</a></h3></div><div class='panel-collapse collapse' id='" + cat.id + "'><div class='list-group'>";
           ref1 = cat.items;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
             itm = ref1[j];
@@ -210,6 +236,187 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
         return wrapper.append(html);
       }
     };
+  };
+
+}).call(this);
+
+(function() {
+  var root;
+
+  root = typeof exports !== "undefined" && exports !== null ? exports : this;
+
+  root.ChainNotificationCenter = {
+    getMessageCount: function(url) {
+      return $.getJSON(url, function(data) {
+        if (data > 0) {
+          return $('.message_envelope').each(function() {
+            return $(this).html('' + data).addClass('messages');
+          });
+        } else {
+          return $('.message_envelope').each(function() {
+            return $(this).html('').removeClass('messages');
+          });
+        }
+      });
+    },
+    initialize: function(user_id, pollingSeconds) {
+      this.url = '/messages/message_count?user_id=' + user_id;
+      return $(document).ready((function(_this) {
+        return function() {
+          _this.initNotificationCenter();
+          _this.getMessageCount(_this.url);
+          if (pollingSeconds > 0) {
+            return _this.startPolling(pollingSeconds);
+          }
+        };
+      })(this));
+    },
+    initWorkflowCallback: function() {
+      return $(document).on('chain:workflow-load', function(evt) {
+        ChainWorkflow.initWorkflowButtons(function(data) {
+          return Chain.showNotificationCenterPane('tasks');
+        });
+        return $('.task-widget [rel-date]').each(function() {
+          var t;
+          t = $(this);
+          return t.html(t.attr('rel-date-prefix') + moment(t.attr('rel-date')).fromNow());
+        });
+      });
+    },
+    initNotificationCenter: function() {
+      $('[data-toggle="notification-center"]').click(function() {
+        return ChainNotificationCenter.toggleNotificationCenter();
+      });
+      $('[notification-center-toggle-target]').on('click', function() {
+        return ChainNotificationCenter.showNotificationCenterPane($(this).attr('notification-center-toggle-target'));
+      });
+      $('#notification-center').on('click', '.delete-message-btn', function(evt) {
+        var msgId;
+        msgId = $(this).attr('message-id');
+        evt.preventDefault();
+        if (window.confirm('Are you sure you want to delete this message?')) {
+          return $.ajax({
+            url: '/messages/' + msgId,
+            type: "post",
+            data: {
+              "_method": "delete"
+            },
+            success: function() {
+              return $('#message-panel-' + msgId).fadeOut();
+            }
+          });
+        }
+      });
+      $('#notification-center').on('click', '.show-time-btn', function(evt) {
+        var t;
+        t = $(this);
+        if (t.html() === t.attr('title')) {
+          return t.html("<span class='glyphicon glyphicon-time'></span>");
+        } else {
+          return t.html(t.attr('title'));
+        }
+      });
+      $('#notification-center').click(function(event) {
+        if (event.target === this) {
+          return ChainNotificationCenter.hideNotificationCenter();
+        }
+      });
+      $('#notification-center').on('show.bs.collapse', '.panel-collapse', function(event) {
+        var id, panel, t;
+        t = event.target;
+        id = $(t).attr('message-id');
+        panel = $('#message-panel-' + id);
+        panel.find('.message-read-icon').removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down');
+        if (panel.hasClass('unread')) {
+          panel.addClass('read').removeClass('unread');
+          return $.get('/messages/' + id + '/read', function() {
+            return ChainNotificationCenter.getMessageCount(ChainNotificationCenter.pollingUrl());
+          });
+        }
+      });
+      $('#notification-center').on('hide.bs.collapse', '.panel-collapse', function(event) {
+        var id, t;
+        t = event.target;
+        id = $(t).attr('message-id');
+        return $('#message-panel-' + id + ' .message-read-icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+      });
+      $('#notification-center').on('click', '.notification-mark-all-read', function(event) {
+        return $.ajax({
+          url: '/messages/read_all',
+          success: function() {
+            $('#notification-center').find('.unread').each(function() {
+              return $(this).removeClass('unread').addClass('read');
+            });
+            return ChainNotificationCenter.getMessageCount(ChainNotificationCenter.pollingUrl());
+          }
+        });
+      });
+      $('#notification-center').on('chain:notification-load', '[notification-center-pane="messages"]', function() {
+        return $('[notification-center-pane="messages"] .message-body a').addClass('btn').addClass('btn-xs').addClass('btn-primary');
+      });
+      return this.initWorkflowCallback();
+    },
+    pollingUrl: function() {
+      return this.url;
+    },
+    startPolling: function(pollingSeconds) {
+      if (!((this.intervalRegistration != null) || pollingSeconds <= 0)) {
+        return this.intervalRegistration = setInterval((function(_this) {
+          return function() {
+            return _this.getMessageCount(_this.url);
+          };
+        })(this), pollingSeconds * 1000);
+      }
+    },
+    stopPolling: function() {
+      var reg;
+      if (this.intervalRegistration != null) {
+        reg = this.intervalRegistration;
+        this.intervalRegistration = null;
+        return clearInterval(reg);
+      }
+    },
+    toggleNotificationCenter: function() {
+      if ($("#notification-center").is(':visible')) {
+        return ChainNotificationCenter.hideNotificationCenter();
+      } else {
+        return ChainNotificationCenter.showNotificationCenter();
+      }
+    },
+    showNotificationCenter: function() {
+      $("#notification-center").modal('show');
+      return ChainNotificationCenter.showNotificationCenterPane('messages');
+    },
+    showNotificationCenterPane: function(target) {
+      var pane;
+      $("[notification-center-pane]").hide();
+      $("[notification-center-toggle-target]").removeClass('btn-primary').addClass('btn-default');
+      $("[notification-center-toggle-target='" + target + "']").removeClass('btn-default').addClass('btn-primary');
+      pane = $("[notification-center-pane='" + target + "']");
+      pane.html('<div class="loader"></div>');
+      pane.show();
+      return $.ajax({
+        url: pane.attr('content-url'),
+        data: {
+          nolayout: 'true'
+        },
+        success: function(data) {
+          var extraTrigger;
+          extraTrigger = pane.attr('data-load-trigger');
+          pane.html(data);
+          pane.trigger('chain:notification-load');
+          if (extraTrigger) {
+            return pane.trigger(extraTrigger);
+          }
+        },
+        error: function() {
+          return pane.html("<div class='alert alert-danger'>We're sorry, an error occurred while trying to load this information.</div>");
+        }
+      });
+    },
+    hideNotificationCenter: function() {
+      return $("#notification-center").modal('hide');
+    }
   };
 
 }).call(this);
