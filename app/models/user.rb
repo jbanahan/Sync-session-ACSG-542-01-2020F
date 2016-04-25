@@ -223,7 +223,9 @@ class User < ActiveRecord::Base
       view_vendors: self.view_vendors?,
       create_vendors: self.create_vendors?,
       view_trade_lanes: self.view_trade_lanes?,
-      edit_trade_lanes: self.edit_trade_lanes?
+      edit_trade_lanes: self.edit_trade_lanes?,
+      view_trade_preference_programs: self.view_trade_preference_programs?,
+      edit_trade_preference_programs: self.edit_trade_preference_programs?
     }
     return {
       id: self.id,

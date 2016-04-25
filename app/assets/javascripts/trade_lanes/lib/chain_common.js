@@ -193,6 +193,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
       };
       publicMethods.Country = newCountryClient();
       publicMethods.TradeLane = newCoreModuleClient('trade_lanes', 'trade_lane');
+      publicMethods.TradePreferenceProgram = newCoreModuleClient('trade_preference_programs', 'trade_preference_program');
       publicMethods.Product = newCoreModuleClient('products', 'product', function(product) {
         delete product.prod_ent_type_id;
         return product;

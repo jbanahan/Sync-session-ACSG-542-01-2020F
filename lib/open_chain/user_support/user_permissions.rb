@@ -66,6 +66,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return true
     when CoreModule::TRADE_LANE
       return self.view_trade_lanes?
+    when CoreModule::TRADE_PREFERENCE_PROGRAM
+      return self.view_trade_preference_programs?
     end
     return false
   end
@@ -115,6 +117,18 @@ module OpenChain; module UserSupport; module UserPermissions
   end
   def attach_trade_lanes?
     self.trade_lane_attach? && self.company.view_trade_lanes?
+  end
+  def view_trade_preference_programs?
+    self.view_trade_lanes?
+  end
+  def edit_trade_preference_programs?
+    self.edit_trade_lanes?
+  end
+  def comment_trade_preference_programs?
+    self.comment_trade_lanes?
+  end
+  def attach_trade_preference_programs?
+    self.attach_trade_lanes?
   end
   def view_drawback?
     self.drawback_view? && MasterSetup.get.drawback_enabled?

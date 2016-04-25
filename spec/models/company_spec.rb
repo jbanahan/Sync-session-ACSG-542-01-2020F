@@ -133,6 +133,18 @@ describe Company do
         end
       end
     end
+    context "trade preference programs" do
+      it "should delegate view to trade_lanes" do
+        c = Company.new
+        c.should_receive(:view_trade_lanes?).and_return 'ABC'
+        expect(c.view_trade_preference_programs?).to eq 'ABC'
+      end
+      it "should delegate edit to trade_lanes" do
+        c = Company.new
+        c.should_receive(:edit_trade_lanes?).and_return 'ABC'
+        expect(c.edit_trade_preference_programs?).to eq 'ABC'
+      end
+    end
     context "security filings" do
       before :each do
         MasterSetup.any_instance.stub(:security_filing_enabled?).and_return(true)

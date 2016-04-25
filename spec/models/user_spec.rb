@@ -297,6 +297,28 @@ describe User do
         expect(u.attach_trade_lanes?).to be_false
       end
     end
+    context "trade_preference_programs" do
+      it "should delegate view to trade lanes method" do
+        u = User.new
+        u.should_receive(:view_trade_lanes?).and_return 'ABC'
+        expect(u.view_trade_preference_programs?).to eq 'ABC'
+      end
+      it "should delegate edit to trade lanes method" do
+        u = User.new
+        u.should_receive(:edit_trade_lanes?).and_return 'ABC'
+        expect(u.edit_trade_preference_programs?).to eq 'ABC'
+      end
+      it "should delegate comment to trade lanes method" do
+        u = User.new
+        u.should_receive(:comment_trade_lanes?).and_return 'ABC'
+        expect(u.comment_trade_preference_programs?).to eq 'ABC'
+      end
+      it "should delegate attach to trade lanes method" do
+        u = User.new
+        u.should_receive(:attach_trade_lanes?).and_return 'ABC'
+        expect(u.attach_trade_preference_programs?).to eq 'ABC'
+      end
+    end
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))

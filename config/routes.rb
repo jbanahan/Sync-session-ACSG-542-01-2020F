@@ -134,6 +134,7 @@ OpenChain::Application.routes.draw do
       resources :user_manuals, only: [:index]
 
       resources :trade_lanes, except: [:destroy]
+      resources :trade_preference_programs, except: [:destroy]
 
       match "/setup_data" => "setup_data#index", via: :get
 

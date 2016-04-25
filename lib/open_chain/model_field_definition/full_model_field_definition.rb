@@ -34,6 +34,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentLineFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
   include OpenChain::ModelFieldDefinition::TradeLaneFieldDefinition
+  include OpenChain::ModelFieldDefinition::TradePreferenceProgramFieldDefinition
   include OpenChain::ModelFieldDefinition::VariantFieldDefinition
   include OpenChain::ModelFieldDefinition::SummaryStatementFieldDefinition
   include OpenChain::ModelFieldDefinition::AttachmentFieldDefinition
@@ -77,5 +78,6 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_entry_comment_fields
     add_commercial_invoice_lacey_fields
     add_trade_lane_fields
+    add_trade_preference_program_fields
   end
 end; end; end

@@ -73,4 +73,13 @@ describe TradeLane do
       end
     end
   end
+  describe '#trade_preference_programs' do
+    it 'should return preference programs' do
+      tpp1 = Factory(:trade_preference_program)
+      tpp2 = Factory(:trade_preference_program,origin_country_id:tpp1.origin_country_id,destination_country_id:tpp1.destination_country_id)
+      lane = Factory(:trade_lane,origin_country_id:tpp1.origin_country_id,destination_country_id:tpp1.destination_country_id)
+
+      expect(lane.trade_preference_programs.to_a).to eq [tpp1,tpp2]
+    end
+  end
 end
