@@ -30,5 +30,6 @@ config/secrets.yml
 config/fenix_sql_proxy.yml
 config/vfi-canada.asc
 config/support_request.yml
+config/fenix_b3_forwarding.yml
 .idea
 dump.rdb

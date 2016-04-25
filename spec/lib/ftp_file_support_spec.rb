@@ -107,4 +107,19 @@ describe "FtpFileSupport" do
       expect(subject.fenixapp_vfitrack_net('folder', 'filename.txt')[:remote_file_name]).to eq "filename.txt"
     end
   end
+
+  describe "ecs_connect_vfitrack_net" do
+    it "uses correct credentials" do
+      expect(subject.ecs_connect_vfitrack_net 'folder').to eq({
+        server: "connect.vfitrack.net",
+        username: "ecs",
+        password: "wzuomlo",
+        folder: "folder", 
+        protocol: "sftp",
+        port: 2222
+      })
+
+      expect(subject.ecs_connect_vfitrack_net('folder', 'filename.txt')[:remote_file_name]).to eq "filename.txt"
+    end
+  end
 end
