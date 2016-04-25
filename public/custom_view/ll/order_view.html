@@ -19,11 +19,14 @@
             <li class='list-group-item'>
               Issue Date <span class='pull-right'>{{order.ord_ord_date}}</span>
             </li>
-            <li class='list-group-item'>
-              Planned Delivery Date <span class='pull-right'>{{order.ord_first_exp_del}}</span>
+            <li class='list-group-item' ng-if='order.ord_window_start && order.ord_window_start==order.ord_window_end'>
+              Delivery Date <span class='pull-right'>{{order.ord_window_start}}</span>
             </li>
-            <li class='list-group-item'>
-              Ship Window <span class='pull-right'><small>To be provided by freight forwarder</small></span>
+            <li class='list-group-item' ng-if='order.ord_window_start && order.ord_window_start!=order.ord_window_end'>
+              Ship Window Start <span class='pull-right'>{{order.ord_window_start}}</span>
+            </li>
+            <li class='list-group-item' ng-if='order.ord_window_end && order.ord_window_start!=order.ord_window_end'>
+              Ship Window End <span class='pull-right'>{{order.ord_window_end}}</span>
             </li>
             <li class="list-group-item">
               Vendor No.
