@@ -99,6 +99,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     if !custom_view.blank?
       h['custom_view'] = custom_view
     end
+    h['vendor_id'] = o.vendor_id
     h['permissions'] = render_permissions(o)
     h
   end
