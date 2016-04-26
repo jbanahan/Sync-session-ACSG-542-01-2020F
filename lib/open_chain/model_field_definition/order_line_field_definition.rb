@@ -39,6 +39,7 @@ module OpenChain; module ModelFieldDefinition; module OrderLineFieldDefinition
       ]
       add_fields CoreModule::ORDER_LINE, pva_fields_to_add
     end
+    add_model_fields CoreModule::ORDER_LINE, make_country_hts_fields(CoreModule::ORDER_LINE, product_lambda: -> (obj) { obj.product } )
 
   end
 end; end; end
