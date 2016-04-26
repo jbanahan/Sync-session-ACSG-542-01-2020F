@@ -286,6 +286,9 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
       expect(order.season).to eq "Fall 2016"
       expect(order.custom_value(cdefs[:ord_division])).to eq "W LRL APP MISSY JEANS"
 
+      expect(order.entity_snapshots.length).to eq 1
+      expect(order.entity_snapshots.first.user).to eq User.integration
+
       vendor = Company.vendors.first
       expect(vendor).not_to be_nil
       expect(vendor.system_code).to eq "0200000363"
