@@ -160,7 +160,7 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
     add_fields CoreModule::PRODUCT, make_attachment_arrays(400,'prod',CoreModule::PRODUCT)
     add_fields CoreModule::PRODUCT, make_business_rule_arrays(500,'prod','products','Product')
     add_fields CoreModule::PRODUCT, make_comment_arrays(600,'prod','Product')
-    add_model_fields CoreModule::PRODUCT, make_country_hts_fields
+    add_model_fields CoreModule::PRODUCT, make_country_hts_fields(CoreModule::PRODUCT, read_only: false, model_field_suffix: "", hts_numbers: 1..3, label_prefix: "", product_lambda: -> (obj) { obj } )
     add_model_fields CoreModule::PRODUCT, make_region_fields
   end
 end; end; end

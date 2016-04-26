@@ -1,53 +1,66 @@
 module OpenChain; module ModelFieldGenerator; module CountryHtsGenerator
-  def make_country_hts_fields
+
+  def import_lambda product_lambda, hts_number, country
+    lambda do |obj, d|
+      p = product_lambda.call(obj)
+
+      #validate HTS
+      hts = TariffRecord.clean_hts(d)
+      return "Blank HTS ignored for #{country.iso_code}" if hts.blank?
+      unless OfficialTariff.find_by_country_id_and_hts_code(country.id,hts) || OfficialTariff.where(country_id:country.id).empty?
+        e = "#{d} is not valid for #{country.iso_code} HTS #{hts_number}"
+        # Indicate the message is an error message
+        def e.error?; true; end
+        return e;
+      end
+      cls = nil
+      #find classifications & tariff records in memory so this can work on objects that are dirty
+      p.classifications.each do |existing|
+        cls = existing if existing.country_id == country.id
+        break if cls
+      end
+      cls = p.classifications.build(:country_id=>country.id) unless cls
+      tr = nil
+      tr = cls.tariff_records.sort {|a,b| a.line_number <=> b.line_number}.first
+      tr = cls.tariff_records.build unless tr
+      tr.send("hts_#{hts_number}=".to_sym,hts)
+      "#{country.iso_code} HTS #{hts_number} set to #{hts.hts_format}"
+    end
+  end
+
+  def export_lambda product_lambda, hts_number, country
+    lambda do |obj|
+      p = product_lambda.call(obj)
+      return "" if p.nil?
+
+      cls = p.classifications.find {|c| c.country_id == country.id }
+
+      retval = ""
+      if cls
+        tr = cls.tariff_records[0]
+        if tr
+          retval = tr.send("hts_#{hts_number}").to_s.hts_format
+        end
+      end
+      retval
+    end
+  end
+
+  def query_subselect hts_number, country, join_table_name, join_table_with_id
+    "(SELECT hts_#{hts_number} FROM classifications hts_#{hts_number}_class INNER JOIN tariff_records hts_#{hts_number}_tariff ON hts_#{hts_number}_tariff.classification_id = hts_#{hts_number}_class.id WHERE hts_#{hts_number}_class.country_id = #{country.id} AND hts_#{hts_number}_class.product_id = #{join_table_name}.#{join_table_with_id ? "id" : "product_id"} ORDER BY hts_#{hts_number}_tariff.line_number LIMIT 1)"
+  end
+
+  def make_country_hts_fields core_module, join_table_name: core_module.table_name, read_only: true, model_field_suffix: core_module.table_name, hts_numbers: 1..1, label_prefix: "Product - ", product_lambda:
     model_fields = []
     Country.import_locations.each do |c|
-      (1..3).each do |i|
-        mf = ModelField.new(next_index_number(CoreModule::PRODUCT),
-          "*fhts_#{i}_#{c.id}".to_sym,
-          CoreModule::PRODUCT,
-          "*fhts_#{i}_#{c.id}".to_sym,
-          {:label_override => "First HTS #{i} (#{c.iso_code})",
-            :data_type=>:string,
-            :history_ignore=>true,
-            :import_lambda => lambda {|p,d|
-              #validate HTS
-              hts = TariffRecord.clean_hts(d)
-              return "Blank HTS ignored for #{c.iso_code}" if hts.blank?
-              unless OfficialTariff.find_by_country_id_and_hts_code(c.id,hts) || OfficialTariff.where(country_id:c.id).empty?
-                e = "#{d} is not valid for #{c.iso_code} HTS #{i}"
-                # Indicate the message is an error message
-                def e.error?; true; end
-                return e;
-              end
-              cls = nil
-              #find classifications & tariff records in memory so this can work on objects that are dirty
-              p.classifications.each do |existing|
-                cls = existing if existing.country_id == c.id
-                break if cls
-              end
-              cls = p.classifications.build(:country_id=>c.id) unless cls
-              tr = nil
-              tr = cls.tariff_records.sort {|a,b| a.line_number <=> b.line_number}.first
-              tr = cls.tariff_records.build unless tr
-              tr.send("hts_#{i}=".intern,hts)
-              "#{c.iso_code} HTS #{i} set to #{hts.hts_format}"
-            },
-            :export_lambda => lambda {|p|
-              #do this in memory with a loop over classifications instead of a where
-              #since there is a better probability that classifications will already be loaded
-              #and we don't want to hit the database again
-              cls = nil
-              p.classifications.each do |cl|
-                cls = cl if cl.country_id == c.id
-                break if cls
-              end
-              return "" unless cls && cls.tariff_records.first
-              h = cls.tariff_records.first.send "hts_#{i}"
-              h.nil? ? "" : h.hts_format
-            },
-            :qualified_field_name => "(SELECT hts_#{i} FROM tariff_records INNER JOIN classifications ON tariff_records.classification_id = classifications.id WHERE classifications.country_id = #{c.id} AND classifications.product_id = products.id ORDER BY tariff_records.line_number LIMIT 1)",
-            :process_query_result_lambda => lambda {|r| r.nil? ? nil : r.hts_format }
+      hts_numbers.each do |i|
+        field_name = "*fhts_#{i}_#{c.id}#{model_field_suffix.blank? ? "" : ("_" + model_field_suffix)}".to_sym
+        mf = ModelField.new(next_index_number(core_module), field_name, core_module, field_name,
+          {label_override: "#{label_prefix}First HTS #{i} (#{c.iso_code})", data_type: :string, history_ignore: true, read_only: read_only,
+            import_lambda: (read_only ? nil : import_lambda(product_lambda, i, c)),
+            export_lambda: export_lambda(product_lambda, i, c), 
+            qualified_field_name: query_subselect(i, c, join_table_name, core_module == CoreModule::PRODUCT),
+            process_query_result_lambda: lambda {|r| r.nil? ? nil : r.hts_format }
           }
         )
         model_fields << mf

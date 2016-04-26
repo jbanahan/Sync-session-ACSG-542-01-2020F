@@ -378,6 +378,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_kewill_exports/file.dat','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
+
+    it "handles polo 850 files" do
+      ms = double("MasterSetup")
+      MasterSetup.stub(:get).and_return ms
+      ms.stub(:custom_feature?).with("RL 850").and_return true
+      OpenChain::CustomHandler::Polo::Polo850Parser.should_receive(:delay).and_return OpenChain::CustomHandler::Polo::Polo850Parser
+      OpenChain::CustomHandler::Polo::Polo850Parser.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/polo/_850/file.dat','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+    end
   end
 
   it 'should return error if bad request type' do

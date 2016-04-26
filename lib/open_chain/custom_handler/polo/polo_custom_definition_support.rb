@@ -6,6 +6,10 @@ module OpenChain
         extend ActiveSupport::Concern
 
         CUSTOM_DEFINITION_INSTRUCTIONS = {
+          :ord_division => {label: "Merchandise Division", data_type: :string, module_type: "Order"},
+          :ord_line_ex_factory_date => {label: "Planned Ex-Factory", data_type: :date, module_type: "OrderLine"},
+          :ord_line_ship_mode => {label: "Ship Mode", data_type: :string, module_type: "OrderLine"},
+          :ord_line_board_number => {label: "Board Number", data_type: :string, module_type: "OrderLine"},
           :bartho_customer_id=>{:label=>"Barthco Customer ID", :data_type=>:string, :module_type=>'Product'},
           :season=>{:label=>"Season", :data_type => :string, :module_type=>'Product'},
           :test_style=>{:label=>"Test Style", :data_type=>:string, :module_type=>'Product'},
