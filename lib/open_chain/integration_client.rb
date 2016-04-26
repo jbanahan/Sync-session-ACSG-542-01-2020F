@@ -26,6 +26,7 @@ require 'open_chain/custom_handler/intacct/alliance_day_end_ar_ap_parser'
 require 'open_chain/custom_handler/intacct/alliance_check_register_parser'
 require 'open_chain/custom_handler/kewill_export_shipment_parser'
 require 'open_chain/custom_handler/siemens/siemens_decryption_passthrough_handler'
+require 'open_chain/custom_handler/polo/polo_850_parser'
 
 module OpenChain
   class IntegrationClient
@@ -153,6 +154,8 @@ module OpenChain
         end
       elsif command['path'].include? '/_polo_850/'
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_850/') && MasterSetup.get.custom_feature?("RL 850")
+        OpenChain::CustomHandler::Polo::Polo850Parser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_shoes_po/'
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_eddie_po/'
