@@ -79,6 +79,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           # Note the time ending in 60..stupid Alliance has dates w/ a minute value of 60 rather
           # than incrementing the hour.
           {'date_no'=>1, 'date'=>201503010660},
+          {'date_no'=>2, 'date'=>201604271130},
           {'date_no'=>3, 'date'=>201503010800},
           {'date_no'=>4, 'date'=>201503010900},
           {'date_no'=>9, 'date'=>201503011000},
@@ -206,7 +207,36 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                     'uom_3' => "MT",
                     'weight_gross' => 10000,
                     'category_no' => '123',
-                    'tariff_desc' => "STUFF"
+                    'tariff_desc' => "STUFF",
+                    "lacey" => [{
+                                "pg_seq_nbr": 1,
+                                "product_seq_nbr": 0,
+                                "detailed_description": "2 IN 1 CONVERTABLE PET STEPS",
+                                "line_value": 309960,
+                                "component_name": "WOOD",
+                                "component_qty": 93200,
+                                "component_uom": "KG",
+                                "scientific_genus_name": "Special",
+                                "scientific_species_name": "Composite",
+                                "country_harvested": "CN",
+                                "percent_recycled_material": 0,
+                                "containers": ["EMCU9890535", "IMTU1064900", "EGHU1017227"]
+                              },
+                              {
+                                "pg_seq_nbr": 2,
+                                "product_seq_nbr": 0,
+                                "detailed_description": "WAVY WOOD PET GATE",
+                                "line_value": 1256400,
+                                "component_name": "WOOD",
+                                "component_qty": 736400,
+                                "component_uom": "KG",
+                                "scientific_genus_name": "Special",
+                                "scientific_species_name": "Composite",
+                                "country_harvested": "CN",
+                                "percent_recycled_material": 20000,
+                                "containers": []
+                              }
+                            ]
                   },
                   {
                     'tariff_no' => '9876543210',
@@ -389,6 +419,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.monthly_statement_received_date).to eq tz.parse("201503020800").to_date
       expect(entry.monthly_statement_paid_date).to eq tz.parse("201503020900").to_date
       expect(entry.first_release_date).to eq tz.parse "201503021000"
+      expect(entry.bol_received_date).to eq tz.parse "201604271130"
 
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
       expect(entry.last_7501_print).to eq tz.parse "201503201247"
@@ -562,6 +593,26 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(tariff.gross_weight).to eq 10000
       expect(tariff.quota_category).to eq 123
       expect(tariff.tariff_description).to eq "STUFF"
+
+      expect(tariff.commercial_invoice_lacey_components.length).to eq 2
+      lacey = tariff.commercial_invoice_lacey_components.first
+      expect(lacey.line_number).to eq 1
+      expect(lacey.detailed_description).to eq "2 IN 1 CONVERTABLE PET STEPS"
+      expect(lacey.value).to eq BigDecimal("3099.60")
+      expect(lacey.name).to eq "WOOD"
+      expect(lacey.quantity).to eq BigDecimal("932.00")
+      expect(lacey.unit_of_measure).to eq "KG"
+      expect(lacey.genus).to eq "Special"
+      expect(lacey.species).to eq "Composite"
+      expect(lacey.harvested_from_country).to eq "CN"
+      expect(lacey.percent_recycled_material).to eq 0
+      expect(lacey.container_numbers).to eq "EMCU9890535\n IMTU1064900\n EGHU1017227"
+
+      lacey = tariff.commercial_invoice_lacey_components.second
+      # Just check the things that have different parsing scenarios on the second lacey line
+      expect(lacey.line_number).to eq 2
+      expect(lacey.percent_recycled_material).to eq BigDecimal("0.02")
+      expect(lacey.container_numbers).to be_nil
 
       tariff = line.commercial_invoice_tariffs.second
       expect(tariff.tariff_description).to eq "REPLACEMENT DESC"

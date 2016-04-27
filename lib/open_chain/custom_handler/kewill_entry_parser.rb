@@ -15,6 +15,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
   # the lowest or highest value for the date is kept. 
   DATE_MAP ||= {
     1 => {attribute: :export_date, datatype: :date},
+    2 => :bol_received_date,
     3 => {attribute: :docs_received_date, datatype: :date},
     98 => {attribute: :docs_received_date, datatype: :date},
     4 => :file_logged_date,
@@ -577,6 +578,11 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           Array.wrap(l[:tariffs]).each do |t|
             tariff = line.commercial_invoice_tariffs.build
             set_invoice_tariff_data t, tariff
+
+            Array.wrap(t[:lacey]).each do |l|
+              lacey = tariff.commercial_invoice_lacey_components.build
+              set_lacey_data l, lacey
+            end
           end
         end
       end
@@ -709,6 +715,21 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       tariff.quota_category = t[:category_no]
       tariff.tariff_description = t[:tariff_desc]
       tariff.tariff_description = t[:tariff_desc_additional] unless t[:tariff_desc_additional].blank?
+    end
+
+    def set_lacey_data l, lacey
+      lacey.line_number = l[:pg_seq_nbr]
+      lacey.detailed_description = l[:detailed_description]
+      lacey.value = parse_decimal l[:line_value]
+      lacey.name = l[:component_name]
+      lacey.quantity = parse_decimal l[:component_qty]
+      lacey.unit_of_measure = l[:component_uom]
+      lacey.genus = l[:scientific_genus_name]
+      lacey.species = l[:scientific_species_name]
+      lacey.harvested_from_country = l[:country_harvested]
+      # Store these as fractional amounts, NOT whole value percentages -> .10 and not 10 for 10%.
+      lacey.percent_recycled_material = parse_decimal l[:percent_recycled_material], decimal_offset: 6
+      lacey.container_numbers = l[:containers].join("\n ") unless l[:containers].blank?
     end
 
     def process_containers e, entry

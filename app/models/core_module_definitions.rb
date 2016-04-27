@@ -228,6 +228,12 @@ module CoreModuleDefinitions
       :quicksearch_fields => [:bi_invoice_number, {model_field_uid: :bi_brok_ref, joins: [:entry]}],
       :module_chain => [BrokerInvoice, BrokerInvoiceLine]
   })
+  COMMERCIAL_INVOICE_LACEY = CoreModule.new("CommercialInvoiceLaceyComponent","Lacey Component",{
+       :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
+       :show_field_prefix => true,
+       :unique_id_field_name=>:lcy_line_number,
+       :key_model_field_uids=>[:lcy_line_number]
+   })
   COMMERCIAL_INVOICE_TARIFF = CoreModule.new("CommercialInvoiceTariff","Invoice Tariff",{
        :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
        :show_field_prefix => true,
@@ -285,7 +291,9 @@ module CoreModuleDefinitions
           entry_comments: {type: EntryComment},
           commercial_invoices: {type: CommercialInvoice, children: {
             commercial_invoice_lines: {type: CommercialInvoiceLine, children: {
-                commercial_invoice_tariffs: {type: CommercialInvoiceTariff}
+                commercial_invoice_tariffs: {type: CommercialInvoiceTariff, children: {
+                    commercial_invoice_lacey_components: {type: CommercialInvoiceLaceyComponent}
+                  }}
               }}
           }},
           containers: {type: Container},

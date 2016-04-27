@@ -76,6 +76,7 @@ div.clear {
 }
 .detail_table th {
   text-align: left;
+  padding-left: 2px;
 }
 .detail_table thead a {
   color: white;
@@ -95,6 +96,13 @@ div.clear {
 .detail_table tr.detail_table_body_row td {
   border:1px solid #ccc;
   padding: 3px;
+}
+.detail_table td.subtable_header {
+  padding-left: 20px;
+  font-weight: bold;
+}
+.detail_table td.subtable {
+  padding-left: 20px;
 }
 .drag_table {
   border: 1px solid #ccc;

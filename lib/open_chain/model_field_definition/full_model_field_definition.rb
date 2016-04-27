@@ -34,6 +34,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::SummaryStatementFieldDefinition
   include OpenChain::ModelFieldDefinition::AttachmentFieldDefinition
   include OpenChain::ModelFieldDefinition::EntryCommentFieldDefinition
+  include OpenChain::ModelFieldDefinition::CommercialInvoiceLaceyComponentFieldDefinition
 
   def add_field_definitions
     add_company_fields
@@ -69,5 +70,6 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_summary_statement_fields
     add_attachment_fields
     add_entry_comment_fields
+    add_commercial_invoice_lacey_fields
   end
 end; end; end

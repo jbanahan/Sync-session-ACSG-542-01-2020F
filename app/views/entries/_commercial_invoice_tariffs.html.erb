@@ -1,0 +1,40 @@
+<% if commercial_invoice_line.commercial_invoice_tariffs.length > 0 %>
+  <% 
+    tariff_fields = [:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:cit_spi_secondary,:cit_classification_qty_1,:cit_classification_uom_1,
+                      :cit_classification_qty_2,:cit_classification_uom_2,:cit_classification_qty_3,:cit_classification_uom_3, :cit_gross_weight,:cit_tariff_description]
+  %>
+  <table class='detail_table' style="width:100%;">
+    <thead>
+      <tr>
+        <%= model_field_labels tariff_fields, table: true, heading: true %>
+      </tr>
+    </thead>
+    <tbody>
+    <%commercial_invoice_line.commercial_invoice_tariffs.each do |line|%>
+      <tr class='hover detail_table_body_row'>
+        <%= 
+          show_model_fields(line, tariff_fields, table: true, editor_only: true) do |mf, form_field_name, value, attributes|
+            if mf.uid == :cit_hts_code
+              show_tariff(line.hts_code, entry.import_country_id, true)
+            else
+              # nil signals to calling method to render the default view
+              nil
+            end
+          end
+        %>
+      </tr>
+      <% if line.commercial_invoice_lacey_components.length > 0 %>
+      <tr>
+        <td class="subtable_header" colspan="<%=tariff_fields.length%>">Lacey Act</td>
+      </tr>
+      <tr>
+        <td class="subtable" colspan="<%=tariff_fields.length%>">
+          <%# Align the fields like they appear on the Lacy/APHIS Form %>
+          <%= render partial: "shared/detail_table", locals: {lines: line.commercial_invoice_lacey_components, fields: [:lcy_detailed_description, :lcy_value, :lcy_name, :lcy_genus, :lcy_species, :lcy_harvest_country, :lcy_quantity, :lcy_unit_of_measure, :lcy_percent_recycled]} %>
+        </td>
+      </tr>
+      <% end %>
+    <%end%>
+    </tbody>
+  </table>
+<% end %>
