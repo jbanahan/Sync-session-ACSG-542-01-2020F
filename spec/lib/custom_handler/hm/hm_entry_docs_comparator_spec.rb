@@ -98,24 +98,17 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
       expect(prod.entity_snapshots.length).to eq 0
     end
 
-    it "does not move attachments if attachment is in both old and new snapshot" do
+    it "moves attachments even if attachment is in both old and new snapshot" do
+      # This is to check to handle the case where the attachment is added at a point in time where the business rules
+      # failed.  The attachment needs to be added at a later time, but at that point the attachment will be in the snapshots 
+      # and not detected as a change.
+
       # just use the same snapshot for both old / new that way the snapshot will be identical and the docs won't be moved
       subject.compare snapshot.bucket, snapshot.doc_path, snapshot.version, snapshot.bucket, snapshot.doc_path, snapshot.version
 
       prod = Product.where(importer_id: importer.id).first
-      expect(prod.attachments.length).to eq 0
-    end
-
-    it "adds attachment to product if attachment size is different" do
-      # remove the existing attachment and add a new one named the same thing with a different size..the new one should be moved
-      entry.attachments.destroy_all
-
-      entry.attachments.create! attachment_type: "Entry Packet", attached_file_name: "file.pdf", attached_file_size: 2
-      new_snapshot = entry.create_snapshot user
-
-      subject.compare snapshot.bucket, snapshot.doc_path, snapshot.version, new_snapshot.bucket, new_snapshot.doc_path, new_snapshot.version
-      prod = Product.where(importer_id: importer.id).first
       expect(prod.attachments.length).to eq 1
+      expect(prod.attachments.first.attached_file_name).to eq "Entry Packet - REF - file.pdf"
     end
 
     it "removes existing Entry Packet attachment from product when an updated one is attached to the entry" do
@@ -126,6 +119,16 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
       prod = Product.where(importer_id: importer.id).first
       expect(prod.attachments.length).to eq 1
       expect(prod.attachments.first).not_to eq existing_attachment
+    end
+
+    it "skips adding attachment if product already has it" do
+      product = Factory(:classification, country: us, product: Factory(:product, importer: importer, unique_identifier: "HENNE-PART")).product
+      existing_attachment = product.attachments.create! attached_file_name: "Entry Packet - REF - file.pdf", attachment_type: "Entry Packet", attached_file_size: 1
+
+      subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
+      prod = Product.where(importer_id: importer.id).first
+      expect(prod.attachments.length).to eq 1
+      expect(prod.attachments.first).to eq existing_attachment
     end
 
     context "with class compare method" do

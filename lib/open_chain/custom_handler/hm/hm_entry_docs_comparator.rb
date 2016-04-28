@@ -46,34 +46,34 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
         products << find_or_create_product(data, user)
       end
 
-      # Now see if we need to move any packets over...only move them if we have new ones
-      # based on a diff from our previous snapshot.
-      old_json = get_json_hash(old_bucket, old_path, old_version)
-      old_entry_packets = entry_packets(old_json)
-
-      diffed_packets = diff_entry_packets(new_entry_packets, old_entry_packets)
+      # Now see if we need to move any packets over...only move them the if products
+      # don't have the entry packets.
 
       # Now attach all the new packets to the products we found
-      diffed_packets.each do |packet|
+      new_entry_packets.each do |packet|
         attachment = find_entity_object(packet)
 
-        attachment.download_to_tempfile do |tempfile|
-          filename = "Entry Packet - #{entry.broker_reference} - #{attachment.attached_file_name}"
-          Attachment.add_original_filename_method(tempfile, filename)
+        filename = "Entry Packet - #{entry.broker_reference} - #{attachment.attached_file_name}"
+        products_to_attach = products_need_attachment(products, filename, "Entry Packet", attachment.attached_file_size)
 
-          products.each do |product|
-            Product.transaction do
-              new_attachment = product.attachments.create! attached: tempfile, attachment_type: "Entry Packet"
+        if products_to_attach.length > 0
+          attachment.download_to_tempfile do |tempfile|
+            Attachment.add_original_filename_method(tempfile, filename)
 
-              # Remove any other "Entry Packet" attachments named the same thing that might be on the product
-              product.attachments.each do |a|
-                a.destroy if a.attachment_type.to_s.upcase == "ENTRY PACKET" && a.attached_file_name == filename && new_attachment.id != a.id
+            products_to_attach.each do |product|
+              Product.transaction do
+                new_attachment = product.attachments.create! attached: tempfile, attachment_type: "Entry Packet"
+
+                # Remove any other "Entry Packet" attachments named the same thing that might be on the product
+                product.attachments.each do |a|
+                  a.destroy if a.attachment_type.to_s.upcase == "ENTRY PACKET" && a.attached_file_name == filename && new_attachment.id != a.id
+                end
               end
+              
+              # The attachment create reads the tempfile, so rewind it so it can be re-used if there
+              # are more products to associate this entry packet with
+              tempfile.rewind
             end
-            
-            # The attachment create reads the tempfile, so rewind it so it can be re-used if there
-            # are more products to associate this entry packet with
-            tempfile.rewind
           end
         end
       end
@@ -90,16 +90,8 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
     packets
   end
 
-  def diff_entry_packets new_packets, old_packets
-    # For the purposes of our diff, we'll use filename and file size to determine if the packet 
-    # is different from the previous one.
-    diff = []
-    new_packets.each do |packet|
-      file_name = mf(packet, 'att_file_name')
-      file_size = mf(packet, 'att_file_size')
-      diff << packet unless old_packets.find {|p| file_name == mf(p, 'att_file_name') && file_size == mf(p, 'att_file_size')}
-    end
-    diff
+  def products_need_attachment products, attachment_name, attachment_type, attached_file_size
+    products.reject {|p| p.attachments.where(attached_file_name: attachment_name, attachment_type: attachment_type, attached_file_size: attached_file_size).count > 0 }
   end
 
   def extract_part_data json
