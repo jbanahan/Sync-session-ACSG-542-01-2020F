@@ -70,7 +70,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
 
     row << "CA" # Classification Country
     row << line[6] # Classification Customs Description
-    hts = line[10].to_s.strip.gsub(".", "")
+    hts = text_value(line[10]).to_s.strip.gsub(".", "")
     row << hts # Proposed HTS
 
     # Validate that the hts number is valid.....we don't want the file import to reject the whole line just because
@@ -92,12 +92,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
     row = []
     row << lumber_system_code # Importer System code
     row << normalize_article_number(line[0]) # Article Number
-    row << line[1] # Name
-    row << line[2] # Old Article Number
+    row << text_value(line[1]) # Name
+    row << text_value(line[2]) # Old Article Number
 
     # If there's no hts present on the line, there's no point in adding any more fields to the translation
     row << "US" # Classification Country
-    hts = line[3].to_s.strip.gsub(".", "")
+    hts = text_value(line[3]).to_s.strip.gsub(".", "")
     row << hts # Proposed HTS
     # Validate that the hts number is valid.....we don't want the file import to reject the whole line just because
     # the tariff is bad (which is the way imported files works).  So validate it ahead of time and strip it from the file if it's
@@ -114,7 +114,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
   end
 
   def normalize_article_number article_num
-    article_num.to_s.strip.rjust(18, '0')
+    text_value(article_num).to_s.strip.rjust(18, '0')
   end
 
   def lumber_system_code 

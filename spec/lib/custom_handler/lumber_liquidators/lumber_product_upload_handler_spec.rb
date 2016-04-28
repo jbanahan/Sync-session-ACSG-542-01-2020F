@@ -11,13 +11,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
   let (:us_lines) {
     [
       ["Article #", "Name", "Old Article #", "HTS 1"],
-      ["10039527", "TRQ King County Knotty Oak 2mm", "2KO-KC", "4418.90.4605"]
+      [10039527.0, "TRQ King County Knotty Oak 2mm", "2KO-KC", "4418.90.4605"]
     ]
   }
   let (:ca_lines) {
     [
       ["Shipment #", "Delivery", "Item", "Ship-to Party", "Article", "Actual delivery qty", "Description", "Total Weight", "Weight Unit", "Base UOM", "HS Confirmation", "Comments"],
-      ["265662", "860015120", "10", "2001", "10004816", "5", "L-Cleat, 16G, 2”, 1000 pieces, BOSTICH", "20", "LB", "EA", "7317.00.0090"]
+      [265662.0, "860015120", "10", "2001", "10004816", "5", "L-Cleat, 16G, 2”, 1000 pieces, BOSTICH", "20", "LB", "EA", 7317000090.0]
     ]
   }
   let (:us) { Country.where(iso_code: "US").first_or_create! }
