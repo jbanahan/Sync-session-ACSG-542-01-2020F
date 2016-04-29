@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberPpqReport do
       tariff = Factory(:commercial_invoice_tariff, hts_code: "1111111111", 
                           commercial_invoice_line: Factory(:commercial_invoice_line, part_number: "Part", po_number: "PO", 
                             commercial_invoice: Factory(:commercial_invoice, mfid: "MID",
-                              entry: Factory(:entry, customer_number: "LUMBER", source_system: "Alliance", release_date: "2016-05-01", master_bills_of_lading: "MBOL1\nMBOL2", container_numbers: "CONT1\n CONT2", entry_number: "ENTNUM", arrival_date: "2016-04-30 05:00")
+                              entry: Factory(:entry, customer_number: "LUMBER", source_system: "Alliance", release_date: "2016-05-01", master_bills_of_lading: "MBOL1\nMBOL2", container_numbers: "CONT1\n CONT2", entry_number: "ENTNUM", arrival_date: Time.zone.parse("2016-04-30 05:00"))
                             )
                           )
                         )
