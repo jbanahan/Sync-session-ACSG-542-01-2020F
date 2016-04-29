@@ -8,10 +8,11 @@ module CoreObjectSupport
     base.instance_eval("include BroadcastsEvents")
     base.instance_eval("include UpdateModelFieldsSupport")
     base.instance_eval("include FingerprintSupport")
-    if History.column_names.include?(base.name.foreign_key)
+    # Allow new instances to start up (prior to migrations run will not have histories or item change subscriptions tables)
+    if ActiveRecord::Base.connection.table_exists?('histories') && History.column_names.include?(base.name.foreign_key)
       base.instance_eval("has_many   :histories, :dependent => :destroy")
     end
-    if ItemChangeSubscription.column_names.include?(base.name.foreign_key)
+    if ActiveRecord::Base.connection.table_exists?('item_change_subscriptions') && ItemChangeSubscription.column_names.include?(base.name.foreign_key)
       base.instance_eval("has_many   :item_change_subscriptions, :dependent => :destroy")
     end
     base.instance_eval("has_many   :comments, :as => :commentable, :dependent => :destroy")
