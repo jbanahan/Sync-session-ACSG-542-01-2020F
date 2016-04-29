@@ -196,7 +196,7 @@ class XlsMaker
 
   def self.create_sheet workbook, sheet_name, headers = []
     sheet = workbook.create_worksheet :name=> sheet_name
-    XlsMaker.add_header_row(sheet, 0, headers) if headers.length > 0
+    XlsMaker.add_header_row(sheet, 0, headers) if headers && headers.length > 0
     sheet
   end
 
