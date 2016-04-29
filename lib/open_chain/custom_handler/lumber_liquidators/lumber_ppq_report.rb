@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPp
 
   def query start_date, end_date
     <<-SQL
-      SELECT '' as 'Unique Id', e.entry_number 'Entry Number', e.master_bills_of_lading 'B/L No(s)', e.container_numbers 'Container No(s)', date(convert_tz(e.arrival_date, 'UTC', 'America/New_York')) 'Arrival Date', i.mfid 'Manufacturer ID', l.part_number 'Part No', l.po_number 'PO No', t.hts_code 'HTS No',
+      SELECT '' as 'Unique Id', e.entry_number 'Entry Number', e.master_bills_of_lading 'B/L No(s)', e.container_numbers 'Container No(s)', e.arrival_date 'Arrival Date', i.mfid 'Manufacturer ID', l.part_number 'Part No', l.po_number 'PO No', t.hts_code 'HTS No',
       lc.detailed_description 'Description', lc.quantity 'Quantity of Constituent Element', lc.unit_of_measure 'UOM', 0  'Percent of Constituent Element', lc.value  'PGA Line Value', lc.genus  'Scientific Genus Name', lc.species  'Scientific Species Name',
       lc.harvested_from_country  'Source Country Code'
       FROM entries e
@@ -46,6 +46,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPp
     c['HTS No'] = lambda {|row, value| value.to_s.hts_format }
     c['B/L No(s)']= csv_translation_lambda
     c['Container No(s)']= csv_translation_lambda
+    c['Arrival Date'] = datetime_translation_lambda(user_timezone, true)
     c
   end
 
