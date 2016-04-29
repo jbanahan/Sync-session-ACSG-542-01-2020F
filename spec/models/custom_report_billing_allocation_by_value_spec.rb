@@ -253,5 +253,10 @@ describe CustomReportBillingAllocationByValue do
       arrays[1][0].should == @bi_2.invoice_number
       arrays[2][0].should == @bi.invoice_number
     end
+    it "handles lines with zero value" do
+      # This used to fail if value was nil, just make sure it runs
+      @cil_1_1.update_attributes! value: nil
+      subject.to_arrays @u
+    end
   end
 end

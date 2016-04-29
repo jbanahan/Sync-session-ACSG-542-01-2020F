@@ -73,7 +73,7 @@ class CustomReportBillingAllocationByValue < CustomReport
       line_count = ci_lines.size
       ci_lines.each_with_index do |line,i|
         break if row_limit && row_cursor>row_limit
-        line_value = line.value
+        line_value = line.value.presence || 0
         line_value = line.commercial_invoice_tariffs.first.nil? ? 0 : line.commercial_invoice_tariffs.first.entered_value if use_hts_value
         if self.include_links?
           write_hyperlink row_cursor, (col_cursor += 1), entry.view_url,"Web View"
