@@ -9,7 +9,8 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
     CoreModule::ENTRY,
     CoreModule::OFFICIAL_TARIFF,
     CoreModule::VARIANT,
-    CoreModule::TRADE_LANE
+    CoreModule::TRADE_LANE,
+    CoreModule::TRADE_PREFERENCE_PROGRAM
   ]
 
   def index

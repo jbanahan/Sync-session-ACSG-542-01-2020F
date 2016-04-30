@@ -4,7 +4,7 @@ module OpenChain; module ModelFieldDefinition; module TradePreferenceProgramFiel
       [1, :tpp_tariff_adjustment_percentage, :tariff_adjustment_percentage, "Tariff Adjustment Percentage", {
         data_type: :decimal
       }],
-      [2, :tpp_name, :name, {data_type: :string}],
+      [2, :tpp_name, :name, 'Name', {data_type: :string}],
       [3, :tpp_updated_at, :updated_at, 'Last Changed', {data_type: :datetime,read_only:true}],
       [4, :tpp_created_at, :created_at, 'Created Date', {data_type: :datetime,read_only:true}],
       [5, :tpp_tariff_identifier, :tariff_identifier, 'Tariff Identifier', {data_type: :string}]
