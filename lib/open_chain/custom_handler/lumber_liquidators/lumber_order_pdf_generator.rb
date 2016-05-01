@@ -1,12 +1,12 @@
 require 'prawn'
 # Technically prawn/table isn't required to be require, but this class will fail HARD if it's not included and I wanted some
 # concrete location in the code to reflect the dependency
-require 'prawn/table' 
+require 'prawn/table'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderPdfGenerator
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  include ActionView::Helpers::NumberHelper 
+  include ActionView::Helpers::NumberHelper
 
   def self.create! order, user
     Tempfile.open(['foo', '.pdf']) do |file|
@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     d.repeat(:all) do
       height = 33
       padding = 3
-      d.bounding_box([0, -2], width: page_width, height: height) do 
+      d.bounding_box([0, -2], width: page_width, height: height) do
         d.stroke_bounds
         d.text_box terms_and_conditions, inline_format: true, at: [padding, height - padding], height: height-(2*padding), width: d.bounds.width - padding
       end
@@ -114,7 +114,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     d.repeat(:all) do
       d.text_box "#{Time.now.utc.to_s} UTC", align: :right, at: [page_width - 85, -45], height: d.font_size + 2
-    end 
+    end
 
     d.number_pages "<page> of <total>", width: 50, at: [(page_width / 2) - 25, -45], align: :center
 
@@ -178,7 +178,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     [
       ["<b>Issue Date</b>", v_date(order, user, :ord_ord_date)],
       ["<b>Planned Delivery Date</b>", v_date(order, user, :ord_first_exp_del)],
-      ["<b>Ship Window</b>", "To be provided by freight forwarder"],
+      ["<b>Ship Window Start</b>", v(order, user, :ord_window_start)],
+      ["<b>Ship Window End</b>", v(order, user, :ord_window_end)],
       ["<b>Vendor No.</b>", v(order, user, :ord_ven_syscode)],
       ["<b>Vendor Name</b>", v(order, user, :ord_ven_name)],
       ["<b>Currency</b>", v(order, user, :ord_currency)],
