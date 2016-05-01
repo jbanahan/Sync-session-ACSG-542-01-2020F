@@ -15,23 +15,31 @@
       return $stateProvider.state('index', {
         url: '/',
         controller: 'IndexCtrl',
-        templateUrl: "trade_lanes/partials/index.html"
+        templateUrl: 'trade_lanes/partials/index.html'
       }).state('new', {
         url: '/new',
         controller: 'NewCtrl',
-        templateUrl: "trade_lanes/partials/new.html"
+        templateUrl: 'trade_lanes/partials/new.html'
       }).state('show', {
         url: '/show/:id',
         controller: 'ShowCtrl',
-        templateUrl: "trade_lanes/partials/show.html"
+        templateUrl: 'trade_lanes/partials/show.html'
       }).state('edit', {
         url: '/edit/:id',
         controller: 'EditCtrl',
-        templateUrl: "trade_lanes/partials/edit.html"
+        templateUrl: 'trade_lanes/partials/edit.html'
       }).state('tpp-show', {
         url: '/tpp/:id',
         controller: 'ShowTppCtrl',
-        templateUrl: "trade_lanes/partials/show_tpp.html"
+        templateUrl: 'trade_lanes/partials/tpp/show.html'
+      }).state('tpp-new', {
+        url: '/tpp/new/:origin_iso/:destinatation_iso',
+        controller: 'NewTppCtrl',
+        templateUrl: 'trade_lanes/partials/tpp/new.html'
+      }).state('tpp-edit', {
+        url: '/tpp/edit/:id',
+        controller: 'EditTppCtrl',
+        templateUrl: 'trade_lanes/partials/tpp/edit.html'
       });
     }
   ]);
@@ -76,6 +84,43 @@
 }).call(this);
 
 (function() {
+  angular.module('ChainTradeLanes').controller('EditTppCtrl', [
+    '$scope', '$stateParams', '$state', 'chainApiSvc', 'chainDomainerSvc', function($scope, $stateParams, $state, chainApiSvc, chainDomainerSvc) {
+      $scope.init = function(id) {
+        $scope.loading = 'loading';
+        return chainDomainerSvc.withDictionary().then(function(d) {
+          $scope.dict = d;
+          return chainApiSvc.TradePreferenceProgram.get(id).then(function(r) {
+            $scope.tpp = r;
+            return delete $scope.loading;
+          });
+        });
+      };
+      $scope.save = function(tpp) {
+        $scope.loading = 'loading';
+        return chainApiSvc.TradePreferenceProgram.save(tpp).then(function(r) {
+          return $state.transitionTo('tpp-show', {
+            id: r.id
+          });
+        });
+      };
+      $scope.cancel = function(tpp) {
+        $scope.loading = 'loading';
+        return chainApiSvc.TradePreferenceProgram.load(tpp).then(function(r) {
+          return $state.transitionTo('tpp-show', {
+            id: r.id
+          });
+        });
+      };
+      if (!$scope.$root.isTest) {
+        return $scope.init($stateParams.id);
+      }
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   angular.module('ChainTradeLanes').controller('IndexCtrl', [
     '$scope', 'chainApiSvc', function($scope, chainApiSvc) {
       var loadPage;
@@ -106,7 +151,7 @@
 
 }).call(this);
 
-angular.module('ChainTradeLanes-Templates', ['trade_lanes/partials/edit.html', 'trade_lanes/partials/index.html', 'trade_lanes/partials/new.html', 'trade_lanes/partials/show.html', 'trade_lanes/partials/show_tpp.html']);
+angular.module('ChainTradeLanes-Templates', ['trade_lanes/partials/edit.html', 'trade_lanes/partials/index.html', 'trade_lanes/partials/new.html', 'trade_lanes/partials/show.html', 'trade_lanes/partials/tpp/edit.html', 'trade_lanes/partials/tpp/new.html', 'trade_lanes/partials/tpp/show.html']);
 
 angular.module("trade_lanes/partials/edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("trade_lanes/partials/edit.html",
@@ -125,12 +170,22 @@ angular.module("trade_lanes/partials/new.html", []).run(["$templateCache", funct
 
 angular.module("trade_lanes/partials/show.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("trade_lanes/partials/show.html",
-    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>Trade Lane</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{lane.lane_origin_cntry_iso}}\"></chain-flag-icon>{{lane.lane_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{lane.lane_destination_cntry_iso}}\"></chain-flag-icon>{{lane.lane_destination_cntry_name}}</h3></div></div><div class=\"row\"><div class=\"col-md-6\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"lane\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TradeLane) | chainFieldsWithValues:lane | chainViewFields:['lane_destination_cntry_iso','lane_destination_cntry_name','lane_origin_cntry_iso','lane_origin_cntry_name']:true track by fld.uid\"><label class=\"control-label\">{{fld.label}}</label><p class=\"form-control-static\"><chain-field-value model=\"lane\" field=\"fld\"></chain-field-value></p></li></ul><div class=\"panel-footer text-right\"><button ng-click=\"edit(lane)\" class=\"btn btn-xs btn-default\"><i class=\"fa fa-edit\"></i></button></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Preference Programs</h3></div><div class=\"panel-body\" ng-show=\"tppLoading\"><chain-loading-wrapper loading=\"{{tppLoading}}\"></chain-loading-wrapper></div><ul class=\"list-group\"><li class=\"list-group-item\" ng-repeat=\"tpp in tradePrefs track by tpp.id\"><a ui-sref=\"tpp-show({id:tpp.id})\">{{tpp.tpp_name}}</a></li></ul><div class=\"panel-footer\"></div></div></div><div class=\"col-md-6\"><div></div><div></div></div></div></div></chain-loading-wrapper>");
+    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>Trade Lane</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{lane.lane_origin_cntry_iso}}\"></chain-flag-icon>{{lane.lane_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{lane.lane_destination_cntry_iso}}\"></chain-flag-icon>{{lane.lane_destination_cntry_name}}</h3></div></div><div class=\"row\"><div class=\"col-md-6\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"lane\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TradeLane) | chainFieldsWithValues:lane | chainViewFields:['lane_destination_cntry_iso','lane_destination_cntry_name','lane_origin_cntry_iso','lane_origin_cntry_name']:true track by fld.uid\"><label class=\"control-label\">{{fld.label}}</label><p class=\"form-control-static\"><chain-field-value model=\"lane\" field=\"fld\"></chain-field-value></p></li></ul><div class=\"panel-footer text-right\" ng-if=\"lane.permissions.can_edit\"><button ng-click=\"edit(lane)\" class=\"btn btn-xs btn-default\"><i class=\"fa fa-edit\"></i></button></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Preference Programs</h3></div><div class=\"panel-body\" ng-show=\"tppLoading\"><chain-loading-wrapper loading=\"{{tppLoading}}\"></chain-loading-wrapper></div><ul class=\"list-group\"><li class=\"list-group-item\" ng-repeat=\"tpp in tradePrefs track by tpp.id\"><a ui-sref=\"tpp-show({id:tpp.id})\">{{tpp.tpp_name}}</a></li></ul><div class=\"panel-footer text-right\" ng-if=\"lane.permissions.can_edit && me.permissions.edit_trade_preference_programs\"><button class=\"btn btn-sm btn-success\" ui-sref=\"tpp-new({origin_iso:lane.lane_origin_cntry_iso,destinatation_iso:lane.lane_destination_cntry_iso})\"><i class=\"fa fa-plus\"></i></button></div></div></div><div class=\"col-md-6\"><div></div><div></div></div></div></div></chain-loading-wrapper>");
 }]);
 
-angular.module("trade_lanes/partials/show_tpp.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("trade_lanes/partials/show_tpp.html",
-    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>{{tpp.tpp_name}}</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_origin_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_destination_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_destination_cntry_name}}</h3></div></div></div></chain-loading-wrapper>");
+angular.module("trade_lanes/partials/tpp/edit.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("trade_lanes/partials/tpp/edit.html",
+    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>Edit Trade Preference Program</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_origin_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_destination_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_destination_cntry_name}}</h3></div></div><div class=\"row\"><div class=\"col-md-12\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"tpp\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TradePreferenceProgram) | chainSkipReadOnly | chainViewFields:['tpp_destination_cntry_iso','tpp_destination_cntry_name','tpp_origin_cntry_iso','tpp_origin_cntry_name']:true track by fld.uid\"><label class=\"control-label\">{{fld.label}}</label><p class=\"form-control-static\"><chain-field-input model=\"tpp\" field=\"fld\"></chain-field-input></p></li></ul><div class=\"panel-footer text-right\"><button class=\"btn btn-sm btn-default\" ng-click=\"cancel(tpp)\">Cancel</button> <button class=\"btn btn-sm btn-success\" ng-click=\"save(tpp)\">Save</button></div></div></div></div></div></chain-loading-wrapper>");
+}]);
+
+angular.module("trade_lanes/partials/tpp/new.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("trade_lanes/partials/tpp/new.html",
+    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12\"><div class=\"panel panel-default\"><div class=\"panel-heading\"><h3 class=\"panel-title\">New Trade Preference Program</h3></div><div class=\"panel-body\"><h3 class=\"text-center\"><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{origin_country_iso}}\"></chain-flag-icon>{{origin_country_iso}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{destination_country_iso}}\"></chain-flag-icon>{{destination_country_iso}}</h3><label>Name</label><input class=\"form-control\" placeholder=\"Enter program name\" ng-model=\"name\"></div><div class=\"panel-footer text-right\"><button class=\"btn btn-sm btn-primary\" ng-click=\"create(origin_country_iso,destination_country_iso,name)\" ng-disabled=\"!(name.length > 0)\">Save</button></div></div></div></div></div></chain-loading-wrapper>");
+}]);
+
+angular.module("trade_lanes/partials/tpp/show.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("trade_lanes/partials/tpp/show.html",
+    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>{{tpp.tpp_name}}</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_origin_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_destination_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_destination_cntry_name}}</h3></div></div><div class=\"row\"><div class=\"col-md-6\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"lane\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TradePreferenceProgram) | chainFieldsWithValues:tpp | chainViewFields:['tpp_destination_cntry_iso','tpp_destination_cntry_name','tpp_origin_cntry_iso','tpp_origin_cntry_name']:true track by fld.uid\"><label class=\"control-label\">{{fld.label}}</label><p class=\"form-control-static\"><chain-field-value model=\"lane\" field=\"fld\"></chain-field-value></p></li></ul><div class=\"panel-footer text-right\" ng-if=\"tpp.permissions.can_edit\"><button ng-click=\"edit(tpp)\" class=\"btn btn-xs btn-default\"><i class=\"fa fa-edit\"></i></button></div></div></div></div></div></chain-loading-wrapper>");
 }]);
 
 (function() {
@@ -200,6 +255,35 @@ angular.module("trade_lanes/partials/show_tpp.html", []).run(["$templateCache", 
 }).call(this);
 
 (function() {
+  angular.module('ChainTradeLanes').controller('NewTppCtrl', [
+    '$scope', '$stateParams', '$state', 'chainApiSvc', 'chainDomainerSvc', function($scope, $stateParams, $state, chainApiSvc, chainDomainerSvc) {
+      $scope.init = function(originIso, destinationIso) {
+        $scope.origin_country_iso = originIso;
+        return $scope.destination_country_iso = destinationIso;
+      };
+      $scope.create = function(originIso, destinationIso, name) {
+        var tpp;
+        $scope.loading = 'loading';
+        tpp = {
+          tpp_origin_cntry_iso: originIso,
+          tpp_destination_cntry_iso: destinationIso,
+          tpp_name: name
+        };
+        return chainApiSvc.TradePreferenceProgram.save(tpp).then(function(resp) {
+          return $state.transitionTo('tpp-show', {
+            id: resp.id
+          });
+        });
+      };
+      if (!$scope.$root.isTest) {
+        return $scope.init($stateParams.origin_iso, $stateParams.destinatation_iso);
+      }
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   angular.module('ChainTradeLanes').controller('ShowCtrl', [
     '$scope', '$stateParams', '$state', 'chainApiSvc', 'chainDomainerSvc', function($scope, $stateParams, $state, chainApiSvc, chainDomainerSvc) {
       $scope.init = function(id) {
@@ -207,30 +291,33 @@ angular.module("trade_lanes/partials/show_tpp.html", []).run(["$templateCache", 
         $scope.tppLoading = 'loading';
         return chainDomainerSvc.withDictionary().then(function(d) {
           $scope.dict = d;
-          return chainApiSvc.TradeLane.get(id).then(function(r) {
-            var searchOpts;
-            $scope.lane = r;
-            delete $scope.loading;
-            searchOpts = {};
-            searchOpts.criteria = [
-              {
-                field: 'tpp_origin_cntry_iso',
-                operator: 'eq',
-                val: r.lane_origin_cntry_iso
-              }, {
-                field: 'tpp_destination_cntry_iso',
-                operator: 'eq',
-                val: r.lane_destination_cntry_iso
-              }
-            ];
-            searchOpts.sorts = [
-              {
-                field: 'tpp_name'
-              }
-            ];
-            return chainApiSvc.TradePreferenceProgram.search(searchOpts).then(function(tpp) {
-              $scope.tradePrefs = tpp;
-              return delete $scope.tppLoading;
+          return chainApiSvc.User.me().then(function(m) {
+            $scope.me = m;
+            return chainApiSvc.TradeLane.get(id).then(function(r) {
+              var searchOpts;
+              $scope.lane = r;
+              delete $scope.loading;
+              searchOpts = {};
+              searchOpts.criteria = [
+                {
+                  field: 'tpp_origin_cntry_iso',
+                  operator: 'eq',
+                  val: r.lane_origin_cntry_iso
+                }, {
+                  field: 'tpp_destination_cntry_iso',
+                  operator: 'eq',
+                  val: r.lane_destination_cntry_iso
+                }
+              ];
+              searchOpts.sorts = [
+                {
+                  field: 'tpp_name'
+                }
+              ];
+              return chainApiSvc.TradePreferenceProgram.search(searchOpts).then(function(tpp) {
+                $scope.tradePrefs = tpp;
+                return delete $scope.tppLoading;
+              });
             });
           });
         });
@@ -260,6 +347,12 @@ angular.module("trade_lanes/partials/show_tpp.html", []).run(["$templateCache", 
             $scope.tpp = r;
             return delete $scope.loading;
           });
+        });
+      };
+      $scope.edit = function(tpp) {
+        $scope.loading = 'loading';
+        return $state.transitionTo('tpp-edit', {
+          id: tpp.id
         });
       };
       if (!$scope.$root.isTest) {
