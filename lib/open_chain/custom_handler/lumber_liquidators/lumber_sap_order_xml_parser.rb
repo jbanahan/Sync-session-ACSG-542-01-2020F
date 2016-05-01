@@ -353,6 +353,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     def ship_to_address base, importer
       el = REXML::XPath.first(base,"./E1EDPA1[PARVW = 'WE']")
+      el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'WE']") unless el
       return address(el,importer)
     end
 
