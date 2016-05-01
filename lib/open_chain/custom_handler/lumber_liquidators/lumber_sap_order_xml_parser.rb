@@ -237,7 +237,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       '300100'=>[40,40,30,7]
     }
     vendor_code = order.vendor.system_code[4,6]
-    ship_to_codes = order.order_lines.collect {|ol| ol.ship_to.system_code}.compact.uniq
+    ship_to_codes = order.order_lines.collect {|ol| ol.ship_to ? ol.ship_to.system_code : nil}.compact.uniq
     use_defaults = true
     if ship_to_codes.length == 1
       matrix_row = ship_window_matrix[vendor_code]
