@@ -3,6 +3,12 @@
 
 /*# sourceMappingURL=chain_address.css.map */
 
+.mini-flag {
+  display: inline;
+  width: 1.25em; }
+
+/*# sourceMappingURL=chain_flag_icon.css.map */
+
 .chain-loader:before,
 .chain-loader:after,
 .chain-loader {
@@ -66,3 +72,18 @@
   padding-left: 1em; }
 
 /*# sourceMappingURL=chain_messages_modal.css.map */
+
+.control-label {
+  font-size: small;
+  color: #666;
+  margin: 0; }
+
+p.form-control-static {
+  margin: 3px 0 0 0;
+  padding: 0;
+  min-height: 0; }
+
+chain-field-value {
+  display: inline; }
+
+/*# sourceMappingURL=field_display.css.map */
