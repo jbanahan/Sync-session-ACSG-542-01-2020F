@@ -1,10 +1,10 @@
 require 'spec_helper'
 
-describe CustomReportEntryInvoiceBreakdown do
+describe CustomReportTieredEntryInvoiceBreakdown do
 
   context "static methods" do
     before :each do
-      @kls = CustomReportEntryInvoiceBreakdown
+      @kls = CustomReportTieredEntryInvoiceBreakdown
       @master_user = Factory(:master_user)
       @importer_user = Factory(:importer_user)
     end
@@ -32,7 +32,6 @@ describe CustomReportEntryInvoiceBreakdown do
     end
   end
 
-
   it "produces report" do
     master_user = Factory(:master_user)
     master_user.stub(:view_broker_invoices?).and_return(true)
@@ -52,7 +51,7 @@ describe CustomReportEntryInvoiceBreakdown do
     expect(sheet[0][2]).to eq "CD1"
     expect(sheet[1][0]).to eq "31612345678"
     expect(sheet[1][2]).to eq 100.12
-    expect(sheet[2][0]).to eq "31612345678"
+    expect(sheet[2][0]).to be_blank
   end
 
 end

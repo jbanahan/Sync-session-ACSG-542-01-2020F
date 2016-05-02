@@ -1,15 +1,15 @@
 require 'custom_report_entry_invoice_breakdown_support'
 
-class CustomReportEntryInvoiceBreakdown < CustomReport
+class CustomReportTieredEntryInvoiceBreakdown < CustomReport
   include CustomReportEntryInvoiceBreakdownSupport
   #display name for report
   def self.template_name
-    "Entry Summary Billing Breakdown"
+    "Tiered Entry Summary Billing Breakdown"
   end
 
   #long description of report purpose / structure
   def self.description
-    "Shows Broker Invoices with entry header information and each charge in its own column."
+    "Shows Broker Invoices with non-repeating entry header information and each charge in its own column."
   end
 
   #ModelFields available to be included on report as columns
@@ -29,7 +29,7 @@ class CustomReportEntryInvoiceBreakdown < CustomReport
   end
 
   def run run_by, row_limit = nil
-    process run_by, row_limit, false
+    process run_by, row_limit, true
   end
 
 end
