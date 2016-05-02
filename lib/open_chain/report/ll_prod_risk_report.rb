@@ -50,22 +50,22 @@ module OpenChain
 
       def query(cd_prodven_risk, cd_cmp_sap_company)
         <<-SQL
-          SELECT (CASE
-                  WHEN cv_ven.string_value IS NULL OR cv_ven.string_value = '' THEN CONCAT("None","~*~",c.id)
-                  ELSE CONCAT(cv_ven.string_value,"~*~",c.id)
-                  END) AS "Vendor SAP #",
-            c.name AS "Vendor Name",
-            p.unique_identifier AS "Product SAP #",
-            p.name AS "Product Name"
-          FROM companies as c
-            INNER JOIN product_vendor_assignments AS pva ON c.id = pva.vendor_id
-            INNER JOIN products AS p on p.id = pva.product_id
-            LEFT OUTER JOIN custom_values AS cv_ven ON (cv_ven.customizable_type = "company" AND cv_ven.customizable_id = c.id
-                                                        AND cv_ven.custom_definition_id = #{cd_cmp_sap_company.id})
-            LEFT OUTER JOIN custom_values AS cv_prodven ON (cv_prodven.customizable_type = "ProductVendorAssignment" AND cv_prodven.customizable_id = pva.id
-                                                        AND cv_prodven.custom_definition_id = #{cd_prodven_risk.id})
-          WHERE cv_prodven.string_value IS NULL OR cv_prodven.string_value = '' and p.id IN (SELECT product_id from order_lines inner join orders on order_lines.order_id = orders.id where orders.closed_at is null)
-          ORDER BY c.name
+select 
+(select (CASE WHEN string_value IS NULL OR string_value = '' THEN CONCAT("None","~*~",v.id) ELSE CONCAT(string_value,"~*~",v.id) END) from custom_values where custom_definition_id = 1 and customizable_type = 'Company' and customizable_id = v.id) as 'Vendor SAP #',
+v.name as 'Company Name',
+p.unique_identifier as 'Product SAP #',
+p.name as 'Product Name',
+group_concat(distinct orders.order_number) as 'Order Numbers',
+min(orders.ship_window_start) as 'Ship Window Start'
+from orders
+inner join order_lines on orders.id = order_lines.order_id
+inner join products p on p.id = order_lines.product_id
+inner join companies v on v.id = orders.vendor_id
+left join product_vendor_assignments pva on pva.vendor_id = v.id and pva.product_id = p.id
+left outer join custom_values risk on risk.custom_definition_id = 140 and risk.customizable_type = 'ProductVendorAssignment' and risk.customizable_id = pva.id
+WHERE orders.closed_at is not null and (risk.string_value is null OR risk.string_value = '')
+group by p.id, v.id
+order by v.name, p.name
         SQL
       end
     end
