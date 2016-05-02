@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPp
   end
 
   def run_report start_date, end_date
-    wb, sheet = XlsMaker.create_workbook_and_sheet "Lacey Data #{start_date.in_time_zone(user_timezone).strftime '%m/%d/%y'} - #{(end_date.in_time_zone(user_timezone) - 1.day).strftime '%m/%d/%y'}", nil
+    wb, sheet = XlsMaker.create_workbook_and_sheet "Lacey Data #{start_date.in_time_zone(user_timezone).strftime '%m.%d.%y'} - #{(end_date.in_time_zone(user_timezone) - 1.day).strftime '%m.%d.%y'}", nil
     table_from_query sheet, query(start_date, end_date), conversions
     wb
   end
