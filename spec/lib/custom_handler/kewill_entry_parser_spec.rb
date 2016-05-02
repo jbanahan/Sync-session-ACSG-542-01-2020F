@@ -1037,7 +1037,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     before :each do 
       OpenChain::AllianceImagingClient.stub(:request_images)
       MasterSetup.stub(:get).and_return master_setup
-      master_setup.stub(:custom_features?).with("Kewill Imaging").and_return true
+      master_setup.stub(:custom_feature?).with("Kewill Imaging").and_return true
     end
 
     it "reads json, parses it, notifies listeners" do
@@ -1063,7 +1063,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "does not call request images if Kewill Imaging is not enabled" do
       json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
-      master_setup.should_receive(:custom_features?).with("Kewill Imaging").and_return false
+      master_setup.should_receive(:custom_feature?).with("Kewill Imaging").and_return false
       OpenChain::AllianceImagingClient.should_not_receive(:request_images)
 
       entry = Entry.new(broker_reference: "TESTING")

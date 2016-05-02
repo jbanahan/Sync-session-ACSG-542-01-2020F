@@ -70,7 +70,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # Kewill Imaging can store off the files locally.  The imaging request gets over to our imaging clients prior to the 
       # image existing in Kewill Imaging and thus we don't get any files back.  So, use :delay_seconds in order to hold back
       # for 5 minutes.
-      if MasterSetup.get.custom_features?("Kewill Imaging")
+      if MasterSetup.get.custom_feature?("Kewill Imaging")
         OpenChain::AllianceImagingClient.request_images(entry.broker_reference, delay_seconds: 300) unless opts[:imaging] == false
       end
       entry.broadcast_event(:save)
