@@ -4,6 +4,14 @@ describe Order do
   before :each do
     OpenChain::OrderAcceptanceRegistry.clear
   end
+  describe 'display_order_number' do
+    it "shoud show order_number if no customer order number" do
+      expect(Order.new(order_number:'abc').display_order_number).to eq 'abc'
+    end
+    it "should show customer order number" do
+      expect(Order.new(order_number:'abc',customer_order_number:'def').display_order_number).to eq 'def'
+    end
+  end
   describe 'post_create_logic' do
     before :each do
       @u = Factory(:master_user)

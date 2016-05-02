@@ -46,33 +46,33 @@ module OpenChain; class EventPublisher
       ),
       order_close: MessageType.new('ORDER_CLOSE',
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
-        lambda {|obj| "Order #{obj.customer_order_number} closed."},
-        lambda {|obj| "Order #{obj.customer_order_number} closed by #{obj.closed_by.full_name} at #{obj.closed_at}."}
+        lambda {|obj| "Order #{obj.display_order_number} closed."},
+        lambda {|obj| "Order #{obj.display_order_number} closed by #{obj.closed_by.full_name} at #{obj.closed_at}."}
       ),
       order_reopen: MessageType.new('ORDER_REOPEN',
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
-        lambda {|obj| "Order #{obj.customer_order_number} reopened."},
-        lambda {|obj| "Order #{obj.customer_order_number} reopened."}
+        lambda {|obj| "Order #{obj.display_order_number} reopened."},
+        lambda {|obj| "Order #{obj.display_order_number} reopened."}
       ),
       order_accept: MessageType.new('ORDER_ACCEPT',
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
-        lambda {|obj| "Order #{obj.customer_order_number} accepted."},
-        lambda {|obj| "Order #{obj.customer_order_number} accepted."}
+        lambda {|obj| "Order #{obj.display_order_number} accepted."},
+        lambda {|obj| "Order #{obj.display_order_number} accepted."}
       ),
       order_unaccept: MessageType.new('ORDER_UNACCEPT',
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
-        lambda {|obj| "Order #{obj.customer_order_number} unaccepted."},
-        lambda {|obj| "Order #{obj.customer_order_number} unaccepted."}
+        lambda {|obj| "Order #{obj.display_order_number} unaccepted."},
+        lambda {|obj| "Order #{obj.display_order_number} unaccepted."}
       ),
       order_create: MessageType.new('ORDER_CREATE',
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
-        lambda {|obj| "Order #{obj.customer_order_number} created."},
-        lambda {|obj| "Order #{obj.customer_order_number} created."}
+        lambda {|obj| "Order #{obj.display_order_number} created."},
+        lambda {|obj| "Order #{obj.display_order_number} created."}
       ),
       order_update: MessageType.new('ORDER_UPDATE',
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
-        lambda {|obj| "Order #{obj.customer_order_number} updated."},
-        lambda {|obj| "Order #{obj.customer_order_number} updated."}
+        lambda {|obj| "Order #{obj.display_order_number} updated."},
+        lambda {|obj| "Order #{obj.display_order_number} updated."}
       ),
       shipment_booking_request: MessageType.new('SHIPMENT_BOOK_REQ',
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
