@@ -165,6 +165,12 @@ class Order < ActiveRecord::Base
 	  return r
 	end
 
+  # useful order number to show to user
+  def display_order_number
+    return self.customer_order_number unless self.customer_order_number.blank?
+    return self.order_number
+  end
+
   # Returns true if order appears on any shipments.
   def shipping?
     self.piece_sets.where("shipment_line_id is not null").count > 0
