@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
         line.find_and_set_custom_value @cdefs[:ord_line_board_number], board_number(xml)
 
         # This is the RL Style regardless of whether the line is a Prepack, Set or standard line
-        style = xml.text("ProductDetails3/ProductID/ProductIDValue")
+        style = get_style(xml)
         line.product = find_product(style)
       end
 
@@ -185,6 +185,19 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
         # they are uploaded via worksheets
         Product.where(unique_identifier: style).first_or_create!
       end
+    end
+
+    def get_style product_line_xml
+      # This is the "main" style value.  However, if the line is a prepack the style value will also have a pack code appended to it.
+      # We need to strip off the the pack code to get at the actual style number.
+      style = product_line_xml.text("ProductDetails3/ProductID/ProductIDValue")
+      prepack_code = product_line_xml.text("ProductDetails2/ProductID/ProductIDValue")
+
+      if !prepack_code.blank? && style.ends_with?(prepack_code)
+        style = style[0..-(prepack_code.length + 1)]
+      end
+
+      style
     end
 
 

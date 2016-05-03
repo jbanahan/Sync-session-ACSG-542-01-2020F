@@ -113,10 +113,16 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
   <Lines>
     <ProductLine>
       <PositionNumber>00010</PositionNumber>
+      <ProductDetails2>
+        <ProductID>
+          <ProductIDType>PK</ProductIDType>
+          <ProductIDValue>AAB</ProductIDValue>
+        </ProductID>
+      </ProductDetails2>
       <ProductDetails3>
         <ProductID>
           <ProductIDType>VA</ProductIDType>
-          <ProductIDValue>209629423004</ProductIDValue>
+          <ProductIDValue>209629423004AAB</ProductIDValue>
         </ProductID>
       </ProductDetails3>
       <ProductQuantityDetails>
@@ -344,6 +350,14 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
       line = order.order_lines.first
       # If there are multiple board numbers, it makes a csv of them
       expect(line.custom_value(cdefs[:ord_line_board_number])).to eq "S1640X12J, Board2"
+    end
+
+    it "strips the pack code from the style on prepack lines" do
+      described_class.parse prepack_xml
+      order = Order.where(importer_id: master_company.id, order_number: "4700447521").first
+      expect(order).not_to be_nil
+
+      expect(order.order_lines.first.product.unique_identifier).to eq "209629423004"
     end
 
   end
