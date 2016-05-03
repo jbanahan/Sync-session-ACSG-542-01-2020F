@@ -86,7 +86,7 @@
   <% if @order.can_accept?(current_user)%>
     <% if @order.approval_status=='Accepted' %>
       <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
-    <% elsif @ord.can_be_accepted? %>
+    <% elsif @order.can_be_accepted? %>
       <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
     <% end %>
   <% end %>
