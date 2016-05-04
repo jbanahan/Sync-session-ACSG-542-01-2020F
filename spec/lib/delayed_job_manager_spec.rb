@@ -76,14 +76,16 @@ describe DelayedJobManager do
     DelayedJobManager.report_delayed_job_error
   end
   it 'should not send an email if a previous email was sent less than X minutes ago' do
+    # Make sure last delayed job error sent is not set at all
     reporting_age = 60.minutes.ago
-    MasterSetup.get.last_delayed_job_error_sent = reporting_age
+    ms = double("MasterSetup")
+    MasterSetup.stub(:get).and_return ms
+    ms.stub(:last_delayed_job_error_sent).and_return reporting_age
+    ms.should_not_receive(:update_attributes!)
     RuntimeError.any_instance.should_not_receive(:log_me)
 
     # Add a minute to our max reporting age due to timing concerns
     DelayedJobManager.report_delayed_job_error(61)
-
-    MasterSetup.get.last_delayed_job_error_sent.to_s(:db).should eq reporting_age.to_s(:db)
   end
   it 'should not add more than 50 error messages to an error notification email' do 
     (1..50).each do |n|

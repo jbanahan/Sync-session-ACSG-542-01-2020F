@@ -81,7 +81,7 @@ class DelayedJobManager
       raise "#{MasterSetup.get.system_code} - #{real_error_count} delayed job(s) have errors." if real_error_count > 0
     rescue
       #Update the error sent time and then log the error (which sends an email out with our errors)
-      MasterSetup.get.update_attributes(:last_delayed_job_error_sent => Time.now)
+      MasterSetup.get.update_attributes!(:last_delayed_job_error_sent => Time.now)
       $!.log_me error_messages, [], true
     end
 
