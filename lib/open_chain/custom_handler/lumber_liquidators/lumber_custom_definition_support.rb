@@ -104,6 +104,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_buyer_name: {label: 'Buyer Name', data_type: :string, module_type: 'Order'},
     ord_buyer_phone: {label: 'Buyer Phone', data_type: :string, module_type: 'Order'},
     ord_country_of_origin: {label: 'Country of Origin', data_type: :string, module_type: 'Order'},
+    ord_dhl_push_date: {label: "DHL PO Push Date", data_type: :date, module_type: "Order"},
     ordln_pc_approved_by:  {label: 'PC Approved By', data_type: :integer, module_type: 'OrderLine'},
     ordln_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'OrderLine'},
     ordln_pc_approved_by_executive:  {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'OrderLine'},

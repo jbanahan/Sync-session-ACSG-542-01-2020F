@@ -1,4 +1,6 @@
 require 'open_chain/report'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_dhl_order_push_report'
+
 class ReportsController < ApplicationController
   
   def index
@@ -461,6 +463,22 @@ class ReportsController < ApplicationController
   def run_ll_prod_risk_report
     if OpenChain::Report::LlProdRiskReport.permission? current_user
       run_report "Lumber Liquidators Product Risk Report", OpenChain::Report::LlProdRiskReport, {}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def show_ll_dhl_order_push_report
+    if OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_ll_dhl_order_push_report
+    if OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport.permission? current_user
+      run_report "Lumber Liquidators DHL PO Push Report", OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport, {}, []
     else
       error_redirect "You do not have permission to view this report"
     end

@@ -2,52 +2,60 @@ require 'spec_helper'
 
 describe OpenChain::Report::ReportHelper do
 
-  before :each do 
-    @helper = Class.new do
+  subject {
+    Class.new do
       include OpenChain::Report::ReportHelper
-    end
-  end
+    end.new
+  }
   
   describe "table_from_query" do
-    before :each do 
-      @helper = Class.new do
+    subject {
+      Class.new do
         include OpenChain::Report::ReportHelper
+        attr_accessor :sheet
 
         def run query, conversions = {}, opts = {}
           wb = Spreadsheet::Workbook.new
-          s = wb.create_worksheet :name=>'x'
-          table_from_query s, query, conversions, opts
+          @sheet = wb.create_worksheet :name=>'x'
+          table_from_query @sheet, query, conversions, opts
         end
-      end
-    end
+      end.new
+    }
 
     it "runs a query, adds headers to sheet, passing control to write result sheet" do
+      e = Factory(:entry, entry_number: "123")
       q = "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
-      h = @helper.new
-      # We can't really reliably determine result set, since there is no ActiveRecord base for it
-      # so just detect it as something that responds to each, since that's how the method handles it anyway.
-      h.should_receive(:write_result_set_to_sheet).with(duck_type(:each), instance_of(Spreadsheet::Worksheet), ['EN','IDENT'], 1, {}, {}).and_return 48
-      expect(h.run q).to eq 48
+      expect(subject.run q).to eq 1
+
+      expect(subject.sheet.rows.length).to eq 2
+      expect(subject.sheet.row(0)).to eq ["EN", "IDENT"]
+      expect(subject.sheet.row(1)).to eq ["123", e.id]
     end
 
     it "shifts off the leftmost X columns if query column offset is used" do
+      e = Factory(:entry, entry_number: "123")
       q = "SELECT 'test' as 'TEST', entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
-      h = @helper.new
-      # We can't really reliably determine result set, since there is no ActiveRecord base for it
-      # so just detect it as something that responds to each, since that's how the method handles it anyway.
-      h.should_receive(:write_result_set_to_sheet).with(duck_type(:each), instance_of(Spreadsheet::Worksheet), ['EN','IDENT'], 1, {}, {query_column_offset: 1}).and_return 48
-      expect(h.run q, {}, query_column_offset: 1).to eq 48
+      subject.run q, {}, query_column_offset: 1
+      sheet = subject.sheet
+      expect(sheet.rows.length).to eq 2
+      expect(sheet.row(0)).to eq ["EN", "IDENT"]
+      expect(sheet.row(1)).to eq ["123", e.id]
+    end
+
+    it "uses conversions associated with column aliases, even if columns are not displayed on report" do
+      Factory(:entry, broker_reference: "123")
+      query = "SELECT e.id 'ID', e.broker_reference 'REF' FROM entries e"
+      id = nil
+      # By setting id value in the conversion lambda on a column that's not on the report, we ensure that conversions 
+      # are definitely still being run over that column
+      subject.run query, {'ID' => lambda { |row, value| id = "Run"}}, query_column_offset: 1 
+      expect(id).to eq "Run"
     end
   end
 
   # mostly tested in table_from_query
   describe "table_from_query_result"  do 
     before :each do 
-      helper = Class.new do
-        include OpenChain::Report::ReportHelper
-      end
-      
-      @h = helper.new
       q = "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
       @result_set = ActiveRecord::Base.connection.execute q
     end
@@ -55,22 +63,21 @@ describe OpenChain::Report::ReportHelper do
     it "extracts columns headers from result_set by default" do
       wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
       XlsMaker.should_receive(:add_header_row).with(sheet, 0, ['EN', 'IDENT'])
-      @h.table_from_query_result sheet, @result_set
+      subject.table_from_query_result sheet, @result_set
     end
 
     it "extracts columns from opts if :column_names is used" do
       wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
       XlsMaker.should_receive(:add_header_row).with(sheet, 0, ['Nigel', 'David'])
-      @h.table_from_query_result sheet, @result_set, {}, {column_names: ['Nigel', 'David']}
+      subject.table_from_query_result sheet, @result_set, {}, {column_names: ['Nigel', 'David']}
     end
 
     it "uses header_row opt if given as row number to write header" do
       wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
       opts = {column_names: ['Nigel', 'David'], header_row: 5}
       XlsMaker.should_receive(:add_header_row).with(sheet, 5, ['Nigel', 'David'])
-      @h.should_receive(:write_result_set_to_sheet).with(@result_set, sheet, ['Nigel', 'David'], 6, {}, opts)
-      @h.table_from_query_result sheet, @result_set, {}, opts
-
+      subject.should_receive(:write_result_set_to_sheet).with(@result_set, sheet, ['Nigel', 'David'], 6, {}, opts)
+      subject.table_from_query_result sheet, @result_set, {}, opts
     end
   end
 
@@ -86,7 +93,7 @@ describe OpenChain::Report::ReportHelper do
       e2 = Factory(:entry,:entry_number=>'65432')
       results = ActiveRecord::Base.connection.execute "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
       # Start at row 5 just to make sure the return value is actually giving us the # of rows written and not the ending line number
-      expect(@helper.new.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 5).to eq 2
+      expect(subject.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 5).to eq 2
 
       @sheet.row(5).should == ['12345',e1.id]
       @sheet.row(6).should == ['65432',e2.id]
@@ -97,7 +104,7 @@ describe OpenChain::Report::ReportHelper do
       e1 = Factory(:entry,:entry_number=>'12345', :release_date => release_date)
       results = ActiveRecord::Base.connection.execute "SELECT release_date 'REL1', date(release_date) as 'Rel2' FROM entries order by entry_number ASC"
       Time.use_zone("Hawaii") do
-        @helper.new.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 0
+        subject.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 0
       end
 
       @sheet.row(0)[0].to_s.should == release_date.in_time_zone("Hawaii").to_s
@@ -105,7 +112,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should convert nil to blank string in excel output" do
-      @helper.new.write_result_set_to_sheet [[nil]], @sheet, ["EN"], 0
+      subject.write_result_set_to_sheet [[nil]], @sheet, ["EN"], 0
       @sheet.row(0).should == ['']
     end
 
@@ -131,12 +138,12 @@ describe OpenChain::Report::ReportHelper do
         raise "Shouldn't use this conversion."
       }
       
-      @helper.new.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Whatever', 'col_3'], 0, conversions
+      subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Whatever', 'col_3'], 0, conversions
       @sheet.row(0).should == ['Col1', 'Col2', 'Col3']
     end
 
     it "offsets output columns if instructed" do
-      @helper.new.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, {}, query_column_offset: 1
+      subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, {}, query_column_offset: 1
       @sheet.row(0).should == ['B', 'C']
     end
 
@@ -157,7 +164,7 @@ describe OpenChain::Report::ReportHelper do
         "Col3"
       }
 
-      @helper.new.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, conversions, translations_modify_result_set: true
+      subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, conversions, translations_modify_result_set: true
       @sheet.row(0).should == ['Col1', 'Col2', 'Col3']
     end
 
@@ -176,14 +183,14 @@ describe OpenChain::Report::ReportHelper do
         "Col2"
       }
 
-      @helper.new.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, conversions, translations_modify_result_set: true, query_column_offset: 1
+      subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, conversions, translations_modify_result_set: true, query_column_offset: 1
       @sheet.row(0).should == ['Col2', 'C']
     end
   end
 
   context :datetime_translation_lambda do
     it "should create a lambda that will translate a datetime value into the specified timezone" do
-      conversion = @helper.new.datetime_translation_lambda "Hawaii", false
+      conversion = subject.datetime_translation_lambda "Hawaii", false
 
       now = Time.zone.now.in_time_zone "UTC"
 
@@ -194,7 +201,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should return a date if specified" do
-      conversion = @helper.new.datetime_translation_lambda "Hawaii", true
+      conversion = subject.datetime_translation_lambda "Hawaii", true
 
       # Use a time we know is going to be one date in UTC and a day earlier in HST.
       now = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 01:00:00"
@@ -205,7 +212,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should handle nil times" do
-      conversion = @helper.new.datetime_translation_lambda "Hawaii", false
+      conversion = subject.datetime_translation_lambda "Hawaii", false
       conversion.call(nil, nil).should be_nil
     end
   end
@@ -215,22 +222,22 @@ describe OpenChain::Report::ReportHelper do
       ms = double("MasterSetup")
       ms.stub(:request_host).and_return "localhost"
       MasterSetup.stub(:get).and_return ms
-      l = @helper.new.weblink_translation_lambda CoreModule::PRODUCT
+      l = subject.weblink_translation_lambda CoreModule::PRODUCT
       expect(l.call(nil, 1)).to eq Spreadsheet::Link.new(Product.excel_url(1), "Web View")
     end
   end
 
   describe "csv_translation_lambda" do
     it "csv's a string" do
-      l = @helper.new.csv_translation_lambda
+      l = subject.csv_translation_lambda
       expect(l.call(nil, "A\nB\n C")).to eq "A, B, C"
     end
     it "uses given parameters to split / joining" do 
-      l = @helper.new.csv_translation_lambda "\n", ","
+      l = subject.csv_translation_lambda "\n", ","
       expect(l.call(nil, "A,B,C")).to eq "A\nB\nC"
     end
     it "handles nil / blank values" do
-      l = @helper.new.csv_translation_lambda
+      l = subject.csv_translation_lambda
       expect(l.call(nil, nil)).to eq nil
       expect(l.call(nil, "   ")).to eq "   "
     end
@@ -238,21 +245,21 @@ describe OpenChain::Report::ReportHelper do
 
   context :sanitize_date_string do
     it "should return a date string" do
-      s = @helper.new.sanitize_date_string "20130101"
+      s = subject.sanitize_date_string "20130101"
       s.should == "2013-01-01"
     end
 
     it "should error on invalid strings" do
-      expect{@helper.new.sanitize_date_string "notadate"}.to raise_error
+      expect{subject.sanitize_date_string "notadate"}.to raise_error
     end
 
     it "should convert date to UTC date time string" do
-      s = @helper.new.sanitize_date_string "20130101", "Hawaii"
+      s = subject.sanitize_date_string "20130101", "Hawaii"
       s.should == "2013-01-01 10:00:00"
     end
 
     it "should accept a date object" do
-      s = @helper.new.sanitize_date_string Date.new(2013,1,1), "Hawaii"
+      s = subject.sanitize_date_string Date.new(2013,1,1), "Hawaii"
       s.should == "2013-01-01 10:00:00"
     end
   end
@@ -268,7 +275,7 @@ describe OpenChain::Report::ReportHelper do
       path = nil
       name = nil
       tempfile = nil
-      @helper.new.workbook_to_tempfile(@wb, "prefix", file_name: "test.xls") do |tf|
+      subject.workbook_to_tempfile(@wb, "prefix", file_name: "test.xls") do |tf|
         workbook = Spreadsheet.open tf
         name = tf.original_filename
         tempfile = tf
@@ -282,7 +289,7 @@ describe OpenChain::Report::ReportHelper do
     it "writes workbook to tempfile returning tempfile" do
       tf = nil
       begin
-        tf = @helper.new.workbook_to_tempfile(@wb, "prefix", file_name: "test.xls")
+        tf = subject.workbook_to_tempfile(@wb, "prefix", file_name: "test.xls")
         expect(tf.original_filename).to eq "test.xls"
         workbook = Spreadsheet.open tf
         expect(workbook.worksheet(0).row(0)).to eq ["Header"]
