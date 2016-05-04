@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloSapProductGenerator do
@@ -152,7 +150,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       a.collect {|x| x[0]}.should == ["Test  Test"]
     end
 
-    it "skips tariff lines for product/classification combos already sent" do
+    it "does not send multiple classifications for the same style/country combo" do
       eu = Factory(:country,:iso_code=>'IT')
       # Create multiple products to ensure the checks against the previous style/iso are done correctly
       p = Factory(:product, unique_identifier: "ZZZ")
@@ -164,9 +162,13 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       # checking for multiple tariff lines
       Factory(:tariff_record,:hts_1=>'1234567890', line_number: "1", classification: Factory(:classification,:country_id=>eu.id,:product=>p))
 
-      p2 = Factory(:product, unique_identifier: "AAA")
-      p2.update_custom_value! @sap_brand_cd, true
-      Factory(:tariff_record,:hts_1=>'1234567890', line_number: "2", classification: Factory(:classification,:country_id=>@us.id,:product=>p2))
+      # Make sure AAA is always sorted first
+      p2 = nil
+      Timecop.freeze(Time.zone.now - 7.days) do 
+        p2 = Factory(:product, unique_identifier: "AAA")
+        p2.update_custom_value! @sap_brand_cd, true
+        Factory(:tariff_record,:hts_1=>'1234567890', line_number: "2", classification: Factory(:classification,:country_id=>@us.id,:product=>p2))
+      end
       
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
