@@ -217,4 +217,30 @@ describe CoreObjectSupport do
       expect(entry.failed_business_rules).to eq ["A Test", "Test"]
     end
   end
+
+  describe :can_run_validations? do
+    before :each do
+      @u = Factory(:user)
+      @u.stub(:edit_business_validation_rule_results?).and_return true
+      @ent = Factory(:entry)
+      
+      @bvrr_1 = Factory(:business_validation_rule_result)
+      bvr_1 = @bvrr_1.business_validation_result
+      bvr_1.validatable = @ent; bvr_1.save!
+
+      @bvrr_2 = Factory(:business_validation_rule_result)
+      bvr_2 = @bvrr_2.business_validation_result
+      bvr_2.validatable = @ent; bvr_2.save!
+    end
+
+    it "returns true if user has permission to edit all rule results associated with object" do
+      expect(@ent.can_run_validations? @u).to eq true
+    end
+
+    it "returns false if there are any rule results user doesn't have permission to edit" do
+      bvru_1 = @bvrr_1.business_validation_rule
+      bvru_1.group = Factory(:group); bvru_1.save!
+      expect(@ent.can_run_validations? @u).to eq false
+    end
+  end
 end
