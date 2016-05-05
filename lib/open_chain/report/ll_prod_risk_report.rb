@@ -5,6 +5,7 @@ module OpenChain
     class LlProdRiskReport
       include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
       include OpenChain::Report::ReportHelper
+      include Rails.application.routes.url_helpers
 
       def self.permission? user
         user.view_products? && user.company.master? && MasterSetup.get.system_code=='ll'
@@ -21,14 +22,14 @@ module OpenChain
       def create_workbook
         wb = XlsMaker.create_workbook "Products Needing Risk Assignment"
         custom_defs = self.class.prep_custom_definitions([:prodven_risk,:cmp_sap_company])
-        table_from_query wb.worksheet(0), query(custom_defs[:prodven_risk], custom_defs[:cmp_sap_company]), {'Vendor SAP #' => link_lambda}
+        table_from_query wb.worksheet(0), query(custom_defs[:prodven_risk], custom_defs[:cmp_sap_company]), {'Vendor SAP #' => link_lambda}, query_column_offset: 1
         wb
       end
 
       def link_lambda
         lambda do |result_set_row, raw_column_value|
-          vendor_sap, vendor_id = raw_column_value.split("~*~")
-          vendor_sap_link = XlsMaker.excel_url("/vendors/" + vendor_id)
+          vendor_sap = raw_column_value.presence || "None"
+          vendor_sap_link = XlsMaker.excel_url(vendor_path(result_set_row[0]))
           XlsMaker.create_link_cell(vendor_sap_link, vendor_sap)
         end
       end
@@ -51,7 +52,8 @@ module OpenChain
       def query(cd_prodven_risk, cd_cmp_sap_company)
         <<-SQL
 select 
-(select (CASE WHEN string_value IS NULL OR string_value = '' THEN CONCAT("None","~*~",v.id) ELSE CONCAT(string_value,"~*~",v.id) END) from custom_values where custom_definition_id = 1 and customizable_type = 'Company' and customizable_id = v.id) as 'Vendor SAP #',
+v.id as 'ID',
+sap.string_value as 'Vendor SAP #',
 v.name as 'Company Name',
 p.unique_identifier as 'Product SAP #',
 p.name as 'Product Name',
@@ -62,8 +64,9 @@ inner join order_lines on orders.id = order_lines.order_id
 inner join products p on p.id = order_lines.product_id
 inner join companies v on v.id = orders.vendor_id
 left join product_vendor_assignments pva on pva.vendor_id = v.id and pva.product_id = p.id
-left outer join custom_values risk on risk.custom_definition_id = 140 and risk.customizable_type = 'ProductVendorAssignment' and risk.customizable_id = pva.id
-WHERE orders.closed_at is not null and (risk.string_value is null OR risk.string_value = '')
+left outer join custom_values risk on risk.custom_definition_id = #{cd_prodven_risk.id} and risk.customizable_type = 'ProductVendorAssignment' and risk.customizable_id = pva.id
+left outer join custom_values sap on sap.custom_definition_id = #{cd_cmp_sap_company.id} and sap.customizable_type = 'Company' and sap.customizable_id = v.id
+WHERE orders.closed_at is not null and length(trim(ifnull(risk.string_value, ''))) > 0
 group by p.id, v.id
 order by v.name, p.name
         SQL
