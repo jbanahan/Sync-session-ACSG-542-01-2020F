@@ -305,10 +305,10 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     end
 
 
-    e.total_duty = e.commercial_invoice_lines.map(&:duty).reduce(:+)
-    e.total_sima = e.commercial_invoice_lines.map(&:sima_value).reduce(:+)
-    e.total_excise = e.commercial_invoice_lines.map(&:excise_amount).reduce(:+)
-    e.total_gst = e.commercial_invoice_lines.map(&:gst_amount).reduce(:+)
+    e.total_duty = e.commercial_invoice_lines.map(&:duty).reduce(:+).presence || 0
+    e.total_sima = e.commercial_invoice_lines.map(&:sima_value).reduce(:+).presence || 0
+    e.total_excise = e.commercial_invoice_lines.map(&:excise_amount).reduce(:+).presence || 0
+    e.total_gst = e.commercial_invoice_lines.map(&:gst_amount).reduce(:+).presence || 0
     e.total_amount = (e.total_duty + e.total_sima + e.total_excise + e.total_gst)
 
     # Data in the file needs to be ordered by subheader / line numbers
