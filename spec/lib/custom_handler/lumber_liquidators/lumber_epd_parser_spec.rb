@@ -43,6 +43,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('Lumber EPD').and_return true
       expect(described_class.can_view?(u)).to be_true
     end
+
+    it 'uses instance method and should pass if user can edit variants, is master, and feature is enabled' do
+      u = Factory(:master_user)
+      u.should_receive(:edit_variants?).and_return true
+      u.should_receive(:in_group?).with('PRODUCTCOMP').and_return true
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('Lumber EPD').and_return true
+      expect(described_class.new(nil).can_view?(u)).to be_true
+    end
   end
   describe '#parse_xlsx' do
     it 'should send data to parse_row_arrays and call process_rows' do

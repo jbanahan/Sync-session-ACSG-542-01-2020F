@@ -16,6 +16,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
     self.class.parse_xlsx @custom_file.path, user.id
   end
 
+  def can_view? user
+    self.class.can_view? user
+  end
+
   def self.can_view? user
     return MasterSetup.get.custom_feature?('Lumber EPD') &&
       user.company.master? &&
