@@ -217,7 +217,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :data_type=>:string
       }],
       [160, :ent_location_of_goods_desc, :location_of_goods_description, "Location of Goods Description", {data_type: :string}],
-      [161, :ent_bol_received_date, :bol_received_date, "BOL Received Date", {:data_type=>:datetime}]
+      [161, :ent_bol_received_date, :bol_received_date, "BOL Date", {:data_type=>:datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
