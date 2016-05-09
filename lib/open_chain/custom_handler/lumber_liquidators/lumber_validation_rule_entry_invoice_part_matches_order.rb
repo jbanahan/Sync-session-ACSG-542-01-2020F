@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators
 
     def run_validation entry
       order_cache = {}
-      bad_invoices = {missing_part_no: [], mismatched_part: [], missing_po: [], failed_rule: [], inactive: []}
+      bad_invoices = {missing_part_no: [], mismatched_part: [], missing_po: [], failed_rule: []}
       entry.commercial_invoice_lines.each do |line|
         tag = {number: line.commercial_invoice.invoice_number, po: line.po_number, part: line.part_number}
         match_errors(line, order_cache).each{ |err| bad_invoices[err] << tag }
@@ -18,7 +18,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators
       order = cil.po_number.presence ? (get_order cil.po_number, order_cache) : nil
       if order["order"]
         errors << :failed_rule if order["order"]["ord_rule_state"] == "Fail"
-        errors << :inactive if order["order"]["ord_closed_at"]
         check_part cil, order, errors
       else
         errors << :missing_po
@@ -28,7 +27,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators
 
     def get_order ord_num, order_cache
       unless order_cache.key? ord_num
-        order_cache[ord_num] = OpenChain::Api::OrderApiClient.new("ll").find_by_order_number ord_num, [:ord_rule_state, :ord_closed_at, :ordln_puid]
+        order_cache[ord_num] = OpenChain::Api::OrderApiClient.new("ll").find_by_order_number ord_num, [:ord_rule_state, :ordln_puid]
       end
       order_cache[ord_num].dup
     end
@@ -65,11 +64,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators
     end
 
     def error_set
-      [{:type => :mismatched_part, :msg => "The following invoices have POs that don't match their part numbers: "},
-       {:type => :missing_po, :msg => "The part number for the following invoices do not have a matching PO: " },
-       {:type => :missing_part_no, :msg => "The following invoices are missing a part number: " }, 
-       {:type => :failed_rule, :msg => "Purchase orders associated with the following invoices have a failing business rule: "},
-       {:type => :inactive, :msg => "The following invoices have inactive purchase orders: "}]
+      [
+        {:type => :mismatched_part, :msg => "The following invoices have POs that don't match their part numbers: "},
+        {:type => :missing_po, :msg => "The part number for the following invoices do not have a matching PO: " },
+        {:type => :missing_part_no, :msg => "The following invoices are missing a part number: " }, 
+        {:type => :failed_rule, :msg => "Purchase orders associated with the following invoices have a failing business rule: "}
+      ]
     end
 
   end
