@@ -15,7 +15,7 @@ module OpenChain; module BusinessRuleValidationResultsSupport
             if bvr
               render json: {business_validation_result: bvr}
             else
-              render json: {error:"You do not have permission to view this validation result"}, status: 401
+              render json: {errors:["You do not have permission to view this validation result"]}, status: 401
             end
           }
       }
