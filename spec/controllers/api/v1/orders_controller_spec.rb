@@ -95,7 +95,7 @@ describe Api::V1::OrdersController do
       expect(response.status).to eq 401
     end
   end
-  describe :accept do
+  describe :unaccept do
     it "should unaccept order if user has permission" do
       Order.any_instance.stub(:can_accept?).and_return true
       Order.any_instance.should_receive(:async_unaccept!)
