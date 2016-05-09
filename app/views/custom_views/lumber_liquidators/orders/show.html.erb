@@ -99,7 +99,7 @@
           <table class="table table-condensed table-bordered">
             <thead>
               <tr>
-                <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_ordered_qty, :prod_uom, :ordln_ppu, :ordln_total_cost], table:true, heading:true) %>
+                <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_total_cost], table:true, heading:true) %>
                 <th>&nbsp;</th>
               </tr>
             </thead>
@@ -112,9 +112,7 @@
                     <small><%=cdefs[:prod_old_article].model_field.process_export(line.product,User.current)%></small><br />
                     <%=ModelField.find_by_uid(:prod_name).process_export(line.product,User.current)%>
                   </td>
-                  <%= show_model_fields(line, [:ordln_ordered_qty], table: true, editor_only: true) %>
-                  <%= show_model_fields(line.product, :prod_uom, table: true, editor_only: true) %>
-                  <%= show_model_fields(line, [:ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
+                  <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
                   <td>
                     <a id='lnk_det_s_<%=line.id%>' href="#">Detail</a>
                     <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="#">Detail</a>
@@ -122,7 +120,7 @@
                 </tr>
                 <tr style='display:none;' id='det_<%=line.id%>'>
                   <td>&nbsp;</td>
-                  <td colspan='<%=ModelField.viewable_model_fields(User.current, [:ordln_line_number, :prod_uid, :ordln_sku, :ordln_ordered_qty, :prod_uom, :ordln_ppu, :ordln_currency, :ordln_total_cost]).size + 4%>' >
+                  <td colspan='<%=ModelField.viewable_model_fields(User.current, [:ordln_line_number, :prod_uid, :ordln_sku, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_currency, :ordln_total_cost]).size + 4%>' >
                     <div class="container col-md-6">
                       <%= show_model_fields line, [:ordln_country_of_origin, :ordln_hts] %>
                       <%= show_custom_fields line %>
@@ -143,7 +141,7 @@
           <table class="table table-condensed table-striped table-bordered">
             <thead>
               <tr>
-                <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_ordered_qty, :prod_uom, :ordln_ppu, :ordln_total_cost,
+                <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_total_cost,
                   cdefs[:prodven_risk].model_field_uid,
                   cdefs[:ordln_pc_approved_by].model_field_uid
                 ], table:true, heading:true) %>
@@ -162,9 +160,7 @@
                     <small><%=cdefs[:prod_old_article].model_field.process_export(line.product,User.current)%></small><br />
                     <%=ModelField.find_by_uid(:prod_name).process_export(line.product,User.current)%>
                   </td>
-                  <%= show_model_fields(line, [:ordln_ordered_qty], table: true, editor_only: true) %>
-                  <%= show_model_fields(line.product, :prod_uom, table: true, editor_only: true) %>
-                  <%= show_model_fields(line, [:ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
+                  <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
                   <%line_risk = cdefs[:prodven_risk].model_field.process_export(line.product.product_vendor_assignments.where(vendor_id:@order.vendor_id).first, User.current)%>
                   <td class='<%=line_risk.blank? ? "danger" : ""%>'>
                     <%=line_risk%>
