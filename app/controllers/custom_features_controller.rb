@@ -1,3 +1,4 @@
+require 'open_chain/s3'
 require 'open_chain/custom_handler/ci_load_handler'
 require 'open_chain/custom_handler/ecellerate_shipment_activity_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
@@ -9,6 +10,7 @@ require 'open_chain/custom_handler/lands_end/le_returns_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 require 'open_chain/custom_handler/lenox/lenox_shipment_status_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_epd_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_order_closer'
 require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/polo/polo_fiber_content_parser'
@@ -47,6 +49,7 @@ class CustomFeaturesController < ApplicationController
   ADVAN_PART_UPLOAD ||= 'OpenChain::CustomHandler::Advance::AdvancePartsUploadParser'
   CQ_ORIGIN ||= 'OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser'
   LUMBER_PART_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler'
+  LUMBER_ORDER_CLOSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser'
 
   def index
     render :layout=>'one_col'
@@ -70,8 +73,8 @@ class CustomFeaturesController < ApplicationController
 
   def ua_winshuttle_b_send
     action_secure(OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"UA Winshuttle Reports",:lock_check=>false}) {
-      eml = params[:email] 
-      if eml.blank? 
+      eml = params[:email]
+      if eml.blank?
         add_flash :errors, "You must specify an email address."
       else
         OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.delay.run_and_email params[:email]
@@ -87,8 +90,8 @@ class CustomFeaturesController < ApplicationController
 
   def ua_winshuttle_send
     action_secure(OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"UA Winshuttle Reports",:lock_check=>false}) {
-      eml = params[:email] 
-      if eml.blank? 
+      eml = params[:email]
+      if eml.blank?
         add_flash :errors, "You must specify an email address."
       else
         OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator.delay.run_and_email params[:email]
@@ -98,7 +101,7 @@ class CustomFeaturesController < ApplicationController
     }
   end
 
-  def ua_tbd_report_index 
+  def ua_tbd_report_index
     generic_index OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(nil), UA_TBD_REPORT_PARSER, "UA TBD Reports"
   end
 
@@ -109,7 +112,7 @@ class CustomFeaturesController < ApplicationController
   def ua_tbd_report_download
     generic_download "UA TBD Reports"
   end
-  
+
   def kewill_isf_index
     generic_index OpenChain::CustomHandler::KewillIsfManualParser.new(nil), KEWILL_ISF, "Kewill ISF Manual Parser"
   end
@@ -126,13 +129,13 @@ class CustomFeaturesController < ApplicationController
     generic_upload POLO_SAP_BOM, "SAP Bill of Materials Files", "polo_sap_bom"
   end
 
-  def polo_sap_bom_reprocess 
+  def polo_sap_bom_reprocess
     f = CustomFile.find params[:id]
     action_secure(OpenChain::CustomHandler::PoloSapBomHandler.new(f).can_view?(current_user),Product,{:verb=>'reprocess',:module_name=>"SAP Bill of Materials Files",:lock_check=>false}) {
       if f.start_at.blank? || f.start_at < 10.minutes.ago || f.error_message
         f.delay.process current_user
         add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else 
+      else
         add_flash :errors, "This file was last processed at #{f.start_at}.  You must wait 10 minutes to reprocess."
       end
       redirect_to '/custom_features/polo_sap_bom'
@@ -150,14 +153,14 @@ class CustomFeaturesController < ApplicationController
   def csm_sync_upload
     generic_upload CSM_SYNC, "CSM Sync Files", "csm_sync"
   end
-  
-  def csm_sync_reprocess 
+
+  def csm_sync_reprocess
     f = CustomFile.find params[:id]
     action_secure(current_user.edit_products?,Product,{:verb=>"upload",:module_name=>"CSM Sync Files",:lock_check=>false}) {
       if f.start_at.blank? || f.start_at < 10.minutes.ago || f.error_message
         f.delay.process current_user
         add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
-      else 
+      else
         add_flash :errors, "This file was last processed at #{f.start_at}.  You must wait 10 minutes to reprocess."
       end
       redirect_to '/custom_features/csm_sync'
@@ -265,7 +268,7 @@ class CustomFeaturesController < ApplicationController
       f = CustomFile.new(:file_type=>LE_CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
       action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Lands' End Commerical Invoice Upload",:lock_check=>false}) {
         if params[:attached].nil?
-          add_flash :errors, "You must select a file to upload." 
+          add_flash :errors, "You must select a file to upload."
         elsif f.save
           OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator.new(f).delay.generate_and_email current_user, params[:file_number]
           add_flash :notices, "Your file is being processed.  You'll receive an email with the CI Load file when it's done."
@@ -310,7 +313,7 @@ class CustomFeaturesController < ApplicationController
       invoice_file = CustomFile.new(:file_type=>ALLIANCE_DAY_END,:uploaded_by=>current_user,:attached=>params[:invoice_file])
 
       saved = false
-      CustomFile.transaction do 
+      CustomFile.transaction do
         saved = check_register.save! && invoice_file.save!
       end
 
@@ -351,11 +354,11 @@ class CustomFeaturesController < ApplicationController
       invoice_date = Date.strptime(params[:invoice_date].to_s, "%Y-%m-%d") rescue nil
 
       if invoice_date.nil?
-        add_flash :errors, "You must enter an Invoice Date." 
+        add_flash :errors, "You must enter an Invoice Date."
       end
     end
   end
-  
+
   def fisher_ci_load_download
     generic_download "Fisher CI Load Upload"
   end
@@ -379,7 +382,7 @@ class CustomFeaturesController < ApplicationController
   def crew_returns_upload
     generic_upload CREW_RETURNS, "J.Crew Returns", "crew_returns"
   end
-  
+
   def crew_returns_download
     generic_download "J.Crew Returns"
   end
@@ -391,7 +394,7 @@ class CustomFeaturesController < ApplicationController
   def pvh_workflow_upload
     generic_upload PVH_WORKFLOW, "PVH Workflow", "pvh_workflow"
   end
-  
+
   def pvh_workflow_download
     generic_download "PVH Workflow"
   end
@@ -403,7 +406,7 @@ class CustomFeaturesController < ApplicationController
   def advan_parts_upload
     generic_upload ADVAN_PART_UPLOAD, "Advance Parts", "advan_parts"
   end
-  
+
   def advan_parts_download
     generic_download "Advance Parts"
   end
@@ -419,7 +422,7 @@ class CustomFeaturesController < ApplicationController
       end
     end
   end
-  
+
   def cq_origin_download
     generic_download "Carquest Orders"
   end
@@ -435,14 +438,34 @@ class CustomFeaturesController < ApplicationController
       end
     end
   end
-  
+
   def lumber_part_download
     generic_download "Lumber Product Upload"
   end
 
+  def lumber_order_close_index
+    generic_index OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser, LUMBER_ORDER_CLOSER, "Lumber Order Close"
+  end
+
+  def lumber_order_close
+    k = OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser
+    action_secure(k.can_view?(current_user),nil,{:verb=>"close", :module_name=>"Orders", :lock_check=> false}) {
+      orders = params[:orders]
+      if orders.blank?
+        error_redirect "You must include at least one order."
+        return
+      end
+      key = "#{MasterSetup.get.uuid}/lumber_order_closer/#{Time.now.to_i}.txt"
+      OpenChain::S3.upload_data(OpenChain::S3.bucket_name,key,orders)
+      k.delay.process(key,current_user.id)
+      add_flash :notices, "Your data is being processed. You will receive a system message when it is complete."
+      redirect_to
+    }
+  end
+
   private
     def generic_download mod_name
-      f = CustomFile.find params[:id] 
+      f = CustomFile.find params[:id]
       action_secure(f.can_view?(current_user),f,{:verb=>"download",:module_name=>mod_name,:lock_check=>false}) {
         redirect_to f.secure_url
       }
@@ -459,7 +482,7 @@ class CustomFeaturesController < ApplicationController
     def generic_upload class_name, mod_name, custom_feature_path, additional_process_params: {}, flash_notice: "Your file is being processed.  You'll receive a VFI Track message when it completes."
       f = CustomFile.new(:file_type=>class_name,:uploaded_by=>current_user,:attached=>params[:attached])
       action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>mod_name,:lock_check=>false}) {
-       
+
         if params[:attached].nil?
           add_flash :errors, "You must select a file to upload."
         end
