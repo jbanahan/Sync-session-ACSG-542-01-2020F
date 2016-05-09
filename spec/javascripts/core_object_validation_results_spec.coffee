@@ -148,8 +148,8 @@ describe 'CoreObjectValidationResultsApp', () ->
         expect(svc.rerunValidations).toHaveBeenCalledWith(svc.pluralObject, svc.objectId)
         expect($scope.loadObject).toHaveBeenCalledWith(svc.pluralObject, svc.objectId)
         expect($scope.ruleResultToEdit).toEqual null
-        expect($scope.setPanel).toHaveBeenCalledWith("Validations being rerun...", "info")
-        expect($scope.setPanel).toHaveBeenCalledWith("Finished", "info")
+        expect($scope.setPanel).toHaveBeenCalledWith("Business Rules are being reevaluated.", "info")
+        expect($scope.setPanel).toHaveBeenCalledWith("Business Rules have been reevaluated.", "info")
 
     describe 'markRuleResultChanged', () ->
       it "sets ruleResultChanged flag", () ->

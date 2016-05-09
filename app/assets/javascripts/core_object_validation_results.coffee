@@ -79,10 +79,10 @@ app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidatio
     objId = coreObjectValidationResultsSvc.objectId
     if pluObj and objId
       $scope.editRuleResult null
-      $scope.setPanel "Validations being rerun...", "info"
+      $scope.setPanel "Business Rules are being reevaluated.", "info"
       coreObjectValidationResultsSvc.rerunValidations(pluObj, objId).then ->
         $scope.loadObject pluObj, objId
-        $scope.setPanel "Finished", "info"
+        $scope.setPanel "Business Rules have been reevaluated.", "info"
 
   $scope.setPanel = (message, type) ->
     panel = Chain.makePanel(message, type, true)
