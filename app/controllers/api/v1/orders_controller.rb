@@ -1,4 +1,8 @@
+require 'open_chain/business_rule_validation_results_support'
+
 module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleControllerBase
+  include OpenChain::BusinessRuleValidationResultsSupport
+
   def core_module
     CoreModule::ORDER
   end
@@ -114,4 +118,10 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       can_comment: order.can_comment?(cu)
     }
   end
+
+  def validate 
+    ord = Order.find params[:id]
+    run_validations(ord)
+  end
+
 end; end; end

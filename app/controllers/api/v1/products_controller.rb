@@ -1,4 +1,7 @@
+require 'open_chain/business_rule_validation_results_support'
+
 module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControllerBase
+  include OpenChain::BusinessRuleValidationResultsSupport
 
   def core_module
     CoreModule::PRODUCT
@@ -95,6 +98,11 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
       can_attach: product.can_attach?(cu),
       can_manage_variants: product.can_manage_variants?(cu)
     }
+  end
+
+  def validate 
+    prod = Product.find params[:id]
+    run_validations prod
   end
 
 end; end; end

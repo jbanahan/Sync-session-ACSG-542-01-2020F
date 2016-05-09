@@ -30,7 +30,21 @@ module Api; module V1; class ApiController < ActionController::Base
     render json: {:errors => e}, status: status
   end
 
-
+  def action_secure(permission_check, obj, options={})
+    err_msg = nil
+    opts = {
+      :lock_check => true, 
+      :verb => "edit", 
+      :lock_lambda => lambda {|o| o.respond_to?(:locked?) && o.locked?},
+      :module_name => "object"}.merge(options)
+    err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
+    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj) 
+    unless err_msg.nil?
+      render_forbidden err_msg
+    else
+      yield
+    end
+  end
 
   private
     def validate_format

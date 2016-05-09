@@ -1,4 +1,8 @@
+require 'open_chain/business_rule_validation_results_support'
+
 module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControllerBase
+  include OpenChain::BusinessRuleValidationResultsSupport
+
   def index
     r = {}
     if params[:roles].blank?
@@ -18,6 +22,11 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
     CoreModule::COMPANY
   end
 
+  def validate 
+    co = Company.find params[:id]
+    run_validations co
+  end
+  
   private
   def query_base linked_with = nil
     r = (current_user.company.master? ? Company : current_user.company.linked_companies).where("length(trim(system_code)) > 0")
@@ -44,4 +53,5 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
     r << current_user.company if current_user.company.read_attribute(sym) && !r.include?(current_user.company) && !current_user.company.system_code.blank?
     r
   end
+
 end; end; end

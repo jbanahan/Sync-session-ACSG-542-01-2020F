@@ -34,6 +34,9 @@ app.factory 'coreObjectValidationResultsSvc', ['$http',($http) ->
     
     cancelOverride: (rr) ->
       $http.put('/business_validation_rule_results/' + rr.id + '/cancel_override')
+
+    rerunValidations: (pluralObject, objectId) ->
+      $http.post('/api/v1/' + pluralObject + '/' + objectId + '/validate.json', {})
   }
 ]
 
@@ -70,6 +73,22 @@ app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidatio
 
   $scope.markRuleResultChanged = () ->
     $scope.ruleResultChanged = true
+
+  $scope.rerunValidations = () ->
+    pluObj = coreObjectValidationResultsSvc.pluralObject
+    objId = coreObjectValidationResultsSvc.objectId
+    if pluObj and objId
+      $scope.editRuleResult null
+      $scope.setPanel "Business Rules are being reevaluated.", "info"
+      coreObjectValidationResultsSvc.rerunValidations(pluObj, objId).then ->
+        $scope.loadObject pluObj, objId
+        $scope.setPanel "Business Rules have been reevaluated.", "info"
+
+  $scope.setPanel = (message, type) ->
+    panel = Chain.makePanel(message, type, true)
+    $('.panel-' + type).remove()
+    $('#validation_result_wrapper').prepend(panel)
+    true
 ]
 
 

@@ -57,6 +57,14 @@ module CoreObjectSupport
     self.business_validation_results.any? {|r| r.failed? }
   end
 
+  def can_run_validations? user
+    can_edit_all_rule_results = true
+    business_validation_results.each do |bvr|
+      bvr.business_validation_rule_results.each { |bvrr| can_edit_all_rule_results = false unless bvrr.can_edit? user }
+    end
+    can_edit_all_rule_results
+  end
+
   def attachment_types
     self.attachments.where("LENGTH(RTRIM(IFNULL(attachment_type, ''))) > 0").order(:attachment_type).uniq.pluck(:attachment_type)
   end

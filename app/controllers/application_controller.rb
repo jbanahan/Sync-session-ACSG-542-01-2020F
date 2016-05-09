@@ -100,7 +100,7 @@ class ApplicationController < ActionController::Base
     err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
     err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj) 
     unless err_msg.nil?
-      error_redirect err_msg
+      opts[:json] ? (render_json_error err_msg) : (error_redirect err_msg)
     else
       yield
     end

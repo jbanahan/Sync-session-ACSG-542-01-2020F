@@ -146,8 +146,10 @@ root.Chain =
       inner += "</ul>"
     if type == "success"
       outer = "<div class='panel panel-success'><div class='panel-heading'><h3 class='panel-title'>Success!</h3></div><div class='panel-body'>#{inner}</div></div>"
-    else
+    else if type == "error"
       outer = "<div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>#{inner}</div></div>"
+    else
+      outer = "<div class='panel panel-info'><div class='panel-heading'><h3 class='panel-title'>&nbsp;</h3></div><div class='panel-body'>#{inner}</div></div>"
     if needs_container
       outer = "<div class='container'>#{outer}</div>"
     outer

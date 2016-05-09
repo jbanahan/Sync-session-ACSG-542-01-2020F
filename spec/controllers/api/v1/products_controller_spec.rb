@@ -439,4 +439,18 @@ describe Api::V1::ProductsController do
       expect(j['errors'].first).to eq "You do not have permission to save this Product."
     end
   end
+
+  describe :validate do
+    it "runs validations and returns result hash" do
+      u = Factory(:master_user, product_view:true)
+      allow_api_access u
+      prod = Factory(:product)
+      bvt = BusinessValidationTemplate.create!(module_type:'Product')
+      bvt.search_criterions.create! model_field_uid: "prod_uid", operator: "nq", value: "XXXXXXXXXX"
+      
+      post :validate, id: prod.id, :format => 'json'
+      expect(bvt.business_validation_results.first.validatable).to eq prod
+      expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Product"
+    end
+  end
 end

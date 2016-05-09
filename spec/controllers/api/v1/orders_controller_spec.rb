@@ -127,4 +127,19 @@ describe Api::V1::OrdersController do
       expect(response.status).to eq 404
     end
   end
+
+  describe :validate do
+    it "runs validations and returns result hash" do
+      MasterSetup.get.update_attributes(:order_enabled=>true)
+      u = Factory(:master_user, order_view: true)
+      allow_api_access u
+      ord = Factory(:order)
+      bvt = BusinessValidationTemplate.create!(module_type:'Order')
+      bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
+      
+      post :validate, id: ord.id, :format => 'json'
+      expect(bvt.business_validation_results.first.validatable).to eq ord
+      expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Order"
+    end
+  end
 end
