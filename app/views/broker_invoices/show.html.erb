@@ -1,5 +1,8 @@
 <% content_for :action_bar do%>
   <button class='btn_link' link_to='<%=broker_invoices_path%>' key_map='b'>Back To Search</button>
+  <% if current_user.view_entries? %>
+    <button class='btn_link' link_to='<%=entry_path(@invoice.entry)%>' key_map='e'>View Entry</button>
+  <% end %>
 <% end%>
 <%= show_model_fields @invoice, CoreModule::BROKER_INVOICE.model_fields.values %>
 <h2>Lines</h2>
