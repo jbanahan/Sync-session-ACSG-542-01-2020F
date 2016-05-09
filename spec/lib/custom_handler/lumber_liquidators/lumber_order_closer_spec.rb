@@ -1,6 +1,18 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
+  describe '#process' do
+    it "should convert flat file data and user id call go" do
+      OpenChain::S3.should_receive(:bucket_name).and_return 'mybucket'
+      OpenChain::S3.should_receive(:get_data).with('mybucket','mypath').and_return("ABC\nDEF\n")
+      u = double(:user)
+      User.should_receive(:find).with(99).and_return u
+
+      described_class.should_receive(:go).with(["ABC","DEF"],u)
+
+      described_class.process('mypath',99)
+    end
+  end
   describe '#go' do
     it 'should call open_closed_orders and close_orders' do
       nums = double('order_numbers')

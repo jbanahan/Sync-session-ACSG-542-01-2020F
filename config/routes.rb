@@ -415,6 +415,8 @@ OpenChain::Application.routes.draw do
   match "/custom_features/lumber_epd" => "custom_features#lumber_epd_index", :via=>:get
   match "/custom_features/lumber_epd/upload" => "custom_features#lumber_epd_upload", :via => :post
   match "/custom_features/lumber_epd/:id/download" => "custom_features#lumber_epd_download", :via => :get
+  match "/custom_features/lumber_order_close" => "custom_features#lumber_order_close_index", :via=>:get
+  match "/custom_features/lumber_order_close" => "custom_features#lumber_order_close", :via=>:post
   match "/custom_features/fenix_ci_load" => "custom_features#fenix_ci_load_index", :via=>:get
   match "/custom_features/fenix_ci_load/upload" => "custom_features#fenix_ci_load_upload", :via => :post
   match "/custom_features/fenix_ci_load/:id/download" => "custom_features#fenix_ci_load_download", :via => :get

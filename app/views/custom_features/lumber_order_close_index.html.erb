@@ -1,0 +1,18 @@
+<%content_for :action_bar do%>
+  <button class='form_to' form_id='frm_sub'>Run</button>
+<%end%>
+<%=form_tag('/custom_features/lumber_order_close',id: 'frm_sub') do -%>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h1>
+        Paste Order Numbers To <em>Keep Open</em>
+      </h1>
+      <div>
+        <em>All other orders will be closed.</em>
+      </div>
+      <textarea name='orders' rows='20' class='form-control'></textarea>
+    </div>
+  </div>
+</div>
+<%end%>
