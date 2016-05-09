@@ -262,6 +262,15 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       expect(h[1..25]).to eq "Invoice 1 2".ljust(25)
     end
 
+    it "can receive an invoice object" do
+      contents = nil
+      @generator.generate_file(@i) do |file|
+        contents = file.read.split("\r\n")
+      end
+      contents
+      # just check that there's contents.
+      expect(contents.length).to eq 3
+    end
   end
 
   context :ftp_credentials do

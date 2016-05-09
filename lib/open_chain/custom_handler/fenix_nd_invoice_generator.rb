@@ -53,8 +53,8 @@ module OpenChain; module CustomHandler
       {:field => :tariff_treatment, :length=> 10}
     ]
 
-    def generate_file id
-      invoice = CommercialInvoice.find id
+    def generate_file id_or_invoice
+      invoice = id_or_invoice.is_a?(CommercialInvoice) ? id_or_invoice : CommercialInvoice.find(id_or_invoice)
 
       if invoice
         header_map = invoice_header_map
@@ -161,12 +161,12 @@ module OpenChain; module CustomHandler
         # invalid for cases where there's no HTS number we could find in the value.  Randy
         # suggested that a value of 0 would always trip any validations and it would 
         # force them to address each invalid line if we did this.
-        :hts_code => lambda {|i, line, tariff| (tariff.hts_code.blank?) ? "0" : tariff.hts_code},
-        :tariff_description => lambda {|i, line, tariff| tariff.tariff_description},
+        :hts_code => lambda {|i, line, tariff| (tariff.try(:hts_code).blank?) ? "0" : tariff.hts_code},
+        :tariff_description => lambda {|i, line, tariff| tariff.try(:tariff_description)},
         :quantity => lambda {|i, line, tariff| line.quantity},
         :unit_price => lambda {|i, line, tariff| line.unit_price},
         :po_number => lambda {|i, line, tariff| line.po_number},
-        :tariff_treatment => lambda {|i, line, tariff| tariff.tariff_provision.blank? ? "2" : tariff.tariff_provision }
+        :tariff_treatment => lambda {|i, line, tariff| tariff.try(:tariff_provision).blank? ? "2" : tariff.tariff_provision }
       }
     end
 

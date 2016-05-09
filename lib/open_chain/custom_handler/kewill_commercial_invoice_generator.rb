@@ -4,13 +4,48 @@ require 'open_chain/ftp_file_support'
 module OpenChain; module CustomHandler; class KewillCommercialInvoiceGenerator < OpenChain::FixedPositionGenerator
   include OpenChain::FtpFileSupport
 
-  CiLoadEntry ||= Struct.new :file_number, :customer, :invoices
-  CiLoadInvoice ||= Struct.new :invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount
-  CiLoadInvoiceLine ||= Struct.new :part_number, :country_of_origin, :gross_weight, :pieces, :hts, :foreign_value, :quantity_1, :quantity_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount
-
+  CiLoadEntry ||= Struct.new(:file_number, :customer, :invoices)
+  CiLoadInvoice ||= Struct.new(:invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount)
+  CiLoadInvoiceLine ||= Struct.new(:part_number, :country_of_origin, :gross_weight, :pieces, :hts, :foreign_value, :quantity_1, :quantity_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price)
 
   def initialize
     super(numeric_pad_char: '0', blank_date_fill_char: '0', string_output_encoding: "ASCII")
+  end
+
+  def generate_and_send_invoices file_number, commercial_invoices
+    entry = CiLoadEntry.new(file_number, nil, [])
+    commercial_invoices = Array.wrap(commercial_invoices)
+
+    entry.customer = commercial_invoices.first.importer.alliance_customer_number
+    commercial_invoices.each do |inv|
+      invoice = CiLoadInvoice.new(inv.invoice_number, inv.invoice_date, [], nil, nil)
+      entry.invoices << invoice
+
+      inv.commercial_invoice_lines.each do |line|
+        line.commercial_invoice_tariffs.each do |tar|
+          l = CiLoadInvoiceLine.new
+          l.po_number = line.po_number
+          l.part_number = line.part_number
+          l.pieces = line.quantity
+          l.unit_price = line.unit_price
+          l.country_of_origin = line.country_origin_code
+          l.foreign_value = line.value
+          l.first_sale = line.contract_amount
+          l.department = line.department
+          l.mid = line.mid
+
+          l.hts = tar.hts_code
+          l.quantity_1 = tar.classification_qty_1
+          l.quantity_2 = tar.classification_qty_2
+          l.gross_weight = tar.gross_weight
+          l.spi = tar.spi_primary
+          
+          invoice.invoice_lines << l
+        end
+      end
+    end
+
+    generate_and_send [entry]
   end
 
   def generate_and_send entries 
@@ -105,7 +140,7 @@ module OpenChain; module CustomHandler; class KewillCommercialInvoiceGenerator <
     io << "M3    " # UOM Volume
     io << num(invoice_line.pieces, 12, 3, numeric_strip_decimals: true) # Quantity Commercial
     io << "PCS   " # UOM Commercial
-    io << "".ljust(15, '0') # Unit Price
+    io << num(invoice_line.unit_price, 15, 3, numeric_strip_decimals: true) # Unit Price
     io << "".ljust(56) # UOM Unit Price - Seal Number
     io << str(invoice_line.hts.to_s.gsub(".", ""), 10)
     io << num(invoice_line.foreign_value, 13, 2, numeric_strip_decimals: true)

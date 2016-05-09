@@ -97,4 +97,73 @@ describe OpenChain::CustomHandler::KewillCommercialInvoiceGenerator do
       )
     end
   end
+
+  describe "generate_and_send_invoices" do
+    let (:importer) {
+      Company.new importer: true, alliance_customer_number: "IMP"
+    }
+    let (:invoice) {
+      i = CommercialInvoice.new
+      i.invoice_number = "INV#"
+      i.invoice_date = Date.new(2016, 5, 9)
+      i.importer = importer
+
+      l = i.commercial_invoice_lines.build
+      l.po_number = "PO"
+      l.part_number = "PART"
+      l.quantity = BigDecimal("10")
+      l.unit_price = BigDecimal("1.50")
+      l.country_origin_code = "CN"
+      l.value = BigDecimal("2.50")
+      l.contract_amount = BigDecimal("2.00")
+      l.department = "DEPT"
+      l.mid = "MID"
+
+      t = l.commercial_invoice_tariffs.build
+      t.hts_code = "1234567890"
+      t.classification_qty_1 = BigDecimal("10")
+      t.classification_qty_2 = BigDecimal("5")
+      t.gross_weight = BigDecimal("100")
+      t.spi_primary = "AU"
+
+      i
+    }
+
+    it "receives commercial invoices, translates them to internal file objects and sends them" do
+      entry = nil
+      subject.should_receive(:generate_and_send) do |entries|
+        expect(entries.length).to eq 1
+        entry = entries.first
+      end
+
+      subject.generate_and_send_invoices("12345", invoice)
+
+      expect(entry.file_number).to eq "12345"
+      expect(entry.customer).to eq "IMP"
+      expect(entry.invoices.length).to eq 1
+
+      i = entry.invoices.first
+      expect(i.invoice_number).to eq "INV#"
+      expect(i.invoice_date).to eq Date.new(2016, 5, 9)
+      expect(i.invoice_lines.length).to eq 1
+
+      i = i.invoice_lines.first
+      expect(i.po_number).to eq "PO"
+      expect(i.part_number).to eq "PART"
+      expect(i.pieces).to eq 10
+      expect(i.unit_price).to eq 1.50
+      expect(i.country_of_origin).to eq "CN"
+      expect(i.foreign_value).to eq 2.50
+      expect(i.first_sale).to eq 2
+      expect(i.department).to eq "DEPT"
+      expect(i.mid).to eq "MID"
+
+      expect(i.hts).to eq "1234567890"
+      expect(i.quantity_1).to eq 10
+      expect(i.quantity_2).to eq 5
+      expect(i.gross_weight).to eq 100
+      expect(i.spi).to eq "AU"
+
+    end
+  end
 end
