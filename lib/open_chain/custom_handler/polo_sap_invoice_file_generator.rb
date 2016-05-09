@@ -23,7 +23,7 @@ module OpenChain
           deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
         },
         :factory_stores => {name: "Polo Factory Stores", tax_id: '806167003RM0002', start_date: Date.new(2016,3,25),
-          email_to: ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
+          email_to: ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
           unallocated_profit_center: "20299699", company_code: "1540", filename_prefix: "PFS", brokerage_gl_account: "50960180", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", nvoice_total_profit_center: nil,
           deployed_brand_gl_account: "", non_deployed_brand_gl_account: "", duty_gl_account: "", business_area: "1115"
         }

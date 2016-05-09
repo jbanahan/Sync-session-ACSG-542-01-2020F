@@ -686,7 +686,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @gen.generate_and_send_invoices :factory_stores, Time.zone.now, [@broker_invoice]
 
         mail = ActionMailer::Base.deliveries.pop
-        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
         sheet = get_workbook_sheet mail.attachments.first
         # Just check the columns that should be different than the other documents
         # .ie most of the account codes
