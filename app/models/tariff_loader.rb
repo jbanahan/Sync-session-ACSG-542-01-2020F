@@ -25,6 +25,7 @@ class TariffLoader
     "SR1" => lambda {|o,d| o.special_rates = d},
     "UNITCODE" => UOM_HEADING_LAMBDA,
     "UOM" => UOM_HEADING_LAMBDA,
+    "UOM1" => UOM_HEADING_LAMBDA,
     "GENERAL" => lambda {|o,d| o.general_rate = d},
     "GENERAL_RATE" => lambda {|o,d| o.general_rate = d},
     "GR1" => lambda {|o,d| o.general_rate = d},
