@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators
 
     def match_errors cil, order_cache
       errors = []
-      order = cil.po_number.presence ? (get_order cil.po_number, order_cache) : nil
+      order = cil.po_number.presence ? (get_order cil.po_number, order_cache) : {}
       if order["order"]
         errors << :failed_rule if order["order"]["ord_rule_state"] == "Fail"
         check_part cil, order, errors
@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators
 
     def get_order ord_num, order_cache
       unless order_cache.key? ord_num
-        order_cache[ord_num] = OpenChain::Api::OrderApiClient.new("ll").find_by_order_number ord_num, [:ord_rule_state, :ordln_puid]
+        order_cache[ord_num] = api_client.find_by_order_number ord_num, [:ord_rule_state, :ordln_puid]
       end
       order_cache[ord_num].dup
     end
@@ -71,6 +71,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators
         {:type => :failed_rule, :msg => "Purchase orders associated with the following invoices have a failing business rule: "}
       ]
     end
+
+    private 
+      def api_client
+        OpenChain::Api::OrderApiClient.new("ll")
+      end
 
   end
 end; end; end
