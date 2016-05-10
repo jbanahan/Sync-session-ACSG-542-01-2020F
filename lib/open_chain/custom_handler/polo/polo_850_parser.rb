@@ -28,11 +28,16 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
       importer = Company.where(master: true).first
       raise "Unable to find Master RL account.  This account should not be missing." unless importer
 
+      # Due to the way the transactional looking occurs around the PO object, it's possible that we can have multiple 
+      # products with the same unique id created if we enclose the outer PO create in a transaction and do the po find/create
+      # inside that transaction...so, we'll create all the products ahead of time in their own individual locks/transactions 
+      # and then do the PO create.
+      products = create_products(dom)
       find_purchase_order(importer, po_number, find_source_system_datetime(dom)) do |po|
         po.last_file_bucket = opts[:bucket]
         po.last_file_path = opts[:key]
 
-        parse_purchase_order dom, po
+        parse_purchase_order dom, po, products
       end
     end
   end
@@ -66,7 +71,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
       end
     end
 
-    def parse_purchase_order dom, po
+    def parse_purchase_order dom, po, products
       # Pretty much all we're storing is the line level style, no sublines.
       # Store off the line numbers so we know which order lines to remove in cases of updates that removed po lines
       line_numbers = []
@@ -90,7 +95,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
 
         # This is the RL Style regardless of whether the line is a Prepack, Set or standard line
         style = get_style(xml)
-        line.product = find_product(style)
+        line.product = products.find {|p| p.unique_identifier == style }
       end
 
       # Every line will have the same season so we only need to find a single one in the document
@@ -185,6 +190,15 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
         # they are uploaded via worksheets
         Product.where(unique_identifier: style).first_or_create!
       end
+    end
+
+    def create_products dom
+      products = []
+      REXML::XPath.each(dom, "/Orders/Lines/ProductLine") do |xml|
+        products << find_product(get_style(xml))
+      end
+
+      products
     end
 
     def get_style product_line_xml
