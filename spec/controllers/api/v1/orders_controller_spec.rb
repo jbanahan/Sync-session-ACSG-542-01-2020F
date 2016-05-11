@@ -92,7 +92,7 @@ describe Api::V1::OrdersController do
       Order.any_instance.should_not_receive(:async_accept!)
       o = Factory(:order)
       post :accept, id: o.id
-      expect(response.status).to eq 401
+      expect(response.status).to eq 403
     end
   end
   describe :unaccept do

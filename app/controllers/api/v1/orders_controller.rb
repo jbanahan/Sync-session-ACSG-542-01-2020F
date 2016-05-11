@@ -25,9 +25,10 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
 
   def accept
     o = Order.find params[:id]
-    unless o.can_be_accepted? && o.can_view?(current_user) && o.can_accept?(current_user)
+    unless o.can_view?(current_user) && o.can_accept?(current_user)
       raise StatusableError.new("Access denied.", :unauthorized)
     end
+    raise StatusableError.new("Order #{o.order_number} cannot be accepted at this time.") unless o.can_be_accepted?
     o.async_accept! current_user
     redirect_to "/api/v1/orders/#{o.id}"
   end
