@@ -284,6 +284,8 @@ p {
   margin: 0 0 0 .5em;
   background: none;
   border-left: 1px dotted #d7d7d7;
+  white-space: pre-line;
+  word-break: normal;
 }
 .comment_controls {
   text-align: right;
