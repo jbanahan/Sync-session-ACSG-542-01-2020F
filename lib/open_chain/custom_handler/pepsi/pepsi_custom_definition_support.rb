@@ -35,6 +35,7 @@ module OpenChain; module CustomHandler; module Pepsi; module PepsiCustomDefiniti
     prod_fda_dims: {label: 'US - FDA Product Dimensions', data_type: :string, module_type: 'Product'},
     prod_oga_1: {label: 'US - Other Agency 1', data_type: :string, module_type: 'Product'},
     prod_oga_2: {label: 'US - Other Agency 2', data_type: :string, module_type: 'Product'},
+    prod_oga_3: {label: 'US - Other Agency 3', data_type: :string, module_type: 'Product'},
     prod_prog_code: {label: 'US - OGA Program Code', data_type: :string, module_type: 'Product'},
     prod_proc_code: {label: 'US - OGA Processing Code', data_type: :string, module_type: 'Product'},
     prod_indented_use: {label: 'US - OGA Indented Use', data_type: :string, module_type: 'Product'},

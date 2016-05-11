@@ -28,6 +28,7 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     :prod_fda_dims,
     :prod_oga_1,
     :prod_oga_2,
+    :prod_oga_3,
     :prod_prog_code,
     :prod_proc_code,
     :prod_indented_use,
