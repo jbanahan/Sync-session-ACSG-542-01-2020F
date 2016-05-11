@@ -62,9 +62,62 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
   app = angular.module('ChainCommon');
 
   app.factory('chainApiSvc', [
-    '$http', '$q', '$sce', '$location', function($http, $q, $sce, $location) {
-      var newAttachmentClient, newCommentClient, newCoreModuleClient, newCountryClient, newFieldValidatorClient, newMessageClient, newSupportClient, newUserClient, newUserManualClient, publicMethods;
+    '$http', '$q', '$sce', '$location', '$rootScope', function($http, $q, $sce, $location, $rootScope) {
+      var newAttachmentClient, newBulkExecuteClient, newCommentClient, newCoreModuleClient, newCountryClient, newFieldValidatorClient, newMessageClient, newSupportClient, newUserClient, newUserManualClient, publicMethods;
       publicMethods = {};
+      newBulkExecuteClient = function() {
+        var runningBulkCount;
+        runningBulkCount = 0;
+        return {
+          execute: function(func, paramsArray) {
+            var errorList, j, jobId, len, outerDeferred, p, pA, params, promisesRemainingCount, successList;
+            jobId = func.toString() + Date.now();
+            promisesRemainingCount = paramsArray.length;
+            successList = [];
+            errorList = [];
+            outerDeferred = $q.defer();
+            runningBulkCount = runningBulkCount + 1;
+            for (j = 0, len = paramsArray.length; j < len; j++) {
+              params = paramsArray[j];
+              pA = Array.isArray(params) ? params : [params];
+              p = func.apply(null, pA);
+              p.then(function(r) {
+                return successList.push(r);
+              })["catch"](function(r) {
+                return errorList.push(r);
+              })["finally"](function(r) {
+                promisesRemainingCount = promisesRemainingCount - 1;
+                outerDeferred.notify({
+                  total: paramsArray.length,
+                  remaining: promisesRemainingCount,
+                  jobId: jobId
+                });
+                if (promisesRemainingCount === 0) {
+                  outerDeferred.resolve({
+                    success: successList,
+                    errors: errorList,
+                    jobId: jobId
+                  });
+                  $rootScope.$broadcast('chain-bulk-execute-end', p, jobId);
+                  return runningBulkCount = runningBulkCount - 1;
+                }
+              });
+            }
+            outerDeferred.notify({
+              total: paramsArray.length,
+              remaining: promisesRemainingCount,
+              jobId: jobId
+            });
+            p = outerDeferred.promise;
+            $rootScope.$broadcast('chain-bulk-execute-start', p, jobId);
+            return p;
+          },
+          queueDepth: function() {
+            return runningBulkCount;
+          }
+        };
+      };
+      publicMethods.Bulk = newBulkExecuteClient();
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
         var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
         cache = {};
@@ -409,6 +462,97 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 }).call(this);
 
 (function() {
+  angular.module('ChainCommon').directive('chainBulkExecute', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {},
+        templateUrl: 'chain-bulk-execute-modal.html',
+        link: function(scope, el, attrs) {
+          var calcTaskList, hideModalIfNeeded, showModalIfNeeded;
+          showModalIfNeeded = function() {
+            if (scope.isVisible) {
+              return;
+            }
+            el.find('.modal').modal('show');
+            return scope.isVisible = true;
+          };
+          hideModalIfNeeded = function() {
+            if (!scope.isVisible) {
+              return;
+            }
+            el.find('.modal').modal('hide');
+            return scope.isVisible = false;
+          };
+          calcTaskList = function() {
+            var cnt, key, ref;
+            scope.tasks = {
+              total: 0,
+              remaining: 0,
+              complete: 0
+            };
+            ref = scope.bulkQ;
+            for (key in ref) {
+              cnt = ref[key];
+              scope.tasks.total = scope.tasks.total + cnt.total;
+              scope.tasks.remaining = scope.tasks.remaining + cnt.remaining;
+              scope.tasks.complete = scope.tasks.complete + cnt.complete;
+            }
+            return scope.tasks.percentComplete = Math.round(scope.tasks.complete / scope.tasks.total * 100);
+          };
+          scope.bulkQ = {};
+          scope.isVisible = false;
+          scope.tasks = {
+            total: 0,
+            remaining: 0,
+            complete: 0
+          };
+          scope.queueDepth = function() {
+            return Object.keys(scope.bulkQ).length;
+          };
+          scope.addPromise = function(jobId, p) {
+            scope.bulkQ[jobId] = {
+              total: 0,
+              remaining: 0,
+              complete: 0
+            };
+            return p.then(null, null, function(msg) {
+              var counts;
+              counts = scope.bulkQ[msg.jobId];
+              if (counts) {
+                counts.total = msg.total;
+                counts.remaining = msg.remaining;
+                counts.complete = msg.total - msg.remaining;
+              }
+              return calcTaskList();
+            });
+          };
+          scope.removePromise = function(jobId, p) {
+            delete scope.bulkQ[jobId];
+            return calcTaskList();
+          };
+          scope.$on('chain-bulk-execute-start', function(evt, p, jobId) {
+            return scope.addPromise(jobId, p);
+          });
+          scope.$on('chain-bulk-execute-end', function(evt, p, jobId) {
+            return scope.removePromise(jobId, p);
+          });
+          return scope.$watch('queueDepth()', function(nv, ov) {
+            if (nv > 0) {
+              showModalIfNeeded();
+            }
+            if (nv === 0) {
+              return hideModalIfNeeded();
+            }
+          });
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   angular.module('ChainCommon').directive('chainChangePasswordModal', [
     'chainApiSvc', function(chainApiSvc) {
       return {
@@ -558,8 +702,21 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 
   mod.factory('chainErrorSvc', [
     '$rootScope', function($rootScope) {
-      var errors;
+      var buildErrorCache, errorCache, errors;
       errors = {};
+      errorCache = [];
+      buildErrorCache = function() {
+        var m, results;
+        errorCache.length = 0;
+        results = [];
+        for (m in errors) {
+          results.push(errorCache.push({
+            message: m,
+            count: errors[m]
+          }));
+        }
+        return results;
+      };
       return {
         addErrors: function(errorMessages) {
           var i, len, m;
@@ -571,6 +728,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
               errors[m] = 1;
             }
           }
+          buildErrorCache();
           return $rootScope.$broadcast('chain-errors-added');
         },
         clearErrors: function() {
@@ -578,43 +736,56 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           for (m in errors) {
             delete errors[m];
           }
+          buildErrorCache();
           return $rootScope.$broadcast('chain-errors-cleared');
         },
         errors: function() {
-          var m, r;
-          r = [];
-          for (m in errors) {
-            r.push(m);
-          }
-          return r;
+          return errorCache;
+        },
+        errorCount: function() {
+          return errorCache.length;
         }
       };
     }
   ]);
 
   mod.directive('chainErrors', [
-    'chainErrorSvc', function(chainErrorSvc) {
+    'chainErrorSvc', '$http', function(chainErrorSvc, $http) {
       return {
         restrict: 'E',
         scope: {},
         templateUrl: 'chain-errors.html',
         link: function(scope, el, attrs) {
+          var httpWatchCheck, showErrors;
+          scope.httpBackend = $http;
+          showErrors = function() {
+            if (chainErrorSvc.errorCount() === 0 || chainErrorSvc.silenceErrors || $http.pendingRequests.length > 0) {
+              return;
+            }
+            scope.isVisible = true;
+            return $('.chain-errors-modal:first').modal('show');
+          };
           scope.errorSvc = chainErrorSvc;
           scope.silence = function() {
             return chainErrorSvc.silenceErrors = true;
           };
           scope.isVisible = false;
           scope.$root.$on('chain-errors-added', function() {
-            scope.isVisible = true;
-            if (!chainErrorSvc.silenceErrors) {
-              return $('.chain-errors-modal:first').modal('show');
-            }
+            return showErrors();
           });
           $(el).on('hide.bs.modal', function() {
             return scope.$apply(function() {
               scope.isVisible = false;
               return chainErrorSvc.clearErrors();
             });
+          });
+          httpWatchCheck = function() {
+            return $http.pendingRequests.length;
+          };
+          scope.$watch(httpWatchCheck, function(nv) {
+            if (nv === 0) {
+              return showErrors();
+            }
           });
           return null;
         }
@@ -1100,11 +1271,16 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-bulk-execute-modal.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
     "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.name}} <span class=\"badge\">{{att.size}}</span></a></li></ul></div>");
+}]);
+
+angular.module("chain-bulk-execute-modal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-bulk-execute-modal.html",
+    "<div class=\"modal fade\" data-keyboard=\"false\" data-backdrop=\"static\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Bulk Action Running</h4></div><div class=\"modal-body\" ng-if=\"isVisible\"><p><b>A bulk action is processing.</b></p><p class=\"text-danger\">Do not close this window until the process is complete.</p><div class=\"progress\"><div class=\"progress-bar progress-bar-striped active\" role=\"progressbar\" aria-valuenow=\"{{tasks.complete}}\" aria-valuemin=\"0\" aria-valuemax=\"{{tasks.total}}\" style=\"width: {{tasks.percentComplete}}%\"><span class=\"sr-only\">{{tasks.remaining}} tasks remaining</span></div></div></div></div></div></div>");
 }]);
 
 angular.module("chain-change-password-modal.html", []).run(["$templateCache", function($templateCache) {
@@ -1119,7 +1295,7 @@ angular.module("chain-comments-panel.html", []).run(["$templateCache", function(
 
 angular.module("chain-errors.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-errors.html",
-    "<div class=\"modal fade chain-errors-modal\" id=\"chain-errors-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Errors</h4></div><div class=\"modal-body\" ng-if=\"isVisible\"><p ng-repeat=\"e in errorSvc.errors()\">{{e}}</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-link\" data-dismiss=\"modal\" ng-click=\"silence()\">Stop showing errors on this page</button> <button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
+    "<div class=\"modal fade chain-errors-modal\" id=\"chain-errors-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Errors</h4></div><div class=\"modal-body\" ng-if=\"isVisible\"><p ng-repeat=\"e in errorSvc.errors()\">{{e.message}} <span ng-if=\"e.count>1\" class=\"badge\">{{e.count}}</span></p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-link\" data-dismiss=\"modal\" ng-click=\"silence()\">Stop showing errors on this page</button> <button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
 }]);
 
 angular.module("chain-messages-modal.html", []).run(["$templateCache", function($templateCache) {

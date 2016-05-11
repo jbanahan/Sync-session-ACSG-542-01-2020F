@@ -16,7 +16,7 @@
       border-bottom: 1px solid black;
     }
   </style>
-  
+
   <%= javascript_include_tag "vendor_portal" -%>
   <script type="text/javascript">
     $(document).on('click','#support-link',function(evt) {
@@ -33,9 +33,9 @@
       <div class="row">
         <div class="col-md-12">
           <div class='text-right'>
-            <%=current_user.full_name%> - 
-            <chain-messages-link></chain-messages-link> - 
-            <button id='support-link' title='Help' class='btn btn-link'><i class="fa fa-question-circle"></i></button> - 
+            <%=current_user.full_name%> -
+            <chain-messages-link></chain-messages-link> -
+            <button id='support-link' title='Help' class='btn btn-link'><i class="fa fa-question-circle"></i></button> -
             <%if current_user.portal_mode != 'vendor'%><a href='/'>Leave Portal Mode</a> -<%end%>
             <a href='/logout'>Log Out</a>
           </div>
@@ -45,6 +45,7 @@
     <div ui-view></div>
     <chain-support-modal></chain-support-modal>
     <chain-errors></chain-errors>
+    <chain-bulk-execute></chain-bulk-execute>
   </div>
 </body>
 </html>
