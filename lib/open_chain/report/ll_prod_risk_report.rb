@@ -66,7 +66,7 @@ inner join companies v on v.id = orders.vendor_id
 left join product_vendor_assignments pva on pva.vendor_id = v.id and pva.product_id = p.id
 left outer join custom_values risk on risk.custom_definition_id = #{cd_prodven_risk.id} and risk.customizable_type = 'ProductVendorAssignment' and risk.customizable_id = pva.id
 left outer join custom_values sap on sap.custom_definition_id = #{cd_cmp_sap_company.id} and sap.customizable_type = 'Company' and sap.customizable_id = v.id
-WHERE orders.closed_at is not null and length(trim(ifnull(risk.string_value, ''))) > 0
+WHERE orders.closed_at is not null and length(trim(ifnull(risk.string_value, ''))) = 0
 group by p.id, v.id
 order by v.name, p.name
         SQL
