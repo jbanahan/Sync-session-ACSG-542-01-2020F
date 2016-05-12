@@ -3,7 +3,7 @@ require 'spec_helper'
 describe AttachmentArchiveSetup do
   before :each do
     @c = Factory(:company)
-    @entry = Factory(:entry,:importer=>@c,:arrival_date=>1.month.ago)
+    @entry = Factory(:entry,:importer=>@c,:arrival_date=>1.month.ago, broker_reference: "REF")
     @invoice = Factory(:broker_invoice, :entry => @entry, :invoice_date => (Time.current.midnight - 30.days) - 1.second)
     @setup = @c.create_attachment_archive_setup(:start_date=>1.year.ago)
     @att = @entry.attachments.create!(:attached_file_name=>'a.pdf',:attached_file_size=>100)
@@ -94,6 +94,14 @@ describe AttachmentArchiveSetup do
       archive = @setup.create_entry_archive! "my name", 5.megabytes
       expect(archive.attachments).not_to include(@att)
     end
+    it "allows supplying list of file numbers to archive for the given importer" do
+      # Setup an end date, that should show that the override list is taking precedence
+      @setup.update_attributes! end_date: Date.new(2013, 1, 1)
+
+      @setup.broker_reference_override = [@entry.broker_reference]
+      att = @setup.create_entry_archive!("my name", 5.megabytes).attachments.to_a
+      expect(att.length).to eq 2
+    end
   end
   describe "entry_attachments_available?" do
     it "should return true if unarchived attachments exist for company" do
@@ -102,6 +110,12 @@ describe AttachmentArchiveSetup do
     it "should return false if no unarchived attachments exist for company" do
       @setup.create_entry_archive! "name", 5.megabytes
       @setup.should_not be_entry_attachments_available
+    end
+    it "uses override list if given" do
+      # Use the end_date so that if the override list wasn't used, it would block any results from being available
+      @setup.update_attributes! end_date: Date.new(2013, 1, 1)
+      @setup.broker_reference_override = [@entry.broker_reference]
+      expect(@setup.entry_attachments_available?).to be_true
     end
   end
 end
