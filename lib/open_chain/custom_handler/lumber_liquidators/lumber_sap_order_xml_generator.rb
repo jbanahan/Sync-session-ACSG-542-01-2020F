@@ -7,7 +7,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def self.build_field_list current_user
-    return unless FIELDS.blank?
     f = [
       :ord_ord_num,
       :ord_cust_ord_no,
