@@ -246,6 +246,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
       '0142' => :acessorial,
       '0235' => :isc_management,
       '0191' => :isf,
+      '0915' => :isf,
       '0189' => :pier_pass,
       '0720' => :pier_pass,
       '0739' => :pier_pass,

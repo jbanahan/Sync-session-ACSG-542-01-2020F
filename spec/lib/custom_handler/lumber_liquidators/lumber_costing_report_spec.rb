@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     end
     
 
-    [{"0004"=>9},{"0007"=>13},{'0176'=>14},{'0050'=>14},{'0142'=>14},{'0235'=>15},{'0191'=>16},{'0189'=>19},{'0720'=>19},{'0739'=>19},{'0212'=>22},{'0016'=>23},{'0031'=>24},{'0125'=>24},{'0026'=>24},{'0193'=>25},{'0196'=>25}].each do |charge|
+    [{"0004"=>9},{"0007"=>13},{'0176'=>14},{'0050'=>14},{'0142'=>14},{'0235'=>15},{'0191'=>16},{'0189'=>19},{'0720'=>19},{'0739'=>19},{'0212'=>22},{'0016'=>23},{'0031'=>24},{'0125'=>24},{'0026'=>24},{'0193'=>25},{'0196'=>25}, {'0915'=>16}].each do |charge|
       it "uses the correct output charge column for code #{charge.keys.first}" do
         entry.broker_invoices.first.broker_invoice_lines.first.update_attributes! charge_code: charge.keys.first
 
