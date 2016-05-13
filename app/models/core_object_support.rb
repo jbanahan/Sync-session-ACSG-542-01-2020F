@@ -53,6 +53,15 @@ module CoreObjectSupport
       pluck("business_validation_rules.name")
   end
 
+  def review_business_rules
+    self.business_validation_results.
+      joins(business_validation_rule_results: [:business_validation_rule]).
+      where(business_validation_rule_results: {state: "Review"}).
+      uniq.
+      order("business_validation_rules.name").
+      pluck("business_validation_rules.name")
+  end
+
   def any_failed_rules?
     self.business_validation_results.any? {|r| r.failed? }
   end
@@ -114,7 +123,7 @@ module CoreObjectSupport
       # sent_at_before is for cases where we don't want to resend product records prior to a certain timeframe OR
       # cases where we're splitting up file sends on product count (batching) and don't want to resend ones we just
       # sent in a previous batch.
-      query = 
+      query =
       "(sync_records.id is NULL OR
          (
             (sync_records.sent_at is NULL OR
