@@ -6,18 +6,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators
     def run_validation entry
       order_cache = {}
       bad_invoices = {missing_part_no: [], mismatched_part: [], missing_po: [], failed_rule: []}
+      skip_rule_state_validation = rule_attributes["skip_order_rule_validation"].to_s.to_boolean
+
       entry.commercial_invoice_lines.each do |line|
         tag = {number: line.commercial_invoice.invoice_number, po: line.po_number, part: line.part_number}
-        match_errors(line, order_cache).each{ |err| bad_invoices[err] << tag }
+        match_errors(line, order_cache, skip_rule_state_validation).each{ |err| bad_invoices[err] << tag }
       end
       create_error_msg bad_invoices
     end
 
-    def match_errors cil, order_cache
+    def match_errors cil, order_cache, skip_rule_state_validation
       errors = []
       order = cil.po_number.presence ? (get_order cil.po_number, order_cache) : {}
       if order["order"]
-        errors << :failed_rule if order["order"]["ord_rule_state"] == "Fail"
+        errors << :failed_rule if !skip_rule_state_validation && order["order"]["ord_rule_state"] == "Fail"
         check_part cil, order, errors
       else
         errors << :missing_po

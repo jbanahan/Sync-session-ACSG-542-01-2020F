@@ -53,5 +53,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryI
 
     expect(subject.run_validation @ent).to eq "Purchase orders associated with the following invoices have a failing business rule: 135A PO 654321 part 123456\n\n"
   end
+
+  it "skips validating the order rule state if unstructed" do
+    subject.rule_attributes_json = {'skip_order_rule_validation' => true}.to_json
+
+    @order_hsh['order']['ord_rule_state'] = "Fail"
+    @api_client_double.should_receive(:find_by_order_number).with(@cil.po_number, [:ord_rule_state, :ordln_puid]).and_return @order_hsh
+
+    expect(subject.run_validation @ent).to be_nil
+  end
   
 end

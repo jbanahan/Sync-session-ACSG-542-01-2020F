@@ -94,4 +94,18 @@ describe OpenChain::PollingJob do
     end
   end
 
+  describe "polling_job_name" do
+    it "uses class name for job name" do
+      expect(subject.polling_job_name).to eq "FakePollingJob"
+    end
+
+    it "uses class name for job name when module is extended" do
+      c = class ExtendPollingJob
+        extend OpenChain::PollingJob
+      end
+
+      expect(c.polling_job_name).to eq "ExtendPollingJob"
+    end
+  end
+
 end

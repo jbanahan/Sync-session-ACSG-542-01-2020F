@@ -43,7 +43,12 @@ module OpenChain; module PollingJob
   end
 
   def polling_job_name
-    self.class.to_s
+    # Handle cases where this module is both included and extended.
+    if self.is_a? Class
+      self.to_s
+    else
+      self.class.to_s
+    end
   end
 
   def apply_offset time, offset
