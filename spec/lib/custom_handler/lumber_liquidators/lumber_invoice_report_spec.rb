@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
   }
 
   let (:invoice) {
-    invoice = Factory(:broker_invoice, entry: entry, invoice_number: "INV123", invoice_date: Date.new(2016, 3, 1), customer_number: "LUMBER")
+    invoice = Factory(:broker_invoice, entry: entry, invoice_number: "INV123", invoice_date: Date.new(2016, 3, 1), customer_number: "LUMBER", source_system: "Alliance")
     line_1 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: 290)
     line_2 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0004", charge_amount: 100)
     line_3 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0005", charge_amount: 150)
@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
   }
 
   let (:invoice_2) {
-    invoice = Factory(:broker_invoice, entry: entry, invoice_number: "INV123A", invoice_date: Date.new(2016, 3, 2), customer_number: "LUMBER")
+    invoice = Factory(:broker_invoice, entry: entry, invoice_number: "INV123A", invoice_date: Date.new(2016, 3, 2), customer_number: "LUMBER", source_system: "Alliance")
     line_3 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: -150)
 
     invoice.reload

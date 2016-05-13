@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
   def find_invoices invoice_date
     invoices = BrokerInvoice.
       joins(BrokerInvoice.need_sync_join_clause('LL BILLING')).
-      where(customer_number: "LUMBER").
+      where(customer_number: "LUMBER", source_system: "Alliance").
       where("sync_records.id IS NULL OR sync_records.sent_at IS NULL").
       where("invoice_date <= ?", invoice_date).
       order("broker_invoices.invoice_date, broker_invoices.invoice_number").

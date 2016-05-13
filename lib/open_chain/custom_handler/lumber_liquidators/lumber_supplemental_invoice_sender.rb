@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSu
     # We don't want to resend in the cases where the invoices may have update dates, LL only wants invoices sent a single time ever.
     invoices = BrokerInvoice.
       joins(BrokerInvoice.need_sync_join_clause('LL SUPPLEMENTAL')).
-      where(customer_number: "LUMBER").where("suffix IS NOT NULL AND LENGTH(TRIM(suffix)) > 0").
+      where(customer_number: "LUMBER", source_system: "Alliance").where("suffix IS NOT NULL AND LENGTH(TRIM(suffix)) > 0").
       where("sync_records.id IS NULL OR sync_records.sent_at IS NULL")
 
 
