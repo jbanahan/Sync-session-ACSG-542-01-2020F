@@ -10,14 +10,14 @@ $(function() {
 
         }
         
-    $("#btn_assign_groups").click(function(evt) {
+    $("#btn_remove_groups").click(function(evt) {
       evt.preventDefault();
       window.reassigned = true;
       var selectedItems = $("#members_select option:selected").toArray();
       $("#non_members_select").append(selectedItems);
       sortSelect("#non_members_select");
     })
-    $("#btn_remove_groups").click(function(evt) {
+    $("#btn_assign_groups").click(function(evt) {
       evt.preventDefault();
       window.reassigned = true;
       var selectedItems = $("#non_members_select option:selected").toArray();
@@ -64,11 +64,11 @@ $(function() {
             </div>
         </div>
         <div class="row">
+          
           <div class="col-md-5">
             <div class="form-group">
-              <label>Members</label>
-                 <%= select_tag(:members_select, options_from_collection_for_select(@new_members, :id, :username), {include_blank: false, class: "form-control", size: 5, multiple: true, id: "members_select"}) %>
-                 <input id="members_list" name="members_list" type="hidden" value="" />
+              <label>Non-members</label>
+              <%= select_tag(:non_members_select, options_from_collection_for_select(@new_non_members, :id, :username), {include_blank: false, class: "form-control", size: 5, multiple: true, id: "non_members_select"}) %>
             </div>
           </div>
           <div class="col-md-2">
@@ -83,8 +83,9 @@ $(function() {
           </div>
           <div class="col-md-5">
             <div class="form-group">
-              <label>Non-members</label>
-              <%= select_tag(:non_members_select, options_from_collection_for_select(@new_non_members, :id, :username), {include_blank: false, class: "form-control", size: 5, multiple: true, id: "non_members_select"}) %>
+              <label>Members</label>
+                 <%= select_tag(:members_select, options_from_collection_for_select(@new_members, :id, :username), {include_blank: false, class: "form-control", size: 5, multiple: true, id: "members_select"}) %>
+                 <input id="members_list" name="members_list" type="hidden" value="" />
             </div>
           </div>
         </div>
