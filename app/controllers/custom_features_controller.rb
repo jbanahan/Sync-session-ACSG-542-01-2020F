@@ -25,6 +25,7 @@ require 'open_chain/custom_handler/pvh/pvh_shipment_workflow_parser'
 require 'open_chain/custom_handler/advance/advance_parts_upload_parser'
 require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_handler'
+require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -50,6 +51,7 @@ class CustomFeaturesController < ApplicationController
   CQ_ORIGIN ||= 'OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser'
   LUMBER_PART_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler'
   LUMBER_ORDER_CLOSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser'
+  EDDIE_7501_AUDIT ||= 'OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler'
 
   def index
     render :layout=>'one_col'
@@ -461,6 +463,18 @@ class CustomFeaturesController < ApplicationController
       add_flash :notices, "Your data is being processed. You will receive a system message when it is complete."
       redirect_to
     }
+  end
+
+  def eddie_bauer_7501_index
+    generic_index OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler.new(nil), EDDIE_7501_AUDIT, "Eddie Bauer 7501 Audit"
+  end
+
+  def eddie_bauer_7501_upload
+    generic_upload EDDIE_7501_AUDIT, "Eddie Bauer 7501 Audit", "eddie_bauer_7501", flash_notice: "Your file is being processed.  You'll receive an email when it completes."
+  end
+
+  def eddie_bauer_7501_download
+    generic_download "Eddie Bauer 7501 Audit"
   end
 
   private
