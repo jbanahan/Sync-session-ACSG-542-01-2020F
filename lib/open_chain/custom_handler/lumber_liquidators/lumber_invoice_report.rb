@@ -1,26 +1,43 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_summary_invoice_support'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_costing_report'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberInvoiceReport
   include OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSupport
 
   def self.run_schedulable
     r = self.new
-    invoice_date = ActiveSupport::TimeZone["America/New_York"].now.to_date
-    invoices = r.find_invoices invoice_date
+    invoices = r.find_invoices *start_end_dates
 
-    r.generate_and_send_report invoices, invoice_date
+    r.generate_and_send_report invoices, ActiveSupport::TimeZone["America/New_York"].now.to_date
   end
 
-  def find_invoices invoice_date
+  def self.start_end_dates time_zone = "America/New_York"
+    # Calculate start/end dates using the run date as the previous workweek (Monday - Sunday)
+    now = Time.zone.now.in_time_zone(time_zone)
+    start_date = (now - 7.days)
+    # Subtract days until we're at a Monday
+    start_date -= 1.day while start_date.wday != 1
+    # Basically, we're formatting these dates so the represent the Monday @ Midnight and the following Monday @ midnight, relying on the 
+    # where clause being >= && <.  We don't want any results showing that are actually on the following Monday based on Eastern timezone
+    [start_date.beginning_of_day.in_time_zone("UTC"), (start_date + 7.days).beginning_of_day.in_time_zone("UTC")]
+  end
+
+  def find_invoices start_date, end_date
+    # We can ONLY send invoices that were sent via the cost file sync between the start and end dates.
     invoices = BrokerInvoice.
       joins(BrokerInvoice.need_sync_join_clause('LL BILLING')).
       where(customer_number: "LUMBER", source_system: "Alliance").
       where("sync_records.id IS NULL OR sync_records.sent_at IS NULL").
-      where("invoice_date <= ?", invoice_date).
       order("broker_invoices.invoice_date, broker_invoices.invoice_number").
+      joins("INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
+            " AND cost_sync.syncable_type = 'Entry' AND cost_sync.syncable_id = broker_invoice.entry_id AND cost_sync.sent_at >= '#{start_date.to_s(:db)}'" + 
+            " AND cost_sync.sent_at < '#{end_date.to_s(:db)}'").
       all
 
-    invoices.reject {|i| i.entry.any_failed_rules? }
+    # Reject any invoices that have failing rules OR were not included on the costing file sent for the entry (lumber_costing_report.rb).  
+    # There can be invoices issued AFTER the cost file, in that case, these will go to Lumber as invoices on the supplemental invoice feed
+    # and should be ignored here.
+    invoices.reject {|i| i.entry.any_failed_rules? || i.sync_records.find {|sr| sr.trading_partner == OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}.nil? }
   end
 
   def generate_and_send_report invoices, invoice_date

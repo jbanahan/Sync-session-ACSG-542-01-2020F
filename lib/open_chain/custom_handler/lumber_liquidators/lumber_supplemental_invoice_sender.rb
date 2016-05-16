@@ -7,14 +7,18 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSu
   def self.run_schedulable
     sender = self.new
 
-    # Normally, I'd want to have the sync records associated directly with the BrokerInvoices, but since the entry parser does a full delete/recreation of
-    # the broker invoices 
-    # We're ONLY sending invoices when the sync record either doesn't exist or the sent at is nil (.ie a forced resend)
-    # We don't want to resend in the cases where the invoices may have update dates, LL only wants invoices sent a single time ever.
+    # What we need to do is ONLY send invoices that were created AFTER the cost file for an entry that has already been sent.
+    # This will mean that the entry will have an LL COST Report sync record but the individual invoices will not, since
+    # the costing report adds sync records for every invoice it sends out at the invoice level and entry level.
     invoices = BrokerInvoice.
       joins(BrokerInvoice.need_sync_join_clause('LL SUPPLEMENTAL')).
+      joins("INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
+            " AND cost_sync.syncable_type = 'Entry' AND cost_sync.syncable_id = broker_invoices.entry_id").
+      joins("LEFT OUTER JOIN sync_records inv_cost_sync ON inv_cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
+            " AND inv_cost_sync.syncable_type = 'BrokerInvoice' AND inv_cost_sync.syncable_id = broker_invoices.id").
       where(customer_number: "LUMBER", source_system: "Alliance").where("suffix IS NOT NULL AND LENGTH(TRIM(suffix)) > 0").
-      where("sync_records.id IS NULL OR sync_records.sent_at IS NULL")
+      where("sync_records.id IS NULL OR sync_records.sent_at IS NULL").
+      where("inv_cost_sync.id IS NULL")
 
 
     invoices.each do |invoice|

@@ -12,6 +12,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     self.new.run
   end
 
+  def self.sync_code
+    "LL_COST_REPORT"
+  end
+
   def initialize opts = {}
     @env = opts[:env].presence || :production
     @api_client = opts[:api_client]
@@ -34,7 +38,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
   def generate_and_send_entry_data id
     entry, data = generate_entry_data(id)
     if !data.blank?
-      sync_record = entry.sync_records.where(trading_partner: "LL_COST_REPORT").first_or_initialize
+      sync_record = entry.sync_records.where(trading_partner: self.class.sync_code).first_or_initialize
 
       # There should never be a sync record already existing, since we should NEVER send data for invoices that we've already sent data for
       return if sync_record.persisted?
@@ -50,9 +54,22 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
 
         SyncRecord.transaction do
           ftp_file temp
-          sync_record.sent_at = Time.zone.now
-          sync_record.confirmed_at = Time.zone.now + 1.minute
+          now = Time.zone.now
+          conf = now + 1.minute
+          sync_record.sent_at = now
+          sync_record.confirmed_at = conf
           sync_record.save!
+
+          # We also need to add sync records for all the broker invoices that were sent too, so that the invoice report can know EXACTLY which
+          # invoices where included on the cost files.  We can assume every invoice that's currently on the entry is included in the cost file.
+          entry.broker_invoices.each do |inv|
+            sr = inv.sync_records.find {|sr| sr.trading_partner == self.class.sync_code}
+            if sr
+              sr.update_attributes! sent_at: now, confirmed_at: conf
+            else
+              inv.sync_records.create! trading_partner: self.class.sync_code, sent_at: now, confirmed_at: now
+            end
+          end
         end
         
       end
@@ -63,14 +80,18 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
   end
 
   def find_entry_ids start_time
-    # Data should be sent ONLY ONCE and not sent until Arrival Date - 3 days.
+    # Not ALL the rules for when to send data are in here...there's a couple rules that aren't well suited for SQL
+    # that are evaulated later during the generate pass.  In other words, not every result returned by this query
+    # will get sent.
+    
+    # Data should be sent ONLY ONCE
     v = Entry.select("DISTINCT entries.id").
           # We have to have broker invoices before we send this data
           joins(:broker_invoices).
           joins("LEFT OUTER JOIN sync_records sync ON sync.syncable_id = entries.id AND sync.syncable_type = 'Entry' and sync.trading_partner = 'LL_COST_REPORT'").
           where(source_system: "Alliance", customer_number: "LUMBER").
-          # Lumber wants these when Arrival Date is 3 days out (.ie Arrival Date minus 3)
-          where("entries.arrival_date IS NOT NULL AND date_sub(date(entries.arrival_date), interval 3 day) <= date(?)", start_time).
+          # Lumber wants these at the LATEST when Arrival Date is 3 days out...day count logic handled in can_send_entry?
+          where("entries.arrival_date IS NOT NULL").
           # If we haven't sent the file already we should send it OR if someone marks the sync record as needing to be resent (.ie sent_at is null)
           # This happens in cases where the file is audited and something is wrong in it.  The person auditing the file needs to correct the file / invoice
           # data and mark the sync record for resend.  Then the automated process will pick up the file again and regenerate it with the fixed data.
@@ -84,9 +105,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     entry_data = []
     values = []
 
-    # Don't continue if any business rules have failed (these easier to do here than in the query since there can be multiple validation templates / rule results
-    # associated with the same entry
-    if entry && !entry.business_validation_results.any?(&:failed?)
+    if can_send_entry?(entry)
       
       total_entered_value = entry.entered_value
       charge_totals = calculate_charge_totals(entry)
@@ -173,6 +192,30 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     end
 
     [entry, entry_data]
+  end
+
+  def can_send_entry? entry
+    # Some extra rules that are just easier to do in code than in the query.
+    send = false
+    # Can't send if the entry has any failing business rules
+    if entry.failed_business_rules.length == 0
+
+      entry.broker_invoices.each do |inv|
+        # We can send if we find any invoice having an Ocean Freight (0004) charge 
+        line = inv.broker_invoice_lines.find {|c| c.charge_code  == "0004"}
+        if line
+          send = true
+          break
+        end
+      end
+
+      # If there hasn't been a freight billing and we're <= 3 days out on arrival, then send.
+      if !send 
+        send = entry.arrival_date && ((Time.zone.now.to_date + 3.days) >= entry.arrival_date.to_date)
+      end
+    end
+
+    send
   end
 
   def line_charge_values line, total_entered_value, charge_totals, charge_buckets

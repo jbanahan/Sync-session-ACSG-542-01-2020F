@@ -30,6 +30,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
     invoice.reload
   }
 
+  def sync_invoice inv, sent_at
+    if inv.entry.sync_records.find {|sr| sr.trading_partner == OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code }.nil?
+      inv.entry.sync_records.create! trading_partner: OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code, sent_at: sent_at
+    end
+    inv.sync_records.create! trading_partner: OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code, sent_at: sent_at
+  end
+
+  let (:synced_invoice) {
+    sync_invoice(invoice, Date.new(2016, 3, 1))
+    invoice
+  }
+
   let (:invoice_2) {
     invoice = Factory(:broker_invoice, entry: entry, invoice_number: "INV123A", invoice_date: Date.new(2016, 3, 2), customer_number: "LUMBER", source_system: "Alliance")
     line_3 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: -150)
@@ -97,12 +109,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
 
 
   describe "find_invoices" do
+
     before :each do
-      invoice
+      synced_invoice
     end
 
     it "finds invoices that are before given date and have no sync_records" do
-      invoices = subject.find_invoices Date.new(2016, 3, 1)
+      invoices = subject.find_invoices Date.new(2016, 3, 1), Date.new(2016, 3, 2)
       expect(invoices.length).to eq 1
       expect(invoices.first).to eq invoice
     end
@@ -110,44 +123,62 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
     it "finds invoices that have been synced but have sent_at blanked" do
       invoice.sync_records.create! trading_partner: "LL BILLING"
 
-      invoices = subject.find_invoices Date.new(2016, 3, 1)
+      invoices = subject.find_invoices Date.new(2016, 3, 1), Date.new(2016, 3, 2)
       expect(invoices.length).to eq 1
       expect(invoices.first).to eq invoice
     end
 
     it "does not find synced invoices" do
       invoice.sync_records.create! trading_partner: "LL BILLING", sent_at: Time.zone.now
-      expect(subject.find_invoices(Date.new(2016, 3, 1)).length).to eq 0
+      expect(subject.find_invoices( Date.new(2016, 3, 1), Date.new(2016, 3, 2)).length).to eq 0
     end
 
-    it "does not find invoices invoiced after given date" do
-      invoice.update_attributes! invoice_date: Date.new(2016, 3, 2)
-      expect(subject.find_invoices(Date.new(2016, 3, 1)).length).to eq 0
+    it "does not find invoices sent on cost file after given date" do
+      synced_invoice.entry.sync_records.first.update_attributes(sent_at: Date.new(2016, 3, 2))
+      expect(subject.find_invoices( Date.new(2016, 3, 1), Date.new(2016, 3, 2)).length).to eq 0
+    end
+
+    it "does not find invoices sent on cost file before given date" do
+      synced_invoice.entry.sync_records.first.update_attributes(sent_at: Date.new(2016, 2, 29))
+      expect(subject.find_invoices( Date.new(2016, 3, 1), Date.new(2016, 3, 2)).length).to eq 0
     end
 
     it "returns invoices ordered by invoice date" do
       invoice_2.update_attributes! invoice_date: Date.new(2016, 1, 1)
-      invoices = subject.find_invoices Date.new(2016, 3, 1)
+      invoice_2.sync_records.create! trading_partner: OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code, sent_at: Date.new(2016, 3, 1)
+      invoices = subject.find_invoices Date.new(2016, 3, 1), Date.new(2016, 3, 2)
       expect(invoices.length).to eq 2
       expect(invoices.first).to eq invoice_2
       expect(invoices.second).to eq invoice
+    end
+
+    it "ignores invoices that were not sent on an entry's costing report" do
+      # Just creating the second invoice withtout the sync record means it should not appear on the report
+      invoice_2
+
+      invoices = subject.find_invoices Date.new(2016, 3, 1), Date.new(2016, 3, 2)
+      expect(invoices.length).to eq 1
+      expect(invoices.first).to eq invoice
     end
   end
 
   describe "run_schedulable" do
     it "runs report for current time" do
-      # Make sure we're using the current time by making one of the invoices be 
-      invoice
-      invoice_2.update_attributes! invoice_date: Date.new(2016, 3, 2)
+      # Make sure run_scheduled is using the current time by making the entry's sync record by making the sync record be at the extreme 
+      # edge of the run window
+      synced_invoice
 
-      # Set to time where UTC is techincally 3/2, but in Eastern time it's still 3/1
-      Timecop.freeze(DateTime.new(2016, 3, 2, 4, 0)) do
+      # Run schedulable uses a date range of the previous workweek (Monday - Sunday), so set the entry up so that based 
+      # soley on the time of the sync it apperas to be off the report, but adjusting for the timezone change it will be on the report.
+      entry.sync_records.first.update_attributes! sent_at: ActiveSupport::TimeZone["UTC"].parse("2016-04-11 03:59")
+
+      Timecop.freeze(DateTime.new(2016, 4, 16, 4, 0)) do
         described_class.run_schedulable
       end
 
       invoice.reload
-      expect(invoice.sync_records.length).to eq 1
-      expect(invoice_2.sync_records.length).to eq 0
+      expect(invoice.sync_records.length).to eq 2
+      expect(invoice.sync_records.find {|sr| sr.trading_partner == "LL BILLING" }).not_to be_nil
 
       expect(ActionMailer::Base.deliveries.length).to eq 1
     end

@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 100, duty_amount: 200)
 
       broker_invoice = Factory(:broker_invoice, entry: entry)
-      invoice_line = broker_invoice.broker_invoice_lines.create! charge_code: "0007", charge_description: "Brokerage", charge_amount: 100
+      invoice_line = broker_invoice.broker_invoice_lines.create! charge_code: "0004", charge_description: "Ocean Freight", charge_amount: 100
       entry.reload
       entry
     end
@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       e, data = subject.generate_entry_data entry.id
       expect(e).not_to be_nil
       expect(data.size).to eq 1
-      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "802542", "100.000", nil, "200.000", "110.000", "120.000", "100.000", nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil, "USD"]
+      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "802542", "100.000", "100.000", "200.000", "110.000", "120.000", nil, nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil, "USD"]
     end
 
     context "with prorated amounts" do
@@ -63,19 +63,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
       it "prorates charge values" do
         e, data = subject.generate_entry_data entry.id
-        expect(data.first[13]).to eq "33.334"
-        expect(data[1][13]).to eq "33.333"
-        expect(data[2][13]).to eq "33.333"
+        expect(data.first[9]).to eq "33.334"
+        expect(data[1][9]).to eq "33.333"
+        expect(data[2][9]).to eq "33.333"
       end
 
       it "does not add prorated amounts to lines with no entred value" do
         line = invoice.commercial_invoice_lines.create! po_number: "PO", part_number: "000123", quantity: 10, value: 100
 
         e, data = subject.generate_entry_data entry.id
-        expect(data.first[13]).to eq "33.334"
-        expect(data[1][13]).to eq "33.333"
-        expect(data[2][13]).to eq "33.333"
-        expect(data[3][13]).to be_nil
+        expect(data.first[9]).to eq "33.334"
+        expect(data[1][9]).to eq "33.333"
+        expect(data[2][9]).to eq "33.333"
+        expect(data[3][9]).to be_nil
       end
     end
     
@@ -96,11 +96,39 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     end
 
     it "does not generate data if validation rules have failures" do
-      entry.business_validation_results.create! state: "Fail"
+      rule = BusinessValidationRule.create! name: "Rule"
+      result = entry.business_validation_results.create! state: "Fail"
+      bvrr = rule.business_validation_rule_results.create! state: "Fail"
+      bvrr.business_validation_result = result
+      bvrr.save!
+
+      entry.reload
 
       e, data = subject.generate_entry_data entry.id
       expect(e).to eq entry
       expect(data).to be_blank
+    end
+
+    it "does not generate data if an ocean freight charge is not present and arrival date is more than 3 days out" do
+      entry.update_attributes! arrival_date: Time.zone.now + 4.days
+      entry.broker_invoices.first.broker_invoice_lines.first.update_attributes! charge_code: "0001"
+
+      entry.reload
+
+      e, data = subject.generate_entry_data entry.id
+      expect(e).to eq entry
+      expect(data).to be_blank
+    end
+
+    it "does generate data if an ocean freight charge is not present and arrival date is less than 3 days out" do
+      entry.update_attributes! arrival_date: Time.zone.now + 2.days
+      entry.broker_invoices.first.broker_invoice_lines.first.update_attributes! charge_code: "0001"
+
+      entry.reload
+
+      e, data = subject.generate_entry_data entry.id
+      expect(e).to eq entry
+      expect(data).not_to be_blank
     end
   end
 
@@ -138,8 +166,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
         entry.update_attributes! customer_number: "NOTLUMBER"  
       end
 
-      it "does not find with arrival dates more than 3 days out " do
-        entry.update_attributes! arrival_date: '2016-01-21 12:00'
+      it "does not find without an arrival date" do
+        entry.update_attributes! arrival_date: nil
       end
 
       it "does not find entries without broker invoices" do
