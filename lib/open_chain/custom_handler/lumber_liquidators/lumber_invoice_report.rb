@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
       where("sync_records.id IS NULL OR sync_records.sent_at IS NULL").
       order("broker_invoices.invoice_date, broker_invoices.invoice_number").
       joins("INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
-            " AND cost_sync.syncable_type = 'Entry' AND cost_sync.syncable_id = broker_invoice.entry_id AND cost_sync.sent_at >= '#{start_date.to_s(:db)}'" + 
+            " AND cost_sync.syncable_type = 'Entry' AND cost_sync.syncable_id = broker_invoices.entry_id AND cost_sync.sent_at >= '#{start_date.to_s(:db)}'" + 
             " AND cost_sync.sent_at < '#{end_date.to_s(:db)}'").
       all
 
