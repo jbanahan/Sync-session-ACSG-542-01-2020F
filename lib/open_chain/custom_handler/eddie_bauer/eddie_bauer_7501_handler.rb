@@ -62,15 +62,11 @@ module OpenChain; module CustomHandler; module EddieBauer
         prod_uid = original_row[2][0..7]
         vfi_hts = hts_hsh[prod_uid]
         XlsMaker.insert_cell_value sheet, row_num, 8, vfi_hts
-        check = (ensure_string(original_row[4]) == vfi_hts).to_s.upcase
+        check = (text_value(original_row[4]) == vfi_hts).to_s.upcase
         XlsMaker.insert_cell_value sheet, row_num, 9, check
         row_num += 1
       end
       book.write report.path
-    end
-
-    def ensure_string hts
-      (hts.is_a? Numeric) ? hts.to_i.to_s : hts.to_s
     end
 
     def copy_partial_row from_row, row_num, to_sheet, index_arr
