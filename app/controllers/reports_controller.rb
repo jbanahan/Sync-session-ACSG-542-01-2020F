@@ -1,5 +1,6 @@
 require 'open_chain/report'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_dhl_order_push_report'
+require 'open_chain/custom_handler/j_crew/j_crew_drawback_imports_report'
 
 class ReportsController < ApplicationController
   
@@ -479,6 +480,31 @@ class ReportsController < ApplicationController
   def run_ll_dhl_order_push_report
     if OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport.permission? current_user
       run_report "Lumber Liquidators DHL PO Push Report", OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport, {}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def show_j_crew_drawback_imports_report
+    if OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_j_crew_drawback_imports_report
+    if OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport.permission? current_user
+      # Validate the start / end dates are not more than a year apart.
+      start_date = params[:start_date].to_s.to_date
+      end_date = params[:end_date].to_s.to_date
+      if start_date.nil? || end_date.nil? || (start_date + 1.year < end_date)
+        add_flash :errors, "You must enter a start and end date that are no more than 1 year apart."
+        redirect_to reports_show_j_crew_drawback_imports_report_path
+      else
+        run_report "J Crew Drawback Imports Report", OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport, {start_date: start_date.to_s, end_date: end_date.to_s}, ["Arrival Date on or after #{start_date} and before #{end_date}"]  
+      end
+      
     else
       error_redirect "You do not have permission to view this report"
     end

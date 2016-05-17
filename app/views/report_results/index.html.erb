@@ -134,6 +134,10 @@
     <tr class='hover'><td><%=link_to "Lumber Liquidators DHL PO Push Report", reports_show_ll_dhl_order_push_report_path%></td>
     <td>Shows all orders requiring push to DHL.</td></tr>
   <%end-%>
+  <%if OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "J Crew Drawback Imports Report", reports_show_j_crew_drawback_imports_report_path%></td>
+    <td>Shows drawback information from imports.</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

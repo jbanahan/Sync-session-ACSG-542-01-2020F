@@ -561,6 +561,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_container_cost_breakdown" => "reports#run_container_cost_breakdown"
   get "/reports/show_ll_dhl_order_push_report" => "reports#show_ll_dhl_order_push_report"
   post "/reports/run_ll_dhl_order_push_report" => "reports#run_ll_dhl_order_push_report"
+  get "/reports/show_j_crew_drawback_imports_report" => "reports#show_j_crew_drawback_imports_report"
+  post "/reports/run_j_crew_drawback_imports_report" => "reports#run_j_crew_drawback_imports_report"
 
   resources :report_results, :only => [:index,:show] do
     get 'download', :on => :member
