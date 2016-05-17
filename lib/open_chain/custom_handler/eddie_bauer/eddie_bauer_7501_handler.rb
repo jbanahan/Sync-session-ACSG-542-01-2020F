@@ -14,7 +14,8 @@ module OpenChain; module CustomHandler; module EddieBauer
     end
 
     def can_view?(user)
-      user.company.alliance_customer_number == 'EDDIE'
+      (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) && user.view_products? && 
+        (user.company.master? || user.company.alliance_customer_number == 'EDDIE')
     end
 
     def create_and_send_report email, custom_file
@@ -23,15 +24,17 @@ module OpenChain; module CustomHandler; module EddieBauer
         create_and_send_report! email, custom_file
       rescue => e
         errors << "Failed to process 7501 due to the following error: '#{e.message}'."
+        e.log_me ["Failed to process 7501. Custom File ID: #{@custom_file.id}. Message: #{e.message}"]
       end
       errors
     end
 
     def create_and_send_report! email, custom_file
-      if File.extname(custom_file.path).downcase == ".xls"
-        hts_hsh = collect_hts custom_file
+      if  [".xls", ".xlsx", ".csv"].include? File.extname(custom_file.path).downcase
+        file_contents = foreach custom_file
+        hts_hsh = collect_hts file_contents
         Tempfile.open(["eb_7501_audit", ".xls"]) do |report|
-          perform_audit hts_hsh, custom_file, report
+          perform_audit hts_hsh, file_contents, report
           send_report email, report
         end
       else
@@ -39,60 +42,56 @@ module OpenChain; module CustomHandler; module EddieBauer
       end
     end
 
-    def collect_hts custom_file
-      prod_uids = get_column(custom_file, 2).map{ |n| n[0..7] }
+    def collect_hts file_contents
+      prod_uids = get_column(file_contents, 2).map{ |n| n[0..7] }.uniq
       extract_hts prod_uids
     end
 
     def extract_hts prod_uids
       prod_nums = {}
-      Product.connection.exec_query(prod_query prod_uids).each do |row|
-        hts = [row["hts_1"], row["hts_2"], row["hts_3"]].map(&:presence).compact.first.to_s
-        prod_nums[row["unique_identifier"]] = hts
-      end
+      Product.connection.exec_query(prod_query prod_uids).each { |row| prod_nums[row["unique_identifier"]] = row["hts_1"].to_s }
       prod_nums
     end
 
-    def perform_audit hts_hsh, custom_file, report
-      book = Spreadsheet::Workbook.new
-      sheet = book.create_worksheet name: "7501 Audit"
-      counter = 0
-      foreach(custom_file) do |original_row| 
-        report_row = sheet.row(counter)
-        copy_partial_row(original_row, report_row, [*0..7])
-        if counter.zero?
-          report_row.insert(8, "VFI Track - HTS")
-          report_row.insert(9, "Match?")
-        else
-          prod_uid = original_row[2][0..7]
-          report_row.insert(8, hts_hsh[prod_uid])
-          check = (report_row[4].to_s == report_row[8].to_s).to_s.upcase
-          report_row.insert(9, check)
-        end
-        counter += 1
+    def perform_audit hts_hsh, file_contents, report
+      header = file_contents.first.concat ["VFI Track - HTS", "Match?"]
+      book, sheet = XlsMaker.create_workbook_and_sheet "7501 Audit", header
+      row_num = 1
+      file_contents.drop(1).each do |original_row| 
+        copy_partial_row(original_row, row_num, sheet, [*0..7])
+        prod_uid = original_row[2][0..7]
+        vfi_hts = hts_hsh[prod_uid]
+        XlsMaker.insert_cell_value sheet, row_num, 8, vfi_hts
+        check = (ensure_string(original_row[4]) == vfi_hts).to_s.upcase
+        XlsMaker.insert_cell_value sheet, row_num, 9, check
+        row_num += 1
       end
       book.write report.path
     end
 
-    def copy_partial_row from_row, to_row, index_arr
-      index_arr.each { |index| to_row.insert(index, from_row[index]) }
+    def ensure_string hts
+      (hts.is_a? Numeric) ? hts.to_i.to_s : hts.to_s
+    end
+
+    def copy_partial_row from_row, row_num, to_sheet, index_arr
+      index_arr.each { |col_num| XlsMaker.insert_cell_value(to_sheet, row_num, col_num, from_row[col_num]) }
     end
 
     def prod_query prod_uid_arr
       <<-SQL
-        SELECT p.unique_identifier, t.hts_1, t.hts_2, t.hts_3
+        SELECT p.unique_identifier, t.hts_1
         FROM products p
           INNER JOIN classifications cl ON p.id = cl.product_id
           INNER JOIN tariff_records t on cl.id = t.classification_id
           INNER JOIN countries co ON co.id = cl.country_id
         WHERE co.iso_code = "US"
-          AND p.unique_identifier IN (#{prod_uid_arr.map{|uid| "\"" + uid + "\""}.join(", ")})
+          AND p.unique_identifier IN (#{prod_uid_arr.map{|uid| ActiveRecord::Base.sanitize uid}.join(", ")})
       SQL
     end
 
-    def get_column custom_file, num
+    def get_column file_contents, num
       col = []
-      foreach(custom_file) { |row| col << row[num] }
+      file_contents.each { |row| col << row[num] }
       col.shift
       col
     end

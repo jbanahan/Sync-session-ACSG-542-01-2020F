@@ -4,8 +4,8 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
   def create_data
     country = Factory(:country, iso_code: 'US')
     class_1 = Factory(:classification, product: Factory(:product, unique_identifier: "022-3724"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "8513104000")])
-    Factory(:classification, product: Factory(:product, unique_identifier: "023-2301"), country: country, tariff_records: [Factory(:tariff_record, hts_2: "foo")])
-    Factory(:classification, product: Factory(:product, unique_identifier: "009-0282"), country: country, tariff_records: [Factory(:tariff_record, hts_3: "6104622011")])
+    Factory(:classification, product: Factory(:product, unique_identifier: "023-2301"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "foo")])
+    Factory(:classification, product: Factory(:product, unique_identifier: "009-0282"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "6104622011")])
     Factory(:classification, product: class_1.product, country: Factory(:country, iso_code: 'CA'), tariff_records: [Factory(:tariff_record, hts_1: "bar" )])
   end
 
@@ -23,13 +23,14 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
       @cf.stub(:path).and_return "path/to/audit_file.xls"
       @cf.stub(:attached).and_return double("audit file")
       @cf.stub(:attached_file_name).and_return "audit_file.xls"
+      @cf.stub(:id).and_return 1
     
       @handler = described_class.new @cf
     end
 
     it "emails user audit spreadsheet" do
       create_data
-      @handler.should_receive(:foreach).at_least(2).times.and_yield(@row_0).and_yield(@row_1).and_yield(@row_2).and_yield(@row_3)
+      @handler.should_receive(:foreach).with(@cf).and_return [@row_0, @row_1, @row_2, @row_3]
       @handler.process @u
 
       mail = ActionMailer::Base.deliveries.pop
@@ -41,7 +42,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
 
     it "produces correct spreadsheet" do
       create_data
-      @handler.should_receive(:foreach).at_least(2).times.and_yield(@row_0).and_yield(@row_1).and_yield(@row_2).and_yield(@row_3)
+      @handler.should_receive(:foreach).with(@cf).and_return [@row_0, @row_1, @row_2, @row_3]
       @handler.process @u
 
       mail = ActionMailer::Base.deliveries.pop
@@ -58,6 +59,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
 
     it "includes exceptions in error email" do
       @handler.stub(:create_and_send_report!).and_raise "Disaster!"
+      StandardError.any_instance.should_receive(:log_me).with ["Failed to process 7501. Custom File ID: 1. Message: Disaster!"]
       @handler.process @u
       mail = ActionMailer::Base.deliveries.pop
 
@@ -67,12 +69,12 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
       expect(mail.attachments).to have(0).item
     end
 
-    it "sends error email if non-xls file is submitted"  do
-      @cf.stub(:path).and_return "path/to/audit_file.csv"
+    it "sends error email if file with unaccepted format is submitted"  do
+      @cf.stub(:path).and_return "path/to/audit_file.foo"
       @handler.process @u
       mail = ActionMailer::Base.deliveries.pop
       
-      expect(mail.body.raw_source).to include "No CI Upload processor exists for .csv file types."
+      expect(mail.body.raw_source).to include "No CI Upload processor exists for .foo file types."
     end
   end
 
