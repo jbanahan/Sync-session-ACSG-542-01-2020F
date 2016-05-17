@@ -27,7 +27,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   def initialize opts={}
     @user = User.integration
     @imp = Company.find_by_master(true)
-    @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone]
+    @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone,
+      :ord_planned_expected_delivery_date, :ord_ship_confirmation_date
+    ]
     @opts = opts
   end
 
@@ -74,8 +76,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         ol.mark_for_destruction unless order_lines_processed.include?(ol.line_number.to_i)
       }
 
-      # remove this method when SAP starts sending the ship window
-      set_ship_window(o)
 
 
       o.save!
@@ -86,6 +86,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
       o.associate_vendor_and_products! @user
 
+      set_header_dates_from_lines(base,o)
+
+      o.save!
+
       o.reload
       validate_line_totals(o,base)
 
@@ -93,7 +97,43 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
   end
 
-  # remove this method when SAP starts sending the ship window
+  def set_header_dates_from_lines base, order
+    mapping = {
+      'VN_EXPEC_DLVD' => [],
+      'VN_SHIPBEGIN' => [],
+      'VN_SHIPEND' => [],
+      'CURR_ARRVD' => [],
+      'ACT_SHIP_DATE' => []
+    }
+    date_elements = REXML::XPath.match(base,'./E1EDP01/E1EDP20/_-LUMBERL_-PO_SHIP_WINDOW')
+    date_elements.each do |el|
+      el.each_element do |child|
+        a = mapping[child.name]
+        next unless a
+        a << child.text
+      end
+    end
+
+    # use the fallback expected delivery date if not populated
+    if mapping['CURR_ARRVD'].empty?
+      REXML::XPath.each(base,'./E1EDP01/E1EDP20/EDATU') do |el|
+        mapping['CURR_ARRVD'] << el.text unless el.text.blank?
+      end
+    end
+
+    # update mapping to get the earliest for each date or nil if the date wasn't sent
+    mapping.each {|k,v| mapping[k] = mapping[k].sort.first}
+
+    order.first_expected_delivery_date = mapping['CURR_ARRVD']
+    order.ship_window_start = mapping['VN_SHIPBEGIN']
+    order.ship_window_end = mapping['VN_SHIPEND']
+    order.update_custom_value!(@cdefs[:ord_planned_expected_delivery_date],mapping['VN_EXPEC_DLVD'])
+    order.update_custom_value!(@cdefs[:ord_ship_confirmation_date],mapping['ACT_SHIP_DATE'])
+
+    set_ship_window(order) if date_elements.blank?
+  end
+
+  # legacy behavior when ship window didn't come in XML
   def set_ship_window order
     matrix_columns = {
       '9444' => 0,
@@ -401,10 +441,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       return my_addr
     end
 
+    # expected delivery date can come from one of two places
+    # if the CURR_ARRVD is populated, use that, otherwise use EDATU
     def expected_delivery_date base
-      el = REXML::XPath.first(base,"./E1EDP20")
-      return nil unless el
-      str = et(el,'EDATU')
+      str = nil
+      outer_el = REXML::XPath.first(base,"./E1EDP20")
+      return nil unless outer_el
+      el = REXML::XPath.first(outer_el,"./_-LUMBERL_-PO_SHIP_WINDOW")
+      str = et(el,'CURR_ARRVD') if el
+      str = et(outer_el,'EDATU') if str.blank?
       return nil if str.blank?
       parse_date(str)
     end
