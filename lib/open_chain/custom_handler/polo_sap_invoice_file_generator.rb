@@ -14,11 +14,11 @@ module OpenChain
       # These are the ONLY the RL Canada importer accounts we're doing automatically, other RL accounts are done by hand for now
       RL_INVOICE_CONFIGS ||= {
         :rl_canada => {name: "RL Canada", tax_id: '806167003RM0001', start_date: Date.new(2013, 6, 01), 
-          email_to: ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "accounting-ca@vandegriftinc.com"],
+          email_to: ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
           unallocated_profit_center: "19999999", company_code: "1017", filename_prefix: "RL", brokerage_gl_account: "52111300", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", invoice_total_profit_center: "49999999",
           deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
         }, 
-        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlaruen.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
+        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "raymond.vasquez@ralphlauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
           unallocated_profit_center: "20399999", company_code: "1710", filename_prefix: "CM", brokerage_gl_account: "52111300", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", invoice_total_profit_center: "49999999",
           deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
         },
