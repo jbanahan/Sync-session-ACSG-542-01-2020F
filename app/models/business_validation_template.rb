@@ -77,9 +77,18 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # never be false associated with the template
     return nil if self.search_criterions.length == 0
 
-    bvr = nil
+    template_applies = false
     self.search_criterions.each do |sc|
-      return nil unless sc.test?(obj)
+      template_applies = sc.test?(obj)
+      break unless template_applies
+    end
+
+    # Check to see if there are any rule results around for this template, if so, we need to remove them as the template no longer applies.
+    # This could be the case is situations where a template was changed to remove a company from the rules.
+    if !template_applies
+      result = obj.business_validation_results.where(business_validation_template_id: self.id).first
+      result.destroy if result
+      return nil
     end
 
     # This should prevent multiple business validation result objects from being generated at a time (.ie if there are concurrent create_all! runs occurring)

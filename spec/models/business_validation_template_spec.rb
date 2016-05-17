@@ -80,7 +80,7 @@ describe BusinessValidationTemplate do
   end
   describe :create_result! do
     before :each do
-      @o = Order.new
+      @o = Factory(:order, order_number: "ajklsdfajl")
       @bvt = described_class.create!(module_type:'Order')
       @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
       @bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
@@ -130,6 +130,16 @@ describe BusinessValidationTemplate do
 
       expect(@bvt.create_result! @o).to be_nil
       expect(BusinessValidationResult.first).to be_nil
+    end
+
+    it "removes stale result records if the template no longer is applicable to the object under test" do
+      # Add a search criterion that eliminates the order from the template rules
+      @bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "eq", value: "1234567890"
+      @o.business_validation_results.create! business_validation_template_id: @bvt.id, state: "Fail"
+
+      @bvt.create_result! @o
+      @o.reload
+      expect(@o.business_validation_results.length).to eq 0
     end
   end
 
