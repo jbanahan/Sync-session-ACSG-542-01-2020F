@@ -14,8 +14,9 @@ module OpenChain; module CustomHandler; module EddieBauer
     end
 
     def can_view?(user)
-      (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) && user.view_products? && 
-        (user.company.master? || user.company.alliance_customer_number == 'EDDIE')
+      (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) && 
+        MasterSetup.get.custom_features_list.include?('Eddie Bauer 7501 Audit') && 
+          Company.where(alliance_customer_number: "EDDIE").first.try(:can_view?, user) && user.view_products?
     end
 
     def create_and_send_report email, custom_file
