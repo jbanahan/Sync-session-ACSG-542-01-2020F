@@ -3,9 +3,9 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
   def create_data
     country = Factory(:country, iso_code: 'US')
-    class_1 = Factory(:classification, product: Factory(:product, unique_identifier: "022-3724"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "8513104000")])
-    Factory(:classification, product: Factory(:product, unique_identifier: "023-2301"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "foo")])
-    Factory(:classification, product: Factory(:product, unique_identifier: "009-0282"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "6104622011")])
+    class_1 = Factory(:classification, product: Factory(:product, unique_identifier: "EDDIE-022-3724"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "8513104000")])
+    Factory(:classification, product: Factory(:product, unique_identifier: "EDDIE-023-2301"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "foo")])
+    Factory(:classification, product: Factory(:product, unique_identifier: "EDDIE-009-0282"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "6104622011")])
     Factory(:classification, product: class_1.product, country: Factory(:country, iso_code: 'CA'), tariff_records: [Factory(:tariff_record, hts_1: "bar" )])
   end
 
