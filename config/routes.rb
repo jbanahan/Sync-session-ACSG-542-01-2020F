@@ -490,6 +490,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/lumber_part/upload" => "custom_features#lumber_part_upload"
   get "/custom_features/lumber_part/:id/download" => "custom_features#lumber_part_download"
 
+  match "/custom_features/eddie_bauer_7501" => "custom_features#eddie_bauer_7501_index", :via => :get
+  match "/custom_features/eddie_bauer_7501/upload" => "custom_features#eddie_bauer_7501_upload", :via => :post
+  match "/custom_features/eddie_bauer_7501/download" => "custom_features#eddie_bauer_7501_download", :via => :get
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get
