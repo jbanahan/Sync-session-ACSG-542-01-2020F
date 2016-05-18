@@ -135,7 +135,7 @@ class ReportResult < ActiveRecord::Base
     self.save!
 
     if !self.email_to.blank?
-      OpenMailer.send_simple_html self.email_to, "Report Complete: #{name}", "Attached is the completed report named #{name}.", [local_file]
+      OpenMailer.send_simple_html(self.email_to, "Report Complete: #{name}", "Attached is the completed report named #{name}.", [local_file]).deliver!
     else
       run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
         <p>You can download it by clicking <a href='#{Rails.application.routes.url_helpers.download_report_result_url(host: MasterSetup.get.request_host, id: id, protocol: (Rails.env.development? ? "http" : "https"))}'>here</a>.</p>

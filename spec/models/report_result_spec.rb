@@ -42,19 +42,20 @@ describe ReportResult do
   end
 
   describe "run report" do
+    class SampleReport
+      def self.run_report user, opts
+        loc = 'spec/support/tmp/sample_report.txt'
+        f = File.new loc, "w"
+        f << "mystring"
+        f.flush
+        f.rewind
+        f
+      end
+    end
+
     before :each do
       @file_location = 'spec/support/tmp/sample_report.txt'
       File.delete @file_location if File.exists? @file_location
-      class SampleReport
-        def self.run_report user, opts
-          loc = 'spec/support/tmp/sample_report.txt'
-          f = File.new loc, "w"
-          f << "mystring"
-          f.flush
-          f.rewind
-          f
-        end
-      end
       @report_class = SampleReport
       Delayed::Worker.delay_jobs = false
     end
@@ -152,6 +153,15 @@ describe ReportResult do
       rr.should_receive(:execute_report)
       ReportResult.any_instance.should_receive(:delay).with(priority: -1).and_return(rr)
       ReportResult.run_report! 'delay', @u, NonAllianceReport
+    end
+
+    it "emails file to user if email_to is set" do
+       ReportResult.run_report! 'user settings', @u, @report_class, 'email_to' => 'me@there.com'
+       expect(ActionMailer::Base.deliveries.length).to eq 1
+       m = ActionMailer::Base.deliveries.first
+       expect(m.to).to eq ["me@there.com"]
+       expect(m.subject).to eq "Report Complete: user settings"
+       expect(m.attachments['sample_report.txt']).not_to be_nil
     end
 
     describe "error handling" do
