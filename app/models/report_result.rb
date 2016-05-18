@@ -33,10 +33,10 @@ class ReportResult < ActiveRecord::Base
   # report_class- Class object for the report.  The underlying class needs to implement self.run_report(user,opts)
   # opts = report options hash like {:settings=>{'a'=>'b'},:friendly_settings=>['user friendly representation of the setttings hash']}
   def self.run_report! report_name, user, report_class, opts={}
-    inner_opts = {:settings=>{},:friendly_settings=>[]}.merge(opts)
+    inner_opts = {:settings=>{},:friendly_settings=>[]}.with_indifferent_access.merge(opts)
     rr = ReportResult.create!(:name=>report_name,:run_at=>0.seconds.ago,
       :friendly_settings_json=>inner_opts[:friendly_settings].to_json,:settings_json=>inner_opts[:settings].to_json,
-      :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id, :custom_report_id=>inner_opts[:custom_report_id]
+      :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id, :custom_report_id=>inner_opts[:custom_report_id], email_to: inner_opts[:email_to]
     )
     # The lower the priority the quicker dj picks these up from the queue - we want these done right away since they're user init'ed.
     if report_class.respond_to?(:alliance_report?) && report_class.alliance_report?
@@ -132,11 +132,16 @@ class ReportResult < ActiveRecord::Base
   def complete_report local_file
     self.report_data = local_file
     self.status = "Complete"
-    self.save
-    run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
-<p>You can download it by clicking <a href='#{Rails.application.routes.url_helpers.download_report_result_url(host: MasterSetup.get.request_host, id: id, protocol: (Rails.env.development? ? "http" : "https"))}'>here</a>.</p>
-<p>You can view the report status page by clicking <a href='#{report_results_link}'>here</a>.</p>"
-    )
+    self.save!
+
+    if !self.email_to.blank?
+      OpenMailer.send_simple_html self.email_to, "Report Complete: #{name}", "Attached is the completed report named #{name}.", [local_file]
+    else
+      run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
+        <p>You can download it by clicking <a href='#{Rails.application.routes.url_helpers.download_report_result_url(host: MasterSetup.get.request_host, id: id, protocol: (Rails.env.development? ? "http" : "https"))}'>here</a>.</p>
+        <p>You can view the report status page by clicking <a href='#{report_results_link}'>here</a>.</p>"
+      )
+    end
   end
 
   def fail_report e

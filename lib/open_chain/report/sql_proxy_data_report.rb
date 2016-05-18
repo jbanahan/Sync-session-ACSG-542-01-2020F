@@ -37,10 +37,25 @@ module OpenChain; module Report; module SqlProxyDataReport
     end
   end
 
-  def decimal_conversion
-    # One of the quirks of transfering active record results over json is that all numeric values 
-    # are turned into Strings.  This is just a simple converter to change them back to decimals
-    lambda {|row, value| value.blank? ? nil : BigDecimal.new(value)}
+  def decimal_conversion decimal_offset: 0, decimal_places: 2
+    # One of the quirks of transfering active record results over json is that all decimal values 
+    # are turned into Strings - since javascript handles decimal values like ruby handles floats (inexactly)
+    lambda do |row, value|
+      v = value.to_s
+      if decimal_offset > 0
+        # Strip any trailing decimal and zeros (.ie "10.0")
+        v = v.sub(/\.0*$/, "")
+        v = v.rjust(decimal_offset, '0')
+        if decimal_offset == v.length
+          v = "0.#{v}"
+        else
+          decimal_position = v.length - decimal_offset
+          v = v[0, decimal_position] + "." + v[decimal_position..-1]
+        end
+      end
+
+      v = v.blank? ? nil : BigDecimal.new(v).try(:round, decimal_places)
+    end
   end
 
   # This method receives the posted results of a sql_proxy alliance query and turns them into a spreadsheet
