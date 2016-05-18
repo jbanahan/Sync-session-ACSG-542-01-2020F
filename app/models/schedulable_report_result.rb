@@ -31,33 +31,32 @@ class SchedulableReportResult < ReportResult
     report_name = opts["report_name"]
     raise "report_name option must be set." if report_name.blank?
 
-    report_class = opts["report_class"]
     settings = {}
-
-    if !report_class.blank?
-      rc = nil
+    report_class = nil
+    if !opts["report_class"].blank?
       begin
-        rc = report_class.to_s.constantize
+        report_class = opts["report_class"].to_s.constantize
       rescue
-        report_class = nil
+        raise "report_class option must be set to a valid report class."
       end
 
-      raise "report_class #{report_class} must implement the run_report method." unless rc.nil? || rc.respond_to?(:run_report)
+      raise "report_class #{opts["report_class"]} must implement the run_report method." unless report_class.respond_to?(:run_report)
       
-      if rc.respond_to?(:schedulable_settings)
-        settings = rc.schedulable_settings(user, report_name, opts).with_indifferent_access
+      if report_class.respond_to?(:schedulable_settings)
+        settings = report_class.schedulable_settings(user, report_name, opts).with_indifferent_access
       end
 
-      if rc.respond_to?(:permission?)
-        raise "User #{user.username} does not have permission to run this scheduled report." unless rc.permission?(user)
+      if report_class.respond_to?(:permission?)
+        raise "User #{user.username} does not have permission to run this scheduled report." unless report_class.permission?(user)
       end
 
-      if rc.respond_to?(:can_view?)
-        raise "User #{user.username} does not have permission to run this scheduled report." unless rc.can_view?(user)
+      if report_class.respond_to?(:can_view?)
+        raise "User #{user.username} does not have permission to run this scheduled report." unless report_class.can_view?(user)
       end
+    else
+      raise "report_class option must be set to a valid report class."
     end
 
-    raise "report_class option must be set to a valid report class." if report_class.blank?
     [user, report_name, report_class, settings]
   end
 

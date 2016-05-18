@@ -14,7 +14,7 @@ describe SchedulableReportResult do
       report_settings = {settings: {'test'=>'testing'}, friendly_settings: ["Testing"]}
       OpenChain::Report::KewillCurrencyRatesReport.should_receive(:schedulable_settings).with(user, "Testing", valid_options).and_return report_settings
 
-      described_class.should_receive(:run_report!).with "Testing", user, report_class, (valid_options.merge report_settings).with_indifferent_access
+      described_class.should_receive(:run_report!).with "Testing", user, report_class.constantize, (valid_options.merge report_settings).with_indifferent_access
       described_class.run_schedulable valid_options
     end
 
@@ -32,7 +32,7 @@ describe SchedulableReportResult do
       expected_hash[:settings] = {"test1" => "test1", "test" => "testing", "test2" => "test2"}
       expected_hash[:friendly_settings] = ["Testing", "Friendly Settings", "Testing 2"]
 
-      described_class.should_receive(:run_report!).with "Testing", user, report_class, expected_hash.with_indifferent_access
+      described_class.should_receive(:run_report!).with "Testing", user, report_class.constantize, expected_hash.with_indifferent_access
       described_class.run_schedulable valid_options
     end
 

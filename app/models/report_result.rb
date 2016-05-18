@@ -39,8 +39,7 @@ class ReportResult < ActiveRecord::Base
       :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id, :custom_report_id=>inner_opts[:custom_report_id], email_to: inner_opts[:email_to]
     )
     # The lower the priority the quicker dj picks these up from the queue - we want these done right away since they're user init'ed.
-    report_klass = report_class.constantize
-    if report_klass.respond_to?(:alliance_report?) && report_klass.alliance_report?
+    if report_class.respond_to?(:alliance_report?) && report_class.alliance_report?
       rr.delay(:priority=>-1).execute_alliance_report
     else
       rr.delay(:priority=>-1).execute_report
