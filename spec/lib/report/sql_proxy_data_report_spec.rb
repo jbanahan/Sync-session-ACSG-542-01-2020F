@@ -146,4 +146,21 @@ describe OpenChain::Report::SqlProxyDataReport do
       subject.class.process_alliance_query_details u, results, settings
     end
   end
+
+  describe "decimal_conversion" do
+    it "converts string values to decimals rounding to 2 decimals by default" do
+      l = subject.decimal_conversion
+      expect(l.call(nil, "12.345")).to eq BigDecimal("12.35")
+    end
+
+    it "allows for adding missing decimal points back into number string, and to adjust decimal place useage" do
+      l = subject.decimal_conversion decimal_offset: 6, decimal_places: 6
+      expect(l.call(nil, "1420400")).to eq BigDecimal("1.4204")
+    end
+
+    it "handles adding leading zeros to use the correct decimal offset" do
+      l = subject.decimal_conversion decimal_offset: 6, decimal_places: 6
+      expect(l.call(nil, "1235")).to eq BigDecimal("0.001235")
+    end
+  end
 end
