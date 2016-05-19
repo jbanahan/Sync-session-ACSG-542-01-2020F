@@ -14,8 +14,9 @@ module OpenChain; module CustomHandler; module EddieBauer
     end
 
     def can_view?(user)
-      (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) && user.view_products? && 
-        (user.company.master? || user.company.alliance_customer_number == 'EDDIE')
+      (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) && 
+        MasterSetup.get.custom_features_list.include?('Eddie Bauer 7501 Audit') && 
+          Company.where(alliance_customer_number: "EDDIE").first.try(:can_view?, user) && user.view_products?
     end
 
     def create_and_send_report email, custom_file
@@ -43,7 +44,7 @@ module OpenChain; module CustomHandler; module EddieBauer
     end
 
     def collect_hts file_contents
-      prod_uids = get_column(file_contents, 2).map{ |n| n[0..7] }.uniq
+      prod_uids = get_column(file_contents, 2).map{ |n| "EDDIE-#{text_value(n)[0..7]}" }.uniq
       extract_hts prod_uids
     end
 
@@ -58,19 +59,13 @@ module OpenChain; module CustomHandler; module EddieBauer
       book, sheet = XlsMaker.create_workbook_and_sheet "7501 Audit", header
       row_num = 1
       file_contents.drop(1).each do |original_row| 
-        copy_partial_row(original_row, row_num, sheet, [*0..7])
-        prod_uid = original_row[2][0..7]
-        vfi_hts = hts_hsh[prod_uid]
-        XlsMaker.insert_cell_value sheet, row_num, 8, vfi_hts
-        check = (text_value(original_row[4]) == vfi_hts).to_s.upcase
-        XlsMaker.insert_cell_value sheet, row_num, 9, check
+        original_row[8] = hts_hsh["EDDIE-#{text_value(original_row[2])[0..7]}"]
+        original_row[4] = text_value(original_row[4])
+        original_row[9] = (original_row[4] == original_row[8]).to_s.upcase
+        XlsMaker.add_body_row sheet, row_num, original_row
         row_num += 1
       end
       book.write report.path
-    end
-
-    def copy_partial_row from_row, row_num, to_sheet, index_arr
-      index_arr.each { |col_num| XlsMaker.insert_cell_value(to_sheet, row_num, col_num, from_row[col_num]) }
     end
 
     def prod_query prod_uid_arr

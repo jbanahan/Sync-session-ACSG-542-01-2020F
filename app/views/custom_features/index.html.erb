@@ -201,7 +201,7 @@
     </div>
   </div>
   <%-end%>
-  <%-if enabled_features.include?('Eddie Bauer 7501 Audit') && OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler.new(nil).can_view?(current_user)-%>
+  <%-if OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler.new(nil).can_view?(current_user)-%>
   <div class='row'>
     <div class='col-md-4 col-md-offset-4'>
       <%=link_to "Eddie Bauer 7501 Upload", '/custom_features/eddie_bauer_7501', :class=>'btn btn-lg btn-default btn-block'%>
