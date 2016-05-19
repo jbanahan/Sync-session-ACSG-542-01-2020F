@@ -44,7 +44,7 @@ module OpenChain; module CustomHandler; module EddieBauer
     end
 
     def collect_hts file_contents
-      prod_uids = get_column(file_contents, 2).map{ |n| "EDDIE-#{n[0..7]}" }.uniq
+      prod_uids = get_column(file_contents, 2).map{ |n| "EDDIE-#{text_value(n)[0..7]}" }.uniq
       extract_hts prod_uids
     end
 
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module EddieBauer
       book, sheet = XlsMaker.create_workbook_and_sheet "7501 Audit", header
       row_num = 1
       file_contents.drop(1).each do |original_row| 
-        original_row[8] = hts_hsh["EDDIE-#{original_row[2][0..7]}"]
+        original_row[8] = hts_hsh["EDDIE-#{text_value(original_row[2])[0..7]}"]
         original_row[4] = text_value(original_row[4])
         original_row[9] = (original_row[4] == original_row[8]).to_s.upcase
         XlsMaker.add_body_row sheet, row_num, original_row
