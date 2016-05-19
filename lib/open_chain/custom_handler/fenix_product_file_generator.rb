@@ -45,12 +45,20 @@ module OpenChain
       
       def make_file products, update_sync_records = true
         t = Tempfile.new(["fenix-#{@fenix_customer_code}",'.txt'])
+        t.binmode
         products.each do |p|
-          c = p.classifications.find_by_country_id(@canada_id)
+          c = p.classifications.find {|cl| cl.country_id == @canada_id }
           next unless c
           c.tariff_records.each do |tr|
             unless tr.hts_1.blank?
-              t << file_output(@fenix_customer_code, p, c, tr) unless tr.hts_1.blank?
+              begin
+                # Fenix's database uses the windows extended "ASCII" encoding.  Make sure we transcode our UTF-8 data to the windows encoding
+                # This lets us send characters like ”, Æ, etc correctly to Fenix
+                t << file_output(@fenix_customer_code, p, c, tr).encode("WINDOWS-1252") unless tr.hts_1.blank?
+              rescue Encoding::UndefinedConversionError => e
+                e.log_me "Product #{p.unique_identifier} could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
+                next
+              end
               break
             end
           end

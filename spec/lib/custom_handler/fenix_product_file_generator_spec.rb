@@ -162,6 +162,26 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       read = IO.read(@t.path)
       expect(read[31, 40]).to eq "myuid".ljust(40)
     end
+
+    it "transliterates to windows encoding" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
+      # Description taken from actual data that's failing to correctly transfer
+      @c.update_custom_value! desc_def, "Brad Nail, 23G, PIN, Brass, 1”, 6000 pcs"
+
+      @t = @h.make_file [@p]
+      read = IO.read(@t.path, encoding: "WINDOWS-1252")
+      expect(read[135, 50]).to eq "Brad Nail, 23G, PIN, Brass, 1”, 6000 pcs".ljust(50)
+    end
+
+    it "logs an error if data can't be encoded to windows encoding" do
+      # Use hebrew chars, since the windows encoding in use in Fenix is a latin one, it can't encode them
+      @p.update_attributes! unique_identifier: "בדיקה אם נרשם"
+
+      StandardError.any_instance.should_receive(:log_me).with "Product בדיקה אם נרשם could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
+      @t = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code).make_file [@p]
+      expect(IO.read(@t.path)).to be_blank
+    end
   end
 
   describe "ftp file" do
