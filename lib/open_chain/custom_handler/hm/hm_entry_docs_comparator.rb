@@ -52,6 +52,8 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
       # Now attach all the new packets to the products we found
       new_entry_packets.each do |packet|
         attachment = find_entity_object(packet)
+        # Attachment could be nil if it was deleted in the intervening time that this comparator was sitting in the job queue
+        next if attachment.nil? 
 
         filename = "Entry Packet - #{entry.broker_reference} - #{attachment.attached_file_name}"
         products_to_attach = products_need_attachment(products, filename, "Entry Packet", attachment.attached_file_size)
