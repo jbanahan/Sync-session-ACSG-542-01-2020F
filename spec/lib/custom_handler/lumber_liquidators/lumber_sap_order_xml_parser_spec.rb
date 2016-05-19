@@ -14,15 +14,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
     end
 
     it "should fail on bad root element" do
-      @test_data.gsub!(/ORDERS05/,'BADROOT')
+      @test_data.gsub!(/_-LUMBERL_-3PL_ORDERS05_EXT/,'BADROOT')
       dom = REXML::Document.new(@test_data)
       expect{described_class.new.parse_dom(dom)}.to raise_error(/root element/)
     end
 
-    it "should accept new root element" do
-      @test_data.gsub!(/ORDERS05/,'_-LUMBERL_-3PL_ORDERS05_EXT')
+    it "should pass on legacy root element" do
+      @test_data.gsub(/_-LUMBERL_-3PL_ORDERS05_EXT/,'ORDERS05')
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom)}.to_not raise_error
+      expect{described_class.new.parse_dom(dom)}.to change(Order,:count).from(0).to(1)
     end
 
     it "should create order" do

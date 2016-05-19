@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<ORDERS05>
+<_-LUMBERL_-3PL_ORDERS05_EXT>
   <IDOC BEGIN="1">
     <EDI_DC40 SEGMENT="1">
       <TABNAM>EDI_DC40</TABNAM>
@@ -250,4 +250,4 @@
       <SUNIT>USD</SUNIT>
     </E1EDS01>
   </IDOC>
-</ORDERS05>
+</_-LUMBERL_-3PL_ORDERS05_EXT>
