@@ -853,6 +853,7 @@ module OpenChain
         # times
         Array.wrap(ftp_folders).each do |folder|
           Tempfile.open(["fenix-b3", ".csv"]) do |temp|
+            temp.binmode
             temp << timestamp_csv(timestamp).to_csv
             lines.each {|line| temp << line.to_csv }
             temp.flush

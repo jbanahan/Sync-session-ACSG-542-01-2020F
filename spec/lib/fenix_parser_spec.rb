@@ -941,6 +941,7 @@ describe OpenChain::FenixParser do
         file_contents = nil
         ftp_options = nil
         OpenChain::FenixParser.any_instance.should_receive(:ftp_file) do |file, options|
+          expect(file.binmode?).to be_true
           file_contents = file.read
           ftp_options = options
         end
