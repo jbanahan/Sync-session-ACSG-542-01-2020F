@@ -35,8 +35,9 @@ module OpenChain; module CustomHandler; module EddieBauer
         base_name = File.basename(custom_file.path, ".*")
         file_contents = foreach custom_file
         hts_hsh = collect_hts file_contents
-        Tempfile.open(["#{base_name}_audit", ".xls"]) do |report|
+        Tempfile.open(["placeholder", ".xls"]) do |report|
           perform_audit hts_hsh, file_contents, report
+          Attachment.add_original_filename_method report, "#{base_name}_audit.xls"
           send_report email, report
         end
       else
