@@ -23,7 +23,7 @@ module OpenChain; module ModelFieldDefinition; module TariffFieldDefinition
           end
           value
         },
-      qualified_field_name: "(SELECT #{field} FROM official_tariffs ot_#{field} WHERE classifications.country_id = ot_#{field}.country_id AND tariff_records.hts_1 = ot_#{field}.hts_code)"
+      qualified_field_name: "(SELECT #{field} FROM official_tariffs ot_#{field} INNER JOIN classifications cl_#{field} WHERE tariff_records.classification_id = cl_#{field}.id AND cl_#{field}.country_id = ot_#{field}.country_id AND tariff_records.hts_1 = ot_#{field}.hts_code)"
     }
   end
 end; end; end
