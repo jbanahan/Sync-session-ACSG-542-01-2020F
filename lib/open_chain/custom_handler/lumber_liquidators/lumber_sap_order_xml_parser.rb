@@ -109,8 +109,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     date_elements.each do |el|
       el.each_element do |child|
         a = mapping[child.name]
-        next unless a
-        a << child.text
+        next if a.nil?
+        txt = child.text
+        a << txt unless txt.blank? || txt.match(/^0*$/)
       end
     end
 
@@ -449,7 +450,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       return nil unless outer_el
       el = REXML::XPath.first(outer_el,"./_-LUMBERL_-PO_SHIP_WINDOW")
       str = et(el,'CURR_ARRVD') if el
-      str = et(outer_el,'EDATU') if str.blank?
+      str = et(outer_el,'EDATU') if str.blank? || str.match(/^0*$/)
       return nil if str.blank?
       parse_date(str)
     end
@@ -495,6 +496,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def parse_date str
+      return nil if str.match(/^0*$/)
       return Date.new(str[0,4].to_i,str[4,2].to_i,str[6,2].to_i)
     end
 

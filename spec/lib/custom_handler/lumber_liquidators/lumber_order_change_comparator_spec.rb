@@ -43,6 +43,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       described_class.stub(:update_autoflow_approvals).and_return false
       described_class.stub(:reset_vendor_approvals).and_return false
       described_class.stub(:reset_product_compliance_approvals).and_return false
+      described_class.stub(:generate_ll_xml)
       described_class.stub(:create_pdf).and_return false
     end
     it 'should return if order does not exist' do
@@ -75,6 +76,22 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       described_class.stub(:set_defaults).and_return true
       described_class.should_not_receive(:create_pdf)
       described_class.execute_business_logic(1,@old_data,@new_data)
+    end
+    it 'should generate xml' do
+      described_class.should_receive(:generate_ll_xml).with(@o,@old_data,@new_data)
+      described_class.execute_business_logic(1,@old_data,@new_data)
+    end
+  end
+
+  describe '#generate ll xml' do
+    it 'should send xml to ll if ord_planned_handover_date has changed' do
+      o = double ('order')
+      od = double('OrderData-Old')
+      od.should_receive(:planned_handover_date).and_return Date.new(2016,5,1)
+      nd = double('OrderData-New')
+      nd.should_receive(:planned_handover_date).and_return Date.new(2016,5,2)
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_receive(:send_order).with(o)
+      described_class.generate_ll_xml(o,od,nd)
     end
   end
 

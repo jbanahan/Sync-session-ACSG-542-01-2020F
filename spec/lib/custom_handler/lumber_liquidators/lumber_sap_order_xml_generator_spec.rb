@@ -1,6 +1,27 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator do
+  describe :send_order do
+    it "should generate and FTP" do
+      o = double('order')
+      u = double('user')
+      User.should_receive(:integration).and_return(u)
+      xml = '<myxml></myxml>'
+      tf = double('tempfile')
+      tf.should_receive(:write).with(xml)
+      tf.should_receive(:flush)
+      Tempfile.should_receive(:open).with(['po_','.xml']).and_yield tf
+      FtpSender.should_receive(:send_file).with(
+        'connect.vfitrack.net',
+        'll-edi',
+        'u1sngfb',
+        tf,
+        {folder:'test/to-ll/po',protocol:'sftp'}
+      )
+      described_class.should_receive(:generate).with(u,o).and_return xml
+      described_class.send_order(o)
+    end
+  end
   it "should use ApiEntityXmlizer" do
     u = double('user')
     o = double('order')

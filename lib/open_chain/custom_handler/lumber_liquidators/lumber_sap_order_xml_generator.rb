@@ -1,6 +1,22 @@
 require 'open_chain/api/api_entity_xmlizer'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlGenerator
 
+  def self.send_order order
+    ftp_opts = {folder:"#{Rails.env.production? ? 'prod' : 'test'}/to-ll/po",protocol:'sftp'}
+    xml = generate(User.integration,order)
+    Tempfile.open(['po_','.xml']) do |tf|
+      tf.write xml
+      tf.flush
+      FtpSender.send_file(
+        'connect.vfitrack.net',
+        'll-edi',
+        'u1sngfb',
+        tf,
+        ftp_opts
+      )
+    end
+  end
+
   def self.generate user, order
     f = build_field_list(user)
     OpenChain::Api::ApiEntityXmlizer.new.entity_to_xml(user,order,f)

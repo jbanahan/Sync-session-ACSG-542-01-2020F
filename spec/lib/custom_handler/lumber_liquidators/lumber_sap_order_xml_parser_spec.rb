@@ -111,6 +111,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
     end
 
+    it "should not blow up on dates that are all zeros" do
+      @test_data.gsub!(/<CURR_ARRVD.*CURR_ARRVD>/,'<CURR_ARRVD>00000000</CURR_ARRVD>')
+      dom = REXML::Document.new(@test_data)
+      described_class.new.parse_dom(dom)
+
+      o = Order.first
+      expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
+    end
+
     it "should fall back to old matrix if _-LUMBERL_-PO_SHIP_WINDOW segment doesn't exist" do
       dom = REXML::Document.new(@test_data)
       dom.root.elements.delete_all(".//_-LUMBERL_-PO_SHIP_WINDOW")
