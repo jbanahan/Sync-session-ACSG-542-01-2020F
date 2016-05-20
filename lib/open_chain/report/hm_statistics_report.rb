@@ -79,7 +79,7 @@ module OpenChain; module Report; class HmStatisticsReport
           INNER JOIN commercial_invoice_lines l ON l.commercial_invoice_id = i.id
           INNER JOIN commercial_invoice_tariffs t ON t.commercial_invoice_line_id = l.id
       WHERE e.customer_number = 'HENNE'
-          AND e.release_date BETWEEN '#{start_date}' AND '#{end_date}'
+          AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
           AND (LENGTH(i.invoice_number) IN (6,7) OR INSTR(i.invoice_number, '-') IN (7,8))
     SQL
     ActiveRecord::Base.connection.execute(qry).first
@@ -90,9 +90,9 @@ module OpenChain; module Report; class HmStatisticsReport
       SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
         (CASE entries.transport_mode_code 
           WHEN 40 THEN "AIR" 
+          WHEN 41 THEN "AIR" 
+          WHEN 10 THEN "OCEAN"
           WHEN 11 THEN "OCEAN" 
-          WHEN 30 THEN 'OCEAN' 
-          WHEN 21 THEN 'OCEAN' 
           ELSE "OTHER" 
          END) AS 'Mode', 
         COUNT(*) AS 'orders'
@@ -100,8 +100,7 @@ module OpenChain; module Report; class HmStatisticsReport
         INNER JOIN commercial_invoices ci ON ci.entry_id = entries.id 
           AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
       WHERE entries.customer_number = 'HENNE'
-        AND release_date BETWEEN '#{start_date}' 
-        AND '#{end_date}'
+        AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
       GROUP BY mode, ecc
     SQL
     result_set = ActiveRecord::Base.connection.execute orders_qry
@@ -127,7 +126,7 @@ module OpenChain; module Report; class HmStatisticsReport
       WHERE e.customer_number = 'HENNE'
         AND e.transport_mode_code IN (10, 11)
         AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
-        AND e.release_date BETWEEN '#{start_date}' AND '#{end_date}'
+        AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
       GROUP BY ecc
     SQL
 
@@ -149,7 +148,7 @@ module OpenChain; module Report; class HmStatisticsReport
       WHERE e.customer_number = 'HENNE'
         AND e.transport_mode_code IN (40, 41)
         AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
-        AND e.release_date BETWEEN '#{start_date}' and '#{end_date}'
+        AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
     SQL
     
     bills = Hash.new do |hash, key| 
