@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
       us
       invoice = Factory(:commercial_invoice, entry: entry, invoice_number: "12345")
       invoice_line = Factory(:commercial_invoice_line, commercial_invoice: invoice, part_number: "PART", quantity: 5)
-      invoice_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890")
+      invoice_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890", tariff_description: "Description")
 
       entry.attachments.create! attachment_type: "Entry Packet", attached_file_name: "file.pdf", attached_file_size: 1
 
@@ -57,8 +57,11 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
       prod = products.first
       expect(prod.unique_identifier).to eq "HENNE-PART"
       expect(prod.classifications.size).to eq 1
-      expect(prod.classifications.first.tariff_records.size).to eq 1
-      expect(prod.classifications.first.tariff_records.first.hts_1).to eq "1234567890"
+      c = prod.classifications.first
+      expect(c.country).to eq us
+      expect(c.custom_value(cdefs[:class_customs_description])).to eq "Description"
+      expect(c.tariff_records.size).to eq 1
+      expect(c.tariff_records.first.hts_1).to eq "1234567890"
       expect(prod.custom_value(cdefs[:prod_part_number])).to eq "PART"
       expect(prod.custom_value(cdefs[:prod_value_order_number])).to eq "12345"
       expect(prod.custom_value(cdefs[:prod_value])).to eq BigDecimal.new("2")
@@ -88,6 +91,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
 
     it "does not update existing product if information is the same" do
       classification = Factory(:classification, country: us, product: Factory(:product, importer: importer, unique_identifier: "HENNE-PART"))
+      classification.update_custom_value! cdefs[:class_customs_description], "Description"
       classification.tariff_records.create! hts_1: "1234567890"
 
       product = classification.product
