@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
 
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions([:prod_part_number, :prod_value_order_number, :prod_value])
+    @cdefs = self.class.prep_custom_definitions([:prod_part_number, :prod_value_order_number, :prod_value, :class_customs_description])
   end
 
 
@@ -110,8 +110,8 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
           hts = mf(tariff, 'cit_hts_code').to_s
           # Skip any tariff rows that are from chapter 98
           next if hts.starts_with?("98") || hts.blank?
-
           data[:tariffs] << hts.to_s.gsub(".", "")
+          data[:tariff_description] = mf(tariff, 'cit_tariff_description').to_s
 
           if data[:per_piece_value].nil?
             entered_value = BigDecimal.new(mf(tariff, 'cit_entered_value').to_s)
@@ -159,6 +159,12 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
     Lock.with_lock_retry(product) do
       classification = product.classifications.find {|c| c.country_id == @us.id}
 
+      desc_updated = false
+      if !part_data[:tariff_description].blank?  && classification.custom_value(@cdefs[:class_customs_description]) != part_data[:tariff_description]
+        classification.update_custom_value! @cdefs[:class_customs_description], part_data[:tariff_description]
+        desc_updated = true
+      end      
+
       tariff_saved = false
       part_data[:tariffs].each do |tariff|
         tariff = tariff.to_s.gsub(".", "")
@@ -176,7 +182,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
       # I don't really know why product.changed? is not working here to detect when we build tariff records 
       # or add new custom values, but it's not, so I'm saving inline in those cases and using flags to determine if a 
       # save occurred to determine if we should snapshot or not.
-      if created || tariff_saved || po_updated
+      if created || tariff_saved || po_updated || desc_updated
         product.create_snapshot user
       end
     end
