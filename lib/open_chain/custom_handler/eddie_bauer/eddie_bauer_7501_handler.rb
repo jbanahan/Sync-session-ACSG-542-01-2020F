@@ -32,9 +32,10 @@ module OpenChain; module CustomHandler; module EddieBauer
 
     def create_and_send_report! email, custom_file
       if  [".xls", ".xlsx", ".csv"].include? File.extname(custom_file.path).downcase
+        base_name = File.basename(custom_file.path, ".*")
         file_contents = foreach custom_file
         hts_hsh = collect_hts file_contents
-        Tempfile.open(["eb_7501_audit", ".xls"]) do |report|
+        Tempfile.open(["#{base_name}_audit", ".xls"]) do |report|
           perform_audit hts_hsh, file_contents, report
           send_report email, report
         end
