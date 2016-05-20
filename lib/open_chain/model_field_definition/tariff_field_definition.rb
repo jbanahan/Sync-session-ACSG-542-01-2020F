@@ -6,7 +6,8 @@ module OpenChain; module ModelFieldDefinition; module TariffFieldDefinition
       [6,:hts_chapter, :chapter, "Chapter", official_tariff_field_def("chapter")],
       [7,:hts_heading, :heading, "Heading", official_tariff_field_def("heading")],
       [8,:hts_sub_heading, :sub_heading, "Sub-Heading", official_tariff_field_def("sub_heading")],
-      [9,:hts_full_description, :full_description, "Full Description", official_tariff_field_def("full_description")]
+      [9,:hts_full_description, :full_description, "Full Description", official_tariff_field_def("full_description")],
+      [10,:hts_article_description, :article_description, "Article Description", official_tariff_field_def("remaining_description")]
     ]
     add_fields CoreModule::TARIFF, make_hts_arrays(100,"hts")
   end
