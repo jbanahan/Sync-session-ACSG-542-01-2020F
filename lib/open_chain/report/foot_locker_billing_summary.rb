@@ -5,7 +5,7 @@ module OpenChain
       include OpenChain::Report::ReportHelper
 
       def self.permission? user
-        user.company.master? && user.view_broker_invoices?
+        (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && user.company.master? && user.view_broker_invoices?
       end
 
       def self.run_report run_by, settings={}

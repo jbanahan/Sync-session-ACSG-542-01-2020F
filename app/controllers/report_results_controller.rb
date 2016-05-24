@@ -1,3 +1,5 @@
+require 'open_chain/report'
+
 class ReportResultsController < ApplicationController
   def download
     r = ReportResult.find(params[:id])

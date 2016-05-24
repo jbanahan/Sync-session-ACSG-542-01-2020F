@@ -12,7 +12,7 @@ module OpenChain
       :ent_gst_rate_code,:ent_gst_amount,:ent_sima_amount,:cit_duty_amount]
 
       def self.permission? user
-        user.company.master? && user.view_broker_invoices?
+        (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && user.company.master? && user.view_broker_invoices?
       end
 
       #expects start_date and end_date

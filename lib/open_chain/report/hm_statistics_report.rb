@@ -16,7 +16,7 @@ module OpenChain; module Report; class HmStatisticsReport
   end
 
   def self.permission? user
-    user.view_entries? && (user.company.master? || user.company.alliance_customer_number=='HENNE') 
+   (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && (user.view_entries? && (user.company.master? || user.company.alliance_customer_number=='HENNE'))
   end
 
   def self.run_report run_by, settings={}

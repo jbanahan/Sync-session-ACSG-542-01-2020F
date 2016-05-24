@@ -3,7 +3,8 @@ module OpenChain
     class MarcJacobsFreightBudget
 
       def self.permission? u
-        (u.company.master? && u.view_broker_invoices?) || u.company_id == marc_jacobs_importer_id
+        (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
+        ((u.company.master? && u.view_broker_invoices?) || u.company_id == marc_jacobs_importer_id)
       end
       def self.run_report run_by, settings={}
         inner_settings={'year'=>Time.now.year,'month'=>Time.now.month}.merge(settings)

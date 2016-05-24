@@ -1,6 +1,11 @@
 module OpenChain
   module Report
     class POAExpiration
+
+      def self.permission? user
+        (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && user.company.master? && user.admin?
+      end
+
       # Run the report
       # settings = { 'poa_expiration_date' => Tue, 31 Jan 2012 }
       # somehow date string is converted to date between receiving

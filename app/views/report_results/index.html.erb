@@ -16,12 +16,11 @@
 
     <tr class='hover'><td><%=link_to "Tariff Comparison", reports_show_tariff_comparison_path%></td>
     <td>Compares two tariff files for the same country and shows you the HTS numbers that were added, removed, or changed.</td></tr>
-
-    <% if current_user.admin? %>
+  <%end%>
+  <% if OpenChain::Report::POAExpiration.permission? current_user %>
     <tr class='hover'><td><%=link_to "POA Expiration", reports_show_poa_expirations_path%></td>
     <td>Shows all companies with Power of Attorneys expiring by a given date.</td></tr>
-    <% end %>
-  <%end%>
+  <% end %>
   <%if current_user.view_entries?%>
     <tr class='hover'><td><%=link_to "Containers Released", reports_show_containers_released_path%></td>
     <td>Shows all containers released in a date range.</td></tr>
@@ -30,11 +29,11 @@
     <tr class='hover'><td><%=link_to "Attachments Not Matched", reports_show_attachments_not_matched_path%></td>
     <td>Shows all uploaded attachments not matched to items.</td></tr>
   <%end%>
-  <%if current_user.company.master? && (!LinkedAttachment.where("attachable_type = \"Product\"").empty? || !Attachment.where("attachable_type = \"Product\"").empty?)%>
+  <%if current_user.company.master? && (!LinkedAttachment.where(attachable_type: "Product").first.nil? || !Attachment.where(attachable_type: "Product").first.nil?)%>
     <tr class='hover'><td><%=link_to "Products Without Attachments", reports_show_products_without_attachments_path%></td>
     <td>Shows all products without attachments.</td></tr>
   <%end%>
-  <%if current_user.company.master? && SyncRecord.count > 0-%>
+  <%if current_user.company.master? && !SyncRecord.where(syncable_type: "Product").first.nil? -%>
     <tr class='hover'><td><%=link_to "Product Sync Problems", reports_show_product_sync_problems_path%></td>
     <td>Shows all products out of sync with remote systems.</td></tr>
   <%end-%>
