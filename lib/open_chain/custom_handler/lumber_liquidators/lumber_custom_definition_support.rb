@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_country_of_origin: {label: 'Country of Origin', data_type: :string, module_type: 'Order'},
     ord_dhl_push_date: {label: "DHL PO Push Date", data_type: :date, module_type: "Order", read_only: true},
     ord_planned_expected_delivery_date: {label: "Planned Expected Delivery Date", data_type: :date, module_type: "Order", read_only:true},
-    ord_planned_handover_date: {label: "Planned Handover Date", data_type: :date, module_type: "Order", read_only:true},
+    ord_planned_handover_date: {label: "Planned Handover Date", data_type: :date, module_type: "Order"},
     ord_ship_confirmation_date: {label: "Ship Confirmation Date", data_type: :date, module_type: "Order", read_only:true},
     ordln_pc_approved_by:  {label: 'PC Approved By', data_type: :integer, module_type: 'OrderLine'},
     ordln_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'OrderLine'},

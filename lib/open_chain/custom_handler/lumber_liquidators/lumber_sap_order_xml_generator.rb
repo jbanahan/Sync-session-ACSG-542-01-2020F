@@ -2,7 +2,7 @@ require 'open_chain/api/api_entity_xmlizer'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlGenerator
 
   def self.send_order order
-    ftp_opts = {folder:"#{Rails.env.production? ? 'prod' : 'test'}/to-ll/po",protocol:'sftp'}
+    ftp_opts = {folder:"#{Rails.env.production? && MasterSetup.get.system_code=='ll' ? 'prod' : 'test'}/to-ll/po",protocol:'sftp',port:22}
     xml = generate(User.integration,order)
     Tempfile.open(['po_','.xml']) do |tf|
       tf.write xml
