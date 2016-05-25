@@ -1,7 +1,7 @@
 require 'open_chain/api/api_entity_xmlizer'
 require 'open_chain/ftp_file_support'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlGenerator
-  include OpenChain::FtpFileSupport
+  extend OpenChain::FtpFileSupport
   def self.send_order order
     xml = generate(User.integration,order)
     Tempfile.open(['po_','.xml']) do |tf|
