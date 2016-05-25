@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
 
   def self.generate_ll_xml ord, old_data, new_data
-    if old_data.planned_handover_date != new_data.planned_handover_date
+    if new_data.planned_handover_date && (old_data.nil? || old_data.planned_handover_date != new_data.planned_handover_date)
       OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.send_order ord
     end
   end

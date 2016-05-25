@@ -87,11 +87,27 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it 'should send xml to ll if ord_planned_handover_date has changed' do
       o = double ('order')
       od = double('OrderData-Old')
-      od.should_receive(:planned_handover_date).and_return Date.new(2016,5,1)
+      od.stub(:planned_handover_date).and_return Date.new(2016,5,1)
       nd = double('OrderData-New')
-      nd.should_receive(:planned_handover_date).and_return Date.new(2016,5,2)
+      nd.stub(:planned_handover_date).and_return Date.new(2016,5,2)
       OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_receive(:send_order).with(o)
       described_class.generate_ll_xml(o,od,nd)
+    end
+
+    it "sends xml if old data is blank and new data has planned handover date" do
+      o = double ('order')
+      nd = double('OrderData-New')
+      nd.stub(:planned_handover_date).and_return Date.new(2016,5,2)
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_receive(:send_order).with(o)
+      described_class.generate_ll_xml(o,nil,nd)
+    end
+
+    it "does not sends xml if old data is blank and new data does not have planned handover date" do
+      o = double ('order')
+      nd = double('OrderData-New')
+      nd.stub(:planned_handover_date).and_return nil
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_not_receive(:send_order)
+      described_class.generate_ll_xml(o,nil,nd)
     end
   end
 
