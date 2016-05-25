@@ -8,7 +8,7 @@ require 'open_chain/entity_compare/comparator_registry'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSystemInit
   def self.init
-    return unless MasterSetup.get.system_code == 'll'
+    return unless ['ll','ll-test'].include? MasterSetup.get.system_code
 
     OpenChain::CustomHandler::CustomViewSelector.register_handler OpenChain::CustomHandler::LumberLiquidators::LumberViewSelector
     OpenChain::OrderAcceptanceRegistry.register OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance
