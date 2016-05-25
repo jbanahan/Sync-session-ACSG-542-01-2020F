@@ -143,7 +143,8 @@ class ModelField
   end
 
   def xml_tag_name
-    @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
+    tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
+    tag_name.to_s.gsub(/[\W]/,'_')
   end
 
   def select_options
