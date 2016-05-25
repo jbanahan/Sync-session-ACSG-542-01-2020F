@@ -19,10 +19,6 @@ module OpenChain; module Api; class ApiEntityXmlizer
     hash.keys.each do |uid|
       mf = ModelField.find_by_uid uid
       val = hash[uid]
-      if val.blank?
-        hash.delete uid
-        next
-      end
       if !mf.blank?
         hash.delete uid
         hash[mf.xml_tag_name] = val
