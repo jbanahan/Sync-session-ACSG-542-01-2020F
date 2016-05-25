@@ -1,20 +1,19 @@
 require 'open_chain/api/api_entity_xmlizer'
+require 'open_chain/ftp_file_support'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlGenerator
-
+  include OpenChain::FtpFileSupport
   def self.send_order order
-    ftp_opts = {folder:"#{Rails.env.production? && MasterSetup.get.system_code=='ll' ? 'prod' : 'test'}/to-ll/po",protocol:'sftp',port:22}
     xml = generate(User.integration,order)
     Tempfile.open(['po_','.xml']) do |tf|
       tf.write xml
       tf.flush
-      FtpSender.send_file(
-        'connect.vfitrack.net',
-        'll-edi',
-        'u1sngfb',
-        tf,
-        ftp_opts
-      )
+      ftp_file tf
     end
+  end
+
+  def self.ftp_credentials
+    folder = "ll-edi/#{Rails.env.production? && MasterSetup.get.system_code=='ll' ? 'prod' : 'test'}/to-ll/po"
+    ecs_connect_vfitrack_net(folder)
   end
 
   def self.generate user, order
