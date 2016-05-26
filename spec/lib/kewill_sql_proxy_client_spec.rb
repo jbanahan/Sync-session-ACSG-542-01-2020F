@@ -156,28 +156,6 @@ describe OpenChain::KewillSqlProxyClient do
       OpenChain::CoreModuleProcessor.should_receive(:bulk_objects).with(CoreModule::ENTRY, primary_keys: nil, primary_key_file_bucket: "bucket", primary_key_file_path: "key").and_yield(1, @entry)
       described_class.bulk_request_entry_data s3_bucket: "bucket", s3_key: "key"
     end
-
-    context "with a search run" do
-      before :each do
-        @search_setup = Factory(:search_setup, module_type: "Entry", user: Factory(:sys_admin_user))  #sys admin so we don't have to bother w/ permissions
-        @sr = @search_setup.search_runs.create!
-      end
-
-       it "uses search run id to request entry data" do
-        entry2 = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'987654')
-        described_class.any_instance.should_receive(:request_entry_data).with "123456"
-        described_class.any_instance.should_receive(:request_entry_data).with "987654"
-
-        described_class.bulk_request_entry_data @sr.id, nil
-      end
-
-      it "skips non-alliance entries" do
-        entry2 = Factory(:entry,:source_system=>'Not Alliance',:broker_reference=>'987654')
-        described_class.any_instance.should_receive(:request_entry_data).with "123456"
-        described_class.any_instance.should_not_receive(:request_entry_data).with "987654"
-        described_class.bulk_request_entry_data @sr.id, nil
-      end
-    end
   end
 
   describe "delayed_bulk_entry_data" do
