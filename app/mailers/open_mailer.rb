@@ -24,17 +24,16 @@ EOS
   end
 
   #send a very simple HTML email (attachments are expected to answer as File objects or paths )
-  def send_simple_html to, subject, body, file_attachments = []
+  def send_simple_html to, subject, body, file_attachments = [], mail_options = {}
     @body_content = body
     @attachment_messages = []
     pm_attachments = []
 
-    file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
     # Something funky happens with the mail if you use the 'attachments' global prior to creating a mail object
     # instead of the mail.attachments attribute.  The mail content ends up being untestable for some reason I think
     # is related to messed up/out of order MIME hierarchies in the email.
     local_attachments = {}
-    file_attachments.each do |file|
+    Array.wrap(file_attachments).each do |file|
       
       save_large_attachment(file, to) do |email_attachment, attachment_text|
         if email_attachment
@@ -48,7 +47,8 @@ EOS
       
     end
 
-    m = mail(to: explode_group_email_list(to, "TO"), subject: subject) do |format|
+    opts = {to: explode_group_email_list(to, "TO"), subject: subject}.merge mail_options
+    m = mail(opts) do |format|
       format.html
     end
 

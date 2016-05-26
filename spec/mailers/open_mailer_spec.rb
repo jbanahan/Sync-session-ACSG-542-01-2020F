@@ -136,6 +136,15 @@ describe OpenMailer do
         expect(OpenMailer.deliveries.last.header['X-ORIGINAL-TO'].value).to eq 'example@example.com'
       end
 
+      it "allows sending additional mail options" do
+        # Just check that the cc option is utilized when passed.  The options hash just gets passed directly
+        # to the #mail method.
+        OpenMailer.send_simple_html("example@example.com", "Test subject","<p>Test body</p>", nil, cc: "test@test.com").deliver!
+
+        m = OpenMailer.deliveries.last
+        expect(m.cc).to eq ["test@test.com"]
+      end
+
       it "should handle multiple addresses in to field" do
         Rails.stub(:env).and_return ActiveSupport::StringInquirer.new("development")
         

@@ -42,6 +42,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceS
       expect(ActionMailer::Base.deliveries.length).to eq 1
       m = ActionMailer::Base.deliveries.first
       expect(m.to).to eq ["otwap@lumberliquidators.com"]
+      expect(m.bcc).to eq ["payments@vandegriftinc"]
       expect(m.subject).to eq "Supplemental Invoice 123456A"
       expect(m.body.raw_source).to include "Attached is the supplemental invoice # 123456A."
 

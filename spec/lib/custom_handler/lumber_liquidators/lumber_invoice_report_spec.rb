@@ -100,6 +100,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       expect(ActionMailer::Base.deliveries.length).to eq 1
       m = ActionMailer::Base.deliveries.first
       expect(m.to).to eq ["otwap@lumberliquidators.com"]
+      expect(m.bcc).to eq ["payments@vandegriftinc"]
       expect(m.subject).to eq "Vandegrift, Inc. Billing for Mar 01, 2016"
       expect(m.body.raw_source).to include "Attached is the Vandegrift weekly invoice file."
       wb = Spreadsheet.open(StringIO.new(m.attachments["VFI Weekly Invoice 2016-03-01.xls"].read))
