@@ -88,7 +88,7 @@ module OpenChain; module Report; class HmStatisticsReport
   def load_order_data master_hash, start_date, end_date
     orders_qry = <<-SQL
       SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
-        (CASE entries.transport_mode_code 
+        (CASE e.transport_mode_code 
           WHEN 40 THEN "AIR" 
           WHEN 41 THEN "AIR" 
           WHEN 10 THEN "OCEAN"
@@ -96,10 +96,10 @@ module OpenChain; module Report; class HmStatisticsReport
           ELSE "OTHER" 
          END) AS 'Mode', 
         COUNT(*) AS 'orders'
-      FROM entries
-        INNER JOIN commercial_invoices ci ON ci.entry_id = entries.id 
+      FROM entries e
+        INNER JOIN commercial_invoices ci ON ci.entry_id = e.id 
           AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
-      WHERE entries.customer_number = 'HENNE'
+      WHERE e.customer_number = 'HENNE'
         AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
       GROUP BY mode, ecc
     SQL
