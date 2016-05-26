@@ -26,33 +26,36 @@ class FieldValidatorRule < ActiveRecord::Base
   #Method returns nil if validation passes, else, a message indicating the reason for failure
   #Passing nested=true will prepend the error messages with the CoreModule name
   def validate_field(base_object,nested=false)
-    @mf = model_field
-    raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if @mf.nil?
-    validate_input @mf.process_export(base_object,nil,true), nested
+    mf = model_field
+    raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if mf.blank?
+    _validate_input(mf, mf.process_export(base_object, nil, true), nested)
   end
 
   def validate_input(input,nested=false)
-    raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if model_field.nil?
-    @nested = nested
-    @mf = model_field
+    mf = model_field
+    raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if mf.blank?
+    _validate_input(mf, input, nested)
+  end
+
+  def _validate_input(model_field, input, nested)
     r = []
     if self.required? && input.blank?
-      r << error_message("#{@mf.label} is required.")
+      r << error_message("#{model_field.label} is required.")
     end
     if !input.blank? #put all checks here
-      r += validate_regex input
-      r += validate_greater_than input
-      r += validate_less_than input
-      r += validate_less_than_date input
-      r += validate_greater_than_date input
-      r += validate_more_than_ago input
-      r += validate_less_than_from_now input
-      r += validate_starts_with input
-      r += validate_ends_with input
-      r += validate_contains input
-      r += validate_one_of input
-      r += validate_minimum_length input
-      r += validate_maximum_length input
+      r += validate_regex input, model_field, nested
+      r += validate_greater_than input, model_field, nested
+      r += validate_less_than input, model_field, nested
+      r += validate_less_than_date input, model_field, nested
+      r += validate_greater_than_date input, model_field, nested
+      r += validate_more_than_ago input, model_field, nested
+      r += validate_less_than_from_now input, model_field, nested
+      r += validate_starts_with input, model_field, nested
+      r += validate_ends_with input, model_field, nested
+      r += validate_contains input, model_field, nested
+      r += validate_one_of input, model_field, nested
+      r += validate_minimum_length input, model_field, nested
+      r += validate_maximum_length input, model_field, nested
     end
     Set.new(r).to_a
   end
@@ -106,53 +109,53 @@ class FieldValidatorRule < ActiveRecord::Base
     FieldValidatorRule.write_module_cache CoreModule.find_by_class_name self.module_type
     FieldValidatorRule.write_field_cache self.model_field_uid
   end
-  def validate_regex val
-    generic_validate val, self.regex,"#{@mf.label} must match expression #{self.regex}.", lambda {val.to_s.match(self.regex)}
+  def validate_regex val, model_field, nested
+    generic_validate model_field, nested, val, self.regex,"#{model_field.label} must match expression #{self.regex}.", lambda {val.to_s.match(self.regex)}
   end
-  def validate_greater_than val
-    generic_validate val, self.greater_than, "#{@mf.label} must be greater than #{self.greater_than}.", lambda {val>self.greater_than}
+  def validate_greater_than val, model_field, nested
+    generic_validate model_field, nested, val, self.greater_than, "#{model_field.label} must be greater than #{self.greater_than}.", lambda {val>self.greater_than}
   end
-  def validate_less_than val
-    generic_validate val, self.less_than, "#{@mf.label} must be less than #{self.less_than}.", lambda {val<self.less_than}
+  def validate_less_than val, model_field, nested
+    generic_validate model_field, nested, val, self.less_than, "#{model_field.label} must be less than #{self.less_than}.", lambda {val<self.less_than}
   end
-  def validate_less_than_date val
-    generic_validate val, self.less_than_date, "#{@mf.label} must be before #{self.less_than_date}.", lambda {val<self.less_than_date}
+  def validate_less_than_date val, model_field, nested
+    generic_validate model_field, nested, val, self.less_than_date, "#{model_field.label} must be before #{self.less_than_date}.", lambda {val<self.less_than_date}
   end
-  def validate_greater_than_date val
-    generic_validate val, self.greater_than_date, "#{@mf.label} must be after #{self.greater_than_date}.", lambda {val>self.greater_than_date}
+  def validate_greater_than_date val, model_field, nested
+    generic_validate model_field, nested, val, self.greater_than_date, "#{model_field.label} must be after #{self.greater_than_date}.", lambda {val>self.greater_than_date}
   end
-  def validate_more_than_ago val
-    generic_validate val, self.more_than_ago, "#{@mf.label} must be before #{self.more_than_ago} #{self.more_than_ago_uom} ago.", lambda {val.to_date<(eval "#{self.more_than_ago}.#{self.more_than_ago_uom}.ago.to_date")}
+  def validate_more_than_ago val, model_field, nested
+    generic_validate model_field, nested, val, self.more_than_ago, "#{model_field.label} must be before #{self.more_than_ago} #{self.more_than_ago_uom} ago.", lambda {val.to_date<(eval "#{self.more_than_ago}.#{self.more_than_ago_uom}.ago.to_date")}
   end
-  def validate_less_than_from_now val
-    generic_validate val, self.less_than_from_now, "#{@mf.label} must be before #{self.less_than_from_now} #{self.less_than_from_now_uom} from now.", lambda {val.to_date<(eval "#{self.less_than_from_now}.#{self.less_than_from_now_uom}.from_now.to_date")}
+  def validate_less_than_from_now val, model_field, nested
+    generic_validate model_field, nested, val, self.less_than_from_now, "#{model_field.label} must be before #{self.less_than_from_now} #{self.less_than_from_now_uom} from now.", lambda {val.to_date<(eval "#{self.less_than_from_now}.#{self.less_than_from_now_uom}.from_now.to_date")}
   end
-  def validate_starts_with val
-    generic_validate val, self.starts_with, "#{@mf.label} must start with #{self.starts_with}.", lambda {val.downcase.starts_with? self.starts_with.downcase}
+  def validate_starts_with val, model_field, nested
+    generic_validate model_field, nested, val, self.starts_with, "#{model_field.label} must start with #{self.starts_with}.", lambda {val.downcase.starts_with? self.starts_with.downcase}
   end
-  def validate_ends_with val
-    generic_validate val, self.ends_with, "#{@mf.label} must end with #{self.ends_with}.", lambda {val.downcase.ends_with? self.ends_with.downcase}
+  def validate_ends_with val, model_field, nested
+    generic_validate model_field, nested, val, self.ends_with, "#{model_field.label} must end with #{self.ends_with}.", lambda {val.downcase.ends_with? self.ends_with.downcase}
   end
-  def validate_contains val
-    generic_validate val, self.contains, "#{@mf.label} must contain #{self.contains}.", lambda {!val.downcase.index(self.contains.downcase).nil?}
+  def validate_contains val, model_field, nested
+    generic_validate model_field, nested, val, self.contains, "#{model_field.label} must contain #{self.contains}.", lambda {!val.downcase.index(self.contains.downcase).nil?}
   end
-  def validate_minimum_length val
-    generic_validate val, self.minimum_length, "#{@mf.label} must be at least #{self.minimum_length} characters.", lambda {val.strip.length>=self.minimum_length}
+  def validate_minimum_length val, model_field, nested
+    generic_validate model_field, nested, val, self.minimum_length, "#{model_field.label} must be at least #{self.minimum_length} characters.", lambda {val.strip.length>=self.minimum_length}
   end
-  def validate_maximum_length val
-    generic_validate val, self.maximum_length, "#{@mf.label} must be at most #{self.maximum_length} characters.", lambda {val.strip.length<=self.maximum_length}
+  def validate_maximum_length val, model_field, nested
+    generic_validate model_field, nested, val, self.maximum_length, "#{model_field.label} must be at most #{self.maximum_length} characters.", lambda {val.strip.length<=self.maximum_length}
   end
-  def validate_one_of val
+  def validate_one_of val, model_field, nested
     return [] if self.one_of.blank?
     good_vals = self.one_of_array
     test_vals = good_vals.collect {|v| v.downcase} #remove whitespace and make lowercase
-    return [error_message("#{@mf.label} must be one of: #{good_vals.join(", ")}.")] unless test_vals.include? val.to_s.strip.downcase
+    return [error_message(model_field, nested, "#{model_field.label} must be one of: #{good_vals.join(", ")}.")] unless test_vals.include? val.to_s.strip.downcase
     return []
   end
 
-  def generic_validate val, comparison_value, message, test_pass
+  def generic_validate model_field, nested, val, comparison_value, message, test_pass
     return [] if comparison_value.blank?
-    return [error_message(message)] unless test_pass.call
+    return [error_message(model_field, nested, message)] unless test_pass.call
     return []
   end
 
@@ -166,9 +169,9 @@ class FieldValidatorRule < ActiveRecord::Base
 
   #generates the appropriate error message for the validation failure.
   #this will return the message you pass in unless the user has set a custom message
-  def error_message base_message
+  def error_message model_field, nested, base_message
     m = self.custom_message.blank? ? base_message : self.custom_message
-    m = "#{@mf.core_module.label}: #{m}" if @nested
+    m = "#{model_field.core_module.label}: #{m}" if nested
     m
   end
 

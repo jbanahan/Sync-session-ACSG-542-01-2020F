@@ -181,11 +181,11 @@ class ProductsController < ApplicationController
       params.delete :utf8
       if run_delayed params
         if current_user.edit_products? || current_user.edit_classifications?
-          OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id
+          OpenChain::BulkUpdateClassification.delayed_bulk_update params, current_user
           add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
         end
       else
-        messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true
+        messages = OpenChain::BulkUpdateClassification.bulk_update params, current_user, :no_user_message => true
         # Show the user the update message and any errors if there were some
         add_flash :notices, messages[:message] if messages[:message]
         messages[:errors].each {|e| add_flash :errors, e}
@@ -209,7 +209,7 @@ class ProductsController < ApplicationController
   def bulk_update_classifications
     action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
       if run_delayed params
-        OpenChain::BulkUpdateClassification.delay.quick_classify params.to_json, current_user
+        OpenChain::BulkUpdateClassification.delayed_quick_classify params, current_user
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       else
         OpenChain::BulkUpdateClassification.quick_classify params, current_user, :no_user_message => true
@@ -231,7 +231,7 @@ class ProductsController < ApplicationController
   #instant classify the given objects
   def bulk_instant_classify
     action_secure(current_user.edit_classifications?,Product.new,{:verb=>"instant classify",:module_name=>module_label.downcase.pluralize}) {
-      OpenChain::BulkInstantClassify.delay.go_serializable params.to_json, current_user.id
+      OpenChain::BulkInstantClassify.delayed_instant_classify params, current_user
       add_flash :notices, "These products will be instant classified in the background.  You will receive a system message when they're ready."
       redirect_to products_path
     }

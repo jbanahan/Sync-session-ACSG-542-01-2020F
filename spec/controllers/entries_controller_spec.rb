@@ -93,8 +93,7 @@ describe EntriesController do
     it "should handle bulk image requests with a referer" do
       request.env["HTTP_REFERER"] = "blah"
       entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
-      OpenChain::AllianceImagingClient.stub(:delay).and_return(OpenChain::AllianceImagingClient)
-      OpenChain::AllianceImagingClient.should_receive(:bulk_request_images).with('1234', '123')
+      OpenChain::AllianceImagingClient.should_receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id'=>'1234', 'pk'=>'123'}
       
       response.should redirect_to("blah")
@@ -105,8 +104,7 @@ describe EntriesController do
     it "should handle bulk image requests without a referer" do
       request.env["HTTP_REFERER"] = nil
       entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
-      OpenChain::AllianceImagingClient.stub(:delay).and_return(OpenChain::AllianceImagingClient)
-      OpenChain::AllianceImagingClient.should_receive(:bulk_request_images).with('1234', '123')
+      OpenChain::AllianceImagingClient.should_receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id'=>'1234', 'pk'=>'123'}
       
       response.should redirect_to("/")
@@ -128,9 +126,7 @@ describe EntriesController do
         it "should request data" do
           #make sure we're not relying on the referrer
           request.env["HTTP_REFERER"] = nil
-          sql_proxy = double("OpenChain::KewillSqlProxyClient")
-          OpenChain::SqlProxyClient.stub(:delay).and_return(sql_proxy)
-          sql_proxy.should_receive(:bulk_request_entry_data).with(nil, [entry.id])
+          OpenChain::KewillSqlProxyClient.should_receive(:delayed_bulk_entry_data).with(nil, [entry.id])
 
           post :request_entry_data, 'id'=>entry.id
           expect(response).to redirect_to(entry)
@@ -143,9 +139,7 @@ describe EntriesController do
 
         it "should handle bulk image requests with a referer" do
           request.env["HTTP_REFERER"] = "blah"
-          sql_proxy = double("OpenChain::KewillSqlProxyClient")
-          OpenChain::SqlProxyClient.stub(:delay).and_return(sql_proxy)
-          sql_proxy.should_receive(:bulk_request_entry_data).with(nil, {"0" => entry.id.to_s})
+          OpenChain::KewillSqlProxyClient.should_receive(:delayed_bulk_entry_data).with(nil, {"0" => entry.id.to_s})
 
           post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
 
@@ -156,9 +150,7 @@ describe EntriesController do
 
         it "should handle bulk image requests without a referer" do
           request.env["HTTP_REFERER"] = nil
-          sql_proxy = double("OpenChain::KewillSqlProxyClient")
-          OpenChain::SqlProxyClient.stub(:delay).and_return(sql_proxy)
-          sql_proxy.should_receive(:bulk_request_entry_data).with(nil, {"0" => entry.id.to_s})
+          OpenChain::KewillSqlProxyClient.should_receive(:delayed_bulk_entry_data).with(nil, {"0" => entry.id.to_s})
 
           post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
 
@@ -176,9 +168,7 @@ describe EntriesController do
           end
 
           it "sends a search run id to the bulk request method" do
-            sql_proxy = double("OpenChain::KewillSqlProxyClient")
-            OpenChain::SqlProxyClient.stub(:delay).and_return(sql_proxy)
-            sql_proxy.should_receive(:bulk_request_entry_data).with(@sr.id.to_s, nil)
+            OpenChain::KewillSqlProxyClient.should_receive(:delayed_bulk_entry_data).with(@sr.id.to_s, nil)
             post :bulk_request_entry_data, {'sr_id' => @sr.id}
             flash[:errors].should be_blank
             flash[:notices].first.should == "Updated entries have been requested.  Please allow 10 minutes for them to appear."
@@ -189,7 +179,7 @@ describe EntriesController do
     describe 'as non-sysadmin' do
       describe 'request_entry_data' do
         it 'should do nothing' do
-          OpenChain::KewillSqlProxyClient.should_not_receive(:delay)
+          OpenChain::KewillSqlProxyClient.should_not_receive(:delayed_bulk_entry_data)
           post :request_entry_data, 'id'=>entry.id
           expect(response).to redirect_to(entry)
           expect(flash[:errors]).to be_blank
@@ -199,7 +189,7 @@ describe EntriesController do
       describe 'bulk_request_entry_data' do
         it 'should do nothing' do
           request.env["HTTP_REFERER"] = nil
-          OpenChain::KewillSqlProxyClient.should_not_receive(:delay)
+          OpenChain::KewillSqlProxyClient.should_not_receive(:delayed_bulk_entry_data)
           post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
           expect(response).to redirect_to("/")
           expect(flash[:errors]).to be_blank

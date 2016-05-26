@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe OpenChain::CoreModuleProcessor do
 
   describe "validate_and_save_module" do
@@ -365,7 +367,7 @@ describe OpenChain::CoreModuleProcessor do
       Lock.should_receive(:acquire).with("Product-#{@obj.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
       Lock.should_receive(:acquire).with("Product-#{@obj2.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
 
-      described_class.bulk_objects(@cm, nil, [@obj.id, @obj2.id]) do |gc, obj|
+      described_class.bulk_objects(@cm, primary_keys: [@obj.id, @obj2.id]) do |gc, obj|
         yielded << obj
         good_count = gc
       end
@@ -381,7 +383,7 @@ describe OpenChain::CoreModuleProcessor do
       Lock.should_receive(:acquire).with("Product-#{@obj.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
       Lock.should_receive(:acquire).with("Product-#{@obj2.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
 
-      described_class.bulk_objects(@cm, nil, {o1: @obj.id, o2: @obj2.id}) do |gc, obj|
+      described_class.bulk_objects(@cm, primary_keys: {o1: @obj.id, o2: @obj2.id}) do |gc, obj|
         yielded << obj
         good_count = gc
       end
@@ -390,18 +392,14 @@ describe OpenChain::CoreModuleProcessor do
       expect(good_count).to eq 2
     end
 
-    it "finds, locks and yields objects referenced by a search run id" do
+    it "downloads file from s3 and deserializes data from it into primary key array" do
+      tf = double("Tempfile")
+      tf.should_receive(:read).and_return [@obj.id, @obj2.id].to_json
+      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "path").and_yield tf
+
       yielded = []
       good_count = nil
-
-      # Just set object keys in the search run ahead of time..this is a little white-boxy, but it works.
-      sr = SearchRun.new
-      sr.instance_variable_set("@object_keys", [@obj.id, @obj2.id])
-
-      Lock.should_receive(:acquire).with("Product-#{@obj.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
-      Lock.should_receive(:acquire).with("Product-#{@obj2.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
-
-      described_class.bulk_objects(@cm, nil, [@obj.id, @obj2.id]) do |gc, obj|
+      described_class.bulk_objects(@cm, primary_key_file_bucket: "bucket", primary_key_file_path: "path") do |gc, obj|
         yielded << obj
         good_count = gc
       end
@@ -409,5 +407,6 @@ describe OpenChain::CoreModuleProcessor do
       expect(yielded).to eq [@obj, @obj2]
       expect(good_count).to eq 2
     end
+    
   end
 end

@@ -10,18 +10,44 @@ describe OpenChain::AllianceImagingClient do
     it 'should request based on primary keys' do
       OpenChain::AllianceImagingClient.should_receive(:request_images).with('123456')
       OpenChain::AllianceImagingClient.should_receive(:request_images).with('654321')
-      OpenChain::AllianceImagingClient.bulk_request_images nil, [@e1.id,@e2.id]
+      OpenChain::AllianceImagingClient.bulk_request_images primary_keys: [@e1.id,@e2.id]
     end
     it 'should request based on search_run_id' do
       OpenChain::AllianceImagingClient.should_receive(:request_images).with('123456')
       OpenChain::AllianceImagingClient.should_receive(:request_images).with('654321')
-      ss = Factory(:search_setup,:module_type=>"Entry",:user=>Factory(:master_user))
-      ss.search_runs.create!
-      OpenChain::AllianceImagingClient.bulk_request_images ss.search_runs.first.id, nil
+      OpenChain::CoreModuleProcessor.should_receive(:bulk_objects).with(CoreModule::ENTRY, primary_keys: nil, primary_key_file_bucket: "bucket", primary_key_file_path: "key").and_yield(1, @e1).and_yield(2, @e2)
+
+      OpenChain::AllianceImagingClient.bulk_request_images s3_bucket: "bucket", s3_key: "key"
     end
     it 'should not request for non-alliance entries' do
       OpenChain::AllianceImagingClient.should_not_receive(:request_images)
-      OpenChain::AllianceImagingClient.bulk_request_images nil, [@e3.id]
+      OpenChain::AllianceImagingClient.bulk_request_images primary_keys: [@e3.id]
+    end
+  end
+
+  describe "delayed_bulk_request_images" do
+    let(:s3_obj) {
+      s3_obj = double("S3Object")
+      s3_bucket = double("S3Bucket")
+      s3_obj.stub(:key).and_return "key"
+      s3_obj.stub(:bucket).and_return s3_bucket
+      s3_bucket.stub(:name).and_return "bucket"
+      s3_obj
+    }
+    let (:search_run) { SearchRun.create! search_setup_id: Factory(:search_setup).id }
+
+    it "proxies requests with search runs in them" do
+      OpenChain::S3.should_receive(:create_s3_tempfile).and_return s3_obj
+      described_class.should_receive(:delay).and_return described_class
+      described_class.should_receive(:bulk_request_images).with(s3_bucket: "bucket", s3_key: "key")
+      described_class.delayed_bulk_request_images search_run.id, nil
+    end
+
+    it "forwards primary keys directly" do
+      described_class.should_receive(:delay).and_return described_class
+      described_class.should_receive(:bulk_request_images).with(primary_keys: [1, 2, 3])
+
+      described_class.delayed_bulk_request_images nil, [1, 2, 3]
     end
   end
 

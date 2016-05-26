@@ -96,7 +96,7 @@ describe ProductsController do
 
   describe :bulk_update do
     it "should bulk update inline for less than 10 products" do
-      OpenChain::BulkUpdateClassification.should_receive(:go) do |params, user, opts|
+      OpenChain::BulkUpdateClassification.should_receive(:bulk_update) do |params, user, opts|
         expected = {"us" => "1"}
         expect(params['product']['classifications_attributes']).to eq expected
         expect(user.id).to eq @user.id
@@ -134,11 +134,8 @@ describe ProductsController do
       end
       p[:pk] = pks
 
-      bulk = double("OpenChain::BulkUpdateClassification")
-      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(bulk)
-      bulk.should_receive(:go_serializable) do |params, id|
-        expect(id).to eq @user.id
-        params = JSON.parse params
+      OpenChain::BulkUpdateClassification.should_receive(:delayed_bulk_update) do |params, user|
+        expect(user).to eq @user
         expect(params['pk'].length).to eq 11
         expect(params['product']['field']).to eq "value"
       end
@@ -151,11 +148,8 @@ describe ProductsController do
     it "should delay bulk updates for search runs" do
       p = {:product => {:field => "value"}, :sr_id => 1, :pk => {"0" => "0"}}
 
-      bulk = double("OpenChain::BulkUpdateClassification")
-      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(bulk)
-      bulk.should_receive(:go_serializable) do |params, id|
-        expect(id).to eq @user.id
-        params = JSON.parse params
+      OpenChain::BulkUpdateClassification.should_receive(:delayed_bulk_update) do |params, user|
+        expect(user).to eq @user
         expect(params['sr_id']).to eq "1"
         expect(params['product']['field']).to eq "value"
       end
@@ -171,10 +165,8 @@ describe ProductsController do
       p = {:sr_id=>1}
 
       b = double
-      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(b)
-      b.should_receive(:quick_classify) do |json, id|
+      OpenChain::BulkUpdateClassification.should_receive(:delayed_quick_classify) do |params, id|
         expect(id).to eq @user
-        params = ActiveSupport::JSON.decode json
         expect(params["sr_id"]).to eq "1"
       end
 
@@ -190,11 +182,8 @@ describe ProductsController do
       end
       p = {:pk => pks}
 
-      b = double
-      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(b)
-      b.should_receive(:quick_classify) do |json, id|
+      OpenChain::BulkUpdateClassification.should_receive(:delayed_quick_classify) do |params, id|
         expect(id).to eq @user
-        params = ActiveSupport::JSON.decode json
         expect(params["pk"].length).to eq 11
       end
 
@@ -222,13 +211,10 @@ describe ProductsController do
     end
 
     it "should allow user to bulk update classifications" do
-      delay = double
       p = {"k1"=>"v1", "k2"=>"v2", :sr_id=>"1"}
-      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
-      delay.should_receive(:quick_classify) do |args, id|
-        json = JSON.parse(args)
-        expect(json["k1"]).to eq "v1"
-        expect(json["k2"]).to eq "v2"
+      OpenChain::BulkUpdateClassification.should_receive(:delayed_quick_classify) do |params, id|
+        expect(params["k1"]).to eq "v1"
+        expect(params["k2"]).to eq "v2"
         expect(id).to eq @user
       end
 
@@ -239,10 +225,8 @@ describe ProductsController do
     end
 
     it "should redirect to products_path with no referer" do
-      delay = double
       p = {:sr_id => "1"}
-      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
-      delay.should_receive(:quick_classify)
+      OpenChain::BulkUpdateClassification.should_receive(:delayed_quick_classify)
       request.env["HTTP_REFERER"] = nil
       post :bulk_update_classifications, p
       response.should redirect_to(products_path)
@@ -250,9 +234,7 @@ describe ProductsController do
 
     it "should redirect to 'back_to' parameter if set" do
       request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=x"
-      delay = double
-      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
-      delay.should_receive(:quick_classify)
+      OpenChain::BulkUpdateClassification.should_receive(:delayed_quick_classify)
       post :bulk_update_classifications, {'back_to'=>'/somewhere?force_search=true&key=val', :sr_id=>"1"}
       response.should redirect_to("http://test.host/somewhere?key=val")
     end

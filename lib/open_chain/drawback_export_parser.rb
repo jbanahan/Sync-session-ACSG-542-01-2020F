@@ -32,9 +32,9 @@ module OpenChain
       end
     end
 
-    def self.parse_xlsx_file s3_path, importer
+    def self.parse_xlsx_file s3_bucket, s3_path, importer
       count = 0
-      f = OpenChain::XLClient.new(s3_path)
+      f = xl_client(s3_bucket, s3_path)
       f.all_row_values(0) do |line|
         unless count == 0
           line.map! {|element| element.to_s}
@@ -63,8 +63,12 @@ module OpenChain
 
     def self.parse_local_xls file, importer
       OpenChain::S3.with_s3_tempfile(file) do |s3_obj| 
-        parse_xlsx_file(s3_obj.key, importer)
+        parse_xlsx_file(s3_obj.bucket.name, s3_obj.key, importer)
       end
+    end
+
+    def self.xl_client bucket, path
+      OpenChain::XLClient.new(path, bucket: bucket)
     end
 
   end
