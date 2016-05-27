@@ -4,6 +4,10 @@ require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlParser
+  VALID_ROOT_ELEMENTS ||= [
+    '_-LUMBERL_-3PL_ORDERS05_EXT', #after June 2016
+    'ORDERS05' #before June 2016
+  ]
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
@@ -30,7 +34,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   def parse_dom dom
     @first_expected_delivery_date = nil
     root = dom.root
-    raise "Incorrect root element #{root.name}, expecting 'ORDERS05'." unless root.name == 'ORDERS05'
+    raise "Incorrect root element #{root.name}, expecting '#{VALID_ROOT_ELEMENTS.join(', ')}'." unless VALID_ROOT_ELEMENTS.include?(root.name)
 
     base = REXML::XPath.first(root,'IDOC')
 

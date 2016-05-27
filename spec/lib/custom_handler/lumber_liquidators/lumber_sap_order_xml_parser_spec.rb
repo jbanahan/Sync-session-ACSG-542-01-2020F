@@ -19,6 +19,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect{described_class.new.parse_dom(dom)}.to raise_error(/root element/)
     end
 
+    it "should accept new root element" do
+      @test_data.gsub!(/ORDERS05/,'_-LUMBERL_-3PL_ORDERS05_EXT')
+      dom = REXML::Document.new(@test_data)
+      expect{described_class.new.parse_dom(dom)}.to_not raise_error
+    end
+
     it "should create order" do
       dom = REXML::Document.new(@test_data)
       expect{described_class.new.parse_dom(dom)}.to change(Order,:count).from(0).to(1)
