@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
           sr.save!
         end
 
-        OpenMailer.send_simple_html("otwap@lumberliquidators.com", "Vandegrift, Inc. Billing for #{invoice_date.strftime "%b %d, %Y"}", "Attached is the Vandegrift weekly invoice file.", file, bcc: "payments@vandegriftinc").deliver!
+        OpenMailer.send_simple_html("otwap@lumberliquidators.com", "Vandegrift, Inc. Billing for #{invoice_date.strftime "%b %d, %Y"}", "Attached is the Vandegrift weekly invoice file.", file, bcc: "payments@vandegriftinc.com").deliver!
       end
     end
   end

@@ -43,7 +43,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSu
 
         sr.save!
 
-        OpenMailer.send_simple_html("otwap@lumberliquidators.com", "Supplemental Invoice #{invoice.invoice_number}", "Attached is the supplemental invoice # #{invoice.invoice_number}.", file, bcc: "payments@vandegriftinc").deliver!
+        OpenMailer.send_simple_html("otwap@lumberliquidators.com", "Supplemental Invoice #{invoice.invoice_number}", "Attached is the supplemental invoice # #{invoice.invoice_number}.", file, bcc: "payments@vandegriftinc.com").deliver!
       end
     end
   end
