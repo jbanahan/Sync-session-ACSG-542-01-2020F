@@ -1,33 +1,43 @@
-module OpenChain
+require 'open_chain/s3'
 
+module OpenChain
   class CoreModuleProcessor
 
-    def self.bulk_objects core_module, search_run_id, primary_keys, &block
-      sr_id = search_run_id 
-      if !sr_id.blank? && sr_id.to_s.match(/^[0-9]*$/)
-        sr = SearchRun.find sr_id
-        good_count = sr.total_objects
-        sr.find_all_object_keys do |k|
-          p = core_module.find(k)
-          # Don't yield directly in an open transaction...there's some code paths where a transaction
-          # doesn't need to be run and it's pointless to open one when not needed.
-          Lock.acquire(lock_name(core_module, p), times: 5, yield_in_transaction: false) do
-            yield good_count, p
-          end
-        end
-      else
-        pks = primary_keys.respond_to?(:values) ? primary_keys.values : primary_keys
-        good_count = pks.size
-        pks.each do |key|
-          p = core_module.find key
-          # Don't yield directly in an open transaction...there's some code paths where a transaction
-          # doesn't need to be run and it's pointless to open one when not needed.
-          Lock.acquire(lock_name(core_module, p), times: 5, yield_in_transaction: false) do
-            yield good_count, p
-          end
-        end
+    def self.bulk_objects core_module, primary_keys: nil, primary_key_file_bucket: nil, primary_key_file_path: nil, &blk
+      if !primary_keys.blank?
+        bulk_objects_from_array_or_hash(core_module, primary_keys, &blk)
+      elsif !primary_key_file_bucket.nil? && !primary_key_file_path.nil?
+        bulk_objects_from_s3_file(core_module, primary_key_file_bucket, primary_key_file_path, &blk)
       end
     end
+
+    def self.bulk_objects_from_array_or_hash core_module, primary_keys, &blk
+      pks = primary_keys.respond_to?(:values) ? primary_keys.values : primary_keys
+      good_count = pks.size
+      pks.each do |key|
+        find_and_lock_object(core_module, good_count, key, &blk)
+      end
+    end
+    private_class_method :bulk_objects_from_array_or_hash
+
+    def self.bulk_objects_from_s3_file core_module, bucket, path, &blk
+      # We're going to download the tempfile, read it as a json object, then pass it through to the bulk objects from array method
+      OpenChain::S3.download_to_tempfile(bucket, path) do |temp|
+        primary_keys = ActiveSupport::JSON.decode temp.read
+        bulk_objects_from_array_or_hash(core_module, primary_keys, &blk)
+      end
+    end
+    private_class_method :bulk_objects_from_s3_file
+
+    def self.find_and_lock_object core_module, number_of_keys, key
+      obj = core_module.find(key)
+      # Don't yield directly in an open transaction...there's some code paths where a transaction
+      # doesn't need to be run and it's pointless to open one when not needed.
+      Lock.acquire(lock_name(core_module, obj), times: 5, yield_in_transaction: false) do
+        yield number_of_keys, obj
+      end
+    end
+    private_class_method :find_and_lock_object
 
     #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
     #this method will automatically save custom fields and will rollback if the validation fails

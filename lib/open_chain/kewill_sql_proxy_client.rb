@@ -72,9 +72,21 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     request 'entry_data', {file_no: file_no.to_i}, {}
   end
 
-  def self.bulk_request_entry_data search_run_id, primary_keys
+  def self.delayed_bulk_entry_data search_run_id, primary_keys
+    # We need to evaluate the search to get the keys BEFORE delaying the request to the backend queue,
+    # otherwise, the search may change prior to the job being processed and then the wrong files get requested.
+    if search_run_id.to_i != 0
+      params = {sr_id: search_run_id}
+      OpenChain::BulkUpdateClassification.replace_search_result_key params
+      self.delay.bulk_request_entry_data s3_bucket: params[:s3_bucket], s3_key: params[:s3_key]
+    else
+      self.delay.bulk_request_entry_data primary_keys: primary_keys
+    end
+  end
+
+  def self.bulk_request_entry_data primary_keys: nil, s3_bucket: nil, s3_key: nil
     c = self.new
-    OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::ENTRY,search_run_id,primary_keys) do |good_count, entry|
+    OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::ENTRY, primary_keys: primary_keys, primary_key_file_bucket: s3_bucket, primary_key_file_path: s3_key) do |good_count, entry|
       c.request_entry_data entry.broker_reference if entry.source_system == "Alliance"
     end
   end

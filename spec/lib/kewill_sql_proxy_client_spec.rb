@@ -142,36 +142,44 @@ describe OpenChain::KewillSqlProxyClient do
 
     it "uses primary key values to request entry data" do
       described_class.any_instance.should_receive(:request_entry_data).with "123456"
-      described_class.bulk_request_entry_data nil, [@entry.id]
+      described_class.bulk_request_entry_data primary_keys: [@entry.id]
     end
 
     it "skips non-alliance entries" do
       @entry.update_attributes! source_system: "Not Alliance"
       described_class.any_instance.should_not_receive(:request_entry_data).with "123456"
-      described_class.bulk_request_entry_data nil, [@entry.id]
+      described_class.bulk_request_entry_data primary_keys: [@entry.id]
     end
 
-    context "with a search run" do
-      before :each do
-        @search_setup = Factory(:search_setup, module_type: "Entry", user: Factory(:sys_admin_user))  #sys admin so we don't have to bother w/ permissions
-        @sr = @search_setup.search_runs.create!
-      end
+    it "uses s3 data to pull keys" do
+      described_class.any_instance.should_receive(:request_entry_data).with "123456"
+      OpenChain::CoreModuleProcessor.should_receive(:bulk_objects).with(CoreModule::ENTRY, primary_keys: nil, primary_key_file_bucket: "bucket", primary_key_file_path: "key").and_yield(1, @entry)
+      described_class.bulk_request_entry_data s3_bucket: "bucket", s3_key: "key"
+    end
+  end
 
-       it "uses search run id to request entry data" do
-        entry2 = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'987654')
-        described_class.any_instance.should_receive(:request_entry_data).with "123456"
-        described_class.any_instance.should_receive(:request_entry_data).with "987654"
+  describe "delayed_bulk_entry_data" do
+    let(:s3_obj) {
+      s3_obj = double("S3Object")
+      s3_bucket = double("S3Bucket")
+      s3_obj.stub(:key).and_return "key"
+      s3_obj.stub(:bucket).and_return s3_bucket
+      s3_bucket.stub(:name).and_return "bucket"
+      s3_obj
+    }
+    let (:search_run) { SearchRun.create! search_setup_id: Factory(:search_setup).id }
 
-        described_class.bulk_request_entry_data @sr.id, nil
-      end
+    it "proxies requests with search runs in them" do
+      OpenChain::S3.should_receive(:create_s3_tempfile).and_return s3_obj
+      described_class.should_receive(:delay).and_return described_class
+      described_class.should_receive(:bulk_request_entry_data).with(s3_bucket: "bucket", s3_key: "key")
+      described_class.delayed_bulk_entry_data search_run.id, nil
+    end
 
-      it "skips non-alliance entries" do
-        entry2 = Factory(:entry,:source_system=>'Not Alliance',:broker_reference=>'987654')
-        described_class.any_instance.should_receive(:request_entry_data).with "123456"
-        described_class.any_instance.should_not_receive(:request_entry_data).with "987654"
-        described_class.bulk_request_entry_data @sr.id, nil
-      end
-
+    it "passes primary keys directly through" do
+      described_class.should_receive(:delay).and_return described_class
+      described_class.should_receive(:bulk_request_entry_data).with(primary_keys: [1, 2, 3])
+      described_class.delayed_bulk_entry_data nil, [1, 2, 3]
     end
   end
 end

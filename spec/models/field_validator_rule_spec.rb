@@ -3,8 +3,7 @@ require 'spec_helper'
 describe FieldValidatorRule do
   describe "max length" do
     before :each do
-      FieldValidatorRule.create!(:model_field_uid=>"ord_ord_num",:maximum_length=>3,:custom_message=>"1010")
-      @f = FieldValidatorRule.first
+      @f = FieldValidatorRule.create!(:model_field_uid=>"ord_ord_num",:maximum_length=>3,:custom_message=>"1010")
     end
     it "should pass for valid values" do
       ["abc","ab","",nil].each do |v|

@@ -2,12 +2,6 @@ require 'open_chain/field_logic'
 module OpenChain
   class BulkUpdateClassification
 
-    def self.go_serializable params_json, user_id
-      u = User.find user_id
-      params = ActiveSupport::JSON.decode params_json
-      BulkUpdateClassification.go params, u
-    end
-
     def self.tariff_record_key t
       "#{t.hts_1}~#{t.hts_2}~#{t.hts_3}~#{t.line_number}~#{t.schedule_b_1}~#{t.schedule_b_2}~#{t.schedule_b_3}"
     end
@@ -85,6 +79,45 @@ module OpenChain
       base_product
     end
 
+    def self.delayed_quick_classify request_params, current_user, options = {}
+      self.delay.quick_classify(cleanse_params(request_params).to_json, current_user, options)
+    end
+
+    def self.cleanse_params request_params
+      params = request_params.deep_dup.with_indifferent_access
+
+      # Only retain the keys in the params hash that are contained in the array below
+      params.keys.each do |k|
+        params.delete k unless ['sr_id', 'pk', 's3_key', 's3_bucket', 'product', 'product_cf'].include? k
+      end
+      replace_search_result_key params
+    end
+    private_class_method :cleanse_params
+
+    def self.replace_search_result_key params
+      # What we need to do here is determine the object keys that we're utilizing for the quick classification
+      # store them out to a temp location (on S3) and then tell quick classify to use the file as the source
+      # of ids to classify.
+      if !params[:sr_id].blank? && params[:sr_id].to_i != 0
+        search_run = SearchRun.find params.delete(:sr_id)
+        keys = search_run.find_all_object_keys.to_a
+        Tempfile.open(["#{search_run.id}-keys", ".json"]) do |temp|
+          Attachment.add_original_filename_method temp, "#{search_run.id}-#{Time.zone.now.to_f}.json"
+
+          temp << ActiveSupport::JSON.encode(keys)
+          temp.flush
+
+          s3_obj = OpenChain::S3.create_s3_tempfile temp
+          params[:s3_key] = s3_obj.key
+          params[:s3_bucket] = s3_obj.bucket.name
+        end
+      else
+        params.delete :sr_id
+      end
+
+      params
+    end
+
     # This method works similar to the standard bulk update, but it DOES NOT delete and recreate 
     # any classification or tariff objects.  It merely takes HTS values from the params and places them into
     # existing products.  It does not clear ANY data from existing products, it is ONLY additive.
@@ -109,11 +142,8 @@ module OpenChain
 
         # delete all non classification parameter values, just in case...this method should ONLY update
         # classfication data.
+        cleanse_params params
         params.each do |k, v|
-          unless ['sr_id', 'pk', 'product'].include? k
-            params.delete k
-          end
-
           if k == 'product'
             params[k].each do |class_key, class_value|
               unless class_key == 'classifications_attributes'
@@ -125,7 +155,7 @@ module OpenChain
 
         log = BulkProcessLog.create! user: current_user, started_at: Time.zone.now, bulk_type: BulkProcessLog::BULK_TYPES[:classify]
         record_sequence = 0
-        OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
+        OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT, primary_keys: params['pk'], primary_key_file_bucket: params['s3_bucket'], primary_key_file_path: params['s3_key']) do |gc, p|
           record_sequence += 1
           begin
             good_count = total_objects = gc if good_count.nil?
@@ -218,7 +248,15 @@ module OpenChain
       end
     end
 
-    def self.go params, current_user, options = {}
+    def self.delayed_bulk_update request_params, current_user, options = {}
+      self.delay.bulk_update(cleanse_params(request_params).to_json, current_user, options)
+    end
+
+    def self.bulk_update params, current_user, options = {}
+      if params.is_a? String
+        params = ActiveSupport::JSON.decode params
+      end
+
       User.current = current_user if User.current.nil? #set this in case we're not in a web environment (like delayed_job)
       good_count = nil
       error_count = 0
@@ -255,7 +293,7 @@ module OpenChain
         params['product_cf'].delete(id) if value.blank?
       end if params['product_cf']
 
-      OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
+      OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT, primary_keys: params['pk'], primary_key_file_bucket: params['s3_bucket'], primary_key_file_path: params['s3_key']) do |gc, p|
         record_sequence += 1
         good_count = total_objects = gc if good_count.nil?
 
@@ -385,19 +423,23 @@ module OpenChain
 
   class BulkInstantClassify
     include ActiveSupport::Inflector 
-    def self.go_serializable params_json, current_user_id
-      u = User.find current_user_id
-      params = ActiveSupport::JSON.decode params_json
-      BulkInstantClassify.go params, u
+
+    def self.delayed_instant_classify request_params, current_user
+      self.delay.instant_classify(BulkUpdateClassification.cleanse_params(request_params).to_json, current_user)
     end
-    def self.go params, current_user
+
+    def self.instant_classify params, current_user
+      if params.is_a? String
+        params = ActiveSupport::JSON.decode params
+      end
+
       icr = InstantClassificationResult.create(:run_by_id=>current_user.id,:run_at=>0.seconds.ago)
       instant_classifications = InstantClassification.ranked #run this here to avoid calling inside the loop
-      OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, product|
+      OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT, primary_keys: params['pk'], primary_key_file_bucket: params['s3_bucket'], primary_key_file_path: params['s3_key']) do |gc, product|
         result_record = icr.instant_classification_result_records.build(:product_id=>product.id)
         ic_to_use = InstantClassification.find_by_product product, current_user, instant_classifications
         if ic_to_use && product.replace_classifications(ic_to_use.classifications.to_a)
-          product.update_attributes(:last_updated_by_id=>user.id)
+          product.update_attributes(:last_updated_by_id=>current_user.id)
           result_record.entity_snapshot = product.create_snapshot(current_user)
         end
         result_record.save

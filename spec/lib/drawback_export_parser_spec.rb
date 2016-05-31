@@ -72,13 +72,31 @@ describe OpenChain::DrawbackExportParser do
     it "should delegate to S3.with_s3_temp_file and parse_xlsx_file" do
       
       mock_s3_obj = double('s3_obj')
+      mock_bucket = double("bucket")
+      mock_bucket.stub(:name).and_return "temp-bucket"
       mock_s3_obj.stub(:key).and_return("abcdefg/temp/test_sheet_1.xls")
+      mock_s3_obj.stub(:bucket).and_return mock_bucket
 
-      described_class.should_receive(:parse_xlsx_file).with("abcdefg/temp/test_sheet_1.xls", "importer")
+      described_class.should_receive(:parse_xlsx_file).with("temp-bucket", "abcdefg/temp/test_sheet_1.xls", "importer")
       File.open("spec/fixtures/files/test_sheet_1.xls", "r") do |xls_file|
         OpenChain::S3.should_receive(:with_s3_tempfile).with(xls_file).and_yield(mock_s3_obj)
         described_class.parse_local_xls(xls_file, "importer")
       end
+    end
+  end
+
+
+  describe "parse_xlsx_file" do
+    it "uses xlclient to retrieve xl data and passes data to csv lines" do
+      data = [["header"], ["row"]]
+      xl_client = double("OpenChain::XLClient")
+      xl_client.should_receive(:all_row_values).with(0).and_yield(data[0]).and_yield(data[1])
+      described_class.should_receive(:xl_client).with("bucket", "path").and_return xl_client
+      line = DutyCalcExportFileLine.new
+      described_class.should_receive(:parse_csv_line).with(data[1], 1, "importer").and_return line
+
+      described_class.parse_xlsx_file "bucket", "path", "importer"
+      expect(line).to be_persisted
     end
   end
 

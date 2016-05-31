@@ -106,9 +106,7 @@ class EntriesController < ApplicationController
   #request that the images be reloaded form alliance for a set of entries
   def bulk_get_images
     action_secure(current_user.company.master? && current_user.view_entries?,Entry.new,{:verb=>'manage',:module_name=>"entries"}) {
-      sr_id = params[:sr_id]
-      primary_keys = params[:pk]
-      OpenChain::AllianceImagingClient.delay.bulk_request_images sr_id, primary_keys
+      OpenChain::AllianceImagingClient.delayed_bulk_request_images params[:sr_id], params[:pk]
       add_flash :notices, "Updated images have been requested.  Please allow 10 minutes for them to appear."
 
       # Redirect back to main page if referrer is blank (this can be removed once we set referrer to never be nil)
@@ -174,7 +172,7 @@ class EntriesController < ApplicationController
   def request_entry_data
     @entry = Entry.find params[:id]
     if current_user.sys_admin?
-      OpenChain::KewillSqlProxyClient.delay.bulk_request_entry_data nil, [@entry.id]
+      OpenChain::KewillSqlProxyClient.delayed_bulk_entry_data nil, [@entry.id]
       add_flash :notices, "Updated entry has been requested.  Please allow 10 minutes for it to appear."
     end
     redirect_to @entry
@@ -182,7 +180,7 @@ class EntriesController < ApplicationController
 
   def bulk_request_entry_data
     if current_user.sys_admin?
-      OpenChain::KewillSqlProxyClient.delay.bulk_request_entry_data params[:sr_id], params[:pk]
+      OpenChain::KewillSqlProxyClient.delayed_bulk_entry_data params[:sr_id], params[:pk]
       add_flash :notices, "Updated entries have been requested.  Please allow 10 minutes for them to appear."
     end
 

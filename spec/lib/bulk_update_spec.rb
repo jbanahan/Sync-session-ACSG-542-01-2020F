@@ -18,7 +18,7 @@ describe OpenChain::BulkUpdateClassification do
       end
 
       it "should update an existing classification with primary keys" do
-        m = OpenChain::BulkUpdateClassification.go(@h,@u)
+        m = OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         Product.find(@p.id).classifications.should have(1).item
 
         log = BulkProcessLog.first
@@ -40,7 +40,7 @@ describe OpenChain::BulkUpdateClassification do
         FieldValidatorRule.create! starts_with: "A", module_type: "Product", model_field_uid: "prod_uid"
 
         @h['product']['prod_uid'] = 'BBB'
-        m = OpenChain::BulkUpdateClassification.go(@h,@u)
+        m = OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
 
         log = BulkProcessLog.first
         log.total_object_count.should eq 1
@@ -57,12 +57,8 @@ describe OpenChain::BulkUpdateClassification do
         m[:errors][0].should match /^Error saving product/
         m[:good_count].should == 0
       end
-      it "should update using serializable version of method" do
-        OpenChain::BulkUpdateClassification.go_serializable(@h.to_json,@u.id)
-        Product.find(@p.id).classifications.should have(1).item
-      end
       it "should update but not make user messages" do
-        OpenChain::BulkUpdateClassification.go(@h,@u, :no_user_message => true)
+        OpenChain::BulkUpdateClassification.bulk_update(@h,@u, :no_user_message => true)
         Product.find(@p.id).classifications.should have(1).item
         @u.messages.length.should == 0
       end
@@ -80,7 +76,7 @@ describe OpenChain::BulkUpdateClassification do
         @h['product']['prod_uom'] = "UOM"
         @h['product'][prod_cd.model_field_uid.to_s] = "PROD_UPDATE"
 
-        OpenChain::BulkUpdateClassification.go(@h,@u)
+        OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
         @p.unit_of_measure.should == "UOM"
@@ -113,7 +109,7 @@ describe OpenChain::BulkUpdateClassification do
         # Set a product value and a product custom value to make sure they're also being set
         @h['product']['prod_uom'] = ""
         @h['product'][prod_cd.model_field_uid.to_s] = ""
-        OpenChain::BulkUpdateClassification.go(@h,@u)
+        OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
         # Validate product level blank attributes / custom values aren't used
@@ -141,7 +137,7 @@ describe OpenChain::BulkUpdateClassification do
         cls.update_custom_value! class_cd, 'ABC'
         @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1234567890','hts_view_sequence'=>'1','hts_line_number'=>'1', tr_cd.model_field_uid.to_s => 'TAROVR'}}
         @h['product']['classifications_attributes']['0'][class_cd.model_field_uid.to_s] = 'CLSOVR'
-        OpenChain::BulkUpdateClassification.go(@h,@u)
+        OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
         @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
         cls = @p.classifications.first
@@ -163,7 +159,7 @@ describe OpenChain::BulkUpdateClassification do
         @h['product'].delete 'classifications_attributes'
         @h['product']['prod_uom'] = "UOM"
         @h['product'][prod_cd.model_field_uid.to_s] = "PROD_UPDATE"
-        OpenChain::BulkUpdateClassification.go(@h,@u)
+        OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
         @p.unit_of_measure.should == "UOM"
@@ -184,7 +180,7 @@ describe OpenChain::BulkUpdateClassification do
         # Note the long index value for the second tariff line, this is how the screen effectively sends updates when the users adds second hts lines on the bulk screen
         @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1234567890','hts_view_sequence'=>'0','hts_line_number'=>'2'}, '1234567890'=>{'hts_hts_1' => '9876543210','hts_view_sequence'=>'1234567890','hts_line_number'=>'1'}}
 
-        OpenChain::BulkUpdateClassification.go(@h,@u)
+        OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
         @p.classifications.first.tariff_records.second.line_number.should eq 2
@@ -200,7 +196,7 @@ describe OpenChain::BulkUpdateClassification do
 
         @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '9876543210','hts_view_sequence'=>'0'}}
 
-        OpenChain::BulkUpdateClassification.go(@h,@u)
+        OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
         @p.classifications.first.tariff_records.should have(2).items
@@ -217,7 +213,7 @@ describe OpenChain::BulkUpdateClassification do
 
         @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1111111111','hts_view_sequence'=>'0', 'hts_line_number'=>'2'}}
 
-        OpenChain::BulkUpdateClassification.go(@h,@u)
+        OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
         @p.classifications.first.tariff_records.should have(2).items
@@ -230,7 +226,7 @@ describe OpenChain::BulkUpdateClassification do
     it "errors if user cannot classify" do
       Product.any_instance.stub(:can_classify?).and_return false
 
-      m = OpenChain::BulkUpdateClassification.go(@h,@u)
+      m = OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
       m[:errors].should have(1).item
 
       m[:errors].first.should eq "You do not have permission to classify product #{@p.unique_identifier}."
@@ -239,7 +235,7 @@ describe OpenChain::BulkUpdateClassification do
     it "errors if user cannot edit products" do
       Product.any_instance.stub(:can_edit?).and_return false
 
-      m = OpenChain::BulkUpdateClassification.go(@h,@u)
+      m = OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
       m[:errors].should have(1).item
 
       m[:errors].first.should eq "You do not have permission to edit product #{@p.unique_identifier}."
@@ -252,7 +248,7 @@ describe OpenChain::BulkUpdateClassification do
       @h['product'].delete 'classifications_attributes'
       @h['product']['unit_of_measure'] = "UOM"
 
-      OpenChain::BulkUpdateClassification.go(@h,@u)
+      OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
       @p.reload
 
       @p.unit_of_measure.should == "UOM"

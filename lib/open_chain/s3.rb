@@ -34,18 +34,22 @@ module OpenChain
     end
 
     # Uploads the given local_file to a temp location in S3 
-    def self.with_s3_tempfile local_file, bucket: bucket_name, tmp_s3_path: "#{MasterSetup.get.uuid}/temp"
-      key = tmp_s3_path + "/" + File.basename(local_file.path)
-
-      uploaded = false
+    def self.with_s3_tempfile local_file, bucket: 'chainio-temp', tmp_s3_path: "#{MasterSetup.get.uuid}/temp"
+      s3_object = nil
       begin
-        s3_object = upload_file(bucket, key, local_file)
-        uploaded = true
+        s3_object = create_s3_tempfile(local_file, bucket: bucket, tmp_s3_path: tmp_s3_path)
         yield s3_object
       ensure
-        delete(bucket, key) if uploaded
+        delete(s3_object.bucket.name, s3_object.key) if s3_object && s3_object.exists?
       end
       nil
+    end
+
+    def self.create_s3_tempfile local_file, bucket: 'chainio-temp', tmp_s3_path: "#{MasterSetup.get.uuid}/temp"
+      filename = local_file.respond_to?(:original_filename) ? local_file.original_filename : local_file.path
+      key = tmp_s3_path + "/" + File.basename(filename)
+      obj = upload_file(bucket, key, local_file)
+      obj ? obj.first : nil
     end
 
     # Find out if a bucket exists in the S3 environment

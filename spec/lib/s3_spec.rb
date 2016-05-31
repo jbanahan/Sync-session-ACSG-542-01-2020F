@@ -348,6 +348,16 @@ describe OpenChain::S3, s3: true do
   end
 
   describe "with_s3_tempfile" do
+    let (:s3_obj) {
+      s3_obj = double("S3Object")
+      s3_bucket = double("S3Object")
+      s3_obj.stub(:bucket).and_return s3_bucket
+      s3_obj.stub(:key).and_return "uuid/temp/file.txt"
+      s3_obj.stub(:exists?).and_return true
+      s3_bucket.stub(:name).and_return "chainio-temp"
+
+      s3_obj
+    }
     # Excessive stubbing below due to preventing s3 uploads...upload tests themselves are in specs for upload_file, to 
     # which this method defers for uploading (likewise for delete)
     before :each do
@@ -360,23 +370,61 @@ describe OpenChain::S3, s3: true do
       fake_file = double("File")
       fake_file.stub(:path).and_return "/path/to/file.txt"
 
-      s3_obj = double("S3Object")
-      OpenChain::S3.should_receive(:upload_file).with("chain-io-test", "uuid/temp/file.txt", fake_file).and_return s3_obj
-      OpenChain::S3.should_receive(:delete).with("chain-io-test", "uuid/temp/file.txt")
+      OpenChain::S3.should_receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return [s3_obj, nil]
+      OpenChain::S3.should_receive(:delete).with("chainio-temp", "uuid/temp/file.txt")
 
       my_obj = nil
       OpenChain::S3.with_s3_tempfile(fake_file) {|obj| my_obj = obj}
       expect(my_obj).to eq s3_obj
     end
 
-    it "cleans up even if yielded block raises an error" do 
+    it "cleans up even if yielded block raises an error" do
       fake_file = double("File")
       fake_file.stub(:path).and_return "/path/to/file.txt"
 
-      OpenChain::S3.should_receive(:upload_file)
-      OpenChain::S3.should_receive(:delete)
+      OpenChain::S3.should_receive(:upload_file).and_return [s3_obj, nil]
+      OpenChain::S3.should_receive(:delete).with(s3_obj.bucket.name, s3_obj.key)
 
       expect {OpenChain::S3.with_s3_tempfile(fake_file) {|obj| raise "Error"} }.to raise_error "Error"
+    end
+
+    it "uses original_filename if local file responds to that" do
+      fake_file = double("File")
+      fake_file.stub(:path).and_return "/path/to/file.txt"
+      fake_file.stub(:original_filename).and_return "original.txt"
+
+      OpenChain::S3.should_receive(:upload_file).with("chainio-temp", "uuid/temp/original.txt", fake_file).and_return [s3_obj, nil]
+      OpenChain::S3.should_receive(:delete)
+
+      my_obj = nil
+      OpenChain::S3.with_s3_tempfile(fake_file) {|obj| my_obj = obj}
+    end
+  end
+
+  describe "create_s3_tempfile" do
+    before :each do
+      ms = double "MasterSetup"
+      MasterSetup.stub(:get).and_return ms
+      ms.stub(:uuid).and_return "uuid"
+    end
+
+    it "creates a tempfile on s3" do
+      fake_file = double("File")
+      fake_file.stub(:path).and_return "/path/to/file.txt"
+      obj = Object.new
+      OpenChain::S3.should_receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return [obj, nil]
+
+      # Just ensure the create method returns whatever the upload file method returns (in prod, this'll be an S3Object)
+      expect(OpenChain::S3.create_s3_tempfile fake_file).to eq obj
+    end
+
+    it "uses original_filename if local file responds to that" do
+      fake_file = double("File")
+      fake_file.stub(:path).and_return "/path/to/file.txt"
+      fake_file.stub(:original_filename).and_return "original.txt"
+
+      OpenChain::S3.should_receive(:upload_file).with("chainio-temp", "uuid/temp/original.txt", fake_file)
+      OpenChain::S3.create_s3_tempfile fake_file
     end
   end
 end
