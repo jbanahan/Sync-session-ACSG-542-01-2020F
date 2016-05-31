@@ -470,3 +470,29 @@ Factory.define :custom_view_template do |f|
   f.sequence(:template_identifier) {|n| "t_#{n}"}
   f.sequence(:template_path) {|n| "tp_#{n}"}
 end
+
+Factory.define :entity_snapshot do |f|
+  f.association :recordable, :factory => :entry
+  f.association :user
+end
+
+Factory.define :billable_event do |f|
+  f.association :eventable, :factory => :entry
+  f.association :entity_snapshot
+end
+
+Factory.define :invoiced_event do |f|
+  f.association :billable_event
+end
+
+Factory.define :vfi_invoice do |f|
+  f.association :customer, :factory=>:company
+  f.sequence :invoice_number
+end
+
+Factory.define :vfi_invoice_line do |f|
+  f.association :vfi_invoice
+  f.sequence :line_number
+  f.charge_description {Factory.next :alpha_numeric}
+  f.charge_amount 1
+end

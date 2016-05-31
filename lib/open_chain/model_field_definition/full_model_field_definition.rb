@@ -30,9 +30,11 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::SecurityFilingLineFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentLineFieldDefinition
+  include OpenChain::ModelFieldDefinition::SummaryStatementFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
   include OpenChain::ModelFieldDefinition::VariantFieldDefinition
-  include OpenChain::ModelFieldDefinition::SummaryStatementFieldDefinition
+  include OpenChain::ModelFieldDefinition::VfiInvoiceFieldDefinition
+  include OpenChain::ModelFieldDefinition::VfiInvoiceLineFieldDefinition
   include OpenChain::ModelFieldDefinition::AttachmentFieldDefinition
   include OpenChain::ModelFieldDefinition::EntryCommentFieldDefinition
   include OpenChain::ModelFieldDefinition::CommercialInvoiceLaceyComponentFieldDefinition
@@ -73,5 +75,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_attachment_fields
     add_entry_comment_fields
     add_commercial_invoice_lacey_fields
+    add_vfi_invoice_fields
+    add_vfi_invoice_line_fields
   end
 end; end; end

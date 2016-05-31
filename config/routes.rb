@@ -900,6 +900,8 @@ OpenChain::Application.routes.draw do
     get 'get_invoices', :on=>:member
   end
 
+  resources :vfi_invoices, only: [:index, :show]
+
   resources :user_manuals, except: [:show] do
     get :download, on: :member
     get :for_referer, on: :collection

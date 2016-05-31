@@ -74,7 +74,7 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
 
 (function() {
   ChainNavPanel.MenuBuilder = function() {
-    var addBrokerInvoiceMenu, addDrawbackMenu, addEntryMenu, addMoreMenu, addOrderMenu, addProductMenu, addSecurityFilingMenu, addShipmentMenu, addSurveyMenu, addTradeLaneMenu, addVendorMenu, makeItem, makeItemIf, makeMenuIf;
+    var addBrokerInvoiceMenu, addDrawbackMenu, addEntryMenu, addMoreMenu, addOrderMenu, addProductMenu, addSecurityFilingMenu, addShipmentMenu, addSurveyMenu, addTradeLaneMenu, addVendorMenu, addVfiInvoiceMenu, makeItem, makeItemIf, makeMenuIf;
     makeItemIf = function(bool, itemArray, id, label, url) {
       if (bool) {
         return itemArray.push(makeItem(id, label, url));
@@ -143,6 +143,12 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
       makeItemIf(u.permissions.edit_summary_statements, items, 'brok-inv-stmnt-new', 'New Statement', '/summary_statements/new');
       return makeMenuIf(cat, 'nav-cat-brok-inv', 'Broker Invoice', items);
     };
+    addVfiInvoiceMenu = function(cat, u) {
+      var items;
+      items = [];
+      makeItemIf(u.permissions.view_vfi_invoices, items, 'vfi-inv-search', 'Search', '/vfi_invoices?force_search=true');
+      return makeMenuIf(cat, 'nav-cat-vfi-inv', 'VFI Invoice', items);
+    };
     addDrawbackMenu = function(cat, u) {
       var items;
       items = [];
@@ -200,6 +206,7 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
         addSecurityFilingMenu(categories, user);
         addEntryMenu(categories, user);
         addBrokerInvoiceMenu(categories, user);
+        addVfiInvoiceMenu(categories, user);
         addDrawbackMenu(categories, user);
         addSurveyMenu(categories, user);
         addVendorMenu(categories, user);
