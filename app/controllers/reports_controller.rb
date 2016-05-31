@@ -391,7 +391,7 @@ class ReportsController < ApplicationController
 
   def show_sg_duty_due_report
     if OpenChain::Report::SgDutyDueReport.permission?(current_user)
-      render
+      @choices = ['sgi', 'sgold', 'rugged'].map{ |cust_num| Company.where(alliance_customer_number: cust_num).first }
     else
       error_redirect "You do not have permission to view this report"
     end
@@ -399,7 +399,7 @@ class ReportsController < ApplicationController
 
   def run_sg_duty_due_report
     if OpenChain::Report::SgDutyDueReport.permission?(current_user)
-      run_report "SG Duty Due Report", OpenChain::Report::SgDutyDueReport, {}, []
+      run_report "SG Duty Due Report", OpenChain::Report::SgDutyDueReport, {customer_number: params[:customer_number]}, []
     else
       error_redirect "You do not have permission to view this report."
       return

@@ -11,24 +11,30 @@ module OpenChain; module Report; class SgDutyDueReport
   end
 
   def self.run_report run_by, settings={}
-    self.new.run(run_by)
+    company = get_company(settings['customer_number'])
+    self.new.run(run_by, company)
   end
 
   def self.run_schedulable opts_hash={}
-    self.new.send_email('email' => opts_hash['email'])
+    company = get_company(opts_hash['customer_number'])
+    self.new.send_email(email: opts_hash['email'], company: company)
   end
 
-  def run(run_by)
-    pdf = generate_pdf(run_by)
+  def self.get_company cust_num
+    Company.where("alliance_customer_number = ?", cust_num).first
+  end
+
+  def run(run_by, company)
+    pdf = generate_pdf(run_by, company)
     pdf_to_tempfile pdf, 'SgDutyDueReport-', file_name: file_name
   end
 
   def send_email(settings)
-    pdf = generate_pdf(User.integration)
+    pdf = generate_pdf(User.integration, settings[:company])
     pdf_to_tempfile pdf, 'SgDutyDueReport-', file_name: file_name do |t|
-      subject = "Duty Due Report"
+      subject = "Duty Due Report: #{settings[:company].name}"
       body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
-      OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
+      OpenMailer.send_simple_html(settings[:email], subject, body, t).deliver!
     end
   end
 
@@ -36,14 +42,14 @@ module OpenChain; module Report; class SgDutyDueReport
     "Duty Due Report - #{Date.today.strftime('%Y-%m-%d')}.pdf"
   end
 
-  def generate_pdf(user)
+  def generate_pdf(user, company)
     Prawn::Font::AFM.hide_m17n_warning = true #suppress warning triggered by #indent
     d = Prawn::Document.new page_size: "LETTER", page_layout: :landscape, margin: [36, 20, 36, 20]
     d.font("Courier", :size => 10)
-    d.repeat(:all, :dynamic => true) { d.text_box header(d.page_number), :at => [0, d.bounds.top] }
+    d.repeat(:all, :dynamic => true) { d.text_box header(d.page_number, company.name), :at => [0, d.bounds.top] }
     d.bounding_box([-5, 510], :width => d.bounds.width) do
       content = [col_names]
-      write_body content, create_digest(get_entries user)
+      write_body content, create_digest(get_entries user, company)
       d.table(content, header: true, cell_style: { borders: []}, width: table_width, column_widths: column_widths) do |t|
         t.columns(5).style(align: :right)
         t.rows(0..-1).style(padding: [0,5,0,5])
@@ -70,8 +76,7 @@ module OpenChain; module Report; class SgDutyDueReport
     content << space << footer
   end
 
-  def get_entries user
-    company = Company.where(alliance_customer_number: 'sgold').first
+  def get_entries user, company
     if user.view_entries? && company.can_view?(user)
       Entry.search_secure(user, Entry.select("entries.id, entry_number, arrival_date, daily_statement_approved_date, daily_statement_number, "\
                                              "broker_reference, duty_due_date, ports.name AS port_name, ports.schedule_d_code AS port_sched_d,"\
@@ -146,9 +151,9 @@ module OpenChain; module Report; class SgDutyDueReport
      total_duties_and_fees: ent[:total_duties_and_fees]}
   end
 
-  def header(page_num)
+  def header(page_num, cust_name)
     "#{Date.today.strftime("%m/%d/%Y")}                               ACH PAYMENT REPORT                      PAGE    #{page_num}\n"\
-    "#{indent 40}S GOLDBERG & CO INC\n\n"
+    "#{indent (59 - cust_name.length)}#{cust_name}\n\n"
   end
 
   def footer

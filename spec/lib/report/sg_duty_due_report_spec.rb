@@ -24,7 +24,7 @@ describe OpenChain::Report::SgDutyDueReport do
        u.stub(:view_entries?).and_return true
        co.stub(:can_view?).with(u).and_return true
        parser = described_class.new
-       results = parser.get_entries u
+       results = parser.get_entries u, co
        expect(results.count).to eq 2
        expect(results[0][:arrival_date].to_date.to_s).to eq '2016-03-01'
        expect(results[0][:daily_statement_approved_date].to_date.to_s).to eq '2016-03-02'
@@ -44,7 +44,7 @@ describe OpenChain::Report::SgDutyDueReport do
     end
   end
 
-  describe :build_digest do
+  describe :create_digest do
     it "returns digest for multiple dates, ports" do
       mar_1 = Date.parse('2016-03-01')
       mar_2 = Date.parse('2016-03-02')
