@@ -181,6 +181,12 @@ class Company < ActiveRecord::Base
   def edit_broker_invoices?
     master_setup.broker_invoice_enabled && self.master?
   end
+  def view_vfi_invoices?
+    master_setup.vfi_invoice_enabled && (self.master? || self.importer?)
+  end
+  def edit_vfi_invoices?
+    false
+  end
   def view_entries?
     master_setup.entry_enabled && (self.master? || self.importer?)
   end

@@ -129,6 +129,12 @@ module OpenChain; module UserSupport; module UserPermissions
   def edit_broker_invoices?
     self.broker_invoice_edit && self.company.edit_broker_invoices?
   end
+  def view_vfi_invoices?
+    self.vfi_invoice_view && self.company.view_vfi_invoices?
+  end
+  def edit_vfi_invoices?
+    self.vfi_invoice_edit && self.company.edit_vfi_invoices?
+  end
   def view_summary_statements?
     view_broker_invoices?
   end
