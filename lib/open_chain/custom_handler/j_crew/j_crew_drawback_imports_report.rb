@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImports
       mbols.each do |bol|
         row = result.clone
         row[2] = bol
-        row[5] = row[5].in_time_zone(user.time_zone).to_date if row[5]
+        row[4] = row[4].in_time_zone(user.time_zone).to_date if row[4]
         XlsMaker.add_body_row sheet, (x+=1), row, column_widths, true
       end
     end
@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImports
 
   def query start_date, end_date
     <<-QRY
-      SELECT e.broker_reference 'Broker Reference', e.entry_number 'Entry Number', e.master_bills_of_lading 'Master Bill', e.house_bills_of_lading 'House Bills', e.customer_number 'Customer Number', e.arrival_date 'Arrival Date', l.po_number 'Invoice Line - PO Number', 
+      SELECT e.broker_reference 'Broker Reference', e.entry_number 'Entry Number', e.master_bills_of_lading 'Master Bill', e.customer_number 'Customer Number', e.arrival_date 'Arrival Date', l.po_number 'Invoice Line - PO Number', 
       l.part_number 'Invoice Line - Part Number', l.country_origin_code 'Invoice Line - Country Origin Code', l.quantity 'Invoice Line - Units'
       FROM entries e
       INNER JOIN commercial_invoices i ON i.entry_id = e.id

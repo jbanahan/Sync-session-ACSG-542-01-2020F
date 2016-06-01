@@ -28,9 +28,9 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport do
       sheet = wb.worksheet("Drawback Imports 04.01.2016 - 04.02.2016")
       expect(sheet).not_to be_nil
       expect(sheet.rows.length).to eq 3
-      expect(sheet.row(0)).to eq ["Broker Reference", "Entry Number", "Master Bill", "House Bills", "Customer Number", "Arrival Date", "Invoice Line - PO Number", "Invoice Line - Part Number", "Invoice Line - Country Origin Code", "Invoice Line - Units"]
-      expect(sheet.row(1)).to eq ["REF", "EN", "A", "A\n B", "J0000", excel_date(Date.new(2016, 4, 1)), "PO", "PART", "CN", 20]
-      expect(sheet.row(2)).to eq ["REF", "EN", "B", "A\n B", "J0000", excel_date(Date.new(2016, 4, 1)), "PO", "PART", "CN", 20]
+      expect(sheet.row(0)).to eq ["Broker Reference", "Entry Number", "Master Bill", "Customer Number", "Arrival Date", "Invoice Line - PO Number", "Invoice Line - Part Number", "Invoice Line - Country Origin Code", "Invoice Line - Units"]
+      expect(sheet.row(1)).to eq ["REF", "EN", "A", "J0000", excel_date(Date.new(2016, 4, 1)), "PO", "PART", "CN", 20]
+      expect(sheet.row(2)).to eq ["REF", "EN", "B", "J0000", excel_date(Date.new(2016, 4, 1)), "PO", "PART", "CN", 20]
     end
 
     it "finds results for JCREW entries" do
