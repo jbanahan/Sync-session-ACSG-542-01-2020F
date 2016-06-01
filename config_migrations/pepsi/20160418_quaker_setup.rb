@@ -47,6 +47,7 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     user_cd, date_cd = create_new_validation_definitions
     create_quaker_system_group
     create_quaker_validate_button user_cd, date_cd
+    update_custom_definition_ranks
   end
 
   def down
@@ -57,6 +58,14 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     destroy_existing_validate_button_new_criteria
     destroy_new_fields
     destroy_new_entity_type
+  end
+
+  def update_custom_definition_ranks
+    defs = OpenChain::CustomHandler::Pepsi::PepsiCustomDefinitionSupport::CUSTOM_DEFINITION_INSTRUCTIONS
+    self.class.prep_custom_definitions(defs.keys).each do |k,cd|
+      next if defs[k][:rank].blank?
+      cd.update_attributes(rank:defs[k][:rank])
+    end
   end
 
   def create_new_entity_type
