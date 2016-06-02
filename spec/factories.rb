@@ -481,3 +481,12 @@ Factory.define :trade_preference_program do |f|
   f.association :origin_country, factory: :country
   f.association :destination_country, factory: :country
 end
+
+Factory.define :product_trade_preference_program do |f|
+  f.association :product
+  f.association :trade_preference_program
+end
+
+Factory.define :official_tariff_spi do |f|
+  f.association :official_tariff
+end

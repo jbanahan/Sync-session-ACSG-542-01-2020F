@@ -3,6 +3,9 @@ class TradePreferenceProgram < ActiveRecord::Base
   belongs_to :origin_country, class_name: 'Country', inverse_of: :trade_lanes_as_origin
   belongs_to :destination_country, class_name: 'Country', inverse_of: :trade_lanes_as_destination
 
+  has_many :product_trade_preference_programs, dependent: :destroy
+  has_many :products, through: :product_trade_preference_programs
+
   validates :destination_country_id, presence: true
   validates :origin_country_id, presence: true
   validates :name, presence: true

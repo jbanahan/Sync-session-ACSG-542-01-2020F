@@ -1,3 +1,4 @@
+require 'digest/md5'
 require 'open_chain/stat_client'
 class OfficialTariff < ActiveRecord::Base
 
@@ -8,14 +9,23 @@ class OfficialTariff < ActiveRecord::Base
 
   after_commit :update_cache
   before_save :set_common_rate
+  before_save :set_special_rate_key
 
   belongs_to :country
   has_one :official_quota
 
   validates :country, :presence => true
   validates :hts_code, :presence => true
-  
+
   validates :hts_code, :uniqueness => {:scope => :country_id}
+
+  def special_rate_keys
+    SpecialRate.where(special_rate_key:self.special_rate_key,country_id:self.country_id)
+  end
+
+  def iso_code
+    self.country ? self.country.iso_code : nil
+  end
 
   def lacey_act?
     return false if self.country.iso_code != "US"
@@ -41,7 +51,7 @@ class OfficialTariff < ActiveRecord::Base
     country_id = country.respond_to?(:id) ? country.id : country
     OfficialTariff.where(:country_id=>country_id,:hts_code=>hts).count > 0
   end
-  
+
   #update the database with the total number of times that each official tariff has been used
   def self.update_use_count
     OpenChain::StatClient.wall_time('ot_use') do
@@ -59,11 +69,11 @@ class OfficialTariff < ActiveRecord::Base
             hts_hash[row[0]] += row[1]
           end
         end
-        job_start = conn.execute("SELECT now()").first.first     
+        job_start = conn.execute("SELECT now()").first.first
         hts_hash.each do |k,v|
            conn.execute "UPDATE official_tariffs SET use_count = #{v}, updated_at = now() WHERE country_id = #{c.id} AND hts_code = \"#{k}\"; "
         end
-        qr = OfficialTariff.where(country_id:c.id).where("use_count is null OR updated_at < ?",job_start).update_all(use_count:0)
+        OfficialTariff.where(country_id:c.id).where("use_count is null OR updated_at < ?",job_start).update_all(use_count:0)
       end
     end
   end
@@ -89,7 +99,7 @@ class OfficialTariff < ActiveRecord::Base
   def binding_ruling_url
     return nil if self.country.nil? || self.hts_code.nil?
     if self.country.iso_code == 'US'
-      return "http://rulings.cbp.gov/index.asp?qu=#{self.hts_code.hts_format.gsub(/\./,"%2E")}&vw=results" 
+      return "http://rulings.cbp.gov/index.asp?qu=#{self.hts_code.hts_format.gsub(/\./,"%2E")}&vw=results"
     elsif self.country.european_union?
       return "http://ec.europa.eu/taxation_customs/dds2/ebti/ebti_consultation.jsp?Lang=en&nomenc=#{six_digit_hts}&orderby=0&Expand=true&offset=1&range=25"
     end
@@ -139,7 +149,7 @@ class OfficialTariff < ActiveRecord::Base
     base.where(search_where(user))
   end
   def can_view? u
-    u.view_official_tariffs? 
+    u.view_official_tariffs?
   end
   def self.search_where user
     user.view_official_tariffs? ? "1=1" : "1=0"
@@ -163,6 +173,17 @@ class OfficialTariff < ActiveRecord::Base
       else
         self.common_rate = self.general_rate
       end
+      if !self.common_rate.blank? && self.common_rate.gsub(/\%/,'').strip.match(/^[0-9]{0,4}\.[0-9]{0,4}$/)
+        self.common_rate_decimal = BigDecimal(self.common_rate.gsub(/\%/,'').strip,4)/100
+      end
+    end
+  end
+
+  def set_special_rate_key
+    if !self.special_rates.blank?
+      self.special_rate_key = Digest::MD5.hexdigest(self.special_rates)
+    else
+      self.special_rate_key = nil
     end
   end
 
