@@ -2,9 +2,19 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
   new class ShipmentBookingCtrl
     constructor: ->
       @loadingFlag = 'loading'
+      @shipmentId = $state.params.shipmentId
       shipmentSvc.getShipment($state.params.shipmentId).then((resp) =>
         @bookingTypes = resp.data.shipment.permissions.enabled_booking_types
       ).finally => @loadingFlag = null
+
+      controller = @
+      # This is necessitated due to how alt-autocomplete handles callbacks. They run inside of its own scope, which then
+      # has no access to methods defined in the booking controller here, so we need to pull our own access through via
+      # closures.
+      @orderSelected = (obj) ->
+        if obj
+          controller.orderLoadingFlag = 'loading'
+          controller.getOrderLines(obj.originalObject.id, controller)
 
     lines: [{}]
     bookingTypes:[]
@@ -32,15 +42,16 @@ angular.module('ShipmentApp').controller 'ShipmentBookingCtrl', ['shipmentSvc','
       shipmentSvc.getAvailableOrders(shipment).then (resp) =>
         @availableOrders = resp.data.available_orders
 
-    getOrder: (id) =>
+    getOrderLines: (id, controller) =>
       shipmentSvc.getOrder(id).then (resp) =>
-        @activeOrder = resp.data.order
-        @lines = @activeOrder.order_lines.map (line) ->
+        controller.activeOrder = resp.data.order
+        controller.lines = controller.activeOrder.order_lines.map (line) ->
           ordln_line_number: line.ordln_line_number
           ordln_puid: line.ordln_puid
           ordln_sku: line.ordln_sku
           bkln_order_line_id: line.id
           bkln_quantity: parseInt line.ordln_ordered_qty
+        controller.orderLoadingFlag = ''
 
     saveButtonEnabled: =>
       enabledLines = @lines.filter (line) -> !line._disabled

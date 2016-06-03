@@ -43,7 +43,7 @@ describe 'ShipmentBookingCtrl', ->
       expect(ctrl.availableOrders).toEqual [1,2,3,4,5]
       expect(svc.getAvailableOrders).toHaveBeenCalledWith({id:1})
 
-  describe 'getOrder', ->
+  describe 'getOrderLines', ->
     it 'gets the order from the service and makes converts the lines', ->
       line1 =
         ordln_line_number: 1
@@ -64,7 +64,7 @@ describe 'ShipmentBookingCtrl', ->
 
       spyOn(svc, 'getOrder').andReturn(q.when(response))
 
-      ctrl.getOrder(1)
+      ctrl.getOrderLines(1, ctrl)
       rootScope.$apply()
 
       expect(ctrl.lines).toEqual [line1, line2].map (line) ->
