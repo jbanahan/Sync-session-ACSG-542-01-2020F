@@ -640,7 +640,7 @@ describe Api::V1::ShipmentsController do
 
   describe "autocomplete_orders" do
     before :each do
-      @order_1 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNUM")
+      @order_1 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNUM", order_number: "ORDERNUM")
       @order_2 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNO#")
       @s = Factory(:shipment, importer: @u.company, vendor: @u.company)
     end
@@ -654,6 +654,32 @@ describe Api::V1::ShipmentsController do
       expect(response).to be_success
       r = JSON.parse(response.body)
       expect(r.size).to eq 1
+      expect(r.first).to eq( {"order_number"=>@order_1.customer_order_number, "id"=>@order_1.id} )
+    end
+
+    it "autocompletes using order_number" do
+      # Just return all orders...all we care about is that Shipment.available_orders is used
+      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+
+      get :autocomplete_order, id: @s.id, n: "ORDER"
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      # Note the use of order_number below, this also checks that the field that was matched on
+      # is used as the title in the json response
+      expect(r.first).to eq( {"order_number"=>@order_1.order_number, "id"=>@order_1.id} )
+    end
+
+    it "prefers customer order number if both order number and customer order number match" do
+      # Just return all orders...all we care about is that Shipment.available_orders is used
+      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+
+      get :autocomplete_order, id: @s.id, n: "NUM"
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      # Note the use of order_number below, this also checks that the field that was matched on
+      # is used as the title in the json response
       expect(r.first).to eq( {"order_number"=>@order_1.customer_order_number, "id"=>@order_1.id} )
     end
 

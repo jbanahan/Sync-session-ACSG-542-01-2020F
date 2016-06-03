@@ -340,9 +340,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       s = get_shipment
 
       orders = s.available_orders current_user
-      results = orders.where('customer_order_number like ?',"%#{params[:n]}%").
+      results = orders.where('customer_order_number LIKE ? OR order_number LIKE ?',"%#{params[:n]}%", "%#{params[:n]}%").
                   limit(10).
-                  collect {|order| {order_number:order.customer_order_number, id:order.id}}
+                  collect {|order| 
+                    # Use whatever field matched as the title that's getting returned
+                    title = (order.customer_order_number.to_s.upcase.include?(params[:n].to_s.upcase) ? order.customer_order_number : order.order_number)
+                    {order_number:(title), id:order.id}
+                  }
     end
 
     render json: results
