@@ -33,6 +33,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentFieldDefinition
   include OpenChain::ModelFieldDefinition::ShipmentLineFieldDefinition
   include OpenChain::ModelFieldDefinition::TariffFieldDefinition
+  include OpenChain::ModelFieldDefinition::TppHtsOverrideFieldDefinition
   include OpenChain::ModelFieldDefinition::TradeLaneFieldDefinition
   include OpenChain::ModelFieldDefinition::TradePreferenceProgramFieldDefinition
   include OpenChain::ModelFieldDefinition::VariantFieldDefinition
@@ -79,5 +80,6 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_commercial_invoice_lacey_fields
     add_trade_lane_fields
     add_trade_preference_program_fields
+    add_tpp_hts_override_fields
   end
 end; end; end

@@ -407,5 +407,8 @@ module CoreModuleDefinitions
   TRADE_PREFERENCE_PROGRAM = CoreModule.new("TradePreferenceProgram","Trade Preference Program", {
     enabled_lambda: lambda { MasterSetup.get.trade_lane_enabled? }
   })
+  TPP_HTS_OVERRIDE = CoreModule.new("TppHtsOverride", "Trade Preference HTS Override", {
+    enabled_lambda: lambda { MasterSetup.get.trade_lane_enabled? }
+  })
 
 end

@@ -54,7 +54,7 @@ OpenChain::Application.routes.draw do
       resources :entries, only: [] do
         post :validate, on: :member
       end
-      
+
       resources :orders, only: [:index,:show,:update] do
         member do
           get :state_toggle_buttons
@@ -135,6 +135,7 @@ OpenChain::Application.routes.draw do
 
       resources :trade_lanes, except: [:destroy]
       resources :trade_preference_programs, except: [:destroy]
+      resources :tpp_hts_overrides, except: [:destroy]
 
       match "/setup_data" => "setup_data#index", via: :get
 

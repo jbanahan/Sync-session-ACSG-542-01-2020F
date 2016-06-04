@@ -319,6 +319,20 @@ describe User do
         expect(u.attach_trade_preference_programs?).to eq 'ABC'
       end
     end
+    context "tpp_hts_overrides" do
+      it "should delegate to trade_preference_programs" do
+        u = User.new
+        u.should_receive(:view_trade_preference_programs?).and_return 'view'
+        u.should_receive(:edit_trade_preference_programs?).and_return 'edit'
+        u.should_receive(:attach_trade_preference_programs?).and_return 'attach'
+        u.should_receive(:comment_trade_preference_programs?).and_return 'comment'
+
+        expect(u.view_tpp_hts_overrides?).to eq 'view'
+        expect(u.edit_tpp_hts_overrides?).to eq 'edit'
+        expect(u.attach_tpp_hts_overrides?).to eq 'attach'
+        expect(u.comment_tpp_hts_overrides?).to eq 'comment'
+      end
+    end
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))

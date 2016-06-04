@@ -68,6 +68,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_trade_lanes?
     when CoreModule::TRADE_PREFERENCE_PROGRAM
       return self.view_trade_preference_programs?
+    when CoreModule::TPP_HTS_OVERRIDE
+      return self.view_tpp_hts_overrides?
     end
     return false
   end
@@ -129,6 +131,18 @@ module OpenChain; module UserSupport; module UserPermissions
   end
   def attach_trade_preference_programs?
     self.attach_trade_lanes?
+  end
+  def view_tpp_hts_overrides?
+    self.view_trade_preference_programs?
+  end
+  def edit_tpp_hts_overrides?
+    self.edit_trade_preference_programs?
+  end
+  def comment_tpp_hts_overrides?
+    self.comment_trade_preference_programs?
+  end
+  def attach_tpp_hts_overrides?
+    self.attach_trade_preference_programs?
   end
   def view_drawback?
     self.drawback_view? && MasterSetup.get.drawback_enabled?

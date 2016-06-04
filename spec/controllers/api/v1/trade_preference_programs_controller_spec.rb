@@ -86,7 +86,7 @@ describe Api::V1::TradePreferenceProgramsController do
 
       prep_countries
 
-      expect{post :create, make_hash}.to_not change(TradeLane,:count)
+      expect{post :create, make_hash}.to_not change(TradePreferenceProgram,:count)
 
       expect(response).to_not be_success
     end
