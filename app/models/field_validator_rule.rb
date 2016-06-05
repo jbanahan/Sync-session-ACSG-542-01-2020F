@@ -23,17 +23,17 @@ class FieldValidatorRule < ActiveRecord::Base
   #validates the given base object based on the rules defined in the FieldValidatorRule instance.
   #The base_object should be an instance of the class backing the CoreModule set in the field validator
   #For example, if the FieldValidator's module_type is Product, then you should pass in a Product object
-  #Method returns nil if validation passes, else, a message indicating the reason for failure
+  #Method returns empty array if validation passes, else, a message indicating the reason for failure
   #Passing nested=true will prepend the error messages with the CoreModule name
   def validate_field(base_object,nested=false)
-    return nil if self.disabled?
+    return [] if self.disabled?
     mf = model_field
     raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if mf.blank?
     _validate_input(mf, mf.process_export(base_object, nil, true), nested)
   end
 
   def validate_input(input,nested=false)
-    return nil if self.disabled?
+    return [] if self.disabled?
     mf = model_field
     raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if mf.blank?
     _validate_input(mf, input, nested)
