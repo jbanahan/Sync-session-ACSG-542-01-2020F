@@ -35,9 +35,7 @@ module Api; module V1; class TppHtsOverridesController < Api::V1::ApiCoreModuleC
     cu = current_user
     {
       can_view: obj.can_view?(cu),
-      can_edit: obj.can_edit?(cu),
-      can_attach: obj.can_attach?(cu),
-      can_comment: obj.can_comment?(cu)
+      can_edit: obj.can_edit?(cu)
     }
   end
   def save_object h
