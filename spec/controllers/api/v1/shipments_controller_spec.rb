@@ -550,6 +550,65 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
       expect(Container.find_by_id(con.id)).to_not be_nil
     end
+
+    context "with booking lines" do
+
+      let (:order_line) { Factory(:order_line, product:@product, quantity:1000,order:Factory(:order,importer:@imp)) }
+      let (:shipment_data) {
+        {'id'=>@shipment.id,
+         'booking_lines' => [
+           'bkln_order_line_id' => order_line.id,
+           'bkln_cbms' => 10,
+           'bkln_carton_qty' => 1
+         ]
+        }
+      }
+
+      it "creates booking lines" do
+        put :update, id: @shipment.id, shipment: shipment_data
+        expect(response).to be_success
+        @shipment.reload
+        expect(@shipment.booking_lines.length).to eq 1
+        line = @shipment.booking_lines.first
+        expect(line.order_line).to eq order_line
+        expect(line.order).not_to be_nil
+        expect(line.product).not_to be_nil
+        expect(line.line_number > 1).to be_true
+        expect(line.cbms).to eq 10
+        expect(line.carton_qty).to eq 1
+      end
+
+      it "skips order_id and product_id on booking lines if order_line_id is set" do
+        bl = shipment_data['booking_lines'].first
+        bl['bkln_order_id'] = 12345
+        bl['bkln_prod_id'] = 54321
+
+        put :update, id: @shipment.id, shipment: shipment_data
+        expect(response).to be_success
+        @shipment.reload
+        expect(@shipment.booking_lines.length).to eq 1
+        line = @shipment.booking_lines.first
+        expect(line.order_line).not_to be_nil
+        expect(line.order_id).to be_nil
+        expect(line.product_id).to be_nil
+      end
+
+      it "supports setting order id and product id if order_line_id is not present" do
+        bl = shipment_data['booking_lines'].first
+        bl['bkln_order_line_id'] = nil
+        bl['bkln_order_id'] = order_line.order.id
+        bl['bkln_prod_id'] = @product.id
+
+        put :update, id: @shipment.id, shipment: shipment_data
+        expect(response).to be_success
+        @shipment.reload
+        expect(@shipment.booking_lines.length).to eq 1
+        line = @shipment.booking_lines.first
+        expect(line.order).to eq order_line.order
+        expect(line.product).to eq @product
+      end
+    end
+    
   end
   describe "available_orders" do
     it "should return all orders available from shipment.available_orders" do

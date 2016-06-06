@@ -596,6 +596,14 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
           next
         end
         s_line.order_line_id = ln['bkln_order_line_id'] if ln['bkln_order_line_id']
+        # If the data has a order line id, blank out the order id and product id values.  The order line should always provide order and product data for the booking line.
+        # If order line id is set and order or product ids are present a validation will also fail and the save will rollback.
+        if !s_line.order_line_id.blank?
+          s_line.order_id = nil
+          s_line.product_id = nil
+          ln['bkln_order_id'] = nil
+          ln['bkln_product_id'] = nil
+        end
         import_fields ln, s_line, CoreModule::BOOKING_LINE
       end
     end
