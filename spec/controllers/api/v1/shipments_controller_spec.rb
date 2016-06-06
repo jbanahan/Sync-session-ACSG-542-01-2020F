@@ -571,8 +571,6 @@ describe Api::V1::ShipmentsController do
         expect(@shipment.booking_lines.length).to eq 1
         line = @shipment.booking_lines.first
         expect(line.order_line).to eq order_line
-        expect(line.order).not_to be_nil
-        expect(line.product).not_to be_nil
         expect(line.line_number > 1).to be_true
         expect(line.cbms).to eq 10
         expect(line.carton_qty).to eq 1
