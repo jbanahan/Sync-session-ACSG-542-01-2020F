@@ -477,7 +477,7 @@ Factory.define :entity_snapshot do |f|
 end
 
 Factory.define :billable_event do |f|
-  f.association :eventable, :factory => :entry
+  f.association :billable_eventable, :factory => :entry
   f.association :entity_snapshot
 end
 

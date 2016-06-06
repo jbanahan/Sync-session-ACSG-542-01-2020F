@@ -31,16 +31,25 @@ describe VfiInvoicesController do
       expect(flash[:errors]).to include "You do not have permission to view VFI invoices."
     end
 
+    it "allows use only by user with permission to view invoice" do
+      @u.stub(:view_vfi_invoices?).and_return true
+      VfiInvoice.any_instance.stub(:can_view?).with(@u).and_return false
+
+      get :show, id: @inv
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).to include "You do not have permission to view this invoice."     
+    end
+
     it "renders and totals invoices" do
       Factory(:vfi_invoice_line, vfi_invoice: @inv, charge_amount: 5)
       Factory(:vfi_invoice_line, vfi_invoice: @inv, charge_amount: 3)
 
+      @u.company = Factory(:master_company)
       @u.stub(:view_vfi_invoices?).and_return true
       
       get :show, id: @inv
       expect(response).to be_success
       expect(assigns(:vfi_invoice)).to eq @inv
-      expect(assigns(:invoice_total)).to eq 8
     end
   end
 

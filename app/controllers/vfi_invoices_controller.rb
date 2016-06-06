@@ -10,8 +10,10 @@ class VfiInvoicesController < ApplicationController
 
   def show
     if current_user.view_vfi_invoices?
-      @vfi_invoice = VfiInvoice.find params[:id]
-      @invoice_total = ModelField.find_by_uid(:vi_invoice_total).process_export(@vfi_invoice, current_user)
+      inv = VfiInvoice.find params[:id]
+      action_secure(inv.can_view?(current_user), inv, {:lock_check=>false,:verb=>"view",:module_name=>"invoice"}) {
+        @vfi_invoice = inv
+      }
     else
       error_redirect "You do not have permission to view VFI invoices."
     end

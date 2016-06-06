@@ -17,7 +17,7 @@ module CoreObjectSupport
     end
     base.instance_eval("has_many   :comments, :as => :commentable, :dependent => :destroy")
     base.instance_eval("has_many   :attachments, :as => :attachable, :dependent => :destroy")
-    base.instance_eval("has_many   :events, :as => :eventable, :class_name => 'BillableEvent', :dependent => :destroy")
+    base.instance_eval("has_many   :billable_events, :as => :billable_eventable, :class_name => 'BillableEvent', :dependent => :destroy")
     base.instance_eval("has_many   :attachment_process_jobs, :as => :attachable, :dependent => :destroy")
     base.instance_eval("has_many   :linked_attachments, :as => :attachable, :dependent => :destroy")
     base.instance_eval("has_many   :linkable_attachments, :through => :linked_attachments")

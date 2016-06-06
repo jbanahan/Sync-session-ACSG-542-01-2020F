@@ -8,12 +8,33 @@ describe VfiInvoice do
       @u = Factory(:user)
     end
 
-    it "returns true if user has permission" do
-      @u.stub(:view_vfi_invoices?).and_return true
-      expect(@inv.can_view? @u).to eq true
+    context "user has permission to view invoices" do
+      before(:each) { @u.stub(:view_vfi_invoices?).and_return true }
+      
+      it "returns true if user belongs to master company" do
+        co = @u.company
+        co.update_attributes(master: true)
+        expect(@inv.can_view? @u).to eq true
+      end
+
+      it "returns true if user's company matches the invoice's customer" do
+        @u.company = @inv.customer; @u.save!
+        expect(@inv.can_view? @u).to eq true
+      end
+
+      it "returns true if one of user's linked companies matches the invoice's customer" do
+        @u.company.linked_companies << @inv.customer; @u.company.save!
+        expect(@inv.can_view? @u).to eq true
+      end
+
+      it "returns falsy otherwise" do
+        expect(@inv.can_view? @u).to be_false
+      end
     end
 
-    it "returns falsy otherwise" do
+    it "returns falsy if user doesn't have permission to view invoices" do
+      co = @u.company
+      co.update_attributes(master: true)
       expect(@inv.can_view? @u).to be_false
     end
   end

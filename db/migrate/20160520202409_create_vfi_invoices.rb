@@ -9,7 +9,7 @@ class CreateVfiInvoices < ActiveRecord::Migration
       t.timestamps
     end
     
-    add_index :vfi_invoices, :customer_id
+    add_index :vfi_invoices, [:customer_id, :invoice_number], unique: true
   end
 
   def self.down

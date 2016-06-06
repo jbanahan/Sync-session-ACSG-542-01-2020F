@@ -6,7 +6,7 @@ class CreateVfiInvoiceLines < ActiveRecord::Migration
       t.string :charge_description
       t.decimal :charge_amount, :precision => 11, :scale => 2
       t.string :charge_code
-      t.decimal :quantity
+      t.decimal :quantity, :precision => 11, :scale => 2
       t.string :unit
       t.decimal :unit_price, :precision => 11, :scale => 2
 

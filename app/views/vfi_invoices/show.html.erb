@@ -10,19 +10,14 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-8">
       <table class="detail_table">
         <thead>
           <%= model_field_labels([:vi_line_number, :vi_line_charge_description, :vi_line_quantity, :vi_line_unit, :vi_line_unit_price, :vi_line_charge_amount], table:true, heading:true) %>
         </thead>
         <% @vfi_invoice.vfi_invoice_lines.each do |ln| %>
           <tr>
-            <td><%= ModelField.find_by_uid(:vi_line_number).process_export(ln, current_user)%></td>
-            <td><%= ModelField.find_by_uid(:vi_line_charge_description).process_export(ln, current_user)%></td>
-            <td><%= ModelField.find_by_uid(:vi_line_quantity).process_export(ln, current_user)%></td>
-            <td><%= ModelField.find_by_uid(:vi_line_unit).process_export(ln, current_user)%></td>
-            <td><%= ModelField.find_by_uid(:vi_line_unit_price).process_export(ln, current_user)%></td>
-            <td><%= ModelField.find_by_uid(:vi_line_charge_amount).process_export(ln, current_user)%></td>
+            <%= show_model_fields(ln, [:vi_line_number, :vi_line_charge_description, :vi_line_quantity, :vi_line_unit, :vi_line_unit_price, :vi_line_charge_amount], table: true, editor_only: true)%>
           </tr>
         <% end %>
       </table>
