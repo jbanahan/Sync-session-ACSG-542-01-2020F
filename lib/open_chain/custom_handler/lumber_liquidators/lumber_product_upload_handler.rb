@@ -92,7 +92,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
     row = []
     row << lumber_system_code # Importer System code
     row << normalize_article_number(line[0]) # Article Number
-    row << text_value(line[1]) # Name
     row << text_value(line[2]) # Old Article Number
 
     # If there's no hts present on the line, there's no point in adding any more fields to the translation
@@ -139,7 +138,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
 
   def us_search_column_uids
     @cdefs ||= self.class.prep_custom_definitions [:prod_old_article, :class_proposed_hts]
-    [:prod_imp_syscode, :prod_uid, :prod_name, @cdefs[:prod_old_article].model_field_uid, :class_cntry_iso, @cdefs[:class_proposed_hts].model_field_uid, :hts_hts_1, :hts_line_number]
+    [:prod_imp_syscode, :prod_uid, @cdefs[:prod_old_article].model_field_uid, :class_cntry_iso, @cdefs[:class_proposed_hts].model_field_uid, :hts_hts_1, :hts_line_number]
   end
 
   def search_name

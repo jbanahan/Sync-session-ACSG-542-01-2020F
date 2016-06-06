@@ -46,14 +46,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
           output = subject.translate_file_line us_lines[1]
           expect(output.length).to eq 1
           line = output.first
-          expect(line).to eq ["LUMBER", "000000000010039527", "TRQ King County Knotty Oak 2mm", "2KO-KC", "US", "4418904605", "4418904605", 1]
+          expect(line).to eq ["LUMBER", "000000000010039527", "2KO-KC", "US", "4418904605", "4418904605", 1]
         end
 
         it "translates lines with invalid tariffs" do
           output = subject.translate_file_line us_lines[1]
           expect(output.length).to eq 1
           line = output.first
-          expect(line).to eq ["LUMBER", "000000000010039527", "TRQ King County Knotty Oak 2mm", "2KO-KC", "US", "4418904605", nil, 1]
+          expect(line).to eq ["LUMBER", "000000000010039527", "2KO-KC", "US", "4418904605", nil, 1]
         end
       end
       
@@ -130,7 +130,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
         expect(uids).to eq([
           'prod_imp_syscode',
           'prod_uid',
-          'prod_name',
           cdefs[:prod_old_article].model_field_uid,
           'class_cntry_iso',
           cdefs[:class_proposed_hts].model_field_uid,
