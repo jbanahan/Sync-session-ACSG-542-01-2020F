@@ -3,15 +3,16 @@ describe 'ShipmentApp', ->
   beforeEach module('ShipmentApp')
 
   describe 'ProcessManifestCtrl', ->
-    ctrl = svc = scope = q = state = null
+    ctrl = svc = scope = q = state = win = null
 
     beforeEach ->
       module ($provide) ->
         $provide.value('shipmentId',null)
         null #must return null, not the provider in the line above
-      inject ($rootScope,$controller,shipmentSvc,$q,$state) ->
+      inject ($rootScope,$controller,shipmentSvc,$q,$state, $window) ->
         scope = $rootScope.$new()
         svc = shipmentSvc
+        win = $window
         ctrl = $controller('ProcessManifestCtrl', {$scope: scope, shipmentSvc: svc})
         q = $q
         state = $state
@@ -22,11 +23,10 @@ describe 'ShipmentApp', ->
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processTradecardPackManifest').andReturn(r.promise)
-        scope.process(shipment,attachment, 'Tradecard')
+        scope.process(shipment,attachment, 'Tradecard Pack Manifest')
         r.resolve({data: {id: 1}})
         expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment, 2)
 
-    describe 'process', ->
       it 'should delegate to booking worksheet service and redirect', ->
         attachment = {id: 2}
         shipment = {id: 1, manufacturerId: 2}
@@ -35,6 +35,21 @@ describe 'ShipmentApp', ->
         scope.process(shipment,attachment, 'Booking Worksheet')
         r.resolve({data: {id: 1}})
         expect(svc.processBookingWorksheet).toHaveBeenCalledWith(shipment,attachment, 2)
+
+      it 'should delegate to booking worksheet service and redirect', ->
+        attachment = {id: 2}
+        shipment = {id: 1, manufacturerId: 2}
+        r = q.defer()
+        spyOn(svc,'processManifestWorksheet').andReturn(r.promise)
+        scope.process(shipment,attachment, 'Manifest Worksheet')
+        r.resolve({data: {id: 1}})
+        expect(svc.processManifestWorksheet).toHaveBeenCalledWith(shipment,attachment, 2)
+
+      it 'notifies of error if no service is set up', ->
+        spyOn(win, 'alert')
+        scope.process({}, {}, 'test')
+        expect(win.alert).toHaveBeenCalledWith("Unknown worksheet type test selected.")
+      
 
   describe 'ShipmentAddOrderCtrl', ->
     ctrl = svc = state = scope = q = null
