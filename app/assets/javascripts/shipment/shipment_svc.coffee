@@ -90,6 +90,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     processBookingWorksheet: (shp, attachment) ->
       shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id})
 
+    processManifestWorksheet: (shp, attachment) ->
+      shipmentPost(shp.id, 'process_manifest_worksheet', {attachment_id: attachment.id})
+
     requestBooking: (shp) ->
       shipmentPost(shp.id, 'request_booking.json')
 

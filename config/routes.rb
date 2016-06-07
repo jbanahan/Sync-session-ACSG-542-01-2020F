@@ -20,6 +20,7 @@ OpenChain::Application.routes.draw do
         member do
           post :process_tradecard_pack_manifest
           post :process_booking_worksheet
+          post :process_manifest_worksheet
           post :request_booking
           post :approve_booking
           post :confirm_booking

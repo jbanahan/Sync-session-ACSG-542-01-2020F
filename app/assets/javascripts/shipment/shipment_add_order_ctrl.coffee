@@ -1,6 +1,7 @@
 angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','shipmentSvc','$q','$state','chainErrorHandler',($scope,shipmentSvc,$q,$state,chainErrorHandler) ->
   $scope.shp = null
   $scope.eh = chainErrorHandler
+  $scope.allLinesEnabled = true
   $scope.eh.responseErrorHandler = (rejection) ->
     $scope.notificationMessage = null
 
@@ -94,6 +95,16 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
       shipmentSvc.getShipment(shp.id,true).then goToShow
 
   $scope.cancel = goToShow
+
+  $scope.disableAllLines = (order) ->
+    for line in order.order_lines
+      line._disabled = true
+    $scope.allLinesEnabled = false
+
+  $scope.enableAllLines = (order) ->
+    for line in order.order_lines
+      line._disabled = false
+    $scope.allLinesEnabled = true
 
   @loadShipment $state.params.shipmentId if $state.params.shipmentId
 

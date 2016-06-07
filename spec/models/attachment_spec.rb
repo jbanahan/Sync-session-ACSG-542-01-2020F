@@ -358,14 +358,19 @@ describe Attachment do
   end
 
   describe "download_to_tempfile" do
+    let (:attachment) {
+      a = double("PaperclipAttachment")
+      att = Attachment.new
+      att.stub(:attached).and_return a
+      a.stub(:path).and_return "path/to/file.txt"
+      a.stub(:options).and_return bucket: "test-bucket"
+      att
+    }
+    
     it "should use S3 to download to tempfile and yield the given block (if block given)" do
-      a = Attachment.new
-      a.stub(:attached).and_return a
-      a.should_receive(:path).and_return "path/to/file.txt"
+      OpenChain::S3.should_receive(:download_to_tempfile).with("test-bucket", "path/to/file.txt").and_yield "Test"
 
-      OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', "path/to/file.txt").and_yield "Test"
-
-      a.download_to_tempfile do |f|
+      attachment.download_to_tempfile do |f|
         f.should eq "Test"
 
         "Pass"
@@ -373,11 +378,8 @@ describe Attachment do
     end
 
     it "should use S3 to download to tempfile and return the tempfile (if no block given)" do
-      a = Attachment.new
-      a.stub(:attached).and_return a
-      a.should_receive(:path).and_return "path/to/file.txt"
-      OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', "path/to/file.txt").and_return "Test"
-      tfile = a.download_to_tempfile
+      OpenChain::S3.should_receive(:download_to_tempfile).with('test-bucket', "path/to/file.txt").and_return "Test"
+      tfile = attachment.download_to_tempfile
       tfile.should eq "Test"
     end
   end

@@ -74,6 +74,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     attachment_job('Booking Worksheet')
   end
 
+  def process_manifest_worksheet
+    attachment_job('Manifest Worksheet')
+  end
+
   def request_booking
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to request a booking.",:forbidden) unless s.can_request_booking?(current_user)
@@ -252,7 +256,12 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_booking_revised_date,
       :shp_booking_revised_by_full_name,
       :shp_freight_total,
-      :shp_invoice_total
+      :shp_invoice_total,
+      :shp_inland_dest_port,
+      :shp_est_inland_port_date,
+      :shp_inland_port_date,
+      :shp_inland_dest_port_id,
+      :shp_inland_dest_port_name,
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     container_fields_to_render = ([
@@ -651,14 +660,18 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
     att = s.attachments.find_by_id(params[:attachment_id])
-    raise StatusableError.new("Attachment not linked to Shipment.",400) unless att
+    raise StatusableError.new("Attachment not linked to Shipment.", 400) unless att
     aj = s.attachment_process_jobs.where(attachment_id:att.id,
-                                         job_name: job_name).first_or_create!(user_id:current_user.id, manufacturer_address_id:params[:manufacturer_address_id])
+                                         job_name: job_name).first_or_create!(user_id:current_user.id)
     if aj.start_at
       raise StatusableError.new("This manifest has already been submitted for processing.",400)
     else
       aj.update_attributes(start_at:Time.now)
-      aj.process
+      if ['Tradecard Pack Manifest', 'Manifest Worksheet'].include? job_name
+        aj.process manufacturer_address_id: params[:manufacturer_address_id]
+      else
+        aj.process
+      end
       render_show CoreModule::SHIPMENT
     end
   end

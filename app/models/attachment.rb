@@ -23,7 +23,7 @@ class Attachment < ActiveRecord::Base
   end
   
   def secure_url(expires_in=90.seconds)
-    OpenChain::S3.url_for attached.options[:bucket], attached.path, expires_in
+    OpenChain::S3.url_for bucket, attached.path, expires_in
   end
 
   def can_view?(user)
@@ -181,7 +181,7 @@ end
   def self.push_to_google_drive drive_folder, attachment_id, drive_account = nil, upload_options = {}
     a = Attachment.find attachment_id
     drive_path = File.join((drive_folder ? drive_folder : ""), a.attached_file_name)
-    OpenChain::S3.download_to_tempfile(a.attached.options[:bucket], a.attached.path) do |temp|
+    OpenChain::S3.download_to_tempfile(a.bucket, a.path) do |temp|
       OpenChain::GoogleDrive.upload_file drive_account, drive_path, temp, upload_options
     end
   end
@@ -190,11 +190,11 @@ end
     if attached
       # Attachments are always in chain-io bucket regardless of environment
       if block_given?
-        return OpenChain::S3.download_to_tempfile('chain-io', attached.path) do |f|
+        return OpenChain::S3.download_to_tempfile(bucket, path) do |f|
           yield f
         end
       else
-        return OpenChain::S3.download_to_tempfile('chain-io', attached.path)
+        return OpenChain::S3.download_to_tempfile(bucket, path)
       end
     end
   end
@@ -228,6 +228,16 @@ end
       # In cases where an Entry is being deleted, this is going to generate stitch requests for each attachment being
       OpenChain::AllianceImagingClient.delay.send_entry_stitch_request(self.attachable_id)
     end
+  end
+
+  # We're aping the custom_file processing api touchpoints here (plus, it's a convenient accessor method anyway)
+  def bucket
+    attached.try(:options).try(:[], :bucket)
+  end
+
+  # We're aping the custom_file processing api touchpoints here (plus, it's a convenient accessor method anyway)
+  def path
+    attached.try(:path)
   end
 
   private

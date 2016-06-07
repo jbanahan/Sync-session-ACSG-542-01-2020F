@@ -10,7 +10,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [11,:shp_freight_terms,:freight_terms,"Freight Terms",{:data_type=>:string}],
       [12,:shp_lcl,:lcl,"LCL",{:data_type=>:boolean}],
       [13,:shp_shipment_type,:shipment_type,"Shipment Type",{:data_type=>:string}],
-      [14,:shp_booking_shipment_type,:booking_shipment_type,"Shipment Type - Booked",{:data_type=>:string}]       ,
+      [14,:shp_booking_shipment_type,:booking_shipment_type,"Shipment Type - Booked",{:data_type=>:string}],
       [15,:shp_booking_mode,:booking_mode,"Mode - Booked",{:data_type=>:string}],
       [16,:shp_vessel,:vessel,"Vessel",{:data_type=>:string}],
       [17,:shp_voyage,:voyage,"Voyage",{:data_type=>:string}],
@@ -24,8 +24,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [25,:shp_cargo_on_hand_date,:cargo_on_hand_date,"Cargo On Hand Date",{:data_type=>:date}],
       [26,:shp_est_departure_date,:est_departure_date,"Est Departure Date",{:data_type=>:date}],
       [27,:shp_departure_date,:departure_date,"Departure Date",{:data_type=>:date}],
-      [28,:shp_est_arrival_port_date,:est_arrival_port_date,"Est Arrival Date",{:data_type=>:date}],
-      [29,:shp_arrival_port_date,:arrival_port_date,"Arrival Date",{:data_type=>:date}],
+      [28,:shp_est_arrival_port_date,:est_arrival_port_date,"Est Arrival Discharge",{:data_type=>:date}],
+      [29,:shp_arrival_port_date,:arrival_port_date,"Arrival Discharge",{:data_type=>:date}],
       [30,:shp_est_delivery_date,:est_delivery_date,"Est Delivery Date",{:data_type=>:date}],
       [31,:shp_delivered_date,:delivered_date,"Delivered Date",{:data_type=>:date}],
       [32,:shp_importer_reference,:importer_reference,"Importer Reference",{data_type: :string}],
@@ -178,7 +178,9 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :read_only=>true
       }],
       [69, :shp_freight_total, :freight_total, "Freight Total", {data_type: :decimal}],
-      [70, :shp_invoice_total, :invoice_total, "Invoice Total", {data_type: :decimal}]
+      [70, :shp_invoice_total, :invoice_total, "Invoice Total", {data_type: :decimal}],
+      [71, :shp_est_inland_port_date, :est_inland_port_date, "Est Inland Port Date", {data_type: :date}],
+      [72, :shp_inland_port_date, :inland_port_date, "Inland Port Date", {data_type: :date}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -187,12 +189,13 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_master_setup_array(400,"shp")
     add_fields CoreModule::SHIPMENT, make_importer_arrays(500,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_comment_arrays(600,'shp','Shipment')
-    add_fields CoreModule::SHIPMENT, make_port_arrays(700,'shp_dest_port','shipments','destination_port','Destination Port')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(700, 'shp_dest_port','shipments','destination_port','Discharge Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(800, 'shp_first_port_receipt','shipments','first_port_receipt','First Port of Receipt')
     add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Port of Lading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Origin Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','Port of Unlading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1110, 'shp_final_dest_port','shipments','final_dest_port','Final Destination')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(1120, 'shp_inland_dest_port','shipments','inland_destination_port','Inland Destination')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1200,'shp','shipments','buyer')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1250,'shp','shipments','seller')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1300,'shp','shipments','ship_to')

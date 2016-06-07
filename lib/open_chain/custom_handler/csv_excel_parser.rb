@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module CsvExcelParser
 
   def decimal_value value, decimal_places: nil
     # use space character set since that handles all UTF-8 whitespace too, not just ascii 33 (space bar)
-    v = BigDecimal(value.to_s.gsub(/\$[[:space:]]/, ""))
+    v = BigDecimal(value.to_s.gsub(/\$[[:space:]]/, "").gsub(",", ""))
     # Round to t decimal places
     if decimal_places.to_i > 0
       v = v.round(decimal_places, BigDecimal::ROUND_HALF_UP)

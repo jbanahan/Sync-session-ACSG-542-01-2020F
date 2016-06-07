@@ -2,8 +2,8 @@ require 'open_chain/xl_client'
 
 module OpenChain; module CustomHandler; module Tradecard; class TradecardPackManifestParser
 
-  def self.process_attachment shipment, attachment, user, manufacturer_address_id=nil
-    parse shipment, attachment.attached.path, user, manufacturer_address_id
+  def self.process_attachment shipment, attachment, user, opts = {}
+    parse shipment, attachment.attached.path, user, opts[:manufacturer_address_id]
   end
   def self.parse shipment, path, user, manufacturer_address_id=nil
     self.new.run(shipment,OpenChain::XLClient.new(path),user, manufacturer_address_id)

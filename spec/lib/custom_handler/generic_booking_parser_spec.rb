@@ -14,6 +14,7 @@ describe OpenChain::CustomHandler::GenericBookingParser do
   let!(:fourth_order) { FactoryGirl.create :order, customer_order_number: 1502398, importer_id:importer.id }
   let!(:order_lines) { [FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248678), FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248654), FactoryGirl.create(:order_line, order_id: second_order.id, sku: 32248838)]}
   let!(:user) { FactoryGirl.create(:master_user, shipment_edit: true, shipment_view: true) }
+  let(:form_data) { StandardBookingFormSpecData.form_lines }
 
   before do
     # These results are based on the standard_booking_form fixture.
@@ -21,7 +22,7 @@ describe OpenChain::CustomHandler::GenericBookingParser do
   end
 
     it 'parses it correctly' do
-      result = subject.process_rows shipment, FORM_ARRAY, user
+      result = subject.process_rows shipment, form_data, user
       expect(result).to be_present
 
       expect(shipment.first_port_receipt).to be_nil
@@ -102,10 +103,10 @@ describe OpenChain::CustomHandler::GenericBookingParser do
     end
 
     it "handles CY/CY ship mode as Ocean - FCL" do
-      values = FORM_ARRAY.dup
+      values = form_data.dup
       values[30][10] = "CY/CY"
 
-      result = subject.process_rows shipment, FORM_ARRAY, user
+      result = subject.process_rows shipment, form_data, user
       expect(shipment.booking_shipment_type).to eq "CY/CY"
       expect(shipment.shipment_type).to eq "CY/CY"
       expect(shipment.mode).to eq "Ocean - FCL"
@@ -113,10 +114,10 @@ describe OpenChain::CustomHandler::GenericBookingParser do
     end
 
     it "handles CY/CFS ship mode as Ocean - FCL" do
-      values = FORM_ARRAY.dup
+      values = form_data.dup
       values[30][10] = "CY/CFS"
 
-      result = subject.process_rows shipment, FORM_ARRAY, user
+      result = subject.process_rows shipment, form_data, user
       expect(shipment.booking_shipment_type).to eq "CY/CFS"
       expect(shipment.shipment_type).to eq "CY/CFS"
       expect(shipment.mode).to eq "Ocean - FCL"
@@ -124,10 +125,10 @@ describe OpenChain::CustomHandler::GenericBookingParser do
     end
 
     it "handles CFS/CFS ship mode as Ocean - LCL" do
-      values = FORM_ARRAY.dup
+      values = form_data.dup
       values[30][10] = "CFS/CFS"
 
-      result = subject.process_rows shipment, FORM_ARRAY, user
+      result = subject.process_rows shipment, form_data, user
       expect(shipment.booking_shipment_type).to eq "CFS/CFS"
       expect(shipment.shipment_type).to eq "CFS/CFS"
       expect(shipment.mode).to eq "Ocean - LCL"
@@ -140,27 +141,25 @@ describe OpenChain::CustomHandler::GenericBookingParser do
       let(:shipment) { FactoryGirl.build :shipment, importer_id:1 }
 
       describe 'if the SKU exists on another order line' do
-        let!(:order) { FactoryGirl.create :order, importer_id:1 }
+        let!(:order) { FactoryGirl.create :order, importer_id: shipment.importer_id }
         let!(:product) { Factory(:product) }
         let!(:order_line) { FactoryGirl.create :order_line, product_id:product.id, order_id:order.id, sku: 'THISISANSKU' }
 
         it 'associates that product with the line' do
-          parser = described_class.new
-          file_layout = parser.send 'file_layout'
+          file_layout = subject.file_layout
           row_with_sku = Array.new(12)
           row_with_sku[file_layout[:sku_column]] = 'THISISANSKU'
-          parser.send 'add_line', shipment, row_with_sku, 1
+          subject.add_line_data shipment, row_with_sku, 1
           expect(shipment.booking_lines.first.product_id).to eq product.id
         end
       end
 
       describe 'if the SKU is not on any other orders' do
         it 'leaves the product blank' do
-          parser = described_class.new
-          file_layout = parser.send 'file_layout'
+          file_layout = subject.file_layout
           row_with_sku = Array.new(12)
           row_with_sku[file_layout[:sku_column]] = 'THISISANSKU'
-          parser.send 'add_line', shipment, row_with_sku, 1
+          subject.add_line_data shipment, row_with_sku, 1
           expect(shipment.booking_lines.first.product_id).to be_nil
         end
       end

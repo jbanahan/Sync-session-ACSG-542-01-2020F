@@ -1,10 +1,12 @@
 require 'open_chain/custom_handler/tradecard/tradecard_pack_manifest_parser'
 require 'open_chain/custom_handler/generic_booking_parser'
+require 'open_chain/custom_handler/generic_shipment_manifest_parser'
 
 class AttachmentProcessJob < ActiveRecord::Base
   JOB_TYPES ||= {
-      'Tradecard Pack Manifest'=>OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser,
-      'Booking Worksheet'=>OpenChain::CustomHandler::GenericBookingParser
+      'Tradecard Pack Manifest'=>"OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser",
+      'Booking Worksheet'=>"OpenChain::CustomHandler::GenericBookingParser",
+      'Manifest Worksheet'=>"OpenChain::CustomHandler::GenericShipmentManifestParser"
   }
   belongs_to :attachment, inverse_of: :attachment_process_jobs
   belongs_to :user
@@ -15,8 +17,8 @@ class AttachmentProcessJob < ActiveRecord::Base
   validates :user, presence: true
   validates :attachable, presence: true
 
-  def process
-    JOB_TYPES[self.job_name].process_attachment self.attachable, self.attachment, self.user, self.manufacturer_address_id
+  def process opts = {}
+    job_class.process_attachment self.attachable, self.attachment, self.user, opts
     self.finish_at = Time.now
     self.save!
   end
@@ -24,6 +26,10 @@ class AttachmentProcessJob < ActiveRecord::Base
   private
   def validate_job_name
     errors.add(:base, "Job name is not recognized.") if JOB_TYPES[self.job_name].blank?
+  end
+
+  def job_class
+    JOB_TYPES[self.job_name].constantize
   end
 
   def write_user_message 
