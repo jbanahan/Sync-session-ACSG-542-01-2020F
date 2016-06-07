@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
 
   def self.bill_new_entries new_billables, invoiceable_ids, invoice
     new_entries, others = split_billables(new_billables, invoiceable_ids)
-    qty_to_bill = new_entries.count# - 250
+    qty_to_bill = new_entries.count
     charge_amount = qty_to_bill * 2.50
     if qty_to_bill > 0
       line = invoice.vfi_invoice_lines.create! charge_amount: charge_amount, quantity: qty_to_bill, unit: "ea", unit_price: 2.50, charge_description: "new entry exceeding 250/mo. limit"
