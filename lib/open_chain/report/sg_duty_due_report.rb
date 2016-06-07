@@ -16,8 +16,10 @@ module OpenChain; module Report; class SgDutyDueReport
   end
 
   def self.run_schedulable opts_hash={}
-    company = get_company(opts_hash['customer_number'])
-    self.new.send_email(email: opts_hash['email'], company: company)
+    opts_hash['customer_numbers'].each do |cust_num|
+      company = get_company cust_num
+      self.new.send_email(email: opts_hash['email'], company: company)
+    end
   end
 
   def self.get_company cust_num
