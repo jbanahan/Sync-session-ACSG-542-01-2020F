@@ -10,6 +10,7 @@ module OpenChain; module CustomHandler; module Pepsi; module PepsiCustomDefiniti
     class_fta_start: {label: "Free Trade Start Date", data_type: :date, module_type: 'Classification'},
     class_ior: {label: "IOR", data_type: :string, module_type: 'Classification'},
     class_ruling_number: {label: 'Ruling #', data_type: :string, module_type: 'Classification'},
+    class_spi_criteria: {label: 'SPI Criteria', data_type: :string, module_type: 'Classification'},
     class_tariff_shift: {label: "Tariff Shift", data_type: :string, module_type: 'Classification'},
     class_val_content: {label: "Value Content", data_type: :string, module_type: 'Classification'},
     prod_alt_prod_code: {label: "Alt Product Code", data_type: :string, module_type: 'Product',rank:2200},

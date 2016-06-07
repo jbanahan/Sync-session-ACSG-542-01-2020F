@@ -10,6 +10,7 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     :class_tariff_shift,
     :class_val_content,
     :class_add_cvd,
+    :class_spi_criteria,
     :prod_shipper_name,
     :prod_us_broker,
     :prod_us_alt_broker,
@@ -41,7 +42,7 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
   def up
     et = create_new_entity_type
     create_new_fields et
-    register_existing_fields_for_entity_type
+    register_existing_fields_for_entity_type et
     update_existing_validate_buttons
     update_existing_validation_definitions
     user_cd, date_cd = create_new_validation_definitions
@@ -81,6 +82,9 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     cdefs.values.each do |cd|
       EntityTypeField.where(model_field_uid:cd.model_field_uid,entity_type_id:entity_type.id).first_or_create!
     end
+    fvr = FieldValidatorRule.where(model_field_uid:cdefs[:class_spi_criteria].model_field_uid).first_or_create!
+    fvr.one_of = "A\nB\nC\nD\nE\nF"
+    fvr.save!
   end
 
   def register_existing_fields_for_entity_type entity_type
