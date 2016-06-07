@@ -349,9 +349,15 @@ describe ReportsController do
       end
       
       it "renders page for authorized users" do
+        sgi = Factory(:company, name: 'SGI APPAREL LTD', alliance_customer_number: 'SGI')
+        sgold = Factory(:company, name: 'S GOLDBERG & CO INC', alliance_customer_number: 'SGOLD')
+        rugged = Factory(:company, name: 'RUGGED SHARK LLC', alliance_customer_number: 'RUGGED')
+        Factory(:company)
+
         sign_in_as @u
         get :show_sg_duty_due_report
         response.should be_success
+        expect(assigns(:choices)).to eq [sgi, sgold, rugged]
       end
     end
 
@@ -359,14 +365,14 @@ describe ReportsController do
       it "doesn't run report for unauthorized users" do
         OpenChain::Report::SgDutyDueReport.should_receive(:permission?).and_return false
         ReportResult.should_not_receive(:run_report!)
-        post :run_sg_duty_due_report
+        post :run_sg_duty_due_report, {customer_number: "SGOLD"}
         expect(flash[:errors].first).to eq "You do not have permission to view this report."
         expect(response).to be_redirect
       end
 
       it "runs report for authorized users" do
-        ReportResult.should_receive(:run_report!).with("SG Duty Due Report", @u, OpenChain::Report::SgDutyDueReport, {:settings => {}, :friendly_settings=>[]})
-        post :run_sg_duty_due_report
+        ReportResult.should_receive(:run_report!).with("SG Duty Due Report", @u, OpenChain::Report::SgDutyDueReport, {:settings => {customer_number: 'SGOLD'}, :friendly_settings=>[]})
+        post :run_sg_duty_due_report, {customer_number: "SGOLD"}
         expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
         expect(response).to be_redirect
       end
