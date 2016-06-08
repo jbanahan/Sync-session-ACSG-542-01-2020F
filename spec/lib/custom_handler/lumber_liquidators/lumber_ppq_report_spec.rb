@@ -44,9 +44,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberPpqReport do
         sheet = Spreadsheet.open(StringIO.new(m.attachments["PPQ Report 05-02-16.xls"].read)).worksheets.first
         expect(sheet.rows.length).to eq 3
 
-        expect(sheet.row(0)).to eq ["Importer Name","Entry Number","B/L No(s)","Container No(s)","Arrival Date","Manufacturer ID","Part No","PO No","HTS No","Description", "Name of Constituent Element", "Quantity of Constituent Element","UOM","Percent of Constituent Element","PGA Line Value","Scientific Genus Name","Scientific Species Name","Source Country Code"]
-        expect(sheet.row(1)).to eq ["LUMBER LIQUIDATORS INC", "ENTNUM", "MBOL1, MBOL2", "CONT1, CONT2", excel_date(Date.new(2016, 4, 30)), "MID", "Part", "PO", "1111.11.1111", "DESC", "NAME", 10, "UOM", 0, 100, "GENUS", "SPECIES", "CA"]
-        expect(sheet.row(2)).to eq ["LUMBER LIQUIDATORS INC", "ENTNUM", "MBOL1, MBOL2", "CONT1, CONT2", excel_date(Date.new(2016, 4, 30)), "MID", "Part", "PO", "1111.11.1111", "DESC2", "NAME2", 20, "UOM2", 0, 50, "GENUS2", "SPECIES2", "CN"]
+        expect(sheet.row(0)).to eq ["Unique Id","Importer Name","Entry Number","B/L No(s)","Container No(s)","Arrival Date","Manufacturer ID","Part No","PO No","HTS No","Description", "Name of Constituent Element", "Quantity of Constituent Element","UOM","Percent of Constituent Element","PGA Line Value","Scientific Genus Name","Scientific Species Name","Source Country Code"]
+        expect(sheet.row(1)).to eq [1, "LUMBER LIQUIDATORS INC", "ENTNUM", "MBOL1, MBOL2", "CONT1, CONT2", excel_date(Date.new(2016, 4, 30)), "MID", "Part", "PO", "1111.11.1111", "DESC", "NAME", 10, "UOM", 0, 100, "GENUS", "SPECIES", "CA"]
+        expect(sheet.row(2)).to eq [2, "LUMBER LIQUIDATORS INC", "ENTNUM", "MBOL1, MBOL2", "CONT1, CONT2", excel_date(Date.new(2016, 4, 30)), "MID", "Part", "PO", "1111.11.1111", "DESC2", "NAME2", 20, "UOM2", 0, 50, "GENUS2", "SPECIES2", "CN"]
       end
 
       context "with invalid entry attribute" do 
