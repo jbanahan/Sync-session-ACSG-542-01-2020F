@@ -46,6 +46,14 @@ class SearchSetup < ActiveRecord::Base
     SearchSetup.last_accessed(user,core_module).first
   end
 
+  def can_edit? user
+    self.user == user
+  end
+
+  def can_view? user
+    self.user == user
+  end
+
   #only admins can setup ftp schedules
   def can_ftp?
     self.user.admin?
