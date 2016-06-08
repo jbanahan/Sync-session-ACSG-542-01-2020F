@@ -1,35 +1,42 @@
 module CoreObjectSupport
-  def self.included(base)
-    base.extend ClassMethods
-    base.instance_eval("attr_accessor :dont_process_linked_attachments")
-    base.instance_eval("include CustomFieldSupport")
-    base.instance_eval("include ShallowMerger")
-    base.instance_eval("include EntitySnapshotSupport")
-    base.instance_eval("include BroadcastsEvents")
-    base.instance_eval("include UpdateModelFieldsSupport")
-    base.instance_eval("include FingerprintSupport")
-    # Allow new instances to start up (prior to migrations run will not have histories or item change subscriptions tables)
-    if ActiveRecord::Base.connection.table_exists?('histories') && History.column_names.include?(base.name.foreign_key)
-      base.instance_eval("has_many   :histories, :dependent => :destroy")
-    end
-    if ActiveRecord::Base.connection.table_exists?('item_change_subscriptions') && ItemChangeSubscription.column_names.include?(base.name.foreign_key)
-      base.instance_eval("has_many   :item_change_subscriptions, :dependent => :destroy")
-    end
-    base.instance_eval("has_many   :comments, :as => :commentable, :dependent => :destroy")
-    base.instance_eval("has_many   :attachments, :as => :attachable, :dependent => :destroy")
-    base.instance_eval("has_many   :attachment_process_jobs, :as => :attachable, :dependent => :destroy, :class_name => AttachmentProcessJob")
-    base.instance_eval("has_many   :linked_attachments, :as => :attachable, :dependent => :destroy")
-    base.instance_eval("has_many   :linkable_attachments, :through => :linked_attachments")
-    base.instance_eval("has_many   :change_records, :as => :recordable")
-    base.instance_eval("has_many :sync_records, :as => :syncable, :dependent=>:destroy, :autosave=>true, :inverse_of => :syncable")
-    base.instance_eval("has_many :business_validation_results, as: :validatable, dependent: :destroy")
-    base.instance_eval("has_many :workflow_instances, as: :base_object, dependent: :destroy, inverse_of: :base_object")
-    base.instance_eval("has_one :workflow_processor_run, as: :base_object, dependent: :destroy, inverse_of: :base_object")
-    base.instance_eval("has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object")
-    base.instance_eval("after_save :process_linked_attachments")
+  extend ActiveSupport::Concern
 
-    base.instance_eval("scope :need_sync, lambda {|trading_partner| joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause())}")
-    base.instance_eval("scope :has_attachment, joins(\"LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '\#{self.name}' AND linked_attachments.attachable_id = \#{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '\#{self.name}' AND attachments.attachable_id = \#{self.table_name}.id\").where('attachments.id is not null OR linked_attachments.id is not null').uniq")
+  included do
+    include CustomFieldSupport
+    include ShallowMerger
+    include EntitySnapshotSupport
+    include BroadcastsEvents
+    include UpdateModelFieldsSupport
+    include FingerprintSupport
+
+    attr_accessor :dont_process_linked_attachments
+    
+    has_many :comments, as: :commentable, dependent: :destroy
+    has_many :attachments, as: :attachable, dependent: :destroy
+    has_many :attachment_process_jobs, as: :attachable, dependent: :destroy, class_name: AttachmentProcessJob
+    has_many :linked_attachments, as: :attachable, dependent: :destroy
+    has_many :linkable_attachments, through: :linked_attachments
+    has_many :change_records, as: :recordable
+    has_many :sync_records, as: :syncable, dependent: :destroy, autosave: true, inverse_of: :syncable
+    has_many :business_validation_results, as: :validatable, dependent: :destroy
+    has_many :workflow_instances, as: :base_object, dependent: :destroy, inverse_of: :base_object
+    has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object
+
+    has_one :workflow_processor_run, as: :base_object, dependent: :destroy, inverse_of: :base_object
+    
+    after_save :process_linked_attachments
+    
+    # Allow new instances to start up (prior to migrations run will not have histories or item change subscriptions tables)
+    if ActiveRecord::Base.connection.table_exists?('histories') && History.column_names.include?(self.name.foreign_key)
+      has_many :histories, dependent: :destroy
+    end
+
+    if ActiveRecord::Base.connection.table_exists?('item_change_subscriptions') && ItemChangeSubscription.column_names.include?(self.name.foreign_key)
+      has_many :item_change_subscriptions, dependent: :destroy
+    end
+
+    scope :need_sync, lambda {|trading_partner| joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause()) }
+    scope :has_attachment, joins("LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '#{self.name}' AND linked_attachments.attachable_id = #{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '#{self.name}' AND attachments.attachable_id = #{self.table_name}.id").where('attachments.id is not null OR linked_attachments.id is not null').uniq
   end
 
   def core_module
