@@ -28,7 +28,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @user = User.integration
     @imp = Company.find_by_master(true)
     @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone,
-      :ord_planned_expected_delivery_date, :ord_ship_confirmation_date
+      :ord_planned_expected_delivery_date, :ord_ship_confirmation_date,
+      :ord_sap_vendor_handover_date, :ord_avail_to_prom_date
     ]
     @opts = opts
   end
@@ -98,40 +99,52 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def set_header_dates_from_lines base, order
+    avail_to_promise_dates = []
+    REXML::XPath.each(base,'./E1EDP01/E1EDP20/EDATU') do |el|
+      avail_to_promise_dates << el.text unless el.text.blank?
+    end
+    avail_to_promise = avail_to_promise_dates.sort.first
+    order.update_custom_value!(@cdefs[:ord_avail_to_prom_date],avail_to_promise)
+
     mapping = {
       'VN_EXPEC_DLVD' => [],
       'VN_SHIPBEGIN' => [],
       'VN_SHIPEND' => [],
       'CURR_ARRVD' => [],
-      'ACT_SHIP_DATE' => []
+      'ACT_SHIP_DATE' => [],
+      'VN_HNDDTE' => []
     }
     date_elements = REXML::XPath.match(base,'./E1EDP01/E1EDP20/_-LUMBERL_-PO_SHIP_WINDOW')
-    date_elements.each do |el|
-      el.each_element do |child|
-        a = mapping[child.name]
-        next if a.nil?
-        txt = child.text
-        a << txt unless txt.blank? || txt.match(/^0*$/)
+
+    if !date_elements.blank?
+      date_elements.each do |el|
+        el.each_element do |child|
+          a = mapping[child.name]
+          next if a.nil?
+          txt = child.text
+          a << txt unless txt.blank? || txt.match(/^0*$/)
+        end
       end
-    end
+      # update mapping to get the earliest for each date or nil if the date wasn't sent
+      mapping.each {|k,v| mapping[k] = mapping[k].sort.first}
 
-    # use the fallback expected delivery date if not populated
-    if mapping['CURR_ARRVD'].empty?
-      REXML::XPath.each(base,'./E1EDP01/E1EDP20/EDATU') do |el|
-        mapping['CURR_ARRVD'] << el.text unless el.text.blank?
+      order.first_expected_delivery_date = mapping['CURR_ARRVD']
+      if order.first_expected_delivery_date.blank?
+        if !mapping['VN_HNDDTE'].blank? && !mapping['VN_HNDDTE'].match(/^0*$/)
+          order.first_expected_delivery_date = avail_to_promise
+        else
+          order.first_expected_delivery_date = mapping['VN_EXPEC_DLVD']
+        end
       end
+      order.ship_window_start = mapping['VN_SHIPBEGIN']
+      order.ship_window_end = mapping['VN_SHIPEND']
+      order.update_custom_value!(@cdefs[:ord_planned_expected_delivery_date],mapping['VN_EXPEC_DLVD'])
+      order.update_custom_value!(@cdefs[:ord_ship_confirmation_date],mapping['ACT_SHIP_DATE'])
+      order.update_custom_value!(@cdefs[:ord_sap_vendor_handover_date],mapping['VN_HNDDTE'])
+    else # legacy PO before June 2016 date logic change
+
+      set_ship_window(order)
     end
-
-    # update mapping to get the earliest for each date or nil if the date wasn't sent
-    mapping.each {|k,v| mapping[k] = mapping[k].sort.first}
-
-    order.first_expected_delivery_date = mapping['CURR_ARRVD']
-    order.ship_window_start = mapping['VN_SHIPBEGIN']
-    order.ship_window_end = mapping['VN_SHIPEND']
-    order.update_custom_value!(@cdefs[:ord_planned_expected_delivery_date],mapping['VN_EXPEC_DLVD'])
-    order.update_custom_value!(@cdefs[:ord_ship_confirmation_date],mapping['ACT_SHIP_DATE'])
-
-    set_ship_window(order) if date_elements.blank?
   end
 
   # legacy behavior when ship window didn't come in XML

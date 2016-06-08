@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       @vendor = Factory(:company,vendor:true,system_code:'0000100131')
       @vendor_address = @vendor.addresses.create!(name:'VNAME',line_1:'ln1',line_2:'l2',city:'New York',state:'NY',postal_code:'10001',country_id:@usa.id)
       @product1= Factory(:product,unique_identifier:'000000000010001547')
-      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date]
+      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date]
     end
 
     it "should fail on bad root element" do
@@ -43,6 +43,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.get_custom_value(@cdefs[:ord_planned_expected_delivery_date]).value.strftime('%Y%m%d')).to eq '20160608'
       expect(o.get_custom_value(@cdefs[:ord_planned_handover_date]).value).to be_blank
       expect(o.get_custom_value(@cdefs[:ord_ship_confirmation_date]).value.strftime('%Y%m%d')).to eq '20160615'
+      expect(o.get_custom_value(@cdefs[:ord_avail_to_prom_date]).value.strftime('%Y%m%d')).to eq '20141103'
+      expect(o.get_custom_value(@cdefs[:ord_sap_vendor_handover_date]).value.strftime('%Y%m%d')).to eq '20160605'
       expect(o.currency).to eq 'USD'
       # No terms in XML should be "Due Immediately"
       expect(o.terms_of_payment).to eq 'Due Immediately'
@@ -102,13 +104,22 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o).to have(0).order_lines
     end
 
-    it "should use EDATU segment for first expected delivery date if VN_EXPEC_DLVD is not populated" do
-      @test_data.gsub!(/<CURR_ARRVD.*CURR_ARRVD>/,'')
-      dom = REXML::Document.new(@test_data)
-      described_class.new.parse_dom(dom)
-
-      o = Order.first
-      expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
+    context 'first expected delivery date' do
+      it "should use CURR_ARRVD for first_expected_delivery_date if it is populated" do
+        described_class.new.parse_dom(REXML::Document.new(@test_data))
+        expect(Order.first.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20160610'
+      end
+      it "should use EDATU for first_expected_delivery_date if CURR_ARRVD is blank and VN_HNDDTE is populated with a valid date" do
+        @test_data.gsub!(/<CURR_ARRVD.*CURR_ARRVD>/,'<CURR_ARRVD></CURR_ARRVD>')
+        described_class.new.parse_dom(REXML::Document.new(@test_data))
+        expect(Order.first.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
+      end
+      it "should use VN_EXPEC_DLVD for first_expected_delivery_date if CURR_ARRVD is blank and VN_HNDDTE is not populated with a valid date" do
+        @test_data.gsub!(/<CURR_ARRVD.*CURR_ARRVD>/,'<CURR_ARRVD></CURR_ARRVD>')
+        @test_data.gsub!(/<VN_HNDDTE.*VN_HNDDTE>/,'<VN_HNDDTE></VN_HNDDTE>')
+        described_class.new.parse_dom(REXML::Document.new(@test_data))
+        expect(Order.first.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20160608'
+      end
     end
 
     it "should not blow up on dates that are all zeros" do
