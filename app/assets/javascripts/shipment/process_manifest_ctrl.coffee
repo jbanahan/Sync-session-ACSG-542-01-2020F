@@ -18,12 +18,13 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
     $scope.eh.clear()
     if attachmentType == 'Booking Worksheet'
       handler = shipmentSvc.processBookingWorksheet
-    else if attachmentType == 'Tradecard Pack Manifest'
+    else if attachmentType == 'Tradecard Manifest'
       handler = shipmentSvc.processTradecardPackManifest
     else if attachmentType == 'Manifest Worksheet'
       handler = shipmentSvc.processManifestWorksheet
     else
       $window.alert("Unknown worksheet type " + attachmentType + " selected.")
+      $state.go('show', {shipmentId: shipment.id})
 
     if handler
       handler(shipment, attachment, shipment.manufacturerId).then((resp) ->
