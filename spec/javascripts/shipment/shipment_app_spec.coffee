@@ -23,7 +23,7 @@ describe 'ShipmentApp', ->
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processTradecardPackManifest').andReturn(r.promise)
-        scope.process(shipment,attachment, 'Tradecard Pack Manifest')
+        scope.process(shipment,attachment, 'Tradecard Manifest')
         r.resolve({data: {id: 1}})
         expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment, 2)
 
@@ -47,8 +47,10 @@ describe 'ShipmentApp', ->
 
       it 'notifies of error if no service is set up', ->
         spyOn(win, 'alert')
-        scope.process({}, {}, 'test')
+        spyOn(state, 'go')
+        scope.process({id: 1}, {}, 'test')
         expect(win.alert).toHaveBeenCalledWith("Unknown worksheet type test selected.")
+        expect(state.go).toHaveBeenCalledWith("show", {shipmentId: 1})
       
 
   describe 'ShipmentAddOrderCtrl', ->
