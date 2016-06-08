@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler',($scope,shipmentSvc,$state,chainErrorHandler) ->
+angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler','$window',($scope,shipmentSvc,$state,chainErrorHandler, $window) ->
   $scope.shp = null
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->
@@ -16,10 +16,19 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
   $scope.process = (shipment, attachment, attachmentType) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
-    handler = if attachmentType == 'Booking Worksheet' then shipmentSvc.processBookingWorksheet else shipmentSvc.processTradecardPackManifest
-    handler(shipment, attachment, shipment.manufacturerId).then((resp) ->
-      $state.go('process_manifest.success')
-    ).finally -> $scope.loadingFlag = null
+    if attachmentType == 'Booking Worksheet'
+      handler = shipmentSvc.processBookingWorksheet
+    else if attachmentType == 'Tradecard Pack Manifest'
+      handler = shipmentSvc.processTradecardPackManifest
+    else if attachmentType == 'Manifest Worksheet'
+      handler = shipmentSvc.processManifestWorksheet
+    else
+      $window.alert("Unknown worksheet type " + attachmentType + " selected.")
+
+    if handler
+      handler(shipment, attachment, shipment.manufacturerId).then((resp) ->
+        $state.go('process_manifest.success')
+      ).finally -> $scope.loadingFlag = null
 
   if $state.params.shipmentId
     $scope.loadShipment $state.params.shipmentId

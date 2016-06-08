@@ -12,9 +12,10 @@
           <option value="">Select a worksheet type...</option>
           <option value="Booking Worksheet" ng-show="shp.permissions.can_add_remove_booking_lines">Booking Worksheet</option>
           <option value="Tradecard Manifest" ng-show="shp.permissions.can_add_remove_shipment_lines">Tradecard Manifest</option>
+          <option value="Manifest Worksheet" ng-show="shp.permissions.can_add_remove_shipment_lines">Manifest Worksheet</option>
         </select>
       </div>
-      <div class="form-group" ng-show="attachmentType === 'Tradecard Manifest'">
+      <div class="form-group" ng-show="attachmentType === 'Tradecard Manifest' || attachmentType === 'Manifest Worksheet'">
         <label for="mfgAddress">Select Manufacturer Address</label>
         <address-book-autocomplete id="mfgAddress" shipment-id="shp.id" address-id-attribute="shp.manufacturerId"></address-book-autocomplete>
       </div>

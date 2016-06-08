@@ -10,9 +10,11 @@
 <input type="text" id="shp_booking_number" ng-model="outerScope.header.shp_booking_number" class="form-control" />
 <label for="shp_receipt_location">Receipt Location</label>
 <input type="text" id="shp_receipt_location" ng-model="outerScope.header.shp_receipt_location" class="form-control" />
-<label for="shp_dest_port">Destination Port</label>
+<label for="shp_dest_port">Discharge Port</label>
 <angucomplete-alt id='shp_dest_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.destPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_dest_port_name}}'></angucomplete-alt>
-<label for="shp_final_dest_port">Final Destination Port</label>
+<label for="shp_inland_dest_port">Inland Destination</label>
+<angucomplete-alt id='shp_inland_dest_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.inlandDestPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_inland_dest_port_name}}'></angucomplete-alt>
+<label for="shp_final_dest_port">Final Destination</label>
 <angucomplete-alt id='shp_final_dest_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.finalDestPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_final_dest_port_name}}'></angucomplete-alt>
 <label for="shp_freight_terms">Freight Terms</label>
 <input type="text" id="shp_freight_terms" ng-model="outerScope.header.shp_freight_terms" class="form-control" />

@@ -367,7 +367,7 @@ class FtpSender
     end
 
     def set_ok_response
-      @last_response = "0 OK"
+      @last_response = "200 OK"
     end
   end
 end

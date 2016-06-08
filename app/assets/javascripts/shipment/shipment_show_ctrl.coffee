@@ -136,6 +136,7 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
     $scope.header.ladingPortSelected = portSelectedCallback('shp_lading_port')
     $scope.header.lastForeignPortSelected = portSelectedCallback('shp_last_foreign_port')
     $scope.header.unladingPortSelected = portSelectedCallback('shp_unlading_port')
+    $scope.header.inlandDestPortSelected = portSelectedCallback('shp_inland_dest_port')
 
   $scope.prepShipmentLineEditObject = copyObjectToScopeAs 'lineToEdit'
 
