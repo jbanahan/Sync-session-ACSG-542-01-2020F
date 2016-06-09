@@ -1,0 +1,57 @@
+<% content_for :javascript do %>
+  $(function() {
+    var scope = $('div[ng-controller]').scope();
+    var id = scope.getId(window.location.href);
+    scope.loadTemplate(id);
+    $("#btn_save").click(function() {
+      angular.element('#controller').scope().saveTemplate();
+      (window.location = '<%=url_for action: 'index'%>').reload()
+    });
+    $("#btn_cancel").click(function() {
+      window.location = '<%=url_for action: 'index'%>';
+    });
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <button id='btn_cancel'>Cancel</button>
+<% end %>
+
+<div id='ng-app' ng-app='CustomViewTemplateApp' ng-view>
+  <div id='custom-view-template-wrapper'>
+    <div id='controller' ng-controller='customViewTemplateCtrl'>
+      <div class='container'>
+        <div class='row'>
+          <div class='col-md-12'>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Template Code</div> 
+                <div class="col-md-8">{{code}}</div>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Template Path</div>
+                <div class="col-md-8">{{path}}</div>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Template Module</div>
+                <div class="col-md-8">{{module}}</div>
+              </div>
+          </div>
+        </div>
+        <br><br>
+          <div class='row'>
+            <div ng-repeat="crit in search_criterions">
+              <div chain-search-criterion="crit" model-fields="model_fields"></div>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col-md-12 form-inline'>
+              Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in model_fields'>
+              </select>
+              <button ng-show='criterionToAdd' class='btn btn-default' ng-click='addCriterion(criterionToAdd)'>Add</button>
+            </div>
+          </div>        
+      </div>
+    </div>
+  </div>
+</div>
