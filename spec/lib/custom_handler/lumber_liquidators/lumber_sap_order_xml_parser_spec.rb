@@ -38,8 +38,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.get_custom_value(@cdefs[:ord_type]).value).to eq 'ZMSP'
       expect(o.get_custom_value(@cdefs[:ord_sap_extract]).value.to_i).to eq ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2014-12-17 14:33:21').to_i
       expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
-      expect(o.ship_window_start.strftime('%Y%m%d')).to eq '20140912'
-      expect(o.ship_window_end.strftime('%Y%m%d')).to eq '20140919'
+      expect(o.ship_window_start.strftime('%Y%m%d')).to eq '20140909'
+      expect(o.ship_window_end.strftime('%Y%m%d')).to eq '20140916'
       expect(o.currency).to eq 'USD'
       # No terms in XML should be "Due Immediately"
       expect(o.terms_of_payment).to eq 'Due Immediately'
