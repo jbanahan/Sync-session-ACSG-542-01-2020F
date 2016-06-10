@@ -3,6 +3,7 @@ require 'open_chain/custom_handler/custom_definition_support'
 module OpenChain; module CustomHandler; module Pepsi; module PepsiCustomDefinitionSupport
   CUSTOM_DEFINITION_INSTRUCTIONS = {
     class_add_cvd: {label: "ADD/CVD", data_type: :boolean, module_type: 'Classification'},
+    class_audit: {label: "Classification Audit", data_type: :text, module_type:'Classification'},
     class_customs_desc_override: {label: 'Customs Description Override', data_type: :text, module_type: 'Classification'},
     class_fta_end: {label: "Free Trade End Date", data_type: :date, module_type: 'Classification'},
     class_fta_name: {label: 'Free Trade Agreement', data_type: :string, module_type: 'Classification'},
@@ -38,7 +39,7 @@ module OpenChain; module CustomHandler; module Pepsi; module PepsiCustomDefiniti
     prod_oga_3: {label: 'US - Other Agency 3', data_type: :string, module_type: 'Product',rank:4900},
     prod_proc_code: {label: 'US - OGA Processing Code', data_type: :string, module_type: 'Product',rank:4400},
     prod_prod_code: {label: "Product Code", data_type: :string, module_type: 'Product',rank:2100},
-    prod_prog_code: {label: 'US - OGA Program Code', data_type: :string, module_type: 'Product'},
+    prod_prog_code: {label: 'US - OGA Program Code', data_type: :string, module_type: 'Product',rank:4350},
     prod_quaker_validated_by: {label: 'Validated By (Quaker)', data_type: :integer, module_type:'Product', is_user: true, read_only: true},
     prod_quaker_validated_date: {label: 'Validated Date (Quaker)', data_type: :datetime, module_type:'Product', read_only: true},
     prod_recod: {label: 'US - Recon', data_type: :boolean, module_type: 'Product',rank:2600},

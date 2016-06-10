@@ -3,6 +3,7 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
   include OpenChain::CustomHandler::Pepsi::PepsiCustomDefinitionSupport
 
   NEW_FIELDS = [
+    :class_audit,
     :class_ior,
     :class_fta_start,
     :class_fta_end,
