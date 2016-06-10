@@ -138,8 +138,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       o = Order.first
       expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
-      expect(o.ship_window_start.strftime('%Y%m%d')).to eq '20140912'
-      expect(o.ship_window_end.strftime('%Y%m%d')).to eq '20140919'
+      expect(o.ship_window_start.strftime('%Y%m%d')).to eq '20140909'
+      expect(o.ship_window_end.strftime('%Y%m%d')).to eq '20140916'
     end
 
     it "should use ship to address from header if nothing at line" do
