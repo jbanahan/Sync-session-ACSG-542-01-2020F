@@ -84,10 +84,12 @@ describe SnapshotDescriptor do
       expect(descriptor.children.second.children.first.entity_class).to eq BrokerInvoiceLine
     end
 
-    it "allows for directly referencing core modules in type to use their snapshot descriptor" do
+    it "allows for directly referencing core module classes as 'descriptor' attribute to use their snapshot descriptor" do
+      repo = {}
+      repo[Folder] = CoreModule::FOLDER.snapshot_descriptor
       descriptor = SnapshotDescriptor.for(Order, {
-        folders: { type: CoreModule::FOLDER }
-      })
+        folders: { descriptor: Folder }
+      }, descriptor_repository: repo)
 
       # This test relies on knowing the snapshot structure of folder
       expect(descriptor.children.size).to eq 1
