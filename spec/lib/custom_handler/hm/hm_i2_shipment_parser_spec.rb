@@ -118,7 +118,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
         us_product
 
         invoice = nil
-        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.any_instance.should_receive(:generate_and_send) do |file_number, inv|
+        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.any_instance.should_receive(:generate_and_send_invoices) do |file_number, inv|
           expect(file_number).to be_nil
           invoice = inv
         end
