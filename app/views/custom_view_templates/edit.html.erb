@@ -4,8 +4,8 @@
     var id = scope.getId(window.location.href);
     scope.loadTemplate(id);
     $("#btn_save").click(function() {
-      angular.element('#controller').scope().saveTemplate();
-      (window.location = '<%=url_for action: 'index'%>').reload()
+      scope.saveTemplate();
+      window.location = '<%=url_for action: 'index'%>' + '?nocache=' + (new Date()).getTime();
     });
     $("#btn_cancel").click(function() {
       window.location = '<%=url_for action: 'index'%>';
