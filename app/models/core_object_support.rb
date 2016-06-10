@@ -21,6 +21,7 @@ module CoreObjectSupport
     has_many :business_validation_results, as: :validatable, dependent: :destroy
     has_many :workflow_instances, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object
+    has_many :folders, as: :base_object, dependent: :destroy, inverse_of: :base_object
 
     has_one :workflow_processor_run, as: :base_object, dependent: :destroy, inverse_of: :base_object
     
