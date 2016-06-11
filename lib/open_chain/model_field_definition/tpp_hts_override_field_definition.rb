@@ -25,7 +25,7 @@ module OpenChain; module ModelFieldDefinition; module TppHtsOverrideFieldDefinit
         qualified_field_name: "IF(#{TppHtsOverride.active_where_clause},true,false)"
       }],
       [6, :tpphtso_start_date, :start_date, 'Start Date', {data_type: :date}],
-      [7, :tpp_htso_end_date, :end_date, 'End Date', {data_type: :date}]
+      [7, :tpphtso_end_date, :end_date, 'End Date', {data_type: :date}]
     ]
   end
 end; end; end
