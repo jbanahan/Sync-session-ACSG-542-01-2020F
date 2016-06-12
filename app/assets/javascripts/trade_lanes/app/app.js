@@ -40,6 +40,14 @@
         url: '/tpp/edit/:id',
         controller: 'EditTppCtrl',
         templateUrl: 'trade_lanes/partials/tpp/edit.html'
+      }).state('htso-edit', {
+        url: '/htso/edit/:id',
+        controller: 'EditHtsoCtrl',
+        templateUrl: 'trade_lanes/partials/htso/edit.html'
+      }).state('htso-new', {
+        url: '/htos/new/:tppid',
+        controller: 'NewHtsoCtrl',
+        templateUrl: 'trade_lanes/partials/htso/new.html'
       });
     }
   ]);
@@ -72,6 +80,46 @@
         return chainApiSvc.TradeLane.load(lane.id).then(function(resp) {
           return $state.transitionTo('show', {
             id: resp.id
+          });
+        });
+      };
+      if (!$scope.$root.isTest) {
+        return $scope.init($stateParams.id);
+      }
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainTradeLanes').controller('EditHtsoCtrl', [
+    '$scope', '$stateParams', '$state', 'chainApiSvc', 'chainDomainerSvc', function($scope, $stateParams, $state, chainApiSvc, chainDomainerSvc) {
+      $scope.init = function(id) {
+        $scope.loading = 'loading';
+        return chainApiSvc.TppHtsOverride.get(id).then(function(htso) {
+          $scope.htso = htso;
+          return chainApiSvc.TradePreferenceProgram.get(htso.tpphtso_trade_preference_program_id).then(function(tpp) {
+            $scope.tpp = tpp;
+            return chainDomainerSvc.withDictionary().then(function(d) {
+              $scope.dict = d;
+              return delete $scope.loading;
+            });
+          });
+        });
+      };
+      $scope.cancel = function(htso) {
+        $scope.loading = 'loading';
+        return chainApiSvc.TppHtsOverride.load(htso.id).then(function(h) {
+          return $state.transitionTo('tpp-show', {
+            id: h.tpphtso_trade_preference_program_id
+          });
+        });
+      };
+      $scope.save = function(htso) {
+        $scope.loading = 'loading';
+        return chainApiSvc.TppHtsOverride.save(htso).then(function(h) {
+          return $state.transitionTo('tpp-show', {
+            id: h.tpphtso_trade_preference_program_id
           });
         });
       };
@@ -151,11 +199,21 @@
 
 }).call(this);
 
-angular.module('ChainTradeLanes-Templates', ['trade_lanes/partials/edit.html', 'trade_lanes/partials/index.html', 'trade_lanes/partials/new.html', 'trade_lanes/partials/show.html', 'trade_lanes/partials/tpp/edit.html', 'trade_lanes/partials/tpp/new.html', 'trade_lanes/partials/tpp/show.html']);
+angular.module('ChainTradeLanes-Templates', ['trade_lanes/partials/edit.html', 'trade_lanes/partials/htso/edit.html', 'trade_lanes/partials/htso/new.html', 'trade_lanes/partials/index.html', 'trade_lanes/partials/new.html', 'trade_lanes/partials/show.html', 'trade_lanes/partials/tpp/edit.html', 'trade_lanes/partials/tpp/new.html', 'trade_lanes/partials/tpp/show.html']);
 
 angular.module("trade_lanes/partials/edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("trade_lanes/partials/edit.html",
     "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>Edit Trade Lane</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{lane.lane_origin_cntry_iso}}\"></chain-flag-icon>{{lane.lane_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{lane.lane_destination_cntry_iso}}\"></chain-flag-icon>{{lane.lane_destination_cntry_name}}</h3></div></div><div class=\"row\"><div class=\"col-md-12\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"lane\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TradeLane) | chainSkipReadOnly | chainViewFields:['lane_destination_cntry_iso','lane_destination_cntry_name','lane_origin_cntry_iso','lane_origin_cntry_name']:true track by fld.uid\"><label class=\"control-label\">{{fld.label}}</label><p class=\"form-control-static\"><chain-field-input model=\"lane\" field=\"fld\" input-class=\"form-control\"></chain-field-input></p></li></ul><div class=\"panel-footer text-right\"><button class=\"btn btn-sm btn-default\" ng-click=\"cancel(lane)\">Cancel</button> <button class=\"btn btn-sm btn-success\" ng-click=\"save(lane)\">Save</button></div></div></div></div></div></chain-loading-wrapper>");
+}]);
+
+angular.module("trade_lanes/partials/htso/edit.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("trade_lanes/partials/htso/edit.html",
+    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>Edit HTS Override</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_origin_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_destination_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_destination_cntry_name}}</h3></div></div><div class=\"row\"><div class=\"col-md-12\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"htso\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TppHtsOverride) | chainSkipReadOnly | chainViewFields:['tpphtso_trade_preference_program_id']:true track by fld.uid\"><label class=\"control-label\">{{fld.label}}</label><p class=\"form-control-static\"><chain-field-input model=\"htso\" field=\"fld\" input-class=\"form-control\"></chain-field-input></p></li></ul><div class=\"panel-footer text-right\"><button class=\"btn btn-sm btn-default\" ng-click=\"cancel(htso)\">Cancel</button> <button class=\"btn btn-sm btn-success\" ng-click=\"save(htso)\">Save</button></div></div></div></div></div></chain-loading-wrapper>");
+}]);
+
+angular.module("trade_lanes/partials/htso/new.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("trade_lanes/partials/htso/new.html",
+    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>New HTS Override</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_origin_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_destination_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_destination_cntry_name}}</h3></div></div><div class=\"row\"><div class=\"col-md-12\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"htso\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TppHtsOverride) | chainSkipReadOnly | chainViewFields:['tpphtso_trade_preference_program_id']:true track by fld.uid\"><chain-field-label field=\"fld\"></chain-field-label><p class=\"form-control-static\"><chain-field-input model=\"htso\" field=\"fld\" input-class=\"form-control\"></chain-field-input></p></li></ul><div class=\"panel-footer text-right\"><button class=\"btn btn-sm btn-default\" ng-click=\"cancel(htso)\">Cancel</button> <button class=\"btn btn-sm btn-success\" ng-click=\"save(htso)\">Save</button></div></div></div></div></div></chain-loading-wrapper>");
 }]);
 
 angular.module("trade_lanes/partials/index.html", []).run(["$templateCache", function($templateCache) {
@@ -185,7 +243,7 @@ angular.module("trade_lanes/partials/tpp/new.html", []).run(["$templateCache", f
 
 angular.module("trade_lanes/partials/tpp/show.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("trade_lanes/partials/tpp/show.html",
-    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>{{tpp.tpp_name}}</h1><h3><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_origin_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_origin_cntry_name}} <i class=\"fa fa-arrow-right\"></i><chain-flag-icon img-class=\"mini-flag\" iso-code=\"{{tpp.tpp_destination_cntry_iso}}\"></chain-flag-icon>{{tpp.tpp_destination_cntry_name}}</h3></div></div><div class=\"row\"><div class=\"col-md-6\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"tpp\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TradePreferenceProgram) | chainFieldsWithValues:tpp | chainViewFields:['tpp_destination_cntry_iso','tpp_destination_cntry_name','tpp_origin_cntry_iso','tpp_origin_cntry_name','tpp_name']:true track by fld.uid\"><label class=\"control-label\">{{fld.label}}</label><p class=\"form-control-static\"><chain-field-value model=\"tpp\" field=\"fld\"></chain-field-value></p></li></ul><div class=\"panel-footer text-right\" ng-if=\"tpp.permissions.can_edit\"><button ng-click=\"edit(tpp)\" class=\"btn btn-xs btn-default\"><i class=\"fa fa-edit\"></i></button></div></div></div><div class=\"col-md-6\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">HTS Overrides</h3></div><div class=\"panel-body\"><chain-search-table api-object-name=\"TppHtsOverride\" load-trigger=\"overrideSearchSetup.doLoad\" search-setup=\"overrideSearchSetup\"></chain-search-table></div><div class=\"panel-footer\"></div></div></div></div></div></chain-loading-wrapper>");
+    "<chain-loading-wrapper loading=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><h1>{{tpp.tpp_name}}</h1></div></div><div class=\"row\"><div class=\"col-md-6 text-center\"><div><chain-flag-icon iso-code=\"{{tpp.tpp_origin_cntry_iso}}\"></chain-flag-icon></div><div><chain-flag-icon iso-code=\"{{tpp.tpp_destination_cntry_iso}}\"></chain-flag-icon></div></div><div class=\"col-md-6\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attributes</h3></div><ul class=\"list-group\" ng-if=\"tpp\"><li class=\"list-group-item\" ng-repeat=\"fld in dict.fieldsByRecordType(dict.recordTypes.TradePreferenceProgram) | chainFieldsWithValues:tpp | chainViewFields:['tpp_destination_cntry_iso','tpp_destination_cntry_name','tpp_origin_cntry_iso','tpp_origin_cntry_name','tpp_name']:true track by fld.uid\"><label class=\"control-label\">{{fld.label}}</label><p class=\"form-control-static\"><chain-field-value model=\"tpp\" field=\"fld\"></chain-field-value></p></li></ul><div class=\"panel-footer text-right\" ng-if=\"tpp.permissions.can_edit\"><button ng-click=\"edit(tpp)\" class=\"btn btn-xs btn-default\" title=\"Edit Override\"><i class=\"fa fa-edit\"></i></button></div></div></div></div><div class=\"row\"><div class=\"col-md-12\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">HTS Overrides</h3></div><div class=\"panel-body\"><chain-search-table api-object-name=\"TppHtsOverride\" load-trigger=\"overrideSearchSetup.doLoad\" search-setup=\"overrideSearchSetup\"></chain-search-table></div><div class=\"panel-footer text-right\"><button ng-click=\"newOverride(tpp)\" class=\"btn btn-xm btn-success\" title=\"New Override\"><i class=\"fa fa-plus\"></i></button></div></div></div></div></div></chain-loading-wrapper>");
 }]);
 
 (function() {
@@ -249,6 +307,43 @@ angular.module("trade_lanes/partials/tpp/show.html", []).run(["$templateCache", 
       }
       $scope.$watch('vals.origin', validateMe);
       return $scope.$watch('vals.destination', validateMe);
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainTradeLanes').controller('NewHtsoCtrl', [
+    '$scope', '$state', '$stateParams', 'chainApiSvc', 'chainDomainerSvc', function($scope, $state, $stateParams, chainApiSvc, chainDomainerSvc) {
+      $scope.htso = {};
+      $scope.init = function(tppId) {
+        $scope.loading = 'loading';
+        return chainDomainerSvc.withDictionary().then(function(dict) {
+          $scope.dict = dict;
+          return chainApiSvc.TradePreferenceProgram.get(tppId).then(function(tpp) {
+            $scope.tpp = tpp;
+            $scope.htso.tpphtso_trade_preference_program_id = tpp.id;
+            return delete $scope.loading;
+          });
+        });
+      };
+      $scope.save = function(htso) {
+        $scope.loading = 'loading';
+        return chainApiSvc.TppHtsOverride.save(htso).then(function(h) {
+          return $state.transitionTo('tpp-show', {
+            id: h.tpphtso_trade_preference_program_id
+          });
+        });
+      };
+      $scope.cancel = function(htso) {
+        $scope.loading = 'loading';
+        return $state.transitionTo('tpp-show', {
+          id: htso.tpphtso_trade_preference_program_id
+        });
+      };
+      if (!$scope.$root.isTest) {
+        return $scope.init($stateParams.tppid);
+      }
     }
   ]);
 
@@ -358,7 +453,16 @@ angular.module("trade_lanes/partials/tpp/show.html", []).run(["$templateCache", 
         });
       };
       $scope.editOverride = function(override) {
-        return console.log(override);
+        $scope.loading = 'loading';
+        return $state.transitionTo('htso-edit', {
+          id: override.id
+        });
+      };
+      $scope.newOverride = function(tpp) {
+        $scope.loading = 'loading';
+        return $state.transitionTo('htso-new', {
+          tppid: tpp.id
+        });
       };
       $scope.overrideSearchSetup = {
         doLoad: false,
@@ -368,13 +472,18 @@ angular.module("trade_lanes/partials/tpp/show.html", []).run(["$templateCache", 
             field: 'tpphtso_trade_preference_program_id'
           }
         ],
-        columns: ['tpphtso_hts_code', 'tpphtso_rate', 'tpphtso_active'],
+        columns: ['tpphtso_hts_code', 'tpphtso_rate', 'tpphtso_active', 'tpphtso_note', 'tpphtso_start_date', 'tpphtso_end_date'],
         buttons: [
           {
             label: 'Edit',
             "class": 'btn btn-xs btn-default',
             iconClass: 'fa fa-edit',
             onClick: $scope.editOverride
+          }
+        ],
+        sorts: [
+          {
+            field: 'tpphtso_hts_code'
           }
         ],
         bulkSelections: {}

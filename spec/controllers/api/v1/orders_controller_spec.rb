@@ -15,6 +15,14 @@ describe Api::V1::OrdersController do
       j = JSON.parse response.body
       expect(j['results'].collect{|r| r['ord_ord_num']}).to eq ['123','ABC']
     end
+    it 'should count orders' do
+      Factory(:order,order_number:'123')
+      Factory(:order,order_number:'ABC')
+      get :index, count_only: 'true'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['record_count']).to eq 2
+    end
   end
   describe :get do
     it "should append custom_view to order if not nil" do
@@ -136,7 +144,7 @@ describe Api::V1::OrdersController do
       ord = Factory(:order)
       bvt = BusinessValidationTemplate.create!(module_type:'Order')
       bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
-      
+
       post :validate, id: ord.id, :format => 'json'
       expect(bvt.business_validation_results.first.validatable).to eq ord
       expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Order"

@@ -3,6 +3,13 @@
 
 /*# sourceMappingURL=chain_address.css.map */
 
+i.required-icon {
+  color: #CC0000;
+  font-size: xx-small;
+  vertical-align: top; }
+
+/*# sourceMappingURL=chain_field_label.css.map */
+
 chain-field-value pre {
   white-space: pre-line;
   word-break: normal; }
@@ -78,6 +85,12 @@ chain-field-value pre {
   padding-left: 1em; }
 
 /*# sourceMappingURL=chain_messages_modal.css.map */
+
+.chain-search-table .page-selector {
+  display: inline;
+  width: auto; }
+
+/*# sourceMappingURL=chain_search_table.css.map */
 
 .control-label {
   font-size: small;

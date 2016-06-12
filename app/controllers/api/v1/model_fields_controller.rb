@@ -42,6 +42,7 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
         mf_h['user_id_field'] = true if mf.user_id_field?
         mf_h['user_field'] = true if mf.user_field?
         mf_h['user_full_name_field'] = true if mf.user_full_name_field?
+        mf_h['required'] = true if mf.required?
         h['fields'] << mf_h
       end
     end
