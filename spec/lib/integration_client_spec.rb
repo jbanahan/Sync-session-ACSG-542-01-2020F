@@ -109,6 +109,13 @@ describe OpenChain::IntegrationClientCommandProcessor do
         cmd = {'request_type'=>'remote_file','path'=>'/_lands_end_parts/a.xml','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
+      it "sends data to Lands End Canada Plus processor" do
+        u = Factory(:user,:username=>'integration')
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('Lands End Canada Plus').and_return(true)
+        OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_lands_end_canada_plus/a.zip','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
     end
     context :jjill do
       it "should send data to J Jill 850 parser" do
