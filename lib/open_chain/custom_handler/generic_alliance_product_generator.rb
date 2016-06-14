@@ -116,7 +116,7 @@ IF(length(#{cd_s @cdefs[:prod_country_of_origin].id, suppress_alias: true})=2,#{
 #{cd_s @cdefs[:prod_fda_affirmation_compliance].id}
 FROM products
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
-INNER JOIN tariff_records on length(tariff_records.hts_1)=10 AND tariff_records.classification_id = classifications.id
+INNER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id
 QRY
         if @custom_where.blank?
           qry += "#{Product.need_sync_join_clause(sync_code)} 

@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
     let (:product) {
       p = Factory(:product, unique_identifier: "0000000123", name: "Description")
       c = p.classifications.create! country: us
-      c.tariff_records.create! hts_1: "1234567890"
+      c.tariff_records.create! hts_1: "12345678"
 
       p
     }
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
       expect(file.length).to eq 1
       expect(file[0][0, 15]).to eq "123            "
       expect(file[0][15, 40]).to eq "Description                             "
-      expect(file[0][55, 10]).to eq "1234567890"
+      expect(file[0][55, 10]).to eq "12345678  "
       # Make sure nothing comes after the name field
       expect(file[0][66]).to be_nil
 
