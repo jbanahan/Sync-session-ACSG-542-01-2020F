@@ -52,7 +52,9 @@ describe Api::V1::TppHtsOverridesController do
           'tpphtso_hts_code'=>'1234567890',
           'tpphtso_rate'=>'0.39',
           'tpphtso_note'=>'ca',
-          'tpphtso_trade_preference_program_id'=>tpp.id.to_s
+          'tpphtso_trade_preference_program_id'=>tpp.id.to_s,
+          'tpphtso_start_date'=>'2016-01-01',
+          'tpphtso_end_date'=>'2016-12-31'
         }
       }
     end

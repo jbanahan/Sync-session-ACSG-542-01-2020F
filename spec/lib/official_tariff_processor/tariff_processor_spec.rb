@@ -4,7 +4,7 @@ describe OpenChain::OfficialTariffProcessor::TariffProcessor do
   describe :process_country do
     it "should do nothing if country not in registry" do
       c = double(:country)
-      OpenChain::OfficialTariff::TariffProcessorRegistry.should_receive(:get).with(c).and_return nil
+      OpenChain::OfficialTariffProcessor::TariffProcessorRegistry.should_receive(:get).with(c).and_return nil
       # shouldn't fail
       described_class.process_country(c)
     end
