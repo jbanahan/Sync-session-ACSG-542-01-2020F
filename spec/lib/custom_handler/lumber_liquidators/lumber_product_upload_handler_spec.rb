@@ -118,6 +118,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
 
         f = ImportedFile.first
         expect(f).not_to be_nil
+        expect(f.update_mode).to eq "update"
+        expect(f.starting_column).to eq 1
+        expect(f.starting_row).to eq 1
+        expect(f.module_type).to eq "Product"
+        expect(f.user).to eq user
+
         ss = f.search_setup
         expect(ss).not_to be_nil
         expect(ss.name).to eq "US Parts Upload (Do Not Delete or Modify)"
@@ -153,6 +159,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
 
         f = ImportedFile.first
         expect(f).not_to be_nil
+        expect(f).not_to be_nil
+        expect(f.update_mode).to eq "update"
+        expect(f.starting_column).to eq 1
+        expect(f.starting_row).to eq 1
+        expect(f.module_type).to eq "Product"
+        expect(f.user).to eq user
+        
         ss = f.search_setup
         expect(ss).not_to be_nil
         expect(ss.name).to eq "CA Parts Upload (Do Not Delete or Modify)"
