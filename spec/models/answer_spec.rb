@@ -95,15 +95,23 @@ describe Answer do
     a = Factory(:answer)
     a.survey_response.update_attributes(:updated_at=>1.week.ago)
     a.choice = "X"
-    a.save!
-    SurveyResponse.find(a.survey_response_id).updated_at.should > 1.second.ago
+    now = Time.zone.now
+    Timecop.freeze(now) do
+      a.save!
+    end
+
+    expect(SurveyResponse.find(a.survey_response_id).updated_at.to_i).to eq now.to_i
   end
 
   describe "attachment_added" do
     it "updates updated_at when an attachment is added" do
       a = Factory(:answer, updated_at: 5.days.ago)
-      a.attachment_added nil
-      expect(a.updated_at).to be_within(5.seconds).of(Time.zone.now)
+      now = Time.zone.now
+      Timecop.freeze(now) do
+        a.attachment_added nil
+      end
+      
+      expect(a.updated_at.to_i).to eq(now.to_i)
     end
   end
 end
