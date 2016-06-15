@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor do
       expect(DrawbackUploadFile.count).to eq 1
       expect(upload.processor).to eq "lands_end_exports"
       expect(upload.start_at).not_to be_nil
-      expect(upload.attachment.attached_file_name).to eq "b3.txt"
+      expect(upload.attachment.attached_file_name).to match(/b3_\d{8}.txt/)
     end
 
     it "skips files with extension other than 'txt'" do

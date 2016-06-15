@@ -12,7 +12,8 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeCanadaPlusProce
         if File.extname(z.name) == ".txt"
           Tempfile.open(["le_drawback", ".txt"]) do |t|
             z.extract(t.path) {true}
-            Attachment.add_original_filename_method(t, z.name)
+            att_name = "#{File.basename(z.name, ".*")}_#{Time.now.strftime('%Y%m%d')}#{File.extname(z.name)}"
+            Attachment.add_original_filename_method(t, att_name)
             create_upload t
           end
         end
