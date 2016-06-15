@@ -37,6 +37,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     ord.reload if reset_vendor_approvals ord, old_data, new_data
     ord.reload if reset_product_compliance_approvals ord, old_data, new_data
     ord.reload if update_autoflow_approvals ord
+    ord.reload if reset_po_cancellation ord, new_data
 
     # if we changed the default values then the PDF should be generated from the comparator
     # that is triggered by that snapshot.  Otherwise, we'll get 2 PDFs.
@@ -89,6 +90,51 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       return true
     end
     return false
+  end
+
+  def self.reset_po_cancellation ord, new_data
+    ActiveRecord::Base.transaction do
+      most_recent_dates = most_recent_dates ord
+      num_lines = get_num_lines new_data
+      new_dates = get_new_dates ord, most_recent_dates, num_lines
+      (most_recent_dates[:cancel_date] != new_dates[:cancel_date]) || (most_recent_dates[:closed_at] != new_dates[:closed_at])
+    end
+  end
+
+  def self.most_recent_dates ord
+    cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
+    cancelled = ord.get_custom_value(cdef).value
+    {cancel_date: cancelled, closed_at: ord.closed_at}
+  end
+
+  def self.get_num_lines new_data
+    new_data.line_hash.keys.count
+  end
+
+  def self.get_new_dates ord, most_recent_dates, num_lines
+    cval, cdef = get_cancelled_date ord
+    if num_lines > 0
+      ord.reopen! User.integration
+      uncancel_order ord, cdef, cval
+    else
+      ord.close! User.integration
+      cancel_order ord, cdef, cval
+    end
+    {cancel_date: cval.value, closed_at: ord.closed_at}
+  end
+
+  def self.get_cancelled_date ord
+    cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
+    cval = ord.get_custom_value(cdef)
+    [cval, cdef]
+  end
+
+  def self.cancel_order ord, cdef, cval
+    ord.update_custom_value!(cdef, Date.today) unless cval.value
+  end
+
+  def self.uncancel_order ord, cdef, cval
+    ord.update_custom_value!(cdef, nil) if cval.value
   end
 
   class OrderData
