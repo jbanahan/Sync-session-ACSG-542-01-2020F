@@ -9,11 +9,10 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeCanadaPlusProce
   def self.process_zip file
     Zip::File.open(file.path) do |zip_file|
       zip_file.each do |z|
-        filename = z.name
-        if filename.split('.').last == 'txt'
+        if File.extname(z.name) == ".txt"
           Tempfile.open(["le_drawback", ".txt"]) do |t|
             z.extract(t.path) {true}
-            Attachment.add_original_filename_method(t, filename)
+            Attachment.add_original_filename_method(t, z.name)
             create_upload t
           end
         end
