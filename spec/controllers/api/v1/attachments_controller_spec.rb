@@ -16,13 +16,35 @@ describe Api::V1::AttachmentsController do
     end
     describe "show" do
       it "retrieves attachment data" do
-        get :show, attachable_type: Product.model_name.route_key, attachable_id: @attachable.id, id: @attachment.id
+        get :show, attachable_type: "products", attachable_id: @attachable.id, id: @attachment.id
 
         expect(response).to be_success
         j = JSON.parse response.body
 
         expect(j).to eq({
           id: @attachment.id,
+          name: "file.txt",
+          size: "1 KB",
+          type: "Attachment Type",
+          user: {
+            id: @user.id,
+            username: @user.username,
+            full_name: @user.full_name
+          }
+        }.with_indifferent_access)
+      end
+
+      it "retrieves attachment data using actual model name" do
+        inv = Factory(:commercial_invoice)
+        att = Attachment.create! attached_file_name: "file.txt", attachable: inv, uploaded_by: @user, attachment_type: "Attachment Type", attached_file_size: 1024
+        Attachment.any_instance.should_receive(:can_view?).with(@user).and_return true
+        get :show, attachable_type: "CommercialInvoice", attachable_id: inv.id, id: att.id
+
+        expect(response).to be_success
+        j = JSON.parse response.body
+
+        expect(j).to eq({
+          id: att.id,
           name: "file.txt",
           size: "1 KB",
           type: "Attachment Type",

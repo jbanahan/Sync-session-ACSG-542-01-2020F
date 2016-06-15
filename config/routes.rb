@@ -174,6 +174,8 @@ OpenChain::Application.routes.draw do
           get :copy, on: :member
           get :model_fields, on: :collection
         end
+
+        resources :groups, only: [:create, :update, :destroy]
       end
 
       resources :fenix_postbacks, only: [] do
@@ -189,6 +191,14 @@ OpenChain::Application.routes.draw do
       resources :support_requests, only: [:create]
 
       resources :search_criterions, only: [:index, :create, :update, :destroy]
+
+      get "/:base_object_type/:base_object_id/folders" => "folders#index"
+      post "/:base_object_type/:base_object_id/folder" => "folders#create"
+      get "/:base_object_type/:base_object_id/folder/:id" => "folders#show"
+      put "/:base_object_type/:base_object_id/folder/:id" => "folders#update"
+      delete "/:base_object_type/:base_object_id/folder/:id" => "folders#destroy"
+
+      resources :groups, only: [:index, :show]
     end
   end
 

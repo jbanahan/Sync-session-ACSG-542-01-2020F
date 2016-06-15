@@ -46,6 +46,10 @@ module Api; module V1; class ApiController < ActionController::Base
     end
   end
 
+  def render_ok
+    render json: {ok: 'ok'}
+  end
+
   private
     def validate_format
       if !request.headers["HTTP_ACCEPT"].match(/application\/json/)

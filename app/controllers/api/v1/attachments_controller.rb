@@ -8,7 +8,6 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
 
   def show
     att = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type]), id: params[:id]).first
-
     if att && att.can_view?(current_user)
       render json: Attachment.attachment_json(att)
     else
@@ -89,24 +88,11 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
       # 2) Send the snake_case pluralized form that would be used in a standard rails route.
       # In general though, it's going to take 'snake_cases' and turn it into 'SnakeCase' and then verify the value
       # can be constantized and is an ActiveModel class
-
       # first, just attempt to constantize the type name straight off, since we do allow sending the type directly, .ie "Entry" vs. "entries"
-      camelized_type = type.to_s.camelize
-      attachable_type = validate_attachable_class_name(type.camelize)
-      if attachable_type.nil?
-        attachable_type = validate_attachable_class_name(camelized_type.singularize)
-      end
-
-      raise StatusableError.new("Invalid attachable_type.", :internal_server_error) if attachable_type.nil?
-
-      attachable_type
-    end
-
-    def validate_attachable_class_name class_name
       begin
-        constantize(class_name) ? class_name : nil
+        return constantize(type).name
       rescue
-        nil
+        raise StatusableError.new("Invalid attachable_type.", :internal_server_error)
       end
     end
 

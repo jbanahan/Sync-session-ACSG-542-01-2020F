@@ -199,30 +199,8 @@ class User < ActiveRecord::Base
   end
 
   # return hash suitable for api controller (doing it here since we also use it outside of the controller)
-  def api_hash
-    permissions_hash = {
-      view_orders: self.view_orders?,
-      edit_orders: self.edit_orders?,
-      view_vendor_portal: self.view_vendor_portal?,
-      view_products: self.view_products?,
-      edit_products: self.edit_products?,
-      view_official_tariffs: self.view_official_tariffs?,
-      view_shipments: self.view_shipments?,
-      edit_shipments: self.edit_shipments?,
-      view_security_filings: self.view_security_filings?,
-      view_entries: self.view_entries?,
-      view_broker_invoices: self.view_broker_invoices?,
-      view_summary_statements: self.view_summary_statements?,
-      edit_summary_statements: self.edit_summary_statements?,
-      view_drawback: self.view_drawback?,
-      edit_drawback: self.edit_drawback?,
-      upload_drawback: self.edit_drawback?,
-      view_survey_responses: !self.survey_responses.empty? || self.view_surveys?,
-      view_surveys: self.view_surveys?,
-      view_vendors: self.view_vendors?,
-      create_vendors: self.create_vendors?
-    }
-    return {
+  def api_hash include_permissions: true
+    hash = {
       id: self.id,
       full_name: self.full_name,
       first_name: self.first_name,
@@ -230,9 +208,35 @@ class User < ActiveRecord::Base
       email: self.email,
       email_new_messages: self.email_new_messages,
       username: self.username,
-      permissions: permissions_hash,
       company_id: self.company_id
     }
+
+    if include_permissions
+      hash[:permissions] = {
+        view_orders: self.view_orders?,
+        edit_orders: self.edit_orders?,
+        view_vendor_portal: self.view_vendor_portal?,
+        view_products: self.view_products?,
+        edit_products: self.edit_products?,
+        view_official_tariffs: self.view_official_tariffs?,
+        view_shipments: self.view_shipments?,
+        edit_shipments: self.edit_shipments?,
+        view_security_filings: self.view_security_filings?,
+        view_entries: self.view_entries?,
+        view_broker_invoices: self.view_broker_invoices?,
+        view_summary_statements: self.view_summary_statements?,
+        edit_summary_statements: self.edit_summary_statements?,
+        view_drawback: self.view_drawback?,
+        edit_drawback: self.edit_drawback?,
+        upload_drawback: self.edit_drawback?,
+        view_survey_responses: !self.survey_responses.empty? || self.view_surveys?,
+        view_surveys: self.view_surveys?,
+        view_vendors: self.view_vendors?,
+        create_vendors: self.create_vendors?
+      }
+    end
+
+    hash
   end
 
   # override default clearance email authentication

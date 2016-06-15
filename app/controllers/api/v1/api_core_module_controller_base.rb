@@ -1,13 +1,8 @@
-require 'open_chain/api/api_entity_jsonizer'
 require 'api/v1/state_toggle_support'
 
 module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiController
   include Api::V1::StateToggleSupport
-  attr_accessor :jsonizer
-
-  def initialize jsonizer = OpenChain::Api::ApiEntityJsonizer.new
-    @jsonizer = jsonizer
-  end
+  include Api::V1::ApiJsonSupport
 
   # The param key to expect the actual object data to be posted into .ie params[:product] -> :product = object_param_name
   def object_param_name
@@ -72,46 +67,6 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     end
   end
 
-  def requested_field_list
-    fields = params[:fields]
-
-    if fields.nil?
-      # The mf_uid param name is a holdover from a pre-v1 API call.  Not all clients have
-      # been updated yet to use 'fields' instead
-      fields = params[:mf_uids]
-    end
-
-    # Depending on how params are sent, the fields could be an array or a string.
-    # query string like "mf_uid[]=uid&mf_uid[]=uid2" will result in an array (rails takes care of this for us
-    # so do most other web application frameworks and lots of tools autogenerate parameters like this so we'll support it)
-    # query string like "mf_uid=uid,uid2,uid2" results in a string
-    unless fields.is_a?(Enumerable) || fields.blank?
-      fields = fields.split(/[,~]/).collect {|v| v.strip!; v.blank? ? nil : v}.compact
-    end
-
-    fields = [] if fields.blank?
-
-    fields
-  end
-
-  # limit list of fields to render to only those that client requested and can see
-  # Render every field if client didn't request any
-  def limit_fields field_list
-    client_fields = requested_field_list
-
-    if !client_fields.blank?
-      # don't to_sym the client fields since symbols aren't gc'ed yet in ruby version we use,
-      # change the given field list to strings and compare
-      field_list = field_list.map {|f| f.to_s} & client_fields
-    end
-
-    user = current_user
-    field_list = field_list.delete_if {|uid| !ModelField.find_by_uid(uid).can_view?(user) }
-
-    # Change back to symbols
-    field_list.map {|f| f.to_sym}
-  end
-
   # load data into object via model fields
   # This method should be avoided unless for some reason you cannot use
   # update_model_field_attributes on your core_object
@@ -129,13 +84,8 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     nil
   end
 
-  #render field for json
-  def export_field model_field_uid, obj
-    jsonizer.export_field current_user, obj, ModelField.find_by_uid(model_field_uid)
-  end
-
   def render_attachments?
-    params[:include] && params[:include].match(/attachments/)
+    include_association?("attachments")
   end
 
   # add attachments array to root of hash
@@ -184,13 +134,6 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
       # Freezing at this point makes the snapshot run faster, and any actual data load that's done following the save
       obj.freeze_all_custom_values_including_children
     end
-  end
-
-  # Utilizes the internal jsonizer object to generate an object hash
-  # containing the values for the given object for every model field uid listed in the
-  # field_list argument.
-  def to_entity_hash(obj, field_list)
-    jsonizer.entity_to_hash(current_user, obj, field_list.map {|f| f.to_s})
   end
 
   def render_search core_module

@@ -9,7 +9,6 @@ class SnapshotWriter
   
     def hash_for_entity entity_descriptor, entity
       core_module = core_module_for_entity(entity)
-      byebug if core_module.nil?
       base_hash = {'entity'=> write_core_entity_fields(core_module, entity)}
       
       children = hash_for_entity_children(entity_descriptor.children, entity)

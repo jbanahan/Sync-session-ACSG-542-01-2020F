@@ -5,13 +5,17 @@ module PolymorphicFinders
     constantize(model_name).find model_id
   end
 
+  def polymorphic_where model_name, model_id
+    constantize(model_name).where(id: model_id)
+  end
+
   def polymorphic_scope model_name
     # Change to .all for rails 4.x (scoped is removed)
     constantize(model_name).scoped
   end
 
   def constantize model_name
-    model_class = model_name.to_s.camelize.constantize
+    model_class = model_name.to_s.camelize.singularize.constantize
 
     if validate_polymorphic_class model_class
       model_class
