@@ -26,22 +26,6 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
     render_model_field_list CoreModule::PRODUCT
   end
 
-  def index
-    render_search core_module
-  end
-
-  def show
-    render_show core_module
-  end
-
-  def create
-    do_create core_module
-  end
-
-  def update
-    do_update core_module
-  end
-
   def save_object obj_hash
     generic_save_object obj_hash
   end
@@ -58,7 +42,7 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
   def obj_to_json_hash obj
     product_fields = limit_fields(
       [:prod_uid, :prod_ent_type, :prod_name, :prod_uom, :prod_changed_at, :prod_last_changed_by, :prod_created_at,
-       :prod_div_name, :prod_imp_name, :prod_imp_syscode] + 
+       :prod_div_name, :prod_imp_name, :prod_imp_syscode] +
       custom_field_keys(CoreModule::PRODUCT)
     )
 
@@ -100,7 +84,7 @@ module Api; module V1; class ProductsController < Api::V1::ApiCoreModuleControll
     }
   end
 
-  def validate 
+  def validate
     prod = Product.find params[:id]
     run_validations prod
   end

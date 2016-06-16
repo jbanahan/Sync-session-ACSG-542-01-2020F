@@ -1,7 +1,7 @@
 module Api; module V1; class AddressesController < Api::V1::ApiCoreModuleControllerBase
 
-  def index
-    render_search CoreModule::ADDRESS
+  def core_module
+    CoreModule::ADDRESS
   end
 
   def autocomplete

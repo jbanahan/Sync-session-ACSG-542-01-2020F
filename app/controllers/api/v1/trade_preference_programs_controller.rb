@@ -3,22 +3,6 @@ module Api; module V1; class TradePreferenceProgramsController < Api::V1::ApiCor
     CoreModule::TRADE_PREFERENCE_PROGRAM
   end
 
-  def index
-    render_search core_module
-  end
-
-  def show
-    render_show core_module
-  end
-
-  def create
-    do_create core_module
-  end
-
-  def update
-    do_update core_module
-  end
-
   def obj_to_json_hash obj
     headers_to_render = limit_fields([
       :tpp_tariff_adjustment_percentage,

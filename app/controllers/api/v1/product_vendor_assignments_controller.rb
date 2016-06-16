@@ -2,13 +2,6 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
   def core_module
     CoreModule::PRODUCT_VENDOR_ASSIGNMENT
   end
-  def index
-    render_search core_module
-  end
-
-  def show
-    render_show core_module
-  end
 
   # create multiple product vendor assignments
   # JSON request must contain two arrays indicating the product & vendor:

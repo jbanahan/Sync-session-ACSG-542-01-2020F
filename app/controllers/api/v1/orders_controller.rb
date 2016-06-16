@@ -6,17 +6,6 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
   def core_module
     CoreModule::ORDER
   end
-  def index
-    render_search CoreModule::ORDER
-  end
-
-  def show
-    render_show CoreModule::ORDER
-  end
-
-  def update
-    do_update CoreModule::ORDER
-  end
 
   def by_order_number
     obj = Order.where(order_number: params[:order_number]).first
@@ -120,7 +109,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     }
   end
 
-  def validate 
+  def validate
     ord = Order.find params[:id]
     run_validations(ord)
   end

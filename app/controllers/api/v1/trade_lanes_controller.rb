@@ -3,22 +3,6 @@ module Api; module V1; class TradeLanesController < Api::V1::ApiCoreModuleContro
     CoreModule::TRADE_LANE
   end
 
-  def index
-    render_search CoreModule::TRADE_LANE
-  end
-
-  def show
-    render_show CoreModule::TRADE_LANE
-  end
-
-  def create
-    do_create CoreModule::TRADE_LANE
-  end
-
-  def update
-    do_update CoreModule::TRADE_LANE
-  end
-
   def obj_to_json_hash obj
     headers_to_render = limit_fields([
       :lane_tariff_adjustment_percentage,

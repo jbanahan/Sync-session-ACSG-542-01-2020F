@@ -3,22 +3,6 @@ module Api; module V1; class TppHtsOverridesController < Api::V1::ApiCoreModuleC
     CoreModule::TPP_HTS_OVERRIDE
   end
 
-  def index
-    render_search core_module
-  end
-
-  def show
-    render_show core_module
-  end
-
-  def create
-    do_create core_module
-  end
-
-  def update
-    do_update core_module
-  end
-
   def obj_to_json_hash obj
     headers_to_render = limit_fields([
       :tpphtso_hts_code,
