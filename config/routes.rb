@@ -95,9 +95,8 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
         post :validate, on: :member
       end
-      resources :variants, only: [:show] do
-
-      end
+      resources :variants, only: [:show]
+      resources :product_rate_overrides, only: [:index, :show, :update, :create]
 
       resources :plants, only: [] do
         get :state_toggle_buttons, on: :member

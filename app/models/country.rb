@@ -78,6 +78,8 @@ class Country < ActiveRecord::Base
 	has_many :official_tariffs
   has_many  :trade_lanes_as_origin, :class_name => 'TradeLane', :foreign_key=>'origin_country_id'
   has_many  :trade_lanes_as_destination, :class_name => 'TradeLane', :foreign_key=>'destination_country_id'
+  has_many  :product_rate_overrides_as_origin, :class_name => 'ProductRateOverride', :foreign_key=>'origin_country_id'
+  has_many  :product_rate_overrides_as_destination, :class_name => 'ProductRateOverride', :foreign_key=>'destination_country_id'
   has_and_belongs_to_many :regions
 
   scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")

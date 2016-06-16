@@ -34,6 +34,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_products?
     when CoreModule::CLASSIFICATION
       return self.view_products?
+    when CoreModule::PRODUCT_RATE_OVERRIDE
+      return self.view_products?
     when CoreModule::OFFICIAL_TARIFF
       return self.view_official_tariffs?
     when CoreModule::ENTRY

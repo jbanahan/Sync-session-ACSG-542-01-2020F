@@ -207,7 +207,15 @@ module CoreModuleDefinitions
             []
           end
        end],
-       :module_chain => [Product, Classification, TariffRecord]
+       :module_chain => [Product, Classification, TariffRecord],
+       :snapshot_descriptor => SnapshotDescriptor.for(Product,
+          classifications: {type: Classification, children: {
+            tariff_records: {type: TariffRecord}
+          }},
+          product_rate_overrides: {type: ProductRateOverride},
+          variants: {type: Variant},
+          attachments: {type: Attachment}
+       )
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
        :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
@@ -410,5 +418,10 @@ module CoreModuleDefinitions
   TPP_HTS_OVERRIDE = CoreModule.new("TppHtsOverride", "Trade Preference HTS Override", {
     enabled_lambda: lambda { MasterSetup.get.trade_lane_enabled? }
   })
-
+  PRODUCT_RATE_OVERRIDE = CoreModule.new("ProductRateOverride","Product Rate Override", {
+    enabled_lambda: lambda { CoreModule::CLASSIFICATION.enabled? },
+    unique_id_field_name: :pro_key,
+    changed_at_parents_lambda: lambda {|c| c.product.nil? ? [] : [c.product] },
+    show_field_prefix: true
+  })
 end

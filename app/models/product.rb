@@ -29,6 +29,7 @@ class Product < ActiveRecord::Base
   has_many :vendors, through: :product_vendor_assignments
   has_many :product_trade_preference_programs, dependent: :destroy
   has_many :trade_preference_programs, through: :product_trade_preference_programs
+  has_many :product_rate_overrides, dependent: :destroy
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true
   accepts_nested_attributes_for :variants, :allow_destroy => true
