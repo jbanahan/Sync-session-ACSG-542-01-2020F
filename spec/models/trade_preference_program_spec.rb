@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe TradePreferenceProgram do
-  describe 'validations' do
+  context 'validations' do
     it 'should require origin country' do
       t = nil
       expect{t = TradePreferenceProgram.create(name:'TPP',destination_country_id:Factory(:country).id)}.to_not change(TradePreferenceProgram,:count)
@@ -76,6 +76,14 @@ describe TradePreferenceProgram do
       tpp = Factory(:trade_preference_program,origin_country:lane.origin_country,destination_country:lane.destination_country)
 
       expect(tpp.trade_lane).to eq lane
+    end
+  end
+  describe '#long_name' do
+    it "should return name and countries" do
+      ca = Factory(:country,iso_code:'CA')
+      us = Factory(:country,iso_code:'US')
+      tpp = TradePreferenceProgram.new(name:'hello',origin_country:ca,destination_country:us)
+      expect(tpp.long_name).to eq 'CA > US: hello'
     end
   end
 end

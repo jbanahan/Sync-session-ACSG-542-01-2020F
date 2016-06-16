@@ -6,6 +6,7 @@ class TradePreferenceProgram < ActiveRecord::Base
   has_many :product_trade_preference_programs, dependent: :destroy
   has_many :products, through: :product_trade_preference_programs
   has_many :tpp_hts_overrides, dependent: :destroy, inverse_of: :trade_preference_program
+  has_many :surveys, inverse_of: :trade_preference_program
 
   validates :destination_country_id, presence: true
   validates :origin_country_id, presence: true
@@ -17,6 +18,12 @@ class TradePreferenceProgram < ActiveRecord::Base
       destination_country_id:self.destination_country_id
     ).first
     @lane
+  end
+
+  def long_name
+    oc_iso = self.origin_country ? self.origin_country.iso_code : ''
+    dc_iso = self.destination_country ? self.destination_country.iso_code : ''
+    "#{oc_iso} > #{dc_iso}: #{self.name}"
   end
 
   def can_view? user

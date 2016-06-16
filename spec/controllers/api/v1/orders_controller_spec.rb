@@ -33,6 +33,25 @@ describe Api::V1::OrdersController do
       j = JSON.parse response.body
       expect(j['order']['custom_view']).to eq 'abc'
     end
+    it "should append tpp_survey_response_options if not nil" do
+      sr1 = double('sr1')
+      sr1.stub(:id).and_return 1
+      sr1.stub(:long_name).and_return 'abc'
+      sr2 = double('sr2')
+      sr2.stub(:id).and_return 2
+      sr2.stub(:long_name).and_return 'def'
+      Order.any_instance.stub(:available_tpp_survey_responses).and_return [sr1,sr2]
+
+      expected = [
+        {'id'=>1,'long_name'=>'abc'},
+        {'id'=>2,'long_name'=>'def'}
+      ]
+      o = Factory(:order)
+      get :show, id: o.id
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['order']['available_tpp_survey_responses']).to eq expected
+    end
     it "should set permission hash" do
       o = Factory(:order)
       Order.any_instance.stub(:can_view?).and_return true

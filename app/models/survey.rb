@@ -1,12 +1,13 @@
 class Survey < ActiveRecord::Base
   belongs_to :created_by, :class_name=>"User"
   belongs_to :company
+  belongs_to :trade_preference_program
   has_many :questions, :inverse_of=>:survey
   has_many :survey_responses, :inverse_of=>:survey
   has_many :assigned_users, :through=>:survey_responses, :source=>:user
   has_many :answers, :through=>:survey_responses
   has_many :survey_subscriptions, :dependent => :destroy
-  
+
   validate :lock_check
 
   accepts_nested_attributes_for :questions, :allow_destroy => true,
@@ -24,7 +25,7 @@ class Survey < ActiveRecord::Base
   def locked?
     has_responses? || archived?
   end
-  
+
   def can_edit? user
     user.edit_surveys? && user.company_id == self.company_id
   end
@@ -63,13 +64,13 @@ class Survey < ActiveRecord::Base
     SurveyResponseLog.joins([survey_response: [:survey]]).where(surveys: {id: self.id}).where("survey_response_logs.user_id IS NOT NULL").order("updated_at DESC").first
   end
 
-  def to_xls 
+  def to_xls
     wb = Spreadsheet::Workbook.new
     create_responses_sheet wb
     create_questions_sheet wb
     wb
   end
-  
+
   private
 
   def has_responses?
@@ -117,7 +118,7 @@ class Survey < ActiveRecord::Base
 
   def create_questions_sheet workbook
     sheet = workbook.create_worksheet :name => "Questions"
-    
+
     row = 0
     cols = ['Question', 'Answered']
     self.rating_values.each do |value|
@@ -131,16 +132,16 @@ class Survey < ActiveRecord::Base
     wrap_format = Spreadsheet::Format.new :text_wrap => true
     self.questions.each do |q|
       cols = []
-      
+
       # The question content is actually textile markup, which is converted to HTML when viewed
       # by the browser.  Excel doesn't support that, so we're just displaying the raw text.
       cols << q.content
       cols << self.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").merge(SurveyResponse.was_archived(false)).count
       self.rating_values.each do |value|
-        # This may be a bug, we're limiting answer counts only for 
+        # This may be a bug, we're limiting answer counts only for
         cols << self.answers.where(:question_id=>q.id, :rating=>value).merge(SurveyResponse.was_archived(false)).count
       end
-      
+
       XlsMaker.add_body_row sheet, row, cols, col_widths, true
       # Make sure the content column allows text wrap
       sheet.row(row).set_format(0, wrap_format)

@@ -95,6 +95,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     end
     h['vendor_id'] = o.vendor_id
     h['permissions'] = render_permissions(o)
+    h['available_tpp_survey_responses'] = render_tpp_surveys(o)
     h
   end
   def render_permissions order
@@ -107,6 +108,10 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       can_attach: order.can_attach?(cu),
       can_comment: order.can_comment?(cu)
     }
+  end
+
+  def render_tpp_surveys order
+    r = order.available_tpp_survey_responses.collect {|sr| {id:sr.id,long_name:sr.long_name}}
   end
 
   def validate
