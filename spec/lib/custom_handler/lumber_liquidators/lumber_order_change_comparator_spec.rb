@@ -125,17 +125,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
 
     it "returns 'true' if order's cancel_date has changed" do
-      described_class.should_receive(:get_new_dates).with(@ord, @new_date_hash, @num_lines).and_return({cancel_date: @today + 1, closed_at: @now})
+      described_class.should_receive(:write_new_dates!).with(@ord, @new_date_hash, @num_lines).and_return({cancel_date: @today + 1, closed_at: @now})
       expect(described_class.reset_po_cancellation @ord, @new_data).to eq true
     end
 
     it "returns 'true' if order's closed_at has changed" do
-      described_class.should_receive(:get_new_dates).with(@ord, @new_date_hash, @num_lines).and_return({cancel_date: @today, closed_at: @now + 1})
+      described_class.should_receive(:write_new_dates!).with(@ord, @new_date_hash, @num_lines).and_return({cancel_date: @today, closed_at: @now + 1})
       expect(described_class.reset_po_cancellation @ord, @new_data).to eq true
     end
 
     it "returns 'false' if order's cancel_date and closed_at are unchanged" do
-      described_class.should_receive(:get_new_dates).with(@ord, @new_date_hash, @num_lines).and_return({cancel_date: @today, closed_at: @now})
+      described_class.should_receive(:write_new_dates!).with(@ord, @new_date_hash, @num_lines).and_return({cancel_date: @today, closed_at: @now})
       expect(described_class.reset_po_cancellation @ord, @new_data).to eq false
     end
   end
@@ -159,7 +159,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
   end
 
-  describe 'get_new_dates' do
+  describe 'write_new_dates!' do
     before :each do
       @o = Factory(:order)
       @cdef = double "cdef"
@@ -172,17 +172,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it "reopens and uncancels order if it has lines" do
       @o.should_receive(:reopen!).with User.integration
       described_class.should_receive(:get_cancelled_date).with(@o).and_return [@cval, @cdef]
-      described_class.should_receive(:uncancel_order).with @o, @cdef, @cval
+      described_class.should_receive(:uncancel_order!).with @o, @cdef, @cval
 
-      described_class.get_new_dates @o, @most_recent_dates, 3
+      described_class.write_new_dates! @o, @most_recent_dates, 3
     end
 
     it "closes and cancels order if it doesn't have lines" do
       @o.should_receive(:close!).with User.integration
       described_class.should_receive(:get_cancelled_date).with(@o).and_return [@cval, @cdef]
-      described_class.should_receive(:cancel_order).with @o, @cdef, @cval
+      described_class.should_receive(:cancel_order!).with @o, @cdef, @cval
 
-      described_class.get_new_dates @o, @most_recent_dates, 0
+      described_class.write_new_dates! @o, @most_recent_dates, 0
     end
 
     it "returns order's cancel_date and closed_at fields" do 
@@ -191,9 +191,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
      @cval.stub(:value).and_return Date.today
      @o.should_receive(:reopen!).with User.integration
      described_class.should_receive(:get_cancelled_date).with(@o).and_return [@cval, @cdef]
-     described_class.should_receive(:uncancel_order).with @o, @cdef, @cval
+     described_class.should_receive(:uncancel_order!).with @o, @cdef, @cval
 
-     expect(described_class.get_new_dates @o, @most_recent_dates, 3).to eq({cancel_date: Date.today, closed_at: some_time})
+     expect(described_class.write_new_dates! @o, @most_recent_dates, 3).to eq({cancel_date: Date.today, closed_at: some_time})
     end
   end
 
@@ -208,7 +208,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
   end
 
-  describe 'cancel_order' do
+  describe 'cancel_order!' do
     before :each do
       @o = Factory(:order)
       @cdef = described_class.prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
@@ -216,24 +216,24 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
     it "assigns today's date to cancel_date custom value if it's nil" do
       cval = @o.get_custom_value @cdef
-      described_class.cancel_order @o, @cdef, cval
+      described_class.cancel_order! @o, @cdef, cval
       cval.reload
       
-      expect(cval.value).to eq Date.today
+      expect(cval.value).to eq(ActiveSupport::TimeZone['America/New_York'].now.to_date)
     end
 
     it "does nothing if there's already a value" do
       yesterday = Date.today - 1
       @o.update_custom_value! @cdef, yesterday
       cval = @o.get_custom_value @cdef
-      described_class.cancel_order @o, @cdef, cval
+      described_class.cancel_order! @o, @cdef, cval
       cval.reload
 
       expect(cval.value).to eq yesterday
     end
   end
 
-  describe 'uncancel_order' do
+  describe 'uncancel_order!' do
     before :each do
       @o = Factory(:order)
       @cdef = described_class.prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
@@ -242,7 +242,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it "sets cancel_date to nil if it has a value" do
       @o.update_custom_value! @cdef, Date.today
       cval = @o.get_custom_value @cdef
-      described_class.uncancel_order @o, @cdef, cval
+      described_class.uncancel_order! @o, @cdef, cval
       cval.reload
 
       expect(cval.value).to be_nil
@@ -251,7 +251,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it "does nothing if it's already nil" do
       cval = @o.get_custom_value @cdef
       @o.should_not_receive(:update_custom_value!)
-      described_class.uncancel_order @o, @cdef, cval
+      described_class.uncancel_order! @o, @cdef, cval
     end
   end
 
