@@ -114,7 +114,7 @@
           <%=field_bootstrap "Rating Options", f.text_area(:ratings_list, :rows=>"5", :class=>'form-control')%>
           <%=field_bootstrap "", "One rating per line."%>
           <%if current_user.view_module?(CoreModule::TRADE_PREFERENCE_PROGRAM)%>
-            <%=field_bootstrap "Trade Preference Program", f.collection_select(:trade_preference_program_id,TradePreferenceProgram.all.sort_by(&:long_name),:id,:long_name, {}, class: 'form-control')%>
+            <%=field_bootstrap "Trade Preference Program", f.collection_select(:trade_preference_program_id,TradePreferenceProgram.all.sort_by(&:long_name),:id,:long_name, {prompt:'Select Trade Lane'}, class: 'form-control')%>
           <%end%>
         <h2 id='email_head'>Email Setup</h2>
           <%=field_bootstrap "Subject", f.text_field(:email_subject, :id=>"eml_sub", :class=>'form-control')%>
