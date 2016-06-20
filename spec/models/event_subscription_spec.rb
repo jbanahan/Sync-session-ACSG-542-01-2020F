@@ -39,6 +39,11 @@ describe EventSubscription do
         c = order.comments.create!(user: user, body:'abc')
         expect(described_class.subscriptions_for_event 'ORDER_COMMENT_CREATE', 'email', c.id).to be_blank
       end
+
+      it "returns blank array if comment isn't found" do
+        Factory(:event_subscription,user:Factory(:user,company:order.importer,order_view:true),event_type:'ORDER_COMMENT_CREATE',email:false)
+        expect(described_class.subscriptions_for_event 'ORDER_COMMENT_CREATE', 'email', -1).to eq []
+      end
     end
   end
 end
