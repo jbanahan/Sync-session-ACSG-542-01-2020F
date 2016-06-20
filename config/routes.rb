@@ -15,6 +15,11 @@ OpenChain::Application.routes.draw do
         post :mark_as_read, on: :member
       end
       resources :comments, only: [:create,:destroy]
+      get "/:base_object_type/:base_object_id/comments" => "comments#polymorphic_index"
+      post "/:base_object_type/:base_object_id/comment" => "comments#polymorphic_create"
+      get "/:base_object_type/:base_object_id/comment/:id" => "comments#polymorphic_show"
+      delete "/:base_object_type/:base_object_id/comment/:id" => "comments#polymorphic_destroy"
+
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
         member do
