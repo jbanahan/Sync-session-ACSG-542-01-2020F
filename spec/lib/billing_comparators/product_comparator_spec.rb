@@ -1,6 +1,12 @@
 require 'spec_helper'
 
 describe OpenChain::BillingComparators::ProductComparator do
+  let :base_hash do
+    {"entity"=>{"core_module"=>"Product", "record_id"=>1, "children"=>
+                    [{"entity"=>{"core_module"=>"Classification", "record_id"=>1, "model_fields"=>{"class_cntry_iso"=>"US"}, "children" =>
+                        [{"entity"=>{"core_module"=>"TariffRecord", "record_id"=>1, "model_fields"=>{"hts_line_number"=>1, "hts_hts_1"=>"1111"}}}]}}]}}
+  end
+
   describe :compare do
     it "exits if the type isn't 'Product'" do
       EntitySnapshot.should_not_receive(:where)
@@ -19,69 +25,71 @@ describe OpenChain::BillingComparators::ProductComparator do
 
   describe :check_new_classification do
     before(:each) do 
-      @class_1 = Factory(:classification)
-      class_2 = Factory(:classification)
-      class_3 = Factory(:classification)
-      @class_list = [{id: @class_1.id, iso_code: 'US'},{id: class_2.id, iso_code: 'CA'}, {id: class_3.id, iso_code: 'CN'}]
+      @class = Factory(:classification)
+      base_hash["entity"]["children"].first["entity"]["record_id"] = @class.id
       @es = Factory(:entity_snapshot)
     end
 
     it "creates a billable event for every classification on the product if the product is new" do
+      described_class.should_receive(:get_json_hash).with(nil,nil,nil).and_return {}
+      described_class.should_receive(:get_json_hash).with('new_bucket', 'new_path', 'new_version').and_return base_hash
 
-      described_class.should_receive(:get_classifications).with(nil, nil, nil).and_return []
-      described_class.should_receive(:get_classifications).with('new_bucket', 'new_path', 'new_version').and_return @class_list
-      described_class.should_receive(:filter_new_classifications).with([], @class_list).and_return @class_list
       described_class.check_new_classification(id: 9, old_bucket: nil, old_path: nil, old_version: nil, new_bucket: 'new_bucket', 
                                                new_path: 'new_path', new_version: 'new_version', new_snapshot_id: @es.id)
 
-      expect(BillableEvent.count).to eq 3
-      be = BillableEvent.all.sort.first
-      expected = [@class_1, @es, "classification_new"]
+      expect(BillableEvent.count).to eq 1
+      be = BillableEvent.first
+      expected = [@class, @es, "classification_new"]
       expect([be.billable_eventable, be.entity_snapshot, be.event_type]).to eq expected
     end
 
     it "creates a billable event for every classification not on the old version of the product" do
-      class_4 = Factory(:classification)
-      class_5 = Factory(:classification)
-      class_list_2 = [{id: 1, iso_code: 'US'}, {id: 3, iso_code: 'CN'}, {id: 4, iso_code: 'AF'}, {id: 5, iso_code: 'MX'}]
-      new_list = [{id: class_4.id, iso_code: 'AF'}, {id: class_5.id, iso_code: 'MX'}]
+      class_2 = Factory(:classification)
+      base_hash_2 = Marshal.load(Marshal.dump base_hash) #creates deep copy -- http://stackoverflow.com/a/4157635
+      new_class = [{"entity"=>{"core_module"=>"Classification", "record_id"=>class_2.id, "model_fields"=>{"class_cntry_iso"=>"CA"}, "children" =>
+                     [{"entity"=>{"core_module"=>"TariffRecord", "record_id"=>2, "model_fields"=>{"hts_line_number"=>1, "hts_hts_1"=>"2222"}}}]}}]
+      base_hash_2["entity"]["children"] += new_class
 
-      described_class.should_receive(:get_classifications).with('old_bucket', 'old_path', 'old_version').and_return @class_list
-      described_class.should_receive(:get_classifications).with('new_bucket', 'new_path', 'new_version').and_return class_list_2
-      described_class.should_receive(:filter_new_classifications).with(@class_list, class_list_2).and_return new_list
-      
+      described_class.should_receive(:get_json_hash).with('old_bucket', 'old_path', 'old_version').and_return base_hash
+      described_class.should_receive(:get_json_hash).with('new_bucket', 'new_path', 'new_version').and_return base_hash_2
+
       described_class.check_new_classification(id: 9, old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version', 
                                                new_bucket: 'new_bucket', new_path: 'new_path', new_version: 'new_version', new_snapshot_id: @es.id)
-      
-      expect(BillableEvent.count). to eq 2
-      be_1, be_2 = BillableEvent.all.sort
-      expected = [class_4, @es, "classification_new"]
-      expect([be_1.billable_eventable, be_1.entity_snapshot, be_1.event_type]).to eq expected
-      expected = [class_5, @es, "classification_new"]
-      expect([be_2.billable_eventable, be_2.entity_snapshot, be_2.event_type]).to eq expected
+
+      expect(BillableEvent.count). to eq 1
+      be = BillableEvent.first
+      expected = [class_2, @es, "classification_new"]
+      expect([be.billable_eventable, be.entity_snapshot, be.event_type]).to eq expected
     end
   end
 
   describe :get_classifications do
-    it "returns hash list of id/iso_code pairs associated with classifications belonging to product" do
-      class_list = [{id: 1, iso_code: 'US'},{id: 2, iso_code: 'CA'}]
-      json_hash = {"entity"=>{"core_module"=>"Product", "record_id"=>1, "children"=>
-                  [{"entity"=>{"core_module"=>"Classification", "record_id"=>1, "model_fields"=>{"class_cntry_iso"=>"US"}}}, 
-                   {"entity"=>{"core_module"=>"Classification", "record_id"=>2, "model_fields"=>{"class_cntry_iso"=>"CA"}}}]}}
-      described_class.should_receive(:get_json_hash).with("bucket", "path", "version").and_return json_hash
-      expect(described_class.get_classifications("bucket", "path", "version")).to eq class_list
+    it "returns hash list of id/iso_code pairs associated with classifications belonging to product with an hts_1" do
+      expect(described_class.get_classifications(base_hash)).to eq [{id: 1, iso_code: 'US'}]
     end
 
     it "returns empty if product has no classifications" do
-      json_hash = {"entity"=>{"core_module"=>"Product", "record_id"=>1}}
-      described_class.should_receive(:get_json_hash).with("bucket", "path", "version").and_return json_hash
-      expect(described_class.get_classifications("bucket", "path", "version")).to be_empty
+      base_hash = {"entity"=>{"core_module"=>"Product", "record_id"=>1}}
+      expect(described_class.get_classifications(base_hash)).to be_empty
+    end
+  end
+
+  describe :contains_hts_1? do
+      
+    it "returns true if classification hash contains a tariff with an hts_1 field" do
+      class_hash = base_hash["entity"]["children"].first
+      expect(described_class.contains_hts_1?(class_hash)).to eq true
     end
 
-    it "returns empty if bucket is empty" do
-      json_hash = {}
-      described_class.should_receive(:get_json_hash).with(nil, nil, nil).and_return json_hash
-      expect(described_class.get_classifications(nil, nil, nil)).to be_empty
+    it "returns false if tariff lacks an hts_1" do
+      class_hash = base_hash["entity"]["children"].first
+      class_hash["entity"]["children"].first["entity"]["model_fields"].merge!({"hts_hts_1" => "", "hts_hts_2" => "1111"})
+      expect(described_class.contains_hts_1?(class_hash)).to eq false
+    end
+
+    it "returns false if tariff is missing altogether" do
+      class_hash = {"entity"=>{"core_module"=>"Classification", "record_id"=>1, "model_fields"=>{"class_cntry_iso"=>"CA"}}}
+      expect(described_class.contains_hts_1?(class_hash)).to eq false
     end
   end
 

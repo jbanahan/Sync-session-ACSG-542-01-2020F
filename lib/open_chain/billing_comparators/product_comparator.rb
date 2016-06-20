@@ -12,8 +12,8 @@ module OpenChain; module BillingComparators; class ProductComparator
   end
 
   def self.check_new_classification args
-    new_bucket_classis = get_classifications(args[:new_bucket], args[:new_path], args[:new_version])
-    old_bucket_classis = get_classifications(args[:old_bucket], args[:old_path], args[:old_version])
+    new_bucket_classis = get_classifications(get_json_hash(args[:new_bucket], args[:new_path], args[:new_version]))
+    old_bucket_classis = get_classifications(get_json_hash(args[:old_bucket], args[:old_path], args[:old_version]))
     new_classis = filter_new_classifications(old_bucket_classis, new_bucket_classis)
     
     new_classis.each do |classi|
@@ -22,12 +22,22 @@ module OpenChain; module BillingComparators; class ProductComparator
     end
   end
 
-  def self.get_classifications new_bucket, new_path, new_version
-    product_hash = get_json_hash(new_bucket, new_path, new_version)
-    classifications = product_hash.presence ? (product_hash["entity"]["children"] || []) : []
-      classifications.map do |classi|
-        {id: classi["entity"]["record_id"], iso_code: classi["entity"]["model_fields"]["class_cntry_iso"]}
-      end
+  def self.get_classifications product_hash
+    classis = product_hash.presence ? (product_hash["entity"]["children"] || []) : []
+    classis_with_hts = classis.select{ |classi| contains_hts_1? classi }
+    classis_with_hts.map do |classi|
+      {id: classi["entity"]["record_id"], iso_code: classi["entity"]["model_fields"]["class_cntry_iso"]}
+    end
+  end
+
+  def self.contains_hts_1? class_hsh
+    hts_1_found = false
+    tariff_records = class_hsh["entity"]["children"] || []
+    tariff_records.each do |t|
+      hts = t["entity"]["model_fields"] || {}
+      hts_1_found = true if hts["hts_hts_1"].presence
+    end
+    hts_1_found
   end
 
   def self.filter_new_classifications old_class_list, new_class_list
