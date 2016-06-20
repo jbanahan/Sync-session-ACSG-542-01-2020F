@@ -62,6 +62,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_drawback?
     when CoreModule::VARIANT
       return self.view_variants?
+    when CoreModule::VFI_INVOICE
+      return self.view_vfi_invoices?
     when CoreModule::ADDRESS
       return true
     end

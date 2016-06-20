@@ -31,6 +31,7 @@ class Company < ActiveRecord::Base
   has_many  :summary_statements, :foreign_key => :customer_id
   has_many  :product_vendor_assignments, dependent: :destroy, foreign_key: :vendor_id
   has_many  :products_as_vendor, through: :product_vendor_assignments, source: :product
+  has_many  :vfi_invoices, :dependent => :destroy, :foreign_key => "customer_id"
 
   has_one :attachment_archive_setup, :dependent => :destroy
 
@@ -57,6 +58,10 @@ class Company < ActiveRecord::Base
 	    return Company.where(:id => user.company_id)
 	  end
 	end
+
+  def has_vfi_invoice?
+    ([self] + linked_companies).map{ |co| co.vfi_invoices.count != 0 }.any?
+  end
 
   def plants_user_can_view user
     self.plants.reject{|plant| !plant.can_view?(user)}
@@ -182,7 +187,7 @@ class Company < ActiveRecord::Base
     master_setup.broker_invoice_enabled && self.master?
   end
   def view_vfi_invoices?
-    master_setup.vfi_invoice_enabled && (self.master? || self.importer?)
+    master_setup.vfi_invoice_enabled && (self.master? || self.has_vfi_invoice?)
   end
   def edit_vfi_invoices?
     false

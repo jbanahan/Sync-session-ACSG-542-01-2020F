@@ -400,7 +400,7 @@ module CoreModuleDefinitions
 
   VFI_INVOICE_LINE = CoreModule.new("VfiInvoiceLine","Vfi Invoice Line",{
     :changed_at_parents_lambda => lambda {|p| p.vfi_invoice.nil? ? [] : [p.vfi_invoice]},
-    :enabled_lambda => lambda {MasterSetup.get.vfi_invoice_enabled?},
+    :enabled_lambda => lambda { CoreModule::VFI_INVOICE.enabled? },
     :unique_id_field_name=>:vi_line_number,
     :key_model_field_uids=>[:vi_line_number],
     :show_field_prefix=>true
