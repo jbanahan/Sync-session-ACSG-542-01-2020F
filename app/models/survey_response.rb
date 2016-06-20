@@ -26,13 +26,13 @@ class SurveyResponse < ActiveRecord::Base
 
   def survey_name
     return nil unless self.survey
-    return self.survey_name
+    return self.survey.name
   end
 
   def long_name
     ln = self.survey_name
     ln = "" if ln.nil?
-    ln = "#{ln} - #{self.subtitle}" unless ln.subtitle.blank?
+    ln = "#{ln} - #{self.subtitle}" unless self.subtitle.blank?
     ln
   end
 
