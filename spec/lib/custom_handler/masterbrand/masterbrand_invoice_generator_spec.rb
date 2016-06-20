@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       split_billables[0].should_receive(:count).and_return(qty_to_be_invoiced)
       
       @inv.should_receive(:vfi_invoice_lines).and_return invoice_lines_relation
-      invoice_lines_relation.should_receive(:create!).with(charge_amount: 5.00, quantity: 2, unit: "ea", unit_price: 2.50, charge_description: "new entry exceeding 250/mo. limit").and_return inv_line
+      invoice_lines_relation.should_receive(:create!).with(quantity: 2, unit: "ea", unit_price: 2.50, charge_description: "new entry exceeding 250/mo. limit").and_return inv_line
       described_class.should_receive(:write_invoiced_events).with(split_billables[0], inv_line)
       described_class.should_receive(:write_invoiced_events).with(split_billables[1])
 

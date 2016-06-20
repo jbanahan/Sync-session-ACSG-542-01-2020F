@@ -1,5 +1,7 @@
 module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
 
+  UNIT_PRICE = 2.00
+  
   def self.run_schedulable
     ActiveRecord::Base.transaction do
       billables = get_new_billables
@@ -25,10 +27,8 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   def self.bill_new_classifications billables, invoiceable_ids, invoice
     to_be_invoiced, others = split_billables(billables, invoiceable_ids)
     qty_to_bill = to_be_invoiced.count
-    charge_amount = qty_to_bill * 2
     if qty_to_bill > 0
-      line = invoice.vfi_invoice_lines.create!(charge_description: "new Canadian classification", charge_amount: charge_amount, 
-                                               quantity: qty_to_bill, unit: "ea", unit_price: 2)
+      line = invoice.vfi_invoice_lines.create!(charge_description: "new Canadian classification", quantity: qty_to_bill, unit: "ea", unit_price: UNIT_PRICE)
       write_invoiced_events(to_be_invoiced, line)
     end
     write_invoiced_events others

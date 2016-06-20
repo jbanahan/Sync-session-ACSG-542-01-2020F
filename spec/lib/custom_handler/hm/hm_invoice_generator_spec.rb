@@ -97,8 +97,8 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       described_class.should_receive(:split_billables).with(@billables, @invoiceable_ids).and_return split_billables
       
       @invoice.should_receive(:vfi_invoice_lines).and_return inv_lines_relation
-      inv_lines_relation.should_receive(:create!).with(charge_description: "new Canadian classification", charge_amount: 4, quantity: 2, 
-                                                       unit: "ea", unit_price: 2).and_return inv_line
+      inv_lines_relation.should_receive(:create!).with(charge_description: "new Canadian classification", quantity: 2, 
+                                                       unit: "ea", unit_price: 2.00).and_return inv_line
       described_class.should_receive(:write_invoiced_events).with(split_billables[0], inv_line)
       described_class.should_receive(:write_invoiced_events).with(split_billables[1])
 
