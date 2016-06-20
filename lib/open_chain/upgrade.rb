@@ -31,7 +31,7 @@ module OpenChain
       result
     end
 
-    # Don't change the argument order or method name without also consulting 
+    # Don't change the argument order or method name without also consulting
     # delayed_jobs_intializers.
     def self.upgrade_delayed_job_if_needed
       result = false
@@ -60,7 +60,7 @@ module OpenChain
     #do not initialize this method directly, use the static #upgrade method instead
     def initialize target
       @target = target
-      @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log" 
+      @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log"
     end
 
     #do not call this directly, use the static #upgrade method instead
@@ -80,16 +80,16 @@ module OpenChain
       end
 
       return false unless @log
-      
+
       execute_callback(callbacks, :running)
       upgrade_completed = false
       begin
         @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.current_code_version, :to_version=>@target, :log=>IO.read(@log_path))
-        get_source 
+        get_source
         apply_upgrade
         #upgrade_running.txt will stick around if one of the previous methods blew an exception
         #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
-        capture_and_log "rm #{Upgrade.upgrade_file_path}" 
+        capture_and_log "rm #{Upgrade.upgrade_file_path}"
         # Remove the upgrade error file if it is present
         capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(Upgrade.upgrade_error_file_path)
         @@upgraded = true
@@ -102,7 +102,7 @@ module OpenChain
         @log.error $!.message
         raise $!
       ensure
-        finish_upgrade_log 
+        finish_upgrade_log
       end
 
       upgrade_completed
@@ -112,7 +112,7 @@ module OpenChain
     def finish_upgrade_log
       @upgrade_log.update_attributes(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
     end
-    def get_source 
+    def get_source
       log_me "Fetching source"
       capture_and_log 'git fetch'
       log_me "Fetch complete, checking out #{@target}"
@@ -120,7 +120,7 @@ module OpenChain
       log_me "Source checked out"
       update_configurations
       log_me "Running bundle install"
-      # Use the frozen command to absolutely prevent updates to Gemfile.lock in production (.ie should a Gemfile 
+      # Use the frozen command to absolutely prevent updates to Gemfile.lock in production (.ie should a Gemfile
       # update get checked in sans Gemfile.lock update)
       capture_and_log "bundle install --frozen --without=development test"
       log_me "Bundle complete, running migrations"
@@ -132,11 +132,12 @@ module OpenChain
       migrate
       precompile
       init_schedulable_jobs
+      update_master_setup_cache
       log_me "Touching restart.txt"
       capture_and_log "touch tmp/restart.txt"
       log_me "Upgrade complete"
     end
-    
+
     def init_schedulable_jobs
       load 'app/models/schedulable_job.rb' #get latest code
       SchedulableJob.create_default_jobs!
@@ -145,7 +146,7 @@ module OpenChain
     def migrate
       c = 0
       #10 minute wait - 5 minute wait proved to be a bit short once or twice when running migrations on data associated with a large table
-      while !MasterSetup.get_migration_lock && c<60 
+      while !MasterSetup.get_migration_lock && c<60
         log_me "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
         sleep 10
         c += 1
@@ -162,10 +163,15 @@ module OpenChain
       log_me stderr unless stderr.blank?
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
     end
-    def precompile 
+    def precompile
       log_me "Precompiling assets"
       capture_and_log "rake assets:precompile"
       log_me "Precompile complete"
+    end
+
+    def update_master_setup_cache
+      MasterSetup.first.update_cache
+      log_me "Updated Master Setup Cache"
     end
 
     def update_configurations
@@ -173,7 +179,7 @@ module OpenChain
       log_me "Updating configuration files for #{instance_name}"
       config_path = Rails.root.join("..", "vfitrack-configurations")
       configs_updated = false
-      
+
       if config_path.exist?
         # Using git pull instead of git fetch for two reasons..
         # 1) Want the actual output message "Already up-to-date" in the logs if it's already up to date.
@@ -214,8 +220,8 @@ module OpenChain
       if callback_list && callback_list[event]
         cb_list = callback_list[event]
         to_run = []
-        if cb_list.respond_to? :entries 
-          to_run = cb_list.entries 
+        if cb_list.respond_to? :entries
+          to_run = cb_list.entries
         else
           to_run << cb_list
         end
