@@ -494,5 +494,7 @@ Factory.define :vfi_invoice_line do |f|
   f.association :vfi_invoice
   f.sequence :line_number
   f.charge_description {Factory.next :alpha_numeric}
+  f.unit_price 5
+  f.quantity 1
   f.charge_amount 1
 end
