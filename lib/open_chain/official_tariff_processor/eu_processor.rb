@@ -30,7 +30,9 @@ module OpenChain; module OfficialTariffProcessor; class EuProcessor
         cp = clean_program(p)
         #only saving Peru & Columbia for now, later sub in other programs we're tracking
         if ['PE','CO'].include?(cp)
-          r << {program_code:cp,amount:amount,text:pair[0].gsub(/(:|,)/,'').strip}
+          rt = pair[0].gsub(/(:|,)/,'').strip
+          raise "HTS = #{official_tariff.hts_code}: Expected text in pair[0] for: \"#{pair}\"" if rt.blank?
+          r << {program_code:cp,amount:amount,text:rt}
         end
       end
     end
@@ -51,6 +53,7 @@ module OpenChain; module OfficialTariffProcessor; class EuProcessor
   def self.clean_text text
     # handle special cases
     text = text.gsub("[see U.S. note 3 of this subchapter)","[see U.S. note 3 of this subchapter]")
+    text = text.gsub("(Net weight on dry matter)","[Net weight on dry matter]")
     text
   end
 end; end; end
