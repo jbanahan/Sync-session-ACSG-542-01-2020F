@@ -26,7 +26,7 @@ describe CommentsController do
     it 'should call bulk action runner with bulk comment' do
       bar = OpenChain::BulkAction::BulkActionRunner
       bar.should_receive(:process_object_ids).with(instance_of(User),['1','2'],OpenChain::BulkAction::BulkComment,{'subject'=>'s','body'=>'b','module_type'=>'Order'})
-      post :bulk, {'pk'=>['1','2'],'module_type'=>'Order','subject'=>'s','body'=>'b'}
+      post :bulk, {'pk'=>{'0'=>'1','1'=>'2'},'module_type'=>'Order','subject'=>'s','body'=>'b'}
       expect(response).to be_success
     end
   end
