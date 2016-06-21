@@ -1,7 +1,8 @@
 module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInvoiceGenerator
     
-  UNIT_PRICE = 2.50
-  LIMIT = 250
+  ENTRY_UNIT_PRICE = 2.50
+  ENTRY_LIMIT = 250
+  MONTHLY_UNIT_PRICE = 1000.00
 
   def self.run_schedulable
     ActiveRecord::Base.transaction do
@@ -23,7 +24,7 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
   end
 
   def self.bill_monthly_charge invoice
-    invoice.vfi_invoice_lines.create! vfi_invoice: invoice, charge_amount: 1000, quantity: 1, unit: "ea", unit_price: 1000, charge_description: "monthly charge"
+    invoice.vfi_invoice_lines.create! vfi_invoice: invoice, quantity: 1, unit: "ea", unit_price: MONTHLY_UNIT_PRICE, charge_description: "monthly charge"
   end
 
   def self.get_new_billables
@@ -36,9 +37,9 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
 
   def self.bill_new_entries new_billables, invoiceable_ids, invoice
     new_entries, others = split_billables(new_billables, invoiceable_ids)
-    qty_to_bill = new_entries.count - LIMIT
+    qty_to_bill = new_entries.count - ENTRY_LIMIT
     if qty_to_bill > 0
-      line = invoice.vfi_invoice_lines.create! quantity: qty_to_bill, unit: "ea", unit_price: UNIT_PRICE, charge_description: "new entry exceeding #{LIMIT}/mo. limit"
+      line = invoice.vfi_invoice_lines.create! quantity: qty_to_bill, unit: "ea", unit_price: ENTRY_UNIT_PRICE, charge_description: "new entry exceeding #{ENTRY_LIMIT}/mo. limit"
       write_invoiced_events new_entries, line
     else
       write_invoiced_events new_entries

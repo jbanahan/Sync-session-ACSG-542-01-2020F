@@ -7,7 +7,6 @@ class VfiInvoiceLine < ActiveRecord::Base
   before_save :set_charge_amount
   validates :vfi_invoice_id, :presence => true
   validates :charge_description, :presence => true
-  validates :charge_amount, :presence => true
   validates :quantity, :presence => true
   validates :unit_price, :presence => true
 
