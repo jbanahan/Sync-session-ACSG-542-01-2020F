@@ -44,6 +44,10 @@ module Helpers
     def method_missing(sym, *args, &block)
       raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
     end
+
+    def self.url_for bucket, path, expires_in
+      "http://#{bucket}.s3.com/#{path}?expires_in=#{expires_in.to_i}"
+    end
     
     def self.upload_data bucket_name, path, data
       # Handle a couple different valid data objects

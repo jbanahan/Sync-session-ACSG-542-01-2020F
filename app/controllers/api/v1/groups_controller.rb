@@ -1,5 +1,6 @@
 module Api; module V1; class GroupsController < Api::V1::ApiController
   include Api::V1::ApiJsonSupport
+  include PolymorphicFinders
 
   def index
     groups = Group.all
@@ -12,6 +13,18 @@ module Api; module V1; class GroupsController < Api::V1::ApiController
       render json: {"group" => group_view(current_user, group)}
     else
       raise ActiveRecord::RecordNotFound
+    end
+  end
+
+  # Adds the specified group to the given object.
+  def add_to_object
+    obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
+    group = Group.find params[:id]
+    if obj && obj.can_edit?(current_user) && obj.respond_to?(:groups)
+      obj.groups << group
+      render_ok
+    else
+      render_forbidden
     end
   end
 

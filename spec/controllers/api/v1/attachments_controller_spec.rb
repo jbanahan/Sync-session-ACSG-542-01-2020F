@@ -2,263 +2,177 @@ require 'spec_helper'
 
 describe Api::V1::AttachmentsController do
 
+  let (:user) { Factory(:user) }
+  let (:product) { Factory(:product) }
+  let (:attachment) { Attachment.create! attached_file_name: "file.txt", attachable: product, uploaded_by: user, attachment_type: "Attachment Type", attached_file_size: 1024 }
+
   before :each do
-    @user = Factory(:user, product_view: true)
-    @attachable = Factory(:product)
-    allow_api_user(@user)
-    Product.any_instance.stub(:can_view?).with(@user).and_return true
-    @attachment = Attachment.create! attached_file_name: "file.txt", attachable: @attachable, uploaded_by: @user, attachment_type: "Attachment Type", attached_file_size: 1024
+    allow_api_user(user)
+    use_json
+    Product.any_instance.stub(:can_view?).with(user).and_return true
   end
 
-  context 'json request' do
+  context "with json api" do
     before :each do
-      use_json
+      attachment
     end
-    describe "show" do
-      it "retrieves attachment data" do
-        get :show, attachable_type: "products", attachable_id: @attachable.id, id: @attachment.id
 
+    describe "destroy" do
+      it "deletes an attachment" do
+        Product.any_instance.should_receive(:can_attach?).with(user).and_return true
+        Attachment.any_instance.should_receive(:rebuild_archive_packet)
+        OpenChain::WorkflowProcessor.should_receive(:async_process)
+
+        delete :destroy, base_object_type: "products", base_object_id: product.id, id: attachment.id
         expect(response).to be_success
-        j = JSON.parse response.body
+        expect(JSON.parse(response.body)).to eq({"ok" => "ok"})
 
-        expect(j).to eq({
-          id: @attachment.id,
-          name: "file.txt",
-          size: "1 KB",
-          type: "Attachment Type",
-          user: {
-            id: @user.id,
-            username: @user.username,
-            full_name: @user.full_name
-          }
-        }.with_indifferent_access)
+        product.reload
+        expect(product.attachments.length).to eq 0
       end
 
-      it "retrieves attachment data using actual model name" do
-        inv = Factory(:commercial_invoice)
-        att = Attachment.create! attached_file_name: "file.txt", attachable: inv, uploaded_by: @user, attachment_type: "Attachment Type", attached_file_size: 1024
-        Attachment.any_instance.should_receive(:can_view?).with(@user).and_return true
-        get :show, attachable_type: "CommercialInvoice", attachable_id: inv.id, id: att.id
-
-        expect(response).to be_success
-        j = JSON.parse response.body
-
-        expect(j).to eq({
-          id: att.id,
-          name: "file.txt",
-          size: "1 KB",
-          type: "Attachment Type",
-          user: {
-            id: @user.id,
-            username: @user.username,
-            full_name: @user.full_name
-          }
-        }.with_indifferent_access)
-      end
-
-      it "skips user attribute if attachment upload by is not set" do
-        @attachment.update_attributes! uploaded_by: nil
-
-        get :show, attachable_type: Product.model_name.route_key, attachable_id: @attachable.id, id: @attachment.id
-
-        expect(response).to be_success
-        j = JSON.parse response.body
-        expect(j).to eq({
-          id: @attachment.id,
-          name: "file.txt",
-          size: "1 KB",
-          type: "Attachment Type"
-        }.with_indifferent_access)
-      end
-
-      it "sends 404 if attachment is missing" do
-        get :show, attachable_type: Product.model_name.route_key, attachable_id: @attachable.id, id: -1
-        expect(response.status).to eq 404
-      end
-
-      it "sends 404 if attachment can't be viewed" do
-        Product.any_instance.stub(:can_view?).with(@user).and_return false
-
-        get :show, attachable_type: Product.model_name.route_key, attachable_id: @attachable.id, id: @attachment.id
-        expect(response.status).to eq 404
-      end
-
-      it "allows sending the real attachable_type value in url" do
-        get :show, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
-        expect(response).to be_success
-        j = JSON.parse response.body
-
-        expect(j['id']).to eq @attachment.id
-      end
-
-      it "errors on a bad attachable_type parameter" do
-        get :show, attachable_type: "BlahBlahBlah", attachable_id: @attachable.id, id: @attachment.id
-        expect(response.status).to eq 500
+      it "errors if user cannot delete attachment" do
+        Product.any_instance.should_receive(:can_attach?).with(user).and_return false
+        delete :destroy, base_object_type: "products", base_object_id: product.id, id: attachment.id
+        expect(response).not_to be_success
       end
     end
 
     describe "index" do
-      it "lists attachments assocatiate with an attachable" do
-        get :index, attachable_type: "Product", attachable_id: @attachable.id
+      it "returns attachments" do
+        get :index, base_object_type: "products", base_object_id: product.id
         expect(response).to be_success
-        j = JSON.parse response.body
-        expect(j).to eq([{
-          id: @attachment.id,
-          name: "file.txt",
-          size: "1 KB",
-          type: "Attachment Type",
-          user: {
-            id: @user.id,
-            username: @user.username,
-            full_name: @user.full_name
-          }
-        }.with_indifferent_access])
+        # Some of the attributes will be nil, which is mostly because we don't want to upload to
+        # S3 (via paperclip) - which is what sets up these values through the attached pseudo-attribute
+        expect(JSON.parse response.body).to eq({"attachments" => [
+          {"id"=>attachment.id, "att_file_name"=>"file.txt", "att_attachment_type"=>"Attachment Type", "att_file_size"=>1024, "att_content_type"=>nil, "att_source_system_timestamp"=>nil, "att_updated_at"=>nil, "att_revision"=>nil, "att_suffix"=>nil, "att_uploaded_by_username"=>user.username, "att_uploaded_by_fullname"=>user.full_name, "att_uploaded_by"=>user.id}
+        ]})
+      end
+
+      it "returns error if user can't view" do
+        Product.any_instance.stub(:can_view?).with(user).and_return false
+        get :index, base_object_type: "products", base_object_id: product.id
+        expect(response).not_to be_success
+      end
+
+      it "returns error for bad id" do
+        Product.any_instance.stub(:can_view?).with(user).and_return false
+        get :index, base_object_type: "products", base_object_id: -1
+        expect(response).not_to be_success
+      end
+    end
+
+    describe "show" do
+      it "returns attachment" do
+        get :show, base_object_type: "products", base_object_id: product.id, id: attachment.id
+        expect(response).to be_success
+        # Some of the attributes will be nil, which is mostly because we don't want to upload to
+        # S3 (via paperclip) - which is what sets up these values through the attached pseudo-attribute
+        expect(JSON.parse response.body).to eq({"attachment" => {
+          "id"=>attachment.id, "att_file_name"=>"file.txt", "att_attachment_type"=>"Attachment Type", "att_file_size"=>1024, "att_content_type"=>nil, "att_source_system_timestamp"=>nil, "att_updated_at"=>nil, "att_revision"=>nil, "att_suffix"=>nil, "att_uploaded_by_username"=>user.username, "att_uploaded_by_fullname"=>user.full_name, "att_uploaded_by"=>user.id
+        }})
+      end
+
+      it "errors if user can't view" do
+        Product.any_instance.stub(:can_view?).with(user).and_return false
+        get :show, base_object_type: "products", base_object_id: product.id, id: attachment.id
+        expect(response).not_to be_success
+      end
+
+      it "returns error for bad id" do
+        Product.any_instance.stub(:can_view?).with(user).and_return false
+        get :show, base_object_type: "products", base_object_id: product.id, id: -1
+        expect(response).not_to be_success
       end
     end
 
     describe "download" do
-      it "retrieves download information for attachment" do
-        Attachment.any_instance.should_receive(:secure_url).and_return "https://my.secure.url"
-        get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
-
+      it "returns download descriptor" do
+        now = Time.zone.now
+        Timecop.freeze(now) do
+          get :download, base_object_type: "products", base_object_id: product.id, id: attachment.id
+        end
         expect(response).to be_success
-        j = JSON.parse response.body
-        expect(j.delete('expires_at')).to be_true
-        expect(j).to eq({
-          url: "https://my.secure.url",
-          name: @attachment.attached_file_name
-        }.with_indifferent_access)
+        expect(JSON.parse response.body).to eq({"url" => attachment.secure_url(now + 5.minutes), "name" => attachment.attached_file_name, "expires_at" => (now + 5.minutes).iso8601 })
       end
 
-      it "404s if user cannot access" do
-        Product.any_instance.stub(:can_view?).with(@user).and_return false
-        get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
-        expect(response.status).to eq 404
-      end
-
-      it "uses internal download link for setups where download proxying is active" do
+      it "returns path for proxied download if setup in master setup" do
         ms = double("MasterSetup")
         MasterSetup.stub(:get).and_return ms
         ms.stub(:request_host).and_return "localhost"
-        ms.stub(:custom_feature?).with("Attachment Mask").and_return true
+        ms.stub(:uuid).and_return "uuid"
+        ms.should_receive(:custom_feature?).with("Attachment Mask").and_return true
 
-        get :download, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
+        now = Time.zone.now
+        Timecop.freeze(now) do
+          get :download, base_object_type: "products", base_object_id: product.id, id: attachment.id
+        end
         expect(response).to be_success
-        j = JSON.parse response.body
-        expect(j['url']).to eq "http://localhost/attachments/#{@attachment.id}/download"
-      end
-    end
-
-    describe "destroy" do
-      before :each do
-        OpenChain::WorkflowProcessor.stub(:async_process)
-      end
-      it "deletes an attachment" do
-        @attachable.class.any_instance.should_receive(:can_attach?).with(@user).and_return true
-        Attachment.any_instance.should_receive(:rebuild_archive_packet)
-
-        OpenChain::WorkflowProcessor.should_receive(:async_process)
-
-        delete :destroy, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
-        expect(response).to be_success
-        expect(response.body).to eq "{}"
+        expect(JSON.parse response.body).to eq({"url" => "http://localhost/attachments/#{attachment.id}/download", "name" => attachment.attached_file_name, "expires_at" => (now + 5.minutes).iso8601 })
       end
 
-      it "doesn't rebuild rebuild_archive_packet or process workflow if delete fails" do
-        # Mock out the AR lookup
-        Attachment.should_receive(:where).and_return Attachment
-        Attachment.should_receive(:first).and_return @attachment
-
-        @attachable.class.any_instance.should_receive(:can_attach?).with(@user).and_return true
-        @attachment.should_receive(:destroy).and_return false
-        @attachment.should_not_receive(:rebuild_archive_packet)
-
-        OpenChain::WorkflowProcessor.should_not_receive(:async_process)
-
-        delete :destroy, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
-        expect(response).to be_success
-        expect(response.body).to eq "{}"
-      end
-
-      it "404s if user cannot delete attachment" do
-        @attachable.class.any_instance.should_receive(:can_attach?).with(@user).and_return false
-        delete :destroy, attachable_type: "Product", attachable_id: @attachable.id, id: @attachment.id
-        expect(response.status).to eq 404
+      it "errors if user can't see file" do
+        Product.any_instance.stub(:can_view?).with(user).and_return false
+        get :download, base_object_type: "products", base_object_id: product.id, id: attachment.id
+        expect(response).not_to be_success
       end
     end
   end
-
-
+ 
 
   describe "create" do
+    let (:file) { fixture_file_upload('/files/test.txt', 'text/plain') }
+
     before :each do
       stub_paperclip
-      @file = fixture_file_upload('/files/test.txt', 'text/plain')
-      OpenChain::WorkflowProcessor.stub(:async_process)
+      Product.any_instance.stub(:can_attach?).and_return true
     end
 
     it "creates an attachment" do
-      @attachable.class.any_instance.should_receive(:can_attach?).and_return true
       OpenChain::WorkflowProcessor.should_receive(:async_process)
-      post :create, attachable_type: "Product", attachable_id: @attachable.id, file: @file, type: "Testing"
+
+      post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
       expect(response).to be_success
-      j = JSON.parse response.body
 
-      @attachable.reload
-      expect(@attachable.attachments.size).to eq 2
-      att = @attachable.attachments.second
+      json = JSON.parse response.body
 
-      expect(j).to eq({
-        id: att.id,
-        name: "test.txt",
-        size: "5 Bytes",
-        type: "Testing",
-        user: {
-          id: @user.id,
-          username: @user.username,
-          full_name: @user.full_name
-        }
-      }.with_indifferent_access)
+      # Just check a few key things from the json
+      expect(json["attachment"]["att_uploaded_by"]).to eq user.id
+      expect(json["attachment"]["att_attachment_type"]).to eq "Attachment Type"
+      expect(json["attachment"]["att_file_name"]).to eq "test.txt"
 
-
-      expect(att.uploaded_by).to eq @user
+      product.reload
+      expect(product.attachments.length).to eq 1
     end
 
-    it "calls log_update if attachable responds to it" do
-      u = nil
-      @attachable.class.any_instance.stub(:log_update) do |user|
-        u = user
+    it "calls log_update and attachment_added if base object responds to those methods" do
+      Product.any_instance.should_receive(:log_update).with(user)
+      attachment_id = nil
+      Product.any_instance.should_receive(:attachment_added) do |attach|
+        attachment_id = attach.id
       end
 
-      @attachable.class.any_instance.should_receive(:can_attach?).and_return true
-      post :create, attachable_type: "Product", attachable_id: @attachable.id, file: @file, type: "Testing"
+      OpenChain::WorkflowProcessor.should_receive(:async_process)
+
+      post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
       expect(response).to be_success
 
-      expect(u).to eq @user
+      json = JSON.parse response.body
+      # This is just a check to make sure the attachment that was created was also the one passed
+      # to the attachmend_added callback
+      expect(json["attachment"]['id']).to eq attachment_id
     end
 
-    it "calls attachment_added if attachable responds to it" do
-      attachment = nil
-      @attachable.class.any_instance.stub(:attachment_added) do |att|
-        attachment = att
-      end
-
-      @attachable.class.any_instance.should_receive(:can_attach?).and_return true
-      post :create, attachable_type: "Product", attachable_id: @attachable.id, file: @file, type: "Testing"
-      expect(response).to be_success
-
-      expect(attachment).not_to be_nil
+    it "errors if no file is given" do
+      post :create, base_object_type: "products", base_object_id: product.id
+      expect(response).not_to be_success
+      expect(JSON.parse response.body).to eq ({"errors" => ["Missing file data."]})
     end
 
-    it "errors if user can't attach" do
-      @attachable.class.any_instance.should_receive(:can_attach?).and_return false
-      post :create, attachable_type: "Product", attachable_id: @attachable.id, file: @file, type: "Testing"
-      expect(response.status).to eq 404
-    end
-
-    it "errors if file param is not included" do
-      post :create, attachable_type: "Product", attachable_id: @attachable.id, type: "Testing"
-      expect(response.status).to eq 500
+    it "errors if user cannot attach" do
+      Product.any_instance.stub(:can_attach?).and_return false
+      post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
+      expect(response).not_to be_success
     end
   end
 end

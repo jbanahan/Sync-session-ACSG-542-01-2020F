@@ -69,4 +69,31 @@ describe Api::V1::GroupsController do
       expect(response.status).to eq 404
     end
   end
+
+  describe "add_to_object" do
+    
+    it "adds group to specified object" do
+      post :add_to_object, base_object_type: "users", base_object_id: user.id, id: group.id
+      expect(response).to be_success
+      expect(JSON.parse(response.body)).to eq({"ok"=>"ok"})
+
+      user.reload
+      expect(user.groups).to include(group)
+    end
+
+    it "fails if user cannot edit specified object" do
+      User.any_instance.should_receive(:can_edit?).and_return false
+      post :add_to_object, base_object_type: "users", base_object_id: user.id, id: group.id
+      expect(response).not_to be_success
+      user.reload
+      expect(user.groups).not_to include(group)
+    end
+
+    it "fails if object does not respond to groups" do
+      order = Factory(:order)
+      Order.any_instance.should_receive(:can_edit?).and_return true
+      post :add_to_object, base_object_type: "orders", base_object_id: order.id, id: group.id
+      expect(response).not_to be_success
+    end
+  end
 end
