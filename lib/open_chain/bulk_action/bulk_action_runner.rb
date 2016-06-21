@@ -24,8 +24,10 @@ module OpenChain; module BulkAction; class BulkActionRunner
     ActiveRecord::Base.transaction do
       data = JSON.parse(OpenChain::S3.get_data(OpenChain::S3.bucket_name,key))
       u = User.find data['user_id']
-      data['keys'].each do |id|
-        action_class.act u, id, data['opts']
+      BulkProcessLog.with_log(u,action_class.bulk_type) do |bpl|
+        data['keys'].each_with_index do |id,idx|
+          action_class.act u, id, data['opts'], bpl, idx+1
+        end
       end
       OpenChain::S3.delete(OpenChain::S3.bucket_name,key)
     end

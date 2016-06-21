@@ -5,6 +5,7 @@ describe OpenChain::BulkAction::BulkActionRunner do
     @bucket_name = 'bn'
     OpenChain::S3.stub(:bucket_name).and_return @bucket_name
     @ac = double('action_class')
+    @ac.stub(:bulk_type).and_return 'My Name'
     @opts = {'a'=>'b'}
     @u = double(:user)
     @u.stub(:id).and_return 99
@@ -54,13 +55,15 @@ describe OpenChain::BulkAction::BulkActionRunner do
   end
   describe '#run_s3' do
     it "should retrieve S3 file, run IDs, delete S3 file" do
+      bpl = BulkProcessLog.create!(user:Factory(:user),bulk_type:'whatever')
       User.should_receive(:find).with(99).and_return @u
+      BulkProcessLog.should_receive(:with_log).with(@u,@ac.bulk_type).and_yield bpl
       base_hash = {user_id:99,keys:[1,2,3],opts:{'abc'=>'def'}}
       data = base_hash.to_json
       key = 'abc'
-      @ac.should_receive(:act).with(@u, 1,base_hash[:opts])
-      @ac.should_receive(:act).with(@u, 2,base_hash[:opts])
-      @ac.should_receive(:act).with(@u, 3,base_hash[:opts])
+      @ac.should_receive(:act).with(@u, 1, base_hash[:opts], bpl, 1)
+      @ac.should_receive(:act).with(@u, 2, base_hash[:opts], bpl, 2)
+      @ac.should_receive(:act).with(@u, 3, base_hash[:opts], bpl, 3)
 
       OpenChain::S3.should_receive(:get_data).with(@bucket_name,key).and_return data
       OpenChain::S3.should_receive(:delete).with(@bucket_name,key)
