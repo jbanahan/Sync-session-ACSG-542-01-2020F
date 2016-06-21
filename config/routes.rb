@@ -54,7 +54,7 @@ OpenChain::Application.routes.draw do
       resources :entries, only: [] do
         post :validate, on: :member
       end
-      
+
       resources :orders, only: [:index,:show,:update] do
         member do
           get :state_toggle_buttons
@@ -353,6 +353,8 @@ OpenChain::Application.routes.draw do
   end
   resources :comments do
     post 'send_email', :on => :member
+    post 'bulk_count', :on => :collection
+    post 'bulk', :on => :collection
   end
 
   match "/textile/preview" => "textile#preview"

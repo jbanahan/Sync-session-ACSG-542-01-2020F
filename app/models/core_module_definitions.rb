@@ -42,7 +42,12 @@ module CoreModuleDefinitions
      :enabled_lambda => lambda { MasterSetup.get.order_enabled? },
      :key_model_field_uids => [:ord_ord_num],
      :quicksearch_fields => [:ord_ord_num, :ord_cust_ord_no],
-     :module_chain => [Order, OrderLine]
+     :module_chain => [Order, OrderLine],
+     :bulk_actions_lambda => lambda {|current_user|
+       bulk_actions = {}
+       bulk_actions["Comment"]={:path=>'/comments/bulk_count.json',:callback=>'BulkActions.submitBulkComment',:ajax_callback=>'BulkActions.handleBulkComment',font_icon:'fa-sticky-note'} if current_user.order_comment?
+       bulk_actions
+     }
     })
   CONTAINER = CoreModule.new("Container", "Container", {
        show_field_prefix: false,
