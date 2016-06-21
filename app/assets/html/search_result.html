@@ -52,7 +52,10 @@
         <li>
           <span ng-transclude></span>
           <span ng-repeat='b in searchResult.bulk_actions' ng-show='bulkSelected.length > 0'>
-            <button class='btn navbar-btn btn-default navbar-btn' ng-click='executeBulkAction(b)' title='{{b.label}}'>{{b.label}}</button>
+            <button class='btn navbar-btn btn-default navbar-btn' ng-click='executeBulkAction(b)' title='{{b.label}}'>
+              <span ng-if='!b.font_icon'>{{b.label}}</span>
+              <span ng-if='b.font_icon' class='fa {{b.font_icon}}'></span>
+            </button>
           </span>
           <button ng-show="!allSelected" ng-click='selectAll()' class='btn navbar-btn btn-default' title='Select All'><i class='fa fa-check-square-o'></i> (<span ng-hide='searchResult.total_objects'><i class='fa fa-clock-o'></i></span>{{searchResult.total_objects}})</button>
           <span ng-show='bulkSelected.length>0 || allSelected'>

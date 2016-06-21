@@ -1,4 +1,6 @@
 require 'open_chain/workflow_processor'
+require 'open_chain/bulk_action/bulk_action_runner'
+require 'open_chain/bulk_action/bulk_comment'
 
 class CommentsController < ApplicationController
   def create
@@ -24,7 +26,7 @@ class CommentsController < ApplicationController
     commentable = cmt.commentable
     action_secure((current_user.admin? || current_user.id == cmt.user_id), cmt, {:lock_check => false, :verb => "delete", :module_name => "comment"}) {
       if cmt.destroy
-        add_flash :notices, "Comment deleted successfully."  
+        add_flash :notices, "Comment deleted successfully."
         OpenChain::WorkflowProcessor.async_process(commentable)
       end
       errors_to_flash cmt
@@ -57,6 +59,28 @@ class CommentsController < ApplicationController
       email cmt
     }
     render :text=>"OK"
+  end
+
+  def bulk_count
+    c = 0
+    if params[:pk]
+      c = params[:pk].length
+    elsif params[:sr_id]
+      sr = SearchRun.find_by_id params[:sr_id]
+      if sr
+        c = sr.total_objects
+      end
+    end
+    render json: {count: c}
+  end
+
+  def bulk
+    opts = {}
+    opts['module_type'] = params['module_type']
+    opts['subject'] = params['subject']
+    opts['body'] = params['body']
+    OpenChain::BulkAction::BulkActionRunner.process_from_parameters current_user, params, OpenChain::BulkAction::BulkComment, opts
+    render json: {'ok'=>'ok'}
   end
 
 private

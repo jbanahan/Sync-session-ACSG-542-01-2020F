@@ -10,13 +10,13 @@ advSearchApp.config ['$httpProvider', ($httpProvider) ->
 ]
 
 advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators','$timeout',($scope,$routeParams,$location,$http,chainSearchOperators,$timeout) ->
-  
+
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
     for m in ary
       return m if m.mfid==mfid
     return null
-  
+
   #create new array with element moved up one position
   moveElementUp = (ary,idx) ->
     if idx <= 0
@@ -108,6 +108,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   loadSearch = (id) ->
     $http.get('/advanced_search/'+id+'/setup.json').success((data,status,headers,config) ->
       $scope.searchSetup = data
+      BulkActions.setCoreModule(data.module_type)
       resetAvailables()
     ).error((data,status) ->
       if status == 404
@@ -241,11 +242,11 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
           saved: true
         }
         loadSearch $scope.searchId
-        
+
     ).error((data) ->
       $scope.error.push "An error occurred while saving this search."
     )
-  
+
   #create a new setup and change location to first page
   $scope.newSetup = () ->
     $scope.searchResult = {}
@@ -345,7 +346,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     for s in $scope.sortsToRemove
       mf = findByMfid $scope.searchSetup.sort_criterions, s
       mf.descending = !mf.descending
-  
+
   $scope.changeSearch = (newId) ->
     $location.path '/'+newId+'/1'
 
@@ -360,7 +361,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         else
           $scope.errors.push "Report download failed.  Please contact support"
       )
-    
+
   #
   # WATCHES
   #
