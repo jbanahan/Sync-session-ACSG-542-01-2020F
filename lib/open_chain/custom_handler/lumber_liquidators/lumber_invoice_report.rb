@@ -1,5 +1,6 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_summary_invoice_support'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_costing_report'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_supplemental_invoice_sender'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberInvoiceReport
   include OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSupport
@@ -23,21 +24,38 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
   end
 
   def find_invoices start_date, end_date
-    # We can ONLY send invoices that were sent via the cost file sync between the start and end dates.
-    invoices = BrokerInvoice.
+    # We can ONLY send invoices that were sent via the cost file sync OR the supplement invoice feed between the start and end dates.
+
+    # Find all the invoices that were on a cost file feed this week.
+    base_query = BrokerInvoice.
       joins(BrokerInvoice.need_sync_join_clause('LL BILLING')).
       where(customer_number: "LUMBER", source_system: "Alliance").
-      where("sync_records.id IS NULL OR sync_records.sent_at IS NULL").
-      order("broker_invoices.invoice_date, broker_invoices.invoice_number").
-      joins("INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
-            " AND cost_sync.syncable_type = 'Entry' AND cost_sync.syncable_id = broker_invoices.entry_id AND cost_sync.sent_at >= '#{start_date.to_s(:db)}'" + 
-            " AND cost_sync.sent_at < '#{end_date.to_s(:db)}'").
-      all
+      where("sync_records.id IS NULL OR sync_records.sent_at IS NULL")
 
-    # Reject any invoices that have failing rules OR were not included on the costing file sent for the entry (lumber_costing_report.rb).  
-    # There can be invoices issued AFTER the cost file, in that case, these will go to Lumber as invoices on the supplemental invoice feed
-    # and should be ignored here.
-    invoices.reject {|i| i.entry.any_failed_rules? || i.sync_records.find {|sr| sr.trading_partner == OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}.nil? }
+    cost_file_invoices = base_query.
+                          joins("INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
+                                " AND cost_sync.syncable_type = 'BrokerInvoice' AND cost_sync.syncable_id = broker_invoices.id AND cost_sync.sent_at >= '#{start_date.to_s(:db)}'" + 
+                                " AND cost_sync.sent_at < '#{end_date.to_s(:db)}'").
+                          all
+    
+    # Find all invoices that were on a supplemental invoice this past week
+    supplemental_invoices = base_query.
+                          joins("INNER JOIN sync_records supp_sync ON supp_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceSender.sync_code}'" + 
+                                " AND supp_sync.syncable_type = 'BrokerInvoice' AND supp_sync.syncable_id = broker_invoices.id AND supp_sync.sent_at >= '#{start_date.to_s(:db)}'" + 
+                                " AND supp_sync.sent_at < '#{end_date.to_s(:db)}'").
+                          all
+
+    # reject any invoices that have failed business rules
+    invoices = (cost_file_invoices + supplemental_invoices).reject {|i| i.entry.any_failed_rules? }
+
+    invoices.sort do |a, b|
+      order = a.invoice_date <=> b.invoice_date
+      if order == 0
+        order = a.invoice_number <=> b.invoice_number
+      end
+
+      order
+    end
   end
 
   def generate_and_send_report invoices, invoice_date
