@@ -37,10 +37,10 @@
     <%if current_user.admin? -%>
       <button id='btn_from_template'>New From Template</button>
       <button id='btn_bulk'>Bulk</button>
+      <button id="btn_send_email" title="Send a welcome email to selected users with their login and a new, random password.">Send Invite Email</button>
     <%end-%>
   <% end %>
-  <% if current_user.sys_admin -%>
-    <button id="btn_send_email" title="Send a welcome email to selected users with their login and a new, random password.">Send Invite Email</button>
+  <% if current_user.sys_admin? -%>
     <button id="change_user_company_button" title="Move the selected user(s) from one company to another.">Move User(s)</button>
   <% end %>
 <% end -%>
