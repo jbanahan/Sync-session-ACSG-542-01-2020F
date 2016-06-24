@@ -1,5 +1,7 @@
 <%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
-<%risk_def = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk])[:prodven_risk]%>
+<%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk,:prod_merch_cat])%>
+<%risk_def = cdefs[:prodven_risk]%>
+<%merch_cat_uid = "#{cdefs[:prod_merch_cat].model_field_uid}_product_vendor_assignment"%>
 <div class='container-fluid'>
   <div class='row'>
     <select id='ll-pva-filter' class='form-control'>
@@ -123,6 +125,10 @@
           var riskDefUid = '<%=risk_def.model_field_uid%>';
           return writeVal(obj,riskDefUid);
         }
+        merchCatHtmlFn = function(obj) {
+          var merchCatUid = '<%=merch_cat_uid%>';
+          return writeVal(obj,merchCatUid);
+        }
         writeVal = function(obj,field) {
           return obj[field] ? obj[field] : '';
         }
@@ -142,6 +148,7 @@
           html += "<tr><td><input type='checkbox' data-pva-id='"+pva.id+"'/></td><td><a href='/products/"+pva.product_id+"'>View</a></td>";
           html += "<td>"+writeVal(pva,'prodven_puid')+"</td>";
           html += "<td>"+writeVal(pva,'prodven_pname')+"</td>";
+          html += "<td>"+merchCatHtmlFn(pva)+"</td>"
           html += "<td>"+riskHtmlFn(pva)+"</td></tr>";
         }
         callback(html);
@@ -152,7 +159,7 @@
     $('#ll-product-panel-row').html("<div class='loader'>loading</div>");
     LLProductVariantAssignmentGetPage(1,function(rowHtml) {
       html = "<div><table class='table table-condensed table-striped'>";
-      html += "<thead><tr><th><input type='checkbox' id='ll-product-select-all' /></th><th></th><th>Article #</th><th>Name</th><th>Risk</th></tr></thead>";
+      html += "<thead><tr><th><input type='checkbox' id='ll-product-select-all' /></th><th></th><th>Article #</th><th>Name</th><th>Merch Cat</th><th>Risk</th></tr></thead>";
       html += "<tbody id='ll-product-panel-body' data-page='1'>";
       html += rowHtml;
       html += "</tbody></table></div>";
