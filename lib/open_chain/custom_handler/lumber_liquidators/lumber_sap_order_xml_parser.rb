@@ -8,6 +8,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     '_-LUMBERL_-3PL_ORDERS05_EXT', #after June 2016
     'ORDERS05' #before June 2016
   ]
+
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
