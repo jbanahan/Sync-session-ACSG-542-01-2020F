@@ -1,6 +1,13 @@
 require 'open_chain/business_rule_validation_results_support'
+require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
+require 'open_chain/bulk_action/bulk_action_runner'
+require 'open_chain/bulk_action/bulk_action_helper'
+require 'open_chain/bulk_action/bulk_order_update'
+
 class OrdersController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
+  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
+  include OpenChain::BulkAction::BulkActionHelper
 
 	def root_class
 		Order
@@ -151,6 +158,26 @@ class OrdersController < ApplicationController
 
   def validation_results
     generic_validation_results(Order.find params[:id])
+  end
+
+  def bulk_update
+    opts = {}
+    opts = params['mf_hsh']
+    OpenChain::BulkAction::BulkActionRunner.process_from_parameters current_user, params, OpenChain::BulkAction::BulkOrderUpdate, opts
+    render json: {'ok'=>'ok'}
+  end
+
+  def bulk_update_fields
+    mf_hsh = {}
+    gac_date = self.class.prep_custom_definitions([:original_gac_date])[:original_gac_date].model_field
+    mf_id_list = [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del]
+    mf_id_list.each do |mf_id| 
+      mf = ModelField.find_by_uid(mf_id)
+      mf_hsh[mf_id] = mf.label if mf.can_view? current_user
+    end
+    mf_hsh[gac_date.uid] = gac_date.label
+    c = get_bulk_count(params[:pk], params[:sr_id])
+    render json: {count: c, mf_hsh: mf_hsh}
   end
 
   private

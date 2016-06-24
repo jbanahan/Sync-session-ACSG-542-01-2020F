@@ -1,8 +1,11 @@
 require 'open_chain/workflow_processor'
 require 'open_chain/bulk_action/bulk_action_runner'
 require 'open_chain/bulk_action/bulk_comment'
+require 'open_chain/bulk_action/bulk_action_helper'
 
 class CommentsController < ApplicationController
+  include OpenChain::BulkAction::BulkActionHelper
+
   def create
     cmt = nil
     if cmt = Comment.create(params[:comment])
@@ -62,15 +65,7 @@ class CommentsController < ApplicationController
   end
 
   def bulk_count
-    c = 0
-    if params[:pk]
-      c = params[:pk].length
-    elsif params[:sr_id]
-      sr = SearchRun.find_by_id params[:sr_id]
-      if sr
-        c = sr.total_objects
-      end
-    end
+    c = get_bulk_count params[:pk], params[:sr_id]
     render json: {count: c}
   end
 

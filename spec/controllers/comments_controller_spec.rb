@@ -6,16 +6,14 @@ describe CommentsController do
     sign_in_as u
   end
   describe '#bulk_count' do
-    it 'should get count for specific items' do
-      p = {"pk" => {"0"=>"99","1"=>"54"}}
-      post :bulk_count, p
+    it 'should get count for specific items from #get_bulk_count' do
+      described_class.any_instance.should_receive(:get_bulk_count).with({"0"=>"99","1"=>"54"}, nil).and_return 2
+      post :bulk_count, {"pk" => {"0"=>"99","1"=>"54"}}
       expect(response).to be_success
       expect(JSON.parse(response.body)['count']).to eq 2
     end
-    it 'should get count for full search update' do
-      sr = double('search_run')
-      sr.should_receive(:total_objects).and_return 10
-      SearchRun.should_receive(:find_by_id).with('99').and_return sr
+    it 'should get count for full search update from #get_bulk_count' do
+      described_class.any_instance.should_receive(:get_bulk_count).with(nil, '99').and_return 10
       post :bulk_count, {sr_id:'99'}
       expect(response).to be_success
       expect(JSON.parse(response.body)['count']).to eq 10
