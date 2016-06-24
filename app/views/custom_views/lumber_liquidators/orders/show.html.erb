@@ -1,5 +1,11 @@
 <%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
-<%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk,:prod_old_article,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])%>
+<%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([
+  :prodven_risk,:prod_old_article,
+  :ordln_pc_approved_by,:ordln_pc_approved_date,
+  :ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,
+  :ord_planned_handover_date,:ord_ship_confirmation_date,
+  :ord_sap_vendor_handover_date,:ord_planned_expected_delivery_date,
+  :ord_sap_extract, :ord_avail_to_prom_date])%>
 <%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
 <script type='text/javascript'>
 
@@ -81,9 +87,15 @@
       <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_imp_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_payment_terms, :ord_terms, :ord_fob_point] %>
     </div>
     <div class="col-md-6">
-      <%= show_model_fields @order, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
+      <%= show_model_fields @order, [:ord_ord_date, :ord_window_start, :ord_window_end, cdefs[:ord_planned_expected_delivery_date].model_field_uid] %>
       <hr />
-      <%=show_custom_fields @order%>
+      <%= show_model_fields @order, [:ord_planned_handover_date,:ord_ship_confirmation_date].collect {|key| cdefs[key].model_field_uid} << :ord_first_exp_del%>
+      <hr />
+      <%= show_model_fields @order, [:ord_sap_extract].collect {|key| cdefs[key].model_field_uid}%>
+      <hr />
+      <%= show_model_fields @order, [:ord_avail_to_prom_date,:ord_sap_vendor_handover_date].collect {|key| cdefs[key].model_field_uid}%>
+      <hr />
+      <%=show_custom_fields @order, {skip_fields:[:ord_planned_expected_delivery_date,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date].collect{|key| cdefs[key].model_field_uid}}%>
     </div>
   </div>
   <div class="row">
