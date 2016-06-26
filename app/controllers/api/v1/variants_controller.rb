@@ -1,5 +1,5 @@
 module Api; module V1; class VariantsController < Api::V1::ApiCoreModuleControllerBase
-  
+
   def core_module
     CoreModule::VARIANT
   end
@@ -15,14 +15,6 @@ module Api; module V1; class VariantsController < Api::V1::ApiCoreModuleControll
     render_model_field_list CoreModule::VARIANT
   end
 
-  def index 
-    render_search core_module
-  end
-
-  def show
-    render_show core_module
-  end
-
   def base_relation
     # Don't pre-load custom values, they'll be loaded later by the custom value freeze (which is actually more efficient)
     Variant.includes([{plant_variant_assignments: {plant: :company}}])
@@ -30,7 +22,7 @@ module Api; module V1; class VariantsController < Api::V1::ApiCoreModuleControll
 
   def obj_to_json_hash obj
     variant_fields = limit_fields(
-      [:var_identifier] + 
+      [:var_identifier] +
       custom_field_keys(CoreModule::VARIANT)
     )
 

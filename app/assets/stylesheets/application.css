@@ -11,6 +11,6 @@
  *= require_self
  *= require_directory .
  *= stub vendor_portal
+ *= stub trade_lanes
  *= stub login
  */
-

@@ -53,12 +53,12 @@ module OpenChain
         :sender_address => %{"Exception Notifier" <bug@vandegriftinc.com>},
         :exception_recipients => %w{bug@vandegriftinc.com}
       }
-      
+
     config.active_record.schema_format = :sql
-    if Rails.env.test? 
-      initializer :after => :initialize_dependency_mechanism do 
-        ActiveSupport::Dependencies.mechanism = :load 
-      end 
+    if Rails.env.test?
+      initializer :after => :initialize_dependency_mechanism do
+        ActiveSupport::Dependencies.mechanism = :load
+      end
     end
 
     # Enable the asset pipeline
@@ -67,18 +67,18 @@ module OpenChain
     # Version of your assets, change this if you want to expire all your assets
     config.assets.version = '1.0'
 
-    config.assets.precompile += %w( vendor_portal.js vendor_portal.css )
+    config.assets.precompile += %w( vendor_portal.js vendor_portal.css trade_lanes.js trade_lanes.css )
 
     config.action_mailer.delivery_method = :postmark
-    
+
     email_settings = YAML::load(File.open("#{::Rails.root.to_s}/config/email.yml"))
     postmark_api_key = email_settings[::Rails.env][:postmark_api_key] unless email_settings[::Rails.env].nil?
     config.action_mailer.postmark_settings = { :api_key => postmark_api_key }
-    
+
     ::AWS_CREDENTIALS = YAML::load_file 'config/s3.yml'
 
     config.paperclip_defaults = {
-      :storage => :s3, 
+      :storage => :s3,
       :s3_credentials => ::AWS_CREDENTIALS,
       :s3_permissions => :private,
       :bucket => 'chain-io',
@@ -89,12 +89,12 @@ module OpenChain
     # Add an interpolation so that you can use :master_setup_uuid in the Paperclip has_attached_file 'path'
     # config variable.
     #
-    # This is done this way primarily as a means to defer the instantiation of the master setup 
+    # This is done this way primarily as a means to defer the instantiation of the master setup
     # object used for the Paperclip attachment path until the point when an attachment is actually
     # saved vs. when a class containing it is loaded.  This has the most impact on testing so that creation
     # of a MasterSetup occurs not at classloading (and thus can ensure the same master setup is used
-    # to describe the attachment path as is used potentially in a test case), but also resolves potential 
-    # problems in migrations that occur when loading a 
+    # to describe the attachment path as is used potentially in a test case), but also resolves potential
+    # problems in migrations that occur when loading a
     # MasterSetup instance during classloading (see original histories of classes w/ has_attached_file in them)
     Paperclip.interpolates(:master_setup_uuid) do |attachment, style|
       MasterSetup.get.uuid
@@ -102,7 +102,7 @@ module OpenChain
 
     require 'open_chain/rack_request_inflater'
     config.middleware.insert_before ActionDispatch::ParamsParser, OpenChain::RackRequestInflater
-    
+
     if Rails.env.production?
       require 'open_chain/new_relic_setup_middleware'
       OpenChain::NewRelicSetupMiddleware.set_constant_custom_attributes

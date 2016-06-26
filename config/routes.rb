@@ -95,9 +95,8 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
         post :validate, on: :member
       end
-      resources :variants, only: [:show] do
-
-      end
+      resources :variants, only: [:show]
+      resources :product_rate_overrides, only: [:index, :show, :update, :create]
 
       resources :plants, only: [] do
         get :state_toggle_buttons, on: :member
@@ -132,6 +131,10 @@ OpenChain::Application.routes.draw do
       end
 
       resources :user_manuals, only: [:index]
+
+      resources :trade_lanes, except: [:destroy]
+      resources :trade_preference_programs, except: [:destroy]
+      resources :tpp_hts_overrides, except: [:destroy]
 
       match "/setup_data" => "setup_data#index", via: :get
 
@@ -911,6 +914,8 @@ OpenChain::Application.routes.draw do
   end
 
   resources :custom_view_templates, except: [:show]
+
+  resources :trade_lanes, only: [:index]
 
   #Griddler inbound email processing
   mount_griddler

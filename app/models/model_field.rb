@@ -24,7 +24,7 @@ class ModelField
               :custom_id, :data_type, :core_module,
               :join_statement, :join_alias, :qualified_field_name, :uid,
               :public, :public_searchable, :definition, :disabled, :field_validator_rule,
-              :user_accessible, :autocomplete
+              :user_accessible, :autocomplete, :required
 
   def initialize(rank, uid, core_module, field_name, options={})
     o = {entity_type_field: false, history_ignore: false, read_only: false, user_accessible: true, restore_field: true}.merge(options)
@@ -79,6 +79,7 @@ class ModelField
     @select_options_lambda = o[:select_options_lambda]
     @autocomplete = o[:autocomplete]
     @restore_field = o[:restore_field]
+    @required = o[:required]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -139,6 +140,10 @@ class ModelField
 
   def restore_field?
     @restore_field
+  end
+
+  def required?
+    @required
   end
 
   def select_options
@@ -966,7 +971,7 @@ class ModelField
     else
       return mf_array.sort { |a,b| a.label(show_prefix) <=> b.label(show_prefix) }
     end
-    
+
   end
 
   def self.disabled_label

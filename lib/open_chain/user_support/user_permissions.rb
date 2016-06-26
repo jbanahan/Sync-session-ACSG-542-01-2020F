@@ -34,6 +34,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_products?
     when CoreModule::CLASSIFICATION
       return self.view_products?
+    when CoreModule::PRODUCT_RATE_OVERRIDE
+      return self.view_products?
     when CoreModule::OFFICIAL_TARIFF
       return self.view_official_tariffs?
     when CoreModule::ENTRY
@@ -64,6 +66,12 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_variants?
     when CoreModule::ADDRESS
       return true
+    when CoreModule::TRADE_LANE
+      return self.view_trade_lanes?
+    when CoreModule::TRADE_PREFERENCE_PROGRAM
+      return self.view_trade_preference_programs?
+    when CoreModule::TPP_HTS_OVERRIDE
+      return self.view_tpp_hts_overrides?
     end
     return false
   end
@@ -101,6 +109,42 @@ module OpenChain; module UserSupport; module UserPermissions
   end
   def comment_security_filings?
     self.security_filing_comment? && self.company.comment_security_filings?
+  end
+  def view_trade_lanes?
+    self.trade_lane_view? && self.company.view_trade_lanes?
+  end
+  def edit_trade_lanes?
+    self.trade_lane_edit? && self.company.edit_trade_lanes?
+  end
+  def comment_trade_lanes?
+    self.trade_lane_comment? && self.company.view_trade_lanes?
+  end
+  def attach_trade_lanes?
+    self.trade_lane_attach? && self.company.view_trade_lanes?
+  end
+  def view_trade_preference_programs?
+    self.view_trade_lanes?
+  end
+  def edit_trade_preference_programs?
+    self.edit_trade_lanes?
+  end
+  def comment_trade_preference_programs?
+    self.comment_trade_lanes?
+  end
+  def attach_trade_preference_programs?
+    self.attach_trade_lanes?
+  end
+  def view_tpp_hts_overrides?
+    self.view_trade_preference_programs?
+  end
+  def edit_tpp_hts_overrides?
+    self.edit_trade_preference_programs?
+  end
+  def comment_tpp_hts_overrides?
+    self.comment_trade_preference_programs?
+  end
+  def attach_tpp_hts_overrides?
+    self.attach_trade_preference_programs?
   end
   def view_drawback?
     self.drawback_view? && MasterSetup.get.drawback_enabled?

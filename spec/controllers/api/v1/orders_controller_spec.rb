@@ -15,6 +15,14 @@ describe Api::V1::OrdersController do
       j = JSON.parse response.body
       expect(j['results'].collect{|r| r['ord_ord_num']}).to eq ['123','ABC']
     end
+    it 'should count orders' do
+      Factory(:order,order_number:'123')
+      Factory(:order,order_number:'ABC')
+      get :index, count_only: 'true'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['record_count']).to eq 2
+    end
   end
   describe :get do
     it "should append custom_view to order if not nil" do
@@ -24,6 +32,25 @@ describe Api::V1::OrdersController do
       expect(response).to be_success
       j = JSON.parse response.body
       expect(j['order']['custom_view']).to eq 'abc'
+    end
+    it "should append tpp_survey_response_options if not nil" do
+      sr1 = double('sr1')
+      sr1.stub(:id).and_return 1
+      sr1.stub(:long_name).and_return 'abc'
+      sr2 = double('sr2')
+      sr2.stub(:id).and_return 2
+      sr2.stub(:long_name).and_return 'def'
+      Order.any_instance.stub(:available_tpp_survey_responses).and_return [sr1,sr2]
+
+      expected = [
+        {'id'=>1,'long_name'=>'abc'},
+        {'id'=>2,'long_name'=>'def'}
+      ]
+      o = Factory(:order)
+      get :show, id: o.id
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['order']['available_tpp_survey_responses']).to eq expected
     end
     it "should set permission hash" do
       o = Factory(:order)
@@ -136,7 +163,7 @@ describe Api::V1::OrdersController do
       ord = Factory(:order)
       bvt = BusinessValidationTemplate.create!(module_type:'Order')
       bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
-      
+
       post :validate, id: ord.id, :format => 'json'
       expect(bvt.business_validation_results.first.validatable).to eq ord
       expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Order"

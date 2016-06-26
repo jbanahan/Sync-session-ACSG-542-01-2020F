@@ -265,6 +265,74 @@ describe User do
         expect(u.edit_projects?).to be_false
       end
     end
+    context "trade_lanes" do
+      let(:user) do
+        u = User.new(trade_lane_view:true,trade_lane_edit:true,trade_lane_comment:true,trade_lane_attach:true)
+        u.company = Company.new
+        u.company.stub(:view_trade_lanes?).and_return true
+        u.company.stub(:edit_trade_lanes?).and_return true
+        u
+      end
+      it "should allow for user whose company has permission" do
+        u = user
+        expect(u.view_trade_lanes?).to be_true
+        expect(u.edit_trade_lanes?).to be_true
+        expect(u.comment_trade_lanes?).to be_true
+        expect(u.attach_trade_lanes?).to be_true
+      end
+      it "should not allow for user whose company does not have permission" do
+        u = user
+        u.company.stub(:view_trade_lanes?).and_return false
+        u.company.stub(:edit_trade_lanes?).and_return false
+        expect(u.view_trade_lanes?).to be_false
+        expect(u.edit_trade_lanes?).to be_false
+        expect(u.comment_trade_lanes?).to be_false
+        expect(u.attach_trade_lanes?).to be_false
+      end
+      it "should not allow for user who does not have permission" do
+        u = User.new
+        expect(u.view_trade_lanes?).to be_false
+        expect(u.edit_trade_lanes?).to be_false
+        expect(u.comment_trade_lanes?).to be_false
+        expect(u.attach_trade_lanes?).to be_false
+      end
+    end
+    context "trade_preference_programs" do
+      it "should delegate view to trade lanes method" do
+        u = User.new
+        u.should_receive(:view_trade_lanes?).and_return 'ABC'
+        expect(u.view_trade_preference_programs?).to eq 'ABC'
+      end
+      it "should delegate edit to trade lanes method" do
+        u = User.new
+        u.should_receive(:edit_trade_lanes?).and_return 'ABC'
+        expect(u.edit_trade_preference_programs?).to eq 'ABC'
+      end
+      it "should delegate comment to trade lanes method" do
+        u = User.new
+        u.should_receive(:comment_trade_lanes?).and_return 'ABC'
+        expect(u.comment_trade_preference_programs?).to eq 'ABC'
+      end
+      it "should delegate attach to trade lanes method" do
+        u = User.new
+        u.should_receive(:attach_trade_lanes?).and_return 'ABC'
+        expect(u.attach_trade_preference_programs?).to eq 'ABC'
+      end
+    end
+    context "tpp_hts_overrides" do
+      it "should delegate to trade_preference_programs" do
+        u = User.new
+        u.should_receive(:view_trade_preference_programs?).and_return 'view'
+        u.should_receive(:edit_trade_preference_programs?).and_return 'edit'
+        u.should_receive(:attach_trade_preference_programs?).and_return 'attach'
+        u.should_receive(:comment_trade_preference_programs?).and_return 'comment'
+
+        expect(u.view_tpp_hts_overrides?).to eq 'view'
+        expect(u.edit_tpp_hts_overrides?).to eq 'edit'
+        expect(u.attach_tpp_hts_overrides?).to eq 'attach'
+        expect(u.comment_tpp_hts_overrides?).to eq 'comment'
+      end
+    end
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))

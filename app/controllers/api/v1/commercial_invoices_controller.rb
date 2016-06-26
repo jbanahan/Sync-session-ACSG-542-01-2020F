@@ -10,16 +10,6 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiCoreModu
     CoreModule::COMMERCIAL_INVOICE
   end
 
-  def index
-    render_search CoreModule::COMMERCIAL_INVOICE
-  end
-  def create
-    do_create CoreModule::COMMERCIAL_INVOICE
-  end
-  def update
-    do_update CoreModule::COMMERCIAL_INVOICE
-  end
-
   #needed for index
   def obj_to_json_hash ci
     headers_to_render = limit_fields([:ci_invoice_number,
@@ -69,7 +59,7 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiCoreModu
   def save_object h
     # Don't use this method as an example of how to write new API controller code for save_object implementations
 
-    # With enough messing around, this should be able to use the more standardizable approach of updating / creating the invoice data 
+    # With enough messing around, this should be able to use the more standardizable approach of updating / creating the invoice data
     # via an update_model_field_attributes call...for now, that's just a bit of a pain to backport into this controller method.
     ci = h['id'].blank? ? CommercialInvoice.new : CommercialInvoice.find(h['id'])
     raise StatusableError.new("Cannot update commercial invoice attached to customs entry.",:forbidden) if ci.entry_id
@@ -100,5 +90,5 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiCoreModu
     end
   end
 
-  
+
 end; end; end

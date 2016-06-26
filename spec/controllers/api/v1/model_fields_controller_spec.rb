@@ -7,28 +7,28 @@ describe Api::V1::ModelFieldsController do
     @user = Factory(:user, product_view: true, username: 'joeuser')
     allow_api_access(@user)
   end
-  
+
   describe :index do
     it "should get record types (core modules)" do
       expect(get :index).to be_success
-      
+
       h = JSON.parse(response.body)
       product_rt = h['recordTypes'].find {|rt| rt['uid']=='Product'}
       expect(product_rt['label']).to eq 'Product'
     end
     it "should not get record types that the current user can't view" do
       CoreModule::ORDER.should_receive(:view?).with(@user).and_return(false)
-      
+
       expect(get :index).to be_success
-      
+
       h = JSON.parse(response.body)
       order_rt = h['recordTypes'].find {|rt| rt['uid']=='Order'}
       expect(order_rt).to be_nil
     end
     it "should get model fields" do
-      
+
       expect(get :index).to be_success
-      
+
       h = JSON.parse(response.body)
       prod_uid = h['fields'].find {|fld| fld['uid']=='prod_uid'}
       expect(prod_uid['label']).to eq 'Unique Identifier'
@@ -39,7 +39,7 @@ describe Api::V1::ModelFieldsController do
       expect(get :index).to be_success
 
       h = JSON.parse(response.body)
-      fld = h['fields'].find {|fld| fld['uid']=='class_comp_cnt'}
+      fld = h['fields'].find {|f| f['uid']=='class_comp_cnt'}
       expect(fld['label']).to eq "Component Count"
     end
     it "should not get model fields that are not user accessible" do
@@ -47,7 +47,7 @@ describe Api::V1::ModelFieldsController do
 
       h = JSON.parse(response.body)
       div_id = h['fields'].find {|fld| fld['uid']=='prod_div_id'}
-      expect(div_id).to be_nil      
+      expect(div_id).to be_nil
     end
     it "should not get model fields that the current user can't see" do
       CoreModule::ENTRY.stub(:view?).and_return(true)
@@ -86,7 +86,7 @@ describe Api::V1::ModelFieldsController do
       expect(mf['remote_validate']).to be_false
 
     end
-    
+
     it "should get choices array" do
       FieldValidatorRule.create!(model_field_uid:'prod_name',module_type:'Product',one_of:"a\nx\nc")
 
@@ -118,7 +118,7 @@ describe Api::V1::ModelFieldsController do
       expect(get :index).to be_success
 
       h = JSON.parse(response.body)
-      fld = h['fields'].find {|fld| fld['uid']=='prod_ent_type'}
+      fld = h['fields'].find {|f| f['uid']=='prod_ent_type'}
       expect(fld['select_options']).to eq [['PT','PT']]
     end
   end

@@ -1,5 +1,5 @@
 class Country < ActiveRecord::Base
-  
+
   ALL_COUNTRIES ||= [["AFGHANISTAN","AF"],["ALAND ISLANDS","AX"],["ALBANIA","AL"],["ALGERIA","DZ"],
     ["AMERICAN SAMOA","AS"],["ANDORRA","AD"],["ANGOLA","AO"],["ANGUILLA","AI"],["ANTARCTICA","AQ"],
     ["ANTIGUA AND BARBUDA","AG"],["ARGENTINA","AR"],["ARMENIA","AM"],["ARUBA","AW"],["AUSTRALIA","AU"],
@@ -68,16 +68,20 @@ class Country < ActiveRecord::Base
   attr_accessible :import_location, :classification_rank, :quicksearch_show
   after_save :update_model_fields
   after_commit :update_cache
-  
+
   scope :import_locations, where(:import_location=>true)
   scope :show_quicksearch, where(:quicksearch_show=>true)
-  scope :sort_name, order("name ASC") 
-  
+  scope :sort_name, order("name ASC")
+
 	has_many :addresses
   has_many :tariff_sets
 	has_many :official_tariffs
+  has_many  :trade_lanes_as_origin, :class_name => 'TradeLane', :foreign_key=>'origin_country_id'
+  has_many  :trade_lanes_as_destination, :class_name => 'TradeLane', :foreign_key=>'destination_country_id'
+  has_many  :product_rate_overrides_as_origin, :class_name => 'ProductRateOverride', :foreign_key=>'origin_country_id'
+  has_many  :product_rate_overrides_as_destination, :class_name => 'ProductRateOverride', :foreign_key=>'destination_country_id'
   has_and_belongs_to_many :regions
-	
+
   scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
 
 	validates_uniqueness_of :iso_code
@@ -89,7 +93,7 @@ class Country < ActiveRecord::Base
     CACHE.set("Country:id:#{country_id}", c) unless c.nil?
     c
   end
-	
+
 	def self.load_default_countries force_load = false
     begin
       @@skip_reload = true

@@ -27,6 +27,9 @@ class Product < ActiveRecord::Base
   has_and_belongs_to_many :factories, :class_name=>"Address", :join_table=>"product_factories", :foreign_key=>'product_id', :association_foreign_key=>'address_id'
   has_many :product_vendor_assignments, dependent: :destroy
   has_many :vendors, through: :product_vendor_assignments
+  has_many :product_trade_preference_programs, dependent: :destroy
+  has_many :trade_preference_programs, through: :product_trade_preference_programs
+  has_many :product_rate_overrides, dependent: :destroy
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true
   accepts_nested_attributes_for :variants, :allow_destroy => true
@@ -224,7 +227,7 @@ class Product < ActiveRecord::Base
     r.delete_if {|h| h.blank?}
     Set.new(r.collect {|h| h.gsub(/\./,'')[0,6]}).to_a
   end
-  
+
   def get_wto6_list_from_current_data
     r = Set.new
     self.classifications.each do |cls|

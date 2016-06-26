@@ -474,3 +474,35 @@ end
 Factory.define :bulk_process_log do |f|
   f.association :user
 end
+Factory.define :trade_lane do |f|
+  f.association :origin_country, factory: :country
+  f.association :destination_country, factory: :country
+end
+
+Factory.define :trade_preference_program do |f|
+  f.name 'TPP'
+  f.association :origin_country, factory: :country
+  f.association :destination_country, factory: :country
+end
+
+Factory.define :tpp_hts_override do |f|
+  f.association :trade_preference_program
+  f.hts_code '1234567890'
+  f.start_date Date.new(1900,1,1)
+  f.end_date Date.new(2999,12,31)
+end
+
+Factory.define :product_trade_preference_program do |f|
+  f.association :product
+  f.association :trade_preference_program
+end
+
+Factory.define :official_tariff_spi do |f|
+  f.association :official_tariff
+end
+
+Factory.define :product_rate_override do |f|
+  f.association :product
+  f.start_date Date.new(1900,1,1)
+  f.end_date Date.new(2999,12,31)
+end

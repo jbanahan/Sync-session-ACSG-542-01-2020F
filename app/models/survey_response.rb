@@ -8,6 +8,7 @@ class SurveyResponse < ActiveRecord::Base
   has_many :questions, :through=>:survey
   has_many :survey_response_logs, :dependent=>:destroy
   has_many :survey_response_updates, :dependent=>:destroy
+  has_many :tpp_orders, class_name: 'Order', foreign_key: 'tpp_survey_response_id'
   has_one :corrective_action_plan, :dependent=>:destroy
   belongs_to :checkout_by_user, class_name: "User"
 
@@ -21,6 +22,19 @@ class SurveyResponse < ActiveRecord::Base
 
   scope :was_archived, lambda {|ar| ar == true ? where("survey_responses.archived = ?", true) : where("survey_responses.archived IS NULL OR survey_responses.archived = ?", false)}
   scope :reminder_email_needed, lambda { joins(:survey).where("(expiration_notification_sent_at IS NULL) AND (ADDDATE(email_sent_date, surveys.expiration_days) < now())").readonly(false) }
+  scope :not_expired, lambda { joins(:survey).where("surveys.expiration_days is null OR survey_responses.email_sent_date is null OR (ADDDATE(email_sent_date, surveys.expiration_days) > now())")}
+
+  def survey_name
+    return nil unless self.survey
+    return self.survey.name
+  end
+
+  def long_name
+    ln = self.survey_name
+    ln = "" if ln.nil?
+    ln = "#{ln} - #{self.subtitle}" unless self.subtitle.blank?
+    ln
+  end
 
   def log_update user
     self.survey_response_updates.where(user_id:user.id).first_or_create
@@ -43,7 +57,7 @@ class SurveyResponse < ActiveRecord::Base
     return user.id == self.user_id || (group && user.in_group?(group))
   end
 
-  def responder_name 
+  def responder_name
     group ? group.name : user.full_name
   end
 
@@ -60,14 +74,14 @@ class SurveyResponse < ActiveRecord::Base
     end
     r
   end
-  
+
   def can_edit? user
     self.survey.company_id == user.company_id && user.edit_surveys? && !self.survey.archived?
   end
 
   #can the user view private comments for this survey
   def can_view_private_comments? user
-    self.survey.company_id == user.company_id 
+    self.survey.company_id == user.company_id
   end
 
   #send email invite to user

@@ -1,12 +1,33 @@
 require 'open_chain/api/api_entity_jsonizer'
 require 'api/v1/state_toggle_support'
 
+# Concrete implementations should implement
+# - core_module
+# - obj_to_json_hash
+# - save_object
 module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiController
   include Api::V1::StateToggleSupport
   attr_accessor :jsonizer
 
   def initialize jsonizer = OpenChain::Api::ApiEntityJsonizer.new
     @jsonizer = jsonizer
+  end
+
+
+  def index
+    render_search core_module
+  end
+
+  def show
+    render_show core_module
+  end
+
+  def create
+    do_create core_module
+  end
+
+  def update
+    do_update core_module
   end
 
   # The param key to expect the actual object data to be posted into .ie params[:product] -> :product = object_param_name
@@ -208,15 +229,19 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     end
 
     k = core_module.klass.search_secure(user,k)
-    outer_query = core_module.klass.where("ID IN (#{k.to_sql})")
-    #apply sort criterions
-    sort_criterions.each do |sc|
-      return unless validate_model_field 'Sort', sc.model_field_uid, core_module, user
-      outer_query = outer_query.order("#{sc.model_field.qualified_field_name}#{sc.descending? ? ' desc' : ''}")
+    if(params['count_only'])
+      render json:{record_count:k.count}
+    else
+      outer_query = core_module.klass.where("ID IN (#{k.to_sql})")
+      #apply sort criterions
+      sort_criterions.each do |sc|
+        return unless validate_model_field 'Sort', sc.model_field_uid, core_module, user
+        outer_query = outer_query.order("#{sc.model_field.qualified_field_name}#{sc.descending? ? ' desc' : ''}")
+      end
+      outer_query = outer_query.paginate(per_page:per_page,page:page)
+      r = outer_query.to_a.collect {|obj| obj_to_json_hash(obj)}
+      render json:{results:r,page:page,per_page:per_page}
     end
-    outer_query = outer_query.paginate(per_page:per_page,page:page)
-    r = outer_query.to_a.collect {|obj| obj_to_json_hash(obj)}
-    render json:{results:r,page:page,per_page:per_page}
   end
 
   def search_criterions

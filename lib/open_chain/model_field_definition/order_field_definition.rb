@@ -49,7 +49,17 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
         read_only: true,
         export_lambda: lambda {|obj| obj.order_lines.collect {|ol| ol.ship_to_id}.uniq.length},
         qualified_field_name: "(SELECT COUNT(DISTINCT ship_to_id) FROM order_lines WHERE order_lines.order_id = orders.id)"
-      }]
+      }],
+      [23,:ord_tppsr_db_id,:tpp_survey_response_id,'TPP Certification DB ID',{data_type: :integer}],
+      [24,:ord_tppsr_name,:name,'TPP Certification Name', {
+        data_type: :string,
+        export_lambda: lambda { |obj|
+          return "" unless obj.tpp_survey_response
+          return obj.tpp_survey_response.long_name
+        },
+        qualified_field_name: "(SELECT CONCAT(surveys.name,IF(length(survey_responses.subtitle)>0,CONCAT(' - ',survey_responses.subtitle),'')) FROM survey_responses INNER JOIN surveys ON survey_responses.survey_id = surveys.id WHERE survey_responses.id = orders.tpp_survey_response_id)",
+        read_only: true
+      }],
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
