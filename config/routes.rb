@@ -658,6 +658,10 @@ OpenChain::Application.routes.draw do
       post 'accept'
       post 'unaccept'
     end
+    collection do
+      post :bulk_update
+      post :bulk_update_fields
+    end
 		resources :order_lines
 	end
 
