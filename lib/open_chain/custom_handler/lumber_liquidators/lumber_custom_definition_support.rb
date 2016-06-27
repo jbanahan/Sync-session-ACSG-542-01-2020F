@@ -111,6 +111,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_planned_handover_date: {label: "Planned Handover Date", data_type: :date, module_type: "Order"},
     ord_sap_vendor_handover_date: {label: 'SAP Vendor Handover Date', data_type: :date, module_type: "Order", read_only: true},
     ord_ship_confirmation_date: {label: "Ship Confirmation Date", data_type: :date, module_type: "Order", read_only:true},
+    ord_cancel_date: {label: "Cancelled Date", data_type: :date, module_type: "Order", read_only: true},
     ordln_pc_approved_by:  {label: 'PC Approved By', data_type: :integer, module_type: 'OrderLine'},
     ordln_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'OrderLine'},
     ordln_pc_approved_by_executive:  {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'OrderLine'},
