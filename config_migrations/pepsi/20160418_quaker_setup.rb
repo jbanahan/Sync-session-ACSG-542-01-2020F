@@ -11,7 +11,7 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     :class_tariff_shift,
     :class_val_content,
     :class_add_cvd,
-    :class_spi_criteria,
+    :class_fta_criteria,
     :prod_shipper_name,
     :prod_us_broker,
     :prod_us_alt_broker,
@@ -50,6 +50,7 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     create_quaker_system_group
     create_quaker_validate_button user_cd, date_cd
     update_custom_definition_ranks
+    create_business_validation_template
   end
 
   def down
@@ -70,6 +71,24 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     end
   end
 
+
+  def create_business_validation_template
+    defs = self.class.prep_custom_definitions([:prod_fss_code,:prod_base_customs_description])
+    ActiveRecord::Base.transaction do
+      bvt = BusinessValidationTemplate.create!(module_type:'Product',name:'Non-Quaker Validations',description:'Additional rules for non-quaker products.')
+      bvt.search_criterions.create!(model_field_uid:'prod_ent_type',operator:'nq',value:'Quaker')
+      [
+        ["FSS Code",defs[:prod_fss_code].model_field_uid],
+        ["Base Customs Description",defs[:prod_base_customs_description].model_field_uid],
+        ["Division Name",'prod_div_name']
+      ].each do |r|
+        bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat',name:"#{r[0]} Required",description:"#{r[0]} is required.",
+          rule_attributes_json:"{\"model_field_uid\":\"#{r[1]}\",\"regex\":\"\\\\w\"}"
+        )
+      end
+      bvt.create_results! true
+    end
+  end
   def create_new_entity_type
     EntityType.where(module_type:'Product',name:'Quaker').first_or_create!
   end
@@ -83,9 +102,24 @@ module ConfigMigrations; module Pepsi; class QuakerSetup
     cdefs.values.each do |cd|
       EntityTypeField.where(model_field_uid:cd.model_field_uid,entity_type_id:entity_type.id).first_or_create!
     end
-    fvr = FieldValidatorRule.where(model_field_uid:cdefs[:class_spi_criteria].model_field_uid).first_or_create!
+    fvr = FieldValidatorRule.where(model_field_uid:cdefs[:class_fta_criteria].model_field_uid).first_or_create!
     fvr.one_of = "A\nB\nC\nD\nE\nF"
     fvr.save!
+
+    coo_fvr = FieldValidatorRule.where(model_field_uid:cdefs[:prod_coo].model_field_uid).first_or_create!
+    coo_fvr.one_of = ["AD","AE","AF","AG","AI","AL","AM","AO","AQ","AR","AS","AT","AU","AW","AX","AZ",
+      "BA","BB","BD","BE","BF","BG","BH","BI","BJ","BL","BM","BN","BO","BQ","BR","BS","BT","BV","BW","BY","BZ",
+      "CC","CD","CF","CG","CH","CI","CK","CL","CM","CN","CO","CR","CU","CV","CW","CX","CY","CZ","DE","DJ","DK","DM","DO","DZ",
+      "EC","EE","EG","EH","ER","ES","ET","FI","FJ","FK","FM","FO","FR","GA","GB","GD","GE","GF","GG","GH","GI","GL","GM","GN",
+      "GP","GQ","GR","GS","GT","GU","GW","GY","HK","HM","HN","HR","HT","HU","ID","IE","IL","IM","IN","IO","IQ","IR","IS","IT",
+      "JE","JM","JO","JP","KE","KG","KH","KI","KM","KN","KP","KR","KW","KY","KZ","LA","LB","LC","LI","LK","LR","LS","LT","LU",
+      "LV","LY","MA","MC","MD","ME","MF","MG","MH","MK","ML","MM","MN","MO","MP","MQ","MR","MS","MT","MU","MV","MW","MX","MY",
+      "MZ","NA","NC","NE","NF","NG","NI","NL","NO","NP","NR","NU","NZ","OM","PA","PE","PF","PG","PH","PK","PL","PM","PN","PR",
+      "PS","PT","PW","PY","QA","RE","RO","RS","RU","RW","SA","SB","SC","SD","SE","SG","SH","SI","SJ","SK","SL","SM","SN","SO",
+      "SR","ST","SV","SX","SY","SZ","TC","TD","TF","TG","TH","TJ","TK","TL","TM","TN","TO","TR","TT","TV","TW","TZ","UA","UG",
+      "UM","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS","XA","XB","XC","XM","XN","XO","XP","XQ","XS","XT","XW",
+      "XY","YE","YT","ZA","ZM","ZW"].join("\n")
+    coo_fvr.save!
   end
 
   def register_existing_fields_for_entity_type entity_type
