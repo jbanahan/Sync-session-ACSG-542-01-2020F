@@ -1,4 +1,4 @@
-module OpenChain; module BulkAction; module BulkActionHelper
+module OpenChain; module BulkAction; module BulkActionSupport
 
   def get_bulk_count pk_list, sr_id
     c = 0

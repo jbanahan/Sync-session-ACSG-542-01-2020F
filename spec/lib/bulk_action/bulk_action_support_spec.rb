@@ -1,12 +1,12 @@
 require 'spec_helper'
-require 'open_chain/bulk_action/bulk_action_helper'
+require 'open_chain/bulk_action/bulk_action_support'
 
-describe OpenChain::BulkAction::BulkActionHelper do
+describe OpenChain::BulkAction::BulkActionSupport do
   
   describe '#get_bulk_count' do
     before :each do
       my_k = Class.new do
-       include OpenChain::BulkAction::BulkActionHelper
+       include OpenChain::BulkAction::BulkActionSupport
      end
      @counter = my_k.new
     end

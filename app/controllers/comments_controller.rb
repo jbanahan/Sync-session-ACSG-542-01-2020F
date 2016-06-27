@@ -1,10 +1,10 @@
 require 'open_chain/workflow_processor'
 require 'open_chain/bulk_action/bulk_action_runner'
 require 'open_chain/bulk_action/bulk_comment'
-require 'open_chain/bulk_action/bulk_action_helper'
+require 'open_chain/bulk_action/bulk_action_support'
 
 class CommentsController < ApplicationController
-  include OpenChain::BulkAction::BulkActionHelper
+  include OpenChain::BulkAction::BulkActionSupport
 
   def create
     cmt = nil

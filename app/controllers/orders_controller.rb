@@ -1,13 +1,11 @@
 require 'open_chain/business_rule_validation_results_support'
-require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 require 'open_chain/bulk_action/bulk_action_runner'
-require 'open_chain/bulk_action/bulk_action_helper'
+require 'open_chain/bulk_action/bulk_action_support'
 require 'open_chain/bulk_action/bulk_order_update'
 
 class OrdersController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
-  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
-  include OpenChain::BulkAction::BulkActionHelper
+  include OpenChain::BulkAction::BulkActionSupport
 
 	def root_class
 		Order
@@ -169,13 +167,8 @@ class OrdersController < ApplicationController
 
   def bulk_update_fields
     mf_hsh = {}
-    gac_date = self.class.prep_custom_definitions([:original_gac_date])[:original_gac_date].model_field
-    mf_id_list = [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del]
-    mf_id_list.each do |mf_id| 
-      mf = ModelField.find_by_uid(mf_id)
-      mf_hsh[mf_id] = mf.label if mf.can_view? current_user
-    end
-    mf_hsh[gac_date.uid] = gac_date.label
+    mfs = CoreModule::ORDER.model_fields(current_user) {|mf| !mf.read_only? && mf.date?}
+    mfs.each_pair { |field_name, mf| mf_hsh[field_name] = mf.label }
     c = get_bulk_count(params[:pk], params[:sr_id])
     render json: {count: c, mf_hsh: mf_hsh}
   end
