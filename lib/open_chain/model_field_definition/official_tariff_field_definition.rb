@@ -1,7 +1,10 @@
 module OpenChain; module ModelFieldDefinition; module OfficialTariffFieldDefinition
   def add_official_tariff_fields
     add_fields CoreModule::OFFICIAL_TARIFF, [
-      [1,:ot_hts_code,:hts_code,"HTS Code",{:data_type=>:string, :export_lambda => lambda {|ot| ot.hts_code.try(:hts_format)}}],
+      [1,:ot_hts_code,:hts_code,"HTS Code",{:data_type=>:string, 
+        :export_lambda => lambda {|ot| ot.hts_code.try(:hts_format)},
+        :search_value_preprocess_lambda=> hts_search_value_preprocess_lambda
+      }],
       [2,:ot_full_desc,:full_description,"Full Description",{:data_type=>:string}],
       [3,:ot_spec_rates,:special_rates,"Special Rates",{:data_type=>:string}],
       [4,:ot_gen_rate,:general_rate,"General Rate",{:data_type=>:string}],

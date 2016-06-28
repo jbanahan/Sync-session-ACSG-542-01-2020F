@@ -2,7 +2,7 @@ module OpenChain; module ModelFieldDefinition; module SecurityFilingLineFieldDef
   def add_security_filing_line_fields
     add_fields CoreModule::SECURITY_FILING_LINE, [
       [2,:sfln_line_number,:line_number,"Line Number",{:data_type=>:integer}],
-      [4,:sfln_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
+      [4,:sfln_hts_code,:hts_code,"HTS Code",{:data_type=>:string, :search_value_preprocess_lambda=> hts_search_value_preprocess_lambda}],
       [5,:sfln_part_number,:part_number,"Part Number",{:data_type=>:string}],
       [6,:sfln_po_number,:po_number,"PO Number",{:data_type=>:string}],
       [7,:sfln_commercial_invoice_number,:commercial_invoice_number,"Commercial Invoice Number",{:data_type=>:string}],
