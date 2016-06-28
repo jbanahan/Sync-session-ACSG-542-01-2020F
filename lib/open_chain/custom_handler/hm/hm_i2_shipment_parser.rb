@@ -62,7 +62,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShimentParser
 
   def set_invoice_line_info system, i, line
     i.po_number = text_value(line[6])
-    i.part_number = text_value(line[9])
+    # The sku needs to be trimmed to 7 chars (We don't track color / size info for HM (which is the remaining X digits of the sku))
+    i.part_number = text_value(line[9])[0..6]
     i.country_origin_code = text_value(line[12])
     i.quantity = decimal_value(line[13])
     # Unit Price is sent as cents

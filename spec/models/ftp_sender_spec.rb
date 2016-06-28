@@ -79,6 +79,12 @@ describe FtpSender do
 
     context :error do
 
+      before :each do 
+        @conf = double("Rails.configuration")
+        Rails.stub(:configuration).and_return @conf
+        @conf.stub(:enable_ftp).and_return true
+      end
+
       it "should log message and requeue if error is raised" do
         # These two lines mock out the actual internal client proxy access
         @ftp.should_receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_raise "RANDOM ERROR"
@@ -146,6 +152,16 @@ describe FtpSender do
         StandardError.any_instance.should_receive(:log_me).with ["Attempted and failed to send ftp Session id #{s.id} 10 times. No more attempts will be made."]
         FtpSender.send_file 'server', 'user', 'password', nil, opts
 
+      end
+
+      it "does not queue send retry if ftp is not enabled" do
+        @conf.stub(:enable_ftp).and_return false
+        # Raise an error early in the send block, since all we care about is that the resend isn't queued
+        FtpSender.stub(:get_ftp_client).and_raise "Error"
+        FtpSender.should_not_receive(:delay)
+        @ftp.stub(:last_response).and_return "500"
+
+        FtpSender.send_file 'server', 'user', 'password', @file, {}
       end
     end
     
