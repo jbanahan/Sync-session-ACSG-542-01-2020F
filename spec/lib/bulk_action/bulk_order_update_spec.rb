@@ -23,6 +23,7 @@ describe OpenChain::BulkAction::BulkOrderUpdate do
       expect(@mf_list[:ord_first_exp_del].process_export(@ord, @u)).to eq @date[4]
       expect(@bpl.change_records.count).to eq 1
       expect(@bpl.change_records.first.record_sequence_number).to eq 99
+      expect(@ord.entity_snapshots.count).to eq 1
     end
 
     it "writes an error if user can't update" do
