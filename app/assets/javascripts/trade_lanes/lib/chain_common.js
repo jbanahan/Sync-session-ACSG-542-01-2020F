@@ -1225,6 +1225,11 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             if (setup.criteria) {
               r.criteria = r.criteria.concat(setup.criteria);
             }
+            if (setup.columns && setup.columns.length > 0) {
+              if (!(setup.columns.length === 1 && setup.columns[0] === 'id')) {
+                r.fields = setup.columns.join(',');
+              }
+            }
             if (setup.sorts) {
               r.sorts = setup.sorts;
             }
@@ -1302,6 +1307,11 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           });
           scope.$watch('searchSetup.page', function(nv, ov) {
             if (!neverLoaded) {
+              return scope.load();
+            }
+          });
+          scope.$watch('searchSetup.reload', function(nv, ov) {
+            if (nv && nv !== ov) {
               return scope.load();
             }
           });
