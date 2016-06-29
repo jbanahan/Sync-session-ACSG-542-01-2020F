@@ -21,7 +21,7 @@
                 </button>
             </div>
             <div ng-if="sbc.isEnabled('order_line')" class="col-md-3">
-                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('order_line'); sbc.loadAvailableOrders();">
+                <button class="btn btn-default choose-booking-btn" ng-click="sbc.chooseBookingType('order_line')">
                     <span class="top">Book by<br><strong class="sku">Order Line (SKU)</strong></span>
                     <hr>
                     <span class="bottom">Choose this if you want to provide full shipment details</span>
@@ -110,19 +110,12 @@
         </div>
         <div class="row">
             <div class="col-xs-2">
-                <input type='text' ng-model='orderFilter' placeholder='Search orders' class='form-control input-sm'/>
-                <div class='text-right'><small><a href='' ng-click='orderFilter=null'>clear</a></small></div>
-                <br />
-                <div ng-show='sbc.availableOrders.length == 0'>No orders found</div>
-                <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
-                    <label class="btn btn-md btn-default"
-                           ng-repeat="ord in sbc.availableOrders | filter:orderFilter"
-                           ng-class="{active:ord.id==sbc.activeOrder.id}"
-                           ng-click="sbc.getOrder(ord.id);"><input type="radio" autocomplete="off"/>{{ord.ord_cust_ord_no}}</label>
-                </div>
+                <angucomplete-alt id='order_autocomplete' input-class='form-control'
+                                              placeholder='Search for Orders...' selected-object='sbc.orderSelected'
+                                              remote-url='/api/v1/shipments/{{sbc.shipmentId}}/autocomplete_order?n=' title-field='order_number' minlength='3' initial-value=''></angucomplete-alt>
             </div>
             <div class="col-xs-10">
-                <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
+                <chain-loading-wrapper loading-flag='{{sbc.orderLoadingFlag}}'>
                     <div ng-show='sbc.activeOrder'>
                         <h2 style='margin-top:0'>Order: {{sbc.activeOrder.ord_cust_ord_no}}</h2>
                         <table class='table booking-table'>

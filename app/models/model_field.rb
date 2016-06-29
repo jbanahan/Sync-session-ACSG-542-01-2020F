@@ -79,6 +79,7 @@ class ModelField
     @select_options_lambda = o[:select_options_lambda]
     @autocomplete = o[:autocomplete]
     @restore_field = o[:restore_field]
+    @xml_tag_name = o[:xml_tag_name]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -139,6 +140,11 @@ class ModelField
 
   def restore_field?
     @restore_field
+  end
+
+  def xml_tag_name
+    tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
+    tag_name.to_s.gsub(/[\W]/,'_')
   end
 
   def select_options
@@ -966,7 +972,7 @@ class ModelField
     else
       return mf_array.sort { |a,b| a.label(show_prefix) <=> b.label(show_prefix) }
     end
-    
+
   end
 
   def self.disabled_label

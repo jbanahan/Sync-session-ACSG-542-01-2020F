@@ -5,6 +5,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_order_default_value
 require 'open_chain/custom_handler/lumber_liquidators/lumber_order_pdf_generator'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_autoflow_order_approver'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_order_xml_generator'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderChangeComparator
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
@@ -34,9 +35,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       ord.reload
       defaults_changed = true
     end
-    ord.reload if reset_vendor_approvals ord, old_data, new_data
-    ord.reload if reset_product_compliance_approvals ord, old_data, new_data
-    ord.reload if update_autoflow_approvals ord
+    
+    if reset_vendor_approvals(ord, old_data, new_data) || reset_product_compliance_approvals(ord, old_data, new_data) ||
+       update_autoflow_approvals(ord) || reset_po_cancellation(ord, new_data)
+
+      ord.reload
+    end
+
+    generate_ll_xml(ord,old_data,new_data)
 
     # if we changed the default values then the PDF should be generated from the comparator
     # that is triggered by that snapshot.  Otherwise, we'll get 2 PDFs.
@@ -45,6 +51,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     # and update_autoflow_approvals since those don't change the fingerprint, so their snapshots won't
     # try to create a new PDF
     create_pdf(ord,old_data,new_data) unless defaults_changed
+  end
+
+
+  def self.generate_ll_xml ord, old_data, new_data
+    if new_data.planned_handover_date && (old_data.nil? || old_data.planned_handover_date != new_data.planned_handover_date)
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.send_order ord
+    end
   end
 
   # set default values based on the vendor setup if they're blank
@@ -91,14 +104,61 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     return false
   end
 
+  def self.reset_po_cancellation ord, new_data
+    ActiveRecord::Base.transaction do
+      most_recent_dates = most_recent_dates ord
+      num_lines = get_num_lines new_data
+      new_dates = write_new_dates! ord, most_recent_dates, num_lines
+      (most_recent_dates[:cancel_date] != new_dates[:cancel_date]) || (most_recent_dates[:closed_at] != new_dates[:closed_at])
+    end
+  end
+
+  def self.most_recent_dates ord
+    cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
+    cancelled = ord.custom_value(cdef)
+    {cancel_date: cancelled, closed_at: ord.closed_at}
+  end
+
+  def self.get_num_lines new_data
+    new_data.line_hash.keys.count
+  end
+
+  def self.write_new_dates! ord, most_recent_dates, num_lines
+    cval, cdef = get_cancelled_date ord
+    if num_lines > 0
+      ord.reopen! User.integration
+      uncancel_order! ord, cdef, cval
+    else
+      ord.close! User.integration
+      cancel_order! ord, cdef, cval
+    end
+    {cancel_date: cval.value, closed_at: ord.closed_at}
+  end
+
+  def self.get_cancelled_date ord
+    cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
+    cval = ord.get_custom_value(cdef)
+    [cval, cdef]
+  end
+
+  def self.cancel_order! ord, cdef, cval
+    ord.update_custom_value!(cdef, ActiveSupport::TimeZone['America/New_York'].now.to_date) unless cval.value
+  end
+
+  def self.uncancel_order! ord, cdef, cval
+    ord.update_custom_value!(cdef, nil) if cval.value
+  end
+
   class OrderData
     ORDER_MODEL_FIELDS ||= [:ord_ord_num,:ord_window_start,:ord_window_end,:ord_currency,:ord_payment_terms,:ord_terms,:ord_fob_point]
     ORDER_CUSTOM_FIELDS ||= []
     ORDER_LINE_MODEL_FIELDS ||= [:ordln_line_number,:ordln_puid,:ordln_ordered_qty,:ordln_unit_of_measure,:ordln_ppu]
+    # using array so we can dynamically build but not have to
+    PLANNED_HANDOVER_DATE_UID ||= []
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
     attr_reader :fingerprint
-    attr_accessor :ship_from_address
+    attr_accessor :ship_from_address, :planned_handover_date
 
     def initialize fingerprint
       @fingerprint = fingerprint
@@ -106,7 +166,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     def self.build_from_hash entity_hash
       if ORDER_CUSTOM_FIELDS.empty?
-        ORDER_CUSTOM_FIELDS << prep_custom_definitions([:ord_country_of_origin]).values.first.model_field_uid.to_sym
+        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date])
+        ORDER_CUSTOM_FIELDS << cdefs[:ord_country_of_origin].model_field_uid.to_sym
+        PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
       end
       elements = []
       order_hash = entity_hash['entity']['model_fields']
@@ -125,6 +187,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
       od = self.new(elements.join('~'))
       od.ship_from_address = order_hash['ord_ship_from_full_address']
+      od.planned_handover_date = order_hash[PLANNED_HANDOVER_DATE_UID.first]
       return od
     end
 

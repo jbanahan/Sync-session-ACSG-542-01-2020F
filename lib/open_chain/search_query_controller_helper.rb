@@ -1,7 +1,7 @@
 module OpenChain
   module SearchQueryControllerHelper
     def execute_query_to_hash sq, user, page, per_page
-      
+
       ss = sq.search_setup
 
       #figure out page count
@@ -9,7 +9,7 @@ module OpenChain
       total_pages = row_count/per_page
       total_pages += 1 if row_count % per_page > 0
 
-      cols = ss.search_columns.order(:rank=>:asc).collect {|col| mf = ModelField.find_by_uid(col.model_field_uid); mf.can_view?(user) ? mf.label : ModelField.disabled_label} 
+      cols = ss.search_columns.order(:rank=>:asc).collect {|col| mf = ModelField.find_by_uid(col.model_field_uid); mf.can_view?(user) ? mf.label : ModelField.disabled_label}
 
       k = ss.core_module.klass
       rows = []
@@ -36,7 +36,7 @@ module OpenChain
             no_edit_links = true
           end
         end
-        
+
         #format dates & times
         row[:result].each_with_index do |r,i|
           if r.respond_to?(:acts_like_time?) && r.acts_like_time?
@@ -77,10 +77,11 @@ module OpenChain
       core_module.bulk_actions(user).each do |k,v|
         h = {"label"=>k.to_s}
         if v.is_a? String
-          h["path"] = eval(v) 
+          h["path"] = eval(v)
         else
           h["path"] = v[:path]
           h["callback"] = v[:ajax_callback]
+          h["font_icon"] = v[:font_icon] if v[:font_icon]
         end
         bulk_actions << h
       end

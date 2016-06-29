@@ -12,7 +12,7 @@ module OpenChain
             :prod_part_number, :prod_season, :prod_suggested_tariff, :prod_countries_of_origin])
         end
 
-        def self.parse file_content
+        def self.parse file_content, opts = {}
           self.new.process file_content
         end
 

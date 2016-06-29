@@ -22,6 +22,7 @@ require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
 require 'open_chain/custom_handler/polo/polo_tradecard_810_parser'
 require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_spreadsheet_handler'
 require 'open_chain/custom_handler/lands_end/le_parts_parser'
+require 'open_chain/custom_handler/lands_end/le_canada_plus_processor'
 require 'open_chain/custom_handler/intacct/alliance_day_end_ar_ap_parser'
 require 'open_chain/custom_handler/intacct/alliance_check_register_parser'
 require 'open_chain/custom_handler/kewill_export_shipment_parser'
@@ -174,6 +175,8 @@ module OpenChain
         OpenChain::CustomHandler::EcellerateXmlRouter.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lands_end_parts/') && MasterSetup.get.custom_feature?('Lands End Parts')
         OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_lands_end_canada_plus/') && MasterSetup.get.custom_feature?('Lands End Canada Plus')
+        OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor.delay.process_from_s3 bucket, remote_path
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
         LinkableAttachmentImportRule.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s, original_path: dir.to_s
       elsif command['path'].include? '/to_chain/'

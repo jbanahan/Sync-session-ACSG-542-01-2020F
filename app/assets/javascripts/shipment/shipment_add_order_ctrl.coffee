@@ -16,6 +16,10 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
       $scope.bookedOrders = resp.data.booked_orders
       $scope.linesAvailable = resp.data.lines_available
 
+  $scope.orderSelected = (obj) ->
+    if obj
+      $scope.getOrderLines(obj.originalObject)
+
 
   @loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
@@ -27,7 +31,7 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
       ]).then -> $scope.loadingFlag = null
 
 
-  $scope.getOrder = (order) ->
+  $scope.getOrderLines = (order) ->
     $scope.orderLoadingFlag = 'loading'
     $scope.activeOrder = null
     shipmentSvc.getOrder(order.id).then (resp) ->

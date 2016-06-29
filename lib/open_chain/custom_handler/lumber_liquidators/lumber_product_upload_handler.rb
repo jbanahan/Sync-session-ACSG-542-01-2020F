@@ -144,5 +144,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
   def search_name
     layout_type == :canada ? "CA Parts Upload (Do Not Delete or Modify)" : "US Parts Upload (Do Not Delete or Modify)"
   end
+
+  def generate_imported_file file, user
+    search_setup = find_or_create_search_setup file, user
+    imported_file = search_setup.imported_files.build update_mode: "update", starting_row: 1, starting_column: 1, module_type: search_setup.module_type, user_id: user.id
+    imported_file.attached = file
+    imported_file.save!
+
+    imported_file
+  end
   
 end; end; end; end

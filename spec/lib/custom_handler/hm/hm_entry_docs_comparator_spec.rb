@@ -135,6 +135,17 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
       expect(prod.attachments.first).to eq existing_attachment
     end
 
+    it "adds US classifications to existing products that don't have one" do
+      prod = Factory(:product, importer: importer, unique_identifier: "HENNE-PART")
+      subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
+
+      prod.reload
+      expect(prod.classifications.size).to eq 1
+      c = prod.classifications.first
+      expect(c.country).to eq us
+      expect(c.custom_value(cdefs[:class_customs_description])).to eq "Description"
+    end
+
     context "with class compare method" do
       it "works" do
         subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version

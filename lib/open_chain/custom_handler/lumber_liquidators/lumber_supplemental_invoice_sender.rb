@@ -3,6 +3,10 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_summary_invoice_sup
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSupplementalInvoiceSender
   include OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSupport
 
+  def self.sync_code
+    'LL SUPPLEMENTAL'
+  end
+
   # This should be run daily at midnight.
   def self.run_schedulable
     sender = self.new
@@ -11,7 +15,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSu
     # This will mean that the entry will have an LL COST Report sync record but the individual invoices will not, since
     # the costing report adds sync records for every invoice it sends out at the invoice level and entry level.
     invoices = BrokerInvoice.
-      joins(BrokerInvoice.need_sync_join_clause('LL SUPPLEMENTAL')).
+      joins(BrokerInvoice.need_sync_join_clause(sync_code)).
       joins("INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
             " AND cost_sync.syncable_type = 'Entry' AND cost_sync.syncable_id = broker_invoices.entry_id").
       joins("LEFT OUTER JOIN sync_records inv_cost_sync ON inv_cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
@@ -37,7 +41,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSu
       file.rewind
 
       ActiveRecord::Base.transaction do
-        sr = invoice.sync_records.first_or_initialize trading_partner: "LL SUPPLEMENTAL"
+        sr = invoice.sync_records.first_or_initialize trading_partner: self.class.sync_code
         sr.sent_at = Time.zone.now
         sr.confirmed_at = (Time.zone.now + 1.minute)
 

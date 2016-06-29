@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShimentParser
       else
         # Send to Kewill Customs
         g = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.new
-        g.generate_and_send nil, invoice
+        g.generate_and_send_invoices nil, invoice
       end
     end
   end
@@ -53,7 +53,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShimentParser
 
   def make_invoice system, line
     invoice = CommercialInvoice.new
-    invoice.importer = importer
+    invoice.importer = importer(system)
     invoice.invoice_number = text_value(line[0])
     invoice.invoice_date = line[3].blank? ? nil : Time.zone.parse(line[3])
     
@@ -90,13 +90,24 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShimentParser
     csv_reader StringIO.new(file), col_sep: ";"
   end
 
-  def importer
-    @importer ||= Company.importers.where(system_code: "HENNE").first
-    raise "No importer record found with system code HENNE." if @importer.nil?
-    @importer
+  def product_importer
+    @product_importer ||= Company.importers.where(system_code: "HENNE").first
+    raise "No importer record found with system code HENNE." if @product_importer.nil?
+    @product_importer
+  end
+
+  def importer system
+    if system == :fenix
+      @importer ||= Company.importers.where(fenix_customer_number: "887634400RM0001").first
+      raise "No Fenix importer record found with Tax ID 887634400RM0001." if @importer.nil?
+      @importer
+    else
+      product_importer
+    end
   end
 
   def hts_and_description system, part_number
+    importer = product_importer
     product = Product.where(importer_id: importer.id, unique_identifier: "#{importer.system_code}-#{part_number}").first
     hts, description = nil
     if product

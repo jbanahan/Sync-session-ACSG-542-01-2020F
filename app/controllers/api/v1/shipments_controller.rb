@@ -30,7 +30,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     s = get_shipment
     ord_fields = [:ord_ord_num,:ord_cust_ord_no,:ord_mode,:ord_imp_name,:ord_ord_date,:ord_ven_name]
     r = []
-    s.available_orders(current_user).order('customer_order_number').each do |ord|
+    s.available_orders(current_user).order('customer_order_number').limit(25).each do |ord|
       hsh = {id:ord.id}
       ord_fields.each {|uid| hsh[uid] = export_field(uid, ord)}
       r << hsh
@@ -340,9 +340,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       s = get_shipment
 
       orders = s.available_orders current_user
-      results = orders.where('customer_order_number like ?',"%#{params[:n]}%").
+      results = orders.where('customer_order_number LIKE ? OR order_number LIKE ?',"%#{params[:n]}%", "%#{params[:n]}%").
                   limit(10).
-                  collect {|order| {order_number:order.customer_order_number, id:order.id}}
+                  collect {|order| 
+                    # Use whatever field matched as the title that's getting returned
+                    title = (order.customer_order_number.to_s.upcase.include?(params[:n].to_s.upcase) ? order.customer_order_number : order.order_number)
+                    {order_number:(title), id:order.id}
+                  }
     end
 
     render json: results
@@ -592,6 +596,14 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
           next
         end
         s_line.order_line_id = ln['bkln_order_line_id'] if ln['bkln_order_line_id']
+        # If the data has a order line id, blank out the order id and product id values.  The order line should always provide order and product data for the booking line.
+        # If order line id is set and order or product ids are present a validation will also fail and the save will rollback.
+        if !s_line.order_line_id.blank?
+          s_line.order_id = nil
+          s_line.product_id = nil
+          ln['bkln_order_id'] = nil
+          ln['bkln_product_id'] = nil
+        end
         import_fields ln, s_line, CoreModule::BOOKING_LINE
       end
     end

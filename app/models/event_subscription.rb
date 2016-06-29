@@ -22,6 +22,11 @@ class EventSubscription < ActiveRecord::Base
   end
   def self.object_for_event_type event_type, object_id
     # The order of these when statements is relevant, don't shift them around
+    # Make sure to either raise a RecordNotFound exception or return nil if the object 
+    # can't be found, anything else can cause an error, which may cause issues in the 
+    # actual event queue client being able to finish with the event message - and the
+    # message getting stuck in the queue
+    
     case event_type
     when /COMMENT_CREATE$/
       return Comment.find(object_id).commentable
@@ -31,5 +36,10 @@ class EventSubscription < ActiveRecord::Base
       raise "CoreModule not found for #{core_module_name}" if cm.nil?
       cm.find object_id
     end
+
+  rescue ActiveRecord::RecordNotFound
+    # Don't care...this can happen if a comment or base object is removed prior to all the subscribed 
+    # events getting sent out through the queue.  So just return nil.
+    return nil
   end
 end

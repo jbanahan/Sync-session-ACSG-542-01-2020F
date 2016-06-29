@@ -59,12 +59,30 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
   
   context "with data" do
 
-    def build_custom_fields custom_fields, product = nil
-      @custom_definitions ||= {}
-      @cd ||= {}
+    before :all do
+      @standard_custom_fields = [:prod_country_of_origin, :prod_part_number]
 
+      @fda_custom_fields = [:prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, 
+                    :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, :prod_fda_container_width, :prod_fda_container_height, 
+                    :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance]
+
+      create_custom_fields (@standard_custom_fields + @fda_custom_fields)
+    end
+
+    after :all do
+      CustomDefinition.delete_all
+    end
+
+    def create_custom_fields custom_fields
+      @custom_definitions ||= {}
       cdefs = CustomFieldBuilder.prep_custom_definitions custom_fields
-      cdefs.each_pair do |code, definition|
+      @custom_definitions = @custom_definitions.merge cdefs
+    end
+
+    def build_custom_fields custom_fields, product = nil
+      @cd ||= {}
+      custom_fields.each do |code|
+        definition = @custom_definitions[code]
         # Push out to 100 chars since that's way longer than any actual field we're using
         value = nil
         if code == :prod_country_of_origin
@@ -73,6 +91,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         elsif code == :prod_fda_product
           value = true
         else
+
           value = "#{definition.id}#{definition.label}".ljust(100, "0")
         end
         
@@ -80,20 +99,12 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         @cd[code] = value
         product.update_custom_value! definition, value if product
       end
-
-      @custom_definitions = @custom_definitions.merge cdefs
     end
 
     before :each do
-      @standard_custom_fields = [:prod_country_of_origin, :prod_part_number]
-
-      @fda_custom_fields = [:prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, 
-                    :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, :prod_fda_container_width, :prod_fda_container_height, 
-                    :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance]
-
       @us = Factory(:country,:iso_code=>"US")
       @p = Factory(:product,:importer=>@c,:name=>"MYNAME")
-      Factory(:tariff_record,:hts_1=>"1234567890",:classification=>Factory(:classification,:country=>@us,:product=>@p))
+      Factory(:tariff_record,:hts_1=>"12345678",:classification=>Factory(:classification,:country=>@us,:product=>@p))
     end
 
     describe "sync_fixed_position" do
@@ -103,22 +114,21 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
       it "should generate output file with FDA info" do
         build_custom_fields (@standard_custom_fields + @fda_custom_fields), @p
         @tmp = described_class.new(@c).sync_fixed_position
-        IO.read(@tmp.path).should == "#{@cd[:prod_part_number][0..14]}MYNAME                                  1234567890#{@cd[:prod_country_of_origin][0..1]}Y#{@cd[:prod_fda_product_code][0..6]}#{@cd[:prod_fda_temperature][0]}#{@cd[:prod_fda_uom][0..2]}#{@cd[:prod_fda_country][0..1]}#{@cd[:prod_fda_mid][0..14]}#{@cd[:prod_fda_shipper_id][0..14]}#{@cd[:prod_fda_description][0..39]}#{@cd[:prod_fda_establishment_no][0..10]}#{@cd[:prod_fda_container_length][0..3]}#{@cd[:prod_fda_container_width][0..3]}#{@cd[:prod_fda_container_height][0..3]}#{@cd[:prod_fda_contact_name][0..9]}#{@cd[:prod_fda_contact_phone][0..9]}#{@cd[:prod_fda_affirmation_compliance][0..2]}\n"
+        IO.read(@tmp.path).should == "#{@cd[:prod_part_number][0..14]}MYNAME                                  12345678  #{@cd[:prod_country_of_origin][0..1]}Y#{@cd[:prod_fda_product_code][0..6]}#{@cd[:prod_fda_temperature][0]}#{@cd[:prod_fda_uom][0..2]}#{@cd[:prod_fda_country][0..1]}#{@cd[:prod_fda_mid][0..14]}#{@cd[:prod_fda_shipper_id][0..14]}#{@cd[:prod_fda_description][0..39]}#{@cd[:prod_fda_establishment_no][0..10]}#{@cd[:prod_fda_container_length][0..3]}#{@cd[:prod_fda_container_width][0..3]}#{@cd[:prod_fda_container_height][0..3]}#{@cd[:prod_fda_contact_name][0..9]}#{@cd[:prod_fda_contact_phone][0..9]}#{@cd[:prod_fda_affirmation_compliance][0..2]}\n"
         expect(@c.last_alliance_product_push_at.to_date).to eq Time.zone.now.to_date
       end
 
       it "does not include FDA info if the product does not have FDA fields" do
         build_custom_fields @standard_custom_fields, @p
-        build_custom_fields @fda_custom_fields
         @tmp = described_class.new(@c).sync_fixed_position
-        IO.read(@tmp.path).should == "#{@cd[:prod_part_number][0..14]}MYNAME                                  1234567890#{@cd[:prod_country_of_origin][0..1]}N                                                                                                                                 \n"
+        IO.read(@tmp.path).should == "#{@cd[:prod_part_number][0..14]}MYNAME                                  12345678  #{@cd[:prod_country_of_origin][0..1]}N                                                                                                                                 \n"
       end
 
       it "does not include FDA info if the product's fda product flag is not set" do
         build_custom_fields (@standard_custom_fields + @fda_custom_fields), @p
         @p.update_custom_value! @custom_definitions[:prod_fda_product], false
         @tmp = described_class.new(@c).sync_fixed_position
-        IO.read(@tmp.path).should == "#{@cd[:prod_part_number][0..14]}MYNAME                                  1234567890#{@cd[:prod_country_of_origin][0..1]}N                                                                                                                                 \n"
+        IO.read(@tmp.path).should == "#{@cd[:prod_part_number][0..14]}MYNAME                                  12345678  #{@cd[:prod_country_of_origin][0..1]}N                                                                                                                                 \n"
       end
 
       it "transliterates non-ASCII data" do
@@ -174,7 +184,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         vals[0].should == @p.id
         vals[1].should == @cd[:prod_part_number]
         vals[2].should == "MYNAME"
-        vals[3].should == "1234567890"
+        vals[3].should == "12345678"
         vals[4].should == @cd[:prod_country_of_origin]
         vals[5].should == "N"
       end
@@ -200,7 +210,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         Factory(:tariff_record,:hts_1=>'1234567777',:classification=>Factory(:classification,:product=>@p))
         r = ActiveRecord::Base.connection.execute described_class.new(@c).query
         r.count.should == 1
-        r.first[3].should == '1234567890'
+        r.first[3].should == '12345678'
       end
       it "should not output product without US classification" do
         @p.classifications.destroy_all

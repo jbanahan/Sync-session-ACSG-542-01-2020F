@@ -80,7 +80,13 @@ module CoreModuleDefinitions
         order_lines: {type: OrderLine },
         folders: { descriptor: Folder }
       }, descriptor_repository: DESCRIPTOR_REPOSITORY
-     )
+     ),
+     :bulk_actions_lambda => lambda {|current_user|
+       bulk_actions = {}
+       bulk_actions["Comment"]={:path=>'/comments/bulk_count.json', :ajax_callback=>'BulkActions.handleBulkComment',font_icon:'fa-sticky-note'} if current_user.comment_orders?
+       bulk_actions["Update"]={:path=>'/orders/bulk_update_fields.json', :ajax_callback=>'BulkActions.handleBulkOrderUpdate',font_icon:'fa-pencil-square-o'} if current_user.edit_orders?
+       bulk_actions
+     }
     })
   CONTAINER = CoreModule.new("Container", "Container", {
        show_field_prefix: false,

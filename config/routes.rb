@@ -59,7 +59,7 @@ OpenChain::Application.routes.draw do
       resources :entries, only: [] do
         post :validate, on: :member
       end
-      
+
       resources :orders, only: [:index,:show,:update] do
         member do
           get :state_toggle_buttons
@@ -371,6 +371,8 @@ OpenChain::Application.routes.draw do
   end
   resources :comments do
     post 'send_email', :on => :member
+    post 'bulk_count', :on => :collection
+    post 'bulk', :on => :collection
   end
 
   match "/textile/preview" => "textile#preview"
@@ -513,7 +515,7 @@ OpenChain::Application.routes.draw do
 
   match "/custom_features/eddie_bauer_7501" => "custom_features#eddie_bauer_7501_index", :via => :get
   match "/custom_features/eddie_bauer_7501/upload" => "custom_features#eddie_bauer_7501_upload", :via => :post
-  match "/custom_features/eddie_bauer_7501/download" => "custom_features#eddie_bauer_7501_download", :via => :get
+  match "/custom_features/eddie_bauer_7501/:id/download" => "custom_features#eddie_bauer_7501_download", :via => :get
 
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
@@ -673,6 +675,10 @@ OpenChain::Application.routes.draw do
       post 'reopen'
       post 'accept'
       post 'unaccept'
+    end
+    collection do
+      post :bulk_update
+      post :bulk_update_fields
     end
 		resources :order_lines
 	end

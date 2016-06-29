@@ -470,3 +470,7 @@ Factory.define :custom_view_template do |f|
   f.sequence(:template_identifier) {|n| "t_#{n}"}
   f.sequence(:template_path) {|n| "tp_#{n}"}
 end
+
+Factory.define :bulk_process_log do |f|
+  f.association :user
+end

@@ -137,6 +137,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
     raise "No US country found" unless @us
 
     created = false
+    classification_added = false
     Lock.acquire("Product-#{unique_id}") do 
       product = Product.where(unique_identifier: unique_id, importer_id: part_data[:importer_id]).first
       # This is a bit of a microoptimization...we don't set the custom definition for part number unless we're creating the product
@@ -151,9 +152,10 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
       classification = product.classifications.find {|c| c.country_id == @us.id}
       if classification.nil?
         product.classifications.build country_id: @us.id
+        classification_added = true
       end
 
-      product.save! if product.changed?
+      product.save! if product.changed? || classification_added
     end
 
     Lock.with_lock_retry(product) do
@@ -182,7 +184,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
       # I don't really know why product.changed? is not working here to detect when we build tariff records 
       # or add new custom values, but it's not, so I'm saving inline in those cases and using flags to determine if a 
       # save occurred to determine if we should snapshot or not.
-      if created || tariff_saved || po_updated || desc_updated
+      if created || tariff_saved || po_updated || desc_updated || classification_added
         product.create_snapshot user
       end
     end

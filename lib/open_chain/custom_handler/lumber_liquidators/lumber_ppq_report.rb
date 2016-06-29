@@ -24,8 +24,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPp
 
   def query start_date, end_date
     <<-SQL
-      SELECT '' as 'Unique Id', e.entry_number 'Entry Number', e.master_bills_of_lading 'B/L No(s)', e.container_numbers 'Container No(s)', e.arrival_date 'Arrival Date', i.mfid 'Manufacturer ID', l.part_number 'Part No', l.po_number 'PO No', t.hts_code 'HTS No',
-      lc.detailed_description 'Description', lc.quantity 'Quantity of Constituent Element', lc.unit_of_measure 'UOM', 0  'Percent of Constituent Element', lc.value  'PGA Line Value', lc.genus  'Scientific Genus Name', lc.species  'Scientific Species Name',
+      SELECT '' as 'Unique Id', e.customer_name 'Importer Name', e.entry_number 'Entry Number', e.master_bills_of_lading 'B/L No(s)', e.container_numbers 'Container No(s)', e.arrival_date 'Arrival Date', i.mfid 'Manufacturer ID', l.part_number 'Part No', l.po_number 'PO No', t.hts_code 'HTS No',
+      lc.detailed_description 'Description', lc.name 'Name of Constituent Element',lc.quantity 'Quantity of Constituent Element', lc.unit_of_measure 'UOM', lc.percent_recycled_material 'Percent Recycled', lc.value  'PGA Line Value', lc.genus  'Scientific Genus Name', lc.species  'Scientific Species Name',
       lc.harvested_from_country  'Source Country Code'
       FROM entries e
       INNER JOIN commercial_invoices i ON e.id = i.entry_id

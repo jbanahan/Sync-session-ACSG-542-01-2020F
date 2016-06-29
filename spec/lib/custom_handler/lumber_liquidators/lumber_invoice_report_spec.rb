@@ -135,12 +135,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
     end
 
     it "does not find invoices sent on cost file after given date" do
-      synced_invoice.entry.sync_records.first.update_attributes(sent_at: Date.new(2016, 3, 2))
+      synced_invoice.sync_records.first.update_attributes(sent_at: Date.new(2016, 3, 2))
       expect(subject.find_invoices( Date.new(2016, 3, 1), Date.new(2016, 3, 2)).length).to eq 0
     end
 
     it "does not find invoices sent on cost file before given date" do
-      synced_invoice.entry.sync_records.first.update_attributes(sent_at: Date.new(2016, 2, 29))
+      synced_invoice.sync_records.first.update_attributes(sent_at: Date.new(2016, 2, 29))
       expect(subject.find_invoices( Date.new(2016, 3, 1), Date.new(2016, 3, 2)).length).to eq 0
     end
 
@@ -153,6 +153,37 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       expect(invoices.second).to eq invoice
     end
 
+    context "with supplemental invoice" do
+
+      before :each do
+        # clear out the cost report invoice sync (use synced_invoice since it creates all the behind the scenes stuff for us)
+        synced_invoice.sync_records.find {|sr| sr.trading_partner == OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}.destroy
+      end
+
+      it "includes invoices that were included on a supplemental invoice feed during the given report timeframe" do
+        synced_invoice.sync_records.create! trading_partner: OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceSender.sync_code, sent_at: Date.new(2016, 3, 1)
+        invoices = subject.find_invoices Date.new(2016, 3, 1), Date.new(2016, 3, 2)
+
+        expect(invoices.length).to eq 1
+        expect(invoices.first).to eq synced_invoice
+      end
+
+      it "does not include invoices with supplemental invoices sent outside the reporting period" do
+        synced_invoice.sync_records.create! trading_partner: OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceSender.sync_code, sent_at: Date.new(2016, 3, 3)
+        invoices = subject.find_invoices Date.new(2016, 3, 1), Date.new(2016, 3, 2)
+        expect(invoices.length).to eq 0
+      end
+    end
+
+    it "includes invoices on same entry with one being costing report and the other supplemental" do
+      invoice_2.sync_records.create! trading_partner: OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceSender.sync_code, sent_at: Date.new(2016, 3, 2)
+      invoices = subject.find_invoices Date.new(2016, 3, 1), Date.new(2016, 3, 3)
+
+      expect(invoices.length).to eq 2
+      expect(invoices.first).to eq synced_invoice
+      expect(invoices.second).to eq invoice_2
+    end
+    
     it "ignores invoices that were not sent on an entry's costing report" do
       # Just creating the second invoice withtout the sync record means it should not appear on the report
       invoice_2
@@ -171,7 +202,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
 
       # Run schedulable uses a date range of the previous workweek (Monday - Sunday), so set the entry up so that based 
       # soley on the time of the sync it apperas to be off the report, but adjusting for the timezone change it will be on the report.
-      entry.sync_records.first.update_attributes! sent_at: ActiveSupport::TimeZone["UTC"].parse("2016-04-11 03:59")
+      synced_invoice.sync_records.first.update_attributes! sent_at: ActiveSupport::TimeZone["UTC"].parse("2016-04-11 03:59")
 
       Timecop.freeze(DateTime.new(2016, 4, 16, 4, 0)) do
         described_class.run_schedulable

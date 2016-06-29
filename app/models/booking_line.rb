@@ -11,7 +11,12 @@ class BookingLine < ActiveRecord::Base
 
   def customer_order_number
     this_order = self.order || self.order_line.try(:order)
-    this_order.try(:customer_order_number)
+    order_number = nil
+    if this_order
+      order_number = this_order.customer_order_number
+      order_number = this_order.order_number if order_number.blank?
+    end
+    order_number
   end
 
   def customer_order_and_line_number

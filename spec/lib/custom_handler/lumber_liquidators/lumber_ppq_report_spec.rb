@@ -7,12 +7,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberPpqReport do
       tariff = Factory(:commercial_invoice_tariff, hts_code: "1111111111", 
                           commercial_invoice_line: Factory(:commercial_invoice_line, part_number: "Part", po_number: "PO", 
                             commercial_invoice: Factory(:commercial_invoice, mfid: "MID",
-                              entry: Factory(:entry, customer_number: "LUMBER", source_system: "Alliance", release_date: "2016-05-01", master_bills_of_lading: "MBOL1\nMBOL2", container_numbers: "CONT1\n CONT2", entry_number: "ENTNUM", arrival_date: Time.zone.parse("2016-04-30 05:00"))
+                              entry: Factory(:entry, customer_number: "LUMBER", customer_name: "LUMBER LIQUIDATORS INC", source_system: "Alliance", release_date: "2016-05-01", master_bills_of_lading: "MBOL1\nMBOL2", container_numbers: "CONT1\n CONT2", entry_number: "ENTNUM", arrival_date: Time.zone.parse("2016-04-30 05:00"))
                             )
                           )
                         )
-      tariff.commercial_invoice_lacey_components.create! detailed_description: "DESC", quantity: 10, unit_of_measure: "UOM", genus: "GENUS", species: "SPECIES", harvested_from_country: "CA", value: 100
-      tariff.commercial_invoice_lacey_components.create! detailed_description: "DESC2", quantity: 20, unit_of_measure: "UOM2", genus: "GENUS2", species: "SPECIES2", harvested_from_country: "CN", value: 50
+      tariff.commercial_invoice_lacey_components.create! detailed_description: "DESC", quantity: 10, unit_of_measure: "UOM", name: "NAME", percent_recycled_material: 30, genus: "GENUS", species: "SPECIES", harvested_from_country: "CA", value: 100
+      tariff.commercial_invoice_lacey_components.create! detailed_description: "DESC2", quantity: 20, unit_of_measure: "UOM2", name: "NAME2", percent_recycled_material: 40, genus: "GENUS2", species: "SPECIES2", harvested_from_country: "CN", value: 50
       tariff.commercial_invoice_line.entry
     }
 
@@ -44,9 +44,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberPpqReport do
         sheet = Spreadsheet.open(StringIO.new(m.attachments["PPQ Report 05-02-16.xls"].read)).worksheets.first
         expect(sheet.rows.length).to eq 3
 
-        expect(sheet.row(0)).to eq ["Unique Id","Entry Number","B/L No(s)","Container No(s)","Arrival Date","Manufacturer ID","Part No","PO No","HTS No","Description","Quantity of Constituent Element","UOM","Percent of Constituent Element","PGA Line Value","Scientific Genus Name","Scientific Species Name","Source Country Code"]
-        expect(sheet.row(1)).to eq [1, "ENTNUM", "MBOL1, MBOL2", "CONT1, CONT2", excel_date(Date.new(2016, 4, 30)), "MID", "Part", "PO", "1111.11.1111", "DESC", 10, "UOM", 0, 100, "GENUS", "SPECIES", "CA"]
-        expect(sheet.row(2)).to eq [2, "ENTNUM", "MBOL1, MBOL2", "CONT1, CONT2", excel_date(Date.new(2016, 4, 30)), "MID", "Part", "PO", "1111.11.1111", "DESC2", 20, "UOM2", 0, 50, "GENUS2", "SPECIES2", "CN"]
+        expect(sheet.row(0)).to eq ["Unique Id","Importer Name","Entry Number","B/L No(s)","Container No(s)","Arrival Date","Manufacturer ID","Part No","PO No","HTS No","Description", "Name of Constituent Element", "Quantity of Constituent Element","UOM","Percent Recycled","PGA Line Value","Scientific Genus Name","Scientific Species Name","Source Country Code"]
+        expect(sheet.row(1)).to eq [1, "LUMBER LIQUIDATORS INC", "ENTNUM", "MBOL1, MBOL2", "CONT1, CONT2", excel_date(Date.new(2016, 4, 30)), "MID", "Part", "PO", "1111.11.1111", "DESC", "NAME", 10, "UOM", 30, 100, "GENUS", "SPECIES", "CA"]
+        expect(sheet.row(2)).to eq [2, "LUMBER LIQUIDATORS INC", "ENTNUM", "MBOL1, MBOL2", "CONT1, CONT2", excel_date(Date.new(2016, 4, 30)), "MID", "Part", "PO", "1111.11.1111", "DESC2", "NAME2", 20, "UOM2", 40, 50, "GENUS2", "SPECIES2", "CN"]
       end
 
       context "with invalid entry attribute" do 

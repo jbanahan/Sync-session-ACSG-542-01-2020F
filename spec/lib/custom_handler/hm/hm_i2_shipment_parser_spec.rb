@@ -11,6 +11,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
     let(:ca_file) { make_csv_file("ZSTO") }
     let(:us_file) { make_csv_file("ZRET") }
     let(:hm) { Factory(:importer, system_code: "HENNE") }
+    let!(:hm_fenix) {Factory(:importer, fenix_customer_number: "887634400RM0001")}
     let(:ca) { Factory(:country, iso_code: "CA")}
     let(:us) { Factory(:country, iso_code: "US")}
     let(:product) { Factory(:product, importer: hm, unique_identifier: "HENNE-PART #", name: "Description") }
@@ -45,7 +46,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
 
         expect(invoice).not_to be_nil
         expect(invoice.invoice_number).to eq "INV#"
-        expect(invoice.importer).to eq hm
+        expect(invoice.importer).to eq hm_fenix
         expect(invoice.invoice_date).to eq Time.zone.parse("2016-02-03 03:05:00")
         expect(invoice.gross_weight).to eq 300
 
@@ -118,7 +119,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
         us_product
 
         invoice = nil
-        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.any_instance.should_receive(:generate_and_send) do |file_number, inv|
+        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.any_instance.should_receive(:generate_and_send_invoices) do |file_number, inv|
           expect(file_number).to be_nil
           invoice = inv
         end

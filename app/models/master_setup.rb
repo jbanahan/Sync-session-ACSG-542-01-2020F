@@ -88,7 +88,7 @@ class MasterSetup < ActiveRecord::Base
   def custom_feature? feature
     custom_features_list.map {|l| l.upcase}.include? feature.to_s.upcase
   end
-  
+
   # get the custom features enabled for this system as an array
   def custom_features_list
     return [] if self.custom_features.blank?
@@ -108,7 +108,6 @@ class MasterSetup < ActiveRecord::Base
     self.custom_features = d
   end
 
-  private
   def update_cache
     CACHE.set CACHE_KEY, self
   end
