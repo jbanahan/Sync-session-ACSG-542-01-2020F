@@ -3,7 +3,7 @@ require 'spec_helper'
 describe CustomViewTemplate do
   describe '#for_object' do
     before :each do
-      @cvt = CustomViewTemplate.create!(template_identifier:'sample',template_path:'/x')
+      @cvt = CustomViewTemplate.create!(template_identifier:'sample',template_path:'/x', module_type: "Order")
       @cvt.search_criterions.create!(model_field_uid:'ord_ord_num',operator:'eq',value:'ABC')
     end
     it 'should return nil for no template identifier match' do
