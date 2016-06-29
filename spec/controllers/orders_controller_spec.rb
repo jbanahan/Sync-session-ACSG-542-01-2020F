@@ -150,9 +150,14 @@ describe OrdersController do
       expect(Time.parse(rr['overridden_at'])).to eq @rule_result.overridden_at
     end
   describe 'bulk_update_fields' do
-    it "returns list of model fields for user to edit, count of selected records" do
+    it "returns list of model fields for user to edit" do
       post :bulk_update_fields 
       expect(JSON.parse(response.body)["mf_hsh"]).to include({"ord_ord_date" => "Order Date"})
+    end
+    it "skips model fields that user isn't authorized to edit" do
+      ModelField.any_instance.stub(:can_edit?).and_return false
+      post :bulk_update_fields 
+      expect(JSON.parse(response.body)["mf_hsh"]).to be_empty
     end
     it 'should get count for specific items from #get_bulk_count' do
       described_class.any_instance.should_receive(:get_bulk_count).with({"0"=>"99","1"=>"54"}, nil).and_return 2

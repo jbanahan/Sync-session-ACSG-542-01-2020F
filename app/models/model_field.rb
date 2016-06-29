@@ -197,18 +197,19 @@ class ModelField
     end
 
     can_edit = false
-    if do_edit_lambda
-      if @can_edit_lambda.nil?
-        if @can_view_lambda.nil?
-          can_edit = true
+    unless read_only?
+      if do_edit_lambda
+        if @can_edit_lambda.nil?
+          if @can_view_lambda.nil?
+            can_edit = true
+          else
+            can_edit = @can_view_lambda.call user
+          end
         else
-          can_edit = @can_view_lambda.call user
+          can_edit = @can_edit_lambda.call user
         end
-      else
-        can_edit = @can_edit_lambda.call user
       end
     end
-
     can_edit
   end
 
