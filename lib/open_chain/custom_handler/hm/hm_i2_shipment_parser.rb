@@ -56,6 +56,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShimentParser
     invoice.importer = importer(system)
     invoice.invoice_number = text_value(line[0])
     invoice.invoice_date = line[3].blank? ? nil : Time.zone.parse(line[3])
+    invoice.currency = "USD"
     
     invoice
   end

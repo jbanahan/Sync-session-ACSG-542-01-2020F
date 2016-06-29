@@ -49,6 +49,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
         expect(invoice.importer).to eq hm_fenix
         expect(invoice.invoice_date).to eq Time.zone.parse("2016-02-03 03:05:00")
         expect(invoice.gross_weight).to eq 300
+        expect(invoice.currency).to eq "USD"
 
         expect(invoice.commercial_invoice_lines.length).to eq 2
         l = invoice.commercial_invoice_lines.first
