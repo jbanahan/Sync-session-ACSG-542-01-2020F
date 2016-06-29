@@ -112,10 +112,14 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
   def write_entry_data billing_file, billing_report, entry
     # Keep in mind these are the struct classes above, not actual entry/invoice/line classes
-    
-    entry.commercial_invoice_lines.each_with_index do |line, x|
-      write_entry_data_line billing_file, entry, line, x == 0
-      write_report_data billing_report, entry, line
+    begin
+      entry.commercial_invoice_lines.each_with_index do |line, x|
+        write_entry_data_line billing_file, entry, line, x == 0
+        write_report_data billing_report, entry, line
+      end
+    rescue => e
+      # Rescue the error and then re-raise it after inserting which file # was the culprit for the error
+      raise e, "File # #{entry.broker_reference} - #{e.message}", e.backtrace
     end
     nil
   end 

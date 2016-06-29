@@ -349,7 +349,13 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(csv_lines.first).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "1", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
         expect(csv_lines.second).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "2", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
       end
+
+      it "re-raises any errors, prepending the file # to the error" do
+        subject.should_receive(:write_entry_data_line).and_raise "ERROR!"
+        expect {subject.write_entry_data StringIO.new, StringIO.new, @ed}.to raise_error "File # 123456 - ERROR!"
+      end
     end
+
 
     describe "generate_and_send" do
       context "transactional fixtures" do
