@@ -18,7 +18,7 @@ describe OrdersController do
         expect(response).to render_template :show
       end
       it 'should render custom template' do
-        cvt = CustomViewTemplate.create!(template_identifier:'order_view',template_path:'custom_views/j_jill/orders/show')
+        cvt = CustomViewTemplate.create!(template_identifier:'order_view',template_path:'custom_views/j_jill/orders/show', module_type: "Order")
         cvt.search_criterions.create!(model_field_uid:'ord_imp_syscode',operator:'eq',value:@u.company.system_code)
         o = Factory(:order,importer:@u.company)
         get :show, id: o.id

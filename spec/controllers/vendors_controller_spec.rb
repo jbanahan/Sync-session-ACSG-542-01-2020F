@@ -180,7 +180,7 @@ describe VendorsController do
       expect(response).to render_template :products
     end
     it "should render custom product view" do
-      CustomViewTemplate.create!(template_identifier:'vendor_products',template_path:'/custom_views/lumber_liquidators/vendors/products')
+      CustomViewTemplate.create!(template_identifier:'vendor_products',template_path:'/custom_views/lumber_liquidators/vendors/products', module_type: "Company")
       @u.update_attributes(product_view:true)
       @u.company.update_attributes(vendor:true)
       User.any_instance.stub(:view_products?).and_return true
