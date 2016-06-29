@@ -80,6 +80,7 @@ class ModelField
     @autocomplete = o[:autocomplete]
     @restore_field = o[:restore_field]
     @required = o[:required]
+    @search_value_preprocess_lambda = o[:search_value_preprocess_lambda]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -999,6 +1000,14 @@ class ModelField
       end
     end
     reloaded
+  end
+
+  def preprocess_search_value val
+    if @search_value_preprocess_lambda
+      @search_value_preprocess_lambda.call val
+    else
+      val
+    end
   end
 
   def parse_date d

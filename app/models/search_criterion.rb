@@ -168,11 +168,12 @@ class SearchCriterion < ActiveRecord::Base
 
   #value formatted properly for the appropriate condition in the SQL
   def where_value
-    if (!self.value.nil? && date_time_field? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator))
-      return parse_date_time self.value
+    val = self.model_field.preprocess_search_value(self.value)
+    if (!val.nil? && date_time_field? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator))
+      return parse_date_time val
     end
 
-    self_val = date_field? && !self.value.nil? && self.value.is_a?(Time)? self.value.to_date : self.value
+    self_val = date_field? && !val.nil? && val.is_a?(Time)? val.to_date : val
     if boolean_field? && ['null','notnull'].include?(self.operator)
       return self.operator=='notnull'
     elsif boolean_field?
