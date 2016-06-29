@@ -60,7 +60,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
     edit_object(params, current_user) do |obj|
       comment = obj.comments.build
       comment.user = current_user
-      save_comment(current_user, comment, params)
+      save_comment(current_user, comment, params[:comment])
     end
   end
 
@@ -69,7 +69,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
       comment = obj.comments.find {|c| c.id == params[:id].to_i }
       if comment && comment.user == current_user
         comment.destroy
-        obj.create_async_snapshot current_user
+        obj.create_async_snapshot(current_user) if obj.respond_to?(:create_async_snapshot)
         OpenChain::WorkflowProcessor.async_process(obj)
         render_ok
       else
@@ -129,7 +129,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
       if comment.errors.any?
         render_error comment.errors
       else
-        comment.commentable.create_async_snapshot user
+        comment.commentable.create_async_snapshot(current_user) if comment.commentable.respond_to?(:create_async_snapshot)
         OpenChain::WorkflowProcessor.async_process(comment.commentable)
         render json: {"comment" => comment_view(user, comment)}
       end

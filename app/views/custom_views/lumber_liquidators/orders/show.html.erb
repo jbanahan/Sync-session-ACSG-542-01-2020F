@@ -190,9 +190,10 @@
   </div>
   <div class="row">
     <div class="col-md-6">
-      <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
+      <%=render :partial => 'shared/folders', :locals => {:obj => @order} %>
     </div>
     <div class="col-md-6">
+      <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
       <%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
     </div>
   </div>

@@ -1,0 +1,76 @@
+.chain-folder-add {
+  margin-left: 20px;
+  margin-top: 20px; }
+  .chain-folder-add h4 span.title {
+    margin-left: 10px;
+    font-weight: bold; }
+  .chain-folder-add .save {
+    margin-right: 20px; }
+  .chain-folder-add .cancel {
+    margin-right: 20px; }
+
+.chain-folder-comment .panel-title .glyphicon {
+  cursor: pointer; }
+.chain-folder-comment .chain-folder-comment-body {
+  padding-left: 20px; }
+
+.chain-folder-upload-file {
+  padding: 10px;
+  border: 1px dotted gray;
+  border-radius: 15px; }
+  .chain-folder-upload-file .upload {
+    font-size: 175%; }
+
+.chain-folder .fa {
+  font-size: 125%;
+  font-weight: bold; }
+.chain-folder .folder-title {
+  font-size: 125%;
+  font-weight: bold; }
+
+.chain-folder-attachment .panel-title {
+  font-size: inherit; }
+  .chain-folder-attachment .panel-title .glyphicon {
+    cursor: pointer;
+    font-weight: bold; }
+.chain-folder-attachment .chain-folder-attachment-details .details .detail {
+  margin-left: 20px; }
+.chain-folder-attachment .chain-folder-attachment-details .trash {
+  padding-left: 20px; }
+
+.chain-folder-dialog .folder-title {
+  font-weight: bold; }
+.chain-folder-dialog .group-button {
+  line-height: 1; }
+.chain-folder-dialog .icon {
+  margin-right: 10px; }
+.chain-folder-dialog .chain-folder-attachment-panel .glyphicon {
+  cursor: pointer; }
+.chain-folder-dialog .section-title {
+  font-size: 125%;
+  font-weight: bold; }
+.chain-folder-dialog .chain-folder-comment-panel .glyphicon {
+  cursor: pointer; }
+.chain-folder-dialog .delete-folder {
+  margin-left: 35px; }
+.chain-folder-dialog .chain-folder-attachment-panel-body {
+  padding-top: 10px; }
+
+.chain-folder-group-chooser table {
+  margin-bottom: 10px; }
+  .chain-folder-group-chooser table input[type="checkbox"] {
+    margin-right: 10px;
+    margin-left: 10px; }
+  .chain-folder-group-chooser table .group-name {
+    font-weight: bold; }
+  .chain-folder-group-chooser table .group-users {
+    font-size: 85%; }
+  .chain-folder-group-chooser table .group-checkbox {
+    vertical-align: top; }
+.chain-folder-group-chooser .cancel {
+  margin-right: 20px; }
+.chain-folder-group-chooser .save {
+  margin-right: 20px; }
+
+.chain-folder-list ul {
+  list-style-type: none; }

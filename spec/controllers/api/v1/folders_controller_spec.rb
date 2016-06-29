@@ -18,13 +18,18 @@ describe Api::V1::FoldersController do
       before :each do
         Order.any_instance.stub(:can_view?).and_return true
         Folder.any_instance.stub(:can_view?).and_return true
+        Folder.any_instance.stub(:can_edit?).and_return true
+        Folder.any_instance.stub(:can_comment?).and_return true
+        Folder.any_instance.stub(:can_attach?).and_return true
       end
 
       it "retrieves folder data" do
         get :show, base_object_type: "orders", base_object_id: base_object.id, id: folder.id
         expect(response).to be_success
         json = JSON.parse response.body
-        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "Folder Name", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id }})
+        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "Folder Name", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
+            "permissions" => {"can_edit"=> true, "can_attach" => true, "can_comment" => true}
+          }})
       end
 
       it "retrieves folder, attachment, comment, and group information" do
@@ -45,6 +50,10 @@ describe Api::V1::FoldersController do
         com_json = json['folder']['comments'].first
         expect(com_json['id']).to eq comment.id
         expect(com_json['cmt_subject']).to eq "Subject"
+        expect(com_json['permissions'].length).not_to eq 0
+        expect(com_json['permissions']['can_view']).to be_true
+        expect(com_json['permissions']['can_edit']).to be_true
+        expect(com_json['permissions']['can_delete']).to be_true
 
         grp_json = json['folder']['groups'].first
         expect(grp_json['id']).to eq group.id
@@ -84,7 +93,9 @@ describe Api::V1::FoldersController do
 
         expect(response).to be_success
         json = JSON.parse response.body
-        expect(json).to eq({"folders" => [{"id" => folder.id, "fld_name" => "Folder Name", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id }]})
+        expect(json).to eq({"folders" => [{"id" => folder.id, "fld_name" => "Folder Name", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
+          "permissions" => {"can_edit"=> false, "can_attach" => false, "can_comment" => false}
+          }]})
       end
     end
 
@@ -112,24 +123,26 @@ describe Api::V1::FoldersController do
   describe "create" do
     context "when user can edit the base object" do
       before :each do
-        Order.any_instance.stub(:can_edit?).with(user).and_return true
+        Order.any_instance.stub(:can_attach?).with(user).and_return true
       end
 
       it "creates new folder instance in base object" do
-        post :create, base_object_type: "orders", base_object_id: base_object.id, fld_name: "FOLDER"
+        post :create, base_object_type: "orders", base_object_id: base_object.id, folder: {fld_name: "FOLDER"}
         expect(response).to be_success
 
         folder = Folder.first
         json = JSON.parse response.body
-        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "FOLDER", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id }})
+        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "FOLDER", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
+          "permissions" => {"can_edit"=> true, "can_attach" => true, "can_comment" => true}
+          }})
 
         expect(base_object.entity_snapshots.length).to eq 1
       end
     end
 
     it "errors if user cannot edit base object" do
-      Order.any_instance.stub(:can_edit?).with(user).and_return false
-      post :create, base_object_type: "orders", base_object_id: base_object.id, fld_name: "FOLDER"
+      Order.any_instance.stub(:can_attach?).with(user).and_return false
+      post :create, base_object_type: "orders", base_object_id: base_object.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
       expect(json['errors']).to eq ["Access denied."] 
@@ -139,34 +152,36 @@ describe Api::V1::FoldersController do
   describe "update" do
     context "when user can edit the base object" do
       before :each do
-        Order.any_instance.stub(:can_edit?).with(user).and_return true
+        Order.any_instance.stub(:can_attach?).with(user).and_return true
         Folder.any_instance.stub(:can_edit?).with(user).and_return true
       end
 
       it "updates a folder instance" do
-        put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, fld_name: "FOLDER"
+        put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, folder: {fld_name: "FOLDER"}
         expect(response).to be_success
 
         folder = Folder.first
         json = JSON.parse response.body
-        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "FOLDER", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id }})
+        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "FOLDER", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
+          "permissions" => {"can_edit"=> true, "can_attach" => true, "can_comment" => true}
+          }})
 
         expect(base_object.entity_snapshots.length).to eq 1
       end
     end
 
     it "errors if user cannot edit base object" do
-      Order.any_instance.stub(:can_edit?).with(user).and_return false
-      put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, fld_name: "FOLDER"
+      Order.any_instance.stub(:can_attach?).with(user).and_return false
+      put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
       expect(json['errors']).to eq ["Access denied."] 
     end
 
     it "errors if user cannot folder" do
-      Order.any_instance.stub(:can_edit?).with(user).and_return true
+      Order.any_instance.stub(:can_attach?).with(user).and_return true
       Folder.any_instance.stub(:can_edit?).with(user).and_return false
-      put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, fld_name: "FOLDER"
+      put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
       expect(json['errors']).to eq ["Access denied."] 
@@ -176,7 +191,7 @@ describe Api::V1::FoldersController do
   describe "destroy" do
     context "when user can access folder" do
       before :each do
-        Order.any_instance.stub(:can_edit?).with(user).and_return true
+        Order.any_instance.stub(:can_attach?).with(user).and_return true
         Folder.any_instance.stub(:can_edit?).with(user).and_return true
       end
 
@@ -185,6 +200,11 @@ describe Api::V1::FoldersController do
         expect(response).to be_success
         expect(JSON.parse response.body).to eq({"ok" => "ok"})
         expect(base_object.entity_snapshots.length).to eq 1
+        # It should only archive the folder, not actually destroy it
+        expect(folder.reload).to be_archived
+        # This is sort of testing the actual has_many setup, but we might as well check that here too.
+        base_object.reload
+        expect(base_object.folders.length).to eq 0
       end
     end
   end

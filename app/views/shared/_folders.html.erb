@@ -1,0 +1,25 @@
+<% content_for :action_bar do %>
+  <button title='Add Folder' class="btn btn-default" href='javascript:;' onclick="newFolder();"><i class='fa fa-folder-open-o'></i></button>
+<%end%>
+<% content_for :javascript do %>
+  function newFolder() {
+    angular.element(".chain-folder-add").scope().showModal()
+  }
+<% end %>
+
+<% unless obj.folders.blank?-%>
+<div class='row text-center'>
+  <div class='col-md-12'>
+    <h3>Folders</h3>
+  </div>
+</div>
+<% end %>
+<div class="row">
+  <div class="col-md-12">
+    <div ng-app="Folders">
+      <chain-folders owner-type="<%=obj.class.to_s.underscore.pluralize%>" owner-id="<%=obj.id%>" can-attach="<%=obj.can_attach?(current_user)%>" create-folder-button="false"/>
+    </div>
+  </div>
+</div>
+
+

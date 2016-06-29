@@ -163,6 +163,7 @@ OpenChain::Application.routes.draw do
       get "/:base_object_type/:base_object_id/attachment/:id" => "attachments#show"
       delete "/:base_object_type/:base_object_id/attachment/:id" => "attachments#destroy"
       get "/:base_object_type/:base_object_id/attachment/:id/download" => "attachments#download"
+      get "/:base_object_type/:base_object_id/attachment_types" => "attachments#attachment_types"
 
       match "/feedback/send_feedback" => 'feedback#send_feedback', via: :post
 
@@ -205,6 +206,7 @@ OpenChain::Application.routes.draw do
 
       resources :groups, only: [:index, :show]
       post "/:base_object_type/:base_object_id/groups/:id/add" => "groups#add_to_object"
+      post "/:base_object_type/:base_object_id/groups" => "groups#set_groups_for_object"
     end
   end
 

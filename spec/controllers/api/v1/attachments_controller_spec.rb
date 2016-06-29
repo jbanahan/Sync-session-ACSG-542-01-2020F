@@ -175,4 +175,23 @@ describe Api::V1::AttachmentsController do
       expect(response).not_to be_success
     end
   end
+
+  describe "attachment_types" do
+    before :each do
+      AttachmentType.create! name: "Attachment Type"
+      product
+    end
+
+    it "returns attachment types" do
+      get :attachment_types, base_object_type: "products", base_object_id: product.id
+      expect(response).to be_success
+      expect(JSON.parse(response.body)).to eq({"attachment_types"=>[{"name" => "Attachment Type", "value" => "Attachment Type"}]})
+    end
+
+    it "errors if user can't view object" do
+      Product.any_instance.stub(:can_view?).with(user).and_return false
+      get :attachment_types, base_object_type: "products", base_object_id: product.id
+      expect(response).not_to be_success
+    end
+  end
 end

@@ -233,7 +233,7 @@ describe Api::V1::CommentsController do
         Shipment.any_instance.should_receive(:create_async_snapshot).with user
         OpenChain::WorkflowProcessor.should_receive(:async_process).with(shipment)
 
-        post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, :cmt_subject=>"Subject", :cmt_body=>"Body"
+        post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, comment: {:cmt_subject=>"Subject", :cmt_body=>"Body"}
         expect(response).to be_success
 
         j = JSON.parse(response.body)
@@ -251,7 +251,7 @@ describe Api::V1::CommentsController do
         Shipment.any_instance.should_receive(:create_async_snapshot).with user
         OpenChain::WorkflowProcessor.should_receive(:async_process).with(shipment)
 
-        post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, cmt_subject: "Subject", cmt_body: "Body", include: "permissions"
+        post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, comment: {cmt_subject: "Subject", cmt_body: "Body"}, include: "permissions"
         expect(response).to be_success
 
         j = JSON.parse(response.body)

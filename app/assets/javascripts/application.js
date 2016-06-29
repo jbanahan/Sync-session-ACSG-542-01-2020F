@@ -25,6 +25,7 @@
 //= require_directory ./state_toggle_buttons
 //= require_directory ./official_tariff
 //= require_directory ./field_validator
+//= require_directory ./folders
 //= stub legacy
 //= stub html5shim
 //= stub vendor_portal

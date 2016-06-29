@@ -18,17 +18,40 @@ module Api; module V1; class GroupsController < Api::V1::ApiController
 
   # Adds the specified group to the given object.
   def add_to_object
-    obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
-    group = Group.find params[:id]
-    if obj && obj.can_edit?(current_user) && obj.respond_to?(:groups)
-      obj.groups << group
-      render_ok
-    else
-      render_forbidden
+    edit_object(current_user, params) do |obj|
+      group = Group.find params[:id]
+      if group
+        obj.groups << group
+        render_ok
+      else
+        render_forbidden
+      end
+    end
+  end
+
+  def set_groups_for_object
+    edit_object(current_user, params) do |obj|
+      groups = Group.where(id: Array.wrap(params[:groups]).map {|g| g[:id]}).all
+      Group.transaction do
+        # Remove all the groups from the object and recreate them from the ones sent in the request
+        obj.groups.destroy_all
+        obj.groups << groups
+      end
+
+      render json: {"groups" => groups.map {|g| group_view(current_user, g)}}
     end
   end
 
   protected
+
+    def edit_object(user, params)
+      obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
+      if obj && obj.can_edit?(user) && obj.respond_to?(:groups)
+        yield obj
+      else
+        render_forbidden
+      end
+    end
 
     def group_view user, group
       fields = all_requested_model_field_uids(CoreModule::GROUP)
