@@ -2,6 +2,7 @@ class CustomViewTemplate < ActiveRecord::Base
   has_many :search_criterions, dependent: :destroy
 
   attr_accessible :template_identifier, :template_path, :module_type
+  validates :module_type, presence: true
 
   def self.for_object template_identifier, base_object, default=nil
     CustomViewTemplate.includes(:search_criterions).where(template_identifier:template_identifier).each do |cvt|

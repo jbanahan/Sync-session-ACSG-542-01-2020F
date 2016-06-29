@@ -467,6 +467,7 @@ Factory.define :product_vendor_assignment do |f|
 end
 
 Factory.define :custom_view_template do |f|
-  f.sequence(:template_identifier) {|n| "t_#{n}"}
-  f.sequence(:template_path) {|n| "tp_#{n}"}
+  f.module_type "Entry"
+  f.sequence(:template_identifier) {|n| "template_identifier_#{n}"}
+  f.sequence(:template_path) {|n| "/path/to/template_#{n}"}
 end
