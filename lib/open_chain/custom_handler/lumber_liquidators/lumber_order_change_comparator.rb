@@ -36,11 +36,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       defaults_changed = true
     end
     
-    if reset_vendor_approvals(ord, old_data, new_data) || reset_product_compliance_approvals(ord, old_data, new_data) ||
-       update_autoflow_approvals(ord) || reset_po_cancellation(ord, new_data)
-
-      ord.reload
-    end
+    ord.reload if reset_vendor_approvals ord, old_data, new_data
+    ord.reload if reset_product_compliance_approvals ord, old_data, new_data
+    ord.reload if update_autoflow_approvals ord
+    ord.reload if reset_po_cancellation ord
 
     generate_ll_xml(ord,old_data,new_data)
 
@@ -104,49 +103,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     return false
   end
 
-  def self.reset_po_cancellation ord, new_data
+  def self.reset_po_cancellation ord
     ActiveRecord::Base.transaction do
-      most_recent_dates = most_recent_dates ord
-      num_lines = get_num_lines new_data
-      new_dates = write_new_dates! ord, most_recent_dates, num_lines
-      (most_recent_dates[:cancel_date] != new_dates[:cancel_date]) || (most_recent_dates[:closed_at] != new_dates[:closed_at])
+      cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
+      cancel_date = ord.get_custom_value(cdef).value
+      num_lines = ord.order_lines.length
+      
+      if num_lines > 0 && cancel_date
+        ord.reopen! User.integration
+        ord.update_custom_value!(cdef, nil)
+        return true
+      elsif num_lines.zero? && cancel_date.nil?
+        ord.close! User.integration
+        ord.update_custom_value!(cdef, ActiveSupport::TimeZone['America/New_York'].now.to_date)
+        return true
+      end
+      return false
     end
-  end
-
-  def self.most_recent_dates ord
-    cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
-    cancelled = ord.custom_value(cdef)
-    {cancel_date: cancelled, closed_at: ord.closed_at}
-  end
-
-  def self.get_num_lines new_data
-    new_data.line_hash.keys.count
-  end
-
-  def self.write_new_dates! ord, most_recent_dates, num_lines
-    cval, cdef = get_cancelled_date ord
-    if num_lines > 0
-      ord.reopen! User.integration
-      uncancel_order! ord, cdef, cval
-    else
-      ord.close! User.integration
-      cancel_order! ord, cdef, cval
-    end
-    {cancel_date: cval.value, closed_at: ord.closed_at}
-  end
-
-  def self.get_cancelled_date ord
-    cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
-    cval = ord.get_custom_value(cdef)
-    [cval, cdef]
-  end
-
-  def self.cancel_order! ord, cdef, cval
-    ord.update_custom_value!(cdef, ActiveSupport::TimeZone['America/New_York'].now.to_date) unless cval.value
-  end
-
-  def self.uncancel_order! ord, cdef, cval
-    ord.update_custom_value!(cdef, nil) if cval.value
   end
 
   class OrderData
