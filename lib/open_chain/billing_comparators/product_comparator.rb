@@ -1,8 +1,11 @@
 require 'open_chain/s3'
 require 'open_chain/entity_compare/comparator_helper'
+require 'open_chain/entity_compare/product_comparator'
 
 module OpenChain; module BillingComparators; class ProductComparator
   extend OpenChain::EntityCompare::ComparatorHelper
+  extend OpenChain::EntityCompare::ProductComparator
+
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type == 'Product'
     new_snapshot_id = EntitySnapshot.where(bucket: new_bucket, doc_path: new_path, version: new_version).first.id
