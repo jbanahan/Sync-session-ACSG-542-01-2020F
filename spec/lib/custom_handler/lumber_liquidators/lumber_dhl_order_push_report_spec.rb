@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
     end
 
     after :all do
-      CustomDefinition.delete_all
+      CustomDefinition.destroy_all
     end
 
     let (:vendor) { Factory(:company, name: "Vendor Name", vendor: true) }
