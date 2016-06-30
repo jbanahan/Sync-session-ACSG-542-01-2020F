@@ -19,7 +19,7 @@ gem 'dalli', '2.6.4'
 gem 'postmark-rails', '0.5.2'
 gem 'rubyzip', '~> 1.1'
 gem 'jquery-rails', '2.3.0'
-gem 'newrelic_rpm', '~> 3.12.1.298'
+gem 'newrelic_rpm', '~> 3.16.0'
 
 #text processing/encoding stuff
 gem 'RedCloth', '4.2.9'
