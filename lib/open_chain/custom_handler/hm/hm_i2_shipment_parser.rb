@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShimentParser
       else
         # Send to Kewill Customs
         g = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.new
-        g.generate_and_send_invoices nil, invoice
+        g.generate_and_send_invoices invoice.invoice_number, invoice
       end
     end
   end
