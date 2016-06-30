@@ -60,7 +60,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
         qualified_field_name: "(SELECT CONCAT(surveys.name,IF(length(survey_responses.subtitle)>0,CONCAT(' - ',survey_responses.subtitle),'')) FROM survey_responses INNER JOIN surveys ON survey_responses.survey_id = surveys.id WHERE survey_responses.id = orders.tpp_survey_response_id)",
         read_only: true
       }],
-      [25,:ord_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
+      [25,:ord_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
       [26,:ord_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true, read_only: true}]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
