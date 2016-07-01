@@ -178,6 +178,7 @@ class ModelField
   end
 
   def can_edit? user
+    return false if self.read_only?
     # If there's any edit groups associated w/ the field, then the user MUST be in one of them to be able
     # to edit...there's no other means to be able to edit this field.
 

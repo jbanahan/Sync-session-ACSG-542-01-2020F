@@ -11,22 +11,24 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
     CoreModule::VARIANT]
 
   def index
-    text_to_render = Rails.cache.fetch("Api::V1::ModelFields#index-#{ModelField.last_loaded}-#{current_user.id}-#{current_user.updated_at.to_i}") do
+    cu = current_user
+    text_to_render = Rails.cache.fetch("Api::V1::ModelFields#index-#{ModelField.last_loaded}-#{cu.id}-#{cu.updated_at.to_i}") do
       validator_rules = Hash[FieldValidatorRule.all.map{|fvr| [fvr.model_field_uid.to_sym, fvr]}]
       h = {}
       h['recordTypes'] = []
       h['fields'] = []
       h['cache_key'] = make_cache_key
       API_MODULES.each do |cm|
-        next unless cm.view?(current_user)
+        next unless cm.view?(cu)
         cm_class_name = cm.class_name
         h['recordTypes'] << {'uid'=>cm_class_name,label:cm.label}
         ModelField.find_by_core_module(cm).each do |mf|
-          next if !mf.can_view?(current_user) || !mf.user_accessible
+          next if !mf.can_view?(cu) || !mf.user_accessible
           mf_h = {'uid'=>mf.uid, 'label'=>mf.label(false), 'data_type'=>mf.data_type, 'record_type_uid'=>cm_class_name, 'read_only' => mf.read_only?}
           select_opts = mf.select_options
           mf_h['select_options'] = select_opts
           mf_h['autocomplete'] = mf.autocomplete unless mf.autocomplete.blank?
+          mf_h['can_edit'] = mf.can_edit?(cu)
           fvr = validator_rules[mf.uid.to_sym]
           if fvr
             mf_h['remote_validate'] = true
