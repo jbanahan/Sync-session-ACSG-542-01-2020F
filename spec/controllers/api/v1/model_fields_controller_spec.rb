@@ -7,28 +7,28 @@ describe Api::V1::ModelFieldsController do
     @user = Factory(:user, product_view: true, username: 'joeuser')
     allow_api_access(@user)
   end
-  
+
   describe :index do
     it "should get record types (core modules)" do
       expect(get :index).to be_success
-      
+
       h = JSON.parse(response.body)
       product_rt = h['recordTypes'].find {|rt| rt['uid']=='Product'}
       expect(product_rt['label']).to eq 'Product'
     end
     it "should not get record types that the current user can't view" do
       CoreModule::ORDER.should_receive(:view?).with(@user).and_return(false)
-      
+
       expect(get :index).to be_success
-      
+
       h = JSON.parse(response.body)
       order_rt = h['recordTypes'].find {|rt| rt['uid']=='Order'}
       expect(order_rt).to be_nil
     end
     it "should get model fields" do
-      
+
       expect(get :index).to be_success
-      
+
       h = JSON.parse(response.body)
       prod_uid = h['fields'].find {|fld| fld['uid']=='prod_uid'}
       expect(prod_uid['label']).to eq 'Unique Identifier'
@@ -47,7 +47,7 @@ describe Api::V1::ModelFieldsController do
 
       h = JSON.parse(response.body)
       div_id = h['fields'].find {|fld| fld['uid']=='prod_div_id'}
-      expect(div_id).to be_nil      
+      expect(div_id).to be_nil
     end
     it "should not get model fields that the current user can't see" do
       CoreModule::ENTRY.stub(:view?).and_return(true)
@@ -86,7 +86,7 @@ describe Api::V1::ModelFieldsController do
       expect(mf['remote_validate']).to be_false
 
     end
-    
+
     it "should get choices array" do
       FieldValidatorRule.create!(model_field_uid:'prod_name',module_type:'Product',one_of:"a\nx\nc")
 
@@ -101,9 +101,9 @@ describe Api::V1::ModelFieldsController do
       company_updated_at = 1.hour.ago
       user_updated_at = 1.day.ago
 
-      ModelField.should_receive(:last_loaded).and_return(mfload)
+      ModelField.should_receive(:last_loaded).twice.and_return(mfload)
       Company.any_instance.should_receive(:updated_at).and_return(company_updated_at)
-      User.any_instance.should_receive(:updated_at).and_return(user_updated_at)
+      User.any_instance.should_receive(:updated_at).twice.and_return(user_updated_at)
 
       expected_cache = Digest::MD5.hexdigest "#{@user.username}#{mfload.to_s}#{company_updated_at.to_i}#{user_updated_at.to_i}"
 
