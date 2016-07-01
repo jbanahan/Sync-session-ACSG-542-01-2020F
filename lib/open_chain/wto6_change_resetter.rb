@@ -2,7 +2,7 @@ require 'open_chain/stat_client'
 
 module OpenChain; class Wto6ChangeResetter
   def self.run_schedulable opts
-    OpenChain::StatClient.wall_time('wto6') do 
+    OpenChain::StatClient.wall_time('wto6') do
       products_to_check(opts).each do |p|
         reset_fields_if_changed(p,opts['change_date_field'],opts['fields_to_reset'])
       end
@@ -17,8 +17,8 @@ module OpenChain; class Wto6ChangeResetter
     mf_cd = ModelField.find_by_uid(change_date_field)
     cd = mf_cd.process_export(product,nil,true)
     if cd && product.wto6_changed_after?(cd)
-      fields_to_reset.each do |uid| 
-        ModelField.find_by_uid(uid).process_import(product,nil,User.integration,bypass_read_only:true)
+      fields_to_reset.each do |uid|
+        ModelField.find_by_uid(uid).process_import(product,nil,User.integration,bypass_read_only:true,bypass_user_check:true)
       end
       product.save!
       product.create_snapshot(User.integration)
