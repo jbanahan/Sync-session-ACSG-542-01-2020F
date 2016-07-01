@@ -490,6 +490,13 @@ angular.module("vendor_portal/partials/standard_order_template.html", []).run(["
           });
         });
       };
+      $scope.save = function(order) {
+        $scope.loading = 'loading';
+        return chainApiSvc.Order.save(order).then(function(o) {
+          $scope.order = o;
+          return delete $scope.loading;
+        });
+      };
       $scope.accept = function(order) {
         $scope.loading = 'loading';
         return chainApiSvc.Order.accept(order).then(function(o) {

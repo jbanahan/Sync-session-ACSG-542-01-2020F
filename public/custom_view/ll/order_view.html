@@ -28,6 +28,14 @@
             <li class='list-group-item' ng-if='order.ord_window_end && order.ord_window_start!=order.ord_window_end'>
               Ship Window End <span class='pull-right'>{{order.ord_window_end}}</span>
             </li>
+            <li class='list-group-item' ng-if='order.permissions.can_edit'>
+              <label>Planned Handover Date</label>
+              <chain-field-input model='order' field='dictionary.fieldsByAttribute("label","Planned Handover Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0]' input-class='form-control'></chain-field-input>
+            </li>
+            <li class='list-group-item' ng-if='!order.permissions.can_edit'>
+              Planned Handover Date
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute("label","Planned Handover Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+            </li>
             <li class="list-group-item">
               Vendor No.
               <span class="pull-right">{{order.ord_ven_syscode}}</span>
@@ -53,6 +61,9 @@
               <span class="pull-right">{{order.ord_fob_point}}</span>
             </li>
           </ul>
+          <div class="panel-footer text-right" ng-if='order.permissions.can_edit'>
+            <button class='btn btn-sm btn-default' title='Save' ng-click='save(order)'><i class='fa fa-save'></i></button>
+          </div>
       </div>
       <div class="panel panel-primary">
           <div class="panel-heading">
