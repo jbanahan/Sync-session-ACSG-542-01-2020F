@@ -185,6 +185,8 @@ class ModelField
     # must exist for the field.  At which point, use the can_edit lambda if it exists, fall back to the
     # can_view lambda if it exists.  If can_edit / can_view lambdas don't exist, then we assume the field is
     # editable by all.
+    return false if read_only?
+    
     do_edit_lambda = false
     if @can_edit_groups.size > 0
       do_edit_lambda = user.in_any_group? @can_edit_groups
@@ -197,17 +199,15 @@ class ModelField
     end
 
     can_edit = false
-    unless read_only?
-      if do_edit_lambda
-        if @can_edit_lambda.nil?
-          if @can_view_lambda.nil?
-            can_edit = true
-          else
-            can_edit = @can_view_lambda.call user
-          end
+    if do_edit_lambda
+      if @can_edit_lambda.nil?
+        if @can_view_lambda.nil?
+          can_edit = true
         else
-          can_edit = @can_edit_lambda.call user
+          can_edit = @can_view_lambda.call user
         end
+      else
+        can_edit = @can_edit_lambda.call user
       end
     end
     can_edit
