@@ -704,13 +704,13 @@ function getAddress(wrapper,address_id,options) {
     loading(wrapper);
     $.getJSON('/addresses/'+address_id+'/render_partial.json', function(data) {
       h = ''
-      if(options.includeName) { h = h+'<b>'+data.address.name+'</b></br>'; }
+      if(options.includeName) { h = h+'<b>'+data.address.name+'</b><br/>'; }
       h = h + makeLine(data.address.line_1,true) + makeLine(data.address.line_2,true);
       if(data.address.city!=null && data.address.city.length>0) {
         h = h + data.address.city+',';
       }
       h = h + makeLine(data.address.state,false) + ' ' + makeLine(data.address.postal_code,false)
-          + '</br>' + makeLine(data.address.country==null ? "" : data.address.country.name,false);
+          + '<br/>' + makeLine(data.address.country==null ? "" : data.address.country.name,false);
       wrapper.html(h);
     });
   }
