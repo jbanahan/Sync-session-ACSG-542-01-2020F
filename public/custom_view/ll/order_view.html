@@ -2,12 +2,16 @@
   <div class="row">
     <div class="col-md-12 text-center">
       <a ui-sref='main'><img src="/logo.png" alt="Logo"></a>
-      <br />
       <h1>
         <small>Purchase Order</small>
         <br />
         {{order.ord_ord_num}}
       </h1>
+    </div>
+  </div>
+  <div class="row" ng-if='order[dictionary.fieldsByAttribute("label","Cancelled Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid].length > 0'>
+    <div class="col-md-12">
+      <div class="alert alert-danger">This order was <strong>cancelled</strong> on {{order[dictionary.fieldsByAttribute("label","Cancelled Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}.</div>
     </div>
   </div>
   <div class="row">
