@@ -561,13 +561,19 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         },
         templateUrl: 'chain-folder-upload-file.html',
         link: function(scope, el, attrs) {
-          scope.upload = {};
-          if (scope.attachmentTypes && scope.attachmentTypes.length > 0) {
-            scope.upload.fileType = scope.attachmentTypes[0];
+          var initializeUpload;
+          initializeUpload = function(status, error) {
+            scope.upload = {};
+            if (scope.attachmentTypes && scope.attachmentTypes.length > 0) {
+              scope.upload.fileType = scope.attachmentTypes[0];
+            }
+            scope.uploading = false;
+            scope.error = error;
+            return scope.uploadStatus = status;
+          };
+          if (scope.upload == null) {
+            initializeUpload(null, null);
           }
-          scope.uploading = false;
-          scope.error = null;
-          scope.uploadStatus = null;
           scope.uploadAttachment = function() {
             var attachment, promise;
             if (scope.upload && scope.upload.file) {
@@ -580,17 +586,10 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
               }
               promise = folderApiSvc.Attachment.upload(scope.folderId, scope.upload.file, attachment);
               return promise.then((function(attachment) {
-                scope.uploadFile = null;
-                scope.uploadFileType = null;
-                scope.uploading = false;
-                scope.uploadStatus = "Upload Finished";
+                initializeUpload("Upload Finished", null);
                 return scope.$emit("chain-folder-attachment-added", attachment);
               }), (function(error) {
-                scope.error = error;
-                scope.uploadFile = null;
-                scope.uploadFileType = null;
-                scope.uploading = false;
-                return scope.uploadStatus = "Error";
+                return initializeUpload("Error", error);
               }), (function(progress) {
                 return el.find('div.progress div.progress-bar').width(((progress.loaded / progress.total) * 100) + "%");
               }));
@@ -820,7 +819,7 @@ angular.module('ChainFolders-Templates', ['chain-folder-add-folder.html', 'chain
 
 angular.module("chain-folder-add-folder.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-folder-add-folder.html",
-    "<div class=\"chain-folder-add\"><button ng-if=\"showCreateButton\" class=\"btn btn-success create\" ng-click=\"showModal()\">Create Folder</button><div class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" id=\"folder-create-dialog\" data-backdrop=\"static\" data-keyboard=\"false\"><div class=\"modal-dialog\" role=\"document\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" ng-click=\"hideModal()\" aria-label=\"Close\" title=\"Close\"><span aria-hidden=\"true\">&times;</span></button><h4 class=\"modal-title\" id=\"myModalLabel\"><span class=\"glyphicon glyphicon-folder-open\"></span><span class=\"title\">Create a new folder</span></h4></div><div class=\"modal-body\"><div ng-if=\"error\" class=\"alert alert-danger\">{{error}}</div><input ng-model=\"newFolderName\" name=\"new-folder\" ng-maxlength=\"255\" size=\"50\" placeholder=\"Enter a folder name....\"><div class=\"pull-right save\"><button class=\"btn btn-sm btn-success\" title=\"Create folder\" ng-click=\"save()\"><i class=\"fa fa-floppy-o\" aria-hidden=\"true\"></i></button></div><div class=\"pull-right cancel\"><button class=\"btn btn-sm btn-danger\" ng-click=\"hideModal()\" title=\"Cancel\"><i class=\"fa fa-times-circle\" aria-hidden=\"true\"></i></button></div><div class=\"clearfix\"></div></div></div></div></div></div>");
+    "<div class=\"chain-folder-add\"><button ng-if=\"showCreateButton\" class=\"btn btn-success create\" ng-click=\"showModal()\">Create Folder</button><div class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" id=\"folder-create-dialog\" data-backdrop=\"static\" data-keyboard=\"false\"><div class=\"modal-dialog\" role=\"document\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" ng-click=\"hideModal()\" aria-label=\"Close\" title=\"Close\"><span aria-hidden=\"true\">&times;</span></button><h4 class=\"modal-title\" id=\"myModalLabel\"><span class=\"glyphicon glyphicon-folder-open\"></span><span class=\"title\">Create a new folder</span></h4></div><div class=\"modal-body\"><div ng-if=\"error\" class=\"alert alert-danger\">{{error}}</div><input ng-model=\"newFolderName\" name=\"new-folder\" ng-maxlength=\"255\" size=\"50\" placeholder=\"Enter a folder name....\"></div><div class=\"modal-footer\"><button class=\"btn btn-sm btn-danger\" ng-click=\"hideModal()\" title=\"Cancel\"><i class=\"fa fa-times-circle\" aria-hidden=\"true\"></i></button> <button class=\"btn btn-sm btn-success\" title=\"Create folder\" ng-click=\"save()\"><i class=\"fa fa-floppy-o\" aria-hidden=\"true\"></i></button></div></div></div></div></div>");
 }]);
 
 angular.module("chain-folder-attachment.html", []).run(["$templateCache", function($templateCache) {
@@ -840,7 +839,7 @@ angular.module("chain-folder-dialog.html", []).run(["$templateCache", function($
 
 angular.module("chain-folder-group-chooser.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-folder-group-chooser.html",
-    "<div id=\"folder-{{folderId}}-groups\" class=\"chain-folder-group-chooser\"><table id=\"folder-{{folderId}}-group-table\"><tbody><tr ng-repeat=\"group in groups track by group.id\"><td class=\"group-checkbox\"><input type=\"checkbox\" ng-model=\"checkboxes[group.id]\" class=\"folder-group-checkbox\"></td><td><div class=\"group-name\">{{group.grp_name}}</div><div class=\"group-users\">{{userList(group)}}</div></td></tr></tbody></table><div class=\"pull-right save\"><button class=\"btn btn-success\" ng-click=\"save()\" title=\"Save\"><i class=\"fa fa-floppy-o\" aria-hidden=\"true\"></i></button></div><div class=\"pull-right cancel\"><button class=\"btn btn-danger\" ng-click=\"cancel()\" title=\"Cancel\"><i class=\"fa fa-times-circle\" aria-hidden=\"true\"></i></button></div><div class=\"clearfix\"></div></div>");
+    "<div id=\"folder-{{folderId}}-groups\" class=\"chain-folder-group-chooser\"><table id=\"folder-{{folderId}}-group-table\"><tbody><tr ng-repeat=\"group in groups track by group.id\"><td class=\"group-checkbox\"><input type=\"checkbox\" ng-model=\"checkboxes[group.id]\" class=\"folder-group-checkbox\"></td><td><div class=\"group-name\" data-toggle=\"collapse\" data-target=\"#chain-folders-group-{{group.id}}\" title=\"Click to see group members.\">{{group.grp_name}}</div><div id=\"chain-folders-group-{{group.id}}\" class=\"collapse group-users\">{{userList(group)}}</div></td></tr></tbody></table><div class=\"pull-right save\"><button class=\"btn btn-success\" ng-click=\"save()\" title=\"Save\"><i class=\"fa fa-floppy-o\" aria-hidden=\"true\"></i></button></div><div class=\"pull-right cancel\"><button class=\"btn btn-danger\" ng-click=\"cancel()\" title=\"Cancel\"><i class=\"fa fa-times-circle\" aria-hidden=\"true\"></i></button></div><div class=\"clearfix\"></div></div>");
 }]);
 
 angular.module("chain-folder-list.html", []).run(["$templateCache", function($templateCache) {
@@ -850,7 +849,7 @@ angular.module("chain-folder-list.html", []).run(["$templateCache", function($te
 
 angular.module("chain-folder-upload-file.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-folder-upload-file.html",
-    "<div class=\"chain-folder-upload-file\"><div ng-if=\"error\" class=\"alert alert-danger\" role=\"alert\">{{error}}</div><div ng-if=\"!uploading\"><form id=\"folder-{{folderId}}-upload-file-form\"><div class=\"form-group\"><label for=\"folder-{{folderId}}-upload-file\">Add File</label><input type=\"file\" name=\"upload.file\" id=\"folder-{{folderId}}-upload-file\" upload-file-on-change=\"fileChosen\"></div><div class=\"form-group\"><label for=\"folder-{{folderId}}-upload-file-type\">File Type</label><select ng-model=\"upload.fileType\" ng-options=\"option.value as option.name for option in attachmentTypes\" name=\"upload.fileType\" class=\"form-control\" id=\"folder-{{folderId}}-upload-file-type\"></select></div><p class=\"text-right upload\"><button title=\"Upload selected file into this folder\" type=\"button\" class=\"btn btn-success\"><i class=\"fa fa-upload\" aria-hidden=\"true\" ng-click=\"uploadAttachment()\"></i></button></p></form></div><div ng-if=\"uploading\" class=\"chain-folder-upload-file-progress\"><div class=\"progress progress-striped active\"><div class=\"progress-bar\" role=\"progress-bar\"><span class=\"sr-only\">Uploading</span></div></div><div class=\"chain-folder-upload-file-status\">{{uploadStatus}}</div></div></div>");
+    "<div class=\"chain-folder-upload-file\"><div ng-if=\"error\" class=\"alert alert-danger\" role=\"alert\">{{error}}</div><div ng-if=\"!uploading\"><form id=\"folder-{{folderId}}-upload-file-form\"><div class=\"form-group\"><label for=\"folder-{{folderId}}-upload-file\">Add File</label><input type=\"file\" name=\"upload.file\" id=\"folder-{{folderId}}-upload-file\" upload-file-on-change=\"fileChosen\"></div><div class=\"form-group\"><label for=\"folder-{{folderId}}-upload-file-type\">File Type</label><select ng-model=\"upload.fileType\" ng-options=\"option.value as option.name for option in attachmentTypes\" name=\"upload.fileType\" class=\"form-control\" id=\"folder-{{folderId}}-upload-file-type\"></select></div><p class=\"text-right upload\"><button title=\"Upload selected file into this folder\" type=\"button\" class=\"btn btn-success\" ng-click=\"uploadAttachment()\"><i class=\"fa fa-upload\" aria-hidden=\"true\"></i></button></p></form></div><div ng-if=\"uploading\" class=\"chain-folder-upload-file-progress\"><div class=\"progress progress-striped active\"><div class=\"progress-bar\" role=\"progress-bar\"><span class=\"sr-only\">Uploading</span></div></div><div class=\"chain-folder-upload-file-status\">{{uploadStatus}}</div></div></div>");
 }]);
 
 angular.module("chain-folder.html", []).run(["$templateCache", function($templateCache) {

@@ -4,10 +4,6 @@
   .chain-folder-add h4 span.title {
     margin-left: 10px;
     font-weight: bold; }
-  .chain-folder-add .save {
-    margin-right: 20px; }
-  .chain-folder-add .cancel {
-    margin-right: 20px; }
 
 .chain-folder-comment .panel-title .glyphicon {
   cursor: pointer; }
@@ -62,7 +58,8 @@
     margin-right: 10px;
     margin-left: 10px; }
   .chain-folder-group-chooser table .group-name {
-    font-weight: bold; }
+    font-weight: bold;
+    cursor: pointer; }
   .chain-folder-group-chooser table .group-users {
     font-size: 85%; }
   .chain-folder-group-chooser table .group-checkbox {
