@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeCompara
       described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_hash
       described_class.should_receive(:build_data).with(old_hash,cdefs).and_return old_data
       described_class.should_receive(:build_data).with(new_hash,cdefs).and_return new_data
-      described_class.should_receive(:process_merch_cat_description).with(1,old_data,new_data)
+      described_class.should_receive(:process_merch_cat_description).with(1,old_data,new_data,cdefs)
       described_class.compare('Product',1,'ob','op','ov','nb','np','nv')
     end
   end
