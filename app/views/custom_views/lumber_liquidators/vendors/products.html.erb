@@ -1,7 +1,8 @@
 <%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
-<%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk,:prod_merch_cat])%>
+<%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk,:prod_merch_cat,:prod_merch_cat_desc])%>
 <%risk_def = cdefs[:prodven_risk]%>
 <%merch_cat_uid = "#{cdefs[:prod_merch_cat].model_field_uid}_product_vendor_assignment"%>
+<%merch_cat_desc_uid = "#{cdefs[:prod_merch_cat_desc].model_field_uid}_product_vendor_assignment"%>
 <div class='container-fluid'>
   <div class='row'>
     <select id='ll-pva-filter' class='form-control'>
@@ -127,13 +128,22 @@
         }
         merchCatHtmlFn = function(obj) {
           var merchCatUid = '<%=merch_cat_uid%>';
-          return writeVal(obj,merchCatUid);
+          var merchCatDescUid = '<%=merch_cat_desc_uid%>';
+          var mc = writeVal(obj,merchCatUid);
+          var mcd = writeVal(obj,merchCatDescUid);
+          var r = '';
+          if(mcd.length > 0) {
+            r = mcd;
+            if(mc.length > 0) {
+              r += " ("+mc+")";
+            }
+          }
+          return r;
         }
         writeVal = function(obj,field) {
           return obj[field] ? obj[field] : '';
         }
         var canEditRisk = <%=risk_def.model_field.can_edit?(current_user) ? 'true' : 'false'%>;
-        console.log(response);
 
         if(response.results.length==pageSize) {
           $('#ll-load-more').show();
