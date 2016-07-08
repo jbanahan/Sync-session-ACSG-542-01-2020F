@@ -26,6 +26,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit do
         cr = OpenChain::EntityCompare::ComparatorRegistry
         cr.should_receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator)
         cr.should_receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignmentChangeComparator)
+        cr.should_receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeComparator)
         OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit.init
       end
       it 'should register order acceptance' do
