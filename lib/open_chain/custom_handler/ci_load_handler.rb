@@ -252,6 +252,8 @@ module OpenChain; module CustomHandler; class CiLoadHandler
         l.gross_weight = decimal_value(row[12])
         l.mid = text_value row[13]
         l.part_number = text_value row[14]
+        l.pieces = decimal_value(row[15])
+
         l
       end
     end

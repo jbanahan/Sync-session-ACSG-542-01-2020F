@@ -274,7 +274,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 SELECT SUM(c.amount)
 FROM intacct_alliance_exports e
 INNER JOIN intacct_checks c on e.id = c.intacct_alliance_export_id
-WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_CHECK}' and e.data_received_date >= '#{db_start_time}'
+WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_CHECK}' and e.data_received_date >= '#{db_start_time}' and c.intacct_upload_date IS NULL
 QRY
       amount = ActiveRecord::Base::connection.execute(qry).first[0]
       errors[:checks] = ["Expected to retrieve #{number_to_currency(check_total)} in Check data from Alliance.  Received #{number_to_currency(amount ? amount : 0)} instead."] if amount != check_total
@@ -289,7 +289,7 @@ ELSE l.amount
 END) FROM intacct_alliance_exports e 
 INNER JOIN intacct_receivables r on r.intacct_alliance_export_id = e.id AND (r.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE}' OR (r.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE}' and r.customer_number <> '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_VFI_CUSTOMER_CODE}'))
 INNER JOIN intacct_receivable_lines l on r.id = l.intacct_receivable_id
-WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_INVOICE}' AND e.data_received_date >= '#{db_start_time}'
+WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_INVOICE}' AND e.data_received_date >= '#{db_start_time}'  and r.intacct_upload_date IS NULL
 QRY
       amount = ActiveRecord::Base::connection.execute(qry).first[0]
       errors[:invoices] = []
@@ -302,7 +302,7 @@ SELECT SUM(l.amount)
 FROM intacct_alliance_exports e
 INNER JOIN intacct_payables p on p.intacct_alliance_export_id = e.id and (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE}' or (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE}' and p.vendor_number <> '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_LMD_VENDOR_CODE}'))
 INNER JOIN intacct_payable_lines l on p.id = l.intacct_payable_id
-WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_INVOICE}' and e.data_received_date > '#{db_start_time}'
+WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_INVOICE}' and e.data_received_date > '#{db_start_time}'  and p.intacct_upload_date IS NULL
 QRY
       amount = ActiveRecord::Base::connection.execute(qry).first[0]
       errors[:invoices] << "Expected to retrieve #{number_to_currency(ap_total)} in AP lines from Alliance.  Received #{number_to_currency(amount ? amount : 0)} instead." if amount != ap_total

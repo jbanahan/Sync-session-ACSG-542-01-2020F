@@ -473,7 +473,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       end
 
       it 'parses a row to invoice line object' do
-        l = subject.parse_invoice_line nil, nil, [nil, nil, nil, "1.23", nil, nil, nil, "1234567890", "CN", "5", "10", "2", "100", "MID", "PART"]
+        l = subject.parse_invoice_line nil, nil, [nil, nil, nil, "1.23", nil, nil, nil, "1234567890", "CN", "5", "10", "2", "100", "MID", "PART", "10"]
 
         expect(l.country_of_origin).to eq "CN"
         expect(l.gross_weight).to eq BigDecimal("100")
@@ -484,6 +484,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         expect(l.mid).to eq "MID"
         expect(l.cartons).to eq BigDecimal("2")
         expect(l.part_number).to eq "PART"
+        expect(l.pieces).to eq BigDecimal("10")
       end
     end
   end
