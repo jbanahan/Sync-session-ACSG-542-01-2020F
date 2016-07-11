@@ -154,6 +154,10 @@ describe ModelField do
       expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_edit_lambda: lambda {|u| false}).can_edit?(Factory(:user))).to be_false
     end
 
+    it "disallows edit if model field is read-only" do
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, read_only: true).can_edit?(Factory(:user))).to be_false
+    end
+
     it "uses can_view_lambda if no edit lambda exists" do
       lambda_called = true
       expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_view_lambda: lambda {|u| lambda_called=true; false}).can_edit?(Factory(:user))).to be_false
