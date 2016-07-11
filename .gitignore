@@ -15,8 +15,8 @@ spec/tmp/*
 coverage/*
 coverage.data
 .rvmrc*
-.ruby-gemset
-.ruby-version
+.ruby-gemset*
+.ruby-version*
 .sass-cache/
 public/assets/*
 vendor/
