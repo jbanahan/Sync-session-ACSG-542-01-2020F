@@ -24,7 +24,7 @@ class ModelField
               :custom_id, :data_type, :core_module,
               :join_statement, :join_alias, :qualified_field_name, :uid,
               :public, :public_searchable, :definition, :disabled, :field_validator_rule,
-              :user_accessible, :autocomplete
+              :user_accessible, :autocomplete, :required
 
   def initialize(rank, uid, core_module, field_name, options={})
     o = {entity_type_field: false, history_ignore: false, read_only: false, user_accessible: true, restore_field: true}.merge(options)
@@ -80,6 +80,8 @@ class ModelField
     @autocomplete = o[:autocomplete]
     @restore_field = o[:restore_field]
     @xml_tag_name = o[:xml_tag_name]
+    @required = o[:required]
+    @search_value_preprocess_lambda = o[:search_value_preprocess_lambda]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -145,6 +147,10 @@ class ModelField
   def xml_tag_name
     tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
     tag_name.to_s.gsub(/[\W]/,'_')
+  end
+
+  def required?
+    @required
   end
 
   def select_options
@@ -1001,6 +1007,14 @@ class ModelField
       end
     end
     reloaded
+  end
+
+  def preprocess_search_value val
+    if @search_value_preprocess_lambda
+      @search_value_preprocess_lambda.call val
+    else
+      val
+    end
   end
 
   def parse_date d

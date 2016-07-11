@@ -44,7 +44,7 @@ describe Company do
     end
   end
   context "role scopes" do
-    before :each do 
+    before :each do
       @dont_find = Factory(:company)
     end
     it "should find carriers" do
@@ -109,6 +109,41 @@ describe Company do
       c2 = Company.new(:name=>'abc',:alliance_customer_number => c1.alliance_customer_number)
       c2.save.should be_false
       c2.errors.full_messages.first.should == "Alliance customer number is already taken."
+    end
+    context "trade lanes" do
+      before :each do
+        MasterSetup.any_instance.stub(:trade_lane_enabled?).and_return(true)
+      end
+      context '#view_trade_lanes? and #edit_trade_lanes' do
+        it "should allow for master company" do
+          c = Factory(:master_company)
+          expect(c.view_trade_lanes?).to be_true
+          expect(c.edit_trade_lanes?).to be_true
+        end
+        it "sould not allow for non-master company" do
+          c = Factory(:company)
+          expect(c.view_trade_lanes?).to be_false
+          expect(c.edit_trade_lanes?).to be_false
+        end
+        it "should not allow if trade lanes not enabled" do
+          MasterSetup.any_instance.stub(:trade_lane_enabled?).and_return(false)
+          c = Factory(:master_company)
+          expect(c.view_trade_lanes?).to be_false
+          expect(c.edit_trade_lanes?).to be_false
+        end
+      end
+    end
+    context "trade preference programs" do
+      it "should delegate view to trade_lanes" do
+        c = Company.new
+        c.should_receive(:view_trade_lanes?).and_return 'ABC'
+        expect(c.view_trade_preference_programs?).to eq 'ABC'
+      end
+      it "should delegate edit to trade_lanes" do
+        c = Company.new
+        c.should_receive(:edit_trade_lanes?).and_return 'ABC'
+        expect(c.edit_trade_preference_programs?).to eq 'ABC'
+      end
     end
     context "security filings" do
       before :each do

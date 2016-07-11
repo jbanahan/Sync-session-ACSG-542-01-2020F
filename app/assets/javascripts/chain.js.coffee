@@ -59,42 +59,6 @@ root.Chain =
       Chain.hideMessage('wh4')
 
     bootstro.start '', {items:itms, onExit: ox}
-    
-  toggleNotificationCenter: () ->
-    if $("#notification-center").is(':visible')
-      Chain.hideNotificationCenter()
-    else
-      Chain.showNotificationCenter()
-      
-  showNotificationCenter : () ->
-    $("#notification-center").modal('show')
-    Chain.showNotificationCenterPane('messages')
-
-  showNotificationCenterPane: (target) ->
-    $("[notification-center-pane]").hide()
-    $("[notification-center-toggle-target]").removeClass('btn-primary').addClass('btn-default')
-    $("[notification-center-toggle-target='"+target+"']").removeClass('btn-default').addClass('btn-primary')
-    pane = $("[notification-center-pane='"+target+"']")
-    pane.html('<div class="loader"></div>')
-    pane.show()
-    $.ajax {
-      url: pane.attr('content-url')
-      data: {nolayout:'true'}
-      success: (data) ->
-        extraTrigger = pane.attr('data-load-trigger')
-        pane.html(data)
-        pane.trigger('chain:notification-load')
-        pane.trigger(extraTrigger) if extraTrigger
-
-      error: () ->
-        pane.html "<div class='alert alert-danger'>We're sorry, an error occurred while trying to load this information.</div>"
-    }
-
-
-
-  hideNotificationCenter : () ->
-    $("#notification-center").modal('hide')
-      
 
   # runs the onwindowunload properly handling IE duplicate call issues
   # expects passed in function to return a string if user should be prompted
@@ -134,7 +98,7 @@ root.Chain =
   # generates html string for a bootstrap error panel
   makeErrorPanel: (messages, needs_container = true) ->
     Chain.makePanel messages, "error", needs_container
-      
+
   makeSuccessPanel: (messages, needs_container = true) ->
     Chain.makePanel messages, "success", needs_container
 
@@ -250,7 +214,7 @@ root.Chain =
       country_cb = []
       cb_set[country_id] = country_cb
     country_cb.push callback
-    
+
   #fire these callbacks when a tariff field is flagged as valid
   fireTariffCallbacks : (state,country_id,bad_tariff_number) ->
     return unless @tariffCallbacks
@@ -317,7 +281,7 @@ root.Chain =
     modal.html(h)
     writeClassification(c) for c in product.classifications
     Classify.enableHtsChecks() #check for HTS values inline
-    
+
     RailsHelper.prepRailsForm modal.find("form"), saveUrl, (if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"]) then 'post' else 'put')
     buttons = {
     'Cancel': () ->
@@ -372,7 +336,7 @@ root.Chain =
             scope.selectNone()
           )
       should_submit
-      
+
     Chain.htsAutoComplete()
     modal.dialog(title:"Quick Classify",width:550,buttons:buttons,modal:true)
     modal.dialog('open')
@@ -384,114 +348,6 @@ root.Chain =
     unless token
       token = $('meta[name="csrf-token"]').attr('content')
     token
-
-  # Controls for enabling and disabling the user message poller.
-  messagePoller :
-    
-    getMessageCount : (url) ->
-      $.getJSON url, (data) ->
-        if data > 0
-          $('.message_envelope').each () ->
-            $(this).html(''+data).addClass('messages')
-        else
-          $('.message_envelope').each () ->
-            $(this).html('').removeClass('messages')
-    
-    
-    # If pollingSeconds is <=0, no ongoing polling is done.
-    initialize : (user_id, pollingSeconds) ->
-      @url = '/messages/message_count?user_id='+user_id
-      $(document).ready () =>
-        @getMessageCount(@url)
-        if pollingSeconds > 0
-          @startPolling(pollingSeconds)
-
-    initNotificationCenter : () ->
-      $('[data-toggle="notification-center"]').click ->
-        Chain.toggleNotificationCenter()
-
-      $('[notification-center-toggle-target]').on 'click', () ->
-        Chain.showNotificationCenterPane($(this).attr('notification-center-toggle-target'))
-
-      $('#notification-center').on 'click', '.delete-message-btn', (evt) ->
-        msgId = $(this).attr('message-id')
-        evt.preventDefault()
-        if(window.confirm('Are you sure you want to delete this message?'))
-          $.ajax {
-            url:'/messages/'+msgId
-            type: "post"
-            data: {"_method":"delete"}
-            success: () ->
-              $('#message-panel-'+msgId).fadeOut()
-          }
-
-      $('#notification-center').on 'click', '.show-time-btn', (evt) ->
-        t = $(this)
-        if(t.html()==t.attr('title'))
-          t.html("<span class='glyphicon glyphicon-time'></span>")
-        else
-          t.html(t.attr('title'))
-
-      $('#notification-center').click (event) ->
-        if (event.target == this)
-          Chain.hideNotificationCenter()
-
-      $('#notification-center').on 'show.bs.collapse', '.panel-collapse', (event) ->
-        t = event.target
-        id = $(t).attr('message-id')
-        panel = $('#message-panel-'+id)
-        panel.find('.message-read-icon').removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down')
-        if panel.hasClass('unread')
-          panel.addClass('read').removeClass('unread')
-          $.get '/messages/'+id+'/read', ->
-            Chain.messagePoller.getMessageCount(Chain.messagePoller.pollingUrl())
-
-      $('#notification-center').on 'hide.bs.collapse', '.panel-collapse', (event) ->
-        t = event.target
-        id = $(t).attr('message-id')
-        $('#message-panel-'+id+' .message-read-icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right')
-
-      $('#notification-center').on 'click', '.notification-mark-all-read', (event) ->
-        $.ajax {
-          url:'/messages/read_all'
-          success: () ->
-            $('#notification-center').find('.unread').each () ->
-              $(this).removeClass('unread').addClass('read')
-            Chain.messagePoller.getMessageCount(Chain.messagePoller.pollingUrl())
-        }
-
-      $('#notification-center').on 'chain:notification-load', '[notification-center-pane="messages"]', () ->
-        $('[notification-center-pane="messages"] .message-body a').addClass('btn').addClass('btn-xs').addClass('btn-primary')
-
-    pollingUrl : ->
-      @url
-
-    startPolling : (pollingSeconds) ->
-      # If there's an interval registration, we're already polling
-      unless @intervalRegistration? || pollingSeconds <= 0
-        @intervalRegistration = setInterval( () =>
-          @getMessageCount @url
-        , pollingSeconds * 1000)
-
-    stopPolling : () ->
-      if @intervalRegistration?
-        reg = @intervalRegistration
-        @intervalRegistration = null
-        clearInterval(reg)
-
-  bindBaseKeys : () ->
-    $(document).keyup (e) ->
-      if e.keyCode is 27
-        if $("#notification-center").is(":visible")
-          $("#notification-center button.close").click()
-        if $('.sidebar-offcanvas').hasClass 'active'
-          $('[data-toggle="offcanvas"]').click()
-
-    $(document).on 'keyup', null, "m", () ->
-      $('[data-toggle="offcanvas"]:first').click()
-      $('#sidebar:visible .list-group-item:first').focus()
-    $(document).on 'keyup', null, 'n', () ->
-      $('[data-toggle="notification-center"]:first').click()
 
   tariffPopUp : (htsNumber, country_id, country_iso) ->
     mod = $("#mod_tariff_popup")
@@ -506,9 +362,9 @@ root.Chain =
         buttons:
           "Close": () ->
             $("#mod_tariff_popup").dialog('close')
-        
+
       )
-    
+
     c = $("#tariff_popup_content")
     c.html("Loading tariff information...")
     mod.dialog('open')
@@ -563,13 +419,13 @@ root.Chain =
             h += htsDataRow("Quota Category",o.official_quota.category)
             h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor)
             h += htsDataRow("SME UOM",o.official_quota.unit_of_measure)
-          
+
           h += htsDataRow("Notes:",o.notes)
           if o.auto_classify_ignore
             h += htsDataRow("Ignore For Auto Classify","Yes")
-        
+
           h += "</tbody></table>"
-        
+
         c.html(h)
     )
 
@@ -579,7 +435,6 @@ $(document).ready () ->
   # Note, this header is included twice, since jquery.form also 'helpfully' reads the crsf token and injects it as well
   $.ajaxSetup({headers: {"X-CRSF-Token": Chain.getAuthToken()}})
 
-  Chain.bindBaseKeys()
   $("#lnk_hide_notice").click (evt) ->
     evt.preventDefault
     $('#notice').hide()
@@ -615,13 +470,6 @@ $(document).ready () ->
         window.history.back()
       else
         window.location=link
-
-  $(document).on 'chain:workflow-load', (evt) ->
-    ChainWorkflow.initWorkflowButtons (data) ->
-      Chain.showNotificationCenterPane('tasks')
-    $('.task-widget [rel-date]').each () ->
-      t = $(this)
-      t.html(t.attr('rel-date-prefix')+moment(t.attr('rel-date')).fromNow())
 
   $(document).on 'show.bs.tab', '[tab-src]', (evt) ->
     t = $(this)
@@ -676,6 +524,6 @@ $(document).ready () ->
         h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
         $('.task-wrap .task-email-check-wrap').html(h)
     }
-    
+
   $(document).on 'chain:workflow-change', () ->
     Chain.showNotificationCenterPane('tasks')

@@ -4,37 +4,33 @@ describe TariffSet do
   context 'activate' do
     before :each do
       Country.destroy_all
-      2.times { Factory(:country) }
+      @c1 = Factory(:country)
+      @c2 = Factory(:country)
     end
     it "replaces official tariff" do
+      should_be_gone = OfficialTariff.create!(:country_id => @c1.id, :hts_code => "1234567890", :full_description => "FD1")
+      should_be_changed = OfficialTariff.create!(:country_id => @c1.id, :hts_code => "1234555555", :full_description => "FD3")
+      should_stay = OfficialTariff.create!(:country_id => @c2.id, :hts_code => should_be_gone.hts_code, :full_description => "FD2")
 
-      c1 = Country.first
-      c2 = Country.last
+      old_ts = TariffSet.create!(:country_id => @c1.id, :label => "oldts", :active => true)
 
-      c1.should_not == c2
-
-      should_be_gone = OfficialTariff.create!(:country_id => c1.id, :hts_code => "1234567890", :full_description => "FD1")
-      should_be_changed = OfficialTariff.create!(:country_id => c1.id, :hts_code => "1234555555", :full_description => "FD3")
-      should_stay = OfficialTariff.create!(:country_id => c2.id, :hts_code => should_be_gone.hts_code, :full_description => "FD2")
-
-      old_ts = TariffSet.create!(:country_id => c1.id, :label => "oldts", :active => true)
-
-      ts = TariffSet.create!(:country_id => c1.id, :label => "newts")
+      ts = TariffSet.create!(:country_id => @c1.id, :label => "newts")
       r = ts.tariff_set_records
-      r.create!(:country_id => c1.id, :hts_code => should_be_changed.hts_code, :full_description => "changed_desc")
-      r.create!(:country_id => c1.id, :hts_code => "9999999999")
+      r.create!(:country_id => @c1.id, :hts_code => should_be_changed.hts_code, :full_description => "changed_desc")
+      r.create!(:country_id => @c1.id, :hts_code => "9999999999")
 
-      OfficialQuota.should_receive(:relink_country).with(c1)
-      
+      OfficialQuota.should_receive(:relink_country).with(@c1)
+      OpenChain::OfficialTariffProcessor::TariffProcessor.should_receive(:process_country).with(@c1)
+
       ts.activate
 
-      found = OfficialTariff.where(:country_id => c1.id)
+      found = OfficialTariff.where(:country_id => @c1.id)
 
       found.should have(2).items
-      OfficialTariff.where(:country_id => c1.id, :hts_code => "1234555555").first.full_description.should == "changed_desc"
-      OfficialTariff.where(:country_id => c1.id, :hts_code => "9999999999").first.should_not be_nil
-      OfficialTariff.where(:country_id => c2.id, :hts_code => should_stay.hts_code).first.should_not be_nil
-      OfficialTariff.where(:country_id => c1.id, :hts_code => should_be_gone.hts_code).first.should be_nil
+      OfficialTariff.where(:country_id => @c1.id, :hts_code => "1234555555").first.full_description.should == "changed_desc"
+      OfficialTariff.where(:country_id => @c1.id, :hts_code => "9999999999").first.should_not be_nil
+      OfficialTariff.where(:country_id => @c2.id, :hts_code => should_stay.hts_code).first.should_not be_nil
+      OfficialTariff.where(:country_id => @c1.id, :hts_code => should_be_gone.hts_code).first.should be_nil
       TariffSet.find(old_ts.id).should_not be_active #should have deactivated old tariff set for same country
       TariffSet.find(ts.id).should be_active #should have activated this tariff set
     end
@@ -42,7 +38,7 @@ describe TariffSet do
     it 'writes user message' do
       u = Factory(:user)
       u.should_not be_nil
-      c = Country.first
+      c = @c1
       ts = TariffSet.create!(:country_id => c.id, :label => "newts")
       ts.activate u
       u.messages.should have(1).item
@@ -52,16 +48,16 @@ describe TariffSet do
       u = Factory(:user)
       u2 = Factory(:user,tariff_subscribed:true)
       u3 = Factory(:user,tariff_subscribed:true)
-      c = Country.first
+      c = @c1
       ts = TariffSet.create!(:country_id => c.id, :label => "newts")
       ts.activate u
       m = ActionMailer::Base.deliveries.pop
       m.to.should == [u3.email]
-      m = ActionMailer::Base.deliveries.pop 
+      m = ActionMailer::Base.deliveries.pop
       m.to.should == [u2.email]
     end
   end
-  
+
   context 'compare' do
     it "returns array of results" do
       c = Factory(:country,:iso_code=>'US')

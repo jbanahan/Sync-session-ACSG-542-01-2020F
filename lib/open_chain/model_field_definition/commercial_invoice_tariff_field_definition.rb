@@ -1,16 +1,20 @@
 module OpenChain; module ModelFieldDefinition; module CommercialInvoiceTariffFieldDefinition
   def add_commercial_invoice_tariff_fields
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
-      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
+      [1,:cit_hts_code,:hts_code,"HTS Code",{
+        :data_type=>:string,
+        :export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format},
+        :search_value_preprocess_lambda=> hts_search_value_preprocess_lambda
+      }],
       [2,:cit_duty_amount,:duty_amount,"Duty",{:data_type=>:decimal}],
       [3,:cit_entered_value,:entered_value,"Entered Value",{:data_type=>:decimal}],
       [4,:cit_spi_primary,:spi_primary,"SPI - Primary",{:data_type=>:string}],
       [5,:cit_spi_secondary,:spi_secondary,"SPI - Secondary",{:data_type=>:string}],
-      [6,:cit_classification_qty_1,:classification_qty_1,"Quanity 1",{:data_type=>:decimal}],
+      [6,:cit_classification_qty_1,:classification_qty_1,"Quantity 1",{:data_type=>:decimal}],
       [7,:cit_classification_uom_1,:classification_uom_1,"UOM 1",{:data_type=>:string}],
-      [8,:cit_classification_qty_2,:classification_qty_2,"Quanity 2",{:data_type=>:decimal}],
+      [8,:cit_classification_qty_2,:classification_qty_2,"Quantity 2",{:data_type=>:decimal}],
       [9,:cit_classification_uom_2,:classification_uom_2,"UOM 2",{:data_type=>:string}],
-      [10,:cit_classification_qty_3,:classification_qty_3,"Quanity 3",{:data_type=>:decimal}],
+      [10,:cit_classification_qty_3,:classification_qty_3,"Quantity 3",{:data_type=>:decimal}],
       [11,:cit_classification_uom_3,:classification_uom_3,"UOM 3",{:data_type=>:string}],
       [12,:cit_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
       [13,:cit_tariff_description,:tariff_description,"Description",{:data_type=>:string}],

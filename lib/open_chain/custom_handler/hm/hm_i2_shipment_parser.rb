@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShimentParser
       else
         # Send to Kewill Customs
         g = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.new
-        g.generate_and_send_invoices nil, invoice
+        g.generate_and_send_invoices invoice.invoice_number, invoice
       end
     end
   end
@@ -56,13 +56,15 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShimentParser
     invoice.importer = importer(system)
     invoice.invoice_number = text_value(line[0])
     invoice.invoice_date = line[3].blank? ? nil : Time.zone.parse(line[3])
+    invoice.currency = "USD"
     
     invoice
   end
 
   def set_invoice_line_info system, i, line
     i.po_number = text_value(line[6])
-    i.part_number = text_value(line[9])
+    # The sku needs to be trimmed to 7 chars (We don't track color / size info for HM (which is the remaining X digits of the sku))
+    i.part_number = text_value(line[9])[0..6]
     i.country_origin_code = text_value(line[12])
     i.quantity = decimal_value(line[13])
     # Unit Price is sent as cents

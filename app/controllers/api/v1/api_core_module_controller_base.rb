@@ -1,8 +1,29 @@
 require 'api/v1/state_toggle_support'
 
+# Concrete implementations should implement
+# - core_module
+# - obj_to_json_hash
+# - save_object
 module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiController
   include Api::V1::StateToggleSupport
   include Api::V1::ApiJsonSupport
+
+
+  def index
+    render_search core_module
+  end
+
+  def show
+    render_show core_module
+  end
+
+  def create
+    do_create core_module
+  end
+
+  def update
+    do_update core_module
+  end
 
   # The param key to expect the actual object data to be posted into .ie params[:product] -> :product = object_param_name
   def object_param_name

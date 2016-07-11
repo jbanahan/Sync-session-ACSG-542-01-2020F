@@ -58,15 +58,6 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator do
         subject.compare nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version, snapshot.bucket, snapshot.doc_path, snapshot.version
         expect(ActionMailer::Base.deliveries.length).to eq 0
       end
-
-      it "does not send email for FDA entries" do
-        entry.update_attributes(fda_transmit_date: "2016-04-17 00:00")
-        snapshot
-
-        subject.compare nil, nil, nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
-
-        expect(ActionMailer::Base.deliveries.length).to eq 0
-      end
     end
 
     context "with Ace comment" do

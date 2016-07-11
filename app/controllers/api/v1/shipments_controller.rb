@@ -10,21 +10,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def core_module
     CoreModule::SHIPMENT
   end
-  def index
-    render_search CoreModule::SHIPMENT
-  end
-
-  def show
-    render_show CoreModule::SHIPMENT
-  end
-
-  def create
-    do_create CoreModule::SHIPMENT
-  end
-
-  def update
-    do_update CoreModule::SHIPMENT
-  end
 
   def available_orders
     s = get_shipment
@@ -376,7 +361,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       result = result.limit(10)
       json = result.map {|address| {name:address.name, full_address:address.full_address, id:address.id} }
     end
-    
+
     render json: json
   end
 
@@ -392,7 +377,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   private
-  def get_shipment 
+  def get_shipment
     s = Shipment.find params[:id]
     raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
     s

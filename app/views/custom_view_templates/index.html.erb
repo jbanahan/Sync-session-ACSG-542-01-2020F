@@ -1,0 +1,34 @@
+<% content_for :javascript do %>
+$(function() {
+    $("#btn_new").click(function(evt) {
+      evt.preventDefault();
+      $("#custom-view-new-form").submit();
+    })
+});
+<%end%>
+
+<%content_for :action_bar do %>
+<button id='btn_new'>New</button>
+<%end%>
+
+<table class='detail_table'>
+  <thead>
+    <th>Template Code</th>
+    <th>Template Path</th>
+    <th>Module Type</th>
+    <th>Parameters</th>
+    <th></th>
+  </thead>
+  <tbody>
+    <%@templates.each do |t|%>
+      <tr class='hover'>
+        <td><%=link_to t.template_identifier, edit_custom_view_template_path(t)%></td>
+        <td><%=link_to t.template_path, edit_custom_view_template_path(t)%></td>
+        <td><%=link_to t.module_type, edit_custom_view_template_path(t)%></td>
+        <td><%=link_to t.search_criterions.count, edit_custom_view_template_path(t)%></td>
+        <td><%=link_to "delete", custom_view_template_path(t), :confirm => 'Delete this custom view template?', :method => :delete %></td>
+      </tr>
+    <%end%>
+  </tbody>
+</table>
+<%= form_tag(new_custom_view_template_path, method: :get, :id => "custom-view-new-form")%> 

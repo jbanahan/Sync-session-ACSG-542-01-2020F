@@ -386,6 +386,13 @@ describe SearchCriterion do
         end
       end
       context :normal_field do
+        it "should process value before search" do
+          t = Factory(:tariff_record, hts_1: "9801001010")
+          sc = SearchCriterion.new(:model_field_uid=>:hts_hts_1,:operator=>"eq",:value=>"9801.00.1010")
+          v = sc.apply(TariffRecord.where("1=1"))
+          v.all.should include t
+        end
+  
         it "should find something created last month with val = 1" do
           @product.update_attributes(:created_at=>1.month.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)

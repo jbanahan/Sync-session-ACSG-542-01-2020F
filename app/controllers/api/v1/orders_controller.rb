@@ -6,17 +6,6 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
   def core_module
     CoreModule::ORDER
   end
-  def index
-    render_search CoreModule::ORDER
-  end
-
-  def show
-    render_show CoreModule::ORDER
-  end
-
-  def update
-    do_update CoreModule::ORDER
-  end
 
   def by_order_number
     obj = Order.where(order_number: params[:order_number]).first
@@ -78,7 +67,9 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       :ord_ship_from_full_address,
       :ord_ship_from_name,
       :ord_rule_state,
-      :ord_closed_at
+      :ord_closed_at,
+      :ord_tppsr_db_id,
+      :ord_tppsr_name
     ] + custom_field_keys(CoreModule::ORDER))
     line_fields_to_render = limit_fields([
       :ordln_line_number,
@@ -106,6 +97,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     end
     h['vendor_id'] = o.vendor_id
     h['permissions'] = render_permissions(o)
+    h['available_tpp_survey_responses'] = render_tpp_surveys(o)
     h
   end
   def render_permissions order
@@ -120,7 +112,11 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     }
   end
 
-  def validate 
+  def render_tpp_surveys order
+    order.available_tpp_survey_responses.collect {|sr| {id:sr.id,long_name:sr.long_name}}
+  end
+
+  def validate
     ord = Order.find params[:id]
     run_validations(ord)
   end

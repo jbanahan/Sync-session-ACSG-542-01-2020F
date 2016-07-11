@@ -437,4 +437,52 @@ describe Order do
       expect(pva.product).to eq ol2.product
     end
   end
+  describe '#available_tpp_survey_responses' do
+    let :clean_survey_response do
+      destination = Factory(:country,iso_code:'US')
+      mc = Factory(:master_company)
+      ship_to = Factory(:address,company:mc,country:destination)
+      u = Factory(:vendor_user)
+      vendor = u.company
+      o = Factory(:order,vendor:vendor)
+      Factory(:order_line,order:o,ship_to:ship_to)
+
+      tpp = Factory(:trade_preference_program,destination_country:destination)
+
+      survey = Factory(:survey,trade_preference_program:tpp,expiration_days:365)
+      sr = survey.generate_response!(u)
+      sr.submitted_date = 1.day.ago
+      sr.save!
+      [o,sr]
+    end
+    it 'should find responses' do
+      o, sr = clean_survey_response
+      expect(o.available_tpp_survey_responses.to_a).to eq [sr]
+    end
+    it 'should only include responses that are submitted' do
+      o, sr = clean_survey_response
+      sr.submitted_date = nil
+      sr.save!
+      expect(o.available_tpp_survey_responses.to_a).to eq []
+    end
+    it 'should only include responses where the responder is from the vendor company' do
+      o = clean_survey_response.first
+      o.vendor = Factory(:vendor)
+      o.save!
+      expect(o.available_tpp_survey_responses.to_a).to eq []
+    end
+    it 'should only include responses that are for a ship to country that is included in order' do
+      o = clean_survey_response.first
+      st = o.order_lines.first.ship_to
+      st.country = Factory(:country)
+      st.save!
+      expect(o.available_tpp_survey_responses.to_a).to eq []
+    end
+    it 'should only include responses that are not expired' do
+      o, sr = clean_survey_response
+      sr.email_sent_date = 2.years.ago
+      sr.save!
+      expect(o.available_tpp_survey_responses.to_a).to eq []
+    end
+  end
 end

@@ -9,10 +9,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAceEn
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     json = get_json_hash new_bucket, new_path, new_version
 
-    # Don't send for FDA entries, per Mike McCullough April 11, 2016
-    return unless json['entity']['model_fields']['ent_fda_transmit_date'].blank?
-
-
     new_comments = entry_comments(json)
     non_ace_comment = find_non_ace_entry_comment new_comments
 

@@ -39,7 +39,7 @@ describe Api::V1::ModelFieldsController do
       expect(get :index).to be_success
 
       h = JSON.parse(response.body)
-      fld = h['fields'].find {|fld| fld['uid']=='class_comp_cnt'}
+      fld = h['fields'].find {|f| f['uid']=='class_comp_cnt'}
       expect(fld['label']).to eq "Component Count"
     end
     it "should not get model fields that are not user accessible" do
@@ -118,7 +118,7 @@ describe Api::V1::ModelFieldsController do
       expect(get :index).to be_success
 
       h = JSON.parse(response.body)
-      fld = h['fields'].find {|fld| fld['uid']=='prod_ent_type'}
+      fld = h['fields'].find {|f| f['uid']=='prod_ent_type'}
       expect(fld['select_options']).to eq [['PT','PT']]
     end
   end

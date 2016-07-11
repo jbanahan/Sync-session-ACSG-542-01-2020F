@@ -29,4 +29,5 @@
 //= stub legacy
 //= stub html5shim
 //= stub vendor_portal
+//= stub trade_lanes
 //= stub login

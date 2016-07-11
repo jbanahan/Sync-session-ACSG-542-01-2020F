@@ -1,6 +1,23 @@
 require 'spec_helper'
 
 describe OfficialTariff do
+  context 'callbacks' do
+    it 'should set general_rate_decimal on save if numeric' do
+      c = Factory(:country)
+      t = OfficialTariff.create!(country_id:c.id,hts_code:'1234567890',general_rate:' 3.2% ')
+      expect(t.common_rate_decimal).to eq BigDecimal('0.032')
+    end
+    it 'should not set general_rate_decimal on save if not numeric' do
+      c = Factory(:country)
+      t = OfficialTariff.create!(country_id:c.id,hts_code:'1234567890',general_rate:'10.2% plus 93.1 EUR per 100 KILOGRAMS')
+      expect(t.common_rate_decimal).to be_nil
+    end
+    it 'should set special_rate_key on save' do
+      special_rates = 'ABC12345'
+      t = Factory(:official_tariff,special_rates:special_rates)
+      expect(t.special_rate_key).to eq Digest::MD5.hexdigest(special_rates)
+    end
+  end
   describe :lacey_act do
     it "should return false if the country's ISO code is not US" do
       c = Factory(:country, iso_code: "VN")
@@ -24,7 +41,7 @@ describe OfficialTariff do
   describe :taric_url do
     it "should return nil if country is nil" do
       t = Factory(:official_tariff, hts_code: "ABCD")
-      
+
       expect(t.taric_url).to be nil
     end
 
@@ -32,7 +49,7 @@ describe OfficialTariff do
       c = Factory(:country)
       t = Factory(:official_tariff, country: c, hts_code: "ABCD")
       c.stub(:european_union?).and_return false
-      
+
       expect(t.taric_url).to be nil
     end
 
@@ -113,7 +130,7 @@ describe OfficialTariff do
   end
   describe :auto_classify do
     before :each do
-      @us = Factory(:country,:iso_code=>'US',:import_location=>true) 
+      @us = Factory(:country,:iso_code=>'US',:import_location=>true)
       @ca = Factory(:country,:iso_code=>'CA',:import_location=>true)
       @de = Factory(:country,:iso_code=>'DE',:import_location=>true)
       @gb = Factory(:country,:iso_code=>'GB',:import_location=>false)

@@ -1,3 +1,4 @@
+require 'open_chain/official_tariff_processor/tariff_processor'
 class TariffSet < ActiveRecord::Base
   has_many :tariff_set_records, :dependent => :destroy
   belongs_to :country
@@ -8,9 +9,11 @@ class TariffSet < ActiveRecord::Base
     OfficialTariff.transaction do
       OfficialTariff.where(:country_id=>self.country_id).destroy_all
       self.tariff_set_records.each do |tsr|
-        tsr.build_official_tariff.save!
+        ot = tsr.build_official_tariff
+        ot.save!
       end
       OfficialQuota.relink_country(self.country)
+      OpenChain::OfficialTariffProcessor::TariffProcessor.process_country(self.country)
       TariffSet.where(:country_id=>self.country_id).where("tariff_sets.id = #{self.id} OR tariff_sets.active = ?",true).each do |ts|
         ts.update_attributes(:active=>ts.id==self.id)
       end

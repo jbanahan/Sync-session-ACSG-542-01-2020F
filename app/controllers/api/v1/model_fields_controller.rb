@@ -8,7 +8,11 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
     CoreModule::ORDER_LINE,
     CoreModule::ENTRY,
     CoreModule::OFFICIAL_TARIFF,
-    CoreModule::VARIANT]
+    CoreModule::VARIANT,
+    CoreModule::TRADE_LANE,
+    CoreModule::TRADE_PREFERENCE_PROGRAM,
+    CoreModule::TPP_HTS_OVERRIDE
+  ]
 
   def index
     cu = current_user
@@ -41,6 +45,7 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
           mf_h['user_id_field'] = true if mf.user_id_field?
           mf_h['user_field'] = true if mf.user_field?
           mf_h['user_full_name_field'] = true if mf.user_full_name_field?
+          mf_h['required'] = true if mf.required?
           h['fields'] << mf_h
         end
       end

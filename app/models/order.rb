@@ -13,8 +13,9 @@ class Order < ActiveRecord::Base
   belongs_to :agent, :class_name=>"Company"
   belongs_to :closed_by, :class_name=>'User'
   belongs_to :factory, :class_name=>'Company'
+  belongs_to :tpp_survey_response, :class_name=>'SurveyResponse'
 
-	validates  :vendor, :presence => true, :unless => :has_importer?
+	validates :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
 
 	has_many	 :order_lines, dependent: :destroy, order: 'line_number', autosave: true, inverse_of: :order
@@ -155,6 +156,17 @@ class Order < ActiveRecord::Base
       importer_agents = self.importer.linked_companies.agents.to_a
     end
     vendor_agents & importer_agents
+  end
+
+  def available_tpp_survey_responses
+    return [] unless self.vendor
+    ship_to_country_ids = self.order_lines.collect {|ol| ol.ship_to ? ol.ship_to.country_id : nil}.uniq.compact
+    return SurveyResponse.
+      not_expired.
+      joins(:survey=>:trade_preference_program).
+      where('survey_responses.user_id IN (SELECT id FROM users WHERE users.company_id = ?)',self.vendor_id).
+      where('trade_preference_programs.destination_country_id IN (?)',ship_to_country_ids).
+      where('survey_responses.submitted_date IS NOT NULL')
   end
 
 	def related_shipments

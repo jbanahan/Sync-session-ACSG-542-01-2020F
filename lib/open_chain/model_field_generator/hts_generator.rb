@@ -1,4 +1,8 @@
 module OpenChain; module ModelFieldGenerator; module HtsGenerator
+  def hts_search_value_preprocess_lambda
+    lambda { |v| v.to_s.gsub(".","") }
+  end
+
   def make_hts_arrays(rank_start,uid_prefix)
     canada = Country.where(:iso_code=>"CA").first
     us = Country.where(:iso_code=>"US").first
@@ -23,7 +27,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
         },
         :process_query_result_lambda => lambda {|val|
           val.blank? ? "" : val.hts_format
-        }
+        },
+        :search_value_preprocess_lambda=> hts_search_value_preprocess_lambda
       }]
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_schedb".to_sym,"schedule_b_#{i}".to_sym,"Schedule B Code #{i}"] if us && us.import_location #make sure us exists so test fixtures pass
