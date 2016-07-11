@@ -382,4 +382,15 @@ describe Company do
     end
   end
 
+  describe "slack_channel scope" do
+    it 'returns only companies with slack channels' do
+      no_slack_channel = Factory(:company, name: 'Slackless')
+      slack_channel = Factory(:company, name: 'Slackfull', slack_channel: 'a_channel')
+
+      results = Company.slack_channel.to_a
+      expect(results).to include(slack_channel)
+      expect(results).to_not include(no_slack_channel)
+    end
+  end
+
 end
