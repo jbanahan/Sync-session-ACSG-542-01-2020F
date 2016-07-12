@@ -2,6 +2,8 @@ Rails.application.config.use_google_auth = false
 Rails.application.config.disable_remember_me = false
 Rails.application.config.pepsi_sso_url = nil
 
+OmniAuth.config.failure_raise_out_environments = [:test]
+
 if File.exist?("config/google_auth.json")
   google_auth_settings = JSON.parse(File.read("config/google_auth.json"))
   Rails.application.config.middleware.use OmniAuth::Builder do
