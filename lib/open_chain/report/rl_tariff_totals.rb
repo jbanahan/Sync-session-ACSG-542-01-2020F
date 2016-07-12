@@ -20,8 +20,8 @@ module OpenChain
       end
 
       def create_workbook(start, finish, settings)
-        start_date = Date.parse(settings['start_date_time']).strftime("%m/%d/%y")
-        end_date = Date.parse(settings['end_date_time']).strftime("%m/%d/%y")
+        start_date = Date.parse(settings['start_date_time']).strftime("%m-%d-%y")
+        end_date = Date.parse(settings['end_date_time']).strftime("%m-%d-%y")
         wb = XlsMaker.create_workbook "GCC Stats for #{start_date} - #{end_date}"
         XlsMaker.create_sheet wb, "GCSEA Stats"
         table_from_query wb.worksheet(0), gcc_query(start, finish)
