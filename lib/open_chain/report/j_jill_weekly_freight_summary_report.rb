@@ -271,7 +271,7 @@ QRY
     q = <<QRY
 select s.id 'Shipment ID', o.id 'Order ID', s.receipt_location 'Origin', vend.name 'Vendor', fact.name 'Factory', o.customer_order_number 'PO Number', o.mode 'PO Mode','' as 'PO Qty',
 gac.date_value 'PO GAC', s.booking_number 'Booking #', s.booking_mode 'Booking Mode', 
-(select sum(bl.quantity) from booking_lines bl where bl.shipment_id = s.id and bl.order_id) 'Booked Qty',
+ifnull((select sum(bl.quantity) from booking_lines bl where bl.shipment_id = s.id and bl.order_id = o.id), 0) 'Booked Qty',
 s.booking_cutoff_date 'Booking Cut Off', s.house_bill_of_lading 'Shipment #', s.mode 'Ship Mode', 
 sum(ps.quantity) "Shipped Qty", s.shipment_cutoff_date 'Shipment Cutoff', s.cargo_on_hand_date 'FCR Date',
 DATEDIFF(s.cargo_on_hand_date, s.shipment_cutoff_date) 'FCR vs. Ship Cutoff',
