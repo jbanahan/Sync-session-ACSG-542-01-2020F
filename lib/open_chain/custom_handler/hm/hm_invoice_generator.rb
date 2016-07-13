@@ -12,9 +12,9 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
 
   def self.get_new_billables
     BillableEvent.joins('LEFT OUTER JOIN invoiced_events ie ON billable_events.id = ie.billable_event_id AND ie.invoice_generator_name = "HmInvoiceGenerator"')
+                 .joins('INNER JOIN classifications cla ON cla.id = billable_eventable_id INNER JOIN countries cou ON cou.id = cla.country_id AND cou.iso_code = "CA" INNER JOIN products p ON cla.product_id = p.id INNER JOIN companies com ON com.id = p.importer_id AND com.alliance_customer_number = "HENNE"')
                  .where('ie.id IS NULL')
                  .where('billable_eventable_type = "Classification"')
-                 .where('billable_eventable_id IN (SELECT cla.id FROM classifications cla INNER JOIN products p ON p.id = cla.product_id INNER JOIN countries cou ON cou.id = cla.country_id INNER JOIN companies com ON com.id = p.importer_id WHERE cou.iso_code = "CA" AND com.alliance_customer_number = "HENNE")')
   end
 
   def self.create_invoice

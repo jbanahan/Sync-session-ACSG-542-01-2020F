@@ -62,6 +62,22 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
         expect(results.count).to eq 0
       end
     end
+
+    it "returns no results for non-classifications" do
+      ent = Factory(:entry, importer: Factory(:company, alliance_customer_number: "HENNE", name: "H&M"))
+      Factory(:billable_event, billable_eventable: ent, entity_snapshot: Factory(:entity_snapshot), event_type: "entry_new")
+      results = described_class.get_new_billables
+      expect(results.count).to eq 0
+    end
+
+    it "returns results for invoiced CA classifications that have been processed by a different generator" do
+      prod = Factory(:product, importer: Factory(:company, alliance_customer_number: "HENNE", name: "H&M"), unique_identifier: "foo")
+      cl = Factory(:classification, product: prod, country: country_ca)
+      be = Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
+      Factory(:invoiced_event, billable_event: be, invoice_generator_name: "FooGenerator")
+      results = described_class.get_new_billables
+      expect(results.count).to eq 1
+    end
   end
 
   describe :create_invoice do
