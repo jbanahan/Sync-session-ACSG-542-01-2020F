@@ -387,7 +387,7 @@ describe Company do
       no_slack_channel = Factory(:company, name: 'Slackless')
       slack_channel = Factory(:company, name: 'Slackfull', slack_channel: 'a_channel')
 
-      results = Company.slack_channel.to_a
+      results = Company.has_slack_channel.to_a
       expect(results).to include(slack_channel)
       expect(results).to_not include(no_slack_channel)
     end
