@@ -11,7 +11,9 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
     CoreModule::VARIANT,
     CoreModule::TRADE_LANE,
     CoreModule::TRADE_PREFERENCE_PROGRAM,
-    CoreModule::TPP_HTS_OVERRIDE
+    CoreModule::TPP_HTS_OVERRIDE,
+    CoreModule::COMPANY,
+    CoreModule::PRODUCT_VENDOR_ASSIGNMENT
   ]
 
   def index

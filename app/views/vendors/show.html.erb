@@ -1,114 +1,22 @@
-<%content_for :javascript do %>
-  $(document).ready(function() {
-    ChainAddress.initAddresses();
-    $('#vendor_setup_form').click(function() {
-      window.open('/customer/lumber_liquidators/sap_vendor_setup_form/<%=@company.id%>');
-    });
-  });
-<%end%>
-<%content_for :action_bar do %>
-  <button class='form_to' form_id='frm_attrs' title='Save'><i class='fa fa-floppy-o'></i></button>
-  <%if MasterSetup.get.custom_feature?('Lumber SAP')%>
-    <button id='vendor_setup_form' title='Vendor Setup Form'><i class='fa fa-download'></i></button>
-  <%end%>
-<%end%>
-<style type="text/css">
-  #address_map {
-    -webkit-transition: all .15s ease-out;
-         -o-transition: all .15s ease-out;
-            transition: all .15s ease-out;
-    height: 0px;
-  }
-  #address_map.google-maps-wrap {
-    height: 300px;
-    background-color: #ccc;
-    padding: 0px;
-  }
-  .address-selector {
-    padding: 5px;
-  }
-</style>
-<div class="container">
-  <%=render partial: '/shared/business_rules', locals:{base_object:@company,rule_state_field:ModelField.find_by_uid(:cmp_rule_state), validation_path: validation_results_vendor_path(@company)}%>
-  <div class="row">
-    <div class="col-md-12">
-      <h1><%=ModelField.find_by_uid(:cmp_name).process_export(@company,current_user)%></h1>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VFI Track - Vendor Setup</title>
+  <%= stylesheet_link_tag    "chain_vendor_maint", :media => "all" -%>
+  <%= javascript_include_tag "chain_vendor_maint" -%>
+  </head>
+<body>
+  <% if @run_as_user %>
+    <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
+  <% end %>
+  <% if current_user %>
+    <%= render "shared/nav_panel" %>
+  <% end %>
+  <div ng-app='ChainVendorMaint'>
+    <div ui-view></div>
+    <chain-errors></chain-errors>
   </div>
-  <div class="row">
-    <div class="col-xs-2"> <!-- required for floating -->
-      <!-- Nav tabs -->
-      <ul class="nav nav-tabs tabs-left">
-        <li class="active"><a href="#attributes" data-toggle="tab">Attributes</a></li>
-        <li><a href="#addresses" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/addresses'>Addresses</a></li>
-        <li><a href="#attachments" data-toggle="tab">Attachments</a></li>
-        <li><a href="#comments" data-toggle="tab">Comments</a></li>
-        <li><a href="#plants" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/plants'>Plants</a></li>
-        <% if current_user.view_orders? %>
-        <li><a href="#orders" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/orders'>Orders</a></li>
-        <% end %>
-        <% if current_user.view_surveys? %>
-          <li><a href="#survey_responses" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/survey_responses'>Surveys</a></li>
-        <% end %>
-        <li><a href="#products" data-toggle="tab" tab-src='/vendors/<%=@company.id%>/products'>Products</a></li>
-      </ul>
-    </div>
-
-    <div class="col-xs-10">
-      <!-- Tab panes -->
-      <div class="tab-content">
-        <div class="tab-pane" id="addresses">
-          <div class='loader'></div>
-        </div>
-        <div class="tab-pane active" id="attributes">
-          <h3>Attributes</h3>
-          <div class="container-fluid">
-            <div class="row">
-              <div class="col-md-12">
-                <%=form_for @company, html:{id: 'frm_attrs'} do |f| %>
-                  <input type='hidden' name='redirect_to' value="<%=vendor_path(@company)%>">
-                  <%= show_model_fields f, [:cmp_name] %>
-                  <%= show_custom_fields f %>
-                <%end%>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tab-pane" id="attachments">
-          <div class="container-fluid">
-            <div class="row">
-              <div class="col-md-12">
-                <%= render :partial => 'shared/attachments', :locals => { :attachable => @company, :redirect_to=>"/vendors/#{@company.id}" } %>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tab-pane" id="comments">
-          <div class="container-fluid">
-            <div class="row">
-              <div class="col-md-12">
-                <%=render :partial => 'shared/comments', :locals => {:commentable => @company, :redirect_to=>"/vendors/#{@company.id}"} %>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tab-pane" id="plants">
-          <div class='loader'></div>
-        </div>
-        <% if current_user.view_orders? %>
-          <div class="tab-pane" id="orders">
-            <div class='loader'></div>
-          </div>
-        <% end %>
-        <% if current_user.view_surveys? %>
-          <div class="tab-pane" id="survey_responses">
-            <div class='loader'></div>
-          </div>
-        <% end %>
-        <div class="tab-pane" id="products">
-          <div class='loader'></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+</body>
+</html>

@@ -507,3 +507,7 @@ Factory.define :product_rate_override do |f|
   f.start_date Date.new(1900,1,1)
   f.end_date Date.new(2999,12,31)
 end
+Factory.define :search_table_config do |f|
+  f.name 'stc'
+  f.sequence :page_uid
+end
