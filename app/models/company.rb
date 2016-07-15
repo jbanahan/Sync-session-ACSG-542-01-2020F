@@ -4,7 +4,6 @@ class Company < ActiveRecord::Base
 	validate  :master_lock
   validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }
   validates_uniqueness_of :alliance_customer_number, :if => lambda {!self.alliance_customer_number.blank?}, :message=>"is already taken."
-  validates_uniqueness_of :slack_channel, if: lambda { !self.slack_channel.blank? }
 
 	has_many	:addresses, :dependent => :destroy
 	has_many	:divisions, :dependent => :destroy
