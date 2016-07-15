@@ -1060,20 +1060,21 @@ describe ModelField do
     end
 
     context :ent_user_notes do
-      before { Time.zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"] }
-
       it "returns user-note string with date/time adjusted to user's timezone" do
         moment = Time.utc(2016, 1, 1)
-        eastern_time_str = moment.in_time_zone.to_s
+        eastern_time_str = moment.in_time_zone("Eastern Time (US & Canada)").to_s
         user_notes = ModelField.find_by_uid :ent_user_notes
         ent = Factory(:entry)
         EntryComment.create!(entry: ent, body: "comment body", generated_at: moment, username: "NTUFNEL", public_comment: true)
         
-        qualified_fname = ActiveRecord::Base.connection.execute("SELECT #{user_notes.qualified_field_name} FROM entries where id = #{ent.id}").first[0]
-        export = user_notes.process_export(ent, User.integration)
+        qualified_field_name = export = nil
+        Time.use_zone("Eastern Time (US & Canada)") do
+          qualified_field_name = ActiveRecord::Base.connection.execute("SELECT #{user_notes.qualified_field_name} FROM entries where id = #{ent.id}").first[0]
+          export = user_notes.process_export(ent, User.integration)
+        end
         eastern_time_comment = "comment body (#{eastern_time_str} - NTUFNEL)"
 
-        expect(qualified_fname).to eq eastern_time_comment
+        expect(qualified_field_name).to eq eastern_time_comment
         expect(export).to eq eastern_time_comment
       end
     end
