@@ -7,7 +7,7 @@ module OpenChain
         rule_fail_count = get_rule_failures_count_for(company)
 
         if rule_fail_count > 0
-          OpenChain::SlackClient.new.send_message!(company.slack_channel, "#{company.name_with_customer_number} has #{rule_fail_count} failed business rules", user: true)
+          OpenChain::SlackClient.new.send_message!(company.slack_channel, "#{company.name_with_customer_number} has #{rule_fail_count} failed business rules")
         end
       end
     end
