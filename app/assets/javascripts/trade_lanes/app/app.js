@@ -485,8 +485,7 @@ angular.module("trade_lanes/partials/tpp/show.html", []).run(["$templateCache", 
           {
             field: 'tpphtso_hts_code'
           }
-        ],
-        bulkSelections: {}
+        ]
       };
       if (!$scope.$root.isTest) {
         return $scope.init($stateParams.id);

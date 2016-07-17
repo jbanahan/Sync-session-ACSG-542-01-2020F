@@ -9,6 +9,8 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   include Api::V1::StateToggleSupport
   attr_accessor :jsonizer
 
+  prepend_before_filter :allow_csv, only: [:index]
+
   def initialize jsonizer = OpenChain::Api::ApiEntityJsonizer.new
     @jsonizer = jsonizer
   end
@@ -217,9 +219,6 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   def render_search core_module
     user = current_user
     raise StatusableError.new("You do not have permission to view this module.", 401) unless user.view_module?(core_module)
-    page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
-    per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
-    per_page = 50 if per_page > 50
     k = core_module.klass.scoped.select("DISTINCT #{core_module.table_name}.id")
 
     #apply search criterions
@@ -238,10 +237,43 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
         return unless validate_model_field 'Sort', sc.model_field_uid, core_module, user
         outer_query = outer_query.order("#{sc.model_field.qualified_field_name}#{sc.descending? ? ' desc' : ''}")
       end
-      outer_query = outer_query.paginate(per_page:per_page,page:page)
-      r = outer_query.to_a.collect {|obj| obj_to_json_hash(obj)}
-      render json:{results:r,page:page,per_page:per_page}
+      if request.format.csv?
+        render_search_csv outer_query
+      else
+        render_search_json outer_query
+      end
     end
+  end
+
+  def render_search_json query
+    page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
+    per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
+    per_page = 50 if per_page > 50
+    q = query.paginate(per_page:per_page,page:page)
+    r = q.to_a.collect {|obj| obj_to_json_hash(obj)}
+    render json:{results:r,page:page,per_page:per_page}
+  end
+
+  def render_search_csv query
+    u = current_user
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=results.csv'
+
+    fields = params['fields'].blank? ? [] : params['fields'].split(',')
+    model_fields = fields.collect {|uid| ModelField.find_by_uid(uid.to_sym)}
+    model_fields.delete_if {|mf| mf.blank?}
+    r = []
+    r << model_fields.collect {|mf| mf.can_view?(u) ? mf.label : '[disabled]'}.to_csv(row_sep: nil)
+
+    page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
+    per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 1000
+    per_page = 1000 if per_page > 1000
+    query.paginate(per_page:per_page,page:page).each do |row|
+      r << model_fields.collect {|mf| mf.process_export(row,u)}.to_csv(row_sep:nil)
+    end
+    r << "Maximum rows (#{per_page}) reached." if r.length == (per_page + 1)
+
+    render text: r.join("\n")
   end
 
   def search_criterions
