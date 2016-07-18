@@ -3,7 +3,7 @@ require 'open_chain/xl_client'
 module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRegionParser
   include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
 
-  REGION_MAP = {
+  REGION_MAP ||= {
     'US' => 'US',
     'AUSTRALIA' => 'AU',
     'BRAZIL' => 'BR',
