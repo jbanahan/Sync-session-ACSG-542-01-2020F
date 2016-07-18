@@ -6,6 +6,7 @@ OpenChain::Application.routes.draw do
   match '/hts' => 'hts#index', :via=>:get
 
   match "auth/:provider/callback" => "user_sessions#create_from_omniauth"
+  match 'auth/failure' => redirect("/login")
 
   namespace :api do
     namespace :v1 do
