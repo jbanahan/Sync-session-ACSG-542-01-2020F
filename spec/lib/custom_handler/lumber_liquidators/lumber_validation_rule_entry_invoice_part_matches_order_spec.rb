@@ -28,11 +28,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryI
     expect(subject.run_validation @ent).to eq "The following invoices have POs that don't match their part numbers: 135A PO 654321 part foo\n\n"
   end
 
+  it "fails if any invoice line has a PO with missing lines" do
+    order_hsh = {"order" => {"id" => @ord.id, "ord_rule_state" => "Pass", "ord_closed_at" => nil}}
+    @api_client_double.should_receive(:find_by_order_number).with(@cil.po_number, [:ord_rule_state, :ordln_puid]).and_return(order_hsh)
+
+    expect(subject.run_validation @ent).to eq "The following invoices have POs that don't match their part numbers: 135A PO 654321 part 123456\n\n"
+  end
+  
   it "fails if any invoice line doesn't have a PO" do
     @api_client_double.should_receive(:find_by_order_number).with(@cil.po_number, [:ord_rule_state, :ordln_puid]).and_return({"order"=>nil})
 
     expect(subject.run_validation @ent).to eq "The part number for the following invoices do not have a matching PO: 135A PO 654321 part 123456\n\n"
   end
+
 
   it "fails if any invoice line is not keyed with a PO Number" do
     @cil.update_attributes! po_number: ""
