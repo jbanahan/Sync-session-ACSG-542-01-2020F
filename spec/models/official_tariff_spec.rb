@@ -2,12 +2,12 @@ require 'spec_helper'
 
 describe OfficialTariff do
   context 'callbacks' do
-    it 'should set general_rate_decimal on save if numeric' do
+    it 'should set common_rate_decimal on save if numeric' do
       c = Factory(:country)
       t = OfficialTariff.create!(country_id:c.id,hts_code:'1234567890',general_rate:' 3.2% ')
       expect(t.common_rate_decimal).to eq BigDecimal('0.032')
     end
-    it 'should not set general_rate_decimal on save if not numeric' do
+    it 'should not set common_rate_decimal on save if not numeric' do
       c = Factory(:country)
       t = OfficialTariff.create!(country_id:c.id,hts_code:'1234567890',general_rate:'10.2% plus 93.1 EUR per 100 KILOGRAMS')
       expect(t.common_rate_decimal).to be_nil

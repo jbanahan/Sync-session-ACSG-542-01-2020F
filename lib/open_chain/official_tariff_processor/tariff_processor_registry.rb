@@ -3,7 +3,9 @@ module OpenChain; module OfficialTariffProcessor; class TariffProcessorRegistry
   REGISTERED ||= {
     'IT'=>OpenChain::OfficialTariffProcessor::EuProcessor,
     'GB'=>OpenChain::OfficialTariffProcessor::EuProcessor,
-    'FR'=>OpenChain::OfficialTariffProcessor::EuProcessor
+    'FR'=>OpenChain::OfficialTariffProcessor::EuProcessor,
+    'US'=>OpenChain::OfficialTariffProcessor::GenericProcessor,
+    'CA'=>OpenChain::OfficialTariffProcessor::GenericProcessor
   }
   def self.get iso_code_or_country
     iso = iso_code_or_country.respond_to?(:iso_code) ? iso_code_or_country.iso_code : iso_code_or_country

@@ -1,7 +1,8 @@
 require 'open_chain/report'
+require 'open_chain/s3'
 
 class ReportsController < ApplicationController
-  
+
   def index
     redirect_to report_results_path
   end
@@ -14,7 +15,7 @@ class ReportsController < ApplicationController
   end
   # show the user a message if their report download has been delayed
   def show_big_search_message
-    
+
   end
 
   def show_products_without_attachments
@@ -42,7 +43,7 @@ class ReportsController < ApplicationController
     fs << "Only customer numbers #{customer_numbers.join(", ")}" unless customer_numbers.blank?
     run_report "Container Release Status", OpenChain::Report::ContainersReleased, settings, fs
   end
-  
+
   def show_tariff_comparison
     @countries = Country.where("id in (select country_id from tariff_sets)").order("name ASC")
   end
@@ -175,7 +176,7 @@ class ReportsController < ApplicationController
     if OpenChain::Report::MarcJacobsFreightBudget.permission? current_user
       year = params[:year]
       month = params[:month]
-      run_report "Marc Jacobs Freight Budget - #{year}-#{month}", OpenChain::Report::MarcJacobsFreightBudget, {:year=>year,:month=>month}, ["Month: #{year}-#{month}"] 
+      run_report "Marc Jacobs Freight Budget - #{year}-#{month}", OpenChain::Report::MarcJacobsFreightBudget, {:year=>year,:month=>month}, ["Month: #{year}-#{month}"]
     else
       error_redirect "You do not have permission to view this report"
     end
@@ -190,7 +191,7 @@ class ReportsController < ApplicationController
   end
   def run_j_jill_weekly_freight_summary
     run_report "J Jill Weekly Freight Summary", OpenChain::Report::JJillWeeklyFreightSummaryReport, {}, []
-  end  
+  end
 
   def show_kitchencraft_billing
     if OpenChain::Report::KitchenCraftBillingReport.permission? current_user
@@ -202,7 +203,7 @@ class ReportsController < ApplicationController
 
   def run_kitchencraft_billing
     if OpenChain::Report::KitchenCraftBillingReport.permission? current_user
-      settings = {:start_date=>params[:start_date],:end_date=>params[:end_date]}  
+      settings = {:start_date=>params[:start_date],:end_date=>params[:end_date]}
       run_report "KitchenCraft Billing", OpenChain::Report::KitchenCraftBillingReport, settings, ["Release Date between #{settings[:start_date]} and #{settings[:end_date]}."]
     else
       error_redirect "You do not have permission to view this report"
@@ -221,7 +222,7 @@ class ReportsController < ApplicationController
     if OpenChain::Report::LandedCostReport.permission? current_user
       customer = Company.where(:alliance_customer_number => params[:customer_number]).first
       if customer && customer.can_view?(current_user)
-        settings = {:start_date=>params[:start_date],:end_date=>params[:end_date], :customer_number => params[:customer_number]}  
+        settings = {:start_date=>params[:start_date],:end_date=>params[:end_date], :customer_number => params[:customer_number]}
         run_report "Landed Cost Report", OpenChain::Report::LandedCostReport, settings, ["Release Date on or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
       else
         error_redirect "You do not have permission to view this company"
@@ -353,7 +354,7 @@ class ReportsController < ApplicationController
   def show_pvh_billing_summary
     if OpenChain::Report::PvhBillingSummary.permission?(current_user)
       render
-    else 
+    else
       error_redirect "You do not have permission to view this report"
     end
   end
@@ -413,7 +414,7 @@ class ReportsController < ApplicationController
       error_redirect "You do not have permission to view this report"
     end
   end
-  
+
   def run_monthly_entry_summation
     run_report "Monthly Entry Summation", OpenChain::Report::MonthlyEntrySummation, params.slice(:start_date, :end_date, :customer_number), []
   end
@@ -500,12 +501,35 @@ class ReportsController < ApplicationController
         add_flash :errors, "You must enter a start and end date that are no more than 1 year apart."
         redirect_to reports_show_j_crew_drawback_imports_report_path
       else
-        run_report "J Crew Drawback Imports Report", OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport, {start_date: start_date.to_s, end_date: end_date.to_s}, ["Arrival Date on or after #{start_date} and before #{end_date}"]  
+        run_report "J Crew Drawback Imports Report", OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport, {start_date: start_date.to_s, end_date: end_date.to_s}, ["Arrival Date on or after #{start_date} and before #{end_date}"]
       end
-      
+
     else
       error_redirect "You do not have permission to view this report"
     end
+  end
+
+  def show_ua_duty_planning_report
+    if OpenChain::Report::UaDutyPlanningReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report."
+    end
+  end
+  def run_ua_duty_planning_report
+    error_redirect "You do not have permission to view this report." unless OpenChain::Report::UaDutyPlanningReport.permission?(current_user)
+    query_params = {}
+    styles = params[:styles]
+    if !styles.blank?
+      path = "ua_duty_planning_report/#{Time.now.to_i}-#{current_user.to_i}.txt"
+      OpenChain::S3.upload_data OpenChain::S3.bucket_name, path, styles
+      query_params[:style_s3_path] = path
+    elsif !params[:season].blank?
+      query_params[:season] = params[:season]
+    else
+      error_redirect "You must include either styles or a season."
+    end
+    run_report "UA Duty Planning", OpenChain::Report::UaDutyPlanningReport, query_params, []
   end
 
   private

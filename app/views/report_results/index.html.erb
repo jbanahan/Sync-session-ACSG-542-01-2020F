@@ -137,6 +137,10 @@
     <tr class='hover'><td><%=link_to "J Crew Drawback Imports Report", reports_show_j_crew_drawback_imports_report_path%></td>
     <td>Shows drawback information from imports.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::UaDutyPlanningReport.permission?(current_user)%>
+    <tr class='hover'><td><%=link_to "UA Duty Planning Report", reports_show_ua_duty_planning_report_path%></td>
+    <td>Shows planned duty rates including free trade agreements.</td></tr>
+  <%end%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

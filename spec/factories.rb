@@ -498,8 +498,10 @@ Factory.define :product_trade_preference_program do |f|
   f.association :trade_preference_program
 end
 
-Factory.define :official_tariff_spi do |f|
-  f.association :official_tariff
+Factory.define :spi_rate do |f|
+  f.association :country
+  f.special_rate_key 'ABC'
+  f.rate_text 'SOMETEXT'
 end
 
 Factory.define :product_rate_override do |f|
