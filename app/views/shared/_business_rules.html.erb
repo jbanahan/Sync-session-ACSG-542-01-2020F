@@ -19,12 +19,14 @@
         bvr = resp.business_validation_result;
         objUpdatedAt = moment(bvr.object_updated_at);
         oldestBRUpdate = findOldestBrUpdate(bvr);
+        msg = panelClass = '';
         if(oldestBRUpdate && oldestBRUpdate.valueOf() < objUpdatedAt.valueOf()) {
           // keep retrying
           console.log('retrying business rules');
-          setTimeout(updateBusinessRules,20000);
+          msg = "Retrying business rules....";
+          colorClass = 'info';
+          setTimeout(updateBusinessRules,3000);
         } else {
-          msg = panelClass = '';
           if(bvr.state == 'Fail') {
             msg = "Business rules have failed.  Click the <i class='fa fa-medkit'></i> button to review.";
             colorClass = 'danger';
@@ -33,11 +35,11 @@
             msg = "Business rules are in review status.  Click the <i class='fa fa-medkit'></i> button to review.";
             colorClass = 'warning';
           }
-          if(msg.length > 0) {
-            panel.find('.panel-body').html(msg);
-            panel.addClass("panel-"+colorClass);
-            panel.show();
-          }
+        }
+        if(msg.length > 0) {
+          panel.find('.panel-body').html(msg);
+          panel.addClass("panel-"+colorClass);
+          panel.show();
         }
       });
     };
