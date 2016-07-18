@@ -6,7 +6,7 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
   include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
 
   def self.permission? user
-    MasterSetup.get.system_code('www-vfitrack-net') &&
+    MasterSetup.get.system_code == 'www-vfitrack-net' &&
     (user.company.master? || user.company.system_code=='JJILL') &&
     user.view_shipments?
   end
