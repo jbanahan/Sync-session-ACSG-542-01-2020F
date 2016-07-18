@@ -35,6 +35,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
     product_rows = []
     import_countries = p.get_custom_value(cdefs[:import_countries]).value
     export_countries = p.get_custom_value(cdefs[:prod_export_countries]).value
+    next if import_countries.blank? || export_countries.blank?
     p.classifications.each do |cls|
       next unless import_countries.match(cls.country.iso_code)
       tr = cls.tariff_records.first
