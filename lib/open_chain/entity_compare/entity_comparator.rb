@@ -35,8 +35,8 @@ module OpenChain; module EntityCompare; class EntityComparator
 
 
       if last_processed
-        # do nothing if newest unprocessed is newer than last processed
-        return unless newest_unprocessed.created_at > last_processed.created_at
+        # do nothing if newest unprocessed is older than last processed
+        return if newest_unprocessed.created_at < last_processed.created_at
 
         return if newest_unprocessed.created_at == last_processed.created_at && newest_unprocessed.id < last_processed.id
 
