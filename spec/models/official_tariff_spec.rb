@@ -12,6 +12,11 @@ describe OfficialTariff do
       t = OfficialTariff.create!(country_id:c.id,hts_code:'1234567890',general_rate:'10.2% plus 93.1 EUR per 100 KILOGRAMS')
       expect(t.common_rate_decimal).to be_nil
     end
+    it 'should set common_rate_decimal to 0 for Free' do
+      c = Factory(:country)
+      t = OfficialTariff.create!(country_id:c.id,hts_code:'1234567890',general_rate:'Free')
+      expect(t.common_rate_decimal).to eq 0
+    end
     it 'should set special_rate_key on save' do
       special_rates = 'ABC12345'
       t = Factory(:official_tariff,special_rates:special_rates)
