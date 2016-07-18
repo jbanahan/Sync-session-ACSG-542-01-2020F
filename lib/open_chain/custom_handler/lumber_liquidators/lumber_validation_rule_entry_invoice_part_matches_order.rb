@@ -37,9 +37,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators
     def check_part cil, order, errors
       if cil.part_number.presence    
           part_matched = false
-          order["order"]["order_lines"].each do |line| 
-            product_uid = line["ordln_puid"].gsub(/^0+/, "")
-            part_matched = true if cil.part_number == product_uid
+          if order["order"]["order_lines"]
+            order["order"]["order_lines"].each do |line| 
+              product_uid = line["ordln_puid"].gsub(/^0+/, "")
+              part_matched = true if cil.part_number == product_uid
+            end
           end
           errors << :mismatched_part unless part_matched
       else

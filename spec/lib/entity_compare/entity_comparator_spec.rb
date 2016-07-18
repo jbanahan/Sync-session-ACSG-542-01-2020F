@@ -39,7 +39,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
 
       described_class.process(es)
-      
+
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq [['Order',order.id,nil,nil,nil,'b','d','v']]
     end
@@ -48,13 +48,13 @@ describe OpenChain::EntityCompare::EntityComparator do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
 
       described_class.process(es)
-      
+
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq [['Order',order.id,nil,nil,nil,'b','d','v']]
 
       #all objects should be flagged as compared
       expect(EntitySnapshot.where('compared_at is null')).to be_empty
-      
+
     end
     it "should handle object with multiple unprocessed snapshots and a processed snapshot" do
       processed_es = EntitySnapshot.create!(compared_at: 2.days.ago, created_at: 2.days.ago, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv')
@@ -62,7 +62,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
 
       described_class.process(es)
-      
+
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv','b','d','v']]
 
@@ -74,11 +74,23 @@ describe OpenChain::EntityCompare::EntityComparator do
       processed_es = EntitySnapshot.create!(compared_at: 1.hour.ago, created_at: 1.hour.ago, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv')
 
       described_class.process(old_es)
-      
+
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq []
 
       expect(EntitySnapshot.where('compared_at is null').to_a).to eq [old_es]
+    end
+
+    it "should handle newest when two written at same time" do
+      create_time = Time.now
+      first_es = EntitySnapshot.create!(created_at: create_time, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
+      EntitySnapshot.create!(created_at: create_time, recordable: order, user:user, bucket: 'ob2', doc_path: 'od2', version: 'ov2')
+      described_class.process(first_es)
+
+      #should pass nil for the old items and the values for the new
+      expect(comparator.compared).to eq [['Order',order.id,nil, nil, nil,'ob2','od2','ov2']]
+
+      expect(EntitySnapshot.where('compared_at is null').to_a).to eq []
     end
   end
 

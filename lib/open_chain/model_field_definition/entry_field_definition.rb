@@ -217,7 +217,18 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :data_type=>:string
       }],
       [160, :ent_location_of_goods_desc, :location_of_goods_description, "Location of Goods Description", {data_type: :string}],
-      [161, :ent_bol_received_date, :bol_received_date, "BOL Date", {:data_type=>:datetime}]
+      [161, :ent_bol_received_date, :bol_received_date, "BOL Date", {:data_type=>:datetime}],
+      [162, :ent_user_notes, :user_notes, "User Notes", {
+        :data_type=>:string,
+        :read_only=>true,
+        :import_lambda=>lambda {|obj, data| "User Notes ignored. (read only)"},
+        :export_lambda=>lambda { |obj| 
+          user_comments = obj.entry_comments.select{|ec| ec.comment_type=='USER'} 
+          user_comment_strings = user_comments.map{ |uc| "#{uc.body} (#{uc.generated_at.in_time_zone(Time.zone)} - #{uc.username})" }
+          user_comment_strings.join("\n")
+        },
+        :qualified_field_name=>lambda {"(SELECT GROUP_CONCAT(CONCAT(ec.body, ' (', DATE_FORMAT(CONVERT_TZ(ec.generated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%Y-%m-%d %H:%i'), ' - ', ec.username, ')') SEPARATOR '\n') FROM entry_comments ec INNER JOIN entries e ON e.id = ec.entry_id WHERE e.id = entries.id AND ec.username NOT IN (#{EntryComment::USER_TYPE_MAP.keys.map(&:inspect).join(', ')}))"}
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

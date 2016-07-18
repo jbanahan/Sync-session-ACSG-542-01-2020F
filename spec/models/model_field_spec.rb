@@ -1058,6 +1058,30 @@ describe ModelField do
         r.should include(@e)
       end
     end
+
+    context :ent_user_notes do
+      it "returns user-note string with date/time adjusted to user's timezone" do
+        moment = Time.utc(2016, 1, 1)
+        eastern_time_str = moment.in_time_zone("Eastern Time (US & Canada)").to_s
+        user_notes = ModelField.find_by_uid :ent_user_notes
+        ent = Factory(:entry)
+        EntryComment.create!(entry: ent, body: "comment body", generated_at: moment, username: "NTUFNEL", public_comment: true)
+        
+        Time.use_zone("Eastern Time (US & Canada)") do
+          u = Factory(:master_user,entry_view:true)
+          ss = SearchSetup.new(module_type:'Entry',user:u)
+          ss.search_columns.build(model_field_uid:'ent_user_notes')
+          row = SearchQuery.new(ss,u).execute.first[:result]
+          eastern_time_comment = "comment body (#{eastern_time_str} - NTUFNEL)"
+          
+          # PENDING FEEDBACK FROM CIRCLE
+          # expect(row.first).to eq eastern_time_comment  
+
+          export = user_notes.process_export(ent, User.integration)
+          expect(export).to eq eastern_time_comment
+        end
+      end
+    end
   end
 
   describe "find_by_uid" do
