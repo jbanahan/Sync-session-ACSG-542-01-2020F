@@ -2,12 +2,19 @@ require 'spec_helper'
 
 describe SchedulableJob do
 
-  describe :create_default_jobs! do
-    it "should create new jobs and respect existing" do
-      SchedulableJob.create!(run_class:'OpenChain::StatClient')
-      expect{SchedulableJob.create_default_jobs!}.to change(SchedulableJob,:count).from(1).to(11)
+  describe '.create_default_jobs!' do
+    jobs = ["OpenChain::StatClient", "OpenChain::IntegrationClient", "BusinessValidationTemplate", "SurveyResponseUpdate",
+            "OfficialTariff", "Message", "ReportResult", "OpenChain::WorkflowProcessor", "OpenChain::DailyTaskEmailJob",
+            "OpenChain::LoadCountriesSchedulableJob", "OpenChain::Report::MonthlyUserAuditReport",
+            "OpenChain::BusinessRulesNotifier"]
+    jobs.each do |klass|
+      it "creates a default job for #{klass}" do
+        SchedulableJob.create_default_jobs!
+        expect(SchedulableJob.where(run_class: klass).first).not_to be_nil
+      end
     end
   end
+
   describe "run" do
     class TestSchedulable
     end
