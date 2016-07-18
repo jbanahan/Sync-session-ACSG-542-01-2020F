@@ -1067,15 +1067,18 @@ describe ModelField do
         ent = Factory(:entry)
         EntryComment.create!(entry: ent, body: "comment body", generated_at: moment, username: "NTUFNEL", public_comment: true)
         
-        qualified_field_name = export = nil
         Time.use_zone("Eastern Time (US & Canada)") do
-          qualified_field_name = ActiveRecord::Base.connection.execute("SELECT #{user_notes.qualified_field_name} FROM entries where id = #{ent.id}").first[0]
-          export = user_notes.process_export(ent, User.integration)
-        end
-        eastern_time_comment = "comment body (#{eastern_time_str} - NTUFNEL)"
+          u = Factory(:master_user,entry_view:true)
+          ss = SearchSetup.new(module_type:'Entry',user:u)
+          ss.search_columns.build(model_field_uid:'ent_user_notes')
+          row = SearchQuery.new(ss,u).execute.first[:result]
+          eastern_time_comment = "comment body (#{eastern_time_str} - NTUFNEL)"
+          
+          expect(row.first).to eq eastern_time_comment
 
-        expect(qualified_field_name).to eq eastern_time_comment
-        expect(export).to eq eastern_time_comment
+          export = user_notes.process_export(ent, User.integration)
+          expect(export).to eq eastern_time_comment
+        end
       end
     end
   end
