@@ -13,7 +13,7 @@ describe OpenChain::BusinessRulesNotifier do
     @company = Factory(:company, alliance_customer_number: '12345', slack_channel: 'company1')
     @bvt.create_results! true
 
-    expected = {as_user: true, user: true, channel:@company.slack_channel, text: "DEV MESSAGE: #{@company.name_with_customer_number} has 1 failed business rules"}
+    expected = {as_user: true, channel:@company.slack_channel, text: "DEV MESSAGE: #{@company.name_with_customer_number} has 1 failed business rules"}
     @fake_client.should_receive(:chat_postMessage).with(expected)
     OpenChain::BusinessRulesNotifier.run_schedulable
   end
