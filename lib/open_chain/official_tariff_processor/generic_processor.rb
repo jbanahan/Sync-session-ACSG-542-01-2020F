@@ -46,6 +46,16 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
         next if skip
         rate_decimal = parse_rate(rate_text)
         raise "Invalid parse expression: #{spi}.  Each matched SPI expression should return exactly 2 non-blank match values." if rate_text.blank?
+
+        # Run through any expressions designed to clean up the SPI program code text.
+        if parse_data[:spi_cleanup]
+          program_code = program_code
+          parse_data[:spi_cleanup].each do |spi_cleanup|
+            next unless spi_cleanup.length == 2
+            program_code = program_code.gsub(spi_cleanup[0], spi_cleanup[1])
+          end
+        end
+
         programs << {program_code:program_code,amount:rate_decimal,text:rate_text}
       end
     end
@@ -66,9 +76,10 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
     when "US"
       return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/,/^Free, under the terms/], skip_spi: [], replaces:{'No change (A) Free'=>'Free','See U.S. note 3(e)'=>'See U.S. note 3e'}}
     when "CA"
-      return {parser: /([^:(]+):\s*\(([^)]+)\),*\s*/, spi_split: /,\s*/, exceptions: [], skip_spi: [/^\s*General\s*$/i]}
-    when "EU"
-      return {parser: /((?:Free)|(?:\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, exceptions: [], skip_spi: []}
+      # Remove all spaces from the spi program codes, CA doesn't have any programs that should have spaces.
+      return {parser: /([^:(]+):\s*\(([^)]+)\),*\s*/, spi_split: /,\s*/, exceptions: [], spi_cleanup: [[/\s/, ""]], skip_spi: [/^\s*General\s*$/i]}
+    when "IT", "GB", "IE", "EU", "FR"
+      return {parser: /((?:Free)|(?:\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/ERGA OMNES - Import/, "ERGA OMNES IMPORT"], [/ERGA OMNES - Veterin/, "ERGA OMNES VETERIN"], [/\s?-\s.*\z/, ""]], exceptions: [], skip_spi: []}
     else
       raise "No Special Program parser configured for #{iso_code}"
     end

@@ -1,9 +1,9 @@
 Dir[__dir__ + '/*'].each {|file| require file } #Require all files in this directory
 module OpenChain; module OfficialTariffProcessor; class TariffProcessorRegistry
   REGISTERED ||= {
-    'IT'=>OpenChain::OfficialTariffProcessor::EuProcessor,
-    'GB'=>OpenChain::OfficialTariffProcessor::EuProcessor,
-    'FR'=>OpenChain::OfficialTariffProcessor::EuProcessor,
+    'IT'=>OpenChain::OfficialTariffProcessor::GenericProcessor,
+    'GB'=>OpenChain::OfficialTariffProcessor::GenericProcessor,
+    'FR'=>OpenChain::OfficialTariffProcessor::GenericProcessor,
     'US'=>OpenChain::OfficialTariffProcessor::GenericProcessor,
     'CA'=>OpenChain::OfficialTariffProcessor::GenericProcessor
   }
