@@ -49,7 +49,7 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
 
         # Run through any expressions designed to clean up the SPI program code text.
         if parse_data[:spi_cleanup]
-          program_code = program_code
+          program_code = program_code.to_s.strip
           parse_data[:spi_cleanup].each do |spi_cleanup|
             next unless spi_cleanup.length == 2
             program_code = program_code.gsub(spi_cleanup[0], spi_cleanup[1])
@@ -64,10 +64,11 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
   end
 
   def self.parse_rate r
-    cleaned = r.gsub(/(\%|:|,)/,'').upcase.strip
+    # These are all assumed to be percentage values...
+    cleaned = r.gsub(/[%:,]/,'').upcase.strip
     return 0 if cleaned=='FREE'
-    return nil if !r.strip.match(/^[0-9]{0,3}\\.{0,1}[0-9]{0,3}$/)
-    return BigDecimal(cleaned,3)*0.01
+    return nil if !cleaned.match(/^[0-9]{0,3}\.{0,1}[0-9]{0,3}$/)
+    return BigDecimal(cleaned)*0.01
   end
 
   def self.parse_data_for country
@@ -79,7 +80,9 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
       # Remove all spaces from the spi program codes, CA doesn't have any programs that should have spaces.
       return {parser: /([^:(]+):\s*\(([^)]+)\),*\s*/, spi_split: /,\s*/, exceptions: [], spi_cleanup: [[/\s/, ""]], skip_spi: [/^\s*General\s*$/i]}
     when "IT", "GB", "IE", "EU", "FR"
-      return {parser: /((?:Free)|(?:\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/ERGA OMNES - Import/, "ERGA OMNES IMPORT"], [/ERGA OMNES - Veterin/, "ERGA OMNES VETERIN"], [/\s?-\s.*\z/, ""]], exceptions: [], skip_spi: []}
+      return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/ERGA OMNES - Import/, "ERGA OMNES IMPORT"], [/ERGA OMNES - Veterin/, "ERGA OMNES VETERIN"], [/\s?-\s.*\z/, ""]], exceptions: [], skip_spi: []}
+    when "CL"
+      return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2'], [/Chile - Canada FTA/, "CA"], [/Colombia tariff trea/, "CO"], [/Costa Rica tariff tr/, "CR"], [/Ecuador Tariff Treat/, "EC"], [/El Salvador tariff T/, "SV"], [/Honduras/, "HN"], [/India/, "IN"], [/Japan/, "JP"], [/Mercosur - /, ""], [/Mexico Tariff Treatm/, "MX"], [/Venezuela tariff tre/, "VE"], [/^us$/, "US"], [/us - In Quota/, "US - In Quota"], [/p\s*a\s*n\s*a\s*m\s*a/i, "PA"], [/Mexico/, "MX"], [/^Bo$/, "BO"], [/^Pe$/, "PE"]], exceptions: [], skip_spi: []}
     else
       raise "No Special Program parser configured for #{iso_code}"
     end
