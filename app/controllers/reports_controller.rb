@@ -521,7 +521,7 @@ class ReportsController < ApplicationController
     query_params = {}
     styles = params[:styles]
     if !styles.blank?
-      path = "ua_duty_planning_report/#{Time.now.to_i}-#{current_user.to_i}.txt"
+      path = "ua_duty_planning_report/#{Time.now.to_i}-#{current_user.id}.txt"
       OpenChain::S3.upload_data OpenChain::S3.bucket_name, path, styles
       query_params[:style_s3_path] = path
     elsif !params[:season].blank?
