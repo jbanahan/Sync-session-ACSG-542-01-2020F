@@ -13,19 +13,25 @@
     };
 
     updateBusinessRules = function() {
-      panel = $('#business_rules_panel');
-      panel.hide();
+      var panel = $('#business_rules_panel');
       $.get('/<%=CoreModule.find_by_object(base_object).table_name%>/<%=base_object.id%>/validation_results.json',function(resp) {
+        var msg, bvr, panelClass, colorClass, objUpdatedAt, oldestBRUpdate;
         bvr = resp.business_validation_result;
         objUpdatedAt = moment(bvr.object_updated_at);
         oldestBRUpdate = findOldestBrUpdate(bvr);
         msg = panelClass = '';
         if(oldestBRUpdate && oldestBRUpdate.valueOf() < objUpdatedAt.valueOf()) {
-          // keep retrying
-          console.log('retrying business rules');
           msg = "Retrying business rules....";
           colorClass = 'info';
-          setTimeout(updateBusinessRules,3000);
+          $.ajax('/api/v1/<%=base_object.class.name.downcase.pluralize%>/<%=base_object.id%>/validate.json', {
+            method:'POST',
+            headers: { 
+              Accept : "application/json",
+              "Content-Type": "application/json"
+            }
+          }).done(function() {
+            updateBusinessRules()
+          });
         } else {
           if(bvr.state == 'Fail') {
             msg = "Business rules have failed.  Click the <i class='fa fa-medkit'></i> button to review.";
@@ -40,6 +46,8 @@
           panel.find('.panel-body').html(msg);
           panel.addClass("panel-"+colorClass);
           panel.show();
+        } else {
+          panel.hide();
         }
       });
     };
