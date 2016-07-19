@@ -275,7 +275,14 @@ class ModelField
   end
 
   def qualified_field_name
-    @qualified_field_name.nil? ? "#{self.join_alias}.#{@field_name}" : @qualified_field_name
+    fn = nil
+    if @qualified_field_name.nil?
+      fn = "#{self.join_alias}.#{@field_name}"
+    else
+      fn = @qualified_field_name.respond_to?(:call) ? @qualified_field_name.call : @qualified_field_name
+    end
+
+    fn
   end
 
   def qualified_field_name_overridden?
