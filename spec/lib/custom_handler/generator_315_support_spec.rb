@@ -51,6 +51,14 @@ describe OpenChain::CustomHandler::Generator315Support do
       expect(r.text "Event/EventDate").to eq "20150101"
       expect(r.text "Event/EventTime").to eq "0000"
     end
+
+    it "zero pads voyage number to at least 2 chars" do
+      @data.voyage_number = "1"
+      doc = REXML::Document.new("<root></root>")
+      subject.write_315_xml doc.root, "CN", @data
+      r = doc.root.elements[1]
+      expect(r.text "VoyageNumber").to eq "01"
+    end
   end
 
   describe "generate_and_send_xml_document" do
