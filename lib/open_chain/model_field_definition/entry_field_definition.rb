@@ -224,10 +224,13 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :import_lambda=>lambda {|obj, data| "User Notes ignored. (read only)"},
         :export_lambda=>lambda { |obj| 
           user_comments = obj.entry_comments.select{|ec| ec.comment_type=='USER'} 
-          user_comment_strings = user_comments.map{ |uc| "#{uc.body} (#{uc.generated_at.in_time_zone(Time.zone)} - #{uc.username})" }
+          user_comment_strings = user_comments.map do |uc| 
+            time_stamp = uc.generated_at ? "#{uc.generated_at.in_time_zone(Time.zone)} - " : ""
+            "#{uc.body} (#{time_stamp}#{uc.username})"
+          end
           user_comment_strings.join("\n")
         },
-        :qualified_field_name=>lambda {"(SELECT GROUP_CONCAT(CONCAT(ec.body, ' (', DATE_FORMAT(CONVERT_TZ(ec.generated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%Y-%m-%d %H:%i'), ' - ', ec.username, ')') SEPARATOR '\n') FROM entry_comments ec INNER JOIN entries e ON e.id = ec.entry_id WHERE e.id = entries.id AND ec.username NOT IN (#{EntryComment::USER_TYPE_MAP.keys.map(&:inspect).join(', ')}))"}
+        :qualified_field_name=>lambda {"(SELECT GROUP_CONCAT(IF(ec.generated_at IS NOT NULL, CONCAT(ec.body, ' (', DATE_FORMAT(CONVERT_TZ(ec.generated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%Y-%m-%d %H:%i'), ' - ', ec.username, ')'), CONCAT(ec.body, ' (', ec.username, ')')) SEPARATOR '\n') FROM entry_comments ec INNER JOIN entries e ON e.id = ec.entry_id WHERE e.id = entries.id AND ec.username NOT IN (#{EntryComment::USER_TYPE_MAP.keys.map(&:inspect).join(', ')}))"}
       }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
