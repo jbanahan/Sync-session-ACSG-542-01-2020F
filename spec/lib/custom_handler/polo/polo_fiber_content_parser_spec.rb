@@ -373,6 +373,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(@prod.get_custom_value(@test_cds[:fabric_type_2]).value).to eq "Outer"
       expect(@prod.get_custom_value(@test_cds[:fabric_percent_2]).value).to eq BigDecimal.new("1")
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Failed: Invalid Fiber Content % format."
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to be_blank
     end
 
     it 'does not update custom values if fiber fingerprint is unchanged' do

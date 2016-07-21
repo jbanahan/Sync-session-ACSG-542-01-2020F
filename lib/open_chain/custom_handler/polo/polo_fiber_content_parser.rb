@@ -532,7 +532,11 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         update_or_create_cv(product, "fabric_percent_#{x}".to_sym, percent)
       end
 
-      update_or_create_cfv(product, clean_fiber_content, results)
+      if parse_failed
+        update_or_create_cfv(product, {}, results)
+      else
+        update_or_create_cfv(product, clean_fiber_content, results)
+      end
       update_or_create_cv(product, :msl_fiber_failure, parse_failed)
       update_or_create_cv(product, :msl_fiber_status, status_message)
     end
@@ -540,7 +544,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     def update_or_create_cfv(product, fiber_hash, results)
       footwear = results[:algorithm] == 'footwear'
       cd = @cdefs[:clean_fiber_content]
-      unless fiber_hash.empty?
+      if fiber_hash.present?
         clean_fiber_string = ''
         count = 1
         fiber_hash.each do |key, value|
@@ -553,9 +557,11 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           clean_fiber_string << " / " unless count == fiber_hash.length
           count += 1
         end
-
-        product.find_and_set_custom_value cd, clean_fiber_string if clean_fiber_string.present?
+      else
+        clean_fiber_string = ''
       end
+
+      product.find_and_set_custom_value cd, clean_fiber_string
     end
 
     def update_or_create_cv product, cv_sym, value
