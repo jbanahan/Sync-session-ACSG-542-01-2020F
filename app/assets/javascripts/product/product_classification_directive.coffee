@@ -11,7 +11,7 @@
       scope.productSvc = productSvc
       scope.addTariff = (cls) ->
         max = 0
-        
+
         for tr in cls.tariff_records
           max = tr.hts_line_number if tr.hts_line_number && tr.hts_line_number > max
 
@@ -24,6 +24,7 @@
         if cls==null
           cls = {class_cntry_iso:country.iso_code,class_cntry_name:country.name,tariff_records:[]}
           scope.addTariff(cls)
+          product.classifications = [] unless product.classifications
           product.classifications.push(cls)
 
         scope.activeClassification=cls

@@ -1,0 +1,23 @@
+<% content_for :javascript do -%>
+
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>UA Duty Planning Report</h2>
+<%=form_tag reports_run_ua_duty_planning_report_path, :id=>'frm_run' do -%>
+<div class="panel panel-default">
+  <div class="panel-body">
+    <label for='styles'>Styles</label>
+    <textarea rows='10' id='styles' name='styles' class='form-control' placeholder="One per line"></textarea>
+    <br />
+    <strong>or</strong>
+    <br />
+    <br />
+    <label for='season'>Season</label>
+    <input type='text' id='season' name='season' class='form-control' placeholder="like: FW17" />
+  </div>
+</div>
+<%end%>
+</div>

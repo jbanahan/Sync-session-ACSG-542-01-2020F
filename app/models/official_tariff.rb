@@ -173,8 +173,12 @@ class OfficialTariff < ActiveRecord::Base
       else
         self.common_rate = self.general_rate
       end
-      if !self.common_rate.blank? && self.common_rate.gsub(/\%/,'').strip.match(/^[0-9]{0,4}\.[0-9]{0,4}$/)
-        self.common_rate_decimal = BigDecimal(self.common_rate.gsub(/\%/,'').strip,4)/100
+      if !self.common_rate.blank?
+        if self.common_rate.gsub(/\%/,'').strip.match(/^\d+\.?\d*$/)
+          self.common_rate_decimal = BigDecimal(self.common_rate.gsub(/\%/,'').strip,4)/100
+        elsif self.common_rate.match(/^Free$/)
+          self.common_rate_decimal = 0
+        end
       end
     end
   end

@@ -437,6 +437,12 @@ OpenChain::Application.routes.draw do
   match "/custom_features/ua_tbd" => "custom_features#ua_tbd_report_index", :via=>:get
   match "/custom_features/ua_tbd/upload" => "custom_features#ua_tbd_report_upload", :via => :post
   match "/custom_features/ua_tbd/:id/download" => "custom_features#ua_tbd_report_download", :via => :get
+  match "/custom_features/ua_style_color_region" => "custom_features#ua_style_color_region_index", :via=>:get
+  match "/custom_features/ua_style_color_region/upload" => "custom_features#ua_style_color_region_upload", :via => :post
+  match "/custom_features/ua_style_color_region/:id/download" => "custom_features#ua_style_color_region_download", :via => :get
+  match "/custom_features/ua_style_color_factory" => "custom_features#ua_style_color_factory_index", :via=>:get
+  match "/custom_features/ua_style_color_factory/upload" => "custom_features#ua_style_color_factory_upload", :via => :post
+  match "/custom_features/ua_style_color_factory/:id/download" => "custom_features#ua_style_color_factory_download", :via => :get
   match "/custom_features/lumber_epd" => "custom_features#lumber_epd_index", :via=>:get
   match "/custom_features/lumber_epd/upload" => "custom_features#lumber_epd_upload", :via => :post
   match "/custom_features/lumber_epd/:id/download" => "custom_features#lumber_epd_download", :via => :get
@@ -576,6 +582,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_ll_dhl_order_push_report" => "reports#run_ll_dhl_order_push_report"
   get "/reports/show_j_crew_drawback_imports_report" => "reports#show_j_crew_drawback_imports_report"
   post "/reports/run_j_crew_drawback_imports_report" => "reports#run_j_crew_drawback_imports_report"
+  get "/reports/show_ua_duty_planning_report" => "reports#show_ua_duty_planning_report"
+  post "/reports/run_ua_duty_planning_report" => "reports#run_ua_duty_planning_report"
 
   resources :report_results, :only => [:index,:show] do
     get 'download', :on => :member
