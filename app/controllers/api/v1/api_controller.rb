@@ -33,12 +33,12 @@ module Api; module V1; class ApiController < ActionController::Base
   def action_secure(permission_check, obj, options={})
     err_msg = nil
     opts = {
-      :lock_check => true, 
-      :verb => "edit", 
+      :lock_check => true,
+      :verb => "edit",
       :lock_lambda => lambda {|o| o.respond_to?(:locked?) && o.locked?},
       :module_name => "object"}.merge(options)
     err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
-    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj) 
+    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj)
     unless err_msg.nil?
       render_forbidden err_msg
     else
@@ -46,9 +46,17 @@ module Api; module V1; class ApiController < ActionController::Base
     end
   end
 
+  # use this as a prepend_before_filter to accept CSV format for a route
+  #  it has to be prepended because it needs to run before validate_format
+  def allow_csv
+    @allow_csv = true
+  end
+
   private
     def validate_format
-      if !request.headers["HTTP_ACCEPT"].match(/application\/json/)
+      return if @allow_csv && request.format.csv?
+      accept = request.headers["HTTP_ACCEPT"]
+      if accept.blank? || !accept.match(/application\/json/)
         raise StatusableError.new("Request must include Accept header of 'application/json'.", :not_acceptable)
       end
 
