@@ -2,6 +2,7 @@ require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
     class PoloSapProductGenerator < ProductGenerator
+      include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
       #SchedulableJob compatibility
       def self.run_schedulable opts={}
@@ -27,6 +28,7 @@ module OpenChain
         @no_brand_restriction = params[:no_brand_restriction]
         @custom_countries = params[:custom_countries]
         raise "SAP Brand custom definition does not exist." unless @sap_brand
+        @cdefs = self.class.prep_custom_definitions [:clean_fiber_content]
       end
 
       def sync_code 
@@ -131,7 +133,7 @@ countries.iso_code as 'Classification - Country ISO Code',
 tariff_records.hts_1 as 'Tariff - HTS Code 1',
 #{cd_s 130, boolean_y_n: true},
 #{cd_s 22},
-#{cd_s 7, suppress_data: true},
+#{cd_s @cdefs[:clean_fiber_content].id, suppress_data: true},
 #{cd_s 79},
 #{cd_s 78},
 #{cd_s 131},
