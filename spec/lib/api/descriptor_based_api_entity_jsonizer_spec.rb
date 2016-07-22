@@ -104,8 +104,8 @@ describe OpenChain::Api::DescriptorBasedApiEntityJsonizer do
     end
 
     it "raises an error for modules that don't have snapshot descriptors" do
-      expect {subject.entity_to_json user, Product.new, [:prod_uid]}.to raise_error "Missing snapshot_descriptor for Product."
+      expect {subject.entity_to_json user, BrokerInvoice.new, [:bi_suffix]}.to raise_error(/Missing snapshot_descriptor for/)
     end
   end
-  
+
 end
