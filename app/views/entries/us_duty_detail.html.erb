@@ -55,7 +55,7 @@
                                 <td><%= ent[:ent_release_date].strftime('%a %m/%d') if ent[:ent_release_date] %></td>
                                 <td>
                                     <% ent[:ent_customer_references].split("\n").each do |ref| %>
-                                    <%= ref %></br>
+                                    <%= ref %><br/>
                                     <% end if ent[:ent_customer_references]%>
                                 </td>
                                 <td class='number-val text-right'><%= number_to_currency(ent[:ent_total_duty]) %></td>

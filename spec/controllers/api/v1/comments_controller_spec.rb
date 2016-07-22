@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Api::V1::CommentsController do
   before :each do
     @s = Factory(:shipment)
-    @u = Factory(:user,first_name:'Joe',last_name:'Coward')
+    @u = Factory(:user,first_name:'Joe',last_name:'Coward', time_zone: "America/New_York")
     Shipment.any_instance.stub(:can_view?).and_return true
     allow_api_access @u
   end
@@ -105,4 +105,171 @@ describe Api::V1::CommentsController do
       expect(response.status).to eq 401
     end
   end
+
+  context "polymorphic methods" do
+    let (:user) { @u }
+    let! (:comment) { shipment.comments.create!(user_id:user.id, subject:'s1', body:'b1') }
+    let (:shipment) { @s }
+
+    describe "polymorphic_index" do
+      
+      it "returns all comments from an object" do
+        get :polymorphic_index, base_object_type: "shipments", base_object_id: shipment.id
+        expect(response).to be_success
+        j = JSON.parse(response.body)
+        expect(j).to eq({
+          "comments"=>[{"id"=>comment.id, "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id}]
+        })
+      end
+
+      it "includes permissions if requested" do
+        get :polymorphic_index, base_object_type: "shipments", base_object_id: shipment.id, include: "permissions"
+        expect(response).to be_success
+        j = JSON.parse(response.body)
+        expect(j).to eq({
+          "comments"=>[
+            {"id"=>comment.id, "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id,
+              "permissions" => {
+                'can_view' => true, 'can_edit' => true, 'can_delete' => true
+              }
+            }]
+        })
+      end
+
+      it "errors if user can't view base object" do
+        Shipment.any_instance.stub(:can_view?).with(user).and_return false
+        get :polymorphic_index, base_object_type: "shipments", base_object_id: shipment.id, include: "permissions"
+        expect(response).not_to be_success
+        expect(response.status).to eq 403
+      end
+    end
+
+    describe "polymorphic_show" do
+
+      it "shows comment" do
+        get :polymorphic_show, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
+        expect(response).to be_success
+        j = JSON.parse(response.body)
+        expect(j).to eq({
+          "comment"=>{"id"=>comment.id, "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id}
+        })
+      end
+
+      it "sends permissions if requested" do
+        get :polymorphic_show, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id, include: "permissions"
+        expect(response).to be_success
+        j = JSON.parse(response.body)
+        expect(j).to eq({
+          "comment"=>{"id"=>comment.id, "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id,
+          "permissions" => {
+                'can_view' => true, 'can_edit' => true, 'can_delete' => true
+              }}
+        })
+      end
+
+      it "errors if user can't view shipment" do
+        Shipment.any_instance.stub(:can_view?).with(user).and_return false
+        get :polymorphic_show, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
+        expect(response).not_to be_success
+        expect(response.status).to eq 403
+      end
+    end
+
+    describe "polymorphic_destroy" do
+
+      before :each do
+        Shipment.any_instance.stub(:can_comment?).with(user).and_return true
+      end
+
+      it "destroys comment" do
+        Shipment.any_instance.should_receive(:create_async_snapshot).with user
+        OpenChain::WorkflowProcessor.should_receive(:async_process).with(shipment)
+
+        delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
+        expect(response).to be_success
+        expect(JSON.parse(response.body)).to eq({"ok" => "ok"})
+
+        shipment.reload
+        expect(shipment.comments.length).to eq 0
+      end
+
+      it "does not destroy comments owned by another user" do
+        u = Factory(:user)
+        c = shipment.comments.create! user_id: u.id, subject: "Sub", body: "Bod"
+
+        Shipment.any_instance.should_not_receive(:create_async_snapshot)
+        OpenChain::WorkflowProcessor.should_not_receive(:async_process)
+
+        delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: c.id
+        expect(response).not_to be_success
+        expect(response.status).to eq 403
+
+        shipment.reload
+        expect(shipment.comments.length).to eq 2
+      end
+
+      it "does not destroy comments when user cannot comment on obj" do
+        Shipment.any_instance.stub(:can_comment?).with(user).and_return false
+
+        Shipment.any_instance.should_not_receive(:create_async_snapshot)
+        OpenChain::WorkflowProcessor.should_not_receive(:async_process)
+
+        delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
+        expect(response).not_to be_success
+        expect(response.status).to eq 403
+
+        shipment.reload
+        expect(shipment.comments.length).to eq 1
+      end
+    end
+
+    describe "polymorphic_create" do
+      before :each do
+        Shipment.any_instance.stub(:can_comment?).with(user).and_return true
+        shipment.comments.destroy_all
+      end
+
+      it "creates a comment" do
+        Shipment.any_instance.should_receive(:create_async_snapshot).with user
+        OpenChain::WorkflowProcessor.should_receive(:async_process).with(shipment)
+
+        post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, comment: {:cmt_subject=>"Subject", :cmt_body=>"Body"}
+        expect(response).to be_success
+
+        j = JSON.parse(response.body)
+        # Just make sure the body, subject given are used...since we won't know the id utilized
+        # This uses the same view method as show and index, so the hash keys / vlaues are already well tested
+        expect(j['comment']['cmt_subject']).to eq "Subject"
+        expect(j['comment']['cmt_body']).to eq "Body"
+        expect(j['comment']['cmt_user']).to eq user.id
+
+        shipment.reload
+        expect(shipment.comments.first.id).to eq j['comment']['id']
+      end
+
+      it "creates a comment, returning permissions" do
+        Shipment.any_instance.should_receive(:create_async_snapshot).with user
+        OpenChain::WorkflowProcessor.should_receive(:async_process).with(shipment)
+
+        post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, comment: {cmt_subject: "Subject", cmt_body: "Body"}, include: "permissions"
+        expect(response).to be_success
+
+        j = JSON.parse(response.body)
+        expect(j['comment']['permissions']).not_to be_nil
+      end
+
+      it "fails if user cannot comment on object" do
+        Shipment.any_instance.stub(:can_comment?).with(user).and_return false
+
+        Shipment.any_instance.should_not_receive(:create_async_snapshot)
+        OpenChain::WorkflowProcessor.should_not_receive(:async_process)
+
+        post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, :cmt_subject=>"Subject", :cmt_body=>"Body"
+        expect(response).not_to be_success
+        expect(response.status).to eq 403
+      end
+    end
+
+  end
+  
 end

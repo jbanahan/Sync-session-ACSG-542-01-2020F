@@ -149,5 +149,38 @@ describe OrdersController do
       expect(rr['overridden_by']['full_name']).to eq @u.full_name
       expect(Time.parse(rr['overridden_at'])).to eq @rule_result.overridden_at
     end
+  describe 'bulk_update_fields' do
+    it "returns list of model fields for user to edit" do
+      post :bulk_update_fields 
+      expect(JSON.parse(response.body)["mf_hsh"]).to include({"ord_ord_date" => "Order Date"})
+    end
+    it "skips model fields that user isn't authorized to edit" do
+      ModelField.any_instance.stub(:can_edit?).and_return false
+      post :bulk_update_fields 
+      expect(JSON.parse(response.body)["mf_hsh"]).to be_empty
+    end
+    it 'should get count for specific items from #get_bulk_count' do
+      described_class.any_instance.should_receive(:get_bulk_count).with({"0"=>"99","1"=>"54"}, nil).and_return 2
+      post :bulk_update_fields, {"pk" => {"0"=>"99","1"=>"54"}}
+      expect(response).to be_success
+      expect(JSON.parse(response.body)['count']).to eq 2
+    end
+    it 'should get count for full search update from #get_bulk_count' do
+      described_class.any_instance.should_receive(:get_bulk_count).with(nil, '99').and_return 10
+      post :bulk_update_fields, {sr_id:'99'}
+      expect(response).to be_success
+      expect(JSON.parse(response.body)['count']).to eq 10
+    end
+  end
+  describe 'bulk_update' do
+    it 'should call bulk action runner with BulkOrderUpdate' do
+      today = Date.today.to_s
+      bar = OpenChain::BulkAction::BulkActionRunner
+      bar.should_receive(:process_object_ids).with(@u,['1','2'], OpenChain::BulkAction::BulkOrderUpdate, {"ord_ord_date" => today})
+      post :bulk_update, pk: {'0'=>'1','1'=>'2'}, mf_hsh: {"ord_ord_date" => today}
+      expect(response).to be_success
+    end
+  end
+
   end
 end

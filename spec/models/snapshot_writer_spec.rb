@@ -162,6 +162,55 @@ describe SnapshotWriter do
         end
       end
     end
+
+    context "with linked core module's descriptor" do
+      let (:descriptor_repository) {
+        { Folder => CoreModule::FOLDER.snapshot_descriptor }
+      }
+      let (:linked_descriptor) {
+        SnapshotDescriptor.for(Entry, {
+          folders: {descriptor: Folder }
+        }, descriptor_repository: descriptor_repository )
+      }
+
+      let (:user) {
+        Factory(:user)
+      }
+
+      let (:entry) { 
+        e = Factory(:entry, broker_reference: "ABC")
+        folder = e.folders.create! name: "Folder", created_by: user
+        folder.comments.create! subject: "Comment", user: user
+        folder.attachments.create! attached_file_name: "Filename.txt"
+
+        e
+      }
+
+      it "creates snapshot with fields from linked core module descriptor" do
+        json = subject.entity_json linked_descriptor, entry
+
+        h = ActiveSupport::JSON.decode(json)['entity']
+        expect(h['record_id']).to eq entry.id
+
+        folder_child = h['children'].first['entity']
+        expect(folder_child).not_to be_nil
+
+        folder = entry.folders.first
+        expect(folder_child['record_id']).to eq folder.id
+        expect(folder_child['model_fields']['fld_name']).to eq folder.name
+
+        # The order the children are built in the json is defined in the snapshot descriptor - See CoreModuleDefinitions for folder's order
+        folder_attachment = folder.attachments.first
+        attachment_child = folder_child['children'].first['entity']
+        expect(attachment_child['record_id']).to eq folder_attachment.id
+        expect(attachment_child['model_fields']['att_file_name']).to eq folder_attachment.attached_file_name
+
+        folder_comment = folder.comments.first
+        comment_child = folder_child['children'].second['entity']
+        expect(comment_child['record_id']).to eq folder_comment.id
+        expect(comment_child['model_fields']['cmt_subject']).to eq "Comment"
+      end
+    end
   end
 
 end

@@ -35,6 +35,10 @@ describe PolymorphicFinders do
       expect(subject.polymorphic_scope "broker_invoice").to eq BrokerInvoice.scoped
     end
 
+    it "handles pluralized (rails route) form of classname" do
+      expect(subject.polymorphic_scope "broker_invoices").to eq BrokerInvoice.scoped
+    end
+
     it "fails if class doesn't inherit from ActiveRecord::Base" do
       expect {expect(subject.polymorphic_scope "String")}.to raise_error "Invalid class name String"
     end
@@ -54,6 +58,14 @@ describe PolymorphicFinders do
     it "allows overriding validate_polymorphic_class to change class usage limitation" do
       expect(subject.constantize("entry")).to eq Entry
       expect {subject.constantize("product")}.to raise_error "Invalid class name product"
+    end
+  end
+
+  describe "polymorphic_where" do
+    let! (:obj) { Factory(:entry) }
+
+    it "returns a relation scoped to the given class and id value of the model" do
+      expect(subject.polymorphic_where("entries", obj.id).first).to eq obj
     end
   end
 end

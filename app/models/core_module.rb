@@ -21,7 +21,8 @@ class CoreModule
       :quicksearch_fields, # List of field / field definitions for quicksearching
       :quicksearch_extra_fields, # List of field / field definitions for displaying along with quicksearch terms
       :module_chain, #default module chain for searches
-      :snapshot_module_chain # the module chain to use for taking snapshots of the core module (might include other items like comments / attachments)
+      :snapshot_module_chain, # the module chain to use for taking snapshots of the core module (might include other items like comments / attachments)
+      :snapshot_descriptor
 
   def initialize(class_name,label,opts={})
     o = {:worksheetable => false, 

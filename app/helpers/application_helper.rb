@@ -221,6 +221,9 @@ module ApplicationHelper
   def show_custom_fields(obj, opts={})
     customizable = nil
     form = nil
+    skip_fields = opts[:skip_fields]
+    skip_fields = [] if skip_fields.nil?
+    skip_fields = skip_fields.collect {|uid| uid.to_s}
     if obj.respond_to?(:fields_for)
       customizable = obj.object
       form = obj
@@ -236,6 +239,11 @@ module ApplicationHelper
 
     #don't show extra address fields
     custom_fields.delete_if {|cf| cf.uid.to_s.match(/\^*af_/)}
+
+    # skip fields
+    custom_fields.delete_if {|cf|
+      skip_fields.include?(cf.uid.to_s)
+    } unless skip_fields.blank?
 
     show_model_fields (form ? form : customizable), custom_fields, opts
   end

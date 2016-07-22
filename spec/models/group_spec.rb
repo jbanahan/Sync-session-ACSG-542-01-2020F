@@ -42,4 +42,24 @@ describe Group do
       expect(g.errors.messages[:system_code]).to include "has already been taken"
     end
   end
+
+  describe "use_system_group" do
+    it "creates system group if not present" do
+      g = Group.use_system_group "CODE", name: "Group"
+      expect(g).to be_persisted
+      expect(g.system_code).to eq "CODE"
+      expect(g.name).to eq "Group"
+    end
+
+    it "does not create group if told not to" do
+      expect(Group.use_system_group "CODE", name: "Group", create: false).to be_nil
+    end
+
+    it "uses existing group" do
+      g = Group.create! system_code: "CODE", name: "Name"
+      found = Group.use_system_group "CODE", name: "Another Name" 
+      expect(found).to eq g
+      expect(found.name).to eq "Name"
+    end
+  end
 end

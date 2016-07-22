@@ -62,6 +62,10 @@ class Attachment < ActiveRecord::Base
     name
   end
 
+  def attachment_file_size_human
+    ActionController::Base.helpers.number_to_human_size(self.attached_file_size)
+  end
+
   def self.email_attachments params #hash
     to_address = params[:to_address]
     email_subject = params[:email_subject]
@@ -131,7 +135,7 @@ end
     json = {
       id: att.id,
       name: att.attached_file_name, 
-      size: ActionController::Base.helpers.number_to_human_size(att.attached_file_size),
+      size: att.attachment_file_size_human,
       type: att.attachment_type
     }
     if att.uploaded_by

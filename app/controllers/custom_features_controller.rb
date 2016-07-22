@@ -481,13 +481,17 @@ class CustomFeaturesController < ApplicationController
     k = OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser
     action_secure(k.can_view?(current_user),nil,{:verb=>"close", :module_name=>"Orders", :lock_check=> false}) {
       orders = params[:orders]
-      if orders.blank?
+      effective_date = params[:effective_date]
+      if effective_date.blank?
+        error_redirect "You must enter an effective date."
+        return
+      elsif orders.blank?
         error_redirect "You must include at least one order."
         return
       end
       key = "#{MasterSetup.get.uuid}/lumber_order_closer/#{Time.now.to_i}.txt"
       OpenChain::S3.upload_data(OpenChain::S3.bucket_name,key,orders)
-      k.delay.process(key,current_user.id)
+      k.delay.process(key, effective_date, current_user.id)
       add_flash :notices, "Your data is being processed. You will receive a system message when it is complete."
       redirect_to
     }

@@ -20,8 +20,13 @@ class SnapshotDescriptor
     @json_writer.entity_json self, entity
   end
 
-  def self.for parent_class, child_hashes, writer: nil
-    root_make_descriptors_for parent_class, child_hashes: child_hashes, writer: writer
+  def self.for parent_class, child_hashes, writer: nil, descriptor_repository: nil
+    descriptor = root_make_descriptors_for parent_class, child_hashes: child_hashes, writer: writer, descriptor_repository: descriptor_repository
+    if descriptor_repository
+      descriptor_repository[parent_class] = descriptor
+    end
+
+    descriptor
   end
 
   private
@@ -30,14 +35,27 @@ class SnapshotDescriptor
       entity.class.name == @entity_class.name
     end
 
-    def self.root_make_descriptors_for parent_class, association_name: nil, child_hashes: nil, writer: nil
+    def self.root_make_descriptors_for parent_class, association_name: nil, child_hashes: nil, writer: nil, descriptor_repository: nil
       children = []
       if child_hashes && child_hashes.is_a?(Hash)
          child_hashes.each_pair do |parent_association, values|
           if values[:children].is_a?(Hash)
-            children << root_make_descriptors_for(values[:type], association_name: parent_association, child_hashes: values[:children])
+            children << root_make_descriptors_for(values[:type], association_name: parent_association, child_hashes: values[:children], descriptor_repository: descriptor_repository)
           else
-            children << SnapshotDescriptor.new(values[:type], parent_association: parent_association)
+            if values[:type]
+               children << SnapshotDescriptor.new(values[:type], parent_association: parent_association)
+            elsif values[:descriptor]
+              descriptor = descriptor_repository[values[:descriptor]]
+
+              if descriptor.nil?
+                raise "No existing descriptor could be found from repository for #{parent_association} in #{parent_class}"
+              end
+
+              children << SnapshotDescriptor.new(descriptor.entity_class, parent_association: parent_association, children: descriptor.children)
+            else
+              children << SnapshotDescriptor.new(values[:type], parent_association: parent_association)
+            end
+            
           end
         end
       end

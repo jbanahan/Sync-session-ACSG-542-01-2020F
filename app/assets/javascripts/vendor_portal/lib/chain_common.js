@@ -9,7 +9,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 (function() {
   var app;
 
-  app = angular.module('ChainCommon', ['ChainCommon-Templates']);
+  app = angular.module('ChainCommon', ['ChainCommon-Templates', 'ChainDomainer']);
 
   app.config([
     '$httpProvider', function($httpProvider) {
@@ -213,6 +213,18 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
               }
               return r;
             });
+          },
+          count: function(searchOpts) {
+            var sOpts;
+            sOpts = $.extend({}, searchOpts);
+            sanitizeSortOpts(sOpts);
+            sanitizeSearchCriteria(sOpts);
+            sOpts.count_only = 'true';
+            return $http.get('/api/v1/' + moduleType + '.json', {
+              params: sOpts
+            }).then(function(resp) {
+              return resp.data.record_count;
+            });
           }
         };
       };
@@ -247,6 +259,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
       publicMethods.Country = newCountryClient();
       publicMethods.TradeLane = newCoreModuleClient('trade_lanes', 'trade_lane');
       publicMethods.TradePreferenceProgram = newCoreModuleClient('trade_preference_programs', 'trade_preference_program');
+      publicMethods.TppHtsOverride = newCoreModuleClient('tpp_hts_overrides', 'tpp_hts_override');
       publicMethods.Product = newCoreModuleClient('products', 'product', function(product) {
         delete product.prod_ent_type_id;
         return product;
@@ -877,6 +890,22 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 }).call(this);
 
 (function() {
+  angular.module('ChainCommon').directive('chainFieldLabel', [
+    function() {
+      return {
+        restrice: 'E',
+        scope: {
+          field: '='
+        },
+        replace: true,
+        template: '<label class="control-label">{{field.label}}<i ng-if="field.required" class="fa fa-asterisk required-icon"></i></label>'
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   angular.module('ChainCommon').directive('chainFieldValue', [
     '$compile', function($compile) {
       return {
@@ -889,12 +918,12 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         link: function(scope, el, attrs) {
           var getHtml, html;
           getHtml = function(scope) {
-            var m, val, withMs;
+            var checkedClass, m, val, withMs;
             if (!scope.field || !scope.model) {
               return '';
             }
             val = scope.model[scope.field.uid];
-            if (!(val && val.length > 0)) {
+            if ((typeof val !== 'boolean') && (!val || val.length === 0)) {
               return '';
             }
             if (scope.field.data_type === 'date') {
@@ -915,6 +944,10 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             }
             if (scope.field.data_type === 'text') {
               return $compile(angular.element('<pre>' + val + '</pre>'))(scope);
+            }
+            if (scope.field.data_type === 'boolean') {
+              checkedClass = val ? 'fa-check-square-o' : 'fa-times';
+              return $compile(angular.element('<i class="fa ' + checkedClass + '" model-field-uid="' + scope.field.uid + '"></i>'))(scope);
             }
             return val;
           };
@@ -1114,6 +1147,185 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 }).call(this);
 
 (function() {
+  angular.module('ChainCommon').directive('chainSearchTable', [
+    'chainApiSvc', 'chainDomainerSvc', function(chainApiSvc, chainDomainerSvc) {
+      return {
+        restrict: 'E',
+        scope: {
+          apiObjectName: '@',
+          loadTrigger: '=?',
+          searchSetup: '=?'
+        },
+        templateUrl: 'chain-search-table.html',
+        replace: true,
+        link: function(scope, el, attrs) {
+          var buildSearchParams, calcPages, doLoad;
+          scope.neverLoaded = true;
+          scope.hasBeenLoaded = false;
+          if (!scope.searchSetup) {
+            scope.searchSetup = {};
+          }
+          if (!scope.searchSetup.columns) {
+            scope.searchSetup.columns = ['id'];
+          }
+          scope.columnFields = {};
+          calcPages = function(recordCount, perPage) {
+            var i, num, pages, ref, results;
+            if (recordCount === 0) {
+              return [];
+            }
+            pages = Math.ceil(recordCount / perPage);
+            scope.pages = [];
+            results = [];
+            for (num = i = 1, ref = pages; 1 <= ref ? i <= ref : i >= ref; num = 1 <= ref ? ++i : --i) {
+              results.push(scope.pages.push(num.toString()));
+            }
+            return results;
+          };
+          doLoad = function(dict) {
+            var apiObj, c, i, len, ref, searchParams, ss;
+            if (!scope.searchSetup.page) {
+              scope.searchSetup.page = '1';
+            }
+            if (!scope.searchSetup.per_page) {
+              scope.searchSetup.per_page = 50;
+            }
+            scope.neverLoaded = false;
+            apiObj = chainApiSvc[scope.apiObjectName];
+            delete scope.recordCount;
+            ss = scope.searchSetup;
+            ref = ss.columns;
+            for (i = 0, len = ref.length; i < len; i++) {
+              c = ref[i];
+              scope.columnFields[c] = dict.field(c);
+            }
+            searchParams = buildSearchParams(ss);
+            return apiObj.search(searchParams).then(function(resp) {
+              scope.content = resp;
+              scope.hasBeenLoaded = true;
+              delete scope.loading;
+              if (scope.content.length < ss.per_page) {
+                scope.recordCount = ((ss.page - 1) * ss.per_page) + scope.content.length;
+                return calcPages(scope.recordCount, ss.per_page);
+              } else {
+                return apiObj.count(searchParams).then(function(count) {
+                  scope.recordCount = count;
+                  return calcPages(scope.recordCount, scope.searchSetup.per_page);
+                });
+              }
+            });
+          };
+          buildSearchParams = function(setup) {
+            var r;
+            r = {
+              criteria: []
+            };
+            if (setup.hiddenCriteria) {
+              r.criteria = r.criteria.concat(setup.hiddenCriteria);
+            }
+            if (setup.criteria) {
+              r.criteria = r.criteria.concat(setup.criteria);
+            }
+            if (setup.columns && setup.columns.length > 0) {
+              if (!(setup.columns.length === 1 && setup.columns[0] === 'id')) {
+                r.fields = setup.columns.join(',');
+              }
+            }
+            if (setup.sorts) {
+              r.sorts = setup.sorts;
+            }
+            if (setup.per_page) {
+              r.per_page = setup.per_page;
+            }
+            if (setup.page) {
+              r.page = setup.page;
+            }
+            return r;
+          };
+          scope.toggleBulkSelect = function(obj) {
+            if (!(obj.id && scope.searchSetup.bulkSelections)) {
+              return;
+            }
+            if (scope.searchSetup.bulkSelections[obj.id]) {
+              return delete scope.searchSetup.bulkSelections[obj.id];
+            } else {
+              return scope.searchSetup.bulkSelections[obj.id] = obj;
+            }
+          };
+          scope.selectAll = function() {
+            var allSelected, i, j, k, len, len1, o, ref, ref1, ref2, results, results1, v;
+            allSelected = true;
+            ref = scope.content;
+            for (i = 0, len = ref.length; i < len; i++) {
+              o = ref[i];
+              if (!scope.searchSetup.bulkSelections[o.id]) {
+                allSelected = false;
+              }
+            }
+            if (allSelected) {
+              ref1 = scope.searchSetup.bulkSelections;
+              results = [];
+              for (k in ref1) {
+                v = ref1[k];
+                results.push(delete scope.searchSetup.bulkSelections[k]);
+              }
+              return results;
+            } else {
+              ref2 = scope.content;
+              results1 = [];
+              for (j = 0, len1 = ref2.length; j < len1; j++) {
+                o = ref2[j];
+                results1.push(scope.searchSetup.bulkSelections[o.id] = o);
+              }
+              return results1;
+            }
+          };
+          scope.load = function() {
+            scope.loading = 'loading';
+            if (scope.dict) {
+              return doLoad(scope.dict);
+            } else {
+              return chainDomainerSvc.withDictionary().then(function(dict) {
+                scope.dict = dict;
+                return doLoad(scope.dict);
+              });
+            }
+          };
+          scope.columnCount = function() {
+            return el.find('thead th').length;
+          };
+          scope.totalPages = function() {
+            if (!scope.pages) {
+              return 0;
+            }
+            return scope.pages.length;
+          };
+          scope.$watch('loadTrigger', function(nv, ov) {
+            if (scope.neverLoaded && nv) {
+              return scope.load();
+            }
+          });
+          scope.$watch('searchSetup.page', function(nv, ov) {
+            if (!scope.neverLoaded) {
+              return scope.load();
+            }
+          });
+          scope.$watch('searchSetup.reload', function(nv, ov) {
+            if (nv && nv !== ov) {
+              return scope.load();
+            }
+          });
+          if (typeof scope.loadTrigger === 'undefined' && !scope.$root.isTest) {
+            return scope.load();
+          }
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   angular.module('ChainCommon').filter('chainSkipReadOnly', function() {
     return function(fields) {
       if (!(fields && fields.length > 0)) {
@@ -1271,7 +1483,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-bulk-execute-modal.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-support-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-bulk-execute-modal.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-search-table.html', 'chain-support-modal.html']);
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
@@ -1301,6 +1513,11 @@ angular.module("chain-errors.html", []).run(["$templateCache", function($templat
 angular.module("chain-messages-modal.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-messages-modal.html",
     "<div class=\"modal\" id=\"chain-messages-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Messages</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"><div ng-if=\"messages && messages.length==0\" class=\"text-success text-center\">You don't have any messages.</div><div class=\"panel-group\"><div class=\"panel\" ng-repeat=\"m in messages track by m.id\"><div class=\"panel-heading\"><h3 class=\"panel-title subject\" ng-click=\"readMessage(m)\" ng-class=\"{'unread-subject':!m.viewed}\">{{m.subject}}</h3></div><div ng-show=\"m.shown\" class=\"panel-body\"><div ng-bind-html=\"m.htmlSafeBody\" class=\"message-body\"></div></div></div></div></chain-loading-wrapper></div><div class=\"modal-footer\"><button ng-if=\"hasMore\" ng-click=\"loadMessages(nextPage)\" type=\"button\" class=\"btn btn-default\" id=\"chain-messages-modal-load-more\">More Messages</button> <button type=\"button\" class=\"btn btn-default\" id=\"toggle-email-new-messages\" ng-click=\"toggleEmailNewMessages()\"><i class=\"fa\" ng-class=\"{'fa-square-o':!user.email_new_messages, 'fa-check-square-o':user.email_new_messages}\"></i> Email Messages</button> <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
+}]);
+
+angular.module("chain-search-table.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-search-table.html",
+    "<div class=\"chain-search-table container-fluid\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div><button ng-click=\"load()\" ng-show=\"searchSetup.allowManualInit || hasBeenLoaded && !loading\" class=\"btn-xs btn btn-default pull-right\" title=\"Reload\"><i class=\"fa fa-refresh\"></i></button></div><table class=\"table\" ng-if=\"content && !loading\"><thead><tr><th ng-if=\"searchSetup.bulkSelections\"><button title=\"Select All\" class=\"btn btn-xs btn-link\" ng-click=\"selectAll()\"><i class=\"fa fa-square-o\"></i></button></th><th ng-if=\"searchSetup.buttons.length > 0\">&nbsp;</th><th ng-repeat=\"col in searchSetup.columns track by $index\">{{columnFields[col].label}}</th></tr></thead><tbody><tr ng-repeat=\"obj in content track by obj.id\"><td ng-if=\"searchSetup.bulkSelections\"><button ng-click=\"toggleBulkSelect(obj)\" title=\"Select Row\" class=\"btn btn-link btn-xs\"><i class=\"fa {{searchSetup.bulkSelections[obj.id] ? &quot;fa-check-square-o&quot; : &quot;fa-square-o&quot;}}\"></i></button></td><td ng-if=\"searchSetup.buttons.length > 0\"><button ng-repeat=\"b in searchSetup.buttons track by $index\" class=\"{{b.class}}\" ng-click=\"b.onClick(obj)\" title=\"{{b.label}}\"><span ng-if=\"!b.iconClass\">{{b.label}}</span> <i class=\"{{b.iconClass}}\" ng-if=\"b.iconClass\"></i></button></td><td ng-repeat=\"col in searchSetup.columns track by $index\"><chain-field-value model=\"obj\" field=\"columnFields[col]\"></chain-field-value></td></tr></tbody><tfoot ng-if=\"totalPages()>1\"><td colspan=\"{{columnCount()}}\" class=\"text-right\">Page&nbsp;<select ng-model=\"searchSetup.page\" ng-options=\"p as p for p in pages\" class=\"form-control page-selector\"></select>&nbsp;of&nbsp; <span class=\"total-pages\">{{totalPages()}}</span></td></tfoot></table></div>");
 }]);
 
 angular.module("chain-support-modal.html", []).run(["$templateCache", function($templateCache) {

@@ -52,6 +52,10 @@ module Api; module V1; class ApiController < ActionController::Base
     @allow_csv = true
   end
 
+  def render_ok
+    render json: {ok: 'ok'}
+  end
+
   private
     def validate_format
       return if @allow_csv && request.format.csv?

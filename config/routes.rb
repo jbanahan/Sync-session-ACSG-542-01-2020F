@@ -16,6 +16,11 @@ OpenChain::Application.routes.draw do
         post :mark_as_read, on: :member
       end
       resources :comments, only: [:create,:destroy]
+      get "/:base_object_type/:base_object_id/comments" => "comments#polymorphic_index"
+      post "/:base_object_type/:base_object_id/comments" => "comments#polymorphic_create"
+      get "/:base_object_type/:base_object_id/comment/:id" => "comments#polymorphic_show"
+      delete "/:base_object_type/:base_object_id/comment/:id" => "comments#polymorphic_destroy"
+
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
         member do
@@ -157,11 +162,12 @@ OpenChain::Application.routes.draw do
       match "/workflow/:core_module/:id/my_instance_open_task_count" => "workflow#my_instance_open_task_count", via: :get
 
 
-      match "/:attachable_type/:attachable_id/attachments/:id" => "attachments#show", via: [:get], as: :attachable_attachment
-      match "/:attachable_type/:attachable_id/attachments" => "attachments#index", via: [:get], as: :attachable_attachments
-      match "/:attachable_type/:attachable_id/attachments" => "attachments#create", via: [:post]
-      match "/:attachable_type/:attachable_id/attachments/:id/download" => "attachments#download", via: [:get], as: :download_attachable_attachment
-      match "/:attachable_type/:attachable_id/attachments/:id" => "attachments#destroy", via: [:delete]
+      get "/:base_object_type/:base_object_id/attachments" => "attachments#index"
+      post "/:base_object_type/:base_object_id/attachments" => "attachments#create"
+      get "/:base_object_type/:base_object_id/attachment/:id" => "attachments#show"
+      delete "/:base_object_type/:base_object_id/attachment/:id" => "attachments#destroy"
+      get "/:base_object_type/:base_object_id/attachment/:id/download" => "attachments#download"
+      get "/:base_object_type/:base_object_id/attachment_types" => "attachments#attachment_types"
 
       match "/feedback/send_feedback" => 'feedback#send_feedback', via: :post
 
@@ -178,6 +184,8 @@ OpenChain::Application.routes.draw do
           get :copy, on: :member
           get :model_fields, on: :collection
         end
+
+        resources :groups, only: [:create, :update, :destroy]
       end
 
       resources :fenix_postbacks, only: [] do
@@ -193,6 +201,16 @@ OpenChain::Application.routes.draw do
       resources :support_requests, only: [:create]
 
       resources :search_criterions, only: [:index, :create, :update, :destroy]
+
+      get "/:base_object_type/:base_object_id/folders" => "folders#index"
+      post "/:base_object_type/:base_object_id/folders" => "folders#create"
+      get "/:base_object_type/:base_object_id/folder/:id" => "folders#show"
+      put "/:base_object_type/:base_object_id/folder/:id" => "folders#update"
+      delete "/:base_object_type/:base_object_id/folder/:id" => "folders#destroy"
+
+      resources :groups, only: [:index, :show]
+      post "/:base_object_type/:base_object_id/groups/:id/add" => "groups#add_to_object"
+      post "/:base_object_type/:base_object_id/groups" => "groups#set_groups_for_object"
     end
   end
 
@@ -669,6 +687,10 @@ OpenChain::Application.routes.draw do
       post 'reopen'
       post 'accept'
       post 'unaccept'
+    end
+    collection do
+      post :bulk_update
+      post :bulk_update_fields
     end
 		resources :order_lines
 	end

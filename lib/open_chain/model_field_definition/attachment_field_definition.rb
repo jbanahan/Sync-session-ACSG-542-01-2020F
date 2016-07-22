@@ -11,5 +11,6 @@ module OpenChain; module ModelFieldDefinition; module AttachmentFieldDefinition
       [8, :att_suffix, :alliance_suffix, "Suffix", {data_type: :string, read_only: true}],
       [9, :att_private, :is_private, "Private?", {data_type: :boolean, read_only: true, can_view_lambda: lambda {|u| u.company.master? }}]
     ]
+    add_fields CoreModule::ATTACHMENT, make_user_fields(100, :att_uploaded_by, "Uploaded By", CoreModule::ATTACHMENT, :uploaded_by)
   end
 end; end; end

@@ -1,5 +1,8 @@
 <%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
-<%risk_def = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk])[:prodven_risk]%>
+<%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([:prodven_risk,:prod_merch_cat,:prod_merch_cat_desc])%>
+<%risk_def = cdefs[:prodven_risk]%>
+<%merch_cat_uid = "#{cdefs[:prod_merch_cat].model_field_uid}_product_vendor_assignment"%>
+<%merch_cat_desc_uid = "#{cdefs[:prod_merch_cat_desc].model_field_uid}_product_vendor_assignment"%>
 <div class='container-fluid'>
   <div class='row'>
     <select id='ll-pva-filter' class='form-control'>
@@ -123,11 +126,24 @@
           var riskDefUid = '<%=risk_def.model_field_uid%>';
           return writeVal(obj,riskDefUid);
         }
+        merchCatHtmlFn = function(obj) {
+          var merchCatUid = '<%=merch_cat_uid%>';
+          var merchCatDescUid = '<%=merch_cat_desc_uid%>';
+          var mc = writeVal(obj,merchCatUid);
+          var mcd = writeVal(obj,merchCatDescUid);
+          var r = '';
+          if(mcd.length > 0) {
+            r = mcd;
+            if(mc.length > 0) {
+              r += " ("+mc+")";
+            }
+          }
+          return r;
+        }
         writeVal = function(obj,field) {
           return obj[field] ? obj[field] : '';
         }
         var canEditRisk = <%=risk_def.model_field.can_edit?(current_user) ? 'true' : 'false'%>;
-        console.log(response);
 
         if(response.results.length==pageSize) {
           $('#ll-load-more').show();
@@ -142,6 +158,7 @@
           html += "<tr><td><input type='checkbox' data-pva-id='"+pva.id+"'/></td><td><a href='/products/"+pva.product_id+"'>View</a></td>";
           html += "<td>"+writeVal(pva,'prodven_puid')+"</td>";
           html += "<td>"+writeVal(pva,'prodven_pname')+"</td>";
+          html += "<td>"+merchCatHtmlFn(pva)+"</td>"
           html += "<td>"+riskHtmlFn(pva)+"</td></tr>";
         }
         callback(html);
@@ -152,7 +169,7 @@
     $('#ll-product-panel-row').html("<div class='loader'>loading</div>");
     LLProductVariantAssignmentGetPage(1,function(rowHtml) {
       html = "<div><table class='table table-condensed table-striped'>";
-      html += "<thead><tr><th><input type='checkbox' id='ll-product-select-all' /></th><th></th><th>Article #</th><th>Name</th><th>Risk</th></tr></thead>";
+      html += "<thead><tr><th><input type='checkbox' id='ll-product-select-all' /></th><th></th><th>Article #</th><th>Name</th><th>Merch Cat</th><th>Risk</th></tr></thead>";
       html += "<tbody id='ll-product-panel-body' data-page='1'>";
       html += rowHtml;
       html += "</tbody></table></div>";

@@ -5,7 +5,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapArticleXmlParser
   include OpenChain::CustomHandler::XmlHelper
-  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport  
+  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
 
   def self.parse data, opts={}
@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract, :prod_old_article, :class_proposed_hts]
+    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract, :prod_old_article, :class_proposed_hts, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
   end
 
   def parse_dom dom
@@ -51,6 +51,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       p.name = name
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], ext_time)
       p.find_and_set_custom_value(@cdefs[:prod_old_article], et(REXML::XPath.first(root,'//IDOC/E1BPE1MARART'),'OLD_MAT_NO'))
+      p.find_and_set_custom_value(@cdefs[:prod_merch_cat], et(REXML::XPath.first(root,'//IDOC/E1BPE1MATHEAD'),'MATL_GROUP'))
+      p.find_and_set_custom_value(@cdefs[:prod_merch_cat_desc], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_EXT'),'MERCH_CAT_DESC'))
+      p.find_and_set_custom_value(@cdefs[:prod_overall_thickness], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_CHAR[ATNAM="OVERALL_THICKNESS"]'),'ATWTB'))
       hts_parent = REXML::XPath.first(root, '//IDOC/E1BPE1MAW1RT[@SEGMENT="1"]')
       hts = hts_parent.nil? ? "" : et(hts_parent, "COMM_CODE")
       set_us_hts p, hts
@@ -93,7 +96,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         end
 
         tariff_record.hts_1 = hts
-      end      
+      end
     end
 
     def us

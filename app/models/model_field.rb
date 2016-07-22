@@ -81,6 +81,7 @@ class ModelField
     @restore_field = o[:restore_field]
     @required = o[:required]
     @search_value_preprocess_lambda = o[:search_value_preprocess_lambda]
+    @xml_tag_name = o[:xml_tag_name]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -147,6 +148,11 @@ class ModelField
     @required
   end
 
+  def xml_tag_name
+    tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
+    tag_name.to_s.gsub(/[\W]/,'_')
+  end
+
   def select_options
     return nil unless @select_options_lambda
     @select_options_lambda.call()
@@ -178,6 +184,7 @@ class ModelField
   end
 
   def can_edit? user
+    return false if self.read_only?
     # If there's any edit groups associated w/ the field, then the user MUST be in one of them to be able
     # to edit...there's no other means to be able to edit this field.
 
@@ -185,6 +192,8 @@ class ModelField
     # must exist for the field.  At which point, use the can_edit lambda if it exists, fall back to the
     # can_view lambda if it exists.  If can_edit / can_view lambdas don't exist, then we assume the field is
     # editable by all.
+    return false if read_only?
+    
     do_edit_lambda = false
     if @can_edit_groups.size > 0
       do_edit_lambda = user.in_any_group? @can_edit_groups
@@ -208,7 +217,6 @@ class ModelField
         can_edit = @can_edit_lambda.call user
       end
     end
-
     can_edit
   end
 

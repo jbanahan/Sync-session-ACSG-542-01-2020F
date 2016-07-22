@@ -2,12 +2,16 @@
   <div class="row">
     <div class="col-md-12 text-center">
       <a ui-sref='main'><img src="/logo.png" alt="Logo"></a>
-      <br />
       <h1>
         <small>Purchase Order</small>
         <br />
         {{order.ord_ord_num}}
       </h1>
+    </div>
+  </div>
+  <div class="row" ng-if='order[dictionary.fieldsByAttribute("label","Cancelled Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid].length > 0'>
+    <div class="col-md-12">
+      <div class="alert alert-danger">This order was <strong>cancelled</strong> on {{order[dictionary.fieldsByAttribute("label","Cancelled Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}.</div>
     </div>
   </div>
   <div class="row">
@@ -27,6 +31,14 @@
             </li>
             <li class='list-group-item' ng-if='order.ord_window_end && order.ord_window_start!=order.ord_window_end'>
               Ship Window End <span class='pull-right'>{{order.ord_window_end}}</span>
+            </li>
+            <li class='list-group-item' ng-if='order.permissions.can_edit'>
+              <label>Planned Handover Date</label>
+              <chain-field-input model='order' field='dictionary.fieldsByAttribute("label","Planned Handover Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0]' input-class='form-control'></chain-field-input>
+            </li>
+            <li class='list-group-item' ng-if='!order.permissions.can_edit'>
+              Planned Handover Date
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute("label","Planned Handover Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
             </li>
             <li class="list-group-item">
               Vendor No.
@@ -53,6 +65,9 @@
               <span class="pull-right">{{order.ord_fob_point}}</span>
             </li>
           </ul>
+          <div class="panel-footer text-right" ng-if='order.permissions.can_edit'>
+            <button class='btn btn-sm btn-default' title='Save' ng-click='save(order)'><i class='fa fa-save'></i></button>
+          </div>
       </div>
       <div class="panel panel-primary">
           <div class="panel-heading">

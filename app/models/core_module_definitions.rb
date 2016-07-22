@@ -1,4 +1,37 @@
 module CoreModuleDefinitions
+
+  # This is used solely as a way to provide "state" between the snapshot descriptor creations as a way to 
+  # not have to redefine the snapshot structure of something like Folder, that can appear 
+  # on every core object.
+  DESCRIPTOR_REPOSITORY ||= {}
+
+  COMMENT = CoreModule.new("Comment", "Comment")
+  GROUP = CoreModule.new("Group", "Group")
+  FOLDER = CoreModule.new("Folder", "Folder", {
+    logical_key_lambda: lambda { |obj| 
+      # We need to find the parent of the folder, and then use the logical key from it, then add in the folder name after that,
+      # otherwise there's no real way to know which folder is being referenced (and this is used from comment event publishing)
+      parent_key = ""
+      base_obj = obj.base_object
+      if base_obj
+        cm = CoreModule.find_by_object base_obj
+        
+        if cm
+          parent_key = "#{cm.label} #{cm.logical_key(base_obj)}"
+        end
+      end
+
+      key = parent_key.blank? ? "" : "#{parent_key} / "
+      key + obj.name
+    },
+    snapshot_descriptor: SnapshotDescriptor.for(Folder, {
+        attachments: { type: Attachment },
+        comments: { type: Comment },
+        groups: { type: Group }
+      }, descriptor_repository: DESCRIPTOR_REPOSITORY
+    )
+  })
+
   SECURITY_FILING_LINE = CoreModule.new("SecurityFilingLine","Security Line", {
        :show_field_prefix=>true,
        :unique_id_field_name=>:sfln_line_number,
@@ -43,9 +76,15 @@ module CoreModuleDefinitions
      :key_model_field_uids => [:ord_ord_num],
      :quicksearch_fields => [:ord_ord_num, :ord_cust_ord_no],
      :module_chain => [Order, OrderLine],
+     snapshot_descriptor: SnapshotDescriptor.for(Order, {
+        order_lines: {type: OrderLine },
+        folders: { descriptor: Folder }
+      }, descriptor_repository: DESCRIPTOR_REPOSITORY
+     ),
      :bulk_actions_lambda => lambda {|current_user|
        bulk_actions = {}
-       bulk_actions["Comment"]={:path=>'/comments/bulk_count.json',:callback=>'BulkActions.submitBulkComment',:ajax_callback=>'BulkActions.handleBulkComment',font_icon:'fa-sticky-note'} if current_user.order_comment?
+       bulk_actions["Comment"]={:path=>'/comments/bulk_count.json', :ajax_callback=>'BulkActions.handleBulkComment',font_icon:'fa-sticky-note'} if current_user.comment_orders?
+       bulk_actions["Update"]={:path=>'/orders/bulk_update_fields.json', :ajax_callback=>'BulkActions.handleBulkOrderUpdate',font_icon:'fa-pencil-square-o'} if current_user.edit_orders?
        bulk_actions
      }
     })
@@ -299,7 +338,7 @@ module CoreModuleDefinitions
        :quicksearch_sort_by_mf => :ent_file_logged_date,
        :logical_key_lambda => lambda {|obj| "#{obj.source_system}_#{obj.broker_reference}"},
        :module_chain => [Entry, CommercialInvoice, CommercialInvoiceLine, CommercialInvoiceTariff],
-       :snapshot_descriptor => SnapshotDescriptor.for(Entry,
+       :snapshot_descriptor => SnapshotDescriptor.for(Entry, {
           entry_comments: {type: EntryComment},
           commercial_invoices: {type: CommercialInvoice, children: {
             commercial_invoice_lines: {type: CommercialInvoiceLine, children: {
@@ -313,6 +352,7 @@ module CoreModuleDefinitions
             broker_invoice_lines: {type: BrokerInvoiceLine}
           }},
           attachments: {type: Attachment}
+        }, descriptor_repository: DESCRIPTOR_REPOSITORY
        )
    })
 
@@ -362,16 +402,17 @@ module CoreModuleDefinitions
     quicksearch_fields: [:cmp_name],
     available_addresses_lambda: lambda {|company| company.addresses.order(:name, :city, :line_1) },
     module_chain: [Company, Plant, PlantProductGroupAssignment],
-    snapshot_descriptor: SnapshotDescriptor.for(Company,
-      plants: {
-        type:Plant,
-        children: {
-          plant_product_group_assignments:{
-            type: PlantProductGroupAssignment
+    snapshot_descriptor: SnapshotDescriptor.for(Company, {
+        plants: {
+          type:Plant,
+          children: {
+            plant_product_group_assignments:{
+              type: PlantProductGroupAssignment
+            }
           }
-        }
-      },
-      addresses: {type:Address}
+        },
+        addresses: {type:Address}
+      }, descriptor_repository: DESCRIPTOR_REPOSITORY
     )
   )
 
@@ -429,4 +470,8 @@ module CoreModuleDefinitions
     changed_at_parents_lambda: lambda {|c| c.product.nil? ? [] : [c.product] },
     show_field_prefix: true
   })
+
+
+  # Don't need these any longer, clear them...this should be the last line in the file
+  DESCRIPTOR_REPOSITORY.clear
 end

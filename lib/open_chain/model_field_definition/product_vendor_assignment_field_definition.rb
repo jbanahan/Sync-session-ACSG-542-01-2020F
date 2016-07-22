@@ -8,5 +8,21 @@ module OpenChain; module ModelFieldDefinition; module ProductVendorAssignmentFie
     ]
     add_fields CoreModule::PRODUCT_VENDOR_ASSIGNMENT, make_product_arrays(100,"prodven","product_vendor_assignments")
     add_fields CoreModule::PRODUCT_VENDOR_ASSIGNMENT, make_vendor_arrays(200,"prodven","product_vendor_assignments")
+    pca_index = 1000
+    product_custom_fields_to_add = []
+    CustomDefinition.where(module_type:'Product').each_with_index do |cd,i|
+      product_custom_fields_to_add << [
+        pca_index+i,
+        "#{cd.model_field_uid}_product_vendor_assignment".to_sym,
+        "#{cd.model_field_uid}_product_vendor_assignment".to_sym,
+        "Product - #{cd.label.to_s}", {
+          data_type: cd.data_type,
+          read_only: true,
+          qualified_field_name: "(SELECT custom_values.#{cd.data_column} FROM products INNER JOIN custom_values ON custom_values.custom_definition_id = #{cd.id} AND custom_values.customizable_type = 'Product' and custom_values.customizable_id = products.id WHERE products.id = product_vendor_assignments.product_id)",
+          export_lambda: lambda {|pva| pva.product ? pva.product.get_custom_value(cd).value : nil}
+        }
+      ]
+    end
+    add_fields CoreModule::PRODUCT_VENDOR_ASSIGNMENT, product_custom_fields_to_add
   end
 end; end; end

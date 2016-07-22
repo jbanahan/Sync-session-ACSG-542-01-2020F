@@ -2,15 +2,10 @@ require 'spec_helper'
 
 describe User do
   describe :api_hash do
+    let (:user) { Factory(:user, first_name:'Joe', last_name:'User', username:'uname', email:'j@sample.com', email_new_messages:true) }
     it "should get hash" do
-      u = Factory(:user,
-        first_name:'Joe',
-        last_name:'User',
-        username:'uname',
-        email:'j@sample.com',
-        email_new_messages:true)
-      u.stub(:view_orders?).and_return true
-      h = u.api_hash
+      user.stub(:view_orders?).and_return true
+      h = user.api_hash
 
       expect(h[:permissions][:view_orders]).to eq true
       expect(h[:permissions][:view_shipments]).to be_false
@@ -19,15 +14,30 @@ describe User do
 
       expected = {
         username:'uname',
-        full_name:u.full_name,
-        first_name:u.first_name,
-        last_name:u.last_name,
+        full_name:user.full_name,
+        first_name:user.first_name,
+        last_name:user.last_name,
         email:'j@sample.com',
         email_new_messages:true,
-        id:u.id,
-        company_id:u.company_id
+        id:user.id,
+        company_id:user.company_id
       }
       expect(h).to eq expected
+    end
+
+    it "excludes permissions if requested not to" do
+      h = user.api_hash include_permissions: false
+      expect(h[:permissions]).to be_nil
+      expect(h).to eq({
+        username:'uname',
+        full_name:user.full_name,
+        first_name:user.first_name,
+        last_name:user.last_name,
+        email:'j@sample.com',
+        email_new_messages:true,
+        id:user.id,
+        company_id:user.company_id
+      })
     end
   end
   describe :groups do
