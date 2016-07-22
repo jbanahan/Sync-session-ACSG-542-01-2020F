@@ -103,29 +103,39 @@ QRY
     q
   end
   def booking_exception_qry
-    q = <<QRY
-SELECT `PO`, `Vendor Style`, `Agent`, `Vendor`, `Ship Window End`
-FROM (
-SELECT
-orders.customer_order_number AS 'PO',
-GROUP_CONCAT(DISTINCT (select string_value from custom_values where custom_definition_id = (select id from custom_definitions where label = 'Vendor Style' and module_type = 'Product') and customizable_id = order_lines.product_id) SEPARATOR ', ') as 'Vendor Style',
-(SELECT name FROM companies WHERE companies.id = orders.agent_id) as 'Agent',
-(SELECT name FROM companies WHERE companies.id = orders.vendor_id) as 'Vendor',
-orders.ship_window_end as 'Ship Window End',
-SUM(ifnull(piece_sets.shipment_line_id,0)) as 'shipmentlines'
-FROM orders
-LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id
-LEFT OUTER JOIN piece_sets ON piece_sets.order_line_id = order_lines.id AND piece_sets.shipment_line_id IS NOT NULL
-WHERE
-orders.closed_at is null
-  AND
-orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
-AND (orders.approval_status = 'Accepted')
-AND DATEDIFF(orders.ship_window_end,now()) < 14
-AND (orders.fob_point IN ('VN','PH','ID'))
-GROUP BY orders.id
-) x WHERE x.shipmentlines = 0
-QRY
+    q = <<-SQL
+      SELECT `PO`, `Vendor Style`, `Agent`, `Vendor`, `Ship Window End`
+      FROM (
+        SELECT
+          orders.customer_order_number AS 'PO',
+          GROUP_CONCAT(DISTINCT (select string_value 
+                                from custom_values 
+                                where custom_definition_id = (select id 
+                                                              from custom_definitions 
+                                                              where label = 'Vendor Style' 
+                                                                and module_type = 'Product') 
+                                                                and customizable_id = order_lines.product_id) SEPARATOR ', ') as 'Vendor Style',
+          (SELECT name FROM companies WHERE companies.id = orders.agent_id) as 'Agent',
+          (SELECT name FROM companies WHERE companies.id = orders.vendor_id) as 'Vendor',
+          orders.ship_window_end as 'Ship Window End',
+          SUM(ifnull(piece_sets.shipment_line_id,0)) as 'shipmentlines'
+      FROM orders
+        LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id
+        LEFT OUTER JOIN piece_sets ON piece_sets.order_line_id = order_lines.id AND piece_sets.shipment_line_id IS NOT NULL
+        LEFT OUTER JOIN shipment_lines ON piece_sets.shipment_line_id = shipment_lines.id
+        LEFT OUTER JOIN shipments ON shipments.id = shipment_lines.shipment_id
+      WHERE
+        orders.closed_at is null
+        AND orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
+        AND (orders.approval_status = 'Accepted')
+        AND DATEDIFF(orders.ship_window_end,now()) < 14
+        AND (orders.fob_point IN ('VN','PH','ID'))
+        AND (shipments.booking_received_date IS NULL)
+        AND (orders.ship_window_end < DATE_ADD(NOW(), INTERVAL 14 DAY))
+      GROUP BY orders.id
+      ) x 
+      WHERE x.shipmentlines = 0
+      SQL
     q
   end
   def transit_time_qry
