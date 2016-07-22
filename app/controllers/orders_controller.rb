@@ -55,7 +55,7 @@ class OrdersController < ApplicationController
   # GET /orders/1/edit
   def edit
     o = Order.find(params[:id])
-    action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
+    action_secure(o.can_edit?(current_user),o,{:verb => "edit", :module_name=>"order"}) {
       @order = o
     }
   end
@@ -87,7 +87,7 @@ class OrdersController < ApplicationController
   # PUT /orders/1.xml
   def update
     o = Order.find(params[:id])
-    action_secure(current_user.company.master,o,{:module_name=>"order"}) {
+    action_secure(o.can_edit?(current_user),o,{:module_name=>"order"}) {
       succeed = lambda {|ord|
         add_flash :notices, "Order was updated successfully."
         redirect_to ord
