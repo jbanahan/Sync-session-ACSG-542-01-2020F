@@ -42,9 +42,9 @@ class BusinessValidationRule < ActiveRecord::Base
                     label: 'Lumber Entry Invoice Part Matches Order',
                     enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}
                   },
-                'OpenChain::CustomHandler::Pepsi::QuakerValidationRuleInvoiceNumberUnique'.to_sym=>
+                'OpenChain::CustomHandler::Pepsi::QuakerValidationRulePoNumberUnique'.to_sym=>
                   {
-                    label: 'Quaker Entry Invoice Number Unique',
+                    label: 'Quaker Entry PO Number Unique',
                     enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}  
                   }
               }
