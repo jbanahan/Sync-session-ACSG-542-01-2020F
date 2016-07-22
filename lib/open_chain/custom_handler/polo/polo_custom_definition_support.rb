@@ -62,7 +62,6 @@ module OpenChain
           :fabric_type_15 => {label: 'Fabric Type - 15', data_type: :string, module_type: "Product"},
           :fabric_15 => {label: 'Fabric - 15', data_type: :string, module_type: "Product"},
           :fabric_percent_15 => {label: 'Fabric % - 15', data_type: :decimal, module_type: "Product"},
-          :clean_fiber_content => {label: 'Clean Fiber Content', data_type: :string, module_type: "Product", read_only: true},
           :msl_fiber_failure => {label: "MSL Fiber Failure", data_type: :boolean, module_type: "Product"},
           :length_cm => {label: "Length (cm)", data_type: :decimal, module_type: "Product"},
           :width_cm => {label: "Width (cm)", data_type: :decimal, module_type: "Product"},

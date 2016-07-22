@@ -2,7 +2,6 @@ require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
     class PoloOmlogProductGenerator < ProductGenerator
-      include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
       def self.run_schedulable opts={}
         h = self.new
@@ -44,8 +43,7 @@ module OpenChain
         end
       end
       def query
-        @cdefs = self.class.prep_custom_definitions [:clean_fiber_content]
-        q = "SELECT products.id,
+        q = "SELECT products.id, 
 #{cd_s 101},
 #{cd_s CustomDefinition.find_by_label('CSM Number').id},
 #{cd_s 2},
@@ -53,7 +51,7 @@ module OpenChain
 #{cd_s 3},
 #{cd_s 4},
 products.unique_identifier as 'Style',
-#{cd_s @cdefs[:clean_fiber_content].id},
+#{cd_s 6},
 products.name as 'Name',
 #{cd_s 8},
 tariff_records.hts_1 as 'Tariff - HTS Code 1',
