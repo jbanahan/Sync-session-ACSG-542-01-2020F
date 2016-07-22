@@ -1,15 +1,17 @@
 require 'open_chain/custom_handler/product_generator'
+require 'open_chain/custom_handler/polo/polo_custom_definition_support'
 module OpenChain
   module CustomHandler
     class PoloSapProductGenerator < ProductGenerator
+      include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
       #SchedulableJob compatibility
       def self.run_schedulable opts={}
         g = self.new(opts)
         f = nil
         begin
-          # Sync only does 500 products at a time now, so keep running the send 
-          # until we get a file output w/ zero lines (sync_csv returns a nil file in this case, 
+          # Sync only does 500 products at a time now, so keep running the send
+          # until we get a file output w/ zero lines (sync_csv returns a nil file in this case,
           # it's also smart enough not to send a file w/ only headers in it)
           f = g.sync_csv
           g.ftp_file f unless f.nil?
@@ -17,7 +19,7 @@ module OpenChain
       end
 
       #Accepts 3 parameters
-      # * :env=>:qa to send to qa ftp folder 
+      # * :env=>:qa to send to qa ftp folder
       # * :custom_where to replace the query where clause
       # * :no_brand_restriction to allow styles to be sent that don't have SAP Brand set
       def initialize params = {}
@@ -27,9 +29,10 @@ module OpenChain
         @no_brand_restriction = params[:no_brand_restriction]
         @custom_countries = params[:custom_countries]
         raise "SAP Brand custom definition does not exist." unless @sap_brand
+        @cdefs = self.class.prep_custom_definitions [:clean_fiber_content]
       end
 
-      def sync_code 
+      def sync_code
         'polo_sap'
       end
 
@@ -125,8 +128,8 @@ module OpenChain
 
       def query
         q = "SELECT products.id,
-products.unique_identifier, 
-#{cd_s 6},
+products.unique_identifier,
+#{cd_s @cdefs[:clean_fiber_content].id},
 countries.iso_code as 'Classification - Country ISO Code',
 tariff_records.hts_1 as 'Tariff - HTS Code 1',
 #{cd_s 130, boolean_y_n: true},
@@ -155,7 +158,7 @@ tariff_records.hts_1 as 'Tariff - HTS Code 1',
 #{cd_s 139},
 #{cd_s 140},
 #{cd_s 141}
-FROM products 
+FROM products
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
 INNER JOIN classifications on classifications.product_id = products.id
 INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
@@ -173,7 +176,7 @@ ORDER BY products.updated_at, products.unique_identifier, countries.iso_code, ta
 SELECT DISTINCT products.id
 FROM products
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
-INNER JOIN classifications on classifications.product_id = products.id 
+INNER JOIN classifications on classifications.product_id = products.id
 INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
 #{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')})
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0

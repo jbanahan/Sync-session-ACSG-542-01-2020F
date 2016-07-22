@@ -14,7 +14,7 @@ module OpenChain
 
       def initialize opts = {}
         super(opts)
-        @cdefs = self.class.prep_custom_definitions [:bartho_customer_id, :test_style, :set_type]
+        @cdefs = self.class.prep_custom_definitions [:bartho_customer_id, :test_style, :set_type, :clean_fiber_content]
       end
 
       #Superclass requires this method
@@ -47,7 +47,7 @@ module OpenChain
           cd_s(3),
           cd_s(4),
           "IFNULL(products.unique_identifier,\"\") AS `#{ModelField.find_by_uid(:prod_uid).label}`",
-          cd_s(6),
+          cd_s(@cdefs[:clean_fiber_content].id),
           "IFNULL(products.name,\"\") AS `#{ModelField.find_by_uid(:prod_name).label}`",
           "\"\" AS `Blank 1`",
           cd_s(8),
