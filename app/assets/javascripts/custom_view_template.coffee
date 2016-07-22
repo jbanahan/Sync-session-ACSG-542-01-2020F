@@ -10,7 +10,7 @@ app.factory 'customViewTemplateSvc', ['$http', ($http) ->
   }
 ]
 
-app.controller 'customViewTemplateCtrl', ['$scope', '$location', 'customViewTemplateSvc', 'chainSearchOperators', ($scope,$location,customViewTemplateSvc,chainSearchOperators) ->
+app.controller 'customViewTemplateCtrl', ['$scope', '$location', '$window', 'customViewTemplateSvc', 'chainSearchOperators', ($scope,$location,$window,customViewTemplateSvc,chainSearchOperators) ->
 
   $scope.getId = (url) ->
     m = url.match(/\d+(?=\/edit)/)
@@ -29,7 +29,7 @@ app.controller 'customViewTemplateCtrl', ['$scope', '$location', 'customViewTemp
   $scope.updateTemplate = (id, criteria) ->
     p = customViewTemplateSvc.updateTemplate id, criteria
     p.then () ->
-      window.location = '/custom_view_templates'
+      $window.location = '/custom_view_templates'
 
   $scope.saveTemplate = () ->
     $scope.updateTemplate($scope.templateId, $scope.search_criterions)
