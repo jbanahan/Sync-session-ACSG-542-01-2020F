@@ -144,15 +144,6 @@ class ModelField
     @restore_field
   end
 
-<<<<<<< HEAD
-  def xml_tag_name
-    tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
-    tag_name.to_s.gsub(/[\W]/,'_')
-  end
-
-  def required?
-    @required
-=======
   def required?
     @required
   end
@@ -160,7 +151,6 @@ class ModelField
   def xml_tag_name
     tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
     tag_name.to_s.gsub(/[\W]/,'_')
->>>>>>> master
   end
 
   def select_options
@@ -203,7 +193,7 @@ class ModelField
     # can_view lambda if it exists.  If can_edit / can_view lambdas don't exist, then we assume the field is
     # editable by all.
     return false if read_only?
-    
+
     do_edit_lambda = false
     if @can_edit_groups.size > 0
       do_edit_lambda = user.in_any_group? @can_edit_groups
