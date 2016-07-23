@@ -3,9 +3,10 @@ class ValidationRuleOrderLineFieldFormat < BusinessValidationRule
   include ValidatesFieldFormat
 
   def run_child_validation order
-    validate_field_format(order) do |mf, val, regex|
-      stop_validation
+    message = validate_field_format(order) do |mf, val, regex|
       "All #{mf.label} values do not match '#{regex}' format."
     end
+    stop_validation if !message.blank?
+    return message
   end
 end

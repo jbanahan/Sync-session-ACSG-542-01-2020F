@@ -564,13 +564,15 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           var initializeUpload;
           initializeUpload = function(status, error) {
             scope.upload = {};
-            if (scope.attachmentTypes && scope.attachmentTypes.length > 0) {
-              scope.upload.fileType = scope.attachmentTypes[0];
-            }
             scope.uploading = false;
             scope.error = error;
             return scope.uploadStatus = status;
           };
+          scope.$watch('attachmentTypes', function(newValue, oldValue) {
+            if (newValue && newValue.length > 0) {
+              return scope.upload.fileType = newValue[0].value;
+            }
+          });
           if (scope.upload == null) {
             initializeUpload(null, null);
           }
@@ -824,7 +826,7 @@ angular.module("chain-folder-add-folder.html", []).run(["$templateCache", functi
 
 angular.module("chain-folder-attachment.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-folder-attachment.html",
-    "<div class=\"panel chain-folder-attachment\" id=\"folder-{{folderId}}-attachment-{{attachment.id}}\"><div class=\"panel-title\"><span ng-if=\"!state.open\" ng-click=\"state.open=true\"><span data-toggle=\"collapse\" data-target=\"#folder-{{folderId}}-attachment-{{attachment.id}}-body\" class=\"glyphicon glyphicon-minus\"></span></span> <span ng-if=\"state.open\" ng-click=\"state.open=false\"><span data-toggle=\"collapse\" data-target=\"#folder-{{folderId}}-attachment-{{attachment.id}}-body\" class=\"glyphicon glyphicon-plus\"></span></span> <i class=\"fa {{fileIconName(attachment)}}\" aria-hidden=\"true\"></i> <a href=\"{{attachmentDownloadUrl(attachment)}}\" target=\"_blank\">{{attachment.att_file_name}}</a> - {{attachment.att_attachment_type}}</div><div class=\"collapse chain-folder-attachment-body\" id=\"folder-{{folderId}}-attachment-{{attachment.id}}-body\"><div ng-if=\"!state.deleting && !state.deleteCheck\"><div class=\"chain-folder-attachment-details row\"><div class=\"col-md-10 details\"><div class=\"detail\">Uploaded By: <span class=\"val\">{{attachment.att_uploaded_by_fullname}}</span></div><div class=\"detail\">Uploaded On: <span class=\"val\">{{timeDisplay(attachment.att_updated_at)}}</span></div><div class=\"detail\">File Size: <span class=\"val\">{{humanFileSize(attachment)}}</span></div></div><div class=\"col-md-2 trash\"><div ng-if=\"canAttach\"><button class=\"btn btn-sm btn-danger\" title=\"Delete this file\" ng-click=\"state.deletecheck=true\"><i title=\"Delete this file.\" class=\"fa fa-trash-o\" aria-hidden=\"true\"></i></button></div></div></div></div><div ng-if=\"state.deleteCheck\" class=\"chain-folder-attachment-delete-check\"><p>Are you sure you want to delete this attachment?</p><div><button class=\"btn btn-sm btn-danger\" ng-click=\"deleteAttachment(attachment)\" title=\"Delete this attachment\">Yes</button> &nbsp; <button class=\"btn btn-sm btn-default\" ng-click=\"state.deleteCheck=false\" title=\"Undo. DON'T delete this attachment\">No</button></div></div><div ng-if=\"state.deleting\" class=\"chain-folder-attachment-deleting\">Deleting Attachment...</div></div></div>");
+    "<div class=\"panel chain-folder-attachment\" id=\"folder-{{folderId}}-attachment-{{attachment.id}}\"><div class=\"panel-title\"><span ng-if=\"!state.open\" ng-click=\"state.open=true\"><span data-toggle=\"collapse\" data-target=\"#folder-{{folderId}}-attachment-{{attachment.id}}-body\" class=\"glyphicon glyphicon-minus\"></span></span> <span ng-if=\"state.open\" ng-click=\"state.open=false\"><span data-toggle=\"collapse\" data-target=\"#folder-{{folderId}}-attachment-{{attachment.id}}-body\" class=\"glyphicon glyphicon-plus\"></span></span> <i class=\"fa {{fileIconName(attachment)}}\" aria-hidden=\"true\"></i> <a href=\"{{attachmentDownloadUrl(attachment)}}\" target=\"_blank\">{{attachment.att_file_name}}</a> - {{attachment.att_attachment_type}}</div><div class=\"collapse chain-folder-attachment-body\" id=\"folder-{{folderId}}-attachment-{{attachment.id}}-body\"><div ng-if=\"!state.deleting && !state.deleteCheck\"><div class=\"chain-folder-attachment-details row\"><div class=\"col-md-10 details\"><div class=\"detail\">Uploaded By: <span class=\"val\">{{attachment.att_uploaded_by_fullname}}</span></div><div class=\"detail\">Uploaded On: <span class=\"val\">{{timeDisplay(attachment.att_updated_at)}}</span></div><div class=\"detail\">File Size: <span class=\"val\">{{humanFileSize(attachment)}}</span></div></div><div class=\"col-md-2 trash\"><div ng-if=\"canAttach\"><button class=\"btn btn-sm btn-danger\" title=\"Delete this file\" ng-click=\"state.deleteCheck=true\"><i title=\"Delete this file.\" class=\"fa fa-trash-o\" aria-hidden=\"true\"></i></button></div></div></div></div><div ng-if=\"state.deleteCheck\" class=\"chain-folder-attachment-delete-check\"><p>Are you sure you want to delete this attachment?</p><div><button class=\"btn btn-sm btn-danger\" ng-click=\"deleteAttachment(attachment)\" title=\"Delete this attachment\">Yes</button> &nbsp; <button class=\"btn btn-sm btn-default\" ng-click=\"state.deleteCheck=false\" title=\"Undo. DON'T delete this attachment\">No</button></div></div><div ng-if=\"state.deleting\" class=\"chain-folder-attachment-deleting\">Deleting Attachment...</div></div></div>");
 }]);
 
 angular.module("chain-folder-comment.html", []).run(["$templateCache", function($templateCache) {

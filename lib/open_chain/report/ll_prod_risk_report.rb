@@ -51,7 +51,7 @@ module OpenChain
 
       def query(cd_prodven_risk, cd_cmp_sap_company)
         <<-SQL
-select 
+select
 v.id as 'ID',
 sap.string_value as 'Vendor SAP #',
 v.name as 'Company Name',
@@ -66,7 +66,7 @@ inner join companies v on v.id = orders.vendor_id
 left join product_vendor_assignments pva on pva.vendor_id = v.id and pva.product_id = p.id
 left outer join custom_values risk on risk.custom_definition_id = #{cd_prodven_risk.id} and risk.customizable_type = 'ProductVendorAssignment' and risk.customizable_id = pva.id
 left outer join custom_values sap on sap.custom_definition_id = #{cd_cmp_sap_company.id} and sap.customizable_type = 'Company' and sap.customizable_id = v.id
-WHERE orders.closed_at is not null and length(trim(ifnull(risk.string_value, ''))) = 0 and orders.ship_window_start >= '2016-01-01'
+WHERE orders.closed_at is null and length(trim(ifnull(risk.string_value, ''))) = 0 and orders.ship_window_start >= '2016-01-01'
 group by p.id, v.id
 order by v.name, p.name
         SQL

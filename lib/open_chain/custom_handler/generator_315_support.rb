@@ -54,7 +54,8 @@ module OpenChain; module CustomHandler; module Generator315Support
     add_element root, "ServiceType", data.service_type
     add_element root, "CarrierCode", data.carrier_code
     add_element root, "Vessel", data.vessel
-    add_element root, "VoyageNumber", data.voyage_number
+    # Voyage must be at least 2 chars to fit EDI document standards for the 315, so zero-pad the voyage to 2 chars
+    add_element root, "VoyageNumber", data.voyage_number.to_s.rjust(2, "0")
     add_element root, "PortOfEntry", data.port_of_entry
     add_element root, "PortOfLading", data.port_of_lading
     add_element root, "CargoControlNumber", data.cargo_control_number

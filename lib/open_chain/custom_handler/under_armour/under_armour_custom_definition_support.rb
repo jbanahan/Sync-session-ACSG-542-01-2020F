@@ -10,13 +10,17 @@ module OpenChain; module CustomHandler; module UnderArmour; module UnderArmourCu
     plant_codes: {label:'Plant Codes',data_type: :text, module_type: 'Product'},
     import_countries: {label:'Import Countries',data_type: :text, module_type: 'Product'},
     size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'},
-    expected_duty_rate: {label: "Expected Duty Rate", data_type: :decimal, module_type: "Classification"}
-  } 
-  
+    expected_duty_rate: {label: "Expected Duty Rate", data_type: :decimal, module_type: "Classification"},
+    prod_seasons: {label:'Seasons',data_type: :text, module_type:'Product'},
+    prod_export_countries: {label:'Export Countries',data_type: :text, module_type: 'Product'},
+    var_export_countries: {label:'Export Countries',data_type: :text, module_type: 'Variant'},
+    var_import_countries: {label:'Import Countries',data_type: :text, module_type: 'Variant'}
+  }
+
   def self.included(base)
     base.extend(::OpenChain::CustomHandler::CustomDefinitionSupport)
     base.extend(ClassMethods)
-  end 
+  end
 
   module ClassMethods
     def prep_custom_definitions fields

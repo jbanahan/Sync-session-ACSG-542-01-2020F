@@ -19,8 +19,10 @@ module OpenChain
         self.new.send_email('email' => opts_hash['email'], 'start_date_time' => start_date_time, 'end_date_time' => end_date_time)
       end
 
-      def create_workbook(start, finish)
-        wb = XlsMaker.create_workbook "GCC Stats"
+      def create_workbook(start, finish, settings)
+        start_date = Date.parse(settings['start_date_time']).strftime("%m-%d-%y")
+        end_date = Date.parse(settings['end_date_time']).strftime("%m-%d-%y")
+        wb = XlsMaker.create_workbook "GCC Stats for #{start_date} - #{end_date}"
         XlsMaker.create_sheet wb, "GCSEA Stats"
         table_from_query wb.worksheet(0), gcc_query(start, finish)
         table_from_query wb.worksheet(1), gcsea_query(start, finish)
@@ -30,12 +32,12 @@ module OpenChain
       def run(settings)
         start_date_time = DateTime.parse(settings['start_date']).to_s(:db)
         end_date_time = (DateTime.parse(settings['end_date']) + 1.day).to_s(:db)
-        wb = create_workbook(start_date_time, end_date_time)
+        wb = create_workbook(start_date_time, end_date_time, settings)
         workbook_to_tempfile wb, 'RlTariffTotals-'
       end
 
       def send_email(settings)
-        wb = create_workbook(settings['start_date_time'], settings['end_date_time'])
+        wb = create_workbook(settings['start_date_time'], settings['end_date_time'], settings)
         
         workbook_to_tempfile wb, 'RlTariffTotals-' do |t|
           start_date_formatted = Date.parse(settings['start_date_time']).strftime("%-m-%-d-%y")

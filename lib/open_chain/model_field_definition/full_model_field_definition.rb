@@ -83,11 +83,11 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_summary_statement_fields
     add_entry_comment_fields
     add_commercial_invoice_lacey_fields
-    add_folder_fields
-    add_comment_fields
-    add_group_fields
     add_trade_lane_fields
     add_trade_preference_program_fields
     add_tpp_hts_override_fields
+    add_folder_fields
+    add_comment_fields
+    add_group_fields
   end
 end; end; end

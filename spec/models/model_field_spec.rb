@@ -154,6 +154,10 @@ describe ModelField do
       expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_edit_lambda: lambda {|u| false}).can_edit?(Factory(:user))).to be_false
     end
 
+    it "disallows edit if model field is read-only" do
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, read_only: true).can_edit?(Factory(:user))).to be_false
+    end
+
     it "uses can_view_lambda if no edit lambda exists" do
       lambda_called = true
       expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_view_lambda: lambda {|u| lambda_called=true; false}).can_edit?(Factory(:user))).to be_false
@@ -1057,6 +1061,43 @@ describe ModelField do
         r = sc.apply(Entry.where("1=1")).to_a
         r.should include(@e)
       end
+    end
+
+    context :ent_user_notes do
+      let(:user_notes) { ModelField.find_by_uid :ent_user_notes }
+      let(:ent) { Factory(:entry) }
+      let!(:u) { Factory(:master_user,entry_view:true) }
+      let(:ss) { SearchSetup.new(module_type:'Entry',user:u) }
+      
+      it "returns user-note string with date/time adjusted to user's timezone" do
+        moment = Time.utc(2016, 1, 1)
+        eastern_time_str = moment.in_time_zone("Eastern Time (US & Canada)").to_s
+        EntryComment.create!(entry: ent, body: "comment body", generated_at: moment, username: "NTUFNEL", public_comment: true)
+        
+        Time.use_zone("Eastern Time (US & Canada)") do
+          ss.search_columns.build(model_field_uid:'ent_user_notes')
+          row = SearchQuery.new(ss,u).execute.first[:result]
+          eastern_time_comment = "comment body (#{eastern_time_str} - NTUFNEL)"
+          
+          # PENDING FEEDBACK FROM CIRCLE
+          # expect(row.first).to eq eastern_time_comment  
+
+          export = user_notes.process_export(ent, User.integration)
+          expect(export).to eq eastern_time_comment
+        end
+      end
+    
+      it "returns user-note string without date/time if generated_at field is NULL" do
+        EntryComment.create!(entry: ent, body: "comment body", generated_at: nil, username: "NTUFNEL", public_comment: true)
+        ss.search_columns.build(model_field_uid:'ent_user_notes')
+        row = SearchQuery.new(ss,u).execute.first[:result]
+        export = user_notes.process_export(ent, User.integration)
+        expected_comment = "comment body (NTUFNEL)"
+
+        expect(row.first).to eq expected_comment
+        expect(export).to eq expected_comment
+      end
+
     end
   end
 

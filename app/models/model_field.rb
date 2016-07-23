@@ -79,9 +79,9 @@ class ModelField
     @select_options_lambda = o[:select_options_lambda]
     @autocomplete = o[:autocomplete]
     @restore_field = o[:restore_field]
-    @xml_tag_name = o[:xml_tag_name]
     @required = o[:required]
     @search_value_preprocess_lambda = o[:search_value_preprocess_lambda]
+    @xml_tag_name = o[:xml_tag_name]
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -144,6 +144,7 @@ class ModelField
     @restore_field
   end
 
+<<<<<<< HEAD
   def xml_tag_name
     tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
     tag_name.to_s.gsub(/[\W]/,'_')
@@ -151,6 +152,15 @@ class ModelField
 
   def required?
     @required
+=======
+  def required?
+    @required
+  end
+
+  def xml_tag_name
+    tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
+    tag_name.to_s.gsub(/[\W]/,'_')
+>>>>>>> master
   end
 
   def select_options
@@ -192,6 +202,8 @@ class ModelField
     # must exist for the field.  At which point, use the can_edit lambda if it exists, fall back to the
     # can_view lambda if it exists.  If can_edit / can_view lambdas don't exist, then we assume the field is
     # editable by all.
+    return false if read_only?
+    
     do_edit_lambda = false
     if @can_edit_groups.size > 0
       do_edit_lambda = user.in_any_group? @can_edit_groups
@@ -215,7 +227,6 @@ class ModelField
         can_edit = @can_edit_lambda.call user
       end
     end
-
     can_edit
   end
 
@@ -282,7 +293,14 @@ class ModelField
   end
 
   def qualified_field_name
-    @qualified_field_name.nil? ? "#{self.join_alias}.#{@field_name}" : @qualified_field_name
+    fn = nil
+    if @qualified_field_name.nil?
+      fn = "#{self.join_alias}.#{@field_name}"
+    else
+      fn = @qualified_field_name.respond_to?(:call) ? @qualified_field_name.call : @qualified_field_name
+    end
+
+    fn
   end
 
   def qualified_field_name_overridden?

@@ -2,6 +2,43 @@ require 'spec_helper'
 
 describe Api::V1::ApiController do
 
+  describe '#allow_csv' do
+    let :setup_route do
+      @routes.draw { post "do_csv" => "anonymous#do_csv" }
+      u = Factory(:user)
+      allow_api_user u
+    end
+    context 'allows_csv' do
+      controller(Api::V1::ApiController) do
+        prepend_before_filter :allow_csv
+        def do_csv
+          respond_to do |format|
+            format.csv {render text: 'hello'}
+          end
+        end
+      end
+      it 'should allow csv if before_filter is set' do
+        setup_route
+        get :do_csv, format: :csv
+        expect(response.body).to eq 'hello'
+      end
+    end
+    context 'no_csv' do
+      controller(Api::V1::ApiController) do
+        def do_csv
+          respond_to do |format|
+            format.csv {render text: 'hello'}
+          end
+        end
+      end
+      it 'should not allow csv if before_filter is not set' do
+        setup_route
+        get :do_csv, format: :csv
+        expect(response).to_not be_success
+      end
+    end
+  end
+
   describe :action_secure do
     controller do
       def secure
@@ -13,9 +50,8 @@ describe Api::V1::ApiController do
     before :each do
       @obj = Factory(:company)
       @routes.draw { post "secure" => "anonymous#secure" }
-      controller.class.skip_before_filter :validate_format
-      controller.class.skip_around_filter :validate_authtoken
-      controller.class.skip_around_filter :set_user_settings
+      u = Factory(:user)
+      allow_api_access u
     end
 
     it "returns error if permission check fails" do
@@ -34,7 +70,7 @@ describe Api::V1::ApiController do
         post :secure, permission_check: true, lock_check: true
         expect(JSON.parse response.body).to eq({"notice" => "Block yielded!"})
       end
-      
+
       it "yields if lock-check is disabled" do
         @obj.locked = true; @obj.save!
         post :secure, permission_check: true, lock_check: false
