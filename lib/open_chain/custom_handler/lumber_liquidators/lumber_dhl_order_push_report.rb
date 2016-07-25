@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberDh
     MasterSetup.get.system_code == "ll" && user.in_group?("LOGISTICS")
   end
 
-  def initialize 
+  def initialize
     @cdefs = self.class.prep_custom_definitions [:ord_country_of_origin, :ord_dhl_push_date]
   end
 
@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberDh
 
   def create_report
     wb, sheet = XlsMaker.create_workbook_and_sheet "DHL PO Push", nil
-    table_from_query sheet, query(['BO', 'BR', 'PE', 'PY']), conversions, query_column_offset: 1
+    table_from_query sheet, query(['BO', 'BR', 'PE', 'PY', 'CO']), conversions, query_column_offset: 1
     wb
   end
 

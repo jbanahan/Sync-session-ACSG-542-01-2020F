@@ -3,7 +3,7 @@ class Variant < ActiveRecord::Base
   include ShallowMerger
   include TouchesParentsChangedAt
   include UpdateModelFieldsSupport
-  
+
   belongs_to :product, inverse_of: :variants
   has_many :plant_variant_assignments, inverse_of: :variant, dependent: :destroy
 
@@ -16,5 +16,9 @@ class Variant < ActiveRecord::Base
   def can_view? user
     return false unless self.product
     return self.product.can_view?(user)
+  end
+
+  def can_edit? user
+    return user.edit_variants? && self.can_view?(user)
   end
 end

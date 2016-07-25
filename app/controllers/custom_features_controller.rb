@@ -18,6 +18,8 @@ require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
+require 'open_chain/custom_handler/under_armour/ua_style_color_region_parser'
+require 'open_chain/custom_handler/under_armour/ua_style_color_factory_parser'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
@@ -28,23 +30,25 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_hand
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 
 class CustomFeaturesController < ApplicationController
-  CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
-  ECELLERATE_SHIPMENT_ACTIVITY = 'OpenChain::CustomHandler::EcellerateShipmentActivityParser'
-  EDDIE_CI_UPLOAD = 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
-  FENIX_CI_UPLOAD = 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
-  JCREW_PARTS = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
-  KEWILL_ISF = 'OpenChain::CustomHandler::KewillIsfManualParser'
-  LENOX_SHIPMENT = 'OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser'
-  POLO_CA_INVOICES = 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
-  POLO_SAP_BOM = 'OpenChain::CustomHandler::PoloSapBomHandler'
-  UA_TBD_REPORT_PARSER = 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
-  LE_RETURNS_PARSER = 'OpenChain::CustomHandler::LandsEnd::LeReturnsParser'
-  LE_CI_UPLOAD = 'OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator'
-  ALLIANCE_DAY_END = 'OpenChain::CustomHandler::Intacct::AllianceDayEndHandler'
-  CI_UPLOAD = 'OpenChain::CustomHandler::CiLoadHandler'
-  LUMBER_EPD = 'OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser'
-  FISHER_CI_UPLOAD = 'OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler'
-  ASCENA_CA_INVOICES = 'OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler'
+  CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
+  ECELLERATE_SHIPMENT_ACTIVITY ||= 'OpenChain::CustomHandler::EcellerateShipmentActivityParser'
+  EDDIE_CI_UPLOAD ||= 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
+  FENIX_CI_UPLOAD ||= 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
+  JCREW_PARTS ||= 'OpenChain::CustomHandler::JCrewPartsExtractParser'
+  KEWILL_ISF ||= 'OpenChain::CustomHandler::KewillIsfManualParser'
+  LENOX_SHIPMENT ||= 'OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser'
+  POLO_CA_INVOICES ||= 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
+  POLO_SAP_BOM ||= 'OpenChain::CustomHandler::PoloSapBomHandler'
+  UA_TBD_REPORT_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
+  UA_STYLE_COLOR_REGION_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser'
+  UA_STYLE_COLOR_FACTORY_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser'
+  LE_RETURNS_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeReturnsParser'
+  LE_CI_UPLOAD ||= 'OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator'
+  ALLIANCE_DAY_END ||= 'OpenChain::CustomHandler::Intacct::AllianceDayEndHandler'
+  CI_UPLOAD ||= 'OpenChain::CustomHandler::CiLoadHandler'
+  LUMBER_EPD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser'
+  FISHER_CI_UPLOAD ||= 'OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler'
+  ASCENA_CA_INVOICES ||= 'OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler'
   CREW_RETURNS ||= 'OpenChain::CustomHandler::JCrew::JCrewReturnsParser'
   PVH_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser'
   ADVAN_PART_UPLOAD ||= 'OpenChain::CustomHandler::Advance::AdvancePartsUploadParser'
@@ -113,6 +117,30 @@ class CustomFeaturesController < ApplicationController
 
   def ua_tbd_report_download
     generic_download "UA TBD Reports"
+  end
+
+  def ua_style_color_region_index
+    generic_index OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser.new(nil), UA_STYLE_COLOR_REGION_PARSER, "UA Style/Color/Region"
+  end
+
+  def ua_style_color_region_upload
+    generic_upload UA_STYLE_COLOR_REGION_PARSER, "UA Style/Color/Region", 'ua_style_color_region'
+  end
+
+  def ua_style_color_region_download
+    generic_download "UA Style/Color/Region"
+  end
+
+  def ua_style_color_factory_index
+    generic_index OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser.new(nil), UA_STYLE_COLOR_FACTORY_PARSER, "UA Style/Color/Factory"
+  end
+
+  def ua_style_color_factory_upload
+    generic_upload UA_STYLE_COLOR_FACTORY_PARSER, "UA Style/Color/Factory", 'ua_style_color_factory'
+  end
+
+  def ua_style_color_factory_download
+    generic_download "UA Style/Color/Region"
   end
 
   def kewill_isf_index

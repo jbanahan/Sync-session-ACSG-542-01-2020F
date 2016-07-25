@@ -9,7 +9,7 @@ describe OpenChain::OfficialTariffProcessor::TariffProcessor do
       described_class.process_country(c)
     end
     it "should create unique list with one of each tariff not already containing keys" do
-      ep = OpenChain::OfficialTariffProcessor::EuProcessor
+      ep = OpenChain::OfficialTariffProcessor::GenericProcessor
       c = Factory(:country,iso_code:'IT')
       spi_already_processed = 'Free: (PE)'
       tariff_already_processed = Factory(:official_tariff,country:c,special_rates:spi_already_processed)
