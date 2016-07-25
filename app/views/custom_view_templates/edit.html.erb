@@ -5,7 +5,6 @@
     scope.loadTemplate(id);
     $("#btn_save").click(function() {
       scope.saveTemplate();
-      window.location = '<%=url_for action: 'index'%>' + '?nocache=' + (new Date()).getTime();
     });
     $("#btn_cancel").click(function() {
       window.location = '<%=url_for action: 'index'%>';
