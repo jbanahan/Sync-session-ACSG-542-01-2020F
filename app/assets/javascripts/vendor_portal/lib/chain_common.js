@@ -39,6 +39,68 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 }).call(this);
 
 (function() {
+  angular.module('ChainCommon').factory('bulkSelectionSvc', [
+    function() {
+      var cache, getInnerCache, publicMethods;
+      cache = {};
+      getInnerCache = function(uid) {
+        var innerCache;
+        innerCache = cache[uid];
+        if (!innerCache) {
+          innerCache = {};
+          cache[uid] = innerCache;
+        }
+        return innerCache;
+      };
+      publicMethods = {
+        toggle: function(uid, obj) {
+          var innerCache;
+          innerCache = getInnerCache(uid);
+          if (innerCache[obj.id]) {
+            delete innerCache[obj.id];
+          } else {
+            innerCache[obj.id] = obj;
+          }
+        },
+        isSelected: function(uid, obj) {
+          if (getInnerCache(uid)[obj.id]) {
+            return true;
+          } else {
+            return false;
+          }
+        },
+        selected: function(uid) {
+          var id, innerCache, obj, r;
+          r = [];
+          innerCache = getInnerCache(uid);
+          for (id in innerCache) {
+            obj = innerCache[id];
+            r.push(obj);
+          }
+          return r;
+        },
+        selectedCount: function(uid) {
+          return Object.keys(getInnerCache(uid)).length;
+        },
+        selectAll: function(uid, objects) {
+          var i, innerCache, len, obj;
+          innerCache = getInnerCache(uid);
+          for (i = 0, len = objects.length; i < len; i++) {
+            obj = objects[i];
+            innerCache[obj.id] = obj;
+          }
+        },
+        selectNone: function(uid) {
+          cache[uid] = {};
+        }
+      };
+      return publicMethods;
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   angular.module('ChainCommon').directive('chainAddress', [
     function() {
       return {
@@ -63,7 +125,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 
   app.factory('chainApiSvc', [
     '$http', '$q', '$sce', '$location', '$rootScope', function($http, $q, $sce, $location, $rootScope) {
-      var newAttachmentClient, newBulkExecuteClient, newCommentClient, newCoreModuleClient, newCountryClient, newFieldValidatorClient, newMessageClient, newSupportClient, newUserClient, newUserManualClient, publicMethods;
+      var newAttachmentClient, newBulkExecuteClient, newCommentClient, newCoreModuleClient, newCountryClient, newFieldValidatorClient, newMessageClient, newSearchTableConfigClient, newSupportClient, newUserClient, newUserManualClient, publicMethods;
       publicMethods = {};
       newBulkExecuteClient = function() {
         var runningBulkCount;
@@ -119,7 +181,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
       };
       publicMethods.Bulk = newBulkExecuteClient();
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
-        var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
+        var cache, handleServerResponse, prepSearchOpts, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
         cache = {};
         handleServerResponse = function(resp) {
           var data;
@@ -161,6 +223,13 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             return delete opts.criteria;
           }
         };
+        prepSearchOpts = function(searchOpts) {
+          var sOpts;
+          sOpts = $.extend({}, searchOpts);
+          sanitizeSortOpts(sOpts);
+          sanitizeSearchCriteria(sOpts);
+          return sOpts;
+        };
         return {
           get: function(id, queryOpts) {
             var deferred;
@@ -194,9 +263,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           },
           search: function(searchOpts) {
             var sOpts;
-            sOpts = $.extend({}, searchOpts);
-            sanitizeSortOpts(sOpts);
-            sanitizeSearchCriteria(sOpts);
+            sOpts = prepSearchOpts(searchOpts);
             return $http.get('/api/v1/' + moduleType + '.json', {
               params: sOpts
             }).then(function(resp) {
@@ -216,15 +283,19 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           },
           count: function(searchOpts) {
             var sOpts;
-            sOpts = $.extend({}, searchOpts);
-            sanitizeSortOpts(sOpts);
-            sanitizeSearchCriteria(sOpts);
+            sOpts = prepSearchOpts(searchOpts);
             sOpts.count_only = 'true';
             return $http.get('/api/v1/' + moduleType + '.json', {
               params: sOpts
             }).then(function(resp) {
               return resp.data.record_count;
             });
+          },
+          csvUrl: function(searchOpts) {
+            var queryString, sOpts;
+            sOpts = prepSearchOpts(searchOpts);
+            queryString = $.param(sOpts);
+            return '/api/v1/' + moduleType + '.csv?' + queryString;
           }
         };
       };
@@ -260,10 +331,12 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
       publicMethods.TradeLane = newCoreModuleClient('trade_lanes', 'trade_lane');
       publicMethods.TradePreferenceProgram = newCoreModuleClient('trade_preference_programs', 'trade_preference_program');
       publicMethods.TppHtsOverride = newCoreModuleClient('tpp_hts_overrides', 'tpp_hts_override');
+      publicMethods.Vendor = newCoreModuleClient('vendors', 'company');
       publicMethods.Product = newCoreModuleClient('products', 'product', function(product) {
         delete product.prod_ent_type_id;
         return product;
       });
+      publicMethods.ProductVendorAssignment = newCoreModuleClient('product_vendor_assignments', 'product_vendor_assignment');
       publicMethods.Order = newCoreModuleClient('orders', 'order');
       publicMethods.Order.accept = function(order) {
         return $http.post('/api/v1/orders/' + order.id + '/accept.json', {
@@ -389,7 +462,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         return {
           forModule: function(moduleType, objectId) {
             return $http.get('/api/v1/' + moduleType + '/' + objectId + '/attachments.json').then(function(resp) {
-              return resp.data;
+              return resp.data.attachments;
             });
           }
         };
@@ -443,6 +516,29 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         };
       };
       publicMethods.FieldValidator = newFieldValidatorClient();
+      newSearchTableConfigClient = function() {
+        var resultCache;
+        resultCache = {};
+        return {
+          forPage: function(page) {
+            var cachedResult, d;
+            d = $q.defer();
+            cachedResult = resultCache[page];
+            if (cachedResult && cachedResult.length > 0) {
+              d.resolve(cachedResult);
+            } else {
+              $http.get('/api/v1/search_table_configs/for_page/' + encodeURIComponent(page) + '.json').then(function(resp) {
+                var configs;
+                configs = resp.data.search_table_configs;
+                resultCache[page] = configs;
+                return d.resolve(configs);
+              });
+            }
+            return d.promise;
+          }
+        };
+      };
+      publicMethods.SearchTableConfig = newSearchTableConfigClient();
       return publicMethods;
     }
   ]);
@@ -858,6 +954,9 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
               inp.attr('type', updatedInputType);
             }
           }
+          if (!scope.field.can_edit) {
+            realInput.prop('disabled', 'disabled');
+          }
           if (scope.field.remote_validate) {
             return realInput.on('blur', function() {
               return scope.$apply(function() {
@@ -1147,14 +1246,109 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 }).call(this);
 
 (function() {
+  angular.module('ChainCommon').directive('chainSearchPanel', [
+    'chainApiSvc', function(chainApiSvc) {
+      return {
+        restrict: 'E',
+        scope: {
+          name: '@',
+          apiObjectName: '@',
+          pageUid: '@',
+          baseSearchSetupFunction: '='
+        },
+        templateUrl: 'chain-search-panel.html',
+        link: function(scope, el, attrs) {
+          scope.coreSearch = {};
+          scope.activateSearch = function(stc) {
+            var c, i, j, k, l, len, len1, len2, len3, len4, m, ref, ref1, ref2, ref3, ref4, search, ss;
+            scope.searchTableConfig = stc;
+            search = stc.config;
+            if (!search) {
+              search = {};
+            }
+            ss = {};
+            if (scope.baseSearchSetupFunction) {
+              ss = scope.baseSearchSetupFunction();
+            }
+            if (!ss.columns && search.columns) {
+              ss.columns = [];
+            }
+            if (search.columns) {
+              ref = search.columns;
+              for (i = 0, len = ref.length; i < len; i++) {
+                c = ref[i];
+                ss.columns.push(c);
+              }
+            }
+            if (!ss.sorts && search.sorts) {
+              ss.sorts = [];
+            }
+            if (search.sorts) {
+              ref1 = search.sorts;
+              for (j = 0, len1 = ref1.length; j < len1; j++) {
+                c = ref1[j];
+                ss.sorts.push(c);
+              }
+            }
+            if (!ss.criteria && search.criteria) {
+              ss.criteria = [];
+            }
+            if (search.criteria) {
+              ref2 = search.criteria;
+              for (k = 0, len2 = ref2.length; k < len2; k++) {
+                c = ref2[k];
+                ss.criteria.push(c);
+              }
+            }
+            if (!ss.hiddenCriteria && search.hiddenCriteria) {
+              ss.hiddenCriteria = [];
+            }
+            if (search.hiddenCriteria) {
+              ref3 = search.hiddenCriteria;
+              for (l = 0, len3 = ref3.length; l < len3; l++) {
+                c = ref3[l];
+                ss.hiddenCriteria.push(c);
+              }
+            }
+            if (!ss.buttons && search.buttons) {
+              ss.buttons = [];
+            }
+            if (search.buttons) {
+              ref4 = search.buttons;
+              for (m = 0, len4 = ref4.length; m < len4; m++) {
+                c = ref4[m];
+                ss.buttons.push(c);
+              }
+            }
+            ss.reload = new Date().getTime();
+            return scope.coreSearch.searchSetup = ss;
+          };
+          scope.init = function() {
+            return chainApiSvc.SearchTableConfig.forPage(scope.pageUid).then(function(stcs) {
+              scope.searchTableConfigs = stcs;
+              if (scope.searchTableConfigs.length > 0) {
+                return scope.activateSearch(scope.searchTableConfigs[0]);
+              }
+            });
+          };
+          return scope.init();
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
   angular.module('ChainCommon').directive('chainSearchTable', [
-    'chainApiSvc', 'chainDomainerSvc', function(chainApiSvc, chainDomainerSvc) {
+    'chainApiSvc', 'chainDomainerSvc', 'bulkSelectionSvc', '$window', function(chainApiSvc, chainDomainerSvc, bulkSelectionSvc, $window) {
       return {
         restrict: 'E',
         scope: {
           apiObjectName: '@',
           loadTrigger: '=?',
-          searchSetup: '=?'
+          searchSetup: '=?',
+          pageUid: '@'
         },
         templateUrl: 'chain-search-table.html',
         replace: true,
@@ -1186,6 +1380,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             var apiObj, c, i, len, ref, searchParams, ss;
             if (!scope.searchSetup.page) {
               scope.searchSetup.page = '1';
+              scope.pageVal = '1';
             }
             if (!scope.searchSetup.per_page) {
               scope.searchSetup.per_page = 50;
@@ -1243,45 +1438,31 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             return r;
           };
           scope.toggleBulkSelect = function(obj) {
-            if (!(obj.id && scope.searchSetup.bulkSelections)) {
-              return;
-            }
-            if (scope.searchSetup.bulkSelections[obj.id]) {
-              return delete scope.searchSetup.bulkSelections[obj.id];
-            } else {
-              return scope.searchSetup.bulkSelections[obj.id] = obj;
-            }
+            return bulkSelectionSvc.toggle(scope.pageUid, obj);
           };
           scope.selectAll = function() {
-            var allSelected, i, j, k, len, len1, o, ref, ref1, ref2, results, results1, v;
-            allSelected = true;
-            ref = scope.content;
-            for (i = 0, len = ref.length; i < len; i++) {
-              o = ref[i];
-              if (!scope.searchSetup.bulkSelections[o.id]) {
-                allSelected = false;
-              }
-            }
-            if (allSelected) {
-              ref1 = scope.searchSetup.bulkSelections;
-              results = [];
-              for (k in ref1) {
-                v = ref1[k];
-                results.push(delete scope.searchSetup.bulkSelections[k]);
-              }
-              return results;
+            if (scope.content.length === bulkSelectionSvc.selectedCount(scope.pageUid)) {
+              return bulkSelectionSvc.selectNone(scope.pageUid);
             } else {
-              ref2 = scope.content;
-              results1 = [];
-              for (j = 0, len1 = ref2.length; j < len1; j++) {
-                o = ref2[j];
-                results1.push(scope.searchSetup.bulkSelections[o.id] = o);
-              }
-              return results1;
+              return bulkSelectionSvc.selectAll(scope.pageUid, scope.content);
             }
+          };
+          scope.isSelected = function(obj) {
+            return bulkSelectionSvc.isSelected(scope.pageUid, obj);
+          };
+          scope.downloadCsv = function() {
+            var apiObj, ss, url;
+            ss = $.extend({}, scope.searchSetup);
+            delete ss.page;
+            delete ss.per_page;
+            apiObj = chainApiSvc[scope.apiObjectName];
+            url = apiObj.csvUrl(buildSearchParams(ss));
+            return $window.location = url;
           };
           scope.load = function() {
             scope.loading = 'loading';
+            scope.reloadVal = scope.searchSetup.reload;
+            scope.pageVal = scope.searchSetup.page;
             if (scope.dict) {
               return doLoad(scope.dict);
             } else {
@@ -1306,11 +1487,17 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             }
           });
           scope.$watch('searchSetup.page', function(nv, ov) {
+            if (nv === scope.pageVal) {
+              return;
+            }
             if (!scope.neverLoaded) {
               return scope.load();
             }
           });
           scope.$watch('searchSetup.reload', function(nv, ov) {
+            if (nv === scope.reloadVal) {
+              return;
+            }
             if (nv && nv !== ov) {
               return scope.load();
             }
@@ -1483,11 +1670,11 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-bulk-execute-modal.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-search-table.html', 'chain-support-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-bulk-execute-modal.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-search-panel.html', 'chain-search-table.html', 'chain-support-modal.html']);
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
-    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.name}} <span class=\"badge\">{{att.size}}</span></a></li></ul></div>");
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments track by att.id\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.att_file_name}} <span class=\"badge\">{{att.friendly_size}}</span></a></li></ul></div>");
 }]);
 
 angular.module("chain-bulk-execute-modal.html", []).run(["$templateCache", function($templateCache) {
@@ -1515,9 +1702,14 @@ angular.module("chain-messages-modal.html", []).run(["$templateCache", function(
     "<div class=\"modal\" id=\"chain-messages-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Messages</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"><div ng-if=\"messages && messages.length==0\" class=\"text-success text-center\">You don't have any messages.</div><div class=\"panel-group\"><div class=\"panel\" ng-repeat=\"m in messages track by m.id\"><div class=\"panel-heading\"><h3 class=\"panel-title subject\" ng-click=\"readMessage(m)\" ng-class=\"{'unread-subject':!m.viewed}\">{{m.subject}}</h3></div><div ng-show=\"m.shown\" class=\"panel-body\"><div ng-bind-html=\"m.htmlSafeBody\" class=\"message-body\"></div></div></div></div></chain-loading-wrapper></div><div class=\"modal-footer\"><button ng-if=\"hasMore\" ng-click=\"loadMessages(nextPage)\" type=\"button\" class=\"btn btn-default\" id=\"chain-messages-modal-load-more\">More Messages</button> <button type=\"button\" class=\"btn btn-default\" id=\"toggle-email-new-messages\" ng-click=\"toggleEmailNewMessages()\"><i class=\"fa\" ng-class=\"{'fa-square-o':!user.email_new_messages, 'fa-check-square-o':user.email_new_messages}\"></i> Email Messages</button> <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
 }]);
 
+angular.module("chain-search-panel.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-search-panel.html",
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">{{name}}</h3></div><div class=\"panel-body\"><select ng-model=\"searchTableConfig\" ng-change=\"activateSearch(searchTableConfig)\" class=\"form-control\" ng-options=\"c as c.name for c in searchTableConfigs track by c.id\"></select></div><div class=\"panel-body\"><chain-search-table api-object-name=\"{{apiObjectName}}\" search-setup=\"coreSearch.searchSetup\" load-trigger=\"false\" page-uid=\"{{pageUid}}\"></chain-search-table></div></div>");
+}]);
+
 angular.module("chain-search-table.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-search-table.html",
-    "<div class=\"chain-search-table container-fluid\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div><button ng-click=\"load()\" ng-show=\"searchSetup.allowManualInit || hasBeenLoaded && !loading\" class=\"btn-xs btn btn-default pull-right\" title=\"Reload\"><i class=\"fa fa-refresh\"></i></button></div><table class=\"table\" ng-if=\"content && !loading\"><thead><tr><th ng-if=\"searchSetup.bulkSelections\"><button title=\"Select All\" class=\"btn btn-xs btn-link\" ng-click=\"selectAll()\"><i class=\"fa fa-square-o\"></i></button></th><th ng-if=\"searchSetup.buttons.length > 0\">&nbsp;</th><th ng-repeat=\"col in searchSetup.columns track by $index\">{{columnFields[col].label}}</th></tr></thead><tbody><tr ng-repeat=\"obj in content track by obj.id\"><td ng-if=\"searchSetup.bulkSelections\"><button ng-click=\"toggleBulkSelect(obj)\" title=\"Select Row\" class=\"btn btn-link btn-xs\"><i class=\"fa {{searchSetup.bulkSelections[obj.id] ? &quot;fa-check-square-o&quot; : &quot;fa-square-o&quot;}}\"></i></button></td><td ng-if=\"searchSetup.buttons.length > 0\"><button ng-repeat=\"b in searchSetup.buttons track by $index\" class=\"{{b.class}}\" ng-click=\"b.onClick(obj)\" title=\"{{b.label}}\"><span ng-if=\"!b.iconClass\">{{b.label}}</span> <i class=\"{{b.iconClass}}\" ng-if=\"b.iconClass\"></i></button></td><td ng-repeat=\"col in searchSetup.columns track by $index\"><chain-field-value model=\"obj\" field=\"columnFields[col]\"></chain-field-value></td></tr></tbody><tfoot ng-if=\"totalPages()>1\"><td colspan=\"{{columnCount()}}\" class=\"text-right\">Page&nbsp;<select ng-model=\"searchSetup.page\" ng-options=\"p as p for p in pages\" class=\"form-control page-selector\"></select>&nbsp;of&nbsp; <span class=\"total-pages\">{{totalPages()}}</span></td></tfoot></table></div>");
+    "<div class=\"chain-search-table container-fluid\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div class=\"text-right\"><div class=\"btn-group\"><button ng-click=\"downloadCsv()\" ng-show=\"hasBeenLoaded\" class=\"btn btn-xs btn-default\" title=\"Download CSV\"><i class=\"fa fa-download\"></i></button> <button ng-click=\"load()\" ng-show=\"searchSetup.allowManualInit || hasBeenLoaded\" class=\"btn-xs btn btn-default\" title=\"Reload\"><i class=\"fa fa-refresh\"></i></button></div></div><table class=\"table\" ng-if=\"content && !loading\"><thead><tr><th ng-if=\"searchSetup.bulkSelections\"><button title=\"Select All\" class=\"btn btn-xs btn-link\" ng-click=\"selectAll()\"><i class=\"fa fa-square-o\"></i></button></th><th ng-if=\"searchSetup.buttons.length > 0\">&nbsp;</th><th ng-repeat=\"col in searchSetup.columns track by $index\">{{columnFields[col].label}}</th></tr></thead><tbody><tr ng-repeat=\"obj in content track by obj.id\"><td ng-if=\"searchSetup.bulkSelections\"><button ng-click=\"toggleBulkSelect(obj)\" title=\"Select Row\" class=\"btn btn-link btn-xs\"><i class=\"fa\" ng-class=\"{&quot;fa-check-square-o&quot;:isSelected(obj), &quot;fa-square-o&quot;:!isSelected(obj)}\"></i></button></td><td ng-if=\"searchSetup.buttons.length > 0\"><button ng-repeat=\"b in searchSetup.buttons track by $index\" class=\"{{b.class}}\" ng-click=\"b.onClick(obj)\" title=\"{{b.label}}\"><span ng-if=\"!b.iconClass\">{{b.label}}</span> <i class=\"{{b.iconClass}}\" ng-if=\"b.iconClass\"></i></button></td><td ng-repeat=\"col in searchSetup.columns track by $index\"><chain-field-value model=\"obj\" field=\"columnFields[col]\"></chain-field-value></td></tr></tbody><tfoot ng-if=\"totalPages()>1\"><td colspan=\"{{columnCount()}}\" class=\"text-right\">Page&nbsp;<select ng-model=\"searchSetup.page\" ng-options=\"p as p for p in pages\" class=\"form-control page-selector\"></select>&nbsp;of&nbsp; <span class=\"total-pages\">{{totalPages()}}</span></td></tfoot></table></div>");
 }]);
 
 angular.module("chain-support-modal.html", []).run(["$templateCache", function($templateCache) {
