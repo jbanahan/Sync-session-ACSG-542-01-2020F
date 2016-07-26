@@ -6,7 +6,6 @@ require 'open_chain/alliance_imaging_client'
 module OpenChain; module CustomHandler; class KewillEntryParser
   extend OpenChain::IntegrationClientParser
 
-  SOURCE_SYSTEM ||= 'Alliance'
   # If no hash value is present, the symbol value component represents the name of the 
   # date attribute that will be set, the datatype is assumed to be a datetime.
   # If a hash value is present, at a minimum, an attribute: key must be set.
@@ -153,9 +152,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       Lock.acquire(Lock::ALLIANCE_PARSER) do
         # Make sure the entry has not been purged. We want to allow for re-using file numbers, so we'll assume that any data exported from the source system AFTER the purge record was created
         # means that the data is for a totally new entry and not for the one that was purged
-        break if Entry.purged? SOURCE_SYSTEM, file_no, extract_time
+        break if Entry.purged? Entry::KEWILL_SOURCE_SYSTEM, file_no, extract_time
 
-        entry = Entry.where(broker_reference: file_no, source_system: SOURCE_SYSTEM).first_or_create! expected_update_time: updated_at, last_exported_from_source: extract_time
+        entry = Entry.where(broker_reference: file_no, source_system: Entry::KEWILL_SOURCE_SYSTEM).first_or_create! expected_update_time: updated_at, last_exported_from_source: extract_time
         if skip_file? entry, extract_time
           entry = nil
         end
@@ -830,7 +829,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def set_broker_invoice_header_data bi, invoice
       invoice.invoice_number = bi[:file_no].to_s + bi[:suffix].to_s
-      invoice.source_system = SOURCE_SYSTEM
+      invoice.source_system = Entry::KEWILL_SOURCE_SYSTEM
       invoice.broker_reference = bi[:file_no]
       invoice.suffix = bi[:suffix]
       invoice.invoice_date = parse_numeric_date bi[:invoice_date]

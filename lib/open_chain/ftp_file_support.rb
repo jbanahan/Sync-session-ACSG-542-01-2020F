@@ -8,13 +8,11 @@ module OpenChain
     def ftp_file file, option_overrides = {}
       send_status = false
 
-      if self.respond_to?(:ftp_credentials) && !file.nil? && File.exists?(file.path)
+      if !file.nil? && File.exists?(file.path)
         begin
-          opts = {}
-          c = ftp_credentials.merge(option_overrides)
-          delete_local = !c[:keep_local]
-          [:folder, :remote_file_name, :protocol, :port].each {|k| opts[k] = c[k] unless c[k].blank?}
-          FtpSender.send_file(c[:server],c[:username],c[:password],file,opts)
+          opts = ftp_information(option_overrides)
+          delete_local = !opts[:keep_local]
+          FtpSender.send_file(opts[:server],opts[:username],opts[:password],file,opts)
           send_status = true
         ensure
           file.unlink if delete_local
@@ -46,6 +44,13 @@ module OpenChain
       opts = {server: 'fenixapp.vfitrack.net', username: 'vfitrack', password: 'bJzgt1S##t', folder: folder, protocol: 'sftp'}
       opts[:remote_file_name] = remote_file_name unless remote_file_name.blank?
       opts
+    end
+
+    def ftp_information ftp_file_options
+      option_data = self.respond_to?(:ftp_credentials) ? ftp_credentials : {}
+
+      # Prefer the data given in the options to that in the ftp_credentials method (if it even exists)
+      option_data.merge ftp_file_options
     end
   end
 end

@@ -39,6 +39,7 @@ module OpenChain
       begin
         tempfile = Tempfile.new([File.basename(path, ".*"), File.extname(path)])
         tempfile.binmode
+        Attachment.add_original_filename_method tempfile, File.basename(path)
 
         client.download_file path, tempfile
 
@@ -92,6 +93,11 @@ module OpenChain
     def self.delete_folder user_email, path
       delete_object user_email, path, :folder
       nil
+    end
+
+    def self.get_file_owner_email user_email, path
+      object_hash = find_object_hash get_client(user_email), path, :file
+      object_hash ? object_hash[:ownerEmail] : nil
     end
 
     # Perminently deletes the file/folder object this path references
@@ -312,13 +318,17 @@ module OpenChain
         if results_found > 1
           raise "Found #{results_found} #{object_identifier.pluralize(results_found)} named '#{file_name}' in the path '#{full_path}'. Only a single #{object_identifier} should be present."
         elsif results_found == 1
-          object_hash = {id: result.items[0].id}
+          item = result.items[0]
+          object_hash = {id: item.id}
           # Warning, I would have though that the schema objects constructed from the JSON responses 
           # would probably handle respond_to? so we could do result.items[0].respond_to?(:downloadUrl)
           # but they don't
           if object_type == :file 
-            object_hash[:downloadUrl] = result.items[0].downloadUrl
+            object_hash[:downloadUrl] = item.downloadUrl
           end
+
+          owner = item.owners.try(:first).try(:emailAddress)
+          object_hash[:ownerEmail] = owner unless owner.blank?
         end
         
         object_hash
@@ -437,6 +447,11 @@ module OpenChain
             :parameters => {'fileId' => id}
           )
         end
+      end
+
+      def get_object_info object_id
+        result = execute_single_method! api_method: @drive.files.get, parameters: {'fileId' => object_id}
+        result ? result.to_hash : nil
       end
 
       private 
@@ -600,7 +615,7 @@ module OpenChain
         end
 
         def append_standard_file_download_params params
-          params["fields"] = "nextPageToken,items(id,downloadUrl)"
+          params["fields"] = "nextPageToken,items(id,downloadUrl,owners)"
         end
 
         def append_search_param params, search_value

@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillEntryCom
   def accept? snapshot
     accept = super
     if accept
-      accept = snapshot.recordable.try(:source_system) == OpenChain::CustomHandler::KewillEntryParser::SOURCE_SYSTEM
+      accept = snapshot.recordable.try(:source_system) == Entry::KEWILL_SOURCE_SYSTEM
     end
 
     accept

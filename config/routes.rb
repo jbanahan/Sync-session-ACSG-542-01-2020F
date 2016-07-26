@@ -186,6 +186,12 @@ OpenChain::Application.routes.draw do
         end
 
         resources :groups, only: [:create, :update, :destroy]
+
+        resources :kewill_entry_documents, only: [] do
+          collection do
+            post :send_google_drive_file_to_kewill
+          end
+        end
       end
 
       resources :fenix_postbacks, only: [] do

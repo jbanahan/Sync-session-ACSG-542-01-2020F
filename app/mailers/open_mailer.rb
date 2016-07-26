@@ -26,28 +26,10 @@ EOS
   #send a very simple HTML email (attachments are expected to answer as File objects or paths )
   def send_simple_html to, subject, body, file_attachments = [], mail_options = {}
     @body_content = body
-    @attachment_messages = []
     pm_attachments = []
-
-    # Something funky happens with the mail if you use the 'attachments' global prior to creating a mail object
-    # instead of the mail.attachments attribute.  The mail content ends up being untestable for some reason I think
-    # is related to messed up/out of order MIME hierarchies in the email.
-    local_attachments = {}
-    Array.wrap(file_attachments).each do |file|
-      
-      save_large_attachment(file, to) do |email_attachment, attachment_text|
-        if email_attachment
-          @attachment_messages << attachment_text
-        else
-          # Use original_filename if the object answers to the method, else use the path's basename.
-          filename = ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
-          local_attachments[filename] = create_attachment(file)
-        end
-      end
-      
-    end
-
     opts = {to: explode_group_email_list(to, "TO"), subject: subject}.merge mail_options
+    local_attachments = process_attachments(file_attachments, opts[:to])
+    
     m = mail(opts) do |format|
       format.html
     end
@@ -440,6 +422,21 @@ EOS
 
     true
   end
+
+
+  def send_kewill_imaging_error email_to, errors, filename, file
+    @errors = errors
+    @filename = filename
+
+    local_attachments = process_attachments(file, email_to)
+    
+    m = mail(to: email_to, subject: "[VFI Track] Failed to load file #{filename}") do |format|
+      format.html
+    end
+
+    local_attachments.each {|name, content| m.attachments[name] = content}
+    m
+  end
   
 
   private
@@ -475,13 +472,35 @@ EOS
       end
     end
 
+    def process_attachments file_attachments, email_to
+      # Something funky happens with the mail if you use the 'attachments' global prior to creating a mail object
+      # instead of the mail.attachments attribute.  The mail content ends up being untestable for some reason I think
+      # is related to messed up/out of order MIME hierarchies in the email.
+      local_attachments = {}
+      @attachment_messages = []
+
+      Array.wrap(file_attachments).each do |file|
+        
+        save_large_attachment(file, email_to) do |email_attachment, attachment_text|
+          if email_attachment
+            @attachment_messages << attachment_text
+          else
+            # Use original_filename if the object answers to the method, else use the path's basename.
+            filename = ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
+            local_attachments[filename] = create_attachment(file)
+          end
+        end
+      end
+
+      local_attachments
+    end
+
     def save_large_attachment(file, registered_emails)
       email_attachment = nil
       attachment_text = nil
       if large_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
-
-        email_attachment = EmailAttachment.create!(:email => registered_emails)
+        email_attachment = EmailAttachment.create!(:email => Array.wrap(registered_emails).join(","))
         email_attachment.attachment = Attachment.new(:attachable => email_attachment)
         # Allow passing file objects here as well, not just paths to a file.
         # This also allows us to implement an original_filename method on the file object to utilize the paperclip
