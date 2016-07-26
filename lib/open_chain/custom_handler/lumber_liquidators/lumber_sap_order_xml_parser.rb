@@ -129,6 +129,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       # update mapping to get the earliest for each date or nil if the date wasn't sent
       mapping.each {|k,v| mapping[k] = mapping[k].sort.first}
 
+      # set legacy dates if we didn't get a VN_EXPEC_DLVD
+      if mapping['VN_EXPEC_DLVD'].blank?
+        set_ship_window(order)
+        return
+      end
+
       order.first_expected_delivery_date = mapping['CURR_ARRVD']
       if order.first_expected_delivery_date.blank?
         if !mapping['VN_HNDDTE'].blank? && !mapping['VN_HNDDTE'].match(/^0*$/)
