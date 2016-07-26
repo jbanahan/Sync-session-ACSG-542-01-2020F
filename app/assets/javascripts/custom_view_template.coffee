@@ -1,6 +1,6 @@
 app = angular.module('CustomViewTemplateApp',['ChainComponents'])
 
-app.factory 'customViewTemplateSvc', ($http) ->
+app.factory 'customViewTemplateSvc', ['$http', ($http) ->
   {
     loadTemplate: (id) ->
       $http.get('/custom_view_templates/' + id + '/' + 'edit.json')
@@ -8,8 +8,9 @@ app.factory 'customViewTemplateSvc', ($http) ->
     updateTemplate: (id, criteria) ->
       $http.put('/custom_view_templates/' + id, JSON.stringify({'criteria' : criteria}))
   }
+]
 
-app.controller 'customViewTemplateCtrl', ($scope,$location,customViewTemplateSvc,chainSearchOperators) ->
+app.controller 'customViewTemplateCtrl', ['$scope', '$location', '$window', 'customViewTemplateSvc', 'chainSearchOperators', ($scope,$location,$window,customViewTemplateSvc,chainSearchOperators) ->
 
   $scope.getId = (url) ->
     m = url.match(/\d+(?=\/edit)/)
@@ -28,7 +29,7 @@ app.controller 'customViewTemplateCtrl', ($scope,$location,customViewTemplateSvc
   $scope.updateTemplate = (id, criteria) ->
     p = customViewTemplateSvc.updateTemplate id, criteria
     p.then () ->
-      $location.url('/custom_view_templates')
+      $window.location = '/custom_view_templates'
 
   $scope.saveTemplate = () ->
     $scope.updateTemplate($scope.templateId, $scope.search_criterions)
@@ -71,4 +72,5 @@ app.controller 'customViewTemplateCtrl', ($scope,$location,customViewTemplateSvc
       deregister() for deregister in registrations
       registrations = null
     )
+]
 

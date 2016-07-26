@@ -81,16 +81,13 @@ describe 'CustomViewTemplateApp', () ->
         expect($scope.model_fields).toEqual 'model_fields'
 
     describe 'updateTemplate', () ->
-      it "calls service's updateTemplate and then loads index", () ->        
+      it "calls service's updateTemplate", () ->        
         deferredUpdate = q.defer()
-        deferredUpdate.resolve "foo"
         spyOn(svc, 'updateTemplate').andReturn deferredUpdate.promise
         $scope.updateTemplate(1, "criteria")
         $scope.$apply()
-
         expect(svc.updateTemplate).toHaveBeenCalledWith(1, "criteria")
-        expect(loc.url()).toEqual "/custom_view_templates"
-
+        
     describe 'saveTemplate', () ->
       it "calls updateTemplate", () ->
         spyOn($scope, 'updateTemplate')
