@@ -16,18 +16,11 @@
                  ng-click="getOrder(ord)"><input type="radio">{{ord.ord_cust_ord_no}}</label>
         </div>
         <p style="margin-top:12px;">All Orders</p>
-        <input type='text' ng-model='orderFilter' placeholder='Search orders' class='form-control input-sm'/>
-        <div class='text-right'><small><a href='' ng-click='orderFilter=null'>clear</a></small></div>
-        <br />
-        <div ng-show='availableOrders.length == 0'>No orders found</div>
-        <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
-          <label class="btn btn-md btn-default"
-              ng-repeat="ord in availableOrders | filter:orderFilter"
-              ng-class="{active:ord.id==activeOrder.id}"
-          ng-click="getOrder(ord)"><input type="radio">{{ord.ord_cust_ord_no}}</label>
-        </div>
+        <angucomplete-alt id='order_autocomplete' input-class='form-control'
+                                              placeholder='Search for Orders...' selected-object='orderSelected'
+                                              remote-url='/api/v1/shipments/{{shp.id}}/autocomplete_order?n=' title-field='order_number' minlength='3' initial-value=''></angucomplete-alt>
       </div>
-      <div ng-show='activeOrder' class="col-xs-12">
+      <div ng-show="activeOrder || orderLoadingFlag == 'loading'" class="col-xs-12">
         <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
           <div class="row">
             <div class="col-xs-8">

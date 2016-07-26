@@ -26,18 +26,24 @@ class Comment < ActiveRecord::Base
     self.user == u || u.sys_admin?
   end
 
-  def publish_comment_create
-    OpenChain::EventPublisher.publish :comment_create, self
-  end
-  private :publish_comment_create
-
   def comment_json user
-    h = {id:self.id,commentable_type:self.commentable_type,commentable_id:self.commentable_id,
+    comment = self
+    {
+      id:self.id,commentable_type:self.commentable_type,commentable_id:self.commentable_id,
         user:{id:self.user.id,full_name:self.user.full_name,email:self.user.email},
-        subject:self.subject,body:self.body,created_at:self.created_at,permissions: {
-          can_view:self.can_view?(user), can_edit:self.can_edit?(user), can_delete:self.can_delete?(user)
-        }
-      }
-    h
+        subject:self.subject,body:self.body,created_at:self.created_at,
+        permissions: Comment.comment_json_permissions(comment, user)
+    }
   end
+
+  def self.comment_json_permissions comment, user
+    {can_view: comment.can_view?(user), can_edit: comment.can_edit?(user), can_delete: comment.can_delete?(user)}
+  end
+
+  private 
+
+    def publish_comment_create
+      OpenChain::EventPublisher.publish :comment_create, self
+    end
+
 end

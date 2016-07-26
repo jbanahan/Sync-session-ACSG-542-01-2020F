@@ -151,6 +151,12 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
       :prodven_ven_syscode,
       :prodven_prod_ord_count
     ] + custom_field_keys(core_module))
+
+    # add product level custom field uids
+    CoreModule::PRODUCT_VENDOR_ASSIGNMENT.model_fields.keys.each do |uid|
+      headers_to_render << uid if uid.to_s.match(/^\*cf.*product_vendor_assignment/)
+    end
+
     h = to_entity_hash(o, headers_to_render)
     h['product_id'] = o.product_id
     h['vendor_id'] = o.vendor_id

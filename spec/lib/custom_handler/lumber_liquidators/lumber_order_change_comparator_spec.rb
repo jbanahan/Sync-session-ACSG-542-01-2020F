@@ -43,6 +43,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       described_class.stub(:update_autoflow_approvals).and_return false
       described_class.stub(:reset_vendor_approvals).and_return false
       described_class.stub(:reset_product_compliance_approvals).and_return false
+      described_class.stub(:generate_ll_xml)
+      described_class.stub(:reset_po_cancellation).and_return false
       described_class.stub(:create_pdf).and_return false
     end
     it 'should return if order does not exist' do
@@ -66,6 +68,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       described_class.should_receive(:update_autoflow_approvals).with(@o)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
+    it 'should reset PO cancellation' do
+      described_class.should_receive(:reset_po_cancellation).with(@o)
+      described_class.execute_business_logic(1,@old_data,@new_data)
+    end
     it 'should generate new PDF' do
       described_class.stub(:set_defaults).and_return false
       described_class.should_receive(:create_pdf).with(@o,@old_data,@new_data)
@@ -75,6 +81,38 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       described_class.stub(:set_defaults).and_return true
       described_class.should_not_receive(:create_pdf)
       described_class.execute_business_logic(1,@old_data,@new_data)
+    end
+    it 'should generate xml' do
+      described_class.should_receive(:generate_ll_xml).with(@o,@old_data,@new_data)
+      described_class.execute_business_logic(1,@old_data,@new_data)
+    end
+  end
+
+  describe '#generate ll xml' do
+    it 'should send xml to ll if ord_planned_handover_date has changed' do
+      o = double ('order')
+      od = double('OrderData-Old')
+      od.stub(:planned_handover_date).and_return Date.new(2016,5,1)
+      nd = double('OrderData-New')
+      nd.stub(:planned_handover_date).and_return Date.new(2016,5,2)
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_receive(:send_order).with(o)
+      described_class.generate_ll_xml(o,od,nd)
+    end
+
+    it "sends xml if old data is blank and new data has planned handover date" do
+      o = double ('order')
+      nd = double('OrderData-New')
+      nd.stub(:planned_handover_date).and_return Date.new(2016,5,2)
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_receive(:send_order).with(o)
+      described_class.generate_ll_xml(o,nil,nd)
+    end
+
+    it "does not sends xml if old data is blank and new data does not have planned handover date" do
+      o = double ('order')
+      nd = double('OrderData-New')
+      nd.stub(:planned_handover_date).and_return nil
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_not_receive(:send_order)
+      described_class.generate_ll_xml(o,nil,nd)
     end
   end
 
@@ -104,6 +142,52 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       expect(described_class.set_defaults(o,d)).to be_false
     end
 
+  end
+
+  describe 'reset_po_cancellation' do
+    before :each do
+      @cdef = described_class.prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
+      @ord = Factory(:order, closed_at: nil)
+      @ord.update_custom_value! @cdef, nil
+    end
+
+    it "reopens and uncancels order if it has lines and a cancel date, returns 'true'" do
+      Factory(:order_line, order: @ord)
+      @ord.update_custom_value! @cdef, Date.today
+      @ord.update_attributes(closed_at: DateTime.now)
+      
+      expect(described_class.reset_po_cancellation @ord).to eq true
+      cancel_date = @ord.get_custom_value @cdef
+      expect(cancel_date.value).to be_nil
+      expect(@ord.closed_at).to be_nil
+    end
+
+    it "closes and cancels order if it is doesn't have lines or a cancel date, returns true" do
+      expect(described_class.reset_po_cancellation @ord).to eq true
+      cancel_date = @ord.get_custom_value @cdef
+      expect(cancel_date.value).not_to be_nil
+      expect(@ord.closed_at).not_to be_nil
+    end
+
+    it "makes no change if order has lines but no cancel date, returns 'false'" do
+      closed = DateTime.now - 10
+      @ord.update_attributes(closed_at: closed)
+      Factory(:order_line, order: @ord)
+      expect(described_class.reset_po_cancellation @ord).to eq false
+      cancel_date = @ord.get_custom_value @cdef
+      expect(cancel_date.value).to be_nil
+      expect(@ord.closed_at).to eq closed
+    end
+
+    it "makes no change if order has a cancel date and no lines, returns 'false'" do
+      closed = DateTime.now - 10
+      @ord.update_attributes(closed_at: closed)
+      @ord.update_custom_value! @cdef, Date.today
+      expect(described_class.reset_po_cancellation @ord).to eq false
+      cancel_date = @ord.get_custom_value @cdef
+      expect(cancel_date.value).to eq Date.today
+      expect(@ord.closed_at).to eq closed
+    end
   end
 
   describe '#update_autoflow_approvals' do

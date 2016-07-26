@@ -34,135 +34,111 @@
 }).call(this);
 
 (function() {
-  var app;
+  var app,
+    hasProp = {}.hasOwnProperty;
 
   app = angular.module('VendorPortal');
 
   app.controller('ChainVpOrderPanelCtrl', [
-    '$scope', '$window', 'chainApiSvc', 'chainDomainerSvc', function($scope, $window, chainApiSvc, chainDomainerSvc) {
-      var defaultFields, defaultSorts, initFunc;
-      defaultFields = 'ord_ord_num,ord_ord_date,ord_window_start';
-      defaultSorts = [
-        {
-          field: 'ord_window_start'
-        }, {
-          field: 'ord_ord_num'
-        }
-      ];
+    '$scope', '$state', '$window', 'chainApiSvc', 'chainDomainerSvc', function($scope, $state, $window, chainApiSvc, chainDomainerSvc) {
+      var activateSearchWithCriteria, initFunc;
+      $scope.bulkDateOrder = {};
+      $scope.showOrder = function(ord) {
+        return $state.transitionTo('showOrder', {
+          id: ord.id
+        });
+      };
+      $scope.coreSearch = {};
       $scope.selectAll = {
         checked: false
       };
-      $scope.getDictionary = function() {
-        return chainDomainerSvc.withDictionary().then(function(d) {
-          $scope.dictionary = d;
-          return d;
-        });
-      };
-      $scope.setActiveOrders = function(searchId, orders) {
-        var ref;
-        if (searchId === ((ref = $scope.activeSearch) != null ? ref.id : void 0)) {
-          $scope.activeOrders = orders;
-          return $scope.loading = null;
-        }
+      activateSearchWithCriteria = function(hiddenCriteria) {
+        return $scope.coreSearch.searchSetup = {
+          reload: new Date().getTime(),
+          hiddenCriteria: hiddenCriteria,
+          columns: ['ord_ord_num', 'ord_ord_date', 'ord_window_start'],
+          buttons: [
+            {
+              label: 'View',
+              "class": 'btn btn-xs btn-default',
+              iconClass: 'fa fa-eye',
+              onClick: $scope.showOrder
+            }
+          ],
+          sorts: [
+            {
+              field: 'ord_window_start'
+            }, {
+              field: 'ord_ord_num'
+            }
+          ],
+          bulkSelections: {}
+        };
       };
       $scope.activateOrdersNotApproved = function() {
-        var params;
-        $scope.loading = 'loading';
-        params = {
-          fields: defaultFields,
-          criteria: [
-            {
-              field: 'ord_approval_status',
-              operator: 'null'
-            }, {
-              field: 'ord_closed_at',
-              operator: 'null'
-            }
-          ],
-          sorts: defaultSorts,
-          per_page: 50
-        };
-        return chainApiSvc.Order.search(params).then(function(orders) {
-          return $scope.setActiveOrders('notapproved', orders);
-        });
+        return activateSearchWithCriteria([
+          {
+            field: 'ord_approval_status',
+            operator: 'null'
+          }, {
+            field: 'ord_closed_at',
+            operator: 'null'
+          }
+        ]);
       };
       $scope.activateOrdersOpen = function() {
-        var params;
-        $scope.loading = 'loading';
-        params = {
-          fields: defaultFields,
-          criteria: [
-            {
-              field: 'ord_closed_at',
-              operator: 'null'
-            }
-          ],
-          sorts: defaultSorts,
-          per_page: 50
-        };
-        return chainApiSvc.Order.search(params).then(function(orders) {
-          return $scope.setActiveOrders('openorders', orders);
-        });
+        return activateSearchWithCriteria([
+          {
+            field: 'ord_closed_at',
+            operator: 'null'
+          }
+        ]);
       };
       $scope.activateApprovedAndOpen = function() {
-        var params;
-        $scope.loading = 'loading';
-        params = {
-          fields: defaultFields,
-          criteria: [
-            {
-              field: 'ord_approval_status',
-              operator: 'notnull'
-            }, {
-              field: 'ord_closed_at',
-              operator: 'null'
-            }
-          ],
-          sorts: defaultSorts,
-          per_page: 50
-        };
-        return chainApiSvc.Order.search(params).then(function(orders) {
-          return $scope.setActiveOrders('approvedandopen', orders);
-        });
+        return activateSearchWithCriteria([
+          {
+            field: 'ord_approval_status',
+            operator: 'notnull'
+          }, {
+            field: 'ord_closed_at',
+            operator: 'null'
+          }
+        ]);
       };
       $scope.activateFindOne = function() {
-        return $scope.loading = null;
+        return null;
       };
       $scope.activateSearch = function() {
         var so;
-        $scope.loading = null;
         so = $.grep($scope.searchOptions, function(el) {
           return el.id === $scope.activeSearch.id;
         });
         if (so.length > 0) {
-          $scope.activeOrders = null;
           return $scope[so[0].func]();
         }
       };
       $scope.find = function(orderNumber) {
-        var params, trimOrder;
+        var defaultFields, defaultSorts, trimOrder;
+        defaultFields = 'ord_ord_num,ord_ord_date,ord_window_start';
+        defaultSorts = [
+          {
+            field: 'ord_window_start'
+          }, {
+            field: 'ord_ord_num'
+          }
+        ];
         trimOrder = orderNumber ? $.trim(orderNumber) : '';
         if (trimOrder.length < 3) {
           $window.alert('Please enter at least 3 letters or numbers into search.');
           return;
         }
-        params = {
-          fields: defaultFields,
-          criteria: [
-            {
-              field: 'ord_ord_num',
-              operator: 'co',
-              val: trimOrder
-            }
-          ],
-          sorts: defaultSorts,
-          per_page: 50
-        };
-        $scope.activeOrders = null;
-        $scope.loading = 'loading';
-        return chainApiSvc.Order.search(params).then(function(orders) {
-          return $scope.setActiveOrders('findone', orders);
-        });
+        return activateSearchWithCriteria([
+          {
+            field: 'ord_ord_num',
+            operator: 'co',
+            val: trimOrder
+          }
+        ]);
       };
       $scope.searchOptions = [
         {
@@ -208,51 +184,55 @@
         });
       };
       $scope.selectedOrders = function() {
-        if (!$scope.activeOrders) {
+        var key, o, r, ref;
+        if (!($scope.coreSearch.searchSetup && $scope.coreSearch.searchSetup.bulkSelections)) {
           return [];
         }
-        return $.grep($scope.activeOrders, function(o) {
-          if (o.selected) {
-            return o;
-          } else {
-            return null;
+        r = [];
+        ref = $scope.coreSearch.searchSetup.bulkSelections;
+        for (key in ref) {
+          if (!hasProp.call(ref, key)) continue;
+          o = ref[key];
+          r.push(o);
+        }
+        return r;
+      };
+      $scope.bulkUpdateFields = function(baseObject, orders) {
+        var i, len, o, prop, updateObjs, updateOrd, val;
+        updateObjs = [];
+        for (i = 0, len = orders.length; i < len; i++) {
+          o = orders[i];
+          updateOrd = {
+            id: o.id
+          };
+          for (prop in baseObject) {
+            if (!hasProp.call(baseObject, prop)) continue;
+            val = baseObject[prop];
+            if (val && val.length > 0) {
+              updateOrd[prop] = val;
+            }
           }
+          updateObjs.push(updateOrd);
+        }
+        return chainApiSvc.Bulk.execute(chainApiSvc.Order.save, updateObjs).then(function() {
+          return $scope.coreSearch.searchSetup.reload = new Date().getTime();
         });
       };
       initFunc = function() {
         $scope.activeSearch = {
           id: 'notapproved'
         };
-        $scope.loading = 'loading';
-        return $scope.getDictionary().then(function(d) {
-          return $scope.activateSearch();
+        $scope.activateSearch();
+        return chainDomainerSvc.withDictionary().then(function(d) {
+          $scope.dict = d;
+          return $scope.dateEditFields = $.grep($scope.dict.fieldsByRecordType($scope.dict.recordTypes.Order), function(field) {
+            return field.data_type === 'date' && field.can_edit === true;
+          });
         });
       };
       if (!$scope.$root.isTest) {
-        initFunc();
+        return initFunc();
       }
-      return $scope.$watch('selectAll.checked', function(nv, ov) {
-        var i, j, len, len1, o, ref, ref1, results;
-        if (!($scope.activeOrders && $scope.activeOrders.length > 0)) {
-          return;
-        }
-        if (nv) {
-          ref = $scope.activeOrders;
-          for (i = 0, len = ref.length; i < len; i++) {
-            o = ref[i];
-            o.selected = true;
-          }
-        }
-        if (!nv && ov) {
-          ref1 = $scope.activeOrders;
-          results = [];
-          for (j = 0, len1 = ref1.length; j < len1; j++) {
-            o = ref1[j];
-            results.push(delete o.selected);
-          }
-          return results;
-        }
-      });
     }
   ]);
 
@@ -312,7 +292,7 @@ angular.module('VendorPortal-Templates', ['vendor_portal/partials/chain_vp_order
 
 angular.module("vendor_portal/partials/chain_vp_order_panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_order_panel.html",
-    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Orders <span class=\"label label-warning\" ng-if=\"loading==&quot;loading&quot;\">Loading</span></h3></div><div class=\"panel-body bg-info\"><select class=\"form-control\" ng-model=\"activeSearch\" ng-change=\"activateSearch()\" ng-options=\"opt.name for opt in searchOptions track by opt.id\"></select></div><div class=\"panel-body form-inline\" ng-if=\"activeSearch.id==&quot;findone&quot;\"><div class=\"form-group\"><input class=\"form-control\" ng-model=\"findOneVal\" placeholder=\"order number\" ng-keyup=\"$event.keyCode == 13 && find(findOneVal)\"> <button class=\"btn btn-success btn-sm\" ng-click=\"find(findOneVal)\"><i class=\"fa fa-search\"></i></button></div></div><div class=\"panel-body\" ng-if=\"loading=='loading'\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper></div><div class=\"panel-body bg-info text-center\" ng-if=\"activeOrders.length == [] && loading!='loading'\"><strong>No orders found</strong></div><div class=\"panel-body bg-danger text-center\" ng-if=\"activeOrders.length > 49 && loading!='loading'\">Only 50 orders are displayed. Use search from the drop down menu to find you order.</div><table class=\"table table-striped\" ng-if=\"activeOrders.length > 0\"><thead><tr><th><input type=\"checkbox\" ng-model=\"selectAll.checked\" title=\"Select All\"></th><th>{{dictionary.fields.ord_ord_num.label}}</th><th>{{dictionary.fields.ord_ord_date.label}}</th><th>{{dictionary.fields.ord_window_start.label}}</th></tr></thead><tr ng-repeat=\"o in activeOrders track by o.id\"><td><input type=\"checkbox\" ng-model=\"o.selected\"></td><td><a ui-sref=\"showOrder({id:o.id})\">{{o.ord_ord_num}}</a></td><td>{{o.ord_ord_date}}</td><td>{{o.ord_window_start}}</td></tr></table><div class=\"panel-footer text-right\"><button class=\"btn btn-sm btn-primary\" ng-disabled=\"selectedOrders().length==0\" data-toggle=\"modal\" data-target=\"#bulk-comment-selected-orders\" title=\"Add Comments\"><i class=\"fa fa-sticky-note\"></i></button> <button class=\"btn btn-sm btn-primary\" ng-disabled=\"selectedOrders().length==0\" ng-click=\"bulkAccept(selectedOrders())\">Approve</button></div></div><div class=\"modal fade\" id=\"bulk-comment-selected-orders\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Add Comments</h4></div><div class=\"modal-body\"><label for=\"bulkOrderCommentSubject\">Subject</label><input class=\"form-control\" id=\"bulkOrderCommentSubject\" ng-model=\"bulkOrderCommentSubject\"><label for=\"bulkOrderCommentBody\">Body</label><textarea class=\"form-control\" id=\"bulkOrderCommentBody\" ng-model=\"bulkOrderCommentBody\"></textarea><div class=\"alert alert-warning\">This will add comments to {{selectedOrders().length}} orders.</div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-success\" data-dismiss=\"modal\" ng-disabled=\"bulkOrderCommentSubject.length==0 || bulkOrderCommentBody.length==0\" ng-click=\"bulkComment(selectedOrders())\">Send</button></div></div></div></div>");
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Orders</h3></div><div class=\"panel-body bg-info\"><select class=\"form-control\" ng-model=\"activeSearch\" ng-change=\"activateSearch()\" ng-options=\"opt.name for opt in searchOptions track by opt.id\"></select></div><div class=\"panel-body form-inline\" ng-if=\"activeSearch.id==&quot;findone&quot;\"><div class=\"form-group\"><input class=\"form-control\" ng-model=\"findOneVal\" placeholder=\"order number\" ng-keyup=\"$event.keyCode == 13 && find(findOneVal)\"> <button class=\"btn btn-success btn-sm\" ng-click=\"find(findOneVal)\"><i class=\"fa fa-search\"></i></button></div></div><div class=\"panel-body\"><chain-search-table api-object-name=\"Order\" search-setup=\"coreSearch.searchSetup\"></chain-search-table></div><div class=\"panel-footer text-right\"><button class=\"btn btn-sm btn-primary\" ng-disabled=\"selectedOrders().length==0\" data-toggle=\"modal\" data-target=\"#bulk-update-dates\" title=\"Update Dates\"><i class=\"fa fa-pencil-square-o\"></i></button> <button class=\"btn btn-sm btn-primary\" ng-disabled=\"selectedOrders().length==0\" data-toggle=\"modal\" data-target=\"#bulk-comment-selected-orders\" title=\"Add Comments\"><i class=\"fa fa-sticky-note\"></i></button> <button class=\"btn btn-sm btn-primary\" ng-disabled=\"selectedOrders().length==0\" ng-click=\"bulkAccept(selectedOrders())\">Approve</button></div></div><div class=\"modal fade\" id=\"bulk-comment-selected-orders\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Add Comments</h4></div><div class=\"modal-body\"><label for=\"bulkOrderCommentSubject\">Subject</label><input class=\"form-control\" id=\"bulkOrderCommentSubject\" ng-model=\"bulkOrderCommentSubject\"><label for=\"bulkOrderCommentBody\">Body</label><textarea class=\"form-control\" id=\"bulkOrderCommentBody\" ng-model=\"bulkOrderCommentBody\"></textarea><div class=\"alert alert-warning\">This will add comments to {{selectedOrders().length}} orders.</div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-success\" data-dismiss=\"modal\" ng-disabled=\"bulkOrderCommentSubject.length==0 || bulkOrderCommentBody.length==0\" ng-click=\"bulkComment(selectedOrders())\">Send</button></div></div></div></div><div class=\"modal fade\" id=\"bulk-update-dates\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Update Dates</h4></div><div class=\"modal-body\"><div ng-repeat=\"f in dateEditFields track by f.uid\"><label>{{f.label}}</label><chain-field-input model=\"bulkDateOrder\" field=\"f\" input-class=\"form-control\"></chain-field-input></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-success\" data-dismiss=\"modal\" ng-click=\"bulkUpdateFields(bulkDateOrder,selectedOrders())\">Save</button></div></div></div></div>");
 }]);
 
 angular.module("vendor_portal/partials/main.html", []).run(["$templateCache", function($templateCache) {
@@ -508,6 +488,13 @@ angular.module("vendor_portal/partials/standard_order_template.html", []).run(["
               return delete $scope.loading;
             });
           });
+        });
+      };
+      $scope.save = function(order) {
+        $scope.loading = 'loading';
+        return chainApiSvc.Order.save(order).then(function(o) {
+          $scope.order = o;
+          return delete $scope.loading;
         });
       };
       $scope.accept = function(order) {

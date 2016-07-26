@@ -101,9 +101,9 @@ describe Api::V1::ModelFieldsController do
       company_updated_at = 1.hour.ago
       user_updated_at = 1.day.ago
 
-      ModelField.should_receive(:last_loaded).and_return(mfload)
+      ModelField.should_receive(:last_loaded).twice.and_return(mfload)
       Company.any_instance.should_receive(:updated_at).and_return(company_updated_at)
-      User.any_instance.should_receive(:updated_at).and_return(user_updated_at)
+      User.any_instance.should_receive(:updated_at).twice.and_return(user_updated_at)
 
       expected_cache = Digest::MD5.hexdigest "#{@user.username}#{mfload.to_s}#{company_updated_at.to_i}#{user_updated_at.to_i}"
 

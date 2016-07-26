@@ -30,6 +30,7 @@ makeBulkActions = ->
       $("#frm_bulk").bind("ajax:success",BulkActions.handleBulkComment)
       $("#frm_bulk").submit()
 
+
     handleBulkComment: (xhr,data,status) ->
       createBulkCommentModal = ->
         $('body').append('<div class="modal fade" id="bulk-comment-modal" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title">Comment</h4></div><div class="modal-body"><label>Subject</label><input type="text" class="form-control" name="subject" /><label>Body</label><textarea class="form-control" name="body" rows="5"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button><button type="button" class="btn btn-primary" id="bulk-comment-modal-submit">Comment</button></div></div></div></div>')
@@ -60,6 +61,51 @@ makeBulkActions = ->
       mod.modal('hide')
       window.alert('Your comments have been submitted in the background. They may take a few minutes to post.')
 
+    handleBulkOrderUpdate: (xhr,data,status) ->
+      createBulkCommentModal = (data) ->
+        $('body').append("<div class='modal fade' id='bulk-ord-update-modal' tabindex='-1' role='dialog' aria-labelledby='' aria-hidden='true'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h4 class='modal-title'>Update Orders</h4></div><div class='modal-body'><div id='bulk-ord-update-fields' class='row' style='line-height: 2.5'></div></div><div class='modal-footer'><button type='button' class='btn btn-default' data-dismiss='modal'>Close</button><button type='button' class='btn btn-primary' id='bulk-ord-update-modal-submit'>Save</button></div></div></div></div>
+")
+        fields = $('#bulk-ord-update-fields')
+        for k,v of data["mf_hsh"]
+          field = "<div><div class='col-md-6'><label class='control-label'>#{v}</label><input type='text' class='form-control isdate' name='mf_hsh[#{k}]' value='' /></div></div>"
+          fields.append field
+        $('.isdate').datepicker()
+
+        $('#bulk-ord-update-modal-submit').click(BulkActions.completeBulkOrderUpdate)
+        $('#bulk-ord-update-modal')
+
+      mod = $('#bulk-ord-update-modal')
+      mod = createBulkCommentModal(data) unless mod.length > 0
+      mod.find('.modal-title').html("Update <span class='text-danger'>#{data["count"]}</span> Records")
+      mod.modal('show')
+    
+
+    completeBulkOrderUpdate: ->
+      mod = $('#bulk-ord-update-modal')
+      fields = mod.find('input').map ->
+        field = {}
+        if this.value 
+          field[this.name] = this.value
+        field if this.value
+      
+      sba = $('#submit_bulk_action')
+      sba.children(':not(input[type="hidden"])').remove()
+      for obj in fields
+        for n,v of obj
+          inputTag = mod.find("input[name='#{n}']")
+          inputTag.attr('value', v)
+          sba.append inputTag
+
+      if fields.length == 0
+        window.alert('You must update at least one field.')
+        return
+    
+      RailsHelper.prepRailsForm sba, '/orders/bulk_update', 'POST'
+      sba.unbind("ajax:success",BulkActions.handleBulkOrderUpdate)
+      sba.submit()
+      mod.modal('hide')
+      window.alert('Your updates have been submitted in the background. They may take a few minutes to post.')
+    
     submitBulkClassify : () ->
       $("#frm_bulk").attr('data-remote','true')
       $("#frm_bulk").attr('action','/products/bulk_classify.json')

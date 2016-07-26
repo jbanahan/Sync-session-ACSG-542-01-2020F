@@ -2,112 +2,130 @@ require 'open_chain/workflow_processor'
 
 module Api; module V1; class AttachmentsController < Api::V1::ApiController
   include PolymorphicFinders
+  include ApiJsonSupport
 
   # The create call is done via a multipart/form posting..so don't check for json
   skip_before_filter :validate_format, only: [:create]
 
-  def show
-    att = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type]), id: params[:id]).first
+  def index
+    find_object(params, current_user) do |obj|
+      attachments = []
+      obj.attachments.select {|a| a.can_view? current_user}.each do |a|
+        attachments << attachment_view(current_user, a)
+      end
 
-    if att && att.can_view?(current_user)
-      render json: Attachment.attachment_json(att)
-    else
-      raise ActiveRecord::RecordNotFound
+      render json: {"attachments" => attachments}
     end
   end
 
-  def index
-    att = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type])).order('created_at desc')
-
-    attachments = []
-    att.each do |a|
-      if a.can_view? current_user
-        attachments << Attachment.attachment_json(a)
+  def show
+    find_object(params, current_user) do |obj|
+      attachment = obj.attachments.find {|a| a.id == params[:id].to_i }
+      if attachment && attachment.can_view?(current_user)
+        render json: {"attachment" => attachment_view(current_user, attachment)}
+      else
+        render_forbidden
       end
     end
-
-    render json: attachments
   end
 
   def destroy
-    attachment = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type]), id: params[:id]).first
+    edit_object(params, current_user) do |obj|
+      attachment = obj.attachments.find {|a| a.id == params[:id].to_i }
+      if attachment
+        deleted = false
+        Attachment.transaction do
+          attachment.destroy
+          attachment.rebuild_archive_packet
+          deleted = true
+        end
 
-    if attachment && attachment.attachable.can_attach?(current_user)
-      deleted = false
-      Attachment.transaction do
-        deleted = attachment.destroy
-        attachment.rebuild_archive_packet if deleted
-      end
-
-      OpenChain::WorkflowProcessor.async_process(attachment.attachable) if deleted
-      render json: {}
-    else
-      raise ActiveRecord::RecordNotFound
-    end
-  end
-
-  def download
-    a = Attachment.where(attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type]), id: params[:id]).first
-    if a.can_view? current_user
-      expires_in = Time.zone.now + 5.minutes
-      if MasterSetup.get.custom_feature?('Attachment Mask')
-        url = download_attachment_url a, protocol: (Rails.env.production? ? "https" : "http"), host: MasterSetup.get.request_host
+        OpenChain::WorkflowProcessor.async_process(obj) if deleted
+        render_ok
       else
-        url = a.secure_url expires_in
-      end        
-      
-      render json: {url: url, name: a.attached_file_name, expires_at: expires_in.iso8601}
-    else
-      raise ActiveRecord::RecordNotFound
+        render_forbidden
+      end
     end
   end
 
   def create
-    attachment = Attachment.new attachable_id: params[:attachable_id], attachable_type: get_attachable_type(params[:attachable_type]), attachment_type: params[:type]
-    attachable = attachment.attachable
     if params[:file].nil?
       render_error "Missing file data."
-    elsif attachable && attachable.can_attach?(current_user)
-      attachment.attached = params[:file]
-      attachment.uploaded_by = current_user
-      attachment.save!
-
-      OpenChain::WorkflowProcessor.async_process(attachable)
-      attachable.log_update(current_user) if attachable.respond_to?(:log_update)
-      attachable.attachment_added(attachment) if attachable.respond_to?(:attachment_added)
-      render json: Attachment.attachment_json(attachment)
     else
-      raise ActiveRecord::RecordNotFound
+      edit_object(params, current_user) do |obj|
+        # Every model field for attachment is read-only, so only pull the attachment type from the params and don't use the model field import - since it'll fail due
+        # to the model field being read-only.
+        attachment = obj.attachments.build attachment_type: params[:att_attachment_type]
+        attachment.attached = params[:file]
+        attachment.uploaded_by = current_user
+        attachment.save!
+
+        OpenChain::WorkflowProcessor.async_process(obj)
+        obj.log_update(current_user) if obj.respond_to?(:log_update)
+        obj.attachment_added(attachment) if obj.respond_to?(:attachment_added)
+
+        render json: {"attachment" => attachment_view(current_user, attachment)}
+      end
+    end
+  end
+
+  def download
+    find_object(params, current_user) do |obj|
+      attachment = obj.attachments.find {|a| a.id == params[:id].to_i }
+      if attachment && attachment.can_view?(current_user)
+        render_download attachment
+      else
+        render_forbidden
+      end
+    end
+  end
+
+  def attachment_types
+    # At the moment, there is no distinction for attachment types based on the object type in use,
+    # however, I'm pretty sure that is coming, so I'm codifying it now.
+    find_object(params, current_user) do |obj|
+      render json: {"attachment_types" => AttachmentType.all.map {|t| {name: t.name, value: t.name}} }
     end
   end
 
   private
-    def get_attachable_type type
-      # If there's irregular forms of the attachable_type...add translations here
-      # We accept two things here..
-      # 1) Send the actual straight up attachable_type as it would appear in the Attachment's attachable_type attribute
-      # 2) Send the snake_case pluralized form that would be used in a standard rails route.
-      # In general though, it's going to take 'snake_cases' and turn it into 'SnakeCase' and then verify the value
-      # can be constantized and is an ActiveModel class
 
-      # first, just attempt to constantize the type name straight off, since we do allow sending the type directly, .ie "Entry" vs. "entries"
-      camelized_type = type.to_s.camelize
-      attachable_type = validate_attachable_class_name(type.camelize)
-      if attachable_type.nil?
-        attachable_type = validate_attachable_class_name(camelized_type.singularize)
+    def render_download attachment
+      expires_in = Time.zone.now + 5.minutes
+      if MasterSetup.get.custom_feature?('Attachment Mask')
+        url = download_attachment_url attachment, protocol: (Rails.env.production? ? "https" : "http"), host: MasterSetup.get.request_host
+      else
+        url = attachment.secure_url expires_in
       end
 
-      raise StatusableError.new("Invalid attachable_type.", :internal_server_error) if attachable_type.nil?
-
-      attachable_type
+      render json: {url: url, name: attachment.attached_file_name, expires_at: expires_in.iso8601}
     end
 
-    def validate_attachable_class_name class_name
-      begin
-        constantize(class_name) ? class_name : nil
-      rescue
+    def find_object params, user
+      obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
+      if obj && obj.can_view?(user)
+        yield obj
+      else
+        render_forbidden
         nil
       end
+    end
+
+    def edit_object params, user
+      obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
+      if obj && obj.can_attach?(user)
+        yield obj
+      else
+        render_forbidden
+        nil
+      end
+    end
+
+    def attachment_view user, attachment
+      fields = all_requested_model_field_uids(CoreModule::ATTACHMENT)
+      h = to_entity_hash(attachment, fields, user: user)
+      h['friendly_size'] = ActionController::Base.helpers.number_to_human_size(attachment.attached_file_size)
+      h
     end
 
 end; end; end;

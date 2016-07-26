@@ -1,6 +1,11 @@
 require 'open_chain/business_rule_validation_results_support'
+require 'open_chain/bulk_action/bulk_action_runner'
+require 'open_chain/bulk_action/bulk_action_support'
+require 'open_chain/bulk_action/bulk_order_update'
+
 class OrdersController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
+  include OpenChain::BulkAction::BulkActionSupport
 
 	def root_class
 		Order
@@ -50,7 +55,7 @@ class OrdersController < ApplicationController
   # GET /orders/1/edit
   def edit
     o = Order.find(params[:id])
-    action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
+    action_secure(o.can_edit?(current_user),o,{:verb => "edit", :module_name=>"order"}) {
       @order = o
     }
   end
@@ -82,7 +87,7 @@ class OrdersController < ApplicationController
   # PUT /orders/1.xml
   def update
     o = Order.find(params[:id])
-    action_secure(current_user.company.master,o,{:module_name=>"order"}) {
+    action_secure(o.can_edit?(current_user),o,{:module_name=>"order"}) {
       succeed = lambda {|ord|
         add_flash :notices, "Order was updated successfully."
         redirect_to ord
@@ -151,6 +156,21 @@ class OrdersController < ApplicationController
 
   def validation_results
     generic_validation_results(Order.find params[:id])
+  end
+
+  def bulk_update
+    opts = {}
+    opts = params['mf_hsh']
+    OpenChain::BulkAction::BulkActionRunner.process_from_parameters current_user, params, OpenChain::BulkAction::BulkOrderUpdate, opts
+    render json: {'ok'=>'ok'}
+  end
+
+  def bulk_update_fields
+    mf_hsh = {}
+    mfs = CoreModule::ORDER.model_fields(current_user) {|mf| mf.can_edit?(current_user) && mf.date?}
+    mfs.each_pair { |field_name, mf| mf_hsh[field_name] = mf.label }
+    c = get_bulk_count(params[:pk], params[:sr_id])
+    render json: {count: c, mf_hsh: mf_hsh}
   end
 
   private

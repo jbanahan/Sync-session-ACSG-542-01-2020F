@@ -8,8 +8,16 @@
       <h1>
         Paste Order Numbers To <em>Keep Open</em>
       </h1>
+      <br>
+      <div class="container">
+        <div class="row" style="line-height: 2.5">
+          <div class="col-md-2"><label class="control-label" for="effective_date">Effective Date:</label></div>
+          <div class="col-md-3"><%=text_field_tag :effective_date,"", :class=>'form-control isdate'%></div>
+        </div>
+      <br>
+      </div>
       <div>
-        <em>All other orders will be closed.</em>
+        <em>All other orders with order dates BEFORE the Effective date will be closed.</em>
       </div>
       <textarea name='orders' rows='20' class='form-control'></textarea>
     </div>

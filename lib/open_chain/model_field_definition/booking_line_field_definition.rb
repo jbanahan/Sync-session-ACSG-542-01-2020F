@@ -28,7 +28,7 @@ module OpenChain
               data_type: :string,
               read_only: true,
               export_lambda: lambda { |bl| bl.customer_order_and_line_number },
-              qualified_field_name: "(SELECT CONCAT_WS(' - ', orders.customer_order_number, order_lines.line_number) FROM booking_lines
+              qualified_field_name: "(SELECT CONCAT_WS(' - ', IF((orders.customer_order_number IS NULL OR LENGTH(TRIM(orders.customer_order_number)) = 0), orders.order_number, orders.customer_order_number), order_lines.line_number) FROM booking_lines
 JOIN order_lines ON order_lines.id = order_line_id
 JOIN orders ON orders.id = order_lines.order_id
 WHERE orders.id = order_lines.order_id)"

@@ -103,7 +103,7 @@ describe 'ShipmentApp', ->
         activeOrder = {id: 99, order_lines: []}
         r = q.defer()
         spyOn(svc,'getOrder').andReturn(r.promise)
-        scope.getOrder(ord)
+        scope.getOrderLines(ord)
         r.resolve({data: {order: activeOrder}})
         scope.$apply()
         expect(scope.activeOrder).toEqual activeOrder
@@ -113,7 +113,7 @@ describe 'ShipmentApp', ->
         ord = {id: 1}
         r = q.defer()
         spyOn(svc,'getOrder').andReturn(r.promise)
-        scope.getOrder(ord)
+        scope.getOrderLines(ord)
         r.resolve({data: {order: {id: 99, order_lines: [{ordln_ordered_qty: 10}]}}})
         scope.$apply()
         expect(scope.activeOrder).toEqual {id: 99,order_lines: [{ordln_ordered_qty: 10, quantity_to_ship: 10}]}

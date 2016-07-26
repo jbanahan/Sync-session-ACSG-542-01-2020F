@@ -25,7 +25,6 @@ module OpenChain; module Api; class ApiEntityJsonizer
     raise "CoreModule could not be found for class #{entity.class.to_s}." if core_module.nil?
 
     requested_model_fields = build_model_field_hash user, core_module, model_field_uids.to_set
-
     entity_hash = {}
     unless requested_model_fields.blank?
       add_model_fields_to_hash user, entity, core_module, requested_model_fields, entity_hash
@@ -82,7 +81,7 @@ module OpenChain; module Api; class ApiEntityJsonizer
     v
   end
 
-  private 
+  protected
 
     def build_model_field_descriptor mf
       {'uid'=>mf.uid.to_s, 'label' => mf.label(false), 'data_type' => mf.data_type.to_s}

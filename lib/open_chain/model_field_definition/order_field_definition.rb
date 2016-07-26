@@ -14,7 +14,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
             ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)}
       },],
       [4,:ord_cust_ord_no, :customer_order_number, "Customer Order Number"],
-      [5,:ord_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}],
+      [5,:ord_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime, read_only: true}],
       [6,:ord_mode, :mode, "Mode of Transport",{:data_type=>:string}],
       #was ord_rule_state
       [8,:ord_revised_date,:last_revised_date, 'Last Revised Date',{data_type: :date}],
@@ -23,7 +23,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
       [11,:ord_window_end,:ship_window_end,'Ship Window End Date',{data_type: :date}],
       [12,:ord_first_exp_del,:first_expected_delivery_date,'First Expected Delivery Date',{data_type: :date}],
       [13,:ord_fob_point,:fob_point,'FOB Point',{data_type: :string}],
-      [14,:ord_closed_at,:closed_at,'Closed At',{data_type: :datetime}],
+      [14,:ord_closed_at,:closed_at,'Closed At',{data_type: :datetime, read_only: true}],
       [15,:ord_closed_by,:username,"Closed By", {
         :import_lambda => lambda {|a,b| return "Closed By cannot be set by import, ignored."},
         :export_lambda => lambda {|obj|

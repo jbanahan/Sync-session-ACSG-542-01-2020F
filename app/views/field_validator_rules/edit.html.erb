@@ -6,7 +6,7 @@ $(function() {
 
 <%end%>
 <% content_for :action_bar do%>
-  <button class="form_to" key_map="s" form_id="frm_rule">Save</button> 
+  <button class="form_to" key_map="s" form_id="frm_rule">Save</button>
   <button id='btn_delete_redirect'>Delete</button>
   <button class="btn_link" key_map="b" link_to="<%=field_validator_rules_path%>">Back</button>
 <% end %>
@@ -17,6 +17,7 @@ $(function() {
   <%=field_row "Field", @rule.model_field.label%>
   <%=field_row "Comment", content_tag(:span,f.text_area(:comment,:rows=>5)+tag("br")+"Put notes here, they won't change how the rule works.")%>
   <%=field_row "Custom Error Message", f.text_field(:custom_message)%>
+  <%=field_row "Custom XML Tag", f.text_field(:xml_tag_name)%>
   <%=field_row "Read Only", f.check_box(:read_only) %>
   <%=field_row "Required", f.check_box(:required) %>
   <% if [:decimal,:integer].include? mf.data_type%>

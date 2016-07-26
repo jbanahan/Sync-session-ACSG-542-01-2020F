@@ -42,6 +42,9 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::AttachmentFieldDefinition
   include OpenChain::ModelFieldDefinition::EntryCommentFieldDefinition
   include OpenChain::ModelFieldDefinition::CommercialInvoiceLaceyComponentFieldDefinition
+  include OpenChain::ModelFieldDefinition::FolderFieldDefinition
+  include OpenChain::ModelFieldDefinition::CommentFieldDefinition
+  include OpenChain::ModelFieldDefinition::GroupFieldDefinition
 
   def add_field_definitions
     add_address_fields
@@ -83,5 +86,8 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_trade_lane_fields
     add_trade_preference_program_fields
     add_tpp_hts_override_fields
+    add_folder_fields
+    add_comment_fields
+    add_group_fields
   end
 end; end; end

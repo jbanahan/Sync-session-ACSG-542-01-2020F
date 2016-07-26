@@ -550,6 +550,63 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
       expect(Container.find_by_id(con.id)).to_not be_nil
     end
+
+    context "with booking lines" do
+
+      let (:order_line) { Factory(:order_line, product:@product, quantity:1000,order:Factory(:order,importer:@imp)) }
+      let (:shipment_data) {
+        {'id'=>@shipment.id,
+         'booking_lines' => [
+           'bkln_order_line_id' => order_line.id,
+           'bkln_cbms' => 10,
+           'bkln_carton_qty' => 1
+         ]
+        }
+      }
+
+      it "creates booking lines" do
+        put :update, id: @shipment.id, shipment: shipment_data
+        expect(response).to be_success
+        @shipment.reload
+        expect(@shipment.booking_lines.length).to eq 1
+        line = @shipment.booking_lines.first
+        expect(line.order_line).to eq order_line
+        expect(line.line_number).to eq 1
+        expect(line.cbms).to eq 10
+        expect(line.carton_qty).to eq 1
+      end
+
+      it "skips order_id and product_id on booking lines if order_line_id is set" do
+        bl = shipment_data['booking_lines'].first
+        bl['bkln_order_id'] = 12345
+        bl['bkln_prod_id'] = 54321
+
+        put :update, id: @shipment.id, shipment: shipment_data
+        expect(response).to be_success
+        @shipment.reload
+        expect(@shipment.booking_lines.length).to eq 1
+        line = @shipment.booking_lines.first
+        expect(line.order_line).not_to be_nil
+        expect(line.order_id).to be_nil
+        expect(line.product_id).to be_nil
+      end
+
+      it "supports setting order id and product id if order_line_id is not present" do
+        bl = shipment_data['booking_lines'].first
+        bl['bkln_order_line_id'] = nil
+        bl['bkln_order_id'] = order_line.order.id
+        bl['bkln_prod_id'] = @product.id
+
+        put :update, id: @shipment.id, shipment: shipment_data
+        expect(response).to be_success
+        @shipment.reload
+        expect(@shipment.booking_lines.length).to eq 1
+        line = @shipment.booking_lines.first
+        expect(line.order).to eq order_line.order
+        expect(line.product).to eq @product
+      end
+    end
+    
   end
   describe "available_orders" do
     it "should return all orders available from shipment.available_orders" do
@@ -559,7 +616,11 @@ describe Api::V1::ShipmentsController do
       o1.id = 99
       o2 = Order.new(importer:imp,vendor:vend,order_date:Date.new(2014,1,1),mode:'Air',order_number:'ONUM2',customer_order_number:'CNUM2')
       o2.id = 100
-      Shipment.any_instance.stub_chain(:available_orders,:order).and_return [o1,o2]
+      ar_object = double("ShipmentRelation")
+      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return ar_object
+      ar_object.should_receive(:order).with("customer_order_number").and_return ar_object
+      ar_object.should_receive(:limit).with(25).and_return ar_object
+      ar_object.should_receive(:each).and_yield(o1).and_yield(o2)
       Shipment.any_instance.stub(:can_view?).and_return true
       s = Factory(:shipment)
       get :available_orders, id: s.id
@@ -636,7 +697,7 @@ describe Api::V1::ShipmentsController do
 
   describe "autocomplete_orders" do
     before :each do
-      @order_1 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNUM")
+      @order_1 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNUM", order_number: "ORDERNUM")
       @order_2 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNO#")
       @s = Factory(:shipment, importer: @u.company, vendor: @u.company)
     end
@@ -650,6 +711,32 @@ describe Api::V1::ShipmentsController do
       expect(response).to be_success
       r = JSON.parse(response.body)
       expect(r.size).to eq 1
+      expect(r.first).to eq( {"order_number"=>@order_1.customer_order_number, "id"=>@order_1.id} )
+    end
+
+    it "autocompletes using order_number" do
+      # Just return all orders...all we care about is that Shipment.available_orders is used
+      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+
+      get :autocomplete_order, id: @s.id, n: "ORDER"
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      # Note the use of order_number below, this also checks that the field that was matched on
+      # is used as the title in the json response
+      expect(r.first).to eq( {"order_number"=>@order_1.order_number, "id"=>@order_1.id} )
+    end
+
+    it "prefers customer order number if both order number and customer order number match" do
+      # Just return all orders...all we care about is that Shipment.available_orders is used
+      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+
+      get :autocomplete_order, id: @s.id, n: "NUM"
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      expect(r.size).to eq 1
+      # Note the use of order_number below, this also checks that the field that was matched on
+      # is used as the title in the json response
       expect(r.first).to eq( {"order_number"=>@order_1.customer_order_number, "id"=>@order_1.id} )
     end
 

@@ -237,6 +237,11 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       $scope.loadShipment(shipment.id).finally ->
         $scope.loadingFlag = null
 
+  $scope.shipmentLineOrderNumber = (shipmentLine) ->
+    ord = shipmentLine.ord_cust_ord_no
+    ord = shipmentLine.ord_ord_num unless ord
+    ord
+
   if $state.params.shipmentId
     $scope.loadShipment $state.params.shipmentId
 
