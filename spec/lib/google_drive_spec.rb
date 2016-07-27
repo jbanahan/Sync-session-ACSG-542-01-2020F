@@ -159,6 +159,15 @@ describe OpenChain::GoogleDrive do
       end
     end
 
+    describe "remove_file_from_folder" do
+      it "removes a file from the given parent's folder" do
+        expect(OpenChain::GoogleDrive.remove_file_from_folder(@user_email, @path))
+
+        retry_expect(additional_rescue_from: [StandardError]) {
+          expect(OpenChain::GoogleDrive.find_file_id(@user_email, @path)).to be_nil
+        }
+      end
+    end
   end
 
   context :delete do

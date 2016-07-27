@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
           OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], File.basename(path), file).deliver!
         end
 
-        drive_client.delete account, actual_drive_path.to_s
+        drive_client.remove_file_from_folder account, actual_drive_path.to_s
       end
     end
   rescue OpenChain::GoogleDrive::FileNotFoundError => e

@@ -82,6 +82,11 @@ module OpenChain
     private_class_method :find_object_hash
 
     # Perminently deletes the file object this path references.
+    # 
+    # Delete ONLY works if you are the Drive owner of the file.  In general, 
+    # if you're removing files using a service account, you'll want to utilize the
+    # remove_file_from_folder method.
+    # 
     # Using 'delete' instead of delete_file to preserve S3 API parity
     def self.delete user_email, path
       delete_object user_email, path, :file
@@ -89,9 +94,28 @@ module OpenChain
     end
 
     # Perminently deletes the folder object this path references.
+    #
+    # Delete ONLY works if you are the Drive owner of the file.  In general, 
+    # if you're removing files using a service account, you'll want to utilize the
+    # remove_file_from_folder method.
+    #
     # BEWARE - This also deletes EVERYTHING below the folder too.
     def self.delete_folder user_email, path
       delete_object user_email, path, :folder
+      nil
+    end
+
+    # 
+    # Removes a file from the parent folder given by the path.
+    # 
+    def self.remove_file_from_folder user_email, path
+      file_id = find_file_id user_email, path
+      return if file_id.nil?
+
+      folder_id = find_folder_id user_email, Pathname.new(path).parent.to_s
+      return if folder_id.nil?
+
+      get_client(user_email).remove_object_from_folder folder_id, file_id
       nil
     end
 
@@ -447,6 +471,10 @@ module OpenChain
             :parameters => {'fileId' => id}
           )
         end
+      end
+
+      def remove_object_from_folder folder_id, file_id
+        execute_single_method! api_method: @drive.children.delete, parameters: {'folderId' => folder_id, 'childId' => file_id}
       end
 
       def get_object_info object_id
