@@ -124,23 +124,12 @@ module OpenChain; module Report; class SgDutyDueReport
     weekend.include? date.wday
   end
 
-  def add_3_workdays start_date
-    start_wday = start_date.wday
-    if start_wday > 2
-      end_wday = (start_wday + 3) % 5
-      days_to_add = (5 - start_wday) + 2 + end_wday
-    else
-      days_to_add = 3
-    end
-    start_date + days_to_add
-  end
-
   def init_group_hsh ent 
     {ent[:port_sched_d] => init_port_hsh(ent), 
      date_total_duties_and_fees: 0,
      daily_statement_approved: ent[:daily_statement_approved_date],
      daily_statement_number: Set.new([ent[:daily_statement_number]]),
-     est_debit_date: add_3_workdays(ent[:duty_due_date])}
+     est_debit_date: ent[:duty_due_date]}
   end
   
   def init_port_hsh ent
