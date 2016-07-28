@@ -449,7 +449,7 @@ module CoreModuleDefinitions
   # Attachment has no field that is really suitable for use in key_model_field_uids or in unique_id_field,
   # as such attachments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so
   # that's not a big deal.
-  ATTACHMENT = CoreModule.new("Attachment", "Attachment", {})
+  ATTACHMENT = CoreModule.new("Attachment", "Attachment", {unique_id_field_name: :att_unique_identifier})
   ADDRESS = CoreModule.new("Address","Address",{
     unique_id_field_name: :add_sys_code,
     enabled_lambda: lambda {true}
