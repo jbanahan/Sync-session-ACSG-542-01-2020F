@@ -39,6 +39,7 @@ module OpenChain
       begin
         tempfile = Tempfile.new([File.basename(path, ".*"), File.extname(path)])
         tempfile.binmode
+        Attachment.add_original_filename_method tempfile, File.basename(path)
 
         client.download_file path, tempfile
 
@@ -81,6 +82,11 @@ module OpenChain
     private_class_method :find_object_hash
 
     # Perminently deletes the file object this path references.
+    # 
+    # Delete ONLY works if you are the Drive owner of the file.  In general, 
+    # if you're removing files using a service account, you'll want to utilize the
+    # remove_file_from_folder method.
+    # 
     # Using 'delete' instead of delete_file to preserve S3 API parity
     def self.delete user_email, path
       delete_object user_email, path, :file
@@ -88,10 +94,34 @@ module OpenChain
     end
 
     # Perminently deletes the folder object this path references.
+    #
+    # Delete ONLY works if you are the Drive owner of the file.  In general, 
+    # if you're removing files using a service account, you'll want to utilize the
+    # remove_file_from_folder method.
+    #
     # BEWARE - This also deletes EVERYTHING below the folder too.
     def self.delete_folder user_email, path
       delete_object user_email, path, :folder
       nil
+    end
+
+    # 
+    # Removes a file from the parent folder given by the path.
+    # 
+    def self.remove_file_from_folder user_email, path
+      file_id = find_file_id user_email, path
+      return if file_id.nil?
+
+      folder_id = find_folder_id user_email, Pathname.new(path).parent.to_s
+      return if folder_id.nil?
+
+      get_client(user_email).remove_object_from_folder folder_id, file_id
+      nil
+    end
+
+    def self.get_file_owner_email user_email, path
+      object_hash = find_object_hash get_client(user_email), path, :file
+      object_hash ? object_hash[:ownerEmail] : nil
     end
 
     # Perminently deletes the file/folder object this path references
@@ -312,13 +342,17 @@ module OpenChain
         if results_found > 1
           raise "Found #{results_found} #{object_identifier.pluralize(results_found)} named '#{file_name}' in the path '#{full_path}'. Only a single #{object_identifier} should be present."
         elsif results_found == 1
-          object_hash = {id: result.items[0].id}
+          item = result.items[0]
+          object_hash = {id: item.id}
           # Warning, I would have though that the schema objects constructed from the JSON responses 
           # would probably handle respond_to? so we could do result.items[0].respond_to?(:downloadUrl)
           # but they don't
           if object_type == :file 
-            object_hash[:downloadUrl] = result.items[0].downloadUrl
+            object_hash[:downloadUrl] = item.downloadUrl
           end
+
+          owner = item.owners.try(:first).try(:emailAddress)
+          object_hash[:ownerEmail] = owner unless owner.blank?
         end
         
         object_hash
@@ -437,6 +471,15 @@ module OpenChain
             :parameters => {'fileId' => id}
           )
         end
+      end
+
+      def remove_object_from_folder folder_id, file_id
+        execute_single_method! api_method: @drive.children.delete, parameters: {'folderId' => folder_id, 'childId' => file_id}
+      end
+
+      def get_object_info object_id
+        result = execute_single_method! api_method: @drive.files.get, parameters: {'fileId' => object_id}
+        result ? result.to_hash : nil
       end
 
       private 
@@ -600,7 +643,7 @@ module OpenChain
         end
 
         def append_standard_file_download_params params
-          params["fields"] = "nextPageToken,items(id,downloadUrl)"
+          params["fields"] = "nextPageToken,items(id,downloadUrl,owners)"
         end
 
         def append_search_param params, search_value

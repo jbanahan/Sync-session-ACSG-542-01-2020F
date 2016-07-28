@@ -621,32 +621,78 @@ describe Api::V1::SurveyResponsesController do
       expect(@survey_response.survey_response_updates.first.user).to eq @user
     end
 
-    it "validates name present" do
-      @survey_response.update_attributes! name: nil
-      post :submit, {id: @survey_response.id}
-      expect(response.status).to eq 403
-      expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+    context "with contact info" do 
+      before do
+        @survey.survey_responses.destroy_all
+        @survey.update_attributes require_contact: true
+        @survey_response = @survey.generate_response! @user
+        @survey_response.update_attributes! name: "Name", address: "123 Fake St", phone: "123-456-7890", email: "me@there.com"
+      end
+
+      it "validates name present" do
+        @survey_response.update_attributes! name: nil
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+      end
+
+      it "validates address present" do
+        @survey_response.update_attributes! address: nil
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+      end
+
+      it "validates phone present" do
+        @survey_response.update_attributes! phone: nil
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+      end
+
+      it "validates email present" do
+        @survey_response.update_attributes! email: nil
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 403
+        expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+      end
     end
 
-    it "validates address present" do
-      @survey_response.update_attributes! address: nil
-      post :submit, {id: @survey_response.id}
-      expect(response.status).to eq 403
-      expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
-    end
+    context "without contact info" do
+      before do
+        @survey.survey_responses.destroy_all
+        @survey.update_attributes require_contact: false
+        @survey_response = @survey.generate_response! @user
+        @survey_response.update_attributes! name: "Name", address: "123 Fake St", phone: "123-456-7890", email: "me@there.com"
+      end
 
-    it "validates phone present" do
-      @survey_response.update_attributes! phone: nil
-      post :submit, {id: @survey_response.id}
-      expect(response.status).to eq 403
-      expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
-    end
+      it "skips name validation" do
+        @survey_response.update_attributes! name: nil
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 200
+        expect(JSON.parse(response.body)['errors']).to be_nil
+      end
 
-    it "validates email present" do
-      @survey_response.update_attributes! email: nil
-      post :submit, {id: @survey_response.id}
-      expect(response.status).to eq 403
-      expect(JSON.parse response.body).to eq({'errors' => ['Name, Address, Phone, and Email must all be filled in.']})
+      it "skips address validation" do
+        @survey_response.update_attributes! address: nil
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 200
+        expect(JSON.parse(response.body)['errors']).to be_nil
+      end
+
+      it "skips phone validation" do
+        @survey_response.update_attributes! phone: nil
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 200
+        expect(JSON.parse(response.body)['errors']).to be_nil
+      end
+
+      it "skips email validation" do
+        @survey_response.update_attributes! email: nil
+        post :submit, {id: @survey_response.id}
+        expect(response.status).to eq 200
+        expect(JSON.parse(response.body)['errors']).to be_nil
+      end
     end
 
     it "validates not archived" do

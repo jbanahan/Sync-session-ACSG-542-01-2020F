@@ -87,7 +87,7 @@ describe SurveyResponsesController do
     end
     context :json do 
       it "should load json response" do
-        q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb"))
+        q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb", require_contact: true))
         sr = q.survey.generate_response! @u, 'subt'
         get :show, :id=>sr.id, :format=>:json
         response.should be_success
@@ -95,6 +95,7 @@ describe SurveyResponsesController do
         srj = j['survey_response']
         srj['survey']['name'].should == sr.survey.name
         srj['survey']['rating_values'].should == ['a','b']
+        srj['survey']['require_contact'].should == true
         a = srj['answers'].first
         expect(a['question']['require_comment']).to be_false
         expect(a['question']['require_attachment']).to be_false

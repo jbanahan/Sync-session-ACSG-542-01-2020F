@@ -117,17 +117,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     }
     date_elements = REXML::XPath.match(base,'./E1EDP01/E1EDP20/_-LUMBERL_-PO_SHIP_WINDOW')
 
-    if !date_elements.blank?
+    if !date_elements.blank? && has_a_valid_date?(date_elements)
       date_elements.each do |el|
         el.each_element do |child|
           a = mapping[child.name]
           next if a.nil?
           txt = child.text
-          a << txt unless txt.blank? || txt.match(/^0*$/)
+          a << txt if valid_new_date?(txt)
         end
       end
       # update mapping to get the earliest for each date or nil if the date wasn't sent
       mapping.each {|k,v| mapping[k] = mapping[k].sort.first}
+
+      # set legacy dates if we didn't get a VN_EXPEC_DLVD
+      if mapping['VN_EXPEC_DLVD'].blank?
+        set_ship_window(order)
+        return
+      end
 
       order.first_expected_delivery_date = mapping['CURR_ARRVD']
       if order.first_expected_delivery_date.blank?
@@ -143,9 +149,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       order.update_custom_value!(@cdefs[:ord_ship_confirmation_date],mapping['ACT_SHIP_DATE'])
       order.update_custom_value!(@cdefs[:ord_sap_vendor_handover_date],mapping['VN_HNDDTE'])
     else # legacy PO before June 2016 date logic change
-
       set_ship_window(order)
     end
+  end
+
+  def has_a_valid_date? date_elements
+    date_elements.find {|el|
+      el.elements.find { |inner|
+        valid_new_date?(inner.text)
+      }
+    }
+  end
+  def valid_new_date? txt
+    !txt.blank? && !txt.match(/^0*$/)
   end
 
   # legacy behavior when ship window didn't come in XML

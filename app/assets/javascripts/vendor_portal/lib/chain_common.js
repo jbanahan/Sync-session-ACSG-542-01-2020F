@@ -389,7 +389,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         return {
           forModule: function(moduleType, objectId) {
             return $http.get('/api/v1/' + moduleType + '/' + objectId + '/attachments.json').then(function(resp) {
-              return resp.data;
+              return resp.data.attachments;
             });
           }
         };
@@ -1487,7 +1487,7 @@ angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
-    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.name}} <span class=\"badge\">{{att.size}}</span></a></li></ul></div>");
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.att_file_name}} <span class=\"badge\">{{att.friendly_size}}</span></a></li></ul></div>");
 }]);
 
 angular.module("chain-bulk-execute-modal.html", []).run(["$templateCache", function($templateCache) {

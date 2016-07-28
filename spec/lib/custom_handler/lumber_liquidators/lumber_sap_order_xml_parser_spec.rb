@@ -142,6 +142,33 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.ship_window_end.strftime('%Y%m%d')).to eq '20140916'
     end
 
+    it "should fall back to old matrix if all new dates are 00000000" do
+      ['CURR_ARRVD','VN_HNDDTE','VN_EXPEC_DLVD','VN_SHIPBEGIN','VN_SHIPEND','ACT_SHIP_DATE'].each do |d_tag|
+        @test_data.gsub!(/<#{d_tag}.*#{d_tag}>/,"<#{d_tag}>00000000</#{d_tag}>")
+      end
+
+      dom = REXML::Document.new(@test_data)
+      described_class.new.parse_dom(dom)
+
+      o = Order.first
+      expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
+
+    end
+
+    it "should fall back to old matrix if no VN_EXPEC_DLVD" do
+      # this happens when LL has not replanned an old order before July 2016 that has already shipped
+      ['VN_EXPEC_DLVD','VN_SHIPBEGIN','VN_SHIPEND'].each do |d_tag|
+        @test_data.gsub!(/<#{d_tag}.*#{d_tag}>/,"<#{d_tag}>00000000</#{d_tag}>")
+      end
+      @test_data.gsub!(/<CURR_ARRVD.*CURR_ARRVD>/,"<CURR_ARRVD>20141103</CURR_ARRVD>")
+      dom = REXML::Document.new(@test_data)
+      described_class.new.parse_dom(dom)
+      o = Order.first
+      expect(o.first_expected_delivery_date.strftime('%Y%m%d')).to eq '20141103'
+      expect(o.ship_window_start.strftime('%Y%m%d')).to eq '20140909'
+      expect(o.ship_window_end.strftime('%Y%m%d')).to eq '20140916'
+    end
+
     it "should use ship to address from header if nothing at line" do
       dom = REXML::Document.new(@test_data)
       first_address = REXML::XPath.first(dom.root,"IDOC/E1EDP01/E1EDPA1[PARVW = 'WE']")

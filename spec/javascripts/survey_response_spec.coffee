@@ -216,17 +216,26 @@ describe "SurveyResponseApp", () ->
         spyOn(svc,'submit')
 
       it "should delegate to service if form is valid", () ->
+        $scope.resp.survey = {require_contact: true}
         $scope.contact_form = { $valid: true }
         $scope.submit()
         expect(svc.submit).toHaveBeenCalledWith(svc.resp)
 
-      it "should not call service if form is not valid", () ->
+      it "should delegate to service if form is not required", () ->
+        $scope.resp.survey = {require_contact: false}
+        $scope.contact_form = { $valid: false }
+        $scope.submit()
+        expect(svc.submit).toHaveBeenCalledWith(svc.resp)
+
+      it "should not call service if form is required but not valid", () ->
+        $scope.resp.survey = {require_contact: true}
         $scope.contact_form = { $valid: false }
         $scope.submit()
         expect(svc.submit.calls.length).toEqual(0)
         expect(svc.resp.error_message).toEqual 'You must complete all contact fields before submitting.'
 
       it "should not call service if all questions aren't answered", () ->
+        $scope.resp.survey = {require_contact: true}
         $scope.resp.answers = []
         $scope.resp.answers.push {id:1,answer_comments:[], question: {warning: true}}
         $scope.contact_form = { $valid: true }

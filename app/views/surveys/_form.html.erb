@@ -113,6 +113,7 @@
           <%=field_bootstrap "System Code", f.text_field(:system_code,:title=>"A code used by the workflow system to track the survey.", :class=>'form-control')%>
           <%=field_bootstrap "Rating Options", f.text_area(:ratings_list, :rows=>"5", :class=>'form-control')%>
           <%=field_bootstrap "", "One rating per line."%>
+          <span><%=f.check_box :require_contact%><strong>&nbsp;Include Contact Information</strong></span>
           <%if current_user.view_module?(CoreModule::TRADE_PREFERENCE_PROGRAM)%>
             <%=field_bootstrap "Trade Preference Program", f.collection_select(:trade_preference_program_id,TradePreferenceProgram.all.sort_by(&:long_name),:id,:long_name, {prompt:'Select Trade Lane'}, class: 'form-control')%>
           <%end%>

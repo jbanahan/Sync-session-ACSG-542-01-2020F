@@ -96,8 +96,8 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
         url = download_attachment_url attachment, protocol: (Rails.env.production? ? "https" : "http"), host: MasterSetup.get.request_host
       else
         url = attachment.secure_url expires_in
-      end        
-      
+      end
+
       render json: {url: url, name: attachment.attached_file_name, expires_at: expires_in.iso8601}
     end
 
@@ -123,7 +123,9 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
 
     def attachment_view user, attachment
       fields = all_requested_model_field_uids(CoreModule::ATTACHMENT)
-      to_entity_hash(attachment, fields, user: user)
+      h = to_entity_hash(attachment, fields, user: user)
+      h['friendly_size'] = ActionController::Base.helpers.number_to_human_size(attachment.attached_file_size)
+      h
     end
 
 end; end; end;

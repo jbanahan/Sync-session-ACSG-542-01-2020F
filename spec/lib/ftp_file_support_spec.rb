@@ -20,17 +20,19 @@ describe "FtpFileSupport" do
     it "should ftp_file" do
       File.stub(:exists?).and_return true
       @t.should_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r', port: 123, protocol: 'proto'})
+      FtpSender.should_receive(:send_file).with('svr','u','p',@t, subject.ftp_credentials)
       subject.ftp_file @t
     end
 
     it "should take option_overrides" do
       File.stub(:exists?).and_return true
-      FtpSender.should_receive(:send_file).with('otherserver','u','p',@t,{:folder=>'f',:remote_file_name=>'r', port:987, protocol: 'test'})
-      @t.should_receive(:unlink)
+      
       def subject.ftp_credentials
         return {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987}
       end
+
+      FtpSender.should_receive(:send_file).with('otherserver','u','p',@t,{:server=>'otherserver',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987})
+      @t.should_receive(:unlink)
 
       subject.ftp_file @t, {server:'otherserver'}
     end
@@ -38,7 +40,7 @@ describe "FtpFileSupport" do
     it 'should not unlink if false is passed' do
       File.stub(:exists?).and_return true
       @t.should_not_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r', port:123, protocol: 'proto'})
+      FtpSender.should_receive(:send_file)
       subject.ftp_file @t, {keep_local:true}
     end
     
@@ -57,8 +59,20 @@ describe "FtpFileSupport" do
       subject.should_receive(:ftp_credentials).and_return(:server=>'svr',:username=>'u',:password=>'p')
       File.stub(:exists?).and_return true
       @t.should_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{})
+      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:server=>'svr',:username=>'u',:password=>'p'})
       subject.ftp_file @t
+    end
+
+    it "allows including class to not implement ftp_credentials method" do
+      s = class FakeFtper
+        include OpenChain::FtpFileSupport
+      end.new
+
+      File.stub(:exists?).and_return true
+      opts = {server: "server", username: "user", password: "pwd"}
+      FtpSender.should_receive(:send_file).with('server','user','pwd',@t, opts)
+      @t.should_receive(:unlink)
+      s.ftp_file @t, opts
     end
   end
 
