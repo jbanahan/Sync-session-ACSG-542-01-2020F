@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
       read_only = cdi[:read_only]
       cdi.delete :read_only
       if cdi
-        cust_def = CustomDefinition.where(cdi).first
+        cust_def = CustomDefinition.where(label:cdi[:label],data_type:cdi[:data_type],module_type:cdi[:module_type]).first
         if !cust_def
           cust_def = CustomDefinition.create!(cdi)
           cust_def.reset_cache
