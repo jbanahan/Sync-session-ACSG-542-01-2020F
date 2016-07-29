@@ -1,5 +1,5 @@
 module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInvoiceGenerator
-    
+
   ENTRY_UNIT_PRICE = 2.50
   ENTRY_LIMIT = 250
   MONTHLY_UNIT_PRICE = 1000.00
@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
   end
 
   def self.bill_monthly_charge billables, invoice
-    line = invoice.vfi_invoice_lines.create! vfi_invoice: invoice, quantity: 1, unit: "ea", unit_price: MONTHLY_UNIT_PRICE, charge_description: "monthly charge"
+    line = invoice.vfi_invoice_lines.create! vfi_invoice: invoice, quantity: 1, unit: "ea", unit_price: MONTHLY_UNIT_PRICE, charge_description: "Monthly charge for up to #{ENTRY_LIMIT} entries"
     write_invoiced_events billables, line
   end
 
@@ -33,11 +33,9 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
   end
 
   def self.bill_new_entries billables, invoice
-    qty_to_bill = billables.count - ENTRY_LIMIT
-    if qty_to_bill > 0
-      line = invoice.vfi_invoice_lines.create! quantity: qty_to_bill, unit: "ea", unit_price: ENTRY_UNIT_PRICE, charge_description: "new entry exceeding #{ENTRY_LIMIT}/mo. limit"
-      write_invoiced_events billables, line
-    end
+    return if billables.empty?
+    line = invoice.vfi_invoice_lines.create! quantity: billables.length, unit: "ea", unit_price: ENTRY_UNIT_PRICE, charge_description: "Entries exceeding #{ENTRY_LIMIT}/mo. limit"
+    write_invoiced_events billables, line
   end
 
   def self.write_invoiced_events billables, invoice_line
