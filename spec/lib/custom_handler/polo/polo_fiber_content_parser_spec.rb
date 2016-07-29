@@ -233,7 +233,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
       it "strips leading/trailing spaces from xref keys/values" do
         DataCrossReference.create! cross_reference_type: DataCrossReference::RL_FABRIC_XREF, key: "   wool   ", value: "   XREF   "
-        expect(@p.parse_fiber_content "100% WOOL").to eq ({percent_1: "100", fiber_1: "XREF", type_1: "Outer", percent_1: "100", algorithm: "single_non_footwear"})
+        expect(@p.parse_fiber_content "100% WOOL").to eq ({percent_1: "100", fiber_1: "XREF", type_1: "Outer", algorithm: "single_non_footwear"})
       end
     end
 
@@ -306,6 +306,34 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @prod.update_custom_value! @test_cds[:fabric_1], "Fabric"
       @prod.update_custom_value! @test_cds[:fabric_percent_1], "0"
       @prod.update_custom_value! @test_cds[:msl_fiber_failure], true
+    end
+
+    it "does not drop significant digits" do
+      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
+      changed_at = 1.day.ago
+      @prod.update_column :changed_at, changed_at
+      @prod.update_column :updated_at, changed_at
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+
+      @prod.reload
+
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS, 50.5% COTTON"
+    end
+
+    it "drops insignificant zeroes" do
+      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      @prod.update_custom_value! @test_cds[:fiber_content], "50.00% Canvas 50.00% Cotton"
+      changed_at = 1.day.ago
+      @prod.update_column :changed_at, changed_at
+      @prod.update_column :updated_at, changed_at
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+
+      @prod.reload
+
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS, 50% COTTON"
     end
 
     it "includes all fabric types, with commas between if multiple fabric types" do

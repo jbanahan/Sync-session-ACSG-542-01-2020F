@@ -523,6 +523,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         fiber, type, percent = all_fiber_fields results, x
 
         unless fiber.blank? || percent.blank?
+          percent = percent.to_f % 1 == 0 ? percent.to_i : percent.to_f
           clean_fiber_content[type] ||= []
           clean_fiber_content[type] << [fiber, percent]
         end
