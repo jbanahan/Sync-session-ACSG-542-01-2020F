@@ -7,4 +7,7 @@ if !Rails.env.test? && ActiveRecord::Base.connection.table_exists?('master_setup
 
   require 'open_chain/custom_handler/pepsi/pepsi_system_init'
   OpenChain::CustomHandler::Pepsi::PepsiSystemInit.init
+
+  require 'open_chain/custom_handler/masterbrand/masterbrand_system_init'
+  OpenChain::CustomHandler::Masterbrand::MasterbrandSystemInit.init
 end

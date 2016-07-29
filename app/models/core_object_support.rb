@@ -22,6 +22,7 @@ module CoreObjectSupport
     has_many :workflow_instances, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :folders, as: :base_object, dependent: :destroy, inverse_of: :base_object, conditions: {archived: false}
+    has_many :billable_events, :as => :billable_eventable, :class_name => 'BillableEvent', :dependent => :destroy"
 
     has_one :workflow_processor_run, as: :base_object, dependent: :destroy, inverse_of: :base_object
     

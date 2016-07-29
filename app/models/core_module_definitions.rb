@@ -262,7 +262,7 @@ module CoreModuleDefinitions
        )
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
-       :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
+       :changed_at_parents_lambda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
        :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
        :unique_id_field_name=>:bi_line_charge_code,
        :key_model_field_uids=>[:bi_line_charge_code],
@@ -438,6 +438,27 @@ module CoreModuleDefinitions
     enabled_lambda: lambda { MasterSetup.get.broker_invoice_enabled? },
     module_chain: [SummaryStatement, BrokerInvoice, BrokerInvoiceLine]
   })
+
+  VFI_INVOICE = CoreModule.new("VfiInvoice", "Vfi Invoice", {
+    default_search_columns: [:vi_invoice_number, :vi_invoice_date, :vi_invoice_total],
+    :unique_id_field_name => :vi_invoice_number,
+    key_model_field_uids: [:vi_invoice_number],
+    children: [VfiInvoiceLine],
+    child_lambdas: {VfiInvoiceLine => lambda {|i| i.vfi_invoice_lines}},
+    child_joins: {VfiInvoiceLine => "LEFT OUTER JOIN vfi_invoice_lines on vfi_invoices.id = vfi_invoice_lines.vfi_invoice_id"},
+    quicksearch_fields: [:vi_invoice_number],
+    quicksearch_sort_by_mf: :vi_invoice_number,
+    enabled_lambda: lambda { MasterSetup.get.vfi_invoice_enabled? },
+    module_chain: [VfiInvoice, VfiInvoiceLine]
+  })
+
+  VFI_INVOICE_LINE = CoreModule.new("VfiInvoiceLine","Vfi Invoice Line",{
+    :changed_at_parents_lambda => lambda {|p| p.vfi_invoice.nil? ? [] : [p.vfi_invoice]},
+    :enabled_lambda => lambda { CoreModule::VFI_INVOICE.enabled? },
+    :unique_id_field_name=>:vi_line_number,
+    :key_model_field_uids=>[:vi_line_number],
+    :show_field_prefix=>true
+   })
 
   PRODUCT_VENDOR_ASSIGNMENT = CoreModule.new("ProductVendorAssignment","Product Vendor Assignment", {
     default_search_columns: [:pva_ven_name, :pva_puid, :pva_pname],
