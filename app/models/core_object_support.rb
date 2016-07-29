@@ -10,7 +10,7 @@ module CoreObjectSupport
     include FingerprintSupport
 
     attr_accessor :dont_process_linked_attachments
-    
+
     has_many :comments, as: :commentable, dependent: :destroy
     has_many :attachments, as: :attachable, dependent: :destroy
     has_many :attachment_process_jobs, as: :attachable, dependent: :destroy, class_name: AttachmentProcessJob
@@ -22,12 +22,12 @@ module CoreObjectSupport
     has_many :workflow_instances, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :folders, as: :base_object, dependent: :destroy, inverse_of: :base_object, conditions: {archived: false}
-    has_many :billable_events, :as => :billable_eventable, :class_name => 'BillableEvent', :dependent => :destroy"
+    has_many :billable_events, :as => :billable_eventable, :class_name => 'BillableEvent', :dependent => :destroy
 
     has_one :workflow_processor_run, as: :base_object, dependent: :destroy, inverse_of: :base_object
-    
+
     after_save :process_linked_attachments
-    
+
     # Allow new instances to start up (prior to migrations run will not have histories or item change subscriptions tables)
     if ActiveRecord::Base.connection.table_exists?('histories') && History.column_names.include?(self.name.foreign_key)
       has_many :histories, dependent: :destroy
