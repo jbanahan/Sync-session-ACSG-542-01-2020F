@@ -1,5 +1,6 @@
 module LinesSupport
   extend ActiveSupport::Concern
+  include DefaultLineNumberSupport
 
   #need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
   included do
@@ -31,16 +32,6 @@ module LinesSupport
     attr_accessor :linked_security_filing_line_id
     after_save :process_links
     after_destroy :merge_piece_sets
-  end
-
-  def default_line_number
-    if self.line_number.nil? || self.line_number < 1
-      max = nil
-      my_association = self.class.name.tableize
-      p = parent_obj
-      max = p.send(my_association.to_sym).collect {|o| o.line_number}.compact.sort.last unless p.nil?
-      self.line_number = (max.nil? || max < 1) ? 1 : (max + 1)
-    end
   end
 
   def default_quantity

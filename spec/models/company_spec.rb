@@ -382,6 +382,29 @@ describe Company do
     end
   end
 
+  describe :has_vfi_invoice? do
+    let(:co) { Factory(:company) }
+    let(:inv) { Factory(:vfi_invoice) }
+
+    it "returns 'true' if company has a vfi invoice" do
+      inv.update_attributes(customer: co)
+      expect(co.has_vfi_invoice?).to eq true
+    end
+
+    it "returns 'true' if there's a linked company with a vfi invoice" do
+      linked_co = Factory(:company)
+      co.update_attributes(linked_companies: [linked_co])
+      inv.update_attributes(customer: linked_co)
+      expect(co.has_vfi_invoice?).to eq true
+    end
+
+    it "returns false if neither the company nor any of the linked companies have a vfi invoice" do
+      linked_co = Factory(:company)
+      co.update_attributes(linked_companies: [linked_co])
+      expect(co.has_vfi_invoice?).to eq false
+    end
+  end
+
   describe "slack_channel scope" do
     it 'returns only companies with slack channels' do
       no_slack_channel = Factory(:company, name: 'Slackless')

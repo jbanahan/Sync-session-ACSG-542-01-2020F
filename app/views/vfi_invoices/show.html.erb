@@ -1,0 +1,26 @@
+<% content_for :action_bar do%>
+  <button class='btn_link' link_to='<%=vfi_invoices_path%>' key_map='b'>Back To Search</button>
+<% end%>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-6">
+      <%= show_model_fields @vfi_invoice, [:vi_cust_name, :vi_invoice_date, :vi_invoice_number, :vi_invoice_currency, :vi_invoice_total] %>
+      <br>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-8">
+      <table class="detail_table">
+        <thead>
+          <%= model_field_labels([:vi_line_number, :vi_line_charge_description, :vi_line_quantity, :vi_line_unit, :vi_line_unit_price, :vi_line_charge_amount], table:true, heading:true) %>
+        </thead>
+        <% @vfi_invoice.vfi_invoice_lines.each do |ln| %>
+          <tr>
+            <%= show_model_fields(ln, [:vi_line_number, :vi_line_charge_description, :vi_line_quantity, :vi_line_unit, :vi_line_unit_price, :vi_line_charge_amount], table: true, editor_only: true)%>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+  </div>
+</div>

@@ -23,6 +23,7 @@ class User < ActiveRecord::Base
     :survey_view, :survey_edit,
     :project_view, :project_edit,
     :vendor_view, :vendor_edit, :vendor_comment, :vendor_attach,
+    :vfi_invoice_view, :vfi_invoice_edit,
     :trade_lane_view, :trade_lane_edit, :trade_lane_comment, :trade_lane_attach,
     :broker_invoice_view, :broker_invoice_edit,
     :variant_edit,
@@ -233,7 +234,9 @@ class User < ActiveRecord::Base
         view_survey_responses: !self.survey_responses.empty? || self.view_surveys?,
         view_surveys: self.view_surveys?,
         view_vendors: self.view_vendors?,
-        create_vendors: self.create_vendors?
+        create_vendors: self.create_vendors?,
+        view_vfi_invoices: self.view_vfi_invoices?,
+        edit_vfi_invoices: self.edit_vfi_invoices?
       }
     end
 
