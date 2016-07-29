@@ -7,10 +7,10 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       new_billables = double("new billables")
       invoice = double("vfi invoice")
       
-      described_class.should_receive(:get_new_billables).and_return new_billables
+      described_class.should_receive(:get_new_billables).twice.and_return new_billables
       described_class.should_receive(:create_invoice).and_return invoice
+      described_class.should_receive(:bill_monthly_charge).with(new_billables, invoice)
       described_class.should_receive(:bill_new_entries).with(new_billables, invoice)
-      described_class.should_receive(:bill_monthly_charge).with invoice
 
       described_class.run_schedulable
     end
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       Factory(:billable_event, billable_eventable: Factory(:entry), entity_snapshot: Factory(:entity_snapshot), event_type: "entry_foo")
       results = described_class.get_new_billables
       expect(results.count).to eq 0
-    end
+    end                                                       
 
     it "returns no results for entries with file_logged_date before '2016-05-01'" do
       e = Factory(:entry, file_logged_date: '2016-01-01')
@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       results = described_class.get_new_billables
       expect(results.count).to eq 0
     end
-
+                              
     it "returns results for events invoiced with a generator other than MasterbrandInvoiceGenerator" do
       be = Factory(:billable_event, billable_eventable: Factory(:entry), entity_snapshot: Factory(:entity_snapshot), event_type: "entry_new")
       Factory(:invoiced_event, billable_event: be, invoice_generator_name: "FooGenerator")
@@ -49,6 +49,11 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       Factory(:billable_event, billable_eventable: e, entity_snapshot: Factory(:entity_snapshot), event_type: "entry_new")
       results = described_class.get_new_billables
       expect(results.count).to eq 1
+    end
+
+    it "should limit query" do
+      results = described_class.get_new_billables 250
+      expect(results.to_sql).to match /LIMIT 250/
     end
   end
 
@@ -83,8 +88,10 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
   describe :bill_monthly_charge do
     it "attaches an invoice line" do
+      billables = double('billables')
+      described_class.should_receive(:write_invoiced_events).with(billables,instance_of(VfiInvoiceLine))
       inv = Factory(:vfi_invoice)
-      described_class.bill_monthly_charge inv
+      described_class.bill_monthly_charge billables, inv
       line = VfiInvoice.first.vfi_invoice_lines.first
       expected = [1000, 1, "ea", 1000, "monthly charge"]
       expect([line.charge_amount, line.quantity, line.unit, line.unit_price, line.charge_description]).to eq expected

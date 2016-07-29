@@ -6,10 +6,9 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
 
   def self.run_schedulable
     ActiveRecord::Base.transaction do
-      billables = get_new_billables
       inv = create_invoice
-      bill_new_entries(billables, inv)
-      bill_monthly_charge inv
+      bill_monthly_charge(get_new_billables(ENTRY_LIMIT),inv)
+      bill_new_entries(get_new_billables, inv)
     end
   end
 
@@ -18,16 +17,19 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
     VfiInvoice.next_invoice_number { |n| VfiInvoice.create!(customer: co, invoice_date: Date.today, invoice_number: n, currency: "USD")}
   end
 
-  def self.bill_monthly_charge invoice
-    invoice.vfi_invoice_lines.create! vfi_invoice: invoice, quantity: 1, unit: "ea", unit_price: MONTHLY_UNIT_PRICE, charge_description: "monthly charge"
+  def self.bill_monthly_charge billables, invoice
+    line = invoice.vfi_invoice_lines.create! vfi_invoice: invoice, quantity: 1, unit: "ea", unit_price: MONTHLY_UNIT_PRICE, charge_description: "monthly charge"
+    write_invoiced_events billables, line
   end
 
-  def self.get_new_billables
-    BillableEvent.joins('LEFT OUTER JOIN invoiced_events ie ON billable_events.id = ie.billable_event_id AND ie.invoice_generator_name = "MasterbrandInvoiceGenerator"')
+  def self.get_new_billables limit=nil
+    be = BillableEvent.joins('LEFT OUTER JOIN invoiced_events ie ON billable_events.id = ie.billable_event_id AND ie.invoice_generator_name = "MasterbrandInvoiceGenerator"')
                  .joins('INNER JOIN entries e ON billable_events.billable_eventable_type = "Entry" and billable_events.billable_eventable_id = e.id')
                  .where('ie.id IS NULL')
                  .where('billable_events.event_type = "entry_new"')
                  .where('e.file_logged_date >= "2016-05-01" OR e.file_logged_date IS NULL')
+    be = be.limit(limit) if limit
+    be
   end
 
   def self.bill_new_entries billables, invoice
