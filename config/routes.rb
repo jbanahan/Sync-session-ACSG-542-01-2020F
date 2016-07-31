@@ -186,6 +186,12 @@ OpenChain::Application.routes.draw do
         end
 
         resources :groups, only: [:create, :update, :destroy]
+
+        resources :kewill_entry_documents, only: [] do
+          collection do
+            post :send_google_drive_file_to_kewill
+          end
+        end
       end
 
       resources :fenix_postbacks, only: [] do
@@ -942,6 +948,8 @@ OpenChain::Application.routes.draw do
   resources :summary_statements, except: [:destroy] do
     get 'get_invoices', :on=>:member
   end
+
+  resources :vfi_invoices, only: [:index, :show]
 
   resources :user_manuals, except: [:show] do
     get :download, on: :member

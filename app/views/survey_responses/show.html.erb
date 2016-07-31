@@ -73,43 +73,45 @@
         <select class='form-control' ng-model='srService.settings.sortMode' ng-options='r for r in srService.sortModes' ng-change='arrangeAnswers()'></select>
       </div>
     </div>
-    <form name='contact_form'>
-      <fieldset>
-        <div class='row'>
-          <div class='col-md-12'>
-            <legend class='text-info'>
-              Contact Information (required) 
-            </legend>
-          </div>
-        </div>
-        <div class='row'>
-          <div class='col-md-6'>
-            <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.name.$invalid}">
-              <label for='ci-name'>Your Name</label>
-              <input class='form-control' id='ci-name' name='name' ng-blur='srService.saveContactInfo(resp)' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
-            </div>
-            <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.address.$invalid}">
-              <label for='ci-address'>Address</label>
-              <textarea class='form-control' id='ci-address' name='address' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.address' ng-disabled='!resp.can_answer || resp.error_message.length>0' required></textarea>
+    <div ng-show="resp.survey.require_contact">
+      <form name='contact_form'>
+        <fieldset>
+          <div class='row'>
+            <div class='col-md-12'>
+              <legend class='text-info'>
+                Contact Information (required) 
+              </legend>
             </div>
           </div>
-          <div class='col-md-6'>
-            <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.phone.$invalid}">
-              <label for='ci-phone'>Phone</label>
-              <input class='form-control' id='ci-phone' name='phone' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.phone' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
+          <div class='row'>
+            <div class='col-md-6'>
+              <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.name.$invalid}">
+                <label for='ci-name'>Your Name</label>
+                <input class='form-control' id='ci-name' name='name' ng-blur='srService.saveContactInfo(resp)' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
+              </div>
+              <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.address.$invalid}">
+                <label for='ci-address'>Address</label>
+                <textarea class='form-control' id='ci-address' name='address' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.address' ng-disabled='!resp.can_answer || resp.error_message.length>0' required></textarea>
+              </div>
             </div>
-            <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.email_add.$invalid}">
-              <label for='ci-email'>Email</label>
-              <input class='form-control' id='ci-email' name='email_add' type='email' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.email' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
-            </div>
-            <div class='form-group'>
-              <label for='ci-fax'>Fax</label>
-              <input class='form-control' id='ci-fax' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.fax' ng-disabled='!resp.can_answer || resp.error_message.length>0' />
+            <div class='col-md-6'>
+              <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.phone.$invalid}">
+                <label for='ci-phone'>Phone</label>
+                <input class='form-control' id='ci-phone' name='phone' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.phone' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
+              </div>
+              <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.email_add.$invalid}">
+                <label for='ci-email'>Email</label>
+                <input class='form-control' id='ci-email' name='email_add' type='email' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.email' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
+              </div>
+              <div class='form-group'>
+                <label for='ci-fax'>Fax</label>
+                <input class='form-control' id='ci-fax' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.fax' ng-disabled='!resp.can_answer || resp.error_message.length>0' />
+              </div>
             </div>
           </div>
-        </div>
-      </fieldset>
-    </form>
+        </fieldset>
+      </form>
+    </div>
     <div class='row'>
       <div class='col-md-8 col-md-offset-2 text-center alert alert-info' ng-hide='srService.settings.filterMode=="All"'>
         Showing {{arrangedAnswers.length}} of {{resp.answers.length}} questions.

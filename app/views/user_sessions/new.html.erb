@@ -171,12 +171,12 @@
                         </div>
                           
                         <div class="form-group">
-                          <%=label_tag("cust_no", "Vandegrift Customer Number(s):")-%>
+                          <%=label_tag("cust_no", "Customer / Vendor ID(s):")-%>
                           <%= text_area_tag("cust_no", "", :class=>"form-control")-%>
                         </div>
                           
                         <div class="form-group">
-                          <%=label_tag("contact", "Who is your Vandegrift Operations Contact Person:")-%>
+                          <%=label_tag("contact", "#{Company.find_master.name.titleize} Contact Name:")-%>
                           <%= text_area_tag("contact", "", :class=>"form-control")-%>
                         </div>
                     </div>

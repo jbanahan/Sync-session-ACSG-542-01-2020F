@@ -125,7 +125,7 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
 
   # set response's submitted state to true on server
   $scope.submit = () ->
-    if !$scope.contact_form.$valid
+    if !$scope.contact_form.$valid && $scope.resp.survey.require_contact
       $scope.resp.error_message = 'You must complete all contact fields before submitting.'
     else if $scope.filterAnswers($scope.resp.answers, 'Not Answered').length > 0
       $scope.resp.error_message = "You must answer all required questions. Use the 'Not Answered' filter to identify any questions that still need answers."

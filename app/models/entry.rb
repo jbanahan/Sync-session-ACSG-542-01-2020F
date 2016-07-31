@@ -28,6 +28,8 @@ class Entry < ActiveRecord::Base
   before_save :update_k84
   before_save :update_tracking_status
 
+  KEWILL_SOURCE_SYSTEM ||= "Alliance"
+
   def locked?
     false
   end

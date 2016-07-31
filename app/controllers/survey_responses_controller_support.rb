@@ -72,7 +72,7 @@ module SurveyResponsesControllerSupport
           question:{methods:[:html_content,:choice_list, :require_comment_for_choices, :require_attachment_for_choices], only:[:id,:warning, :require_comment, :require_attachment]},
           answer_comments:{only:[:id,:content,:private,:created_at],include:[{user:{only:[:id, :username],methods:[:full_name]}}]}
         }}},
-        {survey:{only:[:id,:name],methods:[:rating_values]}},
+        {survey:{only:[:id,:name, :require_contact],methods:[:rating_values]}},
         {user:{include: {company: {only: [:name]}}, methods: [:full_name], only:[:email]}},
         {group:{include: {users: {only: [:email]}}}}
       ])
@@ -186,7 +186,9 @@ module SurveyResponsesControllerSupport
       errors << "Expired surveys cannot be submitted." if sr.expiration_notification_sent_at && sr.expiration_notification_sent_at < Time.zone.now
       errors << "Checked out surveys cannot be submitted." unless sr.checkout_token.blank?
       errors << "Submitted surveys cannot be submitted." if sr.submitted_date
-      errors << "Name, Address, Phone, and Email must all be filled in." if sr.name.blank? || sr.address.blank? || sr.phone.blank? || sr.email.blank?
+      if sr.survey.require_contact
+        errors << "Name, Address, Phone, and Email must all be filled in." if sr.name.blank? || sr.address.blank? || sr.phone.blank? || sr.email.blank?
+      end
 
       takers = survey_takers sr
 

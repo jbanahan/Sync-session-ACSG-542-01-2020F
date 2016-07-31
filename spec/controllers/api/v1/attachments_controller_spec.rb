@@ -45,7 +45,7 @@ describe Api::V1::AttachmentsController do
         # Some of the attributes will be nil, which is mostly because we don't want to upload to
         # S3 (via paperclip) - which is what sets up these values through the attached pseudo-attribute
         expect(JSON.parse response.body).to eq({"attachments" => [
-          {"id"=>attachment.id, "att_file_name"=>"file.txt", "att_attachment_type"=>"Attachment Type", "att_file_size"=>1024, "att_content_type"=>nil, "att_source_system_timestamp"=>nil, "att_updated_at"=>nil, "att_revision"=>nil, "att_suffix"=>nil, "att_uploaded_by_username"=>user.username, "att_uploaded_by_fullname"=>user.full_name, "att_uploaded_by"=>user.id}
+          {"id"=>attachment.id, "att_file_name"=>"file.txt", "att_attachment_type"=>"Attachment Type", "att_file_size"=>1024, "att_content_type"=>nil, "att_source_system_timestamp"=>nil, "att_updated_at"=>nil, "att_revision"=>nil, "att_suffix"=>nil, "att_uploaded_by_username"=>user.username, "att_uploaded_by_fullname"=>user.full_name, "att_uploaded_by"=>user.id, "friendly_size"=>"1 KB", "att_unique_identifier" => "#{attachment.id}-#{attachment.attached_file_name}"}
         ]})
       end
 
@@ -69,7 +69,7 @@ describe Api::V1::AttachmentsController do
         # Some of the attributes will be nil, which is mostly because we don't want to upload to
         # S3 (via paperclip) - which is what sets up these values through the attached pseudo-attribute
         expect(JSON.parse response.body).to eq({"attachment" => {
-          "id"=>attachment.id, "att_file_name"=>"file.txt", "att_attachment_type"=>"Attachment Type", "att_file_size"=>1024, "att_content_type"=>nil, "att_source_system_timestamp"=>nil, "att_updated_at"=>nil, "att_revision"=>nil, "att_suffix"=>nil, "att_uploaded_by_username"=>user.username, "att_uploaded_by_fullname"=>user.full_name, "att_uploaded_by"=>user.id
+          "id"=>attachment.id, "att_file_name"=>"file.txt", "att_attachment_type"=>"Attachment Type", "att_file_size"=>1024, "att_content_type"=>nil, "att_source_system_timestamp"=>nil, "att_updated_at"=>nil, "att_revision"=>nil, "att_suffix"=>nil, "att_uploaded_by_username"=>user.username, "att_uploaded_by_fullname"=>user.full_name, "att_uploaded_by"=>user.id, "friendly_size"=>"1 KB", "att_unique_identifier" => "#{attachment.id}-#{attachment.attached_file_name}"
         }})
       end
 
@@ -118,7 +118,7 @@ describe Api::V1::AttachmentsController do
       end
     end
   end
- 
+
 
   describe "create" do
     let (:file) { fixture_file_upload('/files/test.txt', 'text/plain') }

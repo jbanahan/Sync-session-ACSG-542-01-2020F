@@ -1,15 +1,22 @@
 module OpenChain
   class BusinessRulesNotifier
     def self.run_schedulable
+      slack_exception = nil
       companies = Company.has_slack_channel
 
       companies.each do |company|
         rule_fail_count = get_rule_failures_count_for(company)
 
         if rule_fail_count > 0
-          OpenChain::SlackClient.new.send_message!(company.slack_channel, "#{company.name_with_customer_number} has #{rule_fail_count} failed business rules")
+          begin
+            OpenChain::SlackClient.new.send_message!(company.slack_channel, "#{company.name_with_customer_number} has #{rule_fail_count} failed business rules")
+          rescue Exception => exception
+            slack_exception ||= exception
+          end
         end
       end
+
+      raise slack_exception if slack_exception.present?
     end
 
     private

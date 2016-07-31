@@ -42,7 +42,7 @@ class FieldValidatorRule < ActiveRecord::Base
   def _validate_input(model_field, input, nested)
     r = []
     if self.required? && input.blank?
-      r << error_message("#{model_field.label} is required.")
+      r << error_message(model_field,nested,"#{model_field.label} is required.")
     end
     if !input.blank? #put all checks here
       r += validate_regex input, model_field, nested
