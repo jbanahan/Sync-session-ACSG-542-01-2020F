@@ -235,10 +235,10 @@ class User < ActiveRecord::Base
         view_surveys: self.view_surveys?,
         view_vendors: self.view_vendors?,
         create_vendors: self.create_vendors?,
-	view_trade_lanes: self.view_trade_lanes?,
-	edit_trade_lanes: self.edit_trade_lanes?,
+	      view_trade_lanes: self.view_trade_lanes?,
+	      edit_trade_lanes: self.edit_trade_lanes?,
         view_trade_preference_programs: self.view_trade_preference_programs?,
-        edit_trade_preference_programs: self.edit_trade_preference_programs?
+        edit_trade_preference_programs: self.edit_trade_preference_programs?,
         view_vfi_invoices: self.view_vfi_invoices?,
         edit_vfi_invoices: self.edit_vfi_invoices?
       }
