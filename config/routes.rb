@@ -134,6 +134,8 @@ OpenChain::Application.routes.draw do
 
       resources :vendors, only: [:index,:show,:update,:create] do
         post :validate, on: :member
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
       end
 
       resources :user_manuals, only: [:index]
