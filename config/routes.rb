@@ -202,7 +202,7 @@ OpenChain::Application.routes.draw do
         end
       end
 
-      resources :addresses, only: [:index]
+      resources :addresses, only: [:index, :create, :update, :destroy]
 
       resources :countries, only: [:index]
 

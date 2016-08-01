@@ -181,7 +181,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
       };
       publicMethods.Bulk = newBulkExecuteClient();
       newCoreModuleClient = function(moduleType, objectProperty, loadSuccessHandler) {
-        var cache, handleServerResponse, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
+        var cache, handleServerResponse, prepSearchOpts, sanitizeSearchCriteria, sanitizeSortOpts, setCache;
         cache = {};
         handleServerResponse = function(resp) {
           var data;
@@ -223,6 +223,13 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             return delete opts.criteria;
           }
         };
+        prepSearchOpts = function(searchOpts) {
+          var sOpts;
+          sOpts = $.extend({}, searchOpts);
+          sanitizeSortOpts(sOpts);
+          sanitizeSearchCriteria(sOpts);
+          return sOpts;
+        };
         return {
           get: function(id, queryOpts) {
             var deferred;
@@ -256,9 +263,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           },
           search: function(searchOpts) {
             var sOpts;
-            sOpts = $.extend({}, searchOpts);
-            sanitizeSortOpts(sOpts);
-            sanitizeSearchCriteria(sOpts);
+            sOpts = prepSearchOpts(searchOpts);
             return $http.get('/api/v1/' + moduleType + '.json', {
               params: sOpts
             }).then(function(resp) {
@@ -278,14 +283,30 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           },
           count: function(searchOpts) {
             var sOpts;
-            sOpts = $.extend({}, searchOpts);
-            sanitizeSortOpts(sOpts);
-            sanitizeSearchCriteria(sOpts);
+            sOpts = prepSearchOpts(searchOpts);
             sOpts.count_only = 'true';
             return $http.get('/api/v1/' + moduleType + '.json', {
               params: sOpts
             }).then(function(resp) {
               return resp.data.record_count;
+            });
+          },
+          csvUrl: function(searchOpts) {
+            var queryString, sOpts;
+            sOpts = prepSearchOpts(searchOpts);
+            queryString = $.param(sOpts);
+            return '/api/v1/' + moduleType + '.csv?' + queryString;
+          },
+          stateToggleButtons: function(obj) {
+            return $http.get('/api/v1/' + moduleType + '/' + obj.id + '/state_toggle_buttons.json').then(function(resp) {
+              return resp.data.state_toggle_buttons;
+            });
+          },
+          toggleStateButton: function(obj, button) {
+            return $http.post('/api/v1/' + moduleType + '/' + obj.id + '/toggle_state_button.json', {
+              button_id: button.id
+            }).then(function(resp) {
+              return true;
             });
           }
         };
@@ -296,9 +317,18 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         }
         return a;
       });
-      delete publicMethods.Address.get;
-      delete publicMethods.Address.load;
-      delete publicMethods.Address.save;
+      publicMethods.Address["delete"] = function(obj) {
+        var d;
+        if (obj.id) {
+          return $http["delete"]('/api/v1/addresses/' + obj.id + '.json').then(function(resp) {
+            return true;
+          });
+        } else {
+          d = $q.defer();
+          d.resolve(false);
+          return d.promise;
+        }
+      };
       newCountryClient = function() {
         var cache;
         cache = null;
@@ -453,7 +483,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         return {
           forModule: function(moduleType, objectId) {
             return $http.get('/api/v1/' + moduleType + '/' + objectId + '/attachments.json').then(function(resp) {
-              return resp.data;
+              return resp.data.attachments;
             });
           }
         };
@@ -554,6 +584,128 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             });
           };
           return load();
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainBulkEdit', [
+    'chainApiSvc', 'bulkSelectionSvc', '$compile', '$timeout', function(chainApiSvc, bulkSelectionSvc, $compile, $timeout) {
+      return {
+        restrict: 'E',
+        scope: {
+          apiObjectName: '@',
+          pageUid: '@',
+          buttonClasses: '@'
+        },
+        replace: true,
+        template: '<button class="btn {{buttonClasses}}" ng-disabled="isDisabled()" title="Bulk Edit" ng-click="activateEdit()"><i class="fa fa-pencil-square-o"></i></button>',
+        link: function(scope, el, attrs) {
+          var myModal;
+          myModal = null;
+          scope.isDisabled = function() {
+            return bulkSelectionSvc.selectedCount(scope.pageUid) === 0;
+          };
+          return scope.activateEdit = function() {
+            if (!myModal) {
+              myModal = $compile('<chain-bulk-edit-modal api-object-name="' + scope.apiObjectName + '" page-uid="' + scope.pageUid + '"></chain-bulk-edit-modal>')(scope);
+              $('body').append(myModal);
+            }
+            $timeout(function() {
+              return myModal.find('.modal').modal('show');
+            });
+            return null;
+          };
+        }
+      };
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  var hasProp = {}.hasOwnProperty;
+
+  angular.module('ChainCommon').directive('chainBulkEditModal', [
+    'chainApiSvc', 'bulkSelectionSvc', 'chainDomainerSvc', '$compile', '$timeout', function(chainApiSvc, bulkSelectionSvc, chainDomainerSvc, $compile, $timeout) {
+      return {
+        restrict: 'E',
+        scope: {
+          apiObjectName: '@',
+          pageUid: '@'
+        },
+        templateUrl: 'chain-bulk-edit-modal.html',
+        link: function(scope, el, attrs) {
+          var init;
+          init = function() {
+            scope.loading = 'loading';
+            scope.bulkEditObj = {};
+            return chainDomainerSvc.withDictionary().then(function(d) {
+              scope.editFields = $.grep(d.fieldsByRecordType(d.recordTypes[scope.apiObjectName]), function(field) {
+                return field.can_edit === true;
+              }).sort(function(a, b) {
+                if (a.label && b.label) {
+                  return a.label.localeCompare(b.label);
+                } else {
+                  return a.uid.localeCompare(b.uid);
+                }
+              });
+              return delete scope.loading;
+            });
+          };
+          scope.save = function() {
+            var cbe, doSave, i, len, needsTimeout, o, prop, ref, selected, updateOb, updateObjs, val;
+            el.find('.modal').modal('hide');
+            updateObjs = [];
+            doSave = false;
+            selected = bulkSelectionSvc.selected(scope.pageUid);
+            for (i = 0, len = selected.length; i < len; i++) {
+              o = selected[i];
+              updateOb = {
+                id: o.id
+              };
+              ref = scope.bulkEditObj;
+              for (prop in ref) {
+                if (!hasProp.call(ref, prop)) continue;
+                val = ref[prop];
+                if (val && val.length > 0) {
+                  updateOb[prop] = val;
+                  doSave = true;
+                }
+              }
+              updateObjs.push(updateOb);
+            }
+            if (doSave) {
+              needsTimeout = false;
+              cbe = $('chain-bulk-execute');
+              if (cbe.length === 0) {
+                $('body').append($compile('<chain-bulk-execute></chain-bulk-execute>')(scope.$root));
+                needsTimeout = true;
+              }
+              if (needsTimeout) {
+                return $timeout(function() {
+                  return chainApiSvc.Bulk.execute(chainApiSvc[scope.apiObjectName].save, updateObjs).then(function() {
+                    return scope.bulkEditObj = {};
+                  });
+                });
+              } else {
+                return chainApiSvc.Bulk.execute(chainApiSvc[scope.apiObjectName].save, updateObjs).then(function() {
+                  return scope.bulkEditObj = {};
+                });
+              }
+            }
+          };
+          scope.cancel = function() {
+            scope.bulkEditObj = {};
+            el.find('.modal').modal('hide');
+            return null;
+          };
+          if (!scope.$root.isTest) {
+            return init();
+          }
         }
       };
     }
@@ -945,6 +1097,9 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
               inp.attr('type', updatedInputType);
             }
           }
+          if (!scope.field.can_edit) {
+            realInput.prop('disabled', 'disabled');
+          }
           if (scope.field.remote_validate) {
             return realInput.on('blur', function() {
               return scope.$apply(function() {
@@ -1242,7 +1397,8 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           name: '@',
           apiObjectName: '@',
           pageUid: '@',
-          baseSearchSetupFunction: '='
+          baseSearchSetupFunction: '=',
+          bulkEdit: '='
         },
         templateUrl: 'chain-search-panel.html',
         link: function(scope, el, attrs) {
@@ -1329,7 +1485,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 
 (function() {
   angular.module('ChainCommon').directive('chainSearchTable', [
-    'chainApiSvc', 'chainDomainerSvc', 'bulkSelectionSvc', function(chainApiSvc, chainDomainerSvc, bulkSelectionSvc) {
+    'chainApiSvc', 'chainDomainerSvc', 'bulkSelectionSvc', '$window', function(chainApiSvc, chainDomainerSvc, bulkSelectionSvc, $window) {
       return {
         restrict: 'E',
         scope: {
@@ -1341,7 +1497,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         templateUrl: 'chain-search-table.html',
         replace: true,
         link: function(scope, el, attrs) {
-          var buildSearchParams, calcPages, doLoad;
+          var buildSearchParams, calcPages, doLoad, findCriterionByUid;
           scope.neverLoaded = true;
           scope.hasBeenLoaded = false;
           if (!scope.searchSetup) {
@@ -1438,6 +1594,78 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           scope.isSelected = function(obj) {
             return bulkSelectionSvc.isSelected(scope.pageUid, obj);
           };
+          findCriterionByUid = function(uid) {
+            var allCriteria, c, i, len;
+            allCriteria = scope.searchSetup.criteria;
+            if (!allCriteria) {
+              return false;
+            }
+            for (i = 0, len = allCriteria.length; i < len; i++) {
+              c = allCriteria[i];
+              if (c.field === uid) {
+                return c;
+              }
+            }
+            return false;
+          };
+          scope.isFilteredColumn = function(uid) {
+            if (findCriterionByUid(uid)) {
+              return true;
+            }
+            return false;
+          };
+          scope.filterColumn = function(uid) {
+            var c;
+            c = findCriterionByUid(uid);
+            if (!c) {
+              c = {
+                field: uid,
+                operator: 'co',
+                val: ''
+              };
+            }
+            scope.filterCriterion = c;
+            el.find('.modal').modal('show');
+            return null;
+          };
+          scope.addFilter = function(f) {
+            var found;
+            found = findCriterionByUid(f.field);
+            if (found) {
+              found.val = f.val;
+              found.operator = 'co';
+            } else {
+              if (!scope.searchSetup.criteria) {
+                scope.searchSetup.criteria = [];
+              }
+              scope.searchSetup.criteria.push(f);
+            }
+            scope.searchSetup.reload = new Date().getTime();
+            el.find('.modal').modal('hide');
+            return null;
+          };
+          scope.removeFilter = function(f) {
+            var allCriteria, c, i, idx, len;
+            allCriteria = scope.searchSetup.criteria;
+            for (idx = i = 0, len = allCriteria.length; i < len; idx = ++i) {
+              c = allCriteria[idx];
+              if (c.field === f.field) {
+                allCriteria.splice(idx, 1);
+              }
+            }
+            scope.searchSetup.reload = new Date().getTime();
+            el.find('.modal').modal('hide');
+            return null;
+          };
+          scope.downloadCsv = function() {
+            var apiObj, ss, url;
+            ss = $.extend({}, scope.searchSetup);
+            delete ss.page;
+            delete ss.per_page;
+            apiObj = chainApiSvc[scope.apiObjectName];
+            url = apiObj.csvUrl(buildSearchParams(ss));
+            return $window.location = url;
+          };
           scope.load = function() {
             scope.loading = 'loading';
             scope.reloadVal = scope.searchSetup.reload;
@@ -1481,6 +1709,11 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
               return scope.load();
             }
           });
+          scope.$on('chain-bulk-execute-end', function() {
+            if (!scope.neverLoaded) {
+              return scope.load();
+            }
+          });
           if (typeof scope.loadTrigger === 'undefined' && !scope.$root.isTest) {
             return scope.load();
           }
@@ -1506,6 +1739,49 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
       });
     };
   });
+
+}).call(this);
+
+(function() {
+  angular.module('ChainCommon').directive('chainStateToggleButtons', [
+    'chainApiSvc', '$window', function(chainApiSvc, $window) {
+      return {
+        restrict: 'E',
+        scope: {
+          apiObjectName: '@',
+          buttonClasses: '@',
+          object: '=',
+          toggleCallback: '='
+        },
+        replace: true,
+        templateUrl: 'chain-state-toggle-buttons.html',
+        link: function(scope, el, attrs) {
+          var loadButtons;
+          loadButtons = function(object) {
+            delete scope.stButtons;
+            return chainApiSvc[scope.apiObjectName].stateToggleButtons(object).then(function(buttons) {
+              scope.stButtons = buttons;
+              return object._chainStateToggleButtonLoaded = true;
+            });
+          };
+          scope.toggle = function(button) {
+            if (!button.button_confirmation || button.button_confirmation.length === 0 || $window.confirm(button.button_confirmation)) {
+              return chainApiSvc[scope.apiObjectName].toggleStateButton(scope.object, button).then(function(resp) {
+                if (scope.toggleCallback) {
+                  return scope.toggleCallback();
+                }
+              });
+            }
+          };
+          return scope.$watch('object._chainStateToggleButtonLoaded', function(nv, ov) {
+            if (!nv) {
+              return loadButtons(scope.object);
+            }
+          });
+        }
+      };
+    }
+  ]);
 
 }).call(this);
 
@@ -1649,11 +1925,16 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
 
 }).call(this);
 
-angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-bulk-execute-modal.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-search-panel.html', 'chain-search-table.html', 'chain-support-modal.html']);
+angular.module('ChainCommon-Templates', ['chain-attachments-panel.html', 'chain-bulk-edit-modal.html', 'chain-bulk-execute-modal.html', 'chain-change-password-modal.html', 'chain-comments-panel.html', 'chain-errors.html', 'chain-messages-modal.html', 'chain-search-panel.html', 'chain-search-table.html', 'chain-state-toggle-buttons.html', 'chain-support-modal.html']);
 
 angular.module("chain-attachments-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-attachments-panel.html",
-    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.name}} <span class=\"badge\">{{att.size}}</span></a></li></ul></div>");
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Attachments</h3></div><ul class=\"list-group\"><li ng-repeat=\"att in attachments track by att.id\" class=\"list-group-item\"><button class=\"btn btn-xs btn-danger pull-right\" ng-click=\"deleteAttachment(att.id)\" href=\"javascript:;\" ng-if=\"canAttach\"><i class=\"fa fa-trash\"></i></button> <a href=\"/attachments/{{att.id}}/download\" target=\"_blank\">{{att.att_file_name}} <span class=\"badge\">{{att.friendly_size}}</span></a></li></ul></div>");
+}]);
+
+angular.module("chain-bulk-edit-modal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-bulk-edit-modal.html",
+    "<div class=\"modal fade\" data-keyboard=\"false\" data-backdrop=\"static\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Bulk Edit</h4></div><div class=\"modal-body\"><div ng-repeat=\"f in editFields track by f.uid\"><chain-field-label field=\"f\"></chain-field-label><chain-field-input model=\"bulkEditObj\" field=\"f\" input-class=\"form-control\"></chain-field-input></div></div><div class=\"modal-footer text-right\"><button ng-click=\"cancel()\" class=\"btn btn-default\">Cancel</button> <button ng-click=\"save()\" class=\"btn btn-success\" title=\"Save\"><i class=\"fa fa-save\"></i></button></div></div></div></div>");
 }]);
 
 angular.module("chain-bulk-execute-modal.html", []).run(["$templateCache", function($templateCache) {
@@ -1683,12 +1964,17 @@ angular.module("chain-messages-modal.html", []).run(["$templateCache", function(
 
 angular.module("chain-search-panel.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-search-panel.html",
-    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">{{name}}</h3></div><div class=\"panel-body\"><select ng-model=\"searchTableConfig\" ng-change=\"activateSearch(searchTableConfig)\" class=\"form-control\" ng-options=\"c as c.name for c in searchTableConfigs track by c.id\"></select></div><div class=\"panel-body\"><chain-search-table api-object-name=\"{{apiObjectName}}\" search-setup=\"coreSearch.searchSetup\" load-trigger=\"false\" page-uid=\"{{pageUid}}\"></chain-search-table></div></div>");
+    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">{{name}}</h3></div><div class=\"panel-body\"><select ng-model=\"searchTableConfig\" ng-change=\"activateSearch(searchTableConfig)\" class=\"form-control\" ng-options=\"c as c.name for c in searchTableConfigs track by c.id\"></select></div><div class=\"panel-body\" ng-show=\"searchTableConfigs && searchTableConfigs.length==0\"><div class=\"panel panel-danger\"><div class=\"panel-body\">There aren't any searches setup for this panel. For more help, please contact support.</div></div></div><div class=\"panel-body\"><chain-search-table api-object-name=\"{{apiObjectName}}\" search-setup=\"coreSearch.searchSetup\" load-trigger=\"false\" page-uid=\"{{pageUid}}\"></chain-search-table></div><div class=\"panel-footer text-right\" ng-if=\"bulkEdit && coreSearch.searchSetup.bulkSelections\"><chain-bulk-edit api-object-name=\"{{apiObjectName}}\" page-uid=\"{{pageUid}}\" button-classes=\"btn-default btn-sm\"></chain-bulk-edit></div></div>");
 }]);
 
 angular.module("chain-search-table.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain-search-table.html",
-    "<div class=\"chain-search-table container-fluid\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div><button ng-click=\"load()\" ng-show=\"searchSetup.allowManualInit || hasBeenLoaded\" class=\"btn-xs btn btn-default pull-right\" title=\"Reload\"><i class=\"fa fa-refresh\"></i></button></div><table class=\"table\" ng-if=\"content && !loading\"><thead><tr><th ng-if=\"searchSetup.bulkSelections\"><button title=\"Select All\" class=\"btn btn-xs btn-link\" ng-click=\"selectAll()\"><i class=\"fa fa-square-o\"></i></button></th><th ng-if=\"searchSetup.buttons.length > 0\">&nbsp;</th><th ng-repeat=\"col in searchSetup.columns track by $index\">{{columnFields[col].label}}</th></tr></thead><tbody><tr ng-repeat=\"obj in content track by obj.id\"><td ng-if=\"searchSetup.bulkSelections\"><button ng-click=\"toggleBulkSelect(obj)\" title=\"Select Row\" class=\"btn btn-link btn-xs\"><i class=\"fa\" ng-class=\"{&quot;fa-check-square-o&quot;:isSelected(obj), &quot;fa-square-o&quot;:!isSelected(obj)}\"></i></button></td><td ng-if=\"searchSetup.buttons.length > 0\"><button ng-repeat=\"b in searchSetup.buttons track by $index\" class=\"{{b.class}}\" ng-click=\"b.onClick(obj)\" title=\"{{b.label}}\"><span ng-if=\"!b.iconClass\">{{b.label}}</span> <i class=\"{{b.iconClass}}\" ng-if=\"b.iconClass\"></i></button></td><td ng-repeat=\"col in searchSetup.columns track by $index\"><chain-field-value model=\"obj\" field=\"columnFields[col]\"></chain-field-value></td></tr></tbody><tfoot ng-if=\"totalPages()>1\"><td colspan=\"{{columnCount()}}\" class=\"text-right\">Page&nbsp;<select ng-model=\"searchSetup.page\" ng-options=\"p as p for p in pages\" class=\"form-control page-selector\"></select>&nbsp;of&nbsp; <span class=\"total-pages\">{{totalPages()}}</span></td></tfoot></table></div>");
+    "<div class=\"chain-search-table container-fluid\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div class=\"text-right\"><div class=\"btn-group\"><button ng-click=\"downloadCsv()\" ng-show=\"hasBeenLoaded\" class=\"btn btn-xs btn-default\" title=\"Download CSV\"><i class=\"fa fa-download\"></i></button> <button ng-click=\"load()\" ng-show=\"searchSetup.allowManualInit || hasBeenLoaded\" class=\"btn-xs btn btn-default\" title=\"Reload\"><i class=\"fa fa-refresh\"></i></button></div></div><table class=\"table\" ng-if=\"content && !loading\"><thead><tr><th ng-if=\"searchSetup.bulkSelections\"><button title=\"Select All\" class=\"btn btn-xs btn-link\" ng-click=\"selectAll()\"><i class=\"fa fa-square-o\"></i></button></th><th ng-if=\"searchSetup.buttons.length > 0\">&nbsp;</th><th ng-repeat=\"col in searchSetup.columns track by $index\"><button class=\"btn btn-xs {{isFilteredColumn(col) ? &quot;btn-primary&quot; : &quot;btn-default&quot;}}\" ng-click=\"filterColumn(col)\" title=\"Filter\" ng-if=\"columnFields[col].data_type==&quot;string&quot;\"><i class=\"fa fa-filter\"></i></button> {{columnFields[col].label}}</th></tr></thead><tbody><tr ng-repeat=\"obj in content track by obj.id\"><td ng-if=\"searchSetup.bulkSelections\"><button ng-click=\"toggleBulkSelect(obj)\" title=\"Select Row\" class=\"btn btn-link btn-xs\"><i class=\"fa\" ng-class=\"{&quot;fa-check-square-o&quot;:isSelected(obj), &quot;fa-square-o&quot;:!isSelected(obj)}\"></i></button></td><td ng-if=\"searchSetup.buttons.length > 0\"><button ng-repeat=\"b in searchSetup.buttons track by $index\" class=\"{{b.class}}\" ng-click=\"b.onClick(obj)\" title=\"{{b.label}}\"><span ng-if=\"!b.iconClass\">{{b.label}}</span> <i class=\"{{b.iconClass}}\" ng-if=\"b.iconClass\"></i></button></td><td ng-repeat=\"col in searchSetup.columns track by $index\"><chain-field-value model=\"obj\" field=\"columnFields[col]\"></chain-field-value></td></tr></tbody><tfoot ng-if=\"totalPages()>1\"><td colspan=\"{{columnCount()}}\" class=\"text-right\">Page&nbsp;<select ng-model=\"searchSetup.page\" ng-options=\"p as p for p in pages\" class=\"form-control page-selector\"></select>&nbsp;of&nbsp; <span class=\"total-pages\">{{totalPages()}}</span></td></tfoot></table><div class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Filter</h4></div><div class=\"modal-body\"><chain-field-label field=\"columnFields[filterCriterion.field]\"></chain-field-label><input ng-model=\"filterCriterion.val\" class=\"form-control\"></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button type=\"button\" class=\"btn btn-default\" ng-click=\"removeFilter(filterCriterion)\" title=\"Clear Filter\"><i class=\"fa fa-trash\"></i></button> <button type=\"button\" class=\"btn btn-primary\" ng-click=\"addFilter(filterCriterion)\" title=\"Filter\"><i class=\"fa fa-filter\"></i></button></div></div></div></div></div>");
+}]);
+
+angular.module("chain-state-toggle-buttons.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("chain-state-toggle-buttons.html",
+    "<div class=\"btn-group\"><button ng-hide=\"stButtons && stButtons.length==0\" type=\"button\" class=\"btn btn-default dropdown-toggle {{buttonClasses}}\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">Actions <span class=\"caret\"></span></button><ul class=\"dropdown-menu\"><li ng-if=\"!stButtons\" title=\"loading buttons\"><i class=\"fa fa-circle-o-notch fa-spin\"></i> Loading</li><li ng-repeat-start=\"b in stButtons track by b.id\" ng-repeat-end=\"b\" ng-click=\"toggle(b)\"><a href=\"javascript:void(0)\">{{b.button_text}}</a></li></ul></div>");
 }]);
 
 angular.module("chain-support-modal.html", []).run(["$templateCache", function($templateCache) {

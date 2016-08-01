@@ -13,6 +13,10 @@ class Address < ActiveRecord::Base
       user.company.linked_companies.include?(self.company)
   end
 
+  def can_edit? user
+    return can_view?(user) && self.company.can_edit?(user)
+  end
+
   def self.search_where user
     return "1=1" if user.company.master?
     return "(addresses.company_id = #{user.company_id} OR addresses.company_id IN (select child_id from linked_companies where parent_id = #{user.company_id}))"
