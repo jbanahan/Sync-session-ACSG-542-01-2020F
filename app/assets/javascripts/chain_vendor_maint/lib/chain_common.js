@@ -1625,7 +1625,9 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
               };
             }
             scope.filterCriterion = c;
-            el.find('.modal').modal('show');
+            el.find('.modal').modal('show').on('shown.bs.modal', function() {
+              return el.find('.modal input:first').focus();
+            });
             return null;
           };
           scope.addFilter = function(f) {
