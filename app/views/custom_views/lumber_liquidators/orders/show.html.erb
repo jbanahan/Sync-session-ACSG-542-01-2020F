@@ -1,11 +1,12 @@
 <%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
 <%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([
-  :prodven_risk,:prod_old_article,
+  :prodven_risk,:prod_old_article,:prod_merch_cat_desc,:prod_merch_cat,
   :ordln_pc_approved_by,:ordln_pc_approved_date,
   :ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,
+  :ordln_qa_approved_by,:ordln_qa_approved_date,
   :ord_planned_handover_date,:ord_ship_confirmation_date,
   :ord_sap_vendor_handover_date,:ord_planned_expected_delivery_date,
-  :ord_sap_extract, :ord_avail_to_prom_date])%>
+  :ord_sap_extract, :ord_avail_to_prom_date,])%>
 <%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
 <script type='text/javascript'>
 
@@ -103,6 +104,7 @@
       <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active"><a href="#main" aria-controls="main" role="tab" data-toggle="tab">Main</a></li>
         <li role="presentation"><a href="#compliance" aria-controls="compliance" role="tab" data-toggle="tab">Compliance</a></li>
+        <li role="presentation"><a href="#quality" aria-controls="quality" role="tab" data-toggle="tab">Quality</a></li>
       </ul>
 
       <!-- Tab panes -->
@@ -194,6 +196,45 @@
             </tbody>
           </table>
         </div>
+        <div role="tabpanel" class="tab-pane" id="quality">
+          <table class="table table-condensed table-striped table-bordered">
+            <thead>
+              <tr>
+                <%= model_field_labels([:ordln_line_number, :prod_uid, cdefs[:prod_merch_cat].model_field_uid, :ordln_ordered_qty, :ordln_unit_of_measure,
+                  cdefs[:ordln_qa_approved_by].model_field_uid
+                ], table:true, heading:true) %>
+                <th>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @order.order_lines.each do |line| %>
+                <tr>
+                  <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
+                  <td>
+                    <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
+                    <small><%=cdefs[:prod_old_article].model_field.process_export(line.product,User.current)%></small><br />
+                    <%=ModelField.find_by_uid(:prod_name).process_export(line.product,User.current)%>
+                  </td>
+                  <td>
+                    <small><%=cdefs[:prod_merch_cat].model_field.process_export(line.product,User.current)%></small><br />
+                    <%=cdefs[:prod_merch_cat_desc].model_field.process_export(line.product,User.current)%>
+                  </td>
+                  <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure], table: true, editor_only: true) %>
+                  <td>
+                    <%=ModelField.find_by_uid("*uf_#{cdefs[:ordln_qa_approved_by].id}_fullname".to_sym).process_export(line,User.current)%><br />
+                    <small><%=cdefs[:ordln_qa_approved_date].model_field.process_export(line,User.current)%></small>
+                  </td>
+                  <td>
+                    <%=state_toggle_buttons(line,User.current,button_class:'btn btn-default btn-xs')%>
+                  </td>
+                </tr>
+              <%end %>
+            </tbody>
+          </table>
+        </div>
+
         <div role="tabpanel" class="tab-pane" id="messages">...</div>
         <div role="tabpanel" class="tab-pane" id="settings">...</div>
       </div>
