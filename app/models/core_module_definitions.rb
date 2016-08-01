@@ -262,7 +262,7 @@ module CoreModuleDefinitions
        )
    })
   BROKER_INVOICE_LINE = CoreModule.new("BrokerInvoiceLine","Broker Invoice Line",{
-       :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
+       :changed_at_parents_lambda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
        :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
        :unique_id_field_name=>:bi_line_charge_code,
        :key_model_field_uids=>[:bi_line_charge_code],
@@ -439,6 +439,27 @@ module CoreModuleDefinitions
     module_chain: [SummaryStatement, BrokerInvoice, BrokerInvoiceLine]
   })
 
+  VFI_INVOICE = CoreModule.new("VfiInvoice", "Vfi Invoice", {
+    default_search_columns: [:vi_invoice_number, :vi_invoice_date, :vi_invoice_total],
+    :unique_id_field_name => :vi_invoice_number,
+    key_model_field_uids: [:vi_invoice_number],
+    children: [VfiInvoiceLine],
+    child_lambdas: {VfiInvoiceLine => lambda {|i| i.vfi_invoice_lines}},
+    child_joins: {VfiInvoiceLine => "LEFT OUTER JOIN vfi_invoice_lines on vfi_invoices.id = vfi_invoice_lines.vfi_invoice_id"},
+    quicksearch_fields: [:vi_invoice_number],
+    quicksearch_sort_by_mf: :vi_invoice_number,
+    enabled_lambda: lambda { MasterSetup.get.vfi_invoice_enabled? },
+    module_chain: [VfiInvoice, VfiInvoiceLine]
+  })
+
+  VFI_INVOICE_LINE = CoreModule.new("VfiInvoiceLine","Vfi Invoice Line",{
+    :changed_at_parents_lambda => lambda {|p| p.vfi_invoice.nil? ? [] : [p.vfi_invoice]},
+    :enabled_lambda => lambda { CoreModule::VFI_INVOICE.enabled? },
+    :unique_id_field_name=>:vi_line_number,
+    :key_model_field_uids=>[:vi_line_number],
+    :show_field_prefix=>true
+   })
+
   PRODUCT_VENDOR_ASSIGNMENT = CoreModule.new("ProductVendorAssignment","Product Vendor Assignment", {
     default_search_columns: [:pva_ven_name, :pva_puid, :pva_pname],
     key_model_field_uids: [:pva_ven_name, :pva_puid]
@@ -449,7 +470,7 @@ module CoreModuleDefinitions
   # Attachment has no field that is really suitable for use in key_model_field_uids or in unique_id_field,
   # as such attachments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so
   # that's not a big deal.
-  ATTACHMENT = CoreModule.new("Attachment", "Attachment", {})
+  ATTACHMENT = CoreModule.new("Attachment", "Attachment", {unique_id_field_name: :att_unique_identifier})
   ADDRESS = CoreModule.new("Address","Address",{
     unique_id_field_name: :add_sys_code,
     enabled_lambda: lambda {true}

@@ -52,8 +52,6 @@ describe OpenChain::Report::SgDutyDueReport do
       mar_6 = Date.parse('2016-03-06')
       mar_7 = Date.parse('2016-03-07')
       mar_8 = Date.parse('2016-03-08')
-      mar_10 = Date.parse('2016-03-10')
-      
 
       input = [{arrival_date: mar_1, daily_statement_approved_date: mar_2, daily_statement_number: '12345678AB',
                 broker_reference: "12345", customer_references: "123AB\n 456CD", release_date: mar_1, total_duties_and_fees: 100,
@@ -88,7 +86,7 @@ describe OpenChain::Report::SgDutyDueReport do
                   :date_total_duties_and_fees=>150,
                   :daily_statement_approved => mar_2,
                   :daily_statement_number => Set.new(['12345678AB', '87654321CD']),
-                  :est_debit_date => mar_10},
+                  :est_debit_date => mar_7},
                  {"1234"=>{:port_total_duties_and_fees=>250,
                            :port_name=> "Boston",                                                                                 
                            :entries=>[{release_date: mar_4, arrival_date: mar_4, #FRIDAY
@@ -108,7 +106,7 @@ describe OpenChain::Report::SgDutyDueReport do
                 :date_total_duties_and_fees=>1200,
                 :daily_statement_approved => mar_7,
                 :daily_statement_number => Set.new(['24681012CD']),
-                :est_debit_date => mar_10},
+                :est_debit_date => mar_7},
                 {"1234"=>{:port_total_duties_and_fees=>130, 
                            :port_name=> "Boston",                                                                                  
                            :entries=>[{release_date: mar_7, arrival_date: mar_7, #MONDAY
@@ -117,7 +115,7 @@ describe OpenChain::Report::SgDutyDueReport do
                   :date_total_duties_and_fees=>130,
                   :daily_statement_approved => mar_8,
                   :daily_statement_number => Set.new(['87654321CD']),
-                  :est_debit_date => mar_10}]
+                  :est_debit_date => mar_7}]
 
       parser = described_class.new
       expect(parser.create_digest input).to eq digest

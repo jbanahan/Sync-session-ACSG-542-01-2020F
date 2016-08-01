@@ -35,7 +35,12 @@ class EntitySnapshot < ActiveRecord::Base
     return nil if json_text.blank?
     as_string ? json_text : ActiveSupport::JSON.decode(json_text)
   end
-  
+
+  # more clearly named version of snapshot_json
+  def snapshot_hash
+    snapshot_json false
+  end
+
   def restore user
     o = recursive_restore snapshot_json, user
     o.create_snapshot user
@@ -62,7 +67,7 @@ class EntitySnapshot < ActiveRecord::Base
   end
 
   def self.retrieve_snapshot_data_from_s3 snapshot
-    data = StringIO.new 
+    data = StringIO.new
     OpenChain::S3.get_versioned_data snapshot.bucket, snapshot.doc_path, snapshot.version, data
     data.rewind
     data.read
@@ -72,7 +77,7 @@ class EntitySnapshot < ActiveRecord::Base
   ###################################
   # S3 Handling Stuff
   ###################################
-  
+
   #bucket name for storing entity snapshots
   def self.bucket_name env=Rails.env
     r = "#{env}.#{MasterSetup.get.system_code}.snapshots.vfitrack.net"
@@ -89,7 +94,7 @@ class EntitySnapshot < ActiveRecord::Base
   def expected_s3_path
     rec = self.recordable
     mod = CoreModule.find_by_object(rec)
-    
+
     key_base = rec.id
     raise "key_base couldn't be found for record because it hasn't been saved to database. #{rec.to_s}" unless key_base
     key_base = key_base.to_s.strip.gsub(/\W/,'_').downcase
@@ -147,7 +152,7 @@ class EntitySnapshot < ActiveRecord::Base
           mf.process_import obj, v, user, bypass_user_check: true
         end
       end
-      obj_hash['model_fields'].each do |mfuid,val| 
+      obj_hash['model_fields'].each do |mfuid,val|
         #this loop writes the values in the hash again.
         #this prevents an empty value not in the hash from blanking something
         #that is in the hash like a missing Country ISO blanking an included Country Name
@@ -178,7 +183,7 @@ class EntitySnapshot < ActiveRecord::Base
       # Then we create/update children based on hash
 
       # Skipping children without record_ids is primarily a workaround for buggy snapshot records...not exactly sure at the moment
-      # why we appear to be getting child entity records with null record ids that appear to be 
+      # why we appear to be getting child entity records with null record ids that appear to be
       # duplicate records. .ie two classification records for same country, one without a record id.
       obj_hash['children'].each {|c| recursive_restore(c['entity'], user, obj) unless c['entity']['record_id'].blank?} if obj_hash['children']
     end
@@ -199,7 +204,7 @@ class EntitySnapshot < ActiveRecord::Base
     d.record_id = new_json.nil? ? old_json['entity']['record_id'] : new_json['entity']['record_id']
     d.core_module = new_json.nil? ? old_json['entity']['core_module'] : new_json['entity']['core_module']
     cm = CoreModule.find_by_class_name d.core_module
-    d.model_fields_changed = model_field_diff(old_json,new_json) 
+    d.model_fields_changed = model_field_diff(old_json,new_json)
 
     new_children = new_json.nil? ? [] : new_json['entity']['children']
     old_children = old_json.nil? ? [] : old_json['entity']['children']
