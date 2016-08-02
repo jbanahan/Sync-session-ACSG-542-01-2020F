@@ -6,7 +6,8 @@
   :ordln_qa_approved_by,:ordln_qa_approved_date,
   :ord_planned_handover_date,:ord_ship_confirmation_date,
   :ord_sap_vendor_handover_date,:ord_planned_expected_delivery_date,
-  :ord_sap_extract, :ord_avail_to_prom_date,])%>
+  :ord_sap_extract, :ord_avail_to_prom_date,:ord_qa_hold_by,
+  :ord_qa_hold_date,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_testing_date_completed])%>
 <%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
 <script type='text/javascript'>
 
@@ -86,6 +87,8 @@
         <%=field_bootstrap vendor_name_fld.label, link_to(vendor_name_fld.process_export(@order, User.current), vendor_path(@order.vendor)) %>
       <% end %>
       <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_imp_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_payment_terms, :ord_terms, :ord_fob_point] %>
+      <hr />
+      <%=show_custom_fields @order, {skip_fields:[:ord_planned_expected_delivery_date,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_qa_hold_date,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_testing_date_completed].collect{|key| cdefs[key].model_field_uid}}%>
     </div>
     <div class="col-md-6">
       <%= show_model_fields @order, [:ord_ord_date, :ord_window_start, :ord_window_end, cdefs[:ord_planned_expected_delivery_date].model_field_uid] %>
@@ -96,7 +99,7 @@
       <hr />
       <%= show_model_fields @order, [:ord_avail_to_prom_date,:ord_sap_vendor_handover_date].collect {|key| cdefs[key].model_field_uid}%>
       <hr />
-      <%=show_custom_fields @order, {skip_fields:[:ord_planned_expected_delivery_date,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date].collect{|key| cdefs[key].model_field_uid}}%>
+      <%= show_model_fields @order, [:ord_qa_hold_by,:ord_qa_hold_date,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_testing_date_completed].collect {|key| cdefs[key].model_field_uid}%>
     </div>
   </div>
   <div class="row">
