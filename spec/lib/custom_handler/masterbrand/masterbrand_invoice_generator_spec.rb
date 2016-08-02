@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       expect(line.quantity).to eq billables.length
       expect(line.unit).to eq 'ea'
       expect(line.unit_price).to eq 2.5
-      expect(line.charge_description).to eq 'Entries exceeding 250/mo. limit'
+      expect(line.charge_description).to eq 'Unified Entry Audit; Up To 250 Entries'
     end
   end
 
