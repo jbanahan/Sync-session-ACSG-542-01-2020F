@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @imp = Company.find_by_master(true)
     @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone,
       :ord_planned_expected_delivery_date, :ord_ship_confirmation_date,
-      :ord_sap_vendor_handover_date, :ord_avail_to_prom_date
+      :ord_sap_vendor_handover_date, :ord_avail_to_prom_date, :ord_assigned_agent
     ]
     @opts = opts
   end
@@ -79,8 +79,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       }
 
 
-
       o.save!
+      o.update_custom_value!(@cdefs[:ord_assigned_agent],assigned_agent(o))
       o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
       o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
       buyer_name, buyer_phone = buyer_info(base)
@@ -97,6 +97,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       o.create_snapshot @user
     end
+  end
+
+  def assigned_agent order
+    linked_system_codes = Company.where("companies.id IN (SELECT parent_id FROM linked_companies WHERE child_id = ?)",order.vendor_id).pluck(:system_code)
+    agent_codes = ['GELOWELL','RO'] & linked_system_codes
+    agent_codes.sort.join("/")
   end
 
   def set_header_dates_from_lines base, order
