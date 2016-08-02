@@ -6,7 +6,11 @@ module ConfigMigrations; module LL; class SOW35
     :ord_qa_hold_date,
     :ordln_qa_approved_by,
     :ordln_qa_approved_date,
-    :ord_assigned_agent
+    :ord_assigned_agent,
+    :ord_inspection_date_planned,
+    :ord_inspection_date_completed,
+    :ord_testing_date_planned,
+    :ord_testing_date_completed
   ]
 
   def up
@@ -32,7 +36,15 @@ module ConfigMigrations; module LL; class SOW35
   end
 
   def create_new_custom_defs
-    OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions DEFS
+    defs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions DEFS
+    [:ord_inspection_date_planned,
+    :ord_inspection_date_completed,
+    :ord_testing_date_planned,
+    :ord_testing_date_completed].each do |def_id|
+      cd = defs[def_id]
+      FieldValidatorRule.create!(model_field_uid:cd.model_field_uid,module_type:cd.module_type,can_edit_groups:'QA_APPROVE_ORDER',can_view_groups:"QA_APPROVE_ORDER\nALL")
+    end
+    defs
   end
 
   def remove_custom_defs
