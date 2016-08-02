@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover do
   describe :process do
     before :each do
-      @cdefs = described_class.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date])
+      @cdefs = described_class.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_qa_approved_by,:ordln_qa_approved_date,:ord_assigned_agent])
     end
     it "should approve lines where risk level is Auto-Flow" do
       u = Factory(:master_user,username:'autoflow')
@@ -43,6 +43,23 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
 
 
     end
+    it "should auto flow QA if no assigned agent" do
+      ol = Factory(:order_line)
+      described_class.process(ol.order)
+      expect(ol.get_custom_value(@cdefs[:ordln_qa_approved_by]).value).to_not be_blank
+      expect(ol.get_custom_value(@cdefs[:ordln_qa_approved_date]).value).to_not be_blank
+    end
+
+    it "should not auto flow QA if assigned agent" do
+      ol = Factory(:order_line)
+      ol.order.update_custom_value!(@cdefs[:ord_assigned_agent],'RO')
+
+      described_class.process(ol.order)
+
+      expect(ol.get_custom_value(@cdefs[:ordln_qa_approved_by]).value).to be_blank
+      expect(ol.get_custom_value(@cdefs[:ordln_qa_approved_date]).value).to be_blank
+    end
+
     it "should create Auto Flow user" do
       p = Factory(:product)
       v = Factory(:company,name:'vendor')
