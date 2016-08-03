@@ -1059,7 +1059,7 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         },
         template: "<input type='text' ng-model='model[field.uid]' class='{{inputClass}}' />",
         link: function(scope, el, attrs) {
-          var cb, i, inp, inputTypes, jqEl, len, opt, realInput, ref, sel, ta, updatedInputType;
+          var i, inp, inputTypes, jqEl, len, opt, realInput, ref, sel, updatedInputType;
           jqEl = $(el);
           inp = jqEl.find('input');
           realInput = inp;
@@ -1076,14 +1076,12 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             }
           } else if (scope.field.data_type === 'text') {
             inp.remove();
-            ta = $compile(angular.element('<textarea ng-model="model[field.uid]" class="{{inputClass}}"></textarea>'))(scope);
-            realInput = ta;
-            jqEl.append(ta);
+            realInput = $compile(angular.element('<textarea ng-model="model[field.uid]" class="{{inputClass}}"></textarea>'))(scope);
+            jqEl.append(realInput);
           } else if (scope.field.data_type === 'boolean') {
             inp.remove();
-            cb = $compile(angular.element('<div><input type="checkbox" ng-model="model[field.uid]"></div>'))(scope);
-            realInput = ta;
-            jqEl.append(cb);
+            realInput = $compile(angular.element('<div><input type="checkbox" ng-model="model[field.uid]"></div>'))(scope);
+            jqEl.append(realInput);
           } else {
             inputTypes = {
               number: 'number',
