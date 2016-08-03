@@ -230,6 +230,11 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $scope.searchResult = {}
     ss = $scope.searchSetup
     $scope.searchSetup = {}
+    
+    if ss.search_criterions.length == 0
+      ss.sort_criterions = []
+      ss.search_schedules = []
+
     $http.put('/advanced_search/'+ss.id+'.json',JSON.stringify({search_setup:ss})).success(() ->
       # Unless we're already on the first page, change to it.
       if $scope.page != 1
