@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   def self.bill_new_classifications billables, invoice
     qty_to_bill = billables.count
     if qty_to_bill > 0
-      line = invoice.vfi_invoice_lines.create!(charge_description: "new Canadian classification", quantity: qty_to_bill, unit: "ea", unit_price: UNIT_PRICE)
+      line = invoice.vfi_invoice_lines.create!(charge_description: "Canadian classification", quantity: qty_to_bill, unit: "ea", unit_price: UNIT_PRICE)
       write_invoiced_events(billables, line)
     end
   end

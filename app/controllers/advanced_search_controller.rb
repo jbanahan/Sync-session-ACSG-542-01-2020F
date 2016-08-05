@@ -15,6 +15,14 @@ class AdvancedSearchController < ApplicationController
     ss = SearchSetup.for_user(current_user).find_by_id(params[:id])
     raise ActionController::RoutingError.new('Not Found') unless ss
     base_params = params[:search_setup]
+    
+    if base_params[:search_criterions].blank?
+      if base_params[:sort_criterions].presence || base_params[:search_schedules].presence
+        render_json_error "Must have a search criterion to include sorts or schedules!"
+        return
+      end
+    end
+
     SearchSetup.transaction do
       ss.name = base_params[:name] unless base_params[:name].blank?
       ss.include_links = base_params[:include_links]

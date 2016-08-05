@@ -146,6 +146,16 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
       expect(c.custom_value(cdefs[:class_customs_description])).to eq "Description"
     end
 
+    it "skips lines without part numbers" do
+      entry.commercial_invoice_lines.first.update_attributes! part_number: ""
+      entry.reload
+      new_snapshot = entry.create_snapshot user
+
+      subject.compare nil, nil, nil, new_snapshot.bucket, new_snapshot.doc_path, new_snapshot.version
+      products = Product.where(importer_id: importer.id).all
+      expect(products.size).to eq 0
+    end
+
     context "with class compare method" do
       it "works" do
         subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version

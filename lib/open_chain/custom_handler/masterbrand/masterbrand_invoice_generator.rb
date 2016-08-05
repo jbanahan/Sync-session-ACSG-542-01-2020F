@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
 
   def self.bill_new_entries billables, invoice
     return if billables.empty?
-    line = invoice.vfi_invoice_lines.create! quantity: billables.length, unit: "ea", unit_price: ENTRY_UNIT_PRICE, charge_description: "Entries exceeding #{ENTRY_LIMIT}/mo. limit"
+    line = invoice.vfi_invoice_lines.create! quantity: billables.length, unit: "ea", unit_price: ENTRY_UNIT_PRICE, charge_description: "Unified Entry Audit; Up To #{ENTRY_LIMIT} Entries"
     write_invoiced_events billables, line
   end
 

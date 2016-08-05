@@ -326,6 +326,10 @@ class User < ActiveRecord::Base
     return n
   end
 
+  def full_name_and_username
+    "#{full_name} (#{username})"
+  end
+
   #should a user message be hidden for this user
   def hide_message? message_name
     parse_hidden_messages

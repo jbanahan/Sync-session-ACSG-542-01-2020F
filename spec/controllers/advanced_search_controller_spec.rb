@@ -62,6 +62,16 @@ describe AdvancedSearchController do
       ss = Factory(:search_setup)
       lambda {put :update, :id=>ss.id, :search_setup=>{:name=>'q'}}.should raise_error ActionController::RoutingError 
     end
+    it "returns error if sort is submitted without search criterion" do
+      put :update, :id=>@ss.id, :search_setup=>{:sort_criterions=>[{:mfid=>'prod_name'}]}
+      expect(response).to be_error
+      expect(JSON.parse(response.body)['error']).to eq "Must have a search criterion to include sorts or schedules!"
+    end
+    it "returns error if schedule is submitted without search criterion" do
+      put :update, :id=>@ss.id, :search_setup=>{:search_schedules=>[{:email_addresses=>'b@example.com'}]}
+      expect(response).to be_error
+      expect(JSON.parse(response.body)['error']).to eq "Must have a search criterion to include sorts or schedules!"
+    end
     it "should update name" do
       put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:no_time=>true} 
       response.should be_success
@@ -87,8 +97,8 @@ describe AdvancedSearchController do
       @ss.sort_criterions.create!(:model_field_uid=>:prod_uid,:rank=>1,:descending=>false)
       put :update, :id=>@ss.id, :search_setup=>{:sort_criterions=>[
         {:mfid=>'prod_name',:label=>'NM',:rank=>1,:descending=>true},
-        {:mfid=>'prod_uid',:label=>'UID',:rank=>2,:descending=>false}
-      ]}
+        {:mfid=>'prod_uid',:label=>'UID',:rank=>2,:descending=>false}], 
+        :search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}]}
       response.should be_success
       @ss.reload
       @ss.should have(2).sort_criterions
@@ -102,7 +112,7 @@ describe AdvancedSearchController do
         {:email_addresses=>'b@example.com',:run_hour=>6,:day_of_month=>1,:download_format=>'xls',
           :run_monday=>true,:run_tuesday=>false,:run_wednesday=>false,:run_thursday=>false,:run_friday=>false,:run_saturday=>false,:run_sunday=>false},
         {:ftp_server=>'ftp.example.com',:ftp_username=>'user',:ftp_password=>'pass',:ftp_subfolder=>'/sub', :protocol=>"test"}
-      ]}
+      ], :search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}]}
       response.should be_success
       @ss.reload
       @ss.should have(2).search_schedules

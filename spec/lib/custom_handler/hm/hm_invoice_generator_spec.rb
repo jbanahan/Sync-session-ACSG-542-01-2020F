@@ -98,7 +98,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       inv_lines_relation = double("inv_lines_relation")
       
       invoice.should_receive(:vfi_invoice_lines).and_return inv_lines_relation
-      inv_lines_relation.should_receive(:create!).with(charge_description: "new Canadian classification", quantity: 3, 
+      inv_lines_relation.should_receive(:create!).with(charge_description: "Canadian classification", quantity: 3, 
                                                        unit: "ea", unit_price: 2.00).and_return inv_line
       described_class.should_receive(:write_invoiced_events).with(billables, inv_line)
 
