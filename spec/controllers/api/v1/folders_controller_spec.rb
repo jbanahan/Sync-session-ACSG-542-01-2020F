@@ -27,7 +27,7 @@ describe Api::V1::FoldersController do
         get :show, base_object_type: "orders", base_object_id: base_object.id, id: folder.id
         expect(response).to be_success
         json = JSON.parse response.body
-        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "Folder Name", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
+        expect(json).to eq({"folder" => {"id" => folder.id, "fld_unique_identifier"=>"#{folder.id}-Folder Name", "fld_name" => "Folder Name", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
             "permissions" => {"can_edit"=> true, "can_attach" => true, "can_comment" => true}
           }})
       end
@@ -93,7 +93,7 @@ describe Api::V1::FoldersController do
 
         expect(response).to be_success
         json = JSON.parse response.body
-        expect(json).to eq({"folders" => [{"id" => folder.id, "fld_name" => "Folder Name", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
+        expect(json).to eq({"folders" => [{"id" => folder.id, "fld_unique_identifier"=>"#{folder.id}-Folder Name", "fld_name" => "Folder Name", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
           "permissions" => {"can_edit"=> false, "can_attach" => false, "can_comment" => false}
           }]})
       end
@@ -132,7 +132,7 @@ describe Api::V1::FoldersController do
 
         folder = Folder.first
         json = JSON.parse response.body
-        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "FOLDER", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
+        expect(json).to eq({"folder" => {"id" => folder.id, "fld_unique_identifier"=>"#{folder.id}-FOLDER", "fld_name" => "FOLDER", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
           "permissions" => {"can_edit"=> true, "can_attach" => true, "can_comment" => true}
           }})
 
@@ -162,7 +162,7 @@ describe Api::V1::FoldersController do
 
         folder = Folder.first
         json = JSON.parse response.body
-        expect(json).to eq({"folder" => {"id" => folder.id, "fld_name" => "FOLDER", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
+        expect(json).to eq({"folder" => {"id" => folder.id, "fld_unique_identifier"=>"#{folder.id}-FOLDER", "fld_name" => "FOLDER", "fld_created_at" => folder.created_at.iso8601, "fld_created_by_username"=> user.username, "fld_created_by_fullname"=>user.full_name, "fld_created_by"=>user.id, "attachments"=>[], "comments"=>[], "groups"=>[],
           "permissions" => {"can_edit"=> true, "can_attach" => true, "can_comment" => true}
           }})
 

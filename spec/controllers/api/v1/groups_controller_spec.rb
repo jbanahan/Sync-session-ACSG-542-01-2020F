@@ -21,7 +21,7 @@ describe Api::V1::GroupsController do
       json = JSON.parse(response.body)
       expect(json).to eq({
         "groups" => [
-          {'id' => group.id, 'grp_system_code' => "GROUP", 'grp_name' => "Name", 'grp_description' => "Description"}
+          {'id' => group.id, 'grp_system_code' => "GROUP", 'grp_name' => "Name", 'grp_description' => "Description", "grp_unique_identifier" => "#{group.id}-Name"}
         ]
       })
     end
@@ -48,7 +48,7 @@ describe Api::V1::GroupsController do
       expect(response).to be_success
       json = JSON.parse(response.body)
       expect(json).to eq({
-        "group" => {'id' => group.id, 'grp_system_code' => "GROUP", 'grp_name' => "Name", 'grp_description' => "Description"}
+        "group" => {'id' => group.id, 'grp_system_code' => "GROUP", 'grp_name' => "Name", 'grp_description' => "Description", "grp_unique_identifier" => "#{group.id}-Name"}
       })
     end
 

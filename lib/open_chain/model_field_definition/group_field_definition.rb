@@ -6,7 +6,7 @@ module OpenChain; module ModelFieldDefinition; module GroupFieldDefinition
       [3, :grp_description, :description, "Description", {data_type: :string}],
       [4, :grp_unique_identifier, :unique_identifier, "Unique Identifier", {data_type: :string, read_only: true,
           export_lambda: lambda {|grp| "#{grp.id}-#{grp.name}"},
-          qualified_field_name: "CONCAT(groups.id, '-', ifnull(groups.attached_file_name, ''))"}]
+          qualified_field_name: "CONCAT(groups.id, '-', ifnull(groups.name, ''))"}]
     ]
   end
 end; end; end;
