@@ -74,7 +74,7 @@ class CustomFeaturesController < ApplicationController
   end
 
   def ua_winshuttle_b_index
-    generic_index OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.new(nil), nil, "UA Winshuttle Reports", false
+    generic_index OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.new, nil, "UA Winshuttle Reports", false
   end
 
   def ua_winshuttle_b_send
