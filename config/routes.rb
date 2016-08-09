@@ -608,6 +608,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_j_crew_drawback_imports_report" => "reports#run_j_crew_drawback_imports_report"
   get "/reports/show_ua_duty_planning_report" => "reports#show_ua_duty_planning_report"
   post "/reports/run_ua_duty_planning_report" => "reports#run_ua_duty_planning_report"
+  get "/reports/show_lumber_actualized_charges_report" => "reports#show_lumber_actualized_charges_report"
+  post "/reports/run_lumber_actualized_charges_report" => "reports#run_lumber_actualized_charges_report"
 
   resources :report_results, :only => [:index,:show] do
     get 'download', :on => :member

@@ -2,11 +2,13 @@ require 'digest'
 require 'open_chain/polling_job'
 require 'open_chain/ftp_file_support'
 require 'open_chain/api/order_api_client'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_cost_file_calculations_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCostingReport
   include OpenChain::PollingJob
   include OpenChain::FtpFileSupport
   include ActionView::Helpers::NumberHelper
+  include OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculationsSupport
 
   def self.run_schedulable
     self.new.run
@@ -122,7 +124,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
           raise "Unable to find Lumber PO Line Number for PO # '#{line.po_number}' and Part '#{line.part_number}'." if line_number.nil?
 
 
-          line_values = line_charge_values(line, total_entered_value, charge_totals, charge_buckets)
+          line_values = calculate_proration_for_lines(line, total_entered_value, charge_totals, charge_buckets)
 
           line_values[:entry_number] = entry.entry_number
           line_values[:bol] = entry.master_bills_of_lading
@@ -139,29 +141,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
         end
       end
 
-      # For every proration cent left over in the buckets, spread out the value over all the line items tenth of a cent by tenth of a cent
-      # (since they want the values down to 3 decimal places)
-      # There's probably some formulaic way to do this rather than iteratively, but we're not going to be dealing w/ vast
-      # numbers of lines, so this should work just fine.
-      if values.length > 0
-        charge_buckets.each_pair do |k, v|
-          next unless v > 0
-          val = v
-
-          cent = BigDecimal("0.001")
-          begin
-            values.each do |line|
-              next unless line[:entered_value].nonzero?
-
-              # Skip the line if the entered value on the line is zero...since a zero entered value means the line has
-              # no value to input into the total proration, it should not receive any back from the leftover.
-              line[k] += cent
-              val -= cent
-              break if val <= 0
-            end
-          end while val > 0
-        end
-      end
+      add_remaining_proration_amounts values, charge_buckets
       
 
       values.each do |line|
@@ -216,95 +196,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     end
 
     send
-  end
-
-  def line_charge_values line, total_entered_value, charge_totals, charge_buckets
-    # Don't round this value, we'll round the end amount to 3 decimals
-    proration_percentage = total_entered_value.try(:nonzero?) ? (line.total_entered_value / total_entered_value) : 0
-
-    c = {}
-    c[:entered_value] = (line.total_entered_value.presence || BigDecimal("0"))
-    c[:duty] = line.total_duty
-    c[:add] = line.add_duty_amount
-    c[:cvd] = line.cvd_duty_amount
-    c[:hmf] = line.hmf
-    c[:mpf] = line.prorated_mpf
-
-    # Figure the "ideal" proration value, we'll then compare to what's technically left over from the actual charge buckets
-    prorated_values.each do |k|
-      ideal_proration = (charge_totals[k] * proration_percentage).round(3, BigDecimal::ROUND_HALF_UP)
-
-      # If we go negative, it means the proration amount is too big to alot the full localized amount (in general, this should basically just be a few pennies
-      # that we'll short the final line on)
-      value = nil
-      if (charge_buckets[k] - ideal_proration) < 0
-        value = charge_buckets[k]
-      else
-        value = ideal_proration
-      end
-
-      c[k] = value
-      charge_buckets[k] -= value
-    end
-
-    c
-  end
-
-  def calculate_charge_totals entry
-    totals = Hash.new do |h, k|
-      h[k] = BigDecimal("0")
-    end
-
-    entry.broker_invoices.each do |inv|
-      calculate_charge_totals_per_invoice inv, totals
-    end
-
-    totals
-  end
-
-  def calculate_charge_totals_per_invoice invoice, totals = nil
-    if totals.nil?
-      totals = Hash.new do |h, k|
-        h[k] = BigDecimal("0")
-      end
-    end
-
-    xref = charge_xref
-    invoice.broker_invoice_lines.each do |line|
-      rate_type = xref[line.charge_code]
-      if rate_type && line.charge_amount
-        totals[rate_type] += line.charge_amount
-      end
-    end
-
-    totals
-  end
-
-  def charge_xref
-    {
-      '0004' => :ocean_rate,
-      '0007' => :brokerage,
-      '0176' => :acessorial,
-      '0050' => :acessorial,
-      '0142' => :acessorial,
-      '0235' => :isc_management,
-      '0191' => :isf,
-      '0915' => :isf,
-      '0189' => :pier_pass,
-      '0720' => :pier_pass,
-      '0739' => :pier_pass,
-      '0212' => :inland_freight,
-      '0016' => :courier,
-      '0031' => :oga,
-      '0125' => :oga,
-      '0026' => :oga,
-      '0193' => :clean_truck,
-      '0196' => :clean_truck
-    }
-  end
-
-  def prorated_values 
-    [:ocean_rate, :brokerage, :acessorial, :isc_management, :isf, :blp_handling, :blp, :pier_pass, :inland_freight, :courier, :oga, :clean_truck]
   end
 
   def find_po_line po, part

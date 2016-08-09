@@ -532,6 +532,31 @@ class ReportsController < ApplicationController
     run_report "UA Duty Planning", OpenChain::Report::UaDutyPlanningReport, query_params, []
   end
 
+  def show_lumber_actualized_charges_report
+    if OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_lumber_actualized_charges_report
+    if OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesReport.permission? current_user
+      # Validate the start / end dates are not more than a year apart.
+      start_date = params[:start_date].to_s.to_date
+      end_date = params[:end_date].to_s.to_date
+      if start_date.nil? || end_date.nil?
+        add_flash :errors, "You must enter a start and end date."
+        redirect_to show_lumber_actualized_charges_report_path
+      else
+        run_report "Lumber Actualized Charges Report", OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesReport, {start_date: start_date.to_s, end_date: end_date.to_s}, ["Release Date on or after #{start_date} and before #{end_date}"]
+      end
+
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

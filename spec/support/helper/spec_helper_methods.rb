@@ -158,4 +158,8 @@ module Helpers
     ms
   end
 
+  def stub_master_setup
+    stub_master_setup_request_host
+  end
+
 end
