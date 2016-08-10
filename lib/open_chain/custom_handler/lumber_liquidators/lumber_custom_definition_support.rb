@@ -118,6 +118,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ordln_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'OrderLine'},
     ordln_pc_approved_by_executive:  {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'OrderLine'},
     ordln_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :datetime, module_type: 'OrderLine'},
+    ordln_part_name: {label: 'Part Name', data_type: :string, module_type: 'OrderLine'},
+    ordln_old_art_number: { label: 'Old Article Number', data_type: :string, module_type: 'OrderLine'},
     var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant'}
   }
 
