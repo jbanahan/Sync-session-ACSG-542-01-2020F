@@ -9,8 +9,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       @importer = Factory(:master_company, importer:true)
       @vendor = Factory(:company,vendor:true,system_code:'0000100131')
       @vendor_address = @vendor.addresses.create!(name:'VNAME',line_1:'ln1',line_2:'l2',city:'New York',state:'NY',postal_code:'10001',country_id:@usa.id)
-      @product1= Factory(:product,unique_identifier:'000000000010001547')
-      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date]
+      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:prod_old_article,:ord_buyer_phone,:ord_planned_expected_delivery_date,:prod_old_article,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date, :ordln_part_name, :ordln_old_art_number]
+      @product1= Factory(:product,name: 'Widgets',unique_identifier:'000000000010001547')
     end
 
     it "should fail on bad root element" do
@@ -58,6 +58,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       # existing product
       ol = o.order_lines.find_by_line_number(1)
+      expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq ol.product.name
+      expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq ol.product.get_custom_value(@cdefs[:prod_old_article]).value
       expect(ol.line_number).to eq 1
       expect(ol.product).to eq @product1
       expect(ol.quantity).to eq 5602.8

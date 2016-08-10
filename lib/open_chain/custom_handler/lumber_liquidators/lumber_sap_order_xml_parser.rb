@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @imp = Company.find_by_master(true)
     @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone,
       :ord_planned_expected_delivery_date, :ord_ship_confirmation_date,
-      :ord_sap_vendor_handover_date, :ord_avail_to_prom_date
+      :ord_sap_vendor_handover_date, :ord_avail_to_prom_date, :ordln_part_name, :ordln_old_art_number, :prod_old_article
     ]
     @opts = opts
   end
@@ -375,9 +375,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
       ol = order.order_lines.build(line_number:line_number,total_cost_digits:2) unless ol
 
-      ol.product = find_product(line_el)
+      product = find_product(line_el)
+      ol.product = product
       ol.quantity = BigDecimal(et(line_el,'MENGE'),4)
       ol.unit_of_measure = et(line_el,'MENEE')
+      ol.find_and_set_custom_value @cdefs[:ordln_part_name], product.name
+      ol.find_and_set_custom_value @cdefs[:ordln_old_art_number], product.get_custom_value(@cdefs[:prod_old_article])
 
       # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
       price_per_unit = nil
