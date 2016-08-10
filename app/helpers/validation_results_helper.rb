@@ -23,4 +23,8 @@ module ValidationResultsHelper
       editable: rr.can_edit?(current_user)
     }
   end
+
+  def validation_results_path validatable
+    "/#{validatable.class.to_s.pluralize.underscore}/#{validatable.id}/validation_results"
+  end
 end

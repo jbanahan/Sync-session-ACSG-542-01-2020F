@@ -1,6 +1,8 @@
 require 'open_chain/s3'
 require 'open_chain/entity_compare/entity_comparator'
 class EntitySnapshot < ActiveRecord::Base
+  include SnapshotS3Support
+
   belongs_to :recordable, :polymorphic=>true
   belongs_to :user
   belongs_to :imported_file
@@ -66,63 +68,26 @@ class EntitySnapshot < ActiveRecord::Base
     diff_json old_json, my_json
   end
 
-  def self.retrieve_snapshot_data_from_s3 snapshot
-    data = StringIO.new
-    OpenChain::S3.get_versioned_data snapshot.bucket, snapshot.doc_path, snapshot.version, data
-    data.rewind
-    data.read
-  end
-
 
   ###################################
   # S3 Handling Stuff
   ###################################
 
-  #bucket name for storing entity snapshots
-  def self.bucket_name env=Rails.env
-    r = "#{env}.#{MasterSetup.get.system_code}.snapshots.vfitrack.net"
-    raise "Bucket name too long: #{r}" if r.length > 63
-    return r
-  end
-
-  #find or create the bucket for this system's EntitySnapshots
-  def self.create_bucket_if_needed!
-    return if OpenChain::S3.bucket_exists?(bucket_name)
-    OpenChain::S3.create_bucket!(bucket_name,versioning: true)
-  end
-
   def expected_s3_path
-    rec = self.recordable
-    mod = CoreModule.find_by_object(rec)
-
-    key_base = rec.id
-    raise "key_base couldn't be found for record because it hasn't been saved to database. #{rec.to_s}" unless key_base
-    key_base = key_base.to_s.strip.gsub(/\W/,'_').downcase
-
-    class_name = mod.class_name.underscore
-
-    return "#{class_name}/#{key_base}.json"
-
+    self.class.s3_path self.recordable
   end
 
   def write_s3 json
-    path = expected_s3_path
-    bucket = self.class.bucket_name
-    s3obj, ver = OpenChain::S3.upload_data(bucket, path, json)
-    self.bucket = s3obj.bucket.name
-    self.doc_path = s3obj.key
-    # Technically, version can be nil if uploading to an unversioned bucket..
-    # If that happens though, then the bucket we're trying to use is set up wrong.
-    # Therefore, we this bomb hard if ver is nil
-    self.version = ver.version_id
+    data = self.class.write_to_s3 json, self.recordable
+    self.bucket = data[:bucket]
+    self.doc_path = data[:key]
+    self.version = data[:version]
   end
+
 
   ##################################
   # End S3 handling stuff
   ##################################
-
-
-
   private
 
   def recursive_restore obj_hash, user, parent = nil

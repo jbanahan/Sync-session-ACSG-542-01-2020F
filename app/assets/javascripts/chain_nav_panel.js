@@ -9,7 +9,7 @@
       var initNotificationCenter, registerHotKeys, setupHomepageModal, setupOffCanvas, writeMenu;
       registerHotKeys = function() {
         return $(document).on('keyup', function(evt) {
-          if ($(evt.target).is(':input')) {
+          if ((/textarea|input|select/i).test(evt.target.nodeName)) {
             return;
           }
           switch (evt.keyCode) {

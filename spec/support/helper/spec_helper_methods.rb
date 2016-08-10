@@ -158,4 +158,8 @@ module Helpers
     ms
   end
 
+  def json_date date
+    ActiveSupport::JSON.encode(date).gsub(/"/, "")
+  end
+
 end

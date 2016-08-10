@@ -46,18 +46,28 @@
             </h3>
           </div>
           <div class='panel-body'>
-            <div>
+            <div ng-show="ruleResultToEdit.rule.description">
               <strong>Rule Description</strong><br/>
               {{ruleResultToEdit.rule.description}}
             </div>
-            <div>
+            <div ng-show="ruleResultToEdit.message">
               <strong>System Messages</strong>
               <br>
               <pre>{{ruleResultToEdit.message}}</pre>
             </div>
             <select ng-model='ruleResultToEdit.state' ng-change='markRuleResultChanged()' ng-disabled='!ruleResultToEdit.editable' ng-options='s for s in svc.states' class='form-control'>
             </select>
-            <textarea ng-model='ruleResultToEdit.note' ng-change='markRuleResultChanged()' ng-show='ruleResultToEdit.note || ruleResultChanged || (ruleResultToEdit.editable && ruleResultToEdit.overridden_at)' ng-disabled='!ruleResultToEdit.editable' class='form-control'></textarea>
+            <!-- 
+                ng-hide (instead of ng-show) is used here for a reason...using ng-show causes keyhandler issues when the textarea is blank and a hotkey is pressed.  Because the
+                default action for ng-show is to hide the DOM object, when a hotkey is pressed with nothing in the textarea it's hidden (on the first evaluation pass in angular)
+                which then causes the hotkey code to be unable to determine the keypress target element (which then defaults to the body element), which then causes the hotkey 
+                to fire instead of just typing a character into the textarea.
+
+                TLDR; don't change the ng-hide below to ng-show
+            -->
+            <div ng-hide="!(ruleResultToEdit.note || ruleResultChanged || (ruleResultToEdit.editable && ruleResultToEdit.overridden_at))">
+              <textarea ng-model='ruleResultToEdit.note' ng-change='markRuleResultChanged()' ng-disabled='!ruleResultToEdit.editable' class='form-control'></textarea>
+            </div>
             <div ng-show='ruleResultToEdit.overridden_at'><br>
               <div class="alert alert-info">
                 This business rule has been manually overridden. The rule's status will no longer update unless the override is cleared.<br>

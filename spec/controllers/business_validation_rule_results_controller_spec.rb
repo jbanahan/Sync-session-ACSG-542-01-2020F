@@ -1,86 +1,98 @@
 require 'spec_helper'
 
 describe BusinessValidationRuleResultsController do
-  before :each do 
-    @u = Factory(:admin_user)
-    @ent = Factory(:entry)
-    @rr = Factory(:business_validation_rule_result,state:'Fail')
-    bvr = @rr.business_validation_result
-    bvr.state='Fail'
-    bvr.validatable = @ent
-    bvr.save!
+  
+  let (:user) { Factory(:admin_user) }
+  let (:entry) { Factory(:entry, broker_reference: "REF") }
+  let! (:business_rule) {
+    t = BusinessValidationTemplate.create! name: "Test", module_type: "Entry", description: "Test Template"
+    t.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "notnull"
 
-    sign_in_as @u
+    t.business_validation_rules.create! type: "ValidationRuleFieldFormat", name: "Broker Reference", description: "Rule Description", rule_attributes_json: {model_field_uid: "ent_brok_ref", regex: "ABC"}.to_json
+  }
+
+  before :each do 
+    sign_in_as user
+    BusinessValidationTemplate.create_results_for_object! entry
   end
 
-  describe :update do
-    it "should return json if requested" do
-      @rr.business_validation_rule.update_attributes(name:'myname')
-      put :update, id: @rr.id, business_validation_rule_result:{note:'abc', state:'Pass'}, format: :json
-      @rr.reload
+  describe "update" do
+
+    let (:rule_result) { entry.business_validation_results.first.business_validation_rule_results.first }
+
+    it "overrides rule result data" do
+      now = Time.zone.now
+      Timecop.freeze(now) do
+        put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'}, format: :json
+      end
+
       h = JSON.parse(response.body)['save_response']
       expect(h['result_state']).to eq 'Pass'
       rr = h['rule_result']
-      expect(rr['id']).to eq @rr.id
+      expect(rr['id']).to eq rule_result.id
       expect(rr['state']).to eq 'Pass'
-      expect(rr['rule']['name']).to eq 'myname'
+      expect(rr['rule']['name']).to eq 'Broker Reference'
       expect(rr['note']).to eq 'abc'
-      expect(rr['overridden_by']['full_name']).to eq @u.full_name
-      expect(Time.parse(rr['overridden_at'])).to eq @rr.overridden_at
+      expect(rr['overridden_by']['full_name']).to eq user.full_name
+      expect(rr['overridden_at']).to eq json_date(now)
     end
-    it "should not allow update if user cannot update business_validation_rule_result" do
-      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(@u).and_return(false)
-      put :update, id: @rr.id, business_validation_rule_result:{note:'abc', state:'Pass'} 
+
+    it "denies access to users who cannot edit rule results" do
+      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(user).and_return(false)
+      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'} 
       expect(response).to be_redirect
-      @rr.reload
-      expect(@rr.note).to be_nil
-      expect(@rr.state).to eq 'Fail'
+      rule_result.reload
+      expect(rule_result.note).to be_nil
+      expect(rule_result.state).to eq 'Fail'
     end
-    it "should allow update for admins" do
-      #change this rule once final decision on security is made
-      put :update, id: @rr.id, business_validation_rule_result:{note:'abc', state:'Pass'} 
-      expect(response).to redirect_to validation_results_entry_path(@ent)
-      @rr.reload
-      expect(@rr.note).to eq 'abc'
-      expect(@rr.state).to eq 'Pass'
+
+    it "allows using html format to update rule data" do
+      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'}
+      expect(response).to redirect_to "/entries/#{entry.id}/validation_results"
+      entry.business_validation_results.reload
+      expect(entry.business_validation_results.first.state).to eq 'Pass'
     end
-    it "should update state for business validation result" do
-      put :update, id: @rr.id, business_validation_rule_result:{note:'abc', state:'Pass'} 
-      @rr.reload
-      expect(@rr.business_validation_result.state).to eq 'Pass'
-    end
-    it "should sanitize other fields" do
-      @rr.update_attributes(message:'xyz')
-      put :update, id: @rr.id, business_validation_rule_result:{note:'abc', state:'Pass',message:'qrs'} 
-      expect(response).to redirect_to validation_results_entry_path(@ent)
-      @rr.reload
-      expect(@rr.note).to eq 'abc'
-      expect(@rr.state).to eq 'Pass'
-      expect(@rr.message).to eq 'xyz'
+
+    it "sanitizes params and only allows updating state and note values" do
+      rule_result.update_attributes message: "xyz"
+
+      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass',message:'qrs'}
+
+      rule_result.reload
+      expect(rule_result.note).to eq 'abc'
+      expect(rule_result.state).to eq 'Pass'
+      expect(rule_result.message).to eq 'xyz'
     end
   end
-  describe :cancel_override do       
-    before(:each) { @rr.update_attributes(overridden_at: Time.now, overridden_by: @u, note: "Some message.") }
-    
-    it "runs only for authorized users" do
-      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(@u).and_return(false)
+  describe "cancel_override" do
+    let (:rule_result) { entry.business_validation_results.first.business_validation_rule_results.first }
+
+    before :each do
+      rule_result.update_attributes(overridden_at: Time.zone.now, overridden_by: user, note: "Some message.")
+    end
+
+    it "does not not allow users without edit to cancel overrides" do
+      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(user).and_return(false)
       BusinessValidationTemplate.should_not_receive(:create_results_for_object!)
-      put :cancel_override, id: @rr.id
+      put :cancel_override, id: rule_result.id
+
+      rule_result.reload
     
-      expect(@rr.overridden_at).to_not be nil
-      expect(@rr.overridden_by).to_not be nil
-      expect(@rr.note).to_not be nil
+      expect(rule_result.overridden_at).to_not be nil
+      expect(rule_result.overridden_by).to_not be nil
+      expect(rule_result.note).to_not be nil
       expect(JSON.parse(response.body)["error"]).to eq "You do not have permission to perform this activity."
     end
+
     it "clears overridden attributes and note, reruns validations for the result's validatable" do
-      BusinessValidationTemplate.should_receive(:create_results_for_object!, @ent)
-      put :cancel_override, id: @rr.id
-      @rr.reload
+      BusinessValidationTemplate.should_receive(:create_results_for_object!, entry)
+      put :cancel_override, id: rule_result.id
+      rule_result.reload
       
-      expect(@rr.overridden_at).to be nil
-      expect(@rr.overridden_by).to be nil
-      expect(@rr.note).to be nil
-      expect(flash[:errors]).to be nil
+      expect(rule_result.overridden_at).to be_nil
+      expect(rule_result.overridden_by).to be_nil
+      expect(rule_result.note).to be_nil
+      expect(flash[:errors]).to be_blank
       expect(JSON.parse(response.body)["ok"]).to eq "ok"
     end
   end

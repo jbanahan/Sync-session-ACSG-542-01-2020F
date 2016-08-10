@@ -5,6 +5,7 @@
 <%end%>
 <%content_for :action_bar do%>
   <button class='btn_link' link_to='<%=entry_path(@validation_object)%>'>Entry</button>
+  <button class='btn_link' link_to='<%=polymorphic_action(@validation_object, 'business_rule_snapshots')%>' key_map='h' title='Business Rule History'><i class='fa fa-history'></i></button>
 <%end%>
 
 <%= render 'shared/validation_results' %>

@@ -637,4 +637,9 @@ module ApplicationHelper
     end
     buttons.join.html_safe
   end
+
+
+  def polymorphic_action obj, action
+    "/#{obj.class.to_s.pluralize.underscore}/#{obj.id}/#{action}"
+  end
 end

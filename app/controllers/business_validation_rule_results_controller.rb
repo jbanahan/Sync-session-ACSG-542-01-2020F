@@ -4,15 +4,18 @@ class BusinessValidationRuleResultsController < ApplicationController
     rr = BusinessValidationRuleResult.find params[:id]
     return error_redirect "You do not have permission to perform this activity." unless rr.can_edit? current_user
     rr.update_attributes(sanitized_attributes(params[:business_validation_rule_result]))
-    rr.overridden_at = Time.now
+    rr.overridden_at = Time.zone.now
     rr.overridden_by = current_user
     rr.save!
+    # Technically, we could just validate the single result that was overridden, but by running create_results...
+    # then we get history saved and anything else that needs to happen on a regular full business rule run.
+    validatable = rr.business_validation_result.validatable
+    BusinessValidationTemplate.create_results_for_object! validatable
+
     bvr = BusinessValidationResult.find rr.business_validation_result_id
-    bvr.run_validation # reset result state
-    bvr.save!
     respond_to do |format|
       format.html {
-        redirect_to validation_results_entry_path(rr.business_validation_result.validatable)
+        redirect_to validation_results_path(validatable)
       }
       format.json {
         render json: {save_response:{

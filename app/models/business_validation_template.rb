@@ -38,6 +38,8 @@ class BusinessValidationTemplate < ActiveRecord::Base
     BusinessValidationTemplate.where(module_type:cm.class_name).each do |bvt|
       bvt.create_result!(obj,true)
     end
+
+    nil
   end
 
   #run create
@@ -113,8 +115,14 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
       if run_validation
         bvr.run_validation
-        bvr.updated_at = Time.now #force save
+        bvr.updated_at = Time.zone.now #force save
         bvr.save!
+
+        # Because of the way we're embedding this inside result_result! (which runs only for a single template), objects
+        # that have multiple rule templates associated with them will have extra snapshots.  This situation occurs
+        # infrequently enough that I'm not worrying about it now (only 750 total of 100K's of records we have are linked to multiple
+        # templates - pretty sure even those are due to bad initial template setups)
+        BusinessRuleSnapshot.create_from_entity(obj)
       end
     end
     
