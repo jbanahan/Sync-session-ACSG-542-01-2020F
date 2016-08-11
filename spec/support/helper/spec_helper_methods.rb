@@ -162,4 +162,7 @@ module Helpers
     stub_master_setup_request_host
   end
 
+  def json_date date
+    ActiveSupport::JSON.encode(date).gsub(/"/, "")
+  end
 end

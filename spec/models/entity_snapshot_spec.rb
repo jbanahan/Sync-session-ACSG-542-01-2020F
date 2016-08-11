@@ -298,7 +298,7 @@ describe EntitySnapshot do
       u = Factory(:user)
       CoreModule::ENTRY.stub(:entity_json).and_return(expected_json)
 
-      described_class.any_instance.should_receive(:expected_s3_path).and_return(expected_path)
+      described_class.should_receive(:s3_path).and_return(expected_path)
       described_class.should_receive(:bucket_name).and_return(expected_bucket)
 
       s3_obj = double('S3Obj')
