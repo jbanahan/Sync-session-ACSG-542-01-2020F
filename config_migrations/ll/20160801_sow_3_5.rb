@@ -18,12 +18,38 @@ module ConfigMigrations; module LL; class SOW35
     defs = create_new_custom_defs
     create_state_toggle_buttons defs
     create_order_business_rules defs
+    update_accepted_dates
   end
   def down
     remove_order_business_rules
     remove_state_toggle_buttons
     remove_custom_defs
     remove_groups
+  end
+
+  def update_accepted_dates
+    integration = User.integration
+    Order.where(approval_status:'Accepted').each do |o|
+      snapshots = o.entity_snapshots.order('entity_snapshots.id DESC')
+      accepted_snapshot = find_accepted_snapshot snapshots
+      if accepted_snapshot
+        o.accepted_by = accepted_snapshot.user
+        o.accepted_at = accepted_snapshot.created_at
+        o.save!
+        o.create_snapshot integration
+      end
+    end
+  end
+
+  def find_accepted_snapshot snapshots
+    oldest_with = nil
+    snapshots.each do |es|
+      h = es.snapshot_json
+      approval_status = h['entity']['model_fields']['ord_approval_status']
+      oldest_with = es if !approval_status.blank?
+      break if oldest_with && !approval_status
+    end
+    oldest_with
   end
 
   def create_groups
