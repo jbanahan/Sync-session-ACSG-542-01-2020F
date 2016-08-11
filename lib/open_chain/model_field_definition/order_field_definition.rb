@@ -61,7 +61,8 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
         read_only: true
       }],
       [25,:ord_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
-      [26,:ord_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true, read_only: true}]
+      [26,:ord_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
+      [27,:ord_vendor_id, :vendor_id, "Vendor ID",{data_type: :integer,history_ignore:true,read_only:true}]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")

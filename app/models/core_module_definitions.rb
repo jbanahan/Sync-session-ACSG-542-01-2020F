@@ -1,21 +1,21 @@
 module CoreModuleDefinitions
 
-  # This is used solely as a way to provide "state" between the snapshot descriptor creations as a way to 
-  # not have to redefine the snapshot structure of something like Folder, that can appear 
+  # This is used solely as a way to provide "state" between the snapshot descriptor creations as a way to
+  # not have to redefine the snapshot structure of something like Folder, that can appear
   # on every core object.
   DESCRIPTOR_REPOSITORY ||= {}
 
-  COMMENT = CoreModule.new("Comment", "Comment")
-  GROUP = CoreModule.new("Group", "Group")
+  COMMENT = CoreModule.new("Comment", "Comment",{unique_id_field_name: :cmt_unique_identifier})
+  GROUP = CoreModule.new("Group", "Group",{unique_id_field_name: :grp_unique_identifier})
   FOLDER = CoreModule.new("Folder", "Folder", {
-    logical_key_lambda: lambda { |obj| 
+    logical_key_lambda: lambda { |obj|
       # We need to find the parent of the folder, and then use the logical key from it, then add in the folder name after that,
       # otherwise there's no real way to know which folder is being referenced (and this is used from comment event publishing)
       parent_key = ""
       base_obj = obj.base_object
       if base_obj
         cm = CoreModule.find_by_object base_obj
-        
+
         if cm
           parent_key = "#{cm.label} #{cm.logical_key(base_obj)}"
         end
@@ -29,7 +29,8 @@ module CoreModuleDefinitions
         comments: { type: Comment },
         groups: { type: Group }
       }, descriptor_repository: DESCRIPTOR_REPOSITORY
-    )
+    ),
+    unique_id_field_name: :fld_unique_identifier
   })
 
   SECURITY_FILING_LINE = CoreModule.new("SecurityFilingLine","Security Line", {
@@ -491,7 +492,6 @@ module CoreModuleDefinitions
     changed_at_parents_lambda: lambda {|c| c.product.nil? ? [] : [c.product] },
     show_field_prefix: true
   })
-
 
   # Don't need these any longer, clear them...this should be the last line in the file
   DESCRIPTOR_REPOSITORY.clear

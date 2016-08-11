@@ -564,13 +564,17 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           var initializeUpload;
           initializeUpload = function(status, error) {
             scope.upload = {};
+            scope.upload.fileType = "";
             scope.uploading = false;
             scope.error = error;
             return scope.uploadStatus = status;
           };
           scope.$watch('attachmentTypes', function(newValue, oldValue) {
-            if (newValue && newValue.length > 0) {
-              return scope.upload.fileType = newValue[0].value;
+            if (newValue && newValue.length > 0 && newValue[0].value !== "") {
+              return newValue.unshift({
+                value: "",
+                name: ""
+              });
             }
           });
           if (scope.upload == null) {
@@ -578,7 +582,11 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
           }
           scope.uploadAttachment = function() {
             var attachment, promise;
-            if (scope.upload && scope.upload.file) {
+            if ((scope.upload.fileType == null) || scope.upload.fileType === "") {
+              return scope.error = "You must select a File Type.";
+            } else if (scope.upload.file == null) {
+              return scope.error = "You must select a file to upload.";
+            } else {
               scope.uploadStatus = "Uploading...";
               scope.uploading = true;
               scope.error = null;
@@ -595,8 +603,6 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
               }), (function(progress) {
                 return el.find('div.progress div.progress-bar').width(((progress.loaded / progress.total) * 100) + "%");
               }));
-            } else {
-              return scope.error = "You must select a file to upload.";
             }
           };
           return scope.fileChosen = function(files) {

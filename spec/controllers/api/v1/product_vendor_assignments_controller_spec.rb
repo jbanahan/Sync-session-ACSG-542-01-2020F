@@ -17,6 +17,33 @@ describe Api::V1::ProductVendorAssignmentsController do
       expect(j['results'][0]['vendor_id']).to eq pva.vendor_id
     end
   end
+  describe '#show' do
+    it 'should get record' do
+      User.any_instance.stub(:view_product_vendor_assignments?).and_return(true)
+      pva = Factory(:product_vendor_assignment)
+      u = Factory(:master_user)
+      allow_api_access u
+      get :show, id: pva.id.to_s
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['product_vendor_assignment']['product_id']).to eq pva.product_id
+    end
+  end
+  describe '#update' do
+    it 'should update record' do
+      User.any_instance.stub(:view_product_vendor_assignments?).and_return(true)
+      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return(true)
+      cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
+      pva = Factory(:product_vendor_assignment)
+      u = Factory(:master_user)
+      allow_api_access u
+      h = {'id'=>pva.id,"*cf_#{cd.id}"=>'hello'}
+      put :update, id: pva.id.to_s, product_vendor_assignment:h
+      expect(response).to be_success
+      pva.reload
+      expect(pva.get_custom_value(cd).value).to eq 'hello'
+    end
+  end
   describe '#bulk_create' do
     before :each do
       MasterSetup.get.update_attributes(vendor_management_enabled:true)

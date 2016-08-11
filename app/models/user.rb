@@ -235,6 +235,10 @@ class User < ActiveRecord::Base
         view_surveys: self.view_surveys?,
         view_vendors: self.view_vendors?,
         create_vendors: self.create_vendors?,
+	      view_trade_lanes: self.view_trade_lanes?,
+	      edit_trade_lanes: self.edit_trade_lanes?,
+        view_trade_preference_programs: self.view_trade_preference_programs?,
+        edit_trade_preference_programs: self.edit_trade_preference_programs?,
         view_vfi_invoices: self.view_vfi_invoices?,
         edit_vfi_invoices: self.edit_vfi_invoices?
       }
@@ -320,6 +324,10 @@ class User < ActiveRecord::Base
     n = (self.first_name.nil? ? '' : self.first_name + " ") + (self.last_name.nil? ? '' : self.last_name)
     n = self.username if n.strip.length==0
     return n
+  end
+
+  def full_name_and_username
+    "#{full_name} (#{username})"
   end
 
   #should a user message be hidden for this user

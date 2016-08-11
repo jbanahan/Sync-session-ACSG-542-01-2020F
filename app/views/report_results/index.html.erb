@@ -141,6 +141,10 @@
     <tr class='hover'><td><%=link_to "UA Duty Planning Report", reports_show_ua_duty_planning_report_path%></td>
     <td>Shows planned duty rates including free trade agreements.</td></tr>
   <%end%>
+  <%if OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesReport.permission?(current_user)%>
+    <tr class='hover'><td><%=link_to "Lumber Actualized Charges Report", reports_show_lumber_actualized_charges_report_path%></td>
+    <td>Shows actualized entry charges on a per container basis.</td></tr>
+  <%end%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

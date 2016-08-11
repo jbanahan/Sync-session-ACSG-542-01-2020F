@@ -145,12 +145,19 @@ describe SearchSetup do
     end
   end
   describe "values" do
-    it "should work for all model fields in SELECT" do
-      r = Factory(:region)
-      r.countries << Factory(:country)
+    let (:user) { Factory(:admin_user) }
+
+    before :each do
       ModelField.reload true
-      u = Factory(:admin_user)
-      CoreModule.all.each do |cm|
+    end
+
+    CoreModule.all.each do |cm|
+      it "can utilize all '#{cm.label}' core module model fields in a SearchQuery" do
+        if cm == CoreModule::PRODUCT
+          region = Factory(:region)
+          region.countries << Factory(:country)
+        end
+
         cm.klass.stub(:search_where).and_return("1=1")
 
         cm.model_fields.keys.in_groups_of(20,false) do |uids|
@@ -158,13 +165,13 @@ describe SearchSetup do
           ss = SearchSetup.new(:module_type=>cm.class_name)
           uids.each do |uid|
             mf = cm.model_fields[uid]
-            next unless mf.can_view?(u)
+            next unless mf.can_view?(user)
             ss.search_columns.build(:model_field_uid=>uid,:rank=>(i+=1))
             ss.sort_criterions.build(:model_field_uid=>uid,:rank=>i)
             ss.search_criterions.build(:model_field_uid=>uid,:operator=>'null')
           end
           #just making sure each query executes without error
-          SearchQuery.new(ss,u).execute
+          SearchQuery.new(ss,user).execute
         end
       end
     end

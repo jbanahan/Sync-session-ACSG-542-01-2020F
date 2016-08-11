@@ -96,9 +96,9 @@
                   <input class='form-control' type="text" ng-model="sortFilter" placeholder="Search sorts...">
                 </div>
                 <div>
-                  <div ng-hide='sortsToAdd'>&nbsp;</div>
-                  <div ng-show='sortsToAdd'>
-                    <a ng-show='sortsToAdd' class='btn btn-default' ng-click='addSorts()'>Add</a>
+                  <div ng-hide='searchSetup.search_criterions.length && sortsToAdd'>&nbsp;</div>
+                  <div ng-show='searchSetup.search_criterions.length && sortsToAdd'>
+                    <a class='btn btn-default' ng-click='addSorts()'>Add</a>
                   </div>
                 </div>
               </div>
@@ -112,8 +112,15 @@
             </div>
             <div class='row'>
               <div class='col-md-12 text-center'>
-                <select class='form-control' multiple='multiple' size='10' ng-model='sortsToRemove' ng-options='s.mfid as s.label + descendingLabel(s.descending) for s in searchSetup.sort_criterions'>
-                </select>
+                <div ng-show='searchSetup.search_criterions.length'>
+                  <select class='form-control' multiple='multiple' size='10' ng-model='sortsToRemove' ng-options='s.mfid as s.label + descendingLabel(s.descending) for s in searchSetup.sort_criterions'>
+                  </select>
+                </div>
+                <div ng-hide='searchSetup.search_criterions.length'>
+                  <select class='form-control' multiple='multiple' size='10' disabled='true'>
+                    <option>Before adding a sort, you must add at least one parameter.</option>
+                  </select>
+                </div>
                 <br />
                 <div ng-hide='sortsToRemove'>&nbsp;</div>
                 <div ng-show='sortsToRemove'>
@@ -150,179 +157,184 @@
           </div>
         </div>
         <div class='row'>
-          <div ng-hide='scheduleToEdit'>
-            <ul class='thumbnails'>
-              <li class='col-md-6' ng-repeat='sched in searchSetup.search_schedules'>
-                <div class='thumbnail schedule-display'>
-                  <p>
-                    <strong>To:</strong> {{sched.email_addresses}}
-                  </p>
-                  <p>
-                    <strong>At:</strong> {{scheduleTimingText(sched)}}
-                  </p>
-                  <p>
-                    <strong>As:</strong> {{sched.download_format}} 
-                  </p>
-                  <p>
-                    <span ng-show='sched.ftp_server'><strong>{{scheduleProtocol(sched)}} Server:</strong> {{sched.ftp_server}}<br /></span>
-                  </p>
-                  <div class='text-center'>
-                    <button class='btn btn-default' ng-click='editSchedule(sched)'>Edit</button> <button class='btn btn-default' ng-click='removeSchedule(sched)'>Remove</button>
-                  </div>
-                </div>
-              </li>
-            </ul>
-            <div class='row text-center'>
-              <div class='col-md-12'>
-                <a class='btn btn-default' ng-click='addSchedule()'>Add Schedule</a>
-              </div>
-            </div>
+          <div ng-hide = 'searchSetup.search_criterions.length'>
+            <div class="row text-center">Before adding a schedule, you must add at least one parameter.</div>
           </div>
-          <div class='form-horizontal' ng-show='scheduleToEdit'>
-            <div class='row'>
-              <div class='col-md-6'>
-                <div class='control-group'>
-                  <label class='control-label' for='sched-email-addresses'>Email</label>
-                  <div class='controls'>
-                    <textarea class='form-control' id='sched-email-addresses' ng-model='scheduleToEdit.email_addresses' rows='4' data-/>
-                    <br />
-                    <small class='muted'>
-                      Separate addresses with commas.
-                    </small>
-                  </div>
-                </div>
-                <div class='control-group'>
-                  <label class='control-label' for='sched-send-if-empty'>Send if Empty?</label>
-                  <div class='controls'>
-                    <input id='sched-send-if-empty' type='checkbox' ng-model='scheduleToEdit.send_if_empty'/>
-                  </div>
-                </div>
-                <div class='control-group'>
-                  <label class='control-label' for='sched-format'>Format</label>
-                  <div class='controls'>
-                    <select class='form-control' id='sched-format' ng-model='scheduleToEdit.download_format'>
-                      <option>csv</option>
-                      <option>xls</option>
-                    </select>
-                  </div>
-                </div>
-                <div class='control-group'>
-                  <label class='control-label' for='sched-time'>Time</label>
-                  <div class='controls'>
-                    <select class='form-control' id='sched-time' ng-model='scheduleToEdit.run_hour'>
-                      <option value='0'>midnight</option>
-                      <option value='1'>1:00am</option>
-                      <option value='2'>2:00am</option>
-                      <option value='3'>3:00am</option>
-                      <option value='4'>4:00am</option>
-                      <option value='5'>5:00am</option>
-                      <option value='6'>6:00am</option>
-                      <option value='7'>7:00am</option>
-                      <option value='8'>8:00am</option>
-                      <option value='9'>9:00am</option>
-                      <option value='10'>10:00am</option>
-                      <option value='11'>11:00am</option>
-                      <option value='12'>noon</option>
-                      <option value='13'>1:00pm</option>
-                      <option value='14'>2:00pm</option>
-                      <option value='15'>3:00pm</option>
-                      <option value='16'>4:00pm</option>
-                      <option value='17'>5:00pm</option>
-                      <option value='18'>6:00pm</option>
-                      <option value='19'>7:00pm</option>
-                      <option value='20'>8:00pm</option>
-                      <option value='21'>9:00pm</option>
-                      <option value='22'>10:00pm</option>
-                      <option value='23'>11:00pm</option>
-                    </select>
-                  </div>
-                </div>
-                <div class='control-group'>
-                  <label class='control-label' for='sched-dom'>Day of Month</label>
-                  <div class='controls'>
-                    <select class='form-control' id='sched-dom' ng-model='scheduleToEdit.day_of_month'>
-                      <option></option>
-                      <option>1</option>
-                      <option>2</option>
-                      <option>3</option>
-                      <option>4</option>
-                      <option>5</option>
-                      <option>6</option>
-                      <option>7</option>
-                      <option>8</option>
-                      <option>9</option>
-                      <option>10</option>
-                      <option>11</option>
-                      <option>12</option>
-                      <option>13</option>
-                      <option>14</option>
-                      <option>15</option>
-                      <option>16</option>
-                      <option>17</option>
-                      <option>18</option>
-                      <option>19</option>
-                      <option>20</option>
-                      <option>21</option>
-                      <option>22</option>
-                      <option>23</option>
-                      <option>24</option>
-                      <option>25</option>
-                      <option>26</option>
-                      <option>27</option>
-                      <option>28</option>
-                    </select>
-                  </div>
-                </div>
-                <div class='control-group' ng-hide='scheduleToEdit.day_of_month'>
-                  <div class='controls'>
-                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_monday'/> Monday</label>
-                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_tuesday'/> Tuesday</label>
-                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_wednesday'/> Wednesday</label>
-                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_thursday'/> Thursday</label>
-                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_friday'/> Friday</label>
-                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_saturday'/> Saturday</label>
-                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_sunday'/> Sunday</label>
-                  </div>
-                </div>
-              </div>
-              <div class='col-md-6'>
-                <fieldset ng-show='searchSetup.allow_ftp'>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-f-protocol'>Use SFTP?</label>
-                    <div class='controls'>
-                      <input id='sched-f-protocol' type='checkbox' ng-model='scheduleToEdit.protocol' ng-true-value="sftp" ng-false-value="ftp"/>
+          <div ng-show = 'searchSetup.search_criterions.length'>
+            <div ng-hide='scheduleToEdit'>
+              <ul class='thumbnails'>
+                <li class='col-md-6' ng-repeat='sched in searchSetup.search_schedules'>
+                  <div class='thumbnail schedule-display'>
+                    <p>
+                      <strong>To:</strong> {{sched.email_addresses}}
+                    </p>
+                    <p>
+                      <strong>At:</strong> {{scheduleTimingText(sched)}}
+                    </p>
+                    <p>
+                      <strong>As:</strong> {{sched.download_format}} 
+                    </p>
+                    <p>
+                      <span ng-show='sched.ftp_server'><strong>{{scheduleProtocol(sched)}} Server:</strong> {{sched.ftp_server}}<br /></span>
+                    </p>
+                    <div class='text-center'>
+                      <button class='btn btn-default' ng-click='editSchedule(sched)'>Edit</button> <button class='btn btn-default' ng-click='removeSchedule(sched)'>Remove</button>
                     </div>
                   </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-f-server'>{{scheduleProtocol(scheduleToEdit)}} Server</label>
-                    <div class='controls'>
-                      <input id='sched-f-server' class='form-control' type='text' ng-model='scheduleToEdit.ftp_server'/>
-                    </div>
-                  </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-f-user'>{{scheduleProtocol(scheduleToEdit)}} User</label>
-                    <div class='controls'>
-                      <input id='sched-f-user' class='form-control' type='text' ng-model='scheduleToEdit.ftp_username' />
-                    </div>
-                  </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-f-pass'>{{scheduleProtocol(scheduleToEdit)}} Password</label>
-                    <div class='controls'>
-                      <input id='sched-f-pass' class='form-control' type='text' ng-model='scheduleToEdit.ftp_password' />
-                    </div>
-                  </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-f-folder'>{{scheduleProtocol(scheduleToEdit)}} Folder</label>
-                    <div class='controls'>
-                      <input id='sched-f-folder' class='form-control' type='text' ng-model='scheduleToEdit.ftp_subfolder' />
-                    </div>
-                  </div>
-                </fieldset>
+                </li>
+              </ul>
+              <div class='row text-center'>
+                <div class='col-md-12'>
+                  <a class='btn btn-default' ng-click='addSchedule()'>Add Schedule</a>
+                </div>
               </div>
             </div>
-            <div class='control-group'>
-              <div class='controls'>
-                <button class='btn btn-primary' ng-click='scheduleToEdit = null'>Done</button>
+            <div class='form-horizontal' ng-show='scheduleToEdit'>
+              <div class='row'>
+                <div class='col-md-6'>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-email-addresses'>Email</label>
+                    <div class='controls'>
+                      <textarea class='form-control' id='sched-email-addresses' ng-model='scheduleToEdit.email_addresses' rows='4' data-/>
+                      <br />
+                      <small class='muted'>
+                        Separate addresses with commas.
+                      </small>
+                    </div>
+                  </div>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-send-if-empty'>Send if Empty?</label>
+                    <div class='controls'>
+                      <input id='sched-send-if-empty' type='checkbox' ng-model='scheduleToEdit.send_if_empty'/>
+                    </div>
+                  </div>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-format'>Format</label>
+                    <div class='controls'>
+                      <select class='form-control' id='sched-format' ng-model='scheduleToEdit.download_format'>
+                        <option>csv</option>
+                        <option>xls</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-time'>Time</label>
+                    <div class='controls'>
+                      <select class='form-control' id='sched-time' ng-model='scheduleToEdit.run_hour'>
+                        <option value='0'>midnight</option>
+                        <option value='1'>1:00am</option>
+                        <option value='2'>2:00am</option>
+                        <option value='3'>3:00am</option>
+                        <option value='4'>4:00am</option>
+                        <option value='5'>5:00am</option>
+                        <option value='6'>6:00am</option>
+                        <option value='7'>7:00am</option>
+                        <option value='8'>8:00am</option>
+                        <option value='9'>9:00am</option>
+                        <option value='10'>10:00am</option>
+                        <option value='11'>11:00am</option>
+                        <option value='12'>noon</option>
+                        <option value='13'>1:00pm</option>
+                        <option value='14'>2:00pm</option>
+                        <option value='15'>3:00pm</option>
+                        <option value='16'>4:00pm</option>
+                        <option value='17'>5:00pm</option>
+                        <option value='18'>6:00pm</option>
+                        <option value='19'>7:00pm</option>
+                        <option value='20'>8:00pm</option>
+                        <option value='21'>9:00pm</option>
+                        <option value='22'>10:00pm</option>
+                        <option value='23'>11:00pm</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-dom'>Day of Month</label>
+                    <div class='controls'>
+                      <select class='form-control' id='sched-dom' ng-model='scheduleToEdit.day_of_month'>
+                        <option></option>
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                        <option>6</option>
+                        <option>7</option>
+                        <option>8</option>
+                        <option>9</option>
+                        <option>10</option>
+                        <option>11</option>
+                        <option>12</option>
+                        <option>13</option>
+                        <option>14</option>
+                        <option>15</option>
+                        <option>16</option>
+                        <option>17</option>
+                        <option>18</option>
+                        <option>19</option>
+                        <option>20</option>
+                        <option>21</option>
+                        <option>22</option>
+                        <option>23</option>
+                        <option>24</option>
+                        <option>25</option>
+                        <option>26</option>
+                        <option>27</option>
+                        <option>28</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class='control-group' ng-hide='scheduleToEdit.day_of_month'>
+                    <div class='controls'>
+                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_monday'/> Monday</label>
+                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_tuesday'/> Tuesday</label>
+                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_wednesday'/> Wednesday</label>
+                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_thursday'/> Thursday</label>
+                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_friday'/> Friday</label>
+                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_saturday'/> Saturday</label>
+                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_sunday'/> Sunday</label>
+                    </div>
+                  </div>
+                </div>
+                <div class='col-md-6'>
+                  <fieldset ng-show='searchSetup.allow_ftp'>
+                    <div class='control-group'>
+                      <label class='control-label' for='sched-f-protocol'>Use SFTP?</label>
+                      <div class='controls'>
+                        <input id='sched-f-protocol' type='checkbox' ng-model='scheduleToEdit.protocol' ng-true-value="sftp" ng-false-value="ftp"/>
+                      </div>
+                    </div>
+                    <div class='control-group'>
+                      <label class='control-label' for='sched-f-server'>{{scheduleProtocol(scheduleToEdit)}} Server</label>
+                      <div class='controls'>
+                        <input id='sched-f-server' class='form-control' type='text' ng-model='scheduleToEdit.ftp_server'/>
+                      </div>
+                    </div>
+                    <div class='control-group'>
+                      <label class='control-label' for='sched-f-user'>{{scheduleProtocol(scheduleToEdit)}} User</label>
+                      <div class='controls'>
+                        <input id='sched-f-user' class='form-control' type='text' ng-model='scheduleToEdit.ftp_username' />
+                      </div>
+                    </div>
+                    <div class='control-group'>
+                      <label class='control-label' for='sched-f-pass'>{{scheduleProtocol(scheduleToEdit)}} Password</label>
+                      <div class='controls'>
+                        <input id='sched-f-pass' class='form-control' type='text' ng-model='scheduleToEdit.ftp_password' />
+                      </div>
+                    </div>
+                    <div class='control-group'>
+                      <label class='control-label' for='sched-f-folder'>{{scheduleProtocol(scheduleToEdit)}} Folder</label>
+                      <div class='controls'>
+                        <input id='sched-f-folder' class='form-control' type='text' ng-model='scheduleToEdit.ftp_subfolder' />
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
+              </div>
+              <div class='control-group'>
+                <div class='controls'>
+                  <button class='btn btn-primary' ng-click='scheduleToEdit = null'>Done</button>
+                </div>
               </div>
             </div>
           </div>

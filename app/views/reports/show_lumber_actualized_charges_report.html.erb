@@ -1,0 +1,33 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    var r = true;
+    if($("input[name='start_date']").val().length < 10) {
+      r = false;
+    }
+    if($("input[name='end_date']").val().length < 10) {
+      r = false;
+    }
+    if(!r) {
+      window.alert("You must enter both dates.");
+      return false;
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Lumber Actualized Charges Report</h2>
+<%=form_tag reports_run_lumber_actualized_charges_report_path, :id=>'frm_run' do -%>
+<div class="container">
+  <div class="row" style="line-height: 2.5">
+    <div class="col-md-2"><label class="control-label" for="start_date">Release Date on or after</label></div>
+    <div class="col-md-2"><%=text_field_tag :start_date, params[:start_date], :class=>'form-control isdate'%></div>
+    <div class="col-md-2"><label class="control-label" for="end_date">and before</label></div>
+    <div class="col-md-2"><%=text_field_tag :end_date, params[:end_date], :class=>'form-control isdate' %></div>
+  </div>
+</div>
+<%end%>
+</div>

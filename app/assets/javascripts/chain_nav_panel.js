@@ -167,7 +167,7 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
     addVendorMenu = function(cat, u) {
       var items;
       items = [];
-      makeItemIf(u.permissions.view_vendors, items, 'vendor-view', 'View', '/vendors');
+      makeItemIf(u.permissions.view_vendors, items, 'vendor-view', 'Search', '/vendors');
       makeItemIf(u.permissions.create_vendors, items, 'vendor-new', 'New', '/vendors/new');
       return makeMenuIf(cat, 'nav-cat-vendor', 'Vendor', items);
     };

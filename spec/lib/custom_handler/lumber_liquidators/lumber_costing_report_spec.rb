@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
   let (:api) { double("OpenChain::Api::OrderApiClient")}
   subject { described_class.new api_client: api}
   let (:entry) do 
-      entry = Factory(:entry, entry_number: "ENT", master_bills_of_lading: "MBOL", entered_value: 100, arrival_date: '2016-01-20 12:00', customer_number: "LUMBER", source_system:"Alliance")
+      entry = Factory(:entry, entry_number: "ENT", master_bills_of_lading: "MBOL", entered_value: 100, arrival_date: '2016-01-20 12:00', customer_number: "LUMBER", source_system:"Alliance", export_country_codes: "VN", transport_mode_code: "10")
       container = Factory(:container, entry: entry, container_number: "CONT") 
       invoice_line = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: entry), container: container, 
                              po_number: "PO", part_number: "000123", quantity: 10, value: 100.0, add_duty_amount: 110.0, cvd_duty_amount: 120.00, hmf: 130.00, prorated_mpf: 140.00)
@@ -154,6 +154,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       it "finds entry, generates and sends results when sync record has been marked for resend" do
         entry.sync_records.create! trading_partner: "LL_COST_REPORT"
       end
+
+      it "finds Truck movements if not from Canada" do
+        entry.update_attributes! transport_mode_code: "30"
+      end
+
+      it "finds Canada exports if not truck" do
+        entry.update_attributes! export_country_codes: "CA"
+      end
     end
 
     context "with entries that should not be found" do
@@ -176,6 +184,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
       it "does not find previously synced entries" do
         entry.sync_records.create! trading_partner: "LL_COST_REPORT", sent_at: Time.zone.now
+      end
+
+      it "does not find Truck movements from Canada" do
+        entry.update_attributes! transport_mode_code: "30", export_country_codes: "CA"
       end
     end
   end

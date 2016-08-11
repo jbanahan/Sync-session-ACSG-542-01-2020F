@@ -537,3 +537,7 @@ Factory.define :vfi_invoice_line do |f|
   f.quantity 1
   f.charge_amount 1
 end
+Factory.define :search_table_config do |f|
+  f.name 'stc'
+  f.sequence :page_uid
+end

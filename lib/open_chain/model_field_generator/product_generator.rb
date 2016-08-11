@@ -16,7 +16,8 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
           return nil
         end
       },
-      :qualified_field_name => "(SELECT unique_identifier FROM products WHERE products.id = #{table_name}.product_id)"
+      :qualified_field_name => "(SELECT unique_identifier FROM products WHERE products.id = #{table_name}.product_id)",
+      :data_type => :string
     }]
     r << [rank_start+1,"#{uid_prefix}_pname".to_sym, :name,"Product Name",{
       :import_lambda => lambda {|detail,data|
@@ -31,25 +32,28 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
       },
       :qualified_field_name => "(SELECT name FROM products WHERE products.id = #{table_name}.product_id)",
       :history_ignore => true,
-      :read_only => true
+      :read_only => true,
+      :data_type => :string
     }]
-    r << [rank_start+2, "#{uid_prefix}_prod_id".to_sym, :id,"Product Name", {user_accessible: false, history_ignore: true,
+    r << [rank_start+2, "#{uid_prefix}_prod_id".to_sym, :id,"Product ID", {user_accessible: false, history_ignore: true,
       :import_lambda => lambda {|detail, data, user|
         product_id = data.to_i
         if detail.product_id != product_id && !(prod = Product.where(id: product_id).first).nil?
           detail.product  = prod if prod.can_view?(user)
         end
         ""
-      }
+      },
+      data_type: :integer
     }]
-    r << [rank_start+3, "#{uid_prefix}_prod_ord_count".to_sym, :prod_ord_count, "Product Order Count",
+    r << [rank_start+3, "#{uid_prefix}_prod_ord_count".to_sym, :prod_ord_count, "Product Order Count", {
       history_ignore: true,
       read_only:true,
       export_lambda: lambda {|detail|
-        ModelField.find_by_uid(:prod_ord_count).process_export(detail.product,nil,true)
+        ModelField.find_by_uid(:prod_order_count).process_export(detail.product,nil,true)
       },
       qualified_field_name: "(select count(*) from (select distinct order_lines.order_id, order_lines.product_id from order_lines) x where x.product_id = #{table_name}.product_id)",
-    ]
+      :data_type => :integer
+    }]
     r
   end
 end; end; end

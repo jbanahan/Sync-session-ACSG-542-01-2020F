@@ -67,7 +67,7 @@ module OpenChain
     # Version of your assets, change this if you want to expire all your assets
     config.assets.version = '1.0'
 
-    config.assets.precompile += %w( vendor_portal.js vendor_portal.css trade_lanes.js trade_lanes.css )
+    config.assets.precompile += %w( vendor_portal.js vendor_portal.css trade_lanes.js trade_lanes.css chain_vendor_maint.css chain_vendor_maint.js )
 
     config.action_mailer.delivery_method = :postmark
 

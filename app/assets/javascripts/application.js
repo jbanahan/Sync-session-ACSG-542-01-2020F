@@ -30,4 +30,5 @@
 //= stub html5shim
 //= stub vendor_portal
 //= stub trade_lanes
+//= stub chain_vendor_maint
 //= stub login

@@ -118,7 +118,7 @@ describe Api::V1::CommentsController do
         expect(response).to be_success
         j = JSON.parse(response.body)
         expect(j).to eq({
-          "comments"=>[{"id"=>comment.id, "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id}]
+          "comments"=>[{"id"=>comment.id, "cmt_unique_identifier"=>"#{comment.id}-s1", "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id}]
         })
       end
 
@@ -128,7 +128,7 @@ describe Api::V1::CommentsController do
         j = JSON.parse(response.body)
         expect(j).to eq({
           "comments"=>[
-            {"id"=>comment.id, "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id,
+            {"id"=>comment.id, "cmt_unique_identifier"=>"#{comment.id}-s1", "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id,
               "permissions" => {
                 'can_view' => true, 'can_edit' => true, 'can_delete' => true
               }
@@ -151,7 +151,7 @@ describe Api::V1::CommentsController do
         expect(response).to be_success
         j = JSON.parse(response.body)
         expect(j).to eq({
-          "comment"=>{"id"=>comment.id, "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id}
+          "comment"=>{"id"=>comment.id, "cmt_unique_identifier"=>"#{comment.id}-s1", "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id}
         })
       end
 
@@ -160,7 +160,7 @@ describe Api::V1::CommentsController do
         expect(response).to be_success
         j = JSON.parse(response.body)
         expect(j).to eq({
-          "comment"=>{"id"=>comment.id, "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id,
+          "comment"=>{"id"=>comment.id, "cmt_unique_identifier"=>"#{comment.id}-s1", "cmt_subject"=>"s1", "cmt_body"=>"b1", "cmt_created_at"=>comment.created_at.in_time_zone(user.time_zone).iso8601, "cmt_user_username"=>user.username, "cmt_user_fullname"=>user.full_name, "cmt_user"=>user.id,
           "permissions" => {
                 'can_view' => true, 'can_edit' => true, 'can_delete' => true
               }}

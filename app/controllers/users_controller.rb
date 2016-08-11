@@ -158,6 +158,10 @@ class UsersController < ApplicationController
           update_password = password.blank? ? true : @user.update_user_password(password, password_conf)
 
           valid =  update_password && @user.update_attributes(params[:user])
+          
+          # Ensure that change to group assignments is reflected in time stamp
+          @user.touch
+          
           # Rollback is swallowed by the transaction block
           raise ActiveRecord::Rollback, "Bad user create." unless valid
         end

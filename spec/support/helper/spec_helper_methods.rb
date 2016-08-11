@@ -158,6 +158,10 @@ module Helpers
     ms
   end
 
+  def stub_master_setup
+    stub_master_setup_request_host
+  end
+
   def json_date date
     ActiveSupport::JSON.encode(date).gsub(/"/, "")
   end

@@ -43,7 +43,8 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
       user = User.integration
       products = []
       extract_part_data(new_json).each do |data|
-        products << find_or_create_product(data, user)
+        product = find_or_create_product(data, user)
+        products << product if product
       end
 
       # Now see if we need to move any packets over...only move them the if products
@@ -131,6 +132,11 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
 
 
   def find_or_create_product part_data, user
+    # Return nil if any of the part data is blank, technically, there should be a business rule blocking
+    # these from even making it to this point, but the rule cuts off semi-recently and some really old
+    # HM entries are getting updated still.
+    return nil if part_data[:part_number].blank? || part_data[:importer_id].blank?
+
     product = nil
     unique_id = "HENNE-#{part_data[:part_number]}"
     @us ||= Country.where(iso_code: "US").first
