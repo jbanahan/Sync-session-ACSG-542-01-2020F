@@ -35,7 +35,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       ord.reload
       defaults_changed = true
     end
-    
+
+    ord.reload if set_forecasted_handover_date ord
     ord.reload if reset_vendor_approvals ord, old_data, new_data
     ord.reload if reset_product_compliance_approvals ord, old_data, new_data
     ord.reload if update_autoflow_approvals ord
@@ -52,6 +53,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     create_pdf(ord,old_data,new_data) unless defaults_changed
   end
 
+  def self.set_forecasted_handover_date ord
+    cdefs = self.prep_custom_definitions [:ord_planned_handover_date,:ord_forecasted_handover_date]
+    current_forecasted_handover_date = ord.get_custom_value(cdefs[:ord_forecasted_handover_date]).value
+    planned_handover_date = ord.get_custom_value(cdefs[:ord_planned_handover_date]).value
+    if planned_handover_date && planned_handover_date!=current_forecasted_handover_date
+      ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],planned_handover_date)
+      return true
+    end
+    if !planned_handover_date && ord.ship_window_end && ord.ship_window_end!=current_forecasted_handover_date
+      ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],ord.ship_window_end)
+      return true
+    end
+    return false
+  end
 
   def self.generate_ll_xml ord, old_data, new_data
     if new_data.planned_handover_date && (old_data.nil? || old_data.planned_handover_date != new_data.planned_handover_date)
@@ -108,7 +123,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
       cancel_date = ord.get_custom_value(cdef).value
       num_lines = ord.order_lines.length
-      
+
       if num_lines > 0 && cancel_date
         ord.reopen! User.integration
         ord.update_custom_value!(cdef, nil)

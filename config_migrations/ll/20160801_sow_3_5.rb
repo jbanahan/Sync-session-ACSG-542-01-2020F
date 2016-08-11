@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_order_change_comparator'
 module ConfigMigrations; module LL; class SOW35
 
   DEFS ||= [
@@ -10,7 +11,8 @@ module ConfigMigrations; module LL; class SOW35
     :ord_inspection_date_planned,
     :ord_inspection_date_completed,
     :ord_testing_date_planned,
-    :ord_testing_date_completed
+    :ord_testing_date_completed,
+    :ord_inspector_assigned
   ]
 
   def up
@@ -19,12 +21,22 @@ module ConfigMigrations; module LL; class SOW35
     create_state_toggle_buttons defs
     create_order_business_rules defs
     update_accepted_dates
+    update_forecasted_handover_date
   end
   def down
     remove_order_business_rules
     remove_state_toggle_buttons
     remove_custom_defs
     remove_groups
+  end
+
+  def update_forecasted_handover_date
+    integration = User.integration
+    Order.includes(:custom_values).where(closed_at:nil).each do |o|
+      if OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator.set_forecasted_handover_date o
+        o.create_snapshot integration
+      end
+    end
   end
 
   def update_accepted_dates
@@ -66,9 +78,15 @@ module ConfigMigrations; module LL; class SOW35
     [:ord_inspection_date_planned,
     :ord_inspection_date_completed,
     :ord_testing_date_planned,
-    :ord_testing_date_completed].each do |def_id|
+    :ord_testing_date_completed,
+    :ord_inspector_assigned
+    ].each do |def_id|
       cd = defs[def_id]
-      FieldValidatorRule.create!(model_field_uid:cd.model_field_uid,module_type:cd.module_type,can_edit_groups:'QA_APPROVE_ORDER',can_view_groups:"QA_APPROVE_ORDER\nALL")
+      fvr = FieldValidatorRule.new(model_field_uid:cd.model_field_uid,module_type:cd.module_type,can_edit_groups:'QA_APPROVE_ORDER',can_view_groups:"QA_APPROVE_ORDER\nALL")
+      if def_id==:ord_inspector_assigned
+        fvr.one_of = "Bill Ban\nDaniel Wang\nJacky Zhang\nJames Li\nJason Jia\nJohn Zeng\nNick Hu\nPei Feifei\nSadie Yao\nSean Zhu\nTerrence Zhu\nTom Pi\nVilla Xu\n"
+      end
+      fvr.save!
     end
     defs
   end

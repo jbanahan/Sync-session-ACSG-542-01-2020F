@@ -40,6 +40,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
       # stub all business logic methods, then in each test we use should_receive for the one we're testing
       described_class.stub(:set_defaults).and_return false
+      described_class.stub(:set_forecasted_handover_date).and_return false
       described_class.stub(:update_autoflow_approvals).and_return false
       described_class.stub(:reset_vendor_approvals).and_return false
       described_class.stub(:reset_product_compliance_approvals).and_return false
@@ -54,6 +55,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
     it 'should set defaults' do
       described_class.should_receive(:set_defaults).with(@o,@new_data)
+      described_class.execute_business_logic(1,@old_data,@new_data)
+    end
+    it 'should set forecasted handover date' do
+      described_class.should_receive(:set_forecasted_handover_date).with(@o)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should reset vendor approvals' do
@@ -85,6 +90,28 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it 'should generate xml' do
       described_class.should_receive(:generate_ll_xml).with(@o,@old_data,@new_data)
       described_class.execute_business_logic(1,@old_data,@new_data)
+    end
+  end
+
+  describe '#set_forecasted_handover_date' do
+    before :each do
+      @cdefs = described_class.prep_custom_definitions([:ord_forecasted_handover_date,:ord_planned_handover_date])
+      @o = Factory(:order,ship_window_end:Date.new(2016,5,1))
+    end
+    it "should set forecasted handover date to planned_handover_date if planned_handover_date is not blank" do
+      @o.update_custom_value!(@cdefs[:ord_planned_handover_date],Date.new(2016,5,15))
+      expect(described_class.set_forecasted_handover_date(@o)).to eq true
+      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,15)
+    end
+    it "should set forecasted handover date to ship_window_end if planned_handover_date is blank" do
+      expect(described_class.set_forecasted_handover_date(@o)).to eq true
+      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,1)
+    end
+    it "should return false if did not change" do
+      @o.update_custom_value!(@cdefs[:ord_forecasted_handover_date],Date.new(2016,5,1))
+      expect(described_class.set_forecasted_handover_date(@o)).to eq false
+      @o.reload
+      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,1)
     end
   end
 
@@ -155,7 +182,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       Factory(:order_line, order: @ord)
       @ord.update_custom_value! @cdef, Date.today
       @ord.update_attributes(closed_at: DateTime.now)
-      
+
       expect(described_class.reset_po_cancellation @ord).to eq true
       cancel_date = @ord.get_custom_value @cdef
       expect(cancel_date.value).to be_nil
