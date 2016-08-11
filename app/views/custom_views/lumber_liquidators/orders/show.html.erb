@@ -5,7 +5,7 @@
   :ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,
   :ord_planned_handover_date,:ord_ship_confirmation_date,
   :ord_sap_vendor_handover_date,:ord_planned_expected_delivery_date,
-  :ord_sap_extract, :ord_avail_to_prom_date])%>
+  :ord_sap_extract, :ord_avail_to_prom_date, :ordln_old_art_number, :ordln_part_name])%>
 <%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
 <script type='text/javascript'>
 
@@ -121,8 +121,8 @@
                   <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
                   <td>
                     <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
-                    <small><%=cdefs[:prod_old_article].model_field.process_export(line.product,User.current)%></small><br />
-                    <%=ModelField.find_by_uid(:prod_name).process_export(line.product,User.current)%>
+                    <small><%=cdefs[:ordln_old_art_number].model_field.process_export(line,User.current)%></small><br />
+                    <%=ModelField.find_by_uid(:ordln_part_name).process_export(line,User.current)%>
                   </td>
                   <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
                   <td>

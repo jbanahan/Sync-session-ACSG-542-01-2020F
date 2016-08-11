@@ -380,6 +380,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       ol.quantity = BigDecimal(et(line_el,'MENGE'),4)
       ol.unit_of_measure = et(line_el,'MENEE')
 
+      # There is a possibility these may change between runs. We do not want the part_name or old_article_number
+      # to change once they are set.
       unless ol.get_custom_value(@cdefs[:ordln_part_name]).value.present?
         ol.find_and_set_custom_value @cdefs[:ordln_part_name], product.name
       end
