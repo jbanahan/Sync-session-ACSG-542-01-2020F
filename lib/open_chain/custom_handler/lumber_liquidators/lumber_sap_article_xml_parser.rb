@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract, :prod_old_article, :class_proposed_hts, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
+    @cdefs = self.class.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_sap_extract, :prod_old_article, :class_proposed_hts, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
   end
 
   def parse_dom dom
@@ -47,6 +47,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         return # don't parse since this is older than the previous extract
       end
 
+      # Use prod_sap_extract to check if blank
+      is_new = p.get_custom_value(@cdefs[:prod_sap_extract]).value.blank?
+
       p.importer = Company.where(master: true).first
       p.name = name
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], ext_time)
@@ -60,6 +63,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       p.save!
       p.create_snapshot(@user)
+
+      #update new fields
+      if is_new
+        p.order_lines.each do |order_line|
+          order_line.find_and_set_custom_value(@cdefs[:ordln_old_art_number], p.get_custom_value(@cdefs[:prod_old_article]).value)
+          order_line.find_and_set_custom_value(@cdefs[:ordln_part_name], p.get_custom_value(p.name))
+        end
+      end
     end
   end
 
