@@ -10,6 +10,8 @@ fi
 TAG=$1
 BRANCH=$2
 
+set -e
+
 echo $TAG > config/version.txt
 git commit -a -m $TAG
 git tag $TAG
