@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       @vendor = Factory(:company,vendor:true,system_code:'0000100131')
       @vendor_address = @vendor.addresses.create!(name:'VNAME',line_1:'ln1',line_2:'l2',city:'New York',state:'NY',postal_code:'10001',country_id:@usa.id)
       @product1= Factory(:product,unique_identifier:'000000000010001547')
-      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date]
+      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent]
     end
 
     it "should fail on bad root element" do
@@ -54,6 +54,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       expect(o.order_from_address_id).to eq @vendor_address.id
 
+      expect(o.get_custom_value(@cdefs[:ord_assigned_agent]).value).to be_blank
+
       expect(o).to have(3).order_lines
 
       # existing product
@@ -90,6 +92,36 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       o = Order.first
       expect(o).to have(3).order_lines
+    end
+    context 'assigned agent' do
+      it "should set assigned agent to GELOWELL" do
+        @gelowell = Factory(:company,system_code:'GELOWELL')
+        @gelowell.linked_companies << @vendor
+
+        described_class.new.parse_dom(REXML::Document.new(@test_data))
+
+        expect(Order.first.get_custom_value(@cdefs[:ord_assigned_agent]).value).to eq 'GELOWELL'
+
+      end
+      it "should set assigned agent to RO" do
+        @ro = Factory(:company,system_code:'RO')
+        @ro.linked_companies << @vendor
+
+        described_class.new.parse_dom(REXML::Document.new(@test_data))
+
+        expect(Order.first.get_custom_value(@cdefs[:ord_assigned_agent]).value).to eq 'RO'
+
+      end
+      it "should set assigned agent to GELOWELL/RO" do
+        @gelowell = Factory(:company,system_code:'GELOWELL')
+        @gelowell.linked_companies << @vendor
+        @ro = Factory(:company,system_code:'RO')
+        @ro.linked_companies << @vendor
+        described_class.new.parse_dom(REXML::Document.new(@test_data))
+
+        expect(Order.first.get_custom_value(@cdefs[:ord_assigned_agent]).value).to eq 'GELOWELL/RO'
+
+      end
     end
     it "should not update order if previous extract time is newer than this doc" do
       existing_order = Factory(:order,order_number:'4700000325')

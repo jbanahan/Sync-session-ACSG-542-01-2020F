@@ -11,8 +11,7 @@ class VendorsController < ApplicationController
 
   def show
     secure_company_view do |c|
-      @state_button_path = 'companies'
-      @state_button_object_id = c.id
+      render layout:false
     end
   end
 

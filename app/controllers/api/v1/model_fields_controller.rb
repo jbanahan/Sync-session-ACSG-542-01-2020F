@@ -11,7 +11,10 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
     CoreModule::VARIANT,
     CoreModule::TRADE_LANE,
     CoreModule::TRADE_PREFERENCE_PROGRAM,
-    CoreModule::TPP_HTS_OVERRIDE
+    CoreModule::TPP_HTS_OVERRIDE,
+    CoreModule::COMPANY,
+    CoreModule::PRODUCT_VENDOR_ASSIGNMENT,
+    CoreModule::ADDRESS
   ]
 
   def index
@@ -42,11 +45,11 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
               mf_h['select_options'] = fvr.one_of_array.collect {|a| [a,a]} #api expects 2 dimensional array
             end
           end
-        mf_h['user_id_field'] = true if mf.user_id_field?
-        mf_h['user_field'] = true if mf.user_field?
-        mf_h['user_full_name_field'] = true if mf.user_full_name_field?
-        mf_h['required'] = true if mf.required?
-        h['fields'] << mf_h
+          mf_h['user_id_field'] = true if mf.user_id_field?
+          mf_h['user_field'] = true if mf.user_field?
+          mf_h['user_full_name_field'] = true if mf.user_full_name_field?
+          mf_h['required'] = true if mf.required?
+          h['fields'] << mf_h
         end
       end
       h.to_json

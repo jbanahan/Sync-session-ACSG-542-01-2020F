@@ -22,7 +22,8 @@ module OpenChain; module ModelFieldDefinition; module AddressFieldDefinition
          read_only:true,
          export_lambda: lambda {|obj| obj.full_address},
          qualified_field_name: "(CONCAT_WS(' ', IFNULL(line_1, ''), IFNULL(line_2, ''), IFNULL(line_3, ''),'\n', IFNULL(city, ''), IFNULL(state, ''), IFNULL(postal_code, ''),'\n',IFNULL((select iso_code from countries where addresses.country_id = countries.id),'')))"
-       }]
+       }],
+       [15, :add_comp_db_id, :company_id, 'Company DB ID', {data_type: :integer}]
     ]
     add_fields CoreModule::ADDRESS, make_country_arrays(100,'add','addresses')
     add_fields CoreModule::ADDRESS, make_company_arrays(200,'add','addresses','comp','Company','company')

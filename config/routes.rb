@@ -114,7 +114,7 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
 
-      resources :product_vendor_assignments, only: [:index] do
+      resources :product_vendor_assignments, only: [:index,:show,:update,:create] do
         put :bulk_update, on: :collection
         post :bulk_create, on: :collection
       end
@@ -132,8 +132,10 @@ OpenChain::Application.routes.draw do
         end
       end
 
-      resources :vendors, only: [] do
+      resources :vendors, only: [:index,:show,:update,:create] do
         post :validate, on: :member
+        get :state_toggle_buttons, on: :member
+        post :toggle_state_button, on: :member
       end
 
       resources :user_manuals, only: [:index]
@@ -200,7 +202,7 @@ OpenChain::Application.routes.draw do
         end
       end
 
-      resources :addresses, only: [:index]
+      resources :addresses, only: [:index, :create, :update, :destroy]
 
       resources :countries, only: [:index]
 
@@ -217,6 +219,10 @@ OpenChain::Application.routes.draw do
       resources :groups, only: [:index, :show]
       post "/:base_object_type/:base_object_id/groups/:id/add" => "groups#add_to_object"
       post "/:base_object_type/:base_object_id/groups" => "groups#set_groups_for_object"
+
+      resources :search_table_configs, only: [] do
+        get 'for_page/:page_uid' => "search_table_configs#for_page", on: :collection
+      end
     end
   end
 

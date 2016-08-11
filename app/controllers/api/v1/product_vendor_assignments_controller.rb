@@ -143,6 +143,18 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
     render json: {'ok'=>'ok'}
   end
 
+  def save_object h
+    raise StatusableError.new("Product Vendor Assignements cannot be created via API.") if h['id'].blank?
+    # blank check is redundant, but leaving it so we don't forget about it when we allow creates via api
+    pva = h['id'].blank? ? ProductVendorAssignment.new : ProductVendorAssignment.includes([
+      {custom_values:[:custom_definition]}
+    ]).find_by_id(h['id'])
+    raise StatusableError.new("Object with id #{h['id']} not found.",404) if pva.nil?
+    import_fields h, pva, CoreModule::PRODUCT_VENDOR_ASSIGNMENT
+    raise StatusableError.new("You do not have permission to save this.",:forbidden) unless pva.can_edit?(current_user)
+    pva.save if pva.errors.full_messages.blank?
+    pva
+  end
   def obj_to_json_hash o
     headers_to_render = limit_fields([
       :prodven_puid,

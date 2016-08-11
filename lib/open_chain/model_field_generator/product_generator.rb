@@ -35,14 +35,15 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
       :read_only => true,
       :data_type => :string
     }]
-    r << [rank_start+2, "#{uid_prefix}_prod_id".to_sym, :id,"Product Name", {user_accessible: false, history_ignore: true,
+    r << [rank_start+2, "#{uid_prefix}_prod_id".to_sym, :id,"Product ID", {user_accessible: false, history_ignore: true,
       :import_lambda => lambda {|detail, data, user|
         product_id = data.to_i
         if detail.product_id != product_id && !(prod = Product.where(id: product_id).first).nil?
           detail.product  = prod if prod.can_view?(user)
         end
         ""
-      }
+      },
+      data_type: :integer
     }]
     r << [rank_start+3, "#{uid_prefix}_prod_ord_count".to_sym, :prod_ord_count, "Product Order Count", {
       history_ignore: true,

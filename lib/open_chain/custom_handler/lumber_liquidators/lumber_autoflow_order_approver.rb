@@ -3,7 +3,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   def self.process order
     u = find_or_create_autoflow_user
-    cdefs = self.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])
+    cdefs = self.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,:ord_assigned_agent,:ordln_qa_approved_by,:ordln_qa_approved_date])
     has_changes = false
 
     order.order_lines.each do |ol|
@@ -42,6 +42,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
 
   def self.process_line ol, cdefs, autoflow_user
     changed = false
+    changed = true if process_line_product_compliance(ol,cdefs,autoflow_user)
+    changed = true if process_line_qa(ol,cdefs,autoflow_user)
+    return changed
+  end
+
+  def self.process_line_qa ol, cdefs, autoflow_user
+    should_be_autoflow = ol.order.get_custom_value(cdefs[:ord_assigned_agent]).value.blank?
+    is_approved = !ol.get_custom_value(cdefs[:ordln_qa_approved_date]).value.blank?
+    if !is_approved && should_be_autoflow
+      ol.update_custom_value!(cdefs[:ordln_qa_approved_by],autoflow_user.id)
+      ol.update_custom_value!(cdefs[:ordln_qa_approved_date],0.seconds.ago)
+    end
+    return false
+  end
+
+  def self.process_line_product_compliance ol, cdefs, autoflow_user
+    changed = false
     # if it's approved by someone other than auto-flow, do nothing
     approved_by = ol.get_custom_value(cdefs[:ordln_pc_approved_by]).value
     approved_by = ol.get_custom_value(cdefs[:ordln_pc_approved_by_executive]).value unless approved_by
@@ -67,7 +84,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
     end
     return changed
   end
-  private_class_method :process_line
+  private_class_method :process_line_product_compliance
 
   def self.get_line_risk ol, cdefs
     vendor = ol.order.vendor
