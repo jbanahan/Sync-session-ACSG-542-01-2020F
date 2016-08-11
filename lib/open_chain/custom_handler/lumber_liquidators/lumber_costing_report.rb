@@ -92,6 +92,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
           joins(:broker_invoices).
           joins("LEFT OUTER JOIN sync_records sync ON sync.syncable_id = entries.id AND sync.syncable_type = 'Entry' and sync.trading_partner = 'LL_COST_REPORT'").
           where(source_system: "Alliance", customer_number: "LUMBER").
+          # Goods exported by truck from CA are handled by manually emailing the invoices to LL's AR department so they
+          # should not have cost files generated for them
+          where("entries.transport_mode_code <> '30' OR entries.export_country_codes <> 'CA'").
           # Lumber wants these at the LATEST when Arrival Date is 3 days out...day count logic handled in can_send_entry?
           where("entries.arrival_date IS NOT NULL").
           # If we haven't sent the file already we should send it OR if someone marks the sync record as needing to be resent (.ie sent_at is null)
