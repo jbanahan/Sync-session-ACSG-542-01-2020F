@@ -379,8 +379,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       ol.product = product
       ol.quantity = BigDecimal(et(line_el,'MENGE'),4)
       ol.unit_of_measure = et(line_el,'MENEE')
-      ol.find_and_set_custom_value @cdefs[:ordln_part_name], product.name
-      ol.find_and_set_custom_value @cdefs[:ordln_old_art_number], product.get_custom_value(@cdefs[:prod_old_article])
+
+      unless ol.get_custom_value(@cdefs[:ordln_part_name]).value.present?
+        ol.find_and_set_custom_value @cdefs[:ordln_part_name], product.name
+      end
+
+      unless ol.get_custom_value(@cdefs[:ordln_old_art_number]).value.present?
+        ol.find_and_set_custom_value @cdefs[:ordln_old_art_number], product.get_custom_value(@cdefs[:prod_old_article]).value
+      end
 
       # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
       price_per_unit = nil
