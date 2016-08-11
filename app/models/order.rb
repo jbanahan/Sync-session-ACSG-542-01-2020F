@@ -14,6 +14,7 @@ class Order < ActiveRecord::Base
   belongs_to :closed_by, :class_name=>'User'
   belongs_to :factory, :class_name=>'Company'
   belongs_to :tpp_survey_response, :class_name=>'SurveyResponse'
+  belongs_to :accepted_by, :class_name=>'User'
 
 	validates :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
@@ -55,6 +56,8 @@ class Order < ActiveRecord::Base
 
   def accept! user, async_snapshot = false
     mark_order_as_accepted
+    self.accepted_by = user
+    self.accepted_at = Time.now
     self.save!
     OpenChain::EventPublisher.publish :order_accept, self
     self.create_snapshot_with_async_option async_snapshot, user
@@ -64,6 +67,8 @@ class Order < ActiveRecord::Base
   end
   def unaccept! user, async_snapshot = false
     self.approval_status = nil
+    self.accepted_by = nil
+    self.accepted_at = nil
     self.save!
     OpenChain::EventPublisher.publish :order_unaccept, self
     self.create_snapshot_with_async_option async_snapshot, user

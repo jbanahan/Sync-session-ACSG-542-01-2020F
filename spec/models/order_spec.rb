@@ -66,12 +66,16 @@ describe Order do
       @o.accept! @u
       @o.reload
       expect(@o.approval_status).to eq 'Accepted'
+      expect(@o.accepted_by).to eq @u
+      expect(@o.accepted_at).to_not be_nil
     end
     it 'should accept async' do
       @o.should_receive(:create_snapshot_with_async_option).with true, @u
       @o.async_accept! @u
       @o.reload
       expect(@o.approval_status).to eq 'Accepted'
+      expect(@o.accepted_by).to eq @u
+      expect(@o.accepted_at).to_not be_nil
     end
   end
   describe 'can_be_accepted?' do
@@ -97,11 +101,11 @@ describe Order do
   end
   describe 'unaccept' do
     before :each do
-      @o = Factory(:order,approval_status:'Approved')
-      @v = Factory(:company,vendor:true)
-      @u = Factory(:user,company:@v)
       @t = Time.now
       Time.stub(:now).and_return @t
+      @v = Factory(:company,vendor:true)
+      @u = Factory(:user,company:@v)
+      @o = Factory(:order,approval_status:'Approved',accepted_by:@u,accepted_at:@t)
       OpenChain::EventPublisher.should_receive(:publish).with(:order_unaccept,@o)
     end
 
@@ -109,14 +113,18 @@ describe Order do
       @o.should_receive(:create_snapshot_with_async_option).with false, @u
       @o.unaccept! @u
       @o.reload
-      expect(@o.approval_status).to eq nil
+      expect(@o.approval_status).to be_nil
+      expect(@o.accepted_by).to be_nil
+      expect(@o.accepted_at).to be_nil
     end
 
     it 'should unaccept async' do
       @o.should_receive(:create_snapshot_with_async_option).with true, @u
       @o.async_unaccept! @u
       @o.reload
-      expect(@o.approval_status).to eq nil
+      expect(@o.approval_status).to be_nil
+      expect(@o.accepted_by).to be_nil
+      expect(@o.accepted_at).to be_nil
     end
   end
   describe 'can_accept' do
