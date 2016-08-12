@@ -2,190 +2,307 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
-  before(:each) do
-    @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789\n 987654321")
-    @validator = described_class.new
-    
-    #fenix
-    #6106200010-US quantity: 10, value: 300
-    #6106200010-CN quantity: 10, value: 450
-    #1206200010-CN quantity: 15, value: 50
-
-    #unrolled
-    #6106200010-US quantity: 10, value: 300
-    #6106200010-CN quantity: 10, value: 450
-    #1206200010-CN quantity: 15, value: 50
-    
-    fenix_inv_1 = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)  
-    
-      @fenix_inv_1_ln_1 = Factory(:commercial_invoice_line, commercial_invoice: fenix_inv_1, country_origin_code: "US", quantity: 10, value: 300)
-        fenix_inv_1_ln_1_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: @fenix_inv_1_ln_1, hts_code: "6106200010")
-
-      @fenix_inv_1_ln_2 = Factory(:commercial_invoice_line, commercial_invoice: fenix_inv_1, country_origin_code: "CN", quantity: 15, value: 50)
-        fenix_inv_1_ln_2_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: @fenix_inv_1_ln_2, hts_code: "1206200010")
-
-    fenix_inv_2 = Factory(:commercial_invoice, entry: @ent, invoice_number: '987654321')
-      
-      fenix_inv_2_ln_1 = Factory(:commercial_invoice_line, commercial_invoice: fenix_inv_2, country_origin_code: "CN", quantity: 10, value: 450 )
-        fenix_inv_1_ln_1_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_inv_2_ln_1, hts_code: "6106200010")
-    
-    
-    unrolled_inv_1 = Factory(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
-    
-      unrolled_inv_1_ln_1 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_inv_1, country_origin_code: "US", quantity: 7, value: 150, part_number: '1278-603-494')
-        unrolled_inv_1_ln_1_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_inv_1_ln_1, hts_code: "6106200010")
-
-      unrolled_inv_1_ln_2 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_inv_1, country_origin_code: "US", quantity: 3, value: 150, part_number: '5847-603-494')
-        unrolled_inv_1_ln_2_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_inv_1_ln_2, hts_code: "6106200010")
-
-      unrolled_inv_1_ln_3 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_inv_1, country_origin_code: "CN", quantity: 5, value: 50, part_number: '6177-603-494')
-        unrolled_inv_1_ln_3_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_inv_1_ln_3, hts_code: "6106200010")
-
-      unrolled_inv_1_ln_4 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_inv_1, country_origin_code: "CN", quantity: 7, value: 20, part_number: '4352-603-494')
-        unrolled_inv_1_ln_4_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_inv_1_ln_4, hts_code: "1206200010")
-
-    unrolled_inv_2 = Factory(:commercial_invoice, entry: nil, invoice_number: '987654321', importer_id: 1137)
-    
-      unrolled_inv_2_ln_1 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_inv_2, country_origin_code: "CN", quantity: 5, value: 20, part_number: '1278-603-494')
-        unrolled_inv_2_ln_1_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_inv_2_ln_1, hts_code: "1206200010")
-
-      unrolled_inv_2_ln_2 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_inv_2, country_origin_code: "CN", quantity: 3, value: 10, part_number: '1278-603-494')
-        unrolled_inv_2_ln_2_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_inv_2_ln_2, hts_code: "1206200010")
-
-      unrolled_inv_2_ln_3 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_inv_2, country_origin_code: "CN", quantity: 4, value: 250, part_number: '1278-603-494')
-        unrolled_inv_2_ln_3_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_inv_2_ln_3, hts_code: "6106200010")
-
-      unrolled_inv_2_ln_4 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_inv_2, country_origin_code: "CN", quantity: 1, value: 150, part_number: '1278-603-494')
-        unrolled_inv_2_ln_4_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_inv_2_ln_4, hts_code: "6106200010")
+  let(:validator) { described_class.new }
+  
+  describe "audit" do
+    it "executes #gather_unrolled and :gather_entry" do
+      ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789\n 987654321")
+      unrolled_results = double("unrolled_results")
+      fenix_results = double("fenix_results")
+      unrolled_by_hts_coo = double("unrolled_by_hts_coo")
+      fenix_by_hts_coo = double("fenix_by_hts_coo")
+      style_list = ["styles"]
+      validator.should_receive(:gather_unrolled).with(%Q("123456789", "987654321"), 1137).and_return(unrolled_results)
+      validator.should_receive(:gather_entry).with(ent).and_return(fenix_results)
+      validator.should_receive(:sum_per_hts_coo).with(unrolled_results).and_return unrolled_by_hts_coo
+      validator.should_receive(:arrange_by_hts_coo).with(fenix_results).and_return fenix_by_hts_coo
+      validator.should_receive(:run_tests).with(unrolled_results, fenix_results, unrolled_by_hts_coo, fenix_by_hts_coo, style_list)
+      validator.audit(ent, style_list)
+    end
   end
 
-  describe "run_queries" do
-    it "executes #gather_unrolled and :gather_entry" do
-      @validator.should_receive(:gather_unrolled).with(%Q("123456789", "987654321"), 1137)
-      @validator.should_receive(:gather_entry).with @ent
-      @validator.run_queries @ent
+  describe "run_tests" do
+    before :each do
+      @unrolled = double("unrolled qry results")
+      @fenix = double("fenix qry results")
+      @unrolled_by_hts_coo = double("unrolled_by_hts_coo")
+      @fenix_by_hts_coo = double("fenix_by_hts_coo")
+      @style_list = ["styles"]
+    end
+
+    it "returns empty if all seven tests succeed" do
+      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
+      validator.should_receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
+      validator.should_receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      validator.should_receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:style_list_match).with(@unrolled, @style_list).and_return ""
+
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
+      expect(error).to eq ""
+    end
+    
+    it "returns error if any of the seven tests fails" do
+      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
+      validator.should_receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
+      validator.should_receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
+      validator.should_receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      validator.should_receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:style_list_match).with(@unrolled, @style_list).and_return ""
+
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
+      expect(error).to eq "ERROR: total value per hts/coo"
+    end
+
+    it "produces multiple error messages if there are multiple failing tests" do
+      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
+      validator.should_receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
+      validator.should_receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:total_diff).with(:value, @unrolled, @fenix).and_return "ERROR: total value"
+      validator.should_receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      validator.should_receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:style_list_match).with(@unrolled, @style_list).and_return "ERROR: style set"
+
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
+      expect(error).to eq "ERROR: total value per hts/coo\nERROR: total value\nERROR: style set"
+    end
+
+    it "skips remaining validations if unrolled commercial invoices are missing" do
+      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return "ERROR: missing unrolled invoices"
+      validator.stub(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
+      validator.stub(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      validator.stub(:total_diff).with(:value, @unrolled, @fenix).and_return "ERROR: total value"
+      validator.stub(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      validator.stub(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      validator.stub(:style_list_match).with(@unrolled, @style_list).and_return "ERROR: style set"
+
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
+      expect(error).to eq "ERROR: missing unrolled invoices"
+    end
+
+    it "skips style-list validation if list isn't included" do
+      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
+      validator.should_receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      validator.should_receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
+      validator.should_receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      validator.should_receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      
+      #workaround for Rspec 2.12 bug affecting #should_not_receive (https://github.com/rspec/rspec-mocks/issues/228)
+      validator.stub(:style_list_match).with(@unrolled, @style_list).and_return "This method should not have been called!"
+
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo) 
+      expect(error).to eq ""
     end
   end
 
   describe "invoice_list_diff" do
+    before do
+      @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
+      
+      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)  
+      fenix_cil = Factory(:commercial_invoice_line, commercial_invoice: fenix_ci)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil)
+      
+      unrolled_ci = Factory(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
+      unrolled_cil = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
+    end
+
     it "returns empty if every invoice on the entry has at least one unrolled invoice" do
-      @validator.run_queries @ent
-      expect(@validator.invoice_list_diff).to be_empty
+      unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
+      fenix = validator.send(:gather_entry, @ent)
+
+      expect(validator.invoice_list_diff(unrolled, fenix)).to eq ""
     end
 
     it "returns list of missing unrolled invoices" do
       ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '111111111', importer_id: 1137)  
       cil = Factory(:commercial_invoice_line, commercial_invoice: ci)
       Factory(:commercial_invoice_tariff, commercial_invoice_line: cil)
-      @validator.run_queries @ent
-      expect(@validator.invoice_list_diff).to eq "Missing unrolled invoices: 111111111"
+      unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
+      fenix = validator.send(:gather_entry, @ent)
+
+      expect(validator.invoice_list_diff(unrolled, fenix)).to eq "Missing unrolled invoices: 111111111"
     end
   end
 
-  describe "total_value_per_hts_coo_diff" do
-    it "returns empty if the total value per HTS on the unrolled invoices matches the corresponding Fenix entry" do 
-      @validator.run_queries @ent
-      expect(@validator.total_value_per_hts_coo_diff).to be_empty
+  describe "total_per_hts_coo_diff" do
+    before do
+      @unrolled_by_hts_coo = double("unrolled_by_hts_coo")
+      @fenix_by_hts_coo = double("fenix_by_hts_coo")
     end
 
-    it "compares the affected HTS numbers if the total value per HTS on the unrolled invoices doesn't match the corresponding Fenix entry" do
-      @fenix_inv_1_ln_1.update_attributes(value: 310)
-      @fenix_inv_1_ln_2.update_attributes(value: 100) 
-      @validator.run_queries @ent
-      expect(@validator.total_value_per_hts_coo_diff).to eq "Total value per HTS/country-of-origin:\n" \
-                                                            "Expected 6106200010/US = 300.00, found 6106200010/US = 310.00\n" \
-                                                            "Expected 1206200010/CN = 50.00, found 1206200010/CN = 100.00\n"
+    it "concatenates output of :check_fenix_against_unrolled and :check_unrolled_against_fenix" do
+      validator.should_receive(:check_fenix_against_unrolled).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ["error message 1"]
+      validator.should_receive(:check_unrolled_against_fenix).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ["error message 2"]
+      error = validator.total_per_hts_coo_diff(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo)
+
+      expect(error).to eq "Total value per HTS/country-of-origin:\nerror message 1\nerror message 2\n"
+    end
+
+    it "returns empty if output of methods is empty" do
+      validator.should_receive(:check_fenix_against_unrolled).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return []
+      validator.should_receive(:check_unrolled_against_fenix).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return []
+      error = validator.total_per_hts_coo_diff(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo)
+
+      expect(error).to eq ""
+    end 
+  end
+
+  describe "check_fenix_against_unrolled" do
+    let(:unrolled_hts_coo) do
+      {"6106200010" => {"US" => {quantity: 7, value: 5}}, "1206200010" => {"CN" => {quantity: 10, value: 20}}}
+    end
+
+    it "returns empty if fenix hash matches all hts/coo pairs from unrolled hash" do
+      fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}}, "1206200010" => {"CN" => {quantity: 10, value: 20}}}
+      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq []
+    end
+
+    it "returns error string if fenix hash contains one or more hts/coo pairs missing from unrolled hash" do
+      fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}}, 
+                       "1206200010" => {"US" => {quantity: 10, value: 20, subheader_number: 1, customs_line_number: 2}}}
+      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has 20.00 value for 1206200010 / US. Unrolled Invoice has 0.00."]  
+    end
+
+    it "returns error string if there is a mismatch between corresponding hts/coo pairs" do
+      fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}}, 
+                       "1206200010" => {"CN" => {quantity: 10, value: 25, subheader_number: 1, customs_line_number: 2}}}
+
+      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has 25.00 value for 1206200010 / CN. Unrolled Invoice has 20.00."]                      
     end
   end
 
-  describe "total_qty_per_hts_coo_diff" do
-    it "returns empty if the total quantity per HTS on the unrolled invoices matches the corresponding Fenix entry" do 
-      @validator.run_queries @ent
-      expect(@validator.total_qty_per_hts_coo_diff).to be_empty
+  describe "check_unrolled_against_fenix" do
+    let(:fenix_hts_coo) do
+      {"6106200010" => {"US" => {quantity: 7, value: 5}}, "1206200010" => {"CN" => {quantity: 10, value: 20}}}
     end
 
-    it "compares the affected HTS numbers if the total quantity per HTS on the unrolled invoices doesn't match the corresponding Fenix entry" do
-      @fenix_inv_1_ln_1.update_attributes(quantity: 8)
-      @fenix_inv_1_ln_2.update_attributes(quantity: 1) 
-      @validator.run_queries @ent
-      expect(@validator.total_qty_per_hts_coo_diff).to eq "Total quantity per HTS/country-of-origin:\n" \
-                                                          "Expected 6106200010/US = 10.0, found 6106200010/US = 8.0\n" \
-                                                          "Expected 1206200010/CN = 15.0, found 1206200010/CN = 1.0\n"
-    end
-  end
-
-  describe "total_value_diff" do
-    it "returns empty if the total value of the unrolled invoices matches that of the corresponding Fenix entry" do 
-      @validator.run_queries @ent
-      expect(@validator.total_value_diff).to be_empty
+    it "returns empty if unrolled hash contains no hts/coo pairs missing from fenix hash" do
+      unrolled_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}}, "1206200010" => {"CN" => {quantity: 10, value: 20}}}
+      expect(validator.check_unrolled_against_fenix(:quantity, unrolled_hts_coo, fenix_hts_coo)).to eq []
     end
 
-    it "compares the total values if the total value of the unrolled invoices doesn't match that of the corresponding Fenix entry" do
-      @fenix_inv_1_ln_1.update_attributes(value: 310) 
-      @validator.run_queries @ent
-      expect(@validator.total_value_diff).to eq "Expected total value = 800.00, found total value = 810.00\n"
+    it "returns error string if unrolled hash contains one or more hts/coo pairs missing from fenix hash" do
+      unrolled_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}, "CN" => {quantity: 1, value: 2}}, 
+                          "1206200010" => {"CN" => {quantity: 10, value: 20}}}
+      expect(validator.check_unrolled_against_fenix(:quantity, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 has 0 quantity for 6106200010 / CN. Unrolled Invoice has 1."]
     end
   end
 
-  describe "total_qty_diff" do
-    it "returns empty if the total quantity of the unrolled invoices matches the corresponding Fenix entry" do 
-      @validator.run_queries @ent
-      expect(@validator.total_qty_diff).to be_empty
+  describe "total_diff" do
+    before do
+      @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
+
+      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)  
+      fenix_cil = Factory(:commercial_invoice_line, commercial_invoice: fenix_ci, value: 10)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil)
+
+      unrolled_ci = Factory(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
+      unrolled_cil = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci, value: 7)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
+      @unrolled_cil_2 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci, value: 3)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: @unrolled_cil_2)
+    end
+  
+    it "returns empty if the summed field of the unrolled invoices matches that of the corresponding Fenix entry" do 
+      unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
+      fenix = validator.send(:gather_entry, @ent)
+
+      expect(validator.total_diff(:value, unrolled, fenix)).to eq ""
     end
 
-    it "compares the total quantities if the total quantity of the unrolled invoices doesn't match the corresponding Fenix entry" do
-      @fenix_inv_1_ln_1.update_attributes(quantity: 8) 
-      @validator.run_queries @ent
-      expect(@validator.total_qty_diff).to eq "Expected total quantity = 35.0, found total quantity = 33.0\n"
+    it "compares the summed fields if the summed field of the unrolled invoices doesn't match that of the corresponding Fenix entry" do
+      @unrolled_cil_2.update_attributes(value: 5) 
+      unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
+      fenix = validator.send(:gather_entry, @ent)
+      
+      expect(validator.total_diff(:value, unrolled, fenix)).to eq "B3 has total value of 10.00. Unrolled Invoices have 12.00.\n"
     end
   end
 
-  describe "hts_set_diff" do
+  describe "hts_list_diff" do
+    before do 
+      @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: '123456789')
+      
+      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)  
+      fenix_cil = Factory(:commercial_invoice_line, commercial_invoice: fenix_ci, country_origin_code: "CA", subheader_number: 2, customs_line_number: 1)
+      @fenix_cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil, hts_code: '6106200010' )
+
+      fenix_cil_2 = Factory(:commercial_invoice_line, commercial_invoice: fenix_ci, country_origin_code: "US", subheader_number: 2, customs_line_number: 2)
+      @fenix_cit_2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil_2, hts_code: '6106200010' )
+      
+      unrolled_ci = Factory(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
+      unrolled_cil = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci)
+      @unrolled_cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil, hts_code: '6106200010')
+    end
+    
     it "returns empty if the unrolled invoices contain the same HTS numbers as the corresponding Fenix entry" do 
-      @validator.run_queries @ent
-      expect(@validator.hts_set_diff).to be_empty
+      fenix = validator.send(:gather_entry, @ent)
+      unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
+      fenix_by_hts_coo = validator.arrange_by_hts_coo(fenix)
+
+      expect(validator.hts_list_diff(unrolled, fenix, fenix_by_hts_coo)).to eq ""
     end
 
     it "compares the HTS sets if the unrolled invoices don't contain the same HTS numbers as the corresponding Fenix entry" do
-      @fenix_inv_1_ln_1.commercial_invoice_tariffs.first.update_attributes(hts_code: "1111111111") 
-      @fenix_inv_1_ln_2.commercial_invoice_tariffs.first.update_attributes(hts_code: "2222222222")
-      @validator.run_queries @ent
-      expect(@validator.hts_set_diff).to eq "Missing HTS code(s): 1206200010\nUnexpected HTS code(s): 1111111111, 2222222222\n"
+      @unrolled_cit.update_attributes(hts_code: "1111111111")
+      @fenix_cit.update_attributes(hts_code: "2222222222")
+      @fenix_cit_2.update_attributes(hts_code: "2222222222")
+
+      fenix = validator.send(:gather_entry, @ent)
+      fenix_by_hts_coo = validator.arrange_by_hts_coo(fenix)
+      unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
+      
+      expect(validator.hts_list_diff(unrolled, fenix, fenix_by_hts_coo)).to eq "B3 missing HTS code(s) on Unrolled Invoices: 1111111111\nUnrolled Invoices missing HTS code(s) on B3: 2222222222 (B3 Sub Hdr # 2 / B3 Line # 1; B3 Sub Hdr # 2 / B3 Line # 2)\n"
     end
   end
 
   describe "style_set_match" do
+    before do
+      @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
+      
+      unrolled_ci = Factory(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
+      unrolled_cil = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci, part_number: '1278-603-494')
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
+      @unrolled_cil_2 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci, part_number: '5847-603-494')
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: @unrolled_cil_2)
+    
+      @unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
+    end
+
     it "returns empty if the unrolled invoices don't contain any of the specified styles" do 
-      @validator.run_queries @ent
-      style_set = ['1111'].to_set
-      expect(@validator.style_set_match(style_set)).to be_empty
+      style_list = ['1111']
+      expect(validator.style_list_match(@unrolled, style_list)).to eq ""
     end
 
     it "returns list of if the unrolled invoices contain any of the specified styles" do 
-      @validator.run_queries @ent
-      style_set = ['5847', '6177'].to_set
-      expect(@validator.style_set_match(style_set)).to eq "Flagged style(s): 5847, 6177\n"
+      style_list = ['1278', '5847']
+      expect(validator.style_list_match(@unrolled, style_list)).to eq "Unrolled Invoices include flagged style(s): 1278, 5847\n"
     end
   end
 
-  describe "create_diff_messages" do  
-    it "returns list of discrepancies" do
-      unrolled = [["12345/CN", 10],["54321/US", 15], ["24681/US", 8]].to_set
-      fenix = [["54321/US", 11], ["24681/US", 17], ["99999/ID", 9]].to_set
-      unrolled_diff_set = double()
-      fenix_diff_set = double()
-
-      @validator.should_receive(:relative_complement).with(fenix_diff_set, unrolled_diff_set).and_return unrolled
-      @validator.should_receive(:relative_complement).with(unrolled_diff_set, fenix_diff_set).and_return fenix
-      expect(@validator.create_diff_messages unrolled_diff_set, fenix_diff_set).to eq "Expected 12345/CN = 10, found 12345/CN = 0\n" \
-                                                                                      "Expected 54321/US = 15, found 54321/US = 11\n" \
-                                                                                      "Expected 24681/US = 8, found 24681/US = 17\n" \
-                                                                                      "Did not expect to find 99999/ID = 9\n"
+  describe "arrange_by_hts_coo" do
+    it "converts query output into a nested hash keyed by hts/coo" do
+      fenix_results = [{"invoice_number"=>"123456789", "country_origin_code"=>"US", "hts_code"=>"6106200010", "quantity"=>7, "value"=>150, "subheader_number"=>1, "customs_line_number"=>2}]
+      converted = {"6106200010" => {"US" => {invoice_number: "123456789", quantity: 7, value: 150, subheader_number: 1, customs_line_number: 2}}}
+      expect(validator.arrange_by_hts_coo(fenix_results)).to eq converted
     end
-
-   it "returns empty if both sets are empty" do
-      expect(@validator.create_diff_messages Set.new({}), Set.new({})).to be_empty
-   end
   end
 
+  describe "sum_per_hts_coo" do
+    it "returns hash summing query output values and totals by hts/coo" do
+      unrolled_results = [{"country_origin_code"=>"US", "hts_code"=>"1206200010", "quantity"=>2, "value"=>5},
+                          {"country_origin_code"=>"CA", "hts_code"=>"1206200010", "quantity"=>4, "value"=>10},
+                          {"country_origin_code"=>"CA", "hts_code"=>"1206200010", "quantity"=>6, "value"=>15},
+                          {"country_origin_code"=>"US", "hts_code"=>"6106200010", "quantity"=>8, "value"=>20},
+                          {"country_origin_code"=>"US", "hts_code"=>"6106200010", "quantity"=>10, "value"=>25}]
+      result = {"1206200010" => {"US" => {quantity: 2, value: 5 }, "CA" => {quantity: 10, value: 25} },
+                "6106200010" => {"US" => {quantity: 18, value: 45}}}
+      expect(validator.sum_per_hts_coo(unrolled_results)).to eq result
+    end
+  end
 end
