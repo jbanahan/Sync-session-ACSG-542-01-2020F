@@ -38,11 +38,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
         expect(p.classifications.first.country).to eq @country
         expect(p.classifications.first.custom_value(@cdefs[:class_proposed_hts])).to eq "4409294000"
         expect(p.classifications.first.tariff_records.first.hts_1).to eq "4409294000"
+
       end
 
       it "should update article" do
         dom = REXML::Document.new(@test_data)
         op = Factory(:product,unique_identifier:'000000000010000328')
+        ol = Factory(:order_line, product: op)
         c = op.classifications.create! country: @country
         c.tariff_records.create! line_number: 1, hts_1: "1234567890"
 
@@ -56,6 +58,27 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
         expect(p.classifications.first.tariff_records.first.hts_1).to eq "4409294000"
         expect(p.entity_snapshots.count).to eq 2
         expect(p.get_custom_value(@cdefs[:prod_sap_extract]).value.to_i).to eq ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2014-12-22 10:37:06').to_i
+        expect(p.order_lines.find_by_line_number(1)).to be_present
+        expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq "PHENAWE7-MW-SS"
+        expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq p.name
+      end
+
+      it "should not change the article number if it already exists" do
+        dom = REXML::Document.new(@test_data)
+        op = Factory(:product,unique_identifier:'000000000010000328')
+        ol = Factory(:order_line, product: op)
+        c = op.classifications.create! country: @country
+        c.tariff_records.create! line_number: 1, hts_1: "1234567890"
+
+        op.create_snapshot(Factory(:user))
+        expect{described_class.new.parse_dom(dom)}.to_not change(Product,:count)
+
+        p = Product.first
+        p.find_and_set_custom_value(@cdefs[:prod_old_article], '123456').save!
+        p.find_and_set_custom_value(@cdefs[:prod_sap_extract], nil).save!
+
+        expect{described_class.new.parse_dom(dom)}.to_not change(Product,:count)
+        expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to_not eq '123456'
       end
     end
 

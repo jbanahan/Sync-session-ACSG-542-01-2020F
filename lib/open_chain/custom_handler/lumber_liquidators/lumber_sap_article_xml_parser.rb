@@ -47,7 +47,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         return # don't parse since this is older than the previous extract
       end
 
-      # Use prod_sap_extract to check if blank
       is_new = p.get_custom_value(@cdefs[:prod_sap_extract]).value.blank?
 
       p.importer = Company.where(master: true).first
@@ -61,16 +60,21 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       hts = hts_parent.nil? ? "" : et(hts_parent, "COMM_CODE")
       set_us_hts p, hts
 
+      if is_new
+        p.order_lines.find_each do |order_line|
+          unless order_line.custom_value(@cdefs[:ordln_old_art_number]).present?
+            order_line.find_and_set_custom_value(@cdefs[:ordln_old_art_number], p.get_custom_value(@cdefs[:prod_old_article]).value).save!
+          end
+          unless order_line.custom_value(@cdefs[:ordln_part_name]).present?
+            order_line.find_and_set_custom_value(@cdefs[:ordln_part_name], p.name).save!
+          end
+          order_line.order.create_snapshot(@user)
+        end
+
+      end
+
       p.save!
       p.create_snapshot(@user)
-
-      #update new fields
-      if is_new
-        p.order_lines.each do |order_line|
-          order_line.find_and_set_custom_value(@cdefs[:ordln_old_art_number], p.get_custom_value(@cdefs[:prod_old_article]).value)
-          order_line.find_and_set_custom_value(@cdefs[:ordln_part_name], p.get_custom_value(p.name))
-        end
-      end
     end
   end
 
