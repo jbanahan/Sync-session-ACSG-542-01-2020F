@@ -62,13 +62,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       if is_new
         p.order_lines.find_each do |order_line|
+          line_changed = false
           unless order_line.custom_value(@cdefs[:ordln_old_art_number]).present?
             order_line.find_and_set_custom_value(@cdefs[:ordln_old_art_number], p.get_custom_value(@cdefs[:prod_old_article]).value).save!
+            line_changed = true
           end
           unless order_line.custom_value(@cdefs[:ordln_part_name]).present?
             order_line.find_and_set_custom_value(@cdefs[:ordln_part_name], p.name).save!
+            line_changed = true
           end
-          order_line.order.create_snapshot(@user)
+          order_line.order.create_snapshot(@user) if line_changed
         end
 
       end
