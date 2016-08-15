@@ -2,7 +2,7 @@ dashboardApp = angular.module('DashboardApp',['ChainComponents'])
 dashboardApp.directive 'dashboardWidget', ->
   {
     restrict:'E'
-    template: "<h2 ng-show='widget.searchResult.name' class='widget_heading' >{{widget.searchResult.name}} - {{widget.searchResult.core_module_name}}</h2><div chain-search-result='widget.searchResult' per-page='perPage' page='page' no-chrome='true' src='/advanced_search/'></div><a ng-show='widget.searchResult.name' class='action_link' href='/advanced_search/<%=w.search_setup_id%>'>More</a>"
+    template: "<h2 ng-show='widget.searchResult.name' class='widget_heading' >{{widget.searchResult.name}} - {{widget.searchResult.core_module_name}}</h2><div chain-search-result='widget.searchResult' per-page='perPage' page='page' no-chrome='true' src='/advanced_search/'></div><a ng-show='widget.searchResult.name' class='action_link' href='/advanced_search/{{widgetId}}'>More</a>"
     scope: {
       widgetId: '@'
     }
