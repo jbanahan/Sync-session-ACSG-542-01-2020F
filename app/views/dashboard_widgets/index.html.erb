@@ -4,9 +4,6 @@ $(function() {
     $("#btn_tour").click(function() {
       Chain.showNavTour();
     });
-    $(".widget_box").each(function() {
-      $(this).scope().loadWidget($(this).attr('widget-id'))
-    })
   });
 });
 <%end-%>
@@ -37,11 +34,7 @@ $(function() {
   <%else-%>
     <h1 class='text-center'>Dashboard</h1>
     <%@widgets.each do |w| -%>
-      <div ng-controller='DashboardViewController' class='widget_box' widget-id='<%=w.search_setup_id%>'>
-        <h2 ng-show='widget.name' class='widget_heading' >{{widget.name}} - {{widget.core_module_name}}</h2>
-        <div chain-search-result='widget' per-page='perPage' page='page' no-chrome='true' src='/advanced_search/'></div>
-        <a ng-show='widget.name' class='action_link' href='/advanced_search/<%=w.search_setup_id%>'>More</a>
-      </div>
+      <dashboard-widget class='widget_box' widget-id='<%=w.search_setup_id%>'></dashboard-widget>
     <%end -%>
   <%end -%>
 </div>

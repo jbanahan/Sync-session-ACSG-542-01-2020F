@@ -1033,33 +1033,38 @@
 
       loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
-        sr  = scope.searchResult = {id: searchId}
+        sr  = scope.searchResult
+        for key, value of sr
+          delete sr[key] unless key=='id'
+
         url = scope.urlPrefix+searchId+'.json?page='+p #need to specify json here because of this rails bug https://github.com/rails/rails/issues/9940
         if scope.perPage
           url += "&per_page=" + scope.perPage
 
-        $http.get(url).success((data,status,headers,config) ->
+        successHandler = (response,status,headers,config) ->
+          data = response.data
           # This is primarily just a backup check to make sure we're not attempting to load a page that doesn't exist, if
           # we do, just jump to the first page of the search results (note, this incurs another http request)
-          if data.total_pages == 0 || data.total_pages >= page
-            sr = scope.searchResult = data
+          if data.total_pages==undefined || data.total_pages == 0 || data.total_pages >= page
+            sr = scope.searchResult
+            sr[key] = value for key, value of data
+
             scope.errors.push "Your search was too big.  Only the first " + scope.searchResult.total_pages + " pages are being shown."  if scope.errors && scope.searchResult.too_big
 
-            scope.loadedsearchId = scope.searchResult.id
+            scope.loadedSearchId = scope.searchResult.id
             readSelectionCookie scope, data.id
             $http.get(scope.urlPrefix+searchId+'/total_objects.json').success((data) ->
               sr.total_objects = data.total_objects
             )
           else
             loadResultPage(scope, searchId, 1)
-
-        ).error((data,status) ->
+        errorHandler = (data,status) ->
           if scope.errors
             if status == 404
               scope.errors.push "This search with id "+id+" could not be found."
             else
              scope.errors.push "An error occurred while loading this search result. Please reload and try again."
-        )
+        $http.get(url).then(successHandler,errorHandler)
 
       onSearchLoaded = (saved, scope) ->
         # We want to clear bulkSelections in this case since the user saved the setup (which will
