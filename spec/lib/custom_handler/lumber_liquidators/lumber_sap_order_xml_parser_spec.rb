@@ -83,6 +83,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(new_prod.vendors.to_a).to eq [@vendor]
 
       expect(o.entity_snapshots.count).to eq 1
+
+      expect(o.folders.count).to eq 1
+      f = o.folders.first
+      expect(f.name).to eq 'Quality'
+      expect(f.groups.map(&:system_code)).to eq ['QUALITY']
     end
     it "should update order" do
       Factory(:order,order_number:'4700000325')

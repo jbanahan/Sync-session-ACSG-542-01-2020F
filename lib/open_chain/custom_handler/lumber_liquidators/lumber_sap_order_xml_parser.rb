@@ -95,8 +95,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       o.reload
       validate_line_totals(o,base)
 
+      setup_folders o
+
       o.create_snapshot @user
     end
+  end
+
+  def setup_folders order
+    return if order.folders.map(&:name).include?('Quality')
+    qf = order.folders.create!(name:'Quality',created_by_id:@user.id)
+    qf.groups << Group.use_system_group('QUALITY', name: 'Quality')
+    nil
   end
 
   def assigned_agent order
