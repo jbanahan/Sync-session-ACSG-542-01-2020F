@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_sap_extract, :prod_old_article, :class_proposed_hts, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
+    @cdefs = self.class.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_sap_extract, :prod_old_article, :class_proposed_hts, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
   end
 
   def parse_dom dom
@@ -47,6 +47,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         return # don't parse since this is older than the previous extract
       end
 
+      is_new = p.get_custom_value(@cdefs[:prod_sap_extract]).value.blank?
+
       p.importer = Company.where(master: true).first
       p.name = name
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], ext_time)
@@ -57,6 +59,22 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       hts_parent = REXML::XPath.first(root, '//IDOC/E1BPE1MAW1RT[@SEGMENT="1"]')
       hts = hts_parent.nil? ? "" : et(hts_parent, "COMM_CODE")
       set_us_hts p, hts
+
+      if is_new
+        p.order_lines.find_each do |order_line|
+          line_changed = false
+          unless order_line.custom_value(@cdefs[:ordln_old_art_number]).present?
+            order_line.find_and_set_custom_value(@cdefs[:ordln_old_art_number], p.get_custom_value(@cdefs[:prod_old_article]).value).save!
+            line_changed = true
+          end
+          unless order_line.custom_value(@cdefs[:ordln_part_name]).present?
+            order_line.find_and_set_custom_value(@cdefs[:ordln_part_name], p.name).save!
+            line_changed = true
+          end
+          order_line.order.create_snapshot(@user) if line_changed
+        end
+
+      end
 
       p.save!
       p.create_snapshot(@user)

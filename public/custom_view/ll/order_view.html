@@ -174,8 +174,8 @@
               <td>{{ol.ordln_line_number}}</td>
               <td>
                 <small>{{ol.ordln_puid}}</small><br />
-                <small>{{ol[dictionary.fieldsByAttribute('label','Product - Old Article #',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</small><br />
-                {{ol.ordln_pname}}
+                <small>{{ol[dictionary.fieldsByAttribute('label','Old Article Number',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</small><br />
+                {{ol[dictionary.fieldsByAttribute('label', 'Part Name',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}
               </td>
               <td ng-if='order.ord_ship_to_count > 1'>
                 <chain-address address='{{ol.ordln_ship_to_full_address}}'></chain-address>
