@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       @importer = Factory(:master_company, importer:true)
       @vendor = Factory(:company,vendor:true,system_code:'0000100131')
       @vendor_address = @vendor.addresses.create!(name:'VNAME',line_1:'ln1',line_2:'l2',city:'New York',state:'NY',postal_code:'10001',country_id:@usa.id)
-      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number]
+      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article]
       @product1= Factory(:product,name: 'Widgets',unique_identifier:'000000000010001547')
       cv = @product1.find_and_set_custom_value @cdefs[:prod_old_article], '123456'
       cv.save!

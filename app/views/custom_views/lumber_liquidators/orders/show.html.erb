@@ -130,7 +130,7 @@
                   <td>
                     <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
                     <small><%=cdefs[:ordln_old_art_number].model_field.process_export(line,User.current)%></small><br />
-                    <%=ModelField.find_by_uid(:ordln_part_name).process_export(line,User.current)%>
+                    <%=cdefs[:ordln_part_name].model_field.process_export(line,User.current)%>
                   </td>
                   <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
                   <td>
@@ -178,7 +178,7 @@
                   <td>
                     <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
                     <small><%=cdefs[:ordln_old_art_number].model_field.process_export(line,User.current)%></small><br />
-                    <%=ModelField.find_by_uid(:ordln_part_name).process_export(line,User.current)%>
+                    <%=cdefs[:ordln_part_name].model_field.process_export(line,User.current)%>
                   </td>
                   <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_total_cost], table: true, editor_only: true) %>
                   <%line_risk = cdefs[:prodven_risk].model_field.process_export(line.product.product_vendor_assignments.where(vendor_id:@order.vendor_id).first, User.current)%>
@@ -221,7 +221,7 @@
                   <td>
                     <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
                     <small><%=cdefs[:ordln_old_art_number].model_field.process_export(line,User.current)%></small><br />
-                    <%=ModelField.find_by_uid(:ordln_part_name).process_export(line,User.current)%>
+                    <%=cdefs[:ordln_part_name].model_field.process_export(line,User.current)%>
                   </td>
                   <td>
                     <small><%=cdefs[:prod_merch_cat].model_field.process_export(line.product,User.current)%></small><br />
