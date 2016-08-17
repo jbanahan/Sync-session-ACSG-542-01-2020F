@@ -118,14 +118,14 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     )
 
   $scope.searchId = parseInt $routeParams.searchId
-  $scope.searchResult = {}
+  $scope.searchWrapper = {searchResult:{}}
   pg = parseInt $routeParams.page
   pg = 1 if isNaN(pg) or pg<1
   $scope.page = pg
 
   if $scope.searchId
     loadSearch $scope.searchId
-    $scope.searchResult.id = $scope.searchId
+    $scope.searchWrapper.searchResult.id = $scope.searchId
   else
     $http.get('/advanced_search/last_search_id.json').success((data,status,headers,config) ->
       $location.path '/'+data.id+'/'+$scope.page
@@ -227,10 +227,10 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   #save the search setup and reload the results on after save
   $scope.saveSetup = () ->
     $scope.toggleSetup()
-    $scope.searchResult = {}
+    $scope.searchWrapper.searchResult = {}
     ss = $scope.searchSetup
     $scope.searchSetup = {}
-    
+
     if ss.search_criterions.length == 0
       ss.sort_criterions = []
       ss.search_schedules = []
@@ -242,8 +242,8 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       else
         # The searchResult.saved attribute lets the components watcher know that
         # the user saved the scope (.ie this isn't an initial load)
-        $scope.searchResult = {
-          id: $scope.searchId
+        $scope.searchWrapper.searchResult = {
+          id: ss.id
           saved: true
         }
         loadSearch $scope.searchId
@@ -254,7 +254,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #create a new setup and change location to first page
   $scope.newSetup = () ->
-    $scope.searchResult = {}
+    $scope.searchWrapper.searchResult = {}
     mt = $scope.searchSetup.module_type
     $scope.searchSetup = {}
     $http.post('/advanced_search.json',JSON.stringify({module_type:mt})).success((data) ->
@@ -266,7 +266,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.deletePrompt = false
   #delete current setup and change location to replacement setup
   $scope.deleteSetup = () ->
-    $scope.searchResult = {}
+    $scope.searchWrapper.searchResult = {}
     id = $scope.searchSetup.id
     $scope.searchSetup = {}
     $http.delete('/advanced_search/'+id+'.json').success((data) ->
@@ -377,7 +377,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     watchScope.changeSearch(newValue) unless isNaN(newValue) || newValue==oldValue
   )
 
-  registrations.push($scope.$watch 'searchResult.page', (newValue, oldValue, watchScope) ->
+  registrations.push($scope.$watch 'searchWrapper.searchResult.page', (newValue, oldValue, watchScope) ->
     $location.path '/'+watchScope.searchId+'/'+newValue unless isNaN(newValue) || newValue==oldValue
   )
 

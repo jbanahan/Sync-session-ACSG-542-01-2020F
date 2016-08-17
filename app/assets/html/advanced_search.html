@@ -47,7 +47,7 @@
                   <input class='form-control' type='text' ng-model='columnFilter' placeholder='Search columns...' />
                 </div>
                 <div>
-                  <a ng-show='columnsToAdd' class='btn btn-default' ng-click='addColumns()'>Add</a> 
+                  <a ng-show='columnsToAdd' class='btn btn-default' ng-click='addColumns()'>Add</a>
                   <a class='btn btn-default' ng-click='addBlank()'>Add Blank</a>&nbsp;
                 </div>
               </div>
@@ -73,7 +73,7 @@
               </div>
             </div>
           </div>
-        </div>  
+        </div>
         <hr />
         <!--sort setup-->
         <div class='row'>
@@ -132,7 +132,7 @@
               </div>
             </div>
           </div>
-        </div>  
+        </div>
         <hr />
         <!-- Parameter setup-->
         <div class='row'>
@@ -172,7 +172,7 @@
                       <strong>At:</strong> {{scheduleTimingText(sched)}}
                     </p>
                     <p>
-                      <strong>As:</strong> {{sched.download_format}} 
+                      <strong>As:</strong> {{sched.download_format}}
                     </p>
                     <p>
                       <span ng-show='sched.ftp_server'><strong>{{scheduleProtocol(sched)}} Server:</strong> {{sched.ftp_server}}<br /></span>
@@ -399,11 +399,11 @@
         </div>
       </div>
   </div>
-  <div chain-search-result='searchResult' page='page' errors='errors' src='/advanced_search/'>
+  <div chain-search-result='searchWrapper.searchResult' page='page' errors='errors' src='/advanced_search/'>
     <button class='btn btn-default navbar-btn' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
     <a class='btn btn-default navbar-btn' ng-click="showEmailModal()" title='Email'><i class='fa fa-envelope'></i></a>
-    <button class='btn btn-default navbar-btn' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()' title='Download'><i class='fa fa-download'></i></button> 
-    <a class='btn btn-default navbar-btn' ng-show='searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls' title='Download'><i class='fa fa-download'></i></a>
+    <button class='btn btn-default navbar-btn' ng-show='searchWrapper.searchResult.total_pages>1' ng-click='backgroundDownload()' title='Download'><i class='fa fa-download'></i></button>
+    <a class='btn btn-default navbar-btn' ng-show='searchWrapper.searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls' title='Download'><i class='fa fa-download'></i></a>
     <a class='btn btn-default navbar-btn' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new' title='Upload'><i class='fa fa-upload'></i></a>
     <span ng-show='searchSetup.uploadable_error_messages.length > 0'>
       <span chain-message-box title='Upload' as-button='true' extra-class="'btn-default navbar-btn'" button-icon-class='fa fa-upload'>
