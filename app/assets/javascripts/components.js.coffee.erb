@@ -1194,6 +1194,8 @@
       registrations.push($scope.$watch 'searchResult.id', (newVal, oldVal, cbScope) ->
         if newVal!=undefined && !isNaN(newVal) && newVal!=cbScope.loadedSearchId
           onSearchLoaded cbScope.searchResult.saved, cbScope
+        if newVal==undefined
+          cbScope.loadedSearchId = null
       )
 
       $scope.$on('$destroy', ->
