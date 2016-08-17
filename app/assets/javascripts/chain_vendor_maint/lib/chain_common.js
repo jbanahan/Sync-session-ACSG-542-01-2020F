@@ -923,6 +923,18 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
             ref1 = data.fields;
             for (j = 0, len1 = ref1.length; j < len1; j++) {
               fld = ref1[j];
+              if (fld.select_options) {
+                fld.selectOpts = fld.select_options.map(function(opt) {
+                  return {
+                    value: opt[0],
+                    label: opt[1]
+                  };
+                });
+                fld.selectOpts.unshift({
+                  value: '',
+                  label: ''
+                });
+              }
               fld.recordType = recordTypes[fld.record_type_uid];
               dict.registerField(fld);
             }
@@ -1059,21 +1071,15 @@ return a=K(a),this[a+"s"]()}function $c(a){return function(){return this._data[a
         },
         template: "<input type='text' ng-model='model[field.uid]' class='{{inputClass}}' />",
         link: function(scope, el, attrs) {
-          var i, inp, inputTypes, jqEl, len, opt, realInput, ref, sel, updatedInputType;
+          var inp, inputTypes, jqEl, realInput, sel, updatedInputType;
           jqEl = $(el);
           inp = jqEl.find('input');
           realInput = inp;
-          if (scope.field.select_options) {
+          if (scope.field.selectOpts) {
             inp.remove();
-            sel = $compile(angular.element('<select ng-model="model[field.uid]" class="{{inputClass}}"></select>'))(scope);
+            sel = $compile(angular.element('<select ng-model="model[field.uid]" ng-options="opt.value as opt.label for opt in field.selectOpts" class="{{inputClass}}"></select>'))(scope);
             jqEl.append(sel);
             realInput = sel;
-            sel.append("<option value=''></option>");
-            ref = scope.field.select_options;
-            for (i = 0, len = ref.length; i < len; i++) {
-              opt = ref[i];
-              sel.append("<option value='" + opt[0] + "'>" + opt[1] + "</option>");
-            }
           } else if (scope.field.data_type === 'text') {
             inp.remove();
             realInput = $compile(angular.element('<textarea ng-model="model[field.uid]" class="{{inputClass}}"></textarea>'))(scope);
