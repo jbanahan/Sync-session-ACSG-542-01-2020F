@@ -3,7 +3,7 @@ require 'open_chain/s3'
 
 module OpenChain
   class DrawbackExportParser
-    
+
     def self.parse_file file, importer
       case File.extname(file).downcase
       when ".zip"
@@ -23,7 +23,7 @@ module OpenChain
       f.each_line do |line|
         unless count == 0
           ln = line.encode(Encoding.find("US-ASCII"),:undef=>:replace, :invalid=>:replace, :replace=>' ', :fallback=>' ')
-          CSV.parse(ln) do |r|
+          CSV.parse(ln,col_sep:csv_column_separator) do |r|
             d = parse_csv_line r, count, importer
             d.save! unless d.nil?
           end
@@ -62,13 +62,17 @@ module OpenChain
     end
 
     def self.parse_local_xls file, importer
-      OpenChain::S3.with_s3_tempfile(file) do |s3_obj| 
+      OpenChain::S3.with_s3_tempfile(file) do |s3_obj|
         parse_xlsx_file(s3_obj.bucket.name, s3_obj.key, importer)
       end
     end
 
     def self.xl_client bucket, path
       OpenChain::XLClient.new(path, bucket: bucket)
+    end
+
+    def self.csv_column_separator
+      ','
     end
 
   end
