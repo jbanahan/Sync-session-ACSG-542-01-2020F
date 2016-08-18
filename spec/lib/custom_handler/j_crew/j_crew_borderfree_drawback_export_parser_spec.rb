@@ -1,6 +1,23 @@
+require 'tempfile'
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
+  describe :parse_csv_file do
+    before :each do
+      @f = Tempfile.new('foo')
+    end
+    after :each do
+      @f.unlink
+    end
+    it 'should handle pipe delimited line' do
+      imp = double('importer')
+      data = "a|b\nc|d"
+      described_class.should_receive(:parse_csv_line).with(['c','d'],1,imp)
+      @f.write data
+      @f.flush
+      described_class.parse_csv_file @f.path, imp
+    end
+  end
   describe :parse_csv_line do
     def default_vals
       {
@@ -27,7 +44,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       r[8] = inner_opts[:destination_country]
       r[11] = inner_opts[:desc]
       r[12] = inner_opts[:part_number]
-      r[15] = inner_opts[:quantity] 
+      r[15] = inner_opts[:quantity]
       r[16] = inner_opts[:uom]
       r
     end
@@ -40,7 +57,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     it 'should check for 17 columns (A through Q)' do
       r = make_row
       r << 'another column'
-      lambda {described_class.parse_csv_line r, 1, @imp}.should raise_error /Line 1 had 18 elements/
+      expect{described_class.parse_csv_line r, 1, @imp}.to raise_error(/Line 1 had 18 elements/)
     end
     it "should create line" do
       vals = default_vals
@@ -49,22 +66,21 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       OpenChain::TariffFinder.any_instance.should_receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
       d = described_class.parse_csv_line(make_row,1,@imp)
 
-      d.class.should == DutyCalcExportFileLine
-      d.export_date.strftime("%Y-%m-%d").should == "2011-08-23"
-      d.ship_date.strftime("%Y-%m-%d").should == "2011-08-23"
-      d.part_number.should == "123456789-ABCDEF"
-      d.ref_1.should == vals[:ref_1]
-      d.ref_2.should == vals[:ref_2]
-      d.quantity.to_s.should == vals[:quantity]
-      d.description.should == vals[:desc]
-      d.uom.should == 'EA'
-      d.destination_country.should == 'CA'
-      d.exporter.should == 'J Crew'
-      d.action_code.should == 'E'
+      expect(d.class).to eq DutyCalcExportFileLine
+      expect(d.export_date.strftime("%Y-%m-%d")).to eq "2011-08-23"
+      expect(d.ship_date.strftime("%Y-%m-%d")).to eq "2011-08-23"
+      expect(d.part_number).to eq "123456789-ABCDEF"
+      expect(d.ref_1).to eq vals[:ref_1]
+      expect(d.ref_2).to eq vals[:ref_2]
+      expect(d.quantity.to_s).to eq vals[:quantity]
+      expect(d.description).to eq vals[:desc]
+      expect(d.uom).to eq 'EA'
+      expect(d.destination_country).to eq 'CA'
+      expect(d.exporter).to eq 'J Crew'
+      expect(d.action_code).to eq 'E'
 
-
-      d.hts_code.should == vals[:hts]
-      d.importer.should == @imp
+      expect(d.hts_code).to eq vals[:hts]
+      expect(d.importer).to eq @imp
     end
   end
 end
