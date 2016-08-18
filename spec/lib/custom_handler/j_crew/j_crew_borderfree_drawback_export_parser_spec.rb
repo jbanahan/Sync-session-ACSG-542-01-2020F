@@ -11,8 +11,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     end
     it 'should handle pipe delimited line' do
       imp = double('importer')
-      data = "a|b\nc|d"
-      described_class.should_receive(:parse_csv_line).with(['c','d'],1,imp)
+      data = "a\n1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17"
+      described_class.should_receive(:parse_csv_line).with((1..17).map{|i| i.to_s},1,imp)
       @f.write data
       @f.flush
       described_class.parse_csv_file @f.path, imp

@@ -7,7 +7,6 @@ module OpenChain; module CustomHandler; module JCrew
 
       # I believe this should be 17 no matter what.  Double check?
       raise "Line #{row_number} had #{r.size} elements.  All lines must have 17 elements." unless r.size==17
-      quanity =
       d = DutyCalcExportFileLine.new
       d.ship_date = DateTime.strptime(r[2], "%m/%d/%Y %H:%M:%S %p")
       d.export_date = DateTime.strptime(r[2], "%m/%d/%Y %H:%M:%S %p")
@@ -35,8 +34,9 @@ module OpenChain; module CustomHandler; module JCrew
       r
     end
 
-    def self.csv_column_separator
-      '|'
+    def self.csv_column_separator line
+      return '|' if line.split('|').length==17
+      return ','
     end
   end
 end; end; end

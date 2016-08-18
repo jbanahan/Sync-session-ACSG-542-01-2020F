@@ -23,7 +23,7 @@ module OpenChain
       f.each_line do |line|
         unless count == 0
           ln = line.encode(Encoding.find("US-ASCII"),:undef=>:replace, :invalid=>:replace, :replace=>' ', :fallback=>' ')
-          CSV.parse(ln,col_sep:csv_column_separator) do |r|
+          CSV.parse(ln,col_sep:csv_column_separator(ln)) do |r|
             d = parse_csv_line r, count, importer
             d.save! unless d.nil?
           end
@@ -71,7 +71,7 @@ module OpenChain
       OpenChain::XLClient.new(path, bucket: bucket)
     end
 
-    def self.csv_column_separator
+    def self.csv_column_separator line
       ','
     end
 
