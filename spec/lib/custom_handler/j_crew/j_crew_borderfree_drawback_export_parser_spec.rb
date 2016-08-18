@@ -22,7 +22,6 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     def default_vals
       {
         export_date: '8/23/2011 2:15:32 PM' ,
-        ship_date: '8/23/2011 2:15:32 PM',
         part_number: 'Short Description - 123456789-ABCDEF - KEYWORDS',
         ref_1:'R1',
         ref_2:'R2',
@@ -37,7 +36,6 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     def make_row opts={}
       inner_opts = default_vals.merge opts
       r = Array.new 17
-      r[2] = inner_opts[:ship_date]
       r[2] = inner_opts[:export_date]
       r[4] = inner_opts[:ref_1]
       r[6] = inner_opts[:ref_2]
@@ -81,6 +79,16 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
 
       expect(d.hts_code).to eq vals[:hts]
       expect(d.importer).to eq @imp
+    end
+    it 'should handle short date format' do
+      OpenChain::TariffFinder.any_instance.should_receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
+      d = described_class.parse_csv_line(make_row(export_date:'1/13/2014'),1,@imp)
+      expect(d.export_date.strftime("%Y-%m-%d")).to eq "2014-01-13"
+    end
+    it 'should handle short date format' do
+      OpenChain::TariffFinder.any_instance.should_receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
+      d = described_class.parse_csv_line(make_row(export_date:'1/7/2015 20:46:49'),1,@imp)
+      expect(d.export_date.strftime("%Y-%m-%d")).to eq "2015-01-07"
     end
   end
 end
