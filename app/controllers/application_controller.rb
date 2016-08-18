@@ -81,7 +81,21 @@ class ApplicationController < ActionController::Base
       render 'shared/history'
     }
   end
-  
+
+  def dump_request
+    if current_user.sys_admin?
+      output = "REQUEST FROM IP: #{request.remote_ip}\n\nHEADERS\n========================\n\n"
+      http_envs = {}.tap do |envs|
+        request.headers.each do |key, value|
+          envs[key] = value if key.downcase.to_s.starts_with?('http')
+        end
+      end
+      http_envs.each_pair {|k, v| output += "#{k}: #{v}\n------------------------\n"}
+      render text: output
+    else
+      raise ActionController::RoutingError.new('Not Found')
+    end
+  end
   
   def error_redirect(message=nil)
     add_flash :errors, message unless message.nil?

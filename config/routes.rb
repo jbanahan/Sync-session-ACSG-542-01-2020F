@@ -972,5 +972,7 @@ OpenChain::Application.routes.draw do
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
 
+  get "/dump_request", to: "application#dump_request"
+
   root :to => "home#index"
 end
