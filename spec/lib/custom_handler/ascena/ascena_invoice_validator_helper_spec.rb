@@ -165,14 +165,14 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     it "returns error string if fenix hash contains one or more hts/coo pairs missing from unrolled hash" do
       fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}}, 
                        "1206200010" => {"US" => {quantity: 10, value: 20, subheader_number: 1, customs_line_number: 2}}}
-      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has 20.00 value for 1206200010 / US. Unrolled Invoice has 0.00."]  
+      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has $20.00 value for 1206.20.0010 / US. Unrolled Invoice has $0.00."]  
     end
 
     it "returns error string if there is a mismatch between corresponding hts/coo pairs" do
       fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}}, 
                        "1206200010" => {"CN" => {quantity: 10, value: 25, subheader_number: 1, customs_line_number: 2}}}
 
-      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has 25.00 value for 1206200010 / CN. Unrolled Invoice has 20.00."]                      
+      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has $25.00 value for 1206.20.0010 / CN. Unrolled Invoice has $20.00."]                      
     end
   end
 
@@ -189,7 +189,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     it "returns error string if unrolled hash contains one or more hts/coo pairs missing from fenix hash" do
       unrolled_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}, "CN" => {quantity: 1, value: 2}}, 
                           "1206200010" => {"CN" => {quantity: 10, value: 20}}}
-      expect(validator.check_unrolled_against_fenix(:quantity, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 has 0 quantity for 6106200010 / CN. Unrolled Invoice has 1."]
+      expect(validator.check_unrolled_against_fenix(:quantity, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 has 0 quantity for 6106.20.0010 / CN. Unrolled Invoice has 1."]
     end
   end
 
@@ -220,7 +220,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
       fenix = validator.send(:gather_entry, @ent)
       
-      expect(validator.total_diff(:value, unrolled, fenix)).to eq "B3 has total value of 10.00. Unrolled Invoices have 12.00.\n"
+      expect(validator.total_diff(:value, unrolled, fenix)).to eq "B3 has total value of $10.00. Unrolled Invoices have $12.00.\n"
     end
   end
 
@@ -257,7 +257,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       fenix_by_hts_coo = validator.arrange_by_hts_coo(fenix)
       unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
       
-      expect(validator.hts_list_diff(unrolled, fenix, fenix_by_hts_coo)).to eq "B3 missing HTS code(s) on Unrolled Invoices: 1111111111\nUnrolled Invoices missing HTS code(s) on B3: 2222222222 (B3 Sub Hdr # 2 / B3 Line # 1; B3 Sub Hdr # 2 / B3 Line # 2)\n"
+      expect(validator.hts_list_diff(unrolled, fenix, fenix_by_hts_coo)).to eq "B3 missing HTS code(s) on Unrolled Invoices: 1111.11.1111\nUnrolled Invoices missing HTS code(s) on B3: 2222.22.2222 (B3 Sub Hdr # 2 / B3 Line # 1; B3 Sub Hdr # 2 / B3 Line # 2)\n"
     end
   end
 

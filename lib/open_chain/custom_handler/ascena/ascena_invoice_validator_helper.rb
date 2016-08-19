@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
         fenix = inner[field]
         unrolled = unrolled_by_hts_coo[hts][coo] ? unrolled_by_hts_coo[hts][coo][field] : 0
         if fenix != unrolled
-          error << "B3 Sub Hdr # #{inner[:subheader_number]} / B3 Line # #{inner[:customs_line_number]} has #{string_format(field, fenix)} #{field.to_s} for #{hts} / #{coo}. Unrolled Invoice has #{string_format(field, unrolled)}."
+          error << "B3 Sub Hdr # #{inner[:subheader_number]} / B3 Line # #{inner[:customs_line_number]} has #{string_format(field, fenix)} #{field.to_s} for #{hts.hts_format} / #{coo}. Unrolled Invoice has #{string_format(field, unrolled)}."
         end
       end
     end
@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
       outer.each do |coo, inner|
         fenix = fenix_by_hts_coo[hts][coo] ? fenix_by_hts_coo[hts][coo][field] : nil
         unrolled = string_format(field, inner[field])
-        error << "B3 has 0 #{field.to_s} for #{hts} / #{coo}. Unrolled Invoice has #{unrolled}." if fenix.blank?
+        error << "B3 has #{string_format(field, 0)} #{field.to_s} for #{hts.hts_format} / #{coo}. Unrolled Invoice has #{unrolled}." if fenix.blank?
       end
     end
     error
@@ -82,7 +82,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
     unrolled_hts = hts_list(unrolled)
     fenix_hts = hts_list(fenix)
     missing_fenix_hts = unrolled_hts - fenix_hts
-    error << "B3 missing HTS code(s) on Unrolled Invoices: #{missing_fenix_hts.join(', ')}" unless missing_fenix_hts.empty?
+    error << "B3 missing HTS code(s) on Unrolled Invoices: #{missing_fenix_hts.map(&:hts_format).join(', ')}" unless missing_fenix_hts.empty?
     unexpected_hts_errors = []
     missing_unrolled_hts = fenix_hts - unrolled_hts
     missing_unrolled_hts.each do |hts|
@@ -90,7 +90,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
       fenix_by_hts_coo[hts].each do |coo, line|
         line_info << "B3 Sub Hdr # #{line[:subheader_number]} / B3 Line # #{line[:customs_line_number]}"
       end
-      unexpected_hts_errors << "#{hts} (#{line_info.join('; ')})"
+      unexpected_hts_errors << "#{hts.hts_format} (#{line_info.join('; ')})"
     end
     error << ("Unrolled Invoices missing HTS code(s) on B3: " << unexpected_hts_errors.join(", ")) if unexpected_hts_errors.presence
     error.presence ? error.join("\n") + "\n" : ""
@@ -134,7 +134,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
   end
 
   def string_format type, amount
-    type == :value ? sprintf("%0.02f", amount) : amount.to_s
+    type == :value ? '$' + sprintf('%0.02f', amount) : amount.to_s
   end
 
   def total field, results
