@@ -17,6 +17,10 @@ module Api; module V1; class ApiController < ActionController::Base
     render_forbidden unless User.current.admin?
   end
 
+  def require_sys_admin
+    render_forbidden unless User.current.sys_admin?
+  end
+
   def render_error errors, status = :internal_server_error
     e = nil
     if errors.is_a?(ActiveModel::Errors)

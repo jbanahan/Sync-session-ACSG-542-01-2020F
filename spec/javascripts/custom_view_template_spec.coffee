@@ -15,7 +15,7 @@ describe 'CustomViewTemplateApp', () ->
     describe 'loadTemplate', () ->
       it "loads", () ->
         returnVal = {template: "template",criteria: ["criteria"], model_fields: ["model fields"]}
-        http.expectGET('/custom_view_templates/1/edit.json').respond returnVal
+        http.expectGET('/api/v1/admin/custom_view_templates/1/edit.json').respond returnVal
         promise = svc.loadTemplate(1)
         resolvedPromise = null
         promise.success (data) ->
@@ -27,8 +27,9 @@ describe 'CustomViewTemplateApp', () ->
       it "executes PUT route", () ->
         returnVal = {'ok':'ok'}
         criteria = ['criteria']
-        http.expectPUT('/custom_view_templates/1', JSON.stringify({'criteria':criteria})).respond returnVal
-        promise = svc.updateTemplate(1, criteria)
+        cvt = {}
+        http.expectPUT('/api/v1/admin/custom_view_templates/1', JSON.stringify({criteria:criteria, cvt: cvt})).respond returnVal
+        promise = svc.updateTemplate(1, {criteria: criteria, cvt: cvt})
         resolvedPromise = null
         promise.success (data) ->
           resolvedPromise = data
@@ -74,11 +75,11 @@ describe 'CustomViewTemplateApp', () ->
         $scope.$apply()
 
         expect(svc.loadTemplate).toHaveBeenCalledWith(1)
-        expect($scope.code).toEqual 'identifier'
-        expect($scope.path).toEqual 'path'
-        expect($scope.module).toEqual 'module'
-        expect($scope.search_criterions).toEqual 'criteria'
-        expect($scope.model_fields).toEqual 'model_fields'
+        expect($scope.cvt.template_identifier).toEqual 'identifier'
+        expect($scope.cvt.template_path).toEqual 'path'
+        expect($scope.cvt.module_type).toEqual 'module'
+        expect($scope.searchCriterions).toEqual 'criteria'
+        expect($scope.modelFields).toEqual 'model_fields'
 
     describe 'updateTemplate', () ->
       it "calls service's updateTemplate", () ->        
@@ -92,9 +93,10 @@ describe 'CustomViewTemplateApp', () ->
       it "calls updateTemplate", () ->
         spyOn($scope, 'updateTemplate')
         $scope.templateId = 1
-        $scope.search_criterions = "criteria"
+        $scope.cvt = {}
+        $scope.searchCriterions = "criteria"
         $scope.saveTemplate()
         
-        expect($scope.updateTemplate).toHaveBeenCalledWith(1, "criteria")
+        expect($scope.updateTemplate).toHaveBeenCalledWith(1, {criteria: "criteria", cvt: {}})
 
 

@@ -48,7 +48,6 @@ describe CustomViewTemplatesController do
   end
 
   describe :edit do
-    context "HTTP" do
       it "renders the page for a sys-admin" do
         @u.should_receive(:sys_admin?).and_return true
         get :edit, id: CustomViewTemplate.first.id
@@ -61,60 +60,8 @@ describe CustomViewTemplatesController do
         expect(response).to redirect_to request.referrer
         expect(flash[:errors]).to include "Only system admins can do this."
       end
-    end
-
-    context "JSON" do
-      it "renders template JSON for a sys-admin" do
-        @u.should_receive(:sys_admin?).and_return true
-        mf_collection = [{:mfid=>:prod_attachment_count, :label=>"Attachment Count", :datatype=>:integer}, 
-                         {:mfid=>:prod_attachment_types, :label=>"Attachment Types", :datatype=>:string}]
-        cvt = CustomViewTemplate.first
-        cvt.search_criterions << Factory(:search_criterion)
-        described_class.any_instance.should_receive(:get_mf_digest).with(cvt).and_return mf_collection
-        get :edit, id: cvt.id, :format => "json"
-        expect(response.body).to eq({template: cvt, criteria: cvt.search_criterions.map{ |sc| sc.json(@u) }, model_fields: mf_collection}.to_json)
-      end
-
-      it "prevents access by non-sys-admins" do
-        @u.should_receive(:sys_admin?).and_return false
-        get :edit, id: 1, :format => "json"
-        expect(JSON.parse(response.body)["error"]).to eq "You are not authorized to edit this template."
-      end
-    end
-
   end
   
-  describe :update do
-    before(:each) do
-      @cvt_new_criteria = [{"mfid"=>"prod_uid", "label"=>"Unique Identifier", "operator"=>"eq", "value"=>"x", "datatype"=>"string", "include_empty"=>false}]
-      @cvt = CustomViewTemplate.first
-      @cvt.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref", "operator"=>"eq", "value"=>"w", "include_empty"=>true)
-    end
-    
-    it "replaces search criterions for a sys-admin" do
-      @u.should_receive(:sys_admin?).and_return true
-      
-      put :update, id: @cvt.id, criteria: @cvt_new_criteria
-      @cvt.reload
-      criteria = @cvt.search_criterions
-      new_criterion = (criteria.first.json @u).to_json
-      
-      expect(criteria.count).to eq 1
-      expect(new_criterion).to eq (@cvt_new_criteria.first).to_json
-      expect(JSON.parse(response.body)["ok"]).to eq "ok"
-    end
-
-    it "prevents access by non-sys-admins" do
-      @u.should_receive(:sys_admin?).and_return false
-      put :update, id: @cvt.id, criteria: @cvt_new_criteria
-      @cvt.reload
-      criteria = @cvt.search_criterions
-      expect(criteria.count).to eq 1
-      expect(criteria.first.model_field_uid).to eq "ent_brok_ref"
-      expect(JSON.parse(response.body)["error"]).to eq "You are not authorized to update this template."
-    end
-  end
-
   describe :create do
     it "creates CVT for a sys-admin" do
       @u.should_receive(:sys_admin?).and_return true
@@ -151,13 +98,4 @@ describe CustomViewTemplatesController do
       expect(flash[:errors]).to include "Only system admins can do this."
     end
   end
-
-  describe :get_mf_digest do
-    it "takes the model fields associated with a template's module returns only the mfid, label, and datatype fields" do
-      cvt = Factory(:custom_view_template, module_type: "Product")
-      mfs = described_class.new.get_mf_digest cvt
-      expect(mfs.find{|mf| mf[:mfid] == :prod_uid}).to eq({:mfid => :prod_uid, label: "Unique Identifier", :datatype => :string })
-    end
-  end
-
 end

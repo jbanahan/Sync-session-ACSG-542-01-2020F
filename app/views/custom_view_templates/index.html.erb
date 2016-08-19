@@ -18,14 +18,16 @@ $(function() {
     <th>Module Type</th>
     <th>Parameters</th>
     <th></th>
+    <th></th>
   </thead>
   <tbody>
     <%@templates.each do |t|%>
       <tr class='hover'>
-        <td><%=link_to t.template_identifier, edit_custom_view_template_path(t)%></td>
-        <td><%=link_to t.template_path, edit_custom_view_template_path(t)%></td>
-        <td><%=link_to t.module_type, edit_custom_view_template_path(t)%></td>
-        <td><%=link_to t.search_criterions.count, edit_custom_view_template_path(t)%></td>
+        <td><%=t.template_identifier%></td>
+        <td><%=t.template_path%></td>
+        <td><%=t.module_type%></td>
+        <td><%=t.search_criterions.count%></td>
+        <td><%=link_to "edit", edit_custom_view_template_path(t)%></td>
         <td><%=link_to "delete", custom_view_template_path(t), :confirm => 'Delete this custom view template?', :method => :delete %></td>
       </tr>
     <%end%>

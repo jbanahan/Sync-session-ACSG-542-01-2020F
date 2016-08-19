@@ -24,28 +24,28 @@
         <div class='row'>
           <div class='col-md-12'>
               <div class='row bootstrap-hover'>
-                <div class="col-md-4" style="font-weight:bold;">Template Code</div> 
-                <div class="col-md-8">{{code}}</div>
+                <div class="col-md-4" style="font-weight:bold;">Module Type</div>
+                <div class="col-md-8">{{cvt.module_type}}</div>
               </div>
               <div class='row bootstrap-hover'>
-                <div class="col-md-4" style="font-weight:bold;">Template Path</div>
-                <div class="col-md-8">{{path}}</div>
+                <div class="col-md-4" style="font-weight:bold;">Identifier</div> 
+                <input class="col-md-8" ng-model="cvt.template_identifier"></input>
               </div>
               <div class='row bootstrap-hover'>
-                <div class="col-md-4" style="font-weight:bold;">Template Module</div>
-                <div class="col-md-8">{{module}}</div>
+                <div class="col-md-4" style="font-weight:bold;">Path</div>
+                <input class="col-md-8" ng-model="cvt.template_path"></input>
               </div>
           </div>
         </div>
         <br><br>
           <div class='row'>
-            <div ng-repeat="crit in search_criterions">
-              <div chain-search-criterion="crit" model-fields="model_fields"></div>
+            <div ng-repeat="crit in searchCriterions">
+              <div chain-search-criterion="crit" model-fields="modelFields"></div>
             </div>
           </div>
           <div class='row'>
             <div class='col-md-12 form-inline'>
-              Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in model_fields'>
+              Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in modelFields'>
               </select>
               <button ng-show='criterionToAdd' class='btn btn-default' ng-click='addCriterion(criterionToAdd)'>Add</button>
             </div>

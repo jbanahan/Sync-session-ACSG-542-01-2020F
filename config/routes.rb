@@ -189,6 +189,8 @@ OpenChain::Application.routes.draw do
 
         resources :groups, only: [:create, :update, :destroy]
 
+        resources :custom_view_templates, only: [:edit, :update]
+
         resources :kewill_entry_documents, only: [] do
           collection do
             post :send_google_drive_file_to_kewill
@@ -960,7 +962,7 @@ OpenChain::Application.routes.draw do
     get :for_referer, on: :collection
   end
 
-  resources :custom_view_templates, except: [:show]
+  resources :custom_view_templates, except: [:show, :update]
 
   resources :trade_lanes, only: [:index]
 
