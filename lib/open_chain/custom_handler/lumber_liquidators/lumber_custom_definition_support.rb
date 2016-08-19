@@ -114,6 +114,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_inspection_date_planned: {label: "Inspection Date - Planned", data_type: :date, module_type: "Order"},
     ord_inspection_date_completed: {label: "Inspection Date - Completed", data_type: :date, module_type: "Order"},
     ord_inspector_assigned: {label: "Inspector Assigned", data_type: :string, module_type: 'Order'},
+    ord_pc_approval_recommendation: {label: "PC Approval Recommendation", data_type: :string, module_type: 'Order'},
     ord_planned_expected_delivery_date: {label: "Planned Expected Delivery Date", data_type: :date, module_type: "Order", read_only:true},
     ord_planned_handover_date: {label: "Planned Handover Date", data_type: :date, module_type: "Order"},
     ord_qa_hold_by: {label: "QA Hold By", data_type: :integer, module_type:'Order', is_user:true, read_only: true},

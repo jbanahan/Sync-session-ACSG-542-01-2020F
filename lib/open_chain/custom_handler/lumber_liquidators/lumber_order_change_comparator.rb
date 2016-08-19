@@ -93,6 +93,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   def self.reset_product_compliance_approvals ord, old_data, new_data
     cdefs = prep_custom_definitions([:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])
+    header_cdef = prep_custom_definitions([:ord_pc_approval_recommendation])[:ord_pc_approval_recommendation]
     values_changed = false
     lines_to_check = OrderData.lines_needing_pc_approval_reset(old_data,new_data)
     lines_to_check.each do |line_number|
@@ -105,8 +106,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         end
       end
     end
-    ord.reload
-    ord.create_snapshot(User.integration) if values_changed
+    if values_changed
+      ord.update_custom_value!(header_cdef,'')
+      ord.reload
+      ord.create_snapshot(User.integration)
+    end
     return values_changed
   end
 
