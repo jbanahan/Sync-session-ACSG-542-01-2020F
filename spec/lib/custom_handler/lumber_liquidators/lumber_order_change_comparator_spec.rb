@@ -271,6 +271,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       @cdefs = described_class.prep_custom_definitions([:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])
     end
     it 'should reset lines that changed' do
+      header_cdef = described_class.prep_custom_definitions([:ord_pc_approval_recommendation]).values.first
+      @ord.update_custom_value!(header_cdef,'Approve')
       lines = [@ol1,@ol2]
       [:ordln_pc_approved_by,:ordln_pc_approved_by_executive].each do |uid|
         lines.each {|ln| ln.update_custom_value!(@cdefs[uid],@u.id)}
@@ -290,6 +292,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         expect(@ol1.get_custom_value(cd).value).to be_blank
         expect(@ol2.get_custom_value(cd).value).to_not be_blank
       end
+
+      @ord.reload
+      expect(@ord.custom_value(header_cdef)).to be_blank
 
     end
     it 'should return false if lines changed but they were not approved' do
