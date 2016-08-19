@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions([:prod_old_article, :cmp_purchasing_contact_email])
+    @cdefs = self.class.prep_custom_definitions([:prod_old_article, :cmp_purchasing_contact_email, :ordln_old_art_number, :ordln_part_name])
   end
 
   def render order, user, open_file_object
@@ -227,7 +227,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     order.order_lines.each do |ol|
       line = []
       line << v(ol, user, :ordln_line_number)
-      line << "<font size='7'>#{v(ol, user, :ordln_puid)}</font>\n#{v(ol.product, user, @cdefs[:prod_old_article].model_field_uid)}\n#{v(ol, user, :ordln_pname)}"
+      line << "<font size='7'>#{v(ol, user, :ordln_puid)}</font>\n#{v(ol, user, @cdefs[:ordln_old_art_number].model_field_uid)}\n#{v(ol, user, @cdefs[:ordln_part_name].model_field_uid)}"
       if multi_shipto
         line << address_lines(ol, user, :ordln_ship_to_full_address)
       end
