@@ -13,14 +13,11 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
                                   :value_for_tax, :duty, :entered_value, :special_authority, :description, :value_for_duty_code, :customs_line_number
 
   def self.run_schedulable opts = {}
-    c = opts['public_key'].blank? ? self.new : self.new(opts['public_key'])
+    c = self.new
     c.generate_and_send c.find_entries
   end
 
-  def initialize public_key_path = "config/siemens.asc"
-    raise "Siemens public key must be provided" unless File.exist?(public_key_path)
-    @gpg = OpenChain::GPG.new public_key_path
-
+  def initialize
     super({output_timezone: "Eastern Time (US & Canada)"})
   end
 
@@ -42,40 +39,38 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     filename = "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}#{counter}.dat"
 
     generate_file_data_to_tempfiles(entries, filename) do |outfile, report|
-      encrypt_file(outfile) do |encrypted_file|
-        Attachment.add_original_filename_method encrypted_file, filename+".pgp"
-        completed = false
-        error = nil
-        begin
-          send_time = Time.zone.now
-          confirmed = send_time + 1.minute
+      Attachment.add_original_filename_method outfile, filename
+      completed = false
+      error = nil
+      begin
+        send_time = Time.zone.now
+        confirmed = send_time + 1.minute
 
-          # I'm a little uncomfortable putting the entry sync record creations and counter in the same transaction
-          # as the ftp (since it's possible the ftp could take a bit), but we really do need to our best to ensure that
-          # the ftp and marking entries as sent either all get committed or all get rolled back.  Since  we're sending 
-          # to our local connect ftp server on the same network segment the transfer should be very quick so the transaction
-          # shouldn't span too much clock time.
-          Entry.transaction do 
-            entries.each do |e|
-              e.sync_records.create! trading_partner: sync_code, sent_at: send_time, confirmed_at: confirmed
-            end
-
-            counter_item.update_attributes! json_data: {counter: counter}.to_json
-
-            # At this point, since we're in a transaction, the only issue we could run into is if the ftp was successful, but then saving the ftp session
-            # data off had an error - which would mean we sent the file but then the sync records and counter would get rolled back.  
-            # The chances of that happening are so miniscule that I'm not going to bother handling that condition.
-            ftp_file encrypted_file
-            
-            completed = true
+        # I'm a little uncomfortable putting the entry sync record creations and counter in the same transaction
+        # as the ftp (since it's possible the ftp could take a bit), but we really do need to our best to ensure that
+        # the ftp and marking entries as sent either all get committed or all get rolled back.  Since  we're sending 
+        # to our local connect ftp server on the same network segment the transfer should be very quick so the transaction
+        # shouldn't span too much clock time.
+        Entry.transaction do 
+          entries.each do |e|
+            e.sync_records.create! trading_partner: sync_code, sent_at: send_time, confirmed_at: confirmed
           end
-        ensure
-          if completed
-            now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now
-            OpenMailer.send_simple_html(Group.use_system_group("canada-accounting", name: "VFI Canada Accounting"), "[VFI Track] Siemens Billing Report #{now.strftime("%Y-%m-%d")}", "Attached is the duty data that was sent to Siemens on #{now.strftime("%Y-%m-%d")}.", report).deliver!
-          else
-            OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error", "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", outfile).deliver!
-          end
+
+          counter_item.update_attributes! json_data: {counter: counter}.to_json
+
+          # At this point, since we're in a transaction, the only issue we could run into is if the ftp was successful, but then saving the ftp session
+          # data off had an error - which would mean we sent the file but then the sync records and counter would get rolled back.  
+          # The chances of that happening are so miniscule that I'm not going to bother handling that condition.
+          ftp_file outfile
+          
+          completed = true
+        end
+      ensure
+        if completed
+          now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now
+          OpenMailer.send_simple_html(Group.use_system_group("canada-accounting", name: "VFI Canada Accounting"), "[VFI Track] Siemens Billing Report #{now.strftime("%Y-%m-%d")}", "Attached is the duty data that was sent to Siemens on #{now.strftime("%Y-%m-%d")}.", report).deliver!
+        else
+          OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error", "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", outfile).deliver!
         end
       end
     end
@@ -397,16 +392,6 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
     def b3_line_key line
       line.customs_line_number
-    end
-
-    def encrypt_file source_file
-      Tempfile.open(["siemens_billing", ".dat"]) do |f|
-        f.binmode
-        @gpg.encrypt_file source_file, f
-
-        yield f
-      end
-
     end
 
 end; end; end; end;
