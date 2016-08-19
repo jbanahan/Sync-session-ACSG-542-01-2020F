@@ -26,7 +26,10 @@ module ConfigMigrations; module LL; class SOW239
         ol.update_custom_value!(cdefs[:ordln_part_name],prod_art_hash[:name])
         needs_new_pdf = true if prod_art_hash[:product].name != prod_art_hash[:name] || prod_art_hash[:current_old_art] != prod_art_hash[:old_art]
       end
-      OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.create!(o, u)
+      if needs_new_pdf
+        OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.create!(o, u)
+      end
+      o.create_snapshot u
     end
   end
 
