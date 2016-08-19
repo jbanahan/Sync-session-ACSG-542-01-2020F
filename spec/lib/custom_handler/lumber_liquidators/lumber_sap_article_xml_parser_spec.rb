@@ -58,7 +58,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
         expect(p.classifications.first.tariff_records.first.hts_1).to eq "4409294000"
         expect(p.entity_snapshots.count).to eq 2
         expect(p.get_custom_value(@cdefs[:prod_sap_extract]).value.to_i).to eq ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2014-12-22 10:37:06').to_i
-        expect(p.order_lines.find_by_line_number(1)).to be_present
         expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq "PHENAWE7-MW-SS"
         expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq p.name
       end
