@@ -302,7 +302,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       it "reports errors to user" do
         expect(subject).to receive(:parse_and_send).and_raise "Error"
 
-        expect{subject.process user}.to raise_error(/Error)
+        expect{subject.process user}.to raise_error(/Error/)
 
         expect(user.messages.size).to eq 1
         m = user.messages.first
