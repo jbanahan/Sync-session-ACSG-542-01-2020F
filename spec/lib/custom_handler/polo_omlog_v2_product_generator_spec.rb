@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
   describe :ftp_credentials do
-    it 'should validate credentials' do
-      c = described_class.new
-      expect(c.ftp_credentials).to eq {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
+    it 'should return credentials' do
+      expected_credentials = {:server=>'ftp.omlogasia.com',:username=>'ftp06user21',:password=>'kXynC3jm',:folder=>'chain'}
+      expect(described_class.new.ftp_credentials).to eq expected_credentials
     end
   end
 
