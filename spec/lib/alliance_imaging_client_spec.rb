@@ -409,9 +409,9 @@ describe OpenChain::AllianceImagingClient do
 
     it "logs an error if the response has an error message" do
       @resp['stitch_response']['errors'] = [{'message' => 'This is an error'}]
-      expect_any_instance_of(StandardError).to receive(:log_me)
 
-      expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_nil
+
+      expect{OpenChain::AllianceImagingClient.process_entry_stitch_response @resp}.to change(ErrorLogEntry,:count).by(1)
     end
 
     it "swallows specific error response" do

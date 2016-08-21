@@ -101,9 +101,7 @@ describe Api::V1::AllianceDataController do
       results = {"entry" => {"file_no" => "1234"}}
       expect(OpenChain::CustomHandler::KewillEntryParser).to receive(:save_to_s3).with(results).and_raise "Error!"
 
-      expect_any_instance_of(StandardError).to receive(:log_me).with ["Failed to store entry file data for file # 1234."]
-
-      post "receive_entry_data", results: results, context: {}
+      expect{post "receive_entry_data", results: results, context: {}}.to change(ErrorLogEntry,:count).by(1)
       expect(response.body).to eq ({"OK" => ""}.to_json)
     end
 
