@@ -2,12 +2,14 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
   describe :ftp_credentials do
-    c = described_class.new
-    c.ftp_credentials.should == {:server=>'ftp.omlogasia.com',:username=>'ftp06user21',:password=>'kXynC3jm',:folder=>'chain'}
+    it 'should validate credentials' do
+      c = described_class.new
+      expect(c.ftp_credentials).to eq {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
+    end
   end
 
   describe :sync_csv do
-    after :each do 
+    after :each do
       @tmp.unlink if @tmp
     end
     it "should split CSM numbers" do
@@ -45,7 +47,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
       expect(a[1][8]).to eq('Value1 Value2 Value3')
       expect(a[1][10]).to eq('1234567890'.hts_format)
       expect(a[1][13]).to eq('2222222222'.hts_format)
-      expect(a[1][16]).to eq('3333333333'.hts_format)      
+      expect(a[1][16]).to eq('3333333333'.hts_format)
     end
     it "should build record with blank CSM number" do
       @cd = Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text)

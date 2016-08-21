@@ -2,12 +2,14 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
   describe :ftp_credentials do
-    c = described_class.new
-    c.ftp_credentials.should == {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
+    it 'should validate credentials' do
+      c = described_class.new
+      expect(c.ftp_credentials).to eq {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
+    end
   end
 
   describe :sync_csv do
-    after :each do 
+    after :each do
       @tmp.unlink if @tmp
     end
     it "should split CSM numbers" do
