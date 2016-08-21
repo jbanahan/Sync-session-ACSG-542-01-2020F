@@ -5,7 +5,7 @@ describe CommercialInvoiceMap do
     before :each do
       allow_any_instance_of(ModelField).to receive(:can_view?).and_return(true) #not worrying about field permissions for this test
       allow_any_instance_of(ModelField).to receive(:can_edit?).and_return(true) #not worrying about field permissions for this test
-      
+
       @shp_date = CustomDefinition.create!(:label=>"shpdt",:data_type=>"date",:module_type=>"Shipment")
       @shp_coo = CustomDefinition.create!(:label=>"coo",:data_type=>"string",:module_type=>"ShipmentLine")
       ModelField.reload
@@ -51,7 +51,7 @@ describe CommercialInvoiceMap do
       expect(ci.invoice_date).to eq(Date.new(2006,4,1))
       line = ci.commercial_invoice_lines.first
       expect(line.quantity).to eq(10)
-      expect(line.commercial_invoice_tariffs.first.hts_code).to eq("1234567890") 
+      expect(line.commercial_invoice_tariffs.first.hts_code).to eq("1234567890")
     end
     it "should create invoice based on shipment & order fields" do
       {:shp_ref=>:ci_invoice_number,
@@ -112,7 +112,7 @@ describe CommercialInvoiceMap do
     it "should raise exception if all lines aren't from the same shipment" do
       s_line = Factory(:shipment_line)
       s_line2 = Factory(:shipment_line)
-      expect {CommercialInvoiceMap.generate_invoice! [s_line,s_line2]}.to raise_error
+      expect {CommercialInvoiceMap.generate_invoice! double('user'), [s_line,s_line2]}.to raise_error(/multiple shipments/)
     end
   end
 end

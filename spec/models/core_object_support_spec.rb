@@ -124,7 +124,7 @@ describe CoreObjectSupport do
       expect(p.view_url).to eq XlsMaker.excel_url("/products/#{p.id}")
     end
     it "should raise exception if id not set" do
-      expect{Product.new.view_url}.to raise_error
+      expect{Product.new.view_url}.to raise_error(/view_url/)
     end
   end
   describe "excel_url" do
@@ -141,7 +141,7 @@ describe CoreObjectSupport do
 
     it "should make url without host with class method" do
       expect(Product.relative_url 1).to eq "/products/1"
-    end 
+    end
   end
   describe "all_attachments" do
     it "should sort by attachment type then attached file name then id" do
@@ -163,7 +163,7 @@ describe CoreObjectSupport do
       class TestCoreObject < ActiveRecord::Base
         include CoreObjectSupport
 
-        def self.name 
+        def self.name
           "Class' Name"
         end
       end
@@ -185,7 +185,7 @@ describe CoreObjectSupport do
       end
     end
   end
-  
+
   describe "attachment_types" do
     it "lists all attachments associated with a core object in alphabetical order" do
       p = Factory(:product)
@@ -213,7 +213,7 @@ describe CoreObjectSupport do
       entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
       entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "A Test")).business_validation_result
       entry.business_validation_results << Factory(:business_validation_rule_result, state: "Pass", business_validation_rule: Factory(:business_validation_rule, name: "Another Test")).business_validation_result
-      
+
       expect(entry.failed_business_rules).to eq ["A Test", "Test"]
     end
   end
@@ -223,7 +223,7 @@ describe CoreObjectSupport do
       @u = Factory(:user)
       allow(@u).to receive(:edit_business_validation_rule_results?).and_return true
       @ent = Factory(:entry)
-      
+
       @bvrr_1 = Factory(:business_validation_rule_result)
       bvr_1 = @bvrr_1.business_validation_result
       bvr_1.validatable = @ent; bvr_1.save!

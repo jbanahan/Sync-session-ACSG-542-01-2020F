@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
       expect(sql_proxy_client).to receive(:request_updated_entry_numbers).and_raise "Error"
       expect {
         described_class.request_updated_since_last_run({'sql_proxy_client' => sql_proxy_client})
-      }.to raise_error
+      }.to raise_error(/Error/)
 
       key = KeyJsonItem.updated_entry_data('last_request').first
       expect(key).not_to be_nil
@@ -200,7 +200,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
       described_class.request_entry_batch_data({"1"=>"123", "2"=>{"date" => "234", "inv"=>1}})
     end
-    
+
 
     it "does not not request data if a job is already queued for this data" do
       dj = Delayed::Job.new

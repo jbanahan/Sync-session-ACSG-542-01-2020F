@@ -10,8 +10,8 @@ describe BusinessValidationRulesController do
     it 'should require admin' do
       u = Factory(:user)
       sign_in_as u
-      post :create, 
-            business_validation_template_id: @bvt.id, 
+      post :create,
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-1"}'
             }
@@ -22,8 +22,8 @@ describe BusinessValidationRulesController do
       group = Factory(:group)
       u = Factory(:admin_user)
       sign_in_as u
-      post :create, 
-            business_validation_template_id: @bvt.id, 
+      post :create,
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-2"}',
               "type" => "ValidationRuleManual",
@@ -39,8 +39,8 @@ describe BusinessValidationRulesController do
     it "should only save for valid JSON" do
       u = Factory(:admin_user)
       sign_in_as u
-      post :create, 
-            business_validation_template_id: @bvt.id, 
+      post :create,
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => 'This is not valid JSON'
             }
@@ -65,9 +65,9 @@ describe BusinessValidationRulesController do
     it "should load the correct rule to edit" do
       u = Factory(:admin_user)
       sign_in_as u
-      get :edit, 
+      get :edit,
             id: @bvr.id,
-            business_validation_template_id: @bvt.id, 
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-3"}'
             }
@@ -90,8 +90,8 @@ describe BusinessValidationRulesController do
           id: @bvr.id,
           business_validation_template_id: @bvt.id,
           search_criterions_only: true,
-          business_validation_rule: {search_criterions: [{"mfid" => "ent_cust_name", 
-              "datatype" => "string", "label" => "Customer Name", 
+          business_validation_rule: {search_criterions: [{"mfid" => "ent_cust_name",
+              "datatype" => "string", "label" => "Customer Name",
               "operator" => "eq", "value" => "Monica Lewinsky"}]}
       expect(@bvr.search_criterions.length).to eq(1)
       expect(@bvr.search_criterions.first.value).to eq("Monica Lewinsky")
@@ -107,9 +107,9 @@ describe BusinessValidationRulesController do
     it "should update the correct rule" do
       u = Factory(:admin_user)
       sign_in_as u
-      post :update, 
+      post :update,
             id: @bvr.id,
-            business_validation_template_id: @bvt.id, 
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-4"}'
             }
@@ -140,9 +140,9 @@ describe BusinessValidationRulesController do
       r = JSON.parse(response.body)
       expect(r["model_fields"].length).to eq ModelField.find_by_core_module(CoreModule::ENTRY).size
       rule = r["business_validation_rule"]
-      expect(rule).to eq({"business_validation_template_id"=>@bvt.id, 
-          "description"=>"DESC", "fail_state"=>"FAIL", "id"=>@rule.id, 
-          "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}', 
+      expect(rule).to eq({"business_validation_template_id"=>@bvt.id,
+          "description"=>"DESC", "fail_state"=>"FAIL", "id"=>@rule.id,
+          "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}',
           "search_criterions"=>[{"mfid"=>"prod_uid", "operator"=>"eq", "value"=>"x", "label" => "Unique Identifier", "datatype" => "string", "include_empty" => false}]})
     end
 
@@ -175,7 +175,7 @@ describe BusinessValidationRulesController do
       Delayed::Worker.delay_jobs = false
 
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
-      expect { BusinessValidationRule.find(@bvr.id) }.to raise_error
+      expect(BusinessValidationRule.find_by_id(@bvr.id)).to be_nil
 
       Delayed::Worker.delay_jobs = dj_status
     end

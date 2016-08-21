@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::LandsEndExportParser do
   before :each do
-    @importer = Factory(:company,:importer=>true) 
+    @importer = Factory(:company,:importer=>true)
     @lines = [
       "\"B3_Entry_Nbr\",\"Ca_Import_Dt\",\"Ca_Release_Dt\",\"Carrier_SCAC\",\"Truck_BOL\",\"CCN_Nbr\",\"LE_Order_And_Trailer_Nbr\",\"LE_Order_Tracking_Nbr\",\"B3_Line_Nbr\",\"HS_Nbr\",\"Dutiable_UoM\",\"COO\",\"SKU_Nbr\",\"SKU_Qty\",\"SKU_Unit_price\",\"LE_Order_Currency\",\"Exchange_Rate\",\"Duty_Paid_Dt\",\"Duty_Rate\",\"Duty_Rate_Amt\",\"GST_Amt\",\"PST_HST_Amt\",\"Excise_Tax\",\"Tot_Duty_And_Taxes_Amt\",\"SIMA_Tot_Value\",\"SIMA_Cd\",\"NAFTA_Ind\",\"Client_Cd\",\"Return_Ind\"",
       "\"15818-019998734\",\"1/4/2012\",\"1/3/2012\",\"\",\"\",\"\",\"00104010-11364\",\"1Z7R65572007202242\",1,\"6116.93.00.92\",\"PAR\",\"CN\",\"3250356\",1,6.99,\"USD\",1.021,\"2/24/2012\",18,1.28,.42,0,0,1.7,0,\"\",2,\"LANDSEND-C\",\"\"",
@@ -48,11 +48,11 @@ describe OpenChain::LandsEndExportParser do
     end
     it 'should raise exception if part is empty' do
       line = "\"15818-019998734\",\"1/4/2012\",\"1/3/2012\",\"\",\"\",\"\",\"00104010-11364\",\"1Z7R65572007202242\",1,\"6116.93.00.92\",\"PAR\",\"CN\",\"\",1,6.99,\"USD\",1.021,\"2/24/2012\",18,1.28,.42,0,0,1.7,0,\"\",2,\"LANDSEND-C\",\"\"".parse_csv
-      expect {OpenChain::LandsEndExportParser.parse_csv_line line, 0, @importer}.to raise_error
+      expect {OpenChain::LandsEndExportParser.parse_csv_line line, 0, @importer}.to raise_error(/part/)
     end
     it 'should raise exception if row does not have 29 elements' do
       line = "\"15818-019998734\",\"1/4/2012\",\"1/3/2012\",\"\",\"\",\"\",\"00104010-11364\",\"1Z7R65572007202242\",1,\"6116.93.00.92\",\"PAR\",\"CN\",\"3250356\",1,6.99,\"USD\",1.021,\"2/24/2012\",18,1.28,.42,0,0,1.7,0,\"\",2,\"LANDSEND-C\"".parse_csv
-      expect {OpenChain::LandsEndExportParser.parse_csv_line line}.to raise_error
+      expect {OpenChain::LandsEndExportParser.parse_csv_line line, 0, @importer}.to raise_error(/elements/)
     end
   end
 end

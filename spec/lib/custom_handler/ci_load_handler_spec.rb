@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       data = row_data
       data << ["12345", "CUST", "INV-123", "", "", "PART-2"]
       data << ["54321", "CUST", "INV-321", "", "", "PART-1"]
-      
+
       expect(subject).to receive(:foreach).and_return row_data
       expect(subject).to receive(:file_parser).with(file).and_return file_parser
       # The only data in the entry/invoice that matters is the file # and invoice number
@@ -231,7 +231,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
 
     it "parses numeric values as string, stripping '.0' from numeric values" do
       # For values (like PO #'s) that are keyed as numeric values (12345), excel will store
-      # them as actual numbers and return them to a program reading them as "12345.0".  
+      # them as actual numbers and return them to a program reading them as "12345.0".
       # We don't want that for the PO, we want 12345...so we want to maek sure the code is stripping
       # non-consequential trailing decimal points and zeros for string data.
       row_data[0][14] = 12.0
@@ -302,7 +302,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       it "reports errors to user" do
         expect(subject).to receive(:parse_and_send).and_raise "Error"
 
-        expect{subject.process user}.to raise_error
+        expect{subject.process user}.to raise_error(/Error)
 
         expect(user.messages.size).to eq 1
         m = user.messages.first
@@ -358,7 +358,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         expect(subject.can_view? Factory(:user)).to be_falsey
       end
     end
-    
+
     it "disallows access when alliance feature is not enabled" do
        ms = MasterSetup.new
        allow(MasterSetup).to receive(:get).and_return ms

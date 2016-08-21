@@ -33,3 +33,4 @@ config/support_request.yml
 config/fenix_b3_forwarding.yml
 .idea
 dump.rdb
+.byebug_history

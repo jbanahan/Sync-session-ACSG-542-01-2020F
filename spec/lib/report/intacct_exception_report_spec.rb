@@ -61,7 +61,7 @@ describe OpenChain::Report::IntacctExceptionReport do
       r = IntacctReceivable.create! company: 'A', customer_number: "Cust", intacct_errors: "Description 2: Invalid Customer"
       described_class.new.run ['A'], ['me@there.com']
       sheet = get_emailed_worksheet "Receivable Errors"
-      
+
       expect(sheet.row(1)[5]).to eq "Create Customer account in Intacct and/or ensure account has payment Terms set."
     end
 
@@ -69,7 +69,7 @@ describe OpenChain::Report::IntacctExceptionReport do
       r = IntacctReceivable.create! company: 'A', customer_number: "Cust", intacct_errors: "Description 2: Required field Date Due is missing"
       described_class.new.run ['A'], ['me@there.com']
       sheet = get_emailed_worksheet "Receivable Errors"
-      
+
       expect(sheet.row(1)[5]).to eq "Create Customer account in Intacct and/or ensure account has payment Terms set."
     end
 
@@ -77,7 +77,7 @@ describe OpenChain::Report::IntacctExceptionReport do
       r = IntacctReceivable.create! company: 'A', customer_number: "Cust", intacct_errors: "BL01001973 XL03000009"
       described_class.new.run ['A'], ['me@there.com']
       sheet = get_emailed_worksheet "Receivable Errors"
-      
+
       expect(sheet.row(1)[5]).to eq "Temporary Upload Error. Click 'Clear This Error' link to try again."
     end
 
@@ -85,7 +85,7 @@ describe OpenChain::Report::IntacctExceptionReport do
       r = IntacctReceivable.create! company: 'A', customer_number: "Cust", intacct_errors: "Description 2: Invalid Vendor 'Test' specified."
       described_class.new.run ['A'], ['me@there.com']
       sheet = get_emailed_worksheet "Receivable Errors"
-      
+
       expect(sheet.row(1)[5]).to eq "Create Vendor account Test in Intacct and/or ensure account has payment Terms set."
     end
 
@@ -94,7 +94,7 @@ describe OpenChain::Report::IntacctExceptionReport do
 
       described_class.new.run ['A'], ['me@there.com']
       sheet = get_emailed_worksheet "Payable Errors"
-      
+
       expect(sheet.row(1)[6]).to eq "Create Vendor account in Intacct and/or ensure account has payment Terms set."
     end
 
@@ -103,7 +103,7 @@ describe OpenChain::Report::IntacctExceptionReport do
 
       described_class.new.run ['A'], ['me@there.com']
       sheet = get_emailed_worksheet "Payable Errors"
-      
+
       expect(sheet.row(1)[6]).to eq "Create Vendor account in Intacct and/or ensure account has payment Terms set."
     end
 
@@ -113,7 +113,7 @@ describe OpenChain::Report::IntacctExceptionReport do
 
       described_class.new.run ['A'], ['me@there.com']
       sheet = get_emailed_worksheet "Payable Errors"
-      
+
       expect(sheet.row(1)[6]).to eq "Create Customer account in Intacct."
     end
 
@@ -142,15 +142,15 @@ describe OpenChain::Report::IntacctExceptionReport do
     end
 
     it "raises an error if email is missing" do
-      expect {described_class.run_schedulable({'companies'=>['A']})}.to raise_error
+      expect {described_class.run_schedulable({'companies'=>['A']})}.to raise_error(/email/)
     end
 
     it "raises an error if email blank" do
-      expect {described_class.run_schedulable({'email_to'=>[], 'companies'=>['A']})}.to raise_error
+      expect {described_class.run_schedulable({'email_to'=>[], 'companies'=>['A']})}.to raise_error(/email/)
     end
 
     it "raises an error if companies is missing" do
-      expect {described_class.run_schedulable({'email_to'=>["me@there.com"]})}.to raise_error
+      expect {described_class.run_schedulable({'email_to'=>["me@there.com"]})}.to raise_error(/company/)
     end
   end
 end

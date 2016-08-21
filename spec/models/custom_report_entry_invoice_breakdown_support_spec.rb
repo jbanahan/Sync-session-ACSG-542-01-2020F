@@ -9,7 +9,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     def self.can_view? user; user.view_broker_invoices? end
     def run run_by, row_limit = nil; process run_by, row_limit, true end
   end
-  
+
   context "report" do
     before :each do
       @master_user = Factory(:master_user)
@@ -75,12 +75,12 @@ describe CustomReportEntryInvoiceBreakdownSupport do
         end
         broker_invoice_2 = Factory(:broker_invoice, entry: @invoice_line_1.broker_invoice.entry)
         Factory(:broker_invoice_line, :broker_invoice => broker_invoice_2, :charge_description=>"CD3",:charge_amount=>50.02)
-        Factory(:broker_invoice_line,:broker_invoice=> broker_invoice_2, :charge_description=>"CD4",:charge_amount=>26.40)   
+        Factory(:broker_invoice_line,:broker_invoice=> broker_invoice_2, :charge_description=>"CD4",:charge_amount=>26.40)
         rpt = Cr.create!
         rpt.search_columns.create!(:model_field_uid=>:bi_entry_num,:rank=>1)
         rpt.search_columns.create!(:model_field_uid=>:bi_brok_ref,:rank=>1)
         rows = rpt.to_arrays @master_user
-        
+
         expect(rows[1][0]).to eq "31612345678"
         expect(rows[2][0]).to be_blank
         expect(rows[2][4]).to eq 50.02
@@ -134,9 +134,9 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       rpt = Cr.create!
       rpt.search_columns.create!(:model_field_uid => :bi_brok_ref)
       r = rpt.to_arrays @master_user
-      expect(r[1][0]).to eq("No data was returned for this report.") 
+      expect(r[1][0]).to eq("No data was returned for this report.")
     end
-    
+
     context "security" do
       before :each do
         @importer_user = Factory(:importer_user)
@@ -146,14 +146,14 @@ describe CustomReportEntryInvoiceBreakdownSupport do
         @invoice_line_1.broker_invoice.entry.update_attributes(:importer_id=>@importer_user.company_id)
         dont_find = Factory(:broker_invoice_line)
         r = Cr.new.to_arrays @importer_user
-        expect(r[1][0]).to eq(100.12) 
+        expect(r[1][0]).to eq(100.12)
         expect(r.size).to eq(2)
       end
       it "should raise exception if user does not have view_broker_invoices? permission" do
         allow(@importer_user).to receive(:view_broker_invoices?).and_return(false)
-        expect {Cr.new.xls_file @importer_user}.to raise_error
+        expect {Cr.new.xls_file @importer_user}.to raise_error(/permission/)
       end
     end
-  end    
+  end
 
 end

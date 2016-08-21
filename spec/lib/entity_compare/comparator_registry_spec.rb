@@ -16,7 +16,7 @@ describe OpenChain::EntityCompare::ComparatorRegistry do
     it "should only allow class objects" do
       d = double('FaileEvenThoughInterfaceIsGood')
       allow(d).to receive(:compare)
-      expect{described_class.register(d)}.to raise_error
+      expect{described_class.register(d)}.to raise_error(/be a class/)
     end
     it "should only allow objects that respond_to?(:compare)" do
       expect{described_class.register(Object)}.to raise_error "All comparators must respond to #compare"

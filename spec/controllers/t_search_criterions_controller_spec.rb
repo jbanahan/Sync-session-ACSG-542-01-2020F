@@ -54,7 +54,7 @@ describe TSearchCriterionsController do
       u = Factory(:admin_user)
       sign_in_as u
       post :destroy, id: @sc.id, business_validation_template_id: @bvt.id
-      expect { SearchCriterion.find(@sc.id) }.to raise_error
+      expect(SearchCriterion.find_by_id(@sc.id)).to be_nil
     end
 
   end

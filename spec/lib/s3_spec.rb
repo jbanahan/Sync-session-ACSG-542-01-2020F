@@ -19,7 +19,7 @@ describe OpenChain::S3, s3: true do
       expect(OpenChain::S3.bucket_name('test')).to eq('chain-io-test')
     end
   end
-  
+
   describe "bucket_exists?" do
     before :each do
       @s3_double = double('s3')
@@ -70,7 +70,7 @@ describe OpenChain::S3, s3: true do
       @key = "s3_io_#{Time.now.to_f}.txt"
       @original_tempfile.write @content
       @original_tempfile.flush
-      
+
       OpenChain::S3.upload_file @bucket, @key, @original_tempfile
     end
     after(:each) do
@@ -171,7 +171,7 @@ describe OpenChain::S3, s3: true do
         new_tempfile.close!
       end
     end
-    
+
     describe 'exists?' do
       it 'should return true when key exists' do
         expect(OpenChain::S3.exists?(@bucket,@key)).to be_truthy
@@ -199,7 +199,7 @@ describe OpenChain::S3, s3: true do
         end
         it 'should get keys from integration bucket by date ordered by last modified date' do
           # Last modified has a 1 second precision, so sleep at least 2 seconds to make sure
-          # this doesn't randomly fail.  Not ideal, but I don't know how to actually force an 
+          # this doesn't randomly fail.  Not ideal, but I don't know how to actually force an
           # out of band last modified date update on an s3_object.
 
           # Bizarrely, if I put the sleep AFTER doing the integration keys call the upload_file call below
@@ -340,9 +340,9 @@ describe OpenChain::S3, s3: true do
       expect {
         OpenChain::S3.download_to_tempfile('bucket', 'path', original_filename: 'file.txt') do |f|
           raise "Error"
-        end  
-      }.to raise_error
-      
+        end
+      }.to raise_error(/Error/)
+
       expect(@tempfile.closed?).to be_truthy
     end
   end
@@ -358,7 +358,7 @@ describe OpenChain::S3, s3: true do
 
       s3_obj
     }
-    # Excessive stubbing below due to preventing s3 uploads...upload tests themselves are in specs for upload_file, to 
+    # Excessive stubbing below due to preventing s3 uploads...upload tests themselves are in specs for upload_file, to
     # which this method defers for uploading (likewise for delete)
     before :each do
       ms = double "MasterSetup"

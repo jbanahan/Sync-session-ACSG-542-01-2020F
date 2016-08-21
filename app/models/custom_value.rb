@@ -26,6 +26,8 @@ class CustomValue < ActiveRecord::Base
       deletes = {}
       to_touch = []
       values.each do |cv|
+        raise "All CustomValue objects must have a custom_definition." unless cv.custom_definition
+        raise "All CustomValue objects must have a customizable that has an id." unless cv.customizable && cv.customizable.id
         cust_def_id = cv.custom_definition.id
         customizable_id = cv.customizable.id
         v = cv.value.nil? ? "null" : ActiveRecord::Base.sanitize(cv.value)

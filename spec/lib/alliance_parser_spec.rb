@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::AllianceParser do
   before :each do
     allow(OpenChain::AllianceImagingClient).to receive(:request_images)
-    @ref_num ='36469000' 
+    @ref_num ='36469000'
     @filer_code = '316'
     @entry_ext = '12345678'
     @cust_num = "NJEAN"
@@ -47,7 +47,7 @@ describe OpenChain::AllianceParser do
     @lading_port_code = '55468'
     @unlading_port_code = '6685'
     @transport_mode_code = '11'
-    @ult_consignee_code = 'abcdef' 
+    @ult_consignee_code = 'abcdef'
     @ult_consignee_name = 'u consign nm'
     @consignee_address_1 = 'ca1'
     @consignee_address_2 = 'ca2'
@@ -89,7 +89,7 @@ describe OpenChain::AllianceParser do
     @pay_type = '7'
     @comments = [{:text=>"Entry Summary queued to send",:date=>'201104211824',:user=>'BDEVITO'}]
     convert_cur = lambda {|c,width| c ? (c * 100).to_i.to_s.rjust(width,'0') : "".rjust(width,'0')}
-    
+
     @bond_type = '8'
     @location_of_goods = "LOCG"
     @make_entry_lambda = lambda {
@@ -186,16 +186,16 @@ describe OpenChain::AllianceParser do
           :line_number => '00010', :contract_amount => BigDecimal('99.99', 2), :store_name => "Store1",
           :tariff=>[{
             :duty_total=>BigDecimal("21.10",2),:entered_value=>BigDecimal('19311.12',2),:spi_primary=>'A',:spi_secondary=>'B',:hts_code=>'6504212121',
-            :class_q_1=>BigDecimal('10.04',2),:class_uom_1=>'ABC', 
-            :class_q_2=>BigDecimal('11.04',2),:class_uom_2=>'ABC', 
-            :class_q_3=>BigDecimal('12.04',2),:class_uom_3=>'ABC', 
+            :class_q_1=>BigDecimal('10.04',2),:class_uom_1=>'ABC',
+            :class_q_2=>BigDecimal('11.04',2),:class_uom_2=>'ABC',
+            :class_q_3=>BigDecimal('12.04',2),:class_uom_3=>'ABC',
             :gross_weight=>"551",:tariff_description=>"ABC 123 DEF"
           },
           {
             :duty_total=>BigDecimal("16.10",2),:entered_value=>BigDecimal('190311.12',2),:spi_primary=>'C',:spi_secondary=>'D',:hts_code=>'2702121210',
-            :class_q_1=>BigDecimal('14.04',2),:class_uom_1=>'ABC', 
-            :class_q_2=>BigDecimal('15.04',2),:class_uom_2=>'ABC', 
-            :class_q_3=>BigDecimal('16.04',2),:class_uom_3=>'ABC', 
+            :class_q_1=>BigDecimal('14.04',2),:class_uom_1=>'ABC',
+            :class_q_2=>BigDecimal('15.04',2),:class_uom_2=>'ABC',
+            :class_q_3=>BigDecimal('16.04',2),:class_uom_3=>'ABC',
             :gross_weight=>"559",:tariff_description=>"BDAFDADdafda"
           }],
           :add=>{:case_number => 'A23456789', :bond=> "Y", :amount=>BigDecimal('12345678.90'), :percent=>BigDecimal('123.45'), :value=>BigDecimal('98765432.10')},
@@ -215,7 +215,7 @@ describe OpenChain::AllianceParser do
         :total_quantity=>"000000000099", :total_quantity_uom=>"BOTTLE",
         :lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ',:po_number=>'jfdaila',:part_number=>'fjasjds', :contract_amount =>""}
         ]}
-    ] 
+    ]
     @make_commercial_invoices_lambda = lambda {
       rows = []
       @commercial_invoices.each do |ci|
@@ -239,7 +239,7 @@ describe OpenChain::AllianceParser do
               rows << t_row
             end
           end
-          
+
           cvd_add_line = lambda {|type, v| "CP00#{type}A#{v[:case_number].ljust(9)}#{convert_cur.call(v[:value],10)}#{convert_cur.call(v[:percent],5)}#{v[:bond]}0#{convert_cur.call(v[:amount],10)}"}
           rows << cvd_add_line.call("ADA", line[:add]) if line[:add]
           rows << cvd_add_line.call("CVD", line[:cvd]) if line[:cvd]
@@ -266,8 +266,8 @@ describe OpenChain::AllianceParser do
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @split_string = "\n "
 
-    # Because there's no public concept of unstubbing in rspec, this stub is primarily a hack to avoid 
-    # introducing a new context around the existing classes to be able to stub this call for those, 
+    # Because there's no public concept of unstubbing in rspec, this stub is primarily a hack to avoid
+    # introducing a new context around the existing classes to be able to stub this call for those,
     # and then a secondary context to allow us to make and expectation on the call the verify it's called.
     # Any test that wants to verify broadcast event was called should just check the @event_type variable.
     allow_any_instance_of(Entry).to receive(:broadcast_event) do |instance, event_type|
@@ -285,7 +285,7 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
     expect(ent.release_date).to be_nil
-    expect(ent.first_release_date).not_to be_nil 
+    expect(ent.first_release_date).not_to be_nil
   end
   it 'should set 7501 print dates' do
     first_7501 = '201104211627'
@@ -362,7 +362,7 @@ describe OpenChain::AllianceParser do
     it "should clear removed container" do
       bad_cnum = @containers.first[:cnum]
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
-      expect(Entry.first.containers.find_by_container_number(bad_cnum)).to_not be_nil 
+      expect(Entry.first.containers.find_by_container_number(bad_cnum)).to_not be_nil
       @containers.first[:cnum] = 'newcnum'
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
       expect(Entry.first.containers.find_by_container_number(bad_cnum)).to be_nil
@@ -383,7 +383,7 @@ describe OpenChain::AllianceParser do
     expect(company.name).to eq(@customer_name)
     expect(ent.importer).to eq(company)
   end
-  
+
   it "should write bucket_name & key" do
     OpenChain::AllianceParser.parse @make_entry_lambda.call, {:bucket=>'a',:key=>'b'}
     ent = Entry.find_by_broker_reference @ref_num
@@ -495,16 +495,16 @@ describe OpenChain::AllianceParser do
     expected_vendor_names = Set.new
     expected_total_units_uoms = Set.new
     expected_spis = Set.new
-    expected_pos = Set.new 
+    expected_pos = Set.new
     expected_parts = Set.new
     expected_total_units = BigDecimal("0",2)
     expected_inv_numbers = Set.new
     expected_departments = Set.new
-    
+
     total_cvd = 0
     total_add = 0
 
-    @commercial_invoices.each do |ci| 
+    @commercial_invoices.each do |ci|
       invoices = ent.commercial_invoices.where(:invoice_number=>ci[:invoice_number])
       expect(invoices.size).to eq(1)
       inv = invoices.first
@@ -559,7 +559,7 @@ describe OpenChain::AllianceParser do
         if line[:tariff]
           line[:tariff].each do |t_line|
             found = ci_line.commercial_invoice_tariffs.where(:hts_code=>t_line[:hts_code])
-            expect(found.record.size).to eq(1)
+            expect(found.size).to eq(1)
             t = found.first
             expect(t.duty_amount).to eq(t_line[:duty_total])
             expect(t.entered_value).to eq(t_line[:entered_value])
@@ -581,7 +581,7 @@ describe OpenChain::AllianceParser do
 
         if line[:add]
           add = line[:add]
-          
+
           expect(ci_line.add_case_number).to eq(add[:case_number])
           expect(ci_line.add_bond).to eq(add[:bond] == "Y")
           expect(ci_line.add_duty_amount).to eq(add[:amount])
@@ -592,7 +592,7 @@ describe OpenChain::AllianceParser do
 
         if line[:cvd]
           cvd = line[:cvd]
-          
+
           expect(ci_line.cvd_case_number).to eq(cvd[:case_number])
           expect(ci_line.cvd_bond).to eq(cvd[:bond] == "Y")
           expect(ci_line.cvd_duty_amount).to eq(cvd[:amount])
@@ -626,10 +626,10 @@ describe OpenChain::AllianceParser do
     expect(ent.special_program_indicators.split(@split_string)).to eq(expected_spis.to_a)
     expect(ent.commercial_invoice_numbers.split(@split_string)).to eq(expected_inv_numbers.to_a)
     expect(ent.departments.split(@split_string)).to eq(expected_departments.to_a)
-    expect(ent.total_cvd).to eq(total_cvd) 
+    expect(ent.total_cvd).to eq(total_cvd)
     expect(ent.total_add).to eq(total_add)
 
-    expect(ent.time_to_process).to be < 1000 
+    expect(ent.time_to_process).to be < 1000
     expect(ent.time_to_process).to be > 0
 
     expect(@event_type).to eq(:save)
@@ -740,8 +740,8 @@ describe OpenChain::AllianceParser do
     end
     it 'should work with no customer references' do
       @customer_references = nil
-      expected_pos = Set.new 
-      @commercial_invoices.each do |ci| 
+      expected_pos = Set.new
+      @commercial_invoices.each do |ci|
         ci[:lines].each do |line|
           expected_pos << line[:po_number] if line[:po_number]
         end
@@ -751,9 +751,9 @@ describe OpenChain::AllianceParser do
     end
     it 'should work with no po numbers' do
       @customer_references = "a\nb\nc"
-      @commercial_invoices.each do |ci| 
+      @commercial_invoices.each do |ci|
         ci[:lines].each do |line|
-          line[:po_number] = nil 
+          line[:po_number] = nil
         end
       end
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
@@ -1016,7 +1016,7 @@ describe OpenChain::AllianceParser do
 
       @entry = t4.commercial_invoice_line.entry
 
-      # Normally, we'd not end up missing information for certain lines, but I'm just doing it here to make sure that the 
+      # Normally, we'd not end up missing information for certain lines, but I'm just doing it here to make sure that the
       # correct lines are getting discovered in the code to be updated.
       @query_context = {'broker_reference' => @entry.broker_reference, 'last_exported_from_source'=> @entry.last_exported_from_source.to_json}
       # All of the values need to be sent over as strings, otherwise, the json'ization of the result set sends them as float values which causes issues w/ dates and expected int values.

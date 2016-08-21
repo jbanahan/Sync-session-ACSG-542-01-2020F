@@ -48,7 +48,7 @@ describe OpenChain::SlackClient do
       expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
       expect(@fake_client).to receive(:chat_postMessage).with(expected).and_raise('hello')
       c = described_class.new('abc')
-      expect {c.send_message!('c','txt')}.to raise_error
+      expect {c.send_message!('c','txt')}.to raise_error(/hello/)
     end
   end
 end

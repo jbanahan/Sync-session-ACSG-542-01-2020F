@@ -38,7 +38,7 @@ describe Api::V1::SupportRequestsController do
 
     it "rolls back save if error occurs in sending" do
       expect_any_instance_of(SupportRequest::TestingSender).to receive(:send_request).and_raise "Error!"
-      expect {post :create, support_request: {body: "Help!", importance: "Critical"}}.to raise_error
+      expect {post :create, support_request: {body: "Help!", importance: "Critical"}}.to raise_error(/Error/)
 
       expect(response).not_to be_success
 
@@ -51,7 +51,7 @@ describe Api::V1::SupportRequestsController do
 
       post :create, support_request: {body: "Help!", importance: "Critical"}
       expect(response).not_to be_success
-      # Errors will technically be nil since we don't have any real AR validations, but by 
+      # Errors will technically be nil since we don't have any real AR validations, but by
       # forcing save to return blank we force the invalid path.
       expect(JSON.parse(response.body)).to eq({"errors" => []})
     end

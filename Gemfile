@@ -76,12 +76,12 @@ gem 'ruby-trello', '1.3.0'
 gem 'email_validator', '~> 1.6.0'
 
 group :development,:test do
-  gem 'rspec-rails', '~> 2.99'
+  gem 'rspec-rails', '~> 3.5.0'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
   gem 'factory_girl', '2.5.2'
   gem 'byebug'
   gem 'jasmine-rails'
-  gem 'rspec_junit_formatter', '0.2.3' #circle ci formatting
+  gem 'rspec_junit_formatter', '~> 0.2.3' #circle-ci formatting
   # gem 'rack-mini-profiler'
   gem 'minitest'
 end

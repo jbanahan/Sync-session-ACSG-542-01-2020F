@@ -177,14 +177,14 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     end
     it "should fail if user cannot edit shipments" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
-      expect {@p.process_shipment [default_row]}.to raise_error
+      expect {@p.process_shipment [default_row]}.to raise_error(/edit/)
     end
     it "should fail if order doesn't exist" do
-      expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error
+      expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error(/not found/)
     end
     it "should fail if item doesn't exist on order" do
       @ol.update_attributes(product_id:Factory(:product).id)
-      expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error
+      expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error(/not found/)
     end
   end
 

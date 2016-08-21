@@ -20,7 +20,7 @@ describe OpenChain::OrderAcceptanceRegistry do
       c = Class.new do
       end
 
-      expect{described_class.register c}.to raise_error
+      expect{described_class.register c}.to raise_error(/accept/)
       expect(described_class.registered.to_a).to be_empty
     end
     it "should pass if only implements can_be_accepted?" do

@@ -27,10 +27,10 @@ describe DrawbackUploadFile do
       expect(@user.messages.size).to eq(1)
     end
     it "should error if processor not set" do
-      expect {DrawbackUploadFile.new.process(@user)}.to raise_error
+      expect {DrawbackUploadFile.new.process(@user)}.to raise_error(/Processor/)
     end
     it "should error if processor not valid" do
-      expect {DrawbackUploadFile.new(:processor=>'bad').process(@user)}.to raise_error
+      expect {DrawbackUploadFile.new(:processor=>'bad').process(@user)}.to raise_error(/Processor/)
     end
     it "should catch and log errors from delegated processes" do
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS)

@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
   it "should raise error if no sap brand custom definition" do
     @sap_brand_cd.destroy
-    expect {described_class.new}.to raise_error
+    expect {described_class.new}.to raise_error(/SAP Brand/)
   end
   describe "sync_csv" do
     before :each do
@@ -132,7 +132,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
         p.update_custom_value! @sap_brand_cd, true
         Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))
       end
-      
+
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
       expect(a.size).to eq(1)
@@ -164,12 +164,12 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
       # Make sure AAA is always sorted first
       p2 = nil
-      Timecop.freeze(Time.zone.now - 7.days) do 
+      Timecop.freeze(Time.zone.now - 7.days) do
         p2 = Factory(:product, unique_identifier: "AAA")
         p2.update_custom_value! @sap_brand_cd, true
         Factory(:tariff_record,:hts_1=>'1234567890', line_number: "2", classification: Factory(:classification,:country_id=>@us.id,:product=>p2))
       end
-      
+
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
       expect(a.length).to eq 3
@@ -196,7 +196,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
   end
 
   describe "before_csv_write" do
-    before :each do 
+    before :each do
       @vals = []
       30.times {|i| @vals << i}
       @vals[3] = "1234567890"
@@ -258,9 +258,9 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     it "should handle non-string data" do
       v = {
         0 => BigDecimal.new(123),
-        1 => 123, 
-        2 => 123.4, 
-        3 => Time.now, 
+        1 => 123,
+        2 => 123.4,
+        3 => Time.now,
         4 => nil
       }
 
@@ -268,7 +268,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       expect(r).to eq [v]
     end
 
-    context "invalid_ascii_chars" do 
+    context "invalid_ascii_chars" do
       before :each do
         expect_any_instance_of(StandardError).to receive(:log_me) do |instance, arg|
           @error_message = arg

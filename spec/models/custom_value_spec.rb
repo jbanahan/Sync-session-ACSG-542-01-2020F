@@ -24,17 +24,17 @@ describe CustomValue do
       expect(found.value).to eq("abc")
     end
     it "should fail if parent object is not saved" do
-      expect {CustomValue.batch_write! [CustomValue.new(:custom_definition=>@cd,:customizable=>Product.new)]}.to raise_error
+      expect {CustomValue.batch_write! [CustomValue.new(:custom_definition=>@cd,:customizable=>Product.new)]}.to raise_error(/customizable/)
     end
     it "should fail if custom definition not set" do
-      expect {CustomValue.batch_write! [CustomValue.new(:customizable=>@p)]}.to raise_error
+      expect {CustomValue.batch_write! [CustomValue.new(:customizable=>@p)]}.to raise_error(/custom_definition/)
     end
     it "should roll back all if one fails" do
       @p.update_custom_value! @cd, "xyz"
       cv = CustomValue.find_by_custom_definition_id @cd.id
       cv.value = 'abc'
       bad_cv = CustomValue.new(:customizable=>@p)
-      expect {CustomValue.batch_write! [cv,bad_cv]}.to raise_error
+      expect {CustomValue.batch_write! [cv,bad_cv]}.to raise_error(/custom_definition/)
       expect(CustomValue.all.size).to eq(1)
       expect(CustomValue.first.value).to eq('xyz')
     end
@@ -92,7 +92,7 @@ describe CustomValue do
       changed_at = @p.changed_at
 
       # Because changed_at is not updated if it's less than a minute old, update
-      # it to older than that via update_column, otherwise callbacks are invoked 
+      # it to older than that via update_column, otherwise callbacks are invoked
       # and changed_at is updated to now
       yesterday = 1.day.ago
       @p.update_column :changed_at, yesterday

@@ -66,7 +66,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
     end
     it 'should fail if user does not have permission' do
       allow(described_class).to receive(:permission?).and_return false
-      expect{described_class.run_report user, season:'FW17'}.to raise_error
+      expect{described_class.run_report user, season:'FW17'}.to raise_error(/permission/)
     end
 
     context 'override scenarios' do

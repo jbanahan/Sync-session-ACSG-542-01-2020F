@@ -16,7 +16,7 @@ describe FtpSender do
 
   describe "default_options" do
     it "should have default options" do
-     expect(FtpSender.default_options(@file, @file)).to eq({:binary => true, :passive => true, 
+     expect(FtpSender.default_options(@file, @file)).to eq({:binary => true, :passive => true,
         :remote_file_name => File.basename(@file), :force_empty => false, :protocol => "ftp"}.with_indifferent_access)
     end
 
@@ -24,14 +24,14 @@ describe FtpSender do
       Attachment.add_original_filename_method @file
       @file.original_filename="original.txt"
 
-      expect(FtpSender.default_options(@file, @file)).to eq({:binary => true, :passive => true, 
+      expect(FtpSender.default_options(@file, @file)).to eq({:binary => true, :passive => true,
          :remote_file_name => "original.txt", :force_empty => false, :protocol => "ftp"}.with_indifferent_access)
     end
   end
 
   describe "resend_file" do
-    it "should deserialize json'ized options and call send_file" do 
-      # Make sure to use symbols here since we want to make sure the options hash 
+    it "should deserialize json'ized options and call send_file" do
+      # Make sure to use symbols here since we want to make sure the options hash
       # created from the json is an indifferent access one
       options = {:blah => "blah", :yada => "yada"}.to_json
 
@@ -72,14 +72,14 @@ describe FtpSender do
   end
 
   context "send" do
-    before :each do 
+    before :each do
       @ftp = double('ftp').as_null_object
       expect(FtpSender).to receive(:get_ftp_client).and_return @ftp
     end
 
     context "error" do
 
-      before :each do 
+      before :each do
         @conf = double("Rails.configuration")
         allow(Rails).to receive(:configuration).and_return @conf
         allow(@conf).to receive(:enable_ftp).and_return true
@@ -90,7 +90,7 @@ describe FtpSender do
         expect(@ftp).to receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_raise "RANDOM ERROR"
         expect(@ftp).to receive(:last_response).and_return "500"
 
-        # We're stubbing out the create_attachment call on the ftp session to avoid S3 involvement when 
+        # We're stubbing out the create_attachment call on the ftp session to avoid S3 involvement when
         # saving the ftp session's file attachment
         attachment = double("Attachment")
         allow(attachment).to receive(:id).and_return 1
@@ -131,7 +131,7 @@ describe FtpSender do
         expect(sess.last_server_response).to eq("500")
         # Make sure the correct session id was passed to the resend call
         expect(session_id).to eq sess.id
-        
+
         expect(FtpSession.first.id).to eq(sess.id)
         expect(@file.closed?).to be_truthy
       end
@@ -164,9 +164,9 @@ describe FtpSender do
         FtpSender.send_file 'server', 'user', 'password', @file, {}
       end
     end
-    
-    context "success" do 
-      before :each do 
+
+    context "success" do
+      before :each do
         expect(@ftp).to receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_yield @ftp
       end
 
@@ -239,7 +239,7 @@ describe FtpSender do
         expect(handle.closed?).to be_truthy
       end
 
-      it "should change directory to remote directory" do 
+      it "should change directory to remote directory" do
         allow(@ftp).to receive(:last_response).and_return "200"
         attachment = double("Attachment")
         expect_any_instance_of(FtpSession).to receive(:create_attachment).and_return attachment
@@ -263,6 +263,8 @@ describe FtpSender do
 
     context "validate_connect" do
       it "passes through all the opts to the connect method" do
+        def @file.original_filename; 'myfile.txt'; end
+
         local_opts = {port: 1234, binary: false, passive: false, remote_file_name: "filename.txt", force_empty: true, protocol: "sftp", folder: "folder"}
         expect(@ftp).to receive(:connect).with(@server, @username, @password, kind_of(Array), local_opts.with_indifferent_access).and_yield @ftp
         expect(@ftp).to receive(:after_login).with(kind_of(Hash))
@@ -275,7 +277,7 @@ describe FtpSender do
         file = double('File')
         allow(file).to receive(:size).and_return 0
         expect(FtpSender).to receive(:get_file_to_ftp).and_yield file
-      
+
         FtpSender.send_file @server, @username, @password, @file, local_opts
       end
     end
@@ -303,7 +305,7 @@ describe FtpSender do
     end
 
     context "post_connect" do
-      before :each do 
+      before :each do
         @ftp = double("Net::FTP")
         # connect sets up some variables so we need to call it every time
         expect(Net::FTP).to receive(:open).with(@server, @username, @password).and_yield @ftp
@@ -346,7 +348,7 @@ describe FtpSender do
         end
       end
     end
-    
+
   end
 
   context "SftpClient" do
@@ -407,7 +409,7 @@ describe FtpSender do
     end
 
     context "post_connect" do
-      before :each do 
+      before :each do
         @ftp = double("Net::SFTP")
         # connect sets up some variables so we need to call it every time
         expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
@@ -469,11 +471,11 @@ describe FtpSender do
         end
       end
     end
-    
+
   end
 
   context "empty file check" do
-    
+
     before :each do
       @file.close!
       @file = Tempfile.new("empty")

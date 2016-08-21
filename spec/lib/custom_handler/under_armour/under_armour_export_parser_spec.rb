@@ -1,10 +1,10 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
-  
-  before :each do 
+
+  before :each do
     #UNDER ARMOUR IS DESIGNED TO RUN IN THEIR OWN DATABASE AND USES THE FIRST IMPORTER IN THE DB
-    @importer = Factory(:company,:importer=>true) 
+    @importer = Factory(:company,:importer=>true)
   end
   context "AAFES Exports" do
     before :each do
@@ -14,13 +14,13 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
       @lines = [
 "Style,Color,UPC,PO Number,PO Line Number,Export Date,TCMD CONTAINER,VAN TCN,PO Received Date,Vendor,VENDOR NAME,Facility,ISO,FACNAME,Item,DESC,CRC,STYLE2,Units Received,Cost,Recd $",
 "1000375-609,LG,698611559156,0055404558,5,10/2/2011,MSKU 812950 ,HX7NNW-3903-S0622M2,11-Nov-11,60581514,UNDER ARMOUR,1375142,DE,GRAFENWOEHR MAIN STORE,470566840000001,UA MEN TOP MAROON LARGE,4947811,1000375609,20,$9.50 ,$190.00",
-"1000377-001,XXL,698611562095,0016052969,10,12/25/2011,APZU 474489 ,HX7NNW-4696-M0022M2,6-Feb-12,60581514,UNDER ARMOUR,1463665,KW,KW ARIFJAN Z6,470551939000013,TSHRT MEN XXL BLK,1387244,1000377-080 ,24,$11.88 ,$285.12", 
+"1000377-001,XXL,698611562095,0016052969,10,12/25/2011,APZU 474489 ,HX7NNW-4696-M0022M2,6-Feb-12,60581514,UNDER ARMOUR,1463665,KW,KW ARIFJAN Z6,470551939000013,TSHRT MEN XXL BLK,1387244,1000377-080 ,24,$11.88 ,$285.12",
 "1000377-410,XL,698611562149,0014599787,2,8/14/2011,SBOP,,9-Oct-10,60581507,UNDER ARMOUR,1365550,DE,GE VILSECK PXTRA,470551939000012,TSHRT MEN XL MDN,1387243,1000377-080,6,$12.50 ,$75.00 "
       ]
       @t = Tempfile.new("xyz")
-      @t << @lines.join("\n") 
+      @t << @lines.join("\n")
       @t.flush
-      @messages = described_class.parse_aafes_csv_file @t.path 
+      @messages = described_class.parse_aafes_csv_file @t.path
     end
     after :each do
       @t.close
@@ -62,9 +62,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
     end
     describe "parse_csv_file" do
       it "should handle non-ascii characters" do
-        described_class.parse_csv_file 'spec/support/bin/ua_outbound_unicode.csv', @importer 
+        described_class.parse_csv_file 'spec/support/bin/ua_outbound_unicode.csv', @importer
         expect(DutyCalcExportFileLine.all.size).to eq(1)
-        expect(DutyCalcExportFileLine.first.description).to eq('UA PERFECT CAPRI-BLK/BLK Qu bec') 
+        expect(DutyCalcExportFileLine.first.description).to eq('UA PERFECT CAPRI-BLK/BLK Qu bec')
       end
       it "should parse multi line csv ignoring headers" do
         content = @lines.join("\n")
@@ -112,26 +112,10 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
         expect(d.duty_calc_export_file).to be_nil
         expect(d.importer).to eq(@importer)
       end
-      
-      it 'should raise exception if style is empty' do
-        line = "3452168,85439724,,1,LG,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        expect {described_class.parse_csv_line line, 0, @importer}.to raise_error
-      end
-      it 'should raise exception if color is empty' do
-        line = "3452168,85439724,1005492,,LG,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        expect {described_class.parse_csv_line line, 0, @importer}.to raise_error
-      end
-      it 'should raise exception if size is empty' do
-        line = "3452168,85439724,1005492,1,,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        expect {described_class.parse_csv_line line, 0, @importer}.to raise_error
-      end
-      it 'should skip line if COO is empty' do
-        line = "3452168,85439724,1000382,1,LG,,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        expect(described_class.parse_csv_line(line, 0, @importer)).to be_nil
-      end
+
       it 'should raise exception if row does not have 32 elements' do
         line = "3452168,85439724,1005492,1,LG,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        expect {described_class.parse_csv_line line}.to raise_error
+        expect {described_class.parse_csv_line line, 0, @importer}.to raise_error(/elements/)
       end
     end
   end
@@ -183,4 +167,3 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
     end
   end
 end
-

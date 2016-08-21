@@ -1,14 +1,14 @@
 require 'spec_helper'
 
 describe BrokerInvoicesController do
-  before :each do 
+  before :each do
     MasterSetup.get.update_attributes(:entry_enabled=>true,:broker_invoice_enabled=>true)
 
     @user = Factory(:user,:company=>Factory(:company,:master=>true),:broker_invoice_edit=>true,:entry_view=>true)
     sign_in_as @user
   end
   describe "create" do
-    before :each do 
+    before :each do
       @entry = Factory(:entry)
     end
     context "security" do
@@ -25,7 +25,7 @@ describe BrokerInvoicesController do
         expect(flash[:errors].size).to eq(1)
       end
       it "should not process without an entry_id" do
-        expect {post :create, {'broker_invoice'=>{'suffix'=>'a'}}}.to raise_error
+        expect {post :create, {'broker_invoice'=>{'suffix'=>'a'}}}.to raise_error(/Entry/)
       end
     end
     it "should not create invoices without lines" do

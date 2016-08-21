@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       path = double('data')
       x = double('xlclient')
       u = double('user')
-      expect(OpenChain::XLClient).to receive(:new).with(path).and_return x      
+      expect(OpenChain::XLClient).to receive(:new).with(path).and_return x
       t = double('x')
       expect(described_class).to receive(:new).and_return t
       expect(t).to receive(:run).with(s,x,u,nil)
@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         width:'100.000',
         height:'1000.000',
         dim_unit:'CM'
-      }.merge overrides 
+      }.merge overrides
       r = Array.new(57,'')
       r[5] = base[:range]
       r[6] = base[:carton_start]
@@ -371,7 +371,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       described_class.new.process_rows(@s,rows,@u)
       @s.reload
       expect(@s.shipment_lines.first.container.container_number).to eq 'ABCD12345'
-      
+
     end
     it "should fail on missing PO" do
       row_seed = {
@@ -412,7 +412,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         86=>detail_line({po:'ordnum',sku:'sk12345',item_qty:'8'})
       }
       rows = init_mock_array 90, row_seed
-      expect{described_class.new.process_rows(@s,rows,@u)}.to raise_error
+      expect{described_class.new.process_rows(@s,rows,@u)}.to raise_error(/SKU/)
       @s.reload
       expect(@s.containers).to be_empty
     end

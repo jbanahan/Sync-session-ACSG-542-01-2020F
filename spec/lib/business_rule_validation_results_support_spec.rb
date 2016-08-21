@@ -6,17 +6,16 @@ describe FakeController, :type => :controller do
   controller do
     include OpenChain::BusinessRuleValidationResultsSupport
 
-    def validation_results
+    def show
       generic_validation_results(Entry.find params[:id])
       render nothing: true unless performed?
     end
   end
 
-  before(:each) do 
+  before(:each) do
     @obj = Factory(:entry)
     @u = Factory(:user)
     sign_in_as @u
-    @routes.draw { get "validation_results" => "anonymous#validation_results" }
   end
 
   describe "generic_validation_results" do
@@ -24,21 +23,21 @@ describe FakeController, :type => :controller do
       it "provides object to view if user has rights to object view and business validation results" do
         allow(@u).to receive(:view_business_validation_results?).and_return true
         allow_any_instance_of(Entry).to receive(:can_view?).with(@u).and_return true
-        get :validation_results, id: @obj.id
+        get :show, id: @obj.id
         expect(assigns(:validation_object)).to eq @obj
         expect(response).to be_success
       end
 
       it "redirects with error if user can't view object" do
         allow(@u).to receive(:view_business_validation_results?).and_return true
-        get :validation_results, id: @obj.id
+        get :show, id: @obj.id
         expect(response).to be_redirect
         expect(flash[:errors]).to include "You do not have permission to view this entry."
       end
-      
+
       it "redirects with error if user can't view business results" do
         allow_any_instance_of(Entry).to receive(:can_view?).with(@u).and_return true
-        get :validation_results, id: @obj.id
+        get :show, id: @obj.id
         expect(response).to be_redirect
         expect(flash[:errors]).to include "You do not have permission to view this entry."
       end
@@ -52,24 +51,24 @@ describe FakeController, :type => :controller do
       @bvru_1 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
       @bvru_2 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
       @bvru_3 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
-      
+
       @bvrr_1 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
       @bvrr_1.business_validation_result = @bvr_1; @bvrr_1.save!
-      
+
       @bvrr_2 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
       @bvrr_2.business_validation_result = @bvr_1; @bvrr_2.save!
-      
+
       @bvrr_3 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
       @bvrr_3.business_validation_result = @bvr_2; @bvrr_3.save!
     end
 
     context "with JSON" do
       before(:each) { create_validation_data @u }
-      
+
       it "returns JSON object if user has right to view object and business validation results" do
         allow(@u).to receive(:view_business_validation_results?).and_return true
         allow_any_instance_of(Entry).to receive(:can_view?).with(@u).and_return true
-        get :validation_results, id: @obj.id, :format => 'json'
+        get :show, id: @obj.id, :format => 'json'
         r = JSON.parse(response.body)["business_validation_result"]
         expect(r["object_number"]).to eq "123456"
         expect(r["bv_results"].first["state"]).to eq "Fail"
@@ -77,13 +76,13 @@ describe FakeController, :type => :controller do
 
       it "returns error if user can't view object" do
         allow(@u).to receive(:view_business_validation_results?).and_return true
-        get :validation_results, id: @obj.id, :format => 'json'
+        get :show, id: @obj.id, :format => 'json'
         expect(JSON.parse(response.body)["error"]).to eq "You do not have permission to view this entry."
       end
 
       it "redirects with error if user can't view business results" do
         allow_any_instance_of(Entry).to receive(:can_view?).with(@u).and_return true
-        get :validation_results, id: @obj.id, :format => 'json'
+        get :show, id: @obj.id, :format => 'json'
         expect(JSON.parse(response.body)["error"]).to eq "You do not have permission to view this entry."
       end
     end
@@ -99,7 +98,7 @@ describe FakeJsonController, :type => :controller do
   controller do
     include OpenChain::BusinessRuleValidationResultsSupport
 
-    def validation_runner
+    def show
       run_validations(Entry.find params[:id])
       render nothing: true unless performed?
     end
@@ -115,22 +114,21 @@ describe FakeJsonController, :type => :controller do
       @bvru_1 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
       @bvru_2 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
       @bvru_3 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
-      
+
       @bvrr_1 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
       @bvrr_1.business_validation_result = @bvr_1; @bvrr_1.save!
-      
+
       @bvrr_2 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
       @bvrr_2.business_validation_result = @bvr_1; @bvrr_2.save!
-      
+
       @bvrr_3 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
       @bvrr_3.business_validation_result = @bvr_2; @bvrr_3.save!
     end
-    
-    before :each do 
+
+    before :each do
       MasterSetup.get.update_attributes(:entry_enabled=>true)
       @u = Factory(:master_user,entry_view:true)
       allow_api_access @u
-      @routes.draw { post "validation_runner" => "anonymous#validation_runner" }
     end
 
     it "delegates to BusinessValidationTemplate.create_results_for_object!" do
@@ -138,40 +136,40 @@ describe FakeJsonController, :type => :controller do
       bvt = BusinessValidationTemplate.create!(module_type:'Entry')
       bvt.search_criterions.create! model_field_uid: "ent_entry_num", operator: "nq", value: "XXXXXXXXXX"
       ent = Factory(:entry)
-      post :validation_runner, id: ent.id, format: "json"
+      post :show, id: ent.id, format: "json"
 
       expect(bvt.business_validation_results.first.validatable).to eq ent
     end
-    
+
     it "returns results hash" do
       obj = Factory(:entry)
       allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
-      post :validation_runner, id: obj.id, :format => 'json'
+      post :show, id: obj.id, :format => 'json'
       expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Entry"
     end
 
     it "renders error if user doesn't have permission to view object" do
       obj = Factory(:entry)
       allow_any_instance_of(Entry).to receive(:can_view?).and_return false
-      post :validation_runner, id: obj.id, :format => 'json'
+      post :show, id: obj.id, :format => 'json'
       expect(JSON.parse(response.body)["errors"]).to eq ["You do not have permission to update validation results for this object."]
     end
 
     it "renders error if there are any rule results user doesn't have permission to edit" do
       create_validation_data @u
       @bvru_1.group = Factory(:group); @bvru_1.save!
-      post :validation_runner, id: @obj.id, :format => 'json'
+      post :show, id: @obj.id, :format => 'json'
       expect(JSON.parse(response.body)["errors"]).to eq ["You do not have permission to update validation results for this object."]
     end
   end
 end
 
 describe OpenChain::BusinessRuleValidationResultsSupport do
-  
+
   subject {
     Class.new {
       include OpenChain::BusinessRuleValidationResultsSupport
-    }.new 
+    }.new
   }
 
   before :each do
@@ -187,13 +185,13 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
     @bvru_1 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
     @bvru_2 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
     @bvru_3 = Factory(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
-    
+
     @bvrr_1 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
     @bvrr_1.business_validation_result = @bvr_1; @bvrr_1.save!
-    
+
     @bvrr_2 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
     @bvrr_2.business_validation_result = @bvr_1; @bvrr_2.save!
-    
+
     @bvrr_3 = Factory(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
     @bvrr_3.business_validation_result = @bvr_2; @bvrr_3.save!
   end
@@ -253,7 +251,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
                 overridden_at: @bvrr_3.overridden_at,
                 editable: true
                 }
-              ]  
+              ]
           }
         ]
       }

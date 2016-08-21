@@ -7,7 +7,7 @@ describe OpenChain::Report::ReportHelper do
       include OpenChain::Report::ReportHelper
     end.new
   }
-  
+
   describe "table_from_query" do
     subject {
       Class.new do
@@ -46,16 +46,16 @@ describe OpenChain::Report::ReportHelper do
       Factory(:entry, broker_reference: "123")
       query = "SELECT e.id 'ID', e.broker_reference 'REF' FROM entries e"
       id = nil
-      # By setting id value in the conversion lambda on a column that's not on the report, we ensure that conversions 
+      # By setting id value in the conversion lambda on a column that's not on the report, we ensure that conversions
       # are definitely still being run over that column
-      subject.run query, {'ID' => lambda { |row, value| id = "Run"}}, query_column_offset: 1 
+      subject.run query, {'ID' => lambda { |row, value| id = "Run"}}, query_column_offset: 1
       expect(id).to eq "Run"
     end
   end
 
   # mostly tested in table_from_query
-  describe "table_from_query_result"  do 
-    before :each do 
+  describe "table_from_query_result"  do
+    before :each do
       q = "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
       @result_set = ActiveRecord::Base.connection.execute q
     end
@@ -83,7 +83,7 @@ describe OpenChain::Report::ReportHelper do
 
   describe "write_result_set_to_sheet" do
 
-    before :each do 
+    before :each do
       @wb = XlsMaker.create_workbook 'test'
       @sheet = @wb.worksheets[0]
     end
@@ -118,26 +118,26 @@ describe OpenChain::Report::ReportHelper do
 
     it "should use conversion lambdas to format output" do
       conversions = {}
-      conversions['Col1'] = lambda {|row, val| 
+      conversions['Col1'] = lambda {|row, val|
         expect(row).to eq(['A', 'B', 'C'])
         expect(val).to eq("A")
         "Col1"
       }
-      conversions[1] = lambda{|row, val| 
+      conversions[1] = lambda{|row, val|
         expect(row).to eq(['A', 'B', 'C'])
         expect(val).to eq("B")
         "Col2"
       }
-      conversions[:col_3] = lambda{|row, val| 
+      conversions[:col_3] = lambda{|row, val|
         expect(row).to eq(['A', 'B', 'C'])
         expect(val).to eq("C")
         "Col3"
       }
       # Add a lambda by name and symbol for the 3rd column, proves name/symbol takes precedence
-      conversions[2] = lambda{|row, val| 
+      conversions[2] = lambda{|row, val|
         raise "Shouldn't use this conversion."
       }
-      
+
       subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Whatever', 'col_3'], 0, conversions
       expect(@sheet.row(0)).to eq(['Col1', 'Col2', 'Col3'])
     end
@@ -154,12 +154,12 @@ describe OpenChain::Report::ReportHelper do
         "Col1"
       }
 
-      conversions['Col2'] = lambda {|row, val| 
+      conversions['Col2'] = lambda {|row, val|
         expect(row).to eq ['Col1', 'B', 'C']
         "Col2"
       }
 
-      conversions['Col3'] = lambda {|row, val| 
+      conversions['Col3'] = lambda {|row, val|
         expect(row).to eq ['Col1', 'Col2', 'C']
         "Col3"
       }
@@ -232,7 +232,7 @@ describe OpenChain::Report::ReportHelper do
       l = subject.csv_translation_lambda
       expect(l.call(nil, "A\nB\n C")).to eq "A, B, C"
     end
-    it "uses given parameters to split / joining" do 
+    it "uses given parameters to split / joining" do
       l = subject.csv_translation_lambda "\n", ","
       expect(l.call(nil, "A,B,C")).to eq "A\nB\nC"
     end
@@ -250,7 +250,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should error on invalid strings" do
-      expect{subject.sanitize_date_string "notadate"}.to raise_error
+      expect{subject.sanitize_date_string "notadate"}.to raise_error(/date/)
     end
 
     it "should convert date to UTC date time string" do
@@ -266,7 +266,7 @@ describe OpenChain::Report::ReportHelper do
 
   describe "workbook_to_tempfile" do
 
-    before :each do 
+    before :each do
       @wb = XlsMaker.create_workbook "Name", ["Header"]
     end
 

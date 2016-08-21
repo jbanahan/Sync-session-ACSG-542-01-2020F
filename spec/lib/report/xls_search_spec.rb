@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::Report::XLSSearch do
   before(:each) { @u = Factory(:user,:company_id=>Factory(:company,:master=>true).id,:product_view=>true) }
-  
+
   describe "run_report" do
     it "runs report" do
       search = Factory(:search_setup,:user=>@u,:module_type=>'Product')
@@ -45,7 +45,7 @@ describe OpenChain::Report::XLSSearch do
   end
 
   describe "run" do
-  
+
     context "execute" do
       before :each do
         @product = Factory(:product,:name=>'abc123')
@@ -65,10 +65,10 @@ describe OpenChain::Report::XLSSearch do
         u2 = Factory(:user)
         expect {
           described_class.run u2, @search.id
-        }.to raise_error
+        }.to raise_error(/user/)
       end
     end
-    
+
     context "spreadsheet" do
       before :each do
         @xl_out = double("Spreadsheet")
@@ -76,17 +76,17 @@ describe OpenChain::Report::XLSSearch do
         @xl_maker = double("XlsMaker")
         expect(@xl_maker).to receive(:make_from_search_query_by_search_id_and_user_id).and_return([@xl_out, 3])
       end
-      
+
       it "should include links" do
         ss = Factory(:search_setup,:include_links=>true,:user=>@u)
-        expect(XlsMaker).to receive(:new).with({:include_links=>true,:no_time=>false}).and_return(@xl_maker)  
+        expect(XlsMaker).to receive(:new).with({:include_links=>true,:no_time=>false}).and_return(@xl_maker)
         described_class.run @u, ss.id
       end
       it "should include 'no time' flag" do
         ss = Factory(:search_setup,:no_time=>true,:user=>@u)
-        expect(XlsMaker).to receive(:new).with({:include_links=>false,:no_time=>true}).and_return(@xl_maker)  
+        expect(XlsMaker).to receive(:new).with({:include_links=>false,:no_time=>true}).and_return(@xl_maker)
         described_class.run @u, ss.id
-      end 
+      end
     end
   end
 

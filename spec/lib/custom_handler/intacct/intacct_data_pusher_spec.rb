@@ -148,15 +148,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
     end
 
     it "raises an error if no companies are given" do
-      expect{described_class.run_schedulable JSON.parse('{}')}.to raise_error
+      expect{described_class.run_schedulable JSON.parse('{}')}.to raise_error(/companies/)
     end
 
     it "raises an error if non -array companies are given" do
-      expect{described_class.run_schedulable JSON.parse('{"companies": "Test"}')}.to raise_error
+      expect{described_class.run_schedulable JSON.parse('{"companies": "Test"}')}.to raise_error(/array/)
     end
 
     it "raises an error if blank array is given" do
-      expect{described_class.run_schedulable JSON.parse('{"companies": []}')}.to raise_error
+      expect{described_class.run_schedulable JSON.parse('{"companies": []}')}.to raise_error(/companies/)
     end
   end
 end

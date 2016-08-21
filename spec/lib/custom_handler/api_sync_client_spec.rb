@@ -224,7 +224,7 @@ describe OpenChain::CustomHandler::ApiSyncClient do
     it "handles errors in do_sync and logs them as sync failure messages" do
       expect(@client).to receive(:retrieve_remote_data).and_raise "Error"
 
-      expect {@client.test_sync @sync_object}.to raise_error
+      expect {@client.test_sync @sync_object}.to raise_error(/Error/)
 
       sr = SyncRecord.where(syncable_id: 1, syncable_type: "Test", trading_partner: "test").first
       expect(sr.sent_at.to_i).to be >= (Time.zone.now - 1.minute).to_i
