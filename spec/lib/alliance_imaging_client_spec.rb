@@ -61,7 +61,7 @@ describe OpenChain::AllianceImagingClient do
       File.open("#{Rails.root}/spec/fixtures/files/sample.pdf", "rb") do |f|
         @tempfile << f.read
       end
-      @hash = {"file_name"=>"file.pdf", "file_number"=>"123456", "doc_desc"=>"Testing", 
+      @hash = {"file_name"=>"file.pdf", "file_number"=>"123456", "doc_desc"=>"Testing",
                 "suffix"=>"123456", "doc_date"=>"2016-01-01 00:00"}
     end
 
@@ -108,7 +108,7 @@ describe OpenChain::AllianceImagingClient do
       # These are the only hash values we should currently expect from the Fenix imaging monitoring process
       @hash = {"source_system" => "Fenix", "file_number" => "123456", "doc_date" => Time.now, "file_name"=>"file.pdf", "doc_desc" => "Source Testing"}
       entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-      
+
       expect(entry.entry_number).to eq(@hash["file_number"])
       expect(entry.source_system).to eq('Fenix')
       expect(entry.file_logged_date).to be >= (Time.zone.now - 1.minute)
@@ -163,7 +163,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     context "Fenix B3 Files" do
-      before :each do 
+      before :each do
         @hash["source_system"] = 'Fenix'
         @e1.update_attributes :source_system => 'Fenix', :entry_number => "#{@hash['file_number']}", :broker_reference => '654321'
         @hash["doc_desc"] = "Automated"
@@ -172,7 +172,7 @@ describe OpenChain::AllianceImagingClient do
       it "should recognize B3 Automated Fenix files and attach the images as B3 records" do
         @hash['file_name'] = "File_cdc_123128.pdf"
         entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-        
+
         expect(entry.attachments.size).to eq(1)
         expect(entry.attachments[0].attached_file_name).to eq(@hash['file_name'])
         expect(entry.attachments[0].attachment_type).to eq("B3")
@@ -195,7 +195,7 @@ describe OpenChain::AllianceImagingClient do
       it "should recognize RNS Automated Fenix files and attach the images as RNS records" do
         @hash['file_name'] = "File_rns_123128.pdf"
         entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
-        
+
         expect(entry.attachments.size).to eq(1)
         expect(entry.attachments[0].attached_file_name).to eq(@hash['file_name'])
         expect(entry.attachments[0].attachment_type).to eq("Customs Release Notice")
@@ -367,7 +367,7 @@ describe OpenChain::AllianceImagingClient do
   end
 
   describe "process_entry_stitch_response" do
-    before :each do 
+    before :each do
       stub_paperclip
       @entry = Factory(:entry, entry_number: "1234567890")
       @a1 = @entry.attachments.create! attached_file_name: "test.pdf", attachment_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
@@ -391,7 +391,7 @@ describe OpenChain::AllianceImagingClient do
       StitchQueueItem.create! stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: 'Entry', stitch_queuable_id: @entry.id
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', 'path/to/file.pdf').and_yield @t
       expect(OpenChain::S3).to receive(:delete).with('bucket', 'path/to/file.pdf')
-      
+
       expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_truthy
 
       @entry.reload
@@ -434,7 +434,7 @@ ERR
   end
 
   describe "send_outstanding_stitch_requests" do
-    before :each do 
+    before :each do
       @entry = Factory(:entry, importer: Factory(:company))
       @broker_invoice = Factory(:broker_invoice, entry: @entry, invoice_date: '2014-01-01')
       @attachment = @entry.attachments.create! attached_file_name: "test.pdf", attachment_type: "A"
@@ -519,7 +519,7 @@ ERR
 
   describe "process_fenix_nd_image_file" do
     before :each do
-      @message = {"source_system" => "Fenix", "export_process" => "sql_proxy", "doc_date" => "2015-09-04T05:30:35-10:00", "s3_key"=>"path/to/file.txt", "s3_bucket" => "bucket", 
+      @message = {"source_system" => "Fenix", "export_process" => "sql_proxy", "doc_date" => "2015-09-04T05:30:35-10:00", "s3_key"=>"path/to/file.txt", "s3_bucket" => "bucket",
                   "file_number" => "11981001795105 ", "doc_desc" => "B3", "file_name" => "_11981001795105 _B3_01092015 14.24.42 PM.pdf", "version" => nil, "public" => true}
       # We need to start w/ an actual pdf file as paperclip no longer just uses the file's
       # filename to discover mime type.
