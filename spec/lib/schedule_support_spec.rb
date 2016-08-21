@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::ScheduleSupport do
   describe "run_if_needed" do
     before :each do
-      @ss = Factory(:search_schedule,:last_start_time=>1.year.ago) 
+      @ss = Factory(:search_schedule,:last_start_time=>1.year.ago)
     end
     it "should run if next_run_time < Time.now.utc" do
       @ss.stub(:next_run_time).and_return 1.year.ago
@@ -80,7 +80,7 @@ describe OpenChain::ScheduleSupport do
 
   describe "needs_to_run?" do
     before :each do
-      @ss = Factory(:search_schedule,:last_start_time=>1.year.ago) 
+      @ss = Factory(:search_schedule,:last_start_time=>1.year.ago)
     end
 
     it "needs to run if next run time before now" do
@@ -96,11 +96,15 @@ describe OpenChain::ScheduleSupport do
 
   describe "next_run_time" do
     before :each do
+      Timecop.freeze(Time.utc(2016,1,1,12,0,0))
       @u = User.new
       @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u),:run_monday=>true,
         :run_tuesday=>true,:run_wednesday=>true,:run_thursday=>true,:run_friday=>true,
         :run_saturday=>true,:run_sunday=>true,
         :last_start_time=>1.year.ago)
+    end
+    after :each do
+      Timecop.return
     end
     it "should identify next run time with EST time zone" do
       tz_str = "Eastern Time (US & Canada)"
@@ -151,7 +155,7 @@ describe OpenChain::ScheduleSupport do
     it "should use created_at if last_started_at is nil" do
       tz_str = "Eastern Time (US & Canada)"
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
-      @ss.created_at = Time.now 
+      @ss.created_at = Time.now
       @ss.last_start_time = nil
       now = Time.now.utc
       @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1)
@@ -186,15 +190,15 @@ describe OpenChain::ScheduleSupport do
         @ss.run_hour = target_hour
         @ss.next_run_time.hour.should == now.utc.hour + 1
         @ss.next_run_time.in_time_zone(tz_str).day.should == target_day
-        @ss.next_run_time.should > Time.now 
+        @ss.next_run_time.should > Time.now
       end
     end
 =end
   end
 
   describe "next_run_time" do
-    before :each do 
-      c = class FakeSchedulable 
+    before :each do
+      c = class FakeSchedulable
         include OpenChain::ScheduleSupport
       end
 
@@ -225,7 +229,7 @@ describe OpenChain::ScheduleSupport do
     end
 
     it "does not run on days that are not configured in the schedule" do
-      # Jan 1, 2014 was a wednesday, so the next run time should 
+      # Jan 1, 2014 was a wednesday, so the next run time should
       # be Jan 2 (thurs), midnight
       @s.stub(:interval).and_return "1h"
       @s.stub(:thursday_active?).and_return true
