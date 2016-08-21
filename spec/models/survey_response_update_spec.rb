@@ -18,7 +18,7 @@ describe SurveyResponseUpdate do
       allow(@quiet_email).to receive(:deliver)
       @u = Factory(:user)
     end
-    context :subscription_tests do
+    context "subscription_tests" do
       before :each do
         allow(OpenMailer).to receive(:send_survey_user_update).and_return @quiet_email
       end
@@ -81,7 +81,7 @@ describe SurveyResponseUpdate do
         described_class.run_updates
       end
     end
-    context :survey_user do
+    context "survey_user" do
       before :each do
         quiet_email = double('email')
         allow(quiet_email).to receive(:deliver)

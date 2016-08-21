@@ -85,14 +85,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
     after(:each) do
       Delayed::Worker.delay_jobs = @ws
     end
-    context :ecellerate do
+    context "ecellerate" do
       it "should send data to eCellerate router" do
         expect(OpenChain::CustomHandler::EcellerateXmlRouter).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
         cmd = {'request_type'=>'remote_file','path'=>'/_ecellerate_shipment/a.xml','remote_path'=>'12345'}
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(@success_hash)
       end
     end
-    context :hm do
+    context "hm" do
       it "should send data to H&M I1 Interface if feature enabled and path contains _hm_i1" do
         expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('H&M I1 Interface').and_return(true)
         expect(OpenChain::CustomHandler::Hm::HmI1Interface).to receive(:delay).and_return OpenChain::CustomHandler::Hm::HmI1Interface
@@ -101,7 +101,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(@success_hash)
       end
     end
-    context :lands_end do
+    context "lands_end" do
       it "should send data to Lands End Parts parser" do
         u = Factory(:user,:username=>'integration')
         expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('Lands End Parts').and_return(true)
@@ -117,7 +117,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(@success_hash)
       end
     end
-    context :jjill do
+    context "jjill" do
       it "should send data to J Jill 850 parser" do
         expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('JJill').and_return(true)
         expect(OpenChain::CustomHandler::JJill::JJill850XmlParser).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
@@ -125,7 +125,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(@success_hash)
       end
     end
-    context :lenox do
+    context "lenox" do
       it "should send data to lenox prodct parser if feature enabled and path contains _lenox_product" do
         Factory(:user,:username=>'integration')
         expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('Lenox').and_return(true)
@@ -143,7 +143,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(@success_hash)
       end
     end
-    context :ann_inc do
+    context "ann_inc" do
       it "should send data to Ann Inc SAP Product Handler if feature enabled and path contains _from_sap" do
         expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('Ann SAP').and_return(true)
         expect(OpenChain::CustomHandler::AnnInc::AnnSapProductHandler).to receive(:delay).and_return OpenChain::CustomHandler::AnnInc::AnnSapProductHandler
@@ -161,7 +161,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(@success_hash)
       end
     end
-    context :eddie_bauer do
+    context "eddie_bauer" do
       it "should send ack files to ack parser for _eb_ftz_ack" do
         p = double("parser")
         expect(OpenChain::CustomHandler::AckFileHandler).to receive(:new).and_return p
@@ -178,7 +178,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(@success_hash)
       end
     end
-    context :lumber_liquidators do
+    context "lumber_liquidators" do
       before :each do
         MasterSetup.get.update_attributes(custom_features:'Lumber SAP')
       end
@@ -212,7 +212,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq @success_hash
       end
     end
-    context :msl_plus_enterprise do
+    context "msl_plus_enterprise" do
       it "should send data to MSL+ Enterprise custom handler if feature enabled and path contains _from_msl but not test and file name does not include -ack" do
         expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('MSL+').and_return(true)
         cmd = {'request_type'=>'remote_file','path'=>'/_from_msl/a.csv','remote_path'=>'12345'}

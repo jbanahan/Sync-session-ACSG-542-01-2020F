@@ -8,7 +8,7 @@ describe ProjectDeliverable do
       expect(ProjectDeliverable.not_closed.to_a).to eq [d1]
     end
   end
-  context :security do
+  context "security" do
     it "should allow view if project is visible" do
       pd = Factory(:project_deliverable)
       allow(pd.project).to receive(:can_view?).and_return true

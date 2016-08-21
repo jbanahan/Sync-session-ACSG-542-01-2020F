@@ -158,7 +158,7 @@ describe CoreObjectSupport do
     end
   end
 
-  context :TestCoreObject do
+  context "TestCoreObject" do
     before :each do
       class TestCoreObject < ActiveRecord::Base
         include CoreObjectSupport

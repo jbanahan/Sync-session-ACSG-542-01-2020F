@@ -146,7 +146,7 @@ describe EntitySnapshot do
       expect(restored.name).to eq('n2')
     end
 
-    context :custom_values do
+    context "custom_values" do
       context "with standard custom field" do
         
         before :each do 

@@ -76,7 +76,7 @@ describe OpenMailer do
       @tempfile.binmode
       @tempfile << @s3_content
       @tempfile.rewind
-      
+
       #mock s3 handling
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(@bucket,@s3_path).and_return(@tempfile)
     end
@@ -85,7 +85,7 @@ describe OpenMailer do
     end
     it "should attach file from s3" do
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path).deliver
-      
+
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq([@to])
       expect(mail.cc).to eq([@cc])
@@ -94,7 +94,7 @@ describe OpenMailer do
       pa = mail.attachments[@filename]
       expect(pa.content_type).to eq("application/octet-stream; charset=UTF-8")
       expect(pa.read).to eq(@s3_content)
-      
+
     end
     it "should take attachment_name parameter" do
       alt_name = 'x.y'
@@ -106,7 +106,7 @@ describe OpenMailer do
 
   describe "send_registration_request" do
     it "should send email with registration details to support address" do
-      fields = { email: "john_doe@acme.com", fname: "John", lname: "Doe", company: "Acme", 
+      fields = { email: "john_doe@acme.com", fname: "John", lname: "Doe", company: "Acme",
                   cust_no: "123456789", contact: "Jane Smith", system_code: "HAL9000"}
 
       OpenMailer.send_registration_request(fields).deliver!
@@ -118,17 +118,17 @@ describe OpenMailer do
     end
   end
 
-  context :send_simple_html do 
+  context "send_simple_html" do
     describe "in development environment" do
       it "should send an email to User 1's email" do
         # For some reason, the test seems to fail when run from spork on an undefined message variable in the layout.
         # It runs fine via the rspec commandline, not sure what's going on.
 
         allow(Rails).to receive(:env).and_return ActiveSupport::StringInquirer.new("development")
-        
+
         #Ensure there's a user set up, it seems sometimes there's not in circle environment
         user = Factory(:user, email: "me@there.com")
-        
+
         OpenMailer.send_simple_html("example@example.com", "Test subject","<p>Test body</p>").deliver!
 
         m = OpenMailer.deliveries.last
@@ -147,10 +147,10 @@ describe OpenMailer do
 
       it "should handle multiple addresses in to field" do
         allow(Rails).to receive(:env).and_return ActiveSupport::StringInquirer.new("development")
-        
+
         #Ensure there's a user set up, it seems sometimes there's not in circle environment
         user = Factory(:user, email: "me@there.com")
-        
+
         OpenMailer.send_simple_html("example@example.com, you@there.com", "Test subject","<p>Test body</p>").deliver!
 
         m = OpenMailer.deliveries.last
@@ -204,7 +204,7 @@ describe OpenMailer do
           f2 << "Content2"
           f2.flush
           f.flush
-          
+
           OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
 
           mail = ActionMailer::Base.deliveries.pop
@@ -248,7 +248,7 @@ describe OpenMailer do
           expect(pa).not_to be_nil
           expect(pa.read).to eq(File.read(f2))
           expect(pa.content_type).to match /application\/octet-stream/
-          
+
           ea = EmailAttachment.all.first
           expect(ea).to be_nil
         end
@@ -293,7 +293,7 @@ All system attachments are deleted after seven days, please retrieve your attach
 EMAIL
           expect(mail.body.raw_source).to match(body)
         end
-      end    
+      end
     end
 
     it "should utilize original_filename method for file attachments" do
@@ -315,7 +315,7 @@ EMAIL
     end
   end
 
-  context :auto_send_attachments do 
+  context "auto_send_attachments" do
     it "should send html email with an attachment" do
       Tempfile.open(["file", "txt"]) do |f|
         f.binmode
@@ -328,7 +328,7 @@ EMAIL
         expect(mail.to).to eq(["me@there.com"])
         expect(mail.reply_to).to eq(["test@email.com"])
         expect(mail.subject).to eq("Subject")
-        expect(mail.body.raw_source).to match("&lt;p&gt;Body<br>&lt;/p&gt;")                                            
+        expect(mail.body.raw_source).to match("&lt;p&gt;Body<br>&lt;/p&gt;")
 
         pa = mail.attachments[File.basename(f)]
         expect(pa).not_to be_nil
@@ -347,7 +347,7 @@ EMAIL
           f2 << "Content2"
           f2.flush
           f.flush
-          
+
           OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body\n</p>", [f, f2], "Test name", "test@email.com").deliver
 
           mail = ActionMailer::Base.deliveries.pop
@@ -437,7 +437,7 @@ All system attachments are deleted after seven days, please retrieve your attach
 EMAIL
           expect(mail.body.raw_source).to match(body)
         end
-      end    
+      end
     end
 
     it "should utilize original_filename method for file attachments" do
@@ -469,7 +469,7 @@ EMAIL
     end
   end
 
-  context :send_generic_exception do
+  context "send_generic_exception" do
     it "should send an exception email" do
       error = StandardError.new "Test"
       error.set_backtrace ["Backtrace", "Line 1", "Line 2"]
@@ -557,7 +557,7 @@ EMAIL
     end
   end
 
-  context :send_invite do
+  context "send_invite" do
     before :each do
       MasterSetup.get.update_attributes request_host: "localhost"
       @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
@@ -575,7 +575,7 @@ EMAIL
     end
   end
 
-  context :send_uploaded_items do
+  context "send_uploaded_items" do
     before :each do
       @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
     end
@@ -638,7 +638,7 @@ EMAIL
       @survey.email_body = "test body"
       @survey_response = @survey.survey_responses.build :user => @user
     end
-    
+
     context 'with a non-blank subtitle' do
       it "appends a line including the label to the body of the email and the subject" do
         @survey_response.update_attributes! subtitle: "test subtitle"
@@ -678,7 +678,7 @@ EMAIL
   end
 
   describe "send_survey_reminder" do
-  
+
     it "sends email with specified recipients, subject & body, with a link to the survey" do
       sr = Factory(:survey_response)
       ms = double()
@@ -728,9 +728,9 @@ EMAIL
 
   end
 
-  describe "log_email, email_log: true" do
+  describe "log_email", email_log: true do
 
-    it "saves outgoing e-mail fields and attachments" do   
+    it "saves outgoing e-mail fields and attachments" do
       sub = "what it's about"
       to = "john@doe.com; me@there.com, you@here.com"
       body = "Lorem ipsum dolor sit amet, consectetur adipisicing elit."
@@ -740,7 +740,7 @@ EMAIL
         Tempfile.open(['tempfile_b', '.txt']) do |file2|
           OpenMailer.send_simple_html to, sub, body, [file1, file2]
           email = SentEmail.last
-          
+
           expect(email.email_subject).to eq sub
           expect(email.email_to).to eq "john@doe.com, me@there.com, you@here.com"
           expect(email.email_body).to include "Lorem ipsum dolor sit amet, consectetur adipisicing elit."
@@ -753,7 +753,7 @@ EMAIL
     end
 
     it "saves body data from html mails without attachments" do
-      # Under the hood, the email body is done differently if there's no file attachments...so make sure the logging works 
+      # Under the hood, the email body is done differently if there's no file attachments...so make sure the logging works
       # fine when the message doesn't have any attachments (.ie it's not a multi-part email)
       OpenMailer.send_simple_html "me@there.com", "Subject", "This is a test"
       email = SentEmail.where(email_subject: "Subject").first

@@ -576,7 +576,7 @@ describe User do
     end
   end
 
-  context :run_with_user_settings do
+  context "run_with_user_settings" do
 
     before :each do
       @user = User.current
@@ -660,7 +660,7 @@ describe User do
       expect(u.hide_message?('HX')).to be_truthy
     end
   end
-  context :send_invite_emails do
+  context "send_invite_emails" do
     it "should send an invite email to a user" do
       e = double("Email")
       expect(e).to receive(:deliver)

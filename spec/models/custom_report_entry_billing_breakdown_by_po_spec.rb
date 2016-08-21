@@ -51,7 +51,7 @@ describe CustomReportEntryBillingBreakdownByPo do
     end
   end
 
-  context :run do
+  context "run" do
     before :each do
       @user = Factory(:master_user)
       allow(@user).to receive(:view_broker_invoices?).and_return(true)

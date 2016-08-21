@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe DrawbackClaim do
-  context :callbacks do
+  context "callbacks" do
     before :each do
       @imp = Factory(:company,:importer=>true)
     end
@@ -26,7 +26,7 @@ describe DrawbackClaim do
       expect(d.net_claim_amount).to eq(4)
     end
   end
-  context :validations do
+  context "validations" do
     it "should require importer_id" do
       d = DrawbackClaim.new(:name=>'x')
       expect(d.save).to be_falsey
@@ -116,7 +116,7 @@ describe DrawbackClaim do
     before :each do 
       @d = Factory(:drawback_claim)
     end
-    context :with_permission do
+    context "with_permission" do
       before :each do
         allow_any_instance_of(User).to receive(:view_drawback?).and_return(true)
       end

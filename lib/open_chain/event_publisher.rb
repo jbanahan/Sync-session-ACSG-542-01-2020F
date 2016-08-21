@@ -1,11 +1,11 @@
 module OpenChain; class EventPublisher
-  QUEUES = {'test'=>'http://bad/url',
+  QUEUES ||= {'test'=>'http://bad/url',
     'development'=>'https://sqs.us-east-1.amazonaws.com/468302385899/event-master-dev',
     'production'=>'https://sqs.us-east-1.amazonaws.com/468302385899/event-master-prod'}
 
     CONFIG ||= YAML::load_file('config/s3.yml')
 
-    MessageType = Struct.new(:type,:link_lambda,:short_message_lambda,:long_message_lambda) do
+    MessageType ||= Struct.new(:type,:link_lambda,:short_message_lambda,:long_message_lambda) do
       def link obj
         link_lambda.call(obj)
       end

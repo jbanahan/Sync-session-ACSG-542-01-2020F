@@ -987,7 +987,7 @@ describe OpenChain::FenixParser do
     end
   end
 
-  context :lvs_entries do
+  context "lvs_entries" do
 
     before :each do
       @parent_entry = "1234567"

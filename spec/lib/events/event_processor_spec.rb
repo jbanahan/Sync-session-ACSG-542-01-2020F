@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe OpenChain::Events::EventProcessor do
 
-  context :process_event do
+  context "process_event" do
 
     it "should create a handler and pass the event to it" do
       event = double("Event")
@@ -19,7 +19,7 @@ describe OpenChain::Events::EventProcessor do
     end
   end
 
-  context :module_event_handler do
+  context "module_event_handler" do
 
     before :each do
       @proc = described_class.new

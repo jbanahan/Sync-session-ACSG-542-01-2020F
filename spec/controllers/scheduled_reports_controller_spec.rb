@@ -10,7 +10,7 @@ describe ScheduledReportsController do
     sign_in_as @user
   end
 
-  context :index do
+  context "index" do
 
     it "should find a users scheduled reports and custom reports and generate option values for them" do
       # Use a compound type to make sure we're translating it correctly
@@ -74,7 +74,7 @@ describe ScheduledReportsController do
     end
   end
 
-  context :give_reports do
+  context "give_reports" do
 
     before :each do
       @another_user = Factory(:user)

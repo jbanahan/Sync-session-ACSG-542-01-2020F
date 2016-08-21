@@ -416,7 +416,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       @s.reload
       expect(@s.containers).to be_empty
     end
-    context :cartons do
+    context "cartons" do
       before :each do
         c = Factory(:company)
         p = Factory(:product)

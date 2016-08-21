@@ -14,7 +14,7 @@ describe BroadcastsEvents do
     @broadcaster = BroadcasterTest.new
   end
 
-  context :broadcast_event do
+  context "broadcast_event" do
 
     it "should send an event for the included class object" do
       expect_any_instance_of(OpenChain::Events::EventBroadcaster).to receive(:broadcast).with :test, "BroadcasterTest", 1, nil

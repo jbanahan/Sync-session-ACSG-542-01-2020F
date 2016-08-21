@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe BrokerInvoiceLine do
 
-  context :duty_charge_type? do
+  context "duty_charge_type?" do
     it "should identify D as a duty charge type" do
       l = BrokerInvoiceLine.new
       expect(l.duty_charge_type?).to be_falsey
@@ -17,7 +17,7 @@ describe BrokerInvoiceLine do
     end
   end
 
-  context :hst_gst_charge_code? do
+  context "hst_gst_charge_code?" do
     it "should identify all fenix hst/gst charge codes" do
       l = BrokerInvoiceLine.new
       expect(l.hst_gst_charge_code?).to be_falsey

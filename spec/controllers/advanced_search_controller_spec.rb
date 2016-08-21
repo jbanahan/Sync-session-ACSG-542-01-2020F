@@ -316,7 +316,7 @@ describe AdvancedSearchController do
       expect(sr.page).to eq(2)
       expect(sr.per_page).to eq(40)
     end
-    context :json do
+    context "json" do
       before :each do
         @ss = Factory(:search_setup,:user=>@user,:name=>'myname',:module_type=>'Product')
         @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
@@ -430,7 +430,7 @@ describe AdvancedSearchController do
       expect(response.headers['Content-Type']).to eq("application/vnd.ms-excel")
       expect(response.headers['Content-Disposition']).to eq("attachment; filename=\"#{@ss.name}.xls\"")
     end
-    context :delayed_job do
+    context "delayed_job" do
       before :each do
         @dj_status = Delayed::Worker.delay_jobs
         Delayed::Worker.delay_jobs = false

@@ -22,7 +22,7 @@ describe Address do
     end
   end
 
-  context :address_hash do
+  context "address_hash" do
     it "sets an address hash on save" do
       a = Factory(:address,name:'myname',line_1:'l1',line_2:'l2',city:'Jakarta')
       a.save!
@@ -51,7 +51,7 @@ describe Address do
     end
   end
 
-  context :validations do
+  context "validations" do
     it "should not allow destroy if in use" do
       a = Factory(:address)
       Factory(:shipment,ship_to_id:a.id)

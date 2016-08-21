@@ -44,7 +44,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
     end
   end
 
-  context :using_checksum do 
+  context "using_checksum" do 
     before :each do
       @landed_cost_data = {
         entries: [

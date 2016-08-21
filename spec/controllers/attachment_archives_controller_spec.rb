@@ -8,7 +8,7 @@ describe AttachmentArchivesController do
     sign_in_as @u
   end
   describe "create" do
-    context :good_processing do
+    context "good_processing" do
       before :each do
         arch = double('attachment_archive')
         expect(arch).to receive(:attachment_list_json).and_return('y')

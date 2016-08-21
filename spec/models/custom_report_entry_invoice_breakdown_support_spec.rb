@@ -47,7 +47,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       r = Cr.new.to_arrays(@master_user,1)
       expect(r.size).to eq(2)
     end
-    context :entry_fields do
+    context "entry_fields" do
       before :each do
         rpt = Cr.create!
         rpt.search_columns.create!(:model_field_uid=>:bi_entry_num,:rank=>1)
@@ -106,7 +106,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     end
 
 
-    context :isf do
+    context "isf" do
       it "should truncate ISF charges" do
         @invoice_line_1.update_attributes(:charge_description=>"ISF FILI SF#123455677755",:charge_amount=>6)
         @invoice_line_2.destroy
@@ -137,7 +137,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       expect(r[1][0]).to eq("No data was returned for this report.") 
     end
     
-    context :security do
+    context "security" do
       before :each do
         @importer_user = Factory(:importer_user)
       end

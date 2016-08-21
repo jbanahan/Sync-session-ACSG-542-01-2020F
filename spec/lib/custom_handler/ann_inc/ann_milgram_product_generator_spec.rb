@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       expect(r[2][0]).to eq("t-style")
     end
 
-    context :sets do
+    context "sets" do
       it "should create 3 rows for two component style" do
         p = Factory(:product)
         p.update_custom_value! @cdefs[:approved_long], 'LONG'
@@ -113,7 +113,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     expect(described_class.new.sync_code).to eq('ANN-MIL')
   end
 
-  context :ftp do
+  context "ftp" do
     it "should send proper credentials" do
       expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/MIL'})
     end

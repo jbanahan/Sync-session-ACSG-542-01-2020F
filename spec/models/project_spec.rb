@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Project do
-  context :security do
+  context "security" do
     describe "can_view?" do
       it "should be able to view if user can view projects" do
         u = User.new

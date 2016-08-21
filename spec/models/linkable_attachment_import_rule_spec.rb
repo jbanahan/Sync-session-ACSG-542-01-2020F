@@ -18,7 +18,7 @@ describe LinkableAttachmentImportRule do
   end
 
   describe 'exist_for_class?' do
-    context :with_values do
+    context "with_values" do
       before :each do
         LinkableAttachmentImportRule.create!(:path=>'/this',:model_field_uid=>'ord_ord_num')
         LinkableAttachmentImportRule.create!(:path=>'/that',:model_field_uid=>'prod_uid')

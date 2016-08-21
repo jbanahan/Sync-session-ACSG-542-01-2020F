@@ -363,7 +363,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
   #       end
   #     end
 
-  #     context :trade_compliance do
+  #     context "trade_compliance" do
   #       before :each do 
   #         @plant.product_groups << Factory(:product_group,name:'XX')
   #       end

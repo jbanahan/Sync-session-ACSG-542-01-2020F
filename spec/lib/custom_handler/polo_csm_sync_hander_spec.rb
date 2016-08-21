@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       end
     end
 
-    context :csm_season do
+    context "csm_season" do
       it "should set CSM Season for existing products" do
         p = Factory(:product)
         p.update_custom_value! @season, 'someval'
@@ -274,7 +274,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       expect(u.messages[0].body).to end_with("</li></ul></p>")
     end
 
-    context :dates do
+    context "dates" do
       it "should create csm date custom fields" do
         id = @first_csm_date_cd.id
         @first_csm_date_cd.destroy

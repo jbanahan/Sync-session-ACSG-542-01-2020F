@@ -19,7 +19,7 @@ describe Lock do
     end
   end
 
-  context :acquire do
+  context "acquire" do
 
     it "should lock while a process is running" do
 
@@ -290,7 +290,7 @@ describe Lock do
     end
   end
 
-  context :lock_with_retry do
+  context "lock_with_retry" do
     it "should lock an object and yield" do
       e = Factory(:entry)
       v = Lock.with_lock_retry(e) do

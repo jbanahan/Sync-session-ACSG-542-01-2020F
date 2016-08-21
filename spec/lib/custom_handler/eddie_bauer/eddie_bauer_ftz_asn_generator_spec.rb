@@ -2,7 +2,7 @@ require "spec_helper"
 require 'digest/md5'
 
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
-  
+
   describe "run_schedulable" do
     it "should ftp file" do
       expect_any_instance_of(described_class).to receive(:find_entries).and_return(['ents'])
@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @sync_record = SyncRecord.new syncable: @entry, trading_partner: "partner"
     end
     it "generates file and saves yielded sync records and ftps yield file" do
-      
+
       expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
       expect(subject).to receive(:ftp_file).with @file
 
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @ent = Factory(:entry, updated_at:1.minute.ago, broker_reference: "broker-ref")
     end
 
-    context :changed do
+    context "changed" do
       before :each do
         expect(subject).to receive(:generate_data_for_entry).with(@ent).and_return 'abc'
       end
@@ -144,7 +144,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
 
     context "error handling" do
 
-      before :each do 
+      before :each do
         @ent2 = Factory(:entry)
       end
 
@@ -304,7 +304,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @ci_line.save!
       ln = first_line
       expect(ln[243,20].rstrip).to eql('123-1234')
-      expect(ln[263,3].rstrip).to eql('XYZ') 
+      expect(ln[263,3].rstrip).to eql('XYZ')
       expect(ln[266,4].rstrip).to eql('') #empty size
     end
     it "should handle style/size" do
@@ -312,7 +312,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @ci_line.save!
       ln = first_line
       expect(ln[243,20].rstrip).to eql('123-1234')
-      expect(ln[263,3].rstrip).to eql('') 
+      expect(ln[263,3].rstrip).to eql('')
       expect(ln[266,4].rstrip).to eql('FFFF') #empty size
     end
     it "should handle style/color/size" do
@@ -320,7 +320,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @ci_line.save!
       ln = first_line
       expect(ln[243,20].rstrip).to eql('123-1234')
-      expect(ln[263,3].rstrip).to eql('XYZ') 
+      expect(ln[263,3].rstrip).to eql('XYZ')
       expect(ln[266,4].rstrip).to eql('FFFF') #empty size
     end
     it "should handle mode translations" do

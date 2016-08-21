@@ -249,7 +249,7 @@ describe SearchSchedule do
       expect(@s.send(:send_ftp, "Setup Name", double("Tempfile"), "file.txt")).to be_nil
     end
 
-    context :errors do
+    context "errors" do
       before :each do
         @u = Factory(:user)
         @setup = SearchSetup.new(:user=>@u, :name=>"Search Setup")

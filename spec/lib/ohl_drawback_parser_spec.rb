@@ -152,7 +152,7 @@ describe OpenChain::OhlDrawbackParser do
   it 'should write time to process' do
     expect(Entry.first.time_to_process).to be > 0
   end
-  context :country_of_origin do
+  context "country_of_origin" do
     it 'should map country of origin based on code' do
       lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
       expect(lines.find_by_part_number("1216024-290").country_origin_code).to eq("KH")

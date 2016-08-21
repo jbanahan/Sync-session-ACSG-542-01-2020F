@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe HoldsCustomDefinition do
   
-  context :custom_definition do
+  context "custom_definition" do
     before :each do
       @cd = Factory(:custom_definition,:module_type=>"Product")
       ModelField.reset_custom_fields

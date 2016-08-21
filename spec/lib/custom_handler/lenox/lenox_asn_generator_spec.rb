@@ -30,7 +30,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     end
   end
 
-  context :needs_data do    
+  context "needs_data" do    
     before :each do 
       @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
       @lenox = Factory(:company,alliance_customer_number:'LENOX',system_code:'LENOX')

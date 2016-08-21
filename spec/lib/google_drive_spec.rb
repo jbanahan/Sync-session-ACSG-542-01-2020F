@@ -10,7 +10,7 @@ describe OpenChain::GoogleDrive do
     @test_folder = "spec-" + Random.rand(1000000).to_s + "-" + Socket.gethostname
   end
 
-  context :actions_on_existing_files do
+  context "actions_on_existing_files" do
     before :all do
       # Use windows newlines to ensure we're using binmode
       @contents = "This is the file contents.\r\nContents."
@@ -44,7 +44,7 @@ describe OpenChain::GoogleDrive do
       end if @cleanup
     end
 
-    context :upload_file do
+    context "upload_file" do
       it "should upload data to a folder" do
         retry_expect(additional_rescue_from: [StandardError]) {
           expect(OpenChain::GoogleDrive.find_file_id(@user_email, @path)).to eq @file_id
@@ -100,7 +100,7 @@ describe OpenChain::GoogleDrive do
       end
     end
 
-    context :download_to_tempfile do
+    context "download_to_tempfile" do
 
       it "should download data to a tempfile and return the tempfile" do
         retry_expect(additional_rescue_from: [StandardError]) {
@@ -170,7 +170,7 @@ describe OpenChain::GoogleDrive do
     end
   end
 
-  context :delete do
+  context "delete" do
     after :each do
       # Basically, we're just retrying and only finishing the test if the folder is actually gone
       folder_id = nil
@@ -197,7 +197,7 @@ describe OpenChain::GoogleDrive do
     end
   end
 
-  context :delete_folder do
+  context "delete_folder" do
     after :each do
       # Basically, we're just retrying and only finishing the test if the folder is actually gone
       retry_expect(retry_count: 5, retry_wait: 0.5) {
@@ -226,7 +226,7 @@ describe OpenChain::GoogleDrive do
     end
   end
 
-  context :cached_get_client do
+  context "cached_get_client" do
     it "should cache client creation" do
       OpenChain::GoogleDrive.find_file_id @user_email, "file.txt"
       expect(OpenChain::GoogleDrive).not_to receive(:initialize_client_info)
@@ -234,7 +234,7 @@ describe OpenChain::GoogleDrive do
     end
   end
 
-  context :default_user_account do
+  context "default_user_account" do
     it "should default based on environment" do
       expect(OpenChain::GoogleDrive.default_user_account).to eq "integration-dev@vandegriftinc.com"
     end

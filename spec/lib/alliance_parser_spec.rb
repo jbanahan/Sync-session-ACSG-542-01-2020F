@@ -297,7 +297,7 @@ describe OpenChain::AllianceParser do
     expect(ent.first_7501_print).to eq(@est.parse(first_7501))
     expect(ent.last_7501_print).to eq(@est.parse(last_7501))
   end
-  context :containers do
+  context "containers" do
     it 'should aggregate containers at header' do
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
       ent = Entry.find_by_broker_reference @ref_num

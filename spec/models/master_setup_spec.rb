@@ -25,7 +25,7 @@ describe MasterSetup do
     end
   end
 
-  context :current_config_version do
+  context "current_config_version" do
     before :each do
       @tmp  = Rails.root.join("tmp")
       @config = @tmp.join("config")
@@ -48,13 +48,13 @@ describe MasterSetup do
     end
   end
 
-  context :current_code_version do
+  context "current_code_version" do
     it "should read the current version from the config/version.txt file" do
       expect(Rails.root.join("config", "version.txt").read.strip).to eq(MasterSetup.current_code_version)
     end
   end
 
-  context :need_upgrade? do
+  context "need_upgrade?" do
     it "should require an upgrade if the target version from the DB is not the same as the current code version" do
       MasterSetup.get.update_attributes :target_version => "UPDATE ME!!!"
       expect(MasterSetup.need_upgrade?).to be_truthy

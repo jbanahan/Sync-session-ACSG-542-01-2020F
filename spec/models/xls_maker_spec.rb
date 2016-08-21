@@ -157,7 +157,7 @@ describe XlsMaker do
     end
   end
 
-  context :insert_body_row do
+  context "insert_body_row" do
     before :each do
       @wb = Spreadsheet::Workbook.new
       @sheet = @wb.create_worksheet :name => "Sheet"

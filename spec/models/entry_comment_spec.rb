@@ -12,7 +12,7 @@ describe EntryComment do
     expect(@entry.entry_comments.first.public_comment).to be_truthy
   end
 
-  context :private_comment_strings do
+  context "private_comment_strings" do
     it "should identify comments as private" do
       @entry.entry_comments.build(:body => 'DOCUMENT IMAGE CREATED FOR')
       @entry.save!
@@ -69,7 +69,7 @@ describe EntryComment do
     end
   end
 
-  context :can_view? do
+  context "can_view?" do
     before :each do
       @user = Factory(:master_user, :entry_view => true)
       MasterSetup.get.update_attributes :entry_enabled => true

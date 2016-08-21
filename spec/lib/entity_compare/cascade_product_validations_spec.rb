@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::EntityCompare::CascadeProductValidations do
-  context :orders do
+  context "orders" do
     it "should call BusinessValidationTemplate.create_results_for_object! for linked orders" do
       p = Factory(:product)
       ol = Factory(:order_line,product:p)
@@ -22,7 +22,7 @@ describe OpenChain::EntityCompare::CascadeProductValidations do
       described_class.compare 'Order', o.id, nil, nil, nil, nil, nil, nil
     end
   end
-  context :shipments do
+  context "shipments" do
     it "should call BusinessValidationTemplate.create_results_for_object! for linked shipments" do
       p = Factory(:product)
       l = Factory(:shipment_line,product:p)

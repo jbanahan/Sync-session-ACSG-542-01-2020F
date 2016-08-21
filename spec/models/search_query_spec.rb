@@ -185,7 +185,7 @@ describe SearchQuery do
       expect(r.size).to eq 2
     end
     
-    context :custom_values do
+    context "custom_values" do
       before :each do
         @cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>:string)
         @p1.update_custom_value! @cd, "MYVAL"
@@ -211,7 +211,7 @@ describe SearchQuery do
         expect(r[1][:row_key]).to eq(@p1.id)
       end
     end
-    context :pagination do
+    context "pagination" do
       it "should paginate" do
         crit = @ss.search_criterions.first
         crit.operator = "sw"

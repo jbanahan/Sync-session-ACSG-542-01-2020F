@@ -9,7 +9,7 @@ describe QuickSearchController do
     sign_in_as @u
   end
 
-  context :show do 
+  context "show" do 
     it "should put appropriate modules into @available_modules" do
       expect_any_instance_of(described_class).to receive(:with_core_module_fields).with(@u).and_yield(CoreModule::ENTRY, []).and_yield(CoreModule::PRODUCT, [])
 
@@ -23,7 +23,7 @@ describe QuickSearchController do
     end
   end
 
-  context :by_module do
+  context "by_module" do
     it "should return result for core module" do
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
       cd_1 = Factory(:custom_definition, :module_type=>"Entry", :quick_searchable => true, :label=>'cfield')

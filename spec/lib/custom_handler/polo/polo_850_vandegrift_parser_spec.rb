@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
   end
 
   describe "parse" do
-    context :standard_line_type do
+    context "standard_line_type" do
       before :each do
         @cdefs = described_class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date, :ord_division]
         @po_type = ""
@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
       end
     end
 
-    context :prepack_lines do
+    context "prepack_lines" do
       before :each do
         @po_number = "PO"
         @merchandise_division = "MERCH"

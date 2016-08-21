@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe ProjectUpdate do
-  context :security do
+  context "security" do
     it "should allow view if project is visible" do
       pu = Factory(:project_update)
       allow(pu.project).to receive(:can_view?).and_return true

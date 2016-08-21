@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe OpenChain::Events::IsfEvents::IsfEventHandler do 
 
-  context :listeners do 
+  context "listeners" do 
     it "should return listeners for save event types" do
       event = double("Event")
       allow(event).to receive(:event_type).and_return :save

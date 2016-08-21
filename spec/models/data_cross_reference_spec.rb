@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe DataCrossReference do
 
-  context :hash_for_type do
+  context "hash_for_type" do
     it "should find all for reference" do
       csv = "k,v\nk2,v2"
       described_class.load_cross_references csv, 'xref_type'
@@ -11,7 +11,7 @@ describe DataCrossReference do
     end
   end
 
-  context :get_all_pairs do
+  context "get_all_pairs" do
     it "should get all pairs for a cross reference type" do
       described_class.create!(key:'a',value:'b',cross_reference_type:'x')
       described_class.create!(key:'c',value:'d',cross_reference_type:'x')
@@ -20,7 +20,7 @@ describe DataCrossReference do
       expect(described_class.get_all_pairs('x')).to eq h
     end
   end
-  context :load_cross_references do
+  context "load_cross_references" do
     it "should load csv cross reference data from an IO object" do
       # Make sure we're also updating existing xrefs
       DataCrossReference.create! :company_id=>1, :key=>"key2", :value=>"", :cross_reference_type=>'xref_type'
@@ -38,7 +38,7 @@ describe DataCrossReference do
     end
   end
 
-  context :jjill_order_fingerprint do
+  context "jjill_order_fingerprint" do
     it "should find" do
       described_class.create! key: 1, value:'ABCDEFG', cross_reference_type:described_class::JJILL_ORDER_FINGERPRINT
       o = Order.new
@@ -52,7 +52,7 @@ describe DataCrossReference do
       expect(described_class.find_jjill_order_fingerprint(o)).to eq 'ABCDEFG'
     end
   end
-  context :lenox_item_master_hash do
+  context "lenox_item_master_hash" do
     it "should find" do
       described_class.create! key: 'partno', value:'ABCDEFG', cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH
       expect(described_class.find_lenox_item_master_hash('partno')).to eq 'ABCDEFG'
@@ -62,7 +62,7 @@ describe DataCrossReference do
       expect(described_class.where(key:'part_no',value:'hashval',cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH).count).to eq 1
     end
   end
-  context :lenox_hts_fingerprint do
+  context "lenox_hts_fingerprint" do
     it "should find" do
       described_class.create! key: described_class.make_compound_key(1, 'US'), value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT
       expect(described_class.find_lenox_hts_fingerprint(1, 'US')).to eq '9801001010'
@@ -72,7 +72,7 @@ describe DataCrossReference do
       expect(described_class.where(key: described_class.make_compound_key(1, 'US'), value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT).count).to eq 1
     end
   end
-  context :find_rl_profit_center do
+  context "find_rl_profit_center" do
     it "should find an rl profit center from the brand code" do
       company = Factory(:importer)
       DataCrossReference.create! :key=>"brand", :value=>"profit center", :cross_reference_type=>DataCrossReference::RL_BRAND_TO_PROFIT_CENTER, company_id: company.id
@@ -81,7 +81,7 @@ describe DataCrossReference do
     end
   end
 
-  context :find_rl_brand do
+  context "find_rl_brand" do
     it "should find an rl brand code from PO number" do
       DataCrossReference.create! :key=>"po#", :value=>"brand", :cross_reference_type=>DataCrossReference::RL_PO_TO_BRAND
 
@@ -89,13 +89,13 @@ describe DataCrossReference do
     end
   end
 
-  context :find_ua_plant_to_iso do
+  context "find_ua_plant_to_iso" do
     it "should find" do
       described_class.create!(key:'x',value:'y',cross_reference_type:described_class::UA_PLANT_TO_ISO)
       expect(described_class.find_ua_plant_to_iso('x')).to eq('y')
     end
   end
-  context :find_ua_winshuttle_fingerprint do
+  context "find_ua_winshuttle_fingerprint" do
     it "should find" do
       described_class.create!(key:DataCrossReference.make_compound_key('x', 'y', 'z'),value:'y',cross_reference_type:described_class::UA_WINSHUTTLE_FINGERPRINT)
       expect(described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z')).to eq('y')
@@ -113,19 +113,19 @@ describe DataCrossReference do
     end
   end
 
-  context :find_ua_material_color_plant do
+  context "find_ua_material_color_plant" do
     it "should find" do
       described_class.create!(key:'x-y-z',value:'a',cross_reference_type:described_class::UA_MATERIAL_COLOR_PLANT)
       expect(described_class.find_ua_material_color_plant('x','y','z')).to eq('a')
     end
   end
-  context :create_ua_material_color_plant! do
+  context "create_ua_material_color_plant!" do
     it "should create" do
       described_class.create_ua_material_color_plant! 'x','y','z'
       expect(described_class.find_ua_material_color_plant('x','y','z')).to eq('1')
     end
   end
-  context :add_xref! do
+  context "add_xref!" do
     it "should add" do
       d = described_class.add_xref! described_class::UA_PLANT_TO_ISO, 'x', 'y', 1
       d = described_class.find d.id

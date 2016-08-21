@@ -1,14 +1,14 @@
 require 'spec_helper'
 
 describe Region do
-  context :default_scope do
+  context "default_scope" do
     it "should sort by name" do
       r1 = Factory(:region,:name=>"B")
       r2 = Factory(:region,:name=>"A")
       expect(Region.where("1").to_a).to eq([r2,r1])
     end
   end
-  context :destroy do
+  context "destroy" do
     it "should destroy associated report objects on destroy based on class count model_field_uid" do
       r = Factory(:region)
       uid = 
@@ -27,7 +27,7 @@ describe Region do
       expect(ModelField.find_by_region(r).size).to eq(0)
     end
   end
-  context :create do
+  context "create" do
     it "should reload model fields and include itself" do
       r = Region.create!(:name=>'x')
       expect(ModelField.find_by_region(r).size).to eq(1)

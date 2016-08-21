@@ -324,7 +324,7 @@ describe Order do
   describe "can_view?" do
     let (:order) { Order.new }
 
-    context :importer do
+    context "importer" do
       before :each do
         @importer = Factory(:company, importer: true)
         order.importer = @importer
@@ -360,7 +360,7 @@ describe Order do
       end
     end
 
-    context :vendor do
+    context "vendor" do
       before :each do
         @vendor = Factory(:company, vendor: true)
         order.vendor = @vendor
@@ -380,7 +380,7 @@ describe Order do
       end
     end
 
-    context :factory do
+    context "factory" do
       before :each do
         @factory = Factory(:company, factory:true)
         order.factory = @factory

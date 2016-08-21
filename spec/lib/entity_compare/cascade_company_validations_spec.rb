@@ -8,7 +8,7 @@ describe OpenChain::EntityCompare::CascadeCompanyValidations do
 
     described_class.compare 'Order', o.id, nil, nil, nil, nil, nil, nil
   end
-  context :orders do
+  context "orders" do
     it "should call BusinessValidationTemplate.create_results_for_object! for orders where company is vendor" do
       c = Factory(:company,vendor:true)
       o = Factory(:order,vendor:c)
@@ -27,7 +27,7 @@ describe OpenChain::EntityCompare::CascadeCompanyValidations do
       described_class.compare 'Company', c.id, nil, nil, nil, nil, nil, nil       
     end
   end
-  context :entries do
+  context "entries" do
     it "should call BusinessValidationTemplate.create_results_for_object! for entries where company is importer" do
       c = Factory(:company)
       ent = Factory(:entry,importer:c)

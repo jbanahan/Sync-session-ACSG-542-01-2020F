@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::AckFileHandler do
 
-  context :line_handling do
+  context "line_handling" do
     it "should take optional separator" do
       p = Factory(:product)
       t = described_class.new
@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
     
   end
 
-  context :module_type do
+  context "module_type" do
     it "should default to product handling" do
       p = Factory(:product)
       sr = p.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
       expect(sr.confirmed_at).not_to be_nil
     end
   end
-  context :sync_records do
+  context "sync_records" do
     before :each do
       @p = Factory(:product)
       @u = Factory(:user, email: "example@example.com", username: "testuser")

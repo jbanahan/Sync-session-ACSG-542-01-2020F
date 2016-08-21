@@ -58,7 +58,7 @@ describe ModelField do
       expect(result.to_s).to eq time.in_time_zone('Eastern Time (US & Canada)').to_s
     end
   end
-  context :read_only do
+  context "read_only" do
     before :each do
     end
     after :each do
@@ -864,7 +864,7 @@ describe ModelField do
         sc = SearchCriterion.new(operator:'eq',model_field_uid:'shpln_container_size',value:'40HC')
         expect(sc.apply(Shipment).to_a).to eq [sl.shipment]
       end
-      context :container_uid do
+      context "container_uid" do
         before :each do
           @mf = ModelField.find_by_uid(:shpln_container_uid)
         end
@@ -962,7 +962,7 @@ describe ModelField do
         expect(found.first).to eq p
       end
     end
-    context :ent_rule_state do
+    context "ent_rule_state" do
       before :each do
         @mf = ModelField.find_by_uid(:ent_rule_state)
       end
@@ -977,7 +977,7 @@ describe ModelField do
         expect(fail_sc.apply(Entry).count).to eq 1
       end
     end
-    context :ent_pdf_count do
+    context "ent_pdf_count" do
       before :each do
         @with_pdf = Factory(:entry)
         @with_pdf.attachments.create!(:attached_content_type=>"application/pdf")
@@ -1025,7 +1025,7 @@ describe ModelField do
       end
     end
 
-    context :ent_failed_business_rules do
+    context "ent_failed_business_rules" do
       before :each do
         @entry = Factory(:entry)
         @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
@@ -1045,7 +1045,7 @@ describe ModelField do
       end
     end
 
-    context :ent_attachment_types do
+    context "ent_attachment_types" do
       before :each do
         @e = Factory(:entry)
         first = @e.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A")
@@ -1063,7 +1063,7 @@ describe ModelField do
       end
     end
 
-    context :ent_user_notes do
+    context "ent_user_notes" do
       let(:user_notes) { ModelField.find_by_uid :ent_user_notes }
       let(:ent) { Factory(:entry) }
       let!(:u) { Factory(:master_user,entry_view:true) }
@@ -1151,7 +1151,7 @@ describe ModelField do
     end
   end
 
-  context :user_custom_definition do
+  context "user_custom_definition" do
     it "should create username fields when custom_definition is user" do
       cd = CustomDefinition.create!(label:'User',module_type:'Company',data_type: :integer, is_user: true)
       mf = ModelField.find_by_uid("*uf_#{cd.id}_username")
@@ -1198,7 +1198,7 @@ describe ModelField do
     end
   end
 
-  context :address_custom_definition do
+  context "address_custom_definition" do
     before :each do
       @cd = CustomDefinition.create!(is_address: true, label:'Business', module_type:'Company', data_type: :integer)
       @ad = Factory(:address,name:'MyName',line_1:'234 Market St',line_2:nil,line_3:'5th Floor',city:'Philadelphia',state:'PA',postal_code:'19106',country:Factory(:country,iso_code:'US'))

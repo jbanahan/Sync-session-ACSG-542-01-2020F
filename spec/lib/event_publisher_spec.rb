@@ -4,7 +4,7 @@ describe OpenChain::EventPublisher do
   before :each do
     #spec_helper stubs EventPublisher.publish so events aren't constantly published in other tests.
     #We need to reset it here to allow these tests to call the method
-    OpenChain::EventPublisher.rspec_reset
+    load 'open_chain/event_publisher.rb'
   end
   describe "publish" do
     it "should send event to SQS" do
@@ -24,7 +24,7 @@ describe OpenChain::EventPublisher do
       s = double('sqs')
       expect(AWS::SQS).to receive(:new).and_return(s)
       expect(s).to receive(:client).and_return(c)
-      expect(c).to receive(:send_message).with { |h|
+      expect(c).to receive(:send_message) do |h|
         expect(h[:queue_url]).to eq OpenChain::EventPublisher::QUEUES[Rails.env]
         b = JSON.parse h[:message_body]
         expect(b['event_type']).to eq 'ORDER_REOPEN'
@@ -34,7 +34,8 @@ describe OpenChain::EventPublisher do
         expect(b['link']).to eq 'https://abc/orders/7'
         expect(b['short_message']).to match(/CORD/)
         expect(b['long_message']).to match(/CORD/)
-      }
+        nil
+      end
       OpenChain::EventPublisher.publish(:order_reopen,o)
     end
     it "should write descriptive subject for comments" do
@@ -53,7 +54,7 @@ describe OpenChain::EventPublisher do
       s = double('sqs')
       expect(AWS::SQS).to receive(:new).and_return(s)
       expect(s).to receive(:client).and_return(c)
-      expect(c).to receive(:send_message).with { |h|
+      expect(c).to receive(:send_message) do |h|
         expect(h[:queue_url]).to eq OpenChain::EventPublisher::QUEUES[Rails.env]
         b = JSON.parse h[:message_body]
         expect(b['event_type']).to eq 'COMMENT_CREATE'
@@ -63,7 +64,8 @@ describe OpenChain::EventPublisher do
         expect(b['link']).to eq "https://abc/comments/#{comment.id}"
         expect(b['short_message']).to match("Comment: Order 1234 from Joe Shmo: mysub")
         expect(b['long_message']).to match("Comment Added\n\nmybod")
-      }
+        nil
+      end
 
       OpenChain::EventPublisher.publish(:comment_create,comment)
     end

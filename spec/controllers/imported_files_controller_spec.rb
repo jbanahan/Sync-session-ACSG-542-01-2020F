@@ -74,7 +74,7 @@ describe ImportedFilesController do
     end
   end
   describe 'results' do
-    context :search_runs do
+    context "search_runs" do
       before :each do
         @f = Factory(:imported_file,:user=>@u)
         fir = Factory(:file_import_result,:imported_file=>@f,:finished_at=>1.minute.ago)

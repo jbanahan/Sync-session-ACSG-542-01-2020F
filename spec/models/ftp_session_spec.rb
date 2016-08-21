@@ -2,12 +2,12 @@ require 'spec_helper'
 
 describe FtpSession do
 
-  context :successful? do
+  context "successful?" do
     before :each do 
       @f = FtpSession.new
     end
 
-    context :ftp do 
+    context "ftp" do 
       before :each do
         @f.protocol = "ftp"
       end
@@ -35,7 +35,7 @@ describe FtpSession do
     end
     
 
-    context :sftp do
+    context "sftp" do
       before :each do
         @f.protocol = "sftp"
       end
@@ -53,7 +53,7 @@ describe FtpSession do
     end
   end
 
-  context :can_view? do
+  context "can_view?" do
     it "should allow sys_admin users to view" do
       user = User.new
       user.sys_admin = true

@@ -3,7 +3,7 @@ require 'spreadsheet'
 
 describe OpenChain::Report::LandedCostReport do
 
-  context :run do
+  context "run" do
     before :each do 
       @user = Factory :master_user
       @entry1 = Factory(:entry, :customer_number=>"CUST", :release_date=>(Time.zone.now - 1.day), :entry_number=>"1", :transport_mode_code=>"2", :customer_references=>"3\n4")

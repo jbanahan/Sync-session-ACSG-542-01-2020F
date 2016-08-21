@@ -71,7 +71,7 @@ describe Shipment do
       allow(s).to receive(:can_edit?).and_return true
       expect(s.can_cancel?(u)).to be_falsey
     end
-    context :vendor do
+    context "vendor" do
       before :each do
         @u = Factory(:user,company:Factory(:company,vendor:true))
         @s = Shipment.new
@@ -86,7 +86,7 @@ describe Shipment do
         expect(@s.can_cancel?(@u)).to be_falsey
       end
     end
-    context :importer do
+    context "importer" do
       before :each do
         @u = Factory(:user,company:Factory(:company,importer:true))
         @s = Shipment.new
@@ -490,7 +490,7 @@ describe Shipment do
     it "should find nothing if importer not set" do
       expect(Shipment.new.available_orders(User.new)).to be_empty
     end
-    context :with_data do
+    context "with_data" do
       before(:each) do
         @imp = Factory(:company,importer:true)
         @vendor_1 = Factory(:company,vendor:true)

@@ -53,7 +53,7 @@ describe Api::V1::CompaniesController do
       j = JSON.parse(response.body)['companies']
       expect(j.collect {|c| c['name']}).to include 'c2'
     end
-    context :role do
+    context "role" do
       it "should return self if matches role" do
         c2 = Factory(:company,name:'c2',importer:true,system_code:'c2')
         @c.linked_companies << c2

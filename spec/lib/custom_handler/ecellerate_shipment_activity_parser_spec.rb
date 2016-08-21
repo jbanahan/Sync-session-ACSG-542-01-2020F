@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
     def run_parse rows
       a = double(:att)
       x = double(:xl_client)
-      stubbed = allow(x).to receive(:all_row_values,0)
+      stubbed = allow(x).to receive(:all_row_values)
       rows.each {|row| stubbed = stubbed.and_yield row}
       described_class.new(a).parse x
     end

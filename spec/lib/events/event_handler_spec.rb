@@ -16,7 +16,7 @@ describe OpenChain::Events::EventHandler do
     allow(@object).to receive(:class).and_return "Testing"
   end
 
-  context :handle do
+  context "handle" do
 
     it "should process a single event" do
       l1 = double("Listener1")
@@ -68,7 +68,7 @@ describe OpenChain::Events::EventHandler do
     end
   end
 
-  context :find do
+  context "find" do
     it "should find an event object using the find_by_id method" do
       # This makes sure we're handling potential namespaced classes as well as just
       # using the find_by_id method to do the object lookup

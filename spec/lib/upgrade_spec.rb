@@ -18,8 +18,8 @@ describe OpenChain::Upgrade do
     end
   end
 
-  context :in_progress? do
-    context :file_present do
+  context "in_progress?" do
+    context "file_present" do
       before :each do 
         FileUtils.touch 'tmp/upgrade_running.txt'
       end
@@ -38,7 +38,7 @@ describe OpenChain::Upgrade do
     end
   end
 
-  context :errored? do
+  context "errored?" do
     after :each do
       FileUtils.rm('tmp/upgrade_error.txt') if File.exist?('tmp/upgrade_error.txt')
     end

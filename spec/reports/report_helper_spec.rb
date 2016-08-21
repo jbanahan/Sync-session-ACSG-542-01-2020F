@@ -188,7 +188,7 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
-  context :datetime_translation_lambda do
+  context "datetime_translation_lambda" do
     it "should create a lambda that will translate a datetime value into the specified timezone" do
       conversion = subject.datetime_translation_lambda "Hawaii", false
 
@@ -243,7 +243,7 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
-  context :sanitize_date_string do
+  context "sanitize_date_string" do
     it "should return a date string" do
       s = subject.sanitize_date_string "20130101"
       expect(s).to eq("2013-01-01")

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::Report::KitchenCraftBillingReport do
 
-  context :run do
+  context "run" do
     before :each do
       @entry = Factory(:entry, :customer_number=>'KITCHEN', :release_date=>Time.zone.now, :broker_reference=>'99123456', :entry_number => '1231kl0', :po_numbers => "123\n456", \
         :carrier_code=>'SCAC', :master_bills_of_lading=>"abc\n123", :container_numbers=>"1\n2", :total_invoiced_value=>100)

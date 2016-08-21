@@ -65,7 +65,7 @@ describe CorrectiveActionPlansController do
       expect(response).to be_redirect
       expect(assigns(:cap)).to be_nil
     end
-    context :json do
+    context "json" do
       before :each do
         allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return true
       end

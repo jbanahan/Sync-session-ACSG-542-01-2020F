@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe CsvMaker do
-  context :make_from_search_query do
+  context "make_from_search_query" do
     before :each do
       @logged_date = DateTime.civil_from_format(:utc,2014,7,15,12,26,22)
       @entry = Factory(:entry,:first_it_date=>Date.new(2014,7,30),:file_logged_date=>@logged_date, :broker_reference => "x")

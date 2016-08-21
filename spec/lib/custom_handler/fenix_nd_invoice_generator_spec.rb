@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
     @generator = OpenChain::CustomHandler::FenixNdInvoiceGenerator.new
   end
 
-  context :generate_file do
+  context "generate_file" do
 
     def verify_company_fields l, i, c
       ranges = [(i..i+49), (i+50..i+99), (i+100..i+149), (i+150..i+199), (i+200..i+249), (i+250..i+299), (i+300..i+349), (i+350..i+399)]
@@ -273,7 +273,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
     end
   end
 
-  context :ftp_credentials do
+  context "ftp_credentials" do
 
     it "should use the correct ftp credentials" do
       c = @generator.ftp_credentials
@@ -281,7 +281,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
     end
   end
 
-  context :generate_and_send do
+  context "generate_and_send" do
     it "should generate and ftp the file" do
       file = double("tempfile")
       expect(@generator).to receive(:generate_file).with(@i.id).and_yield file

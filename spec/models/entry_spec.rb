@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Entry do
   
-  context :tracking_status do
-    context :fenix do
+  context "tracking_status" do
+    context "fenix" do
       it "should default to created" do
         expect(Factory(:entry,source_system:'Fenix').tracking_status).to eq(Entry::TRACKING_STATUS_CREATED)
       end
@@ -20,7 +20,7 @@ describe Entry do
         expect(ent.tracking_status).to eq(Entry::TRACKING_STATUS_CLOSED)
       end
     end
-    context :alliance do
+    context "alliance" do
       it "should use created for base entry" do
         Factory(:entry,source_system:'Alliance').tracking_status == Entry::TRACKING_STATUS_CREATED
       end
@@ -34,7 +34,7 @@ describe Entry do
         expect(ent.tracking_status).to eq(Entry::TRACKING_STATUS_CLOSED)
       end
     end
-    context :other do
+    context "other" do
       it "should default to open" do
         expect(Factory(:entry).tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
       end
@@ -213,7 +213,7 @@ describe Entry do
     end
   end
 
-  context :update_k84_month do
+  context "update_k84_month" do
     before :each do
       @entry = Factory(:entry)
     end

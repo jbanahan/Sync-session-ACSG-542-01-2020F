@@ -71,13 +71,13 @@ describe FtpSender do
     end
   end
 
-  context :send do
+  context "send" do
     before :each do 
       @ftp = double('ftp').as_null_object
       expect(FtpSender).to receive(:get_ftp_client).and_return @ftp
     end
 
-    context :error do
+    context "error" do
 
       before :each do 
         @conf = double("Rails.configuration")
@@ -165,7 +165,7 @@ describe FtpSender do
       end
     end
     
-    context :success do 
+    context "success" do 
       before :each do 
         expect(@ftp).to receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_yield @ftp
       end
@@ -261,7 +261,7 @@ describe FtpSender do
       end
     end
 
-    context :validate_connect do
+    context "validate_connect" do
       it "passes through all the opts to the connect method" do
         local_opts = {port: 1234, binary: false, passive: false, remote_file_name: "filename.txt", force_empty: true, protocol: "sftp", folder: "folder"}
         expect(@ftp).to receive(:connect).with(@server, @username, @password, kind_of(Array), local_opts.with_indifferent_access).and_yield @ftp
@@ -281,7 +281,7 @@ describe FtpSender do
     end
   end
 
-  context :FtpClient do
+  context "FtpClient" do
     before :each do
       @client = FtpSender::FtpClient.new
     end
@@ -302,7 +302,7 @@ describe FtpSender do
       end
     end
 
-    context :post_connect do
+    context "post_connect" do
       before :each do 
         @ftp = double("Net::FTP")
         # connect sets up some variables so we need to call it every time
@@ -349,7 +349,7 @@ describe FtpSender do
     
   end
 
-  context :SftpClient do
+  context "SftpClient" do
     before :each do
       @client = FtpSender::SftpClient.new
     end
@@ -406,7 +406,7 @@ describe FtpSender do
       end
     end
 
-    context :post_connect do
+    context "post_connect" do
       before :each do 
         @ftp = double("Net::SFTP")
         # connect sets up some variables so we need to call it every time

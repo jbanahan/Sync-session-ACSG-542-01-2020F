@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
 
   def mock_xl_client rows
     x = double(:xl_client)
-    stubbed = allow(x).to receive(:all_row_values,0)
+    stubbed = allow(x).to receive(:all_row_values)
     rows.each {|row| stubbed = stubbed.and_yield row}
     x
   end

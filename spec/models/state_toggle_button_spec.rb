@@ -175,7 +175,7 @@ describe StateToggleButton do
     end
   end
 
-  context :validations do
+  context "validations" do
     it "should not allow with both date and custom date attributes" do
       cd_date = Factory(:custom_definition,module_type:'Shipment',data_type:'date')
       btn = StateToggleButton.new(module_type:'Shipment',date_attribute:'canceled_date',date_custom_definition:cd_date)

@@ -10,16 +10,20 @@ Spork.prefork do
   require 'clearance/rspec'
   require 'webmock/rspec'
 
+  # don't auto-run minitest which we don't use, but is required by ActiveSupport
+  Test::Unit.run = true if defined?(Test::Unit) && Test::Unit.respond_to?(:run=)
+
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
   Dir[Rails.root.join("spec/support/**/*.rb")].each {|f| require f}
   include Helpers
-  
+
   Rails.logger.level = 4
   RSpec.configure do |config|
+    config.raise_errors_for_deprecations!
     #allows us to create anonymous controllers in tests for other base controller classes
     config.infer_base_class_for_anonymous_controllers = true
-    
+
     config.fixture_path = "#{::Rails.root}/spec/fixtures"
 
     config.mock_with :rspec
@@ -34,7 +38,7 @@ Spork.prefork do
     config.before(:each, :type => :controller) do
         request.env["HTTP_REFERER"] = "/"
     end
-    config.before :each do |example| 
+    config.before :each do |example|
       EntitySnapshotSupport.disable_async = true
       CustomDefinition.skip_reload_trigger = true
       stub_event_publisher
@@ -44,12 +48,12 @@ Spork.prefork do
       # to rely on the AWS services in the test cases.
       # If you need to use paperclip's S3 saving, append "paperclip: true" to the spec declaration
       # .ie -> it "requires paperclip", paperclip: true do
-      
+
       # In Rspec 2.99/3.0 "example" below needs to be changed to "ex"
-      unless example.metadata[:paperclip] 
+      unless example.metadata[:paperclip]
         stub_paperclip
       end
-      unless example.metadata[:s3] 
+      unless example.metadata[:s3]
         stub_s3
       end
       unless example.metadata[:email_log]
@@ -59,7 +63,7 @@ Spork.prefork do
       #clear ComparatorRegistry
       OpenChain::EntityCompare::ComparatorRegistry.clear
     end
-    
+
     # Clears out the deliveries array before every test..which is only done automatically
     # for mailer tests.
     config.after(:each) do |example|
@@ -111,4 +115,3 @@ Spork.each_run do
     $VERBOSE = warn_level
   end
 end
-

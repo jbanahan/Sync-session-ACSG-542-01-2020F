@@ -22,7 +22,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
                           :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"9876543210", :entered_value=>BigDecimal.new("500")), CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"1234567890", :entered_value=>BigDecimal.new("500"))])
   end
 
-  context :landed_cost_data_for_entry do
+  context "landed_cost_data_for_entry" do
 
     it "should calculate landed cost for a single entry" do
       lc = described_class.new.landed_cost_data_for_entry @entry

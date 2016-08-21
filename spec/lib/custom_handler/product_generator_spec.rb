@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
     before :each do 
       @p1 = Factory(:product,:name=>'x')
     end
-    context :row_count do
+    context "row_count" do
       before :each do
         @inst = @base.new
       end
@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
         expect(@inst.row_count).to eq(3)
       end
     end
-    context :preprocess_row do
+    context "preprocess_row" do
       before :each do
         @inst = @base.new
       end
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
         @inst.sync {|row| nil}
       end
     end
-    context :preprocess_header_row do
+    context "preprocess_header_row" do
       before :each do
         @inst = @base.new
       end
@@ -144,8 +144,8 @@ describe OpenChain::CustomHandler::ProductGenerator do
         expect(@inst.row_count).to eq 3
       end
     end
-    context :sync_records do
-      context :implments_sync_code do
+    context "sync_records" do
+      context "implments_sync_code" do
         before :each do
           @inst = @base.new
           def @inst.sync_code; "SYN"; end

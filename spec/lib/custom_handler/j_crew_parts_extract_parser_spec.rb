@@ -7,7 +7,7 @@ describe 'JCrewPartsExtractParser' do
     @j_crew = Factory(:company, :alliance_customer_number => "J0000")
   end
   
-  context :process_file do
+  context "process_file" do
     it "should open a file and call generate and send" do
       path = "/path/to/file.txt"
       io = double("IO")
@@ -18,7 +18,7 @@ describe 'JCrewPartsExtractParser' do
     end
   end
 
-  context :process_s3 do
+  context "process_s3" do
     it "should use s3 to process a file" do
       path = "/path/to/file.txt"
       file = double("file")
@@ -33,7 +33,7 @@ describe 'JCrewPartsExtractParser' do
     end
   end
 
-  context :process do
+  context "process" do
     it "should implement process by utilizing the s3 process" do
       custom_file = double("custom_file")
       attachment = double("attachment")
@@ -72,7 +72,7 @@ describe 'JCrewPartsExtractParser' do
     end
   end
 
-  context :generate_and_send do
+  context "generate_and_send" do
     it "should generate extract data to a temp file and then ftp it" do
       @p = OpenChain::CustomHandler::JCrewPartsExtractParser.new nil
 
@@ -99,14 +99,14 @@ describe 'JCrewPartsExtractParser' do
     end
   end
 
-  context :remote_file_name do 
+  context "remote_file_name" do 
     it "should use JCrew customer numbers" do
     	p = OpenChain::CustomHandler::JCrewPartsExtractParser.new
       expect(p.remote_file_name).to match(/^JPART.DAT$/)
     end
   end
 
-  context :generate_product_file do
+  context "generate_product_file" do
     it "should read product data and translate it into the output format" do
     	us = Factory(:country, :iso_code=>"US")
     	HtsTranslation.create :company_id => @j_crew.id, :country_id => us.id, :hts_number => "6204312010", :translated_hts_number => "1234567890"
@@ -212,7 +212,7 @@ FILE
     end
   end
 
-  context :integration_test do
+  context "integration_test" do
     before :each do
       file = <<FILE
       1620194           SU1           23953          6204624020               348              16.60                CN         HK           0.10
@@ -254,7 +254,7 @@ FILE
     end
   end
 
-  context :can_view? do
+  context "can_view?" do
     it "should allow master users to view" do
       user = Factory(:master_user)
       expect(OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(user)).to be_truthy

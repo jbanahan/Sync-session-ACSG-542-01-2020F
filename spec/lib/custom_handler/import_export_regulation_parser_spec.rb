@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
     @country =  Factory(:country, :iso_code => 'TW')
   end
 
-  context :process_file do
+  context "process_file" do
     it "should look up the country and call process" do
       expect_any_instance_of(OpenChain::CustomHandler::ImportExportRegulationParser).to receive(:process)
       OpenChain::CustomHandler::ImportExportRegulationParser.process_file nil, @country.iso_code

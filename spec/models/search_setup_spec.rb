@@ -176,7 +176,7 @@ describe SearchSetup do
       end
     end
   end
-  context :last_accessed do
+  context "last_accessed" do
     before :each do
       @s = Factory :search_setup
     end

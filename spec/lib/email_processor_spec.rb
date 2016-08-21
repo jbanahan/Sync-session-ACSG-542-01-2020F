@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::EmailProcessor do
 
-  context :hm_shipment do
+  context "hm_shipment" do
     it "should process H&M shipment file" do
       u = double('user')
       allow(User).to receive(:integration).and_return u

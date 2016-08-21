@@ -6,8 +6,8 @@ require 'open_chain/kewill_sql_proxy_client'
 module OpenChain
   class AllianceParser
     extend OpenChain::IntegrationClientParser
-    SOURCE_CODE = 'Alliance'
-    DATE_MAP = {'00012'=>:arrival_date,
+    SOURCE_CODE ||= 'Alliance'
+    DATE_MAP ||= {'00012'=>:arrival_date,
       '00019'=>:release_date,
       '99202'=>:first_release_date,
       '00052'=>:free_date,
@@ -117,21 +117,21 @@ module OpenChain
                 process_cf00 r
               when "SC00"
                 process_sc00 r
-              when "SN00" 
+              when "SN00"
                 process_sn00 r
               when "CP00"
                 process_cp00 r
             end
             current_row += 1
           end
-         
+
           @entry.last_file_bucket = bucket_name
           @entry.last_file_path = s3_key
           @entry.import_country = Country.find_by_iso_code('US')
-          @entry.it_numbers = accumulated_string :it_number 
-          @entry.master_bills_of_lading = accumulated_string :mbol 
-          @entry.house_bills_of_lading = accumulated_string :hbol 
-          @entry.sub_house_bills_of_lading = accumulated_string :sub 
+          @entry.it_numbers = accumulated_string :it_number
+          @entry.master_bills_of_lading = accumulated_string :mbol
+          @entry.house_bills_of_lading = accumulated_string :hbol
+          @entry.sub_house_bills_of_lading = accumulated_string :sub
           [:cust_ref,:po_numbers,:part_numbers].each {|x| @accumulated_strings[x] ||= []}
           @entry.customer_references = (@accumulated_strings[:cust_ref].to_a - @accumulated_strings[:po_numbers].to_a).join("\n ")
           @entry.mfids = accumulated_string :mfid
@@ -200,7 +200,7 @@ module OpenChain
 
       outer_entry = nil
       find_and_process_entry(entry_information) do |entry|
-        # Each line from the results is going to be a hash from a DB query sent back by the Alliance SQL Proxy, the data goes down to the tariff level and is 
+        # Each line from the results is going to be a hash from a DB query sent back by the Alliance SQL Proxy, the data goes down to the tariff level and is
         # sorted together by invoice number, invoice line, tariff line
         # Use the first line for entry header information.
         header = results.first
@@ -221,11 +221,11 @@ module OpenChain
             invoice_line.visa_quantity = nil_blank line["visa qty"], true
             invoice_line.visa_uom = nil_blank line["visa uom"]
             invoice_line.customs_line_number = nil_blank line["customs line number"], true
-           
+
             line_data[:tariffs].values.each do |tariff_line|
               # We don't actually get the underlying Alliance tariff line number in the webtracking files.  Although it's rare,
               # there are some cases where the same tariff number is used on multiple tariff lines for the same com inv. line.
-              # In that case, see if we can use tariff line number as an array 
+              # In that case, see if we can use tariff line number as an array
               lines = invoice_line.commercial_invoice_tariffs.find_all {|t| t.hts_code == tariff_line["tariff no"]}
               invoice_tariff_line = nil
 
@@ -241,7 +241,7 @@ module OpenChain
               invoice_tariff_line.save!
             end
 
-            # Normally, I'd just assume that saving the parent would propigate down and save invoices and 
+            # Normally, I'd just assume that saving the parent would propigate down and save invoices and
             # invoice lines and tariff records.  It doesn't appear that ActiveRecrod actually works that way
             # though.  Because we're not setting any invoice fields, it hits the invoice association and then
             # doesn't bother to traverse down to the invoice line level for the update.  Because of that
@@ -259,7 +259,7 @@ module OpenChain
       outer_entry.broadcast_event :save if outer_entry
     end
 
-    private 
+    private
 
     def extract_invoice_information_from_query_lines results
       invoices = {}
@@ -270,10 +270,10 @@ module OpenChain
 
         if invoices[line["invoice number"]].nil?
           invoices[line["invoice number"]] = {}
-          invoices[line["invoice number"]][:header] = line 
+          invoices[line["invoice number"]][:header] = line
           invoices[line["invoice number"]][:lines] = {}
         end
-        
+
         if invoices[line["invoice number"]][:lines][line["line number"]].nil?
           invoices[line["invoice number"]][:lines][line["line number"]] = {}
           invoices[line["invoice number"]][:lines][line["line number"]][:line] = line
@@ -301,7 +301,7 @@ module OpenChain
         info[:broker_reference] = sh00_line[4,10].gsub(/^[0]*/,'')
         info[:last_exported_from_source] = parse_date_time(sh00_line[24,12])
       end
-      
+
       info
     end
 
@@ -320,7 +320,7 @@ module OpenChain
       end
 
       # entry will be nil if we're skipping the file do to it being outdated
-      if entry 
+      if entry
         Lock.with_lock_retry(entry) do
           # The lock call here can potentially update us with new data, so we need to check again that another process isn't processing a newer file
           yield entry unless skip_file?(entry, entry_information[:last_exported_from_source])
@@ -363,7 +363,7 @@ module OpenChain
       @entry.voyage = r[290,10].strip
       @entry.gross_weight = r[318,12]
       @entry.daily_statement_number = r[347,11].strip
-      @entry.pay_type = r[358] 
+      @entry.pay_type = r[358]
       @entry.liquidation_type_code = r[364,2]
       @entry.liquidation_type = r[366,35].strip
       @entry.liquidation_action_code = r[401,2]
@@ -443,7 +443,7 @@ module OpenChain
     def process_ci00 r
 
       @commercial_invoices ||= []
-      @c_invoice = nil #reset since we're building a new one 
+      @c_invoice = nil #reset since we're building a new one
       @c_invoice = @entry.commercial_invoices.build
       @commercial_invoices << @c_invoice
       @c_invoice.invoice_number = r[4,22].strip
@@ -468,7 +468,7 @@ module OpenChain
     # commercial invoice header optional data
     def process_ci01 r
       # Just straight parse this field as a BigDecimal, we'll want to keep the full value the user input here.
-      # This field doesn't not have an implicit decimal value like others in this file (if it even supports one at all, 
+      # This field doesn't not have an implicit decimal value like others in this file (if it even supports one at all,
       # which isn't real clear)
       @c_invoice.total_quantity = BigDecimal.new r[4, 12]
       @c_invoice.total_quantity_uom = r[16, 6].strip
@@ -482,7 +482,7 @@ module OpenChain
       @c_line.po_number = r[180,35].strip
       @c_line.quantity = parse_decimal r[34,12], 3
       @c_line.unit_of_measure = r[46,6].strip
-      @c_line.value = parse_currency r[273,13] 
+      @c_line.value = parse_currency r[273,13]
       @c_line.country_origin_code = r[67,2].strip
       @c_line.country_export_code = r[80,2]
       @c_line.related_parties = r[82]=='Y'
@@ -498,18 +498,18 @@ module OpenChain
       @c_line.computed_net_value = parse_currency r[312,13]
       accumulate_string :export_country_codes, @c_line.country_export_code
       accumulate_string :origin_country_codes, @c_line.country_origin_code
-      accumulate_string :vendor_names, @c_line.vendor_name 
-      accumulate_string :total_units_uoms, @c_line.unit_of_measure 
+      accumulate_string :vendor_names, @c_line.vendor_name
+      accumulate_string :total_units_uoms, @c_line.unit_of_measure
       accumulate_string :po_numbers, r[180,35].strip
       accumulate_string :part_numbers, @c_line.part_number
       accumulate_string :departments, @c_line.department
       accumulate_string :store_names, @c_line.store_name
-      @entry.total_units += @c_line.quantity 
+      @entry.total_units += @c_line.quantity
     end
 
     def process_cl01 line
       #unless check is a protection for "extra" CL01 records that I've asked about in kewill ticket 00040017
-      @c_line.line_number = (parse_decimal(line[430, 5], 0) / 10).to_i unless @c_line.line_number 
+      @c_line.line_number = (parse_decimal(line[430, 5], 0) / 10).to_i unless @c_line.line_number
     end
 
     # commercial invoice line - fees
@@ -547,13 +547,13 @@ module OpenChain
       @ct.tariff_description = r[96,35].strip
       gw = r[131,12].to_i
       @ct.gross_weight = gw unless gw.nil?
-      accumulate_string :spis, @ct.spi_primary 
+      accumulate_string :spis, @ct.spi_primary
       accumulate_string :spis, @ct.spi_secondary
     end
 
     def process_cp00 r
       # There's technically two types of cp00 lines.  Ones for ADD (Anti-Dumping Duty) and CVD (Countervailing Duty)
-      # The line positions and field names are identical in each, they just go into different prefix'ed fields based on       
+      # The line positions and field names are identical in each, they just go into different prefix'ed fields based on
       # the line type
       values = {}
       values[:case_number] = r[8, 9]
@@ -617,7 +617,7 @@ module OpenChain
     # tracking numbers
     def process_si00 r
       it_date = parse_date(r[98,8].strip)
-      if it_date 
+      if it_date
         if @entry.first_it_date.blank? || @entry.first_it_date > it_date
           @entry.first_it_date = it_date
         end
@@ -630,7 +630,7 @@ module OpenChain
 
     # customer references
     def process_sr00 r
-      accumulate_string :cust_ref, r[4,35].strip 
+      accumulate_string :cust_ref, r[4,35].strip
     end
 
     # containers
@@ -653,15 +653,15 @@ module OpenChain
       end
 
       # handle the aggregate fields for the header
-      accumulate_string :container_numbers, c.container_number 
-      cont_size_num = c.container_size 
-      cont_size_desc = c.size_description 
+      accumulate_string :container_numbers, c.container_number
+      cont_size_num = c.container_size
+      cont_size_desc = c.size_description
       accumulate_string :container_sizes, (cont_size_desc.blank? ? cont_size_num : "#{cont_size_num}-#{cont_size_desc}")
       accumulate_string :fcl_lcl, r[271] unless r[271].blank?
 
 
     end
-    
+
     #comments
     def process_sn00 r
       body = r[4,60].strip
@@ -679,7 +679,7 @@ module OpenChain
     end
 
     # match importer_id
-    def set_importer_id 
+    def set_importer_id
       raise "Alliance entry received without customer number" unless @entry.customer_number
       @entry.importer = Company.find_or_create_by_alliance_customer_number(:alliance_customer_number=>@entry.customer_number, :name=>@entry.customer_name, :importer=>true)
     end
@@ -715,7 +715,7 @@ module OpenChain
       return nil if str.blank? || str.match(/^[0]*$/)
       begin
         timezone.parse str
-      rescue 
+      rescue
         # For some reason Alliance will send us dates with a 60 in the minutes columns (rather than adding an hour)
         # .ie  201305152260
         if str =~ /60$/
@@ -737,12 +737,12 @@ module OpenChain
         d.round(decimal_places, BigDecimal::ROUND_HALF_UP)
       else
         offset = -(decimal_places+1)
-        # NOTE: I don't think this call is doing what was thought it was doing when initially programmed.  The 
+        # NOTE: I don't think this call is doing what was thought it was doing when initially programmed.  The
         # second argument to new is the # significant digits which is not the same as # of decimal places to use.
         # I'm hesitant to change though, since this has been in place for a while.
         BigDecimal.new str.insert(offset,"."), decimal_places
       end
-      
+
     end
     def parse_currency str
       parse_decimal str, 2

@@ -1,7 +1,7 @@
 describe 'spec_helper'
 
 describe AttachmentArchivesAttachment do
-  context :output_path do
+  context "output_path" do
     it "should use the attached entry to generate a path based on the broker reference number" do
       entry = Factory(:entry,:arrival_date=>1.day.ago,:importer=>Factory(:company), :broker_reference=>'brokerref')
       invoice = Factory(:broker_invoice, :entry=>entry, :invoice_date=>2.months.ago)

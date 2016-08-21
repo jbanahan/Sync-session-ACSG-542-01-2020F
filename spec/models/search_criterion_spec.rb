@@ -303,7 +303,7 @@ describe SearchCriterion do
       end
     end
     describe "apply" do
-      context :custom_field do
+      context "custom_field" do
         it "should find something created last month with val = 1" do
           @definition = Factory(:custom_definition,:data_type=>'date')
           @product.update_custom_value! @definition, 1.month.ago
@@ -385,7 +385,7 @@ describe SearchCriterion do
           expect(v.all).to include @product
         end
       end
-      context :normal_field do
+      context "normal_field" do
         it "should process value before search" do
           t = Factory(:tariff_record, hts_1: "9801001010")
           sc = SearchCriterion.new(:model_field_uid=>:hts_hts_1,:operator=>"eq",:value=>"9801.00.1010")
@@ -991,7 +991,7 @@ describe SearchCriterion do
         expect(@search_criterion.test?(@product)).to eq(false)
       end
 
-      context :string_handling do
+      context "string_handling" do
         before :each do
           @ent = Factory(:entry,broker_reference:' ')
           @sc = SearchCriterion.new(model_field_uid:'ent_brok_ref',operator:'null')
@@ -1045,7 +1045,7 @@ describe SearchCriterion do
         expect(@search_criterion.apply(Product)).to include @product
         expect(@search_criterion.test?(@product)).to eq(true)
       end
-      context :string_handling do
+      context "string_handling" do
         before :each do
           @ent = Factory(:entry,broker_reference:'x')
           @sc = SearchCriterion.new(model_field_uid:'ent_brok_ref',operator:'notnull')

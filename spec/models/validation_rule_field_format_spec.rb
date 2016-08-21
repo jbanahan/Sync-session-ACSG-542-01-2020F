@@ -14,7 +14,7 @@ describe ValidationRuleFieldFormat do
     expect(vr.should_skip?(Order.new(order_number:'XabcY'))).to be_falsey
     expect(vr.should_skip?(Order.new(order_number:'XabcdY'))).to be_truthy
   end
-  context :blank do
+  context "blank" do
     it "should not allow blank" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)

@@ -67,7 +67,7 @@ describe CustomReport do
       expect(d.search_schedules).to be_empty
     end
   end
-  context :report_output do
+  context "report_output" do
     before :each do
       @rpt = CustomReport.new
       def @rpt.run run_by, row_limit=nil

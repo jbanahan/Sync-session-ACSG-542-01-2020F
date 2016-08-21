@@ -63,9 +63,9 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     REXML::XPath.match(doc, xpath)
   end
 
-  context :generate_and_send_invoices do
+  context "generate_and_send_invoices" do
   
-    context :MM_Invoices do
+    context "MM_Invoices" do
       before :each do 
         make_sap_po
       end
@@ -455,7 +455,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       end
     end
 
-    context :FFI_Invoices do
+    context "FFI_Invoices" do
 
       before :each do
         # Make line 2 a brokerage fee
@@ -744,7 +744,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
     end
 
-    context :multiple_invoices_same_entry do
+    context "multiple_invoices_same_entry" do
       it "should know if an entry has been sent already during the same generation and send FFI format for second" do
         # create a second broker invoice for the same entry, and make sure it's output in FFI format
         # this also tests making multiple export jobs and attaching multiple files to the email
@@ -776,7 +776,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
   end
 
-  context :previously_invoiced? do
+  context "previously_invoiced?" do
     it "should identify an entry as not having been invoiced" do
       expect(@gen.previously_invoiced?(@entry)).to be_falsey
     end
@@ -803,7 +803,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
   end
 
-  context :find_broker_invoices do
+  context "find_broker_invoices" do
     it "should find broker invoices for RL Canada after June 1, 2013 that have not been succssfully invoiced" do
       # the default invoice should be found
       invoices = @gen.find_broker_invoices :rl_canada
@@ -880,7 +880,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
   end
 
-  context :find_generate_and_send_invoices do
+  context "find_generate_and_send_invoices" do
     it "should run in eastern timezone, call find invoices, and generate" do
       # everything done in the generation and find invoices is already tested..so just make sure this method just
       # calls the right things (yes, I'm pretty much just mocking every call.)
@@ -901,7 +901,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
   end
 
-  context :run_schedulable do
+  context "run_schedulable" do
     it "should instantiate a new generator and run the process" do
       # The only thing this method does is instantiate a new generator and call a method..just make sure it's doing that
       expect_any_instance_of(OpenChain::CustomHandler::PoloSapInvoiceFileGenerator).to receive(:find_generate_and_send_invoices)
@@ -909,7 +909,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
   end
 
-  context :exception_handling do
+  context "exception_handling" do
     it "should log an exception containing a spreadsheet with all errors encountered while building the invoice files" do
       # hook into a method in generate_invoice_output and have it raise an error so we can test error handling
       # during the invoice file generation

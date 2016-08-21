@@ -161,7 +161,7 @@ describe Api::V1::CommercialInvoicesController do
 
     end
 
-    context :lines do
+    context "lines" do
       it "should save lines" do
         @base_hash['commercial_invoice']['commercial_invoice_lines'] << {
           'cil_po_number'=>'po2','cil_part_number'=>'p0','cil_units'=>11,'cil_line_number'=>'2'
@@ -218,7 +218,7 @@ describe Api::V1::CommercialInvoicesController do
         j = JSON.parse(response.body)['errors'].first
         expect(j).to eql "Line 1 is missing Invoice Line - Line Number."
       end
-      context :tariffs do
+      context "tariffs" do
         it "should add tariff records" do
           expect {post :create, @base_hash}.to change(CommercialInvoiceTariff,:count).from(0).to(1)
           t = CommercialInvoiceTariff.first
@@ -254,7 +254,7 @@ describe Api::V1::CommercialInvoicesController do
         end
       end
     end
-    context :importer do
+    context "importer" do
       it "should check if user can edit invoices for importer" do
         c = Factory(:company,system_code:'OTHR',importer:true) #non linked company, can't edit
         @base_hash['commercial_invoice']['ci_imp_syscode'] = 'OTHR'

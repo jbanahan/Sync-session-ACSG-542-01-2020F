@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
     before :each do
       @u = Factory(:user)
     end
-    context :errors do
+    context "errors" do
       before :each do
         expect_any_instance_of(described_class).not_to receive(:parse_excel)
       end
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
     it "should receive rows" do
       xlc = double(:xl_client)
       rows = [[1,2,3,4,5],[1,2,3,4,5,6,7,8,9,0,1],[1,2,3,4,5,6,7,8,9,0,1]]
-      allow(xlc).to receive(:all_row_values,0).and_yield(rows[0]).and_yield(rows[1]).and_yield(rows[2])
+      allow(xlc).to receive(:all_row_values).with(0).and_yield(rows[0]).and_yield(rows[1]).and_yield(rows[2])
 
       dc = double('drawback_claim')
 
@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
   end
   describe "parse_csv" do
     before :each do
-      @data = <<DTA 
+      @data = <<DTA
 "Part NumberExported","Reference 1i.e. AWB #","Reference 2i.e. Invoice","ShipDate","QuantityExported","Dest.Country","DrawbackClaim Number","Average DrawbackEach Item",Reference 3,Exporter,Total
 1010510,1Z7R65572002792187,15818-017643321,,10/12/2010,1,CA,31670523013,Lands,1.4949,1.49
 1010519,1Z7R65572003073390,15818-017643332,,11/04/2010,1,CA,31670523013,Lands,1.782,1.78

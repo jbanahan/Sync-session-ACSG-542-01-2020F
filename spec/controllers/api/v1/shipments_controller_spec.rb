@@ -421,7 +421,7 @@ describe Api::V1::ShipmentsController do
       expect {post :create, @s_hash}.to_not change(Shipment,:count)
       expect(response.status).to eq 403
     end
-    context :order_lines do
+    context "order_lines" do
       before :each do
         @o_line = Factory(:order_line, product:@product, quantity:1000,order:Factory(:order,importer:@imp))
         @s_hash['shipment']['lines'] = [

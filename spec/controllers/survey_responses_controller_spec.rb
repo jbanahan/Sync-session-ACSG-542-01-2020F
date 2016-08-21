@@ -85,7 +85,7 @@ describe SurveyResponsesController do
       expect(response).to be_success
       expect(flash[:errors]).to include "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers."
     end
-    context :json do 
+    context "json" do 
       it "should load json response" do
         q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb", require_contact: true))
         sr = q.survey.generate_response! @u, 'subt'
