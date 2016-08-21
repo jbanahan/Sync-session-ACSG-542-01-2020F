@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it 'should match and generate import line for a good link' do
       described_class.process_entries [@entry]
-      expect(PieceSet.record.size).to eq(1)
+      expect(PieceSet.size).to eq(1)
       ps = PieceSet.first
       expect(ps.shipment_line).to eq(@s_line)
       expect(ps.commercial_invoice_line).to eq(@c_line)
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       other_company.linked_company_ids = [@importer.id]
       @s_line.shipment.update_attributes(:importer_id=>other_company.id)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
-      expect(PieceSet.record.size).to eq(1)
+      expect(PieceSet.size).to eq(1)
     end
     it 'should match one entry to two shipment lines by po / style' do
       @c_line.update_attributes(:quantity=>30)
@@ -224,7 +224,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
 
     it "should make line with combined data for one shipment line" do
-      
+
       described_class.new.link_commercial_invoice_line @c_line
       cr = ChangeRecord.new
       r = described_class.new.make_drawback_import_lines @c_line, cr
@@ -241,7 +241,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       expect(d.country_of_origin_code).to eq(@c_line.country_origin_code)
       expect(d.part_number).to eq("#{@product.unique_identifier}-#{@color}-#{@s_line.get_custom_value(@cdefs[:size]).value}+#{@c_line.country_origin_code}")
       expect(d.hts_code).to eq(@c_tar.hts_code)
-      expect(d.description).to eq(@entry.merchandise_description) 
+      expect(d.description).to eq(@entry.merchandise_description)
       expect(d.unit_of_measure).to eq("EA") #hard code to eaches
       expect(d.quantity).to eq(@s_line.quantity)
       expect(d.unit_price).to eq(BigDecimal("14.40")) #entered value / total units
@@ -277,7 +277,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       s_line2.update_custom_value! @cdefs[:size], "SM"
 
       @c_line.update_attributes(:quantity=>12)
-      
+
       described_class.new.link_commercial_invoice_line @c_line
       cr = ChangeRecord.new
       r = described_class.new.make_drawback_import_lines @c_line, cr
