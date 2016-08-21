@@ -34,7 +34,7 @@ XML
 
   describe "process_from_s3" do
     it "retrieves S3 data and parses it" do
-      OpenChain::S3.should_receive(:get_data).with('abc', '123').and_return @xml
+      expect(OpenChain::S3).to receive(:get_data).with('abc', '123').and_return @xml
       OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.process_from_s3 'abc', '123'
 
       inv = CommercialInvoice.first
@@ -54,7 +54,7 @@ XML
       expect(inv.vendor_name).to eq "Tradecard"
       expect(inv.invoice_date).to eq Date.new(2013, 12, 16)
       expect(inv.invoice_number).to eq "9586/13"
-      expect(inv.commercial_invoice_lines).to have(2).items
+      expect(inv.commercial_invoice_lines.size).to eq(2)
 
       line = inv.commercial_invoice_lines.first
       expect(line.po_number).to eq "CAN007629-0001001"
@@ -79,7 +79,7 @@ XML
       expect(inv).to_not be_nil
       expect(inv.id).to eq existing_inv.id
 
-      expect(inv.commercial_invoice_lines).to have(2).items
+      expect(inv.commercial_invoice_lines.size).to eq(2)
     end
 
     it "handles invalid dates without errors" do
@@ -106,7 +106,7 @@ XML
       o.update_custom_value! cds[:ord_invoicing_system], "Tradecard"
 
       OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.parse @xml
-      expect(o.get_custom_value(cds[:ord_invoiced]).value).to be_true
+      expect(o.get_custom_value(cds[:ord_invoiced]).value).to be_truthy
     end
   end
 end

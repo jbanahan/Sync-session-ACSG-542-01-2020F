@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourSapProductGenerator d
 
     it "ftps sync'ed file" do
       out = nil
-      described_class.any_instance.should_receive(:ftp_file) do |f|
+      expect_any_instance_of(described_class).to receive(:ftp_file) do |instance, f|
         begin
           out = IO.binread f.path
         ensure

@@ -40,15 +40,15 @@ describe CoreObjectSupport do
       Delayed::Worker.delay_jobs = @ws
     end
     it "should kick off job if import rule exists for this module" do
-      LinkedAttachment.should_receive(:create_from_attachable_by_class_and_id).with(Order,instance_of(Fixnum))
+      expect(LinkedAttachment).to receive(:create_from_attachable_by_class_and_id).with(Order,instance_of(Fixnum))
       Order.create!(:order_number=>'onum',:vendor_id=>Factory(:company,:vendor=>true).id)
     end
     it "should not kick off job if only import rules are for another module" do
-      LinkedAttachment.should_not_receive(:create_from_attachable_by_class_and_id)
+      expect(LinkedAttachment).not_to receive(:create_from_attachable_by_class_and_id)
       Product.create!(:unique_identifier=>"PLA")
     end
     it "should not kick off job if don't process linked attachments = true" do
-      LinkedAttachment.should_not_receive(:create_from_attachable_by_class_and_id)
+      expect(LinkedAttachment).not_to receive(:create_from_attachable_by_class_and_id)
       o = Order.new(order_number:'onum',vendor_id:Factory(:company,:vendor=>true).id)
       o.dont_process_linked_attachments = true
       o.save!
@@ -61,55 +61,55 @@ describe CoreObjectSupport do
     end
     it "should find products with no sync records" do
       ns = Product.need_sync @tp
-      ns.size.should == 1
-      ns.first.should == @p
+      expect(ns.size).to eq(1)
+      expect(ns.first).to eq(@p)
     end
     it "should find product with a sync record for a different trading partner" do
       @p.sync_records.create!(:trading_partner=>'other',:sent_at=>1.minute.ago,:confirmed_at=>10.seconds.ago)
       Product.connection.execute("UPDATE products SET updated_at = NOW() - INTERVAL 1 DAY;")
       ns = Product.need_sync @tp
-      ns.size.should == 1
-      ns.first.should == @p
+      expect(ns.size).to eq(1)
+      expect(ns.first).to eq(@p)
     end
     it "should find products with changed records that haven't been sent" do
       @p.sync_records.create!(:trading_partner=>@tp)
       Product.connection.execute("UPDATE products SET updated_at = NOW() - INTERVAL 1 DAY;") #hasn't been changed since last send
       ns = Product.need_sync @tp
-      ns.size.should == 1
-      ns.first.should == @p
+      expect(ns.size).to eq(1)
+      expect(ns.first).to eq(@p)
     end
     it "should find products sent but not confirmed" do
       @p.sync_records.create!(:trading_partner=>@tp,:sent_at=>1.minute.ago,:confirmed_at=>nil)
       Product.connection.execute("UPDATE products SET updated_at = NOW() - INTERVAL 1 DAY;") #hasn't been changed since last send
       ns = Product.need_sync @tp
-      ns.size.should == 1
-      ns.first.should == @p
+      expect(ns.size).to eq(1)
+      expect(ns.first).to eq(@p)
     end
     it "should find products sent after last confirmation" do
       @p.sync_records.create!(:trading_partner=>@tp,:sent_at=>1.minute.ago,:confirmed_at=>2.minutes.ago)
       Product.connection.execute("UPDATE products SET updated_at = NOW() - INTERVAL 1 DAY;") #hasn't been changed since last send
       ns = Product.need_sync @tp
-      ns.size.should == 1
-      ns.first.should == @p
+      expect(ns.size).to eq(1)
+      expect(ns.first).to eq(@p)
     end
     it "should find products changed after sent" do
       @p.sync_records.create!(:trading_partner=>@tp,:sent_at=>1.minute.ago,:confirmed_at=>10.seconds.ago)
       ns = Product.need_sync @tp
-      ns.size.should == 1
-      ns.first.should == @p
+      expect(ns.size).to eq(1)
+      expect(ns.first).to eq(@p)
     end
     it "should not find product where updated_at < sent < confirmed" do
       @p.sync_records.create!(:trading_partner=>@tp,:sent_at=>1.minute.ago,:confirmed_at=>10.seconds.ago)
       Product.connection.execute("UPDATE products SET updated_at = NOW() - INTERVAL 1 DAY;")
       ns = Product.need_sync @tp
-      ns.should be_empty
+      expect(ns).to be_empty
     end
     it "should not find products based on additional where clauses" do
       dont_find = Factory(:product,:unique_identifier=>"DONTFINDME")
       sc = SearchCriterion.new(:model_field_uid=>'prod_uid',:operator=>'nq',:value=>dont_find.unique_identifier)
       ns = sc.apply Product.need_sync @tp
-      ns.size.should == 1
-      ns.first.should == @p
+      expect(ns.size).to eq(1)
+      expect(ns.first).to eq(@p)
     end
     it "should not find products updated before ignore_updates_before" do
       dont_find = Factory(:product,unique_identifier:'DONTFINDME',updated_at:1.day.ago)
@@ -119,7 +119,7 @@ describe CoreObjectSupport do
   end
   describe :view_url do
     it "should make url based on request_host" do
-      MasterSetup.any_instance.stub(:request_host).and_return "x.y.z"
+      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "x.y.z"
       p = Factory(:product)
       expect(p.view_url).to eq XlsMaker.excel_url("/products/#{p.id}")
     end
@@ -129,14 +129,14 @@ describe CoreObjectSupport do
   end
   describe "excel_url" do
     it "should make url based on request_host with class method" do
-      MasterSetup.any_instance.stub(:request_host).and_return "x.y.z"
+      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "x.y.z"
       expect(Product.excel_url 1).to eq XlsMaker.excel_url("/products/1")
     end
   end
   describe :relative_url do
     it "should make url without host" do
       p = Factory(:product)
-      p.relative_url.should == "/products/#{p.id}"
+      expect(p.relative_url).to eq("/products/#{p.id}")
     end
 
     it "should make url without host with class method" do
@@ -151,10 +151,10 @@ describe CoreObjectSupport do
       first = p.attachments.create!(:attachment_type=>"A",:attached_file_name=>"Q")
       fourth = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A")
       r = p.all_attachments
-      r[0].should == first
-      r[1].should == second
-      r[2].should == third
-      r[3].should == fourth
+      expect(r[0]).to eq(first)
+      expect(r[1]).to eq(second)
+      expect(r[2]).to eq(third)
+      expect(r[3]).to eq(fourth)
     end
   end
 
@@ -172,16 +172,16 @@ describe CoreObjectSupport do
     describe :need_sync_join_clause do
       it "should generate sql for joining to sync_records table" do
         sql = TestCoreObject.need_sync_join_clause "Trading's Partner"
-        sql.should include ".syncable_type = 'Class\\' Name'"
-        sql.should include "sync_records.syncable_id = test_core_objects"
-        sql.should include "sync_records.trading_partner = 'Trading\\'s Partner'"
+        expect(sql).to include ".syncable_type = 'Class\\' Name'"
+        expect(sql).to include "sync_records.syncable_id = test_core_objects"
+        expect(sql).to include "sync_records.trading_partner = 'Trading\\'s Partner'"
       end
     end
 
     describe :need_sync_where_clause do
       it "should generate sql for joining to sync_records table" do
         sql = TestCoreObject.need_sync_where_clause
-        sql.should include "test_core_objects.updated_at"
+        expect(sql).to include "test_core_objects.updated_at"
       end
     end
   end
@@ -221,7 +221,7 @@ describe CoreObjectSupport do
   describe :can_run_validations? do
     before :each do
       @u = Factory(:user)
-      @u.stub(:edit_business_validation_rule_results?).and_return true
+      allow(@u).to receive(:edit_business_validation_rule_results?).and_return true
       @ent = Factory(:entry)
       
       @bvrr_1 = Factory(:business_validation_rule_result)

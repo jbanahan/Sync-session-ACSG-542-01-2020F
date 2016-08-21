@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe SearchQuery do
   before :each do
-    Product.stub(:search_where).and_return("1=1")
+    allow(Product).to receive(:search_where).and_return("1=1")
     @ss = SearchSetup.new(:module_type=>"Product")
     @ss.search_columns.build(:model_field_uid=>'prod_uid',:rank=>0)
     @ss.search_columns.build(:model_field_uid=>'prod_name',:rank=>1)
@@ -16,41 +16,41 @@ describe SearchQuery do
   describe :execute do
     it "should return array of arrays" do
       r = @sq.execute(per_page: 1000)
-      r.should have(2).results
-      r[0][:row_key].should == @p2.id
-      r[0][:result][0].should == @p2.unique_identifier
-      r[0][:result][1].should == @p2.name
-      r[1][:row_key].should == @p1.id
-      r[1][:result][0].should == @p1.unique_identifier
-      r[1][:result][1].should == @p1.name
+      expect(r.size).to eq(2)
+      expect(r[0][:row_key]).to eq(@p2.id)
+      expect(r[0][:result][0]).to eq(@p2.unique_identifier)
+      expect(r[0][:result][1]).to eq(@p2.name)
+      expect(r[1][:row_key]).to eq(@p1.id)
+      expect(r[1][:result][0]).to eq(@p1.unique_identifier)
+      expect(r[1][:result][1]).to eq(@p1.name)
     end
     it "should add extra_where clause" do
       @sq = SearchQuery.new @ss, User.new, :extra_where=>"products.id = #{@p1.id}"
       r = @sq.execute
-      r.should have(1).result
-      r[0][:row_key].should == @p1.id
+      expect(r.size).to eq(1)
+      expect(r[0][:row_key]).to eq(@p1.id)
     end
     it "should yield with loop of arrays and return nil" do
       r = []
-      @sq.execute(per_page: 1000) {|row_hash| r << row_hash}.should be_nil
-      r[0][:row_key].should == @p2.id
-      r[0][:result][0].should == @p2.unique_identifier
-      r[0][:result][1].should == @p2.name
-      r[1][:row_key].should == @p1.id
-      r[1][:result][0].should == @p1.unique_identifier
-      r[1][:result][1].should == @p1.name
+      expect(@sq.execute(per_page: 1000) {|row_hash| r << row_hash}).to be_nil
+      expect(r[0][:row_key]).to eq(@p2.id)
+      expect(r[0][:result][0]).to eq(@p2.unique_identifier)
+      expect(r[0][:result][1]).to eq(@p2.name)
+      expect(r[1][:row_key]).to eq(@p1.id)
+      expect(r[1][:result][0]).to eq(@p1.unique_identifier)
+      expect(r[1][:result][1]).to eq(@p1.name)
     end
     it "should process values via ModelField#process_query_result" do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
       r = @sq.execute per_page: 1000
-      r[1][:result][2].should == "1234.56.7890"
+      expect(r[1][:result][2]).to eq("1234.56.7890")
     end
     it "should handle multi-level queries" do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
       r = @sq.execute per_page: 1000
-      r[1][:result][2].should == "1234.56.7890"
+      expect(r[1][:result][2]).to eq("1234.56.7890")
     end
     it "should prevent DISTINCT from combining child level values in a multi-level query" do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
@@ -58,37 +58,37 @@ describe SearchQuery do
 
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
       r = @sq.execute per_page: 1000
-      r[1][:result][2].should == "1234.56.7890"
-      r[1][:row_key].should == r[2][:row_key]
-      r[2][:result][2].should == "1234.56.7890"
+      expect(r[1][:result][2]).to eq("1234.56.7890")
+      expect(r[1][:row_key]).to eq(r[2][:row_key])
+      expect(r[2][:result][2]).to eq("1234.56.7890")
     end
     it "should combine child level values in a multi-level query if no child level column is selected" do
       @ss.search_criterions.first.value = "#{@p1.name}"
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       r = @sq.execute per_page: 1000
-      r.size.should == 1
-      r[0][:result][1].should == @p1.name
-      r[0][:row_key].should == @p1.id
+      expect(r.size).to eq(1)
+      expect(r[0][:result][1]).to eq(@p1.name)
+      expect(r[0][:row_key]).to eq(@p1.id)
     end
     it "should show a blank value for null child values when a column is selected for it by the user" do
       @ss.search_columns.build(:model_field_uid=>'class_cntry_iso',:rank=>2)
       @ss.search_criterions.first.value = "#{@p1.name}"
       r = @sq.execute per_page: 1000
-      r.size.should == 1
-      r[0][:row_key].should == @p1.id
-      r[0][:result][2].should == ""
+      expect(r.size).to eq(1)
+      expect(r[0][:row_key]).to eq(@p1.id)
+      expect(r[0][:result][2]).to eq("")
     end
     it "should handle _blank columns" do
       @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>2)
       r = @sq.execute
-      r[1][:result][2].should == ""
+      expect(r[1][:result][2]).to eq("")
     end
     it "should secure query" do
-      Product.stub(:search_where).and_return("products.name = 'B'")
+      allow(Product).to receive(:search_where).and_return("products.name = 'B'")
       r = @sq.execute per_page: 1000
-      r.size.should == 1
-      r[0][:row_key].should == @p1.id
+      expect(r.size).to eq(1)
+      expect(r[0][:row_key]).to eq(@p1.id)
     end
     it "should sort at multiple levels" do
       # When multi level sorting, if the parent level doesn't have a sort
@@ -111,36 +111,36 @@ describe SearchQuery do
       @tr2_a_1 = Factory(:tariff_record,:hts_1=>'111111111',:classification=>@tr2_a_3.classification,:line_number=>2)
 
       r = @sq.execute per_page: 1000
-      r.size.should == 6
-      4.times { |i| r[i][:row_key].should == @p1.id }
-      (4..5).each { |i| r[i][:row_key].should == @p2.id }
-      (0..1).each { |i| r[i][:result][2].should == 'AX' }
-      (2..3).each { |i| r[i][:result][2].should == 'BX' }
-      (4..5).each { |i| r[i][:result][2].should == 'AX' }
-      r[0][:result][3].should start_with '5'
-      r[1][:result][3].should start_with '9'
-      r[2][:result][3].should start_with '5'
-      r[3][:result][3].should start_with '9'
-      r[4][:result][3].should start_with '1'
-      r[5][:result][3].should start_with '3'
+      expect(r.size).to eq(6)
+      4.times { |i| expect(r[i][:row_key]).to eq(@p1.id) }
+      (4..5).each { |i| expect(r[i][:row_key]).to eq(@p2.id) }
+      (0..1).each { |i| expect(r[i][:result][2]).to eq('AX') }
+      (2..3).each { |i| expect(r[i][:result][2]).to eq('BX') }
+      (4..5).each { |i| expect(r[i][:result][2]).to eq('AX') }
+      expect(r[0][:result][3]).to start_with '5'
+      expect(r[1][:result][3]).to start_with '9'
+      expect(r[2][:result][3]).to start_with '5'
+      expect(r[3][:result][3]).to start_with '9'
+      expect(r[4][:result][3]).to start_with '1'
+      expect(r[5][:result][3]).to start_with '3'
     end
 
     it "should not bomb on IN lists with blank values" do
       @p3.update_attributes :name => ""
       @ss.search_criterions[0].value = ""
       r = @sq.execute per_page: 1000
-      r.should have(1).results
+      expect(r.size).to eq(1)
 
-      r[0][:row_key].should == @p3.id
+      expect(r[0][:row_key]).to eq(@p3.id)
     end
 
     it "should not bomb on IN lists with slashes in a value" do
       @p3.update_attributes :name => "testing"
       @ss.search_criterions[0].value = "test\\\ntesting"
       r = @sq.execute per_page: 1000
-      r.should have(1).results
+      expect(r.size).to eq(1)
 
-      r[0][:row_key].should == @p3.id
+      expect(r[0][:row_key]).to eq(@p3.id)
     end
 
     it "should handle relative fields referencing different core modules" do
@@ -151,7 +151,7 @@ describe SearchQuery do
       @ss.search_criterions.clear
       @ss.search_criterions.build(:model_field_uid=>'prod_created_at', :operator=>'bfld', :value=>"class_updated_at")
       r = @sq.execute per_page: 1000
-      r[0][:result][0].should == @p1.unique_identifier
+      expect(r[0][:result][0]).to eq(@p1.unique_identifier)
     end
 
     it "adds an inner join optimization when pagination options exist" do
@@ -193,22 +193,22 @@ describe SearchQuery do
       it "should support columns" do
         @ss.search_columns.build(:model_field_uid=>"*cf_#{@cd.id}",:rank=>2)
         r = @sq.execute
-        r[0][:result][2].should == ""
-        r[1][:result][2].should == "MYVAL"
+        expect(r[0][:result][2]).to eq("")
+        expect(r[1][:result][2]).to eq("MYVAL")
       end
       it "should support criterions" do
         @ss.search_criterions.build(:model_field_uid=>"*cf_#{@cd.id}",:operator=>"eq",:value=>"MYVAL")
         r = @sq.execute
-        r.size.should == 1
-        r[0][:row_key].should == @p1.id
+        expect(r.size).to eq(1)
+        expect(r[0][:row_key]).to eq(@p1.id)
       end
       it "should support sorts" do
         @p2.update_custom_value! @cd, "AVAL"
         @ss.sort_criterions.first.model_field_uid = "*cf_#{@cd.id}"
         r = @sq.execute
-        r.size.should == 2
-        r[0][:row_key].should == @p2.id
-        r[1][:row_key].should == @p1.id
+        expect(r.size).to eq(2)
+        expect(r[0][:row_key]).to eq(@p2.id)
+        expect(r[1][:row_key]).to eq(@p1.id)
       end
     end
     context :pagination do
@@ -220,9 +220,9 @@ describe SearchQuery do
           Factory(:product,:name=>"D#{i}")
         end
         r = @sq.execute :per_page=>2, :page=>2
-        r.size.should == 2
-        r[0][:result][1].should == "D2"
-        r[1][:result][1].should == "D3"
+        expect(r.size).to eq(2)
+        expect(r[0][:result][1]).to eq("D2")
+        expect(r[1][:result][1]).to eq("D3")
       end
 
       it "should paginate child items across multiple pages" do
@@ -240,18 +240,18 @@ describe SearchQuery do
         c = @p1.classifications.joins(:country).order("countries.iso_code ASC")
 
         r = @sq.execute :per_page=>2, :page=>2
-        r.size.should == 2
-        r[0][:row_key].should == @p1.id
-        r[0][:result][2].should == c[2].country.iso_code
-        r[1][:row_key].should == @p1.id
-        r[1][:result][2].should == c[3].country.iso_code
+        expect(r.size).to eq(2)
+        expect(r[0][:row_key]).to eq(@p1.id)
+        expect(r[0][:result][2]).to eq(c[2].country.iso_code)
+        expect(r[1][:row_key]).to eq(@p1.id)
+        expect(r[1][:result][2]).to eq(c[3].country.iso_code)
 
         r = @sq.execute :per_page=>2, :page=>3
-        r.size.should == 2
-        r[0][:row_key].should == @p1.id
-        r[0][:result][2].should == c[4].country.iso_code
-        r[1][:row_key].should == @p1.id
-        r[1][:result][2].should == c[5].country.iso_code
+        expect(r.size).to eq(2)
+        expect(r[0][:row_key]).to eq(@p1.id)
+        expect(r[0][:result][2]).to eq(c[4].country.iso_code)
+        expect(r[1][:row_key]).to eq(@p1.id)
+        expect(r[1][:result][2]).to eq(c[5].country.iso_code)
       end
     end
   end
@@ -260,12 +260,12 @@ describe SearchQuery do
     it "should return row count for multi level query" do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
-      @sq.count.should == 2
+      expect(@sq.count).to eq(2)
     end
     it "should handle multiple blanks" do
       @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>10)
       @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>11)
-      @sq.count.should == 2
+      expect(@sq.count).to eq(2)
     end
   end
   describe :result_keys do
@@ -274,15 +274,15 @@ describe SearchQuery do
       tr2 = Factory(:tariff_record,:hts_1=>'9876543210',:line_number=>2,:classification=>tr.classification)
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
       keys = @sq.result_keys
-      keys.should == [@p2.id,@p1.id]
+      expect(keys).to eq([@p2.id,@p1.id])
     end
   end
   describe :unique_parent_count do
     it "should return parent count when there are details" do
       @ss.search_columns.build(:model_field_uid=>'class_cntry_iso',:rank=>2)
       2.times {|i| Factory(:classification,:product=>@p1)}
-      @sq.count.should == 3 #confirming we're setup properly
-      @sq.unique_parent_count.should == 2 #the real test
+      expect(@sq.count).to eq(3) #confirming we're setup properly
+      expect(@sq.unique_parent_count).to eq(2) #the real test
     end
   end
 end

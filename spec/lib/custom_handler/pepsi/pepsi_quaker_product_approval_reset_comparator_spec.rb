@@ -8,19 +8,19 @@ describe OpenChain::CustomHandler::Pepsi::PepsiQuakerProductApprovalResetCompara
   end
   describe '#compare' do
     it 'should ignore non-products' do
-      described_class.should_not_receive(:get_json_hash)
+      expect(described_class).not_to receive(:get_json_hash)
       described_class.compare 'Order', 10, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
     it 'should ignore new products' do
-      described_class.should_not_receive(:get_json_hash)
+      expect(described_class).not_to receive(:get_json_hash)
       described_class.compare 'Product', 10, nil, nil, nil, 'nb', 'np', 'nv'
     end
     it 'should get hashes and call compare_hashes' do
       h1 = double('hash1')
       h2 = double('hash2')
-      described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return(h1)
-      described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return(h2)
-      described_class.should_receive(:compare_hashes).with(10,h1,h2)
+      expect(described_class).to receive(:get_json_hash).with('ob','op','ov').and_return(h1)
+      expect(described_class).to receive(:get_json_hash).with('nb','np','nv').and_return(h2)
+      expect(described_class).to receive(:compare_hashes).with(10,h1,h2)
       described_class.compare 'Product', 10, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
   end
@@ -29,15 +29,15 @@ describe OpenChain::CustomHandler::Pepsi::PepsiQuakerProductApprovalResetCompara
     it 'should fingerprint both hashes and call reset if different' do
       h1 = double('hash1')
       h2 = double('hash2')
-      [h1,h2].each_with_index {|h,idx| described_class.should_receive(:fingerprint).with(h).and_return(idx.to_s)}
-      described_class.should_receive(:reset).with(10)
+      [h1,h2].each_with_index {|h,idx| expect(described_class).to receive(:fingerprint).with(h).and_return(idx.to_s)}
+      expect(described_class).to receive(:reset).with(10)
       described_class.compare_hashes(10,h1,h2)
     end
     it 'should fingerprint both hashes and not call reset if different' do
       h1 = double('hash1')
       h2 = double('hash2')
-      [h1,h2].each {|h| described_class.should_receive(:fingerprint).with(h).and_return('a')}
-      described_class.should_not_receive(:reset)
+      [h1,h2].each {|h| expect(described_class).to receive(:fingerprint).with(h).and_return('a')}
+      expect(described_class).not_to receive(:reset)
       described_class.compare_hashes(10,h1,h2)
     end
   end
@@ -116,7 +116,7 @@ describe OpenChain::CustomHandler::Pepsi::PepsiQuakerProductApprovalResetCompara
 
   describe 'reset' do
     it 'should reset pepsi quaker approved by and approved date' do
-      Product.any_instance.should_receive(:create_snapshot)
+      expect_any_instance_of(Product).to receive(:create_snapshot)
       p = Factory(:product)
       cdefs = described_class.prep_custom_definitions([:prod_quaker_validated_by,:prod_quaker_validated_date])
       p.update_custom_value!(cdefs[:prod_quaker_validated_by],100)

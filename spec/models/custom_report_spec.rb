@@ -13,11 +13,11 @@ describe CustomReport do
     it "should copy to another user" do
       @s.give_to @u2
       d = CustomReport.find_by_user_id @u2.id
-      d.name.should == "ABC (From #{@u.full_name})"
-      d.id.should_not be_nil
-      d.class.should == CustomReportEntryInvoiceBreakdown
+      expect(d.name).to eq("ABC (From #{@u.full_name})")
+      expect(d.id).not_to be_nil
+      expect(d.class).to eq(CustomReportEntryInvoiceBreakdown)
       @s.reload
-      @s.name.should == "ABC" #we shouldn't modify the original object
+      expect(@s.name).to eq("ABC") #we shouldn't modify the original object
     end
     it "should create a notification for recipient" do
       @s.give_to @u2
@@ -34,37 +34,37 @@ describe CustomReport do
     end
     it "should copy basic search setup" do
       d = @s.deep_copy "new"
-      d.id.should_not be_nil
-      d.id.should_not == @s.id
-      d.name.should == "new"
-      d.user.should == @u
-      d.include_links.should be_true
-      d.class.should == CustomReportEntryInvoiceBreakdown
+      expect(d.id).not_to be_nil
+      expect(d.id).not_to eq(@s.id)
+      expect(d.name).to eq("new")
+      expect(d.user).to eq(@u)
+      expect(d.include_links).to be_truthy
+      expect(d.class).to eq(CustomReportEntryInvoiceBreakdown)
     end
     it "should copy parameters" do
       @s.search_criterions.create!(:model_field_uid=>'a',:value=>'x',:operator=>'y',:status_rule_id=>1,:custom_definition_id=>2)
       d = @s.deep_copy "new"
-      d.should have(1).search_criterions
+      expect(d.search_criterions.size).to eq(1)
       sc = d.search_criterions.first
-      sc.model_field_uid.should == 'a'
-      sc.value.should == 'x'
-      sc.operator.should == 'y'
-      sc.status_rule_id.should == 1
-      sc.custom_definition_id.should == 2
+      expect(sc.model_field_uid).to eq('a')
+      expect(sc.value).to eq('x')
+      expect(sc.operator).to eq('y')
+      expect(sc.status_rule_id).to eq(1)
+      expect(sc.custom_definition_id).to eq(2)
     end
     it "should copy columns" do
       @s.search_columns.create!(:model_field_uid=>'a',:rank=>7,:custom_definition_id=>9)
       d = @s.deep_copy "new"
-      d.should have(1).search_column
+      expect(d.search_columns.size).to eq(1)
       sc = d.search_columns.first
-      sc.model_field_uid.should == 'a'
-      sc.rank.should == 7
-      sc.custom_definition_id.should == 9
+      expect(sc.model_field_uid).to eq('a')
+      expect(sc.rank).to eq(7)
+      expect(sc.custom_definition_id).to eq(9)
     end
     it "should not copy schedules" do
       @s.search_schedules.create!
       d = @s.deep_copy "new"
-      d.search_schedules.should be_empty
+      expect(d.search_schedules).to be_empty
     end
   end
   context :report_output do
@@ -87,56 +87,56 @@ describe CustomReport do
     it 'should output xls to tmp file' do
       user= Factory(:user)
       @tmp = @rpt.xls_file user
-      @tmp.path.should match(/xls/)
+      expect(@tmp.path).to match(/xls/)
       sheet = Spreadsheet.open(@tmp.path).worksheet(0)
-      sheet.row(0).default_format.name.should == XlsMaker::HEADER_FORMAT.name
-      sheet.row(0)[0].should == "MY HEADING"
-      sheet.row(1)[0].should == "my data"
-      sheet.row(1)[1].should == 7
-      sheet.row(1)[2].should == "mylink"
-      sheet.row(1)[2].url.should == "http://abc/def"
-      sheet.row(1)[3].should == Time.new(2014, 1, 1).to_s
-      sheet.row(4)[4].should == "my row 4"
-      sheet.row(5)[1].should == "col1"
-      sheet.row(5)[2].should == "col2"
+      expect(sheet.row(0).default_format.name).to eq(XlsMaker::HEADER_FORMAT.name)
+      expect(sheet.row(0)[0]).to eq("MY HEADING")
+      expect(sheet.row(1)[0]).to eq("my data")
+      expect(sheet.row(1)[1]).to eq(7)
+      expect(sheet.row(1)[2]).to eq("mylink")
+      expect(sheet.row(1)[2].url).to eq("http://abc/def")
+      expect(sheet.row(1)[3]).to eq(Time.new(2014, 1, 1).to_s)
+      expect(sheet.row(4)[4]).to eq("my row 4")
+      expect(sheet.row(5)[1]).to eq("col1")
+      expect(sheet.row(5)[2]).to eq("col2")
     end
     it 'should output to given xls file' do
       Tempfile.open('custom_report_spec') do |f|
         t = @rpt.xls_file Factory(:user), f
-        t.path.should == f.path
+        expect(t.path).to eq(f.path)
         sheet = Spreadsheet.open(f.path).worksheet(0)
-        sheet.row(0)[0].should == "MY HEADING"
+        expect(sheet.row(0)[0]).to eq("MY HEADING")
       end
     end
 
     it 'should output to array of arrays' do
       r = @rpt.to_arrays Factory(:user)
-      r[0][0].should == "MY HEADING"
-      r[1][0].should == "my data"
-      r[1][1].should == 7
-      r[1][2].should == "http://abc/def"
-      r[1][3].should == Time.new(2014, 1, 1)
-      r[2].should have(0).elements
-      r[3].should have(0).elements
-      r[4][0].should == ""
-      r[4][4].should == "my row 4"
-      r[5].should == ["", "col1", "col2"]
+      expect(r[0][0]).to eq("MY HEADING")
+      expect(r[1][0]).to eq("my data")
+      expect(r[1][1]).to eq(7)
+      expect(r[1][2]).to eq("http://abc/def")
+      expect(r[1][3]).to eq(Time.new(2014, 1, 1))
+      expect(r[2].size).to eq(0)
+      expect(r[3].size).to eq(0)
+      expect(r[4][0]).to eq("")
+      expect(r[4][4]).to eq("my row 4")
+      expect(r[5]).to eq(["", "col1", "col2"])
     end
 
     it 'should output csv' do
       @tmp = @rpt.csv_file Factory(:user)
-      @tmp.path.should match(/csv/)
+      expect(@tmp.path).to match(/csv/)
       r = CSV.read @tmp.path
-      r[0][0].should == "MY HEADING"
-      r[1][0].should == "my data"
-      r[1][1].should == "7"
-      r[1][2].should == "http://abc/def"
-      r[1][3].should == Time.new(2014, 1, 1).strftime("%Y-%m-%d %H:%M")
-      r[2].should have(0).elements
-      r[3].should have(0).elements
-      r[4][0].should == ""
-      r[4][4].should == "my row 4"
-      r[5].should == ["", "col1", "col2"]
+      expect(r[0][0]).to eq("MY HEADING")
+      expect(r[1][0]).to eq("my data")
+      expect(r[1][1]).to eq("7")
+      expect(r[1][2]).to eq("http://abc/def")
+      expect(r[1][3]).to eq(Time.new(2014, 1, 1).strftime("%Y-%m-%d %H:%M"))
+      expect(r[2].size).to eq(0)
+      expect(r[3].size).to eq(0)
+      expect(r[4][0]).to eq("")
+      expect(r[4][4]).to eq("my row 4")
+      expect(r[5]).to eq(["", "col1", "col2"])
     end
 
     context "no time" do
@@ -152,16 +152,16 @@ describe CustomReport do
       it "truncates time from datetime in xls-based output" do
         @tmp = Tempfile.new('custom_report_spec')
         t = @rpt.xls_file Factory(:user), @tmp
-        t.path.should == @tmp.path
+        expect(t.path).to eq(@tmp.path)
         sheet = Spreadsheet.open(@tmp.path).worksheet(0)
         expect(sheet.row(1).format(3).number_format).to eq "YYYY-MM-DD"
       end
 
       it "truncates time from datetime in csv output" do
         @tmp = @rpt.csv_file Factory(:user)
-        @tmp.path.should match(/csv/)
+        expect(@tmp.path).to match(/csv/)
         r = CSV.read @tmp.path
-        r[1][3].should == Time.new(2014, 1, 1).strftime("%Y-%m-%d")
+        expect(r[1][3]).to eq(Time.new(2014, 1, 1).strftime("%Y-%m-%d"))
       end
     end
     
@@ -188,7 +188,7 @@ describe CustomReport do
     it "does nothing if user can_view?" do
       CustomReportSpecImpl.view = true
       r = CustomReportSpecImpl.new
-      expect(r.send(:validate_access, @user)).to be_true
+      expect(r.send(:validate_access, @user)).to be_truthy
     end
   end
 
@@ -214,7 +214,7 @@ describe CustomReport do
     it "prints disabled for fields the user can't view" do
       uid = ModelField.find_by_uid(:prod_uid)
       u = Factory(:user)
-      uid.stub(:can_view?).with(u).and_return false
+      allow(uid).to receive(:can_view?).with(u).and_return false
 
       r = @rpt.to_arrays u
       expect(r[0]).to eq ["Header1", ModelField.disabled_label, ModelField.disabled_label]
@@ -238,7 +238,7 @@ describe CustomReport do
     end
 
     it "adds web links as first column when include_links is true" do
-      MasterSetup.any_instance.stub(:request_host).and_return "localhost"
+      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
       @rpt.include_links = true
       r = @rpt.to_arrays @u
       expect(r[0]).to eq [@p.excel_url, "Value", @p.unique_identifier]
@@ -305,9 +305,9 @@ describe CustomReport do
       Tempfile.open('custom_report_spec') do |f|
         t = @rpt.xls_file Factory(:user), f
         sheet = Spreadsheet.open(f.path).worksheet("First")
-        sheet.row(0)[0].should == "Data1"
+        expect(sheet.row(0)[0]).to eq("Data1")
         sheet = Spreadsheet.open(f.path).worksheet("Second")
-        sheet.row(0)[0].should == "Data2"
+        expect(sheet.row(0)[0]).to eq("Data2")
       end
     end
   end

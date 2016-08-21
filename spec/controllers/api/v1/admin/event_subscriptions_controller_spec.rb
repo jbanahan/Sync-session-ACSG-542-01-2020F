@@ -7,7 +7,7 @@ describe Api::V1::Admin::EventSubscriptionsController do
       u = User.new(email:'a@sample.com',first_name:'Joe',last_name:'Smith',id:5)
       sub = EventSubscription.new
       sub.user = u
-      EventSubscription.should_receive(:subscriptions_for_event).with('ORDER_COMMENT_CREATE','email','5').and_return [sub]
+      expect(EventSubscription).to receive(:subscriptions_for_event).with('ORDER_COMMENT_CREATE','email','5').and_return [sub]
       get :show_by_event_type_object_id_and_subscription_type, event_type: 'ORDER_COMMENT_CREATE', object_id: 5, subscription_type: 'email'
       expect(response).to be_success
       j = JSON.parse(response.body)

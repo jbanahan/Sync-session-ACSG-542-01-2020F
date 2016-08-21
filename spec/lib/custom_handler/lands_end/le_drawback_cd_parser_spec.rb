@@ -10,13 +10,13 @@ I,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.
   end
   it "should create keys" do
     @p.parse @data
-    KeyJsonItem.count.should == 2
-    KeyJsonItem.lands_end_cd('23189224317-1049812').first.data.should == {'entry_number'=>'23189224317',
+    expect(KeyJsonItem.count).to eq(2)
+    expect(KeyJsonItem.lands_end_cd('23189224317-1049812').first.data).to eq({'entry_number'=>'23189224317',
       'part_number'=>'1049812','duty_per_unit'=>'1.92'
-    }
-    KeyJsonItem.lands_end_cd('23171852562-1090261').first.data.should == {'entry_number'=>'23171852562',
+    })
+    expect(KeyJsonItem.lands_end_cd('23171852562-1090261').first.data).to eq({'entry_number'=>'23171852562',
       'part_number'=>'1090261','duty_per_unit'=>'1.0'
-    }
+    })
   end
   it "should skip lines where first element is not a single character" do
     @data << "\nGrandTota,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.98,0.15,2.00"
@@ -25,16 +25,16 @@ I,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.
   it "should build json that can be updated into DrawbackImportLine" do
     @p.parse @data
     d = DrawbackImportLine.new KeyJsonItem.lands_end_cd('23189224317-1049812').first.data
-    d.entry_number.should == '23189224317'
-    d.part_number.should == '1049812'
-    d.duty_per_unit.should == 1.92
+    expect(d.entry_number).to eq('23189224317')
+    expect(d.part_number).to eq('1049812')
+    expect(d.duty_per_unit).to eq(1.92)
   end
   it "should update existing DrawbackImportLine for same entry / part" do
     p = Factory(:product)
     d = DrawbackImportLine.create!(product_id:p.id,entry_number:'23189224317',part_number:'1049812',:unit_of_measure=>'X',importer_id:@le_company.id)
     @p.parse @data
     d.reload
-    d.duty_per_unit.should == 1.92
+    expect(d.duty_per_unit).to eq(1.92)
   end
   it "should not update existing DrawbackImportLine for different importer" do
     other_company = Factory(:company)
@@ -42,6 +42,6 @@ I,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.
     d = DrawbackImportLine.create!(importer_id:other_company.id,product_id:p.id,entry_number:'23189224317',part_number:'1049812',:unit_of_measure=>'X')
     @p.parse @data
     d.reload
-    d.hts_code.should be_nil
+    expect(d.hts_code).to be_nil
   end
 end

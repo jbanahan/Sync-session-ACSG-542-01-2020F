@@ -10,8 +10,8 @@ describe Api::V1::FenixPostbacksController do
     it "delays and passes query results to fenix parser" do
       query_results = [{"summary" => "12345", "child" => "98765"}]
 
-      OpenChain::FenixParser.should_receive(:delay).and_return OpenChain::FenixParser
-      OpenChain::FenixParser.should_receive(:parse_lvs_query_results).with query_results.to_json
+      expect(OpenChain::FenixParser).to receive(:delay).and_return OpenChain::FenixParser
+      expect(OpenChain::FenixParser).to receive(:parse_lvs_query_results).with query_results.to_json
 
       post :receive_lvs_results, results: query_results, context: {}
       expect(response.body).to eq({"OK"=>""}.to_json)

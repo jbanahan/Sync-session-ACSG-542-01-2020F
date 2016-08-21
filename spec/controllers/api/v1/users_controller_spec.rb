@@ -45,26 +45,26 @@ describe Api::V1::UsersController do
       use_json
       @u = Factory(:user, username: "user", api_auth_token: "auth_token", email: "me@gmail.com")
       @config = {client_secret: "secret", client_id: "id"}
-      Rails.application.config.stub(:google_oauth2_api_login).and_return @config
-      described_class.any_instance.stub(:test?).and_return false
+      allow(Rails.application.config).to receive(:google_oauth2_api_login).and_return @config
+      allow_any_instance_of(described_class).to receive(:test?).and_return false
     end
 
     it "uses an omniauth request to validate a user's access token" do
       oauth_client = double
-      OmniAuth::Strategies::GoogleOauth2.any_instance.should_receive(:client).and_return oauth_client
+      expect_any_instance_of(OmniAuth::Strategies::GoogleOauth2).to receive(:client).and_return oauth_client
       oauth_resp = double("OAuthResponse")
-      oauth_client.should_receive(:request).with(:get, 'https://www.googleapis.com/oauth2/v3/userinfo', params: {access_token: "token"}).and_return oauth_resp
-      oauth_resp.should_receive(:parsed).and_return({'email' => "me@gmail.com"})
+      expect(oauth_client).to receive(:request).with(:get, 'https://www.googleapis.com/oauth2/v3/userinfo', params: {access_token: "token"}).and_return oauth_resp
+      expect(oauth_resp).to receive(:parsed).and_return({'email' => "me@gmail.com"})
 
-      User.any_instance.should_receive(:on_successful_login)
+      expect_any_instance_of(User).to receive(:on_successful_login)
       post :google_oauth2, access_token: "token"
       expect(response).to be_success
       expect(JSON.parse(response.body)).to eq({"id" => @u.id, "username" => "user", "token" => "user:auth_token", "full_name" => @u.full_name})
     end
 
     it "returns 404 if server is not setup for google oauth logins" do
-      described_class.any_instance.should_receive(:test?).and_return false
-      Rails.application.config.should_receive(:respond_to?).with(:google_oauth2_api_login).and_return false
+      expect_any_instance_of(described_class).to receive(:test?).and_return false
+      expect(Rails.application.config).to receive(:respond_to?).with(:google_oauth2_api_login).and_return false
 
       post :google_oauth2, access_token: "token"
       expect(response.status).to eq 404
@@ -90,18 +90,18 @@ describe Api::V1::UsersController do
 
     it "handles errors raised via oauth query" do
       oauth_client = double
-      OmniAuth::Strategies::GoogleOauth2.any_instance.should_receive(:client).and_return oauth_client
-      oauth_client.should_receive(:request).and_raise StandardError
+      expect_any_instance_of(OmniAuth::Strategies::GoogleOauth2).to receive(:client).and_return oauth_client
+      expect(oauth_client).to receive(:request).and_raise StandardError
       post :google_oauth2, access_token: "token"
       expect(response.status).to eq 403
     end
 
     it "returns forbidden if email from access_token is not linked to any user" do
       oauth_client = double
-      OmniAuth::Strategies::GoogleOauth2.any_instance.should_receive(:client).and_return oauth_client
+      expect_any_instance_of(OmniAuth::Strategies::GoogleOauth2).to receive(:client).and_return oauth_client
       oauth_resp = double("OAuthResponse")
-      oauth_client.should_receive(:request).with(:get, 'https://www.googleapis.com/oauth2/v3/userinfo', params: {access_token: "token"}).and_return oauth_resp
-      oauth_resp.should_receive(:parsed).and_return({'email' => "nobody@gmail.com"})
+      expect(oauth_client).to receive(:request).with(:get, 'https://www.googleapis.com/oauth2/v3/userinfo', params: {access_token: "token"}).and_return oauth_resp
+      expect(oauth_resp).to receive(:parsed).and_return({'email' => "nobody@gmail.com"})
 
       post :google_oauth2, access_token: "token"
       expect(response.status).to eq 403
@@ -112,10 +112,10 @@ describe Api::V1::UsersController do
       @u.save!
 
       oauth_client = double
-      OmniAuth::Strategies::GoogleOauth2.any_instance.should_receive(:client).and_return oauth_client
+      expect_any_instance_of(OmniAuth::Strategies::GoogleOauth2).to receive(:client).and_return oauth_client
       oauth_resp = double("OAuthResponse")
-      oauth_client.should_receive(:request).with(:get, 'https://www.googleapis.com/oauth2/v3/userinfo', params: {access_token: "token"}).and_return oauth_resp
-      oauth_resp.should_receive(:parsed).and_return({'email' => "me@gmail.com"})
+      expect(oauth_client).to receive(:request).with(:get, 'https://www.googleapis.com/oauth2/v3/userinfo', params: {access_token: "token"}).and_return oauth_resp
+      expect(oauth_resp).to receive(:parsed).and_return({'email' => "me@gmail.com"})
 
       post :google_oauth2, access_token: "token"
       expect(response.status).to eq 403
@@ -160,7 +160,7 @@ describe Api::V1::UsersController do
       expect(response).to redirect_to '/api/v1/users/me'
 
       u.reload
-      expect(u.email_new_messages).to be_true
+      expect(u.email_new_messages).to be_truthy
     end
     it "should unset email_new_messages" do
       u = Factory(:user)
@@ -171,7 +171,7 @@ describe Api::V1::UsersController do
       expect(response).to redirect_to '/api/v1/users/me'
 
       u.reload
-      expect(u.email_new_messages).to be_false
+      expect(u.email_new_messages).to be_falsey
     end
   end
 

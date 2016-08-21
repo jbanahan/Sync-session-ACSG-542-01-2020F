@@ -17,8 +17,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
 
   describe :generate do
     it "should call FTP whenever row_count > 500" do
-      described_class.any_instance.stub(:row_count).and_return(501,501,200)
-      described_class.any_instance.should_receive(:ftp_file).exactly(3).times
+      allow_any_instance_of(described_class).to receive(:row_count).and_return(501,501,200)
+      expect_any_instance_of(described_class).to receive(:ftp_file).exactly(3).times
       described_class.generate
     end
   end
@@ -27,19 +27,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       header_row = {0=>'uid',1=>'imp',2=>'ldesc',3=>'org',4=>'hts'}
       content_row = {0=>'213',1=>'US',2=>"My Long\nDescription\t",3=>'CA',4=>'9876543210',5=>''}
       gen = described_class.new
-      gen.should_receive(:sync).and_yield(header_row).and_yield(content_row)
+      expect(gen).to receive(:sync).and_yield(header_row).and_yield(content_row)
       r = run_to_array gen
-      r.should have(1).record
-      r.first.should == ['213','US','My Long Description ','CA','9876543210']
+      expect(r.size).to eq(1)
+      expect(r.first).to eq(['213','US','My Long Description ','CA','9876543210'])
     end
     it "should not quote empty fields" do
       header_row = {0=>'uid',1=>'imp',2=>'ldesc',3=>'org',4=>'hts'}
       content_row = {0=>'213',1=>'US',2=>"",3=>'',4=>'9876543210',5=>''}
       gen = described_class.new
-      gen.should_receive(:sync).and_yield(header_row).and_yield(content_row)
+      expect(gen).to receive(:sync).and_yield(header_row).and_yield(content_row)
       @tmp = gen.sync_csv
       r = IO.read(@tmp)
-      r.should == "213|US|||9876543210\n"
+      expect(r).to eq("213|US|||9876543210\n")
     end
   end
   describe :query do
@@ -55,9 +55,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
-      r.should have(2).records
-      r.first.should == [p.unique_identifier,'US','LD','MX','1234567890'] 
-      r.last.should ==  [p.unique_identifier,'US','LD','CN','1234567890']
+      expect(r.size).to eq(2)
+      expect(r.first).to eq([p.unique_identifier,'US','LD','MX','1234567890']) 
+      expect(r.last).to eq([p.unique_identifier,'US','LD','CN','1234567890'])
     end
     it "should only return one hts" do
       p = Factory(:product)
@@ -69,8 +69,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       cls.tariff_records.create!(:hts_1=>"0987654321",line_number:2)
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
-      r.should have(1).records
-      r.first.should == [p.unique_identifier,'US','LD','MX','1234567890'] 
+      expect(r.size).to eq(1)
+      expect(r.first).to eq([p.unique_identifier,'US','LD','MX','1234567890']) 
     end
     it "should not output style without ZSCR article type" do
       p = Factory(:product)
@@ -88,8 +88,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       cls2.tariff_records.create!(:hts_1=>"1234567890")
       cls2.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
-      r.should have(1).records
-      r.first.first.should == p.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r.first.first).to eq(p.unique_identifier)
     end
     it "should only output US" do
       p = Factory(:product)
@@ -102,8 +102,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
       r = run_to_array
-      r.should have(1).record
-      r.first.should == [p.unique_identifier,'US','LD','MX','1234567890'] 
+      expect(r.size).to eq(1)
+      expect(r.first).to eq([p.unique_identifier,'US','LD','MX','1234567890']) 
     end
     it "should only output records that need sync" do
       p = Factory(:product)
@@ -119,8 +119,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       #reset updated at so that dont_include won't need sync
       ActiveRecord::Base.connection.execute("UPDATE products SET updated_at = '2010-01-01'")
       r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should only output approved products" do
       p = Factory(:product)
@@ -131,8 +131,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       dont_include = Factory(:product)
       dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
       r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should use long description override from classification if it exists" do
       p = Factory(:product)
@@ -143,9 +143,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
-      r[0][2].should == "Other long description"
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[0][2]).to eq("Other long description")
     end
 
     it "should handle sending multiple lines for related styles" do
@@ -158,10 +158,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       p.update_custom_value! @cdefs[:related_styles], "P-Style\nT-Style"
 
       r = run_to_array
-      r.should have(3).records
-      r[0][0].should == p.unique_identifier
-      r[1][0].should == "P-Style"
-      r[2][0].should == "T-Style"
+      expect(r.size).to eq(3)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[1][0]).to eq("P-Style")
+      expect(r[2][0]).to eq("T-Style")
     end
 
     it "should handle sending multiple lines for related styles and countries" do
@@ -176,13 +176,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       p.update_custom_value! @cdefs[:related_styles], "P-Style\nT-Style"
 
       r = run_to_array
-      r.should have(6).records
-      r[0][0].should == "M-Style"
-      r[1][0].should == "M-Style"
-      r[2][0].should == "P-Style"
-      r[3][0].should == "P-Style"
-      r[4][0].should == "T-Style"
-      r[5][0].should == "T-Style"
+      expect(r.size).to eq(6)
+      expect(r[0][0]).to eq("M-Style")
+      expect(r[1][0]).to eq("M-Style")
+      expect(r[2][0]).to eq("P-Style")
+      expect(r[3][0]).to eq("P-Style")
+      expect(r[4][0]).to eq("T-Style")
+      expect(r[5][0]).to eq("T-Style")
     end
 
     it "should not output same record twice based on fingerprint" do
@@ -199,22 +199,22 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       cls2.update_custom_value! @cdefs[:approved_date], 1.day.ago
 
       r = run_to_array
-      r.should have(2).records
+      expect(r.size).to eq(2)
 
       p.update_attributes(updated_at:1.day.from_now) #shouldn't matter because hash doesn't change
       cls2.tariff_records.first.update_attributes(hts_1:'987654321') #should change hash forcing new record
 
       r = run_to_array
-      r.should have(1).records
-      r[0][0].should == p2.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p2.unique_identifier)
     end
   end
   it "should have sync code" do
-    described_class.new.sync_code.should == 'ANN-ZYM'
+    expect(described_class.new.sync_code).to eq('ANN-ZYM')
   end
   context :ftp do
     it "should send proper credentials" do
-      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/ZYM'}
+      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/ZYM'})
     end
   end
 end

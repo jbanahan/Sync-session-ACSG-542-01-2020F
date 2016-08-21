@@ -5,24 +5,24 @@ describe ApplicationController do
   describe :advanced_search do
     before :each do
       @u = Factory(:master_user)
-      controller.stub(:current_user).and_return(@u)
+      allow(controller).to receive(:current_user).and_return(@u)
     end
     it "should build default search if no search runs" do
       r = controller.advanced_search(CoreModule::PRODUCT)
       ss = @u.search_setups.where(:module_type=>'Product').first
-      r.should == "/advanced_search#/#{ss.id}"
+      expect(r).to eq("/advanced_search#/#{ss.id}")
     end
     it "should redirect to advanced search with page" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
       sr = ss.search_runs.create!(:page=>3,:per_page=>100)
       r = controller.advanced_search(CoreModule::PRODUCT)
-      r.should == "/advanced_search#/#{ss.id}/3"
+      expect(r).to eq("/advanced_search#/#{ss.id}/3")
     end
     it "should redirect to advanced search without page" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
       sr = ss.search_runs.create!
       r = controller.advanced_search(CoreModule::PRODUCT)
-      r.should == "/advanced_search#/#{ss.id}"
+      expect(r).to eq("/advanced_search#/#{ss.id}")
     end
     it "should redirect to advanced search if force_search is set to true" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
@@ -37,7 +37,7 @@ describe ApplicationController do
       #make sure the search setup run is older
       SearchRun.connection.execute("UPDATE search_runs SET last_accessed = '2010-01-01 11:00' where id = #{sr.id}")
       r = controller.advanced_search(CoreModule::PRODUCT,true) 
-      r.should == "/advanced_search#/#{ss.id}"
+      expect(r).to eq("/advanced_search#/#{ss.id}")
     end
     it "should redirect to most recent search run" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
@@ -47,56 +47,56 @@ describe ApplicationController do
       #make sure the search setup run is older
       SearchRun.connection.execute("UPDATE search_runs SET last_accessed = '2010-01-01 11:00' where id = #{sr.id}")
       r = controller.advanced_search(CoreModule::PRODUCT) 
-      r.should == "/imported_files/show_angular#/#{f.id}"
+      expect(r).to eq("/imported_files/show_angular#/#{f.id}")
     end
     it "should redirect to imported file with page" do
       f = Factory(:imported_file,:module_type=>'Product',:user=>@u)
       fsr = f.search_runs.create!(:page=>7)
       r = controller.advanced_search(CoreModule::PRODUCT) 
-      r.should == "/imported_files/show_angular#/#{f.id}/7"
+      expect(r).to eq("/imported_files/show_angular#/#{f.id}/7")
     end
     it "should redirect to imported file without page" do
       f = Factory(:imported_file,:module_type=>'Product',:user=>@u)
       fsr = f.search_runs.create!
       r = controller.advanced_search(CoreModule::PRODUCT) 
-      r.should == "/imported_files/show_angular#/#{f.id}"
+      expect(r).to eq("/imported_files/show_angular#/#{f.id}")
     end
     it "should redirect to custom file" do
       f = Factory(:custom_file,:uploaded_by=>@u,:module_type=>'Product')
       fsr = f.search_runs.create!
       r = controller.advanced_search(CoreModule::PRODUCT) 
-      r.should == "/custom_files/#{f.id}"
+      expect(r).to eq("/custom_files/#{f.id}")
     end
     it "inserts clearSelection parameter if instructed" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
       sr = ss.search_runs.create!(:page=>3,:per_page=>100)
       r = controller.advanced_search(CoreModule::PRODUCT, false, true)
-      r.should == "/advanced_search#/#{ss.id}/3?clearSelection=true"
+      expect(r).to eq("/advanced_search#/#{ss.id}/3?clearSelection=true")
     end
   end
   describe :strip_uri_params do
     it "should remove specified parameters from a URI string" do
       uri = "http://www.test.com/file.html?id=1&k=2&val[nested]=2#hash"
       r = controller.strip_uri_params uri, "id"
-      r.should == "http://www.test.com/file.html?k=2&val[nested]=2#hash"
+      expect(r).to eq("http://www.test.com/file.html?k=2&val[nested]=2#hash")
     end
 
     it "should not leave a dangling ? if query string is blank" do
       uri = "http://www.test.com/?k=2"
       r = controller.strip_uri_params uri, "k"
-      r.should == "http://www.test.com/"
+      expect(r).to eq("http://www.test.com/")
     end
 
     it "should handle blank query strings" do
       uri = "http://www.test.com"
       r = controller.strip_uri_params uri, "k"
-      r.should == "http://www.test.com"
+      expect(r).to eq("http://www.test.com")
     end
 
     it "should handle missing keys" do
       uri = "http://www.test.com"
       r = controller.strip_uri_params uri
-      r.should == "http://www.test.com"
+      expect(r).to eq("http://www.test.com")
     end
   end
 
@@ -127,14 +127,14 @@ describe ApplicationController do
 
     it "should not do anything when a user is logged in and doesn't have password reset forced" do
       get :show, :id => 1
-      response.code.should eq "200"
-      response.body.should == "Rendered"
+      expect(response.code).to eq "200"
+      expect(response.body).to eq("Rendered")
     end
 
     it "should not do anything if the user was not logged in" do
-      controller.stub(:signed_in?).and_return false
+      allow(controller).to receive(:signed_in?).and_return false
       get :show, :id => 1
-      response.code.should eq "200"
+      expect(response.code).to eq "200"
     end
 
     it "should redirect to password reset page if user has password reset checked" do
@@ -143,7 +143,7 @@ describe ApplicationController do
       # The reset should have used the forgot_password! method which sets a confirmation
       # token, if the redirect points the user to the same confirmation token as
       # what's set in the current user, then we're good to go.
-      response.should redirect_to edit_password_reset_path controller.current_user.confirmation_token
+      expect(response).to redirect_to edit_password_reset_path controller.current_user.confirmation_token
     end
   end
 
@@ -220,7 +220,7 @@ describe ApplicationController do
     end
 
     it "should set csrf cookie" do
-      controller.should_receive(:form_authenticity_token).and_return "test"
+      expect(controller).to receive(:form_authenticity_token).and_return "test"
       get :show, :id => 1
       expect(cookies['XSRF-TOKEN']).to eq "test"
     end
@@ -249,7 +249,7 @@ describe ApplicationController do
     end
 
     it "verifies requests with a valid X-XSRF-Token" do
-      controller.stub(:form_authenticity_token).and_return "testing"
+      allow(controller).to receive(:form_authenticity_token).and_return "testing"
       request.env['X-XSRF-Token'] = "testing"
       post :destroy, :id => 1
     end
@@ -303,7 +303,7 @@ describe ApplicationController do
 
     it "should redirect to portal_redirect_path if not blank?" do
     
-      User.any_instance.stub(:portal_redirect_path).and_return '/abc'
+      allow_any_instance_of(User).to receive(:portal_redirect_path).and_return '/abc'
       u = Factory(:user)
       sign_in_as u
 

@@ -10,55 +10,55 @@ describe Survey do
       q2 = Factory(:question,:rank=>2,:survey_id=>@survey.id,:content=>'my question content 2')
       q3 = Factory(:question,:rank=>3,:survey_id=>@survey.id,:content=>'my question content 3')
       new_survey = @survey.copy!
-      new_survey.id.should > 0
-      new_survey.id.should_not == @survey.id
-      new_survey.company_id.should == @survey.company_id
-      new_survey.name.should == @survey.name
-      new_survey.email_subject.should == @survey.email_subject
-      new_survey.email_body.should == @survey.email_body
-      new_survey.ratings_list.should == @survey.ratings_list
-      new_survey.should have(3).questions
+      expect(new_survey.id).to be > 0
+      expect(new_survey.id).not_to eq(@survey.id)
+      expect(new_survey.company_id).to eq(@survey.company_id)
+      expect(new_survey.name).to eq(@survey.name)
+      expect(new_survey.email_subject).to eq(@survey.email_subject)
+      expect(new_survey.email_body).to eq(@survey.email_body)
+      expect(new_survey.ratings_list).to eq(@survey.ratings_list)
+      expect(new_survey.questions.size).to eq(3)
       n1 = new_survey.questions.where(:rank=>1).first
-      n1.content.should == q1.content
-      n1.choices.should == q1.choices
-      n1.warning.should == q1.warning
-      new_survey.questions.where(:rank=>2).first.content.should == q2.content
-      new_survey.questions.where(:rank=>3).first.content.should == q3.content
+      expect(n1.content).to eq(q1.content)
+      expect(n1.choices).to eq(q1.choices)
+      expect(n1.warning).to eq(q1.warning)
+      expect(new_survey.questions.where(:rank=>2).first.content).to eq(q2.content)
+      expect(new_survey.questions.where(:rank=>3).first.content).to eq(q3.content)
     end
     it 'should not copy subscriptions' do
       @survey.survey_subscriptions.create!(:user_id=>Factory(:user).id)
-      @survey.copy!.survey_subscriptions.should be_blank
+      expect(@survey.copy!.survey_subscriptions).to be_blank
     end
     it 'should not copy assigned users' do
       @survey.generate_response! Factory(:user)
-      @survey.copy!.assigned_users.should be_blank
+      expect(@survey.copy!.assigned_users).to be_blank
     end
     it 'should not copy responses' do
       @survey.generate_response! Factory(:user)
-      @survey.copy!.survey_responses.should be_blank
+      expect(@survey.copy!.survey_responses).to be_blank
     end
   end
   it 'should link to user' do
     u = Factory(:user)
     s = Factory(:survey,:created_by_id=>u.id)
-    s.created_by.should == u
+    expect(s.created_by).to eq(u)
   end
   it "should be locked if responses exist" do
     sr = Factory(:survey_response)
-    sr.survey.should be_locked
+    expect(sr.survey).to be_locked
   end
   it 'should not allow edits if locked' do
     s = Factory(:survey)
-    s.stub(:has_responses?).and_return(true)
-    s.save.should be_false
-    s.errors.full_messages.first.should == "You cannot change a locked survey."
+    allow(s).to receive(:has_responses?).and_return(true)
+    expect(s.save).to be_falsey
+    expect(s.errors.full_messages.first).to eq("You cannot change a locked survey.")
   end
   it "should update nested questions" do
     s = Factory(:survey)
     s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
     s = Survey.find(s.id)
-    s.questions.find_by_content("09876543210").rank.should == 1
-    s.questions.find_by_content("1234567890").rank.should == 2
+    expect(s.questions.find_by_content("09876543210").rank).to eq(1)
+    expect(s.questions.find_by_content("1234567890").rank).to eq(2)
   end
   describe 'generate_response' do
     it 'should make a response with all answers' do
@@ -94,7 +94,7 @@ describe Survey do
       s.generate_response! u2
       #no response for user 3
 
-      s.assigned_users.should == [u1,u2]
+      expect(s.assigned_users).to eq([u1,u2])
     end
   end
   describe "can_edit?" do
@@ -103,15 +103,15 @@ describe Survey do
     end
     it "should allow editing if user has permission and is from survey's company" do
       u = Factory(:user,:company=>@s.company,:survey_edit=>true)
-      @s.can_edit?(u).should be_true
+      expect(@s.can_edit?(u)).to be_truthy
     end
     it "should not allow editing if user doesn't have permission" do
       u = Factory(:user,:company=>@s.company)
-      @s.can_edit?(u).should be_false
+      expect(@s.can_edit?(u)).to be_falsey
     end
     it "should not allow editing if user isn't from survey's company" do
       u = Factory(:user,:survey_edit=>true)
-      @s.can_edit?(u).should be_false
+      expect(@s.can_edit?(u)).to be_falsey
     end
   end
   describe "can_view?" do
@@ -120,24 +120,24 @@ describe Survey do
     end
     it "should allow view/download if user has permission and is from survey's company" do
       u = Factory(:user,:company=>@s.company,:survey_edit=>true)
-      @s.can_view?(u).should be_true
+      expect(@s.can_view?(u)).to be_truthy
     end
     it "should not allow view/download if user doesn't have permission" do
       u = Factory(:user,:company=>@s.company)
-      @s.can_view?(u).should be_false
+      expect(@s.can_view?(u)).to be_falsey
     end
     it "should not allow view/download if user isn't from survey's company" do
       u = Factory(:user,:survey_edit=>true)
-      @s.can_view?(u).should be_false
+      expect(@s.can_view?(u)).to be_falsey
     end
   end
   describe :rating_values do
     it "should return empty array if no values" do
-      Survey.new.rating_values.should == []
+      expect(Survey.new.rating_values).to eq([])
     end
     it "should return values, one per line" do
       vals = "a\nb"
-      Survey.new(:ratings_list=>vals).rating_values.should == ["a","b"]
+      expect(Survey.new(:ratings_list=>vals).rating_values).to eq(["a","b"])
     end
   end
   describe "to_xls" do
@@ -162,39 +162,39 @@ describe Survey do
     it "should create an excel file" do
       wb = @survey.to_xls
       responses = wb.worksheet 'Survey Responses'
-      responses.should_not be_nil
+      expect(responses).not_to be_nil
 
-      responses.row_count.should == 4
-      responses.row(0).should == ['Company/Group', 'Label', 'Responder', 'Email', 'Status', 'Rating', 'Invited', 'Opened', 'Submitted', 'Last Updated']
+      expect(responses.row_count).to eq(4)
+      expect(responses.row(0)).to eq(['Company/Group', 'Label', 'Responder', 'Email', 'Status', 'Rating', 'Invited', 'Opened', 'Submitted', 'Last Updated'])
       x = responses.row(1)
-      x[0].should == @r1.user.company.name
-      x[1].should == @r1.subtitle
-      x[2].should == @r1.user.full_name
-      x[3].should == @r1.user.email
-      x[4].should == @r1.status
-      x[5].should == @r1.rating
-      x[6].to_s.should == @r1.email_sent_date.to_s
-      x[7].to_s.should == @r1.response_opened_date.to_s
-      x[8].to_s.should == @r1.submitted_date.to_s
-      x[9].to_s.should == @r1.updated_at.to_s
+      expect(x[0]).to eq(@r1.user.company.name)
+      expect(x[1]).to eq(@r1.subtitle)
+      expect(x[2]).to eq(@r1.user.full_name)
+      expect(x[3]).to eq(@r1.user.email)
+      expect(x[4]).to eq(@r1.status)
+      expect(x[5]).to eq(@r1.rating)
+      expect(x[6].to_s).to eq(@r1.email_sent_date.to_s)
+      expect(x[7].to_s).to eq(@r1.response_opened_date.to_s)
+      expect(x[8].to_s).to eq(@r1.submitted_date.to_s)
+      expect(x[9].to_s).to eq(@r1.updated_at.to_s)
 
-      responses.row(2)[1].should == @r2.subtitle
+      expect(responses.row(2)[1]).to eq(@r2.subtitle)
 
       questions = wb.worksheet "Questions"
-      questions.should_not be_nil
+      expect(questions).not_to be_nil
 
-      questions.row(0).should == ["Question", "Answered", "1", "2"]
+      expect(questions.row(0)).to eq(["Question", "Answered", "1", "2"])
       x = questions.row(1)
-      x[0].should == @q1.content
-      x[1].should == 1
-      x[2].should == 1
-      x[3].should == 1
+      expect(x[0]).to eq(@q1.content)
+      expect(x[1]).to eq(1)
+      expect(x[2]).to eq(1)
+      expect(x[3]).to eq(1)
 
       x = questions.row(2)
-      x[0].should == @q2.content
-      x[1].should == 1
-      x[2].should == 0
-      x[3].should == 1
+      expect(x[0]).to eq(@q2.content)
+      expect(x[1]).to eq(1)
+      expect(x[2]).to eq(0)
+      expect(x[3]).to eq(1)
     end
   end
 
@@ -203,26 +203,26 @@ describe Survey do
 
       it "allows archiving" do
         survey = Factory(:survey, archived: false)
-        survey.stub(:has_responses?).and_return true
+        allow(survey).to receive(:has_responses?).and_return true
         survey.update_attributes! archived: true
         survey.reload
-        expect(survey.archived).to be_true
+        expect(survey.archived).to be_truthy
       end
 
       it "allows de-archiving" do
         survey = Factory(:survey, archived: true)
 
-        survey.stub(:has_responses?).and_return true
+        allow(survey).to receive(:has_responses?).and_return true
         survey.update_attributes! archived: false
         survey.reload
-        expect(survey.archived).to be_false
+        expect(survey.archived).to be_falsey
       end
 
       it "rejects if archived is not the only attribute being saved" do
         survey = Survey.new
-        survey.stub(:has_responses?).and_return true
+        allow(survey).to receive(:has_responses?).and_return true
 
-        expect(survey.update_attributes archived: false, name: "Blah").to be_false
+        expect(survey.update_attributes archived: false, name: "Blah").to be_falsey
         expect(survey.errors.full_messages).to eq ["You cannot change a locked survey."]
       end
     end

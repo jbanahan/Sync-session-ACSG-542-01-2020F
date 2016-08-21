@@ -9,8 +9,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSuppor
   let (:broker_invoice_2) { Factory(:broker_invoice, invoice_total: BigDecimal("10"), invoice_date: Date.new(2016, 3, 1), entry: entry) }
   before :each do
     ms = double("MasterSetup")
-    ms.stub(:request_host).and_return "http://localhost"
-    MasterSetup.stub(:get).and_return ms
+    allow(ms).to receive(:request_host).and_return "http://localhost"
+    allow(MasterSetup).to receive(:get).and_return ms
   end
 
   describe "generate_summary" do

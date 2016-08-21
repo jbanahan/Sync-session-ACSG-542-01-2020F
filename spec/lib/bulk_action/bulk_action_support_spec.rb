@@ -17,8 +17,8 @@ describe OpenChain::BulkAction::BulkActionSupport do
     end
     it 'should get count for full search update' do
       sr = double('search_run')
-      sr.should_receive(:total_objects).and_return 10
-      SearchRun.should_receive(:find_by_id).with('99').and_return sr
+      expect(sr).to receive(:total_objects).and_return 10
+      expect(SearchRun).to receive(:find_by_id).with('99').and_return sr
       expect(@counter.get_bulk_count(nil, '99')).to eq 10
     end
   end

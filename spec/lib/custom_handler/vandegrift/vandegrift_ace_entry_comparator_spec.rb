@@ -76,12 +76,12 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator do
 
   describe "accept" do
     it "accepts kewill snapshots" do
-      expect(subject.accept? snapshot).to be_true
+      expect(subject.accept? snapshot).to be_truthy
     end
 
     it "doesn't accept non-kewill snapshots" do
       entry.update_attributes! source_system: "Fenix"
-      expect(subject.accept? snapshot).to be_false
+      expect(subject.accept? snapshot).to be_falsey
     end
   end
 end

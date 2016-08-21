@@ -82,7 +82,7 @@ describe Api::V1::ApiController do
 
   describe "render_ok" do
     it "renders an ok response" do
-      subject.should_receive(:render).with(json: {ok: "ok"})
+      expect(subject).to receive(:render).with(json: {ok: "ok"})
       subject.render_ok
     end
   end

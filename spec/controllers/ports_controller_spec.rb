@@ -12,15 +12,15 @@ describe PortsController do
       @u.admin = false
       @u.save!
       get :index
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
 
     it "should show ports" do
       3.times {|i| Port.create!(:name=>"p#{i}")}
       get :index
-      assigns[:ports].should have(3).ports
-      assigns[:ports].first.name.should == "p0"
+      expect(assigns[:ports].size).to eq(3)
+      expect(assigns[:ports].first.name).to eq("p0")
     end
 
   end
@@ -29,15 +29,15 @@ describe PortsController do
       @u.admin = false
       @u.save!
       post :create, {'port'=>{'name'=>'x'}}
-      response.should be_redirect
-      flash[:errors].should have(1).message
-      Port.all.should be_empty
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
+      expect(Port.all).to be_empty
     end
     it "should create port" do
       post :create, {'port'=>{'name'=>'x'}}
-      response.should be_redirect
+      expect(response).to be_redirect
       p = Port.first
-      p.name.should == 'x'
+      expect(p.name).to eq('x')
     end
   end
 
@@ -49,14 +49,14 @@ describe PortsController do
       @u.admin = false
       @u.save!
       delete :destroy, :id=>@p.id
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
     it "should destroy port" do
       delete :destroy, :id=>@p.id
-      response.should be_redirect
-      flash[:notices].should have(1).message
-      Port.all.should be_empty
+      expect(response).to be_redirect
+      expect(flash[:notices].size).to eq(1)
+      expect(Port.all).to be_empty
     end
   end
 
@@ -69,17 +69,17 @@ describe PortsController do
       @u.admin = false
       @u.save!
       put :update, { :id=>@p.id, 'port'=>{'name'=>'my port'} }
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
       @p.reload
-      @p.name.should == 'old name'
+      expect(@p.name).to eq('old name')
     end
     it "should update port" do
       put :update, { :id=>@p.id, 'port'=>{'name'=>'my port'} }
-      response.should be_redirect
-      flash[:notices].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:notices].size).to eq(1)
       @p.reload
-      @p.name.should == 'my port'
+      expect(@p.name).to eq('my port')
     end
   end
 end

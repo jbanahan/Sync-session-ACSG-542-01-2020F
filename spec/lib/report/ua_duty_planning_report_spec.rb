@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::Report::UaDutyPlanningReport do
   describe '#run_report' do
     before :each do
-      described_class.stub(:permission?).and_return true
+      allow(described_class).to receive(:permission?).and_return true
       @cdefs = described_class.prep_custom_definitions([:prod_export_countries,:import_countries,:prod_seasons,:expected_duty_rate])
 
 
@@ -59,13 +59,13 @@ describe OpenChain::Report::UaDutyPlanningReport do
       make_countries
       make_tariffs
       p = make_product
-      OpenChain::S3.should_receive(:bucket_name).and_return 'mybucket'
-      OpenChain::S3.should_receive(:get_data).with('mybucket','mypath').and_return("ABC\n#{p.unique_identifier}\nDEF\n")
+      expect(OpenChain::S3).to receive(:bucket_name).and_return 'mybucket'
+      expect(OpenChain::S3).to receive(:get_data).with('mybucket','mypath').and_return("ABC\n#{p.unique_identifier}\nDEF\n")
       opts = {style_s3_path:'mypath'}
       expect(described_class.find_products(user,opts,{}).to_a).to eq [p]
     end
     it 'should fail if user does not have permission' do
-      described_class.stub(:permission?).and_return false
+      allow(described_class).to receive(:permission?).and_return false
       expect{described_class.run_report user, season:'FW17'}.to raise_error
     end
 
@@ -190,18 +190,18 @@ describe OpenChain::Report::UaDutyPlanningReport do
       c = Company.new(master:true)
       @u = User.new
       @u.company = c
-      @u.stub(:view_products?).and_return true
+      allow(@u).to receive(:view_products?).and_return true
       MasterSetup.get.update_attributes(custom_features:'UA-TPP')
     end
     it 'should be available if user can view products and is in master company and UA-TPP is enabled' do
-      expect(described_class.permission?(@u)).to be_true
+      expect(described_class.permission?(@u)).to be_truthy
     end
     context 'not available' do
       after :each do
-        expect(described_class.permission?(@u)).to be_false
+        expect(described_class.permission?(@u)).to be_falsey
       end
       it 'if user cannot view products' do
-        @u.stub(:view_products?).and_return false
+        allow(@u).to receive(:view_products?).and_return false
       end
       it 'if user is not master' do
         @u.company.master = false

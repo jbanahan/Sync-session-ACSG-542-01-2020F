@@ -11,15 +11,15 @@ describe ChargeCodesController do
       @u.admin = false
       @u.save!
       get :index
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
     it "should show all charge codes" do
       3.times {|i| ChargeCode.create!(:code=>"#{5-i}")}
       get :index
       c = assigns[:charge_codes]
-      c.should have(3).codes
-      c.first.code.should == "3"
+      expect(c.size).to eq(3)
+      expect(c.first.code).to eq("3")
     end
   end
 
@@ -28,16 +28,16 @@ describe ChargeCodesController do
       @u.admin = false
       @u.save!
       post :create, {'charge_code'=> {'code'=>"x",'description'=>"y"} }
-      response.should be_redirect
-      flash[:errors].should have(1).message
-      ChargeCode.all.should be_empty
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
+      expect(ChargeCode.all).to be_empty
     end
     it "should create charge code" do
       post :create, {'charge_code'=> {'code'=>"x",'description'=>"y"} }
-      response.should redirect_to charge_codes_path
+      expect(response).to redirect_to charge_codes_path
       c = ChargeCode.first
-      c.code.should == "x"
-      c.description.should == "y"
+      expect(c.code).to eq("x")
+      expect(c.description).to eq("y")
     end
   end
 
@@ -49,14 +49,14 @@ describe ChargeCodesController do
       @u.admin = false
       @u.save!
       delete :destroy, :id=>@c.id
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
     it "should destroy charge code" do
       delete :destroy, :id=>@c.id
-      response.should be_redirect
-      flash[:notices].should have(1).message
-      ChargeCode.all.should be_empty
+      expect(response).to be_redirect
+      expect(flash[:notices].size).to eq(1)
+      expect(ChargeCode.all).to be_empty
     end
   end
 
@@ -68,15 +68,15 @@ describe ChargeCodesController do
       @u.admin = false
       @u.save!
       put :update, { :id=>@c.id, 'charge_code'=>{'code'=>'b','description'=>'xyz'} }
-      response.should be_redirect
-      flash[:errors].should have(1).message
-      ChargeCode.find(@c.id).code.should == "a"
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
+      expect(ChargeCode.find(@c.id).code).to eq("a")
     end
     it "should update charge code" do
       put :update, { :id=>@c.id, 'charge_code'=>{'code'=>'b','description'=>'xyz'} }
-      response.should be_redirect
-      flash[:notices].should have(1).message
-      ChargeCode.find(@c.id).code.should == "b"
+      expect(response).to be_redirect
+      expect(flash[:notices].size).to eq(1)
+      expect(ChargeCode.find(@c.id).code).to eq("b")
     end
   end
 

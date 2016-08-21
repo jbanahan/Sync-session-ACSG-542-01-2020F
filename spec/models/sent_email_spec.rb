@@ -9,10 +9,10 @@ describe SentEmail do
 
   describe :can_view? do
     it "grants permission to sys-admins" do
-      expect(@email_1.can_view? @user).to be_false
+      expect(@email_1.can_view? @user).to be_falsey
       
       @user.sys_admin = true
-      expect(@email_1.can_view? @user).to be_true
+      expect(@email_1.can_view? @user).to be_truthy
     end
   end
 

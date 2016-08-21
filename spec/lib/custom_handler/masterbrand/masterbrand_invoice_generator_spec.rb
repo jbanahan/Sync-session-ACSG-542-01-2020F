@@ -7,10 +7,10 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       new_billables = double("new billables")
       invoice = double("vfi invoice")
 
-      described_class.should_receive(:get_new_billables).twice.and_return new_billables
-      described_class.should_receive(:create_invoice).and_return invoice
-      described_class.should_receive(:bill_monthly_charge).with(new_billables, invoice)
-      described_class.should_receive(:bill_new_entries).with(new_billables, invoice)
+      expect(described_class).to receive(:get_new_billables).twice.and_return new_billables
+      expect(described_class).to receive(:create_invoice).and_return invoice
+      expect(described_class).to receive(:bill_monthly_charge).with(new_billables, invoice)
+      expect(described_class).to receive(:bill_new_entries).with(new_billables, invoice)
 
       described_class.run_schedulable
     end
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
       billables = [double('billable')]
 
-      described_class.should_receive(:write_invoiced_events).with(billables,instance_of(VfiInvoiceLine))
+      expect(described_class).to receive(:write_invoiced_events).with(billables,instance_of(VfiInvoiceLine))
 
       expect{described_class.bill_new_entries billables, inv}.to change(inv.vfi_invoice_lines,:count).from(0).to(1)
 
@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
   describe :bill_monthly_charge do
     it "attaches an invoice line" do
       billables = double('billables')
-      described_class.should_receive(:write_invoiced_events).with(billables,instance_of(VfiInvoiceLine))
+      expect(described_class).to receive(:write_invoiced_events).with(billables,instance_of(VfiInvoiceLine))
       inv = Factory(:vfi_invoice)
       described_class.bill_monthly_charge billables, inv
       line = VfiInvoice.first.vfi_invoice_lines.first

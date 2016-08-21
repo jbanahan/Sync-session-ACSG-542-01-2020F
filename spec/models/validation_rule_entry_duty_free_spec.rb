@@ -9,12 +9,12 @@ describe ValidationRuleEntryDutyFree do
   end
 
   it "passes if tariffs have the specifed SPI and invoice line is duty-free" do
-    @ci_line.stub(:total_duty).and_return 0
+    allow(@ci_line).to receive(:total_duty).and_return 0
     expect(@rule.run_validation(@ci_line.entry)).to be_nil
   end
 
   it "passes if tariffs have a different SPI and invoice line is not duty-free" do
-    @ci_line.stub(:total_duty).and_return 5
+    allow(@ci_line).to receive(:total_duty).and_return 5
     @ci_tariff_1.update_attributes(spi_primary: 5)
     @ci_tariff_2.update_attributes(spi_primary: 5)
     expect(@rule.run_validation(@ci_line.entry)).to be_nil

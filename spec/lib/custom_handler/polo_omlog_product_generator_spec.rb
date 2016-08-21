@@ -19,18 +19,18 @@ describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
       @product.update_custom_value! @cd, "CSM1\nCSM2"
       @tmp = described_class.new.sync_csv
       a = CSV.parse IO.read @tmp.path
-      a[1][1].should == "CSM1"
-      a[1][6].should == @product.unique_identifier
-      a[1][8].should == 'Value1 Value2 Value3'
-      a[1][10].should == '1234567890'.hts_format
-      a[1][13].should == '2222222222'.hts_format
-      a[1][16].should == '3333333333'.hts_format
-      a[2][1].should == "CSM2"
-      a[2][6].should == @product.unique_identifier
-      a[2][8].should == 'Value1 Value2 Value3'
-      a[2][10].should == '1234567890'.hts_format
-      a[2][13].should == '2222222222'.hts_format
-      a[2][16].should == '3333333333'.hts_format
+      expect(a[1][1]).to eq("CSM1")
+      expect(a[1][6]).to eq(@product.unique_identifier)
+      expect(a[1][8]).to eq('Value1 Value2 Value3')
+      expect(a[1][10]).to eq('1234567890'.hts_format)
+      expect(a[1][13]).to eq('2222222222'.hts_format)
+      expect(a[1][16]).to eq('3333333333'.hts_format)
+      expect(a[2][1]).to eq("CSM2")
+      expect(a[2][6]).to eq(@product.unique_identifier)
+      expect(a[2][8]).to eq('Value1 Value2 Value3')
+      expect(a[2][10]).to eq('1234567890'.hts_format)
+      expect(a[2][13]).to eq('2222222222'.hts_format)
+      expect(a[2][16]).to eq('3333333333'.hts_format)
     end
   end
   describe :query do
@@ -43,31 +43,31 @@ describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
     end
     it "should find product with italian classification that needs sync" do
       r = Product.connection.execute described_class.new.query
-      r.first[0].should == @product.id
+      expect(r.first[0]).to eq(@product.id)
     end
     it "should use custom where clause" do
-      described_class.new(:where=>'WHERE xyz').query.should include "WHERE xyz"
+      expect(described_class.new(:where=>'WHERE xyz').query).to include "WHERE xyz"
     end
     it "should not find product without italian classification" do
       @product.classifications.destroy_all
       r = Product.connection.execute described_class.new.query
-      r.count.should == 0
+      expect(r.count).to eq(0)
     end
     it "should not find product without italian hts_1" do
       @product.classifications.first.tariff_records.first.update_attributes(:hts_1=>'')
       r = Product.connection.execute described_class.new.query
-      r.count.should == 0
+      expect(r.count).to eq(0)
     end
     it "should not find product without CSM number" do
       @product.update_custom_value! @cd, ''
       r = Product.connection.execute described_class.new.query
-      r.count.should == 0
+      expect(r.count).to eq(0)
     end
     it "should not find product already synced" do
       @product.sync_records.create!(:trading_partner=>described_class.new.sync_code,:sent_at=>10.minutes.ago,:confirmed_at=>5.minutes.ago)
       @product.update_attributes(:updated_at=>1.day.ago)
       r = Product.connection.execute described_class.new.query
-      r.count.should == 0
+      expect(r.count).to eq(0)
     end
   end
 end

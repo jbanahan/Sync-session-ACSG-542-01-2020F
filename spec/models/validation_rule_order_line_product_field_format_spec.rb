@@ -7,7 +7,7 @@ describe ValidationRuleOrderLineProductFieldFormat do
     json = {model_field_uid: :prod_uid, regex: "ABC"}.to_json
     vr = described_class.create!(rule_attributes_json:json)
 
-    vr.run_validation(ol.order).should_not be_blank
+    expect(vr.run_validation(ol.order)).not_to be_blank
   end
   it "should pass when product does match" do
     p = Factory(:product,unique_identifier:'ABC')
@@ -15,6 +15,6 @@ describe ValidationRuleOrderLineProductFieldFormat do
     json = {model_field_uid: :prod_uid, regex: "ABC"}.to_json
     vr = described_class.create!(rule_attributes_json:json)
 
-    vr.run_validation(ol.order).should be_nil
+    expect(vr.run_validation(ol.order)).to be_nil
   end
 end

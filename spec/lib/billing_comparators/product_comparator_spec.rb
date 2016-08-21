@@ -9,14 +9,14 @@ describe OpenChain::BillingComparators::ProductComparator do
 
   describe :compare do
     it "exits if the type isn't 'Product'" do
-      EntitySnapshot.should_not_receive(:where)
+      expect(EntitySnapshot).not_to receive(:where)
       described_class.compare('Entry', 'id', 'old_bucket', 'old_path', 'old_version', 'new_bucket', 'new_path', 'new_version')
     end
 
     it "runs comparisons" do
       es = Factory(:entity_snapshot, bucket: "new_bucket", doc_path: "new_path", version: "new_version")
       
-      described_class.should_receive(:check_new_classification).with(id: 'id', old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version', 
+      expect(described_class).to receive(:check_new_classification).with(id: 'id', old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version', 
                                                                     new_bucket: 'new_bucket', new_path: 'new_path', new_version: 'new_version', new_snapshot_id: es.id)
       
       described_class.compare('Product', 'id', 'old_bucket', 'old_path', 'old_version', 'new_bucket', 'new_path', 'new_version')
@@ -31,8 +31,8 @@ describe OpenChain::BillingComparators::ProductComparator do
     end
 
     it "creates a billable event for every classification on the product if the product is new" do
-      described_class.should_receive(:get_json_hash).with(nil,nil,nil).and_return {}
-      described_class.should_receive(:get_json_hash).with('new_bucket', 'new_path', 'new_version').and_return base_hash
+      expect(described_class).to receive(:get_json_hash).with(nil,nil,nil) {}
+      expect(described_class).to receive(:get_json_hash).with('new_bucket', 'new_path', 'new_version').and_return base_hash
 
       described_class.check_new_classification(id: 9, old_bucket: nil, old_path: nil, old_version: nil, new_bucket: 'new_bucket', 
                                                new_path: 'new_path', new_version: 'new_version', new_snapshot_id: @es.id)
@@ -50,8 +50,8 @@ describe OpenChain::BillingComparators::ProductComparator do
                      [{"entity"=>{"core_module"=>"TariffRecord", "record_id"=>2, "model_fields"=>{"hts_line_number"=>1, "hts_hts_1"=>"2222"}}}]}}]
       base_hash_2["entity"]["children"] += new_class
 
-      described_class.should_receive(:get_json_hash).with('old_bucket', 'old_path', 'old_version').and_return base_hash
-      described_class.should_receive(:get_json_hash).with('new_bucket', 'new_path', 'new_version').and_return base_hash_2
+      expect(described_class).to receive(:get_json_hash).with('old_bucket', 'old_path', 'old_version').and_return base_hash
+      expect(described_class).to receive(:get_json_hash).with('new_bucket', 'new_path', 'new_version').and_return base_hash_2
 
       described_class.check_new_classification(id: 9, old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version', 
                                                new_bucket: 'new_bucket', new_path: 'new_path', new_version: 'new_version', new_snapshot_id: @es.id)

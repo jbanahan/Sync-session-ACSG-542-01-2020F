@@ -4,21 +4,21 @@ describe BusinessValidationResult do
   describe :can_view do
     it "should allow users who can view results" do
       u = Factory(:master_user)
-      expect(described_class.new.can_view?(u)).to be_true
+      expect(described_class.new.can_view?(u)).to be_truthy
     end
     it "should not allow who can't view results" do
       u = Factory(:user)
-      expect(described_class.new.can_view?(u)).to be_false
+      expect(described_class.new.can_view?(u)).to be_falsey
     end
   end
   describe :can_edit do
     it "should allow users from master company" do
       u = Factory(:master_user)
-      expect(described_class.new.can_edit?(u)).to be_true
+      expect(described_class.new.can_edit?(u)).to be_truthy
     end
     it "should not allow users not from master company" do
       u = Factory(:user)
-      expect(described_class.new.can_edit?(u)).to be_false
+      expect(described_class.new.can_edit?(u)).to be_falsey
     end
   end
   describe :run_validation do
@@ -39,7 +39,7 @@ describe BusinessValidationResult do
 
       [rr1,rr2,rr3,rr4].each do |x|
         bvr.business_validation_rule_results << x
-        x.should_receive(:run_validation).with(o)
+        expect(x).to receive(:run_validation).with(o)
       end
 
       bvr.run_validation
@@ -58,7 +58,7 @@ describe BusinessValidationResult do
 
       [rr1,rr2].each do |x|
         bvr.business_validation_rule_results << x
-        x.should_receive(:run_validation).with(o)
+        expect(x).to receive(:run_validation).with(o)
       end
 
       bvr.run_validation

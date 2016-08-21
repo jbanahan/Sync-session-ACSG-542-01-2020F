@@ -9,23 +9,23 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       @cdefs = described_class.prep_custom_definitions [:cmp_sap_company,:cmp_po_blocked,:cmp_sap_blocked_status]
       @country = Country.where(iso_code:'PY').first_or_create!(name:"Paraguay")
       @integration_user = double(:user)
-      User.stub(:integration).and_return @integration_user
+      allow(User).to receive(:integration).and_return @integration_user
       @mock_workflow_processor = double('wf')
-      @mock_workflow_processor.stub(:process!)
+      allow(@mock_workflow_processor).to receive(:process!)
       @master = Factory(:master_company)
-      Company.any_instance.stub(:create_snapshot)
+      allow_any_instance_of(Company).to receive(:create_snapshot)
     end
     it "should create vendor" do
       dom = REXML::Document.new(@test_data)
-      @mock_workflow_processor.should_receive(:process!).with(instance_of(Company),@integration_user)
-      Company.any_instance.should_receive(:create_snapshot).with(@integration_user)
+      expect(@mock_workflow_processor).to receive(:process!).with(instance_of(Company),@integration_user)
+      expect_any_instance_of(Company).to receive(:create_snapshot).with(@integration_user)
       expect{described_class.new(workflow_processor:@mock_workflow_processor).parse_dom(dom)}.to change(Company,:count).by(1)
       c = Company.last
       expect(c.system_code).to eq '0000100003'
       expect(c.get_custom_value(@cdefs[:cmp_sap_company]).value).to eq '0000100003'
       expect(c.name).to eq 'KIDRON INTERNATIONAL'
-      expect(c.get_custom_value(@cdefs[:cmp_po_blocked]).value).to be_false
-      expect(c.get_custom_value(@cdefs[:cmp_sap_blocked_status]).value).to be_false
+      expect(c.get_custom_value(@cdefs[:cmp_po_blocked]).value).to be_falsey
+      expect(c.get_custom_value(@cdefs[:cmp_sap_blocked_status]).value).to be_falsey
       expect(c).to be_vendor
 
       expect(c.addresses.count).to eq 1
@@ -66,8 +66,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       described_class.new(workflow_processor:@mock_workflow_processor).parse_dom(dom)
 
       c = Company.last
-      expect(c.get_custom_value(@cdefs[:cmp_po_blocked]).value).to be_true
-      expect(c.get_custom_value(@cdefs[:cmp_sap_blocked_status]).value).to be_true
+      expect(c.get_custom_value(@cdefs[:cmp_po_blocked]).value).to be_truthy
+      expect(c.get_custom_value(@cdefs[:cmp_sap_blocked_status]).value).to be_truthy
     end
     it "should not clear PO locked on existing vendor" do
       dom = REXML::Document.new(@test_data)
@@ -75,7 +75,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       c.update_custom_value!(@cdefs[:cmp_po_blocked],true)
       expect{described_class.new(workflow_processor:@mock_workflow_processor).parse_dom(dom)}.to_not change(Company,:count)
       c = Company.find_by_system_code('0000100003')
-      expect(c.get_custom_value(@cdefs[:cmp_po_blocked]).value).to be_true
+      expect(c.get_custom_value(@cdefs[:cmp_po_blocked]).value).to be_truthy
     end
   end
 

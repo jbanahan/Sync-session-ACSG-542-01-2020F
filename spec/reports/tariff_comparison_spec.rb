@@ -27,31 +27,31 @@ describe OpenChain::Report::TariffComparison do
     end
 
     it "should output to a tempfile" do
-      @t.should be_a Tempfile
+      expect(@t).to be_a Tempfile
     end
     
     it "should show added tariffs on first tab" do
       sheet = @wb.worksheet 0
-      sheet.last_row_index.should == 1 #2 total rows
-      sheet.row(1)[0].should == @added.hts_code
+      expect(sheet.last_row_index).to eq(1) #2 total rows
+      expect(sheet.row(1)[0]).to eq(@added.hts_code)
     end
     it "should show removed tariffs on second tab" do
       sheet = @wb.worksheet 1
-      sheet.last_row_index.should == 1 #2 total rows
-      sheet.row(1)[0].should == @removed.hts_code
+      expect(sheet.last_row_index).to eq(1) #2 total rows
+      expect(sheet.row(1)[0]).to eq(@removed.hts_code)
     end
     it "should show changed tariffs on third tab" do
       sheet = @wb.worksheet 2
-      sheet.row(0)[1].should == @changed_hts
-      sheet.row(1).should == [nil, "Attribute", "New Value", "Old Value"]
-      sheet.row(2).should == [nil, "general_rate", "b", "a"]
-      sheet.row(3).should == [nil, "unit_of_measure", "1", "0"]
-      sheet.row(4).should == [nil]
+      expect(sheet.row(0)[1]).to eq(@changed_hts)
+      expect(sheet.row(1)).to eq([nil, "Attribute", "New Value", "Old Value"])
+      expect(sheet.row(2)).to eq([nil, "general_rate", "b", "a"])
+      expect(sheet.row(3)).to eq([nil, "unit_of_measure", "1", "0"])
+      expect(sheet.row(4)).to eq([nil])
 
-      sheet.row(5)[1].should == @changed_2
-      sheet.row(6).should == [nil, "Attribute", "New Value", "Old Value"]
-      sheet.row(7).should == [nil, "unit_of_measure", "1", "0"]
-      sheet.row(8).should == [nil]
+      expect(sheet.row(5)[1]).to eq(@changed_2)
+      expect(sheet.row(6)).to eq([nil, "Attribute", "New Value", "Old Value"])
+      expect(sheet.row(7)).to eq([nil, "unit_of_measure", "1", "0"])
+      expect(sheet.row(8)).to eq([nil])
     end
   end
 

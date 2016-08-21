@@ -5,10 +5,10 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     it "should ftp_file" do
       ents = 'x'
       files = ['y','z']
-      described_class.any_instance.should_receive(:find_shipments).and_return(ents)
-      described_class.any_instance.should_receive(:generate_tempfiles).with(ents).and_yield(files[0], files[1])
-      described_class.any_instance.should_receive(:ftp_file).with(files[0],{remote_file_name:'Vand_Header'})
-      described_class.any_instance.should_receive(:ftp_file).with(files[1],{remote_file_name:'Vand_Detail'})
+      expect_any_instance_of(described_class).to receive(:find_shipments).and_return(ents)
+      expect_any_instance_of(described_class).to receive(:generate_tempfiles).with(ents).and_yield(files[0], files[1])
+      expect_any_instance_of(described_class).to receive(:ftp_file).with(files[0],{remote_file_name:'Vand_Header'})
+      expect_any_instance_of(described_class).to receive(:ftp_file).with(files[1],{remote_file_name:'Vand_Detail'})
       described_class.run_schedulable
     end
   end
@@ -203,8 +203,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     describe :generate_tempfiles do
       it "should generate compliant files" do
         g = described_class.new
-        g.should_receive(:generate_header_rows).with(@shipment).and_yield("abc")
-        g.should_receive(:generate_detail_rows).with(@shipment).and_yield("xyz")
+        expect(g).to receive(:generate_header_rows).with(@shipment).and_yield("abc")
+        expect(g).to receive(:generate_detail_rows).with(@shipment).and_yield("xyz")
         header_file = nil
         detail_file = nil
         g.generate_tempfiles([@shipment]) do |f1, f2|
@@ -216,8 +216,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       end
       it "should write sync records" do
         g = described_class.new
-        g.stub(:generate_header_rows)
-        g.stub(:generate_detail_rows)
+        allow(g).to receive(:generate_header_rows)
+        allow(g).to receive(:generate_detail_rows)
         expect {
           g.generate_tempfiles [@shipment] {|f1, f2| }
         }.to change(

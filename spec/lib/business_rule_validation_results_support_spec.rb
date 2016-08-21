@@ -22,22 +22,22 @@ describe FakeController, :type => :controller do
   describe :generic_validation_results do
     context "with HTML" do
       it "provides object to view if user has rights to object view and business validation results" do
-        @u.stub(:view_business_validation_results?).and_return true
-        Entry.any_instance.stub(:can_view?).with(@u).and_return true
+        allow(@u).to receive(:view_business_validation_results?).and_return true
+        allow_any_instance_of(Entry).to receive(:can_view?).with(@u).and_return true
         get :validation_results, id: @obj.id
         expect(assigns(:validation_object)).to eq @obj
         expect(response).to be_success
       end
 
       it "redirects with error if user can't view object" do
-        @u.stub(:view_business_validation_results?).and_return true
+        allow(@u).to receive(:view_business_validation_results?).and_return true
         get :validation_results, id: @obj.id
         expect(response).to be_redirect
         expect(flash[:errors]).to include "You do not have permission to view this entry."
       end
       
       it "redirects with error if user can't view business results" do
-        Entry.any_instance.stub(:can_view?).with(@u).and_return true
+        allow_any_instance_of(Entry).to receive(:can_view?).with(@u).and_return true
         get :validation_results, id: @obj.id
         expect(response).to be_redirect
         expect(flash[:errors]).to include "You do not have permission to view this entry."
@@ -67,8 +67,8 @@ describe FakeController, :type => :controller do
       before(:each) { create_validation_data @u }
       
       it "returns JSON object if user has right to view object and business validation results" do
-        @u.stub(:view_business_validation_results?).and_return true
-        Entry.any_instance.stub(:can_view?).with(@u).and_return true
+        allow(@u).to receive(:view_business_validation_results?).and_return true
+        allow_any_instance_of(Entry).to receive(:can_view?).with(@u).and_return true
         get :validation_results, id: @obj.id, :format => 'json'
         r = JSON.parse(response.body)["business_validation_result"]
         expect(r["object_number"]).to eq "123456"
@@ -76,13 +76,13 @@ describe FakeController, :type => :controller do
       end
 
       it "returns error if user can't view object" do
-        @u.stub(:view_business_validation_results?).and_return true
+        allow(@u).to receive(:view_business_validation_results?).and_return true
         get :validation_results, id: @obj.id, :format => 'json'
         expect(JSON.parse(response.body)["error"]).to eq "You do not have permission to view this entry."
       end
 
       it "redirects with error if user can't view business results" do
-        Entry.any_instance.stub(:can_view?).with(@u).and_return true
+        allow_any_instance_of(Entry).to receive(:can_view?).with(@u).and_return true
         get :validation_results, id: @obj.id, :format => 'json'
         expect(JSON.parse(response.body)["error"]).to eq "You do not have permission to view this entry."
       end
@@ -145,14 +145,14 @@ describe FakeJsonController, :type => :controller do
     
     it "returns results hash" do
       obj = Factory(:entry)
-      BusinessValidationResult.any_instance.stub(:can_view?).with(@u).and_return true
+      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
       post :validation_runner, id: obj.id, :format => 'json'
       expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Entry"
     end
 
     it "renders error if user doesn't have permission to view object" do
       obj = Factory(:entry)
-      Entry.any_instance.stub(:can_view?).and_return false
+      allow_any_instance_of(Entry).to receive(:can_view?).and_return false
       post :validation_runner, id: obj.id, :format => 'json'
       expect(JSON.parse(response.body)["errors"]).to eq ["You do not have permission to update validation results for this object."]
     end
@@ -176,7 +176,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
 
   before :each do
     @u = Factory(:user, first_name: "Nigel", last_name: "Tufnel")
-    @u.stub(:edit_business_validation_rule_results?).and_return true
+    allow(@u).to receive(:edit_business_validation_rule_results?).and_return true
   end
 
   def create_validation_data user
@@ -260,7 +260,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
     end
 
     it "returns a hash of the business rule results associated with an object if the user has permission to view ALL of them" do
-      BusinessValidationResult.any_instance.stub(:can_view?).with(@u).and_return true
+      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
       r = subject.results_to_hsh @u, @obj
       expect(r.to_json).to eq @target.to_json #to_json resolves millisecond discrepancy
     end

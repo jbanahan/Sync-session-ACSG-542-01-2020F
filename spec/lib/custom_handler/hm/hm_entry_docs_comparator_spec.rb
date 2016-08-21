@@ -10,17 +10,17 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
 
   describe "accept?" do
     it "accepts entry snapshots for HM" do
-      expect(described_class.accept? snapshot).to be_true
+      expect(described_class.accept? snapshot).to be_truthy
     end
 
     it "does not accept non-HM entries" do
       entry.update_attributes! customer_number: "NOT-HM"
-      expect(described_class.accept? snapshot).to be_false
+      expect(described_class.accept? snapshot).to be_falsey
     end
 
     it "does not accept non-Kewill entries" do
       entry.update_attributes! source_system: "NOT-Alliance"
-      expect(described_class.accept? snapshot).to be_false
+      expect(described_class.accept? snapshot).to be_falsey
     end
   end
 
@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
       entry.attachments.create! attachment_type: "Entry Packet", attached_file_name: "file.pdf", attached_file_size: 1
 
       snapshot
-      Attachment.any_instance.stub(:download_to_tempfile).and_yield tempfile
+      allow_any_instance_of(Attachment).to receive(:download_to_tempfile).and_yield tempfile
     end
 
     after :each do

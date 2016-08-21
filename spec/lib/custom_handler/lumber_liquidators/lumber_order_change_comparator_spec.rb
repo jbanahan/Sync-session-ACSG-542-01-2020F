@@ -3,15 +3,15 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator do
   describe '#compare' do
     it 'should do nothing if not an Order type' do
-      described_class.should_not_receive(:run_changes)
+      expect(described_class).not_to receive(:run_changes)
       described_class.compare 'Product', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
     it 'should build OrderData objects and execute_business_logic' do
       old_data = double('old_order_data')
       new_data = double('new_order_data')
-      described_class.should_receive(:build_order_data).with('ob','op','ov').and_return old_data
-      described_class.should_receive(:build_order_data).with('nb','np','nv').and_return new_data
-      described_class.should_receive(:execute_business_logic).with(1,old_data,new_data)
+      expect(described_class).to receive(:build_order_data).with('ob','op','ov').and_return old_data
+      expect(described_class).to receive(:build_order_data).with('nb','np','nv').and_return new_data
+      expect(described_class).to receive(:execute_business_logic).with(1,old_data,new_data)
       described_class.compare 'Order', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
   end
@@ -23,8 +23,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it 'should return from JSON hash if bucket is not nil' do
       h = double('hash')
       od = double('OrderData')
-      described_class.should_receive(:get_json_hash).with('a','b','c').and_return h
-      described_class::OrderData.should_receive(:build_from_hash).with(h).and_return od
+      expect(described_class).to receive(:get_json_hash).with('a','b','c').and_return h
+      expect(described_class::OrderData).to receive(:build_from_hash).with(h).and_return od
       expect(described_class.build_order_data('a','b','c')).to eq od
     end
   end
@@ -33,62 +33,62 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     before :each do
       @order_id = 1
       @o = double('order')
-      @o.stub(:reload)
+      allow(@o).to receive(:reload)
       @old_data = double('od')
       @new_data = double('nd')
-      Order.stub(:find_by_id).and_return @o
+      allow(Order).to receive(:find_by_id).and_return @o
 
       # stub all business logic methods, then in each test we use should_receive for the one we're testing
-      described_class.stub(:set_defaults).and_return false
-      described_class.stub(:set_forecasted_handover_date).and_return false
-      described_class.stub(:update_autoflow_approvals).and_return false
-      described_class.stub(:reset_vendor_approvals).and_return false
-      described_class.stub(:reset_product_compliance_approvals).and_return false
-      described_class.stub(:generate_ll_xml)
-      described_class.stub(:reset_po_cancellation).and_return false
-      described_class.stub(:create_pdf).and_return false
+      allow(described_class).to receive(:set_defaults).and_return false
+      allow(described_class).to receive(:set_forecasted_handover_date).and_return false
+      allow(described_class).to receive(:update_autoflow_approvals).and_return false
+      allow(described_class).to receive(:reset_vendor_approvals).and_return false
+      allow(described_class).to receive(:reset_product_compliance_approvals).and_return false
+      allow(described_class).to receive(:generate_ll_xml)
+      allow(described_class).to receive(:reset_po_cancellation).and_return false
+      allow(described_class).to receive(:create_pdf).and_return false
     end
     it 'should return if order does not exist' do
-      Order.stub(:find_by_id).and_return nil
-      described_class.should_not_receive(:set_defaults)
-      expect(described_class.execute_business_logic(1,@old_data,@new_data)).to be_false
+      allow(Order).to receive(:find_by_id).and_return nil
+      expect(described_class).not_to receive(:set_defaults)
+      expect(described_class.execute_business_logic(1,@old_data,@new_data)).to be_falsey
     end
     it 'should set defaults' do
-      described_class.should_receive(:set_defaults).with(@o,@new_data)
+      expect(described_class).to receive(:set_defaults).with(@o,@new_data)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should set forecasted handover date' do
-      described_class.should_receive(:set_forecasted_handover_date).with(@o)
+      expect(described_class).to receive(:set_forecasted_handover_date).with(@o)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should reset vendor approvals' do
-      described_class.should_receive(:reset_vendor_approvals).with(@o,@old_data,@new_data)
+      expect(described_class).to receive(:reset_vendor_approvals).with(@o,@old_data,@new_data)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should reset PC / Exec PC approvals' do
-      described_class.should_receive(:reset_product_compliance_approvals).with(@o,@old_data,@new_data)
+      expect(described_class).to receive(:reset_product_compliance_approvals).with(@o,@old_data,@new_data)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should autoflow' do
-      described_class.should_receive(:update_autoflow_approvals).with(@o)
+      expect(described_class).to receive(:update_autoflow_approvals).with(@o)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should reset PO cancellation' do
-      described_class.should_receive(:reset_po_cancellation).with(@o)
+      expect(described_class).to receive(:reset_po_cancellation).with(@o)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should generate new PDF' do
-      described_class.stub(:set_defaults).and_return false
-      described_class.should_receive(:create_pdf).with(@o,@old_data,@new_data)
+      allow(described_class).to receive(:set_defaults).and_return false
+      expect(described_class).to receive(:create_pdf).with(@o,@old_data,@new_data)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should not generate new PDF if default values were updated' do
-      described_class.stub(:set_defaults).and_return true
-      described_class.should_not_receive(:create_pdf)
+      allow(described_class).to receive(:set_defaults).and_return true
+      expect(described_class).not_to receive(:create_pdf)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should generate xml' do
-      described_class.should_receive(:generate_ll_xml).with(@o,@old_data,@new_data)
+      expect(described_class).to receive(:generate_ll_xml).with(@o,@old_data,@new_data)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
   end
@@ -119,26 +119,26 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it 'should send xml to ll if ord_planned_handover_date has changed' do
       o = double ('order')
       od = double('OrderData-Old')
-      od.stub(:planned_handover_date).and_return Date.new(2016,5,1)
+      allow(od).to receive(:planned_handover_date).and_return Date.new(2016,5,1)
       nd = double('OrderData-New')
-      nd.stub(:planned_handover_date).and_return Date.new(2016,5,2)
-      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_receive(:send_order).with(o)
+      allow(nd).to receive(:planned_handover_date).and_return Date.new(2016,5,2)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:send_order).with(o)
       described_class.generate_ll_xml(o,od,nd)
     end
 
     it "sends xml if old data is blank and new data has planned handover date" do
       o = double ('order')
       nd = double('OrderData-New')
-      nd.stub(:planned_handover_date).and_return Date.new(2016,5,2)
-      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_receive(:send_order).with(o)
+      allow(nd).to receive(:planned_handover_date).and_return Date.new(2016,5,2)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:send_order).with(o)
       described_class.generate_ll_xml(o,nil,nd)
     end
 
     it "does not sends xml if old data is blank and new data does not have planned handover date" do
       o = double ('order')
       nd = double('OrderData-New')
-      nd.stub(:planned_handover_date).and_return nil
-      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.should_not_receive(:send_order)
+      allow(nd).to receive(:planned_handover_date).and_return nil
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).not_to receive(:send_order)
       described_class.generate_ll_xml(o,nil,nd)
     end
   end
@@ -150,23 +150,23 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it 'should call if order_data#has_blank_defaults?' do
       o = double('order')
       d = double('OrderData')
-      d.should_receive(:has_blank_defaults?).and_return true
-      @k.should_receive(:set_defaults).with(o).and_return true
-      expect(described_class.set_defaults(o,d)).to be_true
+      expect(d).to receive(:has_blank_defaults?).and_return true
+      expect(@k).to receive(:set_defaults).with(o).and_return true
+      expect(described_class.set_defaults(o,d)).to be_truthy
     end
     it 'should return false if has_blank_defaults? but nothing is changed' do
       o = double('order')
       d = double('OrderData')
-      d.should_receive(:has_blank_defaults?).and_return true
-      @k.should_receive(:set_defaults).with(o).and_return false
-      expect(described_class.set_defaults(o,d)).to be_false
+      expect(d).to receive(:has_blank_defaults?).and_return true
+      expect(@k).to receive(:set_defaults).with(o).and_return false
+      expect(described_class.set_defaults(o,d)).to be_falsey
     end
     it 'should not call if !order_data#has_blank_defaults?' do
       o = double('order')
       d = double('OrderData')
-      d.should_receive(:has_blank_defaults?).and_return false
-      @k.should_not_receive(:set_defaults)
-      expect(described_class.set_defaults(o,d)).to be_false
+      expect(d).to receive(:has_blank_defaults?).and_return false
+      expect(@k).not_to receive(:set_defaults)
+      expect(described_class.set_defaults(o,d)).to be_falsey
     end
 
   end
@@ -220,13 +220,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   describe '#update_autoflow_approvals' do
     it 'should call AutoFlowApprover' do
       o = double('order')
-      OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.should_receive(:process).with(o).and_return true
-      expect(described_class.update_autoflow_approvals(o)).to be_true
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(o).and_return true
+      expect(described_class.update_autoflow_approvals(o)).to be_truthy
     end
     it 'should return value of AutoFlowApprover' do
       o = double('order')
-      OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.should_receive(:process).with(o).and_return false
-      expect(described_class.update_autoflow_approvals(o)).to be_false
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(o).and_return false
+      expect(described_class.update_autoflow_approvals(o)).to be_falsey
     end
   end
 
@@ -236,24 +236,24 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       @od = double('olddata')
       @o = double(:order)
       @u = double(:user)
-      User.stub(:integration).and_return @u
+      allow(User).to receive(:integration).and_return @u
     end
     it 'should reset if OrderData#vendor_approval_reset_fields_changed? and order is accepted' do
-      described_class::OrderData.should_receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return true
-      @o.should_receive(:approval_status).and_return 'Accepted'
-      @o.should_receive(:unaccept!).with(@u)
-      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_true
+      expect(described_class::OrderData).to receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return true
+      expect(@o).to receive(:approval_status).and_return 'Accepted'
+      expect(@o).to receive(:unaccept!).with(@u)
+      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_truthy
     end
     it 'should not reset if !OrderData#vendor_approval_reset_fields_changed?' do
-      described_class::OrderData.should_receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return false
-      @o.should_not_receive(:unaccept!)
-      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_false
+      expect(described_class::OrderData).to receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return false
+      expect(@o).not_to receive(:unaccept!)
+      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_falsey
     end
     it 'should not reset if OrderData#vendor_approval_reset_fields_changed? && order not accepted' do
-      described_class::OrderData.should_receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return true
-      @o.should_receive(:approval_status).and_return ''
-      @o.should_not_receive(:unaccept!)
-      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_false
+      expect(described_class::OrderData).to receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return true
+      expect(@o).to receive(:approval_status).and_return ''
+      expect(@o).not_to receive(:unaccept!)
+      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_falsey
     end
   end
 
@@ -267,7 +267,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       @ord.reload
       @u = Factory(:user)
       @integration = double('integration user')
-      User.stub(:integration).and_return(@integration)
+      allow(User).to receive(:integration).and_return(@integration)
       @cdefs = described_class.prep_custom_definitions([:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])
     end
     it 'should reset lines that changed' do
@@ -281,10 +281,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         lines.each {|ln| ln.update_custom_value!(@cdefs[uid],Time.now)}
       end
 
-      described_class::OrderData.should_receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return ['1']
-      @ord.should_receive(:create_snapshot).with(@integration)
+      expect(described_class::OrderData).to receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return ['1']
+      expect(@ord).to receive(:create_snapshot).with(@integration)
 
-      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_true
+      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_truthy
 
       @ol1.reload
       @ol2.reload
@@ -298,10 +298,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
     end
     it 'should return false if lines changed but they were not approved' do
-      described_class::OrderData.should_receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return ['1']
-      @ord.should_not_receive(:create_snapshot)
+      expect(described_class::OrderData).to receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return ['1']
+      expect(@ord).not_to receive(:create_snapshot)
 
-      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_false
+      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_falsey
 
     end
     it 'should return false if no lines changed' do
@@ -312,10 +312,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         @ol1.update_custom_value!(@cdefs[uid],Time.now)
       end
 
-      described_class::OrderData.should_receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return []
-      @ord.should_not_receive(:create_snapshot)
+      expect(described_class::OrderData).to receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return []
+      expect(@ord).not_to receive(:create_snapshot)
 
-      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_false
+      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_falsey
 
       @cdefs.values.each do |cd|
         expect(@ol1.get_custom_value(cd).value).to_not be_blank
@@ -329,18 +329,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       @od = double('old_data')
       @nd = double('new_data')
       @integration = double('integration user')
-      User.stub(:integration).and_return(@integration)
+      allow(User).to receive(:integration).and_return(@integration)
       @k = OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator
     end
     it 'should create pdf if OrderData#needs_new_pdf?' do
-      described_class::OrderData.should_receive(:needs_new_pdf?).with(@od,@nd).and_return true
-      @k.should_receive(:create!).with(@o,@integration)
-      expect(described_class.create_pdf(@o,@od,@nd)).to be_true
+      expect(described_class::OrderData).to receive(:needs_new_pdf?).with(@od,@nd).and_return true
+      expect(@k).to receive(:create!).with(@o,@integration)
+      expect(described_class.create_pdf(@o,@od,@nd)).to be_truthy
     end
     it 'should not create pdf if !OrderData#needs_new_pdf?' do
-      described_class::OrderData.should_receive(:needs_new_pdf?).with(@od,@nd).and_return false
-      @k.should_not_receive(:create!)
-      expect(described_class.create_pdf(@o,@od,@nd)).to be_false
+      expect(described_class::OrderData).to receive(:needs_new_pdf?).with(@od,@nd).and_return false
+      expect(@k).not_to receive(:create!)
+      expect(described_class.create_pdf(@o,@od,@nd)).to be_falsey
     end
   end
 
@@ -381,19 +381,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     describe '#has_blank_defaults?' do
       it 'should be false if none of the fields defaulted from the vendor are blank' do
         fp = 'ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN'
-        expect(described_class::OrderData.new(fp).has_blank_defaults?).to be_false
+        expect(described_class::OrderData.new(fp).has_blank_defaults?).to be_falsey
       end
       it 'should be true if ship terms are blank' do
         fp = 'ON1~2015-01-01~2015-01-10~USD~NT30~~Shanghai~CN'
-        expect(described_class::OrderData.new(fp).has_blank_defaults?).to be_true
+        expect(described_class::OrderData.new(fp).has_blank_defaults?).to be_truthy
       end
       it 'should be true if fob point is blank' do
         fp = 'ON1~2015-01-01~2015-01-10~USD~NT30~FOB~~CN'
-        expect(described_class::OrderData.new(fp).has_blank_defaults?).to be_true
+        expect(described_class::OrderData.new(fp).has_blank_defaults?).to be_truthy
       end
       it 'should be true if country of origin is blank' do
         fp = 'ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~'
-        expect(described_class::OrderData.new(fp).has_blank_defaults?).to be_true
+        expect(described_class::OrderData.new(fp).has_blank_defaults?).to be_truthy
       end
     end
 
@@ -401,18 +401,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       it 'should return true if fingerprints are different' do
         od = double(:od)
         nd = double(:nd)
-        [od,nd].each_with_index {|d,i| d.stub(:fingerprint).and_return(i.to_s)}
-        expect(described_class::OrderData.vendor_approval_reset_fields_changed?(od,nd)).to be_true
+        [od,nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return(i.to_s)}
+        expect(described_class::OrderData.vendor_approval_reset_fields_changed?(od,nd)).to be_truthy
       end
       it 'should return false if fingerprints are the same' do
         od = double(:od)
         nd = double(:nd)
-        [od,nd].each {|d| d.stub(:fingerprint).and_return('x')}
-        expect(described_class::OrderData.vendor_approval_reset_fields_changed?(od,nd)).to be_false
+        [od,nd].each {|d| allow(d).to receive(:fingerprint).and_return('x')}
+        expect(described_class::OrderData.vendor_approval_reset_fields_changed?(od,nd)).to be_falsey
       end
       it 'should return false if old_data is nil' do
         nd = double(:nd)
-        expect(described_class::OrderData.vendor_approval_reset_fields_changed?(nil,nd)).to be_false
+        expect(described_class::OrderData.vendor_approval_reset_fields_changed?(nil,nd)).to be_falsey
       end
     end
 
@@ -446,19 +446,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         @nd = double('new_data')
       end
       it 'should return true if fingerprints are different' do
-        [@od,@nd].each_with_index {|d,i| d.stub(:fingerprint).and_return(i.to_s); d.stub(:ship_from_address).and_return('sf')}
-        expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_true
+        [@od,@nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return(i.to_s); allow(d).to receive(:ship_from_address).and_return('sf')}
+        expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_truthy
       end
       it 'should return true if ship from addresses are different' do
-        [@od,@nd].each_with_index {|d,i| d.stub(:fingerprint).and_return('x'); d.stub(:ship_from_address).and_return(i.to_s)}
-        expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_true
+        [@od,@nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return(i.to_s)}
+        expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_truthy
       end
       it 'should return true if old_data is nil' do
-        expect(described_class::OrderData.needs_new_pdf?(nil,@nd)).to be_true
+        expect(described_class::OrderData.needs_new_pdf?(nil,@nd)).to be_truthy
       end
       it 'should return false if fingerprints are the same and the ship from addresss are the same' do
-        [@od,@nd].each {|d,i| d.stub(:fingerprint).and_return('x'); d.stub(:ship_from_address).and_return('sf')}
-        expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_false
+        [@od,@nd].each {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return('sf')}
+        expect(described_class::OrderData.needs_new_pdf?(@od,@nd)).to be_falsey
       end
     end
   end

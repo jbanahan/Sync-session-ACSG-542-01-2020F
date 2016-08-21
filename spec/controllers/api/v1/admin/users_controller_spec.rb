@@ -6,7 +6,7 @@ describe Api::V1::Admin::UsersController do
       allow_api_access Factory(:admin_user)
       u = Factory(:user)
       st = SearchTemplate.create!(name:'x',search_json:"{'a':'b'}")
-      SearchTemplate.any_instance.should_receive(:add_to_user!).with(u)
+      expect_any_instance_of(SearchTemplate).to receive(:add_to_user!).with(u)
       post :add_templates, id: u.id, template_ids: [st.id.to_s]
       expect(response).to be_success
     end
@@ -28,9 +28,9 @@ describe Api::V1::Admin::UsersController do
     end
 
     it "returns errors to user" do
-      User.should_receive(:where).and_return(User)
-      User.should_receive(:first).and_return user
-      user.should_receive(:update_user_password) do |password, pw2|
+      expect(User).to receive(:where).and_return(User)
+      expect(User).to receive(:first).and_return user
+      expect(user).to receive(:update_user_password) do |password, pw2|
         user.errors[:password] = "is invalid"
         false
       end

@@ -209,21 +209,21 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
     let (:can_view_user) { Factory(:master_user)}
     let (:www_setup) { 
       setup = MasterSetup.new system_code: "www-vfitrack-net"
-      MasterSetup.stub(:get).and_return setup
+      allow(MasterSetup).to receive(:get).and_return setup
     }
 
     it "allows www-vfitrack-net users" do
       www_setup
-      expect(described_class.can_view? can_view_user).to be_true
+      expect(described_class.can_view? can_view_user).to be_truthy
     end
 
     it "disallows non-master users" do
       www_setup
-      expect(described_class.can_view? Factory(:user)).to be_false
+      expect(described_class.can_view? Factory(:user)).to be_falsey
     end
 
     it "disallows non-www systems" do
-      expect(described_class.can_view? can_view_user).to be_false
+      expect(described_class.can_view? can_view_user).to be_falsey
     end
   end
 
@@ -246,9 +246,9 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
 
 
     it "parses file xl file data into distinct shipments" do
-      OpenChain::XLClient.any_instance.should_receive(:all_row_values).and_yield(file_data[0]).and_yield(file_data[1]).and_yield(file_data[2]).and_yield(file_data[3]).and_yield(file_data[4]).and_yield(file_data[5]).and_yield(file_data[6])
-      subject.should_receive(:process_shipment_lines).with User.integration, "OOLU2567813300", [file_data[2], file_data[4]]
-      subject.should_receive(:process_shipment_lines).with User.integration, "OOLU1234567890", [file_data[6]]
+      expect_any_instance_of(OpenChain::XLClient).to receive(:all_row_values).and_yield(file_data[0]).and_yield(file_data[1]).and_yield(file_data[2]).and_yield(file_data[3]).and_yield(file_data[4]).and_yield(file_data[5]).and_yield(file_data[6])
+      expect(subject).to receive(:process_shipment_lines).with User.integration, "OOLU2567813300", [file_data[2], file_data[4]]
+      expect(subject).to receive(:process_shipment_lines).with User.integration, "OOLU1234567890", [file_data[6]]
 
       subject.parse CustomFile.new
     end
@@ -256,8 +256,8 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
 
   describe "process" do
     it "parses file and sends message to user" do
-      custom_file.stub(:attached_file_name).and_return "file.xlsx"
-      subject.should_receive(:parse).with(custom_file).and_return [{shipment: Shipment.new, errors: nil}, {shipment: Shipment.new, errors: nil}]
+      allow(custom_file).to receive(:attached_file_name).and_return "file.xlsx"
+      expect(subject).to receive(:parse).with(custom_file).and_return [{shipment: Shipment.new, errors: nil}, {shipment: Shipment.new, errors: nil}]
       subject.process user
 
       expect(user.messages.length).to eq 1
@@ -267,8 +267,8 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
     end
 
     it "reports errors with parsing" do
-       custom_file.stub(:attached_file_name).and_return "file.xlsx"
-      subject.should_receive(:parse).with(custom_file).and_return [{shipment: Shipment.new, errors: nil}, {shipment: nil, errors: ["Error", "Error2"]}]
+       allow(custom_file).to receive(:attached_file_name).and_return "file.xlsx"
+      expect(subject).to receive(:parse).with(custom_file).and_return [{shipment: Shipment.new, errors: nil}, {shipment: nil, errors: ["Error", "Error2"]}]
       subject.process user
 
       expect(user.messages.length).to eq 1

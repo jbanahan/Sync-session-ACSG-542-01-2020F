@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
   describe :process do
     before :each do
       @u = Factory(:user, email: "nigel@tufnel.net")
-      @u.company.stub(:alliance_customer_number).and_return "EDDIE"
+      allow(@u.company).to receive(:alliance_customer_number).and_return "EDDIE"
 
       @row_0 = ['ExitDocID', 'TxnCode', 'ProductNum', 'StatusCode', 'HtsNum', 'AdValoremRate', 'Value', 'ExitPrintDate']
       @row_1 = ['316-1548927-0', 'ANPC', '022-3724-800-0000', 'N', '8513104000', '0.035', '2.98', '2016-03-30 00:00:00']
@@ -20,29 +20,29 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
       @row_3 = ['316-1548927-0', 'ANPC',  '009-0282-139-0030', 'N', '6104622011', '0.149', '14.35', '2016-03-30 00:00:00']
     
       @cf = double("Custom File")
-      @cf.stub(:path).and_return "path/to/audit_file.xls"
-      @cf.stub(:attached).and_return double("audit file")
-      @cf.stub(:attached_file_name).and_return "audit_file.xls"
-      @cf.stub(:id).and_return 1
+      allow(@cf).to receive(:path).and_return "path/to/audit_file.xls"
+      allow(@cf).to receive(:attached).and_return double("audit file")
+      allow(@cf).to receive(:attached_file_name).and_return "audit_file.xls"
+      allow(@cf).to receive(:id).and_return 1
     
       @handler = described_class.new @cf
     end
 
     it "emails user audit spreadsheet" do
       create_data
-      @handler.should_receive(:foreach).with(@cf).and_return [@row_0, @row_1, @row_2, @row_3]
+      expect(@handler).to receive(:foreach).with(@cf).and_return [@row_0, @row_1, @row_2, @row_3]
       @handler.process @u
 
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq [ "nigel@tufnel.net" ]
       expect(mail.subject).to eq "Eddie Bauer 7501 Audit"
       expect(mail.body.raw_source).to include "Report attached."
-      expect(mail.attachments).to have(1).item
+      expect(mail.attachments.size).to eq(1)
     end
 
     it "produces correct spreadsheet" do
       create_data
-      @handler.should_receive(:foreach).with(@cf).and_return [@row_0, @row_1, @row_2, @row_3]
+      expect(@handler).to receive(:foreach).with(@cf).and_return [@row_0, @row_1, @row_2, @row_3]
       @handler.process @u
 
       mail = ActionMailer::Base.deliveries.pop
@@ -58,19 +58,19 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
     end
 
     it "includes exceptions in error email" do
-      @handler.stub(:create_and_send_report!).and_raise "Disaster!"
-      StandardError.any_instance.should_receive(:log_me).with ["Failed to process 7501. Custom File ID: 1. Message: Disaster!"]
+      allow(@handler).to receive(:create_and_send_report!).and_raise "Disaster!"
+      expect_any_instance_of(StandardError).to receive(:log_me).with ["Failed to process 7501. Custom File ID: 1. Message: Disaster!"]
       @handler.process @u
       mail = ActionMailer::Base.deliveries.pop
 
       expect(mail.to).to eq [ "nigel@tufnel.net" ]
       expect(mail.subject).to eq "Eddie Bauer 7501 Audit Completed With Errors"
       expect(mail.body.raw_source).to include "Disaster!"
-      expect(mail.attachments).to have(0).item
+      expect(mail.attachments.size).to eq(0)
     end
 
     it "sends error email if file with unaccepted format is submitted"  do
-      @cf.stub(:path).and_return "path/to/audit_file.foo"
+      allow(@cf).to receive(:path).and_return "path/to/audit_file.foo"
       @handler.process @u
       mail = ActionMailer::Base.deliveries.pop
       

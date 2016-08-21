@@ -3,14 +3,14 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
   describe '#process' do
     it "should convert flat file data and user id call go" do
-      OpenChain::S3.should_receive(:bucket_name).and_return('mybucket')
-      OpenChain::S3.should_receive(:get_data).with('mybucket','mypath').and_return("ABC\nDEF\n")
+      expect(OpenChain::S3).to receive(:bucket_name).and_return('mybucket')
+      expect(OpenChain::S3).to receive(:get_data).with('mybucket','mypath').and_return("ABC\nDEF\n")
       u = double(:user)
       effective_date = double(:date)
-      User.should_receive(:find).with(99).and_return u
+      expect(User).to receive(:find).with(99).and_return u
 
-      described_class.should_receive(:go).with(["ABC","DEF"], effective_date, u)
-      OpenChain::S3.should_receive(:delete).with('mybucket', 'mypath')
+      expect(described_class).to receive(:go).with(["ABC","DEF"], effective_date, u)
+      expect(OpenChain::S3).to receive(:delete).with('mybucket', 'mypath')
 
       described_class.process('mypath', effective_date, 99)
     end
@@ -20,9 +20,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
       nums = double('order_numbers')
       u = double('user')
       effective_date = double(:date)
-      described_class.should_receive(:open_closed_orders).with(nums,u).and_return 10
-      described_class.should_receive(:close_orders).with(nums, effective_date, u).and_return 1
-      described_class.should_receive(:send_completion_message).with(10,1,u)
+      expect(described_class).to receive(:open_closed_orders).with(nums,u).and_return 10
+      expect(described_class).to receive(:close_orders).with(nums, effective_date, u).and_return 1
+      expect(described_class).to receive(:send_completion_message).with(10,1,u)
 
       described_class.go nums, effective_date, u
     end

@@ -137,8 +137,8 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
       config = MilestoneNotificationConfig.first
       expect(config.customer_number).to eq "CUST"
-      expect(config.enabled).to be_true
-      expect(config.testing).to be_false
+      expect(config.enabled).to be_truthy
+      expect(config.testing).to be_falsey
       expect(config.output_style).to eq "standard"
       expect(config.milestone_fields).to eq (
         [{"model_field_uid" => "ent_brok_ref", "timezone" => "timezone", "no_time" => true}]
@@ -148,7 +148,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(config.search_criterions.first.model_field_uid).to eq "ent_brok_ref"
       expect(config.search_criterions.first.operator).to eq "eq"
       expect(config.search_criterions.first.value).to eq "val"
-      expect(config.search_criterions.first.include_empty?).to be_false
+      expect(config.search_criterions.first.include_empty?).to be_falsey
     end
 
     it "creates an isf milestone config" do
@@ -232,9 +232,9 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
       @config.reload
       expect(@config.customer_number).to eq "CUST"
-      expect(@config.enabled).to be_false
+      expect(@config.enabled).to be_falsey
       expect(@config.output_style).to eq "mbol_container"
-      expect(@config.testing).to be_true
+      expect(@config.testing).to be_truthy
       expect(@config.milestone_fields).to eq (
         [{"model_field_uid" => "ent_brok_ref", "timezone" => "timezone", "no_time" => true}]
       )
@@ -242,7 +242,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(@config.search_criterions.first.model_field_uid).to eq "ent_brok_ref"
       expect(@config.search_criterions.first.operator).to eq "eq"
       expect(@config.search_criterions.first.value).to eq "val"
-      expect(@config.search_criterions.first.include_empty?).to be_false
+      expect(@config.search_criterions.first.include_empty?).to be_falsey
     end
 
     it "rejects non-admin users" do

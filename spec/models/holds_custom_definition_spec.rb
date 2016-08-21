@@ -13,8 +13,8 @@ describe HoldsCustomDefinition do
         [SearchColumn,SearchCriterion,SortCriterion].each do |k|
           sc = k.new
           sc.model_field_uid = @cfid
-          sc.should be_custom_field
-          sc.custom_definition_id.should == @cd.id
+          expect(sc).to be_custom_field
+          expect(sc.custom_definition_id).to eq(@cd.id)
         end
       end
     end
@@ -23,7 +23,7 @@ describe HoldsCustomDefinition do
         [:search_column,:search_criterion,:sort_criterion].each do |k|
           sc = Factory(k,:model_field_uid=>@cfid)
           sc.save!
-          sc.custom_definition.should == @cd
+          expect(sc.custom_definition).to eq(@cd)
         end
       end
     end

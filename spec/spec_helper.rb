@@ -34,7 +34,7 @@ Spork.prefork do
     config.before(:each, :type => :controller) do
         request.env["HTTP_REFERER"] = "/"
     end
-    config.before :each do 
+    config.before :each do |example| 
       EntitySnapshotSupport.disable_async = true
       CustomDefinition.skip_reload_trigger = true
       stub_event_publisher
@@ -62,7 +62,7 @@ Spork.prefork do
     
     # Clears out the deliveries array before every test..which is only done automatically
     # for mailer tests.
-    config.after(:each) do
+    config.after(:each) do |example|
       ActionMailer::Base.deliveries = []
       unless example.metadata[:s3]
         unstub_s3
@@ -74,6 +74,28 @@ Spork.prefork do
       # since it's not unset by the controller.
       MasterSetup.current = nil
     end
+
+    config.mock_with :rspec do |mocks|
+      # In RSpec 3, `any_instance` implementation blocks will be yielded the receiving
+      # instance as the first block argument to allow the implementation block to use
+      # the state of the receiver.
+      # In RSpec 2.99, to maintain compatibility with RSpec 3 you need to either set
+      # this config option to `false` OR set this to `true` and update your
+      # `any_instance` implementation blocks to account for the first block argument
+      # being the receiving instance.
+      mocks.yield_receiver_to_any_instance_implementation_blocks = true
+    end
+
+    # rspec-rails 3 will no longer automatically infer an example group's spec type
+    # from the file location. You can explicitly opt-in to the feature using this
+    # config option.
+    # To explicitly tag specs without using automatic inference, set the `:type`
+    # metadata manually:
+    #
+    #     describe ThingsController, :type => :controller do
+    #       # Equivalent to being in spec/controllers
+    #     end
+    config.infer_spec_type_from_file_location!
   end
 end
 

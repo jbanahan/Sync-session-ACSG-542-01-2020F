@@ -4,7 +4,7 @@ require 'spec_helper'
 describe ReportResult do
   before :each do
     @u = Factory(:user, :email=>'a@vandegriftinc.com', :time_zone => 'Hawaii')
-    MasterSetup.any_instance.stub(:request_host).and_return "localhost"
+    allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
   end
 
   describe 'friendly settings' do
@@ -12,11 +12,11 @@ describe ReportResult do
     it "should handle friendly settings array" do
       r = ReportResult.new
       r.friendly_settings = ['a','b']
-      r.friendly_settings.should == ['a','b']
+      expect(r.friendly_settings).to eq(['a','b'])
     end
 
     it "should return empty array when no friendly settings are set" do
-      ReportResult.new.friendly_settings.should == []
+      expect(ReportResult.new.friendly_settings).to eq([])
     end 
   end
 
@@ -28,16 +28,16 @@ describe ReportResult do
     it "allows sysadmins" do
       sys_admin = User.new
       sys_admin.sys_admin = true
-      @r.can_view?(sys_admin).should be_true
+      expect(@r.can_view?(sys_admin)).to be_truthy
     end
 
     it "allows the same user" do
-      @r.can_view?(@u).should be_true
+      expect(@r.can_view?(@u)).to be_truthy
     end
 
     it "doesn't allow a different user" do
       other_user = User.new
-      @r.can_view?(other_user).should be_false
+      expect(@r.can_view?(other_user)).to be_falsey
     end
   end
 
@@ -63,54 +63,54 @@ describe ReportResult do
       Delayed::Worker.delay_jobs = true
     end
     it "should write data on report run" do
-      ReportResult.any_instance.stub(:execute_report)
+      allow_any_instance_of(ReportResult).to receive(:execute_report)
       ReportResult.run_report! 'nrr', @u, @report_class, {:settings=>{'o1'=>'o2'},:friendly_settings=>['a','b']}
       found = ReportResult.find_by_name('nrr')
-      found.run_by.should == @u
-      found.report_class.should == @report_class.to_s
-      found.run_at.should > 10.seconds.ago
-      found.friendly_settings_json.should == ['a','b'].to_json
-      found.settings_json.should == {'o1'=>'o2'}.to_json
+      expect(found.run_by).to eq(@u)
+      expect(found.report_class).to eq(@report_class.to_s)
+      expect(found.run_at).to be > 10.seconds.ago
+      expect(found.friendly_settings_json).to eq(['a','b'].to_json)
+      expect(found.settings_json).to eq({'o1'=>'o2'}.to_json)
     end
     it "enqueues report before running" do
-      ReportResult.any_instance.stub(:execute_report)
+      allow_any_instance_of(ReportResult).to receive(:execute_report)
       ReportResult.run_report! 'ebr', @u, @report_class
       found = ReportResult.find_by_name('ebr')
-      found.status.should == "Queued"
+      expect(found.status).to eq("Queued")
     end
 
     it "sets report as Complete when done" do
       ReportResult.run_report! 'fin', @u, @report_class
       found = ReportResult.find_by_name('fin')
-      found.status.should == "Complete"
+      expect(found.status).to eq("Complete")
     end
     it "deletes the underlying file when report is finished" do
       ReportResult.run_report! 'del', @u, @report_class
-      File.exists?(@file_location).should be_false
+      expect(File.exists?(@file_location)).to be_falsey
     end
     it "attaches report content to ReportResult", paperclip: true, s3: true do
       ReportResult.run_report! 'cont', @u, @report_class
       found = ReportResult.find_by_name 'cont'
       rc = found.report_content
-      rc.should == "mystring"
+      expect(rc).to eq("mystring")
     end
     it "writes user message when report is finished" do
       ReportResult.run_report! 'msg', @u, @report_class
       found = ReportResult.find_by_name 'msg'
       m = @u.messages
-      m.size.should == 1
-      m.first.body.should include "/report_results/#{found.id}/download" #message body includes download link
+      expect(m.size).to eq(1)
+      expect(m.first.body).to include "/report_results/#{found.id}/download" #message body includes download link
     end
     it "delays the report with priority 100" do
-      ReportResult.any_instance.stub(:execute_report) #don't need report to run
-      ReportResult.any_instance.should_receive(:delay).with(:priority=>-1).and_return(ReportResult.new)
+      allow_any_instance_of(ReportResult).to receive(:execute_report) #don't need report to run
+      expect_any_instance_of(ReportResult).to receive(:delay).with(:priority=>-1).and_return(ReportResult.new)
       ReportResult.run_report! 'delay', @u, @report_class
     end
 
     it "should run with user settings" do
-      SampleReport.should_receive(:run_report) do |run_by|
-        User.current.should == run_by
-        Time.zone.should == ActiveSupport::TimeZone[run_by.time_zone]
+      expect(SampleReport).to receive(:run_report) do |run_by|
+        expect(User.current).to eq(run_by)
+        expect(Time.zone).to eq(ActiveSupport::TimeZone[run_by.time_zone])
 
         loc = 'test/assets/sample_report.txt'
         File.open(loc,'w') {|f| f.write('mystring')}
@@ -132,8 +132,8 @@ describe ReportResult do
         end
       end
       rr = double("ReportResult") 
-      rr.should_receive(:execute_alliance_report)
-      ReportResult.any_instance.should_receive(:delay).with(priority: -1).and_return(rr)
+      expect(rr).to receive(:execute_alliance_report)
+      expect_any_instance_of(ReportResult).to receive(:delay).with(priority: -1).and_return(rr)
       ReportResult.run_report! 'delay', @u, AllianceReport
     end
 
@@ -150,8 +150,8 @@ describe ReportResult do
         end
       end
       rr = double("ReportResult") 
-      rr.should_receive(:execute_report)
-      ReportResult.any_instance.should_receive(:delay).with(priority: -1).and_return(rr)
+      expect(rr).to receive(:execute_report)
+      expect_any_instance_of(ReportResult).to receive(:delay).with(priority: -1).and_return(rr)
       ReportResult.run_report! 'delay', @u, NonAllianceReport
     end
 
@@ -166,29 +166,29 @@ describe ReportResult do
 
     describe "error handling" do
       before(:each) do
-        SampleReport.stub(:run_report).and_raise('some error message')
+        allow(SampleReport).to receive(:run_report).and_raise('some error message')
       end
       it "sets reports that threw exceptions as failed" do
         ReportResult.run_report! 'fail', @u, @report_class
         found = ReportResult.find_by_name 'fail'
-        found.status.should == "Failed"
+        expect(found.status).to eq("Failed")
       end
       it "writes report errors when failing" do
         ReportResult.run_report! 'err msg', @u, @report_class
         found = ReportResult.find_by_name 'err msg'
-        found.run_errors.should == 'some error message'
+        expect(found.run_errors).to eq('some error message')
       end
       it "deletes the underlying file when report fails" do
         ReportResult.run_report! 'uf', @u, @report_class
-        File.exists?(@file_location).should be_false
+        expect(File.exists?(@file_location)).to be_falsey
       end
       it "writes a user message containing the word failed in the subject when report fails" do
         ReportResult.run_report! 'um', @u, @report_class
         m = @u.messages
-        m.size.should == 1
-        m.first.subject.should include "FAILED"
+        expect(m.size).to eq(1)
+        expect(m.first.subject).to include "FAILED"
         found = ReportResult.find_by_name 'um'
-        m.first.body.should include "/report_results/#{found.id}"
+        expect(m.first.body).to include "/report_results/#{found.id}"
       end
     end
   end
@@ -202,21 +202,21 @@ describe ReportResult do
     end
     it "should have an eligible_for_purge scope that returns all reports more than a week old" do
       found = ReportResult.eligible_for_purge
-      found.should have(3).items
-      found.each {|r| r.run_at.should be < 1.week.ago}
+      expect(found.size).to eq(3)
+      found.each {|r| expect(r.run_at).to be < 1.week.ago}
     end
     it "should return a purge_at time of 1 week after run_at" do
       report = ReportResult.first
-      report.purge_at.should == (report.run_at+1.week)
+      expect(report.purge_at).to eq(report.run_at+1.week)
     end
     it "should return nil for purge_at with no run_at" do
-      ReportResult.new.purge_at.should be_nil
+      expect(ReportResult.new.purge_at).to be_nil
     end
     it "should have a purge that actually reports that are eligible for purge" do
       ReportResult.purge
       found = ReportResult.all
-      found.should have(3).items
-      found.each {|r| r.purge_at.should be > 0.days.ago}
+      expect(found.size).to eq(3)
+      found.each {|r| expect(r.purge_at).to be > 0.days.ago}
     end
   end
 
@@ -225,7 +225,7 @@ describe ReportResult do
       r = ReportResult.new
       r.report_data_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
       r.save
-      r.report_data_file_name.should == "___________________________________.jpg"
+      expect(r.report_data_file_name).to eq("___________________________________.jpg")
     end
   end
 
@@ -237,10 +237,10 @@ describe ReportResult do
     end
 
     it "runs an alliance report" do
-      User.should_receive(:run_with_user_settings).and_yield
+      expect(User).to receive(:run_with_user_settings).and_yield
       settings = ActiveSupport::JSON.decode(@r.settings_json)
       settings["report_result_id"] = @r.id
-      @report_class.should_receive(:run_report).with(@u, settings)
+      expect(@report_class).to receive(:run_report).with(@u, settings)
 
       @r.execute_alliance_report
       
@@ -249,11 +249,11 @@ describe ReportResult do
     end
 
     it "handles any errors raised while starting report" do
-      @report_class.should_receive(:run_report).and_raise "Error"
+      expect(@report_class).to receive(:run_report).and_raise "Error"
 
       @r.execute_alliance_report
 
-      expect(@u.messages).to have(1).item
+      expect(@u.messages.size).to eq(1)
       @r.reload
       expect(@r.status).to eq "Failed"
     end
@@ -273,29 +273,29 @@ describe ReportResult do
     end
 
     it "continues an alliance report" do
-      User.should_receive(:run_with_user_settings).and_yield
+      expect(User).to receive(:run_with_user_settings).and_yield
       settings = ActiveSupport::JSON.decode(@r.settings_json)
       results = []
-      @report_class.should_receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+      expect(@report_class).to receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
 
       @r.continue_alliance_report results
 
       @r.reload
-      expect(@u.messages).to have(1).item
+      expect(@u.messages.size).to eq(1)
       expect(@r.status).to eq "Complete"
       expect(@r.report_data).to_not be_nil
     end
 
     it "continues an alliance report with json results" do
-      User.should_receive(:run_with_user_settings).and_yield
+      expect(User).to receive(:run_with_user_settings).and_yield
       settings = ActiveSupport::JSON.decode(@r.settings_json)
       results = []
-      @report_class.should_receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+      expect(@report_class).to receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
 
       @r.continue_alliance_report results.to_json
 
       @r.reload
-      expect(@u.messages).to have(1).item
+      expect(@u.messages.size).to eq(1)
       expect(@r.status).to eq "Complete"
       expect(@r.report_data).to_not be_nil
     end
@@ -303,14 +303,14 @@ describe ReportResult do
     it "handles errors / cleanup if alliance report continuation fails" do
       settings = ActiveSupport::JSON.decode(@r.settings_json)
       results = []
-      @report_class.should_receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
-      @r.should_receive(:complete_report).with(@tf).and_raise "Error"
+      expect(@report_class).to receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+      expect(@r).to receive(:complete_report).with(@tf).and_raise "Error"
       @r.continue_alliance_report results
 
-      expect(@u.messages).to have(1).item
+      expect(@u.messages.size).to eq(1)
       @r.reload
       expect(@r.status).to eq "Failed"
-      expect(@tf.closed?).to be_true
+      expect(@tf.closed?).to be_truthy
     end
   end
 
@@ -320,7 +320,7 @@ describe ReportResult do
       begin
         ReportResult.new.file_cleanup tf
         expect(tf.path).to be_nil
-        expect(tf.closed?).to be_true
+        expect(tf.closed?).to be_truthy
       ensure
         tf.close!
       end
@@ -330,8 +330,8 @@ describe ReportResult do
       f = File.new "tmp/file", "w"
       begin
         ReportResult.new.file_cleanup f
-        expect(f.closed?).to be_true
-        expect(File.exists?(f.path)).to be_false
+        expect(f.closed?).to be_truthy
+        expect(File.exists?(f.path)).to be_falsey
       ensure
         File.delete(f) if File.exists?(f.path)
       end
@@ -341,7 +341,7 @@ describe ReportResult do
       f = File.new "tmp/file", "w"
       begin
         ReportResult.new.file_cleanup f.path
-        expect(File.exists?(f.path)).to be_false
+        expect(File.exists?(f.path)).to be_falsey
       ensure
         File.delete(f) if File.exists?(f.path)
       end
@@ -354,7 +354,7 @@ describe ReportResult do
 
   describe "run_schedulable" do
     it "implements SchedulableJob interface" do
-      ReportResult.should_receive(:purge)
+      expect(ReportResult).to receive(:purge)
       ReportResult.run_schedulable
     end
   end

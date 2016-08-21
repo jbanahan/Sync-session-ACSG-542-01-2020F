@@ -8,15 +8,15 @@ describe OpenChain::WorkflowTester::SurveyCompleteWorkflowTest do
     end
     it "should pass if survey exists by survey_code and survey rating is survey_rating" do
       sr = Factory(:survey_response,survey:Factory(:survey,system_code:'SRX'),rating:'ABC',base_object:@wt.base_object)
-      expect(described_class.pass?(@wt)).to be_true
+      expect(described_class.pass?(@wt)).to be_truthy
     end
     it "should not pass if survey with system_code does not exists" do
       sr = Factory(:survey_response,survey:Factory(:survey,system_code:'Other'),rating:'ABC',base_object:@wt.base_object)
-      expect(described_class.pass?(@wt)).to be_false
+      expect(described_class.pass?(@wt)).to be_falsey
     end
     it "should not pass if survey rating is different" do
       sr = Factory(:survey_response,survey:Factory(:survey,system_code:'SRX'),rating:'Other',base_object:@wt.base_object)
-      expect(described_class.pass?(@wt)).to be_false
+      expect(described_class.pass?(@wt)).to be_falsey
     end
   end
 end

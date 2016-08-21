@@ -11,9 +11,9 @@ describe OpenChain::CustomHandler::DasProductGenerator do
   describe :generate do
     it "should create fixed position file and ftp it" do
       h = described_class.new
-      h.should_receive(:sync_fixed_position).and_return('x')
-      h.should_receive(:ftp_file).with('x').and_return('y')
-      h.generate.should eq 'y'
+      expect(h).to receive(:sync_fixed_position).and_return('x')
+      expect(h).to receive(:ftp_file).with('x').and_return('y')
+      expect(h.generate).to eq 'y'
     end
   end
 
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::DasProductGenerator do
 
   describe :auto_confirm? do
     it "should autoconfirm" do
-      described_class.new.auto_confirm?.should be_true
+      expect(described_class.new.auto_confirm?).to be_truthy
     end
   end
 
@@ -45,8 +45,8 @@ describe OpenChain::CustomHandler::DasProductGenerator do
       dont_find.sync_records.create!(trading_partner: described_class::SYNC_CODE, sent_at: 1.minute.ago, confirmed_at: 1.second.ago)
       dont_find.update_attributes(updated_at: 1.day.ago)
       r = Product.connection.execute described_class.new.query
-      r.count.should == 1
-      r.first[1].should == @match_product.unique_identifier
+      expect(r.count).to eq(1)
+      expect(r.first[1]).to eq(@match_product.unique_identifier)
     end
 
     it "should return products that do need sync" do
@@ -56,24 +56,24 @@ describe OpenChain::CustomHandler::DasProductGenerator do
       do_find.update_custom_value! @unit_cost, 10.5
       do_find.update_custom_value! @coo, 'US'
       r = Product.connection.execute described_class.new.query
-      r.count.should == 2
-      r.first[1].should == @match_product.unique_identifier
-      r.to_a[1][1].should == do_find.unique_identifier
-      r.to_a[1][5].should == find_tariff.hts_1
-      r.to_a[1][3].should == 10.5
-      r.to_a[1][4].should == 'US'
+      expect(r.count).to eq(2)
+      expect(r.first[1]).to eq(@match_product.unique_identifier)
+      expect(r.to_a[1][1]).to eq(do_find.unique_identifier)
+      expect(r.to_a[1][5]).to eq(find_tariff.hts_1)
+      expect(r.to_a[1][3]).to eq(10.5)
+      expect(r.to_a[1][4]).to eq('US')
     end
   end
 
   describe :fixed_position_map do
     it "should return mapping" do
-      described_class.new.fixed_position_map.should == [
+      expect(described_class.new.fixed_position_map).to eq([
         {:len=>15}, #unique identifier
         {:len=>40}, #name
         {:len=>6}, #unit cost
         {:len=>2}, #country of origin
         {:len=>10} #hts
-      ]
+      ])
     end
   end
 
@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::DasProductGenerator do
       @coo = Factory(:custom_definition, id: 6, module_type: "Product", label:"COO")
       @match_product.update_custom_value! @unit_cost, 10.5
 
-      described_class.any_instance.should_receive(:ftp_file)
+      expect_any_instance_of(described_class).to receive(:ftp_file)
       described_class.run_schedulable
 
       expect(SyncRecord.first.syncable).to eq @match_product

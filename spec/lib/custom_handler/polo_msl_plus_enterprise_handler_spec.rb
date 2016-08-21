@@ -20,38 +20,38 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       ['US','IT','CA','TW'].each {|iso| @countries[iso] = Factory(:country,:iso_code=>iso)}
       t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['IT']))
       @p = t.product
-      described_class.any_instance.should_receive(:init_outbound_custom_definitions).and_call_original
+      expect_any_instance_of(described_class).to receive(:init_outbound_custom_definitions).and_call_original
     end
     it "should find product with MSL+ Receive Date having non-US, CA tariffs" do
       @p.update_custom_value! @cd_msl_rec, 1.day.ago
-      described_class.new.products_to_send.to_a.should == [@p]
+      expect(described_class.new.products_to_send.to_a).to eq([@p])
     end
     it 'finds a product with a CSM Number' do
       @p.update_custom_value! @cd_csm_num, "CSM"
-      described_class.new.products_to_send.to_a.should == [@p]
+      expect(described_class.new.products_to_send.to_a).to eq([@p])
     end
     it "should not find product without MSL+ Receive Date or CSM Number" do
-      described_class.new.products_to_send.to_a.should be_empty
+      expect(described_class.new.products_to_send.to_a).to be_empty
     end
     it "should not find product that doesn't need sync" do
       @p.update_custom_value! @cd_msl_rec, 1.day.ago
       @p.update_attributes(:updated_at=>2.days.ago)
       @p.sync_records.create!(:trading_partner=>"MSLE",:sent_at=>1.day.ago,:confirmed_at=>1.hour.ago)
-      described_class.new.products_to_send.to_a.should be_empty
+      expect(described_class.new.products_to_send.to_a).to be_empty
     end
     it "should not find a product that only has US and CA tariffs" do
       @p.classifications.destroy_all
       t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['CA'], product: @p))
       t2 = Factory(:tariff_record, classification: Factory(:classification, country: @countries['US'], product: @p))
 
-      described_class.new.products_to_send.to_a.should be_empty
+      expect(described_class.new.products_to_send.to_a).to be_empty
     end
     it "should not find a product that only has US and CA tariffs" do
       @p.classifications.destroy_all
       t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['CA'], product: @p))
       t2 = Factory(:tariff_record, classification: Factory(:classification, country: @countries['US'], product: @p))
 
-      described_class.new.products_to_send.to_a.should be_empty
+      expect(described_class.new.products_to_send.to_a).to be_empty
     end
     it "should find a product that does not have a tariff record" do
       @p.update_custom_value! @cd_msl_rec, 1.day.ago
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       ['US','IT','CA','TW'].each {|iso| Factory(:country,:iso_code=>iso)}
       @c = @t.classification
       @p = @c.product
-      @h.stub(:send_file)
+      allow(@h).to receive(:send_file)
     end
 
     it "should generate file with appropriate values" do
@@ -125,15 +125,15 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
           "F&W Source 1", "F&W Source 2", "F&W Source 3", "Origin of Wildlife", "Semi-Precious", "Type of Semi-Precious", "CITES", "Fish & Wildlife"]
 
       row = r[1]
-      row[0].should == @p.unique_identifier
-      row[1].should == @c.country.iso_code
-      row[2].should == '' #MP1
-      row[3].should == @t.hts_1.hts_format
-      row[4].should == @t.hts_2.hts_format
-      row[5].should == @t.hts_3.hts_format
-      row[6].should == "1" #length
-      row[7].should == "2" #width
-      row[8].should == "3" #height
+      expect(row[0]).to eq(@p.unique_identifier)
+      expect(row[1]).to eq(@c.country.iso_code)
+      expect(row[2]).to eq('') #MP1
+      expect(row[3]).to eq(@t.hts_1.hts_format)
+      expect(row[4]).to eq(@t.hts_2.hts_format)
+      expect(row[5]).to eq(@t.hts_3.hts_format)
+      expect(row[6]).to eq("1") #length
+      expect(row[7]).to eq("2") #width
+      expect(row[8]).to eq("3") #height
       # Fabric Fields are all nil
       (9..53).each {|x| expect(row[x]).to be_nil}
       expect(row[54..72]).to eq ["k", "fc", "cn1", "cn2", "cn3", "sn1", "sn2", "sn3", "fwo1", "fwo2", "fwo3", "fws1", "fws2", "fws3", "ow", "true", "spt", "true", "false"]
@@ -143,76 +143,76 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       tr2 = Factory(:tariff_record,:hts_1=>'123456')
       @tmp = @h.generate_outbound_sync_file [@p,tr2.product]
       r = CSV.parse IO.read @tmp.path
-      r.should have(3).rows
-      r[1][0].should == @p.unique_identifier
-      r[2][0].should == tr2.product.unique_identifier
+      expect(r.size).to eq(3)
+      expect(r[1][0]).to eq(@p.unique_identifier)
+      expect(r[2][0]).to eq(tr2.product.unique_identifier)
     end
     it "should handle multple countries" do
       tr2 = Factory(:tariff_record,:classification=>Factory(:classification,:product=>@p),:hts_1=>'654321')
       @tmp = @h.generate_outbound_sync_file [@p]
       r = CSV.parse IO.read @tmp.path
-      r.should have(3).rows
-      r[1][0].should == @p.unique_identifier
-      r[2][0].should == @p.unique_identifier
-      r[1][1].should == @c.country.iso_code
-      r[2][1].should == tr2.classification.country.iso_code
-      r[1][3].should == '1234567890'.hts_format
-      r[2][3].should == '654321'.hts_format
+      expect(r.size).to eq(3)
+      expect(r[1][0]).to eq(@p.unique_identifier)
+      expect(r[2][0]).to eq(@p.unique_identifier)
+      expect(r[1][1]).to eq(@c.country.iso_code)
+      expect(r[2][1]).to eq(tr2.classification.country.iso_code)
+      expect(r[1][3]).to eq('1234567890'.hts_format)
+      expect(r[2][3]).to eq('654321'.hts_format)
     end
     it "should not send US, Canada" do
       ['US','CA', 'IT'].each do |iso|
         Factory(:tariff_record,:classification=>Factory(:classification,:country=>Country.find_by_iso_code(iso),:product=>@p),:hts_1=>'654321')
       end
       @p.reload
-      @p.classifications.count.should == 4
+      expect(@p.classifications.count).to eq(4)
       @tmp = @h.generate_outbound_sync_file [@p]
       r = CSV.parse IO.read @tmp.path
-      r.should have(3).rows
-      r[1][1].should == @c.country.iso_code
+      expect(r.size).to eq(3)
+      expect(r[1][1]).to eq(@c.country.iso_code)
     end
     it "should remove periods from Taiwan tariffs" do
       tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>Country.find_by_iso_code('TW')),:hts_1=>'65432101')
       @tmp = @h.generate_outbound_sync_file [tr.product]
       r = CSV.parse IO.read @tmp.path
-      r.should have(2).rows
-      r[1][1].should == 'TW'
-      r[1][3].should == '65432101'
+      expect(r.size).to eq(2)
+      expect(r[1][1]).to eq('TW')
+      expect(r[1][3]).to eq('65432101')
     end
     it "should set MP1 flag for Taiwan tariff with flag set" do
       Factory(:official_tariff,:country=>Country.find_by_iso_code('TW'),:hts_code=>'65432101',:import_regulations=>"ABC MP1 DEF")
       tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>Country.find_by_iso_code('TW')),:hts_1=>'65432101')
       @tmp = @h.generate_outbound_sync_file [tr.product]
       r = CSV.parse IO.read @tmp.path
-      r.should have(2).rows
-      r[1][1].should == 'TW'
-      r[1][2].should == 'true'
-      r[1][3].should == '65432101'
+      expect(r.size).to eq(2)
+      expect(r[1][1]).to eq('TW')
+      expect(r[1][2]).to eq('true')
+      expect(r[1][3]).to eq('65432101')
     end
     it "should create new sync_records" do
       @tmp = @h.generate_outbound_sync_file [@p]
       @p.reload
-      @p.should have(1).sync_records
+      expect(@p.sync_records.size).to eq(1)
       sr = @p.sync_records.first
-      sr.trading_partner.should == "MSLE"
-      sr.sent_at.should > 3.seconds.ago
-      sr.confirmed_at.should be_nil
+      expect(sr.trading_partner).to eq("MSLE")
+      expect(sr.sent_at).to be > 3.seconds.ago
+      expect(sr.confirmed_at).to be_nil
     end
     it "should update sent_at time for existing sync_records" do
       @p.sync_records.create!(:trading_partner=>"MSLE",:sent_at=>1.day.ago)
       @tmp = @h.generate_outbound_sync_file [@p]
       @p.reload
-      @p.should have(1).sync_records
+      expect(@p.sync_records.size).to eq(1)
       sr = @p.sync_records.first
-      sr.trading_partner.should == "MSLE"
-      sr.sent_at.should > 3.seconds.ago
-      sr.confirmed_at.should be_nil
+      expect(sr.trading_partner).to eq("MSLE")
+      expect(sr.sent_at).to be > 3.seconds.ago
+      expect(sr.confirmed_at).to be_nil
     end
     it 'should send file to ftp folder' do
       override_time = DateTime.new(2010,1,2,3,4,5)
       @tmp = Tempfile.new('x')
-      @h.should_receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
+      expect(@h).to receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
       @h.send_and_delete_sync_file @tmp, override_time
-      File.exists?(@tmp.path).should be_false
+      expect(File.exists?(@tmp.path)).to be_falsey
       @tmp = nil
     end
 
@@ -324,13 +324,13 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     it 'should send file' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
-      FtpSender.should_receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_to_msl',:remote_file_name=>fn})
+      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_to_msl',:remote_file_name=>fn})
       OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new.send_file(@tmp,fn)
     end
     it 'should send file in qa_mode' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
-      FtpSender.should_receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_test_to_msl',:remote_file_name=>fn})
+      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_test_to_msl',:remote_file_name=>fn})
       OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new(:env=>:qa).send_file(@tmp,fn)
     end
   end
@@ -351,29 +351,29 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
 4371543380AX,NOS,,DOUBLE HANDLE ATTACHE-ALLIGATOR,DOUBLE HANDLE ATTACHE,Handbag,100% Crocodile Handbag,,,Business Case,Leathergoods,MEN'S COLLECTION BAGS,EXOTIC BAGS"
       @h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
       @style_numbers = ["7352024LTBR","3221691177NY","322169117JAL","443590","4371543380AX"]
-      @h.stub(:send_file)
+      allow(@h).to receive(:send_file)
     end
 
     it "should write new product" do
       @tmp = @h.process @file_content
-      Product.count.should == 5
-      Product.all.collect {|p| p.unique_identifier}.should == @style_numbers
+      expect(Product.count).to eq(5)
+      expect(Product.all.collect {|p| p.unique_identifier}).to eq(@style_numbers)
       p = Product.where(:unique_identifier=>"7352024LTBR").includes(:custom_values).first
       cdefs = @custom_defs
 
-      p.get_custom_value(cdefs[:msl_board_number]).value.should == "O26SC10"
-      p.get_custom_value(cdefs[:msl_gcc_desc]).value.should =="Men's Jacket"
-      p.get_custom_value(cdefs[:msl_hts_desc]).value.should =="100% Real Lambskin Men's Jacket"
-      p.get_custom_value(cdefs[:msl_us_season]).value.should =='F12'
-      p.get_custom_value(cdefs[:msl_item_desc]).value.should =='LEATHER BARRACUDA-POLYESTER'
-      p.get_custom_value(cdefs[:msl_model_desc]).value.should =='LEATHER BARRACUDA'
-      p.get_custom_value(cdefs[:msl_hts_desc_2]).value.should =='TESTHTS2'
-      p.get_custom_value(cdefs[:msl_hts_desc_3]).value.should =='TESTHTS3'
-      p.get_custom_value(cdefs[:ax_subclass]).value.should =='Suede/Leather Outerwear'
-      p.get_custom_value(cdefs[:msl_us_brand]).value.should =='Menswear'
-      p.get_custom_value(cdefs[:msl_us_sub_brand]).value.should =='POLO SPORTSWEAR'
-      p.get_custom_value(cdefs[:msl_us_class]).value.should =='OUTERWEAR'
-      p.get_custom_value(cdefs[:msl_receive_date]).value.should == Date.today
+      expect(p.get_custom_value(cdefs[:msl_board_number]).value).to eq("O26SC10")
+      expect(p.get_custom_value(cdefs[:msl_gcc_desc]).value).to eq("Men's Jacket")
+      expect(p.get_custom_value(cdefs[:msl_hts_desc]).value).to eq("100% Real Lambskin Men's Jacket")
+      expect(p.get_custom_value(cdefs[:msl_us_season]).value).to eq('F12')
+      expect(p.get_custom_value(cdefs[:msl_item_desc]).value).to eq('LEATHER BARRACUDA-POLYESTER')
+      expect(p.get_custom_value(cdefs[:msl_model_desc]).value).to eq('LEATHER BARRACUDA')
+      expect(p.get_custom_value(cdefs[:msl_hts_desc_2]).value).to eq('TESTHTS2')
+      expect(p.get_custom_value(cdefs[:msl_hts_desc_3]).value).to eq('TESTHTS3')
+      expect(p.get_custom_value(cdefs[:ax_subclass]).value).to eq('Suede/Leather Outerwear')
+      expect(p.get_custom_value(cdefs[:msl_us_brand]).value).to eq('Menswear')
+      expect(p.get_custom_value(cdefs[:msl_us_sub_brand]).value).to eq('POLO SPORTSWEAR')
+      expect(p.get_custom_value(cdefs[:msl_us_class]).value).to eq('OUTERWEAR')
+      expect(p.get_custom_value(cdefs[:msl_receive_date]).value).to eq(Date.today)
 
       expect(p.entity_snapshots.size).to eq 1
       expect(p.last_updated_by).to eq User.integration
@@ -385,49 +385,49 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       p.update_custom_value! cdefs[:msl_receive_date], 1.year.ago
       @tmp = @h.process @file_content
       p = Product.find_by_unique_identifier("7352024LTBR")
-      p.get_custom_value(cdefs[:msl_board_number]).value.should == "O26SC10"
-      p.get_custom_value(cdefs[:msl_receive_date]).value.should == Date.today
+      expect(p.get_custom_value(cdefs[:msl_board_number]).value).to eq("O26SC10")
+      expect(p.get_custom_value(cdefs[:msl_receive_date]).value).to eq(Date.today)
       expect(p.entity_snapshots.size).to eq 1
       expect(p.last_updated_by).to eq User.integration
     end
     it "should generate acknowledgement file" do
       @tmp = @h.process @file_content
       r = CSV.parse IO.read @tmp.path
-      r.should have(6).rows
-      r[0].should == ['Style','Time Processed','Status']
+      expect(r.size).to eq(6)
+      expect(r[0]).to eq(['Style','Time Processed','Status'])
       @style_numbers.each_with_index do |s,i|
-        r[i+1][0].should == s
+        expect(r[i+1][0]).to eq(s)
       end
       r.each_with_index do |row,i|
         next if i==0
-        DateTime.strptime(row[1],"%Y%m%d%H%M%S").should > (Time.now-2.minutes)
-        row[2].should == "OK"
+        expect(DateTime.strptime(row[1],"%Y%m%d%H%M%S")).to be > (Time.now-2.minutes)
+        expect(row[2]).to eq("OK")
       end
     end
     it "should write CSV parse failure to acknowledgement file" do
-      CSV.stub(:parse).and_raise("PROCFAIL")
+      allow(CSV).to receive(:parse).and_raise("PROCFAIL")
       @tmp = @h.process @file_content
       tmp_content = IO.readlines @tmp.path
-      tmp_content[1].should == "INVALID CSV FILE ERROR: PROCFAIL"
+      expect(tmp_content[1]).to eq("INVALID CSV FILE ERROR: PROCFAIL")
     end
     it "should write error in processing product to acknowledgement file and keep processing" do
-      Product.should_receive(:find_or_create_by_unique_identifier).with("7352024LTBR").and_raise("PERROR")
+      expect(Product).to receive(:find_or_create_by_unique_identifier).with("7352024LTBR").and_raise("PERROR")
       ['3221691177NY','322169117JAL','443590','4371543380AX'].each do |g|
-        Product.should_receive(:find_or_create_by_unique_identifier).
+        expect(Product).to receive(:find_or_create_by_unique_identifier).
           with(g).and_return(Product.create(:unique_identifier=>g))
       end
       @tmp = @h.process @file_content
       tmp_content = CSV.parse IO.read @tmp.path
-      tmp_content[1][2].should == "PERROR"
-      tmp_content[2][0].should == "3221691177NY"
+      expect(tmp_content[1][2]).to eq("PERROR")
+      expect(tmp_content[2][0]).to eq("3221691177NY")
     end
     it "should FTP acknowledgement file" do
       @tmp = File.new('spec/support/tmp/abc.csv','w')
       @tmp << 'ABC'
       @tmp.flush
-      @h.should_receive(:send_file).with(@tmp,'abc-ack.csv')
+      expect(@h).to receive(:send_file).with(@tmp,'abc-ack.csv')
       @h.send_and_delete_ack_file @tmp, 'abc.csv'
-      File.exists?(@tmp.path).should be_false
+      expect(File.exists?(@tmp.path)).to be_falsey
       @tmp = nil
     end
   end
@@ -445,9 +445,9 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     end
 
     it "processes an a msl plus file and forwards an ack file on" do
-      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "file").and_yield @tempfile
-      described_class.any_instance.should_receive(:process).with(@contents).and_return "Processed"
-      described_class.any_instance.should_receive(:send_and_delete_ack_file).with("Processed", "original.txt")
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "file").and_yield @tempfile
+      expect_any_instance_of(described_class).to receive(:process).with(@contents).and_return "Processed"
+      expect_any_instance_of(described_class).to receive(:send_and_delete_ack_file).with("Processed", "original.txt")
 
       described_class.send_and_delete_ack_file_from_s3 'bucket', 'file', 'original.txt'
     end

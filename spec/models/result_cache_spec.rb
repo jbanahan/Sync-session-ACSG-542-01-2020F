@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe ResultCache do
   before :each do
-    Product.stub(:search_where).and_return("1=1")
+    allow(Product).to receive(:search_where).and_return("1=1")
   end
   describe :next do
     it "should load cache if empty" do
@@ -11,10 +11,10 @@ describe ResultCache do
       p = []
       2.times {|i| p << Factory(:product,:unique_identifier=>"rc#{i}").id }
       rc = ResultCache.new(:result_cacheable=>ss,:page=>1,:per_page=>5)
-      rc.next(p[0]).should == p[1]
+      expect(rc.next(p[0])).to eq(p[1])
     end
     it "should find in cache" do
-      ResultCache.new(:object_ids=>[7,1,5].to_json).next(1).should == 5
+      expect(ResultCache.new(:object_ids=>[7,1,5].to_json).next(1)).to eq(5)
     end
     it "should find in next page" do
       ss = Factory(:search_setup,:module_type=>"Product")
@@ -22,7 +22,7 @@ describe ResultCache do
       p = []
       6.times {|i| p << Factory(:product,:unique_identifier=>"rc#{i}").id }
       rc = ResultCache.new(:result_cacheable=>ss,:page=>1,:per_page=>3,:object_ids=>[p[0],p[1],p[2]].to_json)
-      rc.next(p[2]).should == p[3]
+      expect(rc.next(p[2])).to eq(p[3])
     end
     it "should return nil if end of results" do
       ss = Factory(:search_setup,:module_type=>"Product")
@@ -30,12 +30,12 @@ describe ResultCache do
       p = []
       2.times {|i| p << Factory(:product,:unique_identifier=>"rc#{i}").id }
       rc = ResultCache.new(:result_cacheable=>ss,:page=>1,:per_page=>2,:object_ids=>[p[0],p[1]].to_json)
-      rc.next(p[1]).should be_nil
+      expect(rc.next(p[1])).to be_nil
     end
     it "should return nil if not in cache" do
       rc = ResultCache.new(:object_ids=>[7,1,5].to_json)
-      rc.stub(:load_current_page)
-      rc.next(4).should be_nil
+      allow(rc).to receive(:load_current_page)
+      expect(rc.next(4)).to be_nil
     end
     it "should not return same object id from next page" do
       ss = Factory(:search_setup,:module_type=>"Product")
@@ -48,13 +48,13 @@ describe ResultCache do
       end
       Factory(:classification,:product=>p2)
       rc = ResultCache.new(:result_cacheable=>ss,:page=>1,:per_page=>2,:object_ids=>[p1.id].to_json)
-      rc.next(p1.id).should==p2.id
-      rc.page.should == 2
+      expect(rc.next(p1.id)).to eq(p2.id)
+      expect(rc.page).to eq(2)
     end
   end
   describe :previous do
     it "should find in cache" do
-      ResultCache.new(:object_ids=>[7,1,5].to_json).previous(5).should == 1
+      expect(ResultCache.new(:object_ids=>[7,1,5].to_json).previous(5)).to eq(1)
     end
     it "should load cache if empty" do
       ss = Factory(:search_setup,:module_type=>"Product")
@@ -62,7 +62,7 @@ describe ResultCache do
       p = []
       2.times {|i| p << Factory(:product,:unique_identifier=>"rc#{i}").id }
       rc = ResultCache.new(:result_cacheable=>ss,:page=>1,:per_page=>5)
-      rc.previous(p[1]).should == p[0]
+      expect(rc.previous(p[1])).to eq(p[0])
     end
     it "should find in previous page" do
       ss = Factory(:search_setup,:module_type=>"Product")
@@ -70,15 +70,15 @@ describe ResultCache do
       p = []
       6.times {|i| p << Factory(:product,:unique_identifier=>"rc#{i}").id }
       rc = ResultCache.new(:result_cacheable=>ss,:page=>2,:per_page=>3,:object_ids=>[p[3],p[4],p[5]].to_json)
-      rc.previous(p[3]).should == p[2]
+      expect(rc.previous(p[3])).to eq(p[2])
     end
     it "should return nil if beginning of results" do
-      ResultCache.new(:object_ids=>[7,1,5].to_json,:page=>1).previous(7).should be_nil
+      expect(ResultCache.new(:object_ids=>[7,1,5].to_json,:page=>1).previous(7)).to be_nil
     end
     it "should return nil if not in cache" do
       rc = ResultCache.new(:object_ids=>[7,1,5].to_json,:page=>1)
-      rc.stub(:load_current_page)
-      rc.previous(4).should be_nil
+      allow(rc).to receive(:load_current_page)
+      expect(rc.previous(4)).to be_nil
     end
     it "should not return same object id from previous page" do
       ss = Factory(:search_setup,:module_type=>"Product")
@@ -91,8 +91,8 @@ describe ResultCache do
         Factory(:classification,:product=>p2)
       end
       rc = ResultCache.new(:result_cacheable=>ss,:page=>2,:per_page=>2,:object_ids=>[p2.id].to_json)
-      rc.previous(p2.id).should == p1.id
-      rc.page.should == 1
+      expect(rc.previous(p2.id)).to eq(p1.id)
+      expect(rc.page).to eq(1)
     end
   end
 end

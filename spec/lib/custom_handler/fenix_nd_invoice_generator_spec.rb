@@ -33,15 +33,15 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
     def verify_company_fields l, i, c
       ranges = [(i..i+49), (i+50..i+99), (i+100..i+149), (i+150..i+199), (i+200..i+249), (i+250..i+299), (i+300..i+349), (i+350..i+399)]
 
-      l[ranges[0]].should == c.name.ljust(50)
-      l[ranges[1]].should == c.name_2.to_s.ljust(50)
+      expect(l[ranges[0]]).to eq(c.name.ljust(50))
+      expect(l[ranges[1]]).to eq(c.name_2.to_s.ljust(50))
 
       a = c.addresses.blank? ? Address.new : c.addresses.first
-      l[ranges[2]].should == a.line_1.to_s.ljust(50)
-      l[ranges[3]].should == a.line_2.to_s.ljust(50)
-      l[ranges[4]].should == a.city.to_s.ljust(50)
-      l[ranges[5]].should == a.state.to_s.ljust(50)
-      l[ranges[6]].should == a.postal_code.to_s.ljust(50)
+      expect(l[ranges[2]]).to eq(a.line_1.to_s.ljust(50))
+      expect(l[ranges[3]]).to eq(a.line_2.to_s.ljust(50))
+      expect(l[ranges[4]]).to eq(a.city.to_s.ljust(50))
+      expect(l[ranges[5]]).to eq(a.state.to_s.ljust(50))
+      expect(l[ranges[6]]).to eq(a.postal_code.to_s.ljust(50))
     end
 
     def generate
@@ -56,41 +56,41 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       # Tests all the default header / detail mappings
       contents = generate
 
-      contents.length.should == 3
+      expect(contents.length).to eq(3)
       h = contents[0]
-      h[0].should == "H"
-      h[1..25].should == @i.invoice_number.ljust(25)
-      h[26..35].should == @i.invoice_date.strftime("%Y%m%d").ljust(10)
-      h[36..45].should == @i.country_origin_code.ljust(10)
-      h[46..55].should == "CA        "
-      h[56..59].should == @i.currency.ljust(4)
-      h[60..74].should == @i.total_quantity.to_s.ljust(15)
-      h[75..89].should == @i.gross_weight.to_s.ljust(15)
-      h[90..104].should == @i.commercial_invoice_lines.inject(0.0) {|sum, l| sum + l.quantity}.to_s.ljust(15)
-      h[105..119].should == @i.invoice_value.to_s.ljust(15)
+      expect(h[0]).to eq("H")
+      expect(h[1..25]).to eq(@i.invoice_number.ljust(25))
+      expect(h[26..35]).to eq(@i.invoice_date.strftime("%Y%m%d").ljust(10))
+      expect(h[36..45]).to eq(@i.country_origin_code.ljust(10))
+      expect(h[46..55]).to eq("CA        ")
+      expect(h[56..59]).to eq(@i.currency.ljust(4))
+      expect(h[60..74]).to eq(@i.total_quantity.to_s.ljust(15))
+      expect(h[75..89]).to eq(@i.gross_weight.to_s.ljust(15))
+      expect(h[90..104]).to eq(@i.commercial_invoice_lines.inject(0.0) {|sum, l| sum + l.quantity}.to_s.ljust(15))
+      expect(h[105..119]).to eq(@i.invoice_value.to_s.ljust(15))
       verify_company_fields h, 120, @i.vendor
       verify_company_fields h, 470, @i.consignee
       # Importer data (which is just listed as "GENERIC" in the general case)
-      h[820..1169].should == "GENERIC".ljust(350)
-      h[1170..1219].should == @i.commercial_invoice_lines.first.po_number.to_s.ljust(50)
-      h[1220].should == "2"
-      h[1221, 50].should == @line_2.customer_reference.to_s.ljust(50)
-      h[1271, 50].should == @i.importer.name.ljust(50)
+      expect(h[820..1169]).to eq("GENERIC".ljust(350))
+      expect(h[1170..1219]).to eq(@i.commercial_invoice_lines.first.po_number.to_s.ljust(50))
+      expect(h[1220]).to eq("2")
+      expect(h[1221, 50]).to eq(@line_2.customer_reference.to_s.ljust(50))
+      expect(h[1271, 50]).to eq(@i.importer.name.ljust(50))
 
 
       @i.commercial_invoice_lines.each_with_index do |l, x|
         t = l.commercial_invoice_tariffs.first
 
         o = contents[x+1]
-        o[0].should == "D"
-        o[1..50].should == l.part_number.ljust(50)
-        o[51..60].should == l.country_origin_code.ljust(10)
-        o[61..72].should == t.hts_code.ljust(12)
-        o[73..122].should == t.tariff_description.ljust(50)
-        o[123..137].should == l.quantity.to_s.ljust(15)
-        o[138..152].should == l.unit_price.to_s.ljust(15)
-        o[153..202].should == l.po_number.to_s.ljust(50)
-        o[203..212].should == t.tariff_provision.ljust(10)
+        expect(o[0]).to eq("D")
+        expect(o[1..50]).to eq(l.part_number.ljust(50))
+        expect(o[51..60]).to eq(l.country_origin_code.ljust(10))
+        expect(o[61..72]).to eq(t.hts_code.ljust(12))
+        expect(o[73..122]).to eq(t.tariff_description.ljust(50))
+        expect(o[123..137]).to eq(l.quantity.to_s.ljust(15))
+        expect(o[138..152]).to eq(l.unit_price.to_s.ljust(15))
+        expect(o[153..202]).to eq(l.po_number.to_s.ljust(50))
+        expect(o[203..212]).to eq(t.tariff_provision.ljust(10))
       end
     end
 
@@ -105,20 +105,20 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       contents = generate
       h = contents[0]
 
-      h[1..25].should == "VFI-#{@i.id}".ljust(25)
+      expect(h[1..25]).to eq("VFI-#{@i.id}".ljust(25))
       # Num Cartons
-      h[60..74].should == BigDecimal.new("0").to_s.ljust(15)
+      expect(h[60..74]).to eq(BigDecimal.new("0").to_s.ljust(15))
       # Gross Weight
-      h[75..89].should == "0".ljust(15)
+      expect(h[75..89]).to eq("0".ljust(15))
       # It should be poulating the invoice value from the detail level here
-      h[105..119].should == BigDecimal.new("100.1").to_s.ljust(15)
-      h[120..169].should == "GENERIC".ljust(50)
-      h[470..519].should == "GENERIC".ljust(50)
-      h[820..869].should == "GENERIC".ljust(50)
+      expect(h[105..119]).to eq(BigDecimal.new("100.1").to_s.ljust(15))
+      expect(h[120..169]).to eq("GENERIC".ljust(50))
+      expect(h[470..519]).to eq("GENERIC".ljust(50))
+      expect(h[820..869]).to eq("GENERIC".ljust(50))
 
       d = contents[1]
-      d[61..72].should == "0".ljust(12)
-      d[203..212].should == "2".ljust(10)
+      expect(d[61..72]).to eq("0".ljust(12))
+      expect(d[203..212]).to eq("2".ljust(10))
     end
 
     it "should not populate units or invoice value if any lines are missing unit counts" do
@@ -126,13 +126,13 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @line_2.update_attributes! quantity: nil
 
       contents = generate
-      contents.length.should == 3
+      expect(contents.length).to eq(3)
       h = contents[0]
 
       # Invoice value 
-      h[105..119].should == "0.0".ljust(15)
+      expect(h[105..119]).to eq("0.0".ljust(15))
       # Units
-      h[90..104].should == "0.0".ljust(15)
+      expect(h[90..104]).to eq("0.0".ljust(15))
     end
 
     it "should not populate invoice value if any lines are missing unit price" do
@@ -140,11 +140,11 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @line_2.update_attributes! unit_price: nil
 
       contents = generate
-      contents.length.should == 3
+      expect(contents.length).to eq(3)
       h = contents[0]
 
       # Invoice value 
-      h[105..119].should == "0.0".ljust(15)
+      expect(h[105..119]).to eq("0.0".ljust(15))
     end
 
     it "should handle nils in all default field values" do
@@ -158,7 +158,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       l1.commercial_invoice_tariffs << CommercialInvoiceTariff.new
 
       contents = generate
-      contents.length.should == 3
+      expect(contents.length).to eq(3)
     end
 
     it "should handle lambdas and constants in mappings" do
@@ -179,23 +179,23 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       call_count = 0;
       detail_map[:part_number] = lambda {|h, l, t| dl_inv<< h; dl_line<<l; dl_tar<<t; ftp_folder + (call_count+=1).to_s}
 
-      @generator.should_receive(:invoice_header_map).and_return map
-      @generator.should_receive(:invoice_detail_map).and_return detail_map
+      expect(@generator).to receive(:invoice_header_map).and_return map
+      expect(@generator).to receive(:invoice_detail_map).and_return detail_map
 
       contents = generate
-      contents.length.should == 3
+      expect(contents.length).to eq(3)
 
-      contents[0][1..25].should == @generator.ftp_folder.ljust(25)
-      contents[0][26..35].should == "20130101".ljust(10)
-      contents[1][1..50].should == "#{@generator.ftp_folder}1".ljust(50)
-      contents[2][1..50].should == "#{@generator.ftp_folder}2".ljust(50)
+      expect(contents[0][1..25]).to eq(@generator.ftp_folder.ljust(25))
+      expect(contents[0][26..35]).to eq("20130101".ljust(10))
+      expect(contents[1][1..50]).to eq("#{@generator.ftp_folder}1".ljust(50))
+      expect(contents[2][1..50]).to eq("#{@generator.ftp_folder}2".ljust(50))
 
-      l_inv.should == @i
-      dl_inv[0].should == @i
-      dl_line[0].should == @i.commercial_invoice_lines.first
-      dl_tar[0].should == @i.commercial_invoice_lines.first.commercial_invoice_tariffs.first
-      dl_line[1].should == @i.commercial_invoice_lines.second
-      dl_tar[1].should == @i.commercial_invoice_lines.second.commercial_invoice_tariffs.first
+      expect(l_inv).to eq(@i)
+      expect(dl_inv[0]).to eq(@i)
+      expect(dl_line[0]).to eq(@i.commercial_invoice_lines.first)
+      expect(dl_tar[0]).to eq(@i.commercial_invoice_lines.first.commercial_invoice_tariffs.first)
+      expect(dl_line[1]).to eq(@i.commercial_invoice_lines.second)
+      expect(dl_tar[1]).to eq(@i.commercial_invoice_lines.second.commercial_invoice_tariffs.first)
     end
 
     it "should error if more than 999 lines are on the invoice" do
@@ -203,7 +203,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       
       # THe only reason this is mocked out is to avoid the db save overhead involved with saving an additional 998 (x2) records
       # which ends up being about 20 seconds of time in total
-      CommercialInvoice.should_receive(:find).with(@i.id).and_return @i
+      expect(CommercialInvoice).to receive(:find).with(@i.id).and_return @i
 
       expect{generate}.to raise_error "Invoice # #{@i.invoice_number} generated a Fenix invoice file containing 1000 lines.  Invoice's over 999 lines are not supported and must have detail lines consolidated or the invoice must be split into multiple pieces."
     end
@@ -213,9 +213,9 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.save
 
       contents = generate
-      contents.length.should == 3
+      expect(contents.length).to eq(3)
       h = contents[0]
-      h[1..25].should == "Glosoli".ljust(25)
+      expect(h[1..25]).to eq("Glosoli".ljust(25))
     end
 
     it "uses ? when it can't transliterate a character" do
@@ -223,9 +223,9 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.save
 
       contents = generate
-      contents.length.should == 3
+      expect(contents.length).to eq(3)
       h = contents[0]
-      h[1..25].should == "?".ljust(25)
+      expect(h[1..25]).to eq("?".ljust(25))
     end
 
     it "should trim field lengths when they exceed the format's length attribute" do
@@ -233,9 +233,9 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.save
 
       contents = generate
-      contents.length.should == 3
+      expect(contents.length).to eq(3)
       h = contents[0]
-      h[1..25].should == "1234567890123456789012345"
+      expect(h[1..25]).to eq("1234567890123456789012345")
     end
 
     it "should convert nil hts codes to 0 for output" do 
@@ -247,9 +247,9 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       @i.commercial_invoice_lines.first.commercial_invoice_tariffs.create! :hts_code => nil
 
       contents = generate
-      contents.length.should == 2
+      expect(contents.length).to eq(2)
       h = contents[1]
-      h[61..72].should == "0".ljust(12)
+      expect(h[61..72]).to eq("0".ljust(12))
     end
 
     it "strips newlines from values" do
@@ -284,8 +284,8 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
   context :generate_and_send do
     it "should generate and ftp the file" do
       file = double("tempfile")
-      @generator.should_receive(:generate_file).with(@i.id).and_yield file
-      @generator.should_receive(:ftp_file).with(file, folder: "to_ecs/fenix_invoices")
+      expect(@generator).to receive(:generate_file).with(@i.id).and_yield file
+      expect(@generator).to receive(:ftp_file).with(file, folder: "to_ecs/fenix_invoices")
 
       @generator.generate_and_send @i.id
     end
@@ -293,7 +293,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
 
   describe "generate" do
     it "invokes the generate_and_send instance method" do
-      described_class.any_instance.should_receive(:generate_and_send).with 1
+      expect_any_instance_of(described_class).to receive(:generate_and_send).with 1
 
       described_class.generate 1
     end

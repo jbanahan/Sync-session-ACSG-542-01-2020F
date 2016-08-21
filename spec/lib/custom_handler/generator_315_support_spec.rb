@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::Generator315Support do
       @data.master_bills = "A"
       files = []
       folder = nil
-      subject.should_receive(:ftp_file) do |file, opts|
+      expect(subject).to receive(:ftp_file) do |file, opts|
         files << file.read
         folder = opts[:folder]
       end
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::Generator315Support do
     it "creates xml document, ftps it, but doesn't yield when testing" do
       files = []
       folder = nil
-      subject.should_receive(:ftp_file) do |file, opts|
+      expect(subject).to receive(:ftp_file) do |file, opts|
         files << file.read
         folder = opts[:folder]
       end

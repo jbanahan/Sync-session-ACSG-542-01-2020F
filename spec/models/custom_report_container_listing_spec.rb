@@ -4,20 +4,20 @@ describe CustomReportContainerListing do
   before :each do
     @u = Factory(:master_user)
     @u.company.update_attributes(:broker=>true)
-    @u.stub(:view_entries?).and_return true
+    allow(@u).to receive(:view_entries?).and_return true
   end
   describe :static_methods do
     it "should allow users who can view entries" do
-      described_class.can_view?(@u).should be_true
+      expect(described_class.can_view?(@u)).to be_truthy
     end
 
     it "should not allow users who cannot view entries" do
-      @u.stub(:view_entries?).and_return false
-      described_class.can_view?(@u).should be_false
+      allow(@u).to receive(:view_entries?).and_return false
+      expect(described_class.can_view?(@u)).to be_falsey
     end
 
     it "should allow parameters for all entry fields" do
-      described_class.criterion_fields_available(@u).should == CoreModule::ENTRY.model_fields(@u).values
+      expect(described_class.criterion_fields_available(@u)).to eq(CoreModule::ENTRY.model_fields(@u).values)
     end
   end
 
@@ -27,7 +27,7 @@ describe CustomReportContainerListing do
       rpt = described_class.new
       rpt.search_columns.build(:rank=>0,:model_field_uid=>:ent_brok_ref)
       arrays = rpt.to_arrays @u
-      arrays.should have(3).rows
+      expect(arrays.size).to eq(3)
       expect(arrays[0]).to eq ["Container Number", "Broker Reference"]
       expect(arrays[1]).to eq ["123", "ABC"]
       expect(arrays[2]).to eq ["456", "ABC"]
@@ -35,8 +35,8 @@ describe CustomReportContainerListing do
 
     it "includes weblinks" do
       ms = double("MasterSetup")
-      MasterSetup.stub(:get).and_return ms
-      ms.stub(:request_host).and_return "localhost"
+      allow(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:request_host).and_return "localhost"
 
       ent = Factory(:entry,:container_numbers=>"123\n456",:broker_reference=>"ABC")
       rpt = described_class.new include_links: true

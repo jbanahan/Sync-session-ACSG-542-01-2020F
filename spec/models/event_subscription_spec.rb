@@ -3,7 +3,7 @@ require 'spec_helper'
 describe EventSubscription do
   let (:master_setup) do
     ms = double("MasterSetup")
-    MasterSetup.stub(:get).and_return(ms)
+    allow(MasterSetup).to receive(:get).and_return(ms)
     ms
   end
 
@@ -14,7 +14,7 @@ describe EventSubscription do
       let (:subscription) { Factory(:event_subscription,user:user,event_type:'ORDER_COMMENT_CREATE',email:true) }
 
       before :each do
-        master_setup.stub(:order_enabled).and_return true
+        allow(master_setup).to receive(:order_enabled).and_return true
       end
 
       it "should find subscriptions who can view parent object" do

@@ -39,10 +39,10 @@ describe Api::V1::ShipmentsController do
       expect(sj['shp_importer_reference']).to eq 'DEF'
     end
     it "should render permissions" do
-      Shipment.any_instance.stub(:can_edit?).and_return false
-      Shipment.any_instance.stub(:can_view?).and_return true
-      Shipment.any_instance.stub(:can_attach?).and_return true
-      Shipment.any_instance.stub(:can_comment?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_attach?).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_comment?).and_return false
       s = Factory(:shipment)
       get :show, id: s.id
       j = JSON.parse response.body
@@ -178,18 +178,18 @@ describe Api::V1::ShipmentsController do
   describe "request booking" do
     before :each do
       @s = double("shipment")
-      Shipment.should_receive(:find).with('1').and_return @s
+      expect(Shipment).to receive(:find).with('1').and_return @s
     end
     it "should error if user cannot request booking" do
-      @s.should_receive(:can_request_booking?).with(@u).and_return false
-      @s.should_not_receive(:request_booking!)
-      @s.should_not_receive(:async_request_booking!)
+      expect(@s).to receive(:can_request_booking?).with(@u).and_return false
+      expect(@s).not_to receive(:request_booking!)
+      expect(@s).not_to receive(:async_request_booking!)
       post :request_booking, id: '1'
       expect(response.status).to eq 403
     end
     it "should request booking" do
-      @s.should_receive(:can_request_booking?).with(@u).and_return true
-      @s.should_receive(:async_request_booking!).with(@u)
+      expect(@s).to receive(:can_request_booking?).with(@u).and_return true
+      expect(@s).to receive(:async_request_booking!).with(@u)
       post :request_booking, id: '1'
       expect(response).to be_success
     end
@@ -197,18 +197,18 @@ describe Api::V1::ShipmentsController do
   describe "approve booking" do
     before :each do
       @s = double("shipment")
-      Shipment.should_receive(:find).with('1').and_return @s
+      expect(Shipment).to receive(:find).with('1').and_return @s
     end
     it "should error if user cannot approve booking" do
-      @s.should_receive(:can_approve_booking?).with(@u).and_return false
-      @s.should_not_receive(:approve_booking!)
-      @s.should_not_receive(:async_approve_booking!)
+      expect(@s).to receive(:can_approve_booking?).with(@u).and_return false
+      expect(@s).not_to receive(:approve_booking!)
+      expect(@s).not_to receive(:async_approve_booking!)
       post :approve_booking, id: '1'
       expect(response.status).to eq 403
     end
     it "should approve booking" do
-      @s.should_receive(:can_approve_booking?).with(@u).and_return true
-      @s.should_receive(:async_approve_booking!).with(@u)
+      expect(@s).to receive(:can_approve_booking?).with(@u).and_return true
+      expect(@s).to receive(:async_approve_booking!).with(@u)
       post :approve_booking, id: '1'
       expect(response).to be_success
     end
@@ -216,18 +216,18 @@ describe Api::V1::ShipmentsController do
   describe "confirm booking" do
     before :each do
       @s = double("shipment")
-      Shipment.should_receive(:find).with('1').and_return @s
+      expect(Shipment).to receive(:find).with('1').and_return @s
     end
     it "should error if user cannot confirm booking" do
-      @s.should_receive(:can_confirm_booking?).with(@u).and_return false
-      @s.should_not_receive(:confirm_booking!)
-      @s.should_not_receive(:async_confirm_booking!)
+      expect(@s).to receive(:can_confirm_booking?).with(@u).and_return false
+      expect(@s).not_to receive(:confirm_booking!)
+      expect(@s).not_to receive(:async_confirm_booking!)
       post :confirm_booking, id: '1'
       expect(response.status).to eq 403
     end
     it "should confirm booking" do
-      @s.should_receive(:can_confirm_booking?).with(@u).and_return true
-      @s.should_receive(:async_confirm_booking!).with(@u)
+      expect(@s).to receive(:can_confirm_booking?).with(@u).and_return true
+      expect(@s).to receive(:async_confirm_booking!).with(@u)
       post :confirm_booking, id: '1'
       expect(response).to be_success
     end
@@ -235,18 +235,18 @@ describe Api::V1::ShipmentsController do
   describe "revise booking" do
     before :each do
       @s = double("shipment")
-      Shipment.should_receive(:find).with('1').and_return @s
+      expect(Shipment).to receive(:find).with('1').and_return @s
     end
     it "should call async_revise_booking" do
-      @s.should_receive(:can_revise_booking?).with(@u).and_return true
-      @s.should_receive(:async_revise_booking!).with(@u)
+      expect(@s).to receive(:can_revise_booking?).with(@u).and_return true
+      expect(@s).to receive(:async_revise_booking!).with(@u)
       post :revise_booking, id: 1
       expect(response).to be_success
     end
     it "should fail if user cannot approve booking" do
-      @s.should_receive(:can_revise_booking?).with(@u).and_return false
-      @s.should_not_receive(:revise_booking!)
-      @s.should_not_receive(:async_revise_booking!)
+      expect(@s).to receive(:can_revise_booking?).with(@u).and_return false
+      expect(@s).not_to receive(:revise_booking!)
+      expect(@s).not_to receive(:async_revise_booking!)
       post :revise_booking, id: '1'
       expect(response.status).to eq 403
     end
@@ -254,18 +254,18 @@ describe Api::V1::ShipmentsController do
   describe "cancel" do
     before :each do
       @s = double("shipment")
-      Shipment.should_receive(:find).with('1').and_return @s
+      expect(Shipment).to receive(:find).with('1').and_return @s
     end
     it "should call async_cancel_booking" do
-      @s.should_receive(:can_cancel?).with(@u).and_return true
-      @s.should_receive(:async_cancel_shipment!).with(@u)
+      expect(@s).to receive(:can_cancel?).with(@u).and_return true
+      expect(@s).to receive(:async_cancel_shipment!).with(@u)
       post :cancel, id: 1
       expect(response).to be_success
     end
     it "should fail if user cannot cancel" do
-      @s.should_receive(:can_cancel?).with(@u).and_return false
-      @s.should_not_receive(:async_cancel_shipment!)
-      @s.should_not_receive(:cancel_shipment!)
+      expect(@s).to receive(:can_cancel?).with(@u).and_return false
+      expect(@s).not_to receive(:async_cancel_shipment!)
+      expect(@s).not_to receive(:cancel_shipment!)
       post :cancel, id: 1
       expect(response.status).to eq 403
     end
@@ -273,18 +273,18 @@ describe Api::V1::ShipmentsController do
   describe "uncancel" do
     before :each do
       @s = double("shipment")
-      Shipment.should_receive(:find).with('1').and_return @s
+      expect(Shipment).to receive(:find).with('1').and_return @s
     end
     it "should call async_uncancel_booking" do
-      @s.should_receive(:can_uncancel?).with(@u).and_return true
-      @s.should_receive(:async_uncancel_shipment!).with(@u)
+      expect(@s).to receive(:can_uncancel?).with(@u).and_return true
+      expect(@s).to receive(:async_uncancel_shipment!).with(@u)
       post :uncancel, id: 1
       expect(response).to be_success
     end
     it "should fail if user cannot uncancel" do
-      @s.should_receive(:can_uncancel?).with(@u).and_return false
-      @s.should_not_receive(:async_uncancel_shipment!)
-      @s.should_not_receive(:uncancel_shipment!)
+      expect(@s).to receive(:can_uncancel?).with(@u).and_return false
+      expect(@s).not_to receive(:async_uncancel_shipment!)
+      expect(@s).not_to receive(:uncancel_shipment!)
       post :uncancel, id: 1
       expect(response.status).to eq 403
     end
@@ -295,27 +295,27 @@ describe Api::V1::ShipmentsController do
       @att = Factory(:attachment,attachable:@s)
     end
     it "should fail if user cannot edit shipment" do
-      Shipment.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
       expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
       expect(response.status).to eq 403
     end
     it "should fail if attachment is not attached to this shipment" do
-      Shipment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       a2 = Factory(:attachment)
       expect {post :process_tradecard_pack_manifest, {'attachment_id'=>a2.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
       expect(response.status).to eq 400
       expect(JSON.parse(response.body)['errors']).to eq ['Attachment not linked to Shipment.']
     end
     it "should fail if AttachmentProcessJob already exists" do
-      Shipment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       @s.attachment_process_jobs.create!(attachment_id:@att.id,job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
       expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
       expect(response.status).to eq 400
       expect(JSON.parse(response.body)['errors']).to eq ['This manifest has already been submitted for processing.']
     end
     it "should process job" do
-      Shipment.any_instance.stub(:can_edit?).and_return true
-      AttachmentProcessJob.any_instance.should_receive(:process)
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
+      expect_any_instance_of(AttachmentProcessJob).to receive(:process)
       expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to change(AttachmentProcessJob,:count).from(0).to(1)
       expect(response).to be_success
       expect(JSON.parse(response.body)['shipment']).to_not be_nil
@@ -417,7 +417,7 @@ describe Api::V1::ShipmentsController do
       expect(sc.starting_carton).to eq 2
     end
     it "should not save if user doesn't have permission" do
-      Shipment.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
       expect {post :create, @s_hash}.to_not change(Shipment,:count)
       expect(response.status).to eq 403
     end
@@ -438,7 +438,7 @@ describe Api::V1::ShipmentsController do
         expect(s.order_lines.to_a).to eq [@o_line]
       end
       it "should not allow linking an order if the user cannot view the order" do
-        OrderLine.any_instance.stub(:can_view?).and_return false
+        allow_any_instance_of(OrderLine).to receive(:can_view?).and_return false
         expect {post :create, @s_hash}.to_not change(Shipment,:count)
         expect(response.status).to eq 400
       end
@@ -449,7 +449,7 @@ describe Api::V1::ShipmentsController do
       end
     end
     it "should not allow linking products that the user cannot view" do
-      Product.any_instance.stub(:can_view?).and_return false
+      allow_any_instance_of(Product).to receive(:can_view?).and_return false
       @s_hash['shipment']['lines'] = [
         {'shpln_line_number'=>'1',
           'shpln_shipped_qty'=>'104',
@@ -500,7 +500,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "should not allow new lines if !can_add_remove_lines?" do
-      Shipment.any_instance.stub(:can_add_remove_shipment_lines?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_add_remove_shipment_lines?).and_return false
       @s_hash['lines'] = [
         { 'shpln_shipped_qty'=>'104',
           'shpln_puid'=>@product.unique_identifier
@@ -510,7 +510,7 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
     end
     it "should not allow lines to be deleted if !can_add_remove_lines?" do
-      Shipment.any_instance.stub(:can_add_remove_shipment_lines?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_add_remove_shipment_lines?).and_return false
       sl = Factory(:shipment_line,shipment:@shipment)
       @s_hash['lines'] = [
         { 'id'=>sl.id,
@@ -617,11 +617,11 @@ describe Api::V1::ShipmentsController do
       o2 = Order.new(importer:imp,vendor:vend,order_date:Date.new(2014,1,1),mode:'Air',order_number:'ONUM2',customer_order_number:'CNUM2')
       o2.id = 100
       ar_object = double("ShipmentRelation")
-      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return ar_object
-      ar_object.should_receive(:order).with("customer_order_number").and_return ar_object
-      ar_object.should_receive(:limit).with(25).and_return ar_object
-      ar_object.should_receive(:each).and_yield(o1).and_yield(o2)
-      Shipment.any_instance.stub(:can_view?).and_return true
+      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return ar_object
+      expect(ar_object).to receive(:order).with("customer_order_number").and_return ar_object
+      expect(ar_object).to receive(:limit).with(25).and_return ar_object
+      expect(ar_object).to receive(:each).and_yield(o1).and_yield(o2)
+      allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
       s = Factory(:shipment)
       get :available_orders, id: s.id
       expect(response).to be_success
@@ -640,7 +640,7 @@ describe Api::V1::ShipmentsController do
   end
   describe "booked orders" do
     before :each do
-      Shipment.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
       @shipment = Factory(:shipment)
       @o1 = Factory :order,order_number:'ONUM',customer_order_number:'CNUM'
       @o2 = Factory :order,order_number:'ONUM2',customer_order_number:'CNUM2'
@@ -675,7 +675,7 @@ describe Api::V1::ShipmentsController do
   end
   describe "available_lines" do
     it "returns booking_lines with an order_line_id, in a format that mocks the linked order_line" do
-      Shipment.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
       shipment = Factory(:shipment)
       order = Factory :order, order_number:'ONUM',customer_order_number:'CNUM'
       prod1 = Factory :product
@@ -704,7 +704,7 @@ describe Api::V1::ShipmentsController do
 
     it "autocompletes order numbers that are available to utilize" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
-      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.scoped
 
       get :autocomplete_order, id: @s.id, n: "CNUM"
 
@@ -716,7 +716,7 @@ describe Api::V1::ShipmentsController do
 
     it "autocompletes using order_number" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
-      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.scoped
 
       get :autocomplete_order, id: @s.id, n: "ORDER"
       expect(response).to be_success
@@ -729,7 +729,7 @@ describe Api::V1::ShipmentsController do
 
     it "prefers customer order number if both order number and customer order number match" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
-      Shipment.any_instance.should_receive(:available_orders).with(@u).and_return Order.scoped
+      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.scoped
 
       get :autocomplete_order, id: @s.id, n: "NUM"
       expect(response).to be_success
@@ -741,7 +741,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "returns blank if no autcomplete text is sent" do
-       Shipment.any_instance.should_not_receive(:available_orders)
+       expect_any_instance_of(Shipment).not_to receive(:available_orders)
 
        get :autocomplete_order, id: @s.id, n: " "
 
@@ -760,7 +760,7 @@ describe Api::V1::ShipmentsController do
 
     it "autocompletes products that are available to utilize" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
-      Shipment.any_instance.should_receive(:available_products).with(@u).and_return Product.scoped
+      expect_any_instance_of(Shipment).to receive(:available_products).with(@u).and_return Product.scoped
 
       get :autocomplete_product, id: @s.id, n: "Prod1"
 
@@ -771,7 +771,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "returns blank if no autcomplete text is sent" do
-      Shipment.any_instance.should_not_receive(:available_products)
+      expect_any_instance_of(Shipment).not_to receive(:available_products)
 
       get :autocomplete_product, id: @s.id, n: " "
 
@@ -787,7 +787,7 @@ describe Api::V1::ShipmentsController do
       @importer = Factory(:importer)
       @s = Factory(:shipment, importer: @importer)
       @u.company.linked_companies << @importer
-      Shipment.any_instance.stub(:can_view?).with(@u).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_view?).with(@u).and_return true
       allow_api_access @u
     end
 
@@ -844,7 +844,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "fails if user can't view" do
-      Shipment.any_instance.should_receive(:can_view?).and_return false
+      expect_any_instance_of(Shipment).to receive(:can_view?).and_return false
 
       post :create_address, id: @s.id, address: {}
       expect(response.status).to eq 404
@@ -893,7 +893,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "fails if user can't access the shipment" do
-      Shipment.any_instance.should_receive(:can_view?).and_return false
+      expect_any_instance_of(Shipment).to receive(:can_view?).and_return false
       get :shipment_lines, id: @shipment.id, include: "order_lines"
       expect(response.status).to eq 404
     end
@@ -922,7 +922,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "fails if user can't access the shipment" do
-      Shipment.any_instance.should_receive(:can_view?).and_return false
+      expect_any_instance_of(Shipment).to receive(:can_view?).and_return false
       get :booking_lines, id: @shipment.id
       expect(response.status).to eq 404
     end

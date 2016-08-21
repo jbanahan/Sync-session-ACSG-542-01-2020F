@@ -28,7 +28,7 @@ describe GroupsController do
       end
 
       it "shouldn't allow use by non-admin" do
-        @user.stub(:admin?).and_return false
+        allow(@user).to receive(:admin?).and_return false
 
         post :create, group: {name: "admin"}
         group = Group.first
@@ -75,7 +75,7 @@ describe GroupsController do
     end
 
     it "shouldn't allow use by non-admin" do
-      @user.stub(:admin?).and_return false
+      allow(@user).to receive(:admin?).and_return false
       put :update, id: @g, members_list: "#{@jim.id}, #{@burt.id}", group: {name: "new name", description: "new description"}
       users = User.all
       members = users.select{ |u| u.groups == [@g] }
@@ -136,7 +136,7 @@ describe GroupsController do
     before(:each) { @g = Factory(:group, name: "test_group") }
     
     it "shouldn't allow use by non-admin" do
-      @user.stub(:admin?).and_return false
+      allow(@user).to receive(:admin?).and_return false
       delete :destroy, id: @g
       
       expect(Group.count).to eq 1
@@ -171,7 +171,7 @@ describe GroupsController do
     end
 
     it "shouldn't allow use by non-admin" do
-      @user.stub(:admin?).and_return false
+      allow(@user).to receive(:admin?).and_return false
       get :index
 
       expect(response).to redirect_to request.referrer
@@ -192,7 +192,7 @@ describe GroupsController do
     before(:each) { @g = Factory(:group, name: "test_group") }
 
     it "shouldn't allow use by non-admin" do
-      @user.stub(:admin?).and_return false
+      allow(@user).to receive(:admin?).and_return false
       get :edit, id: @g
 
       expect(response).to redirect_to request.referrer
@@ -220,7 +220,7 @@ describe GroupsController do
   describe :new do
 
     it "shouldn't allow use by non-admin" do
-      @user.stub(:admin?).and_return false
+      allow(@user).to receive(:admin?).and_return false
       get :new
 
       expect(response).to redirect_to request.referrer

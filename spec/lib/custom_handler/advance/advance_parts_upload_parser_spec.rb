@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
   let (:advance) { Factory(:importer, system_code: "ADVANCE") }
   let (:custom_file) {
     custom_file = CustomFile.new attached_file_name: "file.xlsx"
-    custom_file.stub(:path).and_return "/path/to/file.xlsx"
+    allow(custom_file).to receive(:path).and_return "/path/to/file.xlsx"
     custom_file
   }
   let (:user) { Factory(:user) }
@@ -51,11 +51,11 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
     }
 
     it "processes a file, creates a search_setup, imports a file against the setup" do
-      subject.should_receive(:foreach).with(custom_file, skip_headers: true, skip_blank_lines:true).and_yield(file_contents[0])
-      ImportedFile.any_instance.should_receive(:process).with user
+      expect(subject).to receive(:foreach).with(custom_file, skip_headers: true, skip_blank_lines:true).and_yield(file_contents[0])
+      expect_any_instance_of(ImportedFile).to receive(:process).with user
       # Don't worry about how the file contents are translated...just care that it is happening.
       # We'll test this method specifically elsewhere, since it's a pain the try and test as part of the process method testing
-      subject.should_receive(:translate_file_line).with(file_contents[0]).and_return [["line"]]
+      expect(subject).to receive(:translate_file_line).with(file_contents[0]).and_return [["line"]]
 
       subject.process user
 
@@ -114,42 +114,42 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
   describe "can_view?" do
     it "allows user" do
       ms = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return ms
-      ms.stub(:custom_feature?).with("alliance").and_return true
+      expect(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:custom_feature?).with("alliance").and_return true
 
       user = Factory(:master_user)
-      user.should_receive(:edit_products?).and_return true
+      expect(user).to receive(:edit_products?).and_return true
 
-      expect(described_class.can_view? user).to be_true
+      expect(described_class.can_view? user).to be_truthy
     end
 
     it "disallows users that can't edit products" do
       ms = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return ms
-      ms.stub(:custom_feature?).with("alliance").and_return true
+      expect(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:custom_feature?).with("alliance").and_return true
 
       user = Factory(:master_user)
-      user.should_receive(:edit_products?).and_return false
+      expect(user).to receive(:edit_products?).and_return false
 
-      expect(described_class.can_view? user).to be_false
+      expect(described_class.can_view? user).to be_falsey
     end
 
     it "disallows users that aren't master users" do
       ms = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return ms
-      ms.stub(:custom_feature?).with("alliance").and_return true
+      expect(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:custom_feature?).with("alliance").and_return true
 
-      expect(described_class.can_view? user).to be_false
+      expect(described_class.can_view? user).to be_falsey
     end
 
     it "disallows when alliance is not enabled" do
       ms = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return ms
-      ms.stub(:custom_feature?).with("alliance").and_return false
+      expect(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:custom_feature?).with("alliance").and_return false
 
       user = Factory(:master_user)
-      user.stub(:edit_products?).and_return true
-      expect(described_class.can_view? user).to be_false
+      allow(user).to receive(:edit_products?).and_return true
+      expect(described_class.can_view? user).to be_falsey
     end
   end
 

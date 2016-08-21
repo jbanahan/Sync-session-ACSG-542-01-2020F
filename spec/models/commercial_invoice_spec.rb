@@ -41,42 +41,42 @@ describe CommercialInvoice do
     end
     it "should allow edit if user from master company and can edit invoices" do
       u = Factory(:master_user,commercial_invoice_edit:true)
-      expect(@ci.can_edit?(u)).to be_true
+      expect(@ci.can_edit?(u)).to be_truthy
     end
     it "should allow edit if user from same company as importer and can edit invoices" do
       u = Factory(:user,commercial_invoice_edit:true)
       @ci.importer = u.company
-      expect(@ci.can_edit?(u)).to be_true
+      expect(@ci.can_edit?(u)).to be_truthy
     end
     it "should allow edit if importer linked to user's company and can edit" do
       c = Factory(:company)
       u = Factory(:user,commercial_invoice_edit:true)
       u.company.linked_companies << c
       @ci.importer = c
-      expect(@ci.can_edit?(u)).to be_true
+      expect(@ci.can_edit?(u)).to be_truthy
     end
     it "should allow edit if user from vendor company and can edit" do
       u = Factory(:user,commercial_invoice_edit:true)
       @ci.vendor = u.company
-      expect(@ci.can_edit?(u)).to be_true
+      expect(@ci.can_edit?(u)).to be_truthy
     end
     it "should allow edit if user linked to vendor company and can edit" do
       c = Factory(:company)
       u = Factory(:user,commercial_invoice_edit:true)
       u.company.linked_companies << c
       @ci.vendor = c
-      expect(@ci.can_edit?(u)).to be_true
+      expect(@ci.can_edit?(u)).to be_truthy
     end
     it "should not allow random user to edit" do
       imp = Factory(:company)
       vend = Factory(:company)
       @ci.vendor = vend
       @ci.importer = imp
-      expect(@ci.can_edit?(Factory(:user,commercial_invoice_edit:true))).to be_false
+      expect(@ci.can_edit?(Factory(:user,commercial_invoice_edit:true))).to be_falsey
     end
     it "should not allow user who can't edit to edit" do
       u = Factory(:master_user,commercial_invoice_edit:false)
-      expect(@ci.can_edit?(u)).to be_false
+      expect(@ci.can_edit?(u)).to be_falsey
     end
   end
   describe "can_view?" do
@@ -85,17 +85,17 @@ describe CommercialInvoice do
     end
     it "should allow view if user is from master and can view invoices" do
       u = Factory(:user,:company=>Factory(:company,:master=>true),:commercial_invoice_view=>true)
-      CommercialInvoice.new.can_view?(u).should be_true
+      expect(CommercialInvoice.new.can_view?(u)).to be_truthy
     end
     it "should allow view if user is from importer and can view invoices" do
       c = Factory(:company,:importer=>true)
       u = Factory(:user,:commercial_invoice_view=>true,:company=>c)
-      CommercialInvoice.new(:importer=>c).can_view?(u).should be_true
+      expect(CommercialInvoice.new(:importer=>c).can_view?(u)).to be_truthy
     end
     it "should allow view if user is from vendor and can view invoices" do
       c = Factory(:company,:vendor=>true)
       u = Factory(:user,:commercial_invoice_view=>true,:company=>c)
-      CommercialInvoice.new(:vendor=>c).can_view?(u).should be_true
+      expect(CommercialInvoice.new(:vendor=>c).can_view?(u)).to be_truthy
     end
   end
 end

@@ -16,8 +16,8 @@ describe BusinessValidationRule do
       fail_ent = Entry.new(entry_number:'7')
       bvr = BusinessValidationRule.new
       bvr.search_criterions.build(model_field_uid:'ent_entry_num',operator:'eq',value:'9')
-      expect(bvr.should_skip?(pass_ent)).to be_false
-      expect(bvr.should_skip?(fail_ent)).to be_true
+      expect(bvr.should_skip?(pass_ent)).to be_falsey
+      expect(bvr.should_skip?(fail_ent)).to be_truthy
     end
     it "should raise exception if search_criterion's model field CoreModule doesn't equal object's CoreModule" do
       bvr = BusinessValidationRule.new

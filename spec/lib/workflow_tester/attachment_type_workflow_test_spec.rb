@@ -13,10 +13,10 @@ describe OpenChain::WorkflowTester::AttachmentTypeWorkflowTest do
     it "should pass if attachment exists" do
       Factory(:attachment,attachable:@t.workflow_instance.base_object,attachment_type:'Sample')
       @t.reload
-      expect(described_class.pass?(@t)).to be_true
+      expect(described_class.pass?(@t)).to be_truthy
     end
     it "should fail if attachment doesn't exist" do
-      expect(described_class.pass?(@t)).to be_false
+      expect(described_class.pass?(@t)).to be_falsey
     end
   end
 end

@@ -98,9 +98,9 @@ describe EntitySnapshot do
     before :each do 
       ModelField.reload
       #not worrying about permissions
-      Product.any_instance.stub(:can_edit?).and_return(true)
-      Classification.any_instance.stub(:can_edit?).and_return(true)
-      TariffRecord.any_instance.stub(:can_edit?).and_return(true)
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return(true)
+      allow_any_instance_of(Classification).to receive(:can_edit?).and_return(true)
+      allow_any_instance_of(TariffRecord).to receive(:can_edit?).and_return(true)
 
       @u = Factory(:user)
       @p = Factory(:product,:name=>'nm',:unique_identifier=>'uid')
@@ -110,40 +110,40 @@ describe EntitySnapshot do
     it "should replace base object properties" do
       @p.update_attributes(:name=>'n2')
       restored = @first_snapshot.restore(@u)
-      restored.id.should == @p.id
-      restored.name.should == 'nm'
+      expect(restored.id).to eq(@p.id)
+      expect(restored.name).to eq('nm')
     end
     it "should erase base object properties that have been added" do
       @p.update_attributes(:unit_of_measure=>'EA')
       restored = @first_snapshot.restore(@u)
-      restored.id.should == @p.id
-      restored.unit_of_measure.should be_blank
+      expect(restored.id).to eq(@p.id)
+      expect(restored.unit_of_measure).to be_blank
     end
     it "should insert base object properties that have been removed" do
       @p.update_attributes(:name=>nil)
       restored = @first_snapshot.restore(@u)
-      restored.id.should == @p.id
-      restored.name.should == 'nm'
+      expect(restored.id).to eq(@p.id)
+      expect(restored.name).to eq('nm')
     end
     it "should leave base object properties that haven't changed alone" do
       @p.update_attributes(:unit_of_measure=>'EA')
       restored = @first_snapshot.restore(@u)
-      restored.id.should == @p.id
-      restored.name.should == 'nm'
+      expect(restored.id).to eq(@p.id)
+      expect(restored.name).to eq('nm')
     end
     it "should update last_updated_by_id" do
       other_user = Factory(:user)
       restored = @first_snapshot.restore(other_user)
-      restored.last_updated_by_id.should == other_user.id
+      expect(restored.last_updated_by_id).to eq(other_user.id)
     end
     it "should not restore if user does not have permission" do
       @p.update_attributes! last_updated_by: @u
-      Product.any_instance.stub(:can_edit?).and_return(false)
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return(false)
       @p.update_attributes(:name=>'n2')
       other_user = Factory(:user)
       restored = @first_snapshot.restore(@u)
-      restored.last_updated_by_id.should == @u.id
-      restored.name.should == 'n2'
+      expect(restored.last_updated_by_id).to eq(@u.id)
+      expect(restored.name).to eq('n2')
     end
 
     context :custom_values do
@@ -159,22 +159,22 @@ describe EntitySnapshot do
         it "should replace custom fields" do
           @p.update_custom_value! @cd, 'y'
           restored = @first_snapshot.restore(@u)
-          restored.get_custom_value(@cd).value.should == 'x'
+          expect(restored.get_custom_value(@cd).value).to eq('x')
         end
         it "should erase custom fields that have been added" do
           cd2 = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
           @p.update_custom_value! cd2, 'y'
           restored = @first_snapshot.restore(@u)
-          restored.get_custom_value(cd2).value.should be_blank
+          expect(restored.get_custom_value(cd2).value).to be_blank
         end
         it "should insert custom fields that have been removed" do
            @p.get_custom_value(@cd).destroy 
           restored = @first_snapshot.restore(@u)
-          restored.get_custom_value(@cd).value.should == 'x'
+          expect(restored.get_custom_value(@cd).value).to eq('x')
         end
         it "should leave custom fields that haven't changed alone" do
           restored = @first_snapshot.restore(@u)
-          restored.get_custom_value(@cd).value.should == 'x'
+          expect(restored.get_custom_value(@cd).value).to eq('x')
         end
       end
       
@@ -214,22 +214,22 @@ describe EntitySnapshot do
       it "should add children that were removed" do
         @p.classifications.first.destroy
         restored = @first_snapshot.restore @u
-        restored.classifications.first.tariff_records.first.hts_1.should == '1234567890'
+        expect(restored.classifications.first.tariff_records.first.hts_1).to eq('1234567890')
       end
       it "should remove children that didn't exist" do
         p = Factory(:product)
         es = p.create_snapshot @u
         Factory(:tariff_record,:classification=>(Factory(:classification,:product=>p)))
         p.reload
-        p.classifications.first.tariff_records.first.should_not be_nil
+        expect(p.classifications.first.tariff_records.first).not_to be_nil
         es.restore @u
         p.reload
-        p.classifications.first.should be_nil
+        expect(p.classifications.first).to be_nil
       end
       it "should replace values in children that changed" do
         @tr.update_attributes(:hts_1=>'1234')
         @first_snapshot.restore @u
-        TariffRecord.find(@tr.id).hts_1.should == '1234567890'
+        expect(TariffRecord.find(@tr.id).hts_1).to eq('1234567890')
       end
       it "should replace custom values for children that changed" do
         cd = Factory(:custom_definition,:module_type=>"Classification",:data_type=>"string")
@@ -237,7 +237,7 @@ describe EntitySnapshot do
         @first_snapshot = @p.create_snapshot @u
         @tr.classification.update_custom_value! cd, 'y'
         restored = @first_snapshot.restore @u
-        restored.classifications.first.get_custom_value(cd).value.should == 'x'
+        expect(restored.classifications.first.get_custom_value(cd).value).to eq('x')
       end
 
       it "should skip child records with blank record ids" do
@@ -252,7 +252,7 @@ describe EntitySnapshot do
     it "retrieves snapshot data from snapshot field if it is not null" do
       first_snapshot = @first_snapshot.snapshot_json
       @first_snapshot.update_attributes! snapshot: ActiveSupport::JSON.encode(first_snapshot)
-      EntitySnapshot.should_not_receive(:retrieve_snapshot_data_from_s3)
+      expect(EntitySnapshot).not_to receive(:retrieve_snapshot_data_from_s3)
 
       restored = @first_snapshot.restore (@u)
       expect(restored).to eq @p
@@ -274,16 +274,16 @@ describe EntitySnapshot do
   describe :create_bucket_if_needed do
     before :each do
       @bn = 'bucketname'
-      EntitySnapshot.stub(:bucket_name).and_return(@bn)
+      allow(EntitySnapshot).to receive(:bucket_name).and_return(@bn)
     end
     it "should find existing bucket" do
-      OpenChain::S3.should_receive(:bucket_exists?).with(@bn).and_return true
-      OpenChain::S3.should_not_receive(:create_bucket!)
+      expect(OpenChain::S3).to receive(:bucket_exists?).with(@bn).and_return true
+      expect(OpenChain::S3).not_to receive(:create_bucket!)
       described_class.create_bucket_if_needed!
     end
     it "should create bucket with versioning turned on" do
-      OpenChain::S3.should_receive(:bucket_exists?).with(@bn).and_return false
-      OpenChain::S3.should_receive(:create_bucket!).with(@bn,versioning: true)
+      expect(OpenChain::S3).to receive(:bucket_exists?).with(@bn).and_return false
+      expect(OpenChain::S3).to receive(:create_bucket!).with(@bn,versioning: true)
       described_class.create_bucket_if_needed!
     end
   end
@@ -296,21 +296,21 @@ describe EntitySnapshot do
       expected_json = '{"a":"b"}'
       ent = Factory(:entry)
       u = Factory(:user)
-      CoreModule::ENTRY.stub(:entity_json).and_return(expected_json)
+      allow(CoreModule::ENTRY).to receive(:entity_json).and_return(expected_json)
 
-      described_class.should_receive(:s3_path).and_return(expected_path)
-      described_class.should_receive(:bucket_name).and_return(expected_bucket)
+      expect(described_class).to receive(:s3_path).and_return(expected_path)
+      expect(described_class).to receive(:bucket_name).and_return(expected_bucket)
 
       s3_obj = double('S3Obj')
       s3_bucket = double("S3Bucket")
-      s3_obj.stub(:bucket).and_return s3_bucket
-      s3_bucket.stub(:name).and_return expected_bucket
-      s3_obj.stub(:key).and_return expected_path
+      allow(s3_obj).to receive(:bucket).and_return s3_bucket
+      allow(s3_bucket).to receive(:name).and_return expected_bucket
+      allow(s3_obj).to receive(:key).and_return expected_path
 
       version_obj = double('ObjectVersion')
-      version_obj.stub(:version_id).and_return(expected_version)
+      allow(version_obj).to receive(:version_id).and_return(expected_version)
       
-      OpenChain::S3.should_receive(:upload_data).
+      expect(OpenChain::S3).to receive(:upload_data).
         with(expected_bucket,expected_path,expected_json).
         and_return([s3_obj,version_obj])
 
@@ -322,8 +322,8 @@ describe EntitySnapshot do
     end
 
     it "should call EntityCompare.handle_snapshot with snapshot" do
-      described_class.any_instance.stub(:write_s3)
-      OpenChain::EntityCompare::EntityComparator.should_receive(:handle_snapshot)
+      allow_any_instance_of(described_class).to receive(:write_s3)
+      expect(OpenChain::EntityCompare::EntityComparator).to receive(:handle_snapshot)
 
       ent = Factory(:entry)
       u = Factory(:user)
@@ -346,7 +346,7 @@ describe EntitySnapshot do
     }
 
     it "retrieves versioned data for snapshot" do
-      OpenChain::S3.should_receive(:get_versioned_data) do |bucket, path, version, io|
+      expect(OpenChain::S3).to receive(:get_versioned_data) do |bucket, path, version, io|
         expect(bucket).to eq "bucket"
         expect(path).to eq "test/doc-1.json"
         expect(version).to eq "1"
@@ -362,30 +362,30 @@ describe EntitySnapshot do
     let (:json) {  }
 
     before :each do
-      EntitySnapshot.stub(:retrieve_snapshot_data_from_s3).and_return json
+      allow(EntitySnapshot).to receive(:retrieve_snapshot_data_from_s3).and_return json
     end
 
     it "retrieves snapshot from s3" do
       s = EntitySnapshot.new doc_path: "path/to/file.txt"
-      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '{"OK": "OK"}'
+      expect(EntitySnapshot).to receive(:retrieve_snapshot_data_from_s3).with(s).and_return '{"OK": "OK"}'
       expect(s.snapshot_json).to eq({"OK" => "OK"})
     end
 
     it "retrieves snapshot from snapshot attribute" do
       s = EntitySnapshot.new snapshot: '{"OK": ""}'
-      EntitySnapshot.should_not_receive(:retrieve_snapshot_data_from_s3)
+      expect(EntitySnapshot).not_to receive(:retrieve_snapshot_data_from_s3)
       expect(s.snapshot_json).to eq({"OK"=> ""})
     end
 
     it "returns raw json" do
       s = EntitySnapshot.new doc_path: "path/to/file.txt"
-      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '{"OK": "OK"}'
+      expect(EntitySnapshot).to receive(:retrieve_snapshot_data_from_s3).with(s).and_return '{"OK": "OK"}'
       expect(s.snapshot_json(true)).to eq '{"OK": "OK"}'
     end
 
     it "returns nil if json is blank" do
       s = EntitySnapshot.new doc_path: "path/to/file.txt"
-      EntitySnapshot.should_receive(:retrieve_snapshot_data_from_s3).with(s).and_return '     '
+      expect(EntitySnapshot).to receive(:retrieve_snapshot_data_from_s3).with(s).and_return '     '
       expect(s.snapshot_json(true)).to be_nil
     end
   end

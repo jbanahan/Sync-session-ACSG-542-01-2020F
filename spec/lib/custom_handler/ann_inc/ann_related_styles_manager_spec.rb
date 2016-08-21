@@ -17,33 +17,33 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
     it "should not return read only style" do
       p = Factory(:product,unique_identifier:'base-u')
       found = described_class.get_style('base-u',nil,nil,nil)
-      lambda {found.update_attributes(name:'x')}.should_not raise_error ActiveRecord::ReadOnlyRecord
+      expect {found.update_attributes(name:'x')}.not_to raise_error
     end
   end
   describe :find_all_styles do
     it "should find the base style" do
       p = Factory(:product,unique_identifier:'base-u')
       found = described_class.new('base-u',nil,nil,nil).find_all_styles
-      found.should == [p]
+      expect(found).to eq([p])
     end
     it "should find the base style in the related styles field" do
       p = Factory(:product)
       c = described_class.new('base-u',nil,nil,nil)
       p.update_custom_value! c.related_cd, "x\nbase-u\ny"
       found = c.find_all_styles
-      found.should == [p]
+      expect(found).to eq([p])
     end
     it "should find a related style in the unique_identifier field" do
       p = Factory(:product,unique_identifier:'other-u')
       found = described_class.new('base-u','other-u',nil,nil).find_all_styles
-      found.should == [p]
+      expect(found).to eq([p])
     end
     it "should find a related style in the related styles field" do
       p = Factory(:product)
       c = described_class.new('base-u',nil,'other-u',nil)
       p.update_custom_value! c.related_cd, "x\nother-u\ny"
       found = c.find_all_styles
-      found.should == [p]
+      expect(found).to eq([p])
     end
     it "should find multipe related style and base style" do
       p = Factory(:product)
@@ -54,19 +54,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       p3.update_custom_value! c.related_cd, "x\nbase-u\ny"
       dont_find = Factory(:product)
       found = c.find_all_styles
-      found.should =~ [p,p2,p3]
+      expect(found).to match_array([p,p2,p3])
     end
   end
 
   describe :missy_style do
     it "should return nil if it doesn't know" do
-      described_class.new('base',nil,'pet',nil).missy_style.should be_nil
+      expect(described_class.new('base',nil,'pet',nil).missy_style).to be_nil
     end
     it "should return missy style if passed in" do
-      described_class.new('base','mss',nil,nil).missy_style.should == 'mss'
+      expect(described_class.new('base','mss',nil,nil).missy_style).to eq('mss')
     end
     it "should return base style if tall & petite are set" do
-      described_class.new('base',nil,'p','t').missy_style.should == 'base'
+      expect(described_class.new('base',nil,'p','t').missy_style).to eq('base')
     end
   end
 
@@ -75,28 +75,28 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       it "should return matched product" do
         p = Factory(:product)
         c = described_class.new('base',nil,nil,nil)
-        c.product_to_use([p]).should == p
+        expect(c.product_to_use([p])).to eq(p)
       end
       it "should set missy style if it exists in record" do
         p = Factory(:product)
         c = described_class.new('base','m-uid',nil,nil)
-        c.product_to_use([p]).should == p
+        expect(c.product_to_use([p])).to eq(p)
       end
     end
     context "no database matches" do
       it "should return new product with missy uid if missy exists in record" do
         c = described_class.new('base','m-uid',nil,nil)
         p = c.product_to_use []
-        p.id.should > 0 #should be saved in database
-        p.unique_identifier.should == 'm-uid'
-        p.get_custom_value(c.related_cd).value.should == 'base'
+        expect(p.id).to be > 0 #should be saved in database
+        expect(p.unique_identifier).to eq('m-uid')
+        expect(p.get_custom_value(c.related_cd).value).to eq('base')
       end
       it "should return new product with base set if no missy in record" do
         c = described_class.new('base',nil,'p-uid',nil)
         p = c.product_to_use []
-        p.id.should > 0 #should be saved in database
-        p.unique_identifier.should == 'base'
-        p.get_custom_value(c.related_cd).value.should == 'p-uid'
+        expect(p.id).to be > 0 #should be saved in database
+        expect(p.unique_identifier).to eq('base')
+        expect(p.get_custom_value(c.related_cd).value).to eq('p-uid')
       end
     end
     context "multiple database matches" do
@@ -104,36 +104,36 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
         p = Factory(:product,unique_identifier:'m-uid')
         p2 = Factory(:product)
         c = described_class.new('base','m-uid',nil,nil)
-        c.product_to_use([p,p2]).should == p
+        expect(c.product_to_use([p,p2])).to eq(p)
       end
       it "should use first style if no uid==missy" do
         p = Factory(:product)
         p2 = Factory(:product)
         c = described_class.new('base','m-uid',nil,nil)
-        c.product_to_use([p,p2]).should == p
+        expect(c.product_to_use([p,p2])).to eq(p)
       end
       it "should use first style if no missy" do
         p = Factory(:product)
         p2 = Factory(:product,unique_identifier:'base')
         c = described_class.new('base',nil,nil,nil)
-        c.product_to_use([p,p2]).should == p
+        expect(c.product_to_use([p,p2])).to eq(p)
       end
       it "should destroy other products" do
         p = Factory(:product,unique_identifier:'m-uid')
         p2 = Factory(:product)
         c = described_class.new('base','m-uid',nil,nil)
-        c.product_to_use([p,p2]).should == p
-        Product.find_by_id(p2.id).should be_nil
+        expect(c.product_to_use([p,p2])).to eq(p)
+        expect(Product.find_by_id(p2.id)).to be_nil
       end
       it "should merge_aggregate_values, set ac date, set classifications" do
         p = Factory(:product)
         p2 = Factory(:product,unique_identifier:'base')
         c = described_class.new('base',nil,nil,nil)
         a = [p,p2]
-        c.should_receive(:merge_aggregate_values).with(p,a)
-        c.should_receive(:set_earliest_ac_date).with(p,a)
-        c.should_receive(:set_best_classifications)
-        c.product_to_use(a).should == p
+        expect(c).to receive(:merge_aggregate_values).with(p,a)
+        expect(c).to receive(:set_earliest_ac_date).with(p,a)
+        expect(c).to receive(:set_best_classifications)
+        expect(c.product_to_use(a)).to eq(p)
       end
     end
   end
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       tr1.classification.update_custom_value! @appr, 1.day.ago
       tr2 = Factory(:tariff_record,hts_1:'1234567891',classification:Factory(:classification,country:@country))
       tr2.classification.update_custom_value! @appr, 1.day.ago
-      lambda {@c.set_best_classifications tr1.product, [tr1.product,tr2.product]}.should raise_error /Cannot merge classifications with different tariffs/
+      expect {@c.set_best_classifications tr1.product, [tr1.product,tr2.product]}.to raise_error /Cannot merge classifications with different tariffs/
     end
     it "should not raise exception for different tariff if not approved" do
       tr1 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
@@ -157,7 +157,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       tr2 = Factory(:tariff_record,hts_1:'1234567891',classification:Factory(:classification,country:@country))
       tr3 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
       tr3.classification.update_custom_value! @appr, 1.day.ago
-      lambda {@c.set_best_classifications tr1.product, [tr1.product,tr2.product,tr3.product]}.should_not raise_error /Cannot merge classifications with different tariffs/
+      expect {@c.set_best_classifications tr1.product, [tr1.product,tr2.product,tr3.product]}.not_to raise_error
     end
     it "should use the most recent approval date" do
       tr1 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
@@ -166,8 +166,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       tr2.classification.update_custom_value! @appr, 1.day.ago
       @c.set_best_classifications tr1.product, [tr1.product,tr2.product]
       p = Product.find tr1.product.id
-      p.should have(1).classifications
-      p.classifications.first.get_custom_value(@appr).value.strftime("%Y%m%d").should == 1.day.ago.strftime("%Y%m%d")
+      expect(p.classifications.size).to eq(1)
+      expect(p.classifications.first.get_custom_value(@appr).value.strftime("%Y%m%d")).to eq(1.day.ago.strftime("%Y%m%d"))
     end
     it "should give preference to existing linked product" do
       tr1 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
@@ -176,8 +176,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       tr2.classification.update_custom_value! @appr, 1.day.ago
       @c.set_best_classifications tr1.product, [tr1.product,tr2.product]
       p = Product.find tr1.product.id
-      p.should have(1).classifications
-      p.classifications.first.id.should == tr1.classification.id
+      expect(p.classifications.size).to eq(1)
+      expect(p.classifications.first.id).to eq(tr1.classification.id)
     end
     it "should use most recently updated" do
       tr1 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
@@ -189,9 +189,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       tr3.classification.update_attributes(updated_at:2.days.ago)
       @c.set_best_classifications tr1.product, [tr1.product,tr2.product,tr3.product]
       p = Product.find tr1.product.id
-      p.should have(1).classifications
-      p.classifications.first.get_custom_value(@appr).value.strftime("%Y%m%d").should == 1.day.ago.strftime("%Y%m%d")
-      p.classifications.first.id.should == tr2.classification.id
+      expect(p.classifications.size).to eq(1)
+      expect(p.classifications.first.get_custom_value(@appr).value.strftime("%Y%m%d")).to eq(1.day.ago.strftime("%Y%m%d"))
+      expect(p.classifications.first.id).to eq(tr2.classification.id)
     end
   end
 
@@ -205,7 +205,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       p2.update_custom_value! po_cd, "p2\np4"
       c.merge_aggregate_values p, [p,p2]
       found = Product.find p.id
-      found.get_custom_value(po_cd).value.should == "p1\np2\np3\np4"
+      expect(found.get_custom_value(po_cd).value).to eq("p1\np2\np3\np4")
     end
   end
 
@@ -220,18 +220,18 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       p3.update_custom_value! cd, 1.year.ago
 
       c.set_earliest_ac_date p, [p,p3,p2]
-      Product.find(p.id).get_custom_value(cd).value.strftime("%Y%m%d").should == p3.get_custom_value(cd).value.strftime("%Y%m%d")
+      expect(Product.find(p.id).get_custom_value(cd).value.strftime("%Y%m%d")).to eq(p3.get_custom_value(cd).value.strftime("%Y%m%d"))
     end
   end
 
   describe :related_styles_value do
     it "should return all related styles except missy when missy can be determined" do
-      described_class.new('b','m','p',nil).related_styles_value.should == "b\np"
-      described_class.new('b',nil,'p','t').related_styles_value.should == "p\nt"
+      expect(described_class.new('b','m','p',nil).related_styles_value).to eq("b\np")
+      expect(described_class.new('b',nil,'p','t').related_styles_value).to eq("p\nt")
     end
     it "should return all related styles except base when missy cannot be determined" do
-      described_class.new('b',nil,'p',nil).related_styles_value.should == 'p'
-      described_class.new('b',nil,nil,'t').related_styles_value.should == 't'
+      expect(described_class.new('b',nil,'p',nil).related_styles_value).to eq('p')
+      expect(described_class.new('b',nil,nil,'t').related_styles_value).to eq('t')
     end
   end
 

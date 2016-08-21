@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe IntacctErrorsController do
   before :each do
-    MasterSetup.any_instance.stub(:system_code).and_return "www-vfitrack-net"
+    allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
     g = Factory(:group, system_code: 'intacct-accounting')
     @user = Factory(:user, username: "jhulford")
     @user.groups << g
@@ -128,8 +128,8 @@ describe IntacctErrorsController do
 
   describe "push_to_intacct" do
     it "calls intacct data pusher in delayed manner" do
-      OpenChain::CustomHandler::Intacct::IntacctDataPusher.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctDataPusher
-      OpenChain::CustomHandler::Intacct::IntacctDataPusher.should_receive(:run_schedulable).with(companies: ['vfc', 'lmd', 'vcu', 'als'])
+      expect(OpenChain::CustomHandler::Intacct::IntacctDataPusher).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctDataPusher
+      expect(OpenChain::CustomHandler::Intacct::IntacctDataPusher).to receive(:run_schedulable).with(companies: ['vfc', 'lmd', 'vcu', 'als'])
 
       post :push_to_intacct
       expect(response).to redirect_to action: :index

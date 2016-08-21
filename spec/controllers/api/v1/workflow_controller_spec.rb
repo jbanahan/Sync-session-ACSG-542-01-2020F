@@ -10,7 +10,7 @@ describe Api::V1::WorkflowController do
       @group = Factory(:group)
       @group.users << @u
       @wt = Factory(:workflow_task,group:@group)
-      WorkflowTask.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(WorkflowTask).to receive(:can_edit?).and_return true
     end
     it "should assign" do
       put :assign, user_id: @u.id.to_s, id: @wt.id
@@ -19,7 +19,7 @@ describe Api::V1::WorkflowController do
       expect(@wt.assigned_to).to eq @u
     end
     it "should not allow assignment if current_user cannot edit" do
-      WorkflowTask.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(WorkflowTask).to receive(:can_edit?).and_return false
       put :assign, user_id: @u.id.to_s, id: @wt.id
       expect(response.status).to eq 401
       expect(JSON.parse(response.body)['errors']).to_not be_empty
@@ -28,7 +28,7 @@ describe Api::V1::WorkflowController do
     end
     it "should not allow assignment if assignment user cannot edit" do
       u2 = Factory(:user)
-      WorkflowTask.any_instance.should_receive(:can_edit?).twice.and_return(true,false)
+      expect_any_instance_of(WorkflowTask).to receive(:can_edit?).twice.and_return(true,false)
       put :assign, user_id: u2.id.to_s, id: @wt.id
       expect(JSON.parse(response.body)['errors']).to_not be_empty
       @wt.reload
@@ -46,12 +46,12 @@ describe Api::V1::WorkflowController do
     before :each do
       @wt = Factory(:workflow_task,test_class_name:'OpenChain::WorkflowTester::MultiStateWorkflowTest',payload_json:'{"state_options":["yes","no"]}')
       @mp = double(:mock_processor)
-      @mp.stub(:process!)
-      OpenChain::WorkflowProcessor.stub(:new).and_return(@mp)
+      allow(@mp).to receive(:process!)
+      allow(OpenChain::WorkflowProcessor).to receive(:new).and_return(@mp)
     end
     it "should update state" do
-      WorkflowTask.any_instance.stub(:can_edit?).and_return true
-      @mp.should_receive(:process!).with(@wt.workflow_instance.base_object,@u)
+      allow_any_instance_of(WorkflowTask).to receive(:can_edit?).and_return true
+      expect(@mp).to receive(:process!).with(@wt.workflow_instance.base_object,@u)
       put :set_multi_state, id: @wt.id, state: 'yes'
       @wt.reload
       expect(@wt.multi_state_workflow_task.state).to eq 'yes'
@@ -60,14 +60,14 @@ describe Api::V1::WorkflowController do
       expect(JSON.parse(response.body)).to eq expected_resp
     end
     it "should reject if user cannot edit workflow task" do
-      WorkflowTask.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(WorkflowTask).to receive(:can_edit?).and_return false
       put :set_multi_state, id: @wt.id, state: 'yes'
       @wt.reload
       expect(@wt.multi_state_workflow_task).to be_nil
       expect(JSON.parse(response.body)['errors']).to_not be_empty
     end
     it "should reject if state is not in options list" do
-      WorkflowTask.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(WorkflowTask).to receive(:can_edit?).and_return true
       put :set_multi_state, id: @wt.id, state: 'other'
       @wt.reload
       expect(@wt.multi_state_workflow_task).to be_nil
@@ -76,7 +76,7 @@ describe Api::V1::WorkflowController do
   end
   describe :my_instance_open_task_count do
     it "should get the number of incomplete tasks for the current user for the base object in question" do
-      Order.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(Order).to receive(:can_view?).and_return true
       g = Factory(:group)
       g.users << @u
       o = Factory(:order)

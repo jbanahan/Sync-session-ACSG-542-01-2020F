@@ -27,20 +27,20 @@ describe OfficialTariff do
     it "should return false if the country's ISO code is not US" do
       c = Factory(:country, iso_code: "VN")
       t = Factory(:official_tariff, country: c)
-      t.lacey_act?.should == false
+      expect(t.lacey_act?).to eq(false)
     end
     it "should return true if the tariff's HTS code starts with any of the Lacey Act codes" do
       sample_lacey_codes = ["4401","4402","4403","4404","940169", "950420", "9703"]
       c = Factory(:country, iso_code: "US")
       sample_lacey_codes.each do |sample|
         t = Factory(:official_tariff, hts_code: sample + "55555", country: c)
-        t.lacey_act?.should == true
+        expect(t.lacey_act?).to eq(true)
       end
     end
     it "should return false if the country's ISO is US but the HTS code doesn't match any Lacey Act Codes" do
       c = Factory(:country, iso_code: "US")
       t = Factory(:official_tariff, hts_code: "4405155555", country: c)
-      t.lacey_act?.should == false
+      expect(t.lacey_act?).to eq(false)
     end
   end
   describe :taric_url do
@@ -53,7 +53,7 @@ describe OfficialTariff do
     it "should return nil if country is not in the EU" do
       c = Factory(:country)
       t = Factory(:official_tariff, country: c, hts_code: "ABCD")
-      c.stub(:european_union?).and_return false
+      allow(c).to receive(:european_union?).and_return false
 
       expect(t.taric_url).to be nil
     end
@@ -61,7 +61,7 @@ describe OfficialTariff do
     it "should return a url if country is in the EU" do
       c = Factory(:country)
       t = Factory(:official_tariff, country: c, hts_code: "ABCD")
-      c.stub(:european_union?).and_return true
+      allow(c).to receive(:european_union?).and_return true
 
       expect(t.taric_url).to eq "http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Taric=ABCD&LangDescr=en"
     end
@@ -69,7 +69,7 @@ describe OfficialTariff do
 
   describe :update_use_count do
     before :each do
-      OpenChain::StatClient.stub(:wall_time).and_yield
+      allow(OpenChain::StatClient).to receive(:wall_time).and_yield
     end
     it "should update with counts from all 3 hts code locations for the right country" do
       c = Factory(:country)
@@ -87,9 +87,9 @@ describe OfficialTariff do
       ot3 = Factory(:official_tariff,:hts_code=>'1111117',:country=>c)
       OfficialTariff.update_use_count
       [ot1,ot2,ot3].each {|o| o.reload}
-      ot1.use_count.should == 5
-      ot2.use_count.should == 1
-      ot3.use_count.should == 0
+      expect(ot1.use_count).to eq(5)
+      expect(ot2.use_count).to eq(1)
+      expect(ot3.use_count).to eq(0)
     end
     it "should clear use count for unused tariff" do
       ot = Factory(:official_tariff,hts_code:'21345',use_count:10,updated_at:1.day.ago)
@@ -99,38 +99,38 @@ describe OfficialTariff do
         )
       OfficialTariff.update_use_count
       ot.reload
-      ot.use_count.should == 0
+      expect(ot.use_count).to eq(0)
     end
   end
   describe :can_view? do
     it "should allow if user can view official tariffs" do
       u = User.new
-      u.should_receive(:view_official_tariffs?).and_return(true)
-      OfficialTariff.new.can_view?(u).should be_true
+      expect(u).to receive(:view_official_tariffs?).and_return(true)
+      expect(OfficialTariff.new.can_view?(u)).to be_truthy
     end
     it "should not allow if user cannot view offical tariffs" do
       u = User.new
-      u.should_receive(:view_official_tariffs?).and_return(false)
-      OfficialTariff.new.can_view?(u).should be_false
+      expect(u).to receive(:view_official_tariffs?).and_return(false)
+      expect(OfficialTariff.new.can_view?(u)).to be_falsey
     end
   end
   describe :search_where do
     it "should return '1=0' if user cannot view official tariffs" do
       u = User.new
-      u.should_receive(:view_official_tariffs?).and_return(false)
-      OfficialTariff.search_where(u).should == '1=0'
+      expect(u).to receive(:view_official_tariffs?).and_return(false)
+      expect(OfficialTariff.search_where(u)).to eq('1=0')
     end
     it "should return '1=1' if user can view official tariffs" do
       u = User.new
-      u.should_receive(:view_official_tariffs?).and_return(true)
-      OfficialTariff.search_where(u).should == '1=1'
+      expect(u).to receive(:view_official_tariffs?).and_return(true)
+      expect(OfficialTariff.search_where(u)).to eq('1=1')
     end
   end
   describe :search_secure do
     it "should inject search where" do
       u = User.new
-      OfficialTariff.should_receive(:search_where).with(u).and_return('XX')
-      OfficialTariff.search_secure(u,OfficialTariff).to_sql.should include 'XX'
+      expect(OfficialTariff).to receive(:search_where).with(u).and_return('XX')
+      expect(OfficialTariff.search_secure(u,OfficialTariff).to_sql).to include 'XX'
     end
   end
   describe :auto_classify do
@@ -149,16 +149,16 @@ describe OfficialTariff do
     end
     it "should match by 6 digit for active import locations" do
       r = OfficialTariff.auto_classify "5555556666"
-      r.should have(3).elements
-      r[@us].collect{|h| h.hts_code}.should == ['5555550001','5555550000']
-      r[@ca].collect{|h| h.hts_code}.should == ['5555559998','5555559999']
-      r[@de].collect{|h| h.hts_code}.should == ['5555554444']
+      expect(r.size).to eq(3)
+      expect(r[@us].collect{|h| h.hts_code}).to eq(['5555550001','5555550000'])
+      expect(r[@ca].collect{|h| h.hts_code}).to eq(['5555559998','5555559999'])
+      expect(r[@de].collect{|h| h.hts_code}).to eq(['5555554444'])
     end
   end
 
   describe "run_schedulable" do
     it "implements SchedulableJob interface" do
-      OfficialTariff.should_receive(:update_use_count)
+      expect(OfficialTariff).to receive(:update_use_count)
       OfficialTariff.run_schedulable
     end
   end
@@ -170,17 +170,17 @@ describe OfficialTariff do
     it "returns true if given country + hts is valid" do
       official_tariff
 
-      expect(OfficialTariff.valid_hts? country, "1234567890").to be_true
+      expect(OfficialTariff.valid_hts? country, "1234567890").to be_truthy
     end
 
     it "returns false if hts is not present" do
-      expect(OfficialTariff.valid_hts? country, "1234567890").to be_false
+      expect(OfficialTariff.valid_hts? country, "1234567890").to be_falsey
     end
 
     it "accepts country id " do
       official_tariff
 
-      expect(OfficialTariff.valid_hts? country.id, "1234567890").to be_true
+      expect(OfficialTariff.valid_hts? country.id, "1234567890").to be_truthy
     end
   end
 end

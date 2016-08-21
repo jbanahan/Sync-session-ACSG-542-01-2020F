@@ -9,15 +9,15 @@ describe CommercialInvoicesController do
       @ci = Factory(:commercial_invoice)
     end
     it "should show if user can view" do
-      CommercialInvoice.any_instance.stub(:can_view?).and_return(true)
+      allow_any_instance_of(CommercialInvoice).to receive(:can_view?).and_return(true)
       get :show, :id=>@ci.id
-      response.should be_success
-      assigns(:ci).should == @ci
+      expect(response).to be_success
+      expect(assigns(:ci)).to eq(@ci)
     end
     it "should not show if user cannot view" do
-      CommercialInvoice.any_instance.stub(:can_view?).and_return(false)
+      allow_any_instance_of(CommercialInvoice).to receive(:can_view?).and_return(false)
       get :show, :id=>@ci.id
-      response.should redirect_to request.referrer
+      expect(response).to redirect_to request.referrer
     end
     it "should assign shipment if linked" do
       shipment_line = Factory(:shipment_line,:quantity=>10)
@@ -25,11 +25,11 @@ describe CommercialInvoicesController do
       inv_line = Factory(:commercial_invoice_line,:quantity=>10,:commercial_invoice=>@ci)
       PieceSet.create!(:shipment_line_id=>shipment_line.id,:order_line_id=>order_line.id,:commercial_invoice_line_id=>inv_line.id,:quantity=>10)
 
-      CommercialInvoice.any_instance.stub(:can_view?).and_return(true)
+      allow_any_instance_of(CommercialInvoice).to receive(:can_view?).and_return(true)
       get :show, :id=>@ci.id
-      response.should be_success
-      assigns(:ci).should == @ci
-      assigns(:shipment).should == shipment_line.shipment
+      expect(response).to be_success
+      expect(assigns(:ci)).to eq(@ci)
+      expect(assigns(:shipment)).to eq(shipment_line.shipment)
     end
   end
 end

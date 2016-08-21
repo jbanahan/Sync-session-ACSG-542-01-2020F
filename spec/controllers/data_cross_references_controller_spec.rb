@@ -4,8 +4,8 @@ describe DataCrossReferencesController do
 
   before :each do
     ms = double("MasterSetup")
-    MasterSetup.stub(:get).and_return ms
-    ms.stub(:system_code).and_return "polo"
+    allow(MasterSetup).to receive(:get).and_return ms
+    allow(ms).to receive(:system_code).and_return "polo"
 
     @user = Factory(:admin_user)
     sign_in_as @user
@@ -58,7 +58,7 @@ describe DataCrossReferencesController do
 
     it "rejects user without access" do
       xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
-      DataCrossReference.any_instance.should_receive(:can_view?).and_return false
+      expect_any_instance_of(DataCrossReference).to receive(:can_view?).and_return false
       get :edit, id: xref.id
 
       expect(response).to redirect_to request.referer

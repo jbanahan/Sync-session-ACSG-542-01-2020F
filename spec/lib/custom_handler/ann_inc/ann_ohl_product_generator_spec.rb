@@ -24,19 +24,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       header_row = {0=>'uid',1=>'apprlong',2=>'hts',3=>'schedb',4=>'iso'}
       content_row = {0=>'213',1=>"My Long\nDescription",2=>'1234567890',3=>'9876543210',4=>'US',5=>''}
       gen = described_class.new
-      gen.should_receive(:sync).and_yield(header_row).and_yield(content_row)
+      expect(gen).to receive(:sync).and_yield(header_row).and_yield(content_row)
       r = run_to_array gen
-      r.should have(1).record
-      r.first.should == ['213','My Long Description','1234567890','9876543210','US']
+      expect(r.size).to eq(1)
+      expect(r.first).to eq(['213','My Long Description','1234567890','9876543210','US'])
     end
     it "should force capitalization of ISO codes" do
       header_row = {0=>'uid',1=>'apprlong',2=>'hts',3=>'schedb',4=>'iso',5=>''}
       content_row = {0=>'213',1=>"My Long Description",2=>'1234567890',3=>'9876543210',4=>'us',5=>''}
       gen = described_class.new
-      gen.should_receive(:sync).and_yield(header_row).and_yield(content_row)
+      expect(gen).to receive(:sync).and_yield(header_row).and_yield(content_row)
       r = run_to_array gen
-      r.should have(1).record
-      r.first.should == ['213','My Long Description','1234567890','9876543210','US']
+      expect(r.size).to eq(1)
+      expect(r.first).to eq(['213','My Long Description','1234567890','9876543210','US'])
     end
   end
   describe :query do
@@ -49,9 +49,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
       r = run_to_array
-      r.size.should == 2
-      r[0][4].should == 'US'
-      r[1][4].should == 'CA'
+      expect(r.size).to eq(2)
+      expect(r[0][4]).to eq('US')
+      expect(r[1][4]).to eq('CA')
     end
     it "should not send classifications that aren't approved" do
       p = Factory(:product)
@@ -63,8 +63,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       dont_include = Factory(:product)
       dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
       r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should not send record with empty HTS" do
       p = Factory(:product)
@@ -76,8 +76,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       d_cls.tariff_records.create!
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should not send record that doesn't need sync" do
       p = Factory(:product)
@@ -92,8 +92,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       #reset updated at so that dont_include won't need sync
       ActiveRecord::Base.connection.execute("UPDATE products SET updated_at = '2010-01-01'")
       r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should use long description override from classification if it exists" do
       p = Factory(:product)
@@ -103,9 +103,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       cls.tariff_records.create!(:hts_1=>"1234567890")
       r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
-      r[0][1].should == "Other long description"
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[0][1]).to eq("Other long description")
     end
     it "should not send multiple lines for sets" do
       p = Factory(:product)
@@ -115,9 +115,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
-      r[0][2].should == '1234567890'
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[0][2]).to eq('1234567890')
     end
     it "should handle sending multiple lines for related styles" do
       p = Factory(:product)
@@ -128,10 +128,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       p.update_custom_value! @cdefs[:related_styles], "T-Style\nP-Style"
 
       r = run_to_array
-      r.should have(3).records
-      r[0][0].should == p.unique_identifier
-      r[1][0].should == "T-Style"
-      r[2][0].should == "P-Style"
+      expect(r.size).to eq(3)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[1][0]).to eq("T-Style")
+      expect(r[2][0]).to eq("P-Style")
     end
     it "should ensure multiple country lines for related styles are ordered together by style value" do
       p = Factory(:product)
@@ -146,19 +146,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       p.update_custom_value! @cdefs[:related_styles], "T-Style\nP-Style"
 
       r = run_to_array
-      r.should have(6).records
-      r[0][0].should == p.unique_identifier
-      r[0][4].should == "US"
-      r[1][0].should == p.unique_identifier
-      r[1][4].should == "CA"
-      r[2][0].should == "T-Style"
-      r[2][4].should == "US"
-      r[3][0].should == "T-Style"
-      r[3][4].should == "CA"
-      r[4][0].should == "P-Style"
-      r[4][4].should == "US"
-      r[5][0].should == "P-Style"
-      r[5][4].should == "CA"
+      expect(r.size).to eq(6)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[0][4]).to eq("US")
+      expect(r[1][0]).to eq(p.unique_identifier)
+      expect(r[1][4]).to eq("CA")
+      expect(r[2][0]).to eq("T-Style")
+      expect(r[2][4]).to eq("US")
+      expect(r[3][0]).to eq("T-Style")
+      expect(r[3][4]).to eq("CA")
+      expect(r[4][0]).to eq("P-Style")
+      expect(r[4][4]).to eq("US")
+      expect(r[5][0]).to eq("P-Style")
+      expect(r[5][4]).to eq("CA")
     end
     it "handles multiple product records" do
       p = Factory(:product)
@@ -173,17 +173,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
 
       r = run_to_array
-      r.should have(2).records
-      r[0][0].should == p.unique_identifier
-      r[1][0].should == p2.unique_identifier
+      expect(r.size).to eq(2)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[1][0]).to eq(p2.unique_identifier)
     end
   end
   describe :ftp_credentials do
     it "should send proper credentials" do
-      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/OHL'}
+      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/OHL'})
     end
   end
   it "should have sync_code" do
-    described_class.new.sync_code.should == 'ANN-PDM'
+    expect(described_class.new.sync_code).to eq('ANN-PDM')
   end
 end

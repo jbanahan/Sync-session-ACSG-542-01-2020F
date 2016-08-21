@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler do
   let (:custom_file) {
     custom_file = CustomFile.new attached_file_name: "file.xlsx"
-    custom_file.stub(:path).and_return "/path/to/file.xlsx"
+    allow(custom_file).to receive(:path).and_return "/path/to/file.xlsx"
     custom_file
   }
   subject { described_class.new custom_file }
@@ -109,11 +109,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
 
       before :each do
         us
-        subject.stub(:foreach).with(custom_file, skip_headers: false, skip_blank_lines: true).and_yield(us_lines[0]).and_yield(us_lines[1])
+        allow(subject).to receive(:foreach).with(custom_file, skip_headers: false, skip_blank_lines: true).and_yield(us_lines[0]).and_yield(us_lines[1])
       end
 
       it "parses a us file into an imported file" do
-        ImportedFile.any_instance.should_receive(:process).with user
+        expect_any_instance_of(ImportedFile).to receive(:process).with user
         subject.process user
 
         f = ImportedFile.first
@@ -150,11 +150,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
 
       before :each do
         ca
-        subject.stub(:foreach).with(custom_file, skip_headers: false, skip_blank_lines: true).and_yield(ca_lines[0]).and_yield(ca_lines[1])
+        allow(subject).to receive(:foreach).with(custom_file, skip_headers: false, skip_blank_lines: true).and_yield(ca_lines[0]).and_yield(ca_lines[1])
       end
 
       it "parses a ca file into an imported file" do
-        ImportedFile.any_instance.should_receive(:process).with user
+        expect_any_instance_of(ImportedFile).to receive(:process).with user
         subject.process user
 
         f = ImportedFile.first
@@ -193,44 +193,44 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
     let (:master_setup) { double("MasterSetup") }
 
     before :each do
-      MasterSetup.stub(:get).and_return master_setup
-      master_setup.stub(:custom_feature?).with("Lumber EPD").and_return true
+      allow(MasterSetup).to receive(:get).and_return master_setup
+      allow(master_setup).to receive(:custom_feature?).with("Lumber EPD").and_return true
     end
 
     it "allows master user that can edit products to view" do
-      user.should_receive(:edit_products?).and_return true
-      expect(described_class.can_view? user).to be_true
+      expect(user).to receive(:edit_products?).and_return true
+      expect(described_class.can_view? user).to be_truthy
     end
 
     it "disallows non-master user" do
       u = Factory(:user)
-      u.stub(:edit_products?).and_return true
-      expect(described_class.can_view? u).to be_false
+      allow(u).to receive(:edit_products?).and_return true
+      expect(described_class.can_view? u).to be_falsey
     end
 
     it "disallows users that can't edit products" do
-      user.should_receive(:edit_products?).and_return false
-      expect(described_class.can_view? user).to be_false
+      expect(user).to receive(:edit_products?).and_return false
+      expect(described_class.can_view? user).to be_falsey
     end
 
     it "disallows systems with no Lumber EPD report setup" do
-      master_setup.stub(:custom_feature?).with("Lumber EPD").and_return false
-      user.stub(:edit_products?).and_return true
-      expect(described_class.can_view? user).to be_false
+      allow(master_setup).to receive(:custom_feature?).with("Lumber EPD").and_return false
+      allow(user).to receive(:edit_products?).and_return true
+      expect(described_class.can_view? user).to be_falsey
     end
   end
 
   describe "valid_file?" do
     it "accepts csv files" do
-      expect(described_class.valid_file? "file.csv").to be_true
+      expect(described_class.valid_file? "file.csv").to be_truthy
     end
 
     it "accepts xls files" do
-      expect(described_class.valid_file? "file.xls").to be_true
+      expect(described_class.valid_file? "file.xls").to be_truthy
     end
 
     it "accepts xlsx files" do
-      expect(described_class.valid_file? "file.xlsx").to be_true
+      expect(described_class.valid_file? "file.xlsx").to be_truthy
     end
   end
 end

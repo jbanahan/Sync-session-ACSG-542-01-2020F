@@ -111,7 +111,7 @@ describe OpenChain::Report::NexeoOceanExportsReport do
     describe "run_schedulable" do
       it "runs a report over the last month" do
         now = Time.zone.parse "2016-01-01"
-        described_class.stub(:now).and_return now
+        allow(described_class).to receive(:now).and_return now
 
         described_class.run_schedulable({"email_to" => "me@there.com"})
 
@@ -135,19 +135,19 @@ describe OpenChain::Report::NexeoOceanExportsReport do
   describe "permission?" do
     before :each do
       ms = double("MasterSetup")
-      MasterSetup.stub(:get).and_return ms
-      ms.stub(:shipment_enabled).and_return true
+      allow(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:shipment_enabled).and_return true
       @nexeo = Factory(:importer, alliance_customer_number: "NEXEO")
     end
 
     it "allows users with view shipment permission and access to nexeo company to view" do
       user = Factory(:user, company: @nexeo, shipment_view: true)
-      expect(described_class.permission? user).to be_true
+      expect(described_class.permission? user).to be_truthy
     end
 
     it "disallows users not able to view nexeo company" do
       user = Factory(:user)
-      expect(described_class.permission? user).to be_false
+      expect(described_class.permission? user).to be_falsey
     end
   end
 end

@@ -7,15 +7,15 @@ describe OpenChain::CustomHandler::Polo::PoloBusinessLogic do
 
   describe "sap_po?" do
     it 'identifies PO numbers starting with 47 as an SAP PO #' do
-      expect(@logic.sap_po? "47").to be_true
+      expect(@logic.sap_po? "47").to be_truthy
     end
 
     it "doesn't take leading space into account when identifying an SAP PO" do
-      expect(@logic.sap_po? "    \t47").to be_true
+      expect(@logic.sap_po? "    \t47").to be_truthy
     end
 
     it 'identifies non-sap PO numbers' do
-      expect(@logic.sap_po? "4").to be_false
+      expect(@logic.sap_po? "4").to be_falsey
     end
   end
 
@@ -43,12 +43,12 @@ describe OpenChain::CustomHandler::Polo::PoloBusinessLogic do
 
   describe "prepack_indicator?" do
     it "identifies prepack code" do
-      expect(@logic.prepack_indicator? "AS").to be_true
-      expect(@logic.prepack_indicator? "as").to be_true
-      expect(@logic.prepack_indicator? " as").to be_true
-      expect(@logic.prepack_indicator? " as ").to be_true
+      expect(@logic.prepack_indicator? "AS").to be_truthy
+      expect(@logic.prepack_indicator? "as").to be_truthy
+      expect(@logic.prepack_indicator? " as").to be_truthy
+      expect(@logic.prepack_indicator? " as ").to be_truthy
 
-      expect(@logic.prepack_indicator? "EA").to be_false
+      expect(@logic.prepack_indicator? "EA").to be_falsey
     end
   end
 end

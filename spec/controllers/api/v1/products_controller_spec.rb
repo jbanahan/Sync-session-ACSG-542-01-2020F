@@ -43,12 +43,12 @@ describe Api::V1::ProductsController do
       end
 
       it "includes permissions" do
-        Product.any_instance.stub(:can_view?).and_return true
-        Product.any_instance.stub(:can_edit?).and_return true
-        Product.any_instance.stub(:can_classify?).and_return false
-        Product.any_instance.stub(:can_comment?).and_return false
-        Product.any_instance.stub(:can_attach?).and_return true
-        Product.any_instance.stub(:can_manage_variants?).and_return false
+        allow_any_instance_of(Product).to receive(:can_view?).and_return true
+        allow_any_instance_of(Product).to receive(:can_edit?).and_return true
+        allow_any_instance_of(Product).to receive(:can_classify?).and_return false
+        allow_any_instance_of(Product).to receive(:can_comment?).and_return false
+        allow_any_instance_of(Product).to receive(:can_attach?).and_return true
+        allow_any_instance_of(Product).to receive(:can_manage_variants?).and_return false
 
         expected_permissions = {
           'can_view'=>true,
@@ -194,13 +194,13 @@ describe Api::V1::ProductsController do
       end
 
       it "executes the action with valid authorization header" do        
-        controller.should_receive(:show) do
+        expect(controller).to receive(:show) do
           controller.render json: {'ok'=>true}
         end
         get 'show', id: 1, format: 'json'
         expect(response.status).to eq 200
         json = ActiveSupport::JSON.decode response.body
-        expect(json['ok']).to be_true
+        expect(json['ok']).to be_truthy
       end
     end
 
@@ -226,7 +226,7 @@ describe Api::V1::ProductsController do
       describe "set_user_settings" do
         it "should set global user settings" do
           def_tz = Time.zone
-          controller.should_receive(:show) do
+          expect(controller).to receive(:show) do
             expect(User.current.id).to eq @user.id
             expect(Time.zone.name).to eq @user.time_zone
 
@@ -244,7 +244,7 @@ describe Api::V1::ProductsController do
 
       describe "error_handler" do
         it "handles a StatusableError and uses its data in the json response" do
-          controller.should_receive(:show) do
+          expect(controller).to receive(:show) do
             raise StatusableError.new "Error1", 501
           end
 
@@ -255,7 +255,7 @@ describe Api::V1::ProductsController do
         end
 
         it "handles a StatusableError with multiple errors and uses its data in the json response" do
-          controller.should_receive(:show) do
+          expect(controller).to receive(:show) do
             raise StatusableError.new ["Error1", "Error2"], 501
           end
 
@@ -266,7 +266,7 @@ describe Api::V1::ProductsController do
         end
 
         it "handles Record Not Found errors and returns 404" do
-          controller.should_receive(:show) do
+          expect(controller).to receive(:show) do
             raise ActiveRecord::RecordNotFound
           end
 
@@ -277,8 +277,8 @@ describe Api::V1::ProductsController do
         end
 
         it "handles all other exceptions as server errors" do
-          Rails.stub(:env).and_return('not_test') #errors are raised in test
-          controller.should_receive(:show) do
+          allow(Rails).to receive(:env).and_return('not_test') #errors are raised in test
+          expect(controller).to receive(:show) do
             raise "Oops, something weird happened!"
           end
 

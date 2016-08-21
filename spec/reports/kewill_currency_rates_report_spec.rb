@@ -20,15 +20,15 @@ describe OpenChain::Report::KewillCurrencyRatesReport do
 
     before :each do
       ms = stub_master_setup_request_host
-      ms.stub(:system_code).and_return "www-vfitrack-net"
+      allow(ms).to receive(:system_code).and_return "www-vfitrack-net"
     end
 
     it "allows master users permission" do
-      expect(described_class.permission? Factory(:master_user)).to be_true
+      expect(described_class.permission? Factory(:master_user)).to be_truthy
     end
 
     it "disallows non-master user" do
-      expect(described_class.permission? Factory(:user)).to be_false
+      expect(described_class.permission? Factory(:user)).to be_falsey
     end
   end
 
@@ -50,7 +50,7 @@ describe OpenChain::Report::KewillCurrencyRatesReport do
       client = double("SqlProxyClient")
       settings = {'start_date' => "2016-04-01", 'report_result_id' => 1, 'sql_proxy_client' => client}
 
-      client.should_receive(:report_query).with("kewill_currency_rate_report", {"start_date" => "20160401"}, {'report_result_id' => 1})
+      expect(client).to receive(:report_query).with("kewill_currency_rate_report", {"start_date" => "20160401"}, {'report_result_id' => 1})
 
       described_class.run_report u, settings
     end

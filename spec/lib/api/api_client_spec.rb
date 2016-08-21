@@ -28,7 +28,7 @@ describe OpenChain::Api::ApiClient do
     end
 
     it "uses config file to load default user / authtoken information if not given in constructor" do
-      OpenChain::Api::ApiClient.should_receive(:get_config).and_return('test'=> {"user" => "token"})
+      expect(OpenChain::Api::ApiClient).to receive(:get_config).and_return('test'=> {"user" => "token"})
 
       c = OpenChain::Api::ApiClient.new 'test'
       expect(c.username).to eq "user"
@@ -68,8 +68,8 @@ describe OpenChain::Api::ApiClient do
           }
         )
         json = @c.get "/path/file.json", {"mf_uids" => "1,2,3"}
-        json['ok'].should == "Ök"
-        WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
+        expect(json['ok']).to eq("Ök")
+        expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
 
     it "raises an error for errored responses after retrying 3 times" do
@@ -90,7 +90,7 @@ describe OpenChain::Api::ApiClient do
           }
         )
         expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
-        WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").times(3)
+        expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").times(3)
     end
 
     it "raises an error immediately on 400 errors" do
@@ -111,7 +111,7 @@ describe OpenChain::Api::ApiClient do
           }
         )
         expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
-        WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
+        expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
 
     it "handles 401 Authorization errors directly" do
@@ -132,7 +132,7 @@ describe OpenChain::Api::ApiClient do
           }
         )
         expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiAuthenticationError, "Authentication to #{@c.endpoint} failed for user '#{@c.username}' and api token '#{@c.authtoken}'. Error: Error Response"
-        WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
+        expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
 
     it "handles different response charsets" do
@@ -156,7 +156,7 @@ describe OpenChain::Api::ApiClient do
         )
 
         expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "API Request failed with error: invalid byte sequence in US-ASCII"
-        WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3")
+        expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3")
     end
 
     it "handles URL encoding parameters" do
@@ -178,7 +178,7 @@ describe OpenChain::Api::ApiClient do
         )
 
         json = @c.get "/path/file.json", {"mf uids" => "1 3"}
-        json['ok'].should == "ok"
+        expect(json['ok']).to eq("ok")
     end
   end
 end

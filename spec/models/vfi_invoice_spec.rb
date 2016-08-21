@@ -9,7 +9,7 @@ describe VfiInvoice do
     end
 
     context "user has permission to view invoices" do
-      before(:each) { @u.stub(:view_vfi_invoices?).and_return true }
+      before(:each) { allow(@u).to receive(:view_vfi_invoices?).and_return true }
       
       it "returns true if user belongs to master company" do
         co = @u.company
@@ -28,14 +28,14 @@ describe VfiInvoice do
       end
 
       it "returns falsy otherwise" do
-        expect(@inv.can_view? @u).to be_false
+        expect(@inv.can_view? @u).to be_falsey
       end
     end
 
     it "returns falsy if user doesn't have permission to view invoices" do
       co = @u.company
       co.update_attributes(master: true)
-      expect(@inv.can_view? @u).to be_false
+      expect(@inv.can_view? @u).to be_falsey
     end
   end
 

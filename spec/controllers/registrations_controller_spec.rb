@@ -3,7 +3,7 @@ require 'spec_helper'
 describe RegistrationsController do
   before(:each) do
     @system_code = "HAL9000"
-      MasterSetup.any_instance.stub(:system_code).and_return @system_code
+      allow_any_instance_of(MasterSetup).to receive(:system_code).and_return @system_code
       @email = "john_doe@acme.com"
       @fname = "John"
       @lname = "Doe"

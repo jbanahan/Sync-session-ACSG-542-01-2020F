@@ -31,8 +31,8 @@ describe BusinessValidationRulesController do
             }
       expect(response).to be_redirect
       new_rule = BusinessValidationRule.last
-      new_rule.business_validation_template.id.should == @bvt.id
-      new_rule.rule_attributes_json.should == '{"valid":"json-2"}'
+      expect(new_rule.business_validation_template.id).to eq(@bvt.id)
+      expect(new_rule.rule_attributes_json).to eq('{"valid":"json-2"}')
       expect(new_rule.group).to eq group
     end
 
@@ -45,7 +45,7 @@ describe BusinessValidationRulesController do
               "rule_attributes_json" => 'This is not valid JSON'
             }
       expect(response).to be_redirect
-      flash[:errors].first.should match(/Could not save due to invalid JSON/)
+      expect(flash[:errors].first).to match(/Could not save due to invalid JSON/)
     end
   end
 
@@ -72,7 +72,7 @@ describe BusinessValidationRulesController do
               "rule_attributes_json" => '{"valid":"json-3"}'
             }
       expect(response).to be_success
-      response.request.filtered_parameters["id"].to_i.should == @bvr.id
+      expect(response.request.filtered_parameters["id"].to_i).to eq(@bvr.id)
     end
 
   end
@@ -93,8 +93,8 @@ describe BusinessValidationRulesController do
           business_validation_rule: {search_criterions: [{"mfid" => "ent_cust_name", 
               "datatype" => "string", "label" => "Customer Name", 
               "operator" => "eq", "value" => "Monica Lewinsky"}]}
-      @bvr.search_criterions.length.should == 1
-      @bvr.search_criterions.first.value.should == "Monica Lewinsky"
+      expect(@bvr.search_criterions.length).to eq(1)
+      expect(@bvr.search_criterions.first.value).to eq("Monica Lewinsky")
     end
 
     it 'should require admin' do
@@ -115,8 +115,8 @@ describe BusinessValidationRulesController do
             }
       expect(response).to be_redirect
       updated_rule = BusinessValidationRule.find(@bvr.id)
-      updated_rule.rule_attributes_json.should == '{"valid":"json-4"}'
-      updated_rule.business_validation_template.id.should == @bvt.id
+      expect(updated_rule.rule_attributes_json).to eq('{"valid":"json-4"}')
+      expect(updated_rule.business_validation_template.id).to eq(@bvt.id)
     end
 
   end
@@ -166,7 +166,7 @@ describe BusinessValidationRulesController do
       @u.admin = false
       @u.save!
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
-      BusinessValidationRule.any_instance.should_not_receive(:delay)
+      expect_any_instance_of(BusinessValidationRule).not_to receive(:delay)
       expect(response).to be_redirect
     end
 
@@ -182,8 +182,8 @@ describe BusinessValidationRulesController do
 
     it "sets delete_pending flag and executes destroy as a delayed job" do
       d = double("delay")
-      BusinessValidationRule.should_receive(:delay).and_return d
-      d.should_receive(:async_destroy).with @bvr.id
+      expect(BusinessValidationRule).to receive(:delay).and_return d
+      expect(d).to receive(:async_destroy).with @bvr.id
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
       @bvr.reload
       expect(@bvr.delete_pending).to eq true

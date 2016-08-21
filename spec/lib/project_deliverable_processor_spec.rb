@@ -24,11 +24,11 @@ describe OpenChain::ProjectDeliverableProcessor do
   describe :run_schedulable do
 
     it 'should return the correct hash for the ecosystem' do
-      @p.run_schedulable.should == {1000=>[@pd1, @pd3], 2000=>[@pd4]}
+      expect(@p.run_schedulable).to eq({1000=>[@pd1, @pd3], 2000=>[@pd4]})
     end
 
     it 'should call create_emails_from_hash with the correct hash' do
-      OpenChain::ProjectDeliverableProcessor.any_instance.should_receive(:create_emails_from_hash).exactly(1).times.with({1000=>[@pd1, @pd3], 2000=>[@pd4]})
+      expect_any_instance_of(OpenChain::ProjectDeliverableProcessor).to receive(:create_emails_from_hash).exactly(1).times.with({1000=>[@pd1, @pd3], 2000=>[@pd4]})
       @p.run_schedulable
     end
 
@@ -38,7 +38,7 @@ describe OpenChain::ProjectDeliverableProcessor do
 
     it 'should fill the hash with the correct information' do
       blank_hash = {}
-      @p.fill_hash_values(blank_hash).should == {1000=>[@pd1, @pd3], 2000=>[@pd4]}
+      expect(@p.fill_hash_values(blank_hash)).to eq({1000=>[@pd1, @pd3], 2000=>[@pd4]})
     end
 
   end
@@ -47,12 +47,12 @@ describe OpenChain::ProjectDeliverableProcessor do
 
     it 'should make a new key/value pair if the key does not yet exist' do
       start_hash = {"k1" => ["v1"], "k2" => ["v2"]}
-      @p.add_to_hash(start_hash, "k3", "v3").should == {"k1" => ["v1"], "k2" => ["v2"], "k3" => ["v3"]}
+      expect(@p.add_to_hash(start_hash, "k3", "v3")).to eq({"k1" => ["v1"], "k2" => ["v2"], "k3" => ["v3"]})
     end
 
     it 'should extend the value list if the key does already exist' do
       start_hash = {"k1" => ["v1"], "k2" => ["v2"]}
-      @p.add_to_hash(start_hash, "k2", "v3").should == {"k1" => ["v1"], "k2" => ["v2", "v3"]}
+      expect(@p.add_to_hash(start_hash, "k2", "v3")).to eq({"k1" => ["v1"], "k2" => ["v2", "v3"]})
     end
 
   end
@@ -62,13 +62,13 @@ describe OpenChain::ProjectDeliverableProcessor do
     it 'should send emails to correct users with correct projects' do
       @p.run_schedulable
       m = OpenMailer.deliveries.pop
-      m.to.first.should == "user2@email.com"
-      m.body.should match(/PD4 Description/)
+      expect(m.to.first).to eq("user2@email.com")
+      expect(m.body).to match(/PD4 Description/)
 
       m = OpenMailer.deliveries.pop
-      m.to.first.should == "user1@email.com"
-      m.body.should match(/PD1 Description/)
-      m.body.should match(/PD3 Description/)
+      expect(m.to.first).to eq("user1@email.com")
+      expect(m.body).to match(/PD1 Description/)
+      expect(m.body).to match(/PD3 Description/)
     end
 
   end

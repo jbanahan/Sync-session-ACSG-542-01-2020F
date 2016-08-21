@@ -46,14 +46,14 @@ describe StateToggleButton do
 
   describe :toggle! do
     before :each do
-      OpenChain::WorkflowProcessor.any_instance.stub(:process!)
+      allow_any_instance_of(OpenChain::WorkflowProcessor).to receive(:process!)
     end
     it "should set the date and user_id fields" do
       btn = Factory(:state_toggle_button,module_type:'Shipment',date_attribute:'canceled_date',user_attribute:'canceled_by')
       s = Factory(:shipment)
       u = Factory(:user)
 
-      s.should_receive(:create_snapshot_with_async_option).with(false,u)
+      expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
       btn.toggle! s, u
 
       s.reload
@@ -65,7 +65,7 @@ describe StateToggleButton do
       u = Factory(:user)
       s = Factory(:shipment,canceled_date:1.day.ago,canceled_by:u)
 
-      s.should_receive(:create_snapshot_with_async_option).with(false,u)
+      expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
       btn.toggle! s, u
 
       s.reload
@@ -77,7 +77,7 @@ describe StateToggleButton do
       u = Factory(:user)
       s = Factory(:shipment,canceled_date:1.day.ago)
 
-      s.should_receive(:create_snapshot_with_async_option).with(false,u)
+      expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
       btn.toggle! s, u
 
       s.reload
@@ -95,7 +95,7 @@ describe StateToggleButton do
       s = Factory(:shipment)
 
 
-      s.should_receive(:create_snapshot_with_async_option).with(false,u)
+      expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
       btn.toggle! s, u
 
       s.reload
@@ -116,7 +116,7 @@ describe StateToggleButton do
       s.save!
 
 
-      s.should_receive(:create_snapshot_with_async_option).with(false,u)
+      expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
       btn.toggle! s, u
 
       s.reload
@@ -128,18 +128,18 @@ describe StateToggleButton do
       s = Factory(:shipment)
       u = Factory(:user)
 
-      s.should_receive(:create_snapshot_with_async_option).with(true,u)
+      expect(s).to receive(:create_snapshot_with_async_option).with(true,u)
       btn.toggle! s, u, true
     end
     it "should reprocess workfow" do
       wp = double('workflow processor')
-      OpenChain::WorkflowProcessor.should_receive(:new).and_return wp
+      expect(OpenChain::WorkflowProcessor).to receive(:new).and_return wp
       btn = Factory(:state_toggle_button,module_type:'Shipment',date_attribute:'canceled_date',user_attribute:'canceled_by')
       s = Factory(:shipment)
       u = Factory(:user)
 
-      s.stub(:create_snapshot_with_async_option)
-      wp.should_receive(:process!).with(s,u)
+      allow(s).to receive(:create_snapshot_with_async_option)
+      expect(wp).to receive(:process!).with(s,u)
       btn.toggle! s, u
     end
   end
@@ -148,12 +148,12 @@ describe StateToggleButton do
     it "should show activate if date_attribute and date_attribute value returns blank" do
       s = Shipment.new
       btn = StateToggleButton.new(date_attribute:'canceled_date')
-      expect(btn.to_be_activated?(s)).to be_true
+      expect(btn.to_be_activated?(s)).to be_truthy
     end
     it "should not show activate if date_attribute and date_attribute value returns !blank" do
       s = Shipment.new(canceled_date:Time.now)
       btn = StateToggleButton.new(date_attribute:'canceled_date')
-      expect(btn.to_be_activated?(s)).to be_false
+      expect(btn.to_be_activated?(s)).to be_falsey
     end
     it "should show activate if date_custom_definition and custom value returns blank" do
       cd_date = Factory(:custom_definition,module_type:'Shipment',data_type:'date')
@@ -161,7 +161,7 @@ describe StateToggleButton do
         date_custom_definition_id:cd_date.id
       )
       s = Factory(:shipment)
-      expect(btn.to_be_activated?(s)).to be_true
+      expect(btn.to_be_activated?(s)).to be_truthy
     end
     it "should not show activate if date_custom_definition and custom value returns !blank" do
       cd_date = Factory(:custom_definition,module_type:'Shipment',data_type:'date')
@@ -171,7 +171,7 @@ describe StateToggleButton do
       s = Factory(:shipment)
       s.get_custom_value(cd_date).value = Time.now
       s.save!
-      expect(btn.to_be_activated?(s)).to be_false
+      expect(btn.to_be_activated?(s)).to be_falsey
     end
   end
 

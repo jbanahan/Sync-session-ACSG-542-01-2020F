@@ -56,7 +56,7 @@ describe OpenChain::GoogleDrive do
         # copies of the file..if the file exists, we're updating it.
         data = StringIO.new "This is the file contents.\r\nUpdated."
         second_id = OpenChain::GoogleDrive.upload_file @user_email, @path, data
-        second_id.should eq @file_id
+        expect(second_id).to eq @file_id
         data.rewind
 
         expected_data = data.read
@@ -75,7 +75,7 @@ describe OpenChain::GoogleDrive do
         data = StringIO.new "This is the file contents.\r\nUpdated."
         second_id = OpenChain::GoogleDrive.upload_file @user_email, @path, data, overwrite_existing: false
         @cleanup << second_id
-        second_id.should_not eq @file_id
+        expect(second_id).not_to eq @file_id
       end
     end
 
@@ -109,7 +109,7 @@ describe OpenChain::GoogleDrive do
             # Makes sure the tempfile was rewound by just reading straight from the returned file
             # Because we're making consessions to running time, and are updateing the file data above
             # just make sure the file starts with the expected data.
-            t.read.should match /^This is the file contents.\r\n/
+            expect(t.read).to match /^This is the file contents.\r\n/
           ensure
             t.close! if t
           end
@@ -127,8 +127,8 @@ describe OpenChain::GoogleDrive do
 
           # Because we're making consessions to running time, and are updateing the file data above
           # just make sure the file starts with the data that remains the same across all cases.
-          data.should match /^This is the file contents.\r\n/
-          File.exists?(t_path).should be_false
+          expect(data).to match /^This is the file contents.\r\n/
+          expect(File.exists?(t_path)).to be_falsey
         }
       end
 
@@ -142,7 +142,7 @@ describe OpenChain::GoogleDrive do
             end
           }.to raise_error ArgumentError
 
-          File.exists?(t_path).should be_false
+          expect(File.exists?(t_path)).to be_falsey
         }
       end
     end
@@ -229,22 +229,22 @@ describe OpenChain::GoogleDrive do
   context :cached_get_client do
     it "should cache client creation" do
       OpenChain::GoogleDrive.find_file_id @user_email, "file.txt"
-      OpenChain::GoogleDrive.should_not_receive(:initialize_client_info)
+      expect(OpenChain::GoogleDrive).not_to receive(:initialize_client_info)
       OpenChain::GoogleDrive.find_file_id @user_email, "file.txt"
     end
   end
 
   context :default_user_account do
     it "should default based on environment" do
-      OpenChain::GoogleDrive.default_user_account.should eq "integration-dev@vandegriftinc.com"
+      expect(OpenChain::GoogleDrive.default_user_account).to eq "integration-dev@vandegriftinc.com"
     end
 
     it "should default to integration-dev in any non-production environment" do
-      OpenChain::GoogleDrive.default_user_account("madeup").should eq "integration-dev@vandegriftinc.com"
+      expect(OpenChain::GoogleDrive.default_user_account("madeup")).to eq "integration-dev@vandegriftinc.com"
     end
 
     it "should default to integration in production environment" do
-      OpenChain::GoogleDrive.default_user_account("production").should eq "integration@vandegriftinc.com"
+      expect(OpenChain::GoogleDrive.default_user_account("production")).to eq "integration@vandegriftinc.com"
     end
   end
 

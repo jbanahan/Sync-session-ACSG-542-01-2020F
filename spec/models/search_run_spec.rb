@@ -16,12 +16,12 @@ describe SearchRun do
       wrong_module.search_runs.create!(:last_accessed=>1.day.ago,:user_id=>@u.id)
       wrong_user.search_runs.create!(:last_accessed=>1.day.ago,:user_id=>wrong_user.user_id)
 
-      SearchRun.find_last_run(@u,CoreModule::PRODUCT).should == find_me.search_runs.first
+      expect(SearchRun.find_last_run(@u,CoreModule::PRODUCT)).to eq(find_me.search_runs.first)
     end
     it "should not be read only" do
       find_me = Factory(:search_setup,:user=>@u,:module_type=>"Product")
       find_me.touch
-      SearchRun.find_last_run(@u,CoreModule::PRODUCT).should_not be_readonly
+      expect(SearchRun.find_last_run(@u,CoreModule::PRODUCT)).not_to be_readonly
     end
   end
   describe :parent do
@@ -32,16 +32,16 @@ describe SearchRun do
       ss = Factory(:search_setup)
       im = Factory(:imported_file)
       sr = SearchRun.create(:search_setup_id=>ss.id,:imported_file_id=>im.id,:custom_file_id=>@cf.id)
-      sr.parent.should == ss
+      expect(sr.parent).to eq(ss)
     end
     it "should return imported_file if it exists and search setup doesn't" do
       im = Factory(:imported_file)
       sr = SearchRun.create(:imported_file_id=>im.id,:custom_file_id=>@cf.id)
-      sr.parent.should == im
+      expect(sr.parent).to eq(im)
     end
     it "should return custom_file if it exists and search_setup/imported_file don't" do
       sr = SearchRun.create(:custom_file_id=>@cf.id)
-      sr.parent.should == @cf 
+      expect(sr.parent).to eq(@cf) 
     end
   end
   describe "find_all_object_keys / total_objects" do
@@ -55,8 +55,8 @@ describe SearchRun do
       sr = ss.search_runs.create!
       products = []
       sr.find_all_object_keys {|k| products << Product.find(k)}
-      products.should == [@p1,@p2,@p3]
-      sr.total_objects.should == 3
+      expect(products).to eq([@p1,@p2,@p3])
+      expect(sr.total_objects).to eq(3)
     end
     it "should return a sized Enumerator if no block is given" do
       ss = Factory(:search_setup,:module_type=>"Product",:user=>@u)
@@ -78,8 +78,8 @@ describe SearchRun do
       sr.user = @u
       products = []
       sr.find_all_object_keys {|k| products << Product.find(k)}
-      products.should == [@p1,@p2]
-      sr.total_objects.should == 2
+      expect(products).to eq([@p1,@p2])
+      expect(sr.total_objects).to eq(2)
     end
     it "should find based on imported file with a user search" do
       fir = Factory(:file_import_result,:imported_file=>Factory(:imported_file,:module_type=>"Product"))
@@ -89,9 +89,9 @@ describe SearchRun do
       sr.user = @u
 
       products = []
-      sr.total_objects.should == 1
+      expect(sr.total_objects).to eq(1)
       sr.find_all_object_keys {|k| products << Product.find(k)}
-      products.should == [@p1]
+      expect(products).to eq([@p1])
     end
     it "should find based on custom file" do
       cf = Factory(:custom_file)
@@ -99,8 +99,8 @@ describe SearchRun do
       sr = cf.search_runs.create!
       products = []
       sr.find_all_object_keys {|k| products << Product.find(k)}
-      products.should == [@p2,@p3]
-      sr.total_objects.should == 2
+      expect(products).to eq([@p2,@p3])
+      expect(sr.total_objects).to eq(2)
     end
   end
 end

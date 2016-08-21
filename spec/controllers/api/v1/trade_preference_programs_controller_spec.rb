@@ -8,12 +8,12 @@ describe Api::V1::TradePreferenceProgramsController do
   end
   before :each do
     @u = Factory(:user)
-    User.any_instance.stub(:view_trade_preference_programs?).and_return true
-    User.any_instance.stub(:edit_trade_preference_programs?).and_return true
-    TradePreferenceProgram.any_instance.stub(:can_view?).and_return true
-    TradePreferenceProgram.any_instance.stub(:can_edit?).and_return true
-    TradePreferenceProgram.any_instance.stub(:can_comment?).and_return true
-    TradePreferenceProgram.any_instance.stub(:can_attach?).and_return true
+    allow_any_instance_of(User).to receive(:view_trade_preference_programs?).and_return true
+    allow_any_instance_of(User).to receive(:edit_trade_preference_programs?).and_return true
+    allow_any_instance_of(TradePreferenceProgram).to receive(:can_view?).and_return true
+    allow_any_instance_of(TradePreferenceProgram).to receive(:can_edit?).and_return true
+    allow_any_instance_of(TradePreferenceProgram).to receive(:can_comment?).and_return true
+    allow_any_instance_of(TradePreferenceProgram).to receive(:can_attach?).and_return true
     allow_api_access @u
   end
   describe '#index' do
@@ -34,7 +34,7 @@ describe Api::V1::TradePreferenceProgramsController do
       expect(h[1]['tpp_destination_cntry_iso']).to eq 'US'
     end
     it 'should fail if user cannot view_trade_preference_programs?' do
-      User.any_instance.stub(:view_trade_preference_programs?).and_return false
+      allow_any_instance_of(User).to receive(:view_trade_preference_programs?).and_return false
       get :index
       expect(response).to_not be_success
     end
@@ -51,7 +51,7 @@ describe Api::V1::TradePreferenceProgramsController do
       expect(JSON.parse(response.body)['trade_preference_program']['id']).to eq tpp.id
     end
     it 'should fail if user cannot view tpp' do
-      TradePreferenceProgram.any_instance.stub(:can_view?).and_return false
+      allow_any_instance_of(TradePreferenceProgram).to receive(:can_view?).and_return false
       get :show, id: Factory(:trade_preference_program).id.to_s
       expect(response).to_not be_success
     end
@@ -82,7 +82,7 @@ describe Api::V1::TradePreferenceProgramsController do
       expect(tpp.destination_country).to eq us
     end
     it 'should fail if user cannot edit tpps' do
-      TradePreferenceProgram.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(TradePreferenceProgram).to receive(:can_edit?).and_return false
 
       prep_countries
 
@@ -119,7 +119,7 @@ describe Api::V1::TradePreferenceProgramsController do
       expect(tpp.tariff_adjustment_percentage).to eq BigDecimal('0.39')
     end
     it 'should fail if user cannot edit tpp' do
-      TradePreferenceProgram.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(TradePreferenceProgram).to receive(:can_edit?).and_return false
       tpp, hash = data_prep
 
       put :update, hash

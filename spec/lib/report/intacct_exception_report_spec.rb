@@ -4,7 +4,7 @@ require 'open_chain/report/intacct_exception_report'
 describe OpenChain::Report::IntacctExceptionReport do
 
   before :each do
-    MasterSetup.any_instance.stub(:request_host).and_return "localhost"
+    allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
   end
 
   def get_emailed_worksheet name, mail = ActionMailer::Base.deliveries.pop

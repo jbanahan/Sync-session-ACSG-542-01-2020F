@@ -7,14 +7,14 @@ describe WorkflowController do
   end
   describe "show" do
     it "should get all workflow instances for core_object" do
-      Order.any_instance.stub(:can_view?).and_return(true)
+      allow_any_instance_of(Order).to receive(:can_view?).and_return(true)
       o = Factory(:order)
       get :show, core_module:'Order', id:o.id.to_s
       expect(response).to be_success
       expect(assigns(:base_object)).to eq o
     end
     it "should fail if user cannot view core_object" do
-      Order.any_instance.stub(:can_view?).and_return(false)
+      allow_any_instance_of(Order).to receive(:can_view?).and_return(false)
       o = Factory(:order)
       
       expect{get :show, core_module:'Order', id:o.id.to_s}.to raise_error ActionController::RoutingError

@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     it "creates a vfi receivable object" do
       r = @p.create_receivable @export, [@line, @line], true
 
-      expect(r.persisted?).to be_true
+      expect(r.persisted?).to be_truthy
       expect(r.receivable_type).to eq "VFI Sales Invoice"
       expect(r.company).to eq "vfc"
       expect(r.invoice_number).to eq @line['invoice number']
@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(r.customer_number).to eq @export.customer_number
       expect(r.currency).to eq @line['currency']
       
-      expect(r.intacct_receivable_lines).to have(2).items
+      expect(r.intacct_receivable_lines.size).to eq(2)
 
       # Don't bother checking both lines, since the same exact value was used for both
       l = r.intacct_receivable_lines.first
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       @line["line division"] = "11"
 
       r = @p.create_receivable @export, [@line], true
-      expect(r.intacct_receivable_lines).to have(1).item
+      expect(r.intacct_receivable_lines.size).to eq(1)
 
       l = r.intacct_receivable_lines.first
       expect(l.location).to eq @export.division
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       l2['charge amount'] = "-25"
 
       r = @p.create_receivable @export, [@line, l2], true
-      expect(r.persisted?).to be_true
+      expect(r.persisted?).to be_truthy
       expect(r.receivable_type).to eq "VFI Credit Note"
 
       # Credit memos invert the charge amounts (negative amounts are positive / positive are negative)
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       l2['charge amount'] = "-25"
 
       r = @p.create_receivable @export, [@line, l2], true
-      expect(r.persisted?).to be_true
+      expect(r.persisted?).to be_truthy
       expect(r.receivable_type).to eq "LMD Credit Note"
 
       # Credit memos invert the charge amounts (negative amounts are positive / positive are negative)
@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(r.id).to eq exists.id
       expect(r.intacct_errors).to be_nil
       # Make sure lines are deleted and recreated
-      expect(r.intacct_receivable_lines).to have(2).items
+      expect(r.intacct_receivable_lines.size).to eq(2)
     end
 
     it "updates lmd receivables from brokerage files that have not been sent" do
@@ -186,7 +186,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     it "creates a vfc payable" do
       p = @p.create_payable @export, "VENDOR", [@line, @line]
 
-      expect(p.persisted?).to be_true
+      expect(p.persisted?).to be_truthy
       expect(p.company).to eq "vfc"
       expect(p.vendor_number).to eq "VENDOR"
       expect(p.vendor_reference).to be_nil
@@ -195,7 +195,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(p.bill_date).to eq @export.invoice_date
       expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_BILL
 
-      expect(p.intacct_payable_lines).to have(2).items
+      expect(p.intacct_payable_lines.size).to eq(2)
       # Only bother inspecting one line since we used same
       # data for both lines
 
@@ -217,7 +217,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     it "creates a vfc payable to lmd division" do
       p = @p.create_payable @export, "LMD", [@line]
 
-      expect(p.persisted?).to be_true
+      expect(p.persisted?).to be_truthy
       expect(p.company).to eq "vfc"
       expect(p.vendor_number).to eq "LMD"
       expect(p.vendor_reference).to eq @line["freight file number"]
@@ -237,7 +237,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       @export.division = "11"
 
       p = @p.create_payable @export, "LMD VENDOR", [@line]
-      expect(p.persisted?).to be_true
+      expect(p.persisted?).to be_truthy
       expect(p.company).to eq "lmd"
       expect(p.vendor_number).to eq "LMD VENDOR"
       expect(p.vendor_reference).to be_nil
@@ -261,7 +261,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       @export.division = "12"
 
       p = @p.create_payable @export, "LMD VENDOR", [@line]
-      expect(p.persisted?).to be_true
+      expect(p.persisted?).to be_truthy
       expect(p.company).to eq "lmd"
     end
 
@@ -272,7 +272,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(exists.id).to eq p.id
       expect(p.intacct_errors).to be_nil
       # Make sure lines are deleted and recreated
-      expect(p.intacct_payable_lines).to have(1).item
+      expect(p.intacct_payable_lines.size).to eq(1)
     end
 
     it "skips payables that have already been sent" do
@@ -310,12 +310,12 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
 
 
       broker_receivables, lmd_receivables = @p.extract_receivable_lines @export, [@line, non_print, lmd_line1, lmd_line2]
-      expect(broker_receivables).to have(3).items
+      expect(broker_receivables.size).to eq(3)
       expect(broker_receivables.first).to eq @line
       expect(broker_receivables.second).to eq lmd_line1
       expect(broker_receivables.third).to eq lmd_line2
 
-      expect(lmd_receivables).to have(2).items
+      expect(lmd_receivables.size).to eq(2)
       expect(lmd_receivables.first).to eq lmd_line1
       expect(lmd_receivables.second).to eq lmd_line2
     end
@@ -324,16 +324,16 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       @export.division = "11"
 
       broker_receivables, lmd_receivables = @p.extract_receivable_lines @export, [@line]
-      expect(broker_receivables).to have(0).items
-      expect(lmd_receivables).to have(1).items
+      expect(broker_receivables.size).to eq(0)
+      expect(lmd_receivables.size).to eq(1)
     end
 
     it "extracts receivables and payables from an lmd invoice file for Air Freight Division" do
       @export.division = "12"
 
       broker_receivables, lmd_receivables = @p.extract_receivable_lines @export, [@line]
-      expect(broker_receivables).to have(0).items
-      expect(lmd_receivables).to have(1).items
+      expect(broker_receivables.size).to eq(0)
+      expect(lmd_receivables.size).to eq(1)
     end
   end
 
@@ -354,12 +354,12 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       lmd_line2['line division'] = "12"
 
       broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line, line2, non_payable, lmd_line, lmd_line2]
-      expect(broker_payable.keys).to have(3).items
-      expect(broker_payable[@line["vendor"]]).to have(1).item
-      expect(broker_payable[line2["vendor"]]).to have(1).item
-      expect(broker_payable["LMD"]).to have(2).items
+      expect(broker_payable.keys.size).to eq(3)
+      expect(broker_payable[@line["vendor"]].size).to eq(1)
+      expect(broker_payable[line2["vendor"]].size).to eq(1)
+      expect(broker_payable["LMD"].size).to eq(2)
 
-      expect(lmd_payable.keys).to have(0).items
+      expect(lmd_payable.keys.size).to eq(0)
     end
 
     it "pulls out all lmd payable lines from a result set for Ocean Freight Invoices" do
@@ -371,11 +371,11 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       non_payable['payable'] = "N"
 
       broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line, line2, non_payable]
-      expect(broker_payable.keys).to have(0).items
-      expect(lmd_payable.keys).to have(2).items
+      expect(broker_payable.keys.size).to eq(0)
+      expect(lmd_payable.keys.size).to eq(2)
 
-      expect(lmd_payable[@line["vendor"]]).to have(1).item
-      expect(lmd_payable[line2["vendor"]]).to have(1).item
+      expect(lmd_payable[@line["vendor"]].size).to eq(1)
+      expect(lmd_payable[line2["vendor"]].size).to eq(1)
     end
 
     it "pulls out all lmd payable lines from a result set for Air Freight Invoices" do
@@ -385,10 +385,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       non_payable['payable'] = "N"
 
       broker_payable, lmd_payable = @p.extract_payable_lines @export, [@line, non_payable]
-      expect(broker_payable.keys).to have(0).items
-      expect(lmd_payable.keys).to have(1).items
+      expect(broker_payable.keys.size).to eq(0)
+      expect(lmd_payable.keys.size).to eq(1)
 
-      expect(lmd_payable[@line["vendor"]]).to have(1).item
+      expect(lmd_payable[@line["vendor"]].size).to eq(1)
     end
   end
 
@@ -406,17 +406,17 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       @line["line division"] = "11"
 
       # We should have enqueue a couple file number dimension send attempts
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).exactly(2).times.and_return OpenChain::CustomHandler::Intacct::IntacctClient
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file number"], @line["freight file number"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).exactly(2).times.and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Freight File", @line["freight file number"], @line["freight file number"])
 
       @p.parse [@line, line2]
 
       @export.reload
 
       receivables = @export.intacct_receivables
-      expect(receivables).to have(2).items
-      expect(receivables.find_all {|r| r.company == "lmd"}).to have(1).item
+      expect(receivables.size).to eq(2)
+      expect(receivables.find_all {|r| r.company == "lmd"}.size).to eq(1)
       # This line is basically just a check that the right flag is used by the parse method when creating
       # lmd recievables
       expect(receivables.find {|r| r.company == "lmd"}.invoice_number).to eq @line["invoice number"]
@@ -425,9 +425,9 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(found[0].intacct_errors).to be_nil
 
       payables = @export.intacct_payables
-      expect(payables).to have(2).items
+      expect(payables.size).to eq(2)
 
-      expect(payables.find_all {|p| p.vendor_number == "LMD"}).to have(1).item
+      expect(payables.find_all {|p| p.vendor_number == "LMD"}.size).to eq(1)
       found = payables.find_all {|p| p.vendor_number == line2['vendor']}
       expect(found.size).to eq 1
       expect(found[0].intacct_errors).to be_nil
@@ -442,21 +442,21 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       line2['payable'] = "Y"
       line2['print'] = "N"
 
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file number"], @line["freight file number"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Freight File", @line["freight file number"], @line["freight file number"])
 
       @p.parse [@line, line2]
 
       @export.reload
       receivables = @export.intacct_receivables
-      expect(receivables).to have(1).item
+      expect(receivables.size).to eq(1)
       expect(receivables.first.company).to eq "lmd"
       # This line is basically just a check that the right flag is used by the parse method when creating
       # lmd recievables
       expect(receivables.first.invoice_number).to eq @line["invoice number"]
       
       payables = @export.intacct_payables
-      expect(payables).to have(1).item
+      expect(payables.size).to eq(1)
       expect(payables.first.vendor_number).to eq line2["vendor"]
     end
 
@@ -472,8 +472,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       line2 = @line.dup
       line2['check date'] = '0'
 
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
 
       @p.parse [@line, line2]
 
@@ -549,9 +549,9 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "updates vfc check info" do
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).exactly(2).times.and_return OpenChain::CustomHandler::Intacct::IntacctClient
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["file number"], @line["file number"])
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).exactly(2).times.and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Broker File", @line["file number"], @line["file number"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
 
       customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @check.customer_number), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
       vendor = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @check.vendor_number), value: "VENDOR", cross_reference_type: DataCrossReference::INTACCT_VENDOR_XREF
@@ -578,9 +578,9 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "updates updates customer and vendor numbers using xref values" do
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).exactly(2).times.and_return OpenChain::CustomHandler::Intacct::IntacctClient
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["file number"], @line["file number"])
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).exactly(2).times.and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Broker File", @line["file number"], @line["file number"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
 
       @p.parse_check_result [@line]
 
@@ -603,8 +603,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     it 'updates lmd check info' do
       @line['division'] = '11'
 
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).once.and_return OpenChain::CustomHandler::Intacct::IntacctClient
-      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).once.and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with("Freight File", @line["freight file"], @line["freight file"])
 
       @p.parse_check_result [@line]
 

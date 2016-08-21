@@ -11,32 +11,32 @@ describe CustomValue do
       cv.value = "abc"
       CustomValue.batch_write! [cv]
       found = @p.get_custom_value @cd
-      found.value.should == "abc"
-      found.id.should_not be_nil
+      expect(found.value).to eq("abc")
+      expect(found.id).not_to be_nil
     end
     it "should update an existing custom value" do
       @p.update_custom_value! @cd, "xyz"
       cv = CustomValue.first
       cv.value = 'abc'
       CustomValue.batch_write! [cv]
-      CustomValue.all.should have(1).value
+      expect(CustomValue.all.size).to eq(1)
       found = Product.find(@p.id).get_custom_value(@cd)
-      found.value.should == "abc"
+      expect(found.value).to eq("abc")
     end
     it "should fail if parent object is not saved" do
-      lambda {CustomValue.batch_write! [CustomValue.new(:custom_definition=>@cd,:customizable=>Product.new)]}.should raise_error
+      expect {CustomValue.batch_write! [CustomValue.new(:custom_definition=>@cd,:customizable=>Product.new)]}.to raise_error
     end
     it "should fail if custom definition not set" do
-      lambda {CustomValue.batch_write! [CustomValue.new(:customizable=>@p)]}.should raise_error
+      expect {CustomValue.batch_write! [CustomValue.new(:customizable=>@p)]}.to raise_error
     end
     it "should roll back all if one fails" do
       @p.update_custom_value! @cd, "xyz"
       cv = CustomValue.find_by_custom_definition_id @cd.id
       cv.value = 'abc'
       bad_cv = CustomValue.new(:customizable=>@p)
-      lambda {CustomValue.batch_write! [cv,bad_cv]}.should raise_error
-      CustomValue.all.should have(1).value
-      CustomValue.first.value.should == 'xyz'
+      expect {CustomValue.batch_write! [cv,bad_cv]}.to raise_error
+      expect(CustomValue.all.size).to eq(1)
+      expect(CustomValue.first.value).to eq('xyz')
     end
     it "should insert and update values" do
       cd2 = Factory(:custom_definition,:module_type=>"Product",:data_type=>"integer")
@@ -47,18 +47,18 @@ describe CustomValue do
       cv2.value = 2
       CustomValue.batch_write! [cv,cv2]
       @p.reload
-      @p.get_custom_value(@cd).value.should == "abc"
-      @p.get_custom_value(cd2).value.should == 2
+      expect(@p.get_custom_value(@cd).value).to eq("abc")
+      expect(@p.get_custom_value(cd2).value).to eq(2)
     end
     it "should touch parent's changed at if requested during batch_write" do
       ActiveRecord::Base.connection.execute "UPDATE products SET changed_at = \"2004-01-01\";"
       @p.reload
-      @p.changed_at.should < 5.seconds.ago
+      expect(@p.changed_at).to be < 5.seconds.ago
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = 'abc'
       CustomValue.batch_write! [cv], true
       @p.reload
-      @p.changed_at.should > 5.seconds.ago
+      expect(@p.changed_at).to be > 5.seconds.ago
     end
     it "should touch parent's changed at if new custom value added" do
       @p.update_custom_value! @cd, 'abc'
@@ -113,35 +113,35 @@ describe CustomValue do
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = ';" ABC'
       CustomValue.batch_write! [cv], true
-      CustomValue.first.value.should == ";\" ABC"
+      expect(CustomValue.first.value).to eq(";\" ABC")
     end
     it "should handle string" do
       @cd.update_attributes(:data_type=>'string')
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = 'abc'
       CustomValue.batch_write! [cv], true
-      @p.get_custom_value(@cd).value.should == 'abc'
+      expect(@p.get_custom_value(@cd).value).to eq('abc')
     end
     it "should handle date" do
       @cd.update_attributes(:data_type=>'date')
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = Date.new(2012,4,21)
       CustomValue.batch_write! [cv], true
-      @p.get_custom_value(@cd).value.should == Date.new(2012,4,21)
+      expect(@p.get_custom_value(@cd).value).to eq(Date.new(2012,4,21))
     end
     it "should handle decimal" do
       @cd.update_attributes(:data_type=>'decimal')
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = 12.1
       CustomValue.batch_write! [cv], true
-      @p.get_custom_value(@cd).value.should == 12.1
+      expect(@p.get_custom_value(@cd).value).to eq(12.1)
     end
     it "should handle integer" do
       @cd.update_attributes(:data_type=>'integer')
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = 12.1
       CustomValue.batch_write! [cv], true
-      @p.get_custom_value(@cd).value.should == 12
+      expect(@p.get_custom_value(@cd).value).to eq(12)
     end
     it "should handle boolean" do
       @cd.update_attributes(:data_type=>'boolean')
@@ -149,18 +149,18 @@ describe CustomValue do
       cv.value = true
       CustomValue.batch_write! [cv], true
       @p = Product.find @p.id
-      @p.get_custom_value(@cd).value.should be_true
+      expect(@p.get_custom_value(@cd).value).to be_truthy
       cv.value = false
       CustomValue.batch_write! [cv], true
       @p = Product.find @p.id
-      @p.get_custom_value(@cd).value.should be_false
+      expect(@p.get_custom_value(@cd).value).to be_falsey
     end
     it "should handle text" do
       @cd.update_attributes(:data_type=>'text')
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = 'aaaa'
       CustomValue.batch_write! [cv], true
-      @p.get_custom_value(@cd).value.should == 'aaaa'
+      expect(@p.get_custom_value(@cd).value).to eq('aaaa')
     end
     it "should handle datetime" do
       t = 2.minutes.ago
@@ -185,11 +185,11 @@ describe CustomValue do
   describe "sql_field_name" do
     it "should handle data types" do
       {"string"=>"string_value","boolean"=>"boolean_value","text"=>"text_value","date"=>"date_value","decimal"=>"decimal_value","integer"=>"integer_value","datetime"=>"datetime_value"}.each do |k,v|
-        CustomValue.new(:custom_definition=>CustomDefinition.new(:data_type=>k)).sql_field_name.should == v
+        expect(CustomValue.new(:custom_definition=>CustomDefinition.new(:data_type=>k)).sql_field_name).to eq(v)
       end
     end
     it "should error if no custom definition" do
-      lambda {CustomValue.new.sql_field_name}.should raise_error "Cannot get sql field name without a custom definition"
+      expect {CustomValue.new.sql_field_name}.to raise_error "Cannot get sql field name without a custom definition"
     end
   end
 

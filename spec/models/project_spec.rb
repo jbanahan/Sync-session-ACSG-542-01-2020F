@@ -5,37 +5,37 @@ describe Project do
     describe :can_view? do
       it "should be able to view if user can view projects" do
         u = User.new
-        u.should_receive(:view_projects?).and_return true
-        expect(Project.new.can_view?(u)).to be_true
+        expect(u).to receive(:view_projects?).and_return true
+        expect(Project.new.can_view?(u)).to be_truthy
       end
       it "should not be able to view if user can view projects" do
         u = User.new
-        u.should_receive(:view_projects?).and_return false
-        expect(Project.new.can_view?(u)).to be_false
+        expect(u).to receive(:view_projects?).and_return false
+        expect(Project.new.can_view?(u)).to be_falsey
       end
     end
     describe :can_edit? do
       it "should be able to edit if user can edit projects" do
         u = User.new
-        u.should_receive(:edit_projects?).and_return true
-        expect(Project.new.can_edit?(u)).to be_true
+        expect(u).to receive(:edit_projects?).and_return true
+        expect(Project.new.can_edit?(u)).to be_truthy
       end
       it "should not be able to edit if user can edit projects" do
         u = User.new
-        u.should_receive(:edit_projects?).and_return false
-        expect(Project.new.can_edit?(u)).to be_false
+        expect(u).to receive(:edit_projects?).and_return false
+        expect(Project.new.can_edit?(u)).to be_falsey
       end
     end
   end
   describe :red? do
     it "should be red if there are red_messages" do
       p = Project.new()
-      p.stub(:red_messages).and_return ['abc']
+      allow(p).to receive(:red_messages).and_return ['abc']
       expect(p).to be_red
     end
     it "should not be red if there are not red_messages" do
       p = Project.new()
-      p.stub(:red_messages).and_return []
+      allow(p).to receive(:red_messages).and_return []
       expect(p).not_to be_red
     end
   end

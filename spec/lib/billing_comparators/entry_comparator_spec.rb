@@ -3,13 +3,13 @@ require 'spec_helper'
 describe OpenChain::BillingComparators::EntryComparator do
   describe :compare do
     it "exits if the type isn't 'Entry'" do
-      EntitySnapshot.should_not_receive(:where)
+      expect(EntitySnapshot).not_to receive(:where)
       described_class.compare('Product', 1, 'old_bucket', 'old_path', 'old_version', 'new_bucket', 'new_path', 'new_version')
     end
 
     it "runs comparisons" do
       es = Factory(:entity_snapshot, bucket: 'new_bucket', doc_path: 'new_path', version: 'new_version')
-      described_class.should_receive(:check_new_entry).with(id: 2, old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version', 
+      expect(described_class).to receive(:check_new_entry).with(id: 2, old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version', 
                                                             new_bucket: 'new_bucket', new_path: 'new_path', new_version: 'new_version', new_snapshot_id: es.id)
       
       described_class.compare('Entry', 2, 'old_bucket', 'old_path', 'old_version', 'new_bucket', 'new_path', 'new_version')
@@ -30,7 +30,7 @@ describe OpenChain::BillingComparators::EntryComparator do
     end
 
     it "ignores updated entries" do
-      BillableEvent.should_not_receive(:create!)
+      expect(BillableEvent).not_to receive(:create!)
       described_class.check_new_entry(id: 1, old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version', new_bucket: 'new_bucket', 
                                       new_path: 'new_path', new_version: 'new_version', new_snapshot_id: 1)
     end

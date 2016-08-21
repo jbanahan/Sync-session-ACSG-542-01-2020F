@@ -4,20 +4,20 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
 
   describe "permission?" do
     it "allows master users only" do
-      Company.any_instance.should_receive(:master?).and_return true
-      expect(described_class.permission? Factory(:user)).to be_true
+      expect_any_instance_of(Company).to receive(:master?).and_return true
+      expect(described_class.permission? Factory(:user)).to be_truthy
     end
 
     it "rejects non-master companies" do
-      Company.any_instance.should_receive(:master?).and_return false
-      expect(described_class.permission? Factory(:user)).to be_false
+      expect_any_instance_of(Company).to receive(:master?).and_return false
+      expect(described_class.permission? Factory(:user)).to be_falsey
     end
   end
 
   describe "run_report" do
     it "runs the report" do
       user =  Factory(:user)
-      OpenChain::Report::EddieBauerCaStatementSummary.any_instance.should_receive(:run).with(user, instance_of(HashWithIndifferentAccess))
+      expect_any_instance_of(OpenChain::Report::EddieBauerCaStatementSummary).to receive(:run).with(user, instance_of(HashWithIndifferentAccess))
       OpenChain::Report::EddieBauerCaStatementSummary.run_report user, {}
     end
   end
@@ -37,7 +37,7 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
       @broker_invoice_line1 = Factory(:broker_invoice_line, broker_invoice: @broker_invoice, charge_amount: 5)
       @broker_invoice_line2 = Factory(:broker_invoice_line, broker_invoice: @broker_invoice, charge_amount: 15, charge_type: "D")
 
-      MasterSetup.any_instance.stub(:request_host).and_return "localhost"
+      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
     end
 
     after :each do

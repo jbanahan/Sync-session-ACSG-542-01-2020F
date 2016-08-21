@@ -44,9 +44,9 @@ describe OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHan
     let (:xl_client) { double("OpenChain::XLClient") }
     let (:custom_file) {
       cf = double("CustomFile")
-      cf.stub(:attached_file_name).and_return "file.xls"
+      allow(cf).to receive(:attached_file_name).and_return "file.xls"
       attached = double("Paperclip::Attachment")
-      cf.stub(:attached).and_return attached
+      allow(cf).to receive(:attached).and_return attached
 
     }
 

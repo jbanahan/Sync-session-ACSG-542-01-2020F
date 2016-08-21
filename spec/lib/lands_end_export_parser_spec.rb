@@ -17,42 +17,42 @@ describe OpenChain::LandsEndExportParser do
       t << @lines.join("\n")
       t.flush
       OpenChain::LandsEndExportParser.parse_csv_file t.path, @importer
-      DutyCalcExportFileLine.all.should have(2).items
+      expect(DutyCalcExportFileLine.all.size).to eq(2)
       t.unlink
     end
   end
   describe "parse_csv_line" do
     it "should parse line into DutyCalcExportFileLine" do
       d = OpenChain::LandsEndExportParser.parse_csv_line @lines[1].parse_csv, 0, @importer
-      d.export_date.should == Date.new(2012,1,4)
-      d.ship_date.should == Date.new(2012,1,4)
-      d.part_number.should == "3250356"
-      d.carrier.should be_nil
-      d.ref_1.should == "1Z7R65572007202242" #Lands End Tracking Number
-      d.ref_2.should == "15818-019998734" #B3 Number
-      d.ref_3.should be_nil
-      d.ref_4.should be_nil
-      d.destination_country.should == "CA"
-      d.quantity.should == 1
-      d.description.should == "CHP"
-      d.uom.should == "EA"
-      d.exporter.should == "Lands End"
-      d.status.should be_nil
-      d.action_code.should == "E"
-      d.nafta_duty.should be_nil
-      d.nafta_us_equiv_duty.should be_nil
-      d.nafta_duty_rate.should be_nil
-      d.duty_calc_export_file.should be_nil
-      d.hts_code.should == "6116930092"
-      d.importer.should == @importer
+      expect(d.export_date).to eq(Date.new(2012,1,4))
+      expect(d.ship_date).to eq(Date.new(2012,1,4))
+      expect(d.part_number).to eq("3250356")
+      expect(d.carrier).to be_nil
+      expect(d.ref_1).to eq("1Z7R65572007202242") #Lands End Tracking Number
+      expect(d.ref_2).to eq("15818-019998734") #B3 Number
+      expect(d.ref_3).to be_nil
+      expect(d.ref_4).to be_nil
+      expect(d.destination_country).to eq("CA")
+      expect(d.quantity).to eq(1)
+      expect(d.description).to eq("CHP")
+      expect(d.uom).to eq("EA")
+      expect(d.exporter).to eq("Lands End")
+      expect(d.status).to be_nil
+      expect(d.action_code).to eq("E")
+      expect(d.nafta_duty).to be_nil
+      expect(d.nafta_us_equiv_duty).to be_nil
+      expect(d.nafta_duty_rate).to be_nil
+      expect(d.duty_calc_export_file).to be_nil
+      expect(d.hts_code).to eq("6116930092")
+      expect(d.importer).to eq(@importer)
     end
     it 'should raise exception if part is empty' do
       line = "\"15818-019998734\",\"1/4/2012\",\"1/3/2012\",\"\",\"\",\"\",\"00104010-11364\",\"1Z7R65572007202242\",1,\"6116.93.00.92\",\"PAR\",\"CN\",\"\",1,6.99,\"USD\",1.021,\"2/24/2012\",18,1.28,.42,0,0,1.7,0,\"\",2,\"LANDSEND-C\",\"\"".parse_csv
-      lambda {OpenChain::LandsEndExportParser.parse_csv_line line, 0, @importer}.should raise_error
+      expect {OpenChain::LandsEndExportParser.parse_csv_line line, 0, @importer}.to raise_error
     end
     it 'should raise exception if row does not have 29 elements' do
       line = "\"15818-019998734\",\"1/4/2012\",\"1/3/2012\",\"\",\"\",\"\",\"00104010-11364\",\"1Z7R65572007202242\",1,\"6116.93.00.92\",\"PAR\",\"CN\",\"3250356\",1,6.99,\"USD\",1.021,\"2/24/2012\",18,1.28,.42,0,0,1.7,0,\"\",2,\"LANDSEND-C\"".parse_csv
-      lambda {OpenChain::LandsEndExportParser.parse_csv_line line}.should raise_error
+      expect {OpenChain::LandsEndExportParser.parse_csv_line line}.to raise_error
     end
   end
 end

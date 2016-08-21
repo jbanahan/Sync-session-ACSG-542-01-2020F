@@ -50,8 +50,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
   }
   before :each do
     ms = double("MasterSetup")
-    ms.stub(:request_host).and_return "http://localhost"
-    MasterSetup.stub(:get).and_return ms
+    allow(ms).to receive(:request_host).and_return "http://localhost"
+    allow(MasterSetup).to receive(:get).and_return ms
   end
 
   describe "generate_report" do
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
 
     it "generates a report and emails it" do
       # Just mock out the method that generates the report, it's tested above
-      subject.should_receive(:generate_report).with([invoice], Date.new(2016, 3, 1)).and_return workbook
+      expect(subject).to receive(:generate_report).with([invoice], Date.new(2016, 3, 1)).and_return workbook
 
       subject.generate_and_send_report [invoice], Date.new(2016, 3, 1)
 

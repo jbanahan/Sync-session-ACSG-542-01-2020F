@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
 
 
     @user = Factory :master_user
-    @shipment.stub(:can_view?).and_return true
+    allow(@shipment).to receive(:can_view?).and_return true
   end
 
   def create_lines shipment, order, line_count = 1, container = nil

@@ -7,29 +7,29 @@ describe OpenChain::CustomHandler::Generic210Generator do
     before :each do
       @entry = Factory(:entry, customer_number: "TEST")
       @master_setup = double("MasterSetup")
-      MasterSetup.stub(:get).and_return @master_setup
-      @master_setup.stub(:system_code).and_return "www-vfitrack-net"
+      allow(MasterSetup).to receive(:get).and_return @master_setup
+      allow(@master_setup).to receive(:system_code).and_return "www-vfitrack-net"
     end
 
     it "accepts entries with a customer number linked to a sendable setup" do
       setup = AutomatedBillingSetup.create! customer_number: "TEST", enabled: true
-      expect(described_class.new.accepts? :event, @entry).to be_true
+      expect(described_class.new.accepts? :event, @entry).to be_truthy
     end
 
     it "does not accept setups that are not enabled" do
       setup = AutomatedBillingSetup.create! customer_number: "TEST", enabled: false
-      expect(described_class.new.accepts? :event, @entry).to be_false
+      expect(described_class.new.accepts? :event, @entry).to be_falsey
     end
 
     it "does not accept setups that don't have passing search criterions" do
       setup = AutomatedBillingSetup.create! customer_number: "TEST", enabled: true
       setup.search_criterions.create! model_field_uid: "ent_cust_num", operator: "eq", value: "123"
-      expect(described_class.new.accepts? :event, @entry).to be_false
+      expect(described_class.new.accepts? :event, @entry).to be_falsey
     end
 
     it "does not accept on non-www-vfitrack-net systems" do
       setup = AutomatedBillingSetup.create! customer_number: "TEST", enabled: true
-      expect(described_class.new.accepts? :event, @entry).to be_true
+      expect(described_class.new.accepts? :event, @entry).to be_truthy
     end
   end
 
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Generic210Generator do
     before :each do
       @g = subject
       @ftped_files = []
-      @g.stub(:ftp_file) do |tempfile|
+      allow(@g).to receive(:ftp_file) do |tempfile|
         @ftped_files << tempfile.read
       end
 
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::Generic210Generator do
     end
 
     it "generates and sends a 210 xml file" do
-      Lock.should_receive(:acquire).with("210-#{@entry.broker_reference}").and_yield
+      expect(Lock).to receive(:acquire).with("210-#{@entry.broker_reference}").and_yield
       @g.receive :save, @entry
 
       expect(@ftped_files.size).to eq 1

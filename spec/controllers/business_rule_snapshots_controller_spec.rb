@@ -11,11 +11,11 @@ describe BusinessRuleSnapshotsController do
 
   describe "index" do
     it "lists all rule comparisons for an object" do
-      Entry.any_instance.stub(:can_view?).with(user).and_return true
-      user.stub(:view_business_validation_results?).and_return true
+      allow_any_instance_of(Entry).to receive(:can_view?).with(user).and_return true
+      allow(user).to receive(:view_business_validation_results?).and_return true
 
       comparisons = [{"key" => "val"}]
-      BusinessRuleSnapshot.should_receive(:rule_comparisons).with(instance_of(Entry)).and_return comparisons
+      expect(BusinessRuleSnapshot).to receive(:rule_comparisons).with(instance_of(Entry)).and_return comparisons
 
       get :index, {recordable_type: "entries", recordable_id: entity.id}
       expect(response).not_to be_redirect
@@ -27,15 +27,15 @@ describe BusinessRuleSnapshotsController do
     end
 
     it "redirects with error if user can't view entity" do
-      Entry.any_instance.stub(:can_view?).with(user).and_return false
+      allow_any_instance_of(Entry).to receive(:can_view?).with(user).and_return false
       get :index, {recordable_type: "entries", recordable_id: entity.id}
       expect(response).to be_redirect
       expect(flash[:errors]).to include "You do not have permission to view these business rules."
     end
 
     it "redirects with error if user can't view validation results" do
-      Entry.any_instance.stub(:can_view?).with(user).and_return true
-      user.stub(:view_business_validation_results?).and_return false
+      allow_any_instance_of(Entry).to receive(:can_view?).with(user).and_return true
+      allow(user).to receive(:view_business_validation_results?).and_return false
       get :index, {recordable_type: "entries", recordable_id: entity.id}
       expect(response).to be_redirect
       expect(flash[:errors]).to include "You do not have permission to view these business rules."

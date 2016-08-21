@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       p4 = IntacctPayable.create! vendor_number: "Vendor", company: "A"
 
 
-      @api_client.should_receive(:send_payable).with(p3, [])
+      expect(@api_client).to receive(:send_payable).with(p3, [])
 
       @p.push_payables ["C"]
     end
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       c1 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill"
       c2 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_payable_id: p.id
 
-      @api_client.should_receive(:send_payable).with(p, [c1, c2])
+      expect(@api_client).to receive(:send_payable).with(p, [c1, c2])
 
       @p.push_payables ['C']
 
@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       p = IntacctPayable.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill"
       c1 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_payable_id: -1
 
-      @api_client.should_receive(:send_payable).with(p, [])
+      expect(@api_client).to receive(:send_payable).with(p, [])
 
       @p.push_payables ['C']
     end
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       p = IntacctPayable.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill"
       c1 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_adjustment_key: "ADJ-123"
 
-      @api_client.should_receive(:send_payable).with(p, [])
+      expect(@api_client).to receive(:send_payable).with(p, [])
 
       @p.push_payables ['C']
     end
@@ -58,9 +58,9 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       p3 = IntacctPayable.create! vendor_number: "Vendor", company: 'C'
       p3.intacct_upload_date = Time.zone.now
       # This is a bit of a hack so we can test the logic
-      IntacctPayable.should_receive(:find).with(p3.id).and_return p3
-      Lock.should_receive(:with_lock_retry).with(p3).and_yield
-      @api_client.should_not_receive(:send_payable)
+      expect(IntacctPayable).to receive(:find).with(p3.id).and_return p3
+      expect(Lock).to receive(:with_lock_retry).with(p3).and_yield
+      expect(@api_client).not_to receive(:send_payable)
 
       @p.push_payables ['C']
     end
@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       r3 = IntacctReceivable.create! customer_number: "CUST", company: "C"
       r4 = IntacctReceivable.create! customer_number: "CUST", company: "A"
 
-      @api_client.should_receive(:send_receivable).with(r3)
+      expect(@api_client).to receive(:send_receivable).with(r3)
 
       @p.push_receivables ["C"]
     end
@@ -82,9 +82,9 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       r3 = IntacctReceivable.create! customer_number: "CUST", company: "C"
       r3.intacct_upload_date = Time.zone.now
 
-      IntacctReceivable.should_receive(:find).with(r3.id).and_return r3
-      Lock.should_receive(:with_lock_retry).with(r3).and_yield
-      @api_client.should_not_receive(:send_receivable)
+      expect(IntacctReceivable).to receive(:find).with(r3.id).and_return r3
+      expect(Lock).to receive(:with_lock_retry).with(r3).and_yield
+      expect(@api_client).not_to receive(:send_receivable)
 
       @p.push_receivables ["C"]
     end
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       c3 = IntacctCheck.create! vendor_number: "Vendor", intacct_upload_date: Time.zone.now, company: "C"
       c4 = IntacctCheck.create! vendor_number: "Vendor", company: "A"
 
-      @api_client.should_receive(:send_check).with c1, false
+      expect(@api_client).to receive(:send_check).with c1, false
 
       @p.push_checks ["C"]
     end
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
       p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY", intacct_upload_date: Time.zone.now, payable_type: IntacctPayable::PAYABLE_TYPE_BILL
 
-      @api_client.should_receive(:send_check).with c1, true
+      expect(@api_client).to receive(:send_check).with c1, true
 
       @p.push_checks ["VFI"]
     end
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
       p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
 
-      @api_client.should_receive(:send_check).with c1, false
+      expect(@api_client).to receive(:send_check).with c1, false
 
       @p.push_checks ["VFI"]
     end
@@ -124,9 +124,9 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       c = IntacctCheck.create! customer_number: "CUST", company: "VFI"
       c.intacct_upload_date = Time.zone.now
 
-      IntacctCheck.should_receive(:find).with(c.id).and_return c
-      Lock.should_receive(:with_lock_retry).with(c).and_yield
-      @api_client.should_not_receive(:send_check)
+      expect(IntacctCheck).to receive(:find).with(c.id).and_return c
+      expect(Lock).to receive(:with_lock_retry).with(c).and_yield
+      expect(@api_client).not_to receive(:send_check)
 
       @p.push_checks ["VFI"]
     end
@@ -135,7 +135,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_adjustment_key: "ADJ-KEY"
       p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY", intacct_upload_date: Time.zone.now, payable_type: IntacctPayable::PAYABLE_TYPE_BILL
 
-      @api_client.should_receive(:send_check).with c1, false
+      expect(@api_client).to receive(:send_check).with c1, false
 
       @p.push_checks ["VFI"]
     end
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
 
   describe "run_schedulable" do
     it "calls run with company list" do
-      described_class.any_instance.should_receive(:run).with(['A', 'B'])
+      expect_any_instance_of(described_class).to receive(:run).with(['A', 'B'])
       described_class.run_schedulable JSON.parse('{"companies":["A", "B"]}')
     end
 

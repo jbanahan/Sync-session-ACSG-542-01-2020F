@@ -93,7 +93,7 @@ describe OpenChain::Api::DescriptorBasedApiEntityJsonizer do
     end
 
     it "validates user access to model fields" do
-      ModelField.any_instance.stub(:can_view?).with(user).and_return false
+      allow_any_instance_of(ModelField).to receive(:can_view?).with(user).and_return false
       json = subject.entity_to_json user, folder, [:fld_name, :cmt_subject, :grp_name]
       expect(ActiveSupport::JSON.decode(json)).to eq({'folder'=>{'id'=>folder.id}})
     end

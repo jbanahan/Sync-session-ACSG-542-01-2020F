@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
   describe :integration_folder do
     it "should use the correct folder" do
-      described_class.new.integration_folder.should eq ["//opt/wftpserver/ftproot/www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
+      expect(described_class.new.integration_folder).to eq ["//opt/wftpserver/ftproot/www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
     end
   end
 
@@ -102,9 +102,9 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         described_class.new.parse @xml_lambda.call
 
         r = DataCrossReference.first
-        r.cross_reference_type.should eq DataCrossReference::RL_PO_TO_BRAND
-        r.key.should eq @po_number
-        r.value.should eq @po_lines.first[:merchandise_division_numeric]
+        expect(r.cross_reference_type).to eq DataCrossReference::RL_PO_TO_BRAND
+        expect(r.key).to eq @po_number
+        expect(r.value).to eq @po_lines.first[:merchandise_division_numeric]
       end
 
       it "should update existing cross reference records" do
@@ -113,7 +113,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         described_class.new.parse @xml_lambda.call
 
         r = DataCrossReference.first
-        r.value.should eq @po_lines.first[:merchandise_division_numeric]
+        expect(r.value).to eq @po_lines.first[:merchandise_division_numeric]
       end
 
       it "saves XML information as an Order" do
@@ -129,7 +129,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("#{@message_date} #{@message_time[0,2]}:#{@message_time[2,2]}").in_time_zone("UTC")
         expect(order.get_custom_value(@cdefs[:ord_invoicing_system]).value).to eq "Tradecard"
         expect(order.get_custom_value(@cdefs[:ord_division]).value).to eq @po_lines.first[:merchandise_division]
-        expect(order.order_lines).to have(1).item
+        expect(order.order_lines.size).to eq(1)
 
         l = order.order_lines.first
         line = @po_lines.first
@@ -272,9 +272,9 @@ XML
         described_class.new.parse @xml_lambda.call
 
         r = DataCrossReference.first
-        r.cross_reference_type.should eq DataCrossReference::RL_PO_TO_BRAND
-        r.key.should eq @po_number
-        r.value.should eq @merchandise_division
+        expect(r.cross_reference_type).to eq DataCrossReference::RL_PO_TO_BRAND
+        expect(r.key).to eq @po_number
+        expect(r.value).to eq @merchandise_division
 
         order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
         expect(order).not_to be_nil

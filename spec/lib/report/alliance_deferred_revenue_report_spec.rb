@@ -5,27 +5,27 @@ describe OpenChain::Report::AllianceDeferredRevenueReport do
   describe "permission?" do
     it "grants permission to users in accounting group" do
       d = double("MasterSetup")
-      MasterSetup.stub(:get).and_return d
-      d.stub(:system_code).and_return "www-vfitrack-net"
+      allow(MasterSetup).to receive(:get).and_return d
+      allow(d).to receive(:system_code).and_return "www-vfitrack-net"
 
       u = Factory(:user)
       u.groups << Group.use_system_group("intacct-accounting")
 
-      expect(described_class.permission? u).to be_true
+      expect(described_class.permission? u).to be_truthy
     end
 
     it "does not allow plain users" do
       u = Factory(:user)
       d = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return d
-      d.should_receive(:system_code).and_return "www-vfitrack-net"
+      expect(MasterSetup).to receive(:get).and_return d
+      expect(d).to receive(:system_code).and_return "www-vfitrack-net"
 
-      expect(described_class.permission? u).to be_false
+      expect(described_class.permission? u).to be_falsey
     end
 
     it "does not allow non-vfitrack usage" do
       u = Factory(:master_user)
-      expect(described_class.permission? u).to be_false
+      expect(described_class.permission? u).to be_falsey
     end
   end
 
@@ -35,7 +35,7 @@ describe OpenChain::Report::AllianceDeferredRevenueReport do
       client = double("SqlProxyClient")
       settings = {'start_date' => "2014-01-01", 'report_result_id' => 1, 'sql_proxy_client' => client}
 
-      client.should_receive(:report_query).with("deferred_revenue", {:start_date => "20140101"}, {'report_result_id' => 1})
+      expect(client).to receive(:report_query).with("deferred_revenue", {:start_date => "20140101"}, {'report_result_id' => 1})
 
       described_class.run_report u, settings
     end

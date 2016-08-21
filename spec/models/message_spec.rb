@@ -9,13 +9,13 @@ describe Message do
       Factory(:message,:user=>@u,:viewed=>false) #not viewed should be counted
       Factory(:message,:user=>@u) #no viewed value should be counted
       Factory(:message,:user=>@u,:viewed=>true) #viewed should not be counted
-      Message.unread_message_count(@u.id).should == 2
+      expect(Message.unread_message_count(@u.id)).to eq(2)
     end
   end
 
   describe "run_schedulable" do
     it "implements SchedulableJob interface" do
-      Message.should_receive(:purge_messages)
+      expect(Message).to receive(:purge_messages)
       Message.run_schedulable
     end
   end
@@ -24,8 +24,8 @@ describe Message do
     let(:user) { Factory(:user, email_new_messages: true) }
 
     it "sends emails to user who gets a system message" do
-      OpenMailer.should_receive(:delay).and_return OpenMailer
-      OpenMailer.should_receive(:send_message)
+      expect(OpenMailer).to receive(:delay).and_return OpenMailer
+      expect(OpenMailer).to receive(:send_message)
 
       user.messages.create! subject: "Subject", body: "Body"
     end
@@ -33,7 +33,7 @@ describe Message do
     it "does not send email to user that doesn't want them" do
       user.email_new_messages = false
       user.save!
-      OpenMailer.should_not_receive(:delay)
+      expect(OpenMailer).not_to receive(:delay)
       user.messages.create! subject: "Subject", body: "Body"
     end
 
@@ -41,7 +41,7 @@ describe Message do
       user.disabled = true
       user.save!
 
-      OpenMailer.should_not_receive(:delay)
+      expect(OpenMailer).not_to receive(:delay)
       user.messages.create! subject: "Subject", body: "Body"
     end
   end

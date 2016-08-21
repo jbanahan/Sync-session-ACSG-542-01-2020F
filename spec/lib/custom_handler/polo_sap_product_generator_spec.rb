@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
   end
   describe :sync_code do
     it "should be polo_sap" do
-      @g.sync_code.should == 'polo_sap'
+      expect(@g.sync_code).to eq('polo_sap')
     end
   end
   describe :run_schedulable do
@@ -38,11 +38,11 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should call ftp_file & sync_csv repeatedly until all products are sent" do
-      described_class.any_instance.should_receive(:ftp_file).exactly(2).times do |file|
+      expect_any_instance_of(described_class).to receive(:ftp_file).exactly(2).times do |instance, file|
         @files << file
       end
       # Mock out the max product count so we only have 1 product per file
-      described_class.any_instance.should_receive(:max_products).exactly(3).times.and_return 1
+      expect_any_instance_of(described_class).to receive(:max_products).exactly(3).times.and_return 1
       described_class.run_schedulable
       expect(@files.size).to eq 2
 
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
   it "should raise error if no sap brand custom definition" do
     @sap_brand_cd.destroy
-    lambda {described_class.new}.should raise_error
+    expect {described_class.new}.to raise_error
   end
   describe :sync_csv do
     before :each do
@@ -73,8 +73,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       end
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
-      a.should have(3).items
-      a.collect {|x| x[2]}.sort.should == ['CA','IT','US']
+      expect(a.size).to eq(3)
+      expect(a.collect {|x| x[2]}.sort).to eq(['CA','IT','US'])
     end
     it "should allow custom list of valid countries" do
       italy = Factory(:country,:iso_code=>'IT')
@@ -86,8 +86,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       end
       @tmp = described_class.new(:custom_where=>"WHERE 1=1",:custom_countries=>['NZ','IT']).sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
-      a.should have(2).items
-      a.collect {|x| x[2]}.sort.should == ['IT','NZ']
+      expect(a.size).to eq(2)
+      expect(a.collect {|x| x[2]}.sort).to eq(['IT','NZ'])
     end
     it "should not send records with blank tariff numbers" do
       p1 = Factory(:product)
@@ -97,8 +97,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p2))
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
-      a.should have(1).item
-      a[0][0].should == p2.unique_identifier
+      expect(a.size).to eq(1)
+      expect(a[0][0]).to eq(p2.unique_identifier)
     end
     it "should not send products that aren't SAP Brand" do
       p1 = Factory(:product)
@@ -109,8 +109,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       [p1,p2,p3].each {|p| Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))}
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
-      a.should have(1).item
-      a[0][0].should == p1.unique_identifier
+      expect(a.size).to eq(1)
+      expect(a[0][0]).to eq(p1.unique_identifier)
     end
     it "should not limit if :no_brand_restriction = true" do
       p1 = Factory(:product)
@@ -121,8 +121,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       [p1,p2,p3].each {|p| Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))}
       @tmp = described_class.new(:no_brand_restriction=>true,:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
-      a.should have(3).item
-      a.collect {|x| x[0]}.sort.should == [p1.unique_identifier,p2.unique_identifier,p3.unique_identifier].sort
+      expect(a.size).to eq(3)
+      expect(a.collect {|x| x[0]}.sort).to eq([p1.unique_identifier,p2.unique_identifier,p3.unique_identifier].sort)
     end
 
     it "should sync and skip product with invalid UTF-8 data" do
@@ -135,8 +135,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
-      a.should have(1).item
-      a.collect {|x| x[0]}.should == [p1.unique_identifier]
+      expect(a.size).to eq(1)
+      expect(a.collect {|x| x[0]}).to eq([p1.unique_identifier])
     end
 
     it "removes newlines" do
@@ -146,8 +146,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
-      a.should have(1).item
-      a.collect {|x| x[0]}.should == ["Test  Test"]
+      expect(a.size).to eq(1)
+      expect(a.collect {|x| x[0]}).to eq(["Test  Test"])
     end
 
     it "does not send multiple classifications for the same style/country combo" do
@@ -188,10 +188,10 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
   describe :ftp_credentials do
     it "should send proper credentials" do
-      @g.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ralph_Lauren/sap_prod'}
+      expect(@g.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ralph_Lauren/sap_prod'})
     end
     it "should set qa folder if :env=>:qa in class initializer" do
-      described_class.new(:env=>:qa).ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ralph_Lauren/sap_qa'}
+      expect(described_class.new(:env=>:qa).ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ralph_Lauren/sap_qa'})
     end
   end
 
@@ -205,26 +205,26 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     it "should hts_format HTS value if set type indicator is not X" do
       r = @g.before_csv_write 1, @vals
       @vals[3] = '1234.56.7890'
-      r.should == @vals
+      expect(r).to eq(@vals)
     end
     it "should capitalize country of origin" do
       @vals[8] = 'us'
       r = @g.before_csv_write 1, @vals
-      r[8].should == "US"
+      expect(r[8]).to eq("US")
     end
     it "should not send country of origin unless it is 2 digits" do
       @vals[8] = "ABC"
       r = @g.before_csv_write 1, @vals
-      r[8].should == ""
+      expect(r[8]).to eq("")
     end
     it "should clean line breaks and new lines" do
       @vals[1] = "a\nb"
       @vals[2] = "a\rb"
       @vals[4] = "a\r\n\"b"
       r = @g.before_csv_write 1, @vals
-      r[1].should == "a b"
-      r[2].should == "a b"
-      r[4].should == "a   b"
+      expect(r[1]).to eq("a b")
+      expect(r[2]).to eq("a b")
+      expect(r[4]).to eq("a   b")
     end
   end
 
@@ -232,18 +232,18 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     it "should handle converting UTF-8 'EN-DASH' characters to hyphens" do
       # Note the "long hyphen" character...it's the unicode 2013 char
       r = @g.preprocess_row(0 => "This is a – test.")
-      r.should eq [{0=>"This is a - test."}]
+      expect(r).to eq [{0=>"This is a - test."}]
     end
 
     it "should handle converting UTF-8 'EM-DASH' characters to hyphens" do
       # Note the "long hyphen" character...it's the unicode 2014 char
       r = @g.preprocess_row(0 => "This is a — test.")
-      r.should eq [{0=>"This is a - test."}]
+      expect(r).to eq [{0=>"This is a - test."}]
     end
 
     it "should convert ¾ to 3/4" do
       r = @g.preprocess_row(0 => "This is a ¾ test.")
-      r.should eq [{0=>"This is a 3/4 test."}]
+      expect(r).to eq [{0=>"This is a 3/4 test."}]
     end
 
     it "should convert ® to blank" do
@@ -252,7 +252,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
     it "should convert forbidden characters to spaces" do
       r = @g.preprocess_row(0 => "This\tis\ta\ttest.<>^&{}[]+|~*;?")
-      r.should eq [{0 => "This is a test.              "}]
+      expect(r).to eq [{0 => "This is a test.              "}]
     end
 
     it "should handle non-string data" do
@@ -265,12 +265,12 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       }
 
       r = @g.preprocess_row v
-      r.should eq [v]
+      expect(r).to eq [v]
     end
 
     context :invalid_ascii_chars do 
       before :each do
-        StandardError.any_instance.should_receive(:log_me) do |arg|
+        expect_any_instance_of(StandardError).to receive(:log_me) do |instance, arg|
           @error_message = arg
         end
       end
@@ -278,25 +278,25 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       it "should log an error for non-printing chars" do
         # Just use any non-printing char
         r = @g.preprocess_row(0=>1, 2=>"\v")
-        r.should be_nil
+        expect(r).to be_nil
 
-        @error_message.should eq ["Invalid character data found in product with unique_identifier '1'."]
+        expect(@error_message).to eq ["Invalid character data found in product with unique_identifier '1'."]
       end
 
       it "should fail on delete char" do
         # Delete char is ASCII 127 and is not a printable character
         # Only reason it's in a test here is that there had to be special handling since it's ascii 127
         r = @g.preprocess_row(0=>1, 2 => "␡")
-        r.should be_nil
+        expect(r).to be_nil
 
-        @error_message.should eq ["Invalid character data found in product with unique_identifier '1'."]
+        expect(@error_message).to eq ["Invalid character data found in product with unique_identifier '1'."]
       end
 
       it "should log an error for non-ASCII chars" do
         r = @g.preprocess_row(0=>1, 2 =>"Æ")
-        r.should be_nil
+        expect(r).to be_nil
 
-        @error_message.should eq ["Invalid character data found in product with unique_identifier '1'."]
+        expect(@error_message).to eq ["Invalid character data found in product with unique_identifier '1'."]
       end
 
     end

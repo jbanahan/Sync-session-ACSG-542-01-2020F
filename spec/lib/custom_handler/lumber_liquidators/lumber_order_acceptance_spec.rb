@@ -8,19 +8,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance do
       @o.update_custom_value!(@cdefs[:ord_country_of_origin],'CN')
     end
     it "should pass if fields are populated" do
-      expect(described_class.can_be_accepted?(@o)).to be_true
+      expect(described_class.can_be_accepted?(@o)).to be_truthy
     end
     it "should fail if FOB Point is empty" do
       @o.update_attributes(fob_point:nil)
-      expect(described_class.can_be_accepted?(@o)).to be_false
+      expect(described_class.can_be_accepted?(@o)).to be_falsey
     end
     it "should fail if INCO terms are empty" do
       @o.update_attributes(terms_of_sale:nil)
-      expect(described_class.can_be_accepted?(@o)).to be_false
+      expect(described_class.can_be_accepted?(@o)).to be_falsey
     end
     it "should fail if country of origin is empty" do
       @o.update_custom_value!(@cdefs[:ord_country_of_origin],'')
-      expect(described_class.can_be_accepted?(@o)).to be_false
+      expect(described_class.can_be_accepted?(@o)).to be_falsey
     end
   end
 end

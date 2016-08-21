@@ -9,15 +9,15 @@ describe AttachmentArchive do
       arch = entry.importer.create_attachment_archive_setup(:start_date=>1.year.ago).create_entry_archive! "my arch", 100.megabytes
       r = JSON.parse arch.attachment_list_json
       aa = r['attachment_archive']
-      aa['name'].should == 'my arch'
-      aa['attachment_archives_attachments'].should have(1).element
+      expect(aa['name']).to eq('my arch')
+      expect(aa['attachment_archives_attachments'].size).to eq(1)
       aaa = aa['attachment_archives_attachments'].first
-      aaa['file_name'].should == "EDOC-#{attachment.id}-a.txt"
-      aaa['output_path'].should == arch.attachment_archives_attachments.first.output_path
+      expect(aaa['file_name']).to eq("EDOC-#{attachment.id}-a.txt")
+      expect(aaa['output_path']).to eq(arch.attachment_archives_attachments.first.output_path)
 
       att = aaa['attachment']
-      att['id'].should == attachment.id
-      att['attached_file_name'].should == 'a.txt'
+      expect(att['id']).to eq(attachment.id)
+      expect(att['attached_file_name']).to eq('a.txt')
     end
   end
 end

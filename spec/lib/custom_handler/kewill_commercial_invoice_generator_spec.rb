@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::KewillCommercialInvoiceGenerator do
     it "generates data to a tempfile and ftps it" do
       filename = nil
       data = nil
-      subject.should_receive(:ftp_file) do |temp|
+      expect(subject).to receive(:ftp_file) do |temp|
         data = temp.readlines
         filename = File.basename(temp.path)
       end
@@ -131,7 +131,7 @@ describe OpenChain::CustomHandler::KewillCommercialInvoiceGenerator do
 
     it "receives commercial invoices, translates them to internal file objects and sends them" do
       entry = nil
-      subject.should_receive(:generate_and_send) do |entries|
+      expect(subject).to receive(:generate_and_send) do |entries|
         expect(entries.length).to eq 1
         entry = entries.first
       end

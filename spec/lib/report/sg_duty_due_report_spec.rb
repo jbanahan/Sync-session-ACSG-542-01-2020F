@@ -21,8 +21,8 @@ describe OpenChain::Report::SgDutyDueReport do
               entry_type: "01", duty_due_date: duty_due)
 
        u = Factory(:user, company: co)
-       u.stub(:view_entries?).and_return true
-       co.stub(:can_view?).with(u).and_return true
+       allow(u).to receive(:view_entries?).and_return true
+       allow(co).to receive(:can_view?).with(u).and_return true
        parser = described_class.new
        results = parser.get_entries u, co
        expect(results.count).to eq 2

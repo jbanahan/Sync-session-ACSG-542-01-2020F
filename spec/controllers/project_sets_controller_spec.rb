@@ -12,7 +12,7 @@ describe ProjectSetsController do
 
   describe :show do
     it "should redirect for users who cannot view projects" do
-      User.any_instance.stub(:view_projects?).and_return false
+      allow_any_instance_of(User).to receive(:view_projects?).and_return false
       get :show, id: @ps.id
       expect(response).to be_redirect
     end
@@ -24,12 +24,12 @@ describe ProjectSetsController do
 
     it "should correctly assign the project set" do
       get :show, id: @ps.id
-      controller.instance_variable_get(:@project_set).should == @ps
+      expect(controller.instance_variable_get(:@project_set)).to eq(@ps)
     end
 
     it "should correctly assign the projects" do
       get :show, id: @ps.id
-      controller.instance_variable_get(:@projects).should == [@p1, @p2]
+      expect(controller.instance_variable_get(:@projects)).to eq([@p1, @p2])
     end
   end
 end

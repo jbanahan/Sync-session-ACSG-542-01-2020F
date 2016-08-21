@@ -4,11 +4,11 @@ describe BusinessValidationRuleResult do
   describe :can_view do
     it "should allow users who can view results" do
       u = Factory(:master_user)
-      expect(described_class.new.can_view?(u)).to be_true
+      expect(described_class.new.can_view?(u)).to be_truthy
     end
     it "should not allow who can't view results" do
       u = Factory(:user)
-      expect(described_class.new.can_view?(u)).to be_false
+      expect(described_class.new.can_view?(u)).to be_falsey
     end
   end
   describe :can_edit do
@@ -32,7 +32,7 @@ describe BusinessValidationRuleResult do
     end
     it "should allow users who aren't admins if no group has been assigned" do
       u = Factory(:user)
-      u.stub(:edit_business_validation_rule_results?).and_return true
+      allow(u).to receive(:edit_business_validation_rule_results?).and_return true
       @bvr.group = nil
       @bvr.save!
       expect(@bvrr.can_edit?(u)).to be true

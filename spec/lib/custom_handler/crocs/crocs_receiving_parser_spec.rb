@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
   before :each do 
     @s3_path = 'abc'
     @xl_client = double('xl_client')
-    OpenChain::XLClient.stub(:new).and_return @xl_client
+    allow(OpenChain::XLClient).to receive(:new).and_return @xl_client
   end
   describe :validate_s3 do
     before :each do 
@@ -23,8 +23,8 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
         'RCVD_DATE',
         'UOM'
       ]
-      @xl_client.should_receive(:get_row_values).with(0,0).and_return good_headers
-      described_class.validate_s3(@s3_path).should be_empty
+      expect(@xl_client).to receive(:get_row_values).with(0,0).and_return good_headers
+      expect(described_class.validate_s3(@s3_path)).to be_empty
     end
     it "should error if first row doesn't match" do
       bad_headers = [
@@ -38,37 +38,37 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
         'CNTRY_OF_ORGN',
         'UNITS_RCVD',
       ]
-      @xl_client.should_receive(:get_row_values).with(0,0).and_return bad_headers
-      described_class.validate_s3(@s3_path).should == [
+      expect(@xl_client).to receive(:get_row_values).with(0,0).and_return bad_headers
+      expect(described_class.validate_s3(@s3_path)).to eq([
         'Heading at position 1 should be SHPMT_NBR and was S_NBR.',
         'Heading at position 10 should be RCVD_DATE and was blank.'
-      ]
+      ])
     end
   end
 
   describe :parse_s3 do
     it "should call parse_shipment with arrays of rows" do
-      described_class.should_receive(:validate_s3).with(@s3_path).and_return []
-      @xl_client.should_receive(:all_row_values).with(0).
+      expect(described_class).to receive(:validate_s3).with(@s3_path).and_return []
+      expect(@xl_client).to receive(:all_row_values).with(0).
         and_yield(['HEADING']).
         and_yield(['1','','','','','','','','',Date.new(2013,1,1)]).
         and_yield(['1','','','','','','','','',Date.new(2011,1,1)]).
         and_yield(['2','','','','','','','','',Date.new(2012,1,1)]).
         and_yield(['2','','','','','','','','',Date.new(2010,1,1)])
-      described_class.any_instance.should_receive(:parse_shipment).with([['1','','','','','','','','',Date.new(2013,1,1)],['1','','','','','','','','',Date.new(2011,1,1)]])
-      described_class.any_instance.should_receive(:parse_shipment).with([['2','','','','','','','','',Date.new(2012,1,1)],['2','','','','','','','','',Date.new(2010,1,1)]])
+      expect_any_instance_of(described_class).to receive(:parse_shipment).with([['1','','','','','','','','',Date.new(2013,1,1)],['1','','','','','','','','',Date.new(2011,1,1)]])
+      expect_any_instance_of(described_class).to receive(:parse_shipment).with([['2','','','','','','','','',Date.new(2012,1,1)],['2','','','','','','','','',Date.new(2010,1,1)]])
       described_class.parse_s3 @s3_path
     end
     it "should return earliest and latest received dates" do
-      described_class.should_receive(:validate_s3).with(@s3_path).and_return []
-      @xl_client.should_receive(:all_row_values).with(0).
+      expect(described_class).to receive(:validate_s3).with(@s3_path).and_return []
+      expect(@xl_client).to receive(:all_row_values).with(0).
         and_yield(['HEADING']).
         and_yield(['1','','','','','','','','',Date.new(2013,1,1)]).
         and_yield(['1','','','','','','','','',Date.new(2011,1,1)]).
         and_yield(['2','','','','','','','','',Date.new(2012,1,1)]).
         and_yield(['2','','','','','','','','',Date.new(2010,1,1)])
-      described_class.any_instance.stub(:parse_shipment)
-      described_class.parse_s3(@s3_path).should == [Date.new(2010,1,1),Date.new(2013,1,1)]
+      allow_any_instance_of(described_class).to receive(:parse_shipment)
+      expect(described_class.parse_s3(@s3_path)).to eq([Date.new(2010,1,1),Date.new(2013,1,1)])
     end
   end
 
@@ -90,34 +90,34 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       #run this after the call to parse shipment to make sure it doesn't create a false positive if parse shipment improperly preps custom definitions
       defs = described_class.prep_custom_definitions [:shpln_po,:shpln_sku,:shpln_color,:shpln_size,:shpln_coo,:shpln_received_date]
 
-      Product.all.size.should == 2
+      expect(Product.all.size).to eq(2)
       style1 = Product.find_by_unique_identifier('CROCS-STY1')
-      style1.should_not be_nil
+      expect(style1).not_to be_nil
       style2 = Product.find_by_unique_identifier('CROCS-STY2')
-      style2.should_not be_nil
+      expect(style2).not_to be_nil
       s = Shipment.first
-      s.importer.should == @importer
-      s.reference.should == 'CROCS-1'
-      s.should have(6).shipment_lines
+      expect(s.importer).to eq(@importer)
+      expect(s.reference).to eq('CROCS-1')
+      expect(s.shipment_lines.size).to eq(6)
       sl1 = s.shipment_lines.find_by_line_number(1)
-      sl1.quantity.should == 10
-      sl1.product.should == style1
-      sl1.get_custom_value(defs[:shpln_po]).value.should == 'PO1'
-      sl1.get_custom_value(defs[:shpln_sku]).value.should == 'SKU1'
-      sl1.get_custom_value(defs[:shpln_color]).value.should == 'COL1'
-      sl1.get_custom_value(defs[:shpln_size]).value.should == 'SIZE1'
-      sl1.get_custom_value(defs[:shpln_coo]).value.should == 'CN'
-      sl1.get_custom_value(defs[:shpln_received_date]).value.to_date.should == Time.now.to_date 
+      expect(sl1.quantity).to eq(10)
+      expect(sl1.product).to eq(style1)
+      expect(sl1.get_custom_value(defs[:shpln_po]).value).to eq('PO1')
+      expect(sl1.get_custom_value(defs[:shpln_sku]).value).to eq('SKU1')
+      expect(sl1.get_custom_value(defs[:shpln_color]).value).to eq('COL1')
+      expect(sl1.get_custom_value(defs[:shpln_size]).value).to eq('SIZE1')
+      expect(sl1.get_custom_value(defs[:shpln_coo]).value).to eq('CN')
+      expect(sl1.get_custom_value(defs[:shpln_received_date]).value.to_date).to eq(Time.now.to_date) 
       
       sl2 = s.shipment_lines.find_by_line_number(2)
-      sl2.quantity.should == 11
-      sl2.product.should == style1
-      sl2.get_custom_value(defs[:shpln_po]).value.should == 'PO1'
-      sl2.get_custom_value(defs[:shpln_sku]).value.should == 'SKU2'
-      sl2.get_custom_value(defs[:shpln_color]).value.should == 'COL2'
-      sl2.get_custom_value(defs[:shpln_size]).value.should == 'SIZE2'
-      sl2.get_custom_value(defs[:shpln_coo]).value.should == 'CN'
-      sl2.get_custom_value(defs[:shpln_received_date]).value.to_date.should == Time.now.to_date 
+      expect(sl2.quantity).to eq(11)
+      expect(sl2.product).to eq(style1)
+      expect(sl2.get_custom_value(defs[:shpln_po]).value).to eq('PO1')
+      expect(sl2.get_custom_value(defs[:shpln_sku]).value).to eq('SKU2')
+      expect(sl2.get_custom_value(defs[:shpln_color]).value).to eq('COL2')
+      expect(sl2.get_custom_value(defs[:shpln_size]).value).to eq('SIZE2')
+      expect(sl2.get_custom_value(defs[:shpln_coo]).value).to eq('CN')
+      expect(sl2.get_custom_value(defs[:shpln_received_date]).value.to_date).to eq(Time.now.to_date) 
     end
     it "should merge like rows in same shipment" do
       rows = [
@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       ]
       #this one should be ok
       described_class.new.parse_shipment rows
-      ShipmentLine.first.quantity.should == 20
+      expect(ShipmentLine.first.quantity).to eq(20)
     end
 =begin
     it "should fail if shipment / po / sku / received date / coo already exists" do

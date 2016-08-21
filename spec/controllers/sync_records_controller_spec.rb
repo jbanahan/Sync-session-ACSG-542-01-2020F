@@ -13,20 +13,20 @@ describe SyncRecordsController do
     p.sync_records.create! sent_at: Time.zone.now, confirmed_at: Time.zone.now + 1.minute, confirmation_file_name: "file.txt", failure_message: "Message!", :trading_partner => "Testing", :fingerprint => "fingerprint", ignore_updates_before: Time.zone.now
 
     post :resend, :id=>p.sync_records.first.id
-    response.should redirect_to request.referrer
+    expect(response).to redirect_to request.referrer
 
     p.reload
-    Product.scoped.need_sync("Testing").all.include?(p).should be_true
+    expect(Product.scoped.need_sync("Testing").all.include?(p)).to be_truthy
 
     sr = p.sync_records.first
-    sr.sent_at.should be_nil
-    sr.confirmed_at.should be_nil
-    sr.confirmation_file_name.should be_nil
-    sr.failure_message.should be_nil
-    sr.fingerprint.should be_nil
-    sr.ignore_updates_before.should be_nil
+    expect(sr.sent_at).to be_nil
+    expect(sr.confirmed_at).to be_nil
+    expect(sr.confirmation_file_name).to be_nil
+    expect(sr.failure_message).to be_nil
+    expect(sr.fingerprint).to be_nil
+    expect(sr.ignore_updates_before).to be_nil
 
-    flash[:notices].include?("This record will be resent the next time the sync program is executed for Testing.").should be_true
+    expect(flash[:notices].include?("This record will be resent the next time the sync program is executed for Testing.")).to be_truthy
   end
 
   it "should not allow users without access" do
@@ -37,8 +37,8 @@ describe SyncRecordsController do
     p.sync_records.create! sent_at: Time.zone.now, confirmed_at: Time.zone.now + 1.minute, confirmation_file_name: "file.txt", failure_message: "Message!", :trading_partner => "Testing"
 
     post :resend, :id=>p.sync_records.first.id
-    response.should redirect_to request.referrer
+    expect(response).to redirect_to request.referrer
 
-    flash[:errors].include?("You do not have permission to resend this record.").should be_true
+    expect(flash[:errors].include?("You do not have permission to resend this record.")).to be_truthy
   end
 end

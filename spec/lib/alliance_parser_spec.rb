@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::AllianceParser do
   before :each do
-    OpenChain::AllianceImagingClient.stub(:request_images)
+    allow(OpenChain::AllianceImagingClient).to receive(:request_images)
     @ref_num ='36469000' 
     @filer_code = '316'
     @entry_ext = '12345678'
@@ -270,22 +270,22 @@ describe OpenChain::AllianceParser do
     # introducing a new context around the existing classes to be able to stub this call for those, 
     # and then a secondary context to allow us to make and expectation on the call the verify it's called.
     # Any test that wants to verify broadcast event was called should just check the @event_type variable.
-    Entry.any_instance.stub(:broadcast_event) do |event_type|
+    allow_any_instance_of(Entry).to receive(:broadcast_event) do |instance, event_type|
       @event_type = event_type
     end
   end
   it 'should clear dates that have previously been written but are not retransmitted' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
-    ent.release_date.should_not be_nil #this one won't be in the file the 2nd time
-    ent.first_release_date.should_not be_nil #this one will be reprocesed
+    expect(ent.release_date).not_to be_nil #this one won't be in the file the 2nd time
+    expect(ent.first_release_date).not_to be_nil #this one will be reprocesed
     ent.update_attributes(:last_exported_from_source=>nil)
 
     @release_date_str = nil
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
-    ent.release_date.should be_nil
-    ent.first_release_date.should_not be_nil 
+    expect(ent.release_date).to be_nil
+    expect(ent.first_release_date).not_to be_nil 
   end
   it 'should set 7501 print dates' do
     first_7501 = '201104211627'
@@ -294,8 +294,8 @@ describe OpenChain::AllianceParser do
     @comments << {:text=>"Document Image created for F7501F   7501 Form.              ",:date=>last_7501,:user=>'BDEVITO'}
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
-    ent.first_7501_print.should == @est.parse(first_7501)
-    ent.last_7501_print.should == @est.parse(last_7501)
+    expect(ent.first_7501_print).to eq(@est.parse(first_7501))
+    expect(ent.last_7501_print).to eq(@est.parse(last_7501))
   end
   context :containers do
     it 'should aggregate containers at header' do
@@ -303,38 +303,38 @@ describe OpenChain::AllianceParser do
       ent = Entry.find_by_broker_reference @ref_num
       expected_containers = @containers.collect {|c| c[:cnum]}
       expected_sizes = @containers.collect {|c| "#{c[:csize]}-#{c[:cdesc]}"}
-      ent.container_numbers.split(@split_string).should == expected_containers
-      ent.container_sizes.split(@split_string).should == expected_sizes
+      expect(ent.container_numbers.split(@split_string)).to eq(expected_containers)
+      expect(ent.container_sizes.split(@split_string)).to eq(expected_sizes)
     end
     it 'should set fcl_lcl to mixed if different flags on different containers' do
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
       ent = Entry.find_by_broker_reference @ref_num
-      ent.fcl_lcl.should == 'Mixed'
+      expect(ent.fcl_lcl).to eq('Mixed')
     end
     it 'should set fcl_lcl to lcl if "L" on all containers' do
       @containers.each {|c| c[:fcl_lcl] = "L"}
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
       ent = Entry.find_by_broker_reference @ref_num
-      ent.fcl_lcl.should == 'LCL'
+      expect(ent.fcl_lcl).to eq('LCL')
     end
     it 'should set fcl_lcl to fcl if "F" on all containers' do
       @containers.each {|c| c[:fcl_lcl] = "F"}
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
       ent = Entry.find_by_broker_reference @ref_num
-      ent.fcl_lcl.should == 'FCL'
+      expect(ent.fcl_lcl).to eq('FCL')
     end
     it 'should set fcl_lcl to FCL even if only one container has value' do
       @containers.each {|c| c[:fcl_lcl] = ""}
       @containers.first[:fcl_lcl] = "F"
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
       ent = Entry.find_by_broker_reference @ref_num
-      ent.fcl_lcl.should == 'FCL'
+      expect(ent.fcl_lcl).to eq('FCL')
     end
     it 'should set fcl_lcl to nil if no values' do
       @containers.each {|c| c[:fcl_lcl] = ""}
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
       ent = Entry.find_by_broker_reference @ref_num
-      ent.fcl_lcl.should be_nil
+      expect(ent.fcl_lcl).to be_nil
     end
     it "should create container records" do
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
@@ -373,119 +373,119 @@ describe OpenChain::AllianceParser do
     company = Factory(:company,:importer=>true,:alliance_customer_number=>@cust_num)
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     ent = Entry.find_by_broker_reference @ref_num
-    ent.importer.should == company
+    expect(ent.importer).to eq(company)
   end
   it 'should create importer if customer number does not match' do
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     ent = Entry.find_by_broker_reference @ref_num
     company = Company.find_by_alliance_customer_number @cust_num
-    company.should be_importer
-    company.name.should == @customer_name
-    ent.importer.should == company
+    expect(company).to be_importer
+    expect(company.name).to eq(@customer_name)
+    expect(ent.importer).to eq(company)
   end
   
   it "should write bucket_name & key" do
     OpenChain::AllianceParser.parse @make_entry_lambda.call, {:bucket=>'a',:key=>'b'}
     ent = Entry.find_by_broker_reference @ref_num
-    ent.last_file_bucket.should == 'a'
-    ent.last_file_path.should == 'b'
+    expect(ent.last_file_bucket).to eq('a')
+    expect(ent.last_file_path).to eq('b')
   end
 
   it 'should create entry' do
-    Lock.should_receive(:acquire).with(Lock::ALLIANCE_PARSER, times: 3).and_yield
-    Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_yield
+    expect(Lock).to receive(:acquire).with(Lock::ALLIANCE_PARSER, times: 3).and_yield
+    expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
     sql_proxy = double("OpenChain::KewillSqlProxyClient")
-    OpenChain::KewillSqlProxyClient.should_receive(:delay).and_return sql_proxy
-    sql_proxy.should_receive(:request_alliance_entry_details).with @ref_num, @est.parse(@extract_date_str)
+    expect(OpenChain::KewillSqlProxyClient).to receive(:delay).and_return sql_proxy
+    expect(sql_proxy).to receive(:request_alliance_entry_details).with @ref_num, @est.parse(@extract_date_str)
 
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
-    ent.import_country.should == Country.find_by_iso_code('US')
-    ent.source_system.should == 'Alliance'
-    ent.entry_number.should == "#{@filer_code}#{@entry_ext}"
-    ent.customer_number.should == @cust_num
-    ent.last_exported_from_source.should == @est.parse(@extract_date_str)
-    ent.company_number.should == @company_number
-    ent.division_number.should == @division
-    ent.customer_name.should == @customer_name
-    ent.entry_type.should == @entry_type
-    ent.arrival_date.should == @est.parse(@arrival_date_str)
-    ent.entry_filed_date.should == @est.parse(@entry_filed_date_str)
-    ent.release_date.should == @est.parse(@release_date_str)
-    ent.file_logged_date.should == @est.parse(@file_logged_date_str)
-    ent.first_release_date.should == @est.parse(@first_release_date_str)
-    ent.free_date.should == @est.parse(@free_date_str)
-    ent.last_billed_date.should == @est.parse(@last_billed_date_str)
-    ent.invoice_paid_date.should == @est.parse(@invoice_paid_date_str)
-    ent.liquidation_date.should == @est.parse(@liquidation_date_str)
-    ent.fda_release_date.should == @est.parse(@fda_release_str)
-    ent.fda_review_date.should == @est.parse(@fda_review_str)
-    ent.fda_transmit_date.should == @est.parse(@fda_transmit_str)
-    ent.first_entry_sent_date.should == @est.parse(@first_entry_sent_str)
-    ent.docs_received_date.strftime("%Y%m%d").should == @docs_rec_str
-    ent.release_cert_message.should == @release_cert_message
+    expect(ent.import_country).to eq(Country.find_by_iso_code('US'))
+    expect(ent.source_system).to eq('Alliance')
+    expect(ent.entry_number).to eq("#{@filer_code}#{@entry_ext}")
+    expect(ent.customer_number).to eq(@cust_num)
+    expect(ent.last_exported_from_source).to eq(@est.parse(@extract_date_str))
+    expect(ent.company_number).to eq(@company_number)
+    expect(ent.division_number).to eq(@division)
+    expect(ent.customer_name).to eq(@customer_name)
+    expect(ent.entry_type).to eq(@entry_type)
+    expect(ent.arrival_date).to eq(@est.parse(@arrival_date_str))
+    expect(ent.entry_filed_date).to eq(@est.parse(@entry_filed_date_str))
+    expect(ent.release_date).to eq(@est.parse(@release_date_str))
+    expect(ent.file_logged_date).to eq(@est.parse(@file_logged_date_str))
+    expect(ent.first_release_date).to eq(@est.parse(@first_release_date_str))
+    expect(ent.free_date).to eq(@est.parse(@free_date_str))
+    expect(ent.last_billed_date).to eq(@est.parse(@last_billed_date_str))
+    expect(ent.invoice_paid_date).to eq(@est.parse(@invoice_paid_date_str))
+    expect(ent.liquidation_date).to eq(@est.parse(@liquidation_date_str))
+    expect(ent.fda_release_date).to eq(@est.parse(@fda_release_str))
+    expect(ent.fda_review_date).to eq(@est.parse(@fda_review_str))
+    expect(ent.fda_transmit_date).to eq(@est.parse(@fda_transmit_str))
+    expect(ent.first_entry_sent_date).to eq(@est.parse(@first_entry_sent_str))
+    expect(ent.docs_received_date.strftime("%Y%m%d")).to eq(@docs_rec_str)
+    expect(ent.release_cert_message).to eq(@release_cert_message)
     ent.fda_message == @fda_message
-    ent.duty_due_date.strftime("%Y%m%d").should == @duty_due_date_str
-    ent.export_date.strftime("%Y%m%d").should == @export_date_str[0,8]
-    ent.carrier_code.should == @carrier_code
-    ent.total_packages.should == @total_packages
-    ent.total_packages_uom.should == @total_packages_uom
-    ent.total_fees.should == @total_fees
-    ent.total_duty.should == @total_duty
-    ent.total_duty_direct.should == @total_duty_direct
-    ent.entered_value.should == @entered_value
-    ent.customer_references.should == @customer_references #make sure cust refs in sample data don't overlap with line level PO number or they'll be excluded on purpose
-    ent.merchandise_description.should == @merchandise_description
-    ent.transport_mode_code.should == @transport_mode_code
-    ent.entry_port_code.should == @entry_port_code
-    ent.lading_port_code.should == @lading_port_code
-    ent.unlading_port_code.should == @unlading_port_code
-    ent.ult_consignee_code.should == @ult_consignee_code
-    ent.ult_consignee_name.should == @ult_consignee_name
+    expect(ent.duty_due_date.strftime("%Y%m%d")).to eq(@duty_due_date_str)
+    expect(ent.export_date.strftime("%Y%m%d")).to eq(@export_date_str[0,8])
+    expect(ent.carrier_code).to eq(@carrier_code)
+    expect(ent.total_packages).to eq(@total_packages)
+    expect(ent.total_packages_uom).to eq(@total_packages_uom)
+    expect(ent.total_fees).to eq(@total_fees)
+    expect(ent.total_duty).to eq(@total_duty)
+    expect(ent.total_duty_direct).to eq(@total_duty_direct)
+    expect(ent.entered_value).to eq(@entered_value)
+    expect(ent.customer_references).to eq(@customer_references) #make sure cust refs in sample data don't overlap with line level PO number or they'll be excluded on purpose
+    expect(ent.merchandise_description).to eq(@merchandise_description)
+    expect(ent.transport_mode_code).to eq(@transport_mode_code)
+    expect(ent.entry_port_code).to eq(@entry_port_code)
+    expect(ent.lading_port_code).to eq(@lading_port_code)
+    expect(ent.unlading_port_code).to eq(@unlading_port_code)
+    expect(ent.ult_consignee_code).to eq(@ult_consignee_code)
+    expect(ent.ult_consignee_name).to eq(@ult_consignee_name)
     ent.consignee_address_1 == @consignee_address_1
     ent.consignee_address_2 == @consignee_address_2
     ent.consignee_city == @consignee_city
     ent.consignee_state == @consignee_state
-    ent.gross_weight.should == @gross_weight
-    ent.cotton_fee.should == @cotton_fee
-    ent.hmf.should == @hmf
-    ent.mpf.should == @mpf
-    ent.vessel.should == @vessel
-    ent.voyage.should == @voyage
-    ent.should be_paperless_release
-    ent.should be_census_warning
-    ent.should be_error_free_release
-    ent.should be_paperless_certification
-    ent.destination_state.should == @destination_state
-    ent.liquidation_type_code.should == @liq_type_code
-    ent.liquidation_type.should == @liq_type
-    ent.liquidation_action_code.should == @liq_action_code
-    ent.liquidation_action_description.should == @liq_action
-    ent.liquidation_extension_code.should == @liq_ext_code
-    ent.liquidation_extension_description.should == @liq_ext
-    ent.liquidation_extension_count.should == @liq_ext_ct
-    ent.liquidation_duty.should == @liq_duty
-    ent.liquidation_fees.should == @liq_fees
-    ent.liquidation_tax.should == @liq_tax
-    ent.liquidation_ada.should == @liq_ada
-    ent.liquidation_cvd.should == @liq_cvd
-    ent.liquidation_total.should == (@liq_duty+@liq_fees+@liq_tax+@liq_ada+@liq_cvd)
-    ent.daily_statement_number.should == @daily_stmt_number
-    ent.daily_statement_due_date.strftime("%Y%m%d").should == @daily_stmt_due_str
-    ent.daily_statement_approved_date.strftime("%Y%m%d").should == @daily_stmt_approved_str
-    ent.monthly_statement_due_date.strftime("%Y%m%d").should == @monthly_stmt_due_str
-    ent.monthly_statement_received_date.strftime("%Y%m%d").should == @monthly_stmt_received_str
-    ent.monthly_statement_paid_date.strftime("%Y%m%d").should == @monthly_stmt_paid_str
-    ent.monthly_statement_number.should == @monthly_stmt_number
-    ent.eta_date.strftime("%Y%m%d").should == @eta_date_str[0, 8]
-    ent.freight_pickup_date.should == @est.parse(@freight_pickup_str)
-    ent.delivery_order_pickup_date.should == @est.parse(@delivery_order_pickup_str)
-    ent.worksheet_date.should == @est.parse(@worksheet_date_str)
-    ent.available_date.should == @est.parse(@available_date_str)
+    expect(ent.gross_weight).to eq(@gross_weight)
+    expect(ent.cotton_fee).to eq(@cotton_fee)
+    expect(ent.hmf).to eq(@hmf)
+    expect(ent.mpf).to eq(@mpf)
+    expect(ent.vessel).to eq(@vessel)
+    expect(ent.voyage).to eq(@voyage)
+    expect(ent).to be_paperless_release
+    expect(ent).to be_census_warning
+    expect(ent).to be_error_free_release
+    expect(ent).to be_paperless_certification
+    expect(ent.destination_state).to eq(@destination_state)
+    expect(ent.liquidation_type_code).to eq(@liq_type_code)
+    expect(ent.liquidation_type).to eq(@liq_type)
+    expect(ent.liquidation_action_code).to eq(@liq_action_code)
+    expect(ent.liquidation_action_description).to eq(@liq_action)
+    expect(ent.liquidation_extension_code).to eq(@liq_ext_code)
+    expect(ent.liquidation_extension_description).to eq(@liq_ext)
+    expect(ent.liquidation_extension_count).to eq(@liq_ext_ct)
+    expect(ent.liquidation_duty).to eq(@liq_duty)
+    expect(ent.liquidation_fees).to eq(@liq_fees)
+    expect(ent.liquidation_tax).to eq(@liq_tax)
+    expect(ent.liquidation_ada).to eq(@liq_ada)
+    expect(ent.liquidation_cvd).to eq(@liq_cvd)
+    expect(ent.liquidation_total).to eq(@liq_duty+@liq_fees+@liq_tax+@liq_ada+@liq_cvd)
+    expect(ent.daily_statement_number).to eq(@daily_stmt_number)
+    expect(ent.daily_statement_due_date.strftime("%Y%m%d")).to eq(@daily_stmt_due_str)
+    expect(ent.daily_statement_approved_date.strftime("%Y%m%d")).to eq(@daily_stmt_approved_str)
+    expect(ent.monthly_statement_due_date.strftime("%Y%m%d")).to eq(@monthly_stmt_due_str)
+    expect(ent.monthly_statement_received_date.strftime("%Y%m%d")).to eq(@monthly_stmt_received_str)
+    expect(ent.monthly_statement_paid_date.strftime("%Y%m%d")).to eq(@monthly_stmt_paid_str)
+    expect(ent.monthly_statement_number).to eq(@monthly_stmt_number)
+    expect(ent.eta_date.strftime("%Y%m%d")).to eq(@eta_date_str[0, 8])
+    expect(ent.freight_pickup_date).to eq(@est.parse(@freight_pickup_str))
+    expect(ent.delivery_order_pickup_date).to eq(@est.parse(@delivery_order_pickup_str))
+    expect(ent.worksheet_date).to eq(@est.parse(@worksheet_date_str))
+    expect(ent.available_date).to eq(@est.parse(@available_date_str))
     expect(ent.store_names).to eq "Store1\n Store2"
 
-    ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
+    expect(ent.mfids.split(@split_string)).to eq(Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a)
     expect(ent.location_of_goods).to eq @location_of_goods
     expect(ent.bond_type).to eq @bond_type
 
@@ -506,7 +506,7 @@ describe OpenChain::AllianceParser do
 
     @commercial_invoices.each do |ci| 
       invoices = ent.commercial_invoices.where(:invoice_number=>ci[:invoice_number])
-      invoices.should have(1).item
+      expect(invoices.size).to eq(1)
       inv = invoices.first
       expected_invoiced_value += ci[:invoiced_value]
       expected_inv_numbers << ci[:invoice_number]
@@ -521,36 +521,36 @@ describe OpenChain::AllianceParser do
         expected_departments << line[:department] unless line[:department].blank?
 
         ci_line = inv.commercial_invoice_lines.where(:part_number=>line[:part_number]).first
-        ci_line.mid.should == line[:mid]
-        ci_line.po_number.should == line[:po_number]
-        ci_line.quantity.should == line[:units]
-        ci_line.unit_of_measure.should == line[:units_uom]
-        ci_line.value.should == line[:value] unless line[:value].nil?
-        ci_line.mid.should == line[:mid]
-        ci_line.country_origin_code.should == line[:origin_country_code]
-        ci_line.charges.should == line[:total_charges]
-        ci_line.country_export_code.should == line[:export_country_code]
-        ci_line.related_parties?.should == (line[:related_parties] ? line[:related_parties] : false)
-        ci_line.vendor_name.should == line[:vendor_name]
-        ci_line.volume.should == line[:volume] if line[:volume]
-        ci_line.computed_value.should == line[:computed_value] if line[:computed_value]
-        ci_line.computed_adjustments.should == line[:computed_adjustments] if line[:computed_adjustments]
-        ci_line.computed_net_value.should == line[:computed_net_value] if line[:computed_net_value]
-        ci_line.mpf.should == (line[:mpf] ? line[:mpf] : 0)
-        ci_line.hmf.should == line[:hmf]
+        expect(ci_line.mid).to eq(line[:mid])
+        expect(ci_line.po_number).to eq(line[:po_number])
+        expect(ci_line.quantity).to eq(line[:units])
+        expect(ci_line.unit_of_measure).to eq(line[:units_uom])
+        expect(ci_line.value).to eq(line[:value]) unless line[:value].nil?
+        expect(ci_line.mid).to eq(line[:mid])
+        expect(ci_line.country_origin_code).to eq(line[:origin_country_code])
+        expect(ci_line.charges).to eq(line[:total_charges])
+        expect(ci_line.country_export_code).to eq(line[:export_country_code])
+        expect(ci_line.related_parties?).to eq(line[:related_parties] ? line[:related_parties] : false)
+        expect(ci_line.vendor_name).to eq(line[:vendor_name])
+        expect(ci_line.volume).to eq(line[:volume]) if line[:volume]
+        expect(ci_line.computed_value).to eq(line[:computed_value]) if line[:computed_value]
+        expect(ci_line.computed_adjustments).to eq(line[:computed_adjustments]) if line[:computed_adjustments]
+        expect(ci_line.computed_net_value).to eq(line[:computed_net_value]) if line[:computed_net_value]
+        expect(ci_line.mpf).to eq(line[:mpf] ? line[:mpf] : 0)
+        expect(ci_line.hmf).to eq(line[:hmf])
         if line[:prorated_mpf]
-          ci_line.prorated_mpf.should == line[:prorated_mpf]
+          expect(ci_line.prorated_mpf).to eq(line[:prorated_mpf])
         else
-          ci_line.prorated_mpf.should == (line[:mpf] ? line[:mpf] : 0)
+          expect(ci_line.prorated_mpf).to eq(line[:mpf] ? line[:mpf] : 0)
         end
-        ci_line.department.should == line[:department]
-        ci_line.cotton_fee.should == line[:cotton_fee]
-        (ci_line.unit_price*100).to_i.should == ( (ci_line.value / ci_line.quantity) * 100 ).to_i if ci_line.unit_price && ci_line.quantity
-        ci_line.line_number.should == line[:line_number].to_i / 10
+        expect(ci_line.department).to eq(line[:department])
+        expect(ci_line.cotton_fee).to eq(line[:cotton_fee])
+        expect((ci_line.unit_price*100).to_i).to eq(( (ci_line.value / ci_line.quantity) * 100 ).to_i) if ci_line.unit_price && ci_line.quantity
+        expect(ci_line.line_number).to eq(line[:line_number].to_i / 10)
         if line[:contract_amount].blank?
-          ci_line.contract_amount.should == BigDecimal('0')
+          expect(ci_line.contract_amount).to eq(BigDecimal('0'))
         else
-          ci_line.contract_amount.should == line[:contract_amount]
+          expect(ci_line.contract_amount).to eq(line[:contract_amount])
         end
 
         expect(ci_line.product_line).to eq line[:product_line].to_s
@@ -559,22 +559,22 @@ describe OpenChain::AllianceParser do
         if line[:tariff]
           line[:tariff].each do |t_line|
             found = ci_line.commercial_invoice_tariffs.where(:hts_code=>t_line[:hts_code])
-            found.should have(1).record
+            expect(found.record.size).to eq(1)
             t = found.first
-            t.duty_amount.should == t_line[:duty_total]
-            t.entered_value.should == t_line[:entered_value]
-            t.duty_rate.should == ( t_line[:duty_total]/t_line[:entered_value] ).round(3)
-            t.spi_primary.should == t_line[:spi_primary]
-            t.spi_secondary.should == t_line[:spi_secondary]
-            t.hts_code.should == t_line[:hts_code]
-            t.classification_qty_1.should == t_line[:class_q_1]
-            t.classification_qty_2.should == t_line[:class_q_2]
-            t.classification_qty_3.should == t_line[:class_q_3]
-            t.classification_uom_1.should == t_line[:class_uom_1]
-            t.classification_uom_2.should == t_line[:class_uom_2]
-            t.classification_uom_3.should == t_line[:class_uom_3]
-            t.tariff_description.should == t_line[:tariff_description]
-            t.gross_weight.to_s.should == t_line[:gross_weight]
+            expect(t.duty_amount).to eq(t_line[:duty_total])
+            expect(t.entered_value).to eq(t_line[:entered_value])
+            expect(t.duty_rate).to eq(( t_line[:duty_total]/t_line[:entered_value] ).round(3))
+            expect(t.spi_primary).to eq(t_line[:spi_primary])
+            expect(t.spi_secondary).to eq(t_line[:spi_secondary])
+            expect(t.hts_code).to eq(t_line[:hts_code])
+            expect(t.classification_qty_1).to eq(t_line[:class_q_1])
+            expect(t.classification_qty_2).to eq(t_line[:class_q_2])
+            expect(t.classification_qty_3).to eq(t_line[:class_q_3])
+            expect(t.classification_uom_1).to eq(t_line[:class_uom_1])
+            expect(t.classification_uom_2).to eq(t_line[:class_uom_2])
+            expect(t.classification_uom_3).to eq(t_line[:class_uom_3])
+            expect(t.tariff_description).to eq(t_line[:tariff_description])
+            expect(t.gross_weight.to_s).to eq(t_line[:gross_weight])
             [:spi_primary,:spi_secondary].each {|k| expected_spis << t_line[k] unless t_line[k].blank?}
           end
         end
@@ -582,142 +582,142 @@ describe OpenChain::AllianceParser do
         if line[:add]
           add = line[:add]
           
-          ci_line.add_case_number.should == add[:case_number]
-          ci_line.add_bond.should == (add[:bond] == "Y")
-          ci_line.add_duty_amount.should == add[:amount]
+          expect(ci_line.add_case_number).to eq(add[:case_number])
+          expect(ci_line.add_bond).to eq(add[:bond] == "Y")
+          expect(ci_line.add_duty_amount).to eq(add[:amount])
           total_add += add[:amount]
-          ci_line.add_case_value.should == add[:value]
-          ci_line.add_case_percent.should == add[:percent]
+          expect(ci_line.add_case_value).to eq(add[:value])
+          expect(ci_line.add_case_percent).to eq(add[:percent])
         end
 
         if line[:cvd]
           cvd = line[:cvd]
           
-          ci_line.cvd_case_number.should == cvd[:case_number]
-          ci_line.cvd_bond.should == (cvd[:bond] == "Y")
-          ci_line.cvd_duty_amount.should == cvd[:amount]
+          expect(ci_line.cvd_case_number).to eq(cvd[:case_number])
+          expect(ci_line.cvd_bond).to eq(cvd[:bond] == "Y")
+          expect(ci_line.cvd_duty_amount).to eq(cvd[:amount])
           total_cvd += cvd[:amount]
-          ci_line.cvd_case_value.should == cvd[:value]
-          ci_line.cvd_case_percent.should == cvd[:percent]
+          expect(ci_line.cvd_case_value).to eq(cvd[:value])
+          expect(ci_line.cvd_case_percent).to eq(cvd[:percent])
         end
 
       end
-      inv.currency.should == ci[:currency]
-      inv.exchange_rate.should == ci[:exchange_rate]
-      inv.invoice_value_foreign.should == ci[:invoice_value_foreign]
-      inv.invoice_value.should == ci[:invoiced_value]
-      inv.country_origin_code.should == ci[:country_origin_code]
-      inv.total_charges.should == ci[:total_charges]
-      inv.gross_weight.should == ci[:gross_weight].to_i
-      inv.invoice_date.strftime("%Y%m%d").should == ci[:invoice_date]
-      inv.mfid.should == ci[:mfid]
-      inv.total_quantity.should == BigDecimal.new(ci[:total_quantity])
-      inv.total_quantity_uom.should == ci[:total_quantity_uom]
+      expect(inv.currency).to eq(ci[:currency])
+      expect(inv.exchange_rate).to eq(ci[:exchange_rate])
+      expect(inv.invoice_value_foreign).to eq(ci[:invoice_value_foreign])
+      expect(inv.invoice_value).to eq(ci[:invoiced_value])
+      expect(inv.country_origin_code).to eq(ci[:country_origin_code])
+      expect(inv.total_charges).to eq(ci[:total_charges])
+      expect(inv.gross_weight).to eq(ci[:gross_weight].to_i)
+      expect(inv.invoice_date.strftime("%Y%m%d")).to eq(ci[:invoice_date])
+      expect(inv.mfid).to eq(ci[:mfid])
+      expect(inv.total_quantity).to eq(BigDecimal.new(ci[:total_quantity]))
+      expect(inv.total_quantity_uom).to eq(ci[:total_quantity_uom])
     end
 
-    ent.total_invoiced_value.should == expected_invoiced_value
-    ent.export_country_codes.split(@split_string).should == expected_export_country_codes.to_a
-    ent.origin_country_codes.split(@split_string).should == expected_origin_country_codes.to_a
-    ent.vendor_names.split(@split_string).should == expected_vendor_names.to_a
-    ent.total_units.should == expected_total_units
-    ent.total_units_uoms.split(@split_string).should == expected_total_units_uoms.to_a
-    ent.po_numbers.split(@split_string).should == expected_pos.to_a
-    ent.part_numbers.split(@split_string).should == expected_parts.to_a
-    ent.special_program_indicators.split(@split_string).should == expected_spis.to_a
-    ent.commercial_invoice_numbers.split(@split_string).should == expected_inv_numbers.to_a
-    ent.departments.split(@split_string).should == expected_departments.to_a
-    ent.total_cvd.should == total_cvd 
-    ent.total_add.should == total_add
+    expect(ent.total_invoiced_value).to eq(expected_invoiced_value)
+    expect(ent.export_country_codes.split(@split_string)).to eq(expected_export_country_codes.to_a)
+    expect(ent.origin_country_codes.split(@split_string)).to eq(expected_origin_country_codes.to_a)
+    expect(ent.vendor_names.split(@split_string)).to eq(expected_vendor_names.to_a)
+    expect(ent.total_units).to eq(expected_total_units)
+    expect(ent.total_units_uoms.split(@split_string)).to eq(expected_total_units_uoms.to_a)
+    expect(ent.po_numbers.split(@split_string)).to eq(expected_pos.to_a)
+    expect(ent.part_numbers.split(@split_string)).to eq(expected_parts.to_a)
+    expect(ent.special_program_indicators.split(@split_string)).to eq(expected_spis.to_a)
+    expect(ent.commercial_invoice_numbers.split(@split_string)).to eq(expected_inv_numbers.to_a)
+    expect(ent.departments.split(@split_string)).to eq(expected_departments.to_a)
+    expect(ent.total_cvd).to eq(total_cvd) 
+    expect(ent.total_add).to eq(total_add)
 
-    ent.time_to_process.should < 1000 
-    ent.time_to_process.should > 0
+    expect(ent.time_to_process).to be < 1000 
+    expect(ent.time_to_process).to be > 0
 
-    @event_type.should == :save
+    expect(@event_type).to eq(:save)
   end
 
   it "should write a comment" do
-    @comments.size.should == 1
+    expect(@comments.size).to eq(1)
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     comments = Entry.find_by_broker_reference(@ref_num).entry_comments
-    comments.should have(1).comment
+    expect(comments.size).to eq(1)
     comm = comments.first
-    comm.username.should == @comments.first[:user]
-    comm.body.should == @comments.first[:text]
-    comm.generated_at.should == @est.parse(@comments.first[:date])
+    expect(comm.username).to eq(@comments.first[:user])
+    expect(comm.body).to eq(@comments.first[:text])
+    expect(comm.generated_at).to eq(@est.parse(@comments.first[:date]))
   end
 
   it 'code 00098 should override 00003 if it comes second in file' do
     @docs_rec2_str = "20120613"
     OpenChain::AllianceParser.parse @make_entry_lambda.call
-    Entry.find_by_broker_reference(@ref_num).docs_received_date.strftime("%Y%m%d").should == @docs_rec2_str
+    expect(Entry.find_by_broker_reference(@ref_num).docs_received_date.strftime("%Y%m%d")).to eq(@docs_rec2_str)
   end
 
   it 'should set paperless release to false if empty' do
     @paperless = ' '
     OpenChain::AllianceParser.parse @make_entry_lambda.call
-    Entry.find_by_broker_reference(@ref_num).paperless_release.should == false
+    expect(Entry.find_by_broker_reference(@ref_num).paperless_release).to eq(false)
   end
 
   it 'should set census warning to false if empty' do
     @census_warning = ' '
     OpenChain::AllianceParser.parse @make_entry_lambda.call
-    Entry.find_by_broker_reference(@ref_num).census_warning.should == false
+    expect(Entry.find_by_broker_reference(@ref_num).census_warning).to eq(false)
   end
 
   it 'should set error_free_release to false if empty' do
     @error_free = ' '
     OpenChain::AllianceParser.parse @make_entry_lambda.call
-    Entry.find_by_broker_reference(@ref_num).error_free_release.should == false
+    expect(Entry.find_by_broker_reference(@ref_num).error_free_release).to eq(false)
   end
 
   it 'should set paperless_certification to false if empty' do
     @paperless_cert = ' '
     OpenChain::AllianceParser.parse @make_entry_lambda.call
-    Entry.find_by_broker_reference(@ref_num).paperless_certification.should == false
+    expect(Entry.find_by_broker_reference(@ref_num).paperless_certification).to eq(false)
   end
 
   it 'should only update entries with Alliance as source' do
     old_ent = Factory(:entry,:broker_reference=>@ref_num) #doesn't have matching source system
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     entries = Entry.where(:broker_reference=>@ref_num)
-    entries.should have(2).items
+    expect(entries.size).to eq(2)
   end
 
   it 'should not duplicate commercial invoices when reprocessing' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
-    ent.commercial_invoices.should have(@commercial_invoices.size).invoices
+    expect(ent.commercial_invoices.size).to eq(@commercial_invoices.size)
     #do it twice
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
-    ent.commercial_invoices.should have(@commercial_invoices.size).invoices
+    expect(ent.commercial_invoices.size).to eq(@commercial_invoices.size)
   end
 
   context 'recon flags' do
     it 'should expand nafta' do
       @recon = 'BNNN'
       OpenChain::AllianceParser.parse @make_entry_lambda.call
-      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "NAFTA"
+      expect(Entry.find_by_broker_reference(@ref_num).recon_flags).to eq("NAFTA")
     end
     it 'should expand value' do
       @recon = 'NBNN'
       OpenChain::AllianceParser.parse @make_entry_lambda.call
-      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "VALUE"
+      expect(Entry.find_by_broker_reference(@ref_num).recon_flags).to eq("VALUE")
     end
     it 'should expand class' do
       @recon = 'NNBN'
       OpenChain::AllianceParser.parse @make_entry_lambda.call
-      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "CLASS"
+      expect(Entry.find_by_broker_reference(@ref_num).recon_flags).to eq("CLASS")
     end
     it 'should expand 9802' do
       @recon = 'NNNB'
       OpenChain::AllianceParser.parse @make_entry_lambda.call
-      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "9802"
+      expect(Entry.find_by_broker_reference(@ref_num).recon_flags).to eq("9802")
     end
     it 'should combine flags' do
       @recon = 'BBBB'
       OpenChain::AllianceParser.parse @make_entry_lambda.call
-      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "NAFTA\n VALUE\n CLASS\n 9802"
+      expect(Entry.find_by_broker_reference(@ref_num).recon_flags).to eq("NAFTA\n VALUE\n CLASS\n 9802")
     end
   end
 
@@ -727,16 +727,16 @@ describe OpenChain::AllianceParser do
     @entry_port_code = '0000'
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     ent = Entry.find_by_broker_reference @ref_num
-    ent.lading_port_code.should be_nil
-    ent.unlading_port_code.should be_nil
-    ent.entry_port_code.should be_nil
+    expect(ent.lading_port_code).to be_nil
+    expect(ent.unlading_port_code).to be_nil
+    expect(ent.entry_port_code).to be_nil
   end
   context 'reference fields' do
     it 'should remove po numbers from cust ref' do
       @customer_references = "a\nb\nc"
       @commercial_invoices.first[:lines].first[:po_number] = "b"
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
-      Entry.find_by_broker_reference(@ref_num).customer_references.should == "a\n c"
+      expect(Entry.find_by_broker_reference(@ref_num).customer_references).to eq("a\n c")
     end
     it 'should work with no customer references' do
       @customer_references = nil
@@ -747,7 +747,7 @@ describe OpenChain::AllianceParser do
         end
       end
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
-      Entry.find_by_broker_reference(@ref_num).po_numbers.split(@split_string).should == expected_pos.to_a
+      expect(Entry.find_by_broker_reference(@ref_num).po_numbers.split(@split_string)).to eq(expected_pos.to_a)
     end
     it 'should work with no po numbers' do
       @customer_references = "a\nb\nc"
@@ -758,15 +758,15 @@ describe OpenChain::AllianceParser do
       end
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
       ent = Entry.find_by_broker_reference(@ref_num)
-      ent.customer_references.should == "a\n b\n c"
-      ent.po_numbers.should be_blank
+      expect(ent.customer_references).to eq("a\n b\n c")
+      expect(ent.po_numbers).to be_blank
     end
   end
   it 'should handle empty date' do
     @arrival_date_str = '            '
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     ent = Entry.find_by_broker_reference @ref_num
-    ent.arrival_date.should be_nil
+    expect(ent.arrival_date).to be_nil
   end
   it 'should create two entries' do
     r1 = '12345678'
@@ -778,19 +778,19 @@ describe OpenChain::AllianceParser do
     end
     file_content = fc_array.join("\n")
     OpenChain::AllianceParser.parse file_content
-    Entry.count.should == 2
-    [r1,r2].each {|r| Entry.find_by_broker_reference(r).should_not be_nil}
+    expect(Entry.count).to eq(2)
+    [r1,r2].each {|r| expect(Entry.find_by_broker_reference(r)).not_to be_nil}
   end
   it 'should update entry' do
     file_content = @make_entry_lambda.call
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
-    ent.customer_number.should == @cust_num
+    expect(ent.customer_number).to eq(@cust_num)
     @cust_num = 'ABC'
     OpenChain::AllianceParser.parse @make_entry_lambda.call
-    Entry.count.should == 1
-    Entry.find(ent.id).customer_number.should == 'ABC'
-    @event_type.should == :save
+    expect(Entry.count).to eq(1)
+    expect(Entry.find(ent.id).customer_number).to eq('ABC')
+    expect(@event_type).to eq(:save)
   end
   it 'should not update entry if older than last update' do
     OpenChain::AllianceParser.parse @make_entry_lambda.call
@@ -800,73 +800,73 @@ describe OpenChain::AllianceParser do
     @event_type = nil
     #send file w/ older date & different cust num which should be ignored
     OpenChain::AllianceParser.parse @make_entry_lambda.call
-    Entry.count.should == 1
-    Entry.first.customer_number.should == old_cust_num
+    expect(Entry.count).to eq(1)
+    expect(Entry.first.customer_number).to eq(old_cust_num)
     # If we didn't update the entry, an event shouldn't have been broadcast
-    @event_type.should be_nil
+    expect(@event_type).to be_nil
   end
   it 'should populate entry header tracking fields' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
-    Entry.count.should == 1
+    expect(Entry.count).to eq(1)
     ent = Entry.first
-    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join(@split_string)
-    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join(@split_string)
-    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join(@split_string)
-    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join(@split_string)
-    ent.first_it_date.strftime("%Y%m%d").should == '20120603'
+    expect(ent.master_bills_of_lading).to eq((@si_lines.collect {|h| h[:mbol]}).join(@split_string))
+    expect(ent.house_bills_of_lading).to eq((@si_lines.collect {|h| h[:hbol]}).join(@split_string))
+    expect(ent.sub_house_bills_of_lading).to eq((@si_lines.collect {|h| h[:sub]}).join(@split_string))
+    expect(ent.it_numbers).to eq((@si_lines.collect {|h| h[:it]}).join(@split_string))
+    expect(ent.first_it_date.strftime("%Y%m%d")).to eq('20120603')
   end
   it 'should replace entry header tracking fields' do
     Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs',:source_system=>OpenChain::AllianceParser::SOURCE_CODE)
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
-    Entry.count.should == 1
+    expect(Entry.count).to eq(1)
     ent = Entry.first
-    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join(@split_string)
-    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join(@split_string)
-    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join(@split_string)
-    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join(@split_string)
+    expect(ent.master_bills_of_lading).to eq((@si_lines.collect {|h| h[:mbol]}).join(@split_string))
+    expect(ent.house_bills_of_lading).to eq((@si_lines.collect {|h| h[:hbol]}).join(@split_string))
+    expect(ent.sub_house_bills_of_lading).to eq((@si_lines.collect {|h| h[:sub]}).join(@split_string))
+    expect(ent.it_numbers).to eq((@si_lines.collect {|h| h[:it]}).join(@split_string))
   end
   it 'should create invoice' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     ent = Entry.first
-    ent.broker_invoices.should have(1).invoice
+    expect(ent.broker_invoices.size).to eq(1)
     inv = ent.broker_invoices.first
-    inv.invoice_number.should == "#{ent.broker_reference}#{@inv_suffix}"
-    inv.source_system.should == 'Alliance'
-    inv.broker_reference.should == ent.broker_reference
-    inv.currency.should == "USD" #default
-    inv.suffix.should == @inv_suffix
-    inv.invoice_date.should == Date.parse(@inv_invoice_date_str)
-    inv.invoice_total.should == @inv_total
-    inv.customer_number.should == @cust_num
-    inv.bill_to_name.should == @inv_b_name
-    inv.bill_to_address_1.should == @inv_b_add_1
-    inv.bill_to_address_2.should == @inv_b_add_2
-    inv.bill_to_city.should == @inv_b_city
-    inv.bill_to_zip.should == @inv_b_zip
-    inv.bill_to_country.should == @country
+    expect(inv.invoice_number).to eq("#{ent.broker_reference}#{@inv_suffix}")
+    expect(inv.source_system).to eq('Alliance')
+    expect(inv.broker_reference).to eq(ent.broker_reference)
+    expect(inv.currency).to eq("USD") #default
+    expect(inv.suffix).to eq(@inv_suffix)
+    expect(inv.invoice_date).to eq(Date.parse(@inv_invoice_date_str))
+    expect(inv.invoice_total).to eq(@inv_total)
+    expect(inv.customer_number).to eq(@cust_num)
+    expect(inv.bill_to_name).to eq(@inv_b_name)
+    expect(inv.bill_to_address_1).to eq(@inv_b_add_1)
+    expect(inv.bill_to_address_2).to eq(@inv_b_add_2)
+    expect(inv.bill_to_city).to eq(@inv_b_city)
+    expect(inv.bill_to_zip).to eq(@inv_b_zip)
+    expect(inv.bill_to_country).to eq(@country)
   end
   it 'should update invoice' do
     # first invoice
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     ent = Entry.first
-    ent.broker_invoices.should have(1).invoice
+    expect(ent.broker_invoices.size).to eq(1)
     inv = ent.broker_invoices.first
-    inv.suffix.should == @inv_suffix
-    inv.invoice_total.should == @inv_total
+    expect(inv.suffix).to eq(@inv_suffix)
+    expect(inv.invoice_total).to eq(@inv_total)
 
     #second invoice (update)
     @inv_total = BigDecimal("99.09",2)
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     ent = Entry.first
-    ent.broker_invoices.should have(1).invoice
+    expect(ent.broker_invoices.size).to eq(1)
     inv = ent.broker_invoices.first
-    inv.suffix.should == @inv_suffix
-    inv.invoice_total.should == @inv_total
+    expect(inv.suffix).to eq(@inv_suffix)
+    expect(inv.invoice_total).to eq(@inv_total)
   end
   it 'should include all charge codes in entry header charge codes field' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     codes_expected = @invoice_lines.collect {|src| src[:code]}
-    Entry.first.charge_codes.lines.collect {|x| x.strip}.should == codes_expected
+    expect(Entry.first.charge_codes.lines.collect {|x| x.strip}).to eq(codes_expected)
   end
 
   it 'should add invoice with different suffix' do
@@ -878,25 +878,25 @@ describe OpenChain::AllianceParser do
     inv_2 = @make_invoice_lambda.call
     OpenChain::AllianceParser.parse [entry,inv_1,inv_2].join("\n")
     ent = Entry.first
-    ent.broker_invoices.should have(2).invoices
-    ent.broker_invoices.where(:suffix=>'01').should have(1).invoice
-    ent.broker_invoices.where(:suffix=>'02').should have(1).invoice
-    ent.broker_invoice_total.should == BigDecimal("30.00")
+    expect(ent.broker_invoices.size).to eq(2)
+    expect(ent.broker_invoices.where(:suffix=>'01').size).to eq(1)
+    expect(ent.broker_invoices.where(:suffix=>'02').size).to eq(1)
+    expect(ent.broker_invoice_total).to eq(BigDecimal("30.00"))
   end
   it 'should create invoice lines' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     ent = Entry.first
-    ent.broker_invoices.should have(1).invoice
+    expect(ent.broker_invoices.size).to eq(1)
     inv = ent.broker_invoices.first
     lines = inv.broker_invoice_lines
-    lines.should have(@invoice_lines.size).lines
+    expect(lines.size).to eq(@invoice_lines.size)
     @invoice_lines.each do |src|
       line = inv.broker_invoice_lines.where(:charge_code=>src[:code]).first
-      line.charge_description.should == src[:desc]
-      line.charge_amount.should == src[:amt]
-      line.vendor_name.should == src[:v_name]
-      line.vendor_reference.should == src[:v_ref]
-      line.charge_type.should == src[:type]
+      expect(line.charge_description).to eq(src[:desc])
+      expect(line.charge_amount).to eq(src[:amt])
+      expect(line.vendor_name).to eq(src[:v_name])
+      expect(line.vendor_reference).to eq(src[:v_ref])
+      expect(line.charge_type).to eq(src[:type])
     end
   end
   it 'should rebuild invoice lines on invoice update' do
@@ -904,17 +904,17 @@ describe OpenChain::AllianceParser do
     @invoice_lines.each {|src| src[:desc] = "newdesc"}
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     ent = Entry.first
-    ent.broker_invoices.should have(1).invoice
+    expect(ent.broker_invoices.size).to eq(1)
     inv = ent.broker_invoices.first
     lines = inv.broker_invoice_lines
-    lines.should have(@invoice_lines.size).lines
+    expect(lines.size).to eq(@invoice_lines.size)
     @invoice_lines.each do |src|
       line = inv.broker_invoice_lines.where(:charge_code=>src[:code]).first
-      line.charge_description.should == src[:desc]
-      line.charge_amount.should == src[:amt]
-      line.vendor_name.should == src[:v_name]
-      line.vendor_reference.should == src[:v_ref]
-      line.charge_type.should == src[:type]
+      expect(line.charge_description).to eq(src[:desc])
+      expect(line.charge_amount).to eq(src[:amt])
+      expect(line.vendor_name).to eq(src[:v_name])
+      expect(line.vendor_reference).to eq(src[:v_ref])
+      expect(line.charge_type).to eq(src[:type])
     end
   end
 
@@ -924,9 +924,9 @@ describe OpenChain::AllianceParser do
 
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     comments = Entry.find_by_broker_reference(@ref_num).entry_comments
-    comments.should have(1).comment
+    expect(comments.size).to eq(1)
     comment = comments.first
-    comment.generated_at.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("201305152300")
+    expect(comment.generated_at).to eq(ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("201305152300"))
   end
 
   it 'sets charge description to "NO DESCRIPTION" if blank' do
@@ -946,13 +946,13 @@ describe OpenChain::AllianceParser do
 
   it "checks for stale data after the with_lock_retry call" do
     entry = Entry.new last_exported_from_source: Time.now
-    Lock.should_receive(:with_lock_retry).with(MutatingInstanceOf.new(Entry)).and_yield
+    expect(Lock).to receive(:with_lock_retry).with(MutatingInstanceOf.new(Entry)).and_yield
 
-    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}").to be_false
+    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}").to be_falsey
   end
 
   it "handles bad data" do
-    expect(OpenChain::AllianceParser.parse "bjsdfjsdfjkbashjkfsdj\ansdfasdjksd\nsdjfhasjkdfsa\sndfjshd").to be_false
+    expect(OpenChain::AllianceParser.parse "bjsdfjsdfjkbashjkfsdj\ansdfasdjksd\nsdjfhasjkdfsa\sndfjshd").to be_falsey
   end
 
   it "does not update entry filed date" do
@@ -963,31 +963,31 @@ describe OpenChain::AllianceParser do
 
   it "skips purged entries" do
     EntryPurge.create! broker_reference: @ref_num, source_system: OpenChain::AllianceParser::SOURCE_CODE, date_purged: Time.zone.parse("2010-03-01 00:00")
-    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}").to be_false
+    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}").to be_falsey
     expect(Entry.where(broker_reference: @ref_num, source_system: OpenChain::AllianceParser::SOURCE_CODE).first).to be_nil
   end
 
   it "makes new entries for file numbers purged in the past" do
     EntryPurge.create! broker_reference: @ref_num, source_system: OpenChain::AllianceParser::SOURCE_CODE, date_purged: Time.zone.parse("2010-01-01 00:00")
-    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}").to be_true
+    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}").to be_truthy
     expect(Entry.where(broker_reference: @ref_num, source_system: OpenChain::AllianceParser::SOURCE_CODE).first).not_to be_nil
   end
 
   describe 'process_past_days' do
     it "should delay processing" do
-      OpenChain::AllianceParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::AllianceParser)
-      OpenChain::AllianceParser.should_receive(:process_day).exactly(3).times
+      expect(OpenChain::AllianceParser).to receive(:delay).exactly(3).times.and_return(OpenChain::AllianceParser)
+      expect(OpenChain::AllianceParser).to receive(:process_day).exactly(3).times
       OpenChain::AllianceParser.process_past_days 3
     end
   end
   describe 'process_day' do
     it 'should process all files from the given day' do
       d = Date.new
-      OpenChain::S3.should_receive(:integration_keys).with(d,["//opt/wftpserver/ftproot/www-vfitrack-net/_alliance", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_alliance"]).and_yield("a").and_yield("b")
-      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
-      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
-      OpenChain::AllianceParser.should_receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false})
-      OpenChain::AllianceParser.should_receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false})
+      expect(OpenChain::S3).to receive(:integration_keys).with(d,["//opt/wftpserver/ftproot/www-vfitrack-net/_alliance", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_alliance"]).and_yield("a").and_yield("b")
+      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
+      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
+      expect(OpenChain::AllianceParser).to receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false})
+      expect(OpenChain::AllianceParser).to receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false})
       OpenChain::AllianceParser.process_day d
     end
   end
@@ -1027,7 +1027,7 @@ describe OpenChain::AllianceParser do
     end
 
     it "parses query results from SQL Proxy and updates the line information for each line" do
-      Entry.any_instance.should_receive(:broadcast_event).with :save
+      expect_any_instance_of(Entry).to receive(:broadcast_event).with :save
 
       OpenChain::AllianceParser.process_alliance_query_details @query_results, @query_context
 

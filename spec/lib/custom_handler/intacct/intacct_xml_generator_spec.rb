@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(t.text "exchratedate/day").to eq @recv.invoice_date.strftime "%d"
       expect(t.text "exchratetype").to eq "Intacct Daily Rate"
 
-      expect(REXML::XPath.each t, "sotransitems/sotransitem").to have(1).item
+      expect(REXML::XPath.each(t, "sotransitems/sotransitem").size).to eq(1)
 
       i = REXML::XPath.first t, "sotransitems/sotransitem"
       expect(i.text "itemid").to eq @rl.charge_code
@@ -121,7 +121,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(b.text "exchratedate/day").to eq @p.bill_date.strftime "%d"
       expect(b.text "exchratetype").to eq "Intacct Daily Rate"
 
-      expect(REXML::XPath.each b, "billitems/lineitem").to have(1).item
+      expect(REXML::XPath.each(b, "billitems/lineitem").size).to eq(1)
 
       i = REXML::XPath.first b, "billitems/lineitem"
 
@@ -259,7 +259,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       
       field_text = REXML::XPath.each(g, "fields/field").map {|e| e.text}
 
-      expect(field_text).to have(2).items
+      expect(field_text.size).to eq(2)
       expect(field_text).to include "field1"
       expect(field_text).to include "field2"
     end
@@ -275,7 +275,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(g.attributes["object"]).to eq "MyObject"
       expect(g.attributes["key"]).to eq "MyKey"
 
-      expect(REXML::XPath.each(g, "fields/field")).to have(0).items
+      expect(REXML::XPath.each(g, "fields/field").size).to eq(0)
     end
   end
 
@@ -303,7 +303,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(g.text "description").to eq @check.check_number
       expect(g.text "referenceno").to eq @check.bill_number
 
-      expect(REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements).to have(2).items
+      expect(REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements.size).to eq(2)
 
       e = REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements[1]
       expect(e.text "trtype").to eq "credit"
@@ -354,7 +354,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       control_id, xml = described_class.new.generate_check_gl_entry_xml @check
       
       root = REXML::Document.new(xml).root
-      expect(REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements).to have(2).items
+      expect(REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements.size).to eq(2)
 
       e = REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements[1]
       expect(e.text "trtype").to eq "credit"

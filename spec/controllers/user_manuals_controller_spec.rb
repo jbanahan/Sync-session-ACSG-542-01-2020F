@@ -5,7 +5,7 @@ describe UserManualsController do
     sign_in_as Factory(:user)
     yield
     expect(response).to be_redirect
-    expect(flash[:errors]).to have(1).message
+    expect(flash[:errors].size).to eq(1)
   end
   describe '#index' do
     it "should admin secure" do
@@ -104,13 +104,13 @@ describe UserManualsController do
       m1 = double('manual1')
       m2 = double('manual2')
       [m1,m2].each_with_index do |m,i|
-        m.stub(:name).and_return "manual#{i+1}"
-        m.stub(:id).and_return(i+1)
+        allow(m).to receive(:name).and_return "manual#{i+1}"
+        allow(m).to receive(:id).and_return(i+1)
       end
 
       request.env['HTTP_REFERER'] = 'http://example.com/my_page'
 
-      UserManual.should_receive(:for_user_and_page).
+      expect(UserManual).to receive(:for_user_and_page).
         with(u,'http://example.com/my_page').
         and_return [m2,m1] #returning in reverse order to confirm that sorting works
 
@@ -125,7 +125,7 @@ describe UserManualsController do
       @um = Factory(:user_manual)
       @secure_url = 'abc'
       @att = double(:attachment, secure_url: @secure_url)
-      UserManual.any_instance.stub(:attachment).and_return(@att)
+      allow_any_instance_of(UserManual).to receive(:attachment).and_return(@att)
     end
     it "should allow admins" do
       sign_in_as Factory(:admin_user)
@@ -134,29 +134,29 @@ describe UserManualsController do
     end
     it "should allow user who can view" do
       sign_in_as Factory(:user)
-      UserManual.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(UserManual).to receive(:can_view?).and_return true
       get :download, id: @um.id
       expect(response).to redirect_to @secure_url
     end
     it "should not allow if user cannot view" do
-      UserManual.any_instance.stub(:can_view?).and_return false
+      allow_any_instance_of(UserManual).to receive(:can_view?).and_return false
       check_admin_secured do
         get :download, id: @um.id
       end
     end
     it "should allow if user has portal_redirect" do
       sign_in_as Factory(:user)
-      User.any_instance.stub(:portal_redirect_path).and_return '/abc'
+      allow_any_instance_of(User).to receive(:portal_redirect_path).and_return '/abc'
 
       ms = double("MasterSetup")
-      ms.stub(:custom_feature?).with("Attachment Mask").and_return true
-      MasterSetup.stub(:get).and_return ms
+      allow(ms).to receive(:custom_feature?).with("Attachment Mask").and_return true
+      allow(MasterSetup).to receive(:get).and_return ms
 
-      @att.stub(:attached_file_name).and_return "file.txt"
-      @att.stub(:attached_content_type).and_return "text/plain"
+      allow(@att).to receive(:attached_file_name).and_return "file.txt"
+      allow(@att).to receive(:attached_content_type).and_return "text/plain"
       tf = double("Tempfile")
-      tf.should_receive(:read).and_return "123"
-      @att.stub(:download_to_tempfile).and_yield tf
+      expect(tf).to receive(:read).and_return "123"
+      allow(@att).to receive(:download_to_tempfile).and_yield tf
 
       get :download, id: @um.id
       expect(response).to be_success
@@ -166,14 +166,14 @@ describe UserManualsController do
     it "uses alternate download approach" do
       sign_in_as Factory(:user)
       ms = double("MasterSetup")
-      ms.stub(:custom_feature?).with("Attachment Mask").and_return true
-      MasterSetup.stub(:get).and_return ms
+      allow(ms).to receive(:custom_feature?).with("Attachment Mask").and_return true
+      allow(MasterSetup).to receive(:get).and_return ms
 
-      @att.stub(:attached_file_name).and_return "file.txt"
-      @att.stub(:attached_content_type).and_return "text/plain"
+      allow(@att).to receive(:attached_file_name).and_return "file.txt"
+      allow(@att).to receive(:attached_content_type).and_return "text/plain"
       tf = double("Tempfile")
-      tf.should_receive(:read).and_return "123"
-      @att.stub(:download_to_tempfile).and_yield tf
+      expect(tf).to receive(:read).and_return "123"
+      allow(@att).to receive(:download_to_tempfile).and_yield tf
 
       get :download, id: @um.id
       expect(response).to be_success

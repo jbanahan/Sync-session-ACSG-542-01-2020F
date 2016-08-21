@@ -17,47 +17,47 @@ describe SearchCriterion do
     end
     it "should pass if field is after other field's value" do
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>1.days.ago)
-      @sc.test?(ent).should be_true
+      expect(@sc.test?(ent)).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.first.should == ent
+      expect(ents.first).to eq(ent)
     end
     it "should fail if field is same as other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>1.days.ago)
-      @sc.test?(ent).should be_false
+      expect(@sc.test?(ent)).to be_falsey
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should fail if field is before other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
-      @sc.test?(ent).should be_false
+      expect(@sc.test?(ent)).to be_falsey
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should fail if field is null" do
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
-      @sc.test?(ent).should be_false
+      expect(@sc.test?(ent)).to be_falsey
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should fail if other field is null" do
       ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.day.ago)
-      @sc.test?(ent).should be_false
+      expect(@sc.test?(ent)).to be_falsey
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should pass if field is null and include empty is true" do
       @sc.include_empty = true
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
-      @sc.test?(ent).should be_true
+      expect(@sc.test?(ent)).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should pass if field is not null and other field is true and include empty is true" do
       @sc.include_empty = true
       ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.days.ago)
-      @sc.test?(ent).should be_true
+      expect(@sc.test?(ent)).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should pass for custom date fields before another custom date field" do
       # There's no real logic differences in search criterion for handling custom fields
@@ -72,9 +72,9 @@ describe SearchCriterion do
       ent.update_custom_value! @def1, 1.months.ago
       ent.update_custom_value! @def2, 2.month.ago
 
-      @sc.test?(ent).should be_true
+      expect(@sc.test?(ent)).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.first.should == ent
+      expect(ents.first).to eq(ent)
     end
     it "should pass when comparing fields across multiple module levels" do
       # This tests that we get the entry back if the release date is after the invoice date
@@ -83,9 +83,9 @@ describe SearchCriterion do
       ent.update_attributes :release_date => 1.month.ago
       @sc.value = "ci_invoice_date"
 
-      @sc.test?([ent, inv]).should be_true
+      expect(@sc.test?([ent, inv])).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.first.should == ent
+      expect(ents.first).to eq(ent)
     end
   end
 
@@ -97,47 +97,47 @@ describe SearchCriterion do
     end
     it "should pass if field is before other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
-      @sc.test?(ent).should be_true
+      expect(@sc.test?(ent)).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.first.should == ent
+      expect(ents.first).to eq(ent)
     end
     it "should fail if field is same as other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>1.days.ago)
-      @sc.test?(ent).should be_false
+      expect(@sc.test?(ent)).to be_falsey
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should fail if field is after other field's value" do
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>1.days.ago)
-      @sc.test?(ent).should be_false
+      expect(@sc.test?(ent)).to be_falsey
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should fail if field is null" do
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
-      @sc.test?(ent).should be_false
+      expect(@sc.test?(ent)).to be_falsey
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should fail if other field is null" do
       ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.day.ago)
-      @sc.test?(ent).should be_false
+      expect(@sc.test?(ent)).to be_falsey
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should pass if field is null and include empty is true" do
       @sc.include_empty = true
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
-      @sc.test?(ent).should be_true
+      expect(@sc.test?(ent)).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should pass if field is not null and other field is true and include empty is true" do
       @sc.include_empty = true
       ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.days.ago)
-      @sc.test?(ent).should be_true
+      expect(@sc.test?(ent)).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.should be_empty
+      expect(ents).to be_empty
     end
     it "should pass for custom date fields before another custom date field" do
       # There's no real logic differences in search criterion for handling custom fields
@@ -151,9 +151,9 @@ describe SearchCriterion do
       @product.update_custom_value! @def1, 2.months.ago
       @product.update_custom_value! @def2, 1.month.ago
 
-      @sc.test?(@product).should be_true
+      expect(@sc.test?(@product)).to be_truthy
       prods = @sc.apply(Product.scoped).all
-      prods.first.should == @product
+      expect(prods.first).to eq(@product)
     end
     it "should pass when comparing fields across multiple module levels" do
       # This tests that we get the entry back if the release date is before the invoice date
@@ -162,9 +162,9 @@ describe SearchCriterion do
       ent.update_attributes :release_date => 2.month.ago
       @sc.value = "ci_invoice_date"
 
-      @sc.test?([ent, inv]).should be_true
+      expect(@sc.test?([ent, inv])).to be_truthy
       ents = @sc.apply(Entry.scoped).all
-      ents.first.should == ent
+      expect(ents.first).to eq(ent)
     end
   end
   context "previous _ months" do
@@ -174,132 +174,132 @@ describe SearchCriterion do
       end
       it "should find something from the last month with val = 1" do
         @product.created_at = 1.month.ago
-        @sc.test?(@product).should be_true
+        expect(@sc.test?(@product)).to be_truthy
       end
       it "should not find something from this month" do
         @product.created_at = 1.second.ago
-        @sc.test?(@product).should be_false
+        expect(@sc.test?(@product)).to be_falsey
       end
       it "should find something from last month with val = 2" do
         @product.created_at = 1.month.ago
         @sc.value = 2
-        @sc.test?(@product).should be_true
+        expect(@sc.test?(@product)).to be_truthy
       end
       it "should find something from 2 months ago with val = 2" do
         @product.created_at = 2.months.ago
         @sc.value = 2
-        @sc.test?(@product).should be_true
+        expect(@sc.test?(@product)).to be_truthy
       end
       it "should not find something from 2 months ago with val = 1" do
         @product.created_at = 2.months.ago
         @sc.value = 1
-        @sc.test?(@product).should be_false
+        expect(@sc.test?(@product)).to be_falsey
       end
       it "should not find a date in the future" do
         @product.created_at = 1.month.from_now
-        @sc.test?(@product).should be_false
+        expect(@sc.test?(@product)).to be_falsey
       end
       it "should be false for nil" do
         @product.created_at = nil
-        @sc.test?(@product).should be_false
+        expect(@sc.test?(@product)).to be_falsey
       end
       it "should be true for nil with include_empty for date fields" do
         @product.created_at = nil
         crit = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
         crit.include_empty = true
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
       end
       it "should be true for nil and blank values with include_empty for string fields" do
         @product.name = nil
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"1")
         crit.include_empty = true
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
         @product.name = ""
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
         # Make sure we consider nothing but whitespace as empty
         @product.name = "\n  \t  \r"
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
       end
       it "should be true for nil and 0 with include_empty for numeric fields" do
         e = Entry.new
         crit = SearchCriterion.new(:model_field_uid=>:ent_total_fees,:operator=>"eq",:value=>"1")
         crit.include_empty = true
-        crit.test?(e).should be_true
+        expect(crit.test?(e)).to be_truthy
         e.total_fees = 0
-        crit.test?(e).should be_true
+        expect(crit.test?(e)).to be_truthy
         e.total_fees = 0.0
-        crit.test?(e).should be_true
+        expect(crit.test?(e)).to be_truthy
       end
       it "should be true for nil and false with include_empty for boolean fields" do
         e = Entry.new
         crit = SearchCriterion.new(:model_field_uid=>:ent_paperless_release,:operator=>"notnull",:value=>nil)
         crit.include_empty = true
-        crit.test?(e).should be_true
+        expect(crit.test?(e)).to be_truthy
         e.paperless_release = true
-        crit.test?(e).should be_true
+        expect(crit.test?(e)).to be_truthy
         e.paperless_release = false
-        crit.test?(e).should be_false
+        expect(crit.test?(e)).to be_falsey
       end
       it "should not consider trailing whitespce for = operator" do
         @product.name = "ABC   "
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"ABC")
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
         crit.value = "ABC   "
         @product.name = "ABC"
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
 
         #Make sure we are considering leading whitespace
         @product.name = "   ABC"
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
         crit.value = "   ABC"
         @product.name = "ABC"
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
       end
       it "should not consider trailing whitespce for != operator" do
         @product.name = "ABC   "
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"nq",:value=>"ABC")
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
         crit.value = "ABC   "
         @product.name = "ABC"
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
 
         #Make sure we are considering leading whitespace
         @product.name = "   ABC"
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
         crit.value = "   ABC"
         @product.name = "ABC"
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
       end
       it "should not consider trailing whitespce for IN operator" do
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"in",:value=>"ABC\nDEF")
         @product.name = "ABC   "
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
         @product.name = "DEF    "
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
         crit.value = "ABC   \nDEF   \n"
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
 
         #Make sure we are considering leading whitespace
         @product.name = "   ABC"
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
         @product.name = "   DEF"
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
       end
       it "should find something with a NOT IN operator" do
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"notin",:value=>"ABC\nDEF")
         @product.name = "A"
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
         @product.name = "ABC"
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
         @product.name = "ABC   "
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
         @product.name = "DEF   "
-        crit.test?(@product).should be_false
+        expect(crit.test?(@product)).to be_falsey
 
         @product.name = "  ABC"
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
         @product.name = "  DEF"
-        crit.test?(@product).should be_true
+        expect(crit.test?(@product)).to be_truthy
       end
     end
     describe :apply do
@@ -309,7 +309,7 @@ describe SearchCriterion do
           @product.update_custom_value! @definition, 1.month.ago
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"pm",:value=>1)
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
 
         it "should find something with nil date and include_empty" do
@@ -318,7 +318,7 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"pm",:value=>1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
 
         it "should find something with nil string and include_empty" do
@@ -327,7 +327,7 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
 
         it "should find something with blank string and include_empty" do
@@ -339,7 +339,7 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
 
         it "should find something with nil text and include_empty" do
@@ -348,7 +348,7 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
 
         it "should find something with blank text and include_empty" do
@@ -357,7 +357,7 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
 
         it "should find something with 0 and include_empty" do
@@ -366,7 +366,7 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
 
         it "should find something with include_empty that doesn't have a custom value record for custom field" do
@@ -374,7 +374,7 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
 
         it "should find something with include_empty that doesn't have a custom value record for the child object's custom field" do
@@ -382,7 +382,7 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
       end
       context :normal_field do
@@ -390,75 +390,75 @@ describe SearchCriterion do
           t = Factory(:tariff_record, hts_1: "9801001010")
           sc = SearchCriterion.new(:model_field_uid=>:hts_hts_1,:operator=>"eq",:value=>"9801.00.1010")
           v = sc.apply(TariffRecord.where("1=1"))
-          v.all.should include t
+          expect(v.all).to include t
         end
   
         it "should find something created last month with val = 1" do
           @product.update_attributes(:created_at=>1.month.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
           v = sc.apply(Product.where("1=1"))
-          v.all.should include @product
+          expect(v.all).to include @product
         end
         it "should not find something created in the future" do
           @product.update_attributes(:created_at=>1.month.from_now)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
           v = sc.apply(Product.where("1=1"))
-          v.all.should_not include @product
+          expect(v.all).not_to include @product
         end
         it "should not find something created this month with val = 1" do
           @product.update_attributes(:created_at=>0.seconds.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
-          sc.apply(Product.where("1=1")).all.should_not include @product
+          expect(sc.apply(Product.where("1=1")).all).not_to include @product
         end
         it "should not find something created two months ago with val = 1" do
           @product.update_attributes(:created_at=>2.months.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
-          sc.apply(Product.where("1=1")).all.should_not include @product
+          expect(sc.apply(Product.where("1=1")).all).not_to include @product
         end
         it "should find something created last month with val = 2" do
           @product.update_attributes(:created_at=>1.month.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>2)
-          sc.apply(Product.where("1=1")).all.should include @product
+          expect(sc.apply(Product.where("1=1")).all).to include @product
         end
         it "should find something created two months ago with val 2" do
           @product.update_attributes(:created_at=>2.months.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>2)
-          sc.apply(Product.where("1=1")).all.should include @product
+          expect(sc.apply(Product.where("1=1")).all).to include @product
         end
 
         it "should find something with a nil date and include_empty" do
           @product.update_attributes(:created_at=>nil)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>2)
           sc.include_empty = true
-          sc.apply(Product.where("1=1")).all.should include @product
+          expect(sc.apply(Product.where("1=1")).all).to include @product
         end
 
         it "should find a product when there is a regex match on the appropriate text field" do
           @product.update_attributes(unique_identifier: "Blue jeans")
           sc = SearchCriterion.new(:model_field_uid=>:prod_uid,:operator=>"regexp",:value=>"jean")
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
+          expect(sc.apply(Product.where("1=1")).all).to include @product
+          expect(sc.test?(@product)).to be_truthy
         end
 
         it "should not find a product when there is not a regex match on the appropriate text field" do
           @product.update_attributes(unique_identifier: "Blue jeans")
           sc = SearchCriterion.new(:model_field_uid=>:prod_uid,:operator=>"regexp",:value=>"khaki")
-          sc.apply(Product.where("1=1")).all.should_not include @product
-          sc.test?(@product).should be_false
+          expect(sc.apply(Product.where("1=1")).all).not_to include @product
+          expect(sc.test?(@product)).to be_falsey
         end
 
         it "should find a product when there is a NOT regex match on the appropriate text field" do
           @product.update_attributes(unique_identifier: "Blue jeans")
           sc = SearchCriterion.new(:model_field_uid=>:prod_uid,:operator=>"notregexp",:value=>"shirt")
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
+          expect(sc.apply(Product.where("1=1")).all).to include @product
+          expect(sc.test?(@product)).to be_truthy
         end
 
         it "should not find a product when there is a NOT regex match on the appropriate text field" do
           @product.update_attributes(unique_identifier: "Blue shirt")
           sc = SearchCriterion.new(:model_field_uid=>:prod_uid,:operator=>"notregexp",:value=>"shirt")
-          sc.apply(Product.where("1=1")).all.should_not include @product
-          sc.test?(@product).should be_false
+          expect(sc.apply(Product.where("1=1")).all).not_to include @product
+          expect(sc.test?(@product)).to be_falsey
         end
 
         it "should find an entry when there is a regex match on the appropriate date field" do
@@ -466,12 +466,12 @@ describe SearchCriterion do
           e = Factory(:entry, eta_date: '2013-02-03')
 
           sc = SearchCriterion.new(:model_field_uid=>:ent_eta_date,:operator=>"dt_regexp",:value=>"-02-")
-          sc.apply(Entry.where("1=1")).all.should include e
-          sc.test?(e).should be_true
+          expect(sc.apply(Entry.where("1=1")).all).to include e
+          expect(sc.test?(e)).to be_truthy
 
           sc = SearchCriterion.new(:model_field_uid=>:ent_eta_date,:operator=>"dt_regexp",:value=>"[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}")
-          sc.apply(Entry.where("1=1")).all.should include e
-          expect(sc.test?(e)).to be_true
+          expect(sc.apply(Entry.where("1=1")).all).to include e
+          expect(sc.test?(e)).to be_truthy
         end
 
         it "should find an entry when there is a not regex match on the appropriate date field" do
@@ -479,8 +479,8 @@ describe SearchCriterion do
           e = Factory(:entry, eta_date: '2013-02-03')
 
           sc = SearchCriterion.new(:model_field_uid=>:ent_eta_date,:operator=>"dt_notregexp",:value=>"1999")
-          sc.apply(Entry.where("1=1")).all.should include e
-          expect(sc.test?(e)).to be_true
+          expect(sc.apply(Entry.where("1=1")).all).to include e
+          expect(sc.test?(e)).to be_truthy
         end
 
         it "should not find an entry when there is a not regex match on the appropriate date field" do
@@ -488,8 +488,8 @@ describe SearchCriterion do
           e = Factory(:entry, eta_date: '2013-02-03')
 
           sc = SearchCriterion.new(:model_field_uid=>:ent_eta_date,:operator=>"dt_notregexp",:value=>"2013")
-          sc.apply(Entry.where("1=1")).all.should_not include e
-          expect(sc.test?(e)).to be_false
+          expect(sc.apply(Entry.where("1=1")).all).not_to include e
+          expect(sc.test?(e)).to be_falsey
         end
 
         it "finds a product when regex on datetime field" do
@@ -497,13 +497,13 @@ describe SearchCriterion do
           # we're only testing the test? method for this.
           @product.update_attributes(created_at: Time.zone.now)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_regexp",:value=>Time.now.year.to_s)
-          sc.test?(@product).should be_true
+          expect(sc.test?(@product)).to be_truthy
 
           Time.use_zone("Eastern Time (US & Canada)") do
             @product.update_attributes(created_at: ActiveSupport::TimeZone["UTC"].parse("2013-02-03 04:05"))
             # Note the day in the regex is the day before what we set in the created_at attribute
             sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_regexp",:value=>"02-02")
-            expect(sc.test?(@product)).to be_true
+            expect(sc.test?(@product)).to be_truthy
           end
         end
 
@@ -512,12 +512,12 @@ describe SearchCriterion do
           # we're only testing the test? method for this
           @product.update_attributes(created_at: Time.zone.now)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_notregexp",:value=>"1999")
-          sc.test?(@product).should be_true
+          expect(sc.test?(@product)).to be_truthy
 
           Time.use_zone("Eastern Time (US & Canada)") do
             @product.update_attributes(created_at: ActiveSupport::TimeZone["UTC"].parse("2013-02-03 04:05"))
             sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_notregexp",:value=>"02-03")
-            sc.test?(@product).should be_true
+            expect(sc.test?(@product)).to be_truthy
           end
         end
 
@@ -526,41 +526,41 @@ describe SearchCriterion do
           # we're only testing the test? method for this
           @product.update_attributes(created_at: Time.zone.now)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_notregexp",:value=>Time.now.year.to_s)
-          sc.test?(@product).should be_false
+          expect(sc.test?(@product)).to be_falsey
 
           Time.use_zone("Eastern Time (US & Canada)") do
             @product.update_attributes(created_at: ActiveSupport::TimeZone["UTC"].parse("2013-02-03 04:05"))
             sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"dt_notregexp",:value=>"02-02")
-            sc.test?(@product).should be_false
+            expect(sc.test?(@product)).to be_falsey
           end
         end
 
         it "should find a product when there is a regex match on the appropriate integer field" do
           @product.attachments << Factory(:attachment)
           sc = SearchCriterion.new(:model_field_uid=>:prod_attachment_count,:operator=>"regexp",:value=>"1")
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
+          expect(sc.apply(Product.where("1=1")).all).to include @product
+          expect(sc.test?(@product)).to be_truthy
         end
 
         it "should find a product when there is a regex match on the appropriate integer field" do
           @product.attachments << Factory(:attachment)
           sc = SearchCriterion.new(:model_field_uid=>:prod_attachment_count,:operator=>"notregexp",:value=>"0")
-          sc.apply(Product.where("1=1")).all.should include @product
-          sc.test?(@product).should be_true
+          expect(sc.apply(Product.where("1=1")).all).to include @product
+          expect(sc.test?(@product)).to be_truthy
         end
 
         it "should find something with a nil string and include_empty" do
           @product.update_attributes(:name=>nil)
           sc = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"1")
           sc.include_empty = true
-          sc.apply(Product.where("1=1")).all.should include @product
+          expect(sc.apply(Product.where("1=1")).all).to include @product
         end
 
         it "should find something with a blank string and include_empty" do
           @product.update_attributes(:name=>'   ')
           sc = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"1")
           sc.include_empty = true
-          sc.apply(Product.where("1=1")).all.should include @product
+          expect(sc.apply(Product.where("1=1")).all).to include @product
         end
 
         it "should find something with 0 integer value and include_empty" do
@@ -568,7 +568,7 @@ describe SearchCriterion do
           entry.update_attributes(:total_packages=> 0)
           sc = SearchCriterion.new(:model_field_uid=>:ent_total_packages,:operator=>"eq",:value=>"1")
           sc.include_empty = true
-          sc.apply(Entry.where("1=1")).all.should include entry
+          expect(sc.apply(Entry.where("1=1")).all).to include entry
         end
 
         it "should find an entry with a decimal value and a regex match" do
@@ -576,8 +576,8 @@ describe SearchCriterion do
           entry.update_attributes(:total_fees => 123.45)
           sc = SearchCriterion.new(:model_field_uid => :ent_total_fees, :operator=>"regexp",:value=>"123")
           sql_stm = sc.apply(Entry.where("1=1")).to_sql
-          sc.apply(Entry.where("1=1")).all.should include entry
-          sc.test?(entry).should be_true
+          expect(sc.apply(Entry.where("1=1")).all).to include entry
+          expect(sc.test?(entry)).to be_truthy
         end
 
         it "should find something with 0 decimal value and include_empty" do
@@ -585,7 +585,7 @@ describe SearchCriterion do
           entry.update_attributes(:total_fees=> 0.0)
           sc = SearchCriterion.new(:model_field_uid=>:ent_total_fees,:operator=>"eq",:value=>"1")
           sc.include_empty = true
-          sc.apply(Entry.where("1=1")).all.should include entry
+          expect(sc.apply(Entry.where("1=1")).all).to include entry
         end
 
         it "should find something with blank text value and include_empty" do
@@ -593,25 +593,25 @@ describe SearchCriterion do
           entry.update_attributes(:sub_house_bills_of_lading=> '   ')
           sc = SearchCriterion.new(:model_field_uid=>:ent_sbols,:operator=>"eq",:value=>"1")
           sc.include_empty = true
-          sc.apply(Entry.where("1=1")).all.should include entry
+          expect(sc.apply(Entry.where("1=1")).all).to include entry
         end
 
         it "should find something with NOT IN operator" do
           sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"notin", :value=>"val\nval2")
-          sc.apply(Product.where("1=1")).all.should include @product
+          expect(sc.apply(Product.where("1=1")).all).to include @product
         end
 
         it "should not find something with NOT IN operator" do
           #Leave some whitespace in so we know it's getting trimmed out
           sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"notin", :value=>"#{@product.unique_identifier}   ")
-          sc.apply(Product.where("1=1")).all.should_not include @product
+          expect(sc.apply(Product.where("1=1")).all).not_to include @product
         end
 
         it "should find something with an include empty search parameter on a child object, even if the child object doesn't exist" do
           entry = Factory(:entry)
           sc = SearchCriterion.new(:model_field_uid=>:ci_invoice_number,:operator=>"eq",:value=>"1")
           sc.include_empty = true
-          sc.apply(Entry.where("1=1")).all.should include entry
+          expect(sc.apply(Entry.where("1=1")).all).to include entry
         end
         it "finds something with doesn't start with parameter" do
           sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"nsw", :value=>"ABC123")
@@ -641,12 +641,12 @@ describe SearchCriterion do
     context "test?" do
       it "accepts product created prior to first of the previous month" do
         @product.created_at = 2.months.ago.end_of_month
-        expect(@sc.test?(@product)).to be_true
+        expect(@sc.test?(@product)).to be_truthy
       end
 
       it "does not accept product created on first of the previous month" do
         @product.created_at = 1.months.ago.beginning_of_month.at_midnight
-        expect(@sc.test?(@product)).to be_false
+        expect(@sc.test?(@product)).to be_falsey
       end
     end
 
@@ -671,12 +671,12 @@ describe SearchCriterion do
     context "test?" do
       it "accepts product created after the first of the previous month" do
         @product.created_at = Time.zone.now.beginning_of_month.at_midnight
-        expect(@sc.test?(@product)).to be_true
+        expect(@sc.test?(@product)).to be_truthy
       end
 
       it "does not accept product created prior to the first of the previous month" do
         @product.created_at = (Time.zone.now.beginning_of_month.at_midnight - 1.second)
-        expect(@sc.test?(@product)).to be_false
+        expect(@sc.test?(@product)).to be_falsey
       end
     end
 
@@ -701,12 +701,12 @@ describe SearchCriterion do
     context "test?" do
       it "accepts product created after 1 month from now" do
         @product.created_at = (Time.zone.now.beginning_of_month + 2.month).at_midnight
-        expect(@sc.test?(@product)).to be_true
+        expect(@sc.test?(@product)).to be_truthy
       end
 
       it "does not accept product created on last of the next month" do
         @product.created_at = ((Time.zone.now.beginning_of_month + 2.month).at_midnight - 1.second)
-        expect(@sc.test?(@product)).to be_false
+        expect(@sc.test?(@product)).to be_falsey
       end
     end
 
@@ -731,12 +731,12 @@ describe SearchCriterion do
     context "test?" do
       it "accepts product created before 1 month from now" do
         @product.created_at = ((Time.zone.now.beginning_of_month + 1.month).at_midnight - 1.second)
-        expect(@sc.test?(@product)).to be_true
+        expect(@sc.test?(@product)).to be_truthy
       end
 
       it "does not accept product created on first of the next month" do
         @product.created_at = (Time.zone.now.beginning_of_month + 1.month).at_midnight
-        expect(@sc.test?(@product)).to be_false
+        expect(@sc.test?(@product)).to be_falsey
       end
     end
 
@@ -756,27 +756,27 @@ describe SearchCriterion do
   context "string field IN list" do
     it "should find something using a string field from a list of values using unix newlines" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\n#{@product.unique_identifier}\nval2")
-      sc.apply(Product.where("1=1")).all.should include @product
+      expect(sc.apply(Product.where("1=1")).all).to include @product
     end
 
     it "should find something using a string field from a list of values using windows newlines" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\r\n#{@product.unique_identifier}\r\nval2")
-      sc.apply(Product.where("1=1")).all.should include @product
+      expect(sc.apply(Product.where("1=1")).all).to include @product
     end
     it "should not add blank strings in the IN list when using windows newlines" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\r\n#{@product.unique_identifier}\r\nval2")
-      sc.apply(Product.where("1=1")).to_sql.should match /\('val',\s?'#{@product.unique_identifier}',\s?'val2'\)/
+      expect(sc.apply(Product.where("1=1")).to_sql).to match /\('val',\s?'#{@product.unique_identifier}',\s?'val2'\)/
     end
     it "should find something using a numeric field from a list of values" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_class_count, :operator=>"in", :value=>"1\n0\r\n3")
-      sc.apply(Product.where("1=1")).all.should include @product
+      expect(sc.apply(Product.where("1=1")).all).to include @product
     end
     it "should find something with a blank value provided a blank IN list value" do
       # Without the added code backing what's in this test, the query produced for a blank IN list value would be IN (null),
       # but after the change it's IN (''), which is more in line with what the user is requesting if they left the value blank.
       @product.update_attributes :name => ""
       sc = SearchCriterion.new(:model_field_uid=>:prod_name, :operator=>"in", :value=>"")
-      sc.apply(Product.where("1=1")).all.should include @product
+      expect(sc.apply(Product.where("1=1")).all).to include @product
     end
   end
 
@@ -792,7 +792,7 @@ describe SearchCriterion do
       sc = ss.search_criterions.new(model_field_uid:"*cf_#{cd.id}",operator:'notnull')
       sq = SearchQuery.new ss, u
       h = sq.execute
-      h.collect {|r| r[:row_key]}.should == [@product.id]
+      expect(h.collect {|r| r[:row_key]}).to eq([@product.id])
     end
     it "should properly handle null" do
       u = Factory(:master_user)
@@ -805,7 +805,7 @@ describe SearchCriterion do
       sc = ss.search_criterions.new(model_field_uid:"*cf_#{cd.id}",operator:'null')
       sq = SearchQuery.new ss, u
       h = sq.execute
-      h.collect {|r| r[:row_key]}.sort.should == [p2.id,p3.id]
+      expect(h.collect {|r| r[:row_key]}.sort).to eq([p2.id,p3.id])
     end
     it "should translate datetime values to UTC for lt operator" do
       # Run these as central timezone
@@ -817,7 +817,7 @@ describe SearchCriterion do
       end
 
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"lt", :value=>value)
-      sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/
+      expect(sc.apply(Product.where("1=1")).to_sql).to match(/#{expected_value}/)
     end
 
     it "should translate datetime values to UTC for gt operator" do
@@ -830,7 +830,7 @@ describe SearchCriterion do
       end
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"gt", :value=>value)
       sql = sc.apply(Product.where("1=1")).to_sql
-      sql.should =~ /#{expected_value}/
+      expect(sql).to match(/#{expected_value}/)
     end
 
     it "should translate datetime values to UTC for eq operator" do
@@ -841,47 +841,47 @@ describe SearchCriterion do
         Time.zone.parse(value + " 00:00:00").utc.to_formatted_s(:db)
       end
 
-      sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/
+      expect(sc.apply(Product.where("1=1")).to_sql).to match(/#{expected_value}/)
 
       #verify the nq operator is translated too
       sc.operator = "nq"
-      sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/
+      expect(sc.apply(Product.where("1=1")).to_sql).to match(/#{expected_value}/)
     end
 
     it "should not translate date values to UTC for lt, gt, or eq operators" do
       value = "2012-01-01"
       # There's no actual date field in product, we'll use Entry.duty_due_date instead
       sc = SearchCriterion.new(:model_field_uid=>:ent_duty_due_date, :operator=>"eq", :value=>value)
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /#{value}/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/#{value}/)
 
       sc.operator = "lt"
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /#{value}/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/#{value}/)
 
       sc.operator = "gt"
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /#{value}/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/#{value}/)
     end
 
     it "should not translate datetime values to UTC for any operator other than lt, gt, eq, or nq" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"bda", :value=>10)
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /10/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/10/)
 
       sc.operator = "ada"
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /10/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/10/)
 
       sc.operator = "bdf"
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /10/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/10/)
 
       sc.operator = "adf"
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /10/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/10/)
 
       sc.operator = "pm"
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /10/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/10/)
 
       sc.operator = "null"
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /NULL/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/NULL/)
 
       sc.operator = "notnull"
-      sc.apply(Entry.where("1=1")).to_sql.should =~ /NOT NULL/
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/NOT NULL/)
     end
 
     it "should use current timezone to compare object field" do
@@ -897,16 +897,16 @@ describe SearchCriterion do
       p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 10:01"
 
       Time.use_zone(tz) do
-        sc.test?(p).should be_true
+        expect(sc.test?(p)).to be_truthy
         p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 09:59"
-        sc.test?(p).should be_false
+        expect(sc.test?(p)).to be_falsey
       end
     end
 
     it "utilize's users current time in UTC when doing days/months comparison against date time fields" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"bda", :value=>1)
       now = Time.zone.now.in_time_zone 'Hawaii'
-      Time.zone.stub(:now).and_return now
+      allow(Time.zone).to receive(:now).and_return now
 
       current_time = "'#{now.at_midnight.in_time_zone("UTC").strftime("%Y-%m-%d %H:%M:%S")}'"
 
@@ -933,7 +933,7 @@ describe SearchCriterion do
     it "utilize's users current date when doing days/months comparison against date fields" do
       sc = SearchCriterion.new(:model_field_uid=>:ent_export_date, :operator=>"bda", :value=>1)
       now = Time.zone.now.in_time_zone 'Hawaii'
-      Time.zone.stub(:now).and_return now
+      allow(Time.zone).to receive(:now).and_return now
 
       current_date = "'#{now.at_midnight.strftime("%Y-%m-%d %H:%M:%S")}'"
 
@@ -974,21 +974,21 @@ describe SearchCriterion do
       it 'should return for Is Empty and false' do
         @custom_value.value = false
         @custom_value.save!
-        @search_criterion.apply(Product).should include @product
-        @search_criterion.test?(@product).should == true
+        expect(@search_criterion.apply(Product)).to include @product
+        expect(@search_criterion.test?(@product)).to eq(true)
       end
       it 'should return for Is Empty and nil' do
         @custom_value.value = nil
         @custom_value.save!
-        @search_criterion.apply(Product).should include @product
-        @search_criterion.test?(@product).should == true
+        expect(@search_criterion.apply(Product)).to include @product
+        expect(@search_criterion.test?(@product)).to eq(true)
       end
 
       it 'should not return for Is Empty and true' do
         @custom_value.value = true
         @custom_value.save!
-        @search_criterion.apply(Product).should_not include @product
-        @search_criterion.test?(@product).should == false
+        expect(@search_criterion.apply(Product)).not_to include @product
+        expect(@search_criterion.test?(@product)).to eq(false)
       end
 
       context :string_handling do
@@ -1002,9 +1002,9 @@ describe SearchCriterion do
           expect(@sc.apply(Entry)).to be_empty
         end
         it "should test on empty string" do
-          expect(@sc.test?(@ent)).to be_true
+          expect(@sc.test?(@ent)).to be_truthy
           @ent.update_attributes(broker_reference:'x')
-          expect(@sc.test?(@ent)).to be_false
+          expect(@sc.test?(@ent)).to be_falsey
         end
       end
 
@@ -1020,30 +1020,30 @@ describe SearchCriterion do
       it 'should return for Is Not Empty and true' do
         @custom_value.value = true
         @custom_value.save!
-        @search_criterion.apply(Product).should include @product
-        @search_criterion.test?(@product).should == true
+        expect(@search_criterion.apply(Product)).to include @product
+        expect(@search_criterion.test?(@product)).to eq(true)
       end
 
       it 'should not return for Is Not Empty and false' do
         @custom_value.value = false
         @custom_value.save!
-        @search_criterion.apply(Product).should_not include @product
-        @search_criterion.test?(@product).should == false
+        expect(@search_criterion.apply(Product)).not_to include @product
+        expect(@search_criterion.test?(@product)).to eq(false)
       end
 
       it 'should not return for Is Not Empty and nil' do
         @custom_value.value = nil
         @custom_value.save!
-        @search_criterion.apply(Product).should_not include @product
-        @search_criterion.test?(@product).should == false
+        expect(@search_criterion.apply(Product)).not_to include @product
+        expect(@search_criterion.test?(@product)).to eq(false)
       end
 
       it 'should return for Is Not Empty, include_empty and nil' do
         @custom_value.value = nil
         @custom_value.save!
         @search_criterion.include_empty = true
-        @search_criterion.apply(Product).should include @product
-        @search_criterion.test?(@product).should == true
+        expect(@search_criterion.apply(Product)).to include @product
+        expect(@search_criterion.test?(@product)).to eq(true)
       end
       context :string_handling do
         before :each do
@@ -1056,9 +1056,9 @@ describe SearchCriterion do
           expect(@sc.apply(Entry)).to be_empty
         end
         it "should test on empty string" do
-          expect(@sc.test?(@ent)).to be_true
+          expect(@sc.test?(@ent)).to be_truthy
           @ent.update_attributes(broker_reference:' ')
-          expect(@sc.test?(@ent)).to be_false
+          expect(@sc.test?(@ent)).to be_falsey
         end
       end
     end
@@ -1067,11 +1067,11 @@ describe SearchCriterion do
   context "not starts with" do
     it "tests for strings not starting with" do
       sc = SearchCriterion.new(model_field_uid:'prod_uid',operator:'nsw', value: "ZZZZZZZZZ")
-      expect(sc.test? @product).to be_true
+      expect(sc.test? @product).to be_truthy
       expect(sc.apply(Product).all).to eq [@product]
 
       sc.value = @product.unique_identifier
-      expect(sc.test? @product).to be_false
+      expect(sc.test? @product).to be_falsey
       expect(sc.apply(Product).all).to eq []
     end
 
@@ -1079,11 +1079,11 @@ describe SearchCriterion do
       ent = Factory(:entry, total_packages: 10)
       sc = SearchCriterion.new(model_field_uid:'ent_total_packages',operator:'nsw', value: "9")
 
-      expect(sc.test? ent).to be_true
+      expect(sc.test? ent).to be_truthy
       expect(sc.apply(Entry).all).to eq [ent]
 
       sc.value = 1
-      expect(sc.test? ent).to be_false
+      expect(sc.test? ent).to be_falsey
       expect(sc.apply(Entry).all).to eq []
     end
   end
@@ -1091,11 +1091,11 @@ describe SearchCriterion do
   context "not ends with" do
     it "tests for strings not ending with" do
       sc = SearchCriterion.new(model_field_uid:'prod_uid',operator:'new', value: "ZZZZZZZZZ")
-      expect(sc.test? @product).to be_true
+      expect(sc.test? @product).to be_truthy
       expect(sc.apply(Product).all).to eq [@product]
 
       sc.value = @product.unique_identifier[-2..-1]
-      expect(sc.test? @product).to be_false
+      expect(sc.test? @product).to be_falsey
       expect(sc.apply(Product).all).to eq []
     end
 
@@ -1103,11 +1103,11 @@ describe SearchCriterion do
       ent = Factory(:entry, total_packages: 10)
       sc = SearchCriterion.new(model_field_uid:'ent_total_packages',operator:'new', value: "9")
 
-      expect(sc.test? ent).to be_true
+      expect(sc.test? ent).to be_truthy
       expect(sc.apply(Entry).all).to eq [ent]
 
       sc.value = 0
-      expect(sc.test? ent).to be_false
+      expect(sc.test? ent).to be_falsey
       expect(sc.apply(Entry).all).to eq []
     end
   end

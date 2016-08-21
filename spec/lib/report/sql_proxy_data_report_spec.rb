@@ -74,9 +74,9 @@ describe OpenChain::Report::SqlProxyDataReport do
     it "handles results and returns a tempfile containing a spreadsheet" do 
       u = User.new
       settings = {'a' => "b"}
-      subject.should_receive(:worksheet_name).with(u, settings).and_return "Test"
-      subject.should_receive(:column_headers).with(u, settings).and_return({'a' => "Aleph", 'b' => "Beit"})
-      subject.should_receive(:report_filename).with(u, settings).and_return "file.xls"
+      expect(subject).to receive(:worksheet_name).with(u, settings).and_return "Test"
+      expect(subject).to receive(:column_headers).with(u, settings).and_return({'a' => "Aleph", 'b' => "Beit"})
+      expect(subject).to receive(:report_filename).with(u, settings).and_return "file.xls"
 
       results = [{'a' => 'A', 'b'=>"B"}]
 
@@ -92,10 +92,10 @@ describe OpenChain::Report::SqlProxyDataReport do
     it "handles results and returns a tempfile containing a spreadsheet, using conversions" do 
       u = User.new
       settings = {'a' => "b"}
-      subject.should_receive(:worksheet_name).with(u, settings).and_return "Test"
-      subject.should_receive(:column_headers).with(u, settings).and_return({'a' => "Aleph", 'b' => "Beit"})
-      subject.should_receive(:report_filename).with(u, settings).and_return "file.xls"
-      subject.should_receive(:get_data_conversions).with(u, settings).and_return({'a' => lambda{|r, v| v == 'A' ? "א" : v}, 'b' => lambda{|r, v| v == 'B' ? "ב" : v}})
+      expect(subject).to receive(:worksheet_name).with(u, settings).and_return "Test"
+      expect(subject).to receive(:column_headers).with(u, settings).and_return({'a' => "Aleph", 'b' => "Beit"})
+      expect(subject).to receive(:report_filename).with(u, settings).and_return "file.xls"
+      expect(subject).to receive(:get_data_conversions).with(u, settings).and_return({'a' => lambda{|r, v| v == 'A' ? "א" : v}, 'b' => lambda{|r, v| v == 'B' ? "ב" : v}})
 
       results = [{'a' => 'A', 'b'=>"B"}]
 
@@ -114,9 +114,9 @@ describe OpenChain::Report::SqlProxyDataReport do
       u = User.new
       c = double("SqlProxyClient")
       settings = {"a" => "b", 'sql_proxy_client' => c, 'report_result_id'=>1}
-      subject.class.should_receive(:sql_proxy_query_name).with(u, settings).and_return "test"
+      expect(subject.class).to receive(:sql_proxy_query_name).with(u, settings).and_return "test"
 
-      c.should_receive(:report_query).with("test", {"a"=>"b"}, {'report_result_id'=>1})
+      expect(c).to receive(:report_query).with("test", {"a"=>"b"}, {'report_result_id'=>1})
 
       subject.class.run_report u, settings
     end
@@ -125,10 +125,10 @@ describe OpenChain::Report::SqlProxyDataReport do
       u = User.new
       c = double("SqlProxyClient")
       settings = {"a" => "b", 'sql_proxy_client' => c, 'report_result_id'=>1}
-      subject.class.should_receive(:sql_proxy_query_name).with(u, settings).and_return "test"
-      subject.class.should_receive(:sql_proxy_parameters).with(u, settings).and_return({"custom"=>"params"})
+      expect(subject.class).to receive(:sql_proxy_query_name).with(u, settings).and_return "test"
+      expect(subject.class).to receive(:sql_proxy_parameters).with(u, settings).and_return({"custom"=>"params"})
 
-      c.should_receive(:report_query).with("test", {"custom"=>"params"}, {'report_result_id'=>1})
+      expect(c).to receive(:report_query).with("test", {"custom"=>"params"}, {'report_result_id'=>1})
 
       subject.class.run_report u, settings
     end
@@ -140,8 +140,8 @@ describe OpenChain::Report::SqlProxyDataReport do
       results = []
       settings = {}
 
-      subject.class.should_receive(:new_instance).with(u, results, settings).and_return subject
-      subject.should_receive(:process_results).with(u, results, settings)
+      expect(subject.class).to receive(:new_instance).with(u, results, settings).and_return subject
+      expect(subject).to receive(:process_results).with(u, results, settings)
 
       subject.class.process_alliance_query_details u, results, settings
     end

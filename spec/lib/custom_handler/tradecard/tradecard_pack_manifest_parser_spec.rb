@@ -7,10 +7,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       s = double(:shipment)
       att = double(:attachment)
       atchd = double(:attached)
-      att.should_receive(:attached).and_return atchd
+      expect(att).to receive(:attached).and_return atchd
       path = 'xyz'
-      atchd.should_receive(:path).and_return path
-      described_class.should_receive(:parse).with(s,path,u,nil).and_return 'x'
+      expect(atchd).to receive(:path).and_return path
+      expect(described_class).to receive(:parse).with(s,path,u,nil).and_return 'x'
       expect(described_class.process_attachment(s, att, u)).to eq 'x'
     end
   end
@@ -20,10 +20,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       path = double('data')
       x = double('xlclient')
       u = double('user')
-      OpenChain::XLClient.should_receive(:new).with(path).and_return x      
+      expect(OpenChain::XLClient).to receive(:new).with(path).and_return x      
       t = double('x')
-      described_class.should_receive(:new).and_return t
-      t.should_receive(:run).with(s,x,u,nil)
+      expect(described_class).to receive(:new).and_return t
+      expect(t).to receive(:run).with(s,x,u,nil)
       described_class.parse s, path, u
     end
   end
@@ -34,9 +34,9 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       s = double('shipment')
       u = double('user')
       r = double('rows')
-      x.should_receive(:all_row_values).and_return r
+      expect(x).to receive(:all_row_values).and_return r
       d = described_class.new
-      d.should_receive(:process_rows).with(s,r,u,nil)
+      expect(d).to receive(:process_rows).with(s,r,u,nil)
       d.run(s,x,u)
     end
   end
@@ -96,14 +96,14 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     before :each do
       @s = Factory(:shipment)
       @u = Factory(:user)
-      @s.stub(:can_edit?).and_return true
+      allow(@s).to receive(:can_edit?).and_return true
     end
     it "should error if cell B2 doesn't say 'Packing Manifest'" do
       r = init_mock_array 3, {1=>['','']}
       expect{described_class.new.process_rows(@s,r,@u)}.to raise_error "INVALID FORMAT: Cell B2 must contain 'Packing Manifest'."
     end
     it "should error if user cannot edit shipment" do
-      @s.stub(:can_edit?).and_return false
+      allow(@s).to receive(:can_edit?).and_return false
       expect{described_class.new.process_rows(@s,init_mock_array(3,{}),@u)}.to raise_error "You do not have permission to edit this shipment."
     end
     it "adds containers for ocean, and add 40 ft dry van container information" do

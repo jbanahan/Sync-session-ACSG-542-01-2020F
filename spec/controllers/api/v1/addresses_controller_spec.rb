@@ -15,7 +15,7 @@ describe Api::V1::AddressesController do
       get :index
       expect(response).to be_success
       h = JSON.parse(response.body)
-      expect(h['results']).to have(1).result
+      expect(h['results'].size).to eq(1)
       expect(h['results'][0]['add_syscode']).to eq 'ABCD'
     end
     it 'should apply filters' do
@@ -29,7 +29,7 @@ describe Api::V1::AddressesController do
       get :index, sid1:'add_syscode', sop1: 'eq', sv1:'ABCD'
       expect(response).to be_success
       h = JSON.parse(response.body)
-      expect(h['results']).to have(1).result
+      expect(h['results'].size).to eq(1)
       expect(h['results'][0]['add_syscode']).to eq 'ABCD'
     end
   end
@@ -114,7 +114,7 @@ describe Api::V1::AddressesController do
       expect{put :update, h}.to_not change(a,:updated_at)
       expect(response).to be_success
       a.reload
-      expect(a.shipping?).to be_true
+      expect(a.shipping?).to be_truthy
     end
   end
   describe '#destroy' do

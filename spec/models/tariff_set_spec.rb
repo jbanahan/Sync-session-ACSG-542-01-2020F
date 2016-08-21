@@ -19,29 +19,29 @@ describe TariffSet do
       r.create!(:country_id => @c1.id, :hts_code => should_be_changed.hts_code, :full_description => "changed_desc")
       r.create!(:country_id => @c1.id, :hts_code => "9999999999")
 
-      OfficialQuota.should_receive(:relink_country).with(@c1)
-      OpenChain::OfficialTariffProcessor::TariffProcessor.should_receive(:process_country).with(@c1)
+      expect(OfficialQuota).to receive(:relink_country).with(@c1)
+      expect(OpenChain::OfficialTariffProcessor::TariffProcessor).to receive(:process_country).with(@c1)
 
       ts.activate
 
       found = OfficialTariff.where(:country_id => @c1.id)
 
-      found.should have(2).items
-      OfficialTariff.where(:country_id => @c1.id, :hts_code => "1234555555").first.full_description.should == "changed_desc"
-      OfficialTariff.where(:country_id => @c1.id, :hts_code => "9999999999").first.should_not be_nil
-      OfficialTariff.where(:country_id => @c2.id, :hts_code => should_stay.hts_code).first.should_not be_nil
-      OfficialTariff.where(:country_id => @c1.id, :hts_code => should_be_gone.hts_code).first.should be_nil
-      TariffSet.find(old_ts.id).should_not be_active #should have deactivated old tariff set for same country
-      TariffSet.find(ts.id).should be_active #should have activated this tariff set
+      expect(found.size).to eq(2)
+      expect(OfficialTariff.where(:country_id => @c1.id, :hts_code => "1234555555").first.full_description).to eq("changed_desc")
+      expect(OfficialTariff.where(:country_id => @c1.id, :hts_code => "9999999999").first).not_to be_nil
+      expect(OfficialTariff.where(:country_id => @c2.id, :hts_code => should_stay.hts_code).first).not_to be_nil
+      expect(OfficialTariff.where(:country_id => @c1.id, :hts_code => should_be_gone.hts_code).first).to be_nil
+      expect(TariffSet.find(old_ts.id)).not_to be_active #should have deactivated old tariff set for same country
+      expect(TariffSet.find(ts.id)).to be_active #should have activated this tariff set
     end
 
     it 'writes user message' do
       u = Factory(:user)
-      u.should_not be_nil
+      expect(u).not_to be_nil
       c = @c1
       ts = TariffSet.create!(:country_id => c.id, :label => "newts")
       ts.activate u
-      u.messages.should have(1).item
+      expect(u.messages.size).to eq(1)
     end
 
     it "sends notifications to subscribed users" do
@@ -52,9 +52,9 @@ describe TariffSet do
       ts = TariffSet.create!(:country_id => c.id, :label => "newts")
       ts.activate u
       m = ActionMailer::Base.deliveries.pop
-      m.to.should == [u3.email]
+      expect(m.to).to eq([u3.email])
       m = ActionMailer::Base.deliveries.pop
-      m.to.should == [u2.email]
+      expect(m.to).to eq([u2.email])
     end
   end
 
@@ -80,15 +80,15 @@ describe TariffSet do
 
       added, removed, changed = new.compare old
 
-      added.should have(1).item
-      added.first.hts_code.should == "567"
+      expect(added.size).to eq(1)
+      expect(added.first.hts_code).to eq("567")
 
-      removed.should have(1).item
-      removed.first.hts_code.should == "123"
+      expect(removed.size).to eq(1)
+      expect(removed.first.hts_code).to eq("123")
 
-      changed.should have(1).item
-      changed["345"][0]["full_description"].should == "def"
-      changed["345"][1]["full_description"].should == "abc"
+      expect(changed.size).to eq(1)
+      expect(changed["345"][0]["full_description"]).to eq("def")
+      expect(changed["345"][1]["full_description"]).to eq("abc")
     end
   end
 end

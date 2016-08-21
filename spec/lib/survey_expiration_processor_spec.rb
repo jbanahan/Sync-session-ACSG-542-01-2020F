@@ -36,7 +36,7 @@ describe OpenChain::SurveyExpirationProcessor, type: :mailer do
 
 		it 'sends emails to subscribers if survey is expiring' do
       # Combining all the checks into a single example to save runtime
-			OpenMailer.deliveries.length.should equal(6)
+			expect(OpenMailer.deliveries.length).to equal(6)
       expect(OpenMailer.deliveries.collect {|m| m.to}.flatten).to eq ["survey_1_sub1@example.com", "survey_1_sub2@example.com", 
           "survey_1_sub3@example.com", "survey_2_sub1@example.com", "survey_2_sub2@example.com", "survey_2_sub3@example.com"]
       expect(OpenMailer.deliveries.collect {|m| m.subject}).to eq ['Survey "survey_1" has 3 expired survey(s).', 'Survey "survey_1" has 3 expired survey(s).', 

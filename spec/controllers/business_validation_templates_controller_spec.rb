@@ -68,7 +68,7 @@ describe BusinessValidationTemplatesController do
       sign_in_as u
       get :new, id: @t.id
       expect(response).to be_success
-      response.request.filtered_parameters["id"].to_i.should == @t.id
+      expect(response.request.filtered_parameters["id"].to_i).to eq(@t.id)
     end
 
   end
@@ -120,8 +120,8 @@ describe BusinessValidationTemplatesController do
           business_validation_template: {search_criterions: [{"mfid" => "ent_cust_name", 
               "datatype" => "string", "label" => "Customer Name", 
               "operator" => "eq", "value" => "Monica Lewinsky"}]}
-      @t.search_criterions.length.should == 1
-      @t.search_criterions.first.value.should == "Monica Lewinsky"
+      expect(@t.search_criterions.length).to eq(1)
+      expect(@t.search_criterions.first.value).to eq("Monica Lewinsky")
     end
 
   end
@@ -145,7 +145,7 @@ describe BusinessValidationTemplatesController do
       sign_in_as u
       get :edit, id: @t.id
       expect(response).to be_success
-      response.request.filtered_parameters["id"].to_i.should == @t.id
+      expect(response.request.filtered_parameters["id"].to_i).to eq(@t.id)
     end
 
   end
@@ -168,8 +168,8 @@ describe BusinessValidationTemplatesController do
 
     it "should call async_destroy on BVT as a Delayed Job and set delete_pending flag" do
       d = double("delay")
-      BusinessValidationTemplate.should_receive(:delay).and_return d
-      d.should_receive(:async_destroy).with @t.id
+      expect(BusinessValidationTemplate).to receive(:delay).and_return d
+      expect(d).to receive(:async_destroy).with @t.id
       post :destroy, id: @t.id
       @t.reload
       expect(@t.delete_pending).to eq true
@@ -199,8 +199,8 @@ describe BusinessValidationTemplatesController do
       temp = r["business_template"]["business_validation_template"]
       temp.delete("updated_at")
       temp.delete("created_at")
-      temp.should == {"delete_pending"=>nil, "description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", 
-          "name"=>nil, "search_criterions"=>[{"operator"=>"eq", "value"=>"x", "datatype"=>"string", "label"=>"Unique Identifier", "mfid"=>"prod_uid", "include_empty" => false}]}
+      expect(temp).to eq({"delete_pending"=>nil, "description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", 
+          "name"=>nil, "search_criterions"=>[{"operator"=>"eq", "value"=>"x", "datatype"=>"string", "label"=>"Unique Identifier", "mfid"=>"prod_uid", "include_empty" => false}]})
     end
   end
 

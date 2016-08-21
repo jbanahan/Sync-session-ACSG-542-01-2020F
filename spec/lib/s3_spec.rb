@@ -7,35 +7,35 @@ describe OpenChain::S3, s3: true do
   end
   describe 'bucket name' do
     it 'should return test bucket based on environment' do
-      OpenChain::S3.bucket_name.should == 'chain-io-test'
+      expect(OpenChain::S3.bucket_name).to eq('chain-io-test')
     end
     it 'should return production bucket' do
-      OpenChain::S3.bucket_name('production').should == 'chain-io'
+      expect(OpenChain::S3.bucket_name('production')).to eq('chain-io')
     end
     it 'should return development bucket' do
-      OpenChain::S3.bucket_name('development').should == 'chain-io-dev'
+      expect(OpenChain::S3.bucket_name('development')).to eq('chain-io-dev')
     end
     it 'should return test bucket' do
-      OpenChain::S3.bucket_name('test').should == 'chain-io-test'
+      expect(OpenChain::S3.bucket_name('test')).to eq('chain-io-test')
     end
   end
   
   describe :bucket_exists? do
     before :each do
       @s3_double = double('s3')
-      AWS::S3.should_receive(:new).with(AWS_CREDENTIALS).and_return(@s3_double)
+      expect(AWS::S3).to receive(:new).with(AWS_CREDENTIALS).and_return(@s3_double)
       @bucket_double = double('bucket')
       @bucket_name = 'abc'
       @bucket_hash = {@bucket_name => @bucket_double}
-      @s3_double.stub(:buckets).and_return(@bucket_hash)
+      allow(@s3_double).to receive(:buckets).and_return(@bucket_hash)
     end
     it "should find existing bucket" do
-      @bucket_double.should_receive(:exists?).and_return true
-      expect(described_class.bucket_exists?(@bucket_name)).to be_true
+      expect(@bucket_double).to receive(:exists?).and_return true
+      expect(described_class.bucket_exists?(@bucket_name)).to be_truthy
     end
     it "should return false if no bucket" do
-      @bucket_double.should_receive(:exists?).and_return false
-      expect(described_class.bucket_exists?(@bucket_name)).to be_false
+      expect(@bucket_double).to receive(:exists?).and_return false
+      expect(described_class.bucket_exists?(@bucket_name)).to be_falsey
     end
   end
 
@@ -43,22 +43,22 @@ describe OpenChain::S3, s3: true do
     it "should create bucket" do
       bucket_name = 'abc'
       s3_double = double('s3')
-      AWS::S3.should_receive(:new).with(AWS_CREDENTIALS).and_return(s3_double)
+      expect(AWS::S3).to receive(:new).with(AWS_CREDENTIALS).and_return(s3_double)
       new_bucket_double = double('newbucket')
       buckets_double = double('buckets')
-      buckets_double.should_receive(:create).with(bucket_name).and_return(new_bucket_double)
-      s3_double.should_receive(:buckets).and_return(buckets_double)
+      expect(buckets_double).to receive(:create).with(bucket_name).and_return(new_bucket_double)
+      expect(s3_double).to receive(:buckets).and_return(buckets_double)
       expect(described_class.create_bucket!(bucket_name)).to eq new_bucket_double
     end
     it "should enable versioning based on option" do
       bucket_name = 'abc'
       s3_double = double('s3')
-      AWS::S3.should_receive(:new).with(AWS_CREDENTIALS).and_return(s3_double)
+      expect(AWS::S3).to receive(:new).with(AWS_CREDENTIALS).and_return(s3_double)
       new_bucket_double = double('newbucket')
-      new_bucket_double.should_receive(:enable_versioning)
+      expect(new_bucket_double).to receive(:enable_versioning)
       buckets_double = double('buckets')
-      buckets_double.should_receive(:create).with(bucket_name).and_return(new_bucket_double)
-      s3_double.should_receive(:buckets).and_return(buckets_double)
+      expect(buckets_double).to receive(:create).with(bucket_name).and_return(new_bucket_double)
+      expect(s3_double).to receive(:buckets).and_return(buckets_double)
       expect(described_class.create_bucket!(bucket_name, versioning: true)).to eq new_bucket_double
     end
   end
@@ -78,38 +78,38 @@ describe OpenChain::S3, s3: true do
       @original_tempfile.close!
     end
     it 'should get data' do
-      OpenChain::S3.get_data(@bucket,@key).should == @content
+      expect(OpenChain::S3.get_data(@bucket,@key)).to eq(@content)
     end
 
     it "should retry failed downloads 3 times" do
       file = double("S3Object")
-      OpenChain::S3.should_receive(:s3_file).exactly(3).times.and_return file
-      file.should_receive(:read).exactly(3).times.and_raise "Failure"
+      expect(OpenChain::S3).to receive(:s3_file).exactly(3).times.and_return file
+      expect(file).to receive(:read).exactly(3).times.and_raise "Failure"
 
       expect {OpenChain::S3.get_data(@bucket,@key)}.to raise_error "Failure"
     end
 
     it "should retry failed downloads 3 times and truncate in between times" do
       io = StringIO.new
-      io.should_receive(:truncate).with(0).exactly(2).times
-      OpenChain::S3.should_receive(:s3_file).exactly(3).times.and_raise "Failure"
+      expect(io).to receive(:truncate).with(0).exactly(2).times
+      expect(OpenChain::S3).to receive(:s3_file).exactly(3).times.and_raise "Failure"
       expect {OpenChain::S3.get_data(@bucket, @key, io)}.to raise_error "Failure"
     end
 
     it 'should retry failed downloads 3 times and rewind in between' do
       io = double("IO")
-      io.should_receive(:rewind).exactly(2).times
-      OpenChain::S3.should_receive(:s3_file).exactly(3).times.and_raise "Failure"
+      expect(io).to receive(:rewind).exactly(2).times
+      expect(OpenChain::S3).to receive(:s3_file).exactly(3).times.and_raise "Failure"
       expect {OpenChain::S3.get_data(@bucket, @key, io)}.to raise_error "Failure"
     end
 
     it 'should round trip a file to tempfile' do
       new_tempfile = OpenChain::S3.download_to_tempfile @bucket, @key
       begin
-        File.exist?(new_tempfile.path).should be_true
-        IO.read(new_tempfile.path).should == @content
-        new_tempfile.should be_a Tempfile
-        File.basename(new_tempfile.path).should =~ /^s3_io.+\.txt$/
+        expect(File.exist?(new_tempfile.path)).to be_truthy
+        expect(IO.read(new_tempfile.path)).to eq(@content)
+        expect(new_tempfile).to be_a Tempfile
+        expect(File.basename(new_tempfile.path)).to match(/^s3_io.+\.txt$/)
       ensure
         new_tempfile.close!
       end
@@ -117,18 +117,18 @@ describe OpenChain::S3, s3: true do
 
     it 'should stream data file to IO object' do
       io = StringIO.new
-      OpenChain::S3.get_data(@bucket, @key, io).should be_nil
-      io.read.should == @content
+      expect(OpenChain::S3.get_data(@bucket, @key, io)).to be_nil
+      expect(io.read).to eq(@content)
     end
 
     it 'should ensure the tempfile is unlinked if an error occurs while downloading' do
       # Need to do this with mocks, since there's no external references made to the tempfile
       # created while the download is ocurring
       tempfile = double('tempfile')
-      OpenChain::S3.should_receive(:create_tempfile).and_return tempfile
-      tempfile.should_receive(:binmode)
-      tempfile.should_receive(:close!)
-      OpenChain::S3.should_receive(:get_data).and_raise "Error!"
+      expect(OpenChain::S3).to receive(:create_tempfile).and_return tempfile
+      expect(tempfile).to receive(:binmode)
+      expect(tempfile).to receive(:close!)
+      expect(OpenChain::S3).to receive(:get_data).and_raise "Error!"
       expect {OpenChain::S3.download_to_tempfile @bucket, @key}.to raise_error "Error!"
     end
 
@@ -136,12 +136,12 @@ describe OpenChain::S3, s3: true do
       tempfile = nil
       OpenChain::S3.download_to_tempfile @bucket, @key do |t|
         tempfile = t
-        File.basename(t.path).should =~ /^s3_io.+\.txt$/
-        IO.read(t).should == @content
+        expect(File.basename(t.path)).to match(/^s3_io.+\.txt$/)
+        expect(IO.read(t)).to eq(@content)
       end
 
       # Path is nil if the file has been unlinked
-      tempfile.path.should be_nil
+      expect(tempfile.path).to be_nil
     end
 
     it 'should ensure the tempfile is unlinked if block raises an error' do
@@ -154,7 +154,7 @@ describe OpenChain::S3, s3: true do
       }.to raise_error Exception
 
       # Path is nil if the file has been unlinked
-      tempfile.path.should be_nil
+      expect(tempfile.path).to be_nil
     end
 
     it 'should not fail if file key is missing a file extension' do
@@ -162,11 +162,11 @@ describe OpenChain::S3, s3: true do
       AWS::S3.new(AWS_CREDENTIALS).buckets[@bucket].objects[@key].rename_to new_key
       new_tempfile = OpenChain::S3.download_to_tempfile @bucket, new_key
       begin
-        File.exist?(new_tempfile.path).should be_true
-        IO.read(new_tempfile.path).should == @content
-        new_tempfile.should be_a Tempfile
-        File.basename(new_tempfile.path).should =~ /^test.+/
-        File.extname(new_tempfile.path).should == ""
+        expect(File.exist?(new_tempfile.path)).to be_truthy
+        expect(IO.read(new_tempfile.path)).to eq(@content)
+        expect(new_tempfile).to be_a Tempfile
+        expect(File.basename(new_tempfile.path)).to match(/^test.+/)
+        expect(File.extname(new_tempfile.path)).to eq("")
       ensure
         new_tempfile.close!
       end
@@ -174,18 +174,18 @@ describe OpenChain::S3, s3: true do
     
     describe 'exists?' do
       it 'should return true when key exists' do
-        OpenChain::S3.exists?(@bucket,@key).should be_true
+        expect(OpenChain::S3.exists?(@bucket,@key)).to be_truthy
       end
       it 'should return false when key does not exist' do
-        OpenChain::S3.exists?(@bucket,"#{@key}not").should be_false
+        expect(OpenChain::S3.exists?(@bucket,"#{@key}not")).to be_falsey
       end
     end
 
     describe 'delete' do
       it 'should return true when there is something there and it is deleted' do
-        OpenChain::S3.exists?(@bucket,@key).should be_true
+        expect(OpenChain::S3.exists?(@bucket,@key)).to be_truthy
         OpenChain::S3.delete(@bucket,@key)
-        OpenChain::S3.exists?(@bucket,@key).should be_false
+        expect(OpenChain::S3.exists?(@bucket,@key)).to be_falsey
       end
     end
     describe 'integration keys' do
@@ -206,11 +206,11 @@ describe OpenChain::S3, s3: true do
           # (specifically the s3_object.write method) blocks for like 20 seconds.  Possible aws-sdk bug or ruby 2
           # bug with leaking socket handle or something?  This wasn't happening w/ 1.9.3.
           retry_expect {
-            OpenChain::S3.should_receive(:integration_bucket_name).at_least(2).times.and_return(@bucket)
+            expect(OpenChain::S3).to receive(:integration_bucket_name).at_least(2).times.and_return(@bucket)
             found_keys = []
             OpenChain::S3.integration_keys(Date.new(2011,12,26), "subfolder/2") {|key| found_keys << key }
-            found_keys[0].should == @my_keys[0]
-            found_keys[1].should == @my_keys[1]
+            expect(found_keys[0]).to eq(@my_keys[0])
+            expect(found_keys[1]).to eq(@my_keys[1])
           }
 
           retry_expect {
@@ -225,18 +225,18 @@ describe OpenChain::S3, s3: true do
               OpenChain::S3.upload_file @bucket, @my_keys[0], f
               found_keys = []
               OpenChain::S3.integration_keys(Date.new(2011,12,26), "subfolder/2") {|key| found_keys << key }
-              found_keys[0].should == @my_keys[1]
-              found_keys[1].should == @my_keys[0]
+              expect(found_keys[0]).to eq(@my_keys[1])
+              expect(found_keys[1]).to eq(@my_keys[0])
             end
           }
         end
 
         it 'strips leading slashes from subfolder name' do
-          OpenChain::S3.should_receive(:integration_bucket_name).and_return(@bucket)
+          expect(OpenChain::S3).to receive(:integration_bucket_name).and_return(@bucket)
           found_keys = []
           OpenChain::S3.integration_keys(Date.new(2011,12,26), "/subfolder/2") {|key| found_keys << key }
-          found_keys[0].should == @my_keys[0]
-          found_keys[1].should == @my_keys[1]
+          expect(found_keys[0]).to eq(@my_keys[0])
+          expect(found_keys[1]).to eq(@my_keys[1])
         end
       end
 
@@ -252,11 +252,11 @@ describe OpenChain::S3, s3: true do
 
         it 'checks each subfolder given and yields integration keys' do
           retry_expect {
-            OpenChain::S3.stub(:integration_bucket_name).and_return(@bucket)
+            allow(OpenChain::S3).to receive(:integration_bucket_name).and_return(@bucket)
             found_keys = []
             OpenChain::S3.integration_keys(Date.new(2011,12,26), ["/subfolder/2", "/subfolder/1"]) {|key| found_keys << key }
-            found_keys[0].should == @my_keys[1]
-            found_keys[1].should == @my_keys[0]
+            expect(found_keys[0]).to eq(@my_keys[1])
+            expect(found_keys[1]).to eq(@my_keys[0])
           }
         end
       end
@@ -266,23 +266,23 @@ describe OpenChain::S3, s3: true do
   describe :url_for do
     it "should return a url for the specified bucket / key" do
       url = OpenChain::S3.url_for "bucket", "path/to/file.txt"
-      url.should match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/
+      expect(url).to match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/
 
       # Expires should be default be 1 minute
       expires_at = url.match(/Expires=(.*)&/)[1].to_i
-      (expires_at - Time.now.to_i).should <= 60
+      expect(expires_at - Time.now.to_i).to be <= 60
     end
 
     it "should return a url for the specified bucket / key, allow expires_in to be set, and accept options", s3: true do
       url = OpenChain::S3.url_for "bucket", "path/to/file.txt", 10.minutes, {:response_content_type => "application/pdf"}
-      url.should match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/
+      expect(url).to match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/
 
       expires_at = url.match(/Expires=(.*)&/)[1].to_i
       time = (expires_at - Time.now.to_i)
-      time.should <= 600
-      time.should >= 595
+      expect(time).to be <= 600
+      expect(time).to be >= 595
 
-      url.should match "response-content-type=application%2Fpdf"
+      expect(url).to match "response-content-type=application%2Fpdf"
     end
   end
 
@@ -309,41 +309,41 @@ describe OpenChain::S3, s3: true do
     end
 
     it "downloads S3 path to tempfile", s3: true do
-      OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
-      OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
+      expect(OpenChain::S3).to receive(:create_tempfile).and_return @tempfile
+      expect(OpenChain::S3).to receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
       file = OpenChain::S3.download_to_tempfile 'bucket', 'path'
       expect(file).to eq @tempfile
-      expect(file.respond_to? :original_filename).to be_false
+      expect(file.respond_to? :original_filename).to be_falsey
     end
 
     it "downloads s3 path to tempfile and adds original_filename method", s3: true do
-      OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
-      OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
+      expect(OpenChain::S3).to receive(:create_tempfile).and_return @tempfile
+      expect(OpenChain::S3).to receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
       file = OpenChain::S3.download_to_tempfile 'bucket', 'path', original_filename: 'file.txt'
       expect(file).to eq @tempfile
       expect(file.original_filename).to eq "file.txt"
     end
 
     it "yields downloaded file", s3: true do
-      OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
-      OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
+      expect(OpenChain::S3).to receive(:create_tempfile).and_return @tempfile
+      expect(OpenChain::S3).to receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
       OpenChain::S3.download_to_tempfile('bucket', 'path', original_filename: 'file.txt') do |f|
         expect(f).to eq @tempfile
         expect(f.original_filename).to eq "file.txt"
       end
-      expect(@tempfile.closed?).to be_true
+      expect(@tempfile.closed?).to be_truthy
     end
 
     it "ensures exceptions in block still closes file", s3: true do
-      OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
-      OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
+      expect(OpenChain::S3).to receive(:create_tempfile).and_return @tempfile
+      expect(OpenChain::S3).to receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
       expect {
         OpenChain::S3.download_to_tempfile('bucket', 'path', original_filename: 'file.txt') do |f|
           raise "Error"
         end  
       }.to raise_error
       
-      expect(@tempfile.closed?).to be_true
+      expect(@tempfile.closed?).to be_truthy
     end
   end
 
@@ -351,10 +351,10 @@ describe OpenChain::S3, s3: true do
     let (:s3_obj) {
       s3_obj = double("S3Object")
       s3_bucket = double("S3Object")
-      s3_obj.stub(:bucket).and_return s3_bucket
-      s3_obj.stub(:key).and_return "uuid/temp/file.txt"
-      s3_obj.stub(:exists?).and_return true
-      s3_bucket.stub(:name).and_return "chainio-temp"
+      allow(s3_obj).to receive(:bucket).and_return s3_bucket
+      allow(s3_obj).to receive(:key).and_return "uuid/temp/file.txt"
+      allow(s3_obj).to receive(:exists?).and_return true
+      allow(s3_bucket).to receive(:name).and_return "chainio-temp"
 
       s3_obj
     }
@@ -362,16 +362,16 @@ describe OpenChain::S3, s3: true do
     # which this method defers for uploading (likewise for delete)
     before :each do
       ms = double "MasterSetup"
-      MasterSetup.stub(:get).and_return ms
-      ms.stub(:uuid).and_return "uuid"
+      allow(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:uuid).and_return "uuid"
     end
 
     it "yields an s3_file uploaded to s3" do
       fake_file = double("File")
-      fake_file.stub(:path).and_return "/path/to/file.txt"
+      allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
 
-      OpenChain::S3.should_receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return [s3_obj, nil]
-      OpenChain::S3.should_receive(:delete).with("chainio-temp", "uuid/temp/file.txt")
+      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return [s3_obj, nil]
+      expect(OpenChain::S3).to receive(:delete).with("chainio-temp", "uuid/temp/file.txt")
 
       my_obj = nil
       OpenChain::S3.with_s3_tempfile(fake_file) {|obj| my_obj = obj}
@@ -380,21 +380,21 @@ describe OpenChain::S3, s3: true do
 
     it "cleans up even if yielded block raises an error" do
       fake_file = double("File")
-      fake_file.stub(:path).and_return "/path/to/file.txt"
+      allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
 
-      OpenChain::S3.should_receive(:upload_file).and_return [s3_obj, nil]
-      OpenChain::S3.should_receive(:delete).with(s3_obj.bucket.name, s3_obj.key)
+      expect(OpenChain::S3).to receive(:upload_file).and_return [s3_obj, nil]
+      expect(OpenChain::S3).to receive(:delete).with(s3_obj.bucket.name, s3_obj.key)
 
       expect {OpenChain::S3.with_s3_tempfile(fake_file) {|obj| raise "Error"} }.to raise_error "Error"
     end
 
     it "uses original_filename if local file responds to that" do
       fake_file = double("File")
-      fake_file.stub(:path).and_return "/path/to/file.txt"
-      fake_file.stub(:original_filename).and_return "original.txt"
+      allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
+      allow(fake_file).to receive(:original_filename).and_return "original.txt"
 
-      OpenChain::S3.should_receive(:upload_file).with("chainio-temp", "uuid/temp/original.txt", fake_file).and_return [s3_obj, nil]
-      OpenChain::S3.should_receive(:delete)
+      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/original.txt", fake_file).and_return [s3_obj, nil]
+      expect(OpenChain::S3).to receive(:delete)
 
       my_obj = nil
       OpenChain::S3.with_s3_tempfile(fake_file) {|obj| my_obj = obj}
@@ -404,15 +404,15 @@ describe OpenChain::S3, s3: true do
   describe "create_s3_tempfile" do
     before :each do
       ms = double "MasterSetup"
-      MasterSetup.stub(:get).and_return ms
-      ms.stub(:uuid).and_return "uuid"
+      allow(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:uuid).and_return "uuid"
     end
 
     it "creates a tempfile on s3" do
       fake_file = double("File")
-      fake_file.stub(:path).and_return "/path/to/file.txt"
+      allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
       obj = Object.new
-      OpenChain::S3.should_receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return [obj, nil]
+      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return [obj, nil]
 
       # Just ensure the create method returns whatever the upload file method returns (in prod, this'll be an S3Object)
       expect(OpenChain::S3.create_s3_tempfile fake_file).to eq obj
@@ -420,10 +420,10 @@ describe OpenChain::S3, s3: true do
 
     it "uses original_filename if local file responds to that" do
       fake_file = double("File")
-      fake_file.stub(:path).and_return "/path/to/file.txt"
-      fake_file.stub(:original_filename).and_return "original.txt"
+      allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
+      allow(fake_file).to receive(:original_filename).and_return "original.txt"
 
-      OpenChain::S3.should_receive(:upload_file).with("chainio-temp", "uuid/temp/original.txt", fake_file)
+      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/original.txt", fake_file)
       OpenChain::S3.create_s3_tempfile fake_file
     end
   end

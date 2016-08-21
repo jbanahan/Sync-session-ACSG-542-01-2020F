@@ -12,11 +12,11 @@ describe InstantClassification do
     end
     it "should find a match" do
       p = Factory(:product,:unique_identifier=>'findme')
-      InstantClassification.find_by_product(p,Factory(:user)).should == @second_ic
+      expect(InstantClassification.find_by_product(p,Factory(:user))).to eq(@second_ic)
     end
     it "should not find a match" do
       p = Factory(:product,:unique_identifier=>'dont')
-      InstantClassification.find_by_product(p,Factory(:user)).should be_nil
+      expect(InstantClassification.find_by_product(p,Factory(:user))).to be_nil
     end
   end
   describe "test" do
@@ -25,10 +25,10 @@ describe InstantClassification do
       @ic.search_criterions.create!(:model_field_uid=>'prod_uid',:operator=>'eq',:value=>'puidict')
     end
     it "should match" do
-      @ic.test?(Factory(:product,:unique_identifier=>'puidict'),Factory(:user)).should be_true 
+      expect(@ic.test?(Factory(:product,:unique_identifier=>'puidict'),Factory(:user))).to be_truthy 
     end
     it "shouldn't match" do
-      @ic.test?(Factory(:product,:unique_identifier=>'not puidict'),Factory(:user)).should be_false 
+      expect(@ic.test?(Factory(:product,:unique_identifier=>'not puidict'),Factory(:user))).to be_falsey 
     end
   end
 
@@ -53,7 +53,7 @@ describe InstantClassification do
       }
 
       ic = InstantClassification.new name: "Test"
-      expect(ic.update_model_field_attributes! params).to be_true
+      expect(ic.update_model_field_attributes! params).to be_truthy
 
       expect(ic.classifications.length).to eq 1
       expect(ic.classifications.first.country).to eq @country
@@ -79,7 +79,7 @@ describe InstantClassification do
         }}
       }
 
-      expect(ic.update_model_field_attributes! params).to be_true
+      expect(ic.update_model_field_attributes! params).to be_truthy
 
       expect(ic.classifications.length).to eq 1
       expect(ic.classifications.first.get_custom_value(@class_cd).value).to eq 12.3

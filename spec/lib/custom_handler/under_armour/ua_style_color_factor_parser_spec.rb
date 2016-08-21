@@ -13,28 +13,28 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       @u = User.new
       @u.company = Company.new
       @u.company.master = true
-      @u.stub(:edit_trade_preference_programs?).and_return true
-      @u.stub(:edit_variants?).and_return true
-      MasterSetup.any_instance.stub(:custom_feature?).and_return true
+      allow(@u).to receive(:edit_trade_preference_programs?).and_return true
+      allow(@u).to receive(:edit_variants?).and_return true
+      allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
     end
     it 'should be visible if user from master company and can edit_trade_preference_programs? && edit_variants? and UA-TPP custom feature' do
-      expect(new_parser.can_view?(@u)).to be_true
+      expect(new_parser.can_view?(@u)).to be_truthy
     end
     context 'not visible' do
       after :each do
-        expect(new_parser.can_view?(@u)).to be_false
+        expect(new_parser.can_view?(@u)).to be_falsey
       end
       it 'if not master company' do
         @u.company.master = false
       end
       it 'if not edit_trade_preference_programs?' do
-        @u.stub(:edit_trade_preference_programs?).and_return false
+        allow(@u).to receive(:edit_trade_preference_programs?).and_return false
       end
       it 'if not edit_variants' do
-        @u.stub(:edit_variants?).and_return false
+        allow(@u).to receive(:edit_variants?).and_return false
       end
       it 'if not custom feature' do
-        MasterSetup.any_instance.should_receive(:custom_feature?).with('UA-TPP').and_return false
+        expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('UA-TPP').and_return false
       end
     end
   end
@@ -43,10 +43,10 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
     it 'should collect_rows and pass to update_data_hash and then process_data_hash' do
       u = Factory(:user)
       parser = new_parser
-      parser.should_receive(:can_view?).with(u).and_return true
-      parser.should_receive(:collect_rows).and_yield 'cr'
-      parser.should_receive(:update_data_hash).with(instance_of(Hash),'cr')
-      parser.should_receive(:process_data_hash).with(instance_of(Hash),u)
+      expect(parser).to receive(:can_view?).with(u).and_return true
+      expect(parser).to receive(:collect_rows).and_yield 'cr'
+      expect(parser).to receive(:update_data_hash).with(instance_of(Hash),'cr')
+      expect(parser).to receive(:process_data_hash).with(instance_of(Hash),u)
       parser.process(u)
       u.reload
       expect(u.messages.first.subject).to eq "Style/Color/Region Parser Complete"
@@ -54,7 +54,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
     it 'should fail if user cannot view' do
       u = Factory(:user)
       parser = new_parser
-      parser.should_receive(:can_view?).with(u).and_return false
+      expect(parser).to receive(:can_view?).with(u).and_return false
       expect{parser.process(u)}.to raise_error(/permission/)
     end
   end
@@ -63,8 +63,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
     it 'should get rows from API' do
       r = []
       xlc = double('xl_client')
-      OpenChain::XLClient.should_receive(:new_from_attachable).with(@cf).and_return xlc
-      xlc.should_receive(:all_row_values).with(0,0,500).and_yield('a').and_yield('b')
+      expect(OpenChain::XLClient).to receive(:new_from_attachable).with(@cf).and_return xlc
+      expect(xlc).to receive(:all_row_values).with(0,0,500).and_yield('a').and_yield('b')
       new_parser.collect_rows {|row| r << row}
       expect(r).to eq ['a','b']
     end
@@ -123,8 +123,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       b = double('b')
       h = {'1234567'=>a,'7891234'=>b}
       p = new_parser
-      p.should_receive(:update_product).with(a,u)
-      p.should_receive(:update_product).with(b,u)
+      expect(p).to receive(:update_product).with(a,u)
+      expect(p).to receive(:update_product).with(b,u)
       p.process_data_hash h, u
     end
   end
@@ -140,8 +140,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       }
     end
     let :user do
-      Product.any_instance.stub(:can_edit?).and_return true
-      Variant.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return true
+      allow_any_instance_of(Variant).to receive(:can_edit?).and_return true
       Factory(:master_user)
     end
     let :custom_defs do

@@ -7,13 +7,13 @@ describe Shipment do
       c = Factory(:company,vendor:true)
       s = Factory(:shipment,vendor:c,importer:imp)
       u = Factory(:user,shipment_view:true,company:c)
-      expect(s.can_view?(u)).to be_false
+      expect(s.can_view?(u)).to be_falsey
    end
    it "should allow view if user from importer company" do
      imp = Factory(:company)
      u = Factory(:user,shipment_view:true,company:imp)
      s = Factory(:shipment,importer:imp)
-     expect(s.can_view?(u)).to be_false
+     expect(s.can_view?(u)).to be_falsey
    end
   end
   describe :search_secure do
@@ -56,34 +56,34 @@ describe Shipment do
     it "should allow master to cancel if can edit shipment" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new
-      s.should_receive(:can_edit?).with(u).and_return true
-      expect(s.can_cancel?(u)).to be_true
+      expect(s).to receive(:can_edit?).with(u).and_return true
+      expect(s.can_cancel?(u)).to be_truthy
     end
     it "should not allow cancel if cannot edit" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new
-      s.should_receive(:can_edit?).with(u).and_return false
-      expect(s.can_cancel?(u)).to be_false
+      expect(s).to receive(:can_edit?).with(u).and_return false
+      expect(s.can_cancel?(u)).to be_falsey
     end
     it "should not allow cancel if already canceled" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(canceled_date:Time.now)
-      s.stub(:can_edit?).and_return true
-      expect(s.can_cancel?(u)).to be_false
+      allow(s).to receive(:can_edit?).and_return true
+      expect(s.can_cancel?(u)).to be_falsey
     end
     context :vendor do
       before :each do
         @u = Factory(:user,company:Factory(:company,vendor:true))
         @s = Shipment.new
         @s.vendor = @u.company
-        @s.should_receive(:can_edit?).with(@u).and_return true
+        expect(@s).to receive(:can_edit?).with(@u).and_return true
       end
       it "should allow vendor to cancel if not received" do
-        expect(@s.can_cancel?(@u)).to be_true
+        expect(@s.can_cancel?(@u)).to be_truthy
       end
       it "should not allow vendor to cancel if received" do
         @s.booking_received_date = Time.now
-        expect(@s.can_cancel?(@u)).to be_false
+        expect(@s.can_cancel?(@u)).to be_falsey
       end
     end
     context :importer do
@@ -91,31 +91,31 @@ describe Shipment do
         @u = Factory(:user,company:Factory(:company,importer:true))
         @s = Shipment.new
         @s.importer = @u.company
-        @s.should_receive(:can_edit?).with(@u).and_return true
+        expect(@s).to receive(:can_edit?).with(@u).and_return true
       end
       it "should allow importer to cancel if not confirmed" do
-        expect(@s.can_cancel?(@u)).to be_true
+        expect(@s.can_cancel?(@u)).to be_truthy
       end
       it "should not allow importer to cancel if confirmed" do
         @s.booking_confirmed_date = Time.now
-        expect(@s.can_cancel?(@u)).to be_false
+        expect(@s.can_cancel?(@u)).to be_falsey
       end
     end
     it "should allow carrier to cancel" do
       @u = Factory(:user,company:Factory(:company,carrier:true))
       @s = Shipment.new
       @s.carrier = @u.company
-      @s.should_receive(:can_edit?).with(@u).and_return true
+      expect(@s).to receive(:can_edit?).with(@u).and_return true
       @s.booking_confirmed_date = Time.now
-      expect(@s.can_cancel?(@u)).to be_true
+      expect(@s.can_cancel?(@u)).to be_truthy
     end
   end
   describe "cancel_shipment!" do
     it "should set cancel fields" do
       u = Factory(:user)
       s = Factory(:shipment)
-      s.should_receive(:create_snapshot_with_async_option).with false, u
-      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_cancel,s)
+      expect(s).to receive(:create_snapshot_with_async_option).with false, u
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_cancel,s)
       s.cancel_shipment! u
       s.reload
       expect(s.canceled_date).to_not be_nil
@@ -124,8 +124,8 @@ describe Shipment do
     it "should set canceled_order_line_id for linked orders and remove shipment_line_id from piece_sets" do
       u = Factory(:user)
       s = Factory(:shipment)
-      s.should_receive(:create_snapshot_with_async_option).with false, u
-      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_cancel,s)
+      expect(s).to receive(:create_snapshot_with_async_option).with false, u
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_cancel,s)
       p = Factory(:product)
       ol = Factory(:order_line,product:p,quantity:100)
       sl1 = s.shipment_lines.build(quantity:5)
@@ -149,37 +149,37 @@ describe Shipment do
     it "should allow if can_cancel_by_role? & can_edit & has canceled_date" do
       u = double(:user)
       s = Shipment.new(canceled_date:Time.now)
-      s.should_receive(:can_edit?).with(u).and_return true
-      s.should_receive(:can_cancel_by_role?).with(u).and_return true
-      expect(s.can_uncancel?(u)).to be_true
+      expect(s).to receive(:can_edit?).with(u).and_return true
+      expect(s).to receive(:can_cancel_by_role?).with(u).and_return true
+      expect(s.can_uncancel?(u)).to be_truthy
     end
     it "should not allow if cannot edit" do
       u = double(:user)
       s = Shipment.new(canceled_date:Time.now)
-      s.stub(:can_cancel_by_role?).and_return true
-      s.should_receive(:can_edit?).with(u).and_return false
-      expect(s.can_uncancel?(u)).to be_false
+      allow(s).to receive(:can_cancel_by_role?).and_return true
+      expect(s).to receive(:can_edit?).with(u).and_return false
+      expect(s.can_uncancel?(u)).to be_falsey
     end
     it "should not allow if cannot cancel by role" do
       u = double(:user)
       s = Shipment.new(canceled_date:Time.now)
-      s.stub(:can_edit?).and_return true
-      s.should_receive(:can_cancel_by_role?).with(u).and_return false
-      expect(s.can_uncancel?(u)).to be_false
+      allow(s).to receive(:can_edit?).and_return true
+      expect(s).to receive(:can_cancel_by_role?).with(u).and_return false
+      expect(s.can_uncancel?(u)).to be_falsey
     end
     it "should not allow if does not have canceled date" do
       u = double(:user)
       s = Shipment.new(canceled_date:nil)
-      s.stub(:can_edit?).and_return true
-      s.stub(:can_cancel_by_role?).and_return true
-      expect(s.can_uncancel?(u)).to be_false
+      allow(s).to receive(:can_edit?).and_return true
+      allow(s).to receive(:can_cancel_by_role?).and_return true
+      expect(s.can_uncancel?(u)).to be_falsey
     end
   end
   describe :uncancel_shipment! do
     it "should remove cancellation" do
       u = Factory(:user)
       s = Factory(:shipment,canceled_by:u,canceled_date:Time.now)
-      s.should_receive(:create_snapshot_with_async_option).with false, u
+      expect(s).to receive(:create_snapshot_with_async_option).with false, u
       s.uncancel_shipment! u
       s.reload
       expect(s.canceled_by).to be_nil
@@ -188,7 +188,7 @@ describe Shipment do
     it "should restore cancelled order line links" do
       u = Factory(:user)
       s = Factory(:shipment)
-      s.should_receive(:create_snapshot_with_async_option).with false, u
+      expect(s).to receive(:create_snapshot_with_async_option).with false, u
       p = Factory(:product)
       ol = Factory(:order_line,product:p,quantity:100)
       sl1 = s.shipment_lines.build(quantity:5)
@@ -212,8 +212,8 @@ describe Shipment do
     it "should set booking received date and booking request by" do
       u = Factory(:user)
       s = Factory(:shipment)
-      s.should_receive(:create_snapshot_with_async_option).with false, u
-      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_booking_request,s)
+      expect(s).to receive(:create_snapshot_with_async_option).with false, u
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_booking_request,s)
       s.request_booking! u
       s.reload
       expect(s.booking_received_date).to_not be_nil
@@ -223,32 +223,32 @@ describe Shipment do
 
   describe "can_request_booking?" do
     it "should allow if user is from master & can view shipment" do
-      expect(Shipment.new.can_request_booking?(Factory(:master_user,shipment_view:true))).to be_true
+      expect(Shipment.new.can_request_booking?(Factory(:master_user,shipment_view:true))).to be_truthy
     end
     it "should allow if user is from vendor & can view shipment" do
       u = Factory(:user,shipment_view:true,company:Factory(:company,vendor:true))
       s = Shipment.new
-      s.stub(:can_view?).and_return true
+      allow(s).to receive(:can_view?).and_return true
       s.vendor = u.company
-      expect(s.can_request_booking?(u)).to be_true
+      expect(s.can_request_booking?(u)).to be_truthy
     end
     it "should not allow if user cannot edit shipment" do
       u = Factory(:user,shipment_view:false)
       s = Shipment.new
       s.vendor = u.company
-      expect(s.can_request_booking?(u)).to be_false
+      expect(s.can_request_booking?(u)).to be_falsey
     end
     it "should not allow if user not from vendor or master" do
       u = Factory(:user,shipment_view:false)
       s = Shipment.new
-      expect(s.can_request_booking?(u)).to be_false
+      expect(s.can_request_booking?(u)).to be_falsey
     end
     it "should not allow if booking is approved" do
       u = Factory(:user,shipment_view:true,company:Factory(:company,vendor:true))
       s = Shipment.new(booking_approved_date:Time.now)
-      s.stub(:can_view?).and_return true
+      allow(s).to receive(:can_view?).and_return true
       s.vendor = u.company
-      expect(s.can_request_booking?(u)).to be_false
+      expect(s.can_request_booking?(u)).to be_falsey
     end
   end
 
@@ -257,39 +257,39 @@ describe Shipment do
       u = Factory(:user,shipment_edit:true,company:Factory(:company,importer:true))
       s = Shipment.new(booking_received_date:Time.now)
       s.importer = u.company
-      s.stub(:can_edit?).and_return true
-      expect(s.can_approve_booking?(u)).to be_true
+      allow(s).to receive(:can_edit?).and_return true
+      expect(s.can_approve_booking?(u)).to be_truthy
     end
     it "should allow approval for master user who can edit shipment" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(booking_received_date:Time.now)
-      s.should_receive(:can_edit?).with(u).and_return true
-      expect(s.can_approve_booking?(u)).to be_true
+      expect(s).to receive(:can_edit?).with(u).and_return true
+      expect(s.can_approve_booking?(u)).to be_truthy
     end
     it "should not allow approval for user who cannot edit shipment" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(booking_received_date:Time.now)
-      s.should_receive(:can_edit?).with(u).and_return false
-      expect(s.can_approve_booking?(u)).to be_false
+      expect(s).to receive(:can_edit?).with(u).and_return false
+      expect(s.can_approve_booking?(u)).to be_falsey
     end
     it "should not allow approval for user from a different associated company" do
       u = Factory(:user,shipment_edit:true,company:Factory(:company,importer:true))
       s = Shipment.new(booking_received_date:Time.now)
       s.vendor = u.company
-      s.stub(:can_edit?).and_return true
-      expect(s.can_approve_booking?(u)).to be_false
+      allow(s).to receive(:can_edit?).and_return true
+      expect(s.can_approve_booking?(u)).to be_falsey
     end
     it "should not allow approval when booking not received" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(booking_received_date:nil)
-      s.stub(:can_edit?).and_return true
-      expect(s.can_approve_booking?(u)).to be_false
+      allow(s).to receive(:can_edit?).and_return true
+      expect(s.can_approve_booking?(u)).to be_falsey
     end
     it "should not allow if booking has been confirmed" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(booking_received_date:Time.now,booking_confirmed_date:Time.now)
-      s.stub(:can_edit?).and_return true # make sure we're not testing the wrong thing
-      expect(s.can_approve_booking?(u)).to be_false
+      allow(s).to receive(:can_edit?).and_return true # make sure we're not testing the wrong thing
+      expect(s.can_approve_booking?(u)).to be_falsey
     end
   end
 
@@ -297,8 +297,8 @@ describe Shipment do
     it "should set booking_approved_date and booking_approved_by" do
       u = Factory(:user)
       s = Factory(:shipment)
-      s.should_receive(:create_snapshot_with_async_option).with false, u
-      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_booking_approve,s)
+      expect(s).to receive(:create_snapshot_with_async_option).with false, u
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_booking_approve,s)
       s.approve_booking! u
       s.reload
       expect(s.booking_approved_date).to_not be_nil
@@ -310,40 +310,40 @@ describe Shipment do
     it "should allow confirmation for carrier user who can edit shipment" do
       u = Factory(:user,shipment_edit:true,company:Factory(:company,carrier:true))
       s = Shipment.new(booking_received_date:Time.now)
-      s.stub(:can_edit?).and_return true
+      allow(s).to receive(:can_edit?).and_return true
       s.carrier = u.company
-      expect(s.can_confirm_booking?(u)).to be_true
+      expect(s.can_confirm_booking?(u)).to be_truthy
     end
     it "should allow confirmation for master user who can edit shipment" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(booking_received_date:Time.now)
-      s.should_receive(:can_edit?).with(u).and_return true
-      expect(s.can_confirm_booking?(u)).to be_true
+      expect(s).to receive(:can_edit?).with(u).and_return true
+      expect(s.can_confirm_booking?(u)).to be_truthy
     end
     it "should not allow confirmation for user who cannot edit shipment" do
       u = Factory(:master_user,shipment_edit:false)
       s = Shipment.new(booking_received_date:Time.now)
-      s.should_receive(:can_edit?).with(u).and_return false
-      expect(s.can_confirm_booking?(u)).to be_false
+      expect(s).to receive(:can_edit?).with(u).and_return false
+      expect(s.can_confirm_booking?(u)).to be_falsey
     end
     it "should not allow confirmation for user who can edit shipment but isn't carrier or master" do
       u = Factory(:user,shipment_edit:true,company:Factory(:company,vendor:true))
       s = Shipment.new(booking_received_date:Time.now)
-      s.stub(:can_edit?).and_return true
+      allow(s).to receive(:can_edit?).and_return true
       s.vendor = u.company
-      expect(s.can_confirm_booking?(u)).to be_false
+      expect(s.can_confirm_booking?(u)).to be_falsey
     end
     it "should not allow confirmation when booking has not been received" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(booking_received_date:nil)
-      s.stub(:can_edit?).and_return true
-      expect(s.can_confirm_booking?(u)).to be_false
+      allow(s).to receive(:can_edit?).and_return true
+      expect(s.can_confirm_booking?(u)).to be_falsey
     end
     it "should not allow if booking already confiremd" do
       u = Factory(:master_user,shipment_edit:true)
       s = Shipment.new(booking_received_date:Time.now,booking_confirmed_date:Time.now)
-      s.stub(:can_edit?).and_return true #make sure we're not accidentally testing the wrong thing
-      expect(s.can_confirm_booking?(u)).to be_false
+      allow(s).to receive(:can_edit?).and_return true #make sure we're not accidentally testing the wrong thing
+      expect(s.can_confirm_booking?(u)).to be_falsey
     end
   end
   describe "confirm booking" do
@@ -352,8 +352,8 @@ describe Shipment do
       s = Factory(:shipment)
       Factory(:shipment_line,shipment:s,quantity:50)
       Factory(:shipment_line,shipment:s,quantity:100)
-      s.should_receive(:create_snapshot_with_async_option).with false, u
-      OpenChain::EventPublisher.should_receive(:publish).with(:shipment_booking_confirm,s)
+      expect(s).to receive(:create_snapshot_with_async_option).with false, u
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_booking_confirm,s)
       s.confirm_booking! u
       s.reload
       expect(s.booking_confirmed_date).to_not be_nil
@@ -366,49 +366,49 @@ describe Shipment do
     it "should allow user to revise if approved but not confirmed and user can request_booking" do
       u = double('u')
       s = Shipment.new(booking_approved_date:Time.now)
-      s.should_receive(:can_request_booking?).with(u,true).and_return true
-      s.stub(:can_approve_booking?).and_return false #make sure we're not testing the wrong thing
-      s.stub(:can_confirm_booking?).and_return false #make sure we're not testing the wrong thing
-      expect(s.can_revise_booking?(u)).to be_true
+      expect(s).to receive(:can_request_booking?).with(u,true).and_return true
+      allow(s).to receive(:can_approve_booking?).and_return false #make sure we're not testing the wrong thing
+      allow(s).to receive(:can_confirm_booking?).and_return false #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_truthy
     end
     it "should allow user to revise if approved but not confirmed and user can approve_booking" do
       u = double('u')
       s = Shipment.new(booking_approved_date:Time.now)
-      s.should_receive(:can_approve_booking?).with(u,true).and_return true
-      s.stub(:can_request_booking?).and_return false #make sure we're not testing the wrong thing
-      s.stub(:can_confirm_booking?).and_return false #make sure we're not testing the wrong thing
-      expect(s.can_revise_booking?(u)).to be_true
+      expect(s).to receive(:can_approve_booking?).with(u,true).and_return true
+      allow(s).to receive(:can_request_booking?).and_return false #make sure we're not testing the wrong thing
+      allow(s).to receive(:can_confirm_booking?).and_return false #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_truthy
     end
 
     it "should allow user to revise if confirmed and user can confirm_booking" do
       u = double('u')
       s = Shipment.new(booking_approved_date:Time.now,booking_confirmed_date:Time.now)
-      s.should_receive(:can_confirm_booking?).with(u,true).and_return true
-      s.stub(:can_approve_booking?).and_return false #make sure we're not testing the wrong thing
-      s.stub(:can_request_booking?).and_return false #make sure we're not testing the wrong thing
-      expect(s.can_revise_booking?(u)).to be_true
+      expect(s).to receive(:can_confirm_booking?).with(u,true).and_return true
+      allow(s).to receive(:can_approve_booking?).and_return false #make sure we're not testing the wrong thing
+      allow(s).to receive(:can_request_booking?).and_return false #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_truthy
     end
     it "should not allow user to revise if confirmed and user cannot confirm_booking" do
       u = double('u')
       s = Shipment.new(booking_approved_date:Time.now,booking_confirmed_date:Time.now)
-      s.should_receive(:can_confirm_booking?).with(u,true).and_return false
-      s.stub(:can_approve_booking?).and_return true #make sure we're not testing the wrong thing
-      s.stub(:can_request_booking?).and_return true #make sure we're not testing the wrong thing
-      expect(s.can_revise_booking?(u)).to be_false
+      expect(s).to receive(:can_confirm_booking?).with(u,true).and_return false
+      allow(s).to receive(:can_approve_booking?).and_return true #make sure we're not testing the wrong thing
+      allow(s).to receive(:can_request_booking?).and_return true #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_falsey
     end
     it "should not allow if not approved or confirmed" do #since it wouldn't be logical
       u = double('u')
       s = Shipment.new
-      s.stub(:can_approve_booking?).and_return true #make sure we're not testing the wrong thing
-      s.stub(:can_request_booking?).and_return true #make sure we're not testing the wrong thing
-      s.stub(:can_confirm_booking?).and_return true #make sure we're not testing the wrong thing
-      expect(s.can_revise_booking?(u)).to be_false
+      allow(s).to receive(:can_approve_booking?).and_return true #make sure we're not testing the wrong thing
+      allow(s).to receive(:can_request_booking?).and_return true #make sure we're not testing the wrong thing
+      allow(s).to receive(:can_confirm_booking?).and_return true #make sure we're not testing the wrong thing
+      expect(s.can_revise_booking?(u)).to be_falsey
     end
     it "does not allow revising bookings with shipment lines" do
       u = double('u')
       s = Shipment.new(booking_approved_date:Time.now)
       s.shipment_lines.build
-      expect(s.can_revise_booking?(u)).to be_false
+      expect(s.can_revise_booking?(u)).to be_falsey
     end
   end
   describe "revise booking" do
@@ -416,7 +416,7 @@ describe Shipment do
       u = Factory(:user)
       original_receive= Time.zone.now
       s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:original_receive,booking_approved_date:Time.now,booking_confirmed_date:Time.now)
-      s.should_receive(:create_snapshot_with_async_option).with(false,u)
+      expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
       s.revise_booking! u
       s.reload
       expect(s.booking_approved_by).to be_nil
@@ -433,21 +433,21 @@ describe Shipment do
     it "should allow adding lines if user can edit" do
       u = double('user')
       s = Shipment.new
-      s.should_receive(:can_edit?).with(u).and_return true
-      expect(s.can_add_remove_booking_lines?(u)).to be_true
+      expect(s).to receive(:can_edit?).with(u).and_return true
+      expect(s.can_add_remove_booking_lines?(u)).to be_truthy
     end
     it "should not allow adding lines if user cannot edit" do
       u = double('user')
       s = Shipment.new
-      s.should_receive(:can_edit?).with(u).and_return false
-      expect(s.can_add_remove_booking_lines?(u)).to be_false
+      expect(s).to receive(:can_edit?).with(u).and_return false
+      expect(s.can_add_remove_booking_lines?(u)).to be_falsey
     end
     
     context "editable shipment" do
       let(:shipment) do
         s = Shipment.new
         # stub can edit to make sure we're allowing anyone/anything to edit
-        s.stub(:can_edit?).and_return true
+        allow(s).to receive(:can_edit?).and_return true
         s
       end
 
@@ -455,17 +455,17 @@ describe Shipment do
 
       it "should allow adding booking lines if booking is approved" do
         s = shipment.tap {|s| s.booking_approved_date = Time.now }
-        expect(s.can_add_remove_booking_lines? user).to be_true
+        expect(s.can_add_remove_booking_lines? user).to be_truthy
       end
 
       it "should allow adding lines if booking is confirmed" do
         s = shipment.tap {|s| s.booking_confirmed_date = Time.now }
-        expect(s.can_add_remove_booking_lines? user).to be_true
+        expect(s.can_add_remove_booking_lines? user).to be_truthy
       end
 
       it "disallows adding lines if shipment has actual shipment lines on it" do
         s = shipment.tap {|s| s.shipment_lines.build }
-        expect(s.can_add_remove_booking_lines?(user)).to be_false
+        expect(s.can_add_remove_booking_lines?(user)).to be_falsey
       end
     end
   end
@@ -474,15 +474,15 @@ describe Shipment do
     it "allows adding lines if user can edit" do
       u = double('user')
       s = Shipment.new
-      s.should_receive(:can_edit?).with(u).and_return true
-      expect(s.can_add_remove_shipment_lines?(u)).to be_true
+      expect(s).to receive(:can_edit?).with(u).and_return true
+      expect(s.can_add_remove_shipment_lines?(u)).to be_truthy
     end
 
     it "disallows adding lines if user cannot edit" do
       u = double('user')
       s = Shipment.new
-      s.should_receive(:can_edit?).with(u).and_return false
-      expect(s.can_add_remove_shipment_lines?(u)).to be_false
+      expect(s).to receive(:can_edit?).with(u).and_return false
+      expect(s.can_add_remove_shipment_lines?(u)).to be_falsey
     end
   end
 
@@ -542,7 +542,7 @@ describe Shipment do
 
       s = Shipment.find(sl_1.shipment.id)
 
-      s.commercial_invoices.collect {|ci| ci.invoice_number}.should == ["IN1","IN2"]
+      expect(s.commercial_invoices.collect {|ci| ci.invoice_number}).to eq(["IN1","IN2"])
     end
     it "should only return unique invoices" do
       sl_1 = Factory(:shipment_line,:quantity=>10)
@@ -557,7 +557,7 @@ describe Shipment do
       sl_1.reload
       ci = sl_1.shipment.commercial_invoices
       # need to to_a call below because of bug: https://github.com/rails/rails/issues/5554
-      ci.to_a.should have(1).invoice
+      expect(ci.to_a.size).to eq(1)
       ci.first.invoice_number == "IN1"
     end
   end
@@ -567,7 +567,7 @@ describe Shipment do
       linkable = Factory(:linkable_attachment,:model_field_uid=>'shp_ref',:value=>'ordn')
       LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>s)
       s.reload
-      s.linkable_attachments.first.should == linkable
+      expect(s.linkable_attachments.first).to eq(linkable)
     end
   end
 

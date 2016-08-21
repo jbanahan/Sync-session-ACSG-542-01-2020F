@@ -38,7 +38,7 @@ describe BusinessValidationRuleResultsController do
     end
 
     it "denies access to users who cannot edit rule results" do
-      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(user).and_return(false)
+      expect_any_instance_of(BusinessValidationRuleResult).to receive(:can_edit?).with(user).and_return(false)
       put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'} 
       expect(response).to be_redirect
       rule_result.reload
@@ -72,8 +72,8 @@ describe BusinessValidationRuleResultsController do
     end
 
     it "does not not allow users without edit to cancel overrides" do
-      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(user).and_return(false)
-      BusinessValidationTemplate.should_not_receive(:create_results_for_object!)
+      expect_any_instance_of(BusinessValidationRuleResult).to receive(:can_edit?).with(user).and_return(false)
+      expect(BusinessValidationTemplate).not_to receive(:create_results_for_object!)
       put :cancel_override, id: rule_result.id
 
       rule_result.reload
@@ -85,7 +85,7 @@ describe BusinessValidationRuleResultsController do
     end
 
     it "clears overridden attributes and note, reruns validations for the result's validatable" do
-      BusinessValidationTemplate.should_receive(:create_results_for_object!, entry)
+      expect(BusinessValidationTemplate).to receive(:create_results_for_object!, entry)
       put :cancel_override, id: rule_result.id
       rule_result.reload
       

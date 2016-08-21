@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
   describe :parse do
     it "delegates to #process" do
       file_content = "data"
-      described_class.any_instance.should_receive(:process).with(file_content)
+      expect_any_instance_of(described_class).to receive(:process).with(file_content)
       described_class.parse file_content
     end
   end

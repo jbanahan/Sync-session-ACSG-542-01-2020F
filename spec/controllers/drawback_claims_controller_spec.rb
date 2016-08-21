@@ -24,17 +24,17 @@ describe DrawbackClaimsController do
       sign_in_as @u
     end
     it "should show to user with permission" do
-      DrawbackClaim.any_instance.stub(:can_view?).and_return(true)
+      allow_any_instance_of(DrawbackClaim).to receive(:can_view?).and_return(true)
       get :show, :id=>@d.id
-      response.should be_success
-      assigns(:claim).should == @d
+      expect(response).to be_success
+      expect(assigns(:claim)).to eq(@d)
     end
     it "should redirect if no permission" do
-      DrawbackClaim.any_instance.stub(:can_view?).and_return(false)
+      allow_any_instance_of(DrawbackClaim).to receive(:can_view?).and_return(false)
       get :show, :id=>@d.id
-      response.should be_redirect
-      assigns(:claim).should be_nil
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(assigns(:claim)).to be_nil
+      expect(flash[:errors].size).to eq(1)
     end
   end
   describe :edit do
@@ -44,16 +44,16 @@ describe DrawbackClaimsController do
       sign_in_as @u
     end
     it "should show claim" do
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return(true)
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return(true)
       get :edit, :id=>@claim.id
-      response.should be_success
-      assigns(:drawback_claim).should == @claim
+      expect(response).to be_success
+      expect(assigns(:drawback_claim)).to eq(@claim)
     end
     it "should not show claim if user does not have permission to edit" do
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return(false)
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return(false)
       get :edit, :id=>@claim.id
-      response.should redirect_to request.referrer
-      flash[:errors].should have(1).message
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors].size).to eq(1)
     end
   end
   describe :update do
@@ -64,19 +64,19 @@ describe DrawbackClaimsController do
       sign_in_as @u
     end
     it "should update claim" do
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return(true)
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return(true)
       put :update, @h
-      response.should redirect_to @claim
-      flash[:notices].should have(1).message
+      expect(response).to redirect_to @claim
+      expect(flash[:notices].size).to eq(1)
       @claim.reload
-      @claim.name.should == 'newname'
+      expect(@claim.name).to eq('newname')
     end
     it "should not update if user doesn't have permission" do
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return(false)
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return(false)
       put :update, @h
-      response.should redirect_to request.referrer
-      flash[:errors].should have(1).message
-      DrawbackClaim.find(@claim.id).name.should == @claim.name
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors].size).to eq(1)
+      expect(DrawbackClaim.find(@claim.id).name).to eq(@claim.name)
     end
   end
   describe :create do
@@ -87,42 +87,42 @@ describe DrawbackClaimsController do
       sign_in_as @u
     end
     it "should save new claim" do
-      User.any_instance.stub(:edit_drawback?).and_return(true)
+      allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
       post :create, @h
-      response.should redirect_to DrawbackClaim
-      flash[:notices].should have(1).message
+      expect(response).to redirect_to DrawbackClaim
+      expect(flash[:notices].size).to eq(1)
       d = DrawbackClaim.first
       expect(d.importer).to eq @c
       expect(d.name).to eq 'nm'
       expect(d.hmf_claimed).to eq 10.04
     end
     it "should fail if user cannot edit drawback" do
-      User.any_instance.stub(:edit_drawback?).and_return(false)
+      allow_any_instance_of(User).to receive(:edit_drawback?).and_return(false)
       post :create, @h
-      response.should redirect_to request.referrer
-      flash[:errors].should have(1).message
-      DrawbackClaim.all.should be_empty
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors].size).to eq(1)
+      expect(DrawbackClaim.all).to be_empty
     end
   end
   describe :process_report do
     before :each do
       @u = Factory(:user)
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return(true)
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return(true)
       @claim = Factory(:drawback_claim)
       @att = Factory(:attachment,attachable:@claim)
       sign_in_as @u
     end
     it "should process export history" do
       eh = double(:export_history_parser)
-      OpenChain::CustomHandler::DutyCalc::ExportHistoryParser.should_receive(:delay).and_return(eh)
-      eh.should_receive(:process_from_attachment).with(@att.id.to_s,@u.id)
+      expect(OpenChain::CustomHandler::DutyCalc::ExportHistoryParser).to receive(:delay).and_return(eh)
+      expect(eh).to receive(:process_from_attachment).with(@att.id.to_s,@u.id)
       post :process_report, id:@claim.id, attachment_id:@att.id, process_type:'exphist'
       expect(response).to redirect_to @claim
     end
     it "should process claim audit" do
       ca = double(:claim_audit_parser)
-      OpenChain::CustomHandler::DutyCalc::ClaimAuditParser.should_receive(:delay).and_return(ca)
-      ca.should_receive(:process_from_attachment).with(@att.id.to_s,@u.id)
+      expect(OpenChain::CustomHandler::DutyCalc::ClaimAuditParser).to receive(:delay).and_return(ca)
+      expect(ca).to receive(:process_from_attachment).with(@att.id.to_s,@u.id)
       post :process_report, id:@claim.id, attachment_id:@att.id, process_type:'audrpt'
       expect(response).to redirect_to @claim
     end
@@ -135,14 +135,14 @@ describe DrawbackClaimsController do
     end
 
     it "only runs for drawback viewers" do
-      OpenChain::Report::DrawbackAuditReport.any_instance.should_not_receive(:run_and_attach)
+      expect_any_instance_of(OpenChain::Report::DrawbackAuditReport).not_to receive(:run_and_attach)
       post :audit_report, id: @claim.id
       expect(flash[:errors].count).to eq 1
     end
 
     it "runs report" do
-      @u.stub(:view_drawback?).and_return true
-      OpenChain::Report::DrawbackAuditReport.any_instance.should_receive(:run_and_attach).with(@u, @claim.id)
+      allow(@u).to receive(:view_drawback?).and_return true
+      expect_any_instance_of(OpenChain::Report::DrawbackAuditReport).to receive(:run_and_attach).with(@u, @claim.id)
       post :audit_report, id: @claim.id
       expect(flash[:notices]).to include "Report is being processed.  You'll receive a system message when it is complete."
     end
@@ -207,12 +207,12 @@ describe DrawbackClaimsController do
       @ca = @c.drawback_claim_audits.create!
     end
     it "should restrict to edit_drawback?" do
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return false
       expect{delete :clear_claim_audits, id: @c.id}.to_not change(DrawbackClaimAudit,:count)
       expect(flash[:errors].size).to eq 1
     end
     it "should clear claim audit" do
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return true
       expect{
         delete :clear_claim_audits, id: @c.id
       }.to change(DrawbackClaimAudit,:count).from(1).to(0)
@@ -226,12 +226,12 @@ describe DrawbackClaimsController do
       @ca = @c.drawback_export_histories.create!
     end
     it "should restrict to edit_drawback?" do
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return false
       expect{delete :clear_export_histories, id: @c.id}.to_not change(DrawbackExportHistory,:count)
       expect(flash[:errors].size).to eq 1
     end
     it "should clear claim audit" do
-      DrawbackClaim.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return true
       expect{
         delete :clear_export_histories, id: @c.id
       }.to change(DrawbackExportHistory,:count).from(1).to(0)

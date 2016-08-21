@@ -5,12 +5,12 @@ describe OpenChain::CustomHandler::JJill::JJillBookingApprovalDecider do
     it "should not skip J Jill shipments" do
       imp = Factory(:company,system_code:'JJILL')
       s = Factory(:shipment,importer:imp)
-      expect(described_class.skip?(s)).to be_false
+      expect(described_class.skip?(s)).to be_falsey
     end
     it "should skip non-J Jill shipments" do
       imp = Factory(:company)
       s = Factory(:shipment,importer:imp)
-      expect(described_class.skip?(s)).to be_true
+      expect(described_class.skip?(s)).to be_truthy
     end
   end
 

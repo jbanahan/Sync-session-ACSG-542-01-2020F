@@ -28,9 +28,9 @@ describe TSearchCriterionsController do
                     }
       expect(response).to be_redirect
       new_sc = SearchCriterion.last
-      new_sc.model_field_uid.should == "ent_release_date"
-      new_sc.operator.should == "eq"
-      new_sc.business_validation_template.should == @bvt
+      expect(new_sc.model_field_uid).to eq("ent_release_date")
+      expect(new_sc.operator).to eq("eq")
+      expect(new_sc.business_validation_template).to eq(@bvt)
     end
 
   end

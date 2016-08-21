@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser do
     it 'should check for 167 columns' do
       r = make_row
       r << 'another column'
-      lambda {described_class.parse_csv_line r, 1, @imp}.should raise_error(/Line 1 had 168 elements/)
+      expect {described_class.parse_csv_line r, 1, @imp}.to raise_error(/Line 1 had 168 elements/)
     end
     it "should create line" do
       vals = default_vals

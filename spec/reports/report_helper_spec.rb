@@ -62,21 +62,21 @@ describe OpenChain::Report::ReportHelper do
 
     it "extracts columns headers from result_set by default" do
       wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
-      XlsMaker.should_receive(:add_header_row).with(sheet, 0, ['EN', 'IDENT'])
+      expect(XlsMaker).to receive(:add_header_row).with(sheet, 0, ['EN', 'IDENT'])
       subject.table_from_query_result sheet, @result_set
     end
 
     it "extracts columns from opts if :column_names is used" do
       wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
-      XlsMaker.should_receive(:add_header_row).with(sheet, 0, ['Nigel', 'David'])
+      expect(XlsMaker).to receive(:add_header_row).with(sheet, 0, ['Nigel', 'David'])
       subject.table_from_query_result sheet, @result_set, {}, {column_names: ['Nigel', 'David']}
     end
 
     it "uses header_row opt if given as row number to write header" do
       wb, sheet = XlsMaker.create_workbook_and_sheet "Test"
       opts = {column_names: ['Nigel', 'David'], header_row: 5}
-      XlsMaker.should_receive(:add_header_row).with(sheet, 5, ['Nigel', 'David'])
-      subject.should_receive(:write_result_set_to_sheet).with(@result_set, sheet, ['Nigel', 'David'], 6, {}, opts)
+      expect(XlsMaker).to receive(:add_header_row).with(sheet, 5, ['Nigel', 'David'])
+      expect(subject).to receive(:write_result_set_to_sheet).with(@result_set, sheet, ['Nigel', 'David'], 6, {}, opts)
       subject.table_from_query_result sheet, @result_set, {}, opts
     end
   end
@@ -95,8 +95,8 @@ describe OpenChain::Report::ReportHelper do
       # Start at row 5 just to make sure the return value is actually giving us the # of rows written and not the ending line number
       expect(subject.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 5).to eq 2
 
-      @sheet.row(5).should == ['12345',e1.id]
-      @sheet.row(6).should == ['65432',e2.id]
+      expect(@sheet.row(5)).to eq(['12345',e1.id])
+      expect(@sheet.row(6)).to eq(['65432',e2.id])
     end
 
     it "should handle timezone conversion for datetime columns" do
@@ -107,30 +107,30 @@ describe OpenChain::Report::ReportHelper do
         subject.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 0
       end
 
-      @sheet.row(0)[0].to_s.should == release_date.in_time_zone("Hawaii").to_s
-      @sheet.row(0)[1].to_s.should == release_date.strftime("%Y-%m-%d")
+      expect(@sheet.row(0)[0].to_s).to eq(release_date.in_time_zone("Hawaii").to_s)
+      expect(@sheet.row(0)[1].to_s).to eq(release_date.strftime("%Y-%m-%d"))
     end
 
     it "should convert nil to blank string in excel output" do
       subject.write_result_set_to_sheet [[nil]], @sheet, ["EN"], 0
-      @sheet.row(0).should == ['']
+      expect(@sheet.row(0)).to eq([''])
     end
 
     it "should use conversion lambdas to format output" do
       conversions = {}
       conversions['Col1'] = lambda {|row, val| 
-        row.should == ['A', 'B', 'C']
-        val.should == "A"
+        expect(row).to eq(['A', 'B', 'C'])
+        expect(val).to eq("A")
         "Col1"
       }
       conversions[1] = lambda{|row, val| 
-        row.should == ['A', 'B', 'C']
-        val.should == "B"
+        expect(row).to eq(['A', 'B', 'C'])
+        expect(val).to eq("B")
         "Col2"
       }
       conversions[:col_3] = lambda{|row, val| 
-        row.should == ['A', 'B', 'C']
-        val.should == "C"
+        expect(row).to eq(['A', 'B', 'C'])
+        expect(val).to eq("C")
         "Col3"
       }
       # Add a lambda by name and symbol for the 3rd column, proves name/symbol takes precedence
@@ -139,12 +139,12 @@ describe OpenChain::Report::ReportHelper do
       }
       
       subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Whatever', 'col_3'], 0, conversions
-      @sheet.row(0).should == ['Col1', 'Col2', 'Col3']
+      expect(@sheet.row(0)).to eq(['Col1', 'Col2', 'Col3'])
     end
 
     it "offsets output columns if instructed" do
       subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, {}, query_column_offset: 1
-      @sheet.row(0).should == ['B', 'C']
+      expect(@sheet.row(0)).to eq(['B', 'C'])
     end
 
     it "sets conversions back into the result set if instructed" do
@@ -165,7 +165,7 @@ describe OpenChain::Report::ReportHelper do
       }
 
       subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, conversions, translations_modify_result_set: true
-      @sheet.row(0).should == ['Col1', 'Col2', 'Col3']
+      expect(@sheet.row(0)).to eq(['Col1', 'Col2', 'Col3'])
     end
 
     it "executes conversions even on skipped columns" do
@@ -184,7 +184,7 @@ describe OpenChain::Report::ReportHelper do
       }
 
       subject.write_result_set_to_sheet [['A', 'B', 'C']], @sheet, ['Col1', 'Col2', 'Col3'], 0, conversions, translations_modify_result_set: true, query_column_offset: 1
-      @sheet.row(0).should == ['Col2', 'C']
+      expect(@sheet.row(0)).to eq(['Col2', 'C'])
     end
   end
 
@@ -196,8 +196,8 @@ describe OpenChain::Report::ReportHelper do
 
       translated = conversion.call nil, now
       # Make sure the translated value is using the specified time zone (by comparing offset values)
-      translated.utc_offset.should == ActiveSupport::TimeZone["Hawaii"].utc_offset
-      translated.in_time_zone("UTC").should == now
+      expect(translated.utc_offset).to eq(ActiveSupport::TimeZone["Hawaii"].utc_offset)
+      expect(translated.in_time_zone("UTC")).to eq(now)
     end
 
     it "should return a date if specified" do
@@ -207,21 +207,21 @@ describe OpenChain::Report::ReportHelper do
       now = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 01:00:00"
 
       translated = conversion.call nil, now
-      translated.is_a?(Date).should be_true
-      translated.to_s.should == "2012-12-31"
+      expect(translated.is_a?(Date)).to be_truthy
+      expect(translated.to_s).to eq("2012-12-31")
     end
 
     it "should handle nil times" do
       conversion = subject.datetime_translation_lambda "Hawaii", false
-      conversion.call(nil, nil).should be_nil
+      expect(conversion.call(nil, nil)).to be_nil
     end
   end
 
   describe "weblink_translation_lamda" do
     it "creates a lambda capable of transating an Id value to a URL" do
       ms = double("MasterSetup")
-      ms.stub(:request_host).and_return "localhost"
-      MasterSetup.stub(:get).and_return ms
+      allow(ms).to receive(:request_host).and_return "localhost"
+      allow(MasterSetup).to receive(:get).and_return ms
       l = subject.weblink_translation_lambda CoreModule::PRODUCT
       expect(l.call(nil, 1)).to eq Spreadsheet::Link.new(Product.excel_url(1), "Web View")
     end
@@ -246,7 +246,7 @@ describe OpenChain::Report::ReportHelper do
   context :sanitize_date_string do
     it "should return a date string" do
       s = subject.sanitize_date_string "20130101"
-      s.should == "2013-01-01"
+      expect(s).to eq("2013-01-01")
     end
 
     it "should error on invalid strings" do
@@ -255,12 +255,12 @@ describe OpenChain::Report::ReportHelper do
 
     it "should convert date to UTC date time string" do
       s = subject.sanitize_date_string "20130101", "Hawaii"
-      s.should == "2013-01-01 10:00:00"
+      expect(s).to eq("2013-01-01 10:00:00")
     end
 
     it "should accept a date object" do
       s = subject.sanitize_date_string Date.new(2013,1,1), "Hawaii"
-      s.should == "2013-01-01 10:00:00"
+      expect(s).to eq("2013-01-01 10:00:00")
     end
   end
 
@@ -282,7 +282,7 @@ describe OpenChain::Report::ReportHelper do
       end
 
       expect(workbook.worksheet(0).row(0)).to eq ["Header"]
-      expect(tempfile.closed?).to be_true
+      expect(tempfile.closed?).to be_truthy
       expect(name).to eq "test.xls"
     end
 

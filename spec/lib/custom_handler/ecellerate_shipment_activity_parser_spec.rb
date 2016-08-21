@@ -28,39 +28,39 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
   end
   describe :can_view? do
     it "must have ecellerate custom feature" do
-      MasterSetup.any_instance.stub(:custom_feature?).and_return false
-      User.any_instance.stub(:edit_shipments?).and_return true
-      expect(described_class.can_view?(Factory(:master_user))).to be_false
+      allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return false
+      allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
+      expect(described_class.can_view?(Factory(:master_user))).to be_falsey
     end
     it "must be from master user" do
-      MasterSetup.any_instance.stub(:custom_feature?).and_return true
-      User.any_instance.stub(:edit_shipments?).and_return true
-      expect(described_class.can_view?(Factory(:user))).to be_false
+      allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
+      allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
+      expect(described_class.can_view?(Factory(:user))).to be_falsey
     end
     it "must be user who can edit shipments" do
-      MasterSetup.any_instance.stub(:custom_feature?).and_return true
-      User.any_instance.stub(:edit_shipments?).and_return false
-      expect(described_class.can_view?(Factory(:master_user))).to be_false
+      allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
+      allow_any_instance_of(User).to receive(:edit_shipments?).and_return false
+      expect(described_class.can_view?(Factory(:master_user))).to be_falsey
     end
     it "should pass for user who can edit shipments, is master, and has custom feature enabled" do
-      MasterSetup.any_instance.should_receive(:custom_feature?).with('ecellerate').and_return true
-      User.any_instance.stub(:edit_shipments?).and_return true
-      expect(described_class.can_view?(Factory(:master_user))).to be_true
+      expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('ecellerate').and_return true
+      allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
+      expect(described_class.can_view?(Factory(:master_user))).to be_truthy
     end
   end
   describe :process do
     it "must allow can_view?" do
       p = described_class.new(double('att'))
-      p.should_receive(:can_view?).and_return false
+      expect(p).to receive(:can_view?).and_return false
       expect {p.process User.new}.to raise_error "Processing Failed because you cannot view this file."
     end
     it "should call parse" do
       a = double('att')
       xlc = double('xlc')
       p = described_class.new(a)
-      p.should_receive(:can_view?).and_return true
-      OpenChain::XLClient.should_receive(:new_from_attachable).with(a).and_return(xlc)
-      p.should_receive(:parse).with(xlc)
+      expect(p).to receive(:can_view?).and_return true
+      expect(OpenChain::XLClient).to receive(:new_from_attachable).with(a).and_return(xlc)
+      expect(p).to receive(:parse).with(xlc)
       p.process User.new
     end
   end
@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
     def run_parse rows
       a = double(:att)
       x = double(:xl_client)
-      stubbed = x.stub(:all_row_values,0)
+      stubbed = allow(x).to receive(:all_row_values,0)
       rows.each {|row| stubbed = stubbed.and_yield row}
       described_class.new(a).parse x
     end

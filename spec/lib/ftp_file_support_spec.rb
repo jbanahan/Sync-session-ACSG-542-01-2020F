@@ -13,53 +13,53 @@ describe "FtpFileSupport" do
 
   describe :ftp_file do
     before :each do
-      @t = mock('tmpfile')
-      @t.stub(:path).and_return('/x.badfile')
+      @t = double('tmpfile')
+      allow(@t).to receive(:path).and_return('/x.badfile')
     end
 
     it "should ftp_file" do
-      File.stub(:exists?).and_return true
-      @t.should_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t, subject.ftp_credentials)
+      allow(File).to receive(:exists?).and_return true
+      expect(@t).to receive(:unlink)
+      expect(FtpSender).to receive(:send_file).with('svr','u','p',@t, subject.ftp_credentials)
       subject.ftp_file @t
     end
 
     it "should take option_overrides" do
-      File.stub(:exists?).and_return true
+      allow(File).to receive(:exists?).and_return true
       
       def subject.ftp_credentials
         return {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987}
       end
 
-      FtpSender.should_receive(:send_file).with('otherserver','u','p',@t,{:server=>'otherserver',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987})
-      @t.should_receive(:unlink)
+      expect(FtpSender).to receive(:send_file).with('otherserver','u','p',@t,{:server=>'otherserver',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987})
+      expect(@t).to receive(:unlink)
 
       subject.ftp_file @t, {server:'otherserver'}
     end
     
     it 'should not unlink if false is passed' do
-      File.stub(:exists?).and_return true
-      @t.should_not_receive(:unlink)
-      FtpSender.should_receive(:send_file)
+      allow(File).to receive(:exists?).and_return true
+      expect(@t).not_to receive(:unlink)
+      expect(FtpSender).to receive(:send_file)
       subject.ftp_file @t, {keep_local:true}
     end
     
     it "should return false if file is nil" do
-      File.stub(:exists?).and_return true
-      FtpSender.should_not_receive(:send_file)
-      subject.ftp_file(nil).should be_false
+      allow(File).to receive(:exists?).and_return true
+      expect(FtpSender).not_to receive(:send_file)
+      expect(subject.ftp_file(nil)).to be_falsey
     end
     
     it "should return false if file does not exist" do
-      FtpSender.should_not_receive(:send_file)
-      subject.ftp_file(@t).should be_false
+      expect(FtpSender).not_to receive(:send_file)
+      expect(subject.ftp_file(@t)).to be_falsey
     end
 
     it "should allow for missing folder and remote file name values from ftp_credentials" do
-      subject.should_receive(:ftp_credentials).and_return(:server=>'svr',:username=>'u',:password=>'p')
-      File.stub(:exists?).and_return true
-      @t.should_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:server=>'svr',:username=>'u',:password=>'p'})
+      expect(subject).to receive(:ftp_credentials).and_return(:server=>'svr',:username=>'u',:password=>'p')
+      allow(File).to receive(:exists?).and_return true
+      expect(@t).to receive(:unlink)
+      expect(FtpSender).to receive(:send_file).with('svr','u','p',@t,{:server=>'svr',:username=>'u',:password=>'p'})
       subject.ftp_file @t
     end
 
@@ -68,10 +68,10 @@ describe "FtpFileSupport" do
         include OpenChain::FtpFileSupport
       end.new
 
-      File.stub(:exists?).and_return true
+      allow(File).to receive(:exists?).and_return true
       opts = {server: "server", username: "user", password: "pwd"}
-      FtpSender.should_receive(:send_file).with('server','user','pwd',@t, opts)
-      @t.should_receive(:unlink)
+      expect(FtpSender).to receive(:send_file).with('server','user','pwd',@t, opts)
+      expect(@t).to receive(:unlink)
       s.ftp_file @t, opts
     end
   end
@@ -80,16 +80,16 @@ describe "FtpFileSupport" do
 
     it "should use the correct credentials for ftp2 server" do
       c = subject.ftp2_vandegrift_inc 'folder'
-      c[:server].should eq 'ftp2.vandegriftinc.com'
-      c[:username].should eq 'VFITRACK'
-      c[:password].should eq 'RL2VFftp'
-      c[:folder].should eq 'folder'
-      c[:remote_file_name].should be_nil
+      expect(c[:server]).to eq 'ftp2.vandegriftinc.com'
+      expect(c[:username]).to eq 'VFITRACK'
+      expect(c[:password]).to eq 'RL2VFftp'
+      expect(c[:folder]).to eq 'folder'
+      expect(c[:remote_file_name]).to be_nil
     end
 
     it "should add remote filename when given" do
       c = subject.ftp2_vandegrift_inc 'folder', 'remotefile.txt'
-      c[:remote_file_name].should eq 'remotefile.txt'
+      expect(c[:remote_file_name]).to eq 'remotefile.txt'
     end
   end
 

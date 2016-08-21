@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
   describe :parse do
     before :each do
-      Order.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Order).to receive(:can_edit?).and_return true
       Factory(:master_user,username:'integration')
       @path = 'spec/support/bin/jjill850sample.xml'
       @c = Factory(:company,importer:true,system_code:'JJILL')
@@ -15,19 +15,19 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     it "should close cancelled order" do
       dom = REXML::Document.new(IO.read(@path))
       REXML::XPath.each(dom.root,'//BEG01') {|el| el.text = '03'}
-      Order.any_instance.should_receive(:close!).with(instance_of(User))
+      expect_any_instance_of(Order).to receive(:close!).with(instance_of(User))
       described_class.parse_dom dom
     end
     it "should reopen order where BEG01 not eq to '03'" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',closed_by_id:7,closed_at:Time.now)
       DataCrossReference.create_jjill_order_fingerprint!(o,'badfingerprint')
-      Order.any_instance.should_receive(:reopen!).with(instance_of(User))
-      Order.any_instance.should_receive(:post_update_logic!).with(instance_of(User))
+      expect_any_instance_of(Order).to receive(:reopen!).with(instance_of(User))
+      expect_any_instance_of(Order).to receive(:post_update_logic!).with(instance_of(User))
       run_file
     end
     it "should save order" do
       cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
-      Order.any_instance.should_receive(:post_create_logic!).with(instance_of(User))
+      expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
       expect {run_file}.to change(Order,:count).from(0).to(1)
       o = Order.first
       

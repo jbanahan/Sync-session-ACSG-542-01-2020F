@@ -56,7 +56,7 @@ describe WorkflowTask do
     it "should test base_object if target_object.nil?" do
       p = Product.new
       w = WorkflowTask.new
-      w.should_receive(:base_object).and_return(p)
+      expect(w).to receive(:base_object).and_return(p)
       expect(w.object_to_test).to be p
     end
   end
@@ -91,14 +91,14 @@ describe WorkflowTask do
     it "should use test class and set passed" do
       wt = Factory(:workflow_task,test_class_name:"OpenChain::Test::MyTestWorkflowTask",payload_json:'{"pass":"yes"}')
       expect(wt.passed_at).to be_nil
-      expect(wt.test!).to be_true
+      expect(wt.test!).to be_truthy
       expect(wt.passed_at).to_not be_nil
 
     end
     it "should use test class and clear passed" do
       wt = Factory(:workflow_task,test_class_name:"OpenChain::Test::MyTestWorkflowTask",payload_json:'{"a":"b"}',passed_at:Time.now)
       expect(wt.passed_at).to_not be_nil
-      expect(wt.test!).to be_false
+      expect(wt.test!).to be_falsey
       expect(wt.passed_at).to be_nil
     end
   end
@@ -109,30 +109,30 @@ describe WorkflowTask do
       g = Factory(:group)
       g.users << u
       o = Factory(:order)
-      Order.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(Order).to receive(:can_view?).and_return true
       wi = Factory(:workflow_instance,base_object:o)
       wt = Factory(:workflow_task,workflow_instance:wi,group:g)
-      expect(wt.can_edit?(u)).to be_true
+      expect(wt.can_edit?(u)).to be_truthy
     end
     it "cannot edit if user not in group" do
       u = Factory(:user)
       g = Factory(:group)
       # NOT ADDING USER TO GROUP HERE :)
       o = Factory(:order)
-      Order.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(Order).to receive(:can_view?).and_return true
       wi = Factory(:workflow_instance,base_object:o)
       wt = Factory(:workflow_task,workflow_instance:wi,group:g)
-      expect(wt.can_edit?(u)).to be_false
+      expect(wt.can_edit?(u)).to be_falsey
     end
     it "cannot edit if user cannot view object" do
       u = Factory(:user)
       g = Factory(:group)
       g.users << u
       o = Factory(:order)
-      Order.any_instance.stub(:can_view?).and_return false # <<<< this makes the test go to false
+      allow_any_instance_of(Order).to receive(:can_view?).and_return false # <<<< this makes the test go to false
       wi = Factory(:workflow_instance,base_object:o)
       wt = Factory(:workflow_task,workflow_instance:wi,group:g)
-      expect(wt.can_edit?(u)).to be_false
+      expect(wt.can_edit?(u)).to be_falsey
 
     end
   end

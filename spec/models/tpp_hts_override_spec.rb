@@ -9,7 +9,7 @@ describe TppHtsOverride do
         tpp = TradePreferenceProgram.new
         t.trade_preference_program = tpp
 
-        tpp.should_receive(:can_view?).with(u).and_return('x')
+        expect(tpp).to receive(:can_view?).with(u).and_return('x')
 
         expect(t.can_view?(u)).to eq 'x'
       end
@@ -21,7 +21,7 @@ describe TppHtsOverride do
         tpp = TradePreferenceProgram.new
         t.trade_preference_program = tpp
 
-        tpp.should_receive(:can_edit?).with(u).and_return('x')
+        expect(tpp).to receive(:can_edit?).with(u).and_return('x')
 
         expect(t.can_edit?(u)).to eq 'x'
       end
@@ -30,7 +30,7 @@ describe TppHtsOverride do
     describe '#search_secure' do
       it 'should delegate to trade preference program' do
         u = double('user')
-        TradePreferenceProgram.should_receive(:search_where).with(u).and_return('99=99')
+        expect(TradePreferenceProgram).to receive(:search_where).with(u).and_return('99=99')
         qry = described_class.search_secure(u,described_class).to_sql
         expect(qry).to match(/tpp_hts_overrides\.trade_preference_program_id IN \(SELECT id FROM trade_preference_programs WHERE 99=99\)/)
       end

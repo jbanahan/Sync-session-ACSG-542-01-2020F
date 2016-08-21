@@ -9,7 +9,7 @@ describe ProjectUpdatesController do
   end
   describe :create do
     it "should set created_by" do
-      Project.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Project).to receive(:can_edit?).and_return true
       p = Factory(:project)
       post :create, project_id:p.id, project_update:{body:'abc'}
       expect(response).to be_success
@@ -26,7 +26,7 @@ describe ProjectUpdatesController do
       expect(r['project_update']['project_id']).to eq pu.project_id
     end
     it "should return 401 if user cannot edit project_update" do
-      Project.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Project).to receive(:can_edit?).and_return false
       p = Factory(:project)
       post :create, project_id:p.id, project_update:{body:'abc'}
       p.reload

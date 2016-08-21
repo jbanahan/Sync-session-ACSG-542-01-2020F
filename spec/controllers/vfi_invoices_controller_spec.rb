@@ -16,9 +16,9 @@ describe VfiInvoicesController do
     end
 
     it "renders" do
-      @u.stub(:view_vfi_invoices?).and_return true
+      allow(@u).to receive(:view_vfi_invoices?).and_return true
       get :index
-      response.should be_redirect
+      expect(response).to be_redirect
       expect(response.location).to match(/\/advanced_search#\//)
     end
   end
@@ -32,8 +32,8 @@ describe VfiInvoicesController do
     end
 
     it "allows use only by user with permission to view invoice" do
-      @u.stub(:view_vfi_invoices?).and_return true
-      VfiInvoice.any_instance.stub(:can_view?).with(@u).and_return false
+      allow(@u).to receive(:view_vfi_invoices?).and_return true
+      allow_any_instance_of(VfiInvoice).to receive(:can_view?).with(@u).and_return false
 
       get :show, id: @inv
       expect(response).to redirect_to request.referrer
@@ -45,7 +45,7 @@ describe VfiInvoicesController do
       Factory(:vfi_invoice_line, vfi_invoice: @inv, charge_amount: 3)
 
       @u.company = Factory(:master_company)
-      @u.stub(:view_vfi_invoices?).and_return true
+      allow(@u).to receive(:view_vfi_invoices?).and_return true
       
       get :show, id: @inv
       expect(response).to be_success

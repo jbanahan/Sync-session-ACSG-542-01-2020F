@@ -14,8 +14,8 @@ describe SupportRequest do
     }
 
     before :each do
-      Rails.env.stub(:test?).and_return false
-      described_class.should_receive(:support_request_config).and_return config
+      allow(Rails.env).to receive(:test?).and_return false
+      expect(described_class).to receive(:support_request_config).and_return config
     end
 
     describe "request_sender" do
@@ -31,8 +31,8 @@ describe SupportRequest do
     describe "send_ticket!" do
       it "uses TrelloTicketSender to send a ticket" do
         card = double("Trello::Card")
-        card.should_receive(:short_url).and_return "http://short.en/me"
-        OpenChain::Trello.should_receive(:send_support_request!).with("the_board", "The List", support_request, "red").and_return card
+        expect(card).to receive(:short_url).and_return "http://short.en/me"
+        expect(OpenChain::Trello).to receive(:send_support_request!).with("the_board", "The List", support_request, "red").and_return card
 
         support_request.send_request!
 
@@ -51,8 +51,8 @@ describe SupportRequest do
     }
 
     before :each do
-      Rails.env.stub(:test?).and_return false
-      described_class.should_receive(:support_request_config).and_return config
+      allow(Rails.env).to receive(:test?).and_return false
+      expect(described_class).to receive(:support_request_config).and_return config
     end
 
     it "returns null sender" do
@@ -63,16 +63,16 @@ describe SupportRequest do
 
   describe "request_sender" do
     before :each do
-      Rails.env.stub(:test?).and_return false
+      allow(Rails.env).to receive(:test?).and_return false
     end
 
     it "raises an error when an invalid sender is selected" do
-      described_class.should_receive(:support_request_config).and_return({"invalid" => ""})
+      expect(described_class).to receive(:support_request_config).and_return({"invalid" => ""})
       expect { described_class.request_sender }.to raise_error "Unexpected Support Request ticket sender encountered: invalid."
     end
 
     it "raises an error when no config file is present" do 
-      described_class.should_receive(:support_request_config).and_return nil
+      expect(described_class).to receive(:support_request_config).and_return nil
       expect { described_class.request_sender }.to raise_error "No ticket sender configured."
     end
   end

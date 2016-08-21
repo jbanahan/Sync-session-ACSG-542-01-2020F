@@ -18,19 +18,19 @@ describe ValidatesFieldFormat do
     @block = Proc.new {|mf, val, regex| "All #{mf.label} values do not match '#{regex}' format."}
     @order_line = Factory(:order_line)
     @mf_double = double("MF")
-    @mf_double.stub(:label).and_return "HTS Code"
-    ModelField.should_receive(:find_by_uid).with('ordln_hts').and_return @mf_double  
+    allow(@mf_double).to receive(:label).and_return "HTS Code"
+    expect(ModelField).to receive(:find_by_uid).with('ordln_hts').and_return @mf_double  
   end
 
   describe :validate_field_format do
     it "returns nil if the value is blank and allow_blank? is true" do
       @rule = Rule.new('regex' => 'ABC', 'model_field_uid' => 'ordln_hts', 'allow_blank' => 'true')
-      @mf_double.should_receive(:process_export).with(@order_line, nil, true).and_return nil
+      expect(@mf_double).to receive(:process_export).with(@order_line, nil, true).and_return nil
       expect(@rule.validate_field_format(@order_line, &@block)).to be_nil
     end
   
     context "failure" do
-      before(:each) { @mf_double.should_receive(:process_export).with(@order_line, nil, true).and_return 'foo' }
+      before(:each) { expect(@mf_double).to receive(:process_export).with(@order_line, nil, true).and_return 'foo' }
 
       it "returns result of block if yield_failures enabled" do
         expect(@rule.validate_field_format(@order_line, {yield_failures: true}, &@block)).to eq "All HTS Code values do not match 'ABC' format."
@@ -46,7 +46,7 @@ describe ValidatesFieldFormat do
     end
 
     context "success" do
-      before(:each) { @mf_double.should_receive(:process_export).with(@order_line, nil, true).and_return 'ABC' }
+      before(:each) { expect(@mf_double).to receive(:process_export).with(@order_line, nil, true).and_return 'ABC' }
 
       it "executes block if yield_matches enabled" do
         expect{ |block| @rule.validate_field_format(@order_line, {yield_matches: true}, &block) }.to yield_with_args(@mf_double, 'ABC', 'ABC')
@@ -59,17 +59,17 @@ describe ValidatesFieldFormat do
 
     context "multiple validations" do
       before :each do
-        @mf_double.should_receive(:process_export).with(@order_line, nil, true).and_return 'foo'
+        expect(@mf_double).to receive(:process_export).with(@order_line, nil, true).and_return 'foo'
 
         @mf_double_2 = double("MF2")
-        @mf_double_2.stub(:label).and_return "Currency"
-        @mf_double_2.should_receive(:process_export).with(@order_line, nil, true).and_return 'bar'
-        ModelField.should_receive(:find_by_uid).with('ordln_currency').and_return @mf_double_2
+        allow(@mf_double_2).to receive(:label).and_return "Currency"
+        expect(@mf_double_2).to receive(:process_export).with(@order_line, nil, true).and_return 'bar'
+        expect(ModelField).to receive(:find_by_uid).with('ordln_currency').and_return @mf_double_2
 
         @mf_double_3 = double("MF3")
-        @mf_double_3.stub(:label).and_return "SKU"
-        @mf_double_3.should_receive(:process_export).with(@order_line, nil, true).and_return 'baz'
-        ModelField.should_receive(:find_by_uid).with('ordln_sku').and_return @mf_double_3
+        allow(@mf_double_3).to receive(:label).and_return "SKU"
+        expect(@mf_double_3).to receive(:process_export).with(@order_line, nil, true).and_return 'baz'
+        expect(ModelField).to receive(:find_by_uid).with('ordln_sku').and_return @mf_double_3
       end
 
       it "returns all errors if none of the validations match" do

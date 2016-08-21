@@ -33,17 +33,17 @@ describe ValidationRuleEntryInvoiceLineFieldFormat do
     it "should skip on entry level validation" do
       @ci_line.entry.update_attributes(entry_number:'31612345678')
       @rule.search_criterions.build(model_field_uid:'ent_entry_num',operator:'sw',value:'99')
-      expect(@rule.should_skip?(@ci_line.entry)).to be_true
+      expect(@rule.should_skip?(@ci_line.entry)).to be_truthy
     end
     it "should skip on commercial invoice level validation" do
       @ci_line.commercial_invoice.update_attributes(invoice_number:'ABC')
       @rule.search_criterions.build(model_field_uid:'ci_invoice_number',operator:'sw',value:'99')
-      expect(@rule.should_skip?(@ci_line.entry)).to be_true
+      expect(@rule.should_skip?(@ci_line.entry)).to be_truthy
     end
     it "should skip on commercial invoice line level validation" do
       @ci_line.update_attributes(part_number:'ABC')
       @rule.search_criterions.build(model_field_uid:'cil_part_number',operator:'sw',value:'99')
-      expect(@rule.should_skip?(@ci_line.entry)).to be_true
+      expect(@rule.should_skip?(@ci_line.entry)).to be_truthy
     end
     it "should pass when matching all validations" do
       @ci_line.entry.update_attributes(entry_number:'31612345678')
@@ -53,7 +53,7 @@ describe ValidationRuleEntryInvoiceLineFieldFormat do
       @rule.search_criterions.build(model_field_uid:'ent_entry_num',operator:'sw',value:'31')
       @rule.search_criterions.build(model_field_uid:'ci_invoice_number',operator:'sw',value:'AB')
       @rule.search_criterions.build(model_field_uid:'cil_part_number',operator:'sw',value:'AB')
-      expect(@rule.should_skip?(@ci_line.entry)).to be_false
+      expect(@rule.should_skip?(@ci_line.entry)).to be_falsey
     end
   end
 

@@ -128,7 +128,7 @@ describe OpenChain::Api::ApiEntityJsonizer do
     end
 
     it "validates user access to model fields" do
-      ModelField.any_instance.stub(:can_view?).with(@user).and_return false
+      allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return false
       json = OpenChain::Api::ApiEntityJsonizer.new.entity_to_json @user, @product, ['prod_uid', 'class_cntry_iso', 'hts_hts_1']
       expect(ActiveSupport::JSON.decode(json)).to eq({'product'=>{'id'=>@product.id}})
     end
@@ -208,7 +208,7 @@ describe OpenChain::Api::ApiEntityJsonizer do
     end
 
     it "should not show model fields the user does not have access to" do
-      ModelField.any_instance.stub(:can_view?).with(@user).and_return false
+      allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return false
       json = OpenChain::Api::ApiEntityJsonizer.new.model_field_list_to_json @user, CoreModule::PRODUCT
       model_fields = ActiveSupport::JSON.decode(json)
 
@@ -247,8 +247,8 @@ describe OpenChain::Api::ApiEntityJsonizer do
       mf = double
       u = User.new
       p = Product.new
-      mf.should_receive(:process_export).with(p, u).and_return "1"
-      mf.should_receive(:data_type).and_return :integer
+      expect(mf).to receive(:process_export).with(p, u).and_return "1"
+      expect(mf).to receive(:data_type).and_return :integer
       expect(described_class.new.export_field u, p, mf).to eq 1
     end
 
@@ -258,8 +258,8 @@ describe OpenChain::Api::ApiEntityJsonizer do
       mf = double
       u = User.new
       p = Product.new
-      mf.should_receive(:process_export).with(p, u).and_return "123.12"
-      mf.should_receive(:data_type).and_return :decimal
+      expect(mf).to receive(:process_export).with(p, u).and_return "123.12"
+      expect(mf).to receive(:data_type).and_return :decimal
       expect(described_class.new.export_field u, p, mf).to eq BigDecimal("123.12")
     end
 
@@ -269,8 +269,8 @@ describe OpenChain::Api::ApiEntityJsonizer do
       mf = double
       u = User.new
       p = Product.new
-      mf.should_receive(:process_export).with(p, u).and_return "123.12"
-      mf.should_receive(:data_type).and_return :numeric
+      expect(mf).to receive(:process_export).with(p, u).and_return "123.12"
+      expect(mf).to receive(:data_type).and_return :numeric
       expect(described_class.new.export_field u, p, mf).to eq BigDecimal("123.12")
     end
 
@@ -280,8 +280,8 @@ describe OpenChain::Api::ApiEntityJsonizer do
       mf = double
       u = User.new
       p = Product.new
-      mf.should_receive(:process_export).with(p, u).and_return "123.12"
-      mf.should_receive(:data_type).and_return :numeric
+      expect(mf).to receive(:process_export).with(p, u).and_return "123.12"
+      expect(mf).to receive(:data_type).and_return :numeric
       expect(described_class.new(force_big_decimal_numeric: true).export_field u, p, mf).to eq BigDecimal("123.12").to_f
     end
 
@@ -290,8 +290,8 @@ describe OpenChain::Api::ApiEntityJsonizer do
       u = User.new time_zone: "Hawaii"
       p = Product.new
       mf = double
-      mf.should_receive(:process_export).with(p, u).and_return t
-      mf.should_receive(:data_type).and_return :datetime
+      expect(mf).to receive(:process_export).with(p, u).and_return t
+      expect(mf).to receive(:data_type).and_return :datetime
       time = described_class.new.export_field u, p, mf
       expect(time).to eq t.in_time_zone("Hawaii")
     end

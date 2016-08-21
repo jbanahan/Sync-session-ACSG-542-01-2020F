@@ -18,8 +18,8 @@ describe ISFSupport do
         )
         Factory(:shipment_line, shipment:@shipment, manufacturer_address:Factory(:full_address))
         Factory(:shipment_line, shipment:@shipment, manufacturer_address:Factory(:full_address))
-        ShipmentLine.any_instance.stub(:country_of_origin).and_return('Greenland')
-        ShipmentLine.any_instance.stub(:us_hts_number).and_return('123456789')
+        allow_any_instance_of(ShipmentLine).to receive(:country_of_origin).and_return('Greenland')
+        allow_any_instance_of(ShipmentLine).to receive(:us_hts_number).and_return('123456789')
       end
 
       it 'works at all' do
@@ -30,7 +30,7 @@ describe ISFSupport do
     describe "when the ISF is not valid" do
       it "returns false" do
         # By default a shipment isn't going to be valid, missing Importers, parties, etc.
-        expect(Factory(:shipment).valid_isf?).to be_false
+        expect(Factory(:shipment).valid_isf?).to be_falsey
       end
     end
   end
@@ -165,7 +165,7 @@ describe ISFSupport do
 
       it "is invalid when country of origin is missing from shipment line" do
         line_1 = Factory(:shipment_line, shipment:@shipment)
-        line_1.stub(:us_hts_number).and_return "123"
+        allow(line_1).to receive(:us_hts_number).and_return "123"
 
         @shipment.validate_isf
         expect(@shipment.errors.full_messages).to include("All shipment lines must have a Country of Origin and HTS Number")
@@ -173,7 +173,7 @@ describe ISFSupport do
 
       it "is invalid when hts is missing" do
         line_1 = Factory(:shipment_line, shipment:@shipment)
-        line_1.stub(:country_of_origin).and_return "CN"
+        allow(line_1).to receive(:country_of_origin).and_return "CN"
 
         @shipment.validate_isf
         expect(@shipment.errors.full_messages).to include("All shipment lines must have a Country of Origin and HTS Number")

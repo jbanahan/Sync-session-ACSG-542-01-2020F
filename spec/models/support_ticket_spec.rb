@@ -9,31 +9,31 @@ describe SupportTicket do
       find = Factory(:support_ticket)
       dont_find = Factory(:support_ticket,:state=>"closed")
       r = SupportTicket.open
-      r.should have(1).ticket
-      r.first.should == find
+      expect(r.size).to eq(1)
+      expect(r.first).to eq(find)
     end
   end
   describe :can_view? do
     it "should allow view if user is support agent" do
-      @st.can_view?(User.new(:support_agent=>true)).should be_true
+      expect(@st.can_view?(User.new(:support_agent=>true))).to be_truthy
     end
     it "should allow view if user is requestor" do
       u = Factory(:user)
       @st.requestor = u
-      @st.can_view?(u).should be_true
+      expect(@st.can_view?(u)).to be_truthy
     end
     it "should allow view if user is admin" do
       u = User.new
       u.admin = true
-      @st.can_view?(u).should be_true
+      expect(@st.can_view?(u)).to be_truthy
     end
     it "should allow view if user is sysadmin" do
       u = User.new
       u.sys_admin = true
-      @st.can_view?(u).should be_true
+      expect(@st.can_view?(u)).to be_truthy
     end
     it "should not allow view if not agent/requestor/admin/sysadmin" do
-      @st.can_view?(User.new()).should be_false
+      expect(@st.can_view?(User.new())).to be_falsey
     end
   end
   describe :can_edit? do
@@ -41,12 +41,12 @@ describe SupportTicket do
       @u = User.new
     end
     it "should allow if can_view?" do
-      @st.should_receive(:can_view?).with(@u).and_return(true)
-      @st.can_edit?(@u).should be_true
+      expect(@st).to receive(:can_view?).with(@u).and_return(true)
+      expect(@st.can_edit?(@u)).to be_truthy
     end
     it "should not allow if not can_view?" do
-      @st.should_receive(:can_view?).with(@u).and_return(false)
-      @st.can_edit?(@u).should be_false
+      expect(@st).to receive(:can_view?).with(@u).and_return(false)
+      expect(@st.can_edit?(@u)).to be_falsey
     end
   end
   context "notifications" do
@@ -56,45 +56,45 @@ describe SupportTicket do
       @requestor = Factory(:user)
       @agent = Factory(:user,:support_agent=>true)
       @st = Factory(:support_ticket,:requestor=>@requestor,:agent=>@agent,:email_notifications=>true)
-      @mock_email = mock(:email)
+      @mock_email = double(:email)
     end
     after :each do
       Delayed::Worker.delay_jobs = @dj_state
     end
     it "should notify agent when requestor is_last_saved_by" do
-      @mock_email.should_receive(:deliver)
-      OpenMailer.should_receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
+      expect(@mock_email).to receive(:deliver)
+      expect(OpenMailer).to receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
       @st.last_saved_by = @requestor
       @st.send_notification
     end
     it "should notify requestor when agent is last_saved_by" do
-      @mock_email.should_receive(:deliver)
-      OpenMailer.should_receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
+      expect(@mock_email).to receive(:deliver)
+      expect(OpenMailer).to receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
       @st.last_saved_by = @agent
       @st.send_notification
     end
     it "should not notify requestor when email_notifications is not true" do
       @st.email_notifications = false
-      OpenMailer.should_not_receive(:send_support_ticket_to_requestor).with(@st)
+      expect(OpenMailer).not_to receive(:send_support_ticket_to_requestor).with(@st)
       @st.last_saved_by = @agent
       @st.send_notification
     end
     it "should notify both when last_saved_by is not agent or requestor" do
-      @mock_email.should_receive(:deliver).twice
-      OpenMailer.should_receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
-      OpenMailer.should_receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
+      expect(@mock_email).to receive(:deliver).twice
+      expect(OpenMailer).to receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
+      expect(OpenMailer).to receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
       @st.last_saved_by = Factory(:user)
       @st.send_notification
     end
     it "should call send_notification after save if last_saved_by is set" do
       @st.last_saved_by = @agent
-      @st.should_receive(:send_notification)
+      expect(@st).to receive(:send_notification)
       @st.save!
     end
     it "should delay send_notification after save if last_saved_by is set" do
       @st.last_saved_by = @agent
-      @st.should_receive(:delay).and_return(@st)
-      @st.should_receive(:send_notification)
+      expect(@st).to receive(:delay).and_return(@st)
+      expect(@st).to receive(:send_notification)
       @st.save!
     end
   end

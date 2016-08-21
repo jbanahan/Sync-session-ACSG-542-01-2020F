@@ -12,11 +12,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       unrolled_by_hts_coo = double("unrolled_by_hts_coo")
       fenix_by_hts_coo = double("fenix_by_hts_coo")
       style_list = ["styles"]
-      validator.should_receive(:gather_unrolled).with(%Q("123456789", "987654321"), 1137).and_return(unrolled_results)
-      validator.should_receive(:gather_entry).with(ent).and_return(fenix_results)
-      validator.should_receive(:sum_per_hts_coo).with(unrolled_results).and_return unrolled_by_hts_coo
-      validator.should_receive(:arrange_by_hts_coo).with(fenix_results).and_return fenix_by_hts_coo
-      validator.should_receive(:run_tests).with(unrolled_results, fenix_results, unrolled_by_hts_coo, fenix_by_hts_coo, style_list)
+      expect(validator).to receive(:gather_unrolled).with(%Q("123456789", "987654321"), 1137).and_return(unrolled_results)
+      expect(validator).to receive(:gather_entry).with(ent).and_return(fenix_results)
+      expect(validator).to receive(:sum_per_hts_coo).with(unrolled_results).and_return unrolled_by_hts_coo
+      expect(validator).to receive(:arrange_by_hts_coo).with(fenix_results).and_return fenix_by_hts_coo
+      expect(validator).to receive(:run_tests).with(unrolled_results, fenix_results, unrolled_by_hts_coo, fenix_by_hts_coo, style_list)
       validator.audit(ent, style_list)
     end
   end
@@ -31,67 +31,67 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     end
 
     it "returns empty if all seven tests succeed" do
-      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
-      validator.should_receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
-      validator.should_receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
-      validator.should_receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:style_list_match).with(@unrolled, @style_list).and_return ""
+      expect(validator).to receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
+      expect(validator).to receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
+      expect(validator).to receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      expect(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return ""
 
       error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
       expect(error).to eq ""
     end
     
     it "returns error if any of the seven tests fails" do
-      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
-      validator.should_receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
-      validator.should_receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
-      validator.should_receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
-      validator.should_receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:style_list_match).with(@unrolled, @style_list).and_return ""
+      expect(validator).to receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
+      expect(validator).to receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
+      expect(validator).to receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
+      expect(validator).to receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      expect(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return ""
 
       error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
       expect(error).to eq "ERROR: total value per hts/coo"
     end
 
     it "produces multiple error messages if there are multiple failing tests" do
-      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
-      validator.should_receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
-      validator.should_receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:total_diff).with(:value, @unrolled, @fenix).and_return "ERROR: total value"
-      validator.should_receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
-      validator.should_receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:style_list_match).with(@unrolled, @style_list).and_return "ERROR: style set"
+      expect(validator).to receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
+      expect(validator).to receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
+      expect(validator).to receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:total_diff).with(:value, @unrolled, @fenix).and_return "ERROR: total value"
+      expect(validator).to receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      expect(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return "ERROR: style set"
 
       error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
       expect(error).to eq "ERROR: total value per hts/coo\nERROR: total value\nERROR: style set"
     end
 
     it "skips remaining validations if unrolled commercial invoices are missing" do
-      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return "ERROR: missing unrolled invoices"
-      validator.stub(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
-      validator.stub(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
-      validator.stub(:total_diff).with(:value, @unrolled, @fenix).and_return "ERROR: total value"
-      validator.stub(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
-      validator.stub(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
-      validator.stub(:style_list_match).with(@unrolled, @style_list).and_return "ERROR: style set"
+      expect(validator).to receive(:invoice_list_diff).with(@unrolled, @fenix).and_return "ERROR: missing unrolled invoices"
+      allow(validator).to receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
+      allow(validator).to receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      allow(validator).to receive(:total_diff).with(:value, @unrolled, @fenix).and_return "ERROR: total value"
+      allow(validator).to receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      allow(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      allow(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return "ERROR: style set"
 
       error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
       expect(error).to eq "ERROR: missing unrolled invoices"
     end
 
     it "skips style-list validation if list isn't included" do
-      validator.should_receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
-      validator.should_receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
-      validator.should_receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
-      validator.should_receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
-      validator.should_receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
+      expect(validator).to receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:total_per_hts_coo_diff).with(:quantity, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ""
+      expect(validator).to receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
+      expect(validator).to receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
+      expect(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
       
       #workaround for Rspec 2.12 bug affecting #should_not_receive (https://github.com/rspec/rspec-mocks/issues/228)
-      validator.stub(:style_list_match).with(@unrolled, @style_list).and_return "This method should not have been called!"
+      allow(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return "This method should not have been called!"
 
       error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo) 
       expect(error).to eq ""
@@ -136,16 +136,16 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     end
 
     it "concatenates output of :check_fenix_against_unrolled and :check_unrolled_against_fenix" do
-      validator.should_receive(:check_fenix_against_unrolled).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ["error message 1"]
-      validator.should_receive(:check_unrolled_against_fenix).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ["error message 2"]
+      expect(validator).to receive(:check_fenix_against_unrolled).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ["error message 1"]
+      expect(validator).to receive(:check_unrolled_against_fenix).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return ["error message 2"]
       error = validator.total_per_hts_coo_diff(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo)
 
       expect(error).to eq "Total value per HTS/country-of-origin:\nerror message 1\nerror message 2\n"
     end
 
     it "returns empty if output of methods is empty" do
-      validator.should_receive(:check_fenix_against_unrolled).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return []
-      validator.should_receive(:check_unrolled_against_fenix).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return []
+      expect(validator).to receive(:check_fenix_against_unrolled).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return []
+      expect(validator).to receive(:check_unrolled_against_fenix).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return []
       error = validator.total_per_hts_coo_diff(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo)
 
       expect(error).to eq ""

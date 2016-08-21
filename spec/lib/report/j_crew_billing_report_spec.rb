@@ -4,17 +4,17 @@ describe OpenChain::Report::JCrewBillingReport do
 
   describe "permission?" do
     it "allows access to master companies for www users" do
-      MasterSetup.any_instance.should_receive(:system_code).and_return "www-vfitrack-net"
-      expect(described_class.permission? Factory(:master_user)).to be_true
+      expect_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
+      expect(described_class.permission? Factory(:master_user)).to be_truthy
     end
 
     it "denies access to non-master users" do
-      MasterSetup.any_instance.should_receive(:system_code).and_return "www-vfitrack-net"
-      expect(described_class.permission? Factory(:user)).to be_false
+      expect_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
+      expect(described_class.permission? Factory(:user)).to be_falsey
     end
 
     it "denies access to non-www systems" do
-      expect(described_class.permission? Factory(:master_user)).to be_false
+      expect(described_class.permission? Factory(:master_user)).to be_falsey
     end
   end
   

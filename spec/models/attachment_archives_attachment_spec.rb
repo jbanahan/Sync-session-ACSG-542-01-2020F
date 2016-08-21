@@ -10,7 +10,7 @@ describe AttachmentArchivesAttachment do
 
       aaa = arch.attachment_archives_attachments.first
 
-      aaa.output_path.should == "#{entry.broker_reference}/#{aaa.file_name}"
+      expect(aaa.output_path).to eq("#{entry.broker_reference}/#{aaa.file_name}")
     end
   end
 end

@@ -14,7 +14,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
                        {:mfid=>:prod_attachment_types, :label=>"Attachment Types", :datatype=>:string}]
       cvt = CustomViewTemplate.first
       cvt.search_criterions << Factory(:search_criterion)
-      described_class.any_instance.should_receive(:get_mf_digest).with(cvt).and_return mf_collection
+      expect_any_instance_of(described_class).to receive(:get_mf_digest).with(cvt).and_return mf_collection
       get :edit, id: cvt.id
       expect(response.body).to eq({template: cvt, criteria: cvt.search_criterions.map{ |sc| sc.json(@u) }, model_fields: mf_collection}.to_json)
     end

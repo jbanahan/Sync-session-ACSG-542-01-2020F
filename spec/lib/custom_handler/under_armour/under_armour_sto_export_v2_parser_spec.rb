@@ -14,11 +14,11 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser do
       ]
       @prep_xl_client = lambda { |path|
         xlc = double('xlclient')
-        OpenChain::XLClient.should_receive(:new).with(path).and_return xlc
-        xlc.stub(:get_cell).with(0,0,0).and_return @a1_value
-        xlc.stub(:get_cell).with(0,1,0).and_return @a2_value
-        xlc.stub(:get_cell).with(0,2,0).and_return @a3_value
-        body_yield = xlc.stub(:all_row_values).with(0,3)
+        expect(OpenChain::XLClient).to receive(:new).with(path).and_return xlc
+        allow(xlc).to receive(:get_cell).with(0,0,0).and_return @a1_value
+        allow(xlc).to receive(:get_cell).with(0,1,0).and_return @a2_value
+        allow(xlc).to receive(:get_cell).with(0,2,0).and_return @a3_value
+        body_yield = allow(xlc).to receive(:all_row_values).with(0,3)
         @body_rows.each {|br| body_yield = body_yield.and_yield(br)}
       }
       @base_path = 'a/abc'

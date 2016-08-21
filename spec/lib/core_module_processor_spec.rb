@@ -26,12 +26,12 @@ describe OpenChain::CoreModuleProcessor do
       described_class.validate_and_save_module params, p, params['product'], User.current, succeed_lambda, nil
 
       p.reload
-      p.unique_identifier.should eq "unique_id"
-      p.get_custom_value(prod_cd).value.should eq "custom"
+      expect(p.unique_identifier).to eq "unique_id"
+      expect(p.get_custom_value(prod_cd).value).to eq "custom"
 
-      succeed.should be_true
+      expect(succeed).to be_truthy
 
-      EntitySnapshot.first.recordable.id.should eq p.id
+      expect(EntitySnapshot.first.recordable.id).to eq p.id
     end
 
     it "should run module validations and save object, skipping custom values" do
@@ -48,10 +48,10 @@ describe OpenChain::CoreModuleProcessor do
       described_class.validate_and_save_module params, p, params['product'], User.current, succeed_lambda, nil, parse_custom_fields: false
 
       p.reload
-      p.unique_identifier.should eq "unique_id"
-      p.get_custom_value(prod_cd).value.should be_nil
+      expect(p.unique_identifier).to eq "unique_id"
+      expect(p.get_custom_value(prod_cd).value).to be_nil
 
-      succeed.should be_true
+      expect(succeed).to be_truthy
     end
 
     it "should run module validations and save object, passing snapshot to success lambda" do
@@ -62,8 +62,8 @@ describe OpenChain::CoreModuleProcessor do
       snapshot = nil
       succeed_lambda = -> p,s {succeed = true; snapshot = s}
       described_class.validate_and_save_module params, p, params, User.current, succeed_lambda, nil
-      succeed.should be_true
-      EntitySnapshot.first.id.should eq snapshot.id
+      expect(succeed).to be_truthy
+      expect(EntitySnapshot.first.id).to eq snapshot.id
     end
 
     it "should catch validation failures and pass them to the fail lambda" do
@@ -77,9 +77,9 @@ describe OpenChain::CoreModuleProcessor do
 
       described_class.validate_and_save_module params, p, params, User.current, nil, fail_lambda
 
-      failed.should be_true
-      errors[:base].should have(1).item
-      errors[:base].first.should  include "Unique Identifier must start with"
+      expect(failed).to be_truthy
+      expect(errors[:base].size).to eq(1)
+      expect(errors[:base].first).to  include "Unique Identifier must start with"
     end
 
     it "creates new child objects" do
@@ -107,7 +107,7 @@ describe OpenChain::CoreModuleProcessor do
       succeed_lambda = -> a {succeed = true}
       described_class.validate_and_save_module params, p, params['product'], User.current, succeed_lambda, nil
 
-      expect(succeed).to be_true
+      expect(succeed).to be_truthy
       expect(EntitySnapshot.first.recordable).to eq p
 
       p.reload
@@ -154,7 +154,7 @@ describe OpenChain::CoreModuleProcessor do
       succeed_lambda = -> a {succeed = true}
       described_class.validate_and_save_module params, p, params['product'], User.current, succeed_lambda, nil
 
-      expect(succeed).to be_true
+      expect(succeed).to be_truthy
       expect(EntitySnapshot.first.recordable).to eq p
 
       p.reload
@@ -196,7 +196,7 @@ describe OpenChain::CoreModuleProcessor do
       before_validate = false
       before_validate = -> a {before_validate = true}
       described_class.validate_and_save_module params, p, params['product'], User.current, succeed_lambda, nil
-      expect(succeed).to be_true
+      expect(succeed).to be_truthy
 
       p.reload
       expect(p.classifications.size).to eq 0
@@ -245,7 +245,7 @@ describe OpenChain::CoreModuleProcessor do
       before_validate = false
       before_validate = -> a {before_validate = true}
       described_class.validate_and_save_module params, p, params['product'], User.current, succeed_lambda, nil
-      expect(succeed).to be_true
+      expect(succeed).to be_truthy
 
       p.reload
       expect(p.classifications.size).to eq 2
@@ -300,7 +300,7 @@ describe OpenChain::CoreModuleProcessor do
       succeed = nil
       succeed_lambda = -> a {succeed = true}
       described_class.validate_and_save_module params, p, params[:product], User.current, succeed_lambda, nil
-      expect(succeed).to be_true
+      expect(succeed).to be_truthy
 
       p.reload
       expect(p.classifications.size).to eq 2
@@ -323,8 +323,8 @@ describe OpenChain::CoreModuleProcessor do
       }
 
       result = "Failed"
-      result.stub(:error?).and_return true
-      ModelField.find_by_uid(:prod_uid).should_receive(:process_import).with(p, "unique_id", User.current).and_return result
+      allow(result).to receive(:error?).and_return true
+      expect(ModelField.find_by_uid(:prod_uid)).to receive(:process_import).with(p, "unique_id", User.current).and_return result
 
       fail_object= nil
       fail_errors = nil
@@ -342,14 +342,14 @@ describe OpenChain::CoreModuleProcessor do
 
       params = {"order_number" => "po"}
       set = ol.piece_sets.create! :quantity => 10
-      PieceSet.any_instance.should_receive(:create_forecasts)
+      expect_any_instance_of(PieceSet).to receive(:create_forecasts)
 
       succeed = nil
       snapshot = nil
       succeed_lambda = -> o,s {succeed = true; snapshot = s}
       described_class.validate_and_save_module params, o, params, User.current, succeed_lambda, nil
-      succeed.should be_true
-      EntitySnapshot.first.id.should eq snapshot.id
+      expect(succeed).to be_truthy
+      expect(EntitySnapshot.first.id).to eq snapshot.id
     end
   end
 
@@ -364,8 +364,8 @@ describe OpenChain::CoreModuleProcessor do
       yielded = []
       good_count = nil
 
-      Lock.should_receive(:acquire).with("Product-#{@obj.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
-      Lock.should_receive(:acquire).with("Product-#{@obj2.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
+      expect(Lock).to receive(:acquire).with("Product-#{@obj.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
+      expect(Lock).to receive(:acquire).with("Product-#{@obj2.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
 
       described_class.bulk_objects(@cm, primary_keys: [@obj.id, @obj2.id]) do |gc, obj|
         yielded << obj
@@ -380,8 +380,8 @@ describe OpenChain::CoreModuleProcessor do
       yielded = []
       good_count = nil
 
-      Lock.should_receive(:acquire).with("Product-#{@obj.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
-      Lock.should_receive(:acquire).with("Product-#{@obj2.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
+      expect(Lock).to receive(:acquire).with("Product-#{@obj.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
+      expect(Lock).to receive(:acquire).with("Product-#{@obj2.unique_identifier}", times: 5, yield_in_transaction: false).and_yield
 
       described_class.bulk_objects(@cm, primary_keys: {o1: @obj.id, o2: @obj2.id}) do |gc, obj|
         yielded << obj
@@ -394,8 +394,8 @@ describe OpenChain::CoreModuleProcessor do
 
     it "downloads file from s3 and deserializes data from it into primary key array" do
       tf = double("Tempfile")
-      tf.should_receive(:read).and_return [@obj.id, @obj2.id].to_json
-      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "path").and_yield tf
+      expect(tf).to receive(:read).and_return [@obj.id, @obj2.id].to_json
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield tf
 
       yielded = []
       good_count = nil

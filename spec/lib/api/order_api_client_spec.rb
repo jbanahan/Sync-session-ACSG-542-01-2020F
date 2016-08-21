@@ -7,13 +7,13 @@ describe OpenChain::Api::OrderApiClient do
 
   describe "find_by_order_number" do
     it "uses the correct path" do
-      subject.should_receive(:get).with("/orders/by_order_number", {order_number: "order", 'mf_uids' => "ord_order_number"})
+      expect(subject).to receive(:get).with("/orders/by_order_number", {order_number: "order", 'mf_uids' => "ord_order_number"})
       subject.find_by_order_number "order", ["ord_order_number"]
     end
 
     it "transparently handles not found errors" do
       e = OpenChain::Api::ApiClient::ApiError.new(404, {})
-      subject.should_receive(:get).and_raise e
+      expect(subject).to receive(:get).and_raise e
 
       expect(subject.find_by_order_number "order", ["ord_order_number"]).to eq({'order'=>nil})
     end
@@ -21,21 +21,21 @@ describe OpenChain::Api::OrderApiClient do
 
   describe "show" do
     it "uses the correct path" do
-      subject.should_receive(:get).with("/orders/1", {"mf_uids" => "ord_order_number"})
+      expect(subject).to receive(:get).with("/orders/1", {"mf_uids" => "ord_order_number"})
       subject.show(1, [:ord_order_number])
     end
   end
 
   describe "create" do
     it "uses the correct path" do
-      subject.should_receive(:post).with("/orders", {"order"=>{}})
+      expect(subject).to receive(:post).with("/orders", {"order"=>{}})
       subject.create({"order"=>{}})
     end
   end
 
   describe "update" do
     it "uses the correct path" do
-      subject.should_receive(:put).with("/orders/1", {"order"=>{"id" => 1}})
+      expect(subject).to receive(:put).with("/orders/1", {"order"=>{"id" => 1}})
       subject.update({"order"=>{"id" => 1}})
     end
 

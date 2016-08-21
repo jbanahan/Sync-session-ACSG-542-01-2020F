@@ -13,20 +13,20 @@ describe PieceSet do
       )
     end
     it 'should pass with all products the same' do
-      @ps.save.should be_true
+      expect(@ps.save).to be_truthy
     end
     it 'should fail with a different product on an associated line' do
       order_line = @ps.order_line
       order_line.product = Factory(:product)
       order_line.save!
-      @ps.save.should be_false
-      @ps.errors.full_messages.should include "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
+      expect(@ps.save).to be_falsey
+      expect(@ps.errors.full_messages).to include "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
     end
     it 'should fail with different product on DrawbackImportLine' do
       d = @ps.drawback_import_line
       d.product = Factory(:product)
-      @ps.save.should be_false
-      @ps.errors.full_messages.should include "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
+      expect(@ps.save).to be_falsey
+      expect(@ps.errors.full_messages).to include "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
     end
   end
 
@@ -36,7 +36,7 @@ describe PieceSet do
       ps = PieceSet.create!(:quantity=>1,
         :order_line=>Factory(:order_line,:product=>product)
       )
-      expect(ps.destroy_if_one_key).to be_true
+      expect(ps.destroy_if_one_key).to be_truthy
       expect(PieceSet.count).to eq 0
     end
     it "should not destroy if has multiple foreign_keys" do
@@ -45,7 +45,7 @@ describe PieceSet do
         :order_line=>Factory(:order_line,:product=>product),
         :shipment_line=>Factory(:shipment_line,:product=>product)
       )
-      expect(ps.destroy_if_one_key).to be_false
+      expect(ps.destroy_if_one_key).to be_falsey
       expect(PieceSet.count).to eq 1
     end
   end
@@ -100,7 +100,7 @@ describe PieceSet do
 
     it "returns identifier list for piece set" do
       # Make sure user can vew them all
-      ModelField.any_instance.stub(:can_view?).with(@user).and_return true
+      allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return true
       ids = @ps.identifiers @user
       expect(ids[:order]).to eq({label: "Order Number", value: @ps.order_line.order.order_number})
       expect(ids[:shipment]).to eq({label: "Reference Number", value: @ps.shipment_line.shipment.reference})
@@ -109,7 +109,7 @@ describe PieceSet do
     end
 
     it "removes fields user does not have access to" do
-      ModelField.any_instance.stub(:can_view?).with(@user).and_return false
+      allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return false
       ids = @ps.identifiers @user
       expect(ids).to be_blank
     end

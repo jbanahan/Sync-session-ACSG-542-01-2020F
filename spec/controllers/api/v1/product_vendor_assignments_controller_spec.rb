@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Api::V1::ProductVendorAssignmentsController do
   describe '#index' do
     it "should get product vendor assignments" do
-      User.any_instance.stub(:view_product_vendor_assignments?).and_return(true)
+      allow_any_instance_of(User).to receive(:view_product_vendor_assignments?).and_return(true)
       pva = Factory(:product_vendor_assignment)
       u = Factory(:master_user)
       allow_api_access u
@@ -19,7 +19,7 @@ describe Api::V1::ProductVendorAssignmentsController do
   end
   describe '#show' do
     it 'should get record' do
-      User.any_instance.stub(:view_product_vendor_assignments?).and_return(true)
+      allow_any_instance_of(User).to receive(:view_product_vendor_assignments?).and_return(true)
       pva = Factory(:product_vendor_assignment)
       u = Factory(:master_user)
       allow_api_access u
@@ -31,8 +31,8 @@ describe Api::V1::ProductVendorAssignmentsController do
   end
   describe '#update' do
     it 'should update record' do
-      User.any_instance.stub(:view_product_vendor_assignments?).and_return(true)
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return(true)
+      allow_any_instance_of(User).to receive(:view_product_vendor_assignments?).and_return(true)
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return(true)
       cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
       pva = Factory(:product_vendor_assignment)
       u = Factory(:master_user)
@@ -51,9 +51,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_api_access @u
     end
     it "should create records by IDs" do
-      Company.any_instance.stub(:can_edit?).and_return true
-      Product.any_instance.stub(:can_edit?).and_return true
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Company).to receive(:can_edit?).and_return true
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return true
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
       cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
 
       v1 = Factory(:company,vendor:true)
@@ -85,9 +85,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       expect(expect_to_find).to be_empty
     end
     it "should create by unique identifiers" do
-      Company.any_instance.stub(:can_edit?).and_return true
-      Product.any_instance.stub(:can_edit?).and_return true
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Company).to receive(:can_edit?).and_return true
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return true
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
       cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
 
       v1 = Factory(:company,vendor:true,system_code:'X')
@@ -119,9 +119,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       expect(expect_to_find).to be_empty
     end
     it "should not create if user cannot edit product" do
-      Company.any_instance.stub(:can_edit?).and_return true
-      Product.any_instance.stub(:can_edit?).and_return false
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Company).to receive(:can_edit?).and_return true
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return false
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
       v1 = Factory(:company,vendor:true,system_code:'X')
 
@@ -136,9 +136,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       expect(response).to_not be_success
     end
     it "should not create if user cannot edit vendor" do
-      Company.any_instance.stub(:can_edit?).and_return false
-      Product.any_instance.stub(:can_edit?).and_return true
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Company).to receive(:can_edit?).and_return false
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return true
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
       v1 = Factory(:company,vendor:true,system_code:'X')
 
@@ -153,9 +153,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       expect(response).to_not be_success
     end
     it "should report records not found but should not fail" do
-      Company.any_instance.stub(:can_edit?).and_return true
-      Product.any_instance.stub(:can_edit?).and_return true
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Company).to receive(:can_edit?).and_return true
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return true
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
       v1 = Factory(:company,vendor:true,system_code:'X')
 
@@ -175,9 +175,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       ]
     end
     it "should fail if more than 100 records requested" do
-      Company.any_instance.stub(:can_edit?).and_return true
-      Product.any_instance.stub(:can_edit?).and_return true
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Company).to receive(:can_edit?).and_return true
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return true
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
       v1 = Factory(:company,vendor:true,system_code:'X')
 
@@ -202,7 +202,7 @@ describe Api::V1::ProductVendorAssignmentsController do
     end
     it "should update records" do
       u = Factory(:master_user)
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
       allow_api_access u
       cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
       uid = cd.model_field_uid
@@ -222,7 +222,7 @@ describe Api::V1::ProductVendorAssignmentsController do
     end
     it "should fail if user cannot edit records" do
       u = Factory(:master_user)
-      ProductVendorAssignment.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return false
       allow_api_access u
       cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
       uid = cd.model_field_uid

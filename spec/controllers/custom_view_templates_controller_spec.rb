@@ -9,14 +9,14 @@ describe CustomViewTemplatesController do
 
   describe :index do
     it "lists CVTs for a sys-admin" do
-      @u.should_receive(:sys_admin?).and_return true
+      expect(@u).to receive(:sys_admin?).and_return true
       get :index
       expect(assigns(:templates)).to eq CustomViewTemplate.all
       expect(response).to render_template :index
     end
 
     it "prevents access by non-sys-admins" do
-      @u.should_receive(:sys_admin?).and_return false
+      expect(@u).to receive(:sys_admin?).and_return false
       get :index
       expect(assigns(:templates)).to be_nil
       expect(response).to redirect_to request.referrer
@@ -26,10 +26,10 @@ describe CustomViewTemplatesController do
 
   describe :new do
     it "renders CVT new view for a sys-admin" do
-      @u.should_receive(:sys_admin?).and_return true
+      expect(@u).to receive(:sys_admin?).and_return true
       Struct.new("Cm", :class_name)
       cm_arr = ["Product", "Entry", "Order"].map{ |cm_name| Struct::Cm.new(cm_name) }
-      CoreModule.should_receive(:all).and_return cm_arr
+      expect(CoreModule).to receive(:all).and_return cm_arr
 
       get :new
       expect(assigns(:cm_list)).to eq ["Entry", "Order", "Product"]
@@ -38,7 +38,7 @@ describe CustomViewTemplatesController do
     end
 
     it "prevents access by non-sys-admins" do
-      @u.should_receive(:sys_admin?).and_return false
+      expect(@u).to receive(:sys_admin?).and_return false
       get :new
       expect(assigns(:cm_list)).to be_nil
       expect(assigns(:template)).to be_nil
@@ -49,13 +49,13 @@ describe CustomViewTemplatesController do
 
   describe :edit do
       it "renders the page for a sys-admin" do
-        @u.should_receive(:sys_admin?).and_return true
+        expect(@u).to receive(:sys_admin?).and_return true
         get :edit, id: CustomViewTemplate.first.id
         expect(response).to render_template :edit
       end
       
       it "prevents access by non-sys-admins" do
-        @u.should_receive(:sys_admin?).and_return false
+        expect(@u).to receive(:sys_admin?).and_return false
         get :edit, id: CustomViewTemplate.first.id
         expect(response).to redirect_to request.referrer
         expect(flash[:errors]).to include "Only system admins can do this."
@@ -64,7 +64,7 @@ describe CustomViewTemplatesController do
   
   describe :create do
     it "creates CVT for a sys-admin" do
-      @u.should_receive(:sys_admin?).and_return true
+      expect(@u).to receive(:sys_admin?).and_return true
       post :create, {template_identifier: "identifier", template_path: "path/to/template", module_type: "Order"}
       cvt =  CustomViewTemplate.last
       expect(cvt.template_identifier).to eq "identifier"
@@ -74,7 +74,7 @@ describe CustomViewTemplatesController do
     end
 
     it "prevents access by non-sys-admins" do
-      @u.should_receive(:sys_admin?).and_return false
+      expect(@u).to receive(:sys_admin?).and_return false
       post :create, {template_identifier: "identifier", template_path: "path/to/template", module_type: "Order"}
       expect(CustomViewTemplate.count).to eq 3
       expect(response).to redirect_to request.referrer
@@ -84,14 +84,14 @@ describe CustomViewTemplatesController do
 
   describe :destroy do
     it "deletes CVT for a sys-admin" do
-      @u.should_receive(:sys_admin?).and_return true
+      expect(@u).to receive(:sys_admin?).and_return true
       delete :destroy, id: CustomViewTemplate.first.id
       expect(CustomViewTemplate.count).to eq 2
       expect(response).to redirect_to(custom_view_templates_path)
     end
 
     it "prevents access by non-sys-admins" do
-      @u.should_receive(:sys_admin?).and_return false
+      expect(@u).to receive(:sys_admin?).and_return false
       delete :destroy, id: CustomViewTemplate.first.id
       expect(CustomViewTemplate.count).to eq 3
       expect(response).to redirect_to request.referrer

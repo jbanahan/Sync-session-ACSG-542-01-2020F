@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
   let (:user) { Factory(:user) }
   let (:custom_file) {
     custom_file = CustomFile.new attached_file_name: "file.xlsx"
-    custom_file.stub(:path).and_return "/path/to/file.xlsx"
+    allow(custom_file).to receive(:path).and_return "/path/to/file.xlsx"
     custom_file
   }
   subject {described_class.new custom_file }
@@ -49,11 +49,11 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         product2
         product3
 
-        Product.any_instance.stub(:can_view?).and_return true
+        allow_any_instance_of(Product).to receive(:can_view?).and_return true
       end
 
       it "processes a file, saves orders and products" do
-        subject.should_receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[1], 1).and_yield(file_contents[2], 2).and_yield(file_contents[3], 3)
+        expect(subject).to receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[1], 1).and_yield(file_contents[2], 2).and_yield(file_contents[3], 3)
         subject.process user 
 
         expect(user.messages.length).to eq 1
@@ -100,11 +100,11 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         product1
         product3
 
-        Product.any_instance.stub(:can_view?).and_return true
+        allow_any_instance_of(Product).to receive(:can_view?).and_return true
       end
 
       it "generates a product file and PO file containing data for the missing part" do
-        subject.should_receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[1], 1).and_yield(file_contents[2], 2).and_yield(file_contents[3], 3)
+        expect(subject).to receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[1], 1).and_yield(file_contents[2], 2).and_yield(file_contents[3], 3)
         subject.process user
 
         expect(user.messages.length).to eq 1
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
 
       it "adds only a single line to product file, even when product is missing multiple times" do
         # Just yield the same line multiple times, and we should only see the part on the product file once
-        subject.should_receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[2], 2).and_yield(file_contents[2], 2)
+        expect(subject).to receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[2], 2).and_yield(file_contents[2], 2)
         subject.process user
 
         mail = ActionMailer::Base.deliveries.first
@@ -170,33 +170,33 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
 
     context "with alliance enabled master_setup" do
       before :each do
-        MasterSetup.stub(:get).and_return ms
-        ms.stub(:custom_feature?).with("alliance").and_return true
+        allow(MasterSetup).to receive(:get).and_return ms
+        allow(ms).to receive(:custom_feature?).with("alliance").and_return true
       end
 
       it "allows user" do
-        user.should_receive(:edit_orders?).and_return true
-        expect(described_class.can_view? user).to be_true
+        expect(user).to receive(:edit_orders?).and_return true
+        expect(described_class.can_view? user).to be_truthy
       end
 
       it "disallows users that can't edit products" do
-        user.should_receive(:edit_orders?).and_return false
-        expect(described_class.can_view? user).to be_false
+        expect(user).to receive(:edit_orders?).and_return false
+        expect(described_class.can_view? user).to be_falsey
       end
 
       it "disallows users that aren't master users" do
         user = Factory(:user)
-        user.stub(:edit_orders?).and_return true
-        expect(described_class.can_view? user).to be_false
+        allow(user).to receive(:edit_orders?).and_return true
+        expect(described_class.can_view? user).to be_falsey
       end
     end
 
     it "disallows when alliance is not enabled" do
-      MasterSetup.should_receive(:get).and_return ms
-      ms.stub(:custom_feature?).with("alliance").and_return false
+      expect(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:custom_feature?).with("alliance").and_return false
 
-      user.stub(:edit_orders?).and_return true
-      expect(described_class.can_view? user).to be_false
+      allow(user).to receive(:edit_orders?).and_return true
+      expect(described_class.can_view? user).to be_falsey
     end
   end
 
@@ -204,23 +204,23 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
     let (:xlsx_file) { custom_file }
     let (:xls_file) {
       custom_file = CustomFile.new attached_file_name: "file.xls"
-      custom_file.stub(:path).and_return "/path/to/file.xls"
+      allow(custom_file).to receive(:path).and_return "/path/to/file.xls"
       custom_file
     }
 
     it "allows xlsx files" do
-      expect(described_class.new(xlsx_file).valid_file?).to be_true
+      expect(described_class.new(xlsx_file).valid_file?).to be_truthy
     end
 
     it "allows xls files" do
-      expect(described_class.new(xls_file).valid_file?).to be_true
+      expect(described_class.new(xls_file).valid_file?).to be_truthy
     end
 
     it "disallows other files" do
       custom_file = CustomFile.new attached_file_name: "file.txt"
-      custom_file.stub(:path).and_return "/path/to/file.txt"
+      allow(custom_file).to receive(:path).and_return "/path/to/file.txt"
 
-      expect(described_class.new(custom_file).valid_file?).to be_false
+      expect(described_class.new(custom_file).valid_file?).to be_falsey
     end
   end
 end

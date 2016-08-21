@@ -26,7 +26,7 @@ describe Api::V1::OrdersController do
   end
   describe :get do
     it "should append custom_view to order if not nil" do
-      OpenChain::CustomHandler::CustomViewSelector.stub(:order_view).and_return 'abc'
+      allow(OpenChain::CustomHandler::CustomViewSelector).to receive(:order_view).and_return 'abc'
       o = Factory(:order)
       get :show, id: o.id
       expect(response).to be_success
@@ -35,12 +35,12 @@ describe Api::V1::OrdersController do
     end
     it "should append tpp_survey_response_options if not nil" do
       sr1 = double('sr1')
-      sr1.stub(:id).and_return 1
-      sr1.stub(:long_name).and_return 'abc'
+      allow(sr1).to receive(:id).and_return 1
+      allow(sr1).to receive(:long_name).and_return 'abc'
       sr2 = double('sr2')
-      sr2.stub(:id).and_return 2
-      sr2.stub(:long_name).and_return 'def'
-      Order.any_instance.stub(:available_tpp_survey_responses).and_return [sr1,sr2]
+      allow(sr2).to receive(:id).and_return 2
+      allow(sr2).to receive(:long_name).and_return 'def'
+      allow_any_instance_of(Order).to receive(:available_tpp_survey_responses).and_return [sr1,sr2]
 
       expected = [
         {'id'=>1,'long_name'=>'abc'},
@@ -54,12 +54,12 @@ describe Api::V1::OrdersController do
     end
     it "should set permission hash" do
       o = Factory(:order)
-      Order.any_instance.stub(:can_view?).and_return true
-      Order.any_instance.stub(:can_edit?).and_return true
-      Order.any_instance.stub(:can_accept?).and_return false
-      Order.any_instance.stub(:can_be_accepted?).and_return true
-      Order.any_instance.stub(:can_attach?).and_return true
-      Order.any_instance.stub(:can_comment?).and_return false
+      allow_any_instance_of(Order).to receive(:can_view?).and_return true
+      allow_any_instance_of(Order).to receive(:can_edit?).and_return true
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return false
+      allow_any_instance_of(Order).to receive(:can_be_accepted?).and_return true
+      allow_any_instance_of(Order).to receive(:can_attach?).and_return true
+      allow_any_instance_of(Order).to receive(:can_comment?).and_return false
 
       expected_permissions = {
         'can_view'=>true,
@@ -82,7 +82,7 @@ describe Api::V1::OrdersController do
       @order = Factory(:order,order_number:'oldordnum')
     end
     it 'should fail if user cannot edit' do
-      Order.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Order).to receive(:can_edit?).and_return false
       h = {'id'=>@order.id,'ord_ord_num'=>'newordnum'}
       put :update, id:@order.id, order:h
       expect(response.status).to eq 403
@@ -100,23 +100,23 @@ describe Api::V1::OrdersController do
 
   describe :accept do
     it "should accept order if user has permission" do
-      Order.any_instance.stub(:can_accept?).and_return true
-      Order.any_instance.should_receive(:async_accept!)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return true
+      expect_any_instance_of(Order).to receive(:async_accept!)
       o = Factory(:order)
       post :accept, id: o.id
       expect(response).to redirect_to "/api/v1/orders/#{o.id}"
     end
     it "should fail if user does not have permission" do
-      Order.any_instance.stub(:can_accept?).and_return false
-      Order.any_instance.should_not_receive(:async_accept!)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return false
+      expect_any_instance_of(Order).not_to receive(:async_accept!)
       o = Factory(:order)
       post :accept, id: o.id
       expect(response.status).to eq 401
     end
     it "should fail if order cannot be accepted" do
-      Order.any_instance.stub(:can_be_accepted?).and_return false
-      Order.any_instance.stub(:can_accept?).and_return true
-      Order.any_instance.should_not_receive(:async_accept!)
+      allow_any_instance_of(Order).to receive(:can_be_accepted?).and_return false
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return true
+      expect_any_instance_of(Order).not_to receive(:async_accept!)
       o = Factory(:order)
       post :accept, id: o.id
       expect(response.status).to eq 403
@@ -124,15 +124,15 @@ describe Api::V1::OrdersController do
   end
   describe :unaccept do
     it "should unaccept order if user has permission" do
-      Order.any_instance.stub(:can_accept?).and_return true
-      Order.any_instance.should_receive(:async_unaccept!)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return true
+      expect_any_instance_of(Order).to receive(:async_unaccept!)
       o = Factory(:order)
       post :unaccept, id: o.id
       expect(response).to redirect_to "/api/v1/orders/#{o.id}"
     end
     it "should fail if user does not have permission" do
-      Order.any_instance.stub(:can_accept?).and_return false
-      Order.any_instance.should_not_receive(:async_unaccept!)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return false
+      expect_any_instance_of(Order).not_to receive(:async_unaccept!)
       o = Factory(:order)
       post :unaccept, id: o.id
       expect(response.status).to eq 401

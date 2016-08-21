@@ -6,7 +6,7 @@ describe OpenChain::DrawbackExportParser do
     
     it "should extract files from zip" do
       file_names = []
-      described_class.stub(:parse_file) do |f, importer|
+      allow(described_class).to receive(:parse_file) do |f, importer|
         expect(f).to be_a Tempfile
         file_names << File.basename(f)
       end
@@ -30,19 +30,19 @@ describe OpenChain::DrawbackExportParser do
     it "should delegate to parse_local_xls for an xls or xlsx" do
       
       File.open("spec/fixtures/files/test_sheet_1.xls", "r") do |xls_file|
-        described_class.should_receive(:parse_local_xls).with(xls_file, "importer")
+        expect(described_class).to receive(:parse_local_xls).with(xls_file, "importer")
         described_class.parse_file(xls_file, "importer")
       end
 
       File.open("spec/fixtures/files/test_sheet_2.xlsx", "r") do |xlsx_file|
-        described_class.should_receive(:parse_local_xls).with(xlsx_file, "importer")
+        expect(described_class).to receive(:parse_local_xls).with(xlsx_file, "importer")
         described_class.parse_file(xlsx_file, "importer")
       end
     end
     
     it "should delegate to parse_zip_file for a zip" do
       File.open("spec/fixtures/files/test_sheets.zip", "r") do |zip_file|
-        described_class.should_receive(:parse_zip_file).with(zip_file, "importer")
+        expect(described_class).to receive(:parse_zip_file).with(zip_file, "importer")
         described_class.parse_file(zip_file, "importer")
       end
     end
@@ -50,12 +50,12 @@ describe OpenChain::DrawbackExportParser do
     it "should delegate to parse_csv_file for a csv or txt" do
             
       File.open("spec/fixtures/files/test_sheet_3.csv", "r") do |csv_file|
-        described_class.should_receive(:parse_csv_file).with(csv_file.path, "importer")
+        expect(described_class).to receive(:parse_csv_file).with(csv_file.path, "importer")
         described_class.parse_file(csv_file, "importer")
       end
 
       File.open("spec/fixtures/files/test_sheet_4.txt", "r") do |txt_file|
-        described_class.should_receive(:parse_csv_file).with(txt_file.path, "importer")
+        expect(described_class).to receive(:parse_csv_file).with(txt_file.path, "importer")
         described_class.parse_file(txt_file, "importer")
       end
 
@@ -73,13 +73,13 @@ describe OpenChain::DrawbackExportParser do
       
       mock_s3_obj = double('s3_obj')
       mock_bucket = double("bucket")
-      mock_bucket.stub(:name).and_return "temp-bucket"
-      mock_s3_obj.stub(:key).and_return("abcdefg/temp/test_sheet_1.xls")
-      mock_s3_obj.stub(:bucket).and_return mock_bucket
+      allow(mock_bucket).to receive(:name).and_return "temp-bucket"
+      allow(mock_s3_obj).to receive(:key).and_return("abcdefg/temp/test_sheet_1.xls")
+      allow(mock_s3_obj).to receive(:bucket).and_return mock_bucket
 
-      described_class.should_receive(:parse_xlsx_file).with("temp-bucket", "abcdefg/temp/test_sheet_1.xls", "importer")
+      expect(described_class).to receive(:parse_xlsx_file).with("temp-bucket", "abcdefg/temp/test_sheet_1.xls", "importer")
       File.open("spec/fixtures/files/test_sheet_1.xls", "r") do |xls_file|
-        OpenChain::S3.should_receive(:with_s3_tempfile).with(xls_file).and_yield(mock_s3_obj)
+        expect(OpenChain::S3).to receive(:with_s3_tempfile).with(xls_file).and_yield(mock_s3_obj)
         described_class.parse_local_xls(xls_file, "importer")
       end
     end
@@ -90,10 +90,10 @@ describe OpenChain::DrawbackExportParser do
     it "uses xlclient to retrieve xl data and passes data to csv lines" do
       data = [["header"], ["row"]]
       xl_client = double("OpenChain::XLClient")
-      xl_client.should_receive(:all_row_values).with(0).and_yield(data[0]).and_yield(data[1])
-      described_class.should_receive(:xl_client).with("bucket", "path").and_return xl_client
+      expect(xl_client).to receive(:all_row_values).with(0).and_yield(data[0]).and_yield(data[1])
+      expect(described_class).to receive(:xl_client).with("bucket", "path").and_return xl_client
       line = DutyCalcExportFileLine.new
-      described_class.should_receive(:parse_csv_line).with(data[1], 1, "importer").and_return line
+      expect(described_class).to receive(:parse_csv_line).with(data[1], 1, "importer").and_return line
 
       described_class.parse_xlsx_file "bucket", "path", "importer"
       expect(line).to be_persisted

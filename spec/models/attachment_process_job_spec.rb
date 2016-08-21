@@ -26,7 +26,7 @@ describe AttachmentProcessJob do
     end
     it "should delegate to process_attachment method based on job name" do
       opts = {}
-      @tpm.should_receive(:process_attachment).with(@s,@a,@u,opts)
+      expect(@tpm).to receive(:process_attachment).with(@s,@a,@u,opts)
       @j.process opts
       @j.reload
       expect(@j.finish_at).to be > 1.minute.ago

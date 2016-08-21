@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     it 'should handle pipe delimited line' do
       imp = double('importer')
       data = "a\n1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17"
-      described_class.should_receive(:parse_csv_line).with((1..17).map{|i| i.to_s},1,imp)
+      expect(described_class).to receive(:parse_csv_line).with((1..17).map{|i| i.to_s},1,imp)
       @f.write data
       @f.flush
       described_class.parse_csv_file @f.path, imp
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       vals = default_vals
 
       # this mock could probably be eliminated and replaced with a Factory(:product, ...) if necessary
-      OpenChain::TariffFinder.any_instance.should_receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
+      expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
       d = described_class.parse_csv_line(make_row,1,@imp)
 
       expect(d.class).to eq DutyCalcExportFileLine
@@ -81,12 +81,12 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       expect(d.importer).to eq @imp
     end
     it 'should handle short date format' do
-      OpenChain::TariffFinder.any_instance.should_receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
+      expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
       d = described_class.parse_csv_line(make_row(export_date:'1/13/2014'),1,@imp)
       expect(d.export_date.strftime("%Y-%m-%d")).to eq "2014-01-13"
     end
     it 'should handle short date format' do
-      OpenChain::TariffFinder.any_instance.should_receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
+      expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
       d = described_class.parse_csv_line(make_row(export_date:'1/7/2015 20:46:49'),1,@imp)
       expect(d.export_date.strftime("%Y-%m-%d")).to eq "2015-01-07"
     end

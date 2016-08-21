@@ -9,43 +9,43 @@ describe OpenChain::CustomHandler::KewillIsfManualParser do
 
   describe :can_view? do
     it "should be true when user can edit security filings" do
-      User.any_instance.stub(:edit_security_filings?).and_return true
-      @k_nil.can_view?(@u).should == true
+      allow_any_instance_of(User).to receive(:edit_security_filings?).and_return true
+      expect(@k_nil.can_view?(@u)).to eq(true)
     end
 
     it "should be false when user can't edit security filings" do
-      User.any_instance.stub(:edit_security_filings?).and_return false
-      @k_nil.can_view?(@u).should == false
+      allow_any_instance_of(User).to receive(:edit_security_filings?).and_return false
+      expect(@k_nil.can_view?(@u)).to eq(false)
     end
   end
 
   describe :process do
     it "should return nil and stop if the custom file is nil" do
-      OpenChain::CustomHandler::KewillIsfManualParser.any_instance.should_not_receive(:process_s3)
-      @k_nil.process(@u).should == nil
+      expect_any_instance_of(OpenChain::CustomHandler::KewillIsfManualParser).not_to receive(:process_s3)
+      expect(@k_nil.process(@u)).to eq(nil)
     end
 
     it "should return nil and stop if the custom file has nothing attached" do
       @cf = Factory(:attachment)
-      Attachment.any_instance.stub(:attached).and_return nil
+      allow_any_instance_of(Attachment).to receive(:attached).and_return nil
       @k = OpenChain::CustomHandler::KewillIsfManualParser.new(@cf)
-      OpenChain::CustomHandler::KewillIsfManualParser.any_instance.should_not_receive(:process_s3)
-      @k.process(@u).should == nil
+      expect_any_instance_of(OpenChain::CustomHandler::KewillIsfManualParser).not_to receive(:process_s3)
+      expect(@k.process(@u)).to eq(nil)
     end
 
     it "should return nil and stop if the custom file attachment has no path" do
       @cf = Factory(:attachment)
-      Paperclip::Attachment.any_instance.stub(:path).and_return nil
+      allow_any_instance_of(Paperclip::Attachment).to receive(:path).and_return nil
       @k = OpenChain::CustomHandler::KewillIsfManualParser.new(@cf)
-      OpenChain::CustomHandler::KewillIsfManualParser.any_instance.should_not_receive(:process_s3)
-      @k.process(@u).should == nil
+      expect_any_instance_of(OpenChain::CustomHandler::KewillIsfManualParser).not_to receive(:process_s3)
+      expect(@k.process(@u)).to eq(nil)
     end
 
     it "should call process_s3 with the correct arguments given good input" do
       @cf = Factory(:attachment)
       @k = OpenChain::CustomHandler::KewillIsfManualParser.new(@cf)
-      OpenChain::CustomHandler::KewillIsfManualParser.stub(:process_s3).and_return nil #don't bother faking a real s3 path
-      OpenChain::CustomHandler::KewillIsfManualParser.should_receive(:process_s3).with(@cf.attached.path, OpenChain::S3.bucket_name(:production))
+      allow(OpenChain::CustomHandler::KewillIsfManualParser).to receive(:process_s3).and_return nil #don't bother faking a real s3 path
+      expect(OpenChain::CustomHandler::KewillIsfManualParser).to receive(:process_s3).with(@cf.attached.path, OpenChain::S3.bucket_name(:production))
       @k.process(@u)
     end
 
@@ -53,9 +53,9 @@ describe OpenChain::CustomHandler::KewillIsfManualParser do
       @cf = Factory(:attachment)
       @k = OpenChain::CustomHandler::KewillIsfManualParser.new(@cf)
       @m = @u.messages
-      @u.should_receive(:messages).and_return(@m)
-      @m.should_receive(:create)
-      OpenChain::CustomHandler::KewillIsfManualParser.stub(:process_s3).and_return nil
+      expect(@u).to receive(:messages).and_return(@m)
+      expect(@m).to receive(:create)
+      allow(OpenChain::CustomHandler::KewillIsfManualParser).to receive(:process_s3).and_return nil
       @k.process(@u)
     end
   end
@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::KewillIsfManualParser do
       @t << "PVH,3-Jun-14,SOME STATUS 2,Compliant Transaction,COSU,HB23752500T,COSU,TSZX1318447T,22222,,,,,,COSU,,,N,,,,,,KKFU6700083,,,,,VAND0323,VAND0323,VAND0323,HANDS_FREE,DBRIGHT\r\n"
       @t << "PVH,3-Jun-14,SOME STATUS 3,Compliant Transaction,COSU,HB23752500T,COSU,TSZX1318447T,33333,,,,,,COSU,,,N,,,,,,KKFU6700083,,,,,VAND0323,VAND0323,VAND0323,HANDS_FREE,DBRIGHT"
       @t.rewind
-      OpenChain::S3.stub(:download_to_tempfile).and_yield @t
+      allow(OpenChain::S3).to receive(:download_to_tempfile).and_yield @t
     end
 
     it "should update the status of any matching security filings" do
@@ -79,9 +79,9 @@ describe OpenChain::CustomHandler::KewillIsfManualParser do
       @sf1.reload
       @sf2.reload
       @sf3.reload
-      @sf1.status_code.should == "SOME STATUS 1"
-      @sf2.status_code.should == "SOME STATUS 2"
-      @sf3.status_code.should == "SOME STATUS 3"
+      expect(@sf1.status_code).to eq("SOME STATUS 1")
+      expect(@sf2.status_code).to eq("SOME STATUS 2")
+      expect(@sf3.status_code).to eq("SOME STATUS 3")
     end
 
   end

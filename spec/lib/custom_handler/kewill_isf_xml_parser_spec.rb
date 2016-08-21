@@ -8,41 +8,41 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   end
   describe 'process_past_days' do
     it "should delay processing" do
-      @k.should_receive(:delay).exactly(3).times.and_return(@k)
-      @k.should_receive(:process_day).exactly(3).times
+      expect(@k).to receive(:delay).exactly(3).times.and_return(@k)
+      expect(@k).to receive(:process_day).exactly(3).times
       @k.process_past_days 3
     end
   end
   describe 'process_day' do
     it 'should process all files from the given day' do
       d = Date.new
-      OpenChain::S3.should_receive(:integration_keys).with(d, ["//opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]).and_yield("a").and_yield("b")
-      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
-      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
-      @k.should_receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false})
-      @k.should_receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false})
+      expect(OpenChain::S3).to receive(:integration_keys).with(d, ["//opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]).and_yield("a").and_yield("b")
+      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
+      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
+      expect(@k).to receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false})
+      expect(@k).to receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false})
       @k.process_day d
     end
   end
   describe :parse do
     it 'should process from text' do
-      SecurityFiling.any_instance.should_receive(:broadcast_event).with(:save)
+      expect_any_instance_of(SecurityFiling).to receive(:broadcast_event).with(:save)
       @k.parse IO.read(@path)
       sf = SecurityFiling.first
-      sf.host_system_file_number.should == '1870446'
-      sf.host_system.should == "Kewill"
-      sf.last_event.to_i.should == Time.iso8601("2012-11-27T09:20:01.565-05:00").to_i
+      expect(sf.host_system_file_number).to eq('1870446')
+      expect(sf.host_system).to eq("Kewill")
+      expect(sf.last_event.to_i).to eq(Time.iso8601("2012-11-27T09:20:01.565-05:00").to_i)
       # validate the time_to_process was recorded (use 10
       # to try to make sure we're recording milliseconds and not seconds)
-      sf.time_to_process.should > 10
-      sf.time_to_process.should < 1000 # NOTE: this fails if you're ever debugging the parser
+      expect(sf.time_to_process).to be > 10
+      expect(sf.time_to_process).to be < 1000 # NOTE: this fails if you're ever debugging the parser
     end
     it "should not process files with outdated event times" do
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
       @k.parse IO.read(@path)
       # Just pick a piece of informaiton from the file that's not in the Factory create and ensure it's not there
       sf = SecurityFiling.first
-      sf.transaction_number.should be_nil
+      expect(sf.transaction_number).to be_nil
     end
     it "should update existing security filing and replace lines" do
       # This also tests that we're comparing exported from source using >= by using the same export timestamp in factory and parse call (timestamp manually extracted from test file)
@@ -50,22 +50,22 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
       @k.parse IO.read(@path)
       sf.reload
-      sf.booking_number.should == 'BKING'
-      sf.should have(2).security_filing_lines
-      sf.security_filing_lines.collect {|ln| ln.line_number}.should == [1,2]
+      expect(sf.booking_number).to eq('BKING')
+      expect(sf.security_filing_lines.size).to eq(2)
+      expect(sf.security_filing_lines.collect {|ln| ln.line_number}).to eq([1,2])
     end
     it "should set amazon bucket & path" do
       @k.parse IO.read(@path), :bucket=>"bucket", :key => "isf_2435412_20210914_20131118145402586.1384804944.xml"
       sf = SecurityFiling.first
-      sf.last_file_bucket.should == 'bucket'
-      sf.last_file_path.should == 'isf_2435412_20210914_20131118145402586.1384804944.xml'
+      expect(sf.last_file_bucket).to eq('bucket')
+      expect(sf.last_file_path).to eq('isf_2435412_20210914_20131118145402586.1384804944.xml')
     end
     it "should lock entry for update" do
-      Lock.should_receive(:acquire).with(Lock::ISF_PARSER_LOCK, times:3).and_yield()
-      Lock.should_receive(:with_lock_retry).with(kind_of(SecurityFiling)).and_yield()
+      expect(Lock).to receive(:acquire).with(Lock::ISF_PARSER_LOCK, times:3).and_yield()
+      expect(Lock).to receive(:with_lock_retry).with(kind_of(SecurityFiling)).and_yield()
 
       @k.parse IO.read(@path)
-      SecurityFiling.first.should_not be_nil
+      expect(SecurityFiling.first).not_to be_nil
     end
     it "should raise exception if host_system_file_number is blank" do
       dom = REXML::Document.new File.new(@path)
@@ -113,56 +113,56 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     it "should create security filing" do
       sf = @k.new.parse_dom @dom, @sf, "bucket", "file.txt"
 
-      sf.last_file_bucket.should == "bucket"
-      sf.last_file_path.should == "file.txt"
-      sf.transaction_number.should == "31671445820402"
-      sf.importer_account_code.should == 'EDDIEX' 
-      sf.broker_customer_number.should == 'EDDIE'
-      sf.importer_tax_id.should == '27-058606000'
-      sf.transport_mode_code.should == '11'
-      sf.scac.should == 'KKLU'
-      sf.booking_number.should == 'BKING'
-      sf.vessel.should == 'VSL'
-      sf.voyage.should == 'VOY'
-      sf.lading_port_code.should == 'PL'
-      sf.unlading_port_code.should == 'UL'
-      sf.entry_port_code.should == 'PE'
-      sf.status_code.should == 'ACCNOMATCH'
-      sf.late_filing.should be_false
-      sf.master_bill_of_lading.should == 'KKLUXM02368200'
-      sf.house_bills_of_lading.should == 'HBSCHBL123'
-      sf.container_numbers.should == 'KKFU1694054'
-      sf.entry_numbers.should == '31619212983' 
-      sf.entry_reference_numbers.should == '1921298'
-      sf.file_logged_date.to_i.should == Time.utc(2012,11,27,11,40,10).to_i
-      sf.first_sent_date.to_i.should == Time.utc(2012,11,27,14,13,36).to_i
-      sf.first_accepted_date.to_i.should == Time.utc(2012,11,27,14,14,2).to_i
-      sf.last_sent_date.to_i.should == Time.utc(2012,11,27,15,13,36).to_i
-      sf.last_accepted_date.to_i.should == Time.utc(2012,11,27,15,14,2).to_i
+      expect(sf.last_file_bucket).to eq("bucket")
+      expect(sf.last_file_path).to eq("file.txt")
+      expect(sf.transaction_number).to eq("31671445820402")
+      expect(sf.importer_account_code).to eq('EDDIEX') 
+      expect(sf.broker_customer_number).to eq('EDDIE')
+      expect(sf.importer_tax_id).to eq('27-058606000')
+      expect(sf.transport_mode_code).to eq('11')
+      expect(sf.scac).to eq('KKLU')
+      expect(sf.booking_number).to eq('BKING')
+      expect(sf.vessel).to eq('VSL')
+      expect(sf.voyage).to eq('VOY')
+      expect(sf.lading_port_code).to eq('PL')
+      expect(sf.unlading_port_code).to eq('UL')
+      expect(sf.entry_port_code).to eq('PE')
+      expect(sf.status_code).to eq('ACCNOMATCH')
+      expect(sf.late_filing).to be_falsey
+      expect(sf.master_bill_of_lading).to eq('KKLUXM02368200')
+      expect(sf.house_bills_of_lading).to eq('HBSCHBL123')
+      expect(sf.container_numbers).to eq('KKFU1694054')
+      expect(sf.entry_numbers).to eq('31619212983') 
+      expect(sf.entry_reference_numbers).to eq('1921298')
+      expect(sf.file_logged_date.to_i).to eq(Time.utc(2012,11,27,11,40,10).to_i)
+      expect(sf.first_sent_date.to_i).to eq(Time.utc(2012,11,27,14,13,36).to_i)
+      expect(sf.first_accepted_date.to_i).to eq(Time.utc(2012,11,27,14,14,2).to_i)
+      expect(sf.last_sent_date.to_i).to eq(Time.utc(2012,11,27,15,13,36).to_i)
+      expect(sf.last_accepted_date.to_i).to eq(Time.utc(2012,11,27,15,14,2).to_i)
       sf.estimated_vessel_load_date.strftime("%Y%m%d") == @est.local(2012,11,30).strftime("%Y%m%d")
       sf.estimated_vessel_sailing_date.strftime("%Y%m%d") == @est.local(2014,6,26).strftime("%Y%m%d")
       sf.estimated_vessel_arrival_date.strftime("%Y%m%d") == @est.local(2014,8,4).strftime("%Y%m%d")
-      sf.po_numbers.should == "0425694\n0425697"
-      sf.cbp_updated_at.to_date.should == Date.new(2012, 11, 27)
-      sf.status_description.should == "Accepted No Bill Match"
-      sf.manufacturer_names.should == "KINGTAI INDUSTRIAL (XIAMEN) CO., LT \nMANUFACTURER USED FOR TESTING ONLY"
+      expect(sf.po_numbers).to eq("0425694\n0425697")
+      expect(sf.cbp_updated_at.to_date).to eq(Date.new(2012, 11, 27))
+      expect(sf.status_description).to eq("Accepted No Bill Match")
+      expect(sf.manufacturer_names).to eq("KINGTAI INDUSTRIAL (XIAMEN) CO., LT \nMANUFACTURER USED FOR TESTING ONLY")
 
-      sf.should have(2).security_filing_lines
+      expect(sf.security_filing_lines.size).to eq(2)
       ln = sf.security_filing_lines.find {|ln| ln.line_number == 1}
-      ln.part_number.should == '023-2214'
-      ln.quantity.should == 0
-      ln.hts_code.should == '940430'
-      ln.po_number.should == '0425694'
-      ln.commercial_invoice_number.should == 'CIN'
-      ln.mid.should == "MID"
-      ln.country_of_origin_code.should == 'CN'
-      ln.manufacturer_name.should == 'KINGTAI INDUSTRIAL (XIAMEN) CO., LT' 
+      expect(ln.part_number).to eq('023-2214')
+      expect(ln.quantity).to eq(0)
+      expect(ln.hts_code).to eq('940430')
+      expect(ln.po_number).to eq('0425694')
+      expect(ln.commercial_invoice_number).to eq('CIN')
+      expect(ln.mid).to eq("MID")
+      expect(ln.country_of_origin_code).to eq('CN')
+      expect(ln.manufacturer_name).to eq('KINGTAI INDUSTRIAL (XIAMEN) CO., LT') 
       
     end
     it "should build notes" do
       #skipping events 19, 20, 21
       sf = @k.new.parse_dom @dom, @sf
-      sf.notes.lines("\n").collect {|ln| ln.strip}.should == [
+      expect(sf.notes.lines("\n").collect {|ln| ln.strip}).to eq([
         "2012-11-27 06:40 EST: EDI Received",
         "2012-11-27 06:40 EST: Logged",
         "2012-11-27 09:13 EST: ISF Queued to Send to Customs - DANA",
@@ -180,7 +180,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         "2012-11-27 10:14 EST: Submission Type - 1 : Importer Security Filing 10 (ISF-10)",
         "2014-06-26 00:00 EDT: Estimate Sailing",
         "2014-08-04 00:00 EDT: Estimated Arrival"
-      ]
+      ])
     end
     it "should handle multiple brokerrefs segments" do
       ref = @dom.root.add_element("brokerrefs")
@@ -188,14 +188,14 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ref.add_element("ENTRY_NBR").text="12345678"
       ref.add_element("BROKER_REF_NO").text="XYZ"
       sf = @k.new.parse_dom @dom, @sf
-      sf.entry_numbers.should == "31619212983\n31612345678"
-      sf.entry_reference_numbers.should == "1921298\nXYZ"
+      expect(sf.entry_numbers).to eq("31619212983\n31612345678")
+      expect(sf.entry_reference_numbers).to eq("1921298\nXYZ")
     end
     it "should handle multiple container numbers" do
       ref = @dom.root.add_element("containers")
       ref.add_element("CONTAINER_NBR").text="CON"
       sf = @k.new.parse_dom @dom, @sf
-      sf.container_numbers.should == "KKFU1694054\nCON"
+      expect(sf.container_numbers).to eq("KKFU1694054\nCON")
     end
     it "should handle multiple house bills" do
       ref = @dom.root.add_element("bols")
@@ -204,16 +204,16 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ref.add_element("HOUSE_BILL_NBR").text='XXXX'
       ref.add_element("HOUSE_SCAC_CD").text='YYYY'
       sf = @k.new.parse_dom @dom, @sf
-      sf.house_bills_of_lading.should == "HBSCHBL123\nYYYYXXXX"
+      expect(sf.house_bills_of_lading).to eq("HBSCHBL123\nYYYYXXXX")
     end
     it "should set countries of origin" do
       sf = @k.new.parse_dom @dom, @sf
-      sf.countries_of_origin.should == "CN\nMX"
+      expect(sf.countries_of_origin).to eq("CN\nMX")
     end
     it "should set late filing to true" do
       @dom.root.elements['IS_SUBMIT_LATE'].text="Y"
       sf = @k.new.parse_dom @dom, @sf
-      sf.should be_late_filing
+      expect(sf).to be_late_filing
     end
     it "should remove lines not in updated xml" do
       @sf.security_filing_lines.create! line_number: 1
@@ -230,15 +230,15 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     it "should set importer if it already exists by alliance customer number" do
       c = Factory(:company,:alliance_customer_number=>'EDDIE')
       sf = @k.new.parse_dom @dom, @sf
-      sf.importer.should == c
+      expect(sf.importer).to eq(c)
     end
     it "should create new importer" do
       Factory(:company,:alliance_customer_number=>'NOTEDDIE')
       sf = @k.new.parse_dom @dom, @sf
       c = sf.importer
-      c.name.should == 'EDDIE'
-      c.should be_importer
-      c.alliance_customer_number.should == 'EDDIE'
+      expect(c.name).to eq('EDDIE')
+      expect(c).to be_importer
+      expect(c.alliance_customer_number).to eq('EDDIE')
     end
     it "should not fail if there is no matching entity found by MID" do 
       @dom.root.get_elements("//IsfHeaderData/entities/MID").each do |el|
@@ -247,7 +247,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
 
       sf = @k.new.parse_dom @dom, @sf
       sf.security_filing_lines.each do |line|
-        line.manufacturer_name.should be_nil
+        expect(line.manufacturer_name).to be_nil
       end
     end
 

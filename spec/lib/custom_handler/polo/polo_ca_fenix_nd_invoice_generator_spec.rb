@@ -8,13 +8,13 @@ describe OpenChain::CustomHandler::Polo::PoloCaFenixNdInvoiceGenerator do
       invoice.id = 10
 
       m = described_class.new.invoice_header_map
-      m[:invoice_number].call(invoice).should == "VFI-#{invoice.id}"
+      expect(m[:invoice_number].call(invoice)).to eq("VFI-#{invoice.id}")
     end
   end
 
   context :generate do
     it "should call module's generate_and_send method" do
-      described_class.any_instance.should_receive(:generate_and_send).with(5)
+      expect_any_instance_of(described_class).to receive(:generate_and_send).with(5)
       described_class.generate 5
     end
   end

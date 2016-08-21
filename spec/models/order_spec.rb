@@ -16,19 +16,19 @@ describe Order do
     before :each do
       @u = Factory(:master_user)
       @o = Factory(:order)
-      OpenChain::EventPublisher.should_receive(:publish).with(:order_create,@o)
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:order_create,@o)
     end
 
     it 'should run' do
-      @o.should_receive(:create_snapshot_with_async_option).with(false,@u)
+      expect(@o).to receive(:create_snapshot_with_async_option).with(false,@u)
       @o.post_create_logic!(@u)
     end
     it 'should run async' do
-      @o.should_receive(:create_snapshot_with_async_option).with(true,@u)
+      expect(@o).to receive(:create_snapshot_with_async_option).with(true,@u)
       @o.post_create_logic!(@u,true)
     end
     it 'should run async method' do
-      @o.should_receive(:create_snapshot_with_async_option).with(true,@u)
+      expect(@o).to receive(:create_snapshot_with_async_option).with(true,@u)
       @o.async_post_create_logic!(@u)
     end
   end
@@ -36,19 +36,19 @@ describe Order do
     before :each do
       @u = Factory(:master_user)
       @o = Factory(:order)
-      OpenChain::EventPublisher.should_receive(:publish).with(:order_update,@o)
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:order_update,@o)
     end
 
     it 'should run' do
-      @o.should_receive(:create_snapshot_with_async_option).with(false,@u)
+      expect(@o).to receive(:create_snapshot_with_async_option).with(false,@u)
       @o.post_update_logic!(@u)
     end
     it 'should run async' do
-      @o.should_receive(:create_snapshot_with_async_option).with(true,@u)
+      expect(@o).to receive(:create_snapshot_with_async_option).with(true,@u)
       @o.post_update_logic!(@u,true)
     end
     it 'should run async method' do
-      @o.should_receive(:create_snapshot_with_async_option).with(true,@u)
+      expect(@o).to receive(:create_snapshot_with_async_option).with(true,@u)
       @o.async_post_update_logic!(@u)
     end
   end
@@ -58,11 +58,11 @@ describe Order do
       @v = Factory(:company,vendor:true)
       @u = Factory(:user,company:@v)
       @t = Time.now
-      Time.stub(:now).and_return @t
-      OpenChain::EventPublisher.should_receive(:publish).with(:order_accept,@o)
+      allow(Time).to receive(:now).and_return @t
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:order_accept,@o)
     end
     it 'should accept' do
-      @o.should_receive(:create_snapshot_with_async_option).with false, @u
+      expect(@o).to receive(:create_snapshot_with_async_option).with false, @u
       @o.accept! @u
       @o.reload
       expect(@o.approval_status).to eq 'Accepted'
@@ -70,7 +70,7 @@ describe Order do
       expect(@o.accepted_at).to_not be_nil
     end
     it 'should accept async' do
-      @o.should_receive(:create_snapshot_with_async_option).with true, @u
+      expect(@o).to receive(:create_snapshot_with_async_option).with true, @u
       @o.async_accept! @u
       @o.reload
       expect(@o.approval_status).to eq 'Accepted'
@@ -83,8 +83,8 @@ describe Order do
       o = Order.new
       d1 = double('oa1')
       d2 = double('oa2')
-      [d1,d2].each {|d| d.should_receive(:can_be_accepted?).with(o).and_return true}
-      OpenChain::OrderAcceptanceRegistry.should_receive(:registered).and_return [d1,d2]
+      [d1,d2].each {|d| expect(d).to receive(:can_be_accepted?).with(o).and_return true}
+      expect(OpenChain::OrderAcceptanceRegistry).to receive(:registered).and_return [d1,d2]
 
       expect(o.can_be_accepted?).to be true
     end
@@ -92,9 +92,9 @@ describe Order do
       o = Order.new
       d1 = double('oa1')
       d2 = double('oa2')
-      d1.should_receive(:can_be_accepted?).with(o).and_return true
-      d2.should_receive(:can_be_accepted?).with(o).and_return false
-      OpenChain::OrderAcceptanceRegistry.should_receive(:registered).and_return [d1,d2]
+      expect(d1).to receive(:can_be_accepted?).with(o).and_return true
+      expect(d2).to receive(:can_be_accepted?).with(o).and_return false
+      expect(OpenChain::OrderAcceptanceRegistry).to receive(:registered).and_return [d1,d2]
 
       expect(o.can_be_accepted?).to be false
     end
@@ -102,15 +102,15 @@ describe Order do
   describe 'unaccept' do
     before :each do
       @t = Time.now
-      Time.stub(:now).and_return @t
+      allow(Time).to receive(:now).and_return @t
       @v = Factory(:company,vendor:true)
       @u = Factory(:user,company:@v)
       @o = Factory(:order,approval_status:'Approved',accepted_by:@u,accepted_at:@t)
-      OpenChain::EventPublisher.should_receive(:publish).with(:order_unaccept,@o)
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:order_unaccept,@o)
     end
 
     it 'should unaccept' do
-      @o.should_receive(:create_snapshot_with_async_option).with false, @u
+      expect(@o).to receive(:create_snapshot_with_async_option).with false, @u
       @o.unaccept! @u
       @o.reload
       expect(@o.approval_status).to be_nil
@@ -119,7 +119,7 @@ describe Order do
     end
 
     it 'should unaccept async' do
-      @o.should_receive(:create_snapshot_with_async_option).with true, @u
+      expect(@o).to receive(:create_snapshot_with_async_option).with true, @u
       @o.async_unaccept! @u
       @o.reload
       expect(@o.approval_status).to be_nil
@@ -137,7 +137,7 @@ describe Order do
         u = User.new
         u.company = v
         o = Order.new(vendor:v)
-        expect(o.can_accept?(u)).to be_false
+        expect(o.can_accept?(u)).to be_falsey
       end
       it "should allow vendor user to accept" do
         v = Company.new(vendor:true)
@@ -145,7 +145,7 @@ describe Order do
         u.add_to_group_cache @g
         u.company = v
         o = Order.new(vendor:v)
-        expect(o.can_accept?(u)).to be_true
+        expect(o.can_accept?(u)).to be_truthy
       end
       it "should allow agent to accept" do
         a = Company.new(agent:true)
@@ -153,7 +153,7 @@ describe Order do
         u.add_to_group_cache @g
         u.company = a
         o = Order.new(agent:a)
-        expect(o.can_accept?(u)).to be_true
+        expect(o.can_accept?(u)).to be_truthy
       end
       it "should allow admin user to accept" do
         c = Company.new(vendor:true)
@@ -162,8 +162,8 @@ describe Order do
         u.company = c
         u.admin = true
         o = Order.new
-        o.stub(:can_edit?).and_return true
-        expect(o.can_accept?(u)).to be_true
+        allow(o).to receive(:can_edit?).and_return true
+        expect(o.can_accept?(u)).to be_truthy
       end
       it "should not allow user who is not admin to accept" do
         c = Company.new(vendor:true)
@@ -172,8 +172,8 @@ describe Order do
         u.company = c
         u.admin = false
         o = Order.new
-        o.stub(:can_edit?).and_return true
-        expect(o.can_accept?(u)).to be_false
+        allow(o).to receive(:can_edit?).and_return true
+        expect(o.can_accept?(u)).to be_falsey
       end
     end
     it 'should not call default behavior if acceptance registry has values' do
@@ -188,7 +188,7 @@ describe Order do
       u = User.new
       u.company = v
       o = Order.new(vendor:v)
-      expect(o.can_accept?(u)).to be_true
+      expect(o.can_accept?(u)).to be_truthy
     end
   end
   describe 'close' do
@@ -196,8 +196,8 @@ describe Order do
       @o = Factory(:order)
       @u = Factory(:user)
       @t = Time.now
-      Time.stub(:now).and_return @t
-      OpenChain::EventPublisher.should_receive(:publish).with(:order_close,@o)
+      allow(Time).to receive(:now).and_return @t
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:order_close,@o)
     end
     it 'should close' do
       @o.close! @u
@@ -218,8 +218,8 @@ describe Order do
       @u = Factory(:user)
       @o = Factory(:order,closed_at:Time.now,closed_by:@u)
       @t = Time.now
-      Time.stub(:now).and_return @t
-      OpenChain::EventPublisher.should_receive(:publish).with(:order_reopen,@o)
+      allow(Time).to receive(:now).and_return @t
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:order_reopen,@o)
     end
     it 'should reopen' do
       @o.reopen! @u
@@ -241,20 +241,20 @@ describe Order do
     end
     it "should allow if user can edit orders and is from importer" do
       u = Factory(:user,order_edit:true,company:@o.importer)
-      expect(@o.can_close?(u)).to be_true
+      expect(@o.can_close?(u)).to be_truthy
     end
     it "should allow if user can edit orders and is from master" do
       u = Factory(:master_user,order_edit:true)
-      expect(@o.can_close?(u)).to be_true
+      expect(@o.can_close?(u)).to be_truthy
     end
     it "should not allow if user can edit orders and is from vendor" do
       u = Factory(:user,order_edit:true)
       @o.update_attributes(vendor_id:u.company_id)
-      expect(@o.can_close?(u)).to be_false
+      expect(@o.can_close?(u)).to be_falsey
     end
     it "should not allow if user cannot edit orders" do
       u = Factory(:user,order_edit:false,company:@o.importer)
-      expect(@o.can_close?(u)).to be_false
+      expect(@o.can_close?(u)).to be_falsey
     end
   end
   describe 'linkable attachments' do
@@ -263,7 +263,7 @@ describe Order do
       linkable = Factory(:linkable_attachment,:model_field_uid=>'ord_ord_num',:value=>'ordn')
       LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>o)
       o.reload
-      o.linkable_attachments.first.should == linkable
+      expect(o.linkable_attachments.first).to eq(linkable)
     end
   end
 
@@ -274,8 +274,8 @@ describe Order do
     it 'should return all_attachments when only regular attachments' do
       a = @o.attachments.create!
       all = @o.all_attachments
-      all.should have(1).attachment
-      all.first.should == a
+      expect(all.size).to eq(1)
+      expect(all.first).to eq(a)
     end
     it 'should return all_attachments when only linked attachents' do
       linkable = Factory(:linkable_attachment,:model_field_uid=>'ord_ord_num',:value=>@o.order_number)
@@ -283,8 +283,8 @@ describe Order do
       a.save!
       @o.linked_attachments.create!(:linkable_attachment_id=>linkable.id)
       all = @o.all_attachments
-      all.should have(1).attachment
-      all.first.should == a
+      expect(all.size).to eq(1)
+      expect(all.first).to eq(a)
     end
     it 'should return all_attachments when both attachments' do
       a = @o.attachments.create!
@@ -293,12 +293,12 @@ describe Order do
       linkable_a.save!
       @o.linked_attachments.create!(:linkable_attachment_id=>linkable.id)
       all = @o.all_attachments
-      all.should have(2).attachments
-      all.should include(a)
-      all.should include(linkable_a)
+      expect(all.size).to eq(2)
+      expect(all).to include(a)
+      expect(all).to include(linkable_a)
     end
     it 'should return empty array when no attachments' do
-      @o.all_attachments.should be_empty
+      expect(@o.all_attachments).to be_empty
     end
   end
 
@@ -329,34 +329,34 @@ describe Order do
         @importer = Factory(:company, importer: true)
         order.importer = @importer
         @user = Factory(:user, company: @importer)
-        @user.stub(:view_orders?).and_return true
+        allow(@user).to receive(:view_orders?).and_return true
       end
 
       it "allows an importer to view their orders" do
-        expect(order.can_view? @user).to be_true
+        expect(order.can_view? @user).to be_truthy
       end
 
       it "allows user to view if linked company is order importer" do
         order.importer = Factory(:company, importer: true)
 
         @user.company.linked_company_ids = [order.importer.id]
-        expect(order.can_view? @user).to be_true
+        expect(order.can_view? @user).to be_truthy
       end
 
       it "allows user to view if linked company is order vendor" do
         order.vendor = Factory(:company, vendor: true)
 
         @user.company.linked_company_ids = [order.vendor.id]
-        expect(order.can_view? @user).to be_true
+        expect(order.can_view? @user).to be_truthy
       end
 
       it "allows a vendor to view their orders" do
         vendor = Factory(:company, vendor: true)
         order.vendor = vendor
         u = Factory(:user, company: vendor)
-        u.stub(:view_orders?).and_return true
+        allow(u).to receive(:view_orders?).and_return true
 
-        expect(order.can_view? u).to be_true
+        expect(order.can_view? u).to be_truthy
       end
     end
 
@@ -365,18 +365,18 @@ describe Order do
         @vendor = Factory(:company, vendor: true)
         order.vendor = @vendor
         @user = Factory(:user, company: @vendor)
-        @user.stub(:view_orders?).and_return true
+        allow(@user).to receive(:view_orders?).and_return true
       end
 
       it "allows a vendor to view their orders" do
-        expect(order.can_view? @user).to be_true
+        expect(order.can_view? @user).to be_truthy
       end
 
       it "allows user to view if linked company is order vendor" do
         order.vendor = Factory(:company, vendor: true)
 
         @user.company.linked_company_ids = [order.vendor.id]
-        expect(order.can_view? @user).to be_true
+        expect(order.can_view? @user).to be_truthy
       end
     end
 
@@ -385,11 +385,11 @@ describe Order do
         @factory = Factory(:company, factory:true)
         order.factory = @factory
         @user = Factory(:user, company: @factory)
-        @user.stub(:view_orders?).and_return true
+        allow(@user).to receive(:view_orders?).and_return true
       end
 
       it "allows a factory to view their orders" do
-        expect(order.can_view? @user).to be_true
+        expect(order.can_view? @user).to be_truthy
       end
     end
 
@@ -407,13 +407,13 @@ describe Order do
       sl = Factory(:shipment_line, product: order.order_lines.first.product)
       PieceSet.create! order_line: order.order_lines.first, shipment_line: sl, quantity: 1
 
-      expect(order.shipping?).to be_true
+      expect(order.shipping?).to be_truthy
     end
 
     it "does not show PO as shipping if there is no piece set associated w/ a shipment" do
       order = Factory(:order_line).order
       PieceSet.create! order_line: order.order_lines.first, quantity: 1
-      expect(order.shipping?).to be_false
+      expect(order.shipping?).to be_falsey
     end
   end
 
@@ -429,7 +429,7 @@ describe Order do
 
   describe "associate_vendor_and_products!" do
     it "should create assignments for records where they don't already exist" do
-      ProductVendorAssignment.any_instance.should_receive(:create_snapshot).once
+      expect_any_instance_of(ProductVendorAssignment).to receive(:create_snapshot).once
       ol = Factory(:order_line)
       ol2 = Factory(:order_line,order:ol.order)
 

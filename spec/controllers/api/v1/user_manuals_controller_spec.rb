@@ -11,7 +11,7 @@ describe Api::V1::UserManualsController do
 
       source_page = 'https://www.vfitrack.net/vendor_portal'
 
-      UserManual.should_receive(:for_user_and_page).with(u,source_page).and_return [um1,um2]
+      expect(UserManual).to receive(:for_user_and_page).with(u,source_page).and_return [um1,um2]
 
       # expecting return to be sorted by name
       expected = {

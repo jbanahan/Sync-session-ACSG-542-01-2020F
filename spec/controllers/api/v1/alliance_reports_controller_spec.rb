@@ -13,8 +13,8 @@ describe Api::V1::AllianceReportsController do
       query_results = [{"key" => "value"}]
       query_context = {"report_result_id" => rr.id}
 
-      ReportResult.any_instance.should_receive(:delay).and_return rr
-      rr.should_receive(:continue_alliance_report).with query_results.to_json
+      expect_any_instance_of(ReportResult).to receive(:delay).and_return rr
+      expect(rr).to receive(:continue_alliance_report).with query_results.to_json
 
       post "receive_alliance_report_data", results: query_results, context: query_context
       expect(response.body).to eq ({"OK" => ""}.to_json)
@@ -24,7 +24,7 @@ describe Api::V1::AllianceReportsController do
       query_results = [{"key" => "value"}]
       query_context = {"report_result_id" => -1}
 
-      StandardError.any_instance.should_receive(:log_me)
+      expect_any_instance_of(StandardError).to receive(:log_me)
 
       post "receive_alliance_report_data", results: query_results, context: query_context
       expect(response.body).to eq ({"OK" => ""}.to_json)
@@ -35,7 +35,7 @@ describe Api::V1::AllianceReportsController do
       query_results = [{"key" => "value"}]
       query_context = {"report_result_id" => rr.id}
 
-      StandardError.any_instance.should_receive(:log_me)
+      expect_any_instance_of(StandardError).to receive(:log_me)
       post "receive_alliance_report_data", results: query_results, context: query_context
       expect(response.body).to eq ({"OK" => ""}.to_json)
     end
@@ -44,7 +44,7 @@ describe Api::V1::AllianceReportsController do
       query_results = [{"key" => "value"}]
       query_context = {}
 
-      StandardError.any_instance.should_receive(:log_me)
+      expect_any_instance_of(StandardError).to receive(:log_me)
       post "receive_alliance_report_data", results: query_results, context: query_context
       expect(response.body).to eq ({"OK" => ""}.to_json)
     end
@@ -55,8 +55,8 @@ describe Api::V1::AllianceReportsController do
       query_results = nil
       query_context = {"report_result_id" => rr.id}
 
-      ReportResult.any_instance.should_receive(:delay).and_return rr
-      rr.should_receive(:continue_alliance_report).with [].to_json
+      expect_any_instance_of(ReportResult).to receive(:delay).and_return rr
+      expect(rr).to receive(:continue_alliance_report).with [].to_json
 
       post "receive_alliance_report_data", results: query_results, context: query_context
       expect(response.body).to eq ({"OK" => ""}.to_json)

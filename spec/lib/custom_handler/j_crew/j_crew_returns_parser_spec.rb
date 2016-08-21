@@ -30,14 +30,14 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
 
       let (:custom_file) {
         file = double("CustomFile")
-        file.stub(:attached_file_name).and_return "file.csv"
-        file.stub(:bucket).and_return "bucket"
-        file.stub(:path).and_return "path"
+        allow(file).to receive(:attached_file_name).and_return "file.csv"
+        allow(file).to receive(:bucket).and_return "bucket"
+        allow(file).to receive(:path).and_return "path"
         file
       }
 
       before :each do
-        OpenChain::S3.stub(:download_to_tempfile).with("bucket", "path").and_yield(file)
+        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield(file)
       end
 
       it "parses a csv file" do
@@ -70,14 +70,14 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
 
       let (:custom_file) {
         file = double("CustomFile")
-        file.stub(:attached_file_name).and_return "file.pdf"
-        file.stub(:bucket).and_return "bucket"
-        file.stub(:path).and_return "path"
+        allow(file).to receive(:attached_file_name).and_return "file.pdf"
+        allow(file).to receive(:bucket).and_return "bucket"
+        allow(file).to receive(:path).and_return "path"
         file
       }
 
       before :each do
-        OpenChain::S3.stub(:download_to_tempfile).with("bucket", "path").and_yield(file)
+        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield(file)
       end
 
       it "parses a pdf file" do
@@ -101,14 +101,14 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
 
       let (:custom_file) {
         file = double("CustomFile")
-        file.stub(:attached_file_name).and_return "file.zip"
-        file.stub(:bucket).and_return "bucket"
-        file.stub(:path).and_return "path"
+        allow(file).to receive(:attached_file_name).and_return "file.zip"
+        allow(file).to receive(:bucket).and_return "bucket"
+        allow(file).to receive(:path).and_return "path"
         file
       }
 
       before :each do
-        OpenChain::S3.stub(:download_to_tempfile).with("bucket", "path").and_yield(file)
+        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield(file)
       end
 
       it "parses zip file" do

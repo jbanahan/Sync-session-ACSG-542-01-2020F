@@ -27,29 +27,29 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
     end
     it "should parse multi line CSV" do
       line = DutyCalcExportFileLine.find_by_part_number '1000375-609-LG+CN'
-      line.export_date.should == Date.new(2011,10,2)
-      line.ship_date.should == Date.new(2011,10,2)
-      line.ref_1.should == '0055404558'
-      line.ref_2.should == '5'
-      line.ref_3.should == "AAFES - NOT FOR ABI"
-      line.destination_country.should == 'DE'
-      line.quantity.should == 20
-      line.description.should == "UA MEN TOP MAROON LARGE"
-      line.uom.should == "EA"
-      line.action_code.should == 'E'
-      line.duty_calc_export_file_id.should be_nil
-      line.importer.should == @importer
+      expect(line.export_date).to eq(Date.new(2011,10,2))
+      expect(line.ship_date).to eq(Date.new(2011,10,2))
+      expect(line.ref_1).to eq('0055404558')
+      expect(line.ref_2).to eq('5')
+      expect(line.ref_3).to eq("AAFES - NOT FOR ABI")
+      expect(line.destination_country).to eq('DE')
+      expect(line.quantity).to eq(20)
+      expect(line.description).to eq("UA MEN TOP MAROON LARGE")
+      expect(line.uom).to eq("EA")
+      expect(line.action_code).to eq('E')
+      expect(line.duty_calc_export_file_id).to be_nil
+      expect(line.importer).to eq(@importer)
     end
     it "should pick country of origin for most recent import prior to export if multiple are found" do
-      DutyCalcExportFileLine.find_by_part_number('1000377-001-XXL+MY').should_not be_nil
-      DutyCalcExportFileLine.find_by_part_number('1000377-001-XXL+TW').should be_nil
+      expect(DutyCalcExportFileLine.find_by_part_number('1000377-001-XXL+MY')).not_to be_nil
+      expect(DutyCalcExportFileLine.find_by_part_number('1000377-001-XXL+TW')).to be_nil
     end
     it "should skip lines without country of origin match" do
-      DutyCalcExportFileLine.where("part_number like \"1000377-410%\"").should be_empty
+      expect(DutyCalcExportFileLine.where("part_number like \"1000377-410%\"")).to be_empty
     end
     it "should return skipped lines" do
-      @messages.should have(1).message
-      @messages.first.should include "Could not find country of origin for 1000377-410"
+      expect(@messages.size).to eq(1)
+      expect(@messages.first).to include "Could not find country of origin for 1000377-410"
     end
   end
   context "DH Exports" do
@@ -63,8 +63,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
     describe :parse_csv_file do
       it "should handle non-ascii characters" do
         described_class.parse_csv_file 'spec/support/bin/ua_outbound_unicode.csv', @importer 
-        DutyCalcExportFileLine.all.should have(1).item
-        DutyCalcExportFileLine.first.description.should == 'UA PERFECT CAPRI-BLK/BLK Qu bec' 
+        expect(DutyCalcExportFileLine.all.size).to eq(1)
+        expect(DutyCalcExportFileLine.first.description).to eq('UA PERFECT CAPRI-BLK/BLK Qu bec') 
       end
       it "should parse multi line csv ignoring headers" do
         content = @lines.join("\n")
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
         t << content
         t.flush
         described_class.parse_csv_file t.path, @importer
-        DutyCalcExportFileLine.all.should have(2).items
+        expect(DutyCalcExportFileLine.all.size).to eq(2)
         t.unlink
       end
       it "should skip empty lines without error" do
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
         t << content
         t.flush
         described_class.parse_csv_file t.path, @importer
-        DutyCalcExportFileLine.all.should have(2).items
+        expect(DutyCalcExportFileLine.all.size).to eq(2)
         t.unlink
       end
     end
@@ -90,48 +90,48 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
     describe :parse_csv_line do
       it "should parse a line into a DutyCalcExportFileLine" do
         d = described_class.parse_csv_line @lines[1].parse_csv, 0, @importer
-        d.export_date.should == Date.new(2010,3,5)
-        d.ship_date.should == Date.new(2010,3,5)
-        d.part_number.should == "1000382-001-LG+BD"
-        d.carrier.should be_nil
-        d.ref_1.should == "85439724"
-        d.ref_2.should == "3452168"
-        d.ref_3.should be_nil
-        d.ref_4.should be_nil
-        d.destination_country.should == "CA"
-        d.quantity.should == 4
-        d.schedule_b_code.should == "6110303060"
-        d.description.should == "TECH TEE SS-BLK"
-        d.uom.should == "EA"
-        d.exporter.should == "Under Armour"
-        d.status.should be_nil
-        d.action_code.should == "E"
-        d.nafta_duty.should be_nil
-        d.nafta_us_equiv_duty.should be_nil
-        d.nafta_duty_rate.should be_nil
-        d.duty_calc_export_file.should be_nil
-        d.importer.should == @importer
+        expect(d.export_date).to eq(Date.new(2010,3,5))
+        expect(d.ship_date).to eq(Date.new(2010,3,5))
+        expect(d.part_number).to eq("1000382-001-LG+BD")
+        expect(d.carrier).to be_nil
+        expect(d.ref_1).to eq("85439724")
+        expect(d.ref_2).to eq("3452168")
+        expect(d.ref_3).to be_nil
+        expect(d.ref_4).to be_nil
+        expect(d.destination_country).to eq("CA")
+        expect(d.quantity).to eq(4)
+        expect(d.schedule_b_code).to eq("6110303060")
+        expect(d.description).to eq("TECH TEE SS-BLK")
+        expect(d.uom).to eq("EA")
+        expect(d.exporter).to eq("Under Armour")
+        expect(d.status).to be_nil
+        expect(d.action_code).to eq("E")
+        expect(d.nafta_duty).to be_nil
+        expect(d.nafta_us_equiv_duty).to be_nil
+        expect(d.nafta_duty_rate).to be_nil
+        expect(d.duty_calc_export_file).to be_nil
+        expect(d.importer).to eq(@importer)
       end
       
       it 'should raise exception if style is empty' do
         line = "3452168,85439724,,1,LG,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        lambda {described_class.parse_csv_line line, 0, @importer}.should raise_error
+        expect {described_class.parse_csv_line line, 0, @importer}.to raise_error
       end
       it 'should raise exception if color is empty' do
         line = "3452168,85439724,1005492,,LG,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        lambda {described_class.parse_csv_line line, 0, @importer}.should raise_error
+        expect {described_class.parse_csv_line line, 0, @importer}.to raise_error
       end
       it 'should raise exception if size is empty' do
         line = "3452168,85439724,1005492,1,,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        lambda {described_class.parse_csv_line line, 0, @importer}.should raise_error
+        expect {described_class.parse_csv_line line, 0, @importer}.to raise_error
       end
       it 'should skip line if COO is empty' do
         line = "3452168,85439724,1000382,1,LG,,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        described_class.parse_csv_line(line, 0, @importer).should be_nil
+        expect(described_class.parse_csv_line(line, 0, @importer)).to be_nil
       end
       it 'should raise exception if row does not have 32 elements' do
         line = "3452168,85439724,1005492,1,LG,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
-        lambda {described_class.parse_csv_line line}.should raise_error
+        expect {described_class.parse_csv_line line}.to raise_error
       end
     end
   end
@@ -150,35 +150,35 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
       t << content
       t.flush
       described_class.parse_fmi_csv_file t.path
-      DutyCalcExportFileLine.all.should have(2).items
+      expect(DutyCalcExportFileLine.all.size).to eq(2)
     end
 
     describe :parse_fmi_csv_line do
       it "should parse a line into a DutyCalcExportFileLine" do
         described_class.parse_fmi_csv_line @lines[1]
-        DutyCalcExportFileLine.count.should == 1
+        expect(DutyCalcExportFileLine.count).to eq(1)
         d = DutyCalcExportFileLine.first
-        d.export_date.should == Date.new(2010,1,7)
-        d.ship_date.should == Date.new(2010,1,7)
-        d.part_number.should == "1211721-001-LG+CN"
-        d.carrier.should be_nil
-        d.ref_1.should == "4500110966"
-        d.ref_2.should == "161051"
-        d.ref_3.should be_nil
-        d.ref_4.should be_nil
-        d.destination_country.should == "CA"
-        d.quantity.should == 100
-        d.schedule_b_code.should be_nil
-        d.description.should == "CA LOOSE BATTLE LS-BLK/GPH"
-        d.uom.should == "EA"
-        d.exporter.should == "Under Armour"
-        d.status.should be_nil
-        d.action_code.should == "E"
-        d.nafta_duty.should be_nil
-        d.nafta_us_equiv_duty.should be_nil
-        d.nafta_duty_rate.should be_nil
-        d.duty_calc_export_file.should be_nil
-        d.importer.should == @importer
+        expect(d.export_date).to eq(Date.new(2010,1,7))
+        expect(d.ship_date).to eq(Date.new(2010,1,7))
+        expect(d.part_number).to eq("1211721-001-LG+CN")
+        expect(d.carrier).to be_nil
+        expect(d.ref_1).to eq("4500110966")
+        expect(d.ref_2).to eq("161051")
+        expect(d.ref_3).to be_nil
+        expect(d.ref_4).to be_nil
+        expect(d.destination_country).to eq("CA")
+        expect(d.quantity).to eq(100)
+        expect(d.schedule_b_code).to be_nil
+        expect(d.description).to eq("CA LOOSE BATTLE LS-BLK/GPH")
+        expect(d.uom).to eq("EA")
+        expect(d.exporter).to eq("Under Armour")
+        expect(d.status).to be_nil
+        expect(d.action_code).to eq("E")
+        expect(d.nafta_duty).to be_nil
+        expect(d.nafta_us_equiv_duty).to be_nil
+        expect(d.nafta_duty_rate).to be_nil
+        expect(d.duty_calc_export_file).to be_nil
+        expect(d.importer).to eq(@importer)
       end
     end
   end

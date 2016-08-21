@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     }
 
     before :each do
-      api.stub(:find_by_order_number).with('PO', [:ord_ord_num, :ordln_line_number, :ordln_puid]).and_return valid_api_response
+      allow(api).to receive(:find_by_order_number).with('PO', [:ord_ord_num, :ordln_line_number, :ordln_puid]).and_return valid_api_response
     end
 
     it "generates invoice data for an entry id" do
@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     end
 
     it "errors when order line cannot be found" do
-      api.should_receive(:find_by_order_number).with('PO', [:ord_ord_num, :ordln_line_number, :ordln_puid]).and_return invalid_api_response
+      expect(api).to receive(:find_by_order_number).with('PO', [:ord_ord_num, :ordln_line_number, :ordln_puid]).and_return invalid_api_response
 
       expect {subject.generate_entry_data entry.id}.to raise_error "Unable to find Lumber PO Line Number for PO # 'PO' and Part '000123'."
     end
@@ -134,7 +134,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
   describe "ftp_credentials" do
     it "uses connect credentials" do
-      subject.should_receive(:connect_vfitrack_net).with 'to_ecs/lumber_costing_report'
+      expect(subject).to receive(:connect_vfitrack_net).with 'to_ecs/lumber_costing_report'
       subject.ftp_credentials
     end
   end
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
     context "with found entries" do
       after :each do
-        subject.should_receive(:generate_and_send_entry_data).with entry.id
+        expect(subject).to receive(:generate_and_send_entry_data).with entry.id
         subject.run start_time: Time.zone.parse("2016-01-17 12:00")
       end
 
@@ -166,7 +166,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
     context "with entries that should not be found" do
       after :each do
-        subject.should_not_receive(:generate_and_send_entry_data)
+        expect(subject).not_to receive(:generate_and_send_entry_data)
         subject.run start_time: Time.zone.parse("2016-01-17 12:00")
       end
       
@@ -197,8 +197,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     let(:ftped_filenames) { [] }
 
     before :each do
-      subject.stub(:generate_entry_data).with(entry.id).and_return([entry, [["data", "data"],["d", "d"]]])
-      subject.stub(:ftp_file) {|file| ftped_file << file.read; ftped_filenames << file.original_filename }
+      allow(subject).to receive(:generate_entry_data).with(entry.id).and_return([entry, [["data", "data"],["d", "d"]]])
+      allow(subject).to receive(:ftp_file) {|file| ftped_file << file.read; ftped_filenames << file.original_filename }
     end
 
     it "generates and sends entry data for given id" do
@@ -217,7 +217,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
   describe "run_schedulable" do
     it "intializes the report class and runs it" do
-      described_class.any_instance.should_receive(:run)
+      expect_any_instance_of(described_class).to receive(:run)
       described_class.run_schedulable
     end
   end

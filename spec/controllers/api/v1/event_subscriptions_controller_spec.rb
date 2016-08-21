@@ -58,8 +58,8 @@ describe Api::V1::EventSubscriptionsController do
       expect(response.status).to eq 404
     end
     it "should 401 if current_user cannot edit user" do
-      User.any_instance.stub(:can_edit?).and_return false
-      User.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(User).to receive(:can_edit?).and_return false
+      allow_any_instance_of(User).to receive(:can_view?).and_return true
       allow_api_access Factory(:user)
       post :create, user_id: @u.id, event_subscriptions: @payload
       expect(response.status).to eq 401

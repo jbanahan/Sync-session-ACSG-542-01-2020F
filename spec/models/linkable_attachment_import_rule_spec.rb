@@ -5,15 +5,15 @@ describe LinkableAttachmentImportRule do
     it 'should validate unique paths' do
       should_work = Factory("linkable_attachment_import_rule",:path=>'f')
       should_not_work = LinkableAttachmentImportRule.create(:path=>'f',:model_field_uid=>'prod_uid')
-      should_not_work.errors[:path].should have(1).error
+      expect(should_not_work.errors[:path].size).to eq(1)
     end
     it 'should require path' do
       should_not_work = LinkableAttachmentImportRule.create(:model_field_uid=>'prod_uid')
-      should_not_work.errors[:path].should have(1).error
+      expect(should_not_work.errors[:path].size).to eq(1)
     end
     it 'should require model_field_uid' do
       should_not_work = LinkableAttachmentImportRule.create(:path=>'/something_good')
-      should_not_work.errors[:model_field_uid].should have(1).error
+      expect(should_not_work.errors[:model_field_uid].size).to eq(1)
     end
   end
 
@@ -24,10 +24,10 @@ describe LinkableAttachmentImportRule do
         LinkableAttachmentImportRule.create!(:path=>'/that',:model_field_uid=>'prod_uid')
       end
       it "should find for module in use" do
-        LinkableAttachmentImportRule.exists_for_class?(Order).should be_true
+        expect(LinkableAttachmentImportRule.exists_for_class?(Order)).to be_truthy
       end
       it "should not find for module not in use" do
-        LinkableAttachmentImportRule.exists_for_class?(Shipment).should be_false
+        expect(LinkableAttachmentImportRule.exists_for_class?(Shipment)).to be_falsey
       end
     end
   end
@@ -48,7 +48,7 @@ describe LinkableAttachmentImportRule do
     describe 'path matching' do
       it 'should return nil if no matches' do
         result = LinkableAttachmentImportRule.import @file, 'original_file_name.xls', '/path/not/found'
-        result.should be nil
+        expect(result).to be nil
       end
     
       it 'should create linkable attachment' do
@@ -71,23 +71,23 @@ describe LinkableAttachmentImportRule do
       end
       it 'should set by space as first choice' do
         result = LinkableAttachmentImportRule.import @file, 'a.b_some file.csv', @path 
-        result.value.should == 'a.b_some'
+        expect(result.value).to eq('a.b_some')
       end
       it 'should set by underscore as second choice' do
         result = LinkableAttachmentImportRule.import @file, 'a.b_some.csv', @path
-        result.value.should == 'a.b'
+        expect(result.value).to eq('a.b')
       end
       it 'should set by period as third choice' do
         result = LinkableAttachmentImportRule.import @file, 'a.csv', @path
-        result.value.should == 'a'
+        expect(result.value).to eq('a')
       end
       it 'should set full name as last choice' do
         result = LinkableAttachmentImportRule.import @file, 'abcdef', @path
-        result.value.should == 'abcdef'
+        expect(result.value).to eq('abcdef')
       end
       it 'should use value override if given' do
         result = LinkableAttachmentImportRule.import @file, 'a.b_some file.csv', @path, 'x'
-        result.value.should == 'x'
+        expect(result.value).to eq('x')
       end
     end
   end
@@ -101,12 +101,12 @@ describe LinkableAttachmentImportRule do
 
     it "should return an import rule matching the path" do
       rule = LinkableAttachmentImportRule.find_import_rule @path
-      rule.id.should eq @rule.id
+      expect(rule.id).to eq @rule.id
     end
 
     it "should not find a rule if the path doesn't match" do
       rule = LinkableAttachmentImportRule.find_import_rule "a/#{@path}"
-      rule.should be_nil
+      expect(rule).to be_nil
     end
   end
 
@@ -123,7 +123,7 @@ describe LinkableAttachmentImportRule do
 
     it "processes a file from s3 with default paths" do
       @rule = Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
-      OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', '/path/to/s3file.txt', original_filename: 's3file.txt').and_yield @file
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/path/to/s3file.txt', original_filename: 's3file.txt').and_yield @file
       
       LinkableAttachmentImportRule.process_from_s3 'bucket', '/path/to/s3file.txt'
 
@@ -137,7 +137,7 @@ describe LinkableAttachmentImportRule do
 
     it "processes a file from s3 with provided paths" do
       @rule = Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
-      OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt').and_yield @file
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt').and_yield @file
       
       LinkableAttachmentImportRule.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt', original_path: "/path/to"
 
@@ -152,10 +152,10 @@ describe LinkableAttachmentImportRule do
     it "logs errors" do
       r = LinkableAttachmentImportRule.new
       r.errors.add(:path, "Invalid Path")
-      LinkableAttachmentImportRule.should_receive(:import).and_return r
-      OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt').and_yield @file
+      expect(LinkableAttachmentImportRule).to receive(:import).and_return r
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt').and_yield @file
 
-      StandardError.any_instance.should_receive(:log_me).with ["Failed to link S3 file /s3path/dir/s3file.txt using filename orig_file.txt"]
+      expect_any_instance_of(StandardError).to receive(:log_me).with ["Failed to link S3 file /s3path/dir/s3file.txt using filename orig_file.txt"]
 
       LinkableAttachmentImportRule.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt', original_path: "/path/to"
     end

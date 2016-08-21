@@ -9,16 +9,16 @@ describe Address do
     end
     it "should be visible if linked to my company" do
       u = Factory(:user,company:@c)
-      expect(@a.can_view?(u)).to be_true
+      expect(@a.can_view?(u)).to be_truthy
     end
     it "should be visible if linked to a company I'm linked to" do
       u = Factory(:user)
       u.company.linked_companies << @c
-      expect(@a.can_view?(u)).to be_true
+      expect(@a.can_view?(u)).to be_truthy
     end
     it "should not be visible if not linked to my company or a company I'm linked to" do
       u = Factory(:user)
-      expect(@a.can_view?(u)).to be_false
+      expect(@a.can_view?(u)).to be_falsey
     end
   end
 

@@ -7,15 +7,15 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
     @u = Factory(:user)
     @hm = Factory(:company,importer:true,system_code:'HENNE')
     @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
-    described_class.stub(:attach_file).and_return nil
+    allow(described_class).to receive(:attach_file).and_return nil
   end
   describe :parse do
     before :each do
-      [Order,Shipment,CommercialInvoice,Product].each {|k| k.any_instance.stub(:can_edit?).and_return true}
-      [:edit_orders?,:edit_commercial_invoices?,:edit_shipments?,:edit_products?].each {|p| @u.stub(p).and_return true}
+      [Order,Shipment,CommercialInvoice,Product].each {|k| allow_any_instance_of(k).to receive(:can_edit?).and_return true}
+      [:edit_orders?,:edit_commercial_invoices?,:edit_shipments?,:edit_products?].each {|p| allow(@u).to receive(p).and_return true}
     end
     it "should skip non US files" do
-      described_class.stub(:process_second_line).and_return ['ABC.MX','12345']
+      allow(described_class).to receive(:process_second_line).and_return ['ABC.MX','12345']
       expect{described_class.parse(IO.read(@air_path),@u)}.to_not change(Shipment,:count)
     end
     context :permission_issues do
@@ -23,19 +23,19 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
         expect(Shipment.count).to eq 0
       end
       it "should fail if user cannot edit shipment" do
-        Shipment.any_instance.should_receive(:can_edit?).with(@u).and_return false
+        expect_any_instance_of(Shipment).to receive(:can_edit?).with(@u).and_return false
         expect{described_class.parse(IO.read(@air_path),@u)}.to raise_error /permission to edit this shipment/
       end
       it "should fail if user cannot edit product" do
-        Product.any_instance.should_receive(:can_edit?).with(@u).and_return false
+        expect_any_instance_of(Product).to receive(:can_edit?).with(@u).and_return false
         expect{described_class.parse(IO.read(@air_path),@u)}.to raise_error /permission to edit this product/
       end
       it "should fail if user cannot edit order" do
-        Order.any_instance.should_receive(:can_edit?).with(@u).and_return false
+        expect_any_instance_of(Order).to receive(:can_edit?).with(@u).and_return false
         expect{described_class.parse(IO.read(@air_path),@u)}.to raise_error /permission to edit this order/
       end
       it "should fail if user cannot edit commercial invoice" do
-        CommercialInvoice.any_instance.should_receive(:can_edit?).with(@u).and_return false
+        expect_any_instance_of(CommercialInvoice).to receive(:can_edit?).with(@u).and_return false
         expect{described_class.parse(IO.read(@air_path),@u)}.to raise_error /permission to edit this commercial invoice/
       end
     end
@@ -45,7 +45,7 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
         expect{described_class.parse(d,@u)}.to raise_error /First line must start with TRANSPORT INFORMATION/
       end
       it "should create ocean shipment from multi-page document" do
-        Shipment.any_instance.should_receive(:create_snapshot).with(@u) #much faster to not run this
+        expect_any_instance_of(Shipment).to receive(:create_snapshot).with(@u) #much faster to not run this
         expect{described_class.parse(IO.read(@ocean_path),@u)}.to change(Shipment,:count).from(0).to(1)
         s = Shipment.first
         expect(s.importer).to eq @hm
