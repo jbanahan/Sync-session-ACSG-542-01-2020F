@@ -6,7 +6,7 @@ describe Api::V1::CompaniesController do #because we have to test on some concre
     @u = Factory(:admin_user)
     allow_api_access @u
   end
-  describe :toggle_state_button do
+  describe "toggle_state_button" do
     it "should toggle state" do
       btn = double('state toggle button')
       expect(btn).to receive(:async_toggle!).with(@c,@u)
@@ -25,7 +25,7 @@ describe Api::V1::CompaniesController do #because we have to test on some concre
     end
   end
 
-  describe :state_toggle_buttons do
+  describe "state_toggle_buttons" do
     it "should render result of render_state_toggle_buttons" do
       expect_any_instance_of(described_class).to receive(:render_state_toggle_buttons).with(@c,@u).and_return([{a:'b'}])
 
@@ -38,7 +38,7 @@ describe Api::V1::CompaniesController do #because we have to test on some concre
   end
 
   #this is separate from the API method so they can be injected in other calls
-  describe :render_state_toggle_buttons do
+  describe "render_state_toggle_buttons" do
     before :each do
       @btn = Factory(:state_toggle_button,
         activate_text:'A',activate_confirmation_text:'B',

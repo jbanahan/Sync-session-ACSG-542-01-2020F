@@ -6,7 +6,7 @@ describe CustomReportContainerListing do
     @u.company.update_attributes(:broker=>true)
     allow(@u).to receive(:view_entries?).and_return true
   end
-  describe :static_methods do
+  describe "static_methods" do
     it "should allow users who can view entries" do
       expect(described_class.can_view?(@u)).to be_truthy
     end
@@ -21,7 +21,7 @@ describe CustomReportContainerListing do
     end
   end
 
-  describe :run do
+  describe "run" do
     it "should make a row for each container" do
       ent = Factory(:entry,:container_numbers=>"123\n456",:broker_reference=>"ABC")
       rpt = described_class.new

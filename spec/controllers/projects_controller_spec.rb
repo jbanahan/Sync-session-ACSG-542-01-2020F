@@ -7,7 +7,7 @@ describe ProjectsController do
 
     sign_in_as @u
   end
-  describe :index do
+  describe "index" do
     it "should error if user cannot view projects" do
       allow_any_instance_of(User).to receive(:view_projects?).and_return false
       get :index
@@ -21,7 +21,7 @@ describe ProjectsController do
       expect(assigns(:projects).to_a).to eq [p]
     end
   end
-  describe :show do
+  describe "show" do
     it "should error if user cannot view project and request is json" do
       allow_any_instance_of(Project).to receive(:can_view?).and_return false
       p = Factory(:project)
@@ -37,7 +37,7 @@ describe ProjectsController do
       expect(assigns(:project_id)).to eq p.id.to_s
     end
   end
-  describe :update do
+  describe "update" do
     it "should error if user cannot edit project" do
       p = Factory(:project,name:'old')
       allow_any_instance_of(Project).to receive(:can_edit?).and_return false
@@ -57,7 +57,7 @@ describe ProjectsController do
       expect(JSON.parse(response.body)['project']['name']).to eq 'my name'
     end
   end
-  describe :create do
+  describe "create" do
     it "should error if user cannot edit projects" do
       allow_any_instance_of(User).to receive(:edit_projects?).and_return false
       post :create, 'project'=>{'name'=>'my name'}
@@ -73,7 +73,7 @@ describe ProjectsController do
       expect(response).to redirect_to p
     end
   end
-  describe :toggle_close do
+  describe "toggle_close" do
     before :each do
       @p = Factory(:project)
     end
@@ -103,7 +103,7 @@ describe ProjectsController do
       expect(@p.closed_at).to be_nil
     end
   end
-  describe :toggle_on_hold do
+  describe "toggle_on_hold" do
     before :each do
       @p = Factory(:project)
     end
@@ -142,7 +142,7 @@ describe ProjectsController do
       expect(@p.on_hold).to_not be_truthy
     end
   end
-  describe :add_project_set do
+  describe "add_project_set" do
     before :each do
       @p = Factory(:project)
     end
@@ -179,7 +179,7 @@ describe ProjectsController do
       expect(@p.project_sets).to be_empty
     end
   end
-  describe :remove_project_set do
+  describe "remove_project_set" do
     before :each do
       @p = Factory(:project)
       @ps = Factory(:project_set)

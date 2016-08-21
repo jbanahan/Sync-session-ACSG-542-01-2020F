@@ -13,7 +13,7 @@ describe SearchQuery do
     @p2 = Factory(:product,:name=>'A')
     @p3 = Factory(:product,:name=>'C')
   end
-  describe :execute do
+  describe "execute" do
     it "should return array of arrays" do
       r = @sq.execute(per_page: 1000)
       expect(r.size).to eq(2)
@@ -256,7 +256,7 @@ describe SearchQuery do
     end
   end
 
-  describe :count do
+  describe "count" do
     it "should return row count for multi level query" do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
@@ -268,7 +268,7 @@ describe SearchQuery do
       expect(@sq.count).to eq(2)
     end
   end
-  describe :result_keys do
+  describe "result_keys" do
     it "should return unique key list for multi level query" do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       tr2 = Factory(:tariff_record,:hts_1=>'9876543210',:line_number=>2,:classification=>tr.classification)
@@ -277,7 +277,7 @@ describe SearchQuery do
       expect(keys).to eq([@p2.id,@p1.id])
     end
   end
-  describe :unique_parent_count do
+  describe "unique_parent_count" do
     it "should return parent count when there are details" do
       @ss.search_columns.build(:model_field_uid=>'class_cntry_iso',:rank=>2)
       2.times {|i| Factory(:classification,:product=>@p1)}

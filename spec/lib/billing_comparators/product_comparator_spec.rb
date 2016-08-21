@@ -7,7 +7,7 @@ describe OpenChain::BillingComparators::ProductComparator do
                         [{"entity"=>{"core_module"=>"TariffRecord", "record_id"=>1, "model_fields"=>{"hts_line_number"=>1, "hts_hts_1"=>"1111"}}}]}}]}}
   end
 
-  describe :compare do
+  describe "compare" do
     it "exits if the type isn't 'Product'" do
       expect(EntitySnapshot).not_to receive(:where)
       described_class.compare('Entry', 'id', 'old_bucket', 'old_path', 'old_version', 'new_bucket', 'new_path', 'new_version')
@@ -23,7 +23,7 @@ describe OpenChain::BillingComparators::ProductComparator do
     end
   end
 
-  describe :check_new_classification do
+  describe "check_new_classification" do
     before(:each) do 
       @class = Factory(:classification)
       base_hash["entity"]["children"].first["entity"]["record_id"] = @class.id
@@ -63,7 +63,7 @@ describe OpenChain::BillingComparators::ProductComparator do
     end
   end
 
-  describe :get_classifications do
+  describe "get_classifications" do
     it "returns hash list of id/iso_code pairs associated with classifications belonging to product with an hts_1" do
       expect(described_class.get_classifications(base_hash)).to eq [{id: 1, iso_code: 'US'}]
     end
@@ -74,7 +74,7 @@ describe OpenChain::BillingComparators::ProductComparator do
     end
   end
 
-  describe :contains_hts_1? do
+  describe "contains_hts_1?" do
       
     it "returns true if classification hash contains a tariff with an hts_1 field" do
       class_hash = base_hash["entity"]["children"].first
@@ -93,7 +93,7 @@ describe OpenChain::BillingComparators::ProductComparator do
     end
   end
 
-  describe :filter_new_classifications do
+  describe "filter_new_classifications" do
     it "takes two hash lists of id/iso_code pairs and returns those in the second set that don't appear in the first" do
       old_bucket_classis = [{id: 1, iso_code: 'US'},{id: 2, iso_code: 'CA'}, {id: 3, iso_code: 'CN'}]
       new_bucket_classis = [{id: 1, iso_code: 'US'}, {id: 3, iso_code: 'CN'}, {id: 4, iso_code: 'AF'}, {id: 5, iso_code: 'MX'}]

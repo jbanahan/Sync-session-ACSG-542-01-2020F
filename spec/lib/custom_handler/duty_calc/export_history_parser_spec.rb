@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
-  describe :process_from_attachment do
+  describe "process_from_attachment" do
     before :each do
       @u = Factory(:user)
     end
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
       expect(@u.messages.first.body).to match /Invalid file format/
     end
   end
-  describe :parse_csv_from_attachment do
+  describe "parse_csv_from_attachment" do
     it "should download attachment" do
       claim = double('claim')
       att = Factory(:attachment)
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
       p.parse_csv_from_attachment(att,claim)
     end
   end
-  describe :parse_excel do
+  describe "parse_excel" do
     it "should receive rows" do
       xlc = double(:xl_client)
       rows = [[1,2,3,4,5],[1,2,3,4,5,6,7,8,9,0,1],[1,2,3,4,5,6,7,8,9,0,1]]
@@ -85,7 +85,7 @@ describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
       p.parse_excel(xlc,dc)
     end
   end
-  describe :parse_csv do
+  describe "parse_csv" do
     before :each do
       @data = <<DTA 
 "Part NumberExported","Reference 1i.e. AWB #","Reference 2i.e. Invoice","ShipDate","QuantityExported","Dest.Country","DrawbackClaim Number","Average DrawbackEach Item",Reference 3,Exporter,Total

@@ -7,7 +7,7 @@ describe AttachmentArchivesController do
 
     sign_in_as @u
   end
-  describe :create do
+  describe "create" do
     context :good_processing do
       before :each do
         arch = double('attachment_archive')
@@ -51,7 +51,7 @@ describe AttachmentArchivesController do
     end
   end
 
-  describe :complete do
+  describe "complete" do
     before :each do
       @c = Factory(:company)
       @arch = @c.attachment_archives.create!(:name=>'xyz',:start_at=>Time.now)
@@ -71,7 +71,7 @@ describe AttachmentArchivesController do
     end
   end
 
-  describe :show do
+  describe "show" do
     before :each do
       @c = Factory(:company)
       @arch = @c.attachment_archives.create!(:name=>'xyz',:start_at=>Time.now)  

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe WorkflowInstance do
-  describe :destroy_stale_tasks do
+  describe "destroy_stale_tasks" do
     it "should destroy tasks that are not in the tasks_to_keep list and are in the types_to_destroy list" do
       c = Factory(:company)
       wi = Factory(:workflow_instance, base_object: c)

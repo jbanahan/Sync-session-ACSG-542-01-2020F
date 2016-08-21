@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Api::V1::CompaniesController do
-  describe :index do
+  describe "index" do
     before :each do
       @c = Factory(:company, name:'c1',importer:true,system_code:'A')
       @u = Factory(:user, company:@c)
@@ -77,7 +77,7 @@ describe Api::V1::CompaniesController do
     end
   end
 
-  describe :validate do
+  describe "validate" do
     it "runs validations and returns result hash" do
       u = Factory(:master_user)
       allow_api_access u

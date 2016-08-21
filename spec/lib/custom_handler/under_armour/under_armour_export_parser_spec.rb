@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
         "3452168,85439724,1000382,1,MD,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
       ]
     end
-    describe :parse_csv_file do
+    describe "parse_csv_file" do
       it "should handle non-ascii characters" do
         described_class.parse_csv_file 'spec/support/bin/ua_outbound_unicode.csv', @importer 
         expect(DutyCalcExportFileLine.all.size).to eq(1)
@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
       end
     end
 
-    describe :parse_csv_line do
+    describe "parse_csv_line" do
       it "should parse a line into a DutyCalcExportFileLine" do
         d = described_class.parse_csv_line @lines[1].parse_csv, 0, @importer
         expect(d.export_date).to eq(Date.new(2010,3,5))
@@ -153,7 +153,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
       expect(DutyCalcExportFileLine.all.size).to eq(2)
     end
 
-    describe :parse_fmi_csv_line do
+    describe "parse_fmi_csv_line" do
       it "should parse a line into a DutyCalcExportFileLine" do
         described_class.parse_fmi_csv_line @lines[1]
         expect(DutyCalcExportFileLine.count).to eq(1)

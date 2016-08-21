@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit do
     @helper_class = OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper
   end
 
-  describe :run_validation do
+  describe "run_validation" do
     it "returns nil if no errors are returned" do
       expect_any_instance_of(@helper_class).to receive(:audit).with(@ent, ['1111', '2222']).and_return ""
       expect(@rule.run_validation @ent).to be_nil

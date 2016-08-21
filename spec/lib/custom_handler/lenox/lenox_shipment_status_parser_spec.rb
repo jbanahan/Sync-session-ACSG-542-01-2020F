@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     x
   end
 
-  describe :process do
+  describe "process" do
     before :each do
       @cf = double(:custom_file)
     end
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     end
   end
 
-  describe :can_view? do
+  describe "can_view?" do
     before :each do
       @cf = double(:custom_file)
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
@@ -84,7 +84,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     end
   end
 
-  describe :parse do
+  describe "parse" do
     it "should collect shipments and pass them to process_shipment" do
       r1 = default_row
       r2 = default_row({bol:'BOL2'})
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     end
   end
 
-  describe :process_shipment do
+  describe "process_shipment" do
     before :each do
       @u = Factory(:master_user,shipment_edit:true)
       allow_any_instance_of(User).to receive(:edit_shipments?).and_return true

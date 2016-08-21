@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::OfficialTariffProcessor::TariffProcessor do
-  describe :process_country do
+  describe "process_country" do
     it "should do nothing if country not in registry" do
       c = double(:country)
       expect(OpenChain::OfficialTariffProcessor::TariffProcessorRegistry).to receive(:get).with(c).and_return nil

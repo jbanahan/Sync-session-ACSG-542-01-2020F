@@ -5,7 +5,7 @@ describe Api::V1::SetupDataController do
     @u = Factory(:user)
     allow_api_access @u
   end
-  describe :index do
+  describe "index" do
     context "countries & regions" do
       before :each do
         @us = Factory(:country,iso_code:'US',name:'United States',import_location:true,classification_rank: 1)

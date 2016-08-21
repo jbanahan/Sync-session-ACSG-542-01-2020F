@@ -7,7 +7,7 @@ describe ProjectUpdatesController do
 
     sign_in_as @u
   end
-  describe :create do
+  describe "create" do
     it "should set created_by" do
       allow_any_instance_of(Project).to receive(:can_edit?).and_return true
       p = Factory(:project)
@@ -35,7 +35,7 @@ describe ProjectUpdatesController do
       expect(JSON.parse(response.body)['error']).to match /permission/
     end
   end
-  describe :update do
+  describe "update" do
     it "should reject if user is not created_by" do
       pu = Factory(:project_update,created_by:Factory(:user),body:'x')
       put :update, project_id:pu.project_id, id:pu.id, project_update:{id:pu.id,body:'y'}

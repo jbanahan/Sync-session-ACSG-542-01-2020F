@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser do
-  describe :parse_dom do
+  describe "parse_dom" do
     before :all do
       @dom = REXML::Document.new(IO.read('spec/support/bin/jjill_ecellerate_sample.xml'))
     end

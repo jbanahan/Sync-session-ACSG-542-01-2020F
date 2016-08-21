@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Api::V1::EventSubscriptionsController do
-  describe :index do
+  describe "index" do
     before :each do
       @u = Factory(:user)
       @es1 = Factory(:event_subscription,user:@u,event_type:'1')
@@ -26,7 +26,7 @@ describe Api::V1::EventSubscriptionsController do
     end
   end
 
-  describe :create do
+  describe "create" do
     before :each do
       @u = Factory(:user)
       #bad user ids should be ignored

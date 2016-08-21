@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::JCrewDrawbackProcessor do
 
-  describe :process_entries do
+  describe "process_entries" do
     before :each do
       @cd_po = Factory(:custom_definition,:label=>"PO Number",:module_type=>"ShipmentLine",:data_type=>"string")
       @cd_del = Factory(:custom_definition,:label=>"Delivery Date",:module_type=>"Shipment",:data_type=>"date")

@@ -5,7 +5,7 @@ describe CustomReportAnnSapChanges do
     @u = Factory(:master_user)
     allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return(true)
   end
-  describe :static_methods do
+  describe "static_methods" do
     it "should not allow users not from master company" do
       allow_any_instance_of(Company).to receive(:master?).and_return(false)
       expect(described_class.can_view?(@u)).to be_falsey
@@ -29,7 +29,7 @@ describe CustomReportAnnSapChanges do
 
   end
 
-  describe :run do
+  describe "run" do
     def make_eligible_product
       tr = Factory(:tariff_record)
       cls = tr.classification

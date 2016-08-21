@@ -5,7 +5,7 @@ describe SchedulableJobsController do
 
     sign_in_as u
   end
-  describe :index do
+  describe "index" do
     it "should only allow sys_admins" do
       login Factory(:user)
       get :index
@@ -21,7 +21,7 @@ describe SchedulableJobsController do
     end
   end
 
-  describe :edit do
+  describe "edit" do
     before :each do
       @sj = Factory(:schedulable_job)
     end
@@ -38,7 +38,7 @@ describe SchedulableJobsController do
       expect(assigns(:sj)).to eq(@sj)
     end
   end
-  describe :update do
+  describe "update" do
     before :each do
       @sj = Factory(:schedulable_job,opts:'abc')
     end
@@ -59,7 +59,7 @@ describe SchedulableJobsController do
     end
   end
   
-  describe :new do
+  describe "new" do
     it "should only allow sys_admins" do
       login Factory(:user)
       get :new
@@ -73,7 +73,7 @@ describe SchedulableJobsController do
       expect(assigns(:sj)).to be_instance_of(SchedulableJob)
     end
   end
-  describe :create do
+  describe "create" do
     it "should only allow sys_admins" do
       login Factory(:user)
       post :create, schedulable_job:{opts:'12345'}
@@ -89,7 +89,7 @@ describe SchedulableJobsController do
     end
   end
 
-  describe :destroy do
+  describe "destroy" do
     before :each do
       @sj = Factory(:schedulable_job)
     end

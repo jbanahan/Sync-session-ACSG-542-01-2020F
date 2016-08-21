@@ -3,7 +3,7 @@ require 'open_chain/tariff_finder'
 require 'open_chain/xl_client'
 
 describe PartNumberCorrelation do
-  describe :process do
+  describe "process" do
     before :each do
       @user = Factory(:user)
       @pnc = Factory(:part_number_correlation, starting_row: 1, part_column: "B",
@@ -44,7 +44,7 @@ describe PartNumberCorrelation do
     end
   end
 
-  describe :alphabet_column_to_numeric_column do
+  describe "alphabet_column_to_numeric_column" do
     it "should return the correct values for Excel column headings" do
       @pnc = PartNumberCorrelation.new
       

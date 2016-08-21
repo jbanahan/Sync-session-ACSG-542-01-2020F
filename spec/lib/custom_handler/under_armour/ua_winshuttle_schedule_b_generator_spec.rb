@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
   it "should have sync_code" do
     expect(described_class.new.sync_code).to eq('winshuttle-b')
   end
-  describe :run_and_email do
+  describe "run_and_email" do
     it "should run_and_email" do
       d = double('class')
       expect(d).to receive(:sync_xls).and_return 'xyz'
@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
       described_class.run_and_email('j@sample.com')
     end
   end
-  describe :sync do
+  describe "sync" do
     def create_product
       tr = Factory(:tariff_record,schedule_b_1:'1234567890',classification:Factory(:classification,country_id:@us.id))
       tr.product.update_custom_value! @colors_cd, "001"
@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
       expect(r[4]).to eq "ZMMHSCONV-STAWN2(01)\nCommodity code / Import code number for foreign trade"
     end
   end
-  describe :email_file do
+  describe "email_file" do
     before :each do 
       @f = double('file')
       @mailer = double(:mailer)

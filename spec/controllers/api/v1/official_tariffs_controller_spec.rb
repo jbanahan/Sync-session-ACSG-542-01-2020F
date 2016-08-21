@@ -6,7 +6,7 @@ describe Api::V1::OfficialTariffsController do
     allow_api_access @user
   end
 
-  describe :find do
+  describe "find" do
     it "should render tariff" do
       allow_any_instance_of(OfficialTariff).to receive(:can_view?).and_return true
       us = Factory(:country,iso_code:'US',name:'USA')

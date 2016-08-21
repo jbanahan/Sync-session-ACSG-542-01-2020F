@@ -6,7 +6,7 @@ describe CorrectiveActionPlansController do
     @u = Factory(:user,first_name:'joe',last_name:'user')
     sign_in_as @u
   end
-  describe :add_comment do
+  describe "add_comment" do
     before :each do
       @cap = Factory(:corrective_action_plan)
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return true 
@@ -49,7 +49,7 @@ describe CorrectiveActionPlansController do
       expect(SurveyResponseUpdate.all).to be_empty
     end
   end
-  describe :show do
+  describe "show" do
     before :each do
       @cap = Factory(:corrective_action_plan)
     end
@@ -83,7 +83,7 @@ describe CorrectiveActionPlansController do
       end
     end
   end
-  describe :update do
+  describe "update" do
     before :each do
       @cap = Factory(:corrective_action_plan)
       @sr_id = @cap.survey_response_id
@@ -114,7 +114,7 @@ describe CorrectiveActionPlansController do
       post :update, :survey_response_id=>@sr_id.to_s, :id=>@cap.id.to_s, :comment=>'xyz', :format=> 'json'
     end
   end
-  describe :create do
+  describe "create" do
     before :each do
       @sr = Factory(:survey_response)
     end
@@ -132,7 +132,7 @@ describe CorrectiveActionPlansController do
       expect(response).to redirect_to [@sr,cap]
     end
   end
-  describe :activate do
+  describe "activate" do
     before :each do 
       @cap = Factory(:corrective_action_plan)
     end
@@ -157,7 +157,7 @@ describe CorrectiveActionPlansController do
       put :activate, survey_response_id:@cap.survey_response_id.to_s, id: @cap.id.to_s
     end
   end
-  describe :resolve do
+  describe "resolve" do
     before :each do 
       @cap = Factory(:corrective_action_plan)
     end
@@ -177,7 +177,7 @@ describe CorrectiveActionPlansController do
       expect(@cap.status).to eq(CorrectiveActionPlan::STATUSES[:new])
     end
   end
-  describe :destroy do
+  describe "destroy" do
     before :each do
       @cap = Factory(:corrective_action_plan)
     end

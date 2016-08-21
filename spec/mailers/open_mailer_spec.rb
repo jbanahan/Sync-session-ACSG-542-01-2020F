@@ -104,7 +104,7 @@ describe OpenMailer do
     end
   end
 
-  describe :send_registration_request do
+  describe "send_registration_request" do
     it "should send email with registration details to support address" do
       fields = { email: "john_doe@acme.com", fname: "John", lname: "Doe", company: "Acme", 
                   cust_no: "123456789", contact: "Jane Smith", system_code: "HAL9000"}
@@ -608,7 +608,7 @@ EMAIL
     end
   end
 
-  describe :send_high_priority_tasks do
+  describe "send_high_priority_tasks" do
 
     before :each do
       @u1 = Factory(:user, email: "me@there.com")
@@ -630,7 +630,7 @@ EMAIL
 
   end
 
-  describe :send_survey_invite do
+  describe "send_survey_invite" do
     before :each do
       @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
       @survey = Factory(:survey)
@@ -677,7 +677,7 @@ EMAIL
     end
   end
 
-  describe :send_survey_reminder do
+  describe "send_survey_reminder" do
   
     it "sends email with specified recipients, subject & body, with a link to the survey" do
       sr = Factory(:survey_response)
@@ -701,7 +701,7 @@ EMAIL
 
   end
 
-  describe :send_search_result_manually do
+  describe "send_search_result_manually" do
     before(:each) { @u = Factory(:user, email: "me@here.com")}
 
     it "sends email with to, reply_to, subject, body, and attachment" do
@@ -728,7 +728,7 @@ EMAIL
 
   end
 
-  describe :log_email, email_log: true do
+  describe "log_email, email_log: true" do
 
     it "saves outgoing e-mail fields and attachments" do   
       sub = "what it's about"

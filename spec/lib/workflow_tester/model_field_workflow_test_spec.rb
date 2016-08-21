@@ -1,12 +1,12 @@
 require 'spec_helper'
 
 describe OpenChain::WorkflowTester::ModelFieldWorkflowTest do
-  describe :category do
+  describe "category" do
     it "should return Data" do
       expect(described_class.category).to eq 'Data'
     end
   end
-  describe :pass? do
+  describe "pass?" do
     before :each do
       @c = Company.new(name:'Joe',system_code:'ABCDEF')
       @t = Factory(:workflow_task,test_class_name:'OpenChain::WorkflowTester::ModelFieldWorkflowTest',payload_json:'{"model_fields":[{"uid":"cmp_name","regex":"Joe"},{"uid":"cmp_sys_code"}]}',workflow_instance:Factory(:workflow_instance,base_object:@c))

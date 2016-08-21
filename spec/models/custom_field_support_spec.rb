@@ -19,7 +19,7 @@ describe "CustomFieldSupport" do
       expect(CustomValue.find_by_custom_definition_id_and_string_value(@cd.id,"y").customizable).to eq(@s)
     end
   end
-  describe :get_custom_value do
+  describe "get_custom_value" do
     it "should get the same custom value object twice without saving" do
       cd = Factory(:custom_definition,:module_type=>'Product')
       p = Factory(:product)
@@ -53,7 +53,7 @@ describe "CustomFieldSupport" do
     end
   end
 
-  describe :freeze_custom_values do
+  describe "freeze_custom_values" do
     it "should freeze cached values and no longer hit database" do
       cd = Factory(:custom_definition,:module_type=>'Product',data_type:'string')
       cd2 = Factory(:custom_definition,:module_type=>'Product',data_type:'string')
@@ -72,7 +72,7 @@ describe "CustomFieldSupport" do
     end
   end
 
-  describe :freeze_all_custom_values_including_children do
+  describe "freeze_all_custom_values_including_children" do
     it "calls freeze_custom_values on all levels of the obj" do
       p = Product.new
       c = Classification.new

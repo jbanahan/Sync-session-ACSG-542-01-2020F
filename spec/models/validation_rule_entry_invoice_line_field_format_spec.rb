@@ -29,7 +29,7 @@ describe ValidationRuleEntryInvoiceLineFieldFormat do
     expect(@rule.run_validation(@ci_line.entry)).to be_nil
   end
 
-  describe :should_skip? do
+  describe "should_skip?" do
     it "should skip on entry level validation" do
       @ci_line.entry.update_attributes(entry_number:'31612345678')
       @rule.search_criterions.build(model_field_uid:'ent_entry_num',operator:'sw',value:'99')

@@ -1,14 +1,14 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
-  describe :ftp_credentials do
+  describe "ftp_credentials" do
     it 'should return credentials' do
       expected_credentials = {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
       expect(described_class.new.ftp_credentials).to eq expected_credentials
     end
   end
 
-  describe :sync_csv do
+  describe "sync_csv" do
     after :each do
       @tmp.unlink if @tmp
     end
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
       expect(a[2][16]).to eq('3333333333'.hts_format)
     end
   end
-  describe :query do
+  describe "query" do
     before :each do
       @cd = Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text)
       @italy = Factory(:country,:iso_code=>'IT')

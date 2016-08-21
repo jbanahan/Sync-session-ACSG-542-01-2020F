@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BusinessValidationTemplate do
-  describe :create_all! do
+  describe "create_all!" do
     before :each do
       allow(OpenChain::StatClient).to receive(:wall_time).and_yield
     end
@@ -11,7 +11,7 @@ describe BusinessValidationTemplate do
       BusinessValidationTemplate.create_all! true
     end
   end
-  describe :create_results! do
+  describe "create_results!" do
     before :each do
       @bvt = Factory(:business_validation_template)
       @bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
@@ -78,7 +78,7 @@ describe BusinessValidationTemplate do
       expect(BusinessValidationResult.count).to eq 0
     end
   end
-  describe :create_result! do
+  describe "create_result!" do
     before :each do
       @o = Factory(:order, order_number: "ajklsdfajl")
       @bvt = described_class.create!(module_type:'Order')
@@ -143,7 +143,7 @@ describe BusinessValidationTemplate do
     end
   end
 
-  describe :create_results_for_object! do
+  describe "create_results_for_object!" do
     it "should create results" do
       expect(BusinessValidationTemplate.count).to eq 0
       bvt1 = described_class.create!(module_type:'Order')

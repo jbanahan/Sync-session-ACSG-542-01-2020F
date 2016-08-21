@@ -16,7 +16,7 @@ describe CoreModule do
       expect(CoreModule::PRODUCT.default_module_chain.top?(CoreModule::SHIPMENT)).to be_falsey
     end
   end
-  describe :validate_business_logic do
+  describe "validate_business_logic" do
     it "should validate business logic" do
       p = Product.new
       x = double('my validation')
@@ -33,7 +33,7 @@ describe CoreModule do
       expect(p.errors[:base].first).to eq("Tariff number #{ot.hts_code}X is invalid for #{ot.country.iso_code}")
     end
   end
-  describe :logical_key do
+  describe "logical_key" do
     it "should use logical key lambda" do
       ent = Entry.new(source_system:'SS',broker_reference:'123')
       expect(CoreModule::ENTRY.logical_key(ent)).to eq 'SS_123'

@@ -7,7 +7,7 @@ describe CustomViewTemplatesController do
     sign_in_as @u
   end
 
-  describe :index do
+  describe "index" do
     it "lists CVTs for a sys-admin" do
       expect(@u).to receive(:sys_admin?).and_return true
       get :index
@@ -24,7 +24,7 @@ describe CustomViewTemplatesController do
     end
   end
 
-  describe :new do
+  describe "new" do
     it "renders CVT new view for a sys-admin" do
       expect(@u).to receive(:sys_admin?).and_return true
       Struct.new("Cm", :class_name)
@@ -47,7 +47,7 @@ describe CustomViewTemplatesController do
     end
   end
 
-  describe :edit do
+  describe "edit" do
       it "renders the page for a sys-admin" do
         expect(@u).to receive(:sys_admin?).and_return true
         get :edit, id: CustomViewTemplate.first.id
@@ -62,7 +62,7 @@ describe CustomViewTemplatesController do
       end
   end
   
-  describe :create do
+  describe "create" do
     it "creates CVT for a sys-admin" do
       expect(@u).to receive(:sys_admin?).and_return true
       post :create, {template_identifier: "identifier", template_path: "path/to/template", module_type: "Order"}
@@ -82,7 +82,7 @@ describe CustomViewTemplatesController do
     end
   end
 
-  describe :destroy do
+  describe "destroy" do
     it "deletes CVT for a sys-admin" do
       expect(@u).to receive(:sys_admin?).and_return true
       delete :destroy, id: CustomViewTemplate.first.id

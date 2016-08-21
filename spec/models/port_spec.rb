@@ -107,7 +107,7 @@ describe Port do
     end
   end
 
-  describe :entry_country do
+  describe "entry_country" do
     it "should match for schedule d or CBSA" do 
       expect(Port.new(schedule_d_code:'0123').entry_country).to eq('United States')
       expect(Port.new(cbsa_port:'0123').entry_country).to eq('Canada')
@@ -115,7 +115,7 @@ describe Port do
     end
   end
 
-  describe :search_friendly_port_code do
+  describe "search_friendly_port_code" do
     it "should return truncated cbsa_port to match Fenix output" do
       expect(Port.new(cbsa_port:'0123').search_friendly_port_code).to eq('123')
     end

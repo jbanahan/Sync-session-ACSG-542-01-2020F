@@ -9,7 +9,7 @@ describe ProductsController do
     @user.company.linked_companies << @linked_importer
     sign_in_as @user
   end
-  describe :next do
+  describe "next" do
     it "should go to next item" do
       p = Factory(:product)
       expect_any_instance_of(ResultCache).to receive(:next).with(99).and_return(p.id)
@@ -27,7 +27,7 @@ describe ProductsController do
       expect(flash[:errors].first).to eq "Next object could not be found."
     end
   end
-  describe :previous do
+  describe "previous" do
     it "should go to the previous item" do
       p = Factory(:product)
       expect_any_instance_of(ResultCache).to receive(:previous).with(99).and_return(p.id)
@@ -45,7 +45,7 @@ describe ProductsController do
       expect(flash[:errors].first).to eq "Previous object could not be found."
     end
   end
-  describe :create do
+  describe "create" do
     it "should fail if not master and importer_id is not current company or linked company" do
       post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@other_importer.id}
       expect(flash[:errors].first).to eq("You do not have permission to set Importer Name to company #{@other_importer.name}")
@@ -63,7 +63,7 @@ describe ProductsController do
       expect(p.importer).to eq @linked_importer
     end
   end
-  describe :update do
+  describe "update" do
     before :each do
       @product = Factory(:product,:importer=>@user.company)
     end
@@ -94,7 +94,7 @@ describe ProductsController do
     end
   end
 
-  describe :bulk_update do
+  describe "bulk_update" do
     it "should bulk update inline for less than 10 products" do
       expect(OpenChain::BulkUpdateClassification).to receive(:bulk_update) do |params, user, opts|
         expected = {"us" => "1"}

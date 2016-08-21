@@ -23,7 +23,7 @@ describe OfficialTariff do
       expect(t.special_rate_key).to eq Digest::MD5.hexdigest(special_rates)
     end
   end
-  describe :lacey_act do
+  describe "lacey_act" do
     it "should return false if the country's ISO code is not US" do
       c = Factory(:country, iso_code: "VN")
       t = Factory(:official_tariff, country: c)
@@ -43,7 +43,7 @@ describe OfficialTariff do
       expect(t.lacey_act?).to eq(false)
     end
   end
-  describe :taric_url do
+  describe "taric_url" do
     it "should return nil if country is nil" do
       t = Factory(:official_tariff, hts_code: "ABCD")
 
@@ -67,7 +67,7 @@ describe OfficialTariff do
     end
   end
 
-  describe :update_use_count do
+  describe "update_use_count" do
     before :each do
       allow(OpenChain::StatClient).to receive(:wall_time).and_yield
     end
@@ -102,7 +102,7 @@ describe OfficialTariff do
       expect(ot.use_count).to eq(0)
     end
   end
-  describe :can_view? do
+  describe "can_view?" do
     it "should allow if user can view official tariffs" do
       u = User.new
       expect(u).to receive(:view_official_tariffs?).and_return(true)
@@ -114,7 +114,7 @@ describe OfficialTariff do
       expect(OfficialTariff.new.can_view?(u)).to be_falsey
     end
   end
-  describe :search_where do
+  describe "search_where" do
     it "should return '1=0' if user cannot view official tariffs" do
       u = User.new
       expect(u).to receive(:view_official_tariffs?).and_return(false)
@@ -126,14 +126,14 @@ describe OfficialTariff do
       expect(OfficialTariff.search_where(u)).to eq('1=1')
     end
   end
-  describe :search_secure do
+  describe "search_secure" do
     it "should inject search where" do
       u = User.new
       expect(OfficialTariff).to receive(:search_where).with(u).and_return('XX')
       expect(OfficialTariff.search_secure(u,OfficialTariff).to_sql).to include 'XX'
     end
   end
-  describe :auto_classify do
+  describe "auto_classify" do
     before :each do
       @us = Factory(:country,:iso_code=>'US',:import_location=>true)
       @ca = Factory(:country,:iso_code=>'CA',:import_location=>true)

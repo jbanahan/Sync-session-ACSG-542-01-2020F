@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe PartNumberCorrelationsController do
 
-  describe :create do
+  describe "create" do
     before :each do
       @u = Factory(:admin_user)
       sign_in_as @u
@@ -44,7 +44,7 @@ describe PartNumberCorrelationsController do
     end
   end
 
-  describe :index do
+  describe "index" do
     before :each do
       @u = Factory(:admin_user)
       sign_in_as @u

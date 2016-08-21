@@ -27,7 +27,7 @@ describe OrdersController do
     end
   end
 
-  describe :accept do
+  describe "accept" do
     it "should accept if user has permission" do
       expect_any_instance_of(Order).to receive(:async_accept!).with(@u)
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
@@ -50,7 +50,7 @@ describe OrdersController do
     end
   end
 
-  describe :unaccept do
+  describe "unaccept" do
     it "should unaccept if user has permission" do
       expect_any_instance_of(Order).to receive(:async_unaccept!).with(@u)
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
@@ -66,7 +66,7 @@ describe OrdersController do
     end
   end
 
-  describe :close do
+  describe "close" do
     it "should close if user has permission" do
       allow_any_instance_of(Order).to receive(:can_close?).and_return true
       o = Factory(:order)
@@ -86,7 +86,7 @@ describe OrdersController do
       expect(o.closed_at).to be_nil
     end
   end
-  describe :reopen do
+  describe "reopen" do
     before :each do
       @o = Factory(:order,closed_at:Time.now)
     end

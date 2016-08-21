@@ -11,7 +11,7 @@ describe "FtpFileSupport" do
 
   subject { FtpSupportImpl.new }
 
-  describe :ftp_file do
+  describe "ftp_file" do
     before :each do
       @t = double('tmpfile')
       allow(@t).to receive(:path).and_return('/x.badfile')
@@ -76,7 +76,7 @@ describe "FtpFileSupport" do
     end
   end
 
-  describe :ftp2_vandegrift_inc do
+  describe "ftp2_vandegrift_inc" do
 
     it "should use the correct credentials for ftp2 server" do
       c = subject.ftp2_vandegrift_inc 'folder'

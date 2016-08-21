@@ -7,7 +7,7 @@ describe BrokerInvoicesController do
     @user = Factory(:user,:company=>Factory(:company,:master=>true),:broker_invoice_edit=>true,:entry_view=>true)
     sign_in_as @user
   end
-  describe :create do
+  describe "create" do
     before :each do 
       @entry = Factory(:entry)
     end

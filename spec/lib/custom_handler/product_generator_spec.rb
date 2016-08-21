@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
   end
 
-  describe :sync do
+  describe "sync" do
 
     before :each do 
       @p1 = Factory(:product,:name=>'x')
@@ -175,7 +175,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
   end
 
-  describe :sync_csv do
+  describe "sync_csv" do
     before :each do
       @p1 = Factory(:product,:name=>'x')
       @p2 = Factory(:product,:name=>'y')
@@ -234,7 +234,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       expect(a[2][0]).to eq("C")
     end
   end
-  describe :sync_fixed_position do
+  describe "sync_fixed_position" do
     before :each do 
       @t = 0.seconds.ago 
       @p1 = Factory(:product,:name=>'ABCDEFG',:created_at=>@t)
@@ -255,7 +255,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       expect(r).to eq("ABC#{@t.strftime('%Y%m%d')}   5\n")
     end
   end
-  describe :sync_xls do
+  describe "sync_xls" do
     before :each do 
       @p1 = Factory(:product,:name=>'x')
     end
@@ -280,7 +280,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
 
   end
 
-  describe :cd_s do
+  describe "cd_s" do
     it "should generate a subselect with an alias" do
       cd = Factory(:custom_definition, :module_type=>'Product')
       subselect = @base.new.cd_s cd.id
@@ -316,7 +316,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
   end
 
-  describe :write_sync_records do
+  describe "write_sync_records" do
     it "replaces old sync records, incorporates values of #autoconfirm and #has_fingerprint into record insertions" do
       inst = @base.new
       allow(inst).to receive(:sync_code).and_return('SYNC_CODE')

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe CustomValue do
-  describe :batch_write! do
+  describe "batch_write!" do
     before :each do
       @cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
       @p = Factory(:product)

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SurveyResponse do
-  describe :last_logged_by_user do
+  describe "last_logged_by_user" do
     it "should find most recently saved message created_at associated with given user" do
       u = Factory(:user)
       t = 3.days.ago
@@ -15,7 +15,7 @@ describe SurveyResponse do
       expect(sr.last_logged_by_user(u).to_i).to eq t.to_i
     end
   end
-  describe :rated? do
+  describe "rated?" do
     it "should return true if there is a master rating" do
       expect(Factory(:survey_response,:rating=>'abc')).to be_rated
     end
@@ -94,7 +94,7 @@ describe SurveyResponse do
       expect(@sr.can_view?(other_user)).to be_falsey
     end
   end
-  describe :search_secure do
+  describe "search_secure" do
     it "should find assigned to me, even if I cannot view_survey" do
       u = Factory(:user,survey_view:false)
       sr = Factory(:survey_response,user:u)
@@ -202,7 +202,7 @@ describe SurveyResponse do
       end
     end
   end
-  describe :was_archived do
+  describe "was_archived" do
     before :each do
       @survey = Factory(:question).survey
       @u = Factory(:user)

@@ -16,7 +16,7 @@ describe DutyCalcImportFile do
   after :each do
     @to_del.each {|x| File.unlink(x) if File.exist?(x)}
   end
-  describe :generate_for_importer do
+  describe "generate_for_importer" do
     it "should generate excel zip and attach" do
       zip = double('outputzip')
       expect(zip).to receive(:original_filename=).with('abc.txt')
@@ -34,7 +34,7 @@ describe DutyCalcImportFile do
       expect(@user.messages.size).to eq(1)
     end
   end
-  describe :generate_excel_zip do
+  describe "generate_excel_zip" do
     it "should generate a single zipped excel file" do
       d, f = DutyCalcImportFile.generate_excel_zip @importer, @user, @zip_path
       Zip::File.open(f.path) do |zipfile|

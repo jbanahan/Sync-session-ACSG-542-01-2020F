@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SearchSetup do
-  describe :result_keys do
+  describe "result_keys" do
     it "should initialize query" do
       expect_any_instance_of(SearchQuery).to receive(:result_keys).and_return "X"
       expect(SearchSetup.new.result_keys).to eq("X")
@@ -48,7 +48,7 @@ describe SearchSetup do
       expect(Factory(:search_setup).downloadable? errors, true).to be_truthy
     end
   end
-  describe :give_to do
+  describe "give_to" do
     before :each do
       MasterSetup.get.update_attributes(request_host:"localhost:3000")
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")
@@ -87,7 +87,7 @@ describe SearchSetup do
     end
 
   end
-  describe :deep_copy do
+  describe "deep_copy" do
     before :each do
       @u = Factory(:user)
       @s = SearchSetup.create!(:name=>"ABC",:module_type=>"Order",:user=>@u,:simple=>false,:download_format=>'csv',:include_links=>true)

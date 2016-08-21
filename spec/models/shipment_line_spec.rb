@@ -19,7 +19,7 @@ describe ShipmentLine do
       expect(ShipmentLine.new).not_to be_locked
     end
   end
-  describe :merge_piece_sets do
+  describe "merge_piece_sets" do
     it "should merge piece sets on destroy" do
       ol = Factory(:order_line)
       sl = Factory(:shipment_line,product:ol.product)

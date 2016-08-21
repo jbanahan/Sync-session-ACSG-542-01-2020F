@@ -5,7 +5,7 @@ describe OpenChain::SlackClient do
     @fake_client = double('Slack::Web::Client')
     allow(OpenChain::SlackClient).to receive(:slack_client).and_return @fake_client
   end
-  describe :initalize do
+  describe "initalize" do
     it "should get bot-api token from default location" do
       expect(File).to receive(:exist?).with("config/slack_client.yml").and_return true
       expect(YAML).to receive(:load_file).with("config/slack_client.yml").and_return({"VFITRACK_SLACK_TOKEN"=>"abc"})

@@ -46,7 +46,7 @@ describe OpenChain::XLClient do
       expect(subject.send(cmd)).to eq(resp)
     end
   end
-  describe :new_from_attachable do
+  describe "new_from_attachable" do
     it "should initialize with attached path" do
       attachable = double(:attachable)
       attached = double(:attached)
@@ -57,7 +57,7 @@ describe OpenChain::XLClient do
       expect(described_class.new_from_attachable(attachable)).to be x
     end
   end
-  describe :all_row_values do
+  describe "all_row_values" do
     it "should yield for all rows based on last_row_number" do
       expect(subject).to receive(:last_row_number).with(0).and_return(2)
       expect(subject).to receive(:get_rows).with(row:0, sheet: 0, number_of_rows: 1).and_return([['a']])

@@ -6,7 +6,7 @@ describe OpenChain::Trello do
     Factory(:user, email:'b@sample.com',first_name:'Joe',last_name:'Shmo',company:Factory(:company,name:'ACustomer'))
   }
 
-  describe :create_feedback_card! do
+  describe "create_feedback_card!" do
 
     it "adds feedback card to the defined list" do
       wrapper = double("OpenChain::Trello::ApiWrapper")

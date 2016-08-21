@@ -10,7 +10,7 @@ describe ProjectSetsController do
     sign_in_as @u
   end
 
-  describe :show do
+  describe "show" do
     it "should redirect for users who cannot view projects" do
       allow_any_instance_of(User).to receive(:view_projects?).and_return false
       get :show, id: @ps.id

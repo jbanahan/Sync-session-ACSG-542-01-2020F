@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Comment do
-  describe :publish_event do
+  describe "publish_event" do
     it "should publish event on create" do
       o = Factory(:order)
       u = Factory(:user)

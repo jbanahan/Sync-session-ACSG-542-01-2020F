@@ -9,7 +9,7 @@ describe CorrectiveIssuesController do
     allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return(true)
   end
 
-  describe :update do
+  describe "update" do
     it "should allow editor to update description and suggested action" do
       ci = @cap.corrective_issues.create!(description:'d',suggested_action:'sa',action_taken:'at')
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_edit?).and_return(true)

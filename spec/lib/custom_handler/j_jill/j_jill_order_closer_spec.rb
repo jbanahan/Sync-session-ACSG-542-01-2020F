@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::JJill::JJillOrderCloser do
-  describe :close? do
+  describe "close?" do
     it "should close an order > 60 days after ship_window_end" do
       o = Order.new(ship_window_end:61.days.ago)
       expect(described_class.new.close?(o)).to be_truthy
@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::JJill::JJillOrderCloser do
     end
   end
 
-  describe :process_orders do
+  describe "process_orders" do
     it "should close all that pass close" do
       a = double('a')
       b = double('b')

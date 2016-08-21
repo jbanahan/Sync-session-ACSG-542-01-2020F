@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   after :each do
     File.delete @tmp if @tmp && File.exists?(@tmp)
   end
-  describe :products_to_send do
+  describe "products_to_send" do
     before :all do
       @custom_defs = described_class.new.send(:init_outbound_custom_definitions)
     end
@@ -64,7 +64,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       expect(described_class.new.products_to_send).to include @p
     end
   end
-  describe :outbound_file do
+  describe "outbound_file" do
     before :all do
       @custom_defs = described_class.new.send(:init_outbound_custom_definitions)
     end
@@ -320,7 +320,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       expect(r[1][5]).to be_blank
     end
   end
-  describe :send_file do
+  describe "send_file" do
     it 'should send file' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
@@ -334,7 +334,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new(:env=>:qa).send_file(@tmp,fn)
     end
   end
-  describe :inbound_file do
+  describe "inbound_file" do
     before :all do
       @custom_defs = described_class.new.send(:init_inbound_custom_definitions)
     end

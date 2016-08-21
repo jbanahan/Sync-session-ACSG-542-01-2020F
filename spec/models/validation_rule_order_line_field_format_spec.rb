@@ -34,7 +34,7 @@ describe ValidationRuleOrderLineFieldFormat do
     expect(@rule.run_validation(@ol.order)).to be_nil
   end
 
-  describe :should_skip? do
+  describe "should_skip?" do
 
     it "should skip on order validation level" do
       @ol.order.update_attributes(order_number:'1234321')

@@ -4,7 +4,7 @@ describe ResultCache do
   before :each do
     allow(Product).to receive(:search_where).and_return("1=1")
   end
-  describe :next do
+  describe "next" do
     it "should load cache if empty" do
       ss = Factory(:search_setup,:module_type=>"Product")
       ss.sort_criterions.create!(:model_field_uid=>:prod_uid)
@@ -52,7 +52,7 @@ describe ResultCache do
       expect(rc.page).to eq(2)
     end
   end
-  describe :previous do
+  describe "previous" do
     it "should find in cache" do
       expect(ResultCache.new(:object_ids=>[7,1,5].to_json).previous(5)).to eq(1)
     end

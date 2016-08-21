@@ -276,7 +276,7 @@ describe SearchSchedule do
     end
   end
 
-  describe :report_blank? do
+  describe "report_blank?" do
     before(:each) { @ss = SearchSchedule.new }
 
     it "returns true when an xls report is blank" do

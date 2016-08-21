@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
-  describe :process_attachment do
+  describe "process_attachment" do
     it "should get path and call parse" do
       u = double(:user)
       s = double(:shipment)
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(described_class.process_attachment(s, att, u)).to eq 'x'
     end
   end
-  describe :parse do
+  describe "parse" do
     it "should create object and call run" do
       s = double('shipment')
       path = double('data')
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
   end
 
-  describe :run do
+  describe "run" do
     it "should process_rows" do
       x = double('xlclient')
       s = double('shipment')

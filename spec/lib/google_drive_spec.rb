@@ -79,7 +79,7 @@ describe OpenChain::GoogleDrive do
       end
     end
 
-    describe :find_folder_id do
+    describe "find_folder_id" do
       it "should find an id for the test folder" do
         # Just find an id for a folder we know should be there
         # The underlying method this uses already has thorough test coverage 
@@ -91,7 +91,7 @@ describe OpenChain::GoogleDrive do
       end
     end
     
-    describe :find_file_id do
+    describe "find_file_id" do
       it "should find a file id" do
         # Just find an id for a file we know should be there
         retry_expect(additional_rescue_from: [StandardError]) {

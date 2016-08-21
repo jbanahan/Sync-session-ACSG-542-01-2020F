@@ -1,20 +1,20 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloCsmProductGenerator do
-  describe :remote_file_name do
+  describe "remote_file_name" do
     #ChainYYYYMMDDHHSS.csv
     it "should return datestamp naming convention" do
       expect(described_class.new.remote_file_name).to match /Chain[0-9]{14}\.csv/
     end
   end
-  describe :ftp_credentials do
+  describe "ftp_credentials" do
     it "should send credentials" do
       c = described_class.new
       allow(c).to receive(:remote_file_name).and_return("x.csv")
       expect(c.ftp_credentials).to eq({:username=>'polo',:password=>'pZZ117',:server=>'connect.vfitrack.net',:folder=>'/_to_csm',:remote_file_name=>'x.csv'})
     end
   end
-  describe :sync_csv do
+  describe "sync_csv" do
     after :each do
       @tmp.unlink if @tmp
     end
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
       expect(a[1][8]).to eq('A B C')
     end
   end
-  describe :query do
+  describe "query" do
     before :each do
       @cd = Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text)
       @italy = Factory(:country,:iso_code=>'IT')

@@ -1,12 +1,12 @@
 require 'spec_helper'
 
 describe OpenChain::WorkflowTester::MultiStateWorkflowTest do
-  describe :category do
+  describe "category" do
     it "should return Actions" do
       expect(described_class.category).to eq 'Actions'
     end
   end
-  describe :pass? do
+  describe "pass?" do
     before :each do
       @wt = Factory(:workflow_task,test_class_name:described_class.name)
     end

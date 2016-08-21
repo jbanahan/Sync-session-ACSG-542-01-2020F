@@ -7,7 +7,7 @@ describe VfiInvoicesController do
     sign_in_as @u
   end
 
-  describe :index do
+  describe "index" do
     it "allows use only by vfi-invoice viewers" do
       get :index
 
@@ -23,7 +23,7 @@ describe VfiInvoicesController do
     end
   end
 
-  describe :show do
+  describe "show" do
     it "allows use only by vfi-statement viewers" do
       get :show, id: @inv
 

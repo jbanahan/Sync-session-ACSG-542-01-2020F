@@ -22,7 +22,7 @@ describe OpenChain::EntityCompare::EntityComparator do
   let (:user) { Factory(:user) }
   let (:order) { Factory(:order) }
 
-  describe :process_by_id do
+  describe "process_by_id" do
     it "should find EntitySnapshot and process" do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
       expect(described_class).to receive(:process).with(instance_of(EntitySnapshot))
@@ -30,7 +30,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       described_class.process_by_id es.id
     end
   end
-  describe :process do
+  describe "process" do
     before :each do
       allow(comparator).to receive(:delay).and_return(comparator)
       OpenChain::EntityCompare::ComparatorRegistry.register comparator

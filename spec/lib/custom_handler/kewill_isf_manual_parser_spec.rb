@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::KewillIsfManualParser do
     @k_nil = OpenChain::CustomHandler::KewillIsfManualParser.new(nil)
   end
 
-  describe :can_view? do
+  describe "can_view?" do
     it "should be true when user can edit security filings" do
       allow_any_instance_of(User).to receive(:edit_security_filings?).and_return true
       expect(@k_nil.can_view?(@u)).to eq(true)
@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::KewillIsfManualParser do
     end
   end
 
-  describe :process do
+  describe "process" do
     it "should return nil and stop if the custom file is nil" do
       expect_any_instance_of(OpenChain::CustomHandler::KewillIsfManualParser).not_to receive(:process_s3)
       expect(@k_nil.process(@u)).to eq(nil)
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::KewillIsfManualParser do
     end
   end
 
-  describe :process_s3 do
+  describe "process_s3" do
     before :each do
       @sf1 = Factory(:security_filing, host_system_file_number: 11111, status_code: "Some default status")
       @sf2 = Factory(:security_filing, host_system_file_number: 22222, status_code: "Some default status")

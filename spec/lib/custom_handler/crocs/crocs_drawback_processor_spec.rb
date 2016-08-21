@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
-  describe :process_entries_by_arrival_date do
+  describe "process_entries_by_arrival_date" do
     
     it "should find entries by customer and date range" do
       imp = Factory(:company,alliance_customer_number:'CROCS')
@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
     end
   end
 
-  describe :find_shipment_lines do
+  describe "find_shipment_lines" do
     before :each do
       @imp = Factory(:company,alliance_customer_number:'CROCS')
       @p = Factory(:product,unique_identifier:'CROCS-S12345')
@@ -66,7 +66,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
     end
   end
 
-  describe :get_part_number do
+  describe "get_part_number" do
     it 'should be sku-coo' do
       defs = described_class.prep_custom_definitions [:shpln_coo,:shpln_sku]
       s_line = Factory(:shipment_line)
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
     end
   end
 
-  describe :get_country_of_origin do
+  describe "get_country_of_origin" do
     it 'should pull from shipment line' do
       #not pulling from commercial invoice line to stay consistent with get_part_number
       defs = described_class.prep_custom_definitions [:shpln_coo]
@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
     end
   end
 
-  describe :get_received_date do
+  describe "get_received_date" do
     it 'should pull from shipment line custom value' do
       defs = described_class.prep_custom_definitions [:shpln_received_date]
       s_line = Factory(:shipment_line)
@@ -96,7 +96,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
     end
   end
 
-  describe :format_po_number do
+  describe "format_po_number" do
     it "should format po number from all the crap formats" do
       pos = [
         '1234567', #simple

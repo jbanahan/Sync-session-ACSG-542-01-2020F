@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe AnswerCommentsController do
-  describe :create do
+  describe "create" do
     before :each do
       @user = Factory(:user,first_name:'Joe',last_name:'Jackson')
 

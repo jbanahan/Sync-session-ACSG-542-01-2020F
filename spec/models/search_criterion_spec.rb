@@ -4,7 +4,7 @@ describe SearchCriterion do
   before :each do
     @product = Factory(:product)
   end
-  describe :core_module do
+  describe "core_module" do
     it "should return core module based on module type" do
       expect(SearchCriterion.new(model_field_uid:'ent_release_date').core_module.klass).to eq Entry
     end
@@ -168,7 +168,7 @@ describe SearchCriterion do
     end
   end
   context "previous _ months" do
-    describe :test? do
+    describe "test?" do
       before :each do
         @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
       end
@@ -302,7 +302,7 @@ describe SearchCriterion do
         expect(crit.test?(@product)).to be_truthy
       end
     end
-    describe :apply do
+    describe "apply" do
       context :custom_field do
         it "should find something created last month with val = 1" do
           @definition = Factory(:custom_definition,:data_type=>'date')

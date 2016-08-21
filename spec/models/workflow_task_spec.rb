@@ -7,7 +7,7 @@ describe WorkflowTask do
     end
   end; end; end
 
-  describe :for_user do
+  describe "for_user" do
     it "should find workflow tasks for groups user is a member of" do
       # just setting up a standard instance to save on the DB writes of creating
       # a new instance for each task below
@@ -30,7 +30,7 @@ describe WorkflowTask do
     end
   end
 
-  describe :not_passed do
+  describe "not_passed" do
     it "should find workflow tasks where passed_at is nil" do
       w1 = Factory(:workflow_task)
       w2 = Factory(:workflow_task,passed_at:1.minute.ago)
@@ -38,7 +38,7 @@ describe WorkflowTask do
     end
   end
 
-  describe :for_base_object do
+  describe "for_base_object" do
     it "should find workflow_task by base_object" do
       wt1 = Factory(:workflow_task)
       wt2 = Factory(:workflow_task)
@@ -46,7 +46,7 @@ describe WorkflowTask do
     end
   end
 
-  describe :object_to_test do
+  describe "object_to_test" do
     it "should test target_object" do
       p = Product.new
       w = WorkflowTask.new
@@ -61,7 +61,7 @@ describe WorkflowTask do
     end
   end
 
-  describe :are_overdue do
+  describe "are_overdue" do
     it "should find workflow_tasks with due_at in the past" do
       wt1 = Factory(:workflow_task,due_at:1.year.ago)
       wt2 = Factory(:workflow_task,due_at:1.year.from_now)
@@ -70,7 +70,7 @@ describe WorkflowTask do
     end
   end
 
-  describe :overdue? do
+  describe "overdue?" do
     it "should be true when workflow_task due_at is in the past" do
       expect(WorkflowTask.new(due_at:1.hour.ago)).to be_overdue
     end
@@ -81,13 +81,13 @@ describe WorkflowTask do
       expect(WorkflowTask.new).to_not be_overdue
     end
   end
-  describe :test_class do
+  describe "test_class" do
     it "should get test class" do
       wt = WorkflowTask.new(test_class_name:"OpenChain::Test::MyTestWorkflowTask")
       expect(wt.test_class).to eq OpenChain::Test::MyTestWorkflowTask
     end
   end
-  describe :test! do
+  describe "test!" do
     it "should use test class and set passed" do
       wt = Factory(:workflow_task,test_class_name:"OpenChain::Test::MyTestWorkflowTask",payload_json:'{"pass":"yes"}')
       expect(wt.passed_at).to be_nil
@@ -103,7 +103,7 @@ describe WorkflowTask do
     end
   end
 
-  describe :can_edit? do
+  describe "can_edit?" do
     it "can edit if user in group and can view object" do
       u = Factory(:user)
       g = Factory(:group)

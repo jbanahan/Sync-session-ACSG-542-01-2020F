@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SurveyResponseLogsController do
-  describe :index do
+  describe "index" do
     before :each do 
       u = Factory(:user)
 

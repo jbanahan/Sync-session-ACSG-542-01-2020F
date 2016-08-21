@@ -85,7 +85,7 @@ describe SchedulableJob do
     end
   end
 
-  describe :time_zone do
+  describe "time_zone" do
     it "should default to eastern" do
       expect(SchedulableJob.new.time_zone).to eq(ActiveSupport::TimeZone["Eastern Time (US & Canada)"])
     end

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
-  describe :generate do
+  describe "generate" do
     it "should create xls file, and ftp it while rows are written to spreadsheet" do
       h = described_class.new
       expect(h).to receive(:row_count).exactly(3).times.and_return(1, 1, 0)
@@ -13,17 +13,17 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
       h.generate
     end
   end
-  describe :ftp_credentials do
+  describe "ftp_credentials" do
     it "should send credentials" do
       expect(described_class.new.ftp_credentials).to eq({:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/Ralph_Lauren/efocus_products'})
     end
   end
-  describe :auto_confirm? do
+  describe "auto_confirm?" do
     it "should not autoconfirm" do
       expect(described_class.new.auto_confirm?).to be_falsey
     end
   end
-  describe :query do
+  describe "query" do
     before :each do
       @us = Factory(:country,:iso_code=>'US')
     end

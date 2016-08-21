@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Survey do
-  describe :copy! do
+  describe "copy!" do
     before :each do 
       @survey = Factory(:survey,:name=>"my name",:email_subject=>"emlsubj",:email_body=>"emlbod",:ratings_list=>"rat")
     end
@@ -131,7 +131,7 @@ describe Survey do
       expect(@s.can_view?(u)).to be_falsey
     end
   end
-  describe :rating_values do
+  describe "rating_values" do
     it "should return empty array if no values" do
       expect(Survey.new.rating_values).to eq([])
     end

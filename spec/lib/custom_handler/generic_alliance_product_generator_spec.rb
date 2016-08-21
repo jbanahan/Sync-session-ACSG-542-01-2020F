@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
   before :each do
     @c = Factory(:company,:alliance_customer_number=>'MYCUS', last_alliance_product_push_at: '2000-01-01')
   end
-  describe :sync do
+  describe "sync" do
     it "should call appropriate methods" do
       k = described_class
       f = double("file")
@@ -17,21 +17,21 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
       expect(k.sync(@c)).to be_nil
     end
   end
-  describe :remote_file_name do
+  describe "remote_file_name" do
     it "should base remote file name on alliance customer number" do
       g = described_class.new(@c)
       expect(g.remote_file_name).to match /^[0-9]{10}-MYCUS.DAT$/
     end
   end
 
-  describe :fixed_position_map do
+  describe "fixed_position_map" do
     it "should output correct mapping" do
       expected = [{:len=>15}, {:len=>40}, {:len=>10}, {:len=>2}, {:len=>1}, {:len=>7}, {:len=>1}, {:len=>3}, {:len=>2}, {:len=>15}, {:len=>15}, {:len=>40}, {:len=>11}, {:len=>4}, {:len=>4}, {:len=>4}, {:len=>10}, {:len=>10}, {:len=>3}]
       expect(described_class.new(@c).fixed_position_map).to eq(expected)
     end
   end
 
-  describe :new do 
+  describe "new" do 
     it "should initialize with a company id" do
       g = described_class.new(@c.id)
       # Just use remote filename as the check if the importer loaded correctly

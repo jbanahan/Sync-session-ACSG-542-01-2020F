@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe DrawbackUploadFile do
-  describe :process do
+  describe "process" do
     before :each do
       @tmp = double("Tempfile")
       allow(@tmp).to receive(:path).and_return('tmppath')

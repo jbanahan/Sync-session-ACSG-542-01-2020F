@@ -4,7 +4,7 @@ describe AttachmentArchiveManifest do
   before :each do 
     @c = Factory(:company)
   end
-  describe :make_manifest! do
+  describe "make_manifest!" do
     it "should create attachment and update time" do
       @man = @c.attachment_archive_manifests.create!(:start_at=>1.hour.ago)
       @base_time = 2.days.ago
@@ -22,7 +22,7 @@ describe AttachmentArchiveManifest do
     end
   end
 
-  describe :generate_manifest_tempfile! do
+  describe "generate_manifest_tempfile!" do
     before :each do
       @rel_date = 1.day.ago
       @ent = Factory(:entry,:importer=>@c,:broker_reference=>'123',:release_date=>@rel_date,:master_bills_of_lading=>'mbol',:arrival_date=>1.day.ago, :po_numbers => "PO")

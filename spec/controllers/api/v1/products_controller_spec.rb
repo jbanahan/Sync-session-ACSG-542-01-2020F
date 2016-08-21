@@ -440,7 +440,7 @@ describe Api::V1::ProductsController do
     end
   end
 
-  describe :validate do
+  describe "validate" do
     it "runs validations and returns result hash" do
       u = Factory(:master_user, product_view:true)
       allow_api_access u

@@ -6,7 +6,7 @@ describe SecurityFilingsController do
     @u = Factory(:user)
     sign_in_as @u
   end
-  describe :show do
+  describe "show" do
     before :each do
       @sf = Factory(:security_filing)
     end

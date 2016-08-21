@@ -6,7 +6,7 @@ describe ChargeCodesController do
 
     sign_in_as @u
   end
-  describe :index do
+  describe "index" do
     it "should only allow admins" do
       @u.admin = false
       @u.save!
@@ -23,7 +23,7 @@ describe ChargeCodesController do
     end
   end
 
-  describe :create do
+  describe "create" do
     it "should only allow admins" do
       @u.admin = false
       @u.save!
@@ -41,7 +41,7 @@ describe ChargeCodesController do
     end
   end
 
-  describe :destroy do
+  describe "destroy" do
     before :each do
       @c = ChargeCode.create!(:code=>"a")
     end
@@ -60,7 +60,7 @@ describe ChargeCodesController do
     end
   end
 
-  describe :update do
+  describe "update" do
     before :each do
       @c = ChargeCode.create!(:code=>"a")
     end

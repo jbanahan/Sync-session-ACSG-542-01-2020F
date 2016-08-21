@@ -20,7 +20,7 @@ describe OpenChain::S3, s3: true do
     end
   end
   
-  describe :bucket_exists? do
+  describe "bucket_exists?" do
     before :each do
       @s3_double = double('s3')
       expect(AWS::S3).to receive(:new).with(AWS_CREDENTIALS).and_return(@s3_double)
@@ -39,7 +39,7 @@ describe OpenChain::S3, s3: true do
     end
   end
 
-  describe :create_bucket do
+  describe "create_bucket" do
     it "should create bucket" do
       bucket_name = 'abc'
       s3_double = double('s3')
@@ -263,7 +263,7 @@ describe OpenChain::S3, s3: true do
     end
   end
 
-  describe :url_for do
+  describe "url_for" do
     it "should return a url for the specified bucket / key" do
       url = OpenChain::S3.url_for "bucket", "path/to/file.txt"
       expect(url).to match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/

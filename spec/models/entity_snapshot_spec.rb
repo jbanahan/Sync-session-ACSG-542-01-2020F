@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe EntitySnapshot do
 
-  describe :diff do
+  describe "diff" do
     before :each do
       @u = Factory(:user)
     end
@@ -94,7 +94,7 @@ describe EntitySnapshot do
       expect(cib.model_fields_changed['ordln_hts']).to eq ['123456'.hts_format,'654321'.hts_format]
     end
   end
-  describe :restore do
+  describe "restore" do
     before :each do 
       ModelField.reload
       #not worrying about permissions
@@ -260,7 +260,7 @@ describe EntitySnapshot do
     end
   end
 
-  describe :bucket_name do
+  describe "bucket_name" do
     it "should append env.system_code.snapshots.vfitrack.net" do
       env = Rails.env
       MasterSetup.get.update_attributes(system_code:'syscode')
@@ -271,7 +271,7 @@ describe EntitySnapshot do
       expect{EntitySnapshot.bucket_name}.to raise_error(/Bucket name too long/)
     end
   end
-  describe :create_bucket_if_needed do
+  describe "create_bucket_if_needed" do
     before :each do
       @bn = 'bucketname'
       allow(EntitySnapshot).to receive(:bucket_name).and_return(@bn)
@@ -288,7 +288,7 @@ describe EntitySnapshot do
     end
   end
 
-  describe :create_from_entity do
+  describe "create_from_entity" do
     it "should write S3 file at logical path" do
       expected_path = '/my/path'
       expected_bucket = 'bucket'
@@ -331,7 +331,7 @@ describe EntitySnapshot do
     end
   end
 
-  describe :expected_s3_path do
+  describe "expected_s3_path" do
     it "should be core module / recordable.id" do
       ent = Factory(:entry)
       es = EntitySnapshot.new

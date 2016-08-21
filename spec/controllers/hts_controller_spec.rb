@@ -3,7 +3,7 @@ require 'json'
 
 describe HtsController do
 
-  describe :country do
+  describe "country" do
     before :each do
       @usa = Factory(:country, "name"=> "United States", iso_code: "US")
       @tariff1 = Factory(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
@@ -20,7 +20,7 @@ describe HtsController do
     end
   end
 
-  describe :chapter do
+  describe "chapter" do
     before :each do
       @usa = Factory(:country, "name"=> "United States", iso_code: "US")
       @tariff1 = Factory(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
@@ -37,7 +37,7 @@ describe HtsController do
 
   end
 
-  describe :heading do
+  describe "heading" do
     before :each do
       @usa = Factory(:country, "name"=> "United States", iso_code: "US")
       @tariff1 = Factory(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
@@ -51,7 +51,7 @@ describe HtsController do
     end
   end
 
-  describe :subscribed_countries do
+  describe "subscribed_countries" do
     before :each do
       @usa = Factory(:country, "name"=> "United States", iso_code: "US", import_location: true)
       @can = Factory(:country, "name"=> "Canada", iso_code: "CA", import_location: true)

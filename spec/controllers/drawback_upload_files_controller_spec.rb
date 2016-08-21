@@ -7,7 +7,7 @@ describe DrawbackUploadFilesController do
     sign_in_as @user
     allow_any_instance_of(DrawbackUploadFile).to receive(:validate_layout).and_return([])
   end
-  describe :index do
+  describe "index" do
     it "should redirect if user cannot view drawback" do
       allow_any_instance_of(User).to receive(:view_drawback?).and_return(false)
       get :index
@@ -20,7 +20,7 @@ describe DrawbackUploadFilesController do
       expect(response).to be_success
     end
   end
-  describe :create do
+  describe "create" do
     before :each do
       @file = fixture_file_upload('/files/test.txt', 'text/plain')
       @dj = Delayed::Worker.delay_jobs

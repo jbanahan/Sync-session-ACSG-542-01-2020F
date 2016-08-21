@@ -19,7 +19,7 @@ describe FakeController, :type => :controller do
     @routes.draw { get "validation_results" => "anonymous#validation_results" }
   end
 
-  describe :generic_validation_results do
+  describe "generic_validation_results" do
     context "with HTML" do
       it "provides object to view if user has rights to object view and business validation results" do
         allow(@u).to receive(:view_business_validation_results?).and_return true
@@ -105,7 +105,7 @@ describe FakeJsonController, :type => :controller do
     end
   end
 
-  describe :run_validations do
+  describe "run_validations" do
 
     def create_validation_data user
       @obj = Factory(:entry, broker_reference: "123456")
@@ -198,7 +198,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
     @bvrr_3.business_validation_result = @bvr_2; @bvrr_3.save!
   end
 
-  describe :results_to_hsh do
+  describe "results_to_hsh" do
 
     before :each do
       create_validation_data(@u)

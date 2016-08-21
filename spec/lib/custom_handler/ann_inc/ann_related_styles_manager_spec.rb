@@ -13,14 +13,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
     CustomDefinition.where('1=1').destroy_all
   end
 
-  describe :get_style do
+  describe "get_style" do
     it "should not return read only style" do
       p = Factory(:product,unique_identifier:'base-u')
       found = described_class.get_style('base-u',nil,nil,nil)
       expect {found.update_attributes(name:'x')}.not_to raise_error
     end
   end
-  describe :find_all_styles do
+  describe "find_all_styles" do
     it "should find the base style" do
       p = Factory(:product,unique_identifier:'base-u')
       found = described_class.new('base-u',nil,nil,nil).find_all_styles
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
     end
   end
 
-  describe :missy_style do
+  describe "missy_style" do
     it "should return nil if it doesn't know" do
       expect(described_class.new('base',nil,'pet',nil).missy_style).to be_nil
     end
@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
     end
   end
 
-  describe :product_to_use do
+  describe "product_to_use" do
     context "one database match" do
       it "should return matched product" do
         p = Factory(:product)
@@ -138,7 +138,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
     end
   end
 
-  describe :set_best_classifications do 
+  describe "set_best_classifications" do 
     before :each do
       @country = Factory(:country,import_location:true)
       @c = described_class.new('base',nil,nil,nil)
@@ -195,7 +195,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
     end
   end
 
-  describe :merge_aggregate_values do
+  describe "merge_aggregate_values" do
     it "should include all values" do
       c = described_class.new('base',nil,nil,nil)
       po_cd = c.aggregate_defs[:po]
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
     end
   end
 
-  describe :set_earliest_ac_date do
+  describe "set_earliest_ac_date" do
     it "should set earliest ac date ignoring nulls" do
       c = described_class.new('base',nil,nil,nil)
       cd = c.ac_date_cd
@@ -224,7 +224,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
     end
   end
 
-  describe :related_styles_value do
+  describe "related_styles_value" do
     it "should return all related styles except missy when missy can be determined" do
       expect(described_class.new('b','m','p',nil).related_styles_value).to eq("b\np")
       expect(described_class.new('b',nil,'p','t').related_styles_value).to eq("p\nt")

@@ -6,7 +6,7 @@ describe Api::V1::FenixPostbacksController do
     allow_api_access @user
   end
 
-  describe :receive_lvs_results do
+  describe "receive_lvs_results" do
     it "delays and passes query results to fenix parser" do
       query_results = [{"summary" => "12345", "child" => "98765"}]
 

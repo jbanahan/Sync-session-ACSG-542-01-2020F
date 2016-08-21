@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::Report::XLSSearch do
   before(:each) { @u = Factory(:user,:company_id=>Factory(:company,:master=>true).id,:product_view=>true) }
   
-  describe :run_report do
+  describe "run_report" do
     it "runs report" do
       search = Factory(:search_setup,:user=>@u,:module_type=>'Product')
       expect(described_class).to receive(:run).with(@u, search.id)
@@ -11,7 +11,7 @@ describe OpenChain::Report::XLSSearch do
     end
   end
 
-  describe :run_and_email_report do
+  describe "run_and_email_report" do
     before :each do
       @mail_fields = { to: 'sthubbins@hellhole.co.uk', :subject => 'amp', body: "Goes up to 11."}
       @search = Factory(:search_setup,:user=>@u,:module_type=>'Product')
@@ -44,7 +44,7 @@ describe OpenChain::Report::XLSSearch do
 
   end
 
-  describe :run do
+  describe "run" do
   
     context "execute" do
       before :each do

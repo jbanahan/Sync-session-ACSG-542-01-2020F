@@ -8,7 +8,7 @@ describe ProjectDeliverablesController do
 
     sign_in_as @u
   end
-  describe :index do
+  describe "index" do
     before :each do
       @u1 = Factory(:user)
       @u2 = Factory(:user)
@@ -62,7 +62,7 @@ describe ProjectDeliverablesController do
       expect(r.size).to eq 1
     end
   end
-  describe :create do
+  describe "create" do
     it "should create" do
       allow_any_instance_of(Project).to receive(:can_edit?).and_return true
       p = Factory(:project)
@@ -88,7 +88,7 @@ describe ProjectDeliverablesController do
       expect(JSON.parse(response.body)['error']).to match /permission/
     end
   end
-  describe :update do
+  describe "update" do
     it "should reject if user cannot edit" do
       allow_any_instance_of(Project).to receive(:can_edit?).and_return false
       pd = Factory(:project_deliverable,description:'x')
@@ -109,7 +109,7 @@ describe ProjectDeliverablesController do
     end
   end
 
-  describe :notify_now do
+  describe "notify_now" do
 
     it "should reject if user cannot view" do
       allow_any_instance_of(User).to receive(:view_projects?).and_return false

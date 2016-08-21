@@ -21,7 +21,7 @@ describe OpenChain::ProjectDeliverableProcessor do
     @p = OpenChain::ProjectDeliverableProcessor.new
   end
 
-  describe :run_schedulable do
+  describe "run_schedulable" do
 
     it 'should return the correct hash for the ecosystem' do
       expect(@p.run_schedulable).to eq({1000=>[@pd1, @pd3], 2000=>[@pd4]})
@@ -34,7 +34,7 @@ describe OpenChain::ProjectDeliverableProcessor do
 
   end
 
-  describe :fill_hash_values do
+  describe "fill_hash_values" do
 
     it 'should fill the hash with the correct information' do
       blank_hash = {}
@@ -43,7 +43,7 @@ describe OpenChain::ProjectDeliverableProcessor do
 
   end
 
-  describe :add_to_hash do
+  describe "add_to_hash" do
 
     it 'should make a new key/value pair if the key does not yet exist' do
       start_hash = {"k1" => ["v1"], "k2" => ["v2"]}
@@ -57,7 +57,7 @@ describe OpenChain::ProjectDeliverableProcessor do
 
   end
 
-  describe :create_emails_from_hash do
+  describe "create_emails_from_hash" do
 
     it 'should send emails to correct users with correct projects' do
       @p.run_schedulable

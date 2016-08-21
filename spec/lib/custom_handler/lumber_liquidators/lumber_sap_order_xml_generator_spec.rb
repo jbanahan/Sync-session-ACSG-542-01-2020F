@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator
   before :each do
     allow(described_class).to receive(:ftp_file)
   end
-  describe :send_order do
+  describe "send_order" do
     it "should generate and FTP" do
       o = double('order')
       u = double('user')

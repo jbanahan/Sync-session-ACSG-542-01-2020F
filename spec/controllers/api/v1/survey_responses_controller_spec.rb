@@ -294,7 +294,7 @@ describe Api::V1::SurveyResponsesController do
     end
   end
 
-  describe :checkin do
+  describe "checkin" do
 
     before :each do
       @user = Factory(:user, survey_view: true)

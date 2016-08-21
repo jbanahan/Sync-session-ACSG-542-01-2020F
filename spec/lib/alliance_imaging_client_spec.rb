@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::AllianceImagingClient do
-  describe :bulk_request_images do
+  describe "bulk_request_images" do
     before :each do
       @e1 = Factory(:entry,:broker_reference=>'123456',:source_system=>'Alliance')
       @e2 = Factory(:entry,:broker_reference=>'654321',:source_system=>'Alliance')
@@ -51,7 +51,7 @@ describe OpenChain::AllianceImagingClient do
     end
   end
 
-  describe :process_image_file do
+  describe "process_image_file" do
     before :each do
       @e1 = Factory(:entry,:broker_reference=>'123456',:source_system=>'Alliance')
       # We need to start w/ an actual pdf file as paperclip no longer just uses the file's
@@ -240,7 +240,7 @@ describe OpenChain::AllianceImagingClient do
     end
   end
 
-  describe :consume_images do
+  describe "consume_images" do
     it "should use SQS queue to download messages and use the S3 client with tempfile to download the file" do
       # This is mostly just mocks, but I wanted to ensure the expected calls are actualy happening
       hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"}

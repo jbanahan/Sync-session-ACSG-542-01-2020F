@@ -52,7 +52,7 @@ describe DutyCalcExportFileLine do
       expect(exp.unallocated_quantity).to eql(3)
     end
   end
-  describe :not_in_imports do
+  describe "not_in_imports" do
     before :each do
       @imp = Factory(:company)
       p = Factory(:product,:unique_identifier=>"ABC")
@@ -75,7 +75,7 @@ describe DutyCalcExportFileLine do
       expect(DutyCalcExportFileLine.not_in_imports.first).to eq(@exp)
     end
   end
-  describe :make_line_array do
+  describe "make_line_array" do
     it "should make array" do
       line = DutyCalcExportFileLine.new(:export_date=>1.day.ago,:ship_date=>2.days.ago,
         :part_number => "123", :carrier=>"APLL", :ref_1=>"R1", :ref_2=>"R2",

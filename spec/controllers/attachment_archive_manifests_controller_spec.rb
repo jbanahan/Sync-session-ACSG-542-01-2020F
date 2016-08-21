@@ -7,7 +7,7 @@ describe AttachmentArchiveManifestsController do
 
     sign_in_as @u
   end
-  describe :create do
+  describe "create" do
     it "should create manifest and delay manifest generation" do
       d = double("delayed_job")
       expect(d).to receive(:make_manifest!)
@@ -25,7 +25,7 @@ describe AttachmentArchiveManifestsController do
       expect(flash[:errors]).not_to be_empty
     end
   end
-  describe :download do
+  describe "download" do
     before :each do
       @m = @u.company.attachment_archive_manifests.create!
     end

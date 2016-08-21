@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BusinessValidationRuleResult do
-  describe :can_view do
+  describe "can_view" do
     it "should allow users who can view results" do
       u = Factory(:master_user)
       expect(described_class.new.can_view?(u)).to be_truthy
@@ -11,7 +11,7 @@ describe BusinessValidationRuleResult do
       expect(described_class.new.can_view?(u)).to be_falsey
     end
   end
-  describe :can_edit do
+  describe "can_edit" do
     before :each do
       @group = Factory(:group)
       @bvr = Factory(:business_validation_rule, group: @group)
@@ -38,7 +38,7 @@ describe BusinessValidationRuleResult do
       expect(@bvrr.can_edit?(u)).to be true
     end
   end
-  describe :run_validation do
+  describe "run_validation" do
     it "should set failure state and message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
@@ -99,7 +99,7 @@ describe BusinessValidationRuleResult do
       expect(rule.state).to eq 'X'
     end
   end
-  describe :override do
+  describe "override" do
     it "should set overriden_at and overriden_by" do
       u = User.new
       r = described_class.new
@@ -127,7 +127,7 @@ describe BusinessValidationRuleResult do
     end
   end
 
-  describe :cancel_override do
+  describe "cancel_override" do
     it "should set overridden_at, overridden_by, and note to nil" do
       u = User.new
       r = Factory(:business_validation_rule_result, overridden_at: Time.now, overridden_by: u, note: "Some message.")

@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
     @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
     allow(described_class).to receive(:attach_file).and_return nil
   end
-  describe :parse do
+  describe "parse" do
     before :each do
       [Order,Shipment,CommercialInvoice,Product].each {|k| allow_any_instance_of(k).to receive(:can_edit?).and_return true}
       [:edit_orders?,:edit_commercial_invoices?,:edit_shipments?,:edit_products?].each {|p| allow(@u).to receive(p).and_return true}

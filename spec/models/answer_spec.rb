@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Answer do
   
-  describe :log_update do
+  describe "log_update" do
     it "should create survey_response_update" do
       answer = Factory(:answer)
       u = Factory(:user)
@@ -10,7 +10,7 @@ describe Answer do
       expect(answer.survey_response.survey_response_updates.first.user).to eq(u)
     end
   end
-  describe :can_attach? do
+  describe "can_attach?" do
     before :each do
       @a = Answer.new 
       @u = User.new
@@ -24,7 +24,7 @@ describe Answer do
       expect(@a.can_attach?(@u)).to be_falsey
     end
   end
-  describe :answered? do
+  describe "answered?" do
     it 'should not be answered as default' do
       expect(Factory(:answer)).not_to be_answered
     end

@@ -9,7 +9,7 @@ describe OpenChain::WorkflowProcessor do
     allow(@mock_stat_client).to receive(:wall_time).and_yield
   end
 
-  describe :process_all! do
+  describe "process_all!" do
     it "should get all classes and process" do
       k1 = Company
       k2 = Order
@@ -24,7 +24,7 @@ describe OpenChain::WorkflowProcessor do
     end
   end
 
-  describe :process_class! do
+  describe "process_class!" do
     it "should get objects and process all" do
       obj1 = double('obj1')
       obj2 = double('obj2')
@@ -40,7 +40,7 @@ describe OpenChain::WorkflowProcessor do
       described_class.process_class! k, u, opts
     end
   end
-  describe :objects_need_processing do
+  describe "objects_need_processing" do
     before :each do
       #making an object that doesn't need processing and 
       #that shouldn't be found by any of the tests
@@ -76,7 +76,7 @@ describe OpenChain::WorkflowProcessor do
       expect(described_class.objects_need_processing(Order)).to be_empty
     end
   end
-  describe :process do
+  describe "process" do
     it "should process multiple workflows for the right module" do
       wp = wp_without_stat
       ms = MasterSetup.get

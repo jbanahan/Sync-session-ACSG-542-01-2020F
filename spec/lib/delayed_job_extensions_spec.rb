@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::DelayedJobExtensions do
   subject { Class.new { include OpenChain::DelayedJobExtensions }.new }
 
-  describe :get_class do
+  describe "get_class" do
 
     let(:job) { Delayed::Job.new }
 
@@ -18,7 +18,7 @@ describe OpenChain::DelayedJobExtensions do
     end
   end
 
-  describe :group_jobs do
+  describe "group_jobs" do
     it "returns a hash matching a dj with an array of jobs of the same class (each not locked and having a last_error)" do
       dj_1 = Delayed::Job.create!
       dj_1.handler = "--- !ruby/object:Delayed::PerformableMethod\nobject: !ruby/ActiveRecord:ReportResult"

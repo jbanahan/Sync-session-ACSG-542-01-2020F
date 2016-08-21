@@ -38,7 +38,7 @@ describe DrawbackClaim do
       expect(d.errors[:name].size).to eq(1)
     end
   end
-  describe :can_attach? do
+  describe "can_attach?" do
     before :each do
       @dbc = Factory(:drawback_claim)
       @u = Factory(:user)
@@ -52,7 +52,7 @@ describe DrawbackClaim do
       expect(@dbc.can_attach?(@u)).to eq(false)
     end
   end
-  describe :percent_pieces_claimed do
+  describe "percent_pieces_claimed" do
     it "should calculate claim percentage by export pieces" do
       expect(DrawbackClaim.new(:total_pieces_exported=>9,:total_pieces_claimed=>3).percent_pieces_claimed).to eq(0.333)
     end
@@ -69,7 +69,7 @@ describe DrawbackClaim do
       expect(DrawbackClaim.new(:total_pieces_exported=>100000,:total_pieces_claimed=>99999).percent_pieces_claimed).to eq(0.999)
     end
   end
-  describe :percent_money_claimed do
+  describe "percent_money_claimed" do
     it "should calculate percentage by net claim amount vs planned" do
       expect(DrawbackClaim.new(:planned_claim_amount=>9,:net_claim_amount=>3).percent_money_claimed).to eq(0.333)
     end
@@ -83,7 +83,7 @@ describe DrawbackClaim do
       expect(DrawbackClaim.new(:planned_claim_amount=>0,:net_claim_amount=>nil).percent_money_claimed).to eq(0)
     end
   end
-  describe :viewable do
+  describe "viewable" do
     before :each do
       MasterSetup.get.update_attributes(:drawback_enabled=>true)
       @base_claim = Factory(:drawback_claim)
@@ -112,7 +112,7 @@ describe DrawbackClaim do
     end
   end
 
-  describe :can_view? do
+  describe "can_view?" do
     before :each do 
       @d = Factory(:drawback_claim)
     end
@@ -145,7 +145,7 @@ describe DrawbackClaim do
     end
   end
 
-  describe :can_comment? do
+  describe "can_comment?" do
     before :each do 
       @d = Factory(:drawback_claim)
       @u = Factory(:user)
@@ -162,7 +162,7 @@ describe DrawbackClaim do
     end
   end
 
-  describe :can_edit do
+  describe "can_edit" do
     before :each do 
       @d = Factory(:drawback_claim)
     end
@@ -195,7 +195,7 @@ describe DrawbackClaim do
     end
   end
 
-  describe :exports_not_in_import do
+  describe "exports_not_in_import" do
     before :each do
       @c = Factory(:drawback_claim)
       @month_ago = DutyCalcExportFileLine.create!(:importer_id=>@c.importer_id,:part_number=>'ABC',:export_date=>1.month.ago)

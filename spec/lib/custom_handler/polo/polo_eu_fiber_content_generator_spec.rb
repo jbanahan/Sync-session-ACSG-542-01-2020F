@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
 
-  describe :generate do
+  describe "generate" do
     it "should email report" do
       u = Factory(:master_user, username:'EU Fiber Content', email:'a@sample.com')
       mail = double('mail')
@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
     end
   end
 
-  describe :trim_fingerprint do
+  describe "trim_fingerprint" do
     it "should return 3rd element as fingerprint" do
       expect(described_class.new.trim_fingerprint([1,'1','2','3','4'])).to eq ['3',[1,'1','2','3','4']]
     end
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
   it "should auto_confirm" do
     expect(described_class.new.auto_confirm?).to be_truthy
   end
-  describe :sync do
+  describe "sync" do
     before :each do
       @italy = Factory(:country,iso_code:'IT')
       @cdefs = described_class.prep_custom_definitions([

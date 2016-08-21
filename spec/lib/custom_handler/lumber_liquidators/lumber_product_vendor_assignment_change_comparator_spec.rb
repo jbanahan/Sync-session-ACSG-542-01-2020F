@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignm
       described_class.compare 'ProductVendorAssignment', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
   end
-  describe :find_linked_orders do
+  describe "find_linked_orders" do
     it "should find linked orders" do
       p = Factory(:product)
       v = Factory(:company)

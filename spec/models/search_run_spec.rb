@@ -24,7 +24,7 @@ describe SearchRun do
       expect(SearchRun.find_last_run(@u,CoreModule::PRODUCT)).not_to be_readonly
     end
   end
-  describe :parent do
+  describe "parent" do
     before :each do
       @cf = Factory(:custom_file)
     end

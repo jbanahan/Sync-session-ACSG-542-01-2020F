@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser do
-  describe :parse do
+  describe "parse" do
     before :each do
       @imp = Company.where(master:true).first_or_create!(name:'ua')
       Factory(:country,iso_code:'CA')

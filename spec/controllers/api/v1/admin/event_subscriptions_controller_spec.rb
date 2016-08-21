@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Api::V1::Admin::EventSubscriptionsController do
-  describe :show_by_event_type_object_id_and_subscription_type do
+  describe "show_by_event_type_object_id_and_subscription_type" do
     it "should return subscription users" do
       allow_api_access Factory(:admin_user)
       u = User.new(email:'a@sample.com',first_name:'Joe',last_name:'Smith',id:5)

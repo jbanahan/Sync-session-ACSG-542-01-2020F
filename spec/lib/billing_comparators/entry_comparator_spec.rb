@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::BillingComparators::EntryComparator do
-  describe :compare do
+  describe "compare" do
     it "exits if the type isn't 'Entry'" do
       expect(EntitySnapshot).not_to receive(:where)
       described_class.compare('Product', 1, 'old_bucket', 'old_path', 'old_version', 'new_bucket', 'new_path', 'new_version')
@@ -16,7 +16,7 @@ describe OpenChain::BillingComparators::EntryComparator do
     end
   end
 
-  describe :check_new_entry do
+  describe "check_new_entry" do
     it "creates a billable event for a new entry" do
       es = Factory(:entity_snapshot, bucket: 'new_bucket', doc_path: 'new_path', version: 'new_version')
       ent = Factory(:entry)

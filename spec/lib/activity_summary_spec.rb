@@ -10,14 +10,14 @@ describe OpenChain::ActivitySummary do
     Country.destroy_all
   end
 
-  describe :generate_us_entry_summary do
+  describe "generate_us_entry_summary" do
     it "should make json" do
       ent = Factory(:entry,import_country_id:@us.id,importer_id:Factory(:company).id,release_date:'2013-12-25 05:00:00 UTC')
       h = described_class.generate_us_entry_summary(ent.importer_id, Time.parse('2013-12-27 16:00:00 UTC'))
       expect(h['activity_summary']['summary']['1w']['count']).to eq(1)
     end
   end
-  describe :generate_ca_entry_summary do
+  describe "generate_ca_entry_summary" do
     it "should make json" do
       ent = Factory(:entry,import_country_id:@ca.id,importer_id:Factory(:company).id,release_date:'2013-12-25 05:00:00 UTC')
       h = described_class.generate_ca_entry_summary(ent.importer_id, Time.parse('2013-12-27 16:00:00 UTC'))
@@ -97,7 +97,7 @@ describe OpenChain::ActivitySummary do
     end
   end
   describe OpenChain::ActivitySummary::USEntrySummaryGenerator do
-    describe :generate_hash do
+    describe "generate_hash" do
       it "should create summary section" do
         importer = Factory(:company)
 
@@ -356,7 +356,7 @@ describe OpenChain::ActivitySummary do
       end
     end
 
-    describe :generate_unpaid_duty_section do
+    describe "generate_unpaid_duty_section" do
       it "should delegate to #single_company_unpaid_duty and #linked_companies_unpaid_duty, producing joined/flattened list" do
         c = double('company')
         single_total = [double('single_total')]
@@ -370,7 +370,7 @@ describe OpenChain::ActivitySummary do
       end
     end
 
-    describe :linked_companies_unpaid_duty do
+    describe "linked_companies_unpaid_duty" do
       it "should populate an array with the totals of an importer's linked companies" do
         company = Factory(:company, name: 'Acme')
         allow(company).to receive(:linked_companies) {[Company.new(name: 'RiteChoys', importer: true), Company.new(name: 'Super Pow', importer: true), Company.new(name: 'Walshop', importer: true)]}
@@ -379,7 +379,7 @@ describe OpenChain::ActivitySummary do
       end
     end
 
-    describe :single_company_unpaid_duty do
+    describe "single_company_unpaid_duty" do
       before(:each) do
         @date1 = Date.today
         @date2 = Date.today + 15
@@ -512,7 +512,7 @@ describe OpenChain::ActivitySummary do
           @ent9 = Factory(:entry, importer_id: @non_master_company.id, entry_port_code: port1.schedule_d_code, entry_number: '23821946175', release_date: @release_date, duty_due_date: @date1, total_duty: 900, total_fees: 950)
         end
 
-      describe :create_linked_digests do
+      describe "create_linked_digests" do
         it "should populate an array with digests of an importer's linked companies" do
           allow(@company).to receive(:linked_companies) {[Company.new(name: 'RiteChoys', importer: true), Company.new(name: 'Super Pow', importer: true), Company.new(name: 'Walshop', importer: true)]}
           expect(described_class::DutyDetail).to receive(:create_digest) { |u, c| {company_name: c.name} }.exactly(3).times
@@ -520,7 +520,7 @@ describe OpenChain::ActivitySummary do
         end
       end
 
-      describe :create_digest do
+      describe "create_digest" do
         it "should delegate to build and get_entries" do
           u = double('user')
           c = double('company')
@@ -531,7 +531,7 @@ describe OpenChain::ActivitySummary do
         end
       end
 
-      describe :build_digest do
+      describe "build_digest" do
         it "should return empty if entries are empty" do
           allow(@company).to receive(:view_vendors?).with(@user) {true}
           allow(@user).to receive(:view_entries?) {true}
@@ -589,7 +589,7 @@ describe OpenChain::ActivitySummary do
         end
       end
 
-      describe :get_entries do
+      describe "get_entries" do
 
         it "should return results only for specified company" do
           allow(@company).to receive(:can_view?).with(@user).and_return(true)

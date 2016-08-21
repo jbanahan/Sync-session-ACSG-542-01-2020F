@@ -39,7 +39,7 @@ describe Api::V1::ApiController do
     end
   end
 
-  describe :action_secure do
+  describe "action_secure" do
     controller do
       def secure
         obj = Company.first

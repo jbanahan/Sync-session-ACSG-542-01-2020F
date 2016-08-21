@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe VfiInvoice do
 
-  describe :can_view? do
+  describe "can_view?" do
     before :each do
       @inv = Factory(:vfi_invoice)
       @u = Factory(:user)

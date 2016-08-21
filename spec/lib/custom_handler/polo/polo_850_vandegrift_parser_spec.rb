@@ -2,13 +2,13 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
-  describe :integration_folder do
+  describe "integration_folder" do
     it "should use the correct folder" do
       expect(described_class.new.integration_folder).to eq ["//opt/wftpserver/ftproot/www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
     end
   end
 
-  describe :parse do
+  describe "parse" do
     context :standard_line_type do
       before :each do
         @cdefs = described_class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date, :ord_division]

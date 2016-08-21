@@ -4,7 +4,7 @@ describe DrawbackClaimsController do
   before :each do
 
   end
-  describe :index do
+  describe "index" do
     before :each do
       @du = Factory(:drawback_user)
       @dc = Factory(:drawback_claim,:importer=>@du.company,:sent_to_customs_date=>1.year.ago)
@@ -17,7 +17,7 @@ describe DrawbackClaimsController do
       expect(response.location).to match "advanced_search"
     end
   end
-  describe :show do
+  describe "show" do
     before :each do
       @d = Factory(:drawback_claim)
       @u = Factory(:user)
@@ -37,7 +37,7 @@ describe DrawbackClaimsController do
       expect(flash[:errors].size).to eq(1)
     end
   end
-  describe :edit do
+  describe "edit" do
     before :each do
       @claim = Factory(:drawback_claim)
       @u = Factory(:user)
@@ -56,7 +56,7 @@ describe DrawbackClaimsController do
       expect(flash[:errors].size).to eq(1)
     end
   end
-  describe :update do
+  describe "update" do
     before :each do
       @u = Factory(:user)
       @claim = Factory(:drawback_claim)
@@ -79,7 +79,7 @@ describe DrawbackClaimsController do
       expect(DrawbackClaim.find(@claim.id).name).to eq(@claim.name)
     end
   end
-  describe :create do
+  describe "create" do
     before :each do
       @u = Factory(:user)
       @c = Factory(:company)
@@ -104,7 +104,7 @@ describe DrawbackClaimsController do
       expect(DrawbackClaim.all).to be_empty
     end
   end
-  describe :process_report do
+  describe "process_report" do
     before :each do
       @u = Factory(:user)
       allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return(true)
@@ -127,7 +127,7 @@ describe DrawbackClaimsController do
       expect(response).to redirect_to @claim
     end
   end
-  describe :audit_report do
+  describe "audit_report" do
     before :each do
       @u = Factory(:user, company: Factory(:master_company))
       @claim = Factory(:drawback_claim)

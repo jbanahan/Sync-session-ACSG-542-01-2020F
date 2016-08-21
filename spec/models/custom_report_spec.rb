@@ -3,7 +3,7 @@ require 'spreadsheet'
 
 describe CustomReport do
 
-  describe :give_to do
+  describe "give_to" do
     before :each do
       MasterSetup.create(request_host:"localhost:3000")
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")
@@ -27,7 +27,7 @@ describe CustomReport do
       expect(msg.body).to eq "#{@u.username} has sent you a report titled #{@s.name}. Click <a href=\'#{Rails.application.routes.url_helpers.custom_report_url(CustomReport.last.id, host: MasterSetup.get.request_host, protocol: 'http')}\'>here</a> to view it."
     end
   end
-  describe :deep_copy do
+  describe "deep_copy" do
     before :each do 
       @u = Factory(:user)
       @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true)

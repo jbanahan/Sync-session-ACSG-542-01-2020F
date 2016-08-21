@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SearchTemplatesController do
-  describe :destroy do
+  describe "destroy" do
     it "should delete search template" do
       u = Factory(:admin_user)
       sign_in_as u

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe ISFSupport do
-  describe :valid_isf? do
+  describe "valid_isf?" do
     describe 'when the ISF is valid' do
       before :each do
         importer = Factory(:importer, irs_number:'ashjdajdashdad', alliance_customer_number: 'asjhdajhdjasgd')

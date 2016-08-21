@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BusinessValidationRule do
-  describe :enabled? do
+  describe "enabled?" do
     it "should not return !enabled in subclasses_array" do
       expect(described_class.subclasses_array.find {|a| a[1]=='PoloValidationRuleEntryInvoiceLineMatchesPoLine'}).to be_nil
     end
@@ -10,7 +10,7 @@ describe BusinessValidationRule do
       expect(a.find {|a| a[1]=='ValidationRuleManual'}).to_not be_nil
     end
   end
-  describe :should_skip? do
+  describe "should_skip?" do
     it "should base should_skip? on search_criterions" do
       pass_ent = Entry.new(entry_number:'9')
       fail_ent = Entry.new(entry_number:'7')
@@ -25,7 +25,7 @@ describe BusinessValidationRule do
       ci = CommercialInvoiceLine.new
       expect {bvr.should_skip? ci}.to raise_error /Invalid object expected Entry got CommercialInvoiceLine/
     end
-  describe :async_destroy do
+  describe "async_destroy" do
     it "destroys record" do
       rule = Factory(:business_validation_rule)
       described_class.async_destroy rule.id

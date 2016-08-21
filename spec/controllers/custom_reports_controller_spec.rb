@@ -8,7 +8,7 @@ describe CustomReportsController do
     sign_in_as @u
   end
 
-  describe :run do
+  describe "run" do
     before :each do
       @rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id,:name=>"ABCD")
     end
@@ -27,7 +27,7 @@ describe CustomReportsController do
       expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
     end
   end
-  describe :new do
+  describe "new" do
     it "should require a type parameter" do
       get :new
       expect(response).to be_redirect
@@ -52,7 +52,7 @@ describe CustomReportsController do
     end
   end
 
-  describe :show do
+  describe "show" do
     it "should error if user doesn't match current_user" do
       rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>Factory(:user).id)
       get :show, :id=>rpt.id
@@ -67,7 +67,7 @@ describe CustomReportsController do
     end
   end
 
-  describe :destroy do
+  describe "destroy" do
     before :each do
       @rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id)
     end
@@ -84,7 +84,7 @@ describe CustomReportsController do
     end
   end
 
-  describe :update do
+  describe "update" do
     before :each do
       @rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id)
     end
@@ -155,7 +155,7 @@ describe CustomReportsController do
     end
   end
 
-  describe :preview do
+  describe "preview" do
     before :each do
       @rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id)
     end
@@ -169,7 +169,7 @@ describe CustomReportsController do
       expect(response).to be_success
     end
   end
-  describe :create do
+  describe "create" do
     it "should create report of proper class" do
       post :create, {:custom_report_type=>'CustomReportEntryInvoiceBreakdown',:custom_report=>
         {:name=>'ABC',

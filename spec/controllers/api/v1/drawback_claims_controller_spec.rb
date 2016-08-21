@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Api::V1::DrawbackClaimsController do
 
-  describe :validate do
+  describe "validate" do
     it "runs validations and returns result hash" do
       MasterSetup.get.update_attributes(:drawback_enabled=>true)
       u = Factory(:drawback_user, company: Factory(:master_company))

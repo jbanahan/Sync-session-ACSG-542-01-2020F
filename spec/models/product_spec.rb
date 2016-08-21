@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Product do
-  describe :classifications_by_region do
+  describe "classifications_by_region" do
     before :each do
       @product = Product.new
     end
@@ -69,7 +69,7 @@ describe Product do
     end
   end
 
-  describe :wto6_changed_after? do
+  describe "wto6_changed_after?" do
     before :each do
       @u = Factory(:user)
       @tr = Factory(:tariff_record,hts_1:'1234567890',hts_2:'9876543210',hts_3:'5555550000')
@@ -112,7 +112,7 @@ describe Product do
       expect(@p.wto6_changed_after?(3.minutes.ago)).to be_truthy
     end
   end
-  describe :validate_tariff_numbers do
+  describe "validate_tariff_numbers" do
     it "should pass" do
       ot = Factory(:official_tariff)
       p = Product.new
@@ -150,7 +150,7 @@ describe Product do
     end
   end
   context "bill of materials" do
-    describe :on_bill_of_materials? do
+    describe "on_bill_of_materials?" do
       context "true tests" do
         before :each do
           @parent = Factory(:product)

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe RSearchCriterionsController do
 
-  describe :create do
+  describe "create" do
 
     before :each do
       @sc = Factory(:search_criterion)
@@ -41,7 +41,7 @@ describe RSearchCriterionsController do
 
   end
 
-  describe :destroy do
+  describe "destroy" do
 
     before :each do
       @sc = Factory(:search_criterion)

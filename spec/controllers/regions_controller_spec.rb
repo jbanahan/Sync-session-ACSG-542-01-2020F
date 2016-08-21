@@ -5,7 +5,7 @@ describe RegionsController do
   before :each do
 
   end
-  describe :security do
+  describe "security" do
     before :each do
       @u = Factory(:user)
       sign_in_as @u
@@ -47,7 +47,7 @@ describe RegionsController do
       sign_in_as @u
       @r = Factory(:region)
     end
-    describe :index do
+    describe "index" do
       it "should show all regions" do
         r2 = Factory(:region)
         get :index
@@ -55,13 +55,13 @@ describe RegionsController do
         expect(assigns(:regions).to_a).to eq([@r,r2])
       end
     end
-    describe :create do
+    describe "create" do
       it "should make new region" do
         post :create, 'region'=>{'name'=>"EMEA"}, :format=>:json
         expect(response).to redirect_to regions_path
       end
     end
-    describe :destroy do
+    describe "destroy" do
       it "should remove region" do
         id = @r.id
         delete :destroy, :id=>id
@@ -73,7 +73,7 @@ describe RegionsController do
       before :each do
         @c = Factory(:country)
       end
-      describe :add_country do
+      describe "add_country" do
         it "should add country to region" do
           get :add_country, :id=>@r.id, :country_id=>@c.id
           expect(response).to redirect_to regions_path
@@ -81,7 +81,7 @@ describe RegionsController do
           expect(@r.countries.to_a).to eq([@c])
         end
       end
-      describe :remove_country do
+      describe "remove_country" do
         it "should remove country from region" do
           @r.countries << @c
           get :remove_country, :id=>@r.id, :country_id=>@c.id

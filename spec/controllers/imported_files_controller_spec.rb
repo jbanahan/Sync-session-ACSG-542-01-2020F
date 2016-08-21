@@ -231,7 +231,7 @@ describe ImportedFilesController do
     end
   end
 
-  describe :legacy_javascripts? do
+  describe "legacy_javascripts?" do
     it "should not include legacy javascripts" do
       expect(ImportedFilesController.new.legacy_javascripts?).to be_falsey
     end

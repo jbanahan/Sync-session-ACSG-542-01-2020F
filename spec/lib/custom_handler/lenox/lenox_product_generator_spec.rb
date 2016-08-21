@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
     expect(line[43, 1]).to eq "\n"
   end
 
-  describe :ftp_credentials do
+  describe "ftp_credentials" do
     it "defaults to production server" do
       d = described_class.new
       expect(d.ftp_credentials).to eq(server: 'ftp.lenox.com', username:'vanvendor', password: '$hipments', folder: '.', remote_file_name: "Item_HTS")
@@ -156,7 +156,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
     end
   end
 
-  describe :fingerprint_filter do
+  describe "fingerprint_filter" do
     before(:each) do
       @lpg = described_class.new
       @prod_id = 1

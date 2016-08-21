@@ -7,7 +7,7 @@ describe GroupsController do
         sign_in_as @user
   end
 
-  describe :create do
+  describe "create" do
     before(:each) do
       @jim = Factory(:user, username: "Jim")
       @mary = Factory(:user, username: "Mary")
@@ -61,7 +61,7 @@ describe GroupsController do
 
   end
 
-  describe :update do
+  describe "update" do
     before(:each) do
       @g = Factory(:group, name: "test_group", description: "group for testing", system_code: "gk2000")
       @jim = Factory(:user, username: "Jim", groups: [@g])
@@ -132,7 +132,7 @@ describe GroupsController do
     end
   end
 
-  describe :delete do
+  describe "delete" do
     before(:each) { @g = Factory(:group, name: "test_group") }
     
     it "shouldn't allow use by non-admin" do
@@ -163,7 +163,7 @@ describe GroupsController do
     end
   end
 
-  describe :index do
+  describe "index" do
     before(:each) do
       Factory(:group, name: "A group")
       Factory(:group, name: "B group")
@@ -188,7 +188,7 @@ describe GroupsController do
 
   end
 
-  describe :edit do
+  describe "edit" do
     before(:each) { @g = Factory(:group, name: "test_group") }
 
     it "shouldn't allow use by non-admin" do
@@ -217,7 +217,7 @@ describe GroupsController do
     end
   end
 
-  describe :new do
+  describe "new" do
 
     it "shouldn't allow use by non-admin" do
       allow(@user).to receive(:admin?).and_return false

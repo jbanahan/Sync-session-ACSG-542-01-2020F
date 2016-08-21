@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe OpenChain::Events::EventBroadcaster do
 
-  describe :broadcast do
+  describe "broadcast" do
     context :production_environment do
 
       before :each do 

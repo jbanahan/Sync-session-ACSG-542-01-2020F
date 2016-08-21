@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     @ca = Factory(:country,:iso_code=>'CA')
     @cdefs = described_class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :related_styles]
   end
-  describe :sync_csv do
+  describe "sync_csv" do
     it "should clean newlines from long description" do
       header_row = {0=>'uid',1=>'apprlong',2=>'hts',3=>'schedb',4=>'iso'}
       content_row = {0=>'213',1=>"My Long\nDescription",2=>'1234567890',3=>'9876543210',4=>'US',5=>''}
@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r.first).to eq(['213','My Long Description','1234567890','9876543210','US'])
     end
   end
-  describe :query do
+  describe "query" do
     it "should sort US then CA and not include other countries" do
       p = Factory(:product)
       p.update_custom_value! @cdefs[:approved_long], "My Long Description"
@@ -178,7 +178,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r[1][0]).to eq(p2.unique_identifier)
     end
   end
-  describe :ftp_credentials do
+  describe "ftp_credentials" do
     it "should send proper credentials" do
       expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/OHL'})
     end

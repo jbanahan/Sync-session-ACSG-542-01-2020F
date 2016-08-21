@@ -6,7 +6,7 @@ describe Api::V1::OrdersController do
     @u = Factory(:master_user,order_edit:true,order_view:true,product_view:true)
     allow_api_access @u
   end
-  describe :index do
+  describe "index" do
     it 'should list orders' do
       Factory(:order,order_number:'123')
       Factory(:order,order_number:'ABC')
@@ -24,7 +24,7 @@ describe Api::V1::OrdersController do
       expect(j['record_count']).to eq 2
     end
   end
-  describe :get do
+  describe "get" do
     it "should append custom_view to order if not nil" do
       allow(OpenChain::CustomHandler::CustomViewSelector).to receive(:order_view).and_return 'abc'
       o = Factory(:order)
@@ -77,7 +77,7 @@ describe Api::V1::OrdersController do
     end
   end
 
-  describe :update do
+  describe "update" do
     before :each do
       @order = Factory(:order,order_number:'oldordnum')
     end
@@ -98,7 +98,7 @@ describe Api::V1::OrdersController do
     end
   end
 
-  describe :accept do
+  describe "accept" do
     it "should accept order if user has permission" do
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
       expect_any_instance_of(Order).to receive(:async_accept!)
@@ -122,7 +122,7 @@ describe Api::V1::OrdersController do
       expect(response.status).to eq 403
     end
   end
-  describe :unaccept do
+  describe "unaccept" do
     it "should unaccept order if user has permission" do
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
       expect_any_instance_of(Order).to receive(:async_unaccept!)
@@ -155,7 +155,7 @@ describe Api::V1::OrdersController do
     end
   end
 
-  describe :validate do
+  describe "validate" do
     it "runs validations and returns result hash" do
       MasterSetup.get.update_attributes(:order_enabled=>true)
       u = Factory(:master_user, order_view: true)

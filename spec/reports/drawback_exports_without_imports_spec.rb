@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::Report::DrawbackExportsWithoutImports do
-  describe :run_report do
+  describe "run_report" do
     before :each do
       @c = Factory(:company)
       @u = Factory(:user)
@@ -51,7 +51,7 @@ describe OpenChain::Report::DrawbackExportsWithoutImports do
       expect {described_class.run_report @user}.to raise_error "You do not have permission to run this report." 
     end
   end
-  describe :permission? do
+  describe "permission?" do
     it "should not run if user not from master company" do
       u = Factory(:user)
       allow(u).to receive(:view_drawback?).and_return(true)

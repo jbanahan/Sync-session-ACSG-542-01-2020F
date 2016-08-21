@@ -5,7 +5,7 @@ describe Customer::LumberLiquidatorsController do
     @user = Factory(:user)
     sign_in_as @user
   end
-  describe :sap_vendor_setup_form do
+  describe "sap_vendor_setup_form" do
     before :each do
       @vendor = Factory(:company,vendor:true)
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return(true)

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser do
-  describe :parse_csv_line do
+  describe "parse_csv_line" do
     def default_vals
       {
         export_date: '01/31/2011' ,

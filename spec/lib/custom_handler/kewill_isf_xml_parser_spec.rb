@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       @k.process_day d
     end
   end
-  describe :parse do
+  describe "parse" do
     it 'should process from text' do
       expect_any_instance_of(SecurityFiling).to receive(:broadcast_event).with(:save)
       @k.parse IO.read(@path)
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ]
     end
   end
-  describe :parse_dom do
+  describe "parse_dom" do
     before :each do
       @dom = REXML::Document.new File.new(@path)
       @sf = Factory(:security_filing)

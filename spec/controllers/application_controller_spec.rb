@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe ApplicationController do
 
-  describe :advanced_search do
+  describe "advanced_search" do
     before :each do
       @u = Factory(:master_user)
       allow(controller).to receive(:current_user).and_return(@u)
@@ -74,7 +74,7 @@ describe ApplicationController do
       expect(r).to eq("/advanced_search#/#{ss.id}/3?clearSelection=true")
     end
   end
-  describe :strip_uri_params do
+  describe "strip_uri_params" do
     it "should remove specified parameters from a URI string" do
       uri = "http://www.test.com/file.html?id=1&k=2&val[nested]=2#hash"
       r = controller.strip_uri_params uri, "id"
@@ -100,7 +100,7 @@ describe ApplicationController do
     end
   end
 
-  describe :force_reset do 
+  describe "force_reset" do 
 
     # Create an anonymous rspec controller, allows testing only the
     # filter mentioned in it
@@ -147,7 +147,7 @@ describe ApplicationController do
     end
   end
 
-  describe :set_x_frame_options_header do
+  describe "set_x_frame_options_header" do
     # Create an anonymous rspec controller, allows testing only the
     # filter mentioned in it
     controller do
@@ -173,7 +173,7 @@ describe ApplicationController do
     end
   end
 
-  describe :set_x_frame_options_header do
+  describe "set_x_frame_options_header" do
     # Create an anonymous rspec controller, allows testing only the
     # filter mentioned in it
     controller do
@@ -198,7 +198,7 @@ describe ApplicationController do
     end
   end
 
-  describe :set_csrf_cookie do
+  describe "set_csrf_cookie" do
     controller do
       after_filter :set_csrf_cookie
 
@@ -288,7 +288,7 @@ describe ApplicationController do
     end
   end
 
-  describe :portal_redirect do
+  describe "portal_redirect" do
     controller do
       def show 
         render :text => current_user.username

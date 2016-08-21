@@ -30,7 +30,7 @@ describe ModelField do
       expect(@mf.process_export(@order_line,u)).to eq 'ABC'
     end
   end
-  describe :process_query_result do
+  describe "process_query_result" do
     before :each do
       @u = User.new
     end
@@ -838,7 +838,7 @@ describe ModelField do
         end
       end
     end
-    describe :process_query_parameter do
+    describe "process_query_parameter" do
       it "should prcoess query parameters" do
         p = Product.new(:unique_identifier=>"abc")
         expect(ModelField.find_by_uid(:prod_uid).process_query_parameter(p)).to eq "abc"

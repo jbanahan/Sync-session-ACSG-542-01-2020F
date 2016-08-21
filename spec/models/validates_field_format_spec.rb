@@ -22,7 +22,7 @@ describe ValidatesFieldFormat do
     expect(ModelField).to receive(:find_by_uid).with('ordln_hts').and_return @mf_double  
   end
 
-  describe :validate_field_format do
+  describe "validate_field_format" do
     it "returns nil if the value is blank and allow_blank? is true" do
       @rule = Rule.new('regex' => 'ABC', 'model_field_uid' => 'ordln_hts', 'allow_blank' => 'true')
       expect(@mf_double).to receive(:process_export).with(@order_line, nil, true).and_return nil

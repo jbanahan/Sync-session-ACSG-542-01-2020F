@@ -101,7 +101,7 @@ describe DataCrossReference do
       expect(described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z')).to eq('y')
     end
   end
-  describe :create_ua_winshuttle_fingerprint! do
+  describe "create_ua_winshuttle_fingerprint!" do
     it "creates fingerprints" do
       described_class.create_ua_winshuttle_fingerprint! 'x', 'y', 'z', 'fingerprint'
       expect(described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z')).to eq "fingerprint"

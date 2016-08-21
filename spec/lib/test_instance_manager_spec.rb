@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::TestInstanceManager do
-  describe :prep_test_instance do
+  describe "prep_test_instance" do
     it "should perform prep tasks" do
       expect_any_instance_of(described_class).to receive(:update_master_setup!).with('req')
       expect_any_instance_of(described_class).to receive(:clear_schedulable_jobs!)
@@ -10,21 +10,21 @@ describe OpenChain::TestInstanceManager do
       described_class.prep_test_instance 'req'
     end
   end
-  describe :clear_schedulable_jobs do
+  describe "clear_schedulable_jobs" do
     it "should clear jobs" do
       sj = SchedulableJob.create!
       described_class.new.clear_schedulable_jobs!
       expect(SchedulableJob.all).to be_empty
     end
   end
-  describe :clear_scheduled_reports do
+  describe "clear_scheduled_reports" do
     it "should clear scheduled reports" do
       ss = Factory(:search_schedule)
       described_class.new.clear_scheduled_reports!
       expect(SearchSchedule.all).to be_empty
     end
   end
-  describe :update_master_setup do
+  describe "update_master_setup" do
     before :each do
       MasterSetup.get.update_attributes(system_code:'oldcode',uuid:'olduuid',ftp_polling_active:true,custom_features:'cf',request_host:'oldhost')
       described_class.new.update_master_setup! 'new.request.host'
@@ -45,7 +45,7 @@ describe OpenChain::TestInstanceManager do
       expect(MasterSetup.get.request_host).to eq('new.request.host')
     end
   end
-  describe :update_users do
+  describe "update_users" do
     it "should clear tariff_subscribed flags" do
       u = Factory(:user,tariff_subscribed:true)
       described_class.new.update_users!

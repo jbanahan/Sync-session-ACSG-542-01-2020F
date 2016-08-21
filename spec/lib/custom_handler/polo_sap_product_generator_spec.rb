@@ -9,12 +9,12 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
   after :each do
     @tmp.unlink if @tmp
   end
-  describe :sync_code do
+  describe "sync_code" do
     it "should be polo_sap" do
       expect(@g.sync_code).to eq('polo_sap')
     end
   end
-  describe :run_schedulable do
+  describe "run_schedulable" do
 
     before :each do
       us = Factory(:country,:iso_code=>'US')
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     @sap_brand_cd.destroy
     expect {described_class.new}.to raise_error
   end
-  describe :sync_csv do
+  describe "sync_csv" do
     before :each do
       @us = Factory(:country,:iso_code=>'US')
     end
@@ -186,7 +186,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
   end
 
-  describe :ftp_credentials do
+  describe "ftp_credentials" do
     it "should send proper credentials" do
       expect(@g.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ralph_Lauren/sap_prod'})
     end
@@ -195,7 +195,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
   end
 
-  describe :before_csv_write do
+  describe "before_csv_write" do
     before :each do 
       @vals = []
       30.times {|i| @vals << i}
@@ -228,7 +228,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
   end
 
-  describe :preprocess_row do
+  describe "preprocess_row" do
     it "should handle converting UTF-8 'EN-DASH' characters to hyphens" do
       # Note the "long hyphen" character...it's the unicode 2013 char
       r = @g.preprocess_row(0 => "This is a – test.")

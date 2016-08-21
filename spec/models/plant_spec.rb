@@ -9,7 +9,7 @@ describe Plant do
       expect(Plant.where(Plant.search_where(user)).to_a).to eq [plant]
     end
   end
-  describe :can_view? do
+  describe "can_view?" do
     it "should allow if user can view company as vendor" do
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return true
       allow_any_instance_of(Company).to receive(:can_view?).and_return false #to make sure we're not testing the wrong thing
@@ -29,7 +29,7 @@ describe Plant do
       expect(Factory(:plant).can_view?(u)).to be_falsey
     end
   end
-  describe :can_attach? do
+  describe "can_attach?" do
     it "should allow if user can attach to company" do
       allow_any_instance_of(Company).to receive(:can_attach?).and_return true
       u = double(:user)
@@ -41,7 +41,7 @@ describe Plant do
       expect(Factory(:plant).can_attach?(u)).to be_falsey
     end
   end
-  describe :can_edit? do
+  describe "can_edit?" do
     it "should allow if user can edit company" do
       allow_any_instance_of(Company).to receive(:can_edit?).and_return true
       u = double(:user)
@@ -54,7 +54,7 @@ describe Plant do
     end
   end
 
-  describe :in_use? do
+  describe "in_use?" do
     it "should return false" do
       expect(Plant.new.in_use?).to be_falsey
     end
@@ -70,7 +70,7 @@ describe Plant do
     end
   end
 
-  describe :unassigned_product_groups do
+  describe "unassigned_product_groups" do
     it "shoud return unassigned product groups" do
       plant = Factory(:plant)
       pg1 = Factory(:product_group, name: 'PGA')

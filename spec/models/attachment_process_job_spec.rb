@@ -6,7 +6,7 @@ describe AttachmentProcessJob do
     @u = Factory(:user)
     @a = Factory(:attachment)
   end
-  describe :validations do
+  describe "validations" do
     it "should fail on unknown job name" do
       j = described_class.new(attachable:@s,user:@u,attachment:@a)
       j.job_name = 'OTHER'
@@ -19,7 +19,7 @@ describe AttachmentProcessJob do
       expect{j.save!}.to_not raise_error #this would raise exception if validation failed
     end
   end
-  describe :process do
+  describe "process" do
     before :each do
       @j = described_class.create!(attachable:@s,user:@u,attachment:@a,job_name:'Tradecard Pack Manifest')
       @tpm = OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser

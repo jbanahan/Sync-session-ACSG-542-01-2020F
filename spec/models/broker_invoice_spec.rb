@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe BrokerInvoice do
 
-  describe :complete do
+  describe "complete" do
     before :each do
       @with_hst_code = Factory(:charge_code,:apply_hst=>true)
     end
@@ -65,7 +65,7 @@ describe BrokerInvoice do
       expect(bi.broker_invoice_lines.size).to eq(1)
     end
   end
-  describe :hst_amount do
+  describe "hst_amount" do
     it "should calculate HST based on existing charge codes" do
       with_hst_code_1 = Factory(:charge_code,:apply_hst=>true)
       with_hst_code_2 = Factory(:charge_code,:apply_hst=>true)

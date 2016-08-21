@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::WorkflowTester::SurveyCompleteWorkflowTest do
-  describe :pass? do
+  describe "pass?" do
     before :each do
       @o = Factory(:order)
       @wt = Factory(:workflow_task,payload_json:'{"survey_code":"SRX","survey_rating":"ABC"}',workflow_instance:Factory(:workflow_instance,base_object:@o))

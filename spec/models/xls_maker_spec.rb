@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe XlsMaker do
 
-  describe :make_from_search_query do
+  describe "make_from_search_query" do
     before :each do
       @u = Factory(:master_user,:entry_view=>true)
       @search = SearchSetup.create!(:name=>'t',:user=>@u,:module_type=>'Entry')
@@ -69,7 +69,7 @@ describe XlsMaker do
       expect {XlsMaker.new.make_from_search_query @sq}.to raise_error "Your report has over 1 rows.  Please adjust your parameter settings to limit the size of the report."
     end
   end
-  describe :make_from_search_query_by_search_id_and_user_id do
+  describe "make_from_search_query_by_search_id_and_user_id" do
     it "should defer to normal method" do
       ss = double('ss')
       u = double('u')

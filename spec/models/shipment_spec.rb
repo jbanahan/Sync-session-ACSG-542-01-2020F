@@ -16,7 +16,7 @@ describe Shipment do
      expect(s.can_view?(u)).to be_falsey
    end
   end
-  describe :search_secure do
+  describe "search_secure" do
     before :each do
       @master_only = Factory(:shipment)
     end
@@ -145,7 +145,7 @@ describe Shipment do
     end
   end
 
-  describe :can_uncancel? do
+  describe "can_uncancel?" do
     it "should allow if can_cancel_by_role? & can_edit & has canceled_date" do
       u = double(:user)
       s = Shipment.new(canceled_date:Time.now)
@@ -175,7 +175,7 @@ describe Shipment do
       expect(s.can_uncancel?(u)).to be_falsey
     end
   end
-  describe :uncancel_shipment! do
+  describe "uncancel_shipment!" do
     it "should remove cancellation" do
       u = Factory(:user)
       s = Factory(:shipment,canceled_by:u,canceled_date:Time.now)
@@ -429,7 +429,7 @@ describe Shipment do
     end
   end
 
-  describe :can_add_remove_booking_lines? do
+  describe "can_add_remove_booking_lines?" do
     it "should allow adding lines if user can edit" do
       u = double('user')
       s = Shipment.new
@@ -470,7 +470,7 @@ describe Shipment do
     end
   end
 
-  describe :can_add_remove_shipment_lines? do
+  describe "can_add_remove_shipment_lines?" do
     it "allows adding lines if user can edit" do
       u = double('user')
       s = Shipment.new

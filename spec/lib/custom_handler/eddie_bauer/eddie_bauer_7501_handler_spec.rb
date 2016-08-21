@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
     Factory(:classification, product: class_1.product, country: Factory(:country, iso_code: 'CA'), tariff_records: [Factory(:tariff_record, hts_1: "bar" )])
   end
 
-  describe :process do
+  describe "process" do
     before :each do
       @u = Factory(:user, email: "nigel@tufnel.net")
       allow(@u.company).to receive(:alliance_customer_number).and_return "EDDIE"

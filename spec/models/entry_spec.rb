@@ -102,7 +102,7 @@ describe Entry do
       @importer_user = Factory(:user,:company_id=>@importer.id)
       allow(@importer_user).to receive(:view_entries?).and_return true
     end
-    describe :can_view_importer? do
+    describe "can_view_importer?" do
       it "should allow same company" do
         expect(Entry.can_view_importer?(@importer, @importer_user)).to be_truthy
       end

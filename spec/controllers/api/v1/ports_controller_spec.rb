@@ -5,7 +5,7 @@ describe Api::V1::PortsController do
     @u = Factory(:user)
     allow_api_access @u
   end
-  describe :autocomplete do
+  describe "autocomplete" do
     it "should paginate" do
       11.times {|i| Factory(:port, name: "Name #{i}")}
       get :autocomplete, n: "Name"

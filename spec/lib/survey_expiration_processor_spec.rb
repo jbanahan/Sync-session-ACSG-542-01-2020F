@@ -32,7 +32,7 @@ describe OpenChain::SurveyExpirationProcessor, type: :mailer do
 		@p.run_schedulable
 	end
 
-	describe :run_schedulable do
+	describe "run_schedulable" do
 
 		it 'sends emails to subscribers if survey is expiring' do
       # Combining all the checks into a single example to save runtime

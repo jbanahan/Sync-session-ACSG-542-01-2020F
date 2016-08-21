@@ -15,7 +15,7 @@ describe DutyCalcExportFile do
     @to_del.each {|x| File.unlink(x) if File.exist?(x)}
   end
 
-  describe :generate_for_importer do
+  describe "generate_for_importer" do
     it "should generate excel zip and attach" do
       u = Factory(:master_user)
       expect{DutyCalcExportFile.generate_for_importer @importer, u}.to change(DutyCalcExportFile,:count).from(0).to(1)
@@ -28,7 +28,7 @@ describe DutyCalcExportFile do
       expect{DutyCalcExportFile.generate_for_importer(@importer, nil, nil, nil, 1, 1)}.to change(DutyCalcExportFile,:count).from(0).to(2)
     end
   end
-  describe :generate_excel_zip do
+  describe "generate_excel_zip" do
     it "should cap at max files" do
       2.times {DutyCalcExportFileLine.create!(importer_id:@importer.id,export_date:Date.new(2013,9,10))} #makes 4 total because of before each
       d, f = DutyCalcExportFile.generate_excel_zip @importer, @zip_path, 1, nil, 2
@@ -61,7 +61,7 @@ describe DutyCalcExportFile do
       end
     end
   end
-  describe :generate_csv do
+  describe "generate_csv" do
     it "should output csv for all lines" do
       d, t = DutyCalcExportFile.generate_csv @importer
       expect(d.duty_calc_export_file_lines.size).to eq(2)

@@ -7,7 +7,7 @@ describe CompaniesController do
     @c = Factory(:company)
   end
 
-  describe :create do
+  describe "create" do
     it "should trigger snapshot" do
       allow(OpenChain::WorkflowProcessor).to receive(:async_process)
       expect{post :create, {'company'=>{'cmp_name'=>'mycompany'}}}.to change(Company,:count).by(1)
@@ -15,7 +15,7 @@ describe CompaniesController do
       expect(c.entity_snapshots.count).to eq 1
     end
   end
-  describe :update do
+  describe "update" do
     it "should trigger snapshot" do
       allow(OpenChain::WorkflowProcessor).to receive(:async_process)
       put :update, {'id'=>@c.id, 'company'=>{'cmp_name'=>'mycompany'}}
@@ -95,7 +95,7 @@ describe CompaniesController do
       expect(Company.find(@c.id).linked_companies.to_a).to eq([])
     end
   end
-  describe :push_alliance_products do
+  describe "push_alliance_products" do
     before :each do
       MasterSetup.get.update_attributes(:custom_features=>"alliance")
       @u.admin = true

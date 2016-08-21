@@ -23,7 +23,7 @@ describe DelayedJobsController do
     end
   end
 
-  describe :bulk_destroy do
+  describe "bulk_destroy" do
     before :each do
       @dj_1 = Delayed::Job.create!
       @dj_1.handler = "--- !ruby/object:Delayed::PerformableMethod\nobject: !ruby/ActiveRecord:ReportResult"

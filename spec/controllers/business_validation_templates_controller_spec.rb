@@ -4,7 +4,7 @@ describe BusinessValidationTemplatesController do
   before :each do
 
   end
-  describe :index do
+  describe "index" do
     before :each do
       @bv_templates = [Factory(:business_validation_template)]
       u = Factory(:admin_user)
@@ -29,7 +29,7 @@ describe BusinessValidationTemplatesController do
       expect(assigns(:bv_templates).count).to eq 1
     end
   end
-  describe :show do 
+  describe "show" do 
     before :each do 
       @t = Factory(:business_validation_template)
     end
@@ -49,7 +49,7 @@ describe BusinessValidationTemplatesController do
     end
   end
 
-  describe :new do
+  describe "new" do
 
     before :each do
       @t = Factory(:business_validation_template)
@@ -73,7 +73,7 @@ describe BusinessValidationTemplatesController do
 
   end
 
-  describe :create do
+  describe "create" do
 
     before :each do
       @t = Factory(:business_validation_template)
@@ -97,7 +97,7 @@ describe BusinessValidationTemplatesController do
 
   end
 
-  describe :update do
+  describe "update" do
 
     before :each do
       @t = Factory(:business_validation_template)
@@ -126,7 +126,7 @@ describe BusinessValidationTemplatesController do
 
   end
 
-  describe :edit do
+  describe "edit" do
 
     before :each do
       @t = Factory(:business_validation_template)
@@ -150,7 +150,7 @@ describe BusinessValidationTemplatesController do
 
   end
 
-  describe :destroy do
+  describe "destroy" do
 
     before :each do
       @t = Factory(:business_validation_template)
@@ -184,7 +184,7 @@ describe BusinessValidationTemplatesController do
 
   end
 
-  describe :edit_angular do
+  describe "edit_angular" do
     before :each do
       @sc = Factory(:search_criterion)
       @bvt = Factory(:business_validation_template, module_type: "Entry", search_criterions: [@sc])

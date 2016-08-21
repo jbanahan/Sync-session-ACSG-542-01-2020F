@@ -4,7 +4,7 @@ describe VendorPlantsController do
   before :each do
     sign_in_as Factory(:user)
   end
-  describe :show do
+  describe "show" do
     it "should not show if user cannot view plant" do
       allow_any_instance_of(Plant).to receive(:can_view?).and_return false
       p = Factory(:plant)
@@ -21,14 +21,14 @@ describe VendorPlantsController do
     end
   end
 
-  describe :edit do
+  describe "edit" do
     it "should redirect to show" do
       get :edit, vendor_id: 99, id: 5
       expect(response).to redirect_to('/vendors/99/vendor_plants/5')
     end
   end
 
-  describe :update do
+  describe "update" do
     it "should not update if user cannot edit plant" do
       allow_any_instance_of(Plant).to receive(:can_edit?).and_return false
       p = Factory(:plant,name:'original')
@@ -56,7 +56,7 @@ describe VendorPlantsController do
     end
   end
 
-  describe :create do
+  describe "create" do
     it "should not create if user cannot edit vendor" do
       allow_any_instance_of(Company).to receive(:can_edit?).and_return false
       c = Factory(:company)
@@ -74,7 +74,7 @@ describe VendorPlantsController do
     end
   end
 
-  describe :unassigned_product_groups do
+  describe "unassigned_product_groups" do
     it "should error if cannot view plant" do
       allow_any_instance_of(Plant).to receive(:can_view?).and_return(false)
       plant = Factory(:plant)
@@ -96,7 +96,7 @@ describe VendorPlantsController do
     end
   end
 
-  describe :assign_product_group do
+  describe "assign_product_group" do
     it "should error if cannot edit plant" do
       allow_any_instance_of(Plant).to receive(:can_edit?).and_return false
       plant = Factory(:plant)

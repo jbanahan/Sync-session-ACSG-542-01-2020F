@@ -395,13 +395,13 @@ describe Order do
 
   end
 
-  describe :compose_po_number do
+  describe "compose_po_number" do
     it "assembles a po number" do
       expect(Order.compose_po_number "A", "b").to eq "A-b"
     end
   end
 
-  describe :shipping? do
+  describe "shipping?" do
     it "shows PO as shipping if any line has a piece set associated with a shipment" do
       order = Factory(:order_line).order
       sl = Factory(:shipment_line, product: order.order_lines.first.product)

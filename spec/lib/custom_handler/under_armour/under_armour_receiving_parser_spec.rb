@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
       [19,'51.32','number'],
     ]
   end
-  describe :validate do
+  describe "validate" do
     it "should pass with good headings" do
       good = [
         [0,'Vendor','string'],

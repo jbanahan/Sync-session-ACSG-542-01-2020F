@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe StateToggleButton do
-  describe :for_core_object_user do
+  describe "for_core_object_user" do
     it "should find from same core_module" do
       btn = Factory(:state_toggle_button,module_type:'Company')
       Factory(:state_toggle_button,module_type:'Order') #don't find
@@ -44,7 +44,7 @@ describe StateToggleButton do
     end
   end
 
-  describe :toggle! do
+  describe "toggle!" do
     before :each do
       allow_any_instance_of(OpenChain::WorkflowProcessor).to receive(:process!)
     end
@@ -144,7 +144,7 @@ describe StateToggleButton do
     end
   end
 
-  describe :to_be_activated? do
+  describe "to_be_activated?" do
     it "should show activate if date_attribute and date_attribute value returns blank" do
       s = Shipment.new
       btn = StateToggleButton.new(date_attribute:'canceled_date')

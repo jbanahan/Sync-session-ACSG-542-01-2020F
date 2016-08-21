@@ -2,7 +2,7 @@ require 'tempfile'
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
-  describe :parse_csv_file do
+  describe "parse_csv_file" do
     before :each do
       @f = Tempfile.new('foo')
     end
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       described_class.parse_csv_file @f.path, imp
     end
   end
-  describe :parse_csv_line do
+  describe "parse_csv_line" do
     def default_vals
       {
         export_date: '8/23/2011 2:15:32 PM' ,

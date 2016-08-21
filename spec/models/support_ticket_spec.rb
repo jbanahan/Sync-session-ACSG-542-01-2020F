@@ -13,7 +13,7 @@ describe SupportTicket do
       expect(r.first).to eq(find)
     end
   end
-  describe :can_view? do
+  describe "can_view?" do
     it "should allow view if user is support agent" do
       expect(@st.can_view?(User.new(:support_agent=>true))).to be_truthy
     end
@@ -36,7 +36,7 @@ describe SupportTicket do
       expect(@st.can_view?(User.new())).to be_falsey
     end
   end
-  describe :can_edit? do
+  describe "can_edit?" do
     before :each do
       @u = User.new
     end

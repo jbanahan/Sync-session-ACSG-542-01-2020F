@@ -13,7 +13,7 @@ describe FileImportProcessor do
     expect { FileImportProcessor.new(imp,'a,b') }.not_to raise_error
   end
   
-  describe :preview do
+  describe "preview" do
     it "should not write to DB" do
       @ss = SearchSetup.new(:module_type=>"Product")
       @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0) 
@@ -40,7 +40,7 @@ describe FileImportProcessor do
 
   end
 
-  describe :do_row do
+  describe "do_row" do
     before :each do
       @ss = SearchSetup.new(:module_type=>"Product")
       @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product") 

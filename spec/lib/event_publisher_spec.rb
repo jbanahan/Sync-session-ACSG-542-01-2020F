@@ -6,7 +6,7 @@ describe OpenChain::EventPublisher do
     #We need to reset it here to allow these tests to call the method
     OpenChain::EventPublisher.rspec_reset
   end
-  describe :publish do
+  describe "publish" do
     it "should send event to SQS" do
       o = Order.new
       o.customer_order_number = 'CORD'

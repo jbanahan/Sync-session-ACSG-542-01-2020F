@@ -8,7 +8,7 @@ describe OpenChain::StatClient do
     t
   end
 
-  describe :run do
+  describe "run" do
     before :each do
       allow(described_class).to receive(:post_json!)
     end
@@ -41,14 +41,14 @@ describe OpenChain::StatClient do
       described_class.run
     end
   end
-  describe :wall_time do
+  describe "wall_time" do
     it "should measure wall time for process using Time.now" do
       allow(Time).to receive(:now).and_return(20,30)
       expect(described_class).to receive(:add_numeric).with('mycode',10)
       described_class.wall_time('mycode') { nil }
     end
   end
-  describe :collect_report_recipients do
+  describe "collect_report_recipients" do
     it "should only report unique addresses" do
       Factory(:search_schedule,email_addresses:'joe@sample.com, jim@sample.com; mary@sample.com')
       Factory(:search_schedule,email_addresses:'fred@sample.com,joe@sample.com')
@@ -61,7 +61,7 @@ describe OpenChain::StatClient do
       described_class.collect_report_recipients
     end
   end
-  describe :collect_active_users do
+  describe "collect_active_users" do
     it "should call add_numeric with appropriate params" do
       Factory(:user,username:'ca2',last_request_at:Time.zone.now)
       Factory(:user,username:'ca1',last_request_at:8.days.ago) #too old
@@ -71,7 +71,7 @@ describe OpenChain::StatClient do
       described_class.collect_active_users
     end
   end
-  describe :collect_total_survey_responses do
+  describe "collect_total_survey_responses" do
     it "should call add_numeric with appropriate params" do
       m = double('scoped')
       expect(m).to receive(:count).and_return 3
@@ -80,7 +80,7 @@ describe OpenChain::StatClient do
       described_class.collect_total_survey_responses
     end
   end
-  describe :collect_total_surveys do
+  describe "collect_total_surveys" do
     it "should call add_numeric with appropriate params" do
       m = double('scoped')
       expect(m).to receive(:count).and_return 3
@@ -89,7 +89,7 @@ describe OpenChain::StatClient do
       described_class.collect_total_surveys
     end
   end
-  describe :collect_total_entries do
+  describe "collect_total_entries" do
     it "should call add_numeric with appropriate params" do
       m = double('scoped entry')
       expect(m).to receive(:count).and_return 3
@@ -98,7 +98,7 @@ describe OpenChain::StatClient do
       described_class.collect_total_entries
     end
   end
-  describe :collect_total_products do
+  describe "collect_total_products" do
     it "should call add_numeric with appropriate params" do
       m = double('scoped product')
       expect(m).to receive(:count).and_return 3
@@ -107,7 +107,7 @@ describe OpenChain::StatClient do
       described_class.collect_total_products
     end
   end
-  describe :add_numeric do
+  describe "add_numeric" do
     it "should set url and json" do
       t = 1.hour.ago
       dbl = double('stat_client')
@@ -117,7 +117,7 @@ describe OpenChain::StatClient do
     end
   end
 
-  describe :post_json do
+  describe "post_json" do
     before :each do 
       ms = MasterSetup.get
       ms.update_attributes(stats_api_key:'sapi')

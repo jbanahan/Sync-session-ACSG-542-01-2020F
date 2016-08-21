@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe LinesSupport do
-  describe :default_line_number do
+  describe "default_line_number" do
     it "should create line numbers for in memory lines" do
       p = Factory(:product)
       s = Shipment.new(reference:'abc')

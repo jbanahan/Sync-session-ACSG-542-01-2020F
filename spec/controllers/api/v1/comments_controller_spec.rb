@@ -7,7 +7,7 @@ describe Api::V1::CommentsController do
     allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
     allow_api_access @u
   end
-  describe :destroy do
+  describe "destroy" do
     before :each do
       allow(OpenChain::WorkflowProcessor).to receive(:async_process)
     end
@@ -30,7 +30,7 @@ describe Api::V1::CommentsController do
       expect(response.status).to eq 401
     end
   end
-  describe :create do
+  describe "create" do
     before :each do
       allow_any_instance_of(Shipment).to receive(:can_comment?).and_return true
       @comment_hash = {comment:{commentable_id:@s.id.to_s,
@@ -62,7 +62,7 @@ describe Api::V1::CommentsController do
       expect(response.status).to eq 401
     end
   end
-  describe :for_module do
+  describe "for_module" do
     it "should return comments" do
       c1 = @s.comments.create!(user_id:@u.id,subject:'s1',body:'b1')
       c2 = @s.comments.create!(user_id:@u.id,subject:'s2',body:'b2')

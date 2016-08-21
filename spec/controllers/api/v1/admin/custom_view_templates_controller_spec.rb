@@ -8,7 +8,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
     use_json
   end
 
-  describe :edit do
+  describe "edit" do
     it "renders template JSON for a sys-admin" do
       mf_collection = [{:mfid=>:prod_attachment_count, :label=>"Attachment Count", :datatype=>:integer}, 
                        {:mfid=>:prod_attachment_types, :label=>"Attachment Types", :datatype=>:string}]
@@ -30,7 +30,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
     end
   end
 
-  describe :update do
+  describe "update" do
     before(:each) do
       @cvt_new_criteria = [{"mfid"=>"prod_uid", "label"=>"Unique Identifier", "operator"=>"eq", "value"=>"x", "datatype"=>"string", "include_empty"=>false}]
       @cvt = CustomViewTemplate.first
@@ -78,7 +78,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
     end
   end
 
-  describe :get_mf_digest do
+  describe "get_mf_digest" do
     it "takes the model fields associated with a template's module returns only the mfid, label, and datatype fields" do
       cvt = Factory(:custom_view_template, module_type: "Product")
       mfs = described_class.new.get_mf_digest cvt

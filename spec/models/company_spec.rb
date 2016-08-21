@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Company do
-  describe :migrate_accounts do
+  describe "migrate_accounts" do
     before :each do
       @c1 = Factory(:company)
       @c2 = Factory(:company)
@@ -26,7 +26,7 @@ describe Company do
       expect(s.company).to eq @c2
     end
   end
-  describe :attachment_archive_enabled do
+  describe "attachment_archive_enabled" do
     before :each do
       @c = Factory(:company)
       dont_find = Factory(:company)
@@ -382,7 +382,7 @@ describe Company do
     end
   end
 
-  describe :has_vfi_invoice? do
+  describe "has_vfi_invoice?" do
     let(:co) { Factory(:company) }
     let(:inv) { Factory(:vfi_invoice) }
 

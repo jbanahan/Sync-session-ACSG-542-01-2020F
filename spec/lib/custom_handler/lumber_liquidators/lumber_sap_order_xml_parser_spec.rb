@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'rexml/document'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
-  describe :parse_dom do
+  describe "parse_dom" do
     before :each do
       @usa = Factory(:country,iso_code:'US')
       @test_data = IO.read('spec/fixtures/files/ll_sap_order.xml')

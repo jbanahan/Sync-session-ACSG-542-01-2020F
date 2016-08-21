@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Api::V1::Admin::SearchSetupsController do
-  describe :create_from_setup do
+  describe "create_from_setup" do
     it "should create a new template based on search setup id" do
       allow_api_access Factory(:admin_user)
       ss = Factory(:search_setup)

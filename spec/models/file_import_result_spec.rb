@@ -6,7 +6,7 @@ describe FileImportResult do
     @user = Factory(:master_user,:email=>'a@example.com')
   end
 
-  describe :collected_messages do
+  describe "collected_messages" do
     before :each do
       @fir = Factory(:file_import_result)
       @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1)
@@ -23,7 +23,7 @@ describe FileImportResult do
     end
   end
 
-  describe :create_excel_report do
+  describe "create_excel_report" do
     before :each do
       @imported_file = Factory(:imported_file, attached_file_name: "file name")
       @fir = Factory(:file_import_result, imported_file: @imported_file)
@@ -67,7 +67,7 @@ describe FileImportResult do
 
   end
 
-  describe :download_results do
+  describe "download_results" do
     before :each do
       @imported_file = Factory(:imported_file, attached_file_name: "file name")
       @fir = Factory(:file_import_result, imported_file: @imported_file)
@@ -111,7 +111,7 @@ describe FileImportResult do
     end
   end
 
-  describe :time_to_process do
+  describe "time_to_process" do
     it "should return nil if no started_at" do
       expect(FileImportResult.new(:finished_at=>0.seconds.ago).time_to_process).to be_nil
     end

@@ -6,7 +6,7 @@ describe UsersController do
     sign_in_as @user
   end
   
-  describe :create do
+  describe "create" do
     it "should create user with apostrophe in email address" do
       allow_any_instance_of(User).to receive(:admin?).and_return(true)
       u = {'username'=>"c'o@sample.com",'password'=>'pw12345','password_confirmation'=>'pw12345','email'=>"c'o@sample.com",
@@ -84,7 +84,7 @@ describe UsersController do
     end
   end
 
-  describe :show_create_from_template do
+  describe "show_create_from_template" do
     before :each do
       @t = Factory(:user_template)
     end
@@ -104,7 +104,7 @@ describe UsersController do
     end
   end
 
-  describe :create_from_template do
+  describe "create_from_template" do
     before :each do
       @t = Factory(:user_template)
     end
@@ -141,7 +141,7 @@ describe UsersController do
     end
   end
 
-  describe :new do
+  describe "new" do
     context "with admin authorization" do
       before(:each) do
         @user.admin = true
@@ -202,7 +202,7 @@ describe UsersController do
     end
   end
 
-  describe :update do
+  describe "update" do
     before :each do
       @user.admin = true
       @user.save!
@@ -241,7 +241,7 @@ describe UsersController do
       expect(User.authenticate 'testing', 'testing').to be_truthy
     end
   end
-  describe :event_subscriptions do
+  describe "event_subscriptions" do
     it "should work with user id" do
       u = Factory(:user)
       expect_any_instance_of(User).to receive(:can_edit?).and_return true
@@ -342,7 +342,7 @@ describe UsersController do
     end
   end
 
-  describe :bulk_invite do
+  describe "bulk_invite" do
 
     it "should invite multiple users" do
       @user.admin = true
@@ -403,7 +403,7 @@ describe UsersController do
     end
   end
 
-  describe :move_to_new_company do
+  describe "move_to_new_company" do
     
     before :each do
       @user1 = Factory(:user)

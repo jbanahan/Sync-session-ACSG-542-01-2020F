@@ -15,14 +15,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     CustomDefinition.where('1=1').destroy_all
   end
 
-  describe :generate do
+  describe "generate" do
     it "should call FTP whenever row_count > 500" do
       allow_any_instance_of(described_class).to receive(:row_count).and_return(501,501,200)
       expect_any_instance_of(described_class).to receive(:ftp_file).exactly(3).times
       described_class.generate
     end
   end
-  describe :sync_csv do
+  describe "sync_csv" do
     it "should clean newlines and tabs from long description" do
       header_row = {0=>'uid',1=>'imp',2=>'ldesc',3=>'org',4=>'hts'}
       content_row = {0=>'213',1=>'US',2=>"My Long\nDescription\t",3=>'CA',4=>'9876543210',5=>''}
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       expect(r).to eq("213|US|||9876543210\n")
     end
   end
-  describe :query do
+  describe "query" do
     before :each do
       @us = Factory(:country,:iso_code=>'US')
     end

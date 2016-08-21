@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::FixedPositionGenerator do
  
-  describe :str do
+  describe "str" do
     it "should right pad string" do
       expect(subject.str('x',3)).to eq 'x  '
     end
@@ -39,7 +39,7 @@ describe OpenChain::FixedPositionGenerator do
       expect(p.str("¶", 1)).to eq "!"
     end
   end
-  describe :num do
+  describe "num" do
     it "should include implied decimals on fixnum" do
       expect(subject.num(5,6,2)).to eq '  5.00'
     end
@@ -72,7 +72,7 @@ describe OpenChain::FixedPositionGenerator do
       expect(subject.num(5,6,2, numeric_left_align: true)).to eq '5.00  '
     end
   end
-  describe :date do
+  describe "date" do
     it "should handle nil" do
       expect(subject.date(nil)).to eq ''.ljust(8)
     end

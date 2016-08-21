@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe User do
-  describe :api_hash do
+  describe "api_hash" do
     let (:user) { Factory(:user, first_name:'Joe', last_name:'User', username:'uname', email:'j@sample.com', email_new_messages:true) }
     it "should get hash" do
       allow(user).to receive(:view_orders?).and_return true
@@ -40,7 +40,7 @@ describe User do
       })
     end
   end
-  describe :groups do
+  describe "groups" do
     before :each do
       @gA = Factory(:group,system_code:'groupA')
 
@@ -63,7 +63,7 @@ describe User do
       expect(@u1.in_any_group?([@gB])).to be_falsey
     end
   end
-  describe :available_importers do
+  describe "available_importers" do
     before :each do
       @c1 = Factory(:company,importer:true)
       @c2 = Factory(:company,importer:true)
@@ -85,7 +85,7 @@ describe User do
       expect(u.available_importers.to_a).to eq [@c1,@c2]
     end
   end
-  describe :api_admin do
+  describe "api_admin" do
     it "should create api_admin if it doesn't exist" do
       u = User.api_admin
       expect(u.username).to eq 'ApiAdmin'
@@ -103,7 +103,7 @@ describe User do
       expect(User.api_admin).to eq u
     end
   end
-  describe :integration do
+  describe "integration" do
     it "should create integration if it doesn't exist" do
       u = User.integration
       expect(u.username).to eq 'integration'
@@ -121,7 +121,7 @@ describe User do
       expect(User.integration).to eq u
     end
   end
-  describe :magic_columns do
+  describe "magic_columns" do
     before :each do
       @updated_at = 1.year.ago
       @u = Factory(:user,:updated_at=>@updated_at)
@@ -879,7 +879,7 @@ describe User do
 
   end
 
-  describe :portal_redirect_path do
+  describe "portal_redirect_path" do
     it "should return nil if portal_mode.blank?" do
       expect(User.new.portal_redirect_path).to be_nil
     end

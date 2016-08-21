@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Project do
   context :security do
-    describe :can_view? do
+    describe "can_view?" do
       it "should be able to view if user can view projects" do
         u = User.new
         expect(u).to receive(:view_projects?).and_return true
@@ -14,7 +14,7 @@ describe Project do
         expect(Project.new.can_view?(u)).to be_falsey
       end
     end
-    describe :can_edit? do
+    describe "can_edit?" do
       it "should be able to edit if user can edit projects" do
         u = User.new
         expect(u).to receive(:edit_projects?).and_return true
@@ -27,7 +27,7 @@ describe Project do
       end
     end
   end
-  describe :red? do
+  describe "red?" do
     it "should be red if there are red_messages" do
       p = Project.new()
       allow(p).to receive(:red_messages).and_return ['abc']
@@ -39,7 +39,7 @@ describe Project do
       expect(p).not_to be_red
     end
   end
-  describe :red_messages do
+  describe "red_messages" do
     it "should not have message if closed" do
       expect(Project.new(closed_at:Time.now,due:2.weeks.ago).red_messages).to be_blank
     end

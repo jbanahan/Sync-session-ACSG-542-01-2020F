@@ -7,7 +7,7 @@ describe AdvancedSearchController do
     sign_in_as @user
   end
 
-  describe :destroy do 
+  describe "destroy" do 
     it "should destroy and return id of previous search" do
       old_search = Factory(:search_setup,:module_type=>'Product',:user=>@user)
       new_search = Factory(:search_setup,:module_type=>'Product',:user=>@user)
@@ -29,7 +29,7 @@ describe AdvancedSearchController do
       expect(SearchSetup.find_by_id(ss.id)).not_to be_nil
     end
   end
-  describe :create do
+  describe "create" do
     before :each do
       allow(CoreModule::PRODUCT).to receive(:enabled?).and_return(true)
       allow(CoreModule::PRODUCT).to receive(:view?).and_return(true)
@@ -53,7 +53,7 @@ describe AdvancedSearchController do
       expect(SearchSetup.for_user(@user)).to be_empty
     end
   end
-  describe :update do
+  describe "update" do
     before :each do
       @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:no_time=>false,
         :module_type=>"Product")
@@ -148,7 +148,7 @@ describe AdvancedSearchController do
     end
   end
 
-  describe :last_search_id do
+  describe "last_search_id" do
     it "should get last search based on search_run" do
       ss_first = Factory(:search_setup,:user=>@user)
       ss_second = Factory(:search_setup,:user=>@user)
@@ -177,7 +177,7 @@ describe AdvancedSearchController do
     end
   end
 
-  describe :setup do
+  describe "setup" do
     it 'should redirect for html' do
       get :setup, :id=>1
       expect(response).to redirect_to '/advanced_search#/1'
@@ -302,7 +302,7 @@ describe AdvancedSearchController do
     end
   end
 
-  describe :show do
+  describe "show" do
     it 'should redirect for html' do
       get :show, :id=>1
       expect(response).to redirect_to '/advanced_search#/1'
@@ -412,7 +412,7 @@ describe AdvancedSearchController do
       end
     end
   end
-  describe :download do
+  describe "download" do
     before :each do
       @ss = Factory(:search_setup,:user=>@user,:name=>'myname',:module_type=>'Product')
       @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
@@ -466,7 +466,7 @@ describe AdvancedSearchController do
     end
   end
 
-  describe :send_email do
+  describe "send_email" do
     before(:each) do 
       @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:no_time=>false,
         :module_type=>"Product") 
@@ -525,7 +525,7 @@ describe AdvancedSearchController do
     end
   end
 
-  describe :legacy_javascripts? do
+  describe "legacy_javascripts?" do
     it "should not include legacy javascripts" do
       expect(AdvancedSearchController.new.legacy_javascripts?).to be_falsey
     end

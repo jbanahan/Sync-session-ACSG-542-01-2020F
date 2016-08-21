@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
     allow(@cf).to receive(:attached).and_return(att)
     allow(@cf).to receive(:attached_file_name).and_return('attfilename')
   end
-  describe :valid_style? do
+  describe "valid_style?" do
     it "should not validate styles that are not [7 alphanumerics]-[3 alphanumerics]" do
       expect(described_class.valid_style?('12345-12')).to be_falsey
     end
@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       expect(described_class.valid_style?('1a34567-1a3')).to be_truthy
     end
   end
-  describe :valid_plant? do
+  describe "valid_plant?" do
     it "should not validate a blank plant" do
       expect(described_class.valid_plant?('')).to be_falsey
     end
@@ -39,12 +39,12 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       expect(described_class.valid_plant?('I001')).to be_truthy
     end
   end
-  describe :prep_plant_code do
+  describe "prep_plant_code" do
     it "should fix numeric" do
       expect(described_class.prep_plant_code('17.0')).to eq('0017')
     end
   end
-  describe :write_material_color_plant_xrefs do
+  describe "write_material_color_plant_xrefs" do
     it "should write XREFS" do
       rows = [['','12345-001','71'],['','12345-001','71'],['','12345-002','73']]
       described_class.write_material_color_plant_xrefs rows
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       expect(DataCrossReference.find_ua_material_color_plant('12345','002','0073')).to eq('1')
     end
   end
-  describe :valid_material? do
+  describe "valid_material?" do
     it "should not validate materials that contain DELETE" do
       expect(described_class.valid_material?('this material is DELETED already')).to be_falsey
     end
@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       expect(described_class.valid_material?('this material has no bad words')).to be_truthy
     end
   end
-  describe :valid_row? do
+  describe "valid_row?" do
     before :each do
       @r = ['',
         '1234567-890',
@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       expect(described_class.valid_row?(@r)).to be_falsey
     end
   end
-  describe :process do
+  describe "process" do
     before :each do 
       @u = Factory(:user)
       @tmp = double('tmp')
@@ -159,7 +159,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       expect(msg.body).to include 'bad stuff' 
     end
   end
-  describe :process_rows do
+  describe "process_rows" do
     before :each do
       @p = described_class.new(@cf)
       @u = Factory(:user)

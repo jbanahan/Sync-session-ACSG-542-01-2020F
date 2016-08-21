@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
   it "should have sync_code" do
     expect(described_class.new.sync_code).to eq('winshuttle')
   end
-  describe :run_and_email do
+  describe "run_and_email" do
     it "should run_and_email" do
       d = double('class')
       expect(d).to receive(:sync_xls).and_return 'xyz'
@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       described_class.run_and_email('j@sample.com')
     end
   end
-  describe :sync do
+  describe "sync" do
     before :each do
       @plant_cd = described_class.prep_custom_definitions([:plant_codes])[:plant_codes]
       @colors_cd = described_class.prep_custom_definitions([:colors])[:colors]
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
     end
   end
 
-  describe :email_file do
+  describe "email_file" do
     before :each do 
       @f = double('file')
       @mailer = double(:mailer)

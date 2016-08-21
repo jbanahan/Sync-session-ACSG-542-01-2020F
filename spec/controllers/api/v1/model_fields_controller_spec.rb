@@ -8,7 +8,7 @@ describe Api::V1::ModelFieldsController do
     allow_api_access(@user)
   end
 
-  describe :index do
+  describe "index" do
     it "should get record types (core modules)" do
       expect(get :index).to be_success
 
@@ -123,7 +123,7 @@ describe Api::V1::ModelFieldsController do
     end
   end
 
-  describe :cache_key do
+  describe "cache_key" do
     it "should get cache_key" do
       mfload = 10.minutes.ago
       company_updated_at = 1.hour.ago

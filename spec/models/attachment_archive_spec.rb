@@ -1,7 +1,7 @@
 describe 'spec_helper'
 
 describe AttachmentArchive do
-  describe :attachment_list_json do
+  describe "attachment_list_json" do
     it "should write entry information" do
       entry = Factory(:entry,:arrival_date=>1.day.ago,:importer=>Factory(:company), :broker_reference=>'brokerref')
       invoice = Factory(:broker_invoice, :entry=>entry, :invoice_date=>2.months.ago)

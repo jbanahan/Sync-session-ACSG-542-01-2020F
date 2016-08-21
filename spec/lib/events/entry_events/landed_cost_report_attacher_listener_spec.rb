@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
 
-  describe :accepts? do
+  describe "accepts?" do
     context "J JILL Logic" do
       before :each do
         @entry = Factory(:entry, :customer_number => "JILL")
@@ -123,7 +123,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
       }
     end
     
-    describe :receive do
+    describe "receive" do
       before :each do
         @e = Factory(:entry, file_logged_date: '2016-02-01')
       end
@@ -195,7 +195,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
       end
     end
 
-    describe :calculate_landed_cost_checksum do
+    describe "calculate_landed_cost_checksum" do
       it "should generate the same checksum for identical sets of landed cost data" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         expect(checksum).to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data

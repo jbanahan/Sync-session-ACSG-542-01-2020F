@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
-  describe :parse do
+  describe "parse" do
     before :each do
       allow_any_instance_of(Order).to receive(:can_edit?).and_return true
       Factory(:master_user,username:'integration')

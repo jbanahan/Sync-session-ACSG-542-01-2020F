@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
     @date_format = "%Y%m%d"
     @g = OpenChain::CustomHandler::PoloCaEfocusGenerator.new
   end
-  describe :sync_xml do
+  describe "sync_xml" do
     it "should return array of tempfiles" do
       f = @g.sync_xml
       expect(f.size).to eq(1)
@@ -145,7 +145,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
     end
   end
 
-  describe :generate_xml_file do
+  describe "generate_xml_file" do
     def get_entry_element 
       io = StringIO.new 
       @g.generate_xml_file @e1, io
@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
     end
   end
 
-  describe :ftp_xml_files do
+  describe "ftp_xml_files" do
     before :each do 
       @tempfiles = []
       @h = OpenChain::CustomHandler::PoloCaEfocusGenerator.new
@@ -245,7 +245,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
     end
   end
 
-  describe :ftp_credentials do 
+  describe "ftp_credentials" do 
     it "should use the ftp2 credentials" do
       g = OpenChain::CustomHandler::PoloCaEfocusGenerator.new
       expect(g).to receive(:remote_file_name).and_return 'xyz.xml'

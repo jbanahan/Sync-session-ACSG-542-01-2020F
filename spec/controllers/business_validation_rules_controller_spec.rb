@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BusinessValidationRulesController do
-  describe :create do
+  describe "create" do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template
@@ -49,7 +49,7 @@ describe BusinessValidationRulesController do
     end
   end
 
-  describe :edit do
+  describe "edit" do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template
@@ -77,7 +77,7 @@ describe BusinessValidationRulesController do
 
   end
 
-  describe :update do
+  describe "update" do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template
@@ -121,7 +121,7 @@ describe BusinessValidationRulesController do
 
   end
 
-  describe :edit_angular do
+  describe "edit_angular" do
     before :each do
       @sc = Factory(:search_criterion)
       # Use an actual concrete rule class rather than the base 'abstract' class to validate we're getting the correct data back
@@ -154,7 +154,7 @@ describe BusinessValidationRulesController do
     end
   end
 
-  describe :destroy do
+  describe "destroy" do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template

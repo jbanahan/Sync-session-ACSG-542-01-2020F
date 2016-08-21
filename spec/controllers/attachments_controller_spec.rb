@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe AttachmentsController do
 
-  describe :send_email_attachable do
+  describe "send_email_attachable" do
 
     before :each do 
       @u = Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz")

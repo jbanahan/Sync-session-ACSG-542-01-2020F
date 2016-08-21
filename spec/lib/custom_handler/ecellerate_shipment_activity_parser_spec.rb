@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
     r[55] = h[:cartons]
     r
   end
-  describe :can_view? do
+  describe "can_view?" do
     it "must have ecellerate custom feature" do
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return false
       allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
       expect(described_class.can_view?(Factory(:master_user))).to be_truthy
     end
   end
-  describe :process do
+  describe "process" do
     it "must allow can_view?" do
       p = described_class.new(double('att'))
       expect(p).to receive(:can_view?).and_return false
@@ -64,7 +64,7 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
       p.process User.new
     end
   end
-  describe :parse do
+  describe "parse" do
     def run_parse rows
       a = double(:att)
       x = double(:xl_client)

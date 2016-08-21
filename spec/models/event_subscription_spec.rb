@@ -7,7 +7,7 @@ describe EventSubscription do
     ms
   end
 
-  describe :subscriptions_for_event do
+  describe "subscriptions_for_event" do
     context "*_COMMENT_CREATE" do
       let (:order) { Factory(:order,importer:Factory(:company,importer:true)) }
       let (:user) { u = Factory(:user,company:order.importer,order_view:true) }

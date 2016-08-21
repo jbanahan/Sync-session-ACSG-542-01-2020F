@@ -5,7 +5,7 @@ describe Country do
     expect(ModelField).to receive(:reload).with(true)
     Country.create!(:name=>'MYC',:iso_code=>'YC')
   end
-  describe :load_default_countries do
+  describe "load_default_countries" do
     it "should create countries" do
       Country.load_default_countries
       expect(Country.scoped.count).to eq(Country::ALL_COUNTRIES.size)
@@ -21,7 +21,7 @@ describe Country do
       expect(Country.find_by_iso_code('VN').name).to eq('OVN')
     end
   end
-  describe :quicksearch_only_for_import_locations do
+  describe "quicksearch_only_for_import_locations" do
     it "validates that if quicksearch_view is enabled import_location is also set" do
       Country.load_default_countries
       c = Country.first

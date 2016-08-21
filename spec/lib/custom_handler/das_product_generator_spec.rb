@@ -2,13 +2,13 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::DasProductGenerator do
   #YYYYMMDDHHMMSSLLL-DAPART.DAT
-  describe :remote_file_name do
+  describe "remote_file_name" do
     it "should be in correct format" do
       expect(described_class.new.remote_file_name).to eq "DAPART.DAT"
     end
   end
 
-  describe :generate do
+  describe "generate" do
     it "should create fixed position file and ftp it" do
       h = described_class.new
       expect(h).to receive(:sync_fixed_position).and_return('x')
@@ -17,19 +17,19 @@ describe OpenChain::CustomHandler::DasProductGenerator do
     end
   end
 
-  describe :ftp_credentials do
+  describe "ftp_credentials" do
     it "should send credentials" do
      expect(described_class.new.ftp_credentials).to eq server: 'ftp2.vandegriftinc.com', username: "VFITRACK", password: 'RL2VFftp', folder: 'to_ecs/alliance_products', remote_file_name: "DAPART.DAT"
     end
   end
 
-  describe :auto_confirm? do
+  describe "auto_confirm?" do
     it "should autoconfirm" do
       expect(described_class.new.auto_confirm?).to be_truthy
     end
   end
 
-  describe :query do
+  describe "query" do
     before :each do
       @us = Factory(:country, iso_code: 'US')
       @classification = Factory(:classification, :country_id=>@us.id)
@@ -65,7 +65,7 @@ describe OpenChain::CustomHandler::DasProductGenerator do
     end
   end
 
-  describe :fixed_position_map do
+  describe "fixed_position_map" do
     it "should return mapping" do
       expect(described_class.new.fixed_position_map).to eq([
         {:len=>15}, #unique identifier

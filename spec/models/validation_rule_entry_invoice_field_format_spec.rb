@@ -34,7 +34,7 @@ describe ValidationRuleEntryInvoiceFieldFormat do
     expect(@rule.run_validation(@ci.entry)).to be_nil
   end
 
-  describe :should_skip? do
+  describe "should_skip?" do
 
     it "should skip on entry validation level" do
       @ci.entry.update_attributes(entry_number:'1234321')

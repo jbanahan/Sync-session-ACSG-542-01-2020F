@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe ProjectDeliverable do
-  describe :not_closed do
+  describe "not_closed" do
     it "should not return closed deliverables" do
       d1 = Factory(:project_deliverable)
       d2 = Factory(:project_deliverable,project:Factory(:project,closed_at:Time.now))

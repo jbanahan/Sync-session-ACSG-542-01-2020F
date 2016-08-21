@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe CoreObjectSupport do
-  describe :find_by_custom_value do
+  describe "find_by_custom_value" do
     it "shuould find by value" do
       cd = Factory(:custom_definition,module_type:'Product')
       p = Factory(:product)
@@ -10,7 +10,7 @@ describe CoreObjectSupport do
       expect(Product.find_by_custom_value(cd,'def')).to be_nil
     end
   end
-  describe :workflow_instances do
+  describe "workflow_instances" do
     it "should have many workflow instances" do
       o = Factory(:order)
       2.times {|x| Factory(:workflow_instance,base_object:o)}
@@ -18,7 +18,7 @@ describe CoreObjectSupport do
       expect(o.workflow_instances.count).to eq 2
     end
   end
-  describe :business_rules_state do
+  describe "business_rules_state" do
     it "should set worst state from business_validation_results" do
       ent = Factory(:entry)
       bv1 = Factory(:business_validation_result,state:'Pass')
@@ -30,7 +30,7 @@ describe CoreObjectSupport do
       expect(ent.business_rules_state).to eq 'Fail'
     end
   end
-  describe :process_linked_attachments do
+  describe "process_linked_attachments" do
     before :each do
       LinkableAttachmentImportRule.create!(:path=>'X',:model_field_uid=>'ord_ord_num')
       @ws = Delayed::Worker.delay_jobs
@@ -54,7 +54,7 @@ describe CoreObjectSupport do
       o.save!
     end
   end
-  describe :need_sync do
+  describe "need_sync" do
     before :each do
       @tp = "tradingpartner"
       @p = Factory(:product)
@@ -117,7 +117,7 @@ describe CoreObjectSupport do
       expect(Product.need_sync(@tp).to_a).to eq [@p]
     end
   end
-  describe :view_url do
+  describe "view_url" do
     it "should make url based on request_host" do
       allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "x.y.z"
       p = Factory(:product)
@@ -133,7 +133,7 @@ describe CoreObjectSupport do
       expect(Product.excel_url 1).to eq XlsMaker.excel_url("/products/1")
     end
   end
-  describe :relative_url do
+  describe "relative_url" do
     it "should make url without host" do
       p = Factory(:product)
       expect(p.relative_url).to eq("/products/#{p.id}")
@@ -143,7 +143,7 @@ describe CoreObjectSupport do
       expect(Product.relative_url 1).to eq "/products/1"
     end 
   end
-  describe :all_attachments do
+  describe "all_attachments" do
     it "should sort by attachment type then attached file name then id" do
       p = Factory(:product)
       third = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A")
@@ -169,7 +169,7 @@ describe CoreObjectSupport do
       end
     end
 
-    describe :need_sync_join_clause do
+    describe "need_sync_join_clause" do
       it "should generate sql for joining to sync_records table" do
         sql = TestCoreObject.need_sync_join_clause "Trading's Partner"
         expect(sql).to include ".syncable_type = 'Class\\' Name'"
@@ -178,7 +178,7 @@ describe CoreObjectSupport do
       end
     end
 
-    describe :need_sync_where_clause do
+    describe "need_sync_where_clause" do
       it "should generate sql for joining to sync_records table" do
         sql = TestCoreObject.need_sync_where_clause
         expect(sql).to include "test_core_objects.updated_at"
@@ -218,7 +218,7 @@ describe CoreObjectSupport do
     end
   end
 
-  describe :can_run_validations? do
+  describe "can_run_validations?" do
     before :each do
       @u = Factory(:user)
       allow(@u).to receive(:edit_business_validation_rule_results?).and_return true

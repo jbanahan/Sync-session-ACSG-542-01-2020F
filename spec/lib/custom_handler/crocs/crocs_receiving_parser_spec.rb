@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
     @xl_client = double('xl_client')
     allow(OpenChain::XLClient).to receive(:new).and_return @xl_client
   end
-  describe :validate_s3 do
+  describe "validate_s3" do
     before :each do 
     end
     it "should validate headers" do
@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
     end
   end
 
-  describe :parse_s3 do
+  describe "parse_s3" do
     it "should call parse_shipment with arrays of rows" do
       expect(described_class).to receive(:validate_s3).with(@s3_path).and_return []
       expect(@xl_client).to receive(:all_row_values).with(0).
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
     end
   end
 
-  describe :parse_shipment do
+  describe "parse_shipment" do
     before :each do 
       @importer = Factory(:company,importer:true,alliance_customer_number:'CROCS')
     end

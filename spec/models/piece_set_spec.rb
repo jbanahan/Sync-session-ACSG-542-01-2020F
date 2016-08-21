@@ -30,7 +30,7 @@ describe PieceSet do
     end
   end
 
-  describe :destroy_if_one_key! do
+  describe "destroy_if_one_key!" do
     it "should destroy if only has one foreign key" do
       product = Factory(:product)
       ps = PieceSet.create!(:quantity=>1,

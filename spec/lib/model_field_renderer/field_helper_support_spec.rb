@@ -8,7 +8,7 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
     k.new
   end
 
-  describe :add_tooltip_to_html_options do
+  describe "add_tooltip_to_html_options" do
     it "should add tooltip from model field if it exists" do
       html_opts = {}
       mf = double(:model_field)
@@ -30,7 +30,7 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
     end
   end
 
-  describe :get_form_field_name do
+  describe "get_form_field_name" do
     before :each do
       @mf = double(:model_field)
       allow(@mf).to receive(:uid).and_return('xx')
@@ -53,7 +53,7 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
     end
   end
 
-  describe :get_core_and_form_objects do
+  describe "get_core_and_form_objects" do
     it "should return core object and return nil for form_object when core_object is passed" do
       obj = Order.new
       expect(base_object.get_core_and_form_objects(obj)).to eq [obj,nil]
@@ -67,7 +67,7 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
     end
   end
 
-  describe :get_model_field do
+  describe "get_model_field" do
     before :each do
       @expected = ModelField.find_by_uid(:ord_ord_num)
     end
@@ -82,7 +82,7 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
     end
   end
 
-  describe :for_model_fields do
+  describe "for_model_fields" do
     it "should loop and yield ModelField objects for mixed array of strings, symbols, and ModelField objects" do
       vals = [:ord_ord_num, ModelField.find_by_uid(:ord_ord_date),'ord_cust_ord_no']
       expected = [:ord_ord_num,:ord_ord_date,:ord_cust_ord_no].collect {|uid| ModelField.find_by_uid(uid)}
@@ -108,7 +108,7 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
     end
   end
 
-  describe :skip_field? do
+  describe "skip_field?" do
     before :each do
       @model_field = double(:model_field)
       allow(@model_field).to receive(:can_view?).and_return(true)

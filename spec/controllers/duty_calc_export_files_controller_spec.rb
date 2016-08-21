@@ -6,7 +6,7 @@ describe DutyCalcExportFilesController do
 
     sign_in_as @user
   end
-  describe :create do
+  describe "create" do
     before :each do 
       @c = Factory(:company)
     end
@@ -24,7 +24,7 @@ describe DutyCalcExportFilesController do
       expect(response).to redirect_to drawback_upload_files_path
     end
   end
-  describe :download do
+  describe "download" do
     before :each do
       @d = Factory(:duty_calc_export_file)
     end

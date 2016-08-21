@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe ProductGroupsController do
-  describe :index do
+  describe "index" do
     it "should restrict to admins" do
       sign_in_as Factory(:user)
       get :index

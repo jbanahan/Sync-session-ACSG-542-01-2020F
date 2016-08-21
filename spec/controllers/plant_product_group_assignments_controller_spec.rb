@@ -4,7 +4,7 @@ describe PlantProductGroupAssignmentsController do
   before :each do
     sign_in_as Factory(:user)
   end
-  describe :show do
+  describe "show" do
     it "should show if can view" do
       ppga = Factory(:plant_product_group_assignment)
       allow_any_instance_of(PlantProductGroupAssignment).to receive(:can_view?).and_return true
@@ -21,7 +21,7 @@ describe PlantProductGroupAssignmentsController do
     end
   end
 
-  describe :update do
+  describe "update" do
     before :each do
       @cd = Factory(:custom_definition,module_type:'PlantProductGroupAssignment',data_type:'text')
       @ppga = Factory(:plant_product_group_assignment)

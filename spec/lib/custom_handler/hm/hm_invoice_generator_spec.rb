@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
   
-  describe :run_schedulable do
+  describe "run_schedulable" do
     it "finds the new billable events, new invoiceable events, creates a VFI invoice, bills new entries" do
       new_billables = double("new billables")
       invoice = double("vfi invoice")
@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
   end
 
-  describe :get_new_billables do
+  describe "get_new_billables" do
     let(:country_ca) { Factory(:country, iso_code: "CA", name: "CANADA") }
     let(:country_us) { Factory(:country, iso_code: "US", name: "UNITED STATES") }
     
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
   end
 
-  describe :create_invoice do
+  describe "create_invoice" do
     it "creates a new VFI invoice" do
       hm = Factory(:company, alliance_customer_number: "HENNE")
       inv = described_class.create_invoice
@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
   end
 
-  describe :bill_new_classifications do
+  describe "bill_new_classifications" do
     let(:invoice) { double("invoice") }
 
     it "creates invoiced events for all billables and an invoice line for billables with invoiceable ids" do
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
   end
 
-  describe :write_invoiced_events do
+  describe "write_invoiced_events" do
     it "creates an invoiced event for each new billable" do
       inv_line = Factory(:vfi_invoice_line)
       be_1 = Factory(:billable_event)

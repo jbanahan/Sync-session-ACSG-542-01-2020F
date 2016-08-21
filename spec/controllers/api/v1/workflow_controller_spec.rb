@@ -5,7 +5,7 @@ describe Api::V1::WorkflowController do
     @u = Factory(:user)
     allow_api_access @u
   end
-  describe :assign do
+  describe "assign" do
     before :each do
       @group = Factory(:group)
       @group.users << @u
@@ -42,7 +42,7 @@ describe Api::V1::WorkflowController do
       expect(@wt.assigned_to).to be_nil
     end
   end
-  describe :set_multi_state do
+  describe "set_multi_state" do
     before :each do
       @wt = Factory(:workflow_task,test_class_name:'OpenChain::WorkflowTester::MultiStateWorkflowTest',payload_json:'{"state_options":["yes","no"]}')
       @mp = double(:mock_processor)
@@ -74,7 +74,7 @@ describe Api::V1::WorkflowController do
       expect(JSON.parse(response.body)['errors']).to_not be_empty
     end
   end
-  describe :my_instance_open_task_count do
+  describe "my_instance_open_task_count" do
     it "should get the number of incomplete tasks for the current user for the base object in question" do
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       g = Factory(:group)

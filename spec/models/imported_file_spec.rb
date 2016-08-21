@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 describe ImportedFile do
-  describe :result_keys_where do
+  describe "result_keys_where" do
     it "should build proper where clause" do
       f = ImportedFile.new :id => 25
 
@@ -18,7 +18,7 @@ describe ImportedFile do
       expect(result_keys).to eq [1, 2, 3]
     end
   end
-  describe :result_keys do
+  describe "result_keys" do
     it "should return empty array if no file import results" do
       f = Factory(:imported_file)
       expect(f.result_keys).to eq([])

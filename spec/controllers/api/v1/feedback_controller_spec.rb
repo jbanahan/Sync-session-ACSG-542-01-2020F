@@ -7,7 +7,7 @@ describe Api::V1::FeedbackController do
     allow_api_access @user
   end
 
-  describe :send do
+  describe "send" do
     it "should delay trello card creation" do
       td = double('trello')
       expect(td).to receive(:create_feedback_card!).with(@user.id,'https://sample.com/abc','Hello world')

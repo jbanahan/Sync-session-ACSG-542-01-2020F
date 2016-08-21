@@ -1,7 +1,7 @@
 require "spec_helper"
 
 describe OpenChain::CustomHandler::JJill::JJillBookingApprovalDecider do
-  describe :skip? do
+  describe "skip?" do
     it "should not skip J Jill shipments" do
       imp = Factory(:company,system_code:'JJILL')
       s = Factory(:shipment,importer:imp)
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::JJill::JJillBookingApprovalDecider do
     end
   end
 
-  describe :do_workflow! do
+  describe "do_workflow!" do
     before :each do
       imp = Factory(:company,system_code:'JJILL')
       @s = Factory(:shipment,importer:imp)

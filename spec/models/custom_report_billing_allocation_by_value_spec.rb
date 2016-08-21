@@ -7,7 +7,7 @@ describe CustomReportBillingAllocationByValue do
     allow(@u).to receive(:view_broker_invoices?).and_return(true)
     @klass = CustomReportBillingAllocationByValue
   end
-  describe :static_methods do
+  describe "static_methods" do
     it "should allow users who can view broker invoices" do
       expect(@klass.can_view?(@u)).to be_truthy
     end
@@ -32,7 +32,7 @@ describe CustomReportBillingAllocationByValue do
     end
   end
 
-  describe :run do
+  describe "run" do
     before :each do
       @ent = Entry.create!(:entry_number=>"12345678901",:broker_reference=>"4567890",:importer_id=>Factory(:company).id)
       @ci_1 = @ent.commercial_invoices.create!(:invoice_number=>"ci_1")

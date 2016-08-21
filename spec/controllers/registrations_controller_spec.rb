@@ -12,7 +12,7 @@ describe RegistrationsController do
       @contact = "Jane Smith"
   end
 
-  describe :send_email do
+  describe "send_email" do
     it "emails Vandegrift with the registration form data and the server's system_code" do
       
       post :send_email, email: @email, fname: @fname, lname: @lname, company: @company, cust_no: @cust_no, contact: @contact

@@ -7,7 +7,7 @@ describe SummaryStatementsController do
     sign_in_as @u
   end
 
-  describe :index do
+  describe "index" do
     it "allows use only by summary-statement viewers" do
       get :index
 
@@ -23,7 +23,7 @@ describe SummaryStatementsController do
     end
   end
 
-  describe :show do
+  describe "show" do
     it "allows use only by summary-statement viewers" do
       get :show, id: @ss
 
@@ -48,7 +48,7 @@ describe SummaryStatementsController do
     end
   end
 
-  describe :edit do
+  describe "edit" do
     it "allows use only by summary-statement editors" do
       get :edit, id: @ss
 
@@ -73,7 +73,7 @@ describe SummaryStatementsController do
     end
   end
 
-  describe :new do
+  describe "new" do
     it "allows use only by summary-statement editors" do
       get :new
       
@@ -102,7 +102,7 @@ describe SummaryStatementsController do
     end
   end
 
-  describe :create do
+  describe "create" do
     before(:each) do
       allow(@u).to receive(:edit_summary_statements?).and_return true
       @co_1 = Factory(:company, importer: true)
@@ -140,7 +140,7 @@ describe SummaryStatementsController do
 
   end
 
-  describe :update do
+  describe "update" do
     before(:each) do
       allow(@u).to receive(:edit_summary_statements?).and_return true
     end

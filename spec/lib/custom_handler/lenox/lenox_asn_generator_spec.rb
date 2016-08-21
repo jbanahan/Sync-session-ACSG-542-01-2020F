@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
-  describe :run_schedulable do
+  describe "run_schedulable" do
     it "should ftp_file" do
       ents = 'x'
       files = ['y','z']
@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     end
 
     
-    describe :find_shipments do
+    describe "find_shipments" do
       it "should find shipment" do
         expect(described_class.new.find_shipments.to_a).to eq [@shipment]
       end
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(described_class.new.find_shipments.to_a).to be_empty
       end
     end
-    describe :generate_header_rows do
+    describe "generate_header_rows" do
       
       it "should make header row" do
         r = []
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[241,10].rstrip).to eq ''
       end
     end
-    describe :generate_detail_rows do
+    describe "generate_detail_rows" do
       it "should make detail row" do
         r = []
         described_class.new.generate_detail_rows(@shipment) do |dr|
@@ -200,7 +200,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[111,35].rstrip).to eq 'partnum'
       end
     end
-    describe :generate_tempfiles do
+    describe "generate_tempfiles" do
       it "should generate compliant files" do
         g = described_class.new
         expect(g).to receive(:generate_header_rows).with(@shipment).and_yield("abc")

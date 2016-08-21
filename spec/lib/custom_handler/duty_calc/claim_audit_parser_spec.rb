@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::DutyCalc::ClaimAuditParser do
-  describe :process_from_attachment do
+  describe "process_from_attachment" do
     before :each do
       @u = Factory(:user)
     end
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::DutyCalc::ClaimAuditParser do
       expect(@u.messages.first.body).to match /Invalid file format/
     end
   end
-  describe :parse_excel do
+  describe "parse_excel" do
     before :each do
       @xlc = double(:xl_client)
     end
@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::DutyCalc::ClaimAuditParser do
       p.parse_excel(@xlc,drawback_claim)
     end
   end
-  describe :parse_csv_from_attachment do
+  describe "parse_csv_from_attachment" do
     it "should download attachment" do
       claim = double('claim')
       att = Factory(:attachment)
@@ -85,7 +85,7 @@ describe OpenChain::CustomHandler::DutyCalc::ClaimAuditParser do
       p.parse_csv_from_attachment(att,claim)
     end
   end
-  describe :parse_csv do
+  describe "parse_csv" do
     before :each do
       @data = <<DTA 
 Export Date,Produced Date,Import Date,Rcvd Date,Mfg Date,Import Part,Export Part,7501,Qty Claimed,Export Ref 1,Import Ref 1

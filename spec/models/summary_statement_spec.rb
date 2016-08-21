@@ -13,7 +13,7 @@ require 'spec_helper'
     end
   end
 
-  describe :belongs_to_customer? do
+  describe "belongs_to_customer?" do
     before :each do
       @co = Factory(:company)
       @ss.update_attributes(customer: @co)
@@ -41,7 +41,7 @@ require 'spec_helper'
     end
   end
 
-  describe :can_view? do
+  describe "can_view?" do
     it "returns true if user has permission to view broker invoices" do
       u = Factory(:user)
       allow(u).to receive(:view_broker_invoices?).and_return true
@@ -49,7 +49,7 @@ require 'spec_helper'
     end
   end
 
-  describe :total do
+  describe "total" do
     it "returns the sum of the invoice totals" do
       @ss.broker_invoices = [Factory(:broker_invoice, invoice_total: 10), Factory(:broker_invoice, invoice_total: 5)]
       @ss.save!
@@ -57,7 +57,7 @@ require 'spec_helper'
     end
   end
 
-  describe :remove! do
+  describe "remove!" do
     before(:each) { @ss.broker_invoices << Factory(:broker_invoice) }
 
     it "removes specified invoice from the statement" do
@@ -72,7 +72,7 @@ require 'spec_helper'
     end
   end
 
-  describe :add! do
+  describe "add!" do
 
     it "adds invoice to a statement if its company matches the statement customer" do
       co = Factory(:company)
