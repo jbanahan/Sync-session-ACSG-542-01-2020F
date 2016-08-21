@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it 'should match and generate import line for a good link' do
       described_class.process_entries [@entry]
-      expect(PieceSet.size).to eq(1)
+      expect(PieceSet.count).to eq(1)
       ps = PieceSet.first
       expect(ps.shipment_line).to eq(@s_line)
       expect(ps.commercial_invoice_line).to eq(@c_line)
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       other_company.linked_company_ids = [@importer.id]
       @s_line.shipment.update_attributes(:importer_id=>other_company.id)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
-      expect(PieceSet.size).to eq(1)
+      expect(PieceSet.count).to eq(1)
     end
     it 'should match one entry to two shipment lines by po / style' do
       @c_line.update_attributes(:quantity=>30)
