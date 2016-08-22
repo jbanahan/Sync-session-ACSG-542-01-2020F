@@ -269,18 +269,12 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     context "invalid_ascii_chars" do
-      before :each do
-        expect_any_instance_of(StandardError).to receive(:log_me) do |instance, arg|
-          @error_message = arg
-        end
-      end
-
       it "should log an error for non-printing chars" do
         # Just use any non-printing char
         r = @g.preprocess_row(0=>1, 2=>"\v")
         expect(r).to be_nil
 
-        expect(@error_message).to eq ["Invalid character data found in product with unique_identifier '1'."]
+        expect(ErrorLogEntry.last.additional_messages).to eq ["Invalid character data found in product with unique_identifier '1'."]
       end
 
       it "should fail on delete char" do
@@ -289,14 +283,14 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
         r = @g.preprocess_row(0=>1, 2 => "␡")
         expect(r).to be_nil
 
-        expect(@error_message).to eq ["Invalid character data found in product with unique_identifier '1'."]
+        expect(ErrorLogEntry.last.additional_messages).to eq ["Invalid character data found in product with unique_identifier '1'."]
       end
 
       it "should log an error for non-ASCII chars" do
         r = @g.preprocess_row(0=>1, 2 =>"Æ")
         expect(r).to be_nil
 
-        expect(@error_message).to eq ["Invalid character data found in product with unique_identifier '1'."]
+        expect(ErrorLogEntry.last.additional_messages).to eq ["Invalid character data found in product with unique_identifier '1'."]
       end
 
     end

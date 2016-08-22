@@ -39,12 +39,12 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     expect(billing.charge_description).to eq('BILLING')
     expect(billing.charge_amount).to eq(45)
     expect(billing.charge_type).to eq('R')
-    
+
     hst = bi.broker_invoice_lines.find_by_charge_code '255'
     expect(hst.charge_description).to eq('HST (ON)')
     expect(hst.charge_amount).to eq(5.85)
     expect(hst.charge_type).to eq('R')
-    
+
     gst = bi.broker_invoice_lines.find_by_charge_code '21'
     expect(gst.charge_description).to eq('GST ON IMPORTS')
     expect(gst.charge_amount).to eq(4523.98)
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
     bi.broker_invoice_lines.first.destroy
     bi.update_attributes(:invoice_total=>2)
-    
+
     @k.parse @content
     bi.reload
     expect(bi.broker_invoice_lines.size).to eq(3)
@@ -76,15 +76,15 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     @content = <<INV
 INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
 01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
-01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 255 ,HST (ON), 5.85 ,#{@ent.broker_reference},CAD, 4000 , 1 
+01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 255 ,HST (ON), 5.85 ,#{@ent.broker_reference},CAD, 4000 , 1
 
 01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 21 GST ON B3 ,GST ON IMPORTS, 4523.98 ,#{@ent.broker_reference},CAD, 3100 , 1 ,RG01, 2 , 4523.98 ,CAD, 3100 , 1 ,11981001052312
 
 01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 22 ,BROKERAGE, 37 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
-01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 255 ,HST (ON), 4.81 ,#{@ent.broker_reference},CAD, 4000 , 1 
+01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 255 ,HST (ON), 4.81 ,#{@ent.broker_reference},CAD, 4000 , 1
 
 01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 34 ,BOND FEE, 10 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
-01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 255 ,HST (ON), 1.3 ,#{@ent.broker_reference},CAD, 4000 , 1 
+01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 255 ,HST (ON), 1.3 ,#{@ent.broker_reference},CAD, 4000 , 1
 
 01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 20 DUTY ON B3 ,DUTY ON IMPORTS, 542.57 ,#{@ent.broker_reference},CAD, 3100 , 1 ,RG01, 2 , 542.57 ,CAD, 3100 , 1 ,11981001157739
 INV
@@ -109,22 +109,22 @@ INV
   end
 
   it "should handle errors for each invoice individually" do
-    expect_any_instance_of(StandardError).to receive(:log_me).with(["Failed to process Fenix Invoice # 01-00INV#2 from file 'path/to/file'."])
-
-    @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
-              # This line fails due to missing invoice date
-              ",, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,\n" +
-              "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},,  , 1 ,,,,,,,,\n", {:key => "path/to/file"}
+    expect {
+      @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
+      # This line fails due to missing invoice date
+      ",, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,\n" +
+      "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},,  , 1 ,,,,,,,,\n", {:key => "path/to/file"}
+    }.to change(ErrorLogEntry,:count).by(1)
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
     expect(bi).not_to be_nil
   end
 
   it "should raise an error if the broker reference is missing" do
-    expect_any_instance_of(StandardError).to receive(:log_me).with(["Failed to process Fenix Invoice # 01-00INV#2."])
-    
-    @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
-              # This line fails due to missing broker reference
-              "04/27/2013,, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,"
+    expect {
+      @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
+      # This line fails due to missing broker reference
+      "04/27/2013,, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,"
+    }.to change(ErrorLogEntry,:count).by(1)
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
     expect(bi).to be_nil
   end
@@ -186,7 +186,7 @@ INV
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 55 WITH OTHER TEXT ,BILLING, -20,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
-    
+
     expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
     expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with 'Broker File', @ent.entry_number, @ent.entry_number
 
@@ -275,7 +275,7 @@ INV
 
     @k.parse @content
     bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
-    
+
     expect(bi.broker_invoice_lines.size).to eq(2)
     expect(bi.broker_invoice_lines.first.charge_type).to eq "D"
     expect(bi.broker_invoice_lines.second.charge_type).to eq "D"

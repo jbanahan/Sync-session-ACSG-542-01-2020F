@@ -70,11 +70,11 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       get_xml = "<xml>test</xml>"
       control = "controlid"
       expect(@xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
-      
+
       expect(@c).to receive(:post_xml).with("company", false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Intacct Error"
-      expect_any_instance_of(OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError).to receive(:log_me).with ["Failed to find and/or create dimension type id for location company."]
 
       expect(@c.send_dimension "type", "id", "value", "company").to be_nil
+      expect(ErrorLogEntry.last.additional_messages_json).to match(/Failed to find and\/or create dimension type id for location company/)
     end
 
     it "swallows errors returned by Intacct API related to duplicate create calls" do
@@ -163,7 +163,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       xml = "<pay>payable</pay>"
       check_cid = "checkid"
       check_xml = "<check>check</check>"
-    
+
       expect(@c).to receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
       expect(@xml_gen).to receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
       expect(@xml_gen).to receive(:generate_ap_adjustment).with(c, p).and_return [check_cid, check_xml]
@@ -197,7 +197,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       xml = "<pay>payable</pay>"
       check_cid = "checkid"
       check_xml = "<check>check</check>"
-      
+
       expect(@c).to receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
       expect(@xml_gen).to receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
       expect(@xml_gen).to receive(:generate_ap_adjustment).with(c, p).and_return [check_cid, check_xml]
@@ -256,7 +256,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       check = IntacctCheck.new company: "c"
       cid = "controlid"
       xml = "<check>check</check>"
-      
+
       expect(@xml_gen).to receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
       expect(@c).to receive(:post_xml).with("c", true, true, xml, [cid]).and_raise "Creation error."
 
@@ -330,7 +330,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(x.text "/request/operation/authentication/login/companyid").to eq "vfi"
       expect(x.text "/request/operation/authentication/login/password").to eq "b,Z+&W>6dFR:"
       expect(x.text "/request/operation/authentication/login/locationid").to eq "location"
-      
+
       expect(REXML::XPath.first(x, "/request/operation/content").elements[1].to_s).to eq function_content
     end
 
@@ -359,7 +359,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(x.text "/request/operation/authentication/login/companyid").to eq overrides[:company_id]
       expect(x.text "/request/operation/authentication/login/password").to eq overrides[:user_password]
       expect(x.text "/request/operation/authentication/login/locationid").to be_nil
-      
+
       expect(REXML::XPath.first(x, "/request/operation/content").elements[1].to_s).to eq function_content
     end
 

@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
     end
   end
 
-  describe "new" do 
+  describe "new" do
     it "should initialize with a company id" do
       g = described_class.new(@c.id)
       # Just use remote filename as the check if the importer loaded correctly
@@ -56,14 +56,14 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
   class CustomFieldBuilder
     include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   end
-  
+
   context "with data" do
 
     before :all do
       @standard_custom_fields = [:prod_country_of_origin, :prod_part_number]
 
-      @fda_custom_fields = [:prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, 
-                    :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, :prod_fda_container_width, :prod_fda_container_height, 
+      @fda_custom_fields = [:prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id,
+                    :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, :prod_fda_container_width, :prod_fda_container_height,
                     :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance]
 
       create_custom_fields (@standard_custom_fields + @fda_custom_fields)
@@ -94,8 +94,8 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
 
           value = "#{definition.id}#{definition.label}".ljust(100, "0")
         end
-        
-        
+
+
         @cd[code] = value
         product.update_custom_value! definition, value if product
       end
@@ -141,14 +141,10 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
       it "logs an error for non-translatable products and skips the record" do
         build_custom_fields @standard_custom_fields, @p
         @p.update_custom_value! @custom_definitions[:prod_part_number], "Pilcrow ¶"
-        error = nil
-        expect_any_instance_of(StandardError).to receive(:log_me) do 
-          error = $!
-        end
 
         # Nothing will have been written so nil is returned.
         expect(described_class.new(@c).sync_fixed_position).to be_nil
-        expect(error.message).to eq "Untranslatable Non-ASCII character for Part Number 'Pilcrow ¶' found at string index 8 in product query column 0: 'Pilcrow ¶'."
+        expect(ErrorLogEntry.last.error_message).to eq "Untranslatable Non-ASCII character for Part Number 'Pilcrow ¶' found at string index 8 in product query column 0: 'Pilcrow ¶'."
       end
       it "replaces carriage return w/ a space" do
         build_custom_fields @standard_custom_fields, @p

@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     allow(@gen).to receive(:api_client).and_return @api_client
     allow(@api_client).to receive(:find_by_uid).and_return({'product'=>{'classifications' => []}})
     stub_xml_files @gen
-    
+
     @importer = Factory(:importer, fenix_customer_number: "806167003RM0001")
     @entry = Factory(:entry, :total_duty_gst => BigDecimal.new("10.99"), :entry_number => '123456789', :total_duty=> BigDecimal.new("5.99"), :total_gst => BigDecimal.new("5.00"), :importer_tax_id => 'BLAHBLAHBLAH', importer: @importer)
     @commercial_invoice = Factory(:commercial_invoice, :invoice_number => "INV#", :entry => @entry)
@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     StringIO.new(attachment.read)
   end
 
-  def make_sap_po 
+  def make_sap_po
     # set the entry to have an SAP PO
     @entry.update_attributes(:po_numbers=>"A\n47")
     @cil.update_attributes(:po_number=>"47#{@cil.po_number}")
@@ -64,9 +64,9 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
   end
 
   context "generate_and_send_invoices" do
-  
+
     context "MM_Invoices" do
-      before :each do 
+      before :each do
         make_sap_po
       end
 
@@ -206,7 +206,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
         api_client = double("ApiClient")
         expect(gen).to receive(:api_client).and_return api_client
-        
+
         product_json = {'product' => {'classifications' => [{"class_cntry_iso" => "CA", "*cf_131" => "CS"}]}}
 
         expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
@@ -246,7 +246,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
         api_client = double("ApiClient")
         expect(gen).to receive(:api_client).and_return api_client
-        
+
         product_json = {'product' => {'classifications' => [{"class_cntry_iso" => "CA", "*cf_131" => ""}]}}
 
         expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
@@ -271,7 +271,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
         api_client = double("ApiClient")
         expect(gen).to receive(:api_client).and_return api_client
-        
+
         # API 404's on missing product
         expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_raise OpenChain::Api::ApiClient::ApiError.new(404, {'errors'=>['Not Found']})
         stub_xml_files gen
@@ -311,7 +311,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         api_client = double("ApiClient")
         expect(gen).to receive(:api_client).and_return api_client
         product_json = {'product' => {'classifications' => [{"class_cntry_iso" => "CA", "*cf_131" => "CS"}]}}
-        
+
         # API 404's on missing product
         expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
         stub_xml_files gen
@@ -400,7 +400,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
           @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013,06,02), :invoice_number => 'INV2')
           @broker_invoice2_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
-          
+
           @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
 
           job = ExportJob.where(:export_type => ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE).first
@@ -695,7 +695,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(sheet.row(1)[12]).to eq 9.0
         expect(sheet.row(1)[24]).to be_nil
         expect(sheet.row(1)[25]).to be_nil
-                
+
         expect(sheet.row(2)[2]).to eq "1540"
         expect(sheet.row(2)[10]).to eq "50960180"
         expect(sheet.row(2)[12]).to eq 5.0
@@ -752,7 +752,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013,06,01), :invoice_number => 'INV2')
         @broker_invoice2_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
-        
+
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
 
         job = ExportJob.where(:export_type => ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE).first
@@ -845,7 +845,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
 
     it "should use custom_where if supplied to constructor" do
-      # Set the date prior to the cut-off so we know we're absolutely overriding the 
+      # Set the date prior to the cut-off so we know we're absolutely overriding the
       # standard where clauses
       @broker_invoice.update_attributes(:invoice_date => Date.new(2012, 1, 1))
       generator = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new :prod, {:id => @broker_invoice.id}
@@ -915,9 +915,12 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       # during the invoice file generation
       expect(@gen).to receive(:determine_invoice_output_format).and_raise "Error to log."
       sheet = nil
-      expect_any_instance_of(StandardError).to receive(:log_me) do |instance, messages, file_paths|
+      expect(OpenMailer).to receive(:send_generic_exception) do |ex,messages,message,trace,file_paths|
         expect(messages[0]).to eq("See attached spreadsheet for full list of invoice numbers that could not be generated.")
         sheet = Spreadsheet.open(file_paths[0]).worksheet 0
+        obj = double('mailer')
+        expect(obj).to receive(:deliver)
+        obj
       end
 
       expect(@gen).to receive(:production?).and_return true

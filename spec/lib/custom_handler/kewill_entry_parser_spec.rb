@@ -589,7 +589,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(tariff.classification_qty_2).to eq 2
       expect(tariff.classification_uom_2).to eq "LB"
       expect(tariff.classification_qty_3).to eq 3
-      expect(tariff.classification_uom_3).to eq "MT" 
+      expect(tariff.classification_uom_3).to eq "MT"
       expect(tariff.gross_weight).to eq 10000
       expect(tariff.quota_category).to eq 123
       expect(tariff.tariff_description).to eq "STUFF"
@@ -620,7 +620,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # There's a couple different scenarios to check out in the second invoice
       ci = entry.commercial_invoices.second
       line = ci.commercial_invoice_lines.first
-      # This used to parse as 99.99 because it assumed missing decimal points meant there was an implied decimal point, 
+      # This used to parse as 99.99 because it assumed missing decimal points meant there was an implied decimal point,
       # which was wrong and has since been fixed.
       expect(line.contract_amount).to eq BigDecimal.new("9999.00")
       expect(line.value_appraisal_method).to eq "A"
@@ -647,7 +647,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.total_packages).to eq BigDecimal.new("67")
       expect(entry.total_packages_uom).to eq "PCS"
       expect(entry.fda_pending_release_line_count).to eq 0
-  
+
       expect(entry.importer).not_to be_nil
       expect(entry.importer.name).to eq entry.customer_name
       expect(entry.importer.alliance_customer_number).to eq entry.customer_number
@@ -825,15 +825,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "logs an error message if periodic monthly data is missing" do
       @e['pms_year'] = 2016
-      expect_any_instance_of(StandardError).to receive(:log_me)
-      described_class.new.process_entry @e
+      expect {described_class.new.process_entry @e}.to change(ErrorLogEntry,:count).by(1)
     end
 
     it "does not log an error if periodic data is missing and the entry does not have a filed date value" do
       @e['dates'].reject! {|v| v['date_no'] == 16 }
 
-      expect_any_instance_of(StandardError).not_to receive(:log_me)
-      described_class.new.process_entry @e
+      expect {described_class.new.process_entry @e}.to_not change(ErrorLogEntry,:count)
     end
 
     it "skips purged entries" do
@@ -996,8 +994,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # basically, this just checks that if a date value has been removed from the Kewill data
       # that it gets cleared from VFI Track.
       entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance")
-      standard_dates = [:export_date, :docs_received_date, :file_logged_date, :eta_date, :arrival_date, :release_date, :fda_release_date, :trucker_called_date, :delivery_order_pickup_date, 
-        :freight_pickup_date, :last_billed_date, :invoice_paid_date, :duty_due_date, :liquidation_date, :daily_statement_due_date, :free_date, :edi_received_date, :fda_transmit_date, :daily_statement_approved_date, 
+      standard_dates = [:export_date, :docs_received_date, :file_logged_date, :eta_date, :arrival_date, :release_date, :fda_release_date, :trucker_called_date, :delivery_order_pickup_date,
+        :freight_pickup_date, :last_billed_date, :invoice_paid_date, :duty_due_date, :liquidation_date, :daily_statement_due_date, :free_date, :edi_received_date, :fda_transmit_date, :daily_statement_approved_date,
         :final_delivery_date, :worksheet_date, :available_date, :isf_sent_date, :isf_accepted_date, :fda_review_date, :first_release_date, :first_entry_sent_date, :monthly_statement_received_date, :monthly_statement_paid_date]
       first_last_dates = [:first_it_date]
 
@@ -1012,8 +1010,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       attributes = entry.attributes
       # These values should not be cleared by the fact that there was no json in the data we sent to the process_entry method
       first_last_dates.each {|d| expect(attributes[d.to_s]).not_to be_nil, "expected #{d.to_s} not to be nil, got '#{attributes[d.to_s]}'"}
-      
-      # These values all should have been cleared and reparsed from the dates in the json - and since there are no dates in the json we 
+
+      # These values all should have been cleared and reparsed from the dates in the json - and since there are no dates in the json we
       # sent in the test, they should all be nil
       standard_dates.each {|d| expect(attributes[d.to_s]).to be_nil, "expected #{d.to_s} to be nil, got '#{attributes[d.to_s]}'"}
     end
@@ -1034,7 +1032,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
   describe "parse" do
     let (:master_setup) { double("MasterSetup") }
-    before :each do 
+    before :each do
       allow(OpenChain::AllianceImagingClient).to receive(:request_images)
       allow(MasterSetup).to receive(:get).and_return master_setup
       allow(master_setup).to receive(:custom_feature?).with("Kewill Imaging").and_return true

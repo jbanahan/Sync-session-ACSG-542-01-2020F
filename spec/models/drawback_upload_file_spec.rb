@@ -37,9 +37,10 @@ describe DrawbackUploadFile do
       s3_att = double("S3 Attachment")
       allow(s3_att).to receive(:path).and_return('xyz')
       allow(@mock_attachment).to receive(:attached).and_return(s3_att)
-      expect_any_instance_of(RuntimeError).to receive(:log_me)
       expect(OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser).to receive(:parse_s3).with('xyz').and_raise("ERR")
-      expect(d.process(@user)).to eq(nil)
+      expect{
+        expect(d.process(@user)).to eq(nil)
+      }.to change(ErrorLogEntry,:count).by(1)
       expect(d.finish_at).to be > 10.seconds.ago
       expect(d.error_message).to eq("ERR")
     end

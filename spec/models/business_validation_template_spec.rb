@@ -53,8 +53,8 @@ describe BusinessValidationTemplate do
     it 'rescues exceptions raise in create_result! call' do
       match = Factory(:entry,customer_number:'12345')
       expect(@bvt).to receive(:create_result!).and_raise "Error"
-      expect_any_instance_of(RuntimeError).to receive(:log_me).with ["Failed to generate rule results for Entry id #{match.id}"]
       @bvt.create_results!
+      expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to generate rule results for Entry id #{match.id}"]
     end
     it "limits query results to only those associated w/ the current template" do
       # This makes sure we're not getting results back from other templates that have outdated rule results...bug resolution
