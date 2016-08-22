@@ -9,11 +9,11 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     def self.can_view? user; user.view_broker_invoices? end
     def run run_by, row_limit = nil; process run_by, row_limit, true end
   end
-  
+
   context "report" do
     before :each do
       @master_user = Factory(:master_user)
-      @master_user.stub(:view_broker_invoices?).and_return(true)
+      allow(@master_user).to receive(:view_broker_invoices?).and_return(true)
       @invoice_line_1 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>100.12)
       @invoice_line_2 = Factory(:broker_invoice_line,:broker_invoice=>@invoice_line_1.broker_invoice,:charge_description=>"CD2",:charge_amount=>55)
     end
@@ -21,33 +21,33 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     it "should break down a single entry by charge description" do
       r = Cr.new.to_arrays @master_user
       row = r[1]
-      row[0].should == 100.12
-      row[1].should == 55
+      expect(row[0]).to eq(100.12)
+      expect(row[1]).to eq(55)
     end
     it "should write charge description headings" do
       r = Cr.new.to_arrays @master_user
       row = r[0]
-      row[0].should == "CD1"
-      row[1].should == "CD2"
+      expect(row[0]).to eq("CD1")
+      expect(row[1]).to eq("CD2")
     end
     it "should group the same charge for multiple entries into the same column" do
       second_cd1 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>22)
       r = Cr.new.to_arrays @master_user
-      [r[1][0], r[2][0]].should == [100.12,22] #ordering isn't guaranteed
+      expect([r[1][0], r[2][0]]).to eq([100.12,22]) #ordering isn't guaranteed
     end
     it "should add 2 charges with the same charge code on the same entry" do
       @invoice_line_2.update_attributes(:charge_description=>"CD1")
       r = Cr.new.to_arrays(@master_user)[1]
-      r[0].should == 155.12
-      r[1].should be_nil
+      expect(r[0]).to eq(155.12)
+      expect(r[1]).to be_nil
     end
     it "should limit rows" do
       second_cd1 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>22)
-      Cr.new.to_arrays(@master_user).should have(3).rows
+      expect(Cr.new.to_arrays(@master_user).size).to eq(3)
       r = Cr.new.to_arrays(@master_user,1)
-      r.should have(2).rows
+      expect(r.size).to eq(2)
     end
-    context :entry_fields do
+    context "entry_fields" do
       before :each do
         rpt = Cr.create!
         rpt.search_columns.create!(:model_field_uid=>:bi_entry_num,:rank=>1)
@@ -57,17 +57,17 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       end
       it "should write entry field headings" do
         r = @sheet[0]
-        r[0].should == ModelField.find_by_uid(:bi_entry_num).label
-        r[1].should == ModelField.find_by_uid(:bi_brok_ref).label
-        r[2].should == "CD1"
-        r[3].should == "CD2"
+        expect(r[0]).to eq(ModelField.find_by_uid(:bi_entry_num).label)
+        expect(r[1]).to eq(ModelField.find_by_uid(:bi_brok_ref).label)
+        expect(r[2]).to eq("CD1")
+        expect(r[3]).to eq("CD2")
       end
       it "should include search_columns before charges" do
         r = @sheet[1]
-        r[0].should == "31612345678"
-        r[1].should == "1234567"
-        r[2].should == 100.12
-        r[3].should == 55
+        expect(r[0]).to eq("31612345678")
+        expect(r[1]).to eq("1234567")
+        expect(r[2]).to eq(100.12)
+        expect(r[3]).to eq(55)
       end
       it "doesn't repeat entry headers, when configured" do
         class Cr
@@ -75,12 +75,12 @@ describe CustomReportEntryInvoiceBreakdownSupport do
         end
         broker_invoice_2 = Factory(:broker_invoice, entry: @invoice_line_1.broker_invoice.entry)
         Factory(:broker_invoice_line, :broker_invoice => broker_invoice_2, :charge_description=>"CD3",:charge_amount=>50.02)
-        Factory(:broker_invoice_line,:broker_invoice=> broker_invoice_2, :charge_description=>"CD4",:charge_amount=>26.40)   
+        Factory(:broker_invoice_line,:broker_invoice=> broker_invoice_2, :charge_description=>"CD4",:charge_amount=>26.40)
         rpt = Cr.create!
         rpt.search_columns.create!(:model_field_uid=>:bi_entry_num,:rank=>1)
         rpt.search_columns.create!(:model_field_uid=>:bi_brok_ref,:rank=>1)
         rows = rpt.to_arrays @master_user
-        
+
         expect(rows[1][0]).to eq "31612345678"
         expect(rows[2][0]).to be_blank
         expect(rows[2][4]).to eq 50.02
@@ -92,7 +92,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       rows = rpt.to_arrays(@master_user)
       expect(rows[0][0]).to eq "Web Links"
       expect(rows[0][1]).to eq "CD1"
-      rows[1][0].should == @invoice_line_1.broker_invoice.entry.view_url
+      expect(rows[1][0]).to eq(@invoice_line_1.broker_invoice.entry.view_url)
     end
     it "should trim by search criteria" do
       bi2_line = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>222)
@@ -101,24 +101,24 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       rpt = Cr.create!(:name=>"SC")
       rpt.search_criterions.create!(:model_field_uid=>:bi_brok_ref,:operator=>"eq",:value=>"def")
       sheet = rpt.to_arrays @master_user
-      sheet[1][0].should == 100.12
-      sheet.should have(2).rows
+      expect(sheet[1][0]).to eq(100.12)
+      expect(sheet.size).to eq(2)
     end
 
 
-    context :isf do
+    context "isf" do
       it "should truncate ISF charges" do
         @invoice_line_1.update_attributes(:charge_description=>"ISF FILI SF#123455677755",:charge_amount=>6)
         @invoice_line_2.destroy
         bi = Factory(:broker_invoice_line,:charge_description=>"ISF FILING",:charge_amount=>8)
         r = Cr.new.to_arrays @master_user
-        [r[1][0],r[2][0]].should == [6,8]
+        expect([r[1][0],r[2][0]]).to eq([6,8])
       end
       it "should truncate ISF heading" do
         @invoice_line_1.update_attributes(:charge_description=>"ISF FILI SF#123455677755",:charge_amount=>6)
         @invoice_line_2.destroy
         r = Cr.new.to_arrays @master_user
-        r[0][0].should == "ISF"
+        expect(r[0][0]).to eq("ISF")
       end
     end
 
@@ -127,33 +127,33 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       rpt = Cr.create!
       rpt.search_columns.create!(:model_field_uid => :bi_brok_ref)
       r = rpt.to_arrays @master_user
-      r[0][0].should == ModelField.find_by_uid(:bi_brok_ref).label
+      expect(r[0][0]).to eq(ModelField.find_by_uid(:bi_brok_ref).label)
     end
     it "should write no data message if no rows returned" do
       Entry.destroy_all
       rpt = Cr.create!
       rpt.search_columns.create!(:model_field_uid => :bi_brok_ref)
       r = rpt.to_arrays @master_user
-      r[1][0].should == "No data was returned for this report." 
+      expect(r[1][0]).to eq("No data was returned for this report.")
     end
-    
-    context :security do
+
+    context "security" do
       before :each do
         @importer_user = Factory(:importer_user)
       end
       it "should secure entries by linked companies for importers" do
-        @importer_user.stub(:view_broker_invoices?).and_return(true)
+        allow(@importer_user).to receive(:view_broker_invoices?).and_return(true)
         @invoice_line_1.broker_invoice.entry.update_attributes(:importer_id=>@importer_user.company_id)
         dont_find = Factory(:broker_invoice_line)
         r = Cr.new.to_arrays @importer_user
-        r[1][0].should == 100.12 
-        r.should have(2).rows
+        expect(r[1][0]).to eq(100.12)
+        expect(r.size).to eq(2)
       end
       it "should raise exception if user does not have view_broker_invoices? permission" do
-        @importer_user.stub(:view_broker_invoices?).and_return(false)
-        lambda {Cr.new.xls_file @importer_user}.should raise_error
+        allow(@importer_user).to receive(:view_broker_invoices?).and_return(false)
+        expect {Cr.new.xls_file @importer_user}.to raise_error(/permission/)
       end
     end
-  end    
+  end
 
 end

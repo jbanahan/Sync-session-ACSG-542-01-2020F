@@ -30,7 +30,7 @@ describe UpdateModelFieldsSupport do
 
       p = Product.new
 
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       expect(p.unique_identifier).to eq "unique_id"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
       expect(p.classifications.length).to eq 1
@@ -56,7 +56,7 @@ describe UpdateModelFieldsSupport do
           }}
       }
 
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
 
       classifications = p.classifications.collect {|c| c}
       expect(classifications.length).to eq 2
@@ -87,7 +87,7 @@ describe UpdateModelFieldsSupport do
           }}
       }
 
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       
       classifications = p.classifications.collect {|c| c}
       expect(classifications.length).to eq 1
@@ -118,7 +118,7 @@ describe UpdateModelFieldsSupport do
       }
 
       p = Product.new
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       expect(p.unique_identifier).to eq "unique_id"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
       expect(p.classifications.length).to eq 1
@@ -147,7 +147,7 @@ describe UpdateModelFieldsSupport do
       }
 
       p = Product.new
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       expect(p.unique_identifier).to eq "unique_id"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
       expect(p.classifications.length).to eq 1
@@ -165,17 +165,17 @@ describe UpdateModelFieldsSupport do
       p = Product.new
 
       # Product has a unique identifier validation
-      expect(p.update_model_field_attributes prod_uid: existing.unique_identifier).to be_false
+      expect(p.update_model_field_attributes prod_uid: existing.unique_identifier).to be_falsey
       expect(p.errors.full_messages).to include "Unique identifier has already been taken"
     end
 
     it "does not raise an error on model field import validation errors" do
       result = "fail"
-      result.stub(:error?).and_return true
-      ModelField.any_instance.should_receive(:process_import).and_return result
+      allow(result).to receive(:error?).and_return true
+      expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
       p = Product.new
-      expect(p.update_model_field_attributes prod_uid: 'id').to be_false
+      expect(p.update_model_field_attributes prod_uid: 'id').to be_falsey
       expect(p.errors[:base]).to eq ["fail"]
     end
 
@@ -184,11 +184,11 @@ describe UpdateModelFieldsSupport do
       p = Product.new
 
       result = "fail"
-      result.stub(:error?).and_return true
-      ModelField.any_instance.should_receive(:process_import).and_return result
+      allow(result).to receive(:error?).and_return true
+      expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
       # Product has a unique identifier validation
-      expect(p.update_model_field_attributes prod_uid: existing.unique_identifier).to be_false
+      expect(p.update_model_field_attributes prod_uid: existing.unique_identifier).to be_falsey
       expect(p.errors.full_messages).to include "Unique identifier can't be blank"
       expect(p.errors.full_messages).to include "fail"
     end
@@ -218,7 +218,7 @@ describe UpdateModelFieldsSupport do
       }
 
       p = Product.new
-      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.update_model_field_attributes! params).to be_truthy
       expect(p.unique_identifier).to eq "unique_id"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
       expect(p.classifications.length).to eq 1
@@ -247,7 +247,7 @@ describe UpdateModelFieldsSupport do
       }
 
       p = Product.new
-      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.update_model_field_attributes! params).to be_truthy
       expect(p.unique_identifier).to eq "unique_id"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
       expect(p.classifications.length).to eq 1
@@ -276,7 +276,7 @@ describe UpdateModelFieldsSupport do
       }
 
       p = Product.new
-      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.update_model_field_attributes! params).to be_truthy
       expect(p.unique_identifier).to eq "unique_id"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
       expect(p.classifications.length).to eq 1
@@ -304,8 +304,8 @@ describe UpdateModelFieldsSupport do
 
     it "raises an error on model field import validation errors" do
       result = "fail"
-      result.stub(:error?).and_return true
-      ModelField.any_instance.should_receive(:process_import).and_return result
+      allow(result).to receive(:error?).and_return true
+      expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
       p = Product.new
       begin
@@ -321,8 +321,8 @@ describe UpdateModelFieldsSupport do
       p = Product.new
 
       result = "fail"
-      result.stub(:error?).and_return true
-      ModelField.any_instance.should_receive(:process_import).and_return result
+      allow(result).to receive(:error?).and_return true
+      expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
       begin
         p.update_model_field_attributes! prod_uid: existing.unique_identifier
@@ -354,7 +354,7 @@ describe UpdateModelFieldsSupport do
           }}
       }
 
-      expect(p.update_model_field_attributes params, exclude_blank_values:true).to be_true
+      expect(p.update_model_field_attributes params, exclude_blank_values:true).to be_truthy
       expect(p.unit_of_measure).to eq "UOM"
       expect(p.name).to eq "NAME"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
@@ -385,7 +385,7 @@ describe UpdateModelFieldsSupport do
           }]
       }
 
-      expect(p.update_model_field_attributes! params, exclude_blank_values:true).to be_true
+      expect(p.update_model_field_attributes! params, exclude_blank_values:true).to be_truthy
       expect(p.unit_of_measure).to eq "UOM"
       expect(p.name).to eq "NAME"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
@@ -416,7 +416,7 @@ describe UpdateModelFieldsSupport do
           }]
       }
 
-      expect(p.update_model_field_attributes! params, exclude_blank_values:true).to be_true
+      expect(p.update_model_field_attributes! params, exclude_blank_values:true).to be_truthy
       expect(p.unit_of_measure).to eq "UOM"
       expect(p.name).to eq "NAME"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
@@ -444,7 +444,7 @@ describe UpdateModelFieldsSupport do
           }]
       }
 
-      expect(p.update_model_field_attributes! params, exclude_custom_fields:true).to be_true
+      expect(p.update_model_field_attributes! params, exclude_custom_fields:true).to be_truthy
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
       tr = p.classifications.first.tariff_records.first
 
@@ -476,7 +476,7 @@ describe UpdateModelFieldsSupport do
       }
 
       p = Product.new
-      expect(p.assign_model_field_attributes params).to be_true
+      expect(p.assign_model_field_attributes params).to be_truthy
       expect(p.unique_identifier).to eq "unique_id"
       expect(p.get_custom_value(@prod_cd).value).to eq 'custom'
       expect(p.classifications.length).to eq 1
@@ -492,8 +492,8 @@ describe UpdateModelFieldsSupport do
     it "runs validations on assigned object" do
       existing = Factory(:product, unique_identifier: 'unique_id')
       result = "fail"
-      result.stub(:error?).and_return true
-      ModelField.any_instance.stub(:process_import).and_return result
+      allow(result).to receive(:error?).and_return true
+      allow_any_instance_of(ModelField).to receive(:process_import).and_return result
 
       params = {
         'prod_uid' => 'unique_id',
@@ -510,7 +510,7 @@ describe UpdateModelFieldsSupport do
       }
 
       p = Product.new
-      expect(p.assign_model_field_attributes params).to be_false
+      expect(p.assign_model_field_attributes params).to be_falsey
       expect(p.errors.full_messages).to include "Unique identifier can't be blank"
       expect(p.errors.full_messages).to include "fail"
     end
@@ -518,8 +518,8 @@ describe UpdateModelFieldsSupport do
     it "does not run validations on assigned object if instructed not to" do
       existing = Factory(:product, unique_identifier: 'unique_id')
       result = "fail"
-      result.stub(:error?).and_return true
-      ModelField.find_by_uid(:prod_uid).stub(:process_import).and_return result
+      allow(result).to receive(:error?).and_return true
+      allow(ModelField.find_by_uid(:prod_uid)).to receive(:process_import).and_return result
 
       params = {
         'prod_uid' => 'unique_id',
@@ -537,7 +537,7 @@ describe UpdateModelFieldsSupport do
       }
 
       p = Product.new
-      expect(p.assign_model_field_attributes params, no_validation: true).to be_true
+      expect(p.assign_model_field_attributes params, no_validation: true).to be_truthy
       expect(p.errors.full_messages.size).to eq 0
 
       # Make sure the data was still app ssigned
@@ -548,7 +548,7 @@ describe UpdateModelFieldsSupport do
 
     it "rejects child attribute assignments on existing values using lambdas" do
       l = lambda {|attrs| !attrs.include? :class_cntry_iso}
-      Product.should_receive(:model_field_attribute_rejections).and_return [l]
+      expect(Product).to receive(:model_field_attribute_rejections).and_return [l]
 
       p = Factory(:product, unique_identifier: "unique_id")
       cl = Factory(:classification, product: p)
@@ -561,7 +561,7 @@ describe UpdateModelFieldsSupport do
           }}
       }
 
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       
       classifications = p.classifications.collect {|c| c}
       expect(classifications.length).to eq 1
@@ -570,7 +570,7 @@ describe UpdateModelFieldsSupport do
 
     it "rejects child attribute assignments on new values using lambdas" do
       l = lambda {|attrs| !attrs.include? :class_cntry_iso}
-      Product.should_receive(:model_field_attribute_rejections).and_return [l]
+      expect(Product).to receive(:model_field_attribute_rejections).and_return [l]
 
       p = Factory(:product, unique_identifier: "unique_id")
       params = {
@@ -580,13 +580,13 @@ describe UpdateModelFieldsSupport do
           @class_cd.model_field_uid => '12.3'
           }}
       }
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       expect(p.classifications.length).to eq 0
     end
 
     it "rejects child attribute assignments on existing values using methods" do
-      Product.should_receive(:model_field_attribute_rejections).and_return [:reject_me]
-      Product.should_receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
+      expect(Product).to receive(:model_field_attribute_rejections).and_return [:reject_me]
+      expect(Product).to receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
 
       p = Factory(:product, unique_identifier: "unique_id")
       cl = Factory(:classification, product: p)
@@ -599,7 +599,7 @@ describe UpdateModelFieldsSupport do
           }}
       }
 
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       
       classifications = p.classifications.collect {|c| c}
       expect(classifications.length).to eq 1
@@ -607,8 +607,8 @@ describe UpdateModelFieldsSupport do
     end
 
     it "rejects child attribute assignments on new values using methods" do
-      Product.should_receive(:model_field_attribute_rejections).and_return [:reject_me]
-      Product.should_receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
+      expect(Product).to receive(:model_field_attribute_rejections).and_return [:reject_me]
+      expect(Product).to receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
 
       p = Factory(:product, unique_identifier: "unique_id")
       params = {
@@ -618,12 +618,12 @@ describe UpdateModelFieldsSupport do
           @class_cd.model_field_uid => '12.3'
           }}
       }
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       expect(p.classifications.length).to eq 0
     end
 
     it "does not attempt to call reject on objects marked for destruction" do
-      Product.should_not_receive(:reject_child_model_field_assignment?)
+      expect(Product).not_to receive(:reject_child_model_field_assignment?)
 
       p = Factory(:product, unique_identifier: "unique_id")
       cl = Factory(:classification, product: p)
@@ -635,7 +635,7 @@ describe UpdateModelFieldsSupport do
           }}
       }
 
-      expect(p.update_model_field_attributes params).to be_true
+      expect(p.update_model_field_attributes params).to be_truthy
       expect(p.classifications.length).to eq 0
     end
   end

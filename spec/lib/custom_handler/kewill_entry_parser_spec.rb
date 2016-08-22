@@ -544,7 +544,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.value).to eq BigDecimal.new("99.99")
       expect(line.country_origin_code).to eq "CN"
       expect(line.country_export_code).to eq "VN"
-      expect(line.related_parties).to be_true
+      expect(line.related_parties).to be_truthy
       expect(line.vendor_name).to eq "MANFU NAME"
       expect(line.volume).to eq 12.99
       expect(line.contract_amount).to eq 123.12
@@ -561,12 +561,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.hmf).to eq 3.45
       expect(line.cotton_fee).to eq 4.56
       expect(line.add_case_number).to eq '123'
-      expect(line.add_bond).to be_true
+      expect(line.add_bond).to be_truthy
       expect(line.add_duty_amount).to eq 1.23
       expect(line.add_case_value).to eq 2.34
       expect(line.add_case_percent).to eq 3.45
       expect(line.cvd_case_number).to eq '234'
-      expect(line.cvd_bond).to be_false
+      expect(line.cvd_bond).to be_falsey
       expect(line.cvd_duty_amount).to eq 3.45
       expect(line.cvd_case_value).to eq 4.56
       expect(line.cvd_case_percent).to eq 5.67
@@ -575,7 +575,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.fda_hold_date).to be_nil
       expect(line.fda_release_date).to be_nil
       expect(line.value_appraisal_method).to eq "F"
-      expect(line.first_sale).to be_true
+      expect(line.first_sale).to be_truthy
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
@@ -624,7 +624,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # which was wrong and has since been fixed.
       expect(line.contract_amount).to eq BigDecimal.new("9999.00")
       expect(line.value_appraisal_method).to eq "A"
-      expect(line.first_sale).to be_false
+      expect(line.first_sale).to be_falsey
 
       # If we didn't get a matching container record, then we want to make sure the line level linkage
       # is nil
@@ -651,7 +651,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.importer).not_to be_nil
       expect(entry.importer.name).to eq entry.customer_name
       expect(entry.importer.alliance_customer_number).to eq entry.customer_number
-      expect(entry.importer.importer).to be_true
+      expect(entry.importer.importer).to be_truthy
 
       # Uncomment this once this feed is the "One True Source" instead of the AllianceParser
       expect(entry.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-12T13:26:20-04:00"
@@ -810,9 +810,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "uses cross process locking / per entry locking" do
-      Lock.should_receive(:acquire).with(Lock::ALLIANCE_PARSER).and_yield
-      Lock.should_receive(:acquire).with("CreateAllianceCustomer").and_yield
-      Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_yield
+      expect(Lock).to receive(:acquire).with(Lock::ALLIANCE_PARSER).and_yield
+      expect(Lock).to receive(:acquire).with("CreateAllianceCustomer").and_yield
+      expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
 
       entry = described_class.new.process_entry @e
       expect(entry).to be_persisted
@@ -825,14 +825,14 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "logs an error message if periodic monthly data is missing" do
       @e['pms_year'] = 2016
-      StandardError.any_instance.should_receive(:log_me)
+      expect_any_instance_of(StandardError).to receive(:log_me)
       described_class.new.process_entry @e
     end
 
     it "does not log an error if periodic data is missing and the entry does not have a filed date value" do
       @e['dates'].reject! {|v| v['date_no'] == 16 }
 
-      StandardError.any_instance.should_not_receive(:log_me)
+      expect_any_instance_of(StandardError).not_to receive(:log_me)
       described_class.new.process_entry @e
     end
 
@@ -1035,25 +1035,25 @@ describe OpenChain::CustomHandler::KewillEntryParser do
   describe "parse" do
     let (:master_setup) { double("MasterSetup") }
     before :each do 
-      OpenChain::AllianceImagingClient.stub(:request_images)
-      MasterSetup.stub(:get).and_return master_setup
-      master_setup.stub(:custom_feature?).with("Kewill Imaging").and_return true
+      allow(OpenChain::AllianceImagingClient).to receive(:request_images)
+      allow(MasterSetup).to receive(:get).and_return master_setup
+      allow(master_setup).to receive(:custom_feature?).with("Kewill Imaging").and_return true
     end
 
     it "reads json, parses it, notifies listeners" do
       json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
       entry = Entry.new(broker_reference: "TESTING")
-      described_class.any_instance.should_receive(:process_entry).with(json[:entry], {}).and_return entry
+      expect_any_instance_of(described_class).to receive(:process_entry).with(json[:entry], {}).and_return entry
 
-      OpenChain::AllianceImagingClient.should_receive(:request_images).with "TESTING", delay_seconds: 300
-      entry.should_receive(:broadcast_event).with(:save)
+      expect(OpenChain::AllianceImagingClient).to receive(:request_images).with "TESTING", delay_seconds: 300
+      expect(entry).to receive(:broadcast_event).with(:save)
 
       described_class.parse json.to_json
     end
 
     it "handles a hash instead of json" do
       json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}.with_indifferent_access
-      described_class.any_instance.should_receive(:process_entry).with(json[:entry], {})
+      expect_any_instance_of(described_class).to receive(:process_entry).with(json[:entry], {})
       described_class.parse json
     end
 
@@ -1063,11 +1063,11 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "does not call request images if Kewill Imaging is not enabled" do
       json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
-      master_setup.should_receive(:custom_feature?).with("Kewill Imaging").and_return false
-      OpenChain::AllianceImagingClient.should_not_receive(:request_images)
+      expect(master_setup).to receive(:custom_feature?).with("Kewill Imaging").and_return false
+      expect(OpenChain::AllianceImagingClient).not_to receive(:request_images)
 
       entry = Entry.new(broker_reference: "TESTING")
-      described_class.any_instance.should_receive(:process_entry).with(json[:entry], {}).and_return entry
+      expect_any_instance_of(described_class).to receive(:process_entry).with(json[:entry], {}).and_return entry
       described_class.parse json.to_json
     end
 
@@ -1076,14 +1076,14 @@ describe OpenChain::CustomHandler::KewillEntryParser do
   describe "save_to_s3" do
     it "saves entry data to s3 and returns s3 bucket/key" do
       ms = double
-      MasterSetup.should_receive(:get).and_return ms
-      ms.should_receive(:system_code).and_return "system-code"
+      expect(MasterSetup).to receive(:get).and_return ms
+      expect(ms).to receive(:system_code).and_return "system-code"
       json = {'entry' => {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
 
       contents = nil
       bucket = nil
       key = nil
-      OpenChain::S3.should_receive(:upload_file) do |b, k, file|
+      expect(OpenChain::S3).to receive(:upload_file) do |b, k, file|
         bucket = b
         key = k
         contents = file.read

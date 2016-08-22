@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 gem "rails", "3.2.22"
 gem 'mysql2', '0.3.18'
 gem 'sqlite3'
-# AWS-SDK API completely changed in version 2.  Staying below 2 for now, will require some work to translate code to new version.  
+# AWS-SDK API completely changed in version 2.  Staying below 2 for now, will require some work to translate code to new version.
 gem 'aws-sdk', '< 2'
 gem 'will_paginate', '3.0.4'
 gem 'paperclip', '3.5.1'
@@ -76,13 +76,12 @@ gem 'ruby-trello', '1.3.0'
 gem 'email_validator', '~> 1.6.0'
 
 group :development,:test do
-  gem 'rspec-rails', '~> 2.12'
+  gem 'rspec-rails', '~> 3.5.0'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
   gem 'factory_girl', '2.5.2'
-  gem 'spork'
   gem 'byebug'
-  gem 'jasmine-rails'
-  gem 'rspec_junit_formatter', '0.2.2' #circle ci formatting
+  gem 'jasmine-rails', '0.4.6'
+  gem 'rspec_junit_formatter', '~> 0.2.3' #circle-ci formatting
   # gem 'rack-mini-profiler'
   gem 'minitest'
 end

@@ -3,13 +3,13 @@ require 'spec_helper'
 describe Api::V1::TppHtsOverridesController do
   before :each do
     @u = Factory(:user)
-    User.any_instance.stub(:view_tpp_hts_overrides?).and_return true
-    User.any_instance.stub(:edit_tpp_hts_overrides?).and_return true
-    User.any_instance.stub(:view_trade_preference_programs?).and_return true
-    TppHtsOverride.any_instance.stub(:can_view?).and_return true
-    TppHtsOverride.any_instance.stub(:can_edit?).and_return true
-    TppHtsOverride.any_instance.stub(:can_attach?).and_return true
-    TppHtsOverride.any_instance.stub(:can_comment?).and_return true
+    allow_any_instance_of(User).to receive(:view_tpp_hts_overrides?).and_return true
+    allow_any_instance_of(User).to receive(:edit_tpp_hts_overrides?).and_return true
+    allow_any_instance_of(User).to receive(:view_trade_preference_programs?).and_return true
+    allow_any_instance_of(TppHtsOverride).to receive(:can_view?).and_return true
+    allow_any_instance_of(TppHtsOverride).to receive(:can_edit?).and_return true
+    allow_any_instance_of(TppHtsOverride).to receive(:can_attach?).and_return true
+    allow_any_instance_of(TppHtsOverride).to receive(:can_comment?).and_return true
     allow_api_access @u
   end
   describe '#index' do
@@ -22,7 +22,7 @@ describe Api::V1::TppHtsOverridesController do
       expect(h[0]['tpphtso_hts_code']).to eq o.hts_code
     end
     it "should reject if user can't view" do
-      User.any_instance.stub(:view_tpp_hts_overrides?).and_return false
+      allow_any_instance_of(User).to receive(:view_tpp_hts_overrides?).and_return false
       get :index
       expect(response).to_not be_success
     end
@@ -37,7 +37,7 @@ describe Api::V1::TppHtsOverridesController do
       expect(h['tpp_hts_override']['tpphtso_hts_code']).to eq o.hts_code
     end
     it "should fail if user cannot view" do
-      TppHtsOverride.any_instance.stub(:can_view?).and_return false
+      allow_any_instance_of(TppHtsOverride).to receive(:can_view?).and_return false
       get :show, id: Factory(:tpp_hts_override).id.to_s
       expect(response).to_not be_success
     end
@@ -76,7 +76,7 @@ describe Api::V1::TppHtsOverridesController do
       expect(response).to_not be_success
     end
     it 'should fail if user cannot edit override' do
-      TppHtsOverride.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(TppHtsOverride).to receive(:can_edit?).and_return false
 
 
       expect{post :create, make_hash}.to_not change(TppHtsOverride,:count)
@@ -108,7 +108,7 @@ describe Api::V1::TppHtsOverridesController do
       expect(response).to_not be_success
     end
     it 'should fail if user cannot edit override' do
-      TppHtsOverride.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(TppHtsOverride).to receive(:can_edit?).and_return false
 
       put :update, @h
 

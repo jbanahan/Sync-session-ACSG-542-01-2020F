@@ -45,7 +45,7 @@ describe DashboardWidgetsController do
       expect(response).to redirect_to dashboard_widgets_path
       @user.reload
 
-      expect(@user.dashboard_widgets).to have(1).item
+      expect(@user.dashboard_widgets.size).to eq(1)
       expect(@user.dashboard_widgets.first.search_setup).to eq ss2
     end
 
@@ -57,7 +57,7 @@ describe DashboardWidgetsController do
       expect(response).to redirect_to dashboard_widgets_path
       @user.reload
 
-      expect(@user.dashboard_widgets).to have(0).items
+      expect(@user.dashboard_widgets.size).to eq(0)
     end
   end
 

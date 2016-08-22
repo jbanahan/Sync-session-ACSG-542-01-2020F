@@ -44,7 +44,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
     it "converts file via xlcient from returns format to CI Load format" do
       g = described_class.new(nil)
       xl = double("XLClient")
-      g.stub(:xl_client).with("s3_path").and_return xl
+      allow(g).to receive(:xl_client).with("s3_path").and_return xl
       values = [
         ["Header"], # Header is ignored
         make_source_row(coo: "CN ", style: " Style", units: 5.5, total_value: 12.50, mid: "MID", hts: "1234.56.7890", po: "PO"),
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
         make_source_row(coo: "ZZ", style: "", units: "", total_value: "1.50", mid: "MID2", hts: "", po: 456.0),
         make_source_row(coo: "ZZ", style: 123, units: "5", total_value: "1.50", mid: "MID2", hts: 98766543, po: 456.0)
       ]
-      xl.should_receive(:all_row_values).and_yield(values[0]).and_yield(values[1]).and_yield(values[2]).and_yield(values[3])
+      expect(xl).to receive(:all_row_values).and_yield(values[0]).and_yield(values[1]).and_yield(values[2]).and_yield(values[3])
 
       fout = StringIO.new
       fout.binmode
@@ -73,11 +73,11 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
 
     it "generates CI load file and emails it" do
       cf = double("CustomFile")
-      cf.stub(:attached).and_return cf
-      cf.stub(:path).and_return "s3/path/file.txt"
+      allow(cf).to receive(:attached).and_return cf
+      allow(cf).to receive(:path).and_return "s3/path/file.txt"
       g = described_class.new cf
 
-      g.should_receive(:process_file).with("s3/path/file.txt", instance_of(Tempfile), "12345") do |path, t, file|
+      expect(g).to receive(:process_file).with("s3/path/file.txt", instance_of(Tempfile), "12345") do |path, t, file|
         t << "Testing"
       end
       u = Factory(:user, email: "me@there.com")
@@ -96,25 +96,25 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
   describe "can_view?" do
     it "allows company master to view in www-vfitrack-net" do
       ms = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return ms
-      ms.should_receive(:system_code).and_return "www-vfitrack-net"
+      expect(MasterSetup).to receive(:get).and_return ms
+      expect(ms).to receive(:system_code).and_return "www-vfitrack-net"
 
       u = Factory(:master_user)
-      expect(described_class.new(nil).can_view? u).to be_true
+      expect(described_class.new(nil).can_view? u).to be_truthy
     end
 
     it "prevents non-master user" do
       u = Factory(:user)
-      expect(described_class.new(nil).can_view? u).to be_false
+      expect(described_class.new(nil).can_view? u).to be_falsey
     end
 
     it "prevents non-vfitrack user" do
       ms = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return ms
-      ms.should_receive(:system_code).and_return "test"
+      expect(MasterSetup).to receive(:get).and_return ms
+      expect(ms).to receive(:system_code).and_return "test"
 
       u = Factory(:master_user)
-      expect(described_class.new(nil).can_view? u).to be_false
+      expect(described_class.new(nil).can_view? u).to be_falsey
     end
   end
 end

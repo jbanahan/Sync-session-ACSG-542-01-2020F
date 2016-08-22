@@ -27,51 +27,51 @@ describe SearchSetupsController do
           },
         }, \
       "id"=>"#{@ss.id}"}
-      response.should redirect_to('/products')
+      expect(response).to redirect_to('/products')
 
       #make sure the release date value had the time zone appended to it
       @ss.reload
-      @ss.search_criterions.first.value.should == "2013-01-01" + " " + @u.time_zone
-      @ss.search_criterions.first.include_empty.should be_true
-      @ss.search_criterions.second.value.should == "2013-01-01"
-      @ss.search_criterions.second.include_empty.should be_nil
+      expect(@ss.search_criterions.first.value).to eq("2013-01-01" + " " + @u.time_zone)
+      expect(@ss.search_criterions.first.include_empty).to be_truthy
+      expect(@ss.search_criterions.second.value).to eq("2013-01-01")
+      expect(@ss.search_criterions.second.include_empty).to be_nil
     end
     it 'should not fail if no search criterions are in the search' do 
       post :update, 
       {"search_setup"=>{"name"=>"New Name", "download_format"=>"xls", "include_links"=>"0", "no_time"=>"0", "module_type"=>"Product"}, \
         "id"=>"#{@ss.id}"}
       
-      response.should redirect_to('/products')
+      expect(response).to redirect_to('/products')
       @ss = SearchSetup.find(@ss.id)
-      @ss.search_criterions.length.should == 2
+      expect(@ss.search_criterions.length).to eq(2)
     end
   end
   describe 'give' do
     it "should give and redirect" do
       u2 = Factory(:user,:company=>@u.company)
       get :give, :id=>@ss.id, :other_user_id=>u2.id
-      response.should redirect_to '/entries'
-      u2.search_setups.first.name.should == "Test (From #{@u.full_name})" 
+      expect(response).to redirect_to '/entries'
+      expect(u2.search_setups.first.name).to eq("Test (From #{@u.full_name})") 
     end
     it "should give and return ok for json" do
       u2 = Factory(:user,:company=>@u.company)
       post :give, :id=>@ss.id, :other_user_id=>u2.id, :format=>:json
-      response.should be_success
+      expect(response).to be_success
       r = JSON.parse(response.body)
-      r["ok"].should_not be_nil
-      r["given_to"].should == u2.full_name
+      expect(r["ok"]).not_to be_nil
+      expect(r["given_to"]).to eq(u2.full_name)
     end
     it "should 404 if search not found" do
       u2 = Factory(:user,:company=>@u.company)
-      lambda {post :give, :id=>(@ss.id+1), :other_user_id=>u2.id}.should raise_error ActionController::RoutingError
-      SearchSetup.count.should == 1
+      expect {post :give, :id=>(@ss.id+1), :other_user_id=>u2.id}.to raise_error ActionController::RoutingError
+      expect(SearchSetup.count).to eq(1)
     end
     it "should error if user cannot give report to other user" do
       u2 = Factory(:user)
       post :give, :id=>@ss.id, :other_user_id=>u2.id, :format=>:json
-      response.status.should == 422
+      expect(response.status).to eq(422)
       r = JSON.parse(response.body)
-      r["error"].should == "You do not have permission to give this search to user with ID #{u2.id}."
+      expect(r["error"]).to eq("You do not have permission to give this search to user with ID #{u2.id}.")
     end
   end
 
@@ -83,29 +83,29 @@ describe SearchSetupsController do
     it "should make a copy of the search for the user" do
       post :copy, id: @ss.id
 
-      response.should be_success
+      expect(response).to be_success
       r = JSON.parse(response.body)
-      r["ok"].should_not be_nil
-      SearchSetup.where(id: r["id"]).first.should_not be_nil
-      r["name"].should == "Copy of #{@ss.name}" 
+      expect(r["ok"]).not_to be_nil
+      expect(SearchSetup.where(id: r["id"]).first).not_to be_nil
+      expect(r["name"]).to eq("Copy of #{@ss.name}") 
     end
 
     it "should accept copy name from requst" do
       post :copy, id: @ss.id, new_name: "New Name"
 
-      response.should be_success
+      expect(response).to be_success
       r = JSON.parse(response.body)
-      r["ok"].should_not be_nil
-      SearchSetup.where(name: "New Name").first.should_not be_nil
-      r["name"].should == "New Name" 
+      expect(r["ok"]).not_to be_nil
+      expect(SearchSetup.where(name: "New Name").first).not_to be_nil
+      expect(r["name"]).to eq("New Name") 
     end
 
     it "should not allow creating duplicate search names" do
       post :copy, id: @ss.id, new_name: @ss.name
 
-      response.status.should == 422
+      expect(response.status).to eq(422)
       r = JSON.parse(response.body)
-      r["error"].should == "A search with the name '#{@ss.name}' already exists.  Please use a different name or rename the existing report."
+      expect(r["error"]).to eq("A search with the name '#{@ss.name}' already exists.  Please use a different name or rename the existing report.")
     end
   end
 end

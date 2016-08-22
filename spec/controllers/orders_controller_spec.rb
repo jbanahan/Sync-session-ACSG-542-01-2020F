@@ -27,48 +27,48 @@ describe OrdersController do
     end
   end
 
-  describe :accept do
+  describe "accept" do
     it "should accept if user has permission" do
-      Order.any_instance.should_receive(:async_accept!).with(@u)
-      Order.any_instance.stub(:can_accept?).and_return true
+      expect_any_instance_of(Order).to receive(:async_accept!).with(@u)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return true
       o = Factory(:order)
       post :accept, id: o.id
       expect(response).to redirect_to o
     end
     it "should error if user does not have permission" do
-      Order.any_instance.should_not_receive(:async_accept!)
-      Order.any_instance.stub(:can_accept?).and_return false
+      expect_any_instance_of(Order).not_to receive(:async_accept!)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return false
       o = Factory(:order)
       post :accept, id: o.id
     end
     it "should error if order cannot be accepted" do
-      Order.any_instance.should_not_receive(:async_accept!)
-      Order.any_instance.stub(:can_accept?).and_return true
-      Order.any_instance.stub(:can_be_accepted?).and_return false
+      expect_any_instance_of(Order).not_to receive(:async_accept!)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return true
+      allow_any_instance_of(Order).to receive(:can_be_accepted?).and_return false
       o = Factory(:order)
       post :accept, id: o.id
     end
   end
 
-  describe :unaccept do
+  describe "unaccept" do
     it "should unaccept if user has permission" do
-      Order.any_instance.should_receive(:async_unaccept!).with(@u)
-      Order.any_instance.stub(:can_accept?).and_return true
+      expect_any_instance_of(Order).to receive(:async_unaccept!).with(@u)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return true
       o = Factory(:order)
       post :unaccept, id: o.id
       expect(response).to redirect_to o
     end
     it "should error if user does not have permission" do
-      Order.any_instance.should_not_receive(:async_unaccept!)
-      Order.any_instance.stub(:can_accept?).and_return false
+      expect_any_instance_of(Order).not_to receive(:async_unaccept!)
+      allow_any_instance_of(Order).to receive(:can_accept?).and_return false
       o = Factory(:order)
       post :unaccept, id: o.id
     end
   end
 
-  describe :close do
+  describe "close" do
     it "should close if user has permission" do
-      Order.any_instance.stub(:can_close?).and_return true
+      allow_any_instance_of(Order).to receive(:can_close?).and_return true
       o = Factory(:order)
       post :close, id: o.id
       expect(response).to redirect_to o
@@ -77,7 +77,7 @@ describe OrdersController do
       expect(o.closed_at).to be > 1.minute.ago
     end
     it "should error if user cannot close" do
-      Order.any_instance.stub(:can_close?).and_return false
+      allow_any_instance_of(Order).to receive(:can_close?).and_return false
       o = Factory(:order)
       post :close, id: o.id
       expect(response).to be_redirect
@@ -86,19 +86,19 @@ describe OrdersController do
       expect(o.closed_at).to be_nil
     end
   end
-  describe :reopen do
+  describe "reopen" do
     before :each do
       @o = Factory(:order,closed_at:Time.now)
     end
     it "should reopen if user can close" do
-      Order.any_instance.stub(:can_close?).and_return true
+      allow_any_instance_of(Order).to receive(:can_close?).and_return true
       post :reopen, id: @o.id
       expect(response).to redirect_to @o
       @o.reload
       expect(@o.closed_at).to be_nil
     end
     it "should error if user cannot close" do
-      Order.any_instance.stub(:can_close?).and_return false
+      allow_any_instance_of(Order).to receive(:can_close?).and_return false
       post :reopen, id: @o.id
       expect(response).to be_redirect
       @o.reload
@@ -155,18 +155,18 @@ describe OrdersController do
       expect(JSON.parse(response.body)["mf_hsh"]).to include({"ord_ord_date" => "Order Date"})
     end
     it "skips model fields that user isn't authorized to edit" do
-      ModelField.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(ModelField).to receive(:can_edit?).and_return false
       post :bulk_update_fields 
       expect(JSON.parse(response.body)["mf_hsh"]).to be_empty
     end
     it 'should get count for specific items from #get_bulk_count' do
-      described_class.any_instance.should_receive(:get_bulk_count).with({"0"=>"99","1"=>"54"}, nil).and_return 2
+      expect_any_instance_of(described_class).to receive(:get_bulk_count).with({"0"=>"99","1"=>"54"}, nil).and_return 2
       post :bulk_update_fields, {"pk" => {"0"=>"99","1"=>"54"}}
       expect(response).to be_success
       expect(JSON.parse(response.body)['count']).to eq 2
     end
     it 'should get count for full search update from #get_bulk_count' do
-      described_class.any_instance.should_receive(:get_bulk_count).with(nil, '99').and_return 10
+      expect_any_instance_of(described_class).to receive(:get_bulk_count).with(nil, '99').and_return 10
       post :bulk_update_fields, {sr_id:'99'}
       expect(response).to be_success
       expect(JSON.parse(response.body)['count']).to eq 10
@@ -176,7 +176,7 @@ describe OrdersController do
     it 'should call bulk action runner with BulkOrderUpdate' do
       today = Date.today.to_s
       bar = OpenChain::BulkAction::BulkActionRunner
-      bar.should_receive(:process_object_ids).with(@u,['1','2'], OpenChain::BulkAction::BulkOrderUpdate, {"ord_ord_date" => today})
+      expect(bar).to receive(:process_object_ids).with(@u,['1','2'], OpenChain::BulkAction::BulkOrderUpdate, {"ord_ord_date" => today})
       post :bulk_update, pk: {'0'=>'1','1'=>'2'}, mf_hsh: {"ord_ord_date" => today}
       expect(response).to be_success
     end

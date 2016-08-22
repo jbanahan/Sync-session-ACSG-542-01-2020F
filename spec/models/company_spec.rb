@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Company do
-  describe :migrate_accounts do
+  describe "migrate_accounts" do
     before :each do
       @c1 = Factory(:company)
       @c2 = Factory(:company)
@@ -26,21 +26,21 @@ describe Company do
       expect(s.company).to eq @c2
     end
   end
-  describe :attachment_archive_enabled do
+  describe "attachment_archive_enabled" do
     before :each do
       @c = Factory(:company)
       dont_find = Factory(:company)
     end
     it "should return companies with attachment archive setups that include start date" do
       @c.create_attachment_archive_setup(:start_date=>Time.now)
-      Company.attachment_archive_enabled.to_a.should == [@c]
+      expect(Company.attachment_archive_enabled.to_a).to eq([@c])
     end
     it "should not return company with setup that doesn't have start_date" do
       @c.create_attachment_archive_setup()
-      Company.attachment_archive_enabled.count.should == 0
+      expect(Company.attachment_archive_enabled.count).to eq(0)
     end
     it "should not return company without setup" do
-      Company.attachment_archive_enabled.count.should == 0
+      expect(Company.attachment_archive_enabled.count).to eq(0)
     end
   end
   context "role scopes" do
@@ -50,22 +50,22 @@ describe Company do
     it "should find carriers" do
       c1 = Factory(:company,:carrier=>true)
       c2 = Factory(:company,:carrier=>true)
-      Company.carriers.should == [c1,c2]
+      expect(Company.carriers).to eq([c1,c2])
     end
     it "should find importers" do
       c1 = Factory(:company,:importer=>true)
       c2 = Factory(:company,:importer=>true)
-      Company.importers.should == [c1,c2]
+      expect(Company.importers).to eq([c1,c2])
     end
     it "should find customers" do
       c1 = Factory(:company,:customer=>true)
       c2 = Factory(:company,:customer=>true)
-      Company.customers.should == [c1,c2]
+      expect(Company.customers).to eq([c1,c2])
     end
     it "should find vendors" do
       c1 = Factory(:company,:vendor=>true)
       c2 = Factory(:company,:vendor=>true)
-      Company.vendors.should == [c1,c2]
+      expect(Company.vendors).to eq([c1,c2])
     end
   end
   describe 'linked_companies' do
@@ -74,8 +74,8 @@ describe Company do
       child = Factory(:company)
       parent.linked_companies.push child
       parent = Company.find parent.id
-      parent.linked_companies.should have(1).company
-      parent.linked_companies.first.should == child
+      expect(parent.linked_companies.size).to eq(1)
+      expect(parent.linked_companies.first).to eq(child)
     end
   end
   describe 'unlinked_companies' do
@@ -84,20 +84,20 @@ describe Company do
       linked_c = Factory(:company)
       c.linked_companies << linked_c
       unlinked_c = Factory(:company)
-      c.unlinked_companies.should include(unlinked_c) #can't check equals because initializer creates extra "My Company" company
-      c.unlinked_companies.should_not include(linked_c)
+      expect(c.unlinked_companies).to include(unlinked_c) #can't check equals because initializer creates extra "My Company" company
+      expect(c.unlinked_companies).not_to include(linked_c)
     end
   end
   describe "active_importers" do
     it "should retrieve any active importers for existing companies based on products" do
       @importer = Factory(:company, importer: true)
       @product = Factory(:product, importer: @importer)
-      Company.active_importers.should include(@importer)
+      expect(Company.active_importers).to include(@importer)
     end
     it "should retrieve any active importers for existing companies based on entries" do
       @importer = Factory(:company, importer: true)
       @entry = Factory(:entry, importer: @importer, file_logged_date: Time.now)
-      Company.active_importers.should include(@importer)
+      expect(Company.active_importers).to include(@importer)
     end
   end
   context 'security' do
@@ -107,93 +107,93 @@ describe Company do
     it 'should not allow duplicate alliance_customer_number' do
       c1 = Factory(:company,:alliance_customer_number=>'123')
       c2 = Company.new(:name=>'abc',:alliance_customer_number => c1.alliance_customer_number)
-      c2.save.should be_false
-      c2.errors.full_messages.first.should == "Alliance customer number is already taken."
+      expect(c2.save).to be_falsey
+      expect(c2.errors.full_messages.first).to eq("Alliance customer number is already taken.")
     end
     context "trade lanes" do
       before :each do
-        MasterSetup.any_instance.stub(:trade_lane_enabled?).and_return(true)
+        allow_any_instance_of(MasterSetup).to receive(:trade_lane_enabled?).and_return(true)
       end
       context '#view_trade_lanes? and #edit_trade_lanes' do
         it "should allow for master company" do
           c = Factory(:master_company)
-          expect(c.view_trade_lanes?).to be_true
-          expect(c.edit_trade_lanes?).to be_true
+          expect(c.view_trade_lanes?).to be_truthy
+          expect(c.edit_trade_lanes?).to be_truthy
         end
         it "sould not allow for non-master company" do
           c = Factory(:company)
-          expect(c.view_trade_lanes?).to be_false
-          expect(c.edit_trade_lanes?).to be_false
+          expect(c.view_trade_lanes?).to be_falsey
+          expect(c.edit_trade_lanes?).to be_falsey
         end
         it "should not allow if trade lanes not enabled" do
-          MasterSetup.any_instance.stub(:trade_lane_enabled?).and_return(false)
+          allow_any_instance_of(MasterSetup).to receive(:trade_lane_enabled?).and_return(false)
           c = Factory(:master_company)
-          expect(c.view_trade_lanes?).to be_false
-          expect(c.edit_trade_lanes?).to be_false
+          expect(c.view_trade_lanes?).to be_falsey
+          expect(c.edit_trade_lanes?).to be_falsey
         end
       end
     end
     context "trade preference programs" do
       it "should delegate view to trade_lanes" do
         c = Company.new
-        c.should_receive(:view_trade_lanes?).and_return 'ABC'
+        expect(c).to receive(:view_trade_lanes?).and_return 'ABC'
         expect(c.view_trade_preference_programs?).to eq 'ABC'
       end
       it "should delegate edit to trade_lanes" do
         c = Company.new
-        c.should_receive(:edit_trade_lanes?).and_return 'ABC'
+        expect(c).to receive(:edit_trade_lanes?).and_return 'ABC'
         expect(c.edit_trade_preference_programs?).to eq 'ABC'
       end
     end
     context "security filings" do
       before :each do
-        MasterSetup.any_instance.stub(:security_filing_enabled?).and_return(true)
+        allow_any_instance_of(MasterSetup).to receive(:security_filing_enabled?).and_return(true)
       end
       context "view" do
         it "should allow for importers" do
-          Company.new(:importer=>true).view_security_filings?.should be_true
+          expect(Company.new(:importer=>true).view_security_filings?).to be_truthy
         end
         it "should allow for brokers" do
-          Company.new(:broker=>true).view_security_filings?.should be_true
+          expect(Company.new(:broker=>true).view_security_filings?).to be_truthy
         end
         it "should allow for master" do
-          Company.new(:master=>true).view_security_filings?.should be_true
+          expect(Company.new(:master=>true).view_security_filings?).to be_truthy
         end
         it "should not allow for non importer/broker/master" do
-          Company.new.view_security_filings?.should be_false
+          expect(Company.new.view_security_filings?).to be_falsey
         end
         it "should not allow if master setup is disabled" do
-          MasterSetup.any_instance.stub(:security_filing_enabled?).and_return(false)
-          Company.new(:master=>true).view_security_filings?.should be_false
+          allow_any_instance_of(MasterSetup).to receive(:security_filing_enabled?).and_return(false)
+          expect(Company.new(:master=>true).view_security_filings?).to be_falsey
         end
       end
       context "edit" do
         it "should allow for brokers" do
-          Company.new(:broker=>true).edit_security_filings?.should be_true
+          expect(Company.new(:broker=>true).edit_security_filings?).to be_truthy
         end
         it "should allow for master" do
-          Company.new(:master=>true).edit_security_filings?.should be_true
+          expect(Company.new(:master=>true).edit_security_filings?).to be_truthy
         end
         it "should not allow for non broker/master" do
-          Company.new.edit_security_filings?.should be_false
+          expect(Company.new.edit_security_filings?).to be_falsey
         end
         it "should not allow if master setup is disabled" do
-          MasterSetup.any_instance.stub(:security_filing_enabled?).and_return(false)
-          Company.new(:master=>true).edit_security_filings?.should be_false
+          allow_any_instance_of(MasterSetup).to receive(:security_filing_enabled?).and_return(false)
+          expect(Company.new(:master=>true).edit_security_filings?).to be_falsey
         end
       end
       context "attach/comment" do
         it "should be true if view_security_filings is true" do
           c = Company.new
-          c.should_receive(:view_security_filings?).twice.and_return(true)
-          c.attach_security_filings?.should be_true
-          c.comment_security_filings?.should be_true
+          expect(c).to receive(:view_security_filings?).twice.and_return(true)
+          expect(c.attach_security_filings?).to be_truthy
+          expect(c.comment_security_filings?).to be_truthy
         end
         it "should be false if view_security_filings is false" do
           c = Company.new
-          c.should_receive(:view_security_filings?).twice.and_return(false)
-          c.attach_security_filings?.should be_false
-          c.comment_security_filings?.should be_false
+          expect(c).to receive(:view_security_filings?).twice.and_return(false)
+          expect(c.attach_security_filings?).to be_falsey
+          expect(c.comment_security_filings?).to be_falsey
         end
       end
     end
@@ -201,80 +201,80 @@ describe Company do
       it 'should not allow view if master setup is disabled' do
         MasterSetup.get.update_attributes(:entry_enabled=>false)
         c = Factory(:company,:importer=>true)
-        c.view_entries?.should be_false
-        c.comment_entries?.should be_false
-        c.attach_entries?.should be_false
+        expect(c.view_entries?).to be_falsey
+        expect(c.comment_entries?).to be_falsey
+        expect(c.attach_entries?).to be_falsey
       end
       it 'should allow master view/comment/attach' do
         c = Factory(:company,:master=>true)
-        c.view_entries?.should be_true
-        c.comment_entries?.should be_true
-        c.attach_entries?.should be_true
+        expect(c.view_entries?).to be_truthy
+        expect(c.comment_entries?).to be_truthy
+        expect(c.attach_entries?).to be_truthy
       end
       it 'should allow importer view/comment/attach' do
         c = Factory(:company,:importer=>true)
-        c.view_entries?.should be_true
-        c.comment_entries?.should be_true
-        c.attach_entries?.should be_true
+        expect(c.view_entries?).to be_truthy
+        expect(c.comment_entries?).to be_truthy
+        expect(c.attach_entries?).to be_truthy
       end
       it 'should not allow other company view/comment/attach' do
         c = Factory(:company,:importer=>false,:master=>false)
-        c.view_entries?.should be_false
-        c.comment_entries?.should be_false
-        c.attach_entries?.should be_false
+        expect(c.view_entries?).to be_falsey
+        expect(c.comment_entries?).to be_falsey
+        expect(c.attach_entries?).to be_falsey
       end
     end
     context 'broker invoices' do
       it 'should not allow view if master setup is disabled' do
         MasterSetup.get.update_attributes(:broker_invoice_enabled=>false)
         c = Factory(:company,:importer=>true)
-        c.view_broker_invoices?.should be_false
+        expect(c.view_broker_invoices?).to be_falsey
       end
       it 'should allow master view' do
         c = Factory(:company,:master=>true)
-        c.view_broker_invoices?.should be_true
+        expect(c.view_broker_invoices?).to be_truthy
       end
       it 'should allow importer view' do
         c = Factory(:company,:importer=>true)
-        c.view_broker_invoices?.should be_true
+        expect(c.view_broker_invoices?).to be_truthy
       end
       it 'should not allow other company view' do
         c = Factory(:company,:importer=>false,:master=>false)
-        c.view_broker_invoices?.should be_false
+        expect(c.view_broker_invoices?).to be_falsey
       end
       it "should allow edit for master" do
-        Company.new(:master=>true).edit_broker_invoices?.should be_true
+        expect(Company.new(:master=>true).edit_broker_invoices?).to be_truthy
       end
       it "should not allow edit for non-master" do
-        Company.new(:master=>false).edit_broker_invoices?.should be_false
+        expect(Company.new(:master=>false).edit_broker_invoices?).to be_falsey
       end
     end
     context 'commercial invoices' do
       it 'should allow if entry is enabled' do
-        Company.new.should be_view_commercial_invoices
-        Company.new.should be_edit_commercial_invoices
+        expect(Company.new).to be_view_commercial_invoices
+        expect(Company.new).to be_edit_commercial_invoices
       end
       it 'should not allow if entry is disabled' do
         MasterSetup.get.update_attributes(:entry_enabled=>false)
-        Company.new.should_not be_view_commercial_invoices
-        Company.new.should_not be_edit_commercial_invoices
+        expect(Company.new).not_to be_view_commercial_invoices
+        expect(Company.new).not_to be_edit_commercial_invoices
       end
     end
     context 'projects' do
       it 'should allow for master company' do
         MasterSetup.get.update_attributes(project_enabled:true)
-        expect(Company.new(master:true).view_projects?).to be_true
-        expect(Company.new(master:true).edit_projects?).to be_true
+        expect(Company.new(master:true).view_projects?).to be_truthy
+        expect(Company.new(master:true).edit_projects?).to be_truthy
       end
       it 'should not allow for non-master Company' do
         MasterSetup.get.update_attributes(project_enabled:true)
-        expect(Company.new(master:false).view_projects?).to be_false
-        expect(Company.new(master:false).edit_projects?).to be_false
+        expect(Company.new(master:false).view_projects?).to be_falsey
+        expect(Company.new(master:false).edit_projects?).to be_falsey
       end
       it "should not allow if module disabled" do
         MasterSetup.get.update_attributes(project_enabled:false)
-        expect(Company.new(master:true).view_projects?).to be_false
-        expect(Company.new(master:true).edit_projects?).to be_false
+        expect(Company.new(master:true).view_projects?).to be_falsey
+        expect(Company.new(master:true).edit_projects?).to be_falsey
       end
     end
   end
@@ -284,7 +284,7 @@ describe Company do
       c = Factory(:company)
       c.attachments.create!(attached_file_name:"attachment1.jpg")
       c.attachments.create!(attached_file_name:"attachment2.jpg")
-      c.attachments.length.should == 2
+      expect(c.attachments.length).to eq(2)
     end
   end
 
@@ -293,7 +293,7 @@ describe Company do
       my_company = Factory(:company)
       other_company = Factory(:company)
       user = Factory(:user, company: my_company)
-      (other_company.can_view?(user)).should be_false
+      expect(other_company.can_view?(user)).to be_falsey
     end
 
     it "allows user to view linked companies" do
@@ -302,7 +302,7 @@ describe Company do
       user = Factory(:user, company: my_company)
       my_company.linked_companies << other_company
 
-      (other_company.can_view?(user)).should be_true
+      expect(other_company.can_view?(user)).to be_truthy
     end
   end
 
@@ -332,57 +332,57 @@ describe Company do
     end
     it "should pass if user can view_vendors? and user is from this company" do
       u = Factory(:user,vendor_view:true,company:@c)
-      u.stub(:view_vendors?).and_return true
-      expect(@c.can_view_as_vendor?(u)).to be_true
+      allow(u).to receive(:view_vendors?).and_return true
+      expect(@c.can_view_as_vendor?(u)).to be_truthy
     end
     it "should pass if user can view_vendors? and user's company is linked" do
       u = Factory(:user,vendor_view:true)
-      u.stub(:view_vendors?).and_return true
+      allow(u).to receive(:view_vendors?).and_return true
       u.company.linked_companies << @c
-      expect(@c.can_view_as_vendor?(u)).to be_true
+      expect(@c.can_view_as_vendor?(u)).to be_truthy
     end
     it "should pass if user can view_vendors? and user is from master company" do
       u = Factory(:master_user,vendor_view:true)
-      u.stub(:view_vendors?).and_return true
-      expect(@c.can_view_as_vendor?(u)).to be_true
+      allow(u).to receive(:view_vendors?).and_return true
+      expect(@c.can_view_as_vendor?(u)).to be_truthy
     end
     it "should fail if user can view_vendors? and is from unrelated company" do
       u = Factory(:user,vendor_view:true)
-      u.stub(:view_vendors?).and_return true
-      expect(@c.can_view_as_vendor?(u)).to be_false
+      allow(u).to receive(:view_vendors?).and_return true
+      expect(@c.can_view_as_vendor?(u)).to be_falsey
     end
     it "should fail if user cannot view_vendors?" do
       u = Factory(:user,vendor_view:false,company:@c)
-      u.stub(:view_vendors?).and_return false
-      expect(@c.can_view_as_vendor?(u)).to be_false
+      allow(u).to receive(:view_vendors?).and_return false
+      expect(@c.can_view_as_vendor?(u)).to be_falsey
     end
     it "should fail if company is not a vendor?" do
       u = Factory(:user,vendor_view:true)
-      u.stub(:view_vendors?).and_return true
-      expect(u.company.can_view_as_vendor?(u)).to be_false
+      allow(u).to receive(:view_vendors?).and_return true
+      expect(u.company.can_view_as_vendor?(u)).to be_falsey
     end
   end
 
   describe "name_with_customer_number" do
     it "returns a string with the appropriate customer numbers appended to the name" do
       c = Factory(:company, name: "My Name")
-      c.name_with_customer_number.should == "My Name"
+      expect(c.name_with_customer_number).to eq("My Name")
 
       c.fenix_customer_number = "12345"
-      c.name_with_customer_number.should == "My Name (12345)"
+      expect(c.name_with_customer_number).to eq("My Name (12345)")
 
       c.fenix_customer_number = nil
-      c.name_with_customer_number.should == "My Name"
+      expect(c.name_with_customer_number).to eq("My Name")
 
       c.alliance_customer_number = "7890"
-      c.name_with_customer_number.should == "My Name (7890)"
+      expect(c.name_with_customer_number).to eq("My Name (7890)")
 
       c.fenix_customer_number = "ABCD"
-      c.name_with_customer_number.should == "My Name (ABCD) (7890)"
+      expect(c.name_with_customer_number).to eq("My Name (ABCD) (7890)")
     end
   end
 
-  describe :has_vfi_invoice? do
+  describe "has_vfi_invoice?" do
     let(:co) { Factory(:company) }
     let(:inv) { Factory(:vfi_invoice) }
 

@@ -4,15 +4,15 @@ describe Api::V1::CommentsController do
   before :each do
     @s = Factory(:shipment)
     @u = Factory(:user,first_name:'Joe',last_name:'Coward', time_zone: "America/New_York")
-    Shipment.any_instance.stub(:can_view?).and_return true
+    allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
     allow_api_access @u
   end
-  describe :destroy do
+  describe "destroy" do
     before :each do
-      OpenChain::WorkflowProcessor.stub(:async_process)
+      allow(OpenChain::WorkflowProcessor).to receive(:async_process)
     end
     it "should destroy if user is current_user" do
-      OpenChain::WorkflowProcessor.should_receive(:async_process).with(instance_of(Shipment))
+      expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(instance_of(Shipment))
       c = @s.comments.create!(user_id:@u.id,subject:'s1',body:'b1')
       expect{delete :destroy, id: c.id.to_s}.to change(Comment,:count).from(1).to(0)
       expect(response).to be_success
@@ -30,9 +30,9 @@ describe Api::V1::CommentsController do
       expect(response.status).to eq 401
     end
   end
-  describe :create do
+  describe "create" do
     before :each do
-      Shipment.any_instance.stub(:can_comment?).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_comment?).and_return true
       @comment_hash = {comment:{commentable_id:@s.id.to_s,
         commentable_type:Shipment,
         subject:'sub',
@@ -40,8 +40,8 @@ describe Api::V1::CommentsController do
       }}
     end
     it "should create comment" do
-      OpenChain::WorkflowProcessor.stub(:async_process)
-      OpenChain::WorkflowProcessor.should_receive(:async_process).with(instance_of(Shipment))
+      allow(OpenChain::WorkflowProcessor).to receive(:async_process)
+      expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(instance_of(Shipment))
       expect{post :create, @comment_hash}.to change(Comment,:count).from(0).to(1)
       expect(response).to be_success
       expect(@s.comments.first.subject).to eq 'sub'
@@ -57,12 +57,12 @@ describe Api::V1::CommentsController do
       expect(response.status).to eq 404
     end
     it "should 401 if user cannot comment" do
-      Shipment.any_instance.stub(:can_comment?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_comment?).and_return false
       expect{post :create, @comment_hash}.to_not change(Comment,:count)
       expect(response.status).to eq 401
     end
   end
-  describe :for_module do
+  describe "for_module" do
     it "should return comments" do
       c1 = @s.comments.create!(user_id:@u.id,subject:'s1',body:'b1')
       c2 = @s.comments.create!(user_id:@u.id,subject:'s2',body:'b2')
@@ -100,7 +100,7 @@ describe Api::V1::CommentsController do
       expect(response.status).to eq 404
     end
     it "should 401 if user cannot view" do
-      Shipment.any_instance.stub(:can_view?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_view?).and_return false
       get :for_module, module_type:'Shipment', id: @s.id.to_s
       expect(response.status).to eq 401
     end
@@ -137,7 +137,7 @@ describe Api::V1::CommentsController do
       end
 
       it "errors if user can't view base object" do
-        Shipment.any_instance.stub(:can_view?).with(user).and_return false
+        allow_any_instance_of(Shipment).to receive(:can_view?).with(user).and_return false
         get :polymorphic_index, base_object_type: "shipments", base_object_id: shipment.id, include: "permissions"
         expect(response).not_to be_success
         expect(response.status).to eq 403
@@ -168,7 +168,7 @@ describe Api::V1::CommentsController do
       end
 
       it "errors if user can't view shipment" do
-        Shipment.any_instance.stub(:can_view?).with(user).and_return false
+        allow_any_instance_of(Shipment).to receive(:can_view?).with(user).and_return false
         get :polymorphic_show, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
         expect(response).not_to be_success
         expect(response.status).to eq 403
@@ -178,12 +178,12 @@ describe Api::V1::CommentsController do
     describe "polymorphic_destroy" do
 
       before :each do
-        Shipment.any_instance.stub(:can_comment?).with(user).and_return true
+        allow_any_instance_of(Shipment).to receive(:can_comment?).with(user).and_return true
       end
 
       it "destroys comment" do
-        Shipment.any_instance.should_receive(:create_async_snapshot).with user
-        OpenChain::WorkflowProcessor.should_receive(:async_process).with(shipment)
+        expect_any_instance_of(Shipment).to receive(:create_async_snapshot).with user
+        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(shipment)
 
         delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
         expect(response).to be_success
@@ -197,8 +197,8 @@ describe Api::V1::CommentsController do
         u = Factory(:user)
         c = shipment.comments.create! user_id: u.id, subject: "Sub", body: "Bod"
 
-        Shipment.any_instance.should_not_receive(:create_async_snapshot)
-        OpenChain::WorkflowProcessor.should_not_receive(:async_process)
+        expect_any_instance_of(Shipment).not_to receive(:create_async_snapshot)
+        expect(OpenChain::WorkflowProcessor).not_to receive(:async_process)
 
         delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: c.id
         expect(response).not_to be_success
@@ -209,10 +209,10 @@ describe Api::V1::CommentsController do
       end
 
       it "does not destroy comments when user cannot comment on obj" do
-        Shipment.any_instance.stub(:can_comment?).with(user).and_return false
+        allow_any_instance_of(Shipment).to receive(:can_comment?).with(user).and_return false
 
-        Shipment.any_instance.should_not_receive(:create_async_snapshot)
-        OpenChain::WorkflowProcessor.should_not_receive(:async_process)
+        expect_any_instance_of(Shipment).not_to receive(:create_async_snapshot)
+        expect(OpenChain::WorkflowProcessor).not_to receive(:async_process)
 
         delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
         expect(response).not_to be_success
@@ -225,13 +225,13 @@ describe Api::V1::CommentsController do
 
     describe "polymorphic_create" do
       before :each do
-        Shipment.any_instance.stub(:can_comment?).with(user).and_return true
+        allow_any_instance_of(Shipment).to receive(:can_comment?).with(user).and_return true
         shipment.comments.destroy_all
       end
 
       it "creates a comment" do
-        Shipment.any_instance.should_receive(:create_async_snapshot).with user
-        OpenChain::WorkflowProcessor.should_receive(:async_process).with(shipment)
+        expect_any_instance_of(Shipment).to receive(:create_async_snapshot).with user
+        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(shipment)
 
         post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, comment: {:cmt_subject=>"Subject", :cmt_body=>"Body"}
         expect(response).to be_success
@@ -248,8 +248,8 @@ describe Api::V1::CommentsController do
       end
 
       it "creates a comment, returning permissions" do
-        Shipment.any_instance.should_receive(:create_async_snapshot).with user
-        OpenChain::WorkflowProcessor.should_receive(:async_process).with(shipment)
+        expect_any_instance_of(Shipment).to receive(:create_async_snapshot).with user
+        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(shipment)
 
         post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, comment: {cmt_subject: "Subject", cmt_body: "Body"}, include: "permissions"
         expect(response).to be_success
@@ -259,10 +259,10 @@ describe Api::V1::CommentsController do
       end
 
       it "fails if user cannot comment on object" do
-        Shipment.any_instance.stub(:can_comment?).with(user).and_return false
+        allow_any_instance_of(Shipment).to receive(:can_comment?).with(user).and_return false
 
-        Shipment.any_instance.should_not_receive(:create_async_snapshot)
-        OpenChain::WorkflowProcessor.should_not_receive(:async_process)
+        expect_any_instance_of(Shipment).not_to receive(:create_async_snapshot)
+        expect(OpenChain::WorkflowProcessor).not_to receive(:async_process)
 
         post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, :cmt_subject=>"Subject", :cmt_body=>"Body"
         expect(response).not_to be_success

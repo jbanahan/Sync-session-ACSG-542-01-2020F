@@ -5,7 +5,7 @@ describe OpenChain::BulkUpdateClassification do
     before :each do
       ModelField.reload #cleanup from other tests
       @ms = MasterSetup.new :request_host => "localhost"
-      MasterSetup.stub(:get).and_return @ms
+      allow(MasterSetup).to receive(:get).and_return @ms
       @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true)
       @p = Factory(:product, :unit_of_measure=>"UOM")
       @country = Factory(:country)
@@ -14,26 +14,26 @@ describe OpenChain::BulkUpdateClassification do
 
     context "can_classify" do
       before :each do 
-        Product.any_instance.stub(:can_classify?).and_return true
+        allow_any_instance_of(Product).to receive(:can_classify?).and_return true
       end
 
       it "should update an existing classification with primary keys" do
         m = OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
-        Product.find(@p.id).classifications.should have(1).item
+        expect(Product.find(@p.id).classifications.size).to eq(1)
 
         log = BulkProcessLog.first
-        log.total_object_count.should eq 1
-        log.changed_object_count.should eq 1
-        log.change_records.should have(1).item
-        log.change_records.first.failed.should be_false
-        log.change_records.first.entity_snapshot.should_not be_nil
+        expect(log.total_object_count).to eq 1
+        expect(log.changed_object_count).to eq 1
+        expect(log.change_records.size).to eq(1)
+        expect(log.change_records.first.failed).to be_falsey
+        expect(log.change_records.first.entity_snapshot).not_to be_nil
 
-        @u.messages.length.should == 1
-        @u.messages[0].subject.should == "Bulk Update Job Complete."
-        @u.messages[0].body.should == "<p>Your Bulk Update job has completed.</p><p>1 Product saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
-        m[:message].should == "Bulk Update Job Complete."
-        m[:errors].should == []
-        m[:good_count].should == 1
+        expect(@u.messages.length).to eq(1)
+        expect(@u.messages[0].subject).to eq("Bulk Update Job Complete.")
+        expect(@u.messages[0].body).to eq("<p>Your Bulk Update job has completed.</p><p>1 Product saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>")
+        expect(m[:message]).to eq("Bulk Update Job Complete.")
+        expect(m[:errors]).to eq([])
+        expect(m[:good_count]).to eq(1)
       end
       it "should record validation errors in update log and messages" do
         # Create field validator rule to reject on 
@@ -43,24 +43,24 @@ describe OpenChain::BulkUpdateClassification do
         m = OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
 
         log = BulkProcessLog.first
-        log.total_object_count.should eq 1
-        log.changed_object_count.should eq 0
-        log.change_records.should have(1).item
-        log.change_records.first.failed.should be_true
-        log.change_records.first.entity_snapshot.should be_nil
-        log.change_records.first.messages[0].should match /^Error saving product/
+        expect(log.total_object_count).to eq 1
+        expect(log.changed_object_count).to eq 0
+        expect(log.change_records.size).to eq(1)
+        expect(log.change_records.first.failed).to be_truthy
+        expect(log.change_records.first.entity_snapshot).to be_nil
+        expect(log.change_records.first.messages[0]).to match /^Error saving product/
 
-        @u.messages.length.should == 1
-        @u.messages[0].subject.should == "Bulk Update Job Complete (1 Error)."
-        @u.messages[0].body.should == "<p>Your Bulk Update job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
-        m[:message].should == "Bulk Update Job Complete (1 Error)."
-        m[:errors][0].should match /^Error saving product/
-        m[:good_count].should == 0
+        expect(@u.messages.length).to eq(1)
+        expect(@u.messages[0].subject).to eq("Bulk Update Job Complete (1 Error).")
+        expect(@u.messages[0].body).to eq("<p>Your Bulk Update job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>")
+        expect(m[:message]).to eq("Bulk Update Job Complete (1 Error).")
+        expect(m[:errors][0]).to match /^Error saving product/
+        expect(m[:good_count]).to eq(0)
       end
       it "should update but not make user messages" do
         OpenChain::BulkUpdateClassification.bulk_update(@h,@u, :no_user_message => true)
-        Product.find(@p.id).classifications.should have(1).item
-        @u.messages.length.should == 0
+        expect(Product.find(@p.id).classifications.size).to eq(1)
+        expect(@u.messages.length).to eq(0)
       end
       it "creates new classification and tariff records" do
         Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
@@ -79,15 +79,15 @@ describe OpenChain::BulkUpdateClassification do
         OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
-        @p.unit_of_measure.should == "UOM"
-        @p.get_custom_value(prod_cd).value.should == "PROD_UPDATE"
+        expect(@p.unit_of_measure).to eq("UOM")
+        expect(@p.get_custom_value(prod_cd).value).to eq("PROD_UPDATE")
         
         cls = @p.classifications.first
-        cls.country_id.should == @country.id
-        cls.get_custom_value(class_cd).value.should == 'ABC'
-        cls.tariff_records.first.line_number.should == 1
-        cls.tariff_records.first.hts_1.should == '1234567890'
-        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+        expect(cls.country_id).to eq(@country.id)
+        expect(cls.get_custom_value(class_cd).value).to eq('ABC')
+        expect(cls.tariff_records.first.line_number).to eq(1)
+        expect(cls.tariff_records.first.hts_1).to eq('1234567890')
+        expect(cls.tariff_records.first.get_custom_value(tr_cd).value).to eq('DEF')
       end
 
       it "does not use blank attributes and custom values from product, classification, and tariff parameters" do
@@ -113,18 +113,18 @@ describe OpenChain::BulkUpdateClassification do
         @p.reload
 
         # Validate product level blank attributes / custom values aren't used
-        @p.unit_of_measure.should == "UOM"
-        @p.get_custom_value(prod_cd).value.should == "PROD"
+        expect(@p.unit_of_measure).to eq("UOM")
+        expect(@p.get_custom_value(prod_cd).value).to eq("PROD")
         
         cls = @p.classifications.first
 
         # Make sure we're updating the same actual classification and tariff records and not tearing down and rebuilding them
-        cls.id.should == classification.id
-        cls.get_custom_value(class_cd).value.should == 'ABC'
-        cls.tariff_records.first.id.should == tr.id
-        cls.tariff_records.first.hts_1.should == '1234567890'
-        cls.tariff_records.first.hts_2.should == '1234567890'
-        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+        expect(cls.id).to eq(classification.id)
+        expect(cls.get_custom_value(class_cd).value).to eq('ABC')
+        expect(cls.tariff_records.first.id).to eq(tr.id)
+        expect(cls.tariff_records.first.hts_1).to eq('1234567890')
+        expect(cls.tariff_records.first.hts_2).to eq('1234567890')
+        expect(cls.tariff_records.first.get_custom_value(tr_cd).value).to eq('DEF')
       end
       
       it "should allow override of classification & tariff custom values" do
@@ -139,10 +139,10 @@ describe OpenChain::BulkUpdateClassification do
         @h['product']['classifications_attributes']['0'][class_cd.model_field_uid.to_s] = 'CLSOVR'
         OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
-        @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
+        expect(@p.classifications.first.tariff_records.first.hts_1).to eq('1234567890')
         cls = @p.classifications.first
-        cls.get_custom_value(class_cd).value.should == 'CLSOVR'
-        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'TAROVR'
+        expect(cls.get_custom_value(class_cd).value).to eq('CLSOVR')
+        expect(cls.tariff_records.first.get_custom_value(tr_cd).value).to eq('TAROVR')
       end
 
       it "skips classification and tariff values without overwriting them when no classification parameters are sent" do
@@ -162,13 +162,13 @@ describe OpenChain::BulkUpdateClassification do
         OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
-        @p.unit_of_measure.should == "UOM"
-        @p.get_custom_value(prod_cd).value.should == "PROD_UPDATE"
+        expect(@p.unit_of_measure).to eq("UOM")
+        expect(@p.get_custom_value(prod_cd).value).to eq("PROD_UPDATE")
 
-        @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
+        expect(@p.classifications.first.tariff_records.first.hts_1).to eq('1234567890')
         cls = @p.classifications.first
-        cls.get_custom_value(class_cd).value.should == 'ABC'
-        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+        expect(cls.get_custom_value(class_cd).value).to eq('ABC')
+        expect(cls.tariff_records.first.get_custom_value(tr_cd).value).to eq('DEF')
       end
 
       it 'uses tariff line number, when present, to identify which tariff record to update' do
@@ -183,9 +183,9 @@ describe OpenChain::BulkUpdateClassification do
         OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
-        @p.classifications.first.tariff_records.second.line_number.should eq 2
-        @p.classifications.first.tariff_records.first.hts_1.should eq '9876543210'
-        @p.classifications.first.tariff_records.second.hts_1.should eq '1234567890'
+        expect(@p.classifications.first.tariff_records.second.line_number).to eq 2
+        expect(@p.classifications.first.tariff_records.first.hts_1).to eq '9876543210'
+        expect(@p.classifications.first.tariff_records.second.hts_1).to eq '1234567890'
       end
 
       it 'does not remove existing tariff lines if updating only the first tariff record in a set' do
@@ -199,9 +199,9 @@ describe OpenChain::BulkUpdateClassification do
         OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
-        @p.classifications.first.tariff_records.should have(2).items
-        @p.classifications.first.tariff_records.first.line_number.should eq 1
-        @p.classifications.first.tariff_records.first.hts_1.should eq '9876543210'
+        expect(@p.classifications.first.tariff_records.size).to eq(2)
+        expect(@p.classifications.first.tariff_records.first.line_number).to eq 1
+        expect(@p.classifications.first.tariff_records.first.hts_1).to eq '9876543210'
       end
 
       it 'does not remove existing tariff lines if updating only the second tariff record in a set' do
@@ -216,34 +216,34 @@ describe OpenChain::BulkUpdateClassification do
         OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
         @p.reload
 
-        @p.classifications.first.tariff_records.should have(2).items
-        @p.classifications.first.tariff_records.first.line_number.should eq 1
-        @p.classifications.first.tariff_records.first.hts_1.should eq '1234567890'
-        @p.classifications.first.tariff_records.second.hts_1.should eq '1111111111'
+        expect(@p.classifications.first.tariff_records.size).to eq(2)
+        expect(@p.classifications.first.tariff_records.first.line_number).to eq 1
+        expect(@p.classifications.first.tariff_records.first.hts_1).to eq '1234567890'
+        expect(@p.classifications.first.tariff_records.second.hts_1).to eq '1111111111'
       end
     end
 
     it "errors if user cannot classify" do
-      Product.any_instance.stub(:can_classify?).and_return false
+      allow_any_instance_of(Product).to receive(:can_classify?).and_return false
 
       m = OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
-      m[:errors].should have(1).item
+      expect(m[:errors].size).to eq(1)
 
-      m[:errors].first.should eq "You do not have permission to classify product #{@p.unique_identifier}."
+      expect(m[:errors].first).to eq "You do not have permission to classify product #{@p.unique_identifier}."
     end
 
     it "errors if user cannot edit products" do
-      Product.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return false
 
       m = OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
-      m[:errors].should have(1).item
+      expect(m[:errors].size).to eq(1)
 
-      m[:errors].first.should eq "You do not have permission to edit product #{@p.unique_identifier}."
+      expect(m[:errors].first).to eq "You do not have permission to edit product #{@p.unique_identifier}."
     end
 
     it "does not error if user can edit but cannot classify if there are no classification attributes" do
-      Product.any_instance.stub(:can_edit?).and_return true
-      Product.any_instance.stub(:can_classify?).and_return false
+      allow_any_instance_of(Product).to receive(:can_edit?).and_return true
+      allow_any_instance_of(Product).to receive(:can_classify?).and_return false
 
       @h['product'].delete 'classifications_attributes'
       @h['product']['unit_of_measure'] = "UOM"
@@ -251,7 +251,7 @@ describe OpenChain::BulkUpdateClassification do
       OpenChain::BulkUpdateClassification.bulk_update(@h,@u)
       @p.reload
 
-      @p.unit_of_measure.should == "UOM"
+      expect(@p.unit_of_measure).to eq("UOM")
     end
 
   end
@@ -268,26 +268,26 @@ describe OpenChain::BulkUpdateClassification do
     it "should build tariff based on primary keys" do
       product_ids = @products.collect {|p| p.id}
       OpenChain::BulkUpdateClassification.build_common_classifications product_ids, @base_product
-      @base_product.classifications.should have(1).item
+      expect(@base_product.classifications.size).to eq(1)
       classification = @base_product.classifications.first
-      classification.country.should == @country
-      classification.should have(1).tariff_record
+      expect(classification.country).to eq(@country)
+      expect(classification.tariff_records.size).to eq(1)
       tr = classification.tariff_records.first
-      tr.hts_1.should == @hts
-      tr.line_number.should == 1
+      expect(tr.hts_1).to eq(@hts)
+      expect(tr.line_number).to eq(1)
     end
     it "should build tariff based on search run" do
       user = Factory(:user,:admin=>true,:company_id=>Factory(:company,:master=>true).id)
       search_setup = Factory(:search_setup,:module_type=>"Product",:user=>user)
       search_setup.touch #makes search_run
       OpenChain::BulkUpdateClassification.build_common_classifications search_setup.search_runs.first, @base_product
-      @base_product.classifications.should have(1).item
+      expect(@base_product.classifications.size).to eq(1)
       classification = @base_product.classifications.first
-      classification.country.should == @country
-      classification.should have(1).tariff_record
+      expect(classification.country).to eq(@country)
+      expect(classification.tariff_records.size).to eq(1)
       tr = classification.tariff_records.first
-      tr.hts_1.should == @hts
-      tr.line_number.should == 1
+      expect(tr.hts_1).to eq(@hts)
+      expect(tr.line_number).to eq(1)
     end
     it "should build for one country and not for another when the second has different tariffs" do
       country_2 = Factory(:country)
@@ -296,26 +296,26 @@ describe OpenChain::BulkUpdateClassification do
       end
       product_ids = @products.collect {|p| p.id}
       OpenChain::BulkUpdateClassification.build_common_classifications product_ids, @base_product
-      @base_product.classifications.should have(1).item
+      expect(@base_product.classifications.size).to eq(1)
       classification = @base_product.classifications.first
-      classification.country.should == @country
-      classification.should have(1).tariff_record
+      expect(classification.country).to eq(@country)
+      expect(classification.tariff_records.size).to eq(1)
       tr = classification.tariff_records.first
-      tr.hts_1.should == @hts
-      tr.line_number.should == 1
+      expect(tr.hts_1).to eq(@hts)
+      expect(tr.line_number).to eq(1)
     end
     it "should not build if one of the products does not have the classification for the country" do
       country_2 = Factory(:country)
       @products.first.classifications.create!(:country_id=>country_2.id).tariff_records.create!(:line_number=>1,:hts_1=>"123456789")
       product_ids = @products.collect {|p| p.id}
       OpenChain::BulkUpdateClassification.build_common_classifications product_ids, @base_product
-      @base_product.classifications.should have(1).item
+      expect(@base_product.classifications.size).to eq(1)
       classification = @base_product.classifications.first
-      classification.country.should == @country
-      classification.should have(1).tariff_record
+      expect(classification.country).to eq(@country)
+      expect(classification.tariff_records.size).to eq(1)
       tr = classification.tariff_records.first
-      tr.hts_1.should == @hts
-      tr.line_number.should == 1
+      expect(tr.hts_1).to eq(@hts)
+      expect(tr.line_number).to eq(1)
     end
   end
 
@@ -326,7 +326,7 @@ describe OpenChain::BulkUpdateClassification do
       @country = Factory(:country, :iso_code => "US")
       @hts = '1234567890'
       @ms = MasterSetup.new :request_host => "localhost"
-      MasterSetup.stub(:get).and_return @ms
+      allow(MasterSetup).to receive(:get).and_return @ms
 
       @parameters = {
         'pk' => ["#{@products[0].id}", "#{@products[1].id}"],
@@ -350,21 +350,21 @@ describe OpenChain::BulkUpdateClassification do
 
       @products.each do |p|
         p.reload
-        p.classifications.should have(1).item
-        p.classifications[0].country_id.should eq @country.id
+        expect(p.classifications.size).to eq(1)
+        expect(p.classifications[0].country_id).to eq @country.id
 
-        p.classifications[0].tariff_records.should have(1).item
-        p.classifications[0].tariff_records[0].hts_1.should eq @hts
+        expect(p.classifications[0].tariff_records.size).to eq(1)
+        expect(p.classifications[0].tariff_records[0].hts_1).to eq @hts
       end
 
-      log.change_records.should have(2).items
+      expect(log.change_records.size).to eq(2)
       log.change_records.each do |cr|
-        cr.entity_snapshot.should_not be_nil
+        expect(cr.entity_snapshot).not_to be_nil
       end
 
-      @u.messages.should have(1).item
-      @u.messages[0].subject.should eq "Bulk Classify Job Complete."
-      @u.messages[0].body.should eq "<p>Your Bulk Classify job has completed.</p><p>2 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+      expect(@u.messages.size).to eq(1)
+      expect(@u.messages[0].subject).to eq "Bulk Classify Job Complete."
+      expect(@u.messages[0].body).to eq "<p>Your Bulk Classify job has completed.</p><p>2 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
     end
 
     it "should create new classifications on products using json string" do
@@ -372,11 +372,11 @@ describe OpenChain::BulkUpdateClassification do
 
       @products.each do |p|
         p.reload
-        p.classifications.should have(1).item
-        p.classifications[0].country_id.should eq @country.id
+        expect(p.classifications.size).to eq(1)
+        expect(p.classifications[0].country_id).to eq @country.id
 
-        p.classifications[0].tariff_records.should have(1).item
-        p.classifications[0].tariff_records[0].hts_1.should eq @hts
+        expect(p.classifications[0].tariff_records.size).to eq(1)
+        expect(p.classifications[0].tariff_records[0].hts_1).to eq @hts
       end
     end
 
@@ -404,16 +404,16 @@ describe OpenChain::BulkUpdateClassification do
       messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
       p.reload
-      p.classifications.should have(1).item
-      p.classifications[0].country_id.should eq @country.id
+      expect(p.classifications.size).to eq(1)
+      expect(p.classifications[0].country_id).to eq @country.id
 
-      p.classifications[0].tariff_records.should have(1).item
-      p.classifications[0].tariff_records[0].hts_1.should eq @hts
+      expect(p.classifications[0].tariff_records.size).to eq(1)
+      expect(p.classifications[0].tariff_records[0].hts_1).to eq @hts
     end
 
     it "should handle errors in product updates" do 
       # An easy way to force an error is to set the value to blank
-      OpenChain::FieldLogicValidator.stub(:validate) do |o|
+      allow(OpenChain::FieldLogicValidator).to receive(:validate) do |o|
         o.errors[:base] << "Error"
         raise OpenChain::ValidationLogicError.new nil, o
       end
@@ -422,14 +422,14 @@ describe OpenChain::BulkUpdateClassification do
 
       log = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
-      log.change_records.should have(1).item
-      log.change_records.first.failed.should be_true
-      log.change_records.first.messages[0].should eq "Error saving product #{p.unique_identifier}: Error"
-      log.change_records.first.entity_snapshot.should be_nil
+      expect(log.change_records.size).to eq(1)
+      expect(log.change_records.first.failed).to be_truthy
+      expect(log.change_records.first.messages[0]).to eq "Error saving product #{p.unique_identifier}: Error"
+      expect(log.change_records.first.entity_snapshot).to be_nil
 
-      @u.messages.should have(1).item
-      @u.messages[0].subject.should eq "Bulk Classify Job Complete (1 Error)."
-      @u.messages[0].body.should eq "<p>Your Bulk Classify job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+      expect(@u.messages.size).to eq(1)
+      expect(@u.messages[0].subject).to eq "Bulk Classify Job Complete (1 Error)."
+      expect(@u.messages[0].body).to eq "<p>Your Bulk Classify job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
 
     end
 
@@ -440,8 +440,8 @@ describe OpenChain::BulkUpdateClassification do
       @u.update_attributes product_view: false
       log = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
-      @u.messages.should have(1).item
-      @u.messages[0].subject.should eq "Bulk Classify Job Complete (1 Error)."
+      expect(@u.messages.size).to eq(1)
+      expect(@u.messages[0].subject).to eq "Bulk Classify Job Complete (1 Error)."
 
     end
 
@@ -452,7 +452,7 @@ describe OpenChain::BulkUpdateClassification do
       @u.update_attributes product_view: false
       messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u, no_user_message: true
 
-      @u.messages.should have(0).items
+      expect(@u.messages.size).to eq(0)
     end
   end
 end

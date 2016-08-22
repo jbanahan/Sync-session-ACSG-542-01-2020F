@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductParser do
     @u = Factory(:master_user)
     @row = "    00200GB           ODIN 5 PC PLACE SET BOXED               A                         0003METALS         03STAINLESS           02DANSK               7                                    0010FINE STAINLESS FLATWARE       004METALS                        O002ODIN                          F0047FORMAL STAINLESS    61867            1387534          VN 55224                    1 FIRST     0004GLENN DESTEFANO               0004ANTHONY BADESSA               25 JOE GILSON               97 MADELINE LUMA                      MADELINE_LUMA@LENOX.COM       267-525-5153                  005"
   end
-  context :hashing do
+  context "hashing" do
     it "should process line the first time" do
       expect {
         described_class.new.process @row, @u
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductParser do
       expect(p.updated_at.to_i).not_to eq t.to_i
     end
   end
-  context :product do
+  context "product" do
     before :each do
       @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
     end

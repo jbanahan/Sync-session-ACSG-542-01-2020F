@@ -27,7 +27,7 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
       expect(m.body.raw_source).to include "Attached is a listing of 1 Entry and 1 Invoice missing from VFI Track. Please ensure these files get pushed from Alliance to VFI Track."
 
       attachment = m.attachments.first
-      attachment.should_not be_nil
+      expect(attachment).not_to be_nil
 
       io = StringIO.new(attachment.read)
       wb = Spreadsheet.open(io)
@@ -64,8 +64,8 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
       start_date = (now.in_time_zone("Eastern Time (US & Canada)") - 7.days).to_date
       end_time = (now - 1.hour)
 
-      OpenChain::KewillSqlProxyClient.should_receive(:request_file_tracking_info).with start_date, end_time
-      ActiveSupport::TimeZone.any_instance.stub(:now).and_return now
+      expect(OpenChain::KewillSqlProxyClient).to receive(:request_file_tracking_info).with start_date, end_time
+      allow_any_instance_of(ActiveSupport::TimeZone).to receive(:now).and_return now
 
       described_class.run_schedulable
     end
@@ -75,8 +75,8 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
       start_date = (now.in_time_zone("Eastern Time (US & Canada)") - 2.days).to_date
       end_time = (now - 1.hour)
 
-      OpenChain::KewillSqlProxyClient.should_receive(:request_file_tracking_info).with start_date, end_time
-      ActiveSupport::TimeZone.any_instance.stub(:now).and_return now
+      expect(OpenChain::KewillSqlProxyClient).to receive(:request_file_tracking_info).with start_date, end_time
+      allow_any_instance_of(ActiveSupport::TimeZone).to receive(:now).and_return now
 
       described_class.run_schedulable({'days_ago' => '2'})
     end

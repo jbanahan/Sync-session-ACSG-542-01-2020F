@@ -14,28 +14,28 @@ describe MessagesController do
     it 'should work for sys_admins' do
       sign_in_as @sys_admin_user
       put :create, {:message=>{:subject=>'test subject',:body=>'test body',:user_id=>@base_user.id.to_s}}
-      response.should redirect_to('/messages')
-      flash[:notices].should include "Your message has been sent."
-      flash[:errors].should be_blank
+      expect(response).to redirect_to('/messages')
+      expect(flash[:notices]).to include "Your message has been sent."
+      expect(flash[:errors]).to be_blank
       @base_user.reload
-      @base_user.messages.should have(1).item
+      expect(@base_user.messages.size).to eq(1)
       msg = @base_user.messages.first
-      msg.subject.should == 'test subject'
-      msg.body.should == 'test body'
+      expect(msg.subject).to eq('test subject')
+      expect(msg.body).to eq('test body')
     end
     it 'should sanitize html' do
       sign_in_as @sys_admin_user
       put :create, {:message=>{:subject=>'test <em>subject</em>',:body=>'<a href=\'http://www.google.com\'>test body</a>',:user_id=>@base_user.id.to_s}}
       msg = @base_user.messages.first
-      msg.subject.should == 'test subject'
-      msg.body.should == 'test body'
+      expect(msg.subject).to eq('test subject')
+      expect(msg.body).to eq('test body')
     end
     it 'should not allow basic users' do
       sign_in_as @base_user
       put :create, {:subject=>'test subject',:body=>'test body',:user_id=>@base_user.id.to_s}
-      response.should be_redirect
-      flash[:notices].should be_blank
-      flash[:errors].should_not be_blank
+      expect(response).to be_redirect
+      expect(flash[:notices]).to be_blank
+      expect(flash[:errors]).not_to be_blank
     end
     it 'should not allow normal admins' do
       u = Factory(:user)
@@ -43,9 +43,9 @@ describe MessagesController do
       u.save!
       sign_in_as u
       put :create, {:subject=>'test subject',:body=>'test body',:user_id=>@base_user.id.to_s}
-      response.should be_redirect
-      flash[:notices].should be_blank
-      flash[:errors].should_not be_blank
+      expect(response).to be_redirect
+      expect(flash[:notices]).to be_blank
+      expect(flash[:errors]).not_to be_blank
     end
   end
 
@@ -53,12 +53,12 @@ describe MessagesController do
     it 'should allow sys_admins' do
       sign_in_as @sys_admin_user
       get :new
-      response.should be_success
+      expect(response).to be_success
     end
     it 'should not allow basic users' do
       sign_in_as @base_user
       get :new
-      response.should be_redirect
+      expect(response).to be_redirect
     end
     it 'should not allow normal admins' do
       u = Factory(:user)
@@ -66,7 +66,7 @@ describe MessagesController do
       u.save!
       sign_in_as u
       get :new
-      response.should be_redirect
+      expect(response).to be_redirect
     end
   end
 
@@ -119,8 +119,8 @@ describe MessagesController do
         sign_in_as u
         
         d = double("delayed_job")
-        Message.should_receive(:delay).and_return d
-        d.should_receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "This is a test.")
+        expect(Message).to receive(:delay).and_return d
+        expect(d).to receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "This is a test.")
 
         post :send_to_users, {receivers: [@receiver1.id, @receiver2.id], message_subject: "Test <em>Message</em>", message_body: "<a href=\'http://www.google.com\'>This is a test.</a>"}
       end
@@ -130,8 +130,8 @@ describe MessagesController do
         sign_in_as u
         
         d = double("delayed_job")
-        Message.should_receive(:delay).and_return d
-        d.should_receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "This is a test.")
+        expect(Message).to receive(:delay).and_return d
+        expect(d).to receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "This is a test.")
         
         post :send_to_users, {receivers: [@receiver1.id, @receiver2.id], message_subject: "Test Message", message_body: "This is a test."}
         expect(flash[:notices]).to include "Message sent."

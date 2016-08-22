@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
     let (:entry) { Entry.create! customer_number: "CUST", source_system: "Alliance", broker_reference: "12345"}
 
     before :each do
-      subject.stub(:drive_client).and_return google_drive
+      allow(subject).to receive(:drive_client).and_return google_drive
     end
 
     after :each do
@@ -32,13 +32,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
 
       it "validates path data and ftp's the file" do
         opts = nil
-        subject.should_receive(:ftp_file) do |file, ftp_options|
+        expect(subject).to receive(:ftp_file) do |file, ftp_options|
           expect(file).to eq downloaded_file
           opts = ftp_options
         end
         
-        google_drive.should_receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.pdf").and_yield downloaded_file
-        google_drive.should_receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.pdf")
+        expect(google_drive).to receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.pdf").and_yield downloaded_file
+        expect(google_drive).to receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.pdf")
 
         subject.send_google_drive_document_to_kewill("me@there.com", "Root/Document Type/12345 - CUST.pdf")
 
@@ -51,9 +51,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
     it "validates data and emails errors back to Drive file owner" do
       # In this case, we'll have a valid file path, but all other aspects of the data will be invalid
       Attachment.add_original_filename_method downloaded_file, "12345 - CUST.txt"
-      google_drive.should_receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt").and_yield downloaded_file
-      google_drive.should_receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt").and_return "you@there.com"
-      google_drive.should_receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt")
+      expect(google_drive).to receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt").and_yield downloaded_file
+      expect(google_drive).to receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt").and_return "you@there.com"
+      expect(google_drive).to receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt")
 
       subject.send_google_drive_document_to_kewill("me@there.com", "Root/Document Type/12345 - CUST.txt")
 
@@ -69,9 +69,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
     end
 
     it "errors if file name is invalid and emails owner" do
-      google_drive.should_receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_yield downloaded_file
-      google_drive.should_receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_return "you@there.com"
-      google_drive.should_receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt")
+      expect(google_drive).to receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_yield downloaded_file
+      expect(google_drive).to receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_return "you@there.com"
+      expect(google_drive).to receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt")
      
       subject.send_google_drive_document_to_kewill("me@there.com", "Root/Document Type/12345.txt")
 
@@ -82,9 +82,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
     end
 
     it "uses bug email address to send to if file owner cannot be discovered" do
-      google_drive.should_receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_yield downloaded_file
-      google_drive.should_receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_return nil
-      google_drive.should_receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt")
+      expect(google_drive).to receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_yield downloaded_file
+      expect(google_drive).to receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_return nil
+      expect(google_drive).to receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt")
 
       subject.send_google_drive_document_to_kewill("me@there.com", "Root/Document Type/12345.txt")
 

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Api::V1::EventSubscriptionsController do
-  describe :index do
+  describe "index" do
     before :each do
       @u = Factory(:user)
       @es1 = Factory(:event_subscription,user:@u,event_type:'1')
@@ -26,7 +26,7 @@ describe Api::V1::EventSubscriptionsController do
     end
   end
 
-  describe :create do
+  describe "create" do
     before :each do
       @u = Factory(:user)
       #bad user ids should be ignored
@@ -58,8 +58,8 @@ describe Api::V1::EventSubscriptionsController do
       expect(response.status).to eq 404
     end
     it "should 401 if current_user cannot edit user" do
-      User.any_instance.stub(:can_edit?).and_return false
-      User.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(User).to receive(:can_edit?).and_return false
+      allow_any_instance_of(User).to receive(:can_view?).and_return true
       allow_api_access Factory(:user)
       post :create, user_id: @u.id, event_subscriptions: @payload
       expect(response.status).to eq 401

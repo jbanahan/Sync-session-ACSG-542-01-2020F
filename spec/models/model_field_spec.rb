@@ -17,28 +17,28 @@ describe ModelField do
       ss.search_criterions.build(model_field_uid:@mf.uid,operator:'sw',value:'A')
       u = Factory(:master_user,order_view:true)
       h = SearchQuery.new(ss,u).execute
-      h.should have(1).record
+      expect(h.size).to eq(1)
       expect(h.first[:row_key]).to eq @order_line.order.id
       expect(h.first[:result].first).to eq 'ABC'
     end
     it "should be read only" do
       expect(@mf.process_import(@order_line,'DEF',Factory(:user))).to eq "Value ignored. #{@mf.label} is read only."
-      expect(@mf.read_only?).to be_true
+      expect(@mf.read_only?).to be_truthy
     end
     it "should export properly" do
       u = Factory(:master_user,order_view:true)
       expect(@mf.process_export(@order_line,u)).to eq 'ABC'
     end
   end
-  describe :process_query_result do
+  describe "process_query_result" do
     before :each do
       @u = User.new
     end
     it "should pass vlue through for default object" do
-      ModelField.new(10000,:test,CoreModule::PRODUCT,:name).process_query_result("x",@u).should=="x"
+      expect(ModelField.new(10000,:test,CoreModule::PRODUCT,:name).process_query_result("x",@u)).to eq("x")
     end
     it "should override with given lambda" do
-      ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:process_query_result_lambda=>lambda {|v| v.upcase}).process_query_result("x",@u).should=="X"
+      expect(ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:process_query_result_lambda=>lambda {|v| v.upcase}).process_query_result("x",@u)).to eq("X")
     end
     it "should write HIDDEN if user cannot view column" do
       expect(ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:can_view_lambda=>lambda {|u| false}).process_query_result("x",@u)).to be_nil
@@ -58,7 +58,7 @@ describe ModelField do
       expect(result.to_s).to eq time.in_time_zone('Eastern Time (US & Canada)').to_s
     end
   end
-  context :read_only do
+  context "read_only" do
     before :each do
     end
     after :each do
@@ -66,7 +66,7 @@ describe ModelField do
     end
     it "should default to not being read only" do
       mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{:data_type=>:string})
-      mf.should_not be_read_only
+      expect(mf).not_to be_read_only
       p = Product.new
       mf.process_import p, "n", User.new
       expect(p.name).to eq 'n'
@@ -74,7 +74,7 @@ describe ModelField do
     it "should not write if read only" do
       FieldLabel.set_label :x, "PLBL"
       mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{:data_type=>:string,:read_only=>true})
-      mf.should be_read_only
+      expect(mf).to be_read_only
       p = Product.new(:name=>'x')
       r = mf.process_import p, 'n', User.new
       expect(p.name).to eq 'x'
@@ -87,108 +87,108 @@ describe ModelField do
       fvr.read_only = true
       fvr.model_field_uid = "*cf_#{cd.id}"
       fvr.save!
-      ModelField.find_by_uid("*cf_#{cd.id}").should be_read_only
+      expect(ModelField.find_by_uid("*cf_#{cd.id}")).to be_read_only
     end
     it "should not set read_only for custom_definition that isn't read only" do
       cd = Factory(:custom_definition)
       ModelField.reload
-      ModelField.find_by_uid("*cf_#{cd.id}").should_not be_read_only
+      expect(ModelField.find_by_uid("*cf_#{cd.id}")).not_to be_read_only
     end
 
     it "should set read_only for normal read_only field" do
       mf = ModelField.find_by_uid :prod_uid
-      mf.should_not be_read_only
+      expect(mf).not_to be_read_only
       fvr = FieldValidatorRule.create!(model_field_uid: :prod_uid, read_only: true)
       mf = ModelField.find_by_uid :prod_uid
-      mf.should be_read_only
+      expect(mf).to be_read_only
     end
 
   end
   describe "can_view?" do
     it "should default to true" do
-      ModelField.new(1,:x,CoreModule::SHIPMENT,:z).can_view?(Factory(:user)).should be_true
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z).can_view?(Factory(:user))).to be_truthy
     end
     it "should be false when lambda returns false" do
-      ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(Factory(:user)).should be_false
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(Factory(:user))).to be_falsey
     end
 
     it "allows if view lambda is not set" do
       #edit lambda below is ignored
-      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_edit_lambda=>lambda {|user| false}}).can_view?(Factory(:user))).to be_true
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_edit_lambda=>lambda {|user| false}}).can_view?(Factory(:user))).to be_truthy
     end
 
     it "allows viewing when user is in FieldValidatorRule view group" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_true
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_truthy
     end
 
     it "allows viewing when user is in FieldValidatorRule edit group" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_true
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_truthy
     end
 
     it "prevents viewing if user is in view group but lambda blocks access" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(user)).to be_false
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(user)).to be_falsey
     end
 
     it "prevents viewing when user is not in a group allowed to view the field" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
       user = Factory(:user)
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_false
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_falsey
     end
   end
 
   describe "can_edit?" do
     it "allows edit by default" do
-      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z).can_edit?(Factory(:user))).to be_true
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z).can_edit?(Factory(:user))).to be_truthy
     end
 
     it "disallows edit if can_edit_lambda returns false" do
-      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_edit_lambda: lambda {|u| false}).can_edit?(Factory(:user))).to be_false
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_edit_lambda: lambda {|u| false}).can_edit?(Factory(:user))).to be_falsey
     end
 
     it "disallows edit if model field is read-only" do
-      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, read_only: true).can_edit?(Factory(:user))).to be_false
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, read_only: true).can_edit?(Factory(:user))).to be_falsey
     end
 
     it "uses can_view_lambda if no edit lambda exists" do
       lambda_called = true
-      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_view_lambda: lambda {|u| lambda_called=true; false}).can_edit?(Factory(:user))).to be_false
-      expect(lambda_called).to be_true
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z, can_view_lambda: lambda {|u| lambda_called=true; false}).can_edit?(Factory(:user))).to be_falsey
+      expect(lambda_called).to be_truthy
     end
 
     it "it allows edit if user is in edit group" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_true
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_truthy
     end
 
     it "disallows edit if user is not in edit group" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
       user = Factory(:user)
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_false
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_falsey
     end
 
     it "allows edit if user is in view group when no edit groups exist" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_true
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_truthy
     end
 
     it "disallows edit if user is in view group when edit groups exist" do
       FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP", can_edit_groups: "GROUP2"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_false
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_falsey
     end
   end
 
@@ -210,7 +210,7 @@ describe ModelField do
       mf = ModelField.new(1, :x, CoreModule::SHIPMENT, nil, custom_id: cd.id, can_view_lambda: lambda {|u| true})
       ship = Factory(:shipment)
       ship.update_custom_value! cd, "TESTING!!!"
-      expect(mf.custom?).to be_true
+      expect(mf.custom?).to be_truthy
       expect(mf.process_export ship, User.new).to eq "TESTING!!!"
     end
     it "retrieves standard field values" do
@@ -244,7 +244,7 @@ describe ModelField do
       c = c.new
       result = mf.process_import c, "TESTING", User.new
       expect(result).to eq "MY LABEL set to TESTING"
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
       expect(c.reference).to eq "TESTING"
     end
 
@@ -256,7 +256,7 @@ describe ModelField do
 
       result = mf.process_import ship, "TESTING", User.new
       expect(result).to eq "TEST set to TESTING"
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
       expect(ship.get_custom_value(cd).value).to eq "TESTING"
     end
 
@@ -276,7 +276,7 @@ describe ModelField do
       # I'm leaving in place since the code is long lived and copied into custom_value.rb as well.
       result = mf.process_import c, "02-01-2014", User.new
       expect(result).to eq "MY LABEL set to #{Date.new(2014, 1, 2)}"
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
       expect(c.reference).to eq Date.new(2014, 1, 2)
     end
 
@@ -291,7 +291,7 @@ describe ModelField do
       c = c.new
       result = mf.process_import c, "02/01/2014", User.new
       expect(result).to eq "MY LABEL set to #{Date.new(2014, 2, 1)}"
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
       expect(c.reference).to eq Date.new(2014, 2, 1)
     end
 
@@ -302,7 +302,7 @@ describe ModelField do
 
       result = mf.process_import cv, "TEST123", User.new
       expect(result).to eq "MY LABEL set to TEST123"
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
       expect(cv.value).to eq "TEST123"
     end
 
@@ -310,7 +310,7 @@ describe ModelField do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", read_only: true)
       result = mf.process_import "Object", "MY Value", User.new
       expect(result).to eq "Value ignored. MY LABEL is read only."
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
     end
 
     it "uses import_lambda if given" do
@@ -319,7 +319,7 @@ describe ModelField do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", import_lambda: lambda {|obj, data| my_obj=obj; my_data=data; "IMPORTED!"})
       result = mf.process_import "OBJ", "DATA", User.new
       expect(result).to eq "IMPORTED!"
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
       expect(my_obj).to eq "OBJ"
       expect(my_data).to eq "DATA"
     end
@@ -328,13 +328,13 @@ describe ModelField do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", read_only: true, import_lambda: lambda {|obj, data| raise "ERROR!!!"})
       result = mf.process_import "Object", "MY Value", User.new
       expect(result).to eq "Value ignored. MY LABEL is read only."
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
     end
 
     it "does process import if read_only and bypass_read_only==true" do
       s = Shipment.new
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", read_only: true)
-      mf.stub(:can_edit?).and_return true
+      allow(mf).to receive(:can_edit?).and_return true
       mf.process_import s, "MY Value", User.new, bypass_read_only: true
       expect(s.reference).to eq "MY Value"
     end
@@ -342,10 +342,10 @@ describe ModelField do
     it "does not allow import for user that cannot edit the field" do
       mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", import_lambda: lambda {|obj, data| raise "ERROR!!!"})
       u = User.new
-      mf.should_receive(:can_edit?).with(u).and_return false
+      expect(mf).to receive(:can_edit?).with(u).and_return false
       result = mf.process_import "Object", "MY Value", u
       expect(result).to eq "You do not have permission to edit #{mf.label}."
-      expect(result.error?).to be_true
+      expect(result.error?).to be_truthy
     end
 
     it "allows caller to forcefully allow import even if user might not be able to import" do
@@ -357,10 +357,10 @@ describe ModelField do
         end
       end
       c = c.new
-      mf.stub(:can_edit?).and_return false
+      allow(mf).to receive(:can_edit?).and_return false
       result = mf.process_import c, "TESTING", User.new, bypass_user_check: true
       expect(result).to eq "MY LABEL set to TESTING"
-      expect(result.error?).to be_false
+      expect(result.error?).to be_falsey
       expect(c.reference).to eq "TESTING"
     end
   end
@@ -447,7 +447,7 @@ describe ModelField do
           expect(c_mf.label).to eq "First HTS #{i} (ZY)"
           c2_mf = ModelField.find_by_uid "*fhts_#{i}_#{c2.id}"
           expect(c2_mf.label).to eq "First HTS #{i} (ZZ)"
-          expect(ModelField.model_field_loaded?("*fhts_#{i}_#{c3.id}")).to be_false #don't create because not an import location
+          expect(ModelField.model_field_loaded?("*fhts_#{i}_#{c3.id}")).to be_falsey #don't create because not an import location
         end
       end
       it "should allow import" do
@@ -460,9 +460,9 @@ describe ModelField do
           expect(r).to eq "ZY HTS #{i} set to 1234.56.789#{i}"
         end
         p.save!
-        p.should have(1).classifications
+        expect(p.classifications.size).to eq(1)
         cls = p.classifications.find_by_country_id(@c.id)
-        cls.should have(1).tariff_records
+        expect(cls.tariff_records.size).to eq(1)
         tr = cls.tariff_records.find_by_line_number 1
         expect(tr.hts_1).to eq "1234567891"
         expect(tr.hts_2).to eq "1234567892"
@@ -509,7 +509,7 @@ describe ModelField do
         ss.search_columns.build(model_field_uid:"*fhts_1_#{@c.id}",rank:1)
         ss.search_criterions.build(model_field_uid:"*fhts_1_#{@c.id}",operator:'eq',value:'0000000000')
         h = SearchQuery.new(ss,u).execute
-        h.should have(1).record
+        expect(h.size).to eq(1)
         expect(h.first[:row_key]).to eq tr.product.id
         expect(h.first[:result].first).to eq '0000000000'.hts_format
       end
@@ -522,7 +522,7 @@ describe ModelField do
       it "should not allow imports for parents" do
         p = Factory(:product)
         r = @parent_mf.process_import p, 'abc', User.new
-        p.should_not be_on_bill_of_materials
+        expect(p).not_to be_on_bill_of_materials
         expect(r).to match(/ignored/)
       end
       it "process_export should return csv of BOM parents" do
@@ -546,7 +546,7 @@ describe ModelField do
       it "should not allow imports for children" do
         p = Factory(:product)
         r = @child_mf.process_import p, 'abc', User.new
-        p.should_not be_on_bill_of_materials
+        expect(p).not_to be_on_bill_of_materials
         expect(r).to match(/ignored/)
       end
       it "should return csv of BOM children" do
@@ -627,8 +627,8 @@ describe ModelField do
         r = Factory(:region)
         r2 = Factory(:region)
         ModelField.reload
-        ModelField.find_by_region(r).should have(1).model_field
-        ModelField.find_by_region(r2).should have(1).model_field
+        expect(ModelField.find_by_region(r).size).to eq(1)
+        expect(ModelField.find_by_region(r2).size).to eq(1)
       end
       context "classification count field methods" do
         before :each do
@@ -652,7 +652,7 @@ describe ModelField do
           expect(@mf.process_export(@p,User.new,true)).to eq 1
           x = @sc.apply(Product.where("1"))
           x = x.uniq
-          x.should have(1).product
+          expect(x.product.size).to eq(1)
           expect(x.first).to eq @p
         end
         it "should return products without classification for eq 0" do
@@ -666,12 +666,12 @@ describe ModelField do
         end
         it "should not count tariff records without hts_1 values" do
           @p.classifications.find_by_country_id(@c1.id).tariff_records.first.update_attributes(:hts_1=>'')
-          @sc.apply(Product.where("1")).first.should be_nil
+          expect(@sc.apply(Product.where("1")).first).to be_nil
         end
         it "should not double count multiple tariff records for country" do
           @p.classifications.find_by_country_id(@c1.id).tariff_records.create!(:hts_1=>'987654321')
           x = @sc.apply(Product.where("1")).uniq
-          x.should have(1).product
+          expect(x.product.size).to eq(1)
           expect(x.first).to eq @p
         end
       end
@@ -688,7 +688,7 @@ describe ModelField do
         sc = SearchCriterion.new(:model_field_uid=>'ent_statement_month',:operator=>'eq',:value=>'9')
         Factory(:entry,:monthly_statement_due_date=>Date.new(2012,10,1))
         r = sc.apply(Entry.where('1=1'))
-        r.should have(1).entry
+        expect(r.entries.size).to eq(1)
         expect(r.first).to eq @ent
       end
     end
@@ -698,13 +698,13 @@ describe ModelField do
       end
       it "should show problem" do
         @ent.sync_records.create!(trading_partner:'ABC',sent_at:Date.new(2014,1,1),confirmed_at:Date.new(2014,1,2),failure_message:'PROBLEM')
-        expect(ModelField.find_by_uid(:ent_sync_problems).process_export(@ent,nil,true)).to be_true
+        expect(ModelField.find_by_uid(:ent_sync_problems).process_export(@ent,nil,true)).to be_truthy
         sc = SearchCriterion.new(:model_field_uid=>'ent_sync_problems',operator:'eq',value:'true')
         expect(sc.apply(Entry).to_a).to eq [@ent]
       end
       it "should show no problem" do
         @ent.sync_records.create!(trading_partner:'ABC',sent_at:Date.new(2014,1,1),confirmed_at:Date.new(2014,1,2))
-        expect(ModelField.find_by_uid(:ent_sync_problems).process_export(@ent,nil,true)).to be_false
+        expect(ModelField.find_by_uid(:ent_sync_problems).process_export(@ent,nil,true)).to be_falsey
         sc = SearchCriterion.new(:model_field_uid=>'ent_sync_problems',operator:'eq',value:'false')
         expect(sc.apply(Entry).to_a).to eq [@ent]
       end
@@ -768,18 +768,18 @@ describe ModelField do
       end
       it "should view if broker and can view broker invoices" do
         u = Factory(:broker_user)
-        u.stub(:view_broker_invoices?).and_return(true)
-        @mf.can_view?(u).should be_true
+        allow(u).to receive(:view_broker_invoices?).and_return(true)
+        expect(@mf.can_view?(u)).to be_truthy
       end
       it "should not view if not broker" do
         u = Factory(:importer_user)
-        u.stub(:view_broker_invoices?).and_return(true)
-        @mf.can_view?(u).should be_false
+        allow(u).to receive(:view_broker_invoices?).and_return(true)
+        expect(@mf.can_view?(u)).to be_falsey
       end
       it "should not view user cannot view broker invoicees" do
         u = Factory(:broker_user)
-        u.stub(:view_broker_invoices?).and_return(false)
-        @mf.can_view?(u).should be_false
+        allow(u).to receive(:view_broker_invoices?).and_return(false)
+        expect(@mf.can_view?(u)).to be_falsey
       end
     end
     context "employee" do
@@ -788,11 +788,11 @@ describe ModelField do
       end
       it "should not view if not broker" do
         u = Factory(:importer_user)
-        expect(@mf.can_view?(u)).to be_false
+        expect(@mf.can_view?(u)).to be_falsey
       end
       it "should view if broker" do
         u = Factory(:broker_user)
-        expect(@mf.can_view?(u)).to be_true
+        expect(@mf.can_view?(u)).to be_truthy
       end
     end
     context "first HTS code" do
@@ -838,7 +838,7 @@ describe ModelField do
         end
       end
     end
-    describe :process_query_parameter do
+    describe "process_query_parameter" do
       it "should prcoess query parameters" do
         p = Product.new(:unique_identifier=>"abc")
         expect(ModelField.find_by_uid(:prod_uid).process_query_parameter(p)).to eq "abc"
@@ -864,7 +864,7 @@ describe ModelField do
         sc = SearchCriterion.new(operator:'eq',model_field_uid:'shpln_container_size',value:'40HC')
         expect(sc.apply(Shipment).to_a).to eq [sl.shipment]
       end
-      context :container_uid do
+      context "container_uid" do
         before :each do
           @mf = ModelField.find_by_uid(:shpln_container_uid)
         end
@@ -900,11 +900,11 @@ describe ModelField do
       end
       it "should allow you to see broker_invoice_total if you can view broker_invoices" do
         u = Factory(:user,:broker_invoice_view=>true,:company=>Factory(:company,:master=>true))
-        ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u).should be_true
+        expect(ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u)).to be_truthy
       end
       it "should not allow you to see broker_invoice_total if you can't view broker_invoices" do
         u = Factory(:user,:broker_invoice_view=>false)
-        ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u).should be_false
+        expect(ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u)).to be_falsey
       end
     end
     context "broker security" do
@@ -914,34 +914,34 @@ describe ModelField do
       end
       it "should allow duty due date if user is broker company" do
         u = @broker_user
-        ModelField.find_by_uid(:ent_duty_due_date).can_view?(u).should be_true
-        ModelField.find_by_uid(:bi_duty_due_date).can_view?(u).should be_true
+        expect(ModelField.find_by_uid(:ent_duty_due_date).can_view?(u)).to be_truthy
+        expect(ModelField.find_by_uid(:bi_duty_due_date).can_view?(u)).to be_truthy
       end
       it "should not allow duty due date if user is not a broker" do
         u = @non_broker_user
-        ModelField.find_by_uid(:ent_duty_due_date).can_view?(u).should be_false
-        ModelField.find_by_uid(:bi_duty_due_date).can_view?(u).should be_false
+        expect(ModelField.find_by_uid(:ent_duty_due_date).can_view?(u)).to be_falsey
+        expect(ModelField.find_by_uid(:bi_duty_due_date).can_view?(u)).to be_falsey
       end
       it "should secure error_free_release" do
         mf = ModelField.find_by_uid(:ent_error_free_release)
-        mf.can_view?(@broker_user).should be_true
-        mf.can_view?(@non_broker_user).should be_false
+        expect(mf.can_view?(@broker_user)).to be_truthy
+        expect(mf.can_view?(@non_broker_user)).to be_falsey
       end
       it "should secure census warning" do
         mf = ModelField.find_by_uid(:ent_census_warning)
-        mf.can_view?(@broker_user).should be_true
-        mf.can_view?(@non_broker_user).should be_false
+        expect(mf.can_view?(@broker_user)).to be_truthy
+        expect(mf.can_view?(@non_broker_user)).to be_falsey
       end
       it "should secure pdf count" do
         mf = ModelField.find_by_uid(:ent_pdf_count)
-        mf.can_view?(@broker_user).should be_true
-        mf.can_view?(@non_broker_user).should be_false
+        expect(mf.can_view?(@broker_user)).to be_truthy
+        expect(mf.can_view?(@non_broker_user)).to be_falsey
       end
       it "should secure first/last 7501 print" do
         [:ent_first_7501_print,:ent_last_7501_print].each do |id|
           mf = ModelField.find_by_uid(id)
-          mf.can_view?(@broker_user).should be_true
-          mf.can_view?(@non_broker_user).should be_false
+          expect(mf.can_view?(@broker_user)).to be_truthy
+          expect(mf.can_view?(@non_broker_user)).to be_falsey
         end
       end
     end
@@ -958,11 +958,11 @@ describe ModelField do
         ss.search_criterions.create!(:model_field_uid=>'prod_last_changed_by',
           :operator=>'sw',:value=>'ghi')
         found = ss.search.to_a
-        found.should have(1).product
+        expect(found.product.size).to eq(1)
         expect(found.first).to eq p
       end
     end
-    context :ent_rule_state do
+    context "ent_rule_state" do
       before :each do
         @mf = ModelField.find_by_uid(:ent_rule_state)
       end
@@ -977,7 +977,7 @@ describe ModelField do
         expect(fail_sc.apply(Entry).count).to eq 1
       end
     end
-    context :ent_pdf_count do
+    context "ent_pdf_count" do
       before :each do
         @with_pdf = Factory(:entry)
         @with_pdf.attachments.create!(:attached_content_type=>"application/pdf")
@@ -1003,29 +1003,29 @@ describe ModelField do
       it "should search with greater than" do
         sc = SearchCriterion.new(:model_field_uid=>:ent_pdf_count,:operator=>'gt',:value=>0)
         r = sc.apply(Entry.where("1=1")).to_a
-        r.should have(2).entries
-        r.should include(@with_pdf)
-        r.should include(@with_tif_and_2_pdf)
+        expect(r.entries.size).to eq(2)
+        expect(r).to include(@with_pdf)
+        expect(r).to include(@with_tif_and_2_pdf)
       end
       it "should search with equals" do
         sc = SearchCriterion.new(:model_field_uid=>:ent_pdf_count,:operator=>'eq',:value=>0)
         r = sc.apply(Entry.where("1=1")).to_a
-        r.should have(2).entries
-        r.should include(@with_tif)
-        r.should include(@without_attachments)
+        expect(r.entries.size).to eq(2)
+        expect(r).to include(@with_tif)
+        expect(r).to include(@without_attachments)
       end
       it "should search with pdf counts based on file extension or mime type" do
         @with_pdf.attachments.create!(:attached_content_type=>"application/notapdf", :attached_file_name=>"test.PDF")
 
         sc = SearchCriterion.new(:model_field_uid=>:ent_pdf_count,:operator=>'eq',:value=>2)
         r = sc.apply(Entry.where("1=1")).to_a
-        r.should have(2).entries
-        r.should include(@with_pdf)
-        r.should include(@with_tif_and_2_pdf)
+        expect(r.entries.size).to eq(2)
+        expect(r).to include(@with_pdf)
+        expect(r).to include(@with_tif_and_2_pdf)
       end
     end
 
-    context :ent_failed_business_rules do
+    context "ent_failed_business_rules" do
       before :each do
         @entry = Factory(:entry)
         @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
@@ -1041,11 +1041,11 @@ describe ModelField do
       it "finds results using failed rules as criterion" do
         sc = SearchCriterion.new(:model_field_uid=>:ent_failed_business_rules,:operator=>'co',:value=>"Test")
         r = sc.apply(Entry.where("1=1")).to_a
-        r.should include(@entry)
+        expect(r).to include(@entry)
       end
     end
 
-    context :ent_attachment_types do
+    context "ent_attachment_types" do
       before :each do
         @e = Factory(:entry)
         first = @e.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A")
@@ -1059,11 +1059,11 @@ describe ModelField do
       it "finds results using attachments as criterion" do
         sc = SearchCriterion.new(:model_field_uid=>:ent_attachment_types,:operator=>'co',:value=>"B")
         r = sc.apply(Entry.where("1=1")).to_a
-        r.should include(@e)
+        expect(r).to include(@e)
       end
     end
 
-    context :ent_user_notes do
+    context "ent_user_notes" do
       let(:user_notes) { ModelField.find_by_uid :ent_user_notes }
       let(:ent) { Factory(:entry) }
       let!(:u) { Factory(:master_user,entry_view:true) }
@@ -1113,12 +1113,12 @@ describe ModelField do
     end
 
     it "reloads model fields on an initial lookup failure" do
-      ModelField.should_receive(:reload).with(true)
+      expect(ModelField).to receive(:reload).with(true)
       mf = ModelField.find_by_uid "not a model field"
     end
 
     it "ensures model field lists are not stale" do
-      ModelField.should_receive(:reload_if_stale).and_return true
+      expect(ModelField).to receive(:reload_if_stale).and_return true
       mf = ModelField.find_by_uid "not a model field"
     end
 
@@ -1129,8 +1129,8 @@ describe ModelField do
     end
 
     it "doesn't attempt to reload if fields were stale" do
-      ModelField.should_receive(:reload_if_stale).and_return true
-      ModelField.should_not_receive(:reload)
+      expect(ModelField).to receive(:reload_if_stale).and_return true
+      expect(ModelField).not_to receive(:reload)
       expect(ModelField.find_by_uid "not a model field").to be_blank
     end
   end
@@ -1151,7 +1151,7 @@ describe ModelField do
     end
   end
 
-  context :user_custom_definition do
+  context "user_custom_definition" do
     it "should create username fields when custom_definition is user" do
       cd = CustomDefinition.create!(label:'User',module_type:'Company',data_type: :integer, is_user: true)
       mf = ModelField.find_by_uid("*uf_#{cd.id}_username")
@@ -1198,7 +1198,7 @@ describe ModelField do
     end
   end
 
-  context :address_custom_definition do
+  context "address_custom_definition" do
     before :each do
       @cd = CustomDefinition.create!(is_address: true, label:'Business', module_type:'Company', data_type: :integer)
       @ad = Factory(:address,name:'MyName',line_1:'234 Market St',line_2:nil,line_3:'5th Floor',city:'Philadelphia',state:'PA',postal_code:'19106',country:Factory(:country,iso_code:'US'))

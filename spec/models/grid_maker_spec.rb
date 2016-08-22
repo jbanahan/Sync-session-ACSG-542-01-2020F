@@ -14,7 +14,7 @@ describe GridMaker do
       GridMaker.new([Entry.first],[SearchColumn.new(:model_field_uid=>:cil_part_number)],[],CoreModule::ENTRY.default_module_chain,@u,3).go do |row,obj|
         objs << obj
       end
-      objs.size.should == 3
+      expect(objs.size).to eq(3)
     end
     it "should process all parent objects when truncation is turned on" do
       2.times do |x|
@@ -27,7 +27,7 @@ describe GridMaker do
       GridMaker.new(Entry.all,[SearchColumn.new(:model_field_uid=>:cil_part_number)],[],CoreModule::ENTRY.default_module_chain,@u,3).go do |row,obj|
         objs << obj
       end
-      objs.size.should == 6
+      expect(objs.size).to eq(6)
     end
   end
 end

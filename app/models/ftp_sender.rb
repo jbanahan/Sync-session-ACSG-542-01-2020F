@@ -6,7 +6,7 @@ class FtpSender
 
   #send a file via FTP
   # arg_file - can be a path to a file or an actual File object
-  #opts = :binary (defaults to true) 
+  #opts = :binary (defaults to true)
   #  :folder (defaults to nil)
   #  :remote_file_name (defaults to local file name)
   #  :passive (defaults to true)
@@ -18,7 +18,7 @@ class FtpSender
     # when the options come from a JSON option string (.ie retries)
     opts = opts.with_indifferent_access
     get_file_to_ftp(arg_file, opts) do |file|
-      
+
       my_opts = default_options(arg_file, file).merge(opts).with_indifferent_access
       log = ["Attempting to #{my_opts[:protocol]} file to #{server} with username #{username}."]
       remote_name = my_opts[:remote_file_name]
@@ -27,7 +27,7 @@ class FtpSender
       # Attempt to send 10 times total
       max_retry_count = 9
       error = nil
-      begin  
+      begin
         if file.size > 0 || my_opts[:force_empty]
           store_sent_file = true
           # Handles connecting and logging in
@@ -37,16 +37,16 @@ class FtpSender
             log << "Logged in with account #{username}"
 
             f.after_login my_opts
-            
+
             if my_opts[:folder]
-              f.chdir(my_opts[:folder]) 
-              log << "Changed to folder #{my_opts[:folder]}" 
+              f.chdir(my_opts[:folder])
+              log << "Changed to folder #{my_opts[:folder]}"
             end
             data = nil
 
             log << "Sending file #{File.basename(file.path)} as #{remote_name}"
             # We need to use the file path since the ftp send always closes
-            # the file handle it is passed, and we need to keep that handle open 
+            # the file handle it is passed, and we need to keep that handle open
             # so the ftp session attachment will get saved off.
             f.send_file file.path, remote_name, my_opts
             log << "Session completed successfully."
@@ -75,7 +75,7 @@ class FtpSender
             # Add the session id and attachment id to the options hash so the resend knows which file to send and which session to update
             my_opts[:session_id] = session.id
             my_opts[:attachment_id] = session.attachment.id
-            # Make sure we're setting the remote file name so that it's the same name as the session object, otherwise we'll be sending 
+            # Make sure we're setting the remote file name so that it's the same name as the session object, otherwise we'll be sending
             # the files using the tempfile name used when the attachment is downloaded
             my_opts[:remote_file_name] = session.file_name
             self.delay(run_at: calculate_retry_run_at(session.retry_count)).resend_file server, username, password, my_opts.to_json
@@ -83,7 +83,7 @@ class FtpSender
             # At this point, we've failed to send the file 10 times...just bail, sending an error email out to notify of the failure
             error.log_me ["Attempted and failed to send #{my_opts[:protocol]} Session id #{session.id} #{max_retry_count + 1} times. No more attempts will be made."]
           end
-          
+
         end
         return session
       end
@@ -96,7 +96,7 @@ class FtpSender
     # use arg_file because that's the only thing that may have an original_filename method associated with it
     # since we generally won't have gotten that same object to send (for a variety of reasons - see get_file_to_ftp)
     filename = arg_file.respond_to?(:original_filename) ? arg_file.original_filename : File.basename(local_file)
-   
+
     {:binary=>true,:passive=>true,:remote_file_name=>filename,
             :force_empty=>false, :protocol=>"ftp"}.with_indifferent_access
   end
@@ -105,7 +105,7 @@ class FtpSender
   def self.resend_file server, username, password, json_options
     options = ActiveSupport::JSON.decode(json_options)
 
-    send_file server, username, password, nil, options  
+    send_file server, username, password, nil, options
   end
 
   def self.calculate_retry_run_at retry_count
@@ -211,7 +211,7 @@ class FtpSender
     end
 
     def chdir folder, opts={}
-      @client.chdir(folder) 
+      @client.chdir(folder)
     end
 
     def send_file local_path, remote_name, opts={}
@@ -224,14 +224,14 @@ class FtpSender
       end
     end
 
-    def last_response 
+    def last_response
       @client ? @client.last_response : (@last_response ? @last_response : "")
     end
 
-    private 
+    private
       def handle_exception e
         if e.is_a? Net::FTPError
-          # Status exceptions have an actual error code associated with them and the description which we can 
+          # Status exceptions have an actual error code associated with them and the description which we can
           # use to set the last response value (like with ftp codes)
           @last_response = "#{e.message}"
         else
@@ -276,25 +276,25 @@ class FtpSender
       # SFTP servers have no actual concept of current directories so we end up having
       # to emulate it by keeping a remote path variable for the session (see connect method)
 
-      # cleanpath handles any folder traversals that might be done from the folder variable .ie 'path/blagh/../new'.cleanpath = 'path/new' 
+      # cleanpath handles any folder traversals that might be done from the folder variable .ie 'path/blagh/../new'.cleanpath = 'path/new'
       @remote_path = append_path @remote_path, folder
     end
 
     def send_file local_path, remote_name, opts={}
       # synthesize the remote filename from the path
       remote_path = append_path @remote_path, remote_name
-      
+
       @client.upload! local_path, remote_path.to_s
       set_ok_response
     rescue => e
       handle_exception e
     end
 
-    def last_response 
+    def last_response
       @last_response
     end
 
-    private 
+    private
       def session_completed?
         @session_completed == true
       end
@@ -309,16 +309,16 @@ class FtpSender
 
       def handle_exception e
         if e.is_a? Net::SFTP::StatusException
-          # Status exceptions have an actual error code associated with them and the description which we can 
+          # Status exceptions have an actual error code associated with them and the description which we can
           # use to set the last response value (like with ftp codes)
           @last_response = "#{e.code} #{e.description}"
-          # If this is a status exception, we'll also need to strip out the Net::SFTP::Response object from it 
+          # If this is a status exception, we'll also need to strip out the Net::SFTP::Response object from it
           # since it contains a whole bunch of stuff that can't be serialized to a delayed job queue (procs, primarily)
           e.instance_variable_set("@response", nil)
         else
-          # There's a bug in Wing FTP server or the ssh/sftp gem code that results in a Disconnect exception being 
-          # thrown when session.close is called inside the sftp#start method (this all works fine for standard sshd).  
-          # This shouldn't happen, and it's not an actual error situation (hence not propigating it).  So for now, 
+          # There's a bug in Wing FTP server or the ssh/sftp gem code that results in a Disconnect exception being
+          # thrown when session.close is called inside the sftp#start method (this all works fine for standard sshd).
+          # This shouldn't happen, and it's not an actual error situation (hence not propigating it).  So for now,
           # just swallow the error if the session completed, until we know Wing FTP has resolved the issue.
           if e.is_a?(Net::SSH::Disconnect) && session_completed?
             return nil
@@ -350,7 +350,7 @@ class FtpSender
       # SFTP servers have no actual concept of current directories so we end up having
       # to emulate it by keeping a remote path variable for the session (see connect method)
 
-      # cleanpath handles any folder traversals that might be done from the folder variable .ie 'path/blagh/../new'.cleanpath = 'path/new' 
+      # cleanpath handles any folder traversals that might be done from the folder variable .ie 'path/blagh/../new'.cleanpath = 'path/new'
       @remote_path = append_path @remote_path, folder
     end
 
@@ -358,7 +358,7 @@ class FtpSender
       set_ok_response
     end
 
-    def last_response 
+    def last_response
       @last_response
     end
 

@@ -11,8 +11,8 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
 
       before :each do
         ms = double("MasterSetup")
-        ms.stub(:system_code).and_return "www-vfitrack-net"
-        MasterSetup.stub(:get).and_return ms
+        allow(ms).to receive(:system_code).and_return "www-vfitrack-net"
+        allow(MasterSetup).to receive(:get).and_return ms
       end
 
       it "accepts 'CROCS' entries with broker invoices" do
@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
           )
         )
 
-        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_true
+        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_truthy
       end
 
       it "accepts 'CROCSSAM' entries with broker invoices" do
@@ -32,11 +32,11 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
           )
         )
 
-        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_true
+        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_truthy
       end
 
       it "doesn't accept entries without broker invoices" do
-        expect(described_class.new.accepts?(:save, Factory(:entry, customer_number: "CROCS"))).to be_false
+        expect(described_class.new.accepts?(:save, Factory(:entry, customer_number: "CROCS"))).to be_falsey
       end
 
       it "doesn't accept entries without last bill dates" do
@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
           )
         )
 
-        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_false
+        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_falsey
       end
     end
    
@@ -57,14 +57,14 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
         )
       )
 
-      expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_false
+      expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_falsey
     end
   end
 
   describe "ftp_credentials" do
     it "uses ftp2 credentials with crocs ftp path" do
       g = described_class.new
-      g.should_receive(:ftp2_vandegrift_inc).with("to_ecs/Crocs/210").and_return {}
+      expect(g).to receive(:ftp2_vandegrift_inc).with("to_ecs/Crocs/210") {}
       g.ftp_credentials
     end
   end
@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
     it "generates xml for invoices" do
       x = @g.generate_xml @invoice
 
-      x.root.name.should eq "Crocs210"
+      expect(x.root.name).to eq "Crocs210"
       expect(REXML::XPath.match(x, "/Crocs210/MasterBill")[0].text).to eq "12345"
       expect(REXML::XPath.match(x, "/Crocs210/MasterBill")[1].text).to eq "54321"
       expect(REXML::XPath.match(x, "/Crocs210/HouseBill")[0].text).to eq "123"
@@ -136,7 +136,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       # Make sure the charge children are ordered internally according to our "spec", 
       # for some reason it causes EDI translation problems if they're not in this exact order.
       charge = REXML::XPath.first(x, "/Crocs210/Invoice/Charge")
-      expect(charge.elements).to have(4).items
+      expect(charge.elements.size).to eq(4)
       expect(charge.elements[1].name).to eq "Type"
       expect(charge.elements[2].name).to eq "Amount"
       expect(charge.elements[3].name).to eq "Code"
@@ -178,13 +178,13 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       @invoice.entry.broker_invoices << invoice_2
 
       contents = []
-      @g.should_receive(:ftp_file).exactly(2).times do |t|
+      expect(@g).to receive(:ftp_file).exactly(2).times do |t|
         contents << IO.read(t.path)
       end
 
       @g.receive :save, @invoice.entry
 
-      expect(contents).to have(2).items
+      expect(contents.size).to eq(2)
       xml = REXML::Document.new(contents[0])
       expect(REXML::XPath.first(xml, "/Crocs210/Invoice/Number").text).to eq "A"
 
@@ -203,7 +203,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       @invoice.entry.sync_records.create! trading_partner: "crocs 210", fingerprint: "B\nC"
 
       contents = nil
-      @g.should_receive(:ftp_file) do |t|
+      expect(@g).to receive(:ftp_file) do |t|
         contents = IO.read(t.path)
       end
 
@@ -218,7 +218,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
 
     it "does not generate xml for files already sent" do
       @invoice.entry.sync_records.create! trading_partner: "crocs 210", fingerprint: "B\nA\nC"
-      @g.should_not_receive(:ftp_file)
+      expect(@g).not_to receive(:ftp_file)
       @g.receive :save, @invoice.entry
     end
 
@@ -226,7 +226,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       @invoice.broker_invoice_lines.first.update_attributes! charge_type: "T"
 
       @g.receive :save, @invoice.entry
-      @g.should_not_receive(:ftp_file)
+      expect(@g).not_to receive(:ftp_file)
 
       expect(OpenMailer.deliveries.length).to eq 1
       expect(OpenMailer.deliveries.first.to).to eq ["crocs-manual-billing@vandegriftinc.com"]

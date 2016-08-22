@@ -1,17 +1,17 @@
 require 'spec_helper'
 
 describe BusinessValidationTemplate do
-  describe :create_all! do
+  describe "create_all!" do
     before :each do
-      OpenChain::StatClient.stub(:wall_time).and_yield
+      allow(OpenChain::StatClient).to receive(:wall_time).and_yield
     end
     it "should run all templates" do
       Factory(:business_validation_template)
-      BusinessValidationTemplate.any_instance.should_receive(:create_results!).with(boolean())
+      expect_any_instance_of(BusinessValidationTemplate).to receive(:create_results!).with(boolean())
       BusinessValidationTemplate.create_all! true
     end
   end
-  describe :create_results! do
+  describe "create_results!" do
     before :each do
       @bvt = Factory(:business_validation_template)
       @bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
@@ -52,8 +52,8 @@ describe BusinessValidationTemplate do
     end
     it 'rescues exceptions raise in create_result! call' do
       match = Factory(:entry,customer_number:'12345')
-      @bvt.should_receive(:create_result!).and_raise "Error"
-      RuntimeError.any_instance.should_receive(:log_me).with ["Failed to generate rule results for Entry id #{match.id}"]
+      expect(@bvt).to receive(:create_result!).and_raise "Error"
+      expect_any_instance_of(RuntimeError).to receive(:log_me).with ["Failed to generate rule results for Entry id #{match.id}"]
       @bvt.create_results!
     end
     it "limits query results to only those associated w/ the current template" do
@@ -67,7 +67,7 @@ describe BusinessValidationTemplate do
       template.business_validation_results.create! validatable: entry, state: "Pass", updated_at: (entry.updated_at + 1.hour)
       template.reload
 
-      template.should_not_receive(:create_result!)
+      expect(template).not_to receive(:create_result!)
 
       template.create_results!
     end
@@ -78,7 +78,7 @@ describe BusinessValidationTemplate do
       expect(BusinessValidationResult.count).to eq 0
     end
   end
-  describe :create_result! do
+  describe "create_result!" do
     before :each do
       @o = Factory(:order, order_number: "ajklsdfajl")
       @bvt = described_class.create!(module_type:'Order')
@@ -119,8 +119,8 @@ describe BusinessValidationTemplate do
       expect(bvr.state).not_to be_nil
     end
     it "utilizes database locking while creating and validating objects" do
-      Lock.should_receive(:with_lock_retry).with(@bvt).and_yield
-      Lock.should_receive(:with_lock_retry).with(instance_of(BusinessValidationResult)).and_yield
+      expect(Lock).to receive(:with_lock_retry).with(@bvt).and_yield
+      expect(Lock).to receive(:with_lock_retry).with(instance_of(BusinessValidationResult)).and_yield
 
       @bvt.create_result! @o
     end
@@ -143,7 +143,7 @@ describe BusinessValidationTemplate do
     end
   end
 
-  describe :create_results_for_object! do
+  describe "create_results_for_object!" do
     it "should create results" do
       expect(BusinessValidationTemplate.count).to eq 0
       bvt1 = described_class.create!(module_type:'Order')
@@ -163,12 +163,12 @@ describe BusinessValidationTemplate do
   end
   describe "run_schedulable" do
     it "implements schedulable job interface" do
-      BusinessValidationTemplate.should_receive(:create_all!).with true
+      expect(BusinessValidationTemplate).to receive(:create_all!).with true
       BusinessValidationTemplate.run_schedulable
     end
 
     it "allows setting run_validation param via opts to false" do
-      BusinessValidationTemplate.should_receive(:create_all!).with false
+      expect(BusinessValidationTemplate).to receive(:create_all!).with false
       BusinessValidationTemplate.run_schedulable 'run_validation' => false
     end
   end

@@ -3,35 +3,35 @@ require 'spec_helper'
 describe AttachmentArchiveManifestsController do
   before :each do
     @u = Factory(:user)
-    User.any_instance.stub(:view_attachment_archives?).and_return(true)
+    allow_any_instance_of(User).to receive(:view_attachment_archives?).and_return(true)
 
     sign_in_as @u
   end
-  describe :create do
+  describe "create" do
     it "should create manifest and delay manifest generation" do
-      d = mock("delayed_job")
-      d.should_receive(:make_manifest!)
-      AttachmentArchiveManifest.any_instance.should_receive(:delay).and_return(d)
+      d = double("delayed_job")
+      expect(d).to receive(:make_manifest!)
+      expect_any_instance_of(AttachmentArchiveManifest).to receive(:delay).and_return(d)
       post :create, :company_id=>@u.company.id.to_s
-      response.should be_success
+      expect(response).to be_success
       m = AttachmentArchiveManifest.find_by_company_id(@u.company.id)
-      JSON.parse(response.body).should == {'id'=>m.id}
+      expect(JSON.parse(response.body)).to eq({'id'=>m.id})
     end
     it "should fail if user cannot view archives" do
-      User.any_instance.stub(:view_attachment_archives?).and_return(false)
+      allow_any_instance_of(User).to receive(:view_attachment_archives?).and_return(false)
       post :create, :company_id=>@u.company.id.to_s
-      response.should be_redirect
-      AttachmentArchiveManifest.first.should be_nil
-      flash[:errors].should_not be_empty
+      expect(response).to be_redirect
+      expect(AttachmentArchiveManifest.first).to be_nil
+      expect(flash[:errors]).not_to be_empty
     end
   end
-  describe :download do
+  describe "download" do
     before :each do
       @m = @u.company.attachment_archive_manifests.create!
     end
     it "should respond with 204 if manifest not done" do
       get :download, :company_id=>@u.company.id, :id=>@m.id
-      response.status.should == 204
+      expect(response.status).to eq(204)
     end
     it "should respond with a 204 if the manifest doesn't exist in s3" do
       # The excessive mocking is because you can't really reliably 
@@ -42,26 +42,26 @@ describe AttachmentArchiveManifestsController do
       manifests = double()
       manifest = double()
       attach = double()
-      Company.should_receive(:find).with("#{@u.company.id}").and_return(company)
-      company.should_receive(:attachment_archive_manifests).and_return(manifests)
-      manifests.should_receive(:find).with("#{@m.id}").and_return(manifest)
-      manifest.should_receive(:attachment).any_number_of_times.and_return(attachment)
-      attachment.should_receive(:attached).any_number_of_times.and_return(attach)
-      attach.should_receive(:exists?).and_return(false)
+      expect(Company).to receive(:find).with("#{@u.company.id}").and_return(company)
+      expect(company).to receive(:attachment_archive_manifests).and_return(manifests)
+      expect(manifests).to receive(:find).with("#{@m.id}").and_return(manifest)
+      allow(manifest).to receive(:attachment).and_return(attachment)
+      allow(attachment).to receive(:attached).and_return(attach)
+      expect(attach).to receive(:exists?).and_return(false)
 
       get :download, :company_id=>@u.company.id, :id=>@m.id
-      response.status.should == 204
+      expect(response.status).to eq(204)
     end
     it "should respond with 200 and attachment if done", paperclip: true, s3: true do
       @m.make_manifest!
       get :download, :company_id=>@u.company.id, :id=>@m.id
-      response.location.should match /s3.*attachment/
+      expect(response.location).to match /s3.*attachment/
     end
     it "should fail if user cannot view " do
-      User.any_instance.stub(:view_attachment_archives?).and_return(false)
+      allow_any_instance_of(User).to receive(:view_attachment_archives?).and_return(false)
       get :download, :company_id=>@u.company.id, :id=>@m.id
-      response.should redirect_to request.referrer
-      flash[:errors].should_not be_empty
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).not_to be_empty
     end
   end
 end

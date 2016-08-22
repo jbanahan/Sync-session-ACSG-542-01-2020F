@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe RSearchCriterionsController do
 
-  describe :create do
+  describe "create" do
 
     before :each do
       @sc = Factory(:search_criterion)
@@ -15,7 +15,7 @@ describe RSearchCriterionsController do
     it "should require admin" do
       u = Factory(:user)
       sign_in_as u
-      post :create, business_validation_rule_id: @bvr.id, business_validation_template_id: @bvt.id, 
+      post :create, business_validation_rule_id: @bvr.id, business_validation_template_id: @bvt.id,
                     search_criterion: {
                       "operator" => "eq",
                       "model_field_uid" => "ent_release_date"
@@ -33,15 +33,15 @@ describe RSearchCriterionsController do
                     }
       expect(response).to be_redirect
       new_sc = SearchCriterion.last
-      new_sc.model_field_uid.should == "ent_release_date"
-      new_sc.operator.should == "eq"
-      new_sc.business_validation_rule.id.should == @bvr.id
-      new_sc.business_validation_rule.business_validation_template.id.should == @bvt.id
+      expect(new_sc.model_field_uid).to eq("ent_release_date")
+      expect(new_sc.operator).to eq("eq")
+      expect(new_sc.business_validation_rule.id).to eq(@bvr.id)
+      expect(new_sc.business_validation_rule.business_validation_template.id).to eq(@bvt.id)
     end
 
   end
 
-  describe :destroy do
+  describe "destroy" do
 
     before :each do
       @sc = Factory(:search_criterion)
@@ -62,7 +62,7 @@ describe RSearchCriterionsController do
       u = Factory(:admin_user)
       sign_in_as u
       post :destroy, id: @sc.id, business_validation_template_id: @bvt.id, business_validation_rule_id: @bvr.id
-      expect { SearchCriterion.find(@sc.id) }.to raise_error
+      expect(SearchCriterion.find_by_id(@sc.id)).to be_nil
     end
 
   end

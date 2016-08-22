@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SurveyResponse do
-  describe :last_logged_by_user do
+  describe "last_logged_by_user" do
     it "should find most recently saved message created_at associated with given user" do
       u = Factory(:user)
       t = 3.days.ago
@@ -15,7 +15,7 @@ describe SurveyResponse do
       expect(sr.last_logged_by_user(u).to_i).to eq t.to_i
     end
   end
-  describe :rated? do
+  describe "rated?" do
     it "should return true if there is a master rating" do
       expect(Factory(:survey_response,:rating=>'abc')).to be_rated
     end
@@ -27,10 +27,10 @@ describe SurveyResponse do
     end
   end
   it "should require survey" do
-    expect(SurveyResponse.new(:user=>Factory(:user)).save).to be_false
+    expect(SurveyResponse.new(:user=>Factory(:user)).save).to be_falsey
   end
   it "should require user" do
-    expect(SurveyResponse.new(:survey=>Factory(:survey)).save).to be_false
+    expect(SurveyResponse.new(:survey=>Factory(:survey)).save).to be_falsey
   end
   it "should protect date attributes" do
     sr = Factory(:survey_response)
@@ -83,18 +83,18 @@ describe SurveyResponse do
       @sr = @survey.generate_response! @response_user
     end
     it "should pass if user is response user" do
-      expect(@sr.can_view?(@response_user)).to be_true
+      expect(@sr.can_view?(@response_user)).to be_truthy
     end
     it "should pass if user can view_survey? and survey is created by user's company" do
       other_user = Factory(:user, company:@survey.company,survey_view:true)
-      expect(@sr.can_view?(other_user)).to be_true
+      expect(@sr.can_view?(other_user)).to be_truthy
     end
     it "should fail if user can view_survey? and survey is NOT created by user's company" do
       other_user = Factory(:user)
-      expect(@sr.can_view?(other_user)).to be_false
+      expect(@sr.can_view?(other_user)).to be_falsey
     end
   end
-  describe :search_secure do
+  describe "search_secure" do
     it "should find assigned to me, even if I cannot view_survey" do
       u = Factory(:user,survey_view:false)
       sr = Factory(:survey_response,user:u)
@@ -119,19 +119,19 @@ describe SurveyResponse do
     end
     it "should pass if user is from the survey company and can edit surveys" do
       u = Factory(:user,:company=>@survey.company,:survey_edit=>true)
-      expect(@sr.can_edit?(u)).to be_true
+      expect(@sr.can_edit?(u)).to be_truthy
     end
     it "should fail if user is from the survey company and cannot edit surveys" do
       u = Factory(:user,:company=>@survey.company,:survey_edit=>false)
-      expect(@sr.can_edit?(u)).to be_false
+      expect(@sr.can_edit?(u)).to be_falsey
     end
     it "should fail if user is not from the survey company" do
-      expect(@sr.can_edit?(Factory(:user,survey_edit:true))).to be_false
+      expect(@sr.can_edit?(Factory(:user,survey_edit:true))).to be_falsey
     end
     it "does not allow edit when survey is archvied" do
       u = Factory(:user,:company=>@survey.company,:survey_edit=>true)
       @survey.update_attributes! archived: true
-      expect(@sr.can_edit?(u)).to be_false
+      expect(@sr.can_edit?(u)).to be_falsey
     end
   end
   describe "can_view_private_comments?" do
@@ -142,13 +142,13 @@ describe SurveyResponse do
     end
     it "should pass if the user is from the survey company" do
       u = Factory(:user,:company=>@survey.company)
-      expect(@sr.can_view_private_comments?(u)).to be_true
+      expect(@sr.can_view_private_comments?(u)).to be_truthy
     end
     it "should fail if the user is not from the survey company" do
-      expect(@sr.can_view_private_comments?(Factory(:user))).to be_false
+      expect(@sr.can_view_private_comments?(Factory(:user))).to be_falsey
     end
     it "should fail if the user is the response_user and is not from the survey company" do
-      expect(@sr.can_view_private_comments?(@response_user)).to be_false
+      expect(@sr.can_view_private_comments?(@response_user)).to be_falsey
     end
   end
   describe "invite_user!" do
@@ -202,7 +202,7 @@ describe SurveyResponse do
       end
     end
   end
-  describe :was_archived do
+  describe "was_archived" do
     before :each do
       @survey = Factory(:question).survey
       @u = Factory(:user)
@@ -254,23 +254,23 @@ describe SurveyResponse do
 
     it "shows as assigned if user matches response user" do
       response = @survey.generate_response! @u
-      expect(response.assigned_to_user? @u).to be_true
+      expect(response.assigned_to_user? @u).to be_truthy
     end
 
     it "does not show as assigned if user is not response user" do
       response = @survey.generate_response! @u
-      expect(response.assigned_to_user? Factory(:user)).to be_false
+      expect(response.assigned_to_user? Factory(:user)).to be_falsey
     end
 
     it "shows as assigned if user in in group assigned to response" do
       @u.groups << @group
       response = @survey.generate_group_response! @group
-      expect(response.assigned_to_user? @u).to be_true
+      expect(response.assigned_to_user? @u).to be_truthy
     end
 
     it "does not show as assigned if user is not in response group" do
       response = @survey.generate_group_response! @group
-      expect(response.assigned_to_user? @u).to be_false
+      expect(response.assigned_to_user? @u).to be_falsey
     end
   end
 

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe DrawbackExportHistory do
-  describe :bulk_insert do
+  describe "bulk_insert" do
     it "should insert multiple records" do
       d1 = DrawbackExportHistory.new(part_number:'123',
         export_ref_1:'ER1',

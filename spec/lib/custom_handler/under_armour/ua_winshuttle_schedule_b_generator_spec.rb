@@ -2,27 +2,27 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator do
   it "should have sync_code" do
-    described_class.new.sync_code.should == 'winshuttle-b'
+    expect(described_class.new.sync_code).to eq('winshuttle-b')
   end
-  describe :run_and_email do
+  describe "run_and_email" do
     it "should run_and_email" do
       d = double('class')
-      d.should_receive(:sync_xls).and_return 'xyz'
-      d.should_receive(:email_file).with('xyz','j@sample.com')
-      ArchivedFile.should_receive(:make_from_file!).with('xyz','Winshuttle Schedule B Output',/Sent to j@sample.com at /)
-      described_class.stub(:new).and_return d
+      expect(d).to receive(:sync_xls).and_return 'xyz'
+      expect(d).to receive(:email_file).with('xyz','j@sample.com')
+      expect(ArchivedFile).to receive(:make_from_file!).with('xyz','Winshuttle Schedule B Output',/Sent to j@sample.com at /)
+      allow(described_class).to receive(:new).and_return d
       described_class.run_and_email('j@sample.com')
     end
     it "should not email if file is nil" do
       d = double('class')
-      d.should_receive(:sync_xls).and_return nil
-      d.should_not_receive(:email_file)
-      ArchivedFile.should_not_receive(:make_from_file!)
-      described_class.stub(:new).and_return d
+      expect(d).to receive(:sync_xls).and_return nil
+      expect(d).not_to receive(:email_file)
+      expect(ArchivedFile).not_to receive(:make_from_file!)
+      allow(described_class).to receive(:new).and_return d
       described_class.run_and_email('j@sample.com')
     end
   end
-  describe :sync do
+  describe "sync" do
     def create_product
       tr = Factory(:tariff_record,schedule_b_1:'1234567890',classification:Factory(:classification,country_id:@us.id))
       tr.product.update_custom_value! @colors_cd, "001"
@@ -71,20 +71,20 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
       expect(r[4]).to eq "ZMMHSCONV-STAWN2(01)\nCommodity code / Import code number for foreign trade"
     end
   end
-  describe :email_file do
+  describe "email_file" do
     before :each do 
       @f = double('file')
       @mailer = double(:mailer)
-      @mailer.should_receive(:deliver)
+      expect(@mailer).to receive(:deliver)
     end
     it "should email result" do
-      OpenMailer.should_receive(:send_simple_html).with('joe@sample.com','Winshuttle Schedule B Output File','Your Winshuttle schedule b output file is attached.  For assistance, please email support@vandegriftinc.com',[@f]).and_return(@mailer)
+      expect(OpenMailer).to receive(:send_simple_html).with('joe@sample.com','Winshuttle Schedule B Output File','Your Winshuttle schedule b output file is attached.  For assistance, please email support@vandegriftinc.com',[@f]).and_return(@mailer)
       described_class.new.email_file @f, 'joe@sample.com'
     end
     it "should make original_filename method on file object" do
-      OpenMailer.stub(:send_simple_html).and_return(@mailer)
+      allow(OpenMailer).to receive(:send_simple_html).and_return(@mailer)
       described_class.new.email_file @f, 'joe@sample.com'
-      @f.original_filename.should match /winshuttle_schedule_b_[[:digit:]]{8}\.xls/
+      expect(@f.original_filename).to match /winshuttle_schedule_b_[[:digit:]]{8}\.xls/
     end
   end
 end

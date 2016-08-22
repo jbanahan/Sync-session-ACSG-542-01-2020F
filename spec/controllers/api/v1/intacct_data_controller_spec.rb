@@ -44,8 +44,8 @@ describe Api::V1::IntacctDataController do
   describe "receive_check_result" do
     it "forwards results to intacct invoice details parser" do
       results = [{:a => "b"}]
-      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser
-      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.should_receive(:parse_check_result).with results.to_json
+      expect(OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser
+      expect(OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser).to receive(:parse_check_result).with results.to_json
       post "receive_check_result", results: results
       expect(response.body).to eq ({"OK" => ""}.to_json)
     end

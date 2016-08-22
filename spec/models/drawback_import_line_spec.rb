@@ -30,7 +30,7 @@ describe DrawbackImportLine do
       d2 = Factory(:drawback_import_line) 
       dcl = DutyCalcImportFileLine.create!(:drawback_import_line_id=>d2.id)
 
-      DrawbackImportLine.not_in_duty_calc_file.all.should == [d1]
+      expect(DrawbackImportLine.not_in_duty_calc_file.all).to eq([d1])
     end
   end
   describe "duty_calc_line" do
@@ -61,7 +61,7 @@ describe DrawbackImportLine do
       csv = CSV.parse(line).first
       [d.entry_number,"04/01/2010","04/02/2010","","4601","100.10","101.10","","5000.01","485.00","1","",d.id.to_s,"","",d.country_of_origin_code,"","",
       d.part_number,d.part_number,d.hts_code,d.description,d.unit_of_measure,"","10.040000000","10.040000000","","2.0450000","","","","0.030000000","","","","0.153000000","7","","Y"].each_with_index do |v,i|
-        csv[i].should == v
+        expect(csv[i]).to eq(v)
       end
     end
   end

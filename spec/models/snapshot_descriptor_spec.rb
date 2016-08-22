@@ -6,7 +6,7 @@ describe SnapshotDescriptor do
 
   let (:writer) {
     writer = double("SnapshotWriter")
-    writer.stub(:entity_json).and_return json
+    allow(writer).to receive(:entity_json).and_return json
     writer
   }
 

@@ -19,9 +19,9 @@ describe OpenChain::CustomHandler::VfitrackCustomDefinitionSupport do
     ]
     expected.each do |e|
       cd = defs[e[0]]
-      cd.label.should == e[1]
-      cd.data_type.should == e[2].to_sym
-      cd.module_type.should == e[3]
+      expect(cd.label).to eq(e[1])
+      expect(cd.data_type).to eq(e[2].to_sym)
+      expect(cd.module_type).to eq(e[3])
     end
   end
 end

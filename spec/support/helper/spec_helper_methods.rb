@@ -16,8 +16,8 @@ module Helpers
     # Everything else about the attachment process should remain working, the attached_* attributes should
     # be filled in when 'attachment.attached = file' is used, etc.  only difference is no s3 calls should be made
     # ever.
-    Paperclip::Attachment.any_instance.stub(:save).and_return true
-    Paperclip::Attachment.any_instance.stub(:destroy).and_return true
+    allow_any_instance_of(Paperclip::Attachment).to receive(:save).and_return true
+    allow_any_instance_of(Paperclip::Attachment).to receive(:destroy).and_return true
   end
 
   class MockS3
@@ -107,7 +107,7 @@ module Helpers
   end
 
   def stub_email_logging
-    OpenMailer.any_instance.stub(:log_email).and_return true
+    allow_any_instance_of(OpenMailer).to receive(:log_email).and_return true
   end
 
   def unstub_s3
@@ -132,7 +132,7 @@ module Helpers
   end
 
   def stub_event_publisher
-    OpenChain::EventPublisher.stub(:publish).and_return nil
+    allow(OpenChain::EventPublisher).to receive(:publish).and_return nil
   end
 
   def retry_expect retry_count: 2, retry_wait: 1, additional_rescue_from: []
@@ -152,9 +152,9 @@ module Helpers
 
   def stub_master_setup_request_host
     ms = double("MasterSetup")
-    ms.stub(:request_host).and_return "localhost:3000"
-    ms.stub(:system_code).and_return "test"
-    MasterSetup.stub(:get).and_return ms
+    allow(ms).to receive(:request_host).and_return "localhost:3000"
+    allow(ms).to receive(:system_code).and_return "test"
+    allow(MasterSetup).to receive(:get).and_return ms
     ms
   end
 

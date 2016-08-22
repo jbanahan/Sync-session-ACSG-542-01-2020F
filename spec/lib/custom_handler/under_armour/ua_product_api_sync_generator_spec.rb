@@ -17,12 +17,12 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
       @product.update_custom_value! @cdefs[:colors], "A\n   \nB\nA"
 
       # We're going to mock out the data for the remote calls
-      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99", "prod_imp_syscode"]).and_return({'product'=>nil})
-      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-B", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99", "prod_imp_syscode"]).and_return({'product'=>nil})
+      expect(@api_client).to receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99", "prod_imp_syscode"]).and_return({'product'=>nil})
+      expect(@api_client).to receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-B", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99", "prod_imp_syscode"]).and_return({'product'=>nil})
 
       # Capture and analyze the remote data later
       create_data = []
-      @api_client.should_receive(:create).exactly(2).times do |data|
+      expect(@api_client).to receive(:create).exactly(2).times do |data|
         create_data << data
         nil
       end
@@ -70,10 +70,10 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
       ca = Factory(:country, iso_code: 'CA')
       @tariff.classification.update_attributes! country: ca
 
-      @api_client.should_receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99","prod_imp_syscode"]).and_return({'product'=>nil})
+      expect(@api_client).to receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99","prod_imp_syscode"]).and_return({'product'=>nil})
       
       create_data = []
-      @api_client.should_receive(:create).exactly(1).times do |data|
+      expect(@api_client).to receive(:create).exactly(1).times do |data|
         create_data << data
         nil
       end

@@ -3,7 +3,7 @@ require 'spreadsheet'
 
 describe OpenChain::Report::LandedCostReport do
 
-  context :run do
+  context "run" do
     before :each do 
       @user = Factory :master_user
       @entry1 = Factory(:entry, :customer_number=>"CUST", :release_date=>(Time.zone.now - 1.day), :entry_number=>"1", :transport_mode_code=>"2", :customer_references=>"3\n4")
@@ -22,42 +22,42 @@ describe OpenChain::Report::LandedCostReport do
       start_date = (Time.zone.now - 2.days).strftime("%Y-%m-%d")
       end_date = (Time.zone.now + 1.day).strftime("%Y-%m-%d")
       c = described_class.new @user, 'customer_number'=>"CUST", 'start_date' => start_date, 'end_date' => end_date
-      OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@entry1.id).and_return(generator_data(@entry1))
-      OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@entry2.id).and_return(generator_data(@entry2))
+      expect_any_instance_of(OpenChain::Report::LandedCostDataGenerator).to receive(:landed_cost_data_for_entry).with(@entry1.id).and_return(generator_data(@entry1))
+      expect_any_instance_of(OpenChain::Report::LandedCostDataGenerator).to receive(:landed_cost_data_for_entry).with(@entry2.id).and_return(generator_data(@entry2))
 
       @tempfile = c.run
 
-      File.basename(@tempfile).should match /^Landed Cost CUST/
+      expect(File.basename(@tempfile)).to match /^Landed Cost CUST/
 
       sheet = Spreadsheet.open(@tempfile.path).worksheet "CUST #{start_date} - #{end_date}"
 
       # don't really care about the header names, just make sure they're there
-      sheet.row(0)[0].should == "Broker Reference"
-      sheet.row(0)[18].should == "Total Per Unit"
+      expect(sheet.row(0)[0]).to eq("Broker Reference")
+      expect(sheet.row(0)[18]).to eq("Total Per Unit")
       
-      sheet.row(1)[0].should == @entry1.broker_reference
-      sheet.row(1)[1].should == @entry1.entry_number
-      sheet.row(1)[2].strftime("%Y-%m-%d").should == @entry1.release_date.strftime("%Y-%m-%d")
-      sheet.row(1)[3].should == @entry1.transport_mode_code
-      sheet.row(1)[4].should == @entry1.customer_references.split("\n").join(", ")
+      expect(sheet.row(1)[0]).to eq(@entry1.broker_reference)
+      expect(sheet.row(1)[1]).to eq(@entry1.entry_number)
+      expect(sheet.row(1)[2].strftime("%Y-%m-%d")).to eq(@entry1.release_date.strftime("%Y-%m-%d"))
+      expect(sheet.row(1)[3]).to eq(@entry1.transport_mode_code)
+      expect(sheet.row(1)[4]).to eq(@entry1.customer_references.split("\n").join(", "))
       # This info is all hardcoded in the generator_data method
-      sheet.row(1)[5].should == "1234.56.7890, 9876.54.3210"
-      sheet.row(1)[6].should == "CO"
-      sheet.row(1)[7].should == "PO"
-      sheet.row(1)[8].should == 1
-      sheet.row(1)[9].should == BigDecimal.new("1")
-      sheet.row(1)[10].should == BigDecimal.new("2")
-      sheet.row(1)[11].should == BigDecimal.new("3")
-      sheet.row(1)[12].should == BigDecimal.new("4")
-      sheet.row(1)[13].should == BigDecimal.new("5")
-      sheet.row(1)[14].should == BigDecimal.new("6")
-      sheet.row(1)[15].should == BigDecimal.new("7")
-      sheet.row(1)[16].should == BigDecimal.new("8")
-      sheet.row(1)[17].should == BigDecimal.new("9")
-      sheet.row(1)[18].should == BigDecimal.new("10.99") # landed cost is rounded to 2 decimal places
+      expect(sheet.row(1)[5]).to eq("1234.56.7890, 9876.54.3210")
+      expect(sheet.row(1)[6]).to eq("CO")
+      expect(sheet.row(1)[7]).to eq("PO")
+      expect(sheet.row(1)[8]).to eq(1)
+      expect(sheet.row(1)[9]).to eq(BigDecimal.new("1"))
+      expect(sheet.row(1)[10]).to eq(BigDecimal.new("2"))
+      expect(sheet.row(1)[11]).to eq(BigDecimal.new("3"))
+      expect(sheet.row(1)[12]).to eq(BigDecimal.new("4"))
+      expect(sheet.row(1)[13]).to eq(BigDecimal.new("5"))
+      expect(sheet.row(1)[14]).to eq(BigDecimal.new("6"))
+      expect(sheet.row(1)[15]).to eq(BigDecimal.new("7"))
+      expect(sheet.row(1)[16]).to eq(BigDecimal.new("8"))
+      expect(sheet.row(1)[17]).to eq(BigDecimal.new("9"))
+      expect(sheet.row(1)[18]).to eq(BigDecimal.new("10.99")) # landed cost is rounded to 2 decimal places
 
       # Just make sure the second entry's row is there
-      sheet.row(2)[0].should == @entry2.broker_reference
+      expect(sheet.row(2)[0]).to eq(@entry2.broker_reference)
 
     end
 
@@ -82,7 +82,7 @@ describe OpenChain::Report::LandedCostReport do
       @tempfile = c.run
 
       sheet = Spreadsheet.open(@tempfile.path).worksheet 0
-      sheet.row(1)[0].should be_nil
+      expect(sheet.row(1)[0]).to be_nil
     end
 
     it "should not find an entry outside date range" do
@@ -92,7 +92,7 @@ describe OpenChain::Report::LandedCostReport do
       @tempfile = c.run
 
       sheet = Spreadsheet.open(@tempfile.path).worksheet 0
-      sheet.row(1)[0].should be_nil
+      expect(sheet.row(1)[0]).to be_nil
     end
 
     it "should not find entries a user can't view" do
@@ -105,7 +105,7 @@ describe OpenChain::Report::LandedCostReport do
       @tempfile = c.run
 
       sheet = Spreadsheet.open(@tempfile.path).worksheet 0
-      sheet.row(1)[0].should be_nil
+      expect(sheet.row(1)[0]).to be_nil
     end
   end
 end

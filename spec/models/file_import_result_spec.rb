@@ -6,7 +6,7 @@ describe FileImportResult do
     @user = Factory(:master_user,:email=>'a@example.com')
   end
 
-  describe :collected_messages do
+  describe "collected_messages" do
     before :each do
       @fir = Factory(:file_import_result)
       @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1)
@@ -15,15 +15,15 @@ describe FileImportResult do
     end
 
     it "should return the correct messages and count when including everything" do
-      @fir.collected_messages(@cr1, false).should == ["INFO: Hello\nERROR: Hello", 2]
+      expect(@fir.collected_messages(@cr1, false)).to eq(["INFO: Hello\nERROR: Hello", 2])
     end
 
     it "should return the correct messages and count when including errors only" do
-      @fir.collected_messages(@cr1, true).should == ["ERROR: Hello", 1]
+      expect(@fir.collected_messages(@cr1, true)).to eq(["ERROR: Hello", 1])
     end
   end
 
-  describe :create_excel_report do
+  describe "create_excel_report" do
     before :each do
       @imported_file = Factory(:imported_file, attached_file_name: "file name")
       @fir = Factory(:file_import_result, imported_file: @imported_file)
@@ -37,7 +37,7 @@ describe FileImportResult do
 
     it "should return a worksheet object" do
       output = @fir.create_excel_report(true, "Some name")
-      output.class.should == Spreadsheet::Workbook
+      expect(output.class).to eq(Spreadsheet::Workbook)
     end
 
     it "should have four columns" do
@@ -57,17 +57,17 @@ describe FileImportResult do
 
     it "should have the appropriate number of rows when including all" do
       output = @fir.create_excel_report(true, "Some name")
-      output.worksheets.first.rows.length.should == 3
+      expect(output.worksheets.first.rows.length).to eq(3)
     end
 
     it "should have the appropriate number of rows when including only errors" do
       output = @fir.create_excel_report(false, "Some name")
-      output.worksheets.first.rows.length.should == 2
+      expect(output.worksheets.first.rows.length).to eq(2)
     end
 
   end
 
-  describe :download_results do
+  describe "download_results" do
     before :each do
       @imported_file = Factory(:imported_file, attached_file_name: "file name")
       @fir = Factory(:file_import_result, imported_file: @imported_file)
@@ -82,47 +82,47 @@ describe FileImportResult do
     it "should create a new attachment when delayed" do
       expect{FileImportResult.download_results(true, @user.id, @fir, true)}.to change(Attachment,:count).from(0).to(1)
       a = Attachment.last
-      a.attached_file_name.should == "Log for file name - Results.xls"
-      a.attachable_type.should == "FileImportResult"
+      expect(a.attached_file_name).to eq("Log for file name - Results.xls")
+      expect(a.attachable_type).to eq("FileImportResult")
     end
 
     it "should create a message for the user if delayed" do
       FileImportResult.download_results(true, @user.id, @fir, true)
       @user.reload
-      @user.messages.length.should == 1
-      @user.messages.last.subject.should == "File Import Result Prepared for Download"
+      expect(@user.messages.length).to eq(1)
+      expect(@user.messages.last.subject).to eq("File Import Result Prepared for Download")
     end
 
     it "should not create a message for the user if not delayed" do
       FileImportResult.download_results(true, @user.id, @fir, false) do |t| "blank block" end
       @user.reload
-      @user.messages.length.should == 0
+      expect(@user.messages.length).to eq(0)
     end
 
     it "should skip successful records when include_all is false" do
-      ChangeRecord.any_instance.should_receive(:record_sequence_number).exactly(1).times
+      expect_any_instance_of(ChangeRecord).to receive(:record_sequence_number).exactly(1).times
       FileImportResult.download_results(false, @user.id, @fir) do |t| "blank block" end
     end
 
     it "should include successful records when include_all is true" do
-      @cr1.should_receive(:record_sequence_number)
-      @cr2.should_receive(:record_sequence_number)
+      expect(@cr1).to receive(:record_sequence_number)
+      expect(@cr2).to receive(:record_sequence_number)
       FileImportResult.download_results(true, @user.id, @fir) do |t| "blank block" end
     end
   end
 
-  describe :time_to_process do
+  describe "time_to_process" do
     it "should return nil if no started_at" do
-      FileImportResult.new(:finished_at=>0.seconds.ago).time_to_process.should be_nil
+      expect(FileImportResult.new(:finished_at=>0.seconds.ago).time_to_process).to be_nil
     end
     it "should return nil if no finished_at" do
-      FileImportResult.new(:started_at=>0.seconds.ago).time_to_process.should be_nil
+      expect(FileImportResult.new(:started_at=>0.seconds.ago).time_to_process).to be_nil
     end
     it "should return minutes" do
-      FileImportResult.new(:started_at=>3.minutes.ago,:finished_at=>0.minutes.ago).time_to_process.should == 3
+      expect(FileImportResult.new(:started_at=>3.minutes.ago,:finished_at=>0.minutes.ago).time_to_process).to eq(3)
     end
     it "should return 1 minute even if rounding to zero" do
-      FileImportResult.new(:started_at=>2.seconds.ago,:finished_at=>0.seconds.ago).time_to_process.should == 1
+      expect(FileImportResult.new(:started_at=>2.seconds.ago,:finished_at=>0.seconds.ago).time_to_process).to eq(1)
     end
   end
   it 'should only find unique changed objects' do
@@ -133,9 +133,9 @@ describe FileImportResult do
       2.times { |z| fir.change_records.create!(:recordable=>p) }
     end
     co = fir.changed_objects
-    co.should have(3).items
+    expect(co.size).to eq(3)
     3.times do |i|
-      co.include?(Product.where(:unique_identifier=>"#{i}pid").first).should be_true
+      expect(co.include?(Product.where(:unique_identifier=>"#{i}pid").first)).to be_truthy
     end
   end
   it 'should allow additional filters on changed_objects' do
@@ -146,8 +146,8 @@ describe FileImportResult do
       2.times { |z| fir.change_records.create!(:recordable=>p) }
     end
     co = fir.changed_objects [SearchCriterion.new(:model_field_uid=>"prod_uid",:operator=>"eq",:value=>"1pid")]
-    co.should have(1).item
-    co.first.should == Product.where(:unique_identifier=>"1pid").first
+    expect(co.size).to eq(1)
+    expect(co.first).to eq(Product.where(:unique_identifier=>"1pid").first)
   end
   it 'should set changed_object_count on save' do
     file_import_result = Factory(:file_import_result)
@@ -158,7 +158,7 @@ describe FileImportResult do
     file_import_result.finished_at = Time.now
     file_import_result.save!
     file_import_result.reload
-    file_import_result.changed_object_count.should == 3
+    expect(file_import_result.changed_object_count).to eq(3)
   end
 
 end

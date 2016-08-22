@@ -11,7 +11,7 @@ describe Lock do
     it "should lock with fully qualified class name" do
       k = OpenChain::XLClient
       opts = {a:'b'}
-      Lock.should_receive(:acquire).with('OpenChain::XLClient',opts).and_yield
+      expect(Lock).to receive(:acquire).with('OpenChain::XLClient',opts).and_yield
       yield_value = Lock.acquire_for_class(k,opts) do
         'hello'
       end
@@ -19,7 +19,7 @@ describe Lock do
     end
   end
 
-  context :acquire do
+  context "acquire" do
 
     it "should lock while a process is running" do
 
@@ -66,15 +66,15 @@ describe Lock do
       t1.join(10) if t1.status
       t2.join(1) if t2.status
 
-      start_blocking.should_not be_nil
-      end_blocking.should_not be_nil
-      lock1ReturnValue.should == "Success"
+      expect(start_blocking).not_to be_nil
+      expect(end_blocking).not_to be_nil
+      expect(lock1ReturnValue).to eq("Success")
 
       # Make sure the latter thread waited at least sleepSeconds to get the lock
       # (Due to thread scheduling and timing the sleeps might be slightly quicker that sleepSeconds)
-      (end_blocking - start_blocking).should >= (sleepSeconds - 0.1)
+      expect(end_blocking - start_blocking).to be >= (sleepSeconds - 0.1)
       expect(Lock.send(:expires_in, 'LockSpec')).to be <= 300
-      expect(Lock.send(:unlocked?, 'LockSpec')).to be_true
+      expect(Lock.send(:unlocked?, 'LockSpec')).to be_truthy
     end
 
     it "should release the lock if an error occurs in the first thread" do
@@ -109,17 +109,17 @@ describe Lock do
       t1.join(5) if t1.status
       t2.join(1) if t2.status
 
-      started.should be_true
-      errored.should be_true
-      start_time.should_not be_nil
-      end_time.should_not be_nil
+      expect(started).to be_truthy
+      expect(errored).to be_truthy
+      expect(start_time).not_to be_nil
+      expect(end_time).not_to be_nil
 
       # This is kind of an arbitrary amount of time to check for, but really
       # if the raised exception in the first thread doesn't release the lock
       # then the latter thread is going to block undefinitely anyway.
-      (end_time - start_time).should <= 1.0
+      expect(end_time - start_time).to be <= 1.0
       expect(Lock.send(:expires_in, 'LockSpec')).to be <= 300
-      expect(Lock.send(:unlocked?, 'LockSpec')).to be_true
+      expect(Lock.send(:unlocked?, 'LockSpec')).to be_truthy
     end
 
     it "yields inside of a transaction by default" do
@@ -162,7 +162,7 @@ describe Lock do
       cp = ConnectionPool.new(size: 1, timeout: 1) do
         Lock.send(:get_redis_client, config['test'].with_indifferent_access)
       end
-      Lock.stub(:get_connection_pool).and_return cp
+      allow(Lock).to receive(:get_connection_pool).and_return cp
 
       done = false
       lockAcquired = false
@@ -238,7 +238,7 @@ describe Lock do
     it "attempts to retry connecting if server is not reachable" do
       # Just have the connection pool raise the Redis::CannotConnectError, which tells our process
       # to sleep and try again to connect.
-      Redis::Semaphore.any_instance.stub(:lock).and_raise Redis::CannotConnectError
+      allow_any_instance_of(Redis::Semaphore).to receive(:lock).and_raise Redis::CannotConnectError
       start = Time.now.to_i
       expect { Lock.acquire('LockSpec', timeout: 2) }.to raise_error Timeout::Error, "Waited 2 seconds while attempting to connect to lock server for lock 'LockSpec'."
       stop = Time.now.to_i
@@ -250,11 +250,11 @@ describe Lock do
 
       # Just short circuit the actual code by insisting the lock has already been seen to avoid
       # hassle of a bunch of other setup crap
-      Lock.should_receive(:definitely_acquired?).with("€foo").and_return true
+      expect(Lock).to receive(:definitely_acquired?).with("€foo").and_return true
 
       locked = false
       Lock.acquire(lock_name) { locked = true}
-      expect(locked).to be_true
+      expect(locked).to be_truthy
     end
 
     it "transcodes lock names to UTF-8" do
@@ -263,13 +263,13 @@ describe Lock do
       lock_name = "€foo\xA0".force_encoding("ASCII")
 
       locked_name = nil
-      Lock.should_receive(:definitely_acquired?) do |name|
+      expect(Lock).to receive(:definitely_acquired?) do |name|
         locked_name = name
         true
       end
       locked = false
       Lock.acquire(lock_name) { locked = true}
-      expect(locked).to be_true
+      expect(locked).to be_truthy
       expect(locked_name).to eq "foo"
       expect(locked_name.encoding.name).to eq "UTF-8"
     end
@@ -279,32 +279,32 @@ describe Lock do
       lock_name = "€foo\xA0".force_encoding("UTF-8")
 
       locked_name = nil
-      Lock.should_receive(:definitely_acquired?) do |name|
+      expect(Lock).to receive(:definitely_acquired?) do |name|
         locked_name = name
         true
       end
       locked = false
       Lock.acquire(lock_name) { locked = true}
-      expect(locked).to be_true
+      expect(locked).to be_truthy
       expect(locked_name).to eq "€foo"
     end
   end
 
-  context :lock_with_retry do
+  context "lock_with_retry" do
     it "should lock an object and yield" do
       e = Factory(:entry)
       v = Lock.with_lock_retry(e) do
         e.update_attributes :entry_number => "123"
         "return val"
       end
-      v.should == "return val"
+      expect(v).to eq("return val")
       e.reload
-      e.entry_number.should == "123"
+      expect(e.entry_number).to eq("123")
     end
 
     it "should passthrough lock clause directory to with_lock call" do
       model = double("MyModel")
-      model.should_receive(:with_lock).with("lock_clause")
+      expect(model).to receive(:with_lock).with("lock_clause")
       Lock.with_lock_retry(model, "lock_clause")
     end
 
@@ -312,24 +312,24 @@ describe Lock do
       e = double("MyModel")
 
       # We have to fake out the lock, since this test is, in-fact running in an open transaction
-      Lock.should_receive(:inside_nested_transaction?).and_return false
+      expect(Lock).to receive(:inside_nested_transaction?).and_return false
 
-      e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
-      e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
-      e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
-      e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
-      e.should_receive(:with_lock).once.ordered
+      expect(e).to receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      expect(e).to receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      expect(e).to receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      expect(e).to receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      expect(e).to receive(:with_lock).once.ordered
 
       Lock.with_lock_retry(e)
     end
 
     it "should throw an error if it retries too many times" do
       # We have to fake out the lock, since this test is, in-fact running in an open transaction
-      Lock.should_receive(:inside_nested_transaction?).and_return false
+      expect(Lock).to receive(:inside_nested_transaction?).and_return false
 
       # This also ensures that we're using the retry parameter
       e = double("MyModel")
-      e.should_receive(:with_lock).exactly(3).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      expect(e).to receive(:with_lock).exactly(3).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
 
       expect{Lock.with_lock_retry(e, true, 2)}.to raise_error ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
     end

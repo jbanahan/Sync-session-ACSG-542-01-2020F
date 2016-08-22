@@ -20,27 +20,27 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFtzParser do
     t << @line
     t.flush
     @parser.process_csv t.path
-    Product.first.unique_identifier.should == "1200739-001"
-    DrawbackImportLine.all.should have(1).item
+    expect(Product.first.unique_identifier).to eq("1200739-001")
+    expect(DrawbackImportLine.all.size).to eq(1)
     d = DrawbackImportLine.first
-    d.product.should == Product.first
-    d.entry_number.should == "11348734200"
-    d.import_date.strftime("%m/%d/%Y").should == @entered_date.strftime("%m/%d/%Y")
-    d.received_date.strftime("%m/%d/%Y").should == @entered_date.strftime("%m/%d/%Y")
-    d.port_code.should == @port_code
-    d.box_37_duty.should == @box_37
-    d.box_40_duty.should == @box_40
-    d.total_invoice_value.should == @total_value
-    d.total_mpf.should == @total_mpf
-    d.country_of_origin_code.should == "ID"
-    d.part_number.should == "1200739-001-7+ID"
-    d.hts_code.should == "6402992760"
-    d.description.should == "UA LOCKER SLIDE - BLK/SLV"
-    d.unit_of_measure.should == "EA"
-    d.quantity.should == 285
-    d.unit_price.should == 3.13
-    d.rate.should == 0.03
-    d.duty_per_unit.should == 0.0939
+    expect(d.product).to eq(Product.first)
+    expect(d.entry_number).to eq("11348734200")
+    expect(d.import_date.strftime("%m/%d/%Y")).to eq(@entered_date.strftime("%m/%d/%Y"))
+    expect(d.received_date.strftime("%m/%d/%Y")).to eq(@entered_date.strftime("%m/%d/%Y"))
+    expect(d.port_code).to eq(@port_code)
+    expect(d.box_37_duty).to eq(@box_37)
+    expect(d.box_40_duty).to eq(@box_40)
+    expect(d.total_invoice_value).to eq(@total_value)
+    expect(d.total_mpf).to eq(@total_mpf)
+    expect(d.country_of_origin_code).to eq("ID")
+    expect(d.part_number).to eq("1200739-001-7+ID")
+    expect(d.hts_code).to eq("6402992760")
+    expect(d.description).to eq("UA LOCKER SLIDE - BLK/SLV")
+    expect(d.unit_of_measure).to eq("EA")
+    expect(d.quantity).to eq(285)
+    expect(d.unit_price).to eq(3.13)
+    expect(d.rate).to eq(0.03)
+    expect(d.duty_per_unit).to eq(0.0939)
   end
   it "should not create import lines if they already exist" do
     exp = Factory(:duty_calc_export_file_line,:ref_1=>'85075306')
@@ -49,15 +49,15 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFtzParser do
     t.flush
     @parser.process_csv t.path
     @parser.process_csv t.path
-    DrawbackImportLine.all.should have(1).item
+    expect(DrawbackImportLine.all.size).to eq(1)
   end
   it "should not create import lines if export lines don't already exist" do
     t = Tempfile.new("ftz")
     t << @line
     t.flush
     @parser.process_csv t.path
-    DrawbackImportLine.all.should be_empty
-    Product.all.should be_empty
+    expect(DrawbackImportLine.all).to be_empty
+    expect(Product.all).to be_empty
   end
 
 end

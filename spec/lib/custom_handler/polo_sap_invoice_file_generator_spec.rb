@@ -6,8 +6,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
   before :each do
     @gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
     @api_client = double("ProductApiClient")
-    @gen.stub(:api_client).and_return @api_client
-    @api_client.stub(:find_by_uid).and_return({'product'=>{'classifications' => []}})
+    allow(@gen).to receive(:api_client).and_return @api_client
+    allow(@api_client).to receive(:find_by_uid).and_return({'product'=>{'classifications' => []}})
     stub_xml_files @gen
     
     @importer = Factory(:importer, fenix_customer_number: "806167003RM0001")
@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
   def stub_xml_files gen
     @xml_files = []
     # Capture the xml file output from an ftp (also prevents actual ftp calls from happening in tests)
-    gen.stub(:ftp_file) do |f|
+    allow(gen).to receive(:ftp_file) do |f|
       f.rewind
       xml_file = {}
       xml_file[:name] = f.original_filename
@@ -63,9 +63,9 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     REXML::XPath.match(doc, xpath)
   end
 
-  context :generate_and_send_invoices do
+  context "generate_and_send_invoices" do
   
-    context :MM_Invoices do
+    context "MM_Invoices" do
       before :each do 
         make_sap_po
       end
@@ -77,35 +77,35 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         # A single ExportJob should have been created
         job = ExportJob.all.first
-        job.should_not be_nil
-        job.start_time.to_i.should == time.to_i
+        expect(job).not_to be_nil
+        expect(job.start_time.to_i).to eq(time.to_i)
         # Shouldn't be more than 5 seconds from export job "end time"
-        (Time.zone.now.to_i - job.end_time.to_i).should <= 5
-        job.successful.should be_true
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
-        job.attachments.length.should == 2
-        job.attachments.first.attached_file_name.should == "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xls"
-        job.attachments.second.attached_file_name.should == "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml"
+        expect(Time.zone.now.to_i - job.end_time.to_i).to be <= 5
+        expect(job.successful).to be_truthy
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE)
+        expect(job.attachments.length).to eq(2)
+        expect(job.attachments.first.attached_file_name).to eq("Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xls")
+        expect(job.attachments.second.attached_file_name).to eq("Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml")
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.should_not be_nil
-        mail.to.should == ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
-        mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
-        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
+        expect(mail).not_to be_nil
+        expect(mail.to).to eq(["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
+        expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
         at = mail.attachments["Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xls"]
-        at.should_not be_nil
+        expect(at).not_to be_nil
 
         sheet = get_workbook_sheet at
-        sheet.name.should == "MMGL"
+        expect(sheet.name).to eq("MMGL")
         # Verify the invoice header information
         header = ["X", @broker_invoice.invoice_date.strftime("%Y%m%d"), @broker_invoice.invoice_number, '1017', '100023825', 'CAD', BigDecimal.new("18.99"), nil, '0001', job.start_time.strftime("%Y%m%d"), @broker_invoice.entry.entry_number, "V"]
-        sheet.row(1)[0, 12].should == header
+        expect(sheet.row(1)[0, 12]).to eq(header)
 
         # Verify the commercial invoice information (it should strip the sap line from the value)
         po, line = @gen.split_sap_po_line_number(@cil.po_number)
         inv_row = ["1", po, line, @tariff_line.duty_amount + @tariff_line2.duty_amount, @cil.quantity, "ZDTY", nil]
-        sheet.row(1)[12, 7].should == inv_row
+        expect(sheet.row(1)[12, 7]).to eq(inv_row)
 
         # Verify the broker invoice information
         # First line is GST
@@ -115,20 +115,20 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
           ["3", "52111200", @broker_invoice_line2.charge_amount, "S", "1017", @broker_invoice_line2.charge_description, @profit_center.value],
           ["4", "52111200", @broker_invoice_line3.charge_amount.abs, "H", "1017", @broker_invoice_line3.charge_description, @profit_center.value]
         ]
-        sheet.row(1)[19, 7].should == brok_inv_rows[0]
+        expect(sheet.row(1)[19, 7]).to eq(brok_inv_rows[0])
 
         # Rest of the lines are the actual broker charges
-        sheet.row(2)[19, 7].should == brok_inv_rows[1]
-        sheet.row(3)[19, 7].should == brok_inv_rows[2]
-        sheet.row(4)[19, 7].should == brok_inv_rows[3]
+        expect(sheet.row(2)[19, 7]).to eq(brok_inv_rows[1])
+        expect(sheet.row(3)[19, 7]).to eq(brok_inv_rows[2])
+        expect(sheet.row(4)[19, 7]).to eq(brok_inv_rows[3])
 
         # Now we need to verify the XML document structure
-        expect(@xml_files).to have(1).item
-        @xml_files[0][:name].should == "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml"
+        expect(@xml_files.size).to eq(1)
+        expect(@xml_files[0][:name]).to eq("Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml")
         d = REXML::Document.new @xml_files[0][:contents]
-        d.root.name.should eq "Invoices"
-        expect(xp_m(d, '/Invoices/Invoice')).to have(1).item
-        expect(xp_m(d, '/Invoices/Invoice/HeaderData')).to have(1).item
+        expect(d.root.name).to eq "Invoices"
+        expect(xp_m(d, '/Invoices/Invoice').size).to eq(1)
+        expect(xp_m(d, '/Invoices/Invoice/HeaderData').size).to eq(1)
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/Indicator')).to eq header[0]
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/DocumentType')).to eq "RE"
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/DocumentDate')).to eq header[1]
@@ -141,7 +141,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/PaymentTerms')).to eq header[8]
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/BaseLineDate')).to eq header[9]
 
-        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData')).to have(1).item
+        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq(1)
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/InvoiceDocumentNumber')).to eq inv_row[0]
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq po
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq line
@@ -150,7 +150,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq inv_row[4].to_s
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/ConditionType')).to eq inv_row[5]
 
-        expect(xp_m(d, '/Invoices/Invoice/GLAccounts/GLAccountData')).to have(brok_inv_rows.length).items
+        expect(xp_m(d, '/Invoices/Invoice/GLAccounts/GLAccountData').size).to eq(brok_inv_rows.length)
         brok_inv_rows.each_with_index do |row, x|
           expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[#{x + 1}]/DocumentItemInInvoiceDocument")).to eq (x+1).to_s
           expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[#{x + 1}]/GLVendorCustomer")).to eq row[1]
@@ -169,7 +169,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
         # Just verify that an MM invoice was generated.  There are no data differences between SAP / non-SAP invoices in the MM format.
         job = ExportJob.all.first
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE)
       end
 
       it "should create an MM invoice, skip GST line if GST amount is 0, and skip duty charge lines in commercial invoices" do
@@ -180,14 +180,14 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
         job = ExportJob.all.first
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE)
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.should_not be_nil
+        expect(mail).not_to be_nil
 
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
-        expect(xp_m(d, '/Invoices/Invoice/GLAccounts/GLAccountData')).to have(2).items
+        expect(xp_m(d, '/Invoices/Invoice/GLAccounts/GLAccountData').size).to eq(2)
         expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[1]/Amount")).to eq @broker_invoice_line2.charge_amount.to_s
         expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[2]/Amount")).to eq @broker_invoice_line3.charge_amount.abs.to_s
       end
@@ -197,7 +197,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
         expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[2]/GLVendorCustomer")).to eq "52111300"
       end
@@ -205,21 +205,21 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       it "should use tradecard invoice line quantity for Sets and combine like invoice lines" do
         gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
         api_client = double("ApiClient")
-        gen.should_receive(:api_client).and_return api_client
+        expect(gen).to receive(:api_client).and_return api_client
         
         product_json = {'product' => {'classifications' => [{"class_cntry_iso" => "CA", "*cf_131" => "CS"}]}}
 
-        api_client.should_receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
+        expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
 
         inv_line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>@cil.po_number, :quantity=> BigDecimal.new("20"))
         inv_line_2_tariff = inv_line_2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("4.00"))
         stub_xml_files gen
 
         gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
 
         d = REXML::Document.new @xml_files[0][:contents]
-        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData')).to have(1).item
+        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq(1)
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq @cil.po_number.split("-")[0]
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq (@cil.po_number.split("-")[1] + '0')
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/AmountDocumentCurrency')).to eq (@tariff_line.duty_amount + @tariff_line2.duty_amount + inv_line_2_tariff.duty_amount).to_s
@@ -232,10 +232,10 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         inv_line_2_tariff = inv_line_2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("4.00"))
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
 
         d = REXML::Document.new @xml_files[0][:contents]
-        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData')).to have(1).item
+        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq(1)
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq @cil.po_number.split("-")[0]
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq (@cil.po_number.split("-")[1] + '0')
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/AmountDocumentCurrency')).to eq (@tariff_line.duty_amount + @tariff_line2.duty_amount + inv_line_2_tariff.duty_amount).to_s
@@ -245,11 +245,11 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       it "should use entry quantity and combine lines for non-prepack / non-set lines" do
         gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
         api_client = double("ApiClient")
-        gen.should_receive(:api_client).and_return api_client
+        expect(gen).to receive(:api_client).and_return api_client
         
         product_json = {'product' => {'classifications' => [{"class_cntry_iso" => "CA", "*cf_131" => ""}]}}
 
-        api_client.should_receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
+        expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
 
         inv_line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>@cil.po_number, :quantity=> BigDecimal.new("20"))
         inv_line_2_tariff = inv_line_2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("4.00"))
@@ -257,10 +257,10 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         stub_xml_files gen
 
         gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
 
         d = REXML::Document.new @xml_files[0][:contents]
-        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData')).to have(1).items
+        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq(1)
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq @cil.po_number.split("-")[0]
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq (@cil.po_number.split("-")[1] + '0')
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/AmountDocumentCurrency')).to eq (@tariff_line.duty_amount + @tariff_line2.duty_amount + inv_line_2_tariff.duty_amount).to_s
@@ -270,38 +270,38 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       it "should use entry quantity and email Joanne Pauta with non-conformant line report for missing products" do
         gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
         api_client = double("ApiClient")
-        gen.should_receive(:api_client).and_return api_client
+        expect(gen).to receive(:api_client).and_return api_client
         
         # API 404's on missing product
-        api_client.should_receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_raise OpenChain::Api::ApiClient::ApiError.new(404, {'errors'=>['Not Found']})
+        expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_raise OpenChain::Api::ApiClient::ApiError.new(404, {'errors'=>['Not Found']})
         stub_xml_files gen
 
         gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
 
         d = REXML::Document.new @xml_files[0][:contents]
-        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData')).to have(1).items
+        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq(1)
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq @cil.po_number.split("-")[0]
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq (@cil.po_number.split("-")[1] + '0')
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/AmountDocumentCurrency')).to eq (@tariff_line.duty_amount + @tariff_line2.duty_amount).to_s
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq @cil.quantity.to_s
 
         job = ExportJob.all.first
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE)
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.should_not be_nil
-        mail.to.should == ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
-        mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
-        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
+        expect(mail).not_to be_nil
+        expect(mail.to).to eq(["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
+        expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
         at = mail.attachments["Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")} Exceptions.xls"]
-        at.should_not be_nil
+        expect(at).not_to be_nil
 
         sheet = get_workbook_sheet at
-        sheet.name.should == "MMGL Exceptions"
-        sheet.row(0).should == ["Entry #", "Commercial Invoice #", "PO #", "SAP Line #", "Error"]
-        sheet.row(1).should == [@entry.entry_number, @commercial_invoice.invoice_number, @cil.po_number.split("-")[0], (@cil.po_number.split("-")[1] + "0"), "No VFI Track product found for style #{@cil.part_number}."]
+        expect(sheet.name).to eq("MMGL Exceptions")
+        expect(sheet.row(0)).to eq(["Entry #", "Commercial Invoice #", "PO #", "SAP Line #", "Error"])
+        expect(sheet.row(1)).to eq([@entry.entry_number, @commercial_invoice.invoice_number, @cil.po_number.split("-")[0], (@cil.po_number.split("-")[1] + "0"), "No VFI Track product found for style #{@cil.part_number}."])
       end
 
       it "should use entry quantity and email Joanne Pauta with non-conformant line report for missing Tradecard lines" do
@@ -309,39 +309,39 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
         api_client = double("ApiClient")
-        gen.should_receive(:api_client).and_return api_client
+        expect(gen).to receive(:api_client).and_return api_client
         product_json = {'product' => {'classifications' => [{"class_cntry_iso" => "CA", "*cf_131" => "CS"}]}}
         
         # API 404's on missing product
-        api_client.should_receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
+        expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
         stub_xml_files gen
 
         gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
 
         d = REXML::Document.new @xml_files[0][:contents]
-        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData')).to have(1).items
+        expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq(1)
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq @cil.po_number.split("-")[0]
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq (@cil.po_number.split("-")[1] + '0')
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/AmountDocumentCurrency')).to eq (@tariff_line.duty_amount + @tariff_line2.duty_amount).to_s
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq @cil.quantity.to_s
 
         job = ExportJob.all.first
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE)
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.should_not be_nil
-        mail.to.should == ["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
-        mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
-        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
+        expect(mail).not_to be_nil
+        expect(mail.to).to eq(["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
+        expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
         at = mail.attachments["Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")} Exceptions.xls"]
-        at.should_not be_nil
+        expect(at).not_to be_nil
 
         sheet = get_workbook_sheet at
-        sheet.name.should == "MMGL Exceptions"
-        sheet.row(0).should == ["Entry #", "Commercial Invoice #", "PO #", "SAP Line #", "Error"]
-        sheet.row(1).should == [@entry.entry_number, @commercial_invoice.invoice_number, @cil.po_number.split("-")[0], (@cil.po_number.split("-")[1] + "0"), "No Tradecard Invoice line found for PO # #{ @cil.po_number.split("-")[0]} / SAP Line #{(@cil.po_number.split("-")[1] + "0")}"]
+        expect(sheet.name).to eq("MMGL Exceptions")
+        expect(sheet.row(0)).to eq(["Entry #", "Commercial Invoice #", "PO #", "SAP Line #", "Error"])
+        expect(sheet.row(1)).to eq([@entry.entry_number, @commercial_invoice.invoice_number, @cil.po_number.split("-")[0], (@cil.po_number.split("-")[1] + "0"), "No Tradecard Invoice line found for PO # #{ @cil.po_number.split("-")[0]} / SAP Line #{(@cil.po_number.split("-")[1] + "0")}"])
       end
 
       it "falls back to PO to find SAP Line number" do
@@ -355,7 +355,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq @cil.po_number
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq order_line.line_number.to_s
@@ -374,7 +374,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq @cil.po_number
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq order_line.line_number.to_s
@@ -387,7 +387,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         tariff_line = cil2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("0"))
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
         expect(xp_m(d, '/Invoices/Invoice/Items/ItemData').size).to eq 1
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq "10.0"
@@ -404,12 +404,12 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
           @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
 
           job = ExportJob.where(:export_type => ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE).first
-          job.should_not be_nil
+          expect(job).not_to be_nil
 
           job = ExportJob.where(:export_type => ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE).first
-          job.should_not be_nil
+          expect(job).not_to be_nil
 
-          expect(@xml_files).to have(2).items
+          expect(@xml_files.size).to eq(2)
           expect(@xml_files[0][:name]).to eq "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml"
           expect(@xml_files[1][:name]).to eq "Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xml"
 
@@ -436,14 +436,14 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).to_not be_nil
         expect(mail.to).to eq ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
-        mail.subject.should == "[VFI Track] Vandegrift, Inc. Club Monaco Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
-        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for Club Monaco for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
+        expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. Club Monaco Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
+        expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for Club Monaco for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
         at = mail.attachments["Vandegrift MM CM #{job.start_time.strftime("%Y%m%d")}.xls"]
-        at.should_not be_nil
+        expect(at).not_to be_nil
 
         sheet = get_workbook_sheet at
-        sheet.name.should == "MMGL"
+        expect(sheet.name).to eq("MMGL")
         # We only need to validate the file differences between CM and RL CA
         # Which is the company code and unallocated profit center differences
 
@@ -455,7 +455,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       end
     end
 
-    context :FFI_Invoices do
+    context "FFI_Invoices" do
 
       before :each do
         # Make line 2 a brokerage fee
@@ -475,27 +475,27 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         # A single ExportJob should have been created
         job = ExportJob.all.first
-        job.should_not be_nil
-        job.start_time.to_i.should == time.to_i
+        expect(job).not_to be_nil
+        expect(job.start_time.to_i).to eq(time.to_i)
         # Shouldn't be more than 5 seconds from export job "end time"
-        (Time.zone.now.to_i - job.end_time.to_i).should <= 5
-        job.successful.should be_true
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
-        job.attachments.length.should == 2
-        job.attachments.first.attached_file_name.should == "Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xls"
-        job.attachments.second.attached_file_name.should == "Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xml"
+        expect(Time.zone.now.to_i - job.end_time.to_i).to be <= 5
+        expect(job.successful).to be_truthy
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE)
+        expect(job.attachments.length).to eq(2)
+        expect(job.attachments.first.attached_file_name).to eq("Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xls")
+        expect(job.attachments.second.attached_file_name).to eq("Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xml")
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.should_not be_nil
-        mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
-        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
+        expect(mail).not_to be_nil
+        expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
+        expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
-        mail.attachments.should have(1).item
+        expect(mail.attachments.size).to eq(1)
 
-        mail.attachments["Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xls"].should_not be_nil
+        expect(mail.attachments["Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xls"]).not_to be_nil
 
         sheet = get_workbook_sheet mail.attachments["Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xls"]
-        sheet.name.should == "FFI"
+        expect(sheet.name).to eq("FFI")
         now = job.start_time.strftime("%m/%d/%Y")
         rows = []
         rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "31", "100023825", nil, BigDecimal.new("18.99"), "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "49999999", nil, @entry.entry_number, nil]
@@ -505,17 +505,17 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "52111300", nil, @broker_invoice_line2.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
         rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line3.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line3.charge_description[0, 50]]
 
-        sheet.row(1).should == rows[0]
-        sheet.row(2).should == rows[1]
-        sheet.row(3).should == rows[2]
-        sheet.row(4).should == rows[3]
-        sheet.row(5).should == rows[4]
-        sheet.row(6).should == rows[5]
+        expect(sheet.row(1)).to eq(rows[0])
+        expect(sheet.row(2)).to eq(rows[1])
+        expect(sheet.row(3)).to eq(rows[2])
+        expect(sheet.row(4)).to eq(rows[3])
+        expect(sheet.row(5)).to eq(rows[4])
+        expect(sheet.row(6)).to eq(rows[5])
 
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
         h = rows[0]
-        expect(xp_m(d, '/Invoices/Invoice/HeaderData')).to have(1).item
+        expect(xp_m(d, '/Invoices/Invoice/HeaderData').size).to eq(1)
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/COMPANYCODE')).to eq h[2]
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/DOCUMENTTYPE')).to eq h[1]
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/DOCUMENTDATE')).to eq @broker_invoice.invoice_date.strftime("%Y%m%d")
@@ -527,7 +527,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/BASELINEDATE')).to eq job.start_time.strftime("%Y%m%d")
 
 
-        expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData')).to have(5).items
+        expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData').size).to eq(5)
 
         rows[1..-1].each_with_index do |r, x|
           expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[#{x+1}]/COMPANYCODE")).to eq r[2]
@@ -545,7 +545,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         # A single ExportJob should have been created
         job = ExportJob.all.first
-        job.should_not be_nil
+        expect(job).not_to be_nil
         mail = ActionMailer::Base.deliveries.pop
 
         sheet = get_workbook_sheet mail.attachments["Vandegrift FI CM #{job.start_time.strftime("%Y%m%d")}.xls"]
@@ -556,7 +556,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
       it "should use unallocated profit center for CM invoices on HST/GST Lines" do
         @broker_invoice_line1.update_attributes! charge_code: "250"
-        @gen.stub(:find_profit_center).and_return "profit_center"
+        allow(@gen).to receive(:find_profit_center).and_return "profit_center"
 
         # All that we need to check here is the differences between rl ca and club monaco
         time = Time.zone.now
@@ -564,7 +564,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         # A single ExportJob should have been created
         job = ExportJob.all.first
-        job.should_not be_nil
+        expect(job).not_to be_nil
         mail = ActionMailer::Base.deliveries.pop
 
         sheet = get_workbook_sheet mail.attachments["Vandegrift FI CM #{job.start_time.strftime("%Y%m%d")}.xls"]
@@ -582,12 +582,12 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         # A single ExportJob should have been created
         job = ExportJob.all.first
-        job.should_not be_nil
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+        expect(job).not_to be_nil
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE)
         now = job.start_time.strftime("%m/%d/%Y")
 
         # Verify the profit center is the 199.. one (aside from the FFI invoice instead of MM, that's the only thing to look out for here)
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/PROFITCENTER")).to eq "19999999"
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[4]/PROFITCENTER")).to eq "19999999"
@@ -600,18 +600,18 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       it "should generate an FFI invoice for SAP PO's that have already had an invoice sent" do
         make_sap_po
 
-        @gen.stub(:previously_invoiced?).with(@entry).and_return true
+        allow(@gen).to receive(:previously_invoiced?).with(@entry).and_return true
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
         job = ExportJob.all.first
-        job.should_not be_nil
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+        expect(job).not_to be_nil
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE)
 
         mail = ActionMailer::Base.deliveries.pop
         sheet = get_workbook_sheet mail.attachments.first
         now = job.start_time.strftime("%m/%d/%Y")
 
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
         # Because we've sent an invoice for the entry already, we don't include duty or GST in the total or in the charge lines
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/INVOICINGPARTY')).to eq "100023825"
@@ -619,7 +619,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         # Since this is an SAP PO, we should be using the actual SAP profit center from the xref (and use the gl account indicating
         # a deployed brand)
-        expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData')).to have(3).items
+        expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData').size).to eq(3)
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[1]/AMOUNT")).to eq @broker_invoice_line1.charge_amount.to_s
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[2]/AMOUNT")).to eq @broker_invoice_line2.charge_amount.to_s
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/AMOUNT")).to eq @broker_invoice_line3.charge_amount.to_s
@@ -630,21 +630,21 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         # Just like we skip the gst/duty lines for SAP entries we've already sent via MM, we need to do the
         # same when we've sent the entry previously via FFI interface
 
-        @gen.stub(:previously_invoiced?).with(@entry).and_return true
+        allow(@gen).to receive(:previously_invoiced?).with(@entry).and_return true
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
         job = ExportJob.all.first
-        job.should_not be_nil
-        job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+        expect(job).not_to be_nil
+        expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE)
 
-        expect(@xml_files).to have(1).item
+        expect(@xml_files.size).to eq(1)
         d = REXML::Document.new @xml_files[0][:contents]
         # Because we've sent an invoice for the entry already, we don't include duty or GST in the total or in the charge lines
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/INVOICINGPARTY')).to eq "100023825"
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/AMOUNT')).to eq BigDecimal.new("8.00").to_s
 
         # Since this is an SAP PO, we should be using the actual SAP profit center from the xref
-        expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData')).to have(3).items
+        expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData').size).to eq(3)
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[1]/AMOUNT")).to eq @broker_invoice_line1.charge_amount.to_s
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[2]/AMOUNT")).to eq @broker_invoice_line2.charge_amount.to_s
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/AMOUNT")).to eq @broker_invoice_line3.charge_amount.to_s
@@ -653,7 +653,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       it "should generate a credit FFI invoice" do
         # Skip the duty/gst lines so only the invoice lines are accounted for, this is how it'll end up being invoiced
         # for real anyway.
-        @gen.stub(:previously_invoiced?).with(@entry).and_return true
+        allow(@gen).to receive(:previously_invoiced?).with(@entry).and_return true
         @broker_invoice_line1.update_attributes :charge_amount => BigDecimal("-5.00")
         @broker_invoice_line2.update_attributes :charge_amount => BigDecimal("-4.00")
 
@@ -669,7 +669,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/AMOUNT')).to eq BigDecimal.new("10.00").to_s
 
         # Since this is an SAP PO, we should be using the actual SAP profit center from the xref
-        expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData')).to have(3).items
+        expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData').size).to eq(3)
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[1]/CreditDebitIndicator")).to eq "H"
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[1]/AMOUNT")).to eq @broker_invoice_line1.charge_amount.abs.to_s
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[2]/CreditDebitIndicator")).to eq "H"
@@ -726,7 +726,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
           # A single ExportJob should have been created
           job = ExportJob.all.first
-          job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+          expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE)
         end
 
         it "generates FF invoices when every line is duty free" do
@@ -738,13 +738,13 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
           @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
           job = ExportJob.all.first
-          job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+          expect(job.export_type).to eq(ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE)
         end
       end
 
     end
 
-    context :multiple_invoices_same_entry do
+    context "multiple_invoices_same_entry" do
       it "should know if an entry has been sent already during the same generation and send FFI format for second" do
         # create a second broker invoice for the same entry, and make sure it's output in FFI format
         # this also tests making multiple export jobs and attaching multiple files to the email
@@ -756,12 +756,12 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
 
         job = ExportJob.where(:export_type => ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE).first
-        job.should_not be_nil
+        expect(job).not_to be_nil
 
         job = ExportJob.where(:export_type => ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE).first
-        job.should_not be_nil
+        expect(job).not_to be_nil
 
-        expect(@xml_files).to have(2).items
+        expect(@xml_files.size).to eq(2)
         expect(@xml_files[0][:name]).to eq "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml"
         expect(@xml_files[1][:name]).to eq "Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xml"
 
@@ -776,9 +776,9 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
   end
 
-  context :previously_invoiced? do
+  context "previously_invoiced?" do
     it "should identify an entry as not having been invoiced" do
-      @gen.previously_invoiced?(@entry).should be_false
+      expect(@gen.previously_invoiced?(@entry)).to be_falsey
     end
 
     it "should not identify an entry as having been invoiced if the export job is not successful" do
@@ -788,7 +788,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
       j.save!
 
-      @gen.previously_invoiced?(@entry).should be_false
+      expect(@gen.previously_invoiced?(@entry)).to be_falsey
     end
 
     it "should identify an entry as being invoiced if it has a successful export job associated with it" do
@@ -799,11 +799,11 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
       j.save!
 
-      @gen.previously_invoiced?(@entry).should be_true
+      expect(@gen.previously_invoiced?(@entry)).to be_truthy
     end
   end
 
-  context :find_broker_invoices do
+  context "find_broker_invoices" do
     it "should find broker invoices for RL Canada after June 1, 2013 that have not been succssfully invoiced" do
       # the default invoice should be found
       invoices = @gen.find_broker_invoices :rl_canada
@@ -828,12 +828,12 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
       j.save!
 
-      expect(@gen.find_broker_invoices(:rl_canada)).to have(0).items
+      expect(@gen.find_broker_invoices(:rl_canada).size).to eq(0)
     end
 
     it "should not find RL Canada invoices prior to June 1, 2013" do
       @broker_invoice.update_attributes(:invoice_date => Date.new(2013, 5, 31))
-      expect(@gen.find_broker_invoices(:rl_canada)).to have(0).items
+      expect(@gen.find_broker_invoices(:rl_canada).size).to eq(0)
     end
 
     it "should not find Club Monaco invoices prior to May 23, 2014" do
@@ -841,7 +841,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       @broker_invoice.entry.update_attributes! importer: club_monaco
 
       @broker_invoice.update_attributes(:invoice_date => Date.new(2014, 5, 22))
-      expect(@gen.find_broker_invoices(:club_monaco)).to have(0).items
+      expect(@gen.find_broker_invoices(:club_monaco).size).to eq(0)
     end
 
     it "should use custom_where if supplied to constructor" do
@@ -857,7 +857,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
     it "does not include invoices for entries with failing business rules" do
       @entry.business_validation_results.create! state: 'Fail'
-      expect(@gen.find_broker_invoices(:rl_canada)).to have(0).items
+      expect(@gen.find_broker_invoices(:rl_canada).size).to eq(0)
     end
 
     it "does not include invoices that failed and then were successfully sent later" do
@@ -876,57 +876,57 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
       j.save!
 
-      expect(@gen.find_broker_invoices(:rl_canada)).to have(0).items
+      expect(@gen.find_broker_invoices(:rl_canada).size).to eq(0)
     end
   end
 
-  context :find_generate_and_send_invoices do
+  context "find_generate_and_send_invoices" do
     it "should run in eastern timezone, call find invoices, and generate" do
       # everything done in the generation and find invoices is already tested..so just make sure this method just
       # calls the right things (yes, I'm pretty much just mocking every call.)
       zone = double("zone")
       now = double("now")
 
-      Time.stub(:use_zone).with("Eastern Time (US & Canada)").and_yield
-      Time.stub(:zone).and_return zone
-      zone.stub(:now).and_return now
-      @gen.should_receive(:find_broker_invoices).with(:rl_canada).and_return([@broker_invoice])
-      @gen.should_receive(:find_broker_invoices).with(:club_monaco).and_return([])
-      @gen.should_receive(:find_broker_invoices).with(:factory_stores).and_return([])
-      @gen.should_receive(:generate_and_send_invoices).with(:rl_canada, now, [@broker_invoice])
-      @gen.should_receive(:generate_and_send_invoices).with(:club_monaco, now, [])
-      @gen.should_receive(:generate_and_send_invoices).with(:factory_stores, now, [])
+      allow(Time).to receive(:use_zone).with("Eastern Time (US & Canada)").and_yield
+      allow(Time).to receive(:zone).and_return zone
+      allow(zone).to receive(:now).and_return now
+      expect(@gen).to receive(:find_broker_invoices).with(:rl_canada).and_return([@broker_invoice])
+      expect(@gen).to receive(:find_broker_invoices).with(:club_monaco).and_return([])
+      expect(@gen).to receive(:find_broker_invoices).with(:factory_stores).and_return([])
+      expect(@gen).to receive(:generate_and_send_invoices).with(:rl_canada, now, [@broker_invoice])
+      expect(@gen).to receive(:generate_and_send_invoices).with(:club_monaco, now, [])
+      expect(@gen).to receive(:generate_and_send_invoices).with(:factory_stores, now, [])
 
       @gen.find_generate_and_send_invoices
     end
   end
 
-  context :run_schedulable do
+  context "run_schedulable" do
     it "should instantiate a new generator and run the process" do
       # The only thing this method does is instantiate a new generator and call a method..just make sure it's doing that
-      OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.any_instance.should_receive(:find_generate_and_send_invoices)
+      expect_any_instance_of(OpenChain::CustomHandler::PoloSapInvoiceFileGenerator).to receive(:find_generate_and_send_invoices)
       OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.run_schedulable {}
     end
   end
 
-  context :exception_handling do
+  context "exception_handling" do
     it "should log an exception containing a spreadsheet with all errors encountered while building the invoice files" do
       # hook into a method in generate_invoice_output and have it raise an error so we can test error handling
       # during the invoice file generation
-      @gen.should_receive(:determine_invoice_output_format).and_raise "Error to log."
+      expect(@gen).to receive(:determine_invoice_output_format).and_raise "Error to log."
       sheet = nil
-      StandardError.any_instance.should_receive(:log_me) do |messages, file_paths|
-        messages[0].should == "See attached spreadsheet for full list of invoice numbers that could not be generated."
+      expect_any_instance_of(StandardError).to receive(:log_me) do |instance, messages, file_paths|
+        expect(messages[0]).to eq("See attached spreadsheet for full list of invoice numbers that could not be generated.")
         sheet = Spreadsheet.open(file_paths[0]).worksheet 0
       end
 
-      @gen.should_receive(:production?).and_return true
+      expect(@gen).to receive(:production?).and_return true
       @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
-      sheet.row(1)[0].should == @broker_invoice.invoice_number
-      sheet.row(1)[1].should == "Error to log."
+      expect(sheet.row(1)[0]).to eq(@broker_invoice.invoice_number)
+      expect(sheet.row(1)[1]).to eq("Error to log.")
       # This is the backtrace, so just make sure this looks somewhat like a backtrace should
-      sheet.row(1)[2].should =~ /lib\/open_chain\/custom_handler\/polo_sap_invoice_file_generator\.rb:\d+/
+      expect(sheet.row(1)[2]).to match(/lib\/open_chain\/custom_handler\/polo_sap_invoice_file_generator\.rb:\d+/)
     end
   end
 

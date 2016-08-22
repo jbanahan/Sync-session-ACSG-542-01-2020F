@@ -22,19 +22,19 @@ describe ReportResultsController do
 
       it "should show only their reports, even with flag for show all turned on" do
         get :index, :show_all=>'true'
-        response.should be_success
+        expect(response).to be_success
         results = assigns(:report_results)
-        results.should have(2).things
-        results.each {|r| r.name.should == 'base_report'}
+        expect(results.size).to eq(2)
+        results.each {|r| expect(r.name).to eq('base_report')}
       end
 
       it "should paginate results" do
         #add more reports
         21.times {|i| ReportResult.create(:name=>'base_report',:run_by_id=>@base_user.id)}
         get :index
-        response.should be_success
+        expect(response).to be_success
         results = assigns(:report_results)
-        results.should have(20).things
+        expect(results.size).to eq(20)
       end
       
       it "should sort results by run at date desc" do
@@ -45,21 +45,21 @@ describe ReportResultsController do
         last_result.update_attributes(:run_at=>5.minutes.ago)
 
         get :index
-        response.should be_success
+        expect(response).to be_success
         results = assigns(:report_results)
-        results.first.should == first_result
-        results.last.should == last_result
+        expect(results.first).to eq(first_result)
+        expect(results.last).to eq(last_result)
       end
 
       it "should show customizable reports if user can view them" do
-        CustomReportEntryInvoiceBreakdown.stub(:can_view?).with(@base_user).and_return(true)
-        CustomReportBillingAllocationByValue.stub(:can_view?).with(@base_user).and_return(true)
-        CustomReportBillingStatementByPo.stub(:can_view?).with(@base_user).and_return(true)
+        allow(CustomReportEntryInvoiceBreakdown).to receive(:can_view?).with(@base_user).and_return(true)
+        allow(CustomReportBillingAllocationByValue).to receive(:can_view?).with(@base_user).and_return(true)
+        allow(CustomReportBillingStatementByPo).to receive(:can_view?).with(@base_user).and_return(true)
 
         get :index
-        response.should be_success
+        expect(response).to be_success
         custom_reports = assigns(:customizable_reports)
-        custom_reports.should have(3).elements
+        expect(custom_reports.size).to eq(3)
       end
     end
 
@@ -71,17 +71,17 @@ describe ReportResultsController do
       
       it "should show admin users only their reports when show all flag is not there" do
         get :index
-        response.should be_success
+        expect(response).to be_success
         results = assigns(:report_results)
-        results.should have(2).things
-        results.each {|r| r.name.should == 'admin_report'}
+        expect(results.size).to eq(2)
+        results.each {|r| expect(r.name).to eq('admin_report')}
       end
       
       it "should show admin users all reports when show all flag is turned on" do
         get :index, :show_all=>'true'
-        response.should be_success
+        expect(response).to be_success
         results = assigns(:report_results)
-        results.should have(4).things
+        expect(results.size).to eq(4)
       end
     end
   end
@@ -94,13 +94,13 @@ describe ReportResultsController do
 
       it "should show report run by another user" do
         get :show, {:id=>@base_report.id}
-        response.should be_success
-        assigns(:report_result).should == @base_report
+        expect(response).to be_success
+        expect(assigns(:report_result)).to eq(@base_report)
       end
       it "should show report run by admin user" do
         get :show, {:id=>@admin_report.id}
-        response.should be_success
-        assigns(:report_result).should == @admin_report
+        expect(response).to be_success
+        expect(assigns(:report_result)).to eq(@admin_report)
       end
     end
 
@@ -111,12 +111,12 @@ describe ReportResultsController do
 
       it "should show report run by base user" do
         get :show, {:id=>@base_report.id}
-        response.should be_success
-        assigns(:report_result).should == @base_report
+        expect(response).to be_success
+        expect(assigns(:report_result)).to eq(@base_report)
       end
       it "should not show report run by another user" do
         get :show, {:id=>@admin_report.id}
-        response.should redirect_to('/')
+        expect(response).to redirect_to('/')
       end
     end
   end

@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
 
       it "creates an invoice" do
         invoice = nil
-        OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate) do |id|
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
           invoice = id
         end
         described_class.parse ca_file
@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
 
       it "finds tariff associated with part number and uses it" do
         invoice = nil
-        OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate) do |id|
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
           invoice = id
         end
         ca_product
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
 
       it "uses customs description from product" do
         invoice = nil
-        OpenChain::CustomHandler::FenixNdInvoiceGenerator.should_receive(:generate) do |id|
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
           invoice = id
         end
         ca_product.classifications.first.update_custom_value! cdefs[:class_customs_description], "Description"
@@ -120,7 +120,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShimentParser do
         us_product
 
         invoice = nil
-        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.any_instance.should_receive(:generate_and_send_invoices) do |file_number, inv|
+        expect_any_instance_of(OpenChain::CustomHandler::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
           expect(file_number).to eq "INV#"
           invoice = inv
         end

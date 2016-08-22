@@ -15,7 +15,7 @@ describe ValidationRuleEntryInvoiceChargeCode do
       Factory(:broker_invoice_line, charge_code: '999', charge_amount: 17) #unrelated entry
     end
 
-  describe :run_validation do
+  describe "run_validation" do
       
     it "passes if invoice lines with white-listed charge codes have a non-zero sum" do
       rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123', '456', '789']}.to_json)
@@ -50,7 +50,7 @@ describe ValidationRuleEntryInvoiceChargeCode do
     end
   end
 
-  describe :query do
+  describe "query" do
     before :each do 
       @results = []
       @rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123', '456', '789']}.to_json)
@@ -72,7 +72,7 @@ describe ValidationRuleEntryInvoiceChargeCode do
     end
   end
 
-  describe :check_list do
+  describe "check_list" do
     before :each do
       @rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123', '456', '789']}.to_json)
       @totals = [{'charge_code' => '123', 'amount' => 5}, 

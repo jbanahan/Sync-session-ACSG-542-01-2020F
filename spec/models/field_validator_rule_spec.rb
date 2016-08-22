@@ -7,11 +7,11 @@ describe FieldValidatorRule do
     end
     it "should pass for valid values" do
       ["abc","ab","",nil].each do |v|
-        @f.validate_input(v).should be_empty
+        expect(@f.validate_input(v)).to be_empty
       end
     end
     it "should fail for longer string" do
-      @f.validate_input("abcd").first.should == @f.custom_message
+      expect(@f.validate_input("abcd").first).to eq(@f.custom_message)
     end
   end
 

@@ -22,123 +22,123 @@ describe OpenChain::Report::LandedCostDataGenerator do
                           :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"9876543210", :entered_value=>BigDecimal.new("500")), CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"1234567890", :entered_value=>BigDecimal.new("500"))])
   end
 
-  context :landed_cost_data_for_entry do
+  context "landed_cost_data_for_entry" do
 
     it "should calculate landed cost for a single entry" do
       lc = described_class.new.landed_cost_data_for_entry @entry
-      lc[:customer_name].should == @entry.customer_name
-      lc[:entries].should have(1).item
+      expect(lc[:customer_name]).to eq(@entry.customer_name)
+      expect(lc[:entries].size).to eq(1)
       e = lc[:entries].first
-      e[:broker_reference].should == @entry.broker_reference
-      e[:customer_references].should == ["PO", "PO2", "A", "B"]
-      e[:number_of_invoice_lines].should == 3
-      e[:release_date].should == @entry.release_date
-      e[:transport_mode_code].should == @entry.transport_mode_code
-      e[:customer_reference].should == @entry.customer_references.split("\n")
+      expect(e[:broker_reference]).to eq(@entry.broker_reference)
+      expect(e[:customer_references]).to eq(["PO", "PO2", "A", "B"])
+      expect(e[:number_of_invoice_lines]).to eq(3)
+      expect(e[:release_date]).to eq(@entry.release_date)
+      expect(e[:transport_mode_code]).to eq(@entry.transport_mode_code)
+      expect(e[:customer_reference]).to eq(@entry.customer_references.split("\n"))
 
-      e[:commercial_invoices].should have(1).item
+      expect(e[:commercial_invoices].size).to eq(1)
       i = e[:commercial_invoices].first
 
-      i[:invoice_number].should == @ci.invoice_number
-      i[:first_logged].should == @entry.file_logged_date
-      i[:commercial_invoice_lines].should have(3).items
+      expect(i[:invoice_number]).to eq(@ci.invoice_number)
+      expect(i[:first_logged]).to eq(@entry.file_logged_date)
+      expect(i[:commercial_invoice_lines].size).to eq(3)
 
       l = i[:commercial_invoice_lines].first
 
-      l[:part_number].should == @ci_line_1.part_number
-      l[:po_number].should == @ci_line_1.po_number
-      l[:country_origin_code].should == @ci_line_1.country_origin_code
-      l[:mid].should == @ci_line_1.mid
-      l[:quantity].should == @ci_line_1.quantity
-      l[:hts_code].should == [@ci_line_1.commercial_invoice_tariffs.first.hts_code]
+      expect(l[:part_number]).to eq(@ci_line_1.part_number)
+      expect(l[:po_number]).to eq(@ci_line_1.po_number)
+      expect(l[:country_origin_code]).to eq(@ci_line_1.country_origin_code)
+      expect(l[:mid]).to eq(@ci_line_1.mid)
+      expect(l[:quantity]).to eq(@ci_line_1.quantity)
+      expect(l[:hts_code]).to eq([@ci_line_1.commercial_invoice_tariffs.first.hts_code])
 
       # We gave each charge the same amount so we could just use the same per_unit proration for all checks
       per_unit = BigDecimal.new("100") / BigDecimal.new("33")
 
-      l[:entered_value].should == @ci_line_1.commercial_invoice_tariffs.first.entered_value
-      l[:duty].should == @ci_line_1.commercial_invoice_tariffs.first.duty_amount
-      l[:fee].should == @ci_line_1.hmf + @ci_line_1.prorated_mpf + @ci_line_1.cotton_fee
-      l[:brokerage].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
-      l[:other].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
-      l[:international_freight].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
-      l[:inland_freight].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
-      l[:landed_cost].should == (l[:entered_value] + l[:duty] + l[:fee] + l[:international_freight] + l[:inland_freight] + l[:brokerage]  + l[:other])
-      l[:hmf].should == @ci_line_1.hmf
-      l[:mpf].should == @ci_line_1.prorated_mpf
-      l[:cotton_fee].should == @ci_line_1.cotton_fee
+      expect(l[:entered_value]).to eq(@ci_line_1.commercial_invoice_tariffs.first.entered_value)
+      expect(l[:duty]).to eq(@ci_line_1.commercial_invoice_tariffs.first.duty_amount)
+      expect(l[:fee]).to eq(@ci_line_1.hmf + @ci_line_1.prorated_mpf + @ci_line_1.cotton_fee)
+      expect(l[:brokerage]).to eq((per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP))
+      expect(l[:other]).to eq((per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP))
+      expect(l[:international_freight]).to eq((per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP))
+      expect(l[:inland_freight]).to eq((per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP))
+      expect(l[:landed_cost]).to eq(l[:entered_value] + l[:duty] + l[:fee] + l[:international_freight] + l[:inland_freight] + l[:brokerage]  + l[:other])
+      expect(l[:hmf]).to eq(@ci_line_1.hmf)
+      expect(l[:mpf]).to eq(@ci_line_1.prorated_mpf)
+      expect(l[:cotton_fee]).to eq(@ci_line_1.cotton_fee)
 
-      l[:per_unit][:entered_value].should == (l[:entered_value] / @ci_line_1.quantity)
-      l[:per_unit][:duty].should == (l[:duty] / @ci_line_1.quantity)
-      l[:per_unit][:fee].should == (l[:fee] / @ci_line_1.quantity)
-      l[:per_unit][:brokerage].should == (l[:brokerage] / @ci_line_1.quantity)
-      l[:per_unit][:international_freight].should == (l[:international_freight] / @ci_line_1.quantity)
-      l[:per_unit][:inland_freight].should == (l[:inland_freight] / @ci_line_1.quantity)
-      l[:per_unit][:other].should == (l[:other] / @ci_line_1.quantity)
-      l[:per_unit][:landed_cost].should == (l[:landed_cost] / @ci_line_1.quantity)
+      expect(l[:per_unit][:entered_value]).to eq(l[:entered_value] / @ci_line_1.quantity)
+      expect(l[:per_unit][:duty]).to eq(l[:duty] / @ci_line_1.quantity)
+      expect(l[:per_unit][:fee]).to eq(l[:fee] / @ci_line_1.quantity)
+      expect(l[:per_unit][:brokerage]).to eq(l[:brokerage] / @ci_line_1.quantity)
+      expect(l[:per_unit][:international_freight]).to eq(l[:international_freight] / @ci_line_1.quantity)
+      expect(l[:per_unit][:inland_freight]).to eq(l[:inland_freight] / @ci_line_1.quantity)
+      expect(l[:per_unit][:other]).to eq(l[:other] / @ci_line_1.quantity)
+      expect(l[:per_unit][:landed_cost]).to eq(l[:landed_cost] / @ci_line_1.quantity)
 
-      l[:percentage][:entered_value].should == ((l[:entered_value] / l[:landed_cost]) * BigDecimal.new("100"))
-      l[:percentage][:duty].should == ((l[:duty] / l[:landed_cost]) * BigDecimal.new("100"))
-      l[:percentage][:fee].should == ((l[:fee] / l[:landed_cost]) * BigDecimal.new("100"))
-      l[:percentage][:international_freight].should == ((l[:international_freight] / l[:landed_cost]) * BigDecimal.new("100"))
-      l[:percentage][:inland_freight].should == ((l[:inland_freight] / l[:landed_cost]) * BigDecimal.new("100"))
-      l[:percentage][:brokerage].should == ((l[:brokerage] / l[:landed_cost]) * BigDecimal.new("100"))
-      l[:percentage][:other].should == ((l[:other] / l[:landed_cost]) * BigDecimal.new("100"))
+      expect(l[:percentage][:entered_value]).to eq((l[:entered_value] / l[:landed_cost]) * BigDecimal.new("100"))
+      expect(l[:percentage][:duty]).to eq((l[:duty] / l[:landed_cost]) * BigDecimal.new("100"))
+      expect(l[:percentage][:fee]).to eq((l[:fee] / l[:landed_cost]) * BigDecimal.new("100"))
+      expect(l[:percentage][:international_freight]).to eq((l[:international_freight] / l[:landed_cost]) * BigDecimal.new("100"))
+      expect(l[:percentage][:inland_freight]).to eq((l[:inland_freight] / l[:landed_cost]) * BigDecimal.new("100"))
+      expect(l[:percentage][:brokerage]).to eq((l[:brokerage] / l[:landed_cost]) * BigDecimal.new("100"))
+      expect(l[:percentage][:other]).to eq((l[:other] / l[:landed_cost]) * BigDecimal.new("100"))
 
       # No point in validating the second line since it's going to be the same calculations as the first
       # The third line is interesting to us only because of the rounding calcuation we have to do with the prorated remainers
       # on 1 cent and the way we're summing multiple tariff lines
       l = i[:commercial_invoice_lines][2]
 
-      l[:entered_value].should == @ci_line_3.commercial_invoice_tariffs.inject(BigDecimal.new("0")){|s, v| s + v.entered_value}
-      l[:duty].should == BigDecimal.new("500") # add two tariff lines together
-      l[:fee].should == BigDecimal.new("0")
-      l[:brokerage].should == BigDecimal.new("33.34")
-      l[:other].should ==  BigDecimal.new("33.34")
-      l[:international_freight].should ==  BigDecimal.new("33.34")
-      l[:inland_freight].should ==  BigDecimal.new("33.34")
-      l[:landed_cost].should == (l[:entered_value] + l[:duty] + l[:fee] + l[:international_freight] + l[:inland_freight] + l[:brokerage]  + l[:other])
+      expect(l[:entered_value]).to eq(@ci_line_3.commercial_invoice_tariffs.inject(BigDecimal.new("0")){|s, v| s + v.entered_value})
+      expect(l[:duty]).to eq(BigDecimal.new("500")) # add two tariff lines together
+      expect(l[:fee]).to eq(BigDecimal.new("0"))
+      expect(l[:brokerage]).to eq(BigDecimal.new("33.34"))
+      expect(l[:other]).to eq(BigDecimal.new("33.34"))
+      expect(l[:international_freight]).to eq(BigDecimal.new("33.34"))
+      expect(l[:inland_freight]).to eq(BigDecimal.new("33.34"))
+      expect(l[:landed_cost]).to eq(l[:entered_value] + l[:duty] + l[:fee] + l[:international_freight] + l[:inland_freight] + l[:brokerage]  + l[:other])
 
       # Make sure the unique hts codes were gathered
-      l[:hts_code].should == [@ci_line_3.commercial_invoice_tariffs.first.hts_code, @ci_line_3.commercial_invoice_tariffs.second.hts_code]
+      expect(l[:hts_code]).to eq([@ci_line_3.commercial_invoice_tariffs.first.hts_code, @ci_line_3.commercial_invoice_tariffs.second.hts_code])
 
-      e[:totals][:entered_value].should == BigDecimal.new("2750")
-      e[:totals][:duty].should == BigDecimal.new("1250")
-      e[:totals][:fee].should == BigDecimal.new("100")
-      e[:totals][:international_freight].should == BigDecimal.new("100")
-      e[:totals][:inland_freight].should == BigDecimal.new("100")
-      e[:totals][:brokerage].should == BigDecimal.new("100")
-      e[:totals][:other].should == BigDecimal.new("100")
-      e[:totals][:landed_cost].should == (e[:totals][:entered_value] + e[:totals][:duty] + e[:totals][:fee] + e[:totals][:international_freight] +
+      expect(e[:totals][:entered_value]).to eq(BigDecimal.new("2750"))
+      expect(e[:totals][:duty]).to eq(BigDecimal.new("1250"))
+      expect(e[:totals][:fee]).to eq(BigDecimal.new("100"))
+      expect(e[:totals][:international_freight]).to eq(BigDecimal.new("100"))
+      expect(e[:totals][:inland_freight]).to eq(BigDecimal.new("100"))
+      expect(e[:totals][:brokerage]).to eq(BigDecimal.new("100"))
+      expect(e[:totals][:other]).to eq(BigDecimal.new("100"))
+      expect(e[:totals][:landed_cost]).to eq(e[:totals][:entered_value] + e[:totals][:duty] + e[:totals][:fee] + e[:totals][:international_freight] +
                                            e[:totals][:inland_freight] + e[:totals][:brokerage]  + e[:totals][:other])
 
-      e[:percentage][:entered_value].should == (BigDecimal.new("2750") / e[:totals][:landed_cost]) * BigDecimal.new("100")
-      e[:percentage][:duty].should == (BigDecimal.new("1250") / e[:totals][:landed_cost]) * BigDecimal.new("100")
-      e[:percentage][:fee].should == (BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100")
-      e[:percentage][:international_freight].should == (BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100")
-      e[:percentage][:inland_freight].should == (BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100")
-      e[:percentage][:brokerage].should == (BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100")
-      e[:percentage][:other].should == (BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100")
+      expect(e[:percentage][:entered_value]).to eq((BigDecimal.new("2750") / e[:totals][:landed_cost]) * BigDecimal.new("100"))
+      expect(e[:percentage][:duty]).to eq((BigDecimal.new("1250") / e[:totals][:landed_cost]) * BigDecimal.new("100"))
+      expect(e[:percentage][:fee]).to eq((BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100"))
+      expect(e[:percentage][:international_freight]).to eq((BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100"))
+      expect(e[:percentage][:inland_freight]).to eq((BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100"))
+      expect(e[:percentage][:brokerage]).to eq((BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100"))
+      expect(e[:percentage][:other]).to eq((BigDecimal.new("100") / e[:totals][:landed_cost]) * BigDecimal.new("100"))
 
-      lc[:totals][:entered_value].should == BigDecimal.new("2750")
-      lc[:totals][:duty].should == BigDecimal.new("1250")
-      lc[:totals][:fee].should == BigDecimal.new("100")
-      lc[:totals][:international_freight].should == BigDecimal.new("100")
-      lc[:totals][:inland_freight].should == BigDecimal.new("100")
-      lc[:totals][:brokerage].should == BigDecimal.new("100")
-      lc[:totals][:other].should == BigDecimal.new("100")
+      expect(lc[:totals][:entered_value]).to eq(BigDecimal.new("2750"))
+      expect(lc[:totals][:duty]).to eq(BigDecimal.new("1250"))
+      expect(lc[:totals][:fee]).to eq(BigDecimal.new("100"))
+      expect(lc[:totals][:international_freight]).to eq(BigDecimal.new("100"))
+      expect(lc[:totals][:inland_freight]).to eq(BigDecimal.new("100"))
+      expect(lc[:totals][:brokerage]).to eq(BigDecimal.new("100"))
+      expect(lc[:totals][:other]).to eq(BigDecimal.new("100"))
 
     end
 
     it "should take an entry id for calculating landed costs" do
       lc = described_class.new.landed_cost_data_for_entry @entry.id
 
-      lc[:totals][:entered_value].should == BigDecimal.new("2750")
-      lc[:totals][:duty].should == BigDecimal.new("1250")
-      lc[:totals][:fee].should == BigDecimal.new("100")
-      lc[:totals][:international_freight].should == BigDecimal.new("100")
-      lc[:totals][:inland_freight].should == BigDecimal.new("100")
-      lc[:totals][:brokerage].should == BigDecimal.new("100")
-      lc[:totals][:other].should == BigDecimal.new("100")
+      expect(lc[:totals][:entered_value]).to eq(BigDecimal.new("2750"))
+      expect(lc[:totals][:duty]).to eq(BigDecimal.new("1250"))
+      expect(lc[:totals][:fee]).to eq(BigDecimal.new("100"))
+      expect(lc[:totals][:international_freight]).to eq(BigDecimal.new("100"))
+      expect(lc[:totals][:inland_freight]).to eq(BigDecimal.new("100"))
+      expect(lc[:totals][:brokerage]).to eq(BigDecimal.new("100"))
+      expect(lc[:totals][:other]).to eq(BigDecimal.new("100"))
     end
 
     it "should prorate international freight against a single invoice if specified" do
@@ -153,20 +153,20 @@ describe OpenChain::Report::LandedCostDataGenerator do
       lc = described_class.new.landed_cost_data_for_entry @entry.id
 
       e = lc[:entries].first
-      e[:commercial_invoices].should have(2).items
+      expect(e[:commercial_invoices].size).to eq(2)
       i = e[:commercial_invoices].first
       l = i[:commercial_invoice_lines]
-      l.should have(3).items
+      expect(l.size).to eq(3)
 
       i = e[:commercial_invoices].second
       l = i[:commercial_invoice_lines]
-      l.should have(1).item
+      expect(l.size).to eq(1)
       l = i[:commercial_invoice_lines].first
 
       # The second item should have had all the new int'l freight charge applied to it as well as its share of the "global" int'l freight charge
       global_freight_proration = (@bi_line_freight.charge_amount / BigDecimal.new("44"))
-      l[:international_freight].should == (BigDecimal.new("100") + (global_freight_proration * ci_2_line_1.quantity)).round(2, BigDecimal::ROUND_HALF_UP)
-      lc[:totals][:international_freight].should == BigDecimal.new("200")
+      expect(l[:international_freight]).to eq((BigDecimal.new("100") + (global_freight_proration * ci_2_line_1.quantity)).round(2, BigDecimal::ROUND_HALF_UP))
+      expect(lc[:totals][:international_freight]).to eq(BigDecimal.new("200"))
     end
 
     it "should prorate international freight against a single invoice if specified - fuzzy freight invoice matching" do
@@ -181,20 +181,20 @@ describe OpenChain::Report::LandedCostDataGenerator do
       lc = described_class.new.landed_cost_data_for_entry @entry.id
 
       e = lc[:entries].first
-      e[:commercial_invoices].should have(2).items
+      expect(e[:commercial_invoices].size).to eq(2)
       i = e[:commercial_invoices].first
       l = i[:commercial_invoice_lines]
-      l.should have(3).items
+      expect(l.size).to eq(3)
 
       i = e[:commercial_invoices].second
       l = i[:commercial_invoice_lines]
-      l.should have(1).item
+      expect(l.size).to eq(1)
       l = i[:commercial_invoice_lines].first
 
       # The second item should have had all the new int'l freight charge applied to it as well as its share of the "global" int'l freight charge
       global_freight_proration = (@bi_line_freight.charge_amount / BigDecimal.new("44"))
-      l[:international_freight].to_s("F").should == (BigDecimal.new("100") + (global_freight_proration * ci_2_line_1.quantity)).round(2, BigDecimal::ROUND_HALF_UP).to_s("F")
-      lc[:totals][:international_freight].should == BigDecimal.new("200")
+      expect(l[:international_freight].to_s("F")).to eq((BigDecimal.new("100") + (global_freight_proration * ci_2_line_1.quantity)).round(2, BigDecimal::ROUND_HALF_UP).to_s("F"))
+      expect(lc[:totals][:international_freight]).to eq(BigDecimal.new("200"))
     end
 
     it "detects and applies freight charges for freight lines other than 0600" do
@@ -219,15 +219,15 @@ describe OpenChain::Report::LandedCostDataGenerator do
       # 400 is the sum of all freight charge lines, 33 is total # of units on invoice
       per_unit = BigDecimal.new("400") / BigDecimal.new("33")
       expect(l[:international_freight]).to eq (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
-      l[:per_unit][:international_freight].should == (l[:international_freight] / @ci_line_1.quantity)
-      l[:percentage][:international_freight].should == ((l[:international_freight] / l[:landed_cost]) * BigDecimal.new("100"))
+      expect(l[:per_unit][:international_freight]).to eq(l[:international_freight] / @ci_line_1.quantity)
+      expect(l[:percentage][:international_freight]).to eq((l[:international_freight] / l[:landed_cost]) * BigDecimal.new("100"))
       # Since we switched the "O" charge line to a freight line via the charge code type, make sure this was taken into account 
       # and our other charges are now 0
-      l[:other].should ==  BigDecimal.new("0")
+      expect(l[:other]).to eq(BigDecimal.new("0"))
 
-      e[:totals][:other].should == BigDecimal.new("0")
-      e[:totals][:international_freight].should == BigDecimal.new("400")
-      e[:percentage][:international_freight].should == (BigDecimal.new("400") / e[:totals][:landed_cost]) * BigDecimal.new("100")
+      expect(e[:totals][:other]).to eq(BigDecimal.new("0"))
+      expect(e[:totals][:international_freight]).to eq(BigDecimal.new("400"))
+      expect(e[:percentage][:international_freight]).to eq((BigDecimal.new("400") / e[:totals][:landed_cost]) * BigDecimal.new("100"))
     end
 
     it "handles cotton fee specified only at the header" do

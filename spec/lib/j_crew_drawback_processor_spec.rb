@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::JCrewDrawbackProcessor do
 
-  describe :process_entries do
+  describe "process_entries" do
     before :each do
       @cd_po = Factory(:custom_definition,:label=>"PO Number",:module_type=>"ShipmentLine",:data_type=>"string")
       @cd_del = Factory(:custom_definition,:label=>"Delivery Date",:module_type=>"Shipment",:data_type=>"date")
@@ -64,12 +64,12 @@ describe OpenChain::JCrewDrawbackProcessor do
       expect(d.ocean).to eq true #mode 10 or 11
       expect(d.importer_id).to eq @entry.importer_id
       expect(d.total_mpf).to eq @entry.mpf
-      PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).should have(1).result
+      expect(PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).size).to eq(1)
     end
     it "should only match shipments received after import" do
       @shipment.update_custom_value! @cd_del, 1.day.ago
       OpenChain::JCrewDrawbackProcessor.process_entries [@entry]
-      DrawbackImportLine.first.should be_nil
+      expect(DrawbackImportLine.first).to be_nil
     end
   end
 end

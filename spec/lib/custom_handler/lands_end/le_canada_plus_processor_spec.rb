@@ -4,8 +4,8 @@ describe OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor do
   describe "process_from_s3" do
     it "retrieves file from S3 and passes it to ZIP handler" do
       tempfile = double("tempfile")
-      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "key").and_yield tempfile
-      described_class.should_receive(:process_zip).with tempfile
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "key").and_yield tempfile
+      expect(described_class).to receive(:process_zip).with tempfile
       described_class.process_from_s3 "bucket", "key"
     end
   end

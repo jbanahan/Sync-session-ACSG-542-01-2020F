@@ -12,10 +12,10 @@ RSpec::Matchers.define :be_alphabetical_by do |field|
     ret
   end
 
-  failure_message_for_should do |c|
+  failure_message do |c|
     "expected collection #{c.to_s} to be in alphabetical order by #{field}"
   end
-  failure_message_for_should_not do |c|
+  failure_message_when_negated do |c|
     "expected collection #{c.to_s} not to be in alphabetical order by #{field}"
   end
 end
@@ -33,10 +33,10 @@ RSpec::Matchers.define :be_alphabetical_descending_by do |field|
     ret
   end
 
-  failure_message_for_should do |c|
+  failure_message do |c|
     "expected collection #{c.to_s} to be in descending alphabetical order by #{field}"
   end
-  failure_message_for_should_not do |c|
+  failure_message_when_negated do |c|
     "expected collection #{c.to_s} not to be in descending alphabetical order by #{field}"
   end
 end

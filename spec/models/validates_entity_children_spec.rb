@@ -26,34 +26,34 @@ describe ValidatesEntityChildren do
 
   describe "run_validation" do
     it "validates child objects" do
-      @v.should_receive(:run_child_validation).with(@entry.commercial_invoice_lines.first).and_return ""
-      @v.should_receive(:run_child_validation).with(@entry.commercial_invoice_lines.second).and_return ""
+      expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.first).and_return ""
+      expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.second).and_return ""
       expect(@v.run_validation(@entry)).to be_nil
     end
 
     it "returns errors for each object" do
-      @v.should_receive(:run_child_validation).with(@entry.commercial_invoice_lines.first).and_return "Error 1"
-      @v.should_receive(:run_child_validation).with(@entry.commercial_invoice_lines.second).and_return "Error 2"
+      expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.first).and_return "Error 1"
+      expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.second).and_return "Error 2"
       expect(@v.run_validation(@entry)).to eq "Error 1\nError 2"
     end
 
     it "skip lines that don't match child level search criteria" do
       @v.search_criterions.build model_field_uid:'cil_po_number',operator:'eq',value:'ABC'
-      @v.should_receive(:run_child_validation).with(@entry.commercial_invoice_lines.first).and_return "Error 1"
+      expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.first).and_return "Error 1"
 
       expect(@v.run_validation(@entry)).to eq "Error 1"
     end
 
     it "skip lines that don't match header level search criteria" do
       @v.search_criterions.build model_field_uid:'ent_entry_num',operator:'eq',value:'123'
-      @v.should_not_receive(:run_child_validation)
+      expect(@v).not_to receive(:run_child_validation)
 
       expect(@v.run_validation(@entry)).to be_nil
     end
 
     it "doesn't validated children if stop is called" do
       # Since we're calling stop, the second line shouldn't be evaluated.
-      @v.should_receive(:run_child_validation).with(@entry.commercial_invoice_lines.first) do |param|
+      expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.first) do |param|
         @v.stop_validation
         "Error"
       end
@@ -65,8 +65,8 @@ describe ValidatesEntityChildren do
     end
 
     it "calls setup_validation if defined" do
-      @v.should_receive(:setup_validation)
-      @v.should_receive(:run_child_validation).exactly(2).times
+      expect(@v).to receive(:setup_validation)
+      expect(@v).to receive(:run_child_validation).exactly(2).times
       expect(@v.run_validation(@entry)).to be_nil
     end
   end
@@ -74,21 +74,21 @@ describe ValidatesEntityChildren do
   describe "should_skip?" do
     it "skips validation when no search criterion matches" do
       @v.search_criterions.build model_field_uid:'ent_entry_num',operator:'eq',value:'123'
-      expect(@v.should_skip?(@entry)).to be_true
+      expect(@v.should_skip?(@entry)).to be_truthy
     end
 
     it "does not skip validation when search criterion matches header" do
       @v.search_criterions.build model_field_uid:'ent_entry_num', operator:'null'
-      expect(@v.should_skip?(@entry)).to be_false
+      expect(@v.should_skip?(@entry)).to be_falsey
     end
 
     it "does not skip validation when search criterion matches a single child" do
       @v.search_criterions.build model_field_uid:'cil_po_number',operator:'eq',value:'ABC'
-      expect(@v.should_skip?(@entry)).to be_false
+      expect(@v.should_skip?(@entry)).to be_falsey
     end
 
     it "does not skip validation when there are no search criterions" do
-      expect(@v.should_skip?(@entry)).to be_false
+      expect(@v.should_skip?(@entry)).to be_falsey
     end
   end
 end

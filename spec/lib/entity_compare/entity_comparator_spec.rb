@@ -22,17 +22,17 @@ describe OpenChain::EntityCompare::EntityComparator do
   let (:user) { Factory(:user) }
   let (:order) { Factory(:order) }
 
-  describe :process_by_id do
+  describe "process_by_id" do
     it "should find EntitySnapshot and process" do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
-      described_class.should_receive(:process).with(instance_of(EntitySnapshot))
+      expect(described_class).to receive(:process).with(instance_of(EntitySnapshot))
 
       described_class.process_by_id es.id
     end
   end
-  describe :process do
+  describe "process" do
     before :each do
-      comparator.stub(:delay).and_return(comparator)
+      allow(comparator).to receive(:delay).and_return(comparator)
       OpenChain::EntityCompare::ComparatorRegistry.register comparator
     end
     it "should handle object with one snapshot" do
@@ -100,14 +100,14 @@ describe OpenChain::EntityCompare::EntityComparator do
     it "delays process_by_id call if there is a comparator set to handle the snapshot" do
       OpenChain::EntityCompare::ComparatorRegistry.register comparator
 
-      described_class.should_receive(:delay).with(priority: 10).and_return described_class
-      described_class.should_receive(:process_by_id).with(snapshot.id)
+      expect(described_class).to receive(:delay).with(priority: 10).and_return described_class
+      expect(described_class).to receive(:process_by_id).with(snapshot.id)
 
       described_class.handle_snapshot snapshot
     end
 
     it "does not call process_by_id if no comparator is set to handle the snapshot" do
-      described_class.should_not_receive(:delay)
+      expect(described_class).not_to receive(:delay)
 
       described_class.handle_snapshot snapshot
     end

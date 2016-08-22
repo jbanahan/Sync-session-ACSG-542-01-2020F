@@ -5,7 +5,7 @@ describe Api::V1::DivisionsController do
     @u = Factory(:user)
     allow_api_access @u
   end
-  describe :autocomplete do
+  describe "autocomplete" do
     it "should autocomplete" do
       d = Division.create(name:'Div')
 

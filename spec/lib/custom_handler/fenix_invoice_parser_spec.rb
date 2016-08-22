@@ -11,44 +11,44 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
   it "should set s3 info if passed" do
     @k.parse @content, {:bucket=>'bucket',:key=>'key'}
     b = BrokerInvoice.first
-    b.last_file_bucket.should == 'bucket'
-    b.last_file_path.should == 'key'
+    expect(b.last_file_bucket).to eq('bucket')
+    expect(b.last_file_path).to eq('key')
   end
   it "should write invoice" do
     # There's two invoices in the spec csv file, account for that
-    Lock.should_receive(:acquire).twice.with(Lock::FENIX_INVOICE_PARSER_LOCK, times: 3).and_yield
-    Lock.should_receive(:with_lock_retry).twice.with(instance_of(BrokerInvoice)).and_yield
-    Lock.should_receive(:with_lock_retry).twice.with(instance_of(IntacctReceivable)).and_yield
+    expect(Lock).to receive(:acquire).twice.with(Lock::FENIX_INVOICE_PARSER_LOCK, times: 3).and_yield
+    expect(Lock).to receive(:with_lock_retry).twice.with(instance_of(BrokerInvoice)).and_yield
+    expect(Lock).to receive(:with_lock_retry).twice.with(instance_of(IntacctReceivable)).and_yield
 
     @k.parse @content
-    BrokerInvoice.count.should == 2
+    expect(BrokerInvoice.count).to eq(2)
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
-    bi.invoice_total.should == 4574.83 #does not include GST (code 2)
-    bi.suffix.should be_blank
-    bi.currency.should == 'CAD'
+    expect(bi.invoice_total).to eq(4574.83) #does not include GST (code 2)
+    expect(bi.suffix).to be_blank
+    expect(bi.currency).to eq('CAD')
     bi.invoice_date = Date.new(2013,1,14)
-    bi.invoice_number.should == '01-0000009'
-    bi.customer_number.should == "BOSSCI"
+    expect(bi.invoice_number).to eq('01-0000009')
+    expect(bi.customer_number).to eq("BOSSCI")
   end
   it "should write details" do
     @k.parse @content
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
-    bi.should have(3).broker_invoice_lines
+    expect(bi.broker_invoice_lines.size).to eq(3)
 
     billing = bi.broker_invoice_lines.find_by_charge_code '55' #should truncate the text if the invoice charge code starts with a number and a space
-    billing.charge_description.should == 'BILLING'
-    billing.charge_amount.should == 45
-    billing.charge_type.should == 'R'
+    expect(billing.charge_description).to eq('BILLING')
+    expect(billing.charge_amount).to eq(45)
+    expect(billing.charge_type).to eq('R')
     
     hst = bi.broker_invoice_lines.find_by_charge_code '255'
-    hst.charge_description.should == 'HST (ON)'
-    hst.charge_amount.should == 5.85
-    hst.charge_type.should == 'R'
+    expect(hst.charge_description).to eq('HST (ON)')
+    expect(hst.charge_amount).to eq(5.85)
+    expect(hst.charge_type).to eq('R')
     
     gst = bi.broker_invoice_lines.find_by_charge_code '21'
-    gst.charge_description.should == 'GST ON IMPORTS'
-    gst.charge_amount.should == 4523.98
-    gst.charge_type.should == 'D'
+    expect(gst.charge_description).to eq('GST ON IMPORTS')
+    expect(gst.charge_amount).to eq(4523.98)
+    expect(gst.charge_type).to eq('D')
   end
   it "should replace invoice" do
     #going to process, then delete a line, then reprocess and line should come back
@@ -59,14 +59,14 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     
     @k.parse @content
     bi.reload
-    bi.should have(3).broker_invoice_lines
-    bi.invoice_total.should == 4574.83
+    expect(bi.broker_invoice_lines.size).to eq(3)
+    expect(bi.invoice_total).to eq(4574.83)
   end
   it "should match to entry" do
     @k.parse @content
     bi = BrokerInvoice.find_by_broker_reference_and_source_system @ent.broker_reference, 'Fenix'
-    bi.entry.should == @ent
-    bi.entry.broker_invoice_total.should == bi.invoice_total
+    expect(bi.entry).to eq(@ent)
+    expect(bi.entry.broker_invoice_total).to eq(bi.invoice_total)
   end
 
   it "should update total broker invoice value from the entry" do
@@ -91,42 +91,42 @@ INV
 
     @k.parse @content
     @ent.reload
-    @ent.broker_invoices.should have(2).items
-    @ent.broker_invoice_total.should == @ent.broker_invoices.inject(BigDecimal.new("0.0")){|sum, inv| sum += inv.invoice_total}
+    expect(@ent.broker_invoices.size).to eq(2)
+    expect(@ent.broker_invoice_total).to eq(@ent.broker_invoices.inject(BigDecimal.new("0.0")){|sum, inv| sum += inv.invoice_total})
   end
 
   it "invoice total should not include codes 20 or 21" do
     @k.parse @content
-    BrokerInvoice.find_by_broker_reference('280952').invoice_total.should == 4574.83
-    BrokerInvoice.find_by_broker_reference('281350').invoice_total.to_f.should == 595.68
+    expect(BrokerInvoice.find_by_broker_reference('280952').invoice_total).to eq(4574.83)
+    expect(BrokerInvoice.find_by_broker_reference('281350').invoice_total.to_f).to eq(595.68)
   end
 
   it "should handle a minimal amount of information" do
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},  , 1 ,,,,,,,,"
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-000INV#', 'Fenix'
-    bi.broker_reference.should == @ent.broker_reference
+    expect(bi.broker_reference).to eq(@ent.broker_reference)
   end
 
   it "should handle errors for each invoice individually" do
-    StandardError.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # 01-00INV#2 from file 'path/to/file'."])
+    expect_any_instance_of(StandardError).to receive(:log_me).with(["Failed to process Fenix Invoice # 01-00INV#2 from file 'path/to/file'."])
 
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               # This line fails due to missing invoice date
               ",, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,\n" +
               "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},,  , 1 ,,,,,,,,\n", {:key => "path/to/file"}
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
-    bi.should_not be_nil
+    expect(bi).not_to be_nil
   end
 
   it "should raise an error if the broker reference is missing" do
-    StandardError.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # 01-00INV#2."])
+    expect_any_instance_of(StandardError).to receive(:log_me).with(["Failed to process Fenix Invoice # 01-00INV#2."])
     
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               # This line fails due to missing broker reference
               "04/27/2013,, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,"
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
-    bi.should be_nil
+    expect(bi).to be_nil
   end
 
   it "should skip lines that are missing invoice numbers" do
@@ -141,7 +141,7 @@ INV
     @k.parse @content
 
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-0039009', 'Fenix'
-    bi.should_not be_nil
+    expect(bi).not_to be_nil
   end
 
   it "falls back to finding legacy invoice numbers for updates" do
@@ -154,8 +154,8 @@ INV
 
     @k.parse @content
     bi.reload
-    bi.should have(3).broker_invoice_lines
-    bi.invoice_total.should == 4574.83
+    expect(bi.broker_invoice_lines.size).to eq(3)
+    expect(bi.invoice_total).to eq(4574.83)
   end
 
   it "uses suffix in invoice number if value in column 4 is not 0" do
@@ -187,8 +187,8 @@ INV
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 55 WITH OTHER TEXT ,BILLING, -20,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
     
-    OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
-    OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with 'Broker File', @ent.entry_number, @ent.entry_number
+    expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
+    expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with 'Broker File', @ent.entry_number, @ent.entry_number
 
     @k.parse @content
 
@@ -202,7 +202,7 @@ INV
     expect(r.currency).to eq bi.currency
     expect(r.receivable_type).to eq "VFC Sales Invoice"
 
-    expect(r.intacct_receivable_lines).to have(2).items
+    expect(r.intacct_receivable_lines.size).to eq(2)
 
     l = r.intacct_receivable_lines.first
     bl = bi.broker_invoice_lines.first
@@ -276,7 +276,7 @@ INV
     @k.parse @content
     bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
     
-    expect(bi.broker_invoice_lines).to have(2).items
+    expect(bi.broker_invoice_lines.size).to eq(2)
     expect(bi.broker_invoice_lines.first.charge_type).to eq "D"
     expect(bi.broker_invoice_lines.second.charge_type).to eq "D"
   end

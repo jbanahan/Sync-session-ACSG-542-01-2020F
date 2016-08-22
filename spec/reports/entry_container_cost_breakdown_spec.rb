@@ -27,7 +27,7 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
 
       @user = Factory(:master_user, time_zone: "UTC", entry_view: true)
       # By defualt, just allow access to all entrie (t)
-      Entry.any_instance.stub(:can_view?).with(@user).and_return true
+      allow_any_instance_of(Entry).to receive(:can_view?).with(@user).and_return true
     end
 
     describe "run" do 
@@ -113,7 +113,7 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
       end
 
       it "excludes entries user cannot view" do
-        Entry.any_instance.stub(:can_view?).with(@user).and_return false
+        allow_any_instance_of(Entry).to receive(:can_view?).with(@user).and_return false
         wb = subject.run @user, {'start_date' => '2015-06-01', 'end_date' => '2015-06-02', 'customer_number' => "CQ"}
         wb = Spreadsheet.open(wb.path)
         sheet = wb.worksheet "06-01-15 - 06-01-15"

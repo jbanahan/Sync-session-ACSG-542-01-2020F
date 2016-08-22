@@ -6,8 +6,8 @@ describe OpenChain::CustomHandler::Generic315Generator do
     context "with custom feature enabled" do
       before :each do
         ms = double
-        MasterSetup.stub(:get).and_return ms
-        ms.stub(:custom_feature?).with("Entry 315").and_return true
+        allow(MasterSetup).to receive(:get).and_return ms
+        allow(ms).to receive(:custom_feature?).with("Entry 315").and_return true
       end
 
       it "accepts entries linked to customer numbers with 315 setups" do
@@ -15,18 +15,18 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"
         c.save! 
 
-        expect(subject.accepts? :save, e).to be_true
+        expect(subject.accepts? :save, e).to be_truthy
       end
 
       it "doesn't accept entries without 315 setups" do
         e = Entry.new broker_reference: "ref", customer_number: "cust"
-        expect(subject.accepts? :save, e).to be_false
+        expect(subject.accepts? :save, e).to be_falsey
       end
 
       it "doesn't accept entries without customer numbers" do 
         c = MilestoneNotificationConfig.create! enabled: true, output_style: "standard", module_type: "Entry"
         e = Entry.new broker_reference: "cust"
-        expect(subject.accepts? :save, e).to be_false
+        expect(subject.accepts? :save, e).to be_falsey
       end
 
       it "doesn't find 315 setups for other modules" do
@@ -34,7 +34,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "SecurityFiling"
         c.save! 
 
-        expect(subject.accepts? :save, e).to be_false
+        expect(subject.accepts? :save, e).to be_falsey
       end
 
       it "doesn't accept entries linked to 315 setups that are disabled" do
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c = MilestoneNotificationConfig.new customer_number: "cust", enabled: false, output_style: "standard", module_type: "Entry"
         c.save! 
 
-        expect(subject.accepts? :save, e).to be_false
+        expect(subject.accepts? :save, e).to be_falsey
       end
 
       it "accepts if multiple configs are setup" do
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c.save! 
         c1.save!
 
-        expect(subject.accepts? :save, e).to be_true
+        expect(subject.accepts? :save, e).to be_truthy
       end
 
       it "accepts if configs are all testing" do
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true, module_type: "Entry"
         c.save!
 
-        expect(subject.accepts? :save, e).to be_true
+        expect(subject.accepts? :save, e).to be_truthy
       end
     end
     
@@ -70,10 +70,10 @@ describe OpenChain::CustomHandler::Generic315Generator do
       c.save! 
 
       ms = double
-      MasterSetup.stub(:get).and_return ms
-      ms.stub(:custom_feature?).with("Entry 315").and_return false
+      allow(MasterSetup).to receive(:get).and_return ms
+      allow(ms).to receive(:custom_feature?).with("Entry 315").and_return false
 
-      expect(subject.accepts? :save, e).to be_false
+      expect(subject.accepts? :save, e).to be_falsey
     end
   end
 
@@ -88,11 +88,11 @@ describe OpenChain::CustomHandler::Generic315Generator do
     end
 
     it "generates and sends xml for 315 update" do
-      Lock.should_receive(:acquire).with("315-123").and_yield 
+      expect(Lock).to receive(:acquire).with("315-123").and_yield 
       c = subject
       file_contents = nil
       ftp_opts = nil
-      c.should_receive(:ftp_file) do |file, opts|
+      expect(c).to receive(:ftp_file) do |file, opts|
         file_contents = file.read
         ftp_opts = opts
       end
@@ -119,7 +119,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       @config.save!
 
       ftp_opts = nil
-      subject.should_receive(:ftp_file) do |file, opts|
+      expect(subject).to receive(:ftp_file) do |file, opts|
         ftp_opts = opts
       end
       subject.receive :save, @entry
@@ -132,7 +132,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
     it "accepts if all search creatrions match" do
       @config.search_criterions.create! model_field_uid: "ent_release_date", operator: "notnull"
       c = subject
-      c.should_receive(:ftp_file)
+      expect(c).to receive(:ftp_file)
       c.receive :save, @entry
     end
 
@@ -141,7 +141,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       @config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "co", value: "NOMATCH"
       @config.search_criterions.create! model_field_uid: "ent_release_date", operator: "notnull"
       c = subject
-      c.should_not_receive(:ftp_file)
+      expect(c).not_to receive(:ftp_file)
       c.receive :save, @entry
     end
 
@@ -150,7 +150,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       m = OpenChain::CustomHandler::Generic315Generator::MilestoneUpdate.new 'release_date', @entry.release_date.in_time_zone("Eastern Time (US & Canada)")
       fingerprint = c.calculate_315_fingerprint m, []
       @entry.sync_records.create! trading_partner: "315_release_date", fingerprint: fingerprint, sent_at: Time.zone.now, confirmed_at: Time.zone.now
-      c.should_not_receive(:ftp_file)
+      expect(c).not_to receive(:ftp_file)
       c.receive :save, @entry
     end
 
@@ -161,7 +161,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       @config.save!
       c = subject
       file_contents = nil
-      c.should_receive(:ftp_file) do |file, opts|
+      expect(c).to receive(:ftp_file) do |file, opts|
         file_contents = file.read
       end
 
@@ -177,7 +177,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       @config.save!
       c = subject
       file_contents = nil
-      c.should_receive(:ftp_file) do |file, opts|
+      expect(c).to receive(:ftp_file) do |file, opts|
         file_contents = file.read
       end
 
@@ -194,7 +194,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       @config.save!
       c = subject
       file_contents = nil
-      c.should_receive(:ftp_file) do |file, opts|
+      expect(c).to receive(:ftp_file) do |file, opts|
         file_contents = file.read
       end
 
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       c = subject
       file_contents = nil
-      c.should_receive(:ftp_file).exactly(1).times do |file|
+      expect(c).to receive(:ftp_file).exactly(1).times do |file|
         file_contents = file.read
       end
       c.receive :save, @entry
@@ -237,7 +237,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       c = subject
       file_contents = nil
-      c.should_receive(:ftp_file).exactly(1).times do |file|
+      expect(c).to receive(:ftp_file).exactly(1).times do |file|
         file_contents = file.read
       end
       c.receive :save, @entry
@@ -264,7 +264,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       @entry.update_attributes! file_logged_date: Time.zone.now
 
       file_contents = []
-      subject.should_receive(:ftp_file).exactly(2).times do |file|
+      expect(subject).to receive(:ftp_file).exactly(2).times do |file|
         file_contents << file.read
       end
       subject.receive :save, @entry

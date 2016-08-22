@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'rexml/document'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
-  describe :parse_dom do
+  describe "parse_dom" do
     before :each do
       @usa = Factory(:country,iso_code:'US')
       @test_data = IO.read('spec/fixtures/files/ll_sap_order.xml')
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       expect(o.get_custom_value(@cdefs[:ord_assigned_agent]).value).to be_blank
 
-      expect(o).to have(3).order_lines
+      expect(o.order_lines.size).to eq(3)
 
       # existing product
       ol = o.order_lines.find_by_line_number(1)
@@ -140,7 +140,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect{described_class.new.parse_dom(dom)}.to_not change(Order,:count)
 
       o = Order.first
-      expect(o).to have(3).order_lines
+      expect(o.order_lines.size).to eq(3)
     end
     context 'assigned agent' do
       it "should set assigned agent to GELOWELL" do
@@ -182,7 +182,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       o = Order.first
       # didn't write the order
-      expect(o).to have(0).order_lines
+      expect(o.order_lines.size).to eq(0)
     end
 
     context 'first expected delivery date' do

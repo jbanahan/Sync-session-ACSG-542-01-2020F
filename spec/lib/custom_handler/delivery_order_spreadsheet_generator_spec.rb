@@ -72,30 +72,30 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
     }
 
     def tab_expectations sub, d, index
-      sub.should_receive(:clone_template_page).with(d.tab_title).and_return index
-      sub.should_receive(:set_cell).with(index, "K", 6, d.date)
-      sub.should_receive(:set_cell).with(index, "M", 6, d.vfi_reference)
-      sub.should_receive(:set_multiple_vertical_cells).with(index, "F", 7, d.instruction_provided_by, 4)
-      sub.should_receive(:set_cell).with(index, "B", 10, d.vessel_voyage)
-      sub.should_receive(:set_cell).with(index, "B", 12, d.importing_carrier)
-      sub.should_receive(:set_cell).with(index, "F", 12, d.freight_location)
-      sub.should_receive(:set_cell).with(index, "L", 12, d.port_of_origin)
-      sub.should_receive(:set_cell).with(index, "B", 14, d.bill_of_lading)
-      sub.should_receive(:set_cell).with(index, "F", 14, d.arrival_date)
-      sub.should_receive(:set_cell).with(index, "H", 14, d.last_free_day)
-      sub.should_receive(:set_cell).with(index, "J", 14, d.do_issued_to)
-      sub.should_receive(:set_multiple_vertical_cells).with(index, "B", 16, d.for_delivery_to, 5)
-      sub.should_receive(:set_multiple_vertical_cells).with(index, "I", 16, d.special_instructions, 5)
-      sub.should_receive(:set_cell).with(index, "B", 22, d.no_cartons)
-      sub.should_receive(:set_cell).with(index, "M", 22, d.weight)
-      sub.should_receive(:set_multiple_vertical_cells).with(index, "B", 23, d.body, 1000)
+      expect(sub).to receive(:clone_template_page).with(d.tab_title).and_return index
+      expect(sub).to receive(:set_cell).with(index, "K", 6, d.date)
+      expect(sub).to receive(:set_cell).with(index, "M", 6, d.vfi_reference)
+      expect(sub).to receive(:set_multiple_vertical_cells).with(index, "F", 7, d.instruction_provided_by, 4)
+      expect(sub).to receive(:set_cell).with(index, "B", 10, d.vessel_voyage)
+      expect(sub).to receive(:set_cell).with(index, "B", 12, d.importing_carrier)
+      expect(sub).to receive(:set_cell).with(index, "F", 12, d.freight_location)
+      expect(sub).to receive(:set_cell).with(index, "L", 12, d.port_of_origin)
+      expect(sub).to receive(:set_cell).with(index, "B", 14, d.bill_of_lading)
+      expect(sub).to receive(:set_cell).with(index, "F", 14, d.arrival_date)
+      expect(sub).to receive(:set_cell).with(index, "H", 14, d.last_free_day)
+      expect(sub).to receive(:set_cell).with(index, "J", 14, d.do_issued_to)
+      expect(sub).to receive(:set_multiple_vertical_cells).with(index, "B", 16, d.for_delivery_to, 5)
+      expect(sub).to receive(:set_multiple_vertical_cells).with(index, "I", 16, d.special_instructions, 5)
+      expect(sub).to receive(:set_cell).with(index, "B", 22, d.no_cartons)
+      expect(sub).to receive(:set_cell).with(index, "M", 22, d.weight)
+      expect(sub).to receive(:set_multiple_vertical_cells).with(index, "B", 23, d.body, 1000)
     end
 
     it "generates spreadsheet data using xl client" do
       xl_client = double("OpenChain::XLClient")
-      xl_client.should_receive(:delete_sheet).with 0
-      xl_client.should_receive(:save).with "#{MasterSetup.get.uuid}/delivery_orders/REF.xlsx", bucket: "chainio-temp"
-      subject.stub(:xl).and_return xl_client
+      expect(xl_client).to receive(:delete_sheet).with 0
+      expect(xl_client).to receive(:save).with "#{MasterSetup.get.uuid}/delivery_orders/REF.xlsx", bucket: "chainio-temp"
+      allow(subject).to receive(:xl).and_return xl_client
 
       tab_expectations subject, delivery_order, 1
 
@@ -116,14 +116,14 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
       @tf = Tempfile.new("file")
       @tf << "Content" # We need to put content in here, otherwise the mailer strips blank files from the emails
       @tf.flush
-      @tf.stub(:original_filename).and_return "file.xlsx"
+      allow(@tf).to receive(:original_filename).and_return "file.xlsx"
       @tf
     }
     let (:temp2) {
       @tf2 = Tempfile.new("file")
       @tf2 << "Content" # We need to put content in here, otherwise the mailer strips blank files from the emails
       @tf2.flush
-      @tf2.stub(:original_filename).and_return "file-b.xls"
+      allow(@tf2).to receive(:original_filename).and_return "file-b.xls"
       @tf2
     }
 
@@ -134,8 +134,8 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
 
     it "emails delivery order files to user" do
       files = [{bucket: "bucket-a", path: "path/to/file.xlsx"}, {bucket: "bucket-b", path: "path/to/file-b.xls"}]
-      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket-a", "path/to/file.xlsx", original_filename: "file.xlsx").and_return temp1
-      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket-b", "path/to/file-b.xls", original_filename: "file-b.xls").and_return temp2
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket-a", "path/to/file.xlsx", original_filename: "file.xlsx").and_return temp1
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket-b", "path/to/file-b.xls", original_filename: "file-b.xls").and_return temp2
 
       subject.send_delivery_order user, "12345", files
 
@@ -166,7 +166,7 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
       @tf = Tempfile.new("file")
       @tf << "Content" # We need to put content in here, otherwise the mailer strips blank files from the emails
       @tf.flush
-      @tf.stub(:original_filename).and_return "file.xlsx"
+      allow(@tf).to receive(:original_filename).and_return "file.xlsx"
       @tf
     }
 
@@ -176,8 +176,8 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
 
     it "generates and sends data" do
       # mock out the call to actually write the files and download them from s3
-      described_class.any_instance.should_receive(:generate_delivery_order_spreadsheets).and_return [{bucket: "bucket", path: "path/to/file.xls"}]
-      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "path/to/file.xls", original_filename: "file.xls").and_return temp1
+      expect_any_instance_of(described_class).to receive(:generate_delivery_order_spreadsheets).and_return [{bucket: "bucket", path: "path/to/file.xls"}]
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path/to/file.xls", original_filename: "file.xls").and_return temp1
 
       described_class.generate_and_send_delivery_orders user.id, entry.id
 

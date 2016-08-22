@@ -3,33 +3,33 @@ require 'spec_helper'
 describe CustomReportAnnSapChanges do
   before :each do
     @u = Factory(:master_user)
-    MasterSetup.any_instance.stub(:custom_feature?).and_return(true)
+    allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return(true)
   end
-  describe :static_methods do
+  describe "static_methods" do
     it "should not allow users not from master company" do
-      Company.any_instance.stub(:master?).and_return(false)
-      described_class.can_view?(@u).should be_false
+      allow_any_instance_of(Company).to receive(:master?).and_return(false)
+      expect(described_class.can_view?(@u)).to be_falsey
     end
     it "should not allow if Ann SAP not enabled" do
-      MasterSetup.any_instance.should_receive(:custom_feature?).with('Ann SAP').and_return(false)
-      described_class.can_view?(@u).should be_false
+      expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('Ann SAP').and_return(false)
+      expect(described_class.can_view?(@u)).to be_falsey
     end
     it "should allow product, classification fields" do
       avail = described_class.column_fields_available(@u)
-      avail.size.should == CoreModule::PRODUCT.model_fields.values.size + CoreModule::CLASSIFICATION.model_fields.values.size
-      avail.should include(ModelField.find_by_uid(:prod_uid))
-      avail.should include(ModelField.find_by_uid(:class_cntry_iso))
+      expect(avail.size).to eq(CoreModule::PRODUCT.model_fields.values.size + CoreModule::CLASSIFICATION.model_fields.values.size)
+      expect(avail).to include(ModelField.find_by_uid(:prod_uid))
+      expect(avail).to include(ModelField.find_by_uid(:class_cntry_iso))
     end
     it "should allow parameters from product, classifcation" do
       avail = described_class.criterion_fields_available(@u)
-      avail.size.should == CoreModule::PRODUCT.model_fields.values.size + CoreModule::CLASSIFICATION.model_fields.values.size
-      avail.should include(ModelField.find_by_uid(:prod_uid))
-      avail.should include(ModelField.find_by_uid(:class_cntry_iso))
+      expect(avail.size).to eq(CoreModule::PRODUCT.model_fields.values.size + CoreModule::CLASSIFICATION.model_fields.values.size)
+      expect(avail).to include(ModelField.find_by_uid(:prod_uid))
+      expect(avail).to include(ModelField.find_by_uid(:class_cntry_iso))
     end
 
   end
 
-  describe :run do
+  describe "run" do
     def make_eligible_product
       tr = Factory(:tariff_record)
       cls = tr.classification
@@ -52,9 +52,9 @@ describe CustomReportAnnSapChanges do
       cls2.update_custom_value! @appr, 2.days.ago
       cls2.product.update_custom_value! @sap, 3.days.ago
       arrays = @rc.to_arrays @u
-      arrays.should have(2).rows
-      arrays[1][0].should == p.unique_identifier
-      arrays[1][1].should == p.classifications.first.country.iso_code
+      expect(arrays.size).to eq(2)
+      expect(arrays[1][0]).to eq(p.unique_identifier)
+      expect(arrays[1][1]).to eq(p.classifications.first.country.iso_code)
     end
     it "should write difference columns" do
       p = make_eligible_product
@@ -64,45 +64,45 @@ describe CustomReportAnnSapChanges do
       es.update_attributes(created_at:3.days.ago)
       diffs.each {|d| p.update_custom_value! @cdefs[d], "NEW-#{d}" }
       arrays = @rc.to_arrays @u
-      arrays.should have(2).rows
+      expect(arrays.size).to eq(2)
       row = arrays[1]
       diffs.each_with_index do |d,i|
         new_val = row[3+(i*2)]
-        new_val.should == "NEW-#{d}"
+        expect(new_val).to eq("NEW-#{d}")
 
         old_val = row[2+(i*2)]
-        old_val.should == "OLD-#{d}"
+        expect(old_val).to eq("OLD-#{d}")
       end
     end
     it "should include web links" do
       @rc.include_links = true
-      MasterSetup.any_instance.stub(:request_host).and_return('http://xxxx')
+      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return('http://xxxx')
       p = make_eligible_product
       arrays = @rc.to_arrays @u
-      arrays[1][0].should == "http://xxxx/products/#{p.id}"
-      arrays[1][1].should == p.unique_identifier
+      expect(arrays[1][0]).to eq("http://xxxx/products/#{p.id}")
+      expect(arrays[1][1]).to eq(p.unique_identifier)
     end
     it "should not include classification with approval after sap revised date even if another classification is before" do
       p = make_eligible_product
       cls = Factory(:classification,product:p)
       cls.update_custom_value! @appr, 0.days.ago
       arrays = @rc.to_arrays @u
-      arrays.size.should == 2
-      arrays[1][1].should == p.classifications.first.country.iso_code
+      expect(arrays.size).to eq(2)
+      expect(arrays[1][1]).to eq(p.classifications.first.country.iso_code)
     end
     it "should filter on extra parameters" do
       find_me = make_eligible_product
       dont_find_me = make_eligible_product
       @rc.search_criterions.build(model_field_uid:'prod_uid',operator:'eq',value:find_me.unique_identifier)
       arrays = @rc.to_arrays @u
-      arrays.size.should == 2
-      arrays[1][0].should == find_me.unique_identifier 
+      expect(arrays.size).to eq(2)
+      expect(arrays[1][0]).to eq(find_me.unique_identifier) 
     end
     it "should handle records with no snapshots" do
       p = make_eligible_product
       arrays = @rc.to_arrays @u
-      arrays.size.should == 2
-      arrays[1][2].should == ""
+      expect(arrays.size).to eq(2)
+      expect(arrays[1][2]).to eq("")
     end
     it "should handle records with no snapshots before approved date" do
       p = make_eligible_product
@@ -111,8 +111,8 @@ describe CustomReportAnnSapChanges do
       es = p.create_snapshot @u
       diffs.each {|d| p.update_custom_value! @cdefs[d], "NEW-#{d}" }
       arrays = @rc.to_arrays @u
-      arrays.should have(2).rows
-      arrays[1][2].should == "" 
+      expect(arrays.size).to eq(2)
+      expect(arrays[1][2]).to eq("") 
     end
     it "should use most recent snapshot before approved date" do
       p = make_eligible_product
@@ -128,9 +128,9 @@ describe CustomReportAnnSapChanges do
       es.update_attributes(created_at:1.days.ago)
       diffs.each {|d| p.update_custom_value! @cdefs[d], "NEW-#{d}" }
       arrays = @rc.to_arrays @u
-      arrays.should have(2).rows
-      arrays[1][2].should == "OLD-origin"
-      arrays[1][3].should == "NEW-origin"
+      expect(arrays.size).to eq(2)
+      expect(arrays[1][2]).to eq("OLD-origin")
+      expect(arrays[1][3]).to eq("NEW-origin")
     end
     it "should write headings" do
       p = make_eligible_product
@@ -139,7 +139,7 @@ describe CustomReportAnnSapChanges do
         expected << "Old #{@cdefs[d].model_field.label}"
         expected << "New #{@cdefs[d].model_field.label}"
       end
-      @rc.to_arrays(@u).first.should == expected
+      expect(@rc.to_arrays(@u).first).to eq(expected)
     end
   end
 end

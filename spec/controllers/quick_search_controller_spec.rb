@@ -9,9 +9,9 @@ describe QuickSearchController do
     sign_in_as @u
   end
 
-  context :show do 
+  context "show" do 
     it "should put appropriate modules into @available_modules" do
-      described_class.any_instance.should_receive(:with_core_module_fields).with(@u).and_yield(CoreModule::ENTRY, []).and_yield(CoreModule::PRODUCT, [])
+      expect_any_instance_of(described_class).to receive(:with_core_module_fields).with(@u).and_yield(CoreModule::ENTRY, []).and_yield(CoreModule::PRODUCT, [])
 
       get :show, v: 'Test'
 
@@ -23,9 +23,9 @@ describe QuickSearchController do
     end
   end
 
-  context :by_module do
+  context "by_module" do
     it "should return result for core module" do
-      CoreModule.any_instance.stub(:quicksearch_extra_fields).and_return []
+      allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
       cd_1 = Factory(:custom_definition, :module_type=>"Entry", :quick_searchable => true, :label=>'cfield')
       ent = Factory(:entry,:entry_number=>'12345678901')
       ent.update_custom_value! cd_1, "Test"
@@ -59,7 +59,7 @@ describe QuickSearchController do
       Factory(:entry, :broker_reference => "123_second", :file_logged_date => DateTime.now - 1)
       Factory(:entry, :broker_reference => "123_last", :file_logged_date => DateTime.now - 2)
       Factory(:entry, :broker_reference => "123_first", :file_logged_date => DateTime.now)
-      CoreModule::ENTRY.should_receive(:quicksearch_sort_by).at_least(1).times.and_return "entries.file_logged_date"
+      expect(CoreModule::ENTRY).to receive(:quicksearch_sort_by).at_least(1).times.and_return "entries.file_logged_date"
       
       get :by_module, module_type:'Entry', v: '123'
       expect(response).to be_success
@@ -71,7 +71,7 @@ describe QuickSearchController do
     end
 
     it "should return a result for Vendor" do
-      CoreModule.any_instance.stub(:quicksearch_extra_fields).and_return []
+      allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
       vendor = Factory(:company, :name=>'Company', vendor: true, system_code: "CODE")
       get :by_module, module_type: "Company", v: 'Co'
       expect(response).to be_success
@@ -91,7 +91,7 @@ describe QuickSearchController do
     end
 
     it "should return a result for BrokerInvoice for an importer company" do
-      CoreModule.any_instance.stub(:quicksearch_extra_fields).and_return []
+      allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
       c = Factory(:company, importer: true)
       user = Factory(:user, company: c, broker_invoice_view: true)
       sign_in_as user
@@ -120,9 +120,9 @@ describe QuickSearchController do
     it "returns extra fields" do
       e = Factory(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 1")
       e2 = Factory(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 2")
-      Entry.stub(:can_view_importer?).and_return true
-      CoreModule.any_instance.stub(:quicksearch_fields).and_return [:ent_location_of_goods]
-      CoreModule.any_instance.stub(:quicksearch_extra_fields).and_return [:ent_importer_tax_id]
+      allow(Entry).to receive(:can_view_importer?).and_return true
+      allow_any_instance_of(CoreModule).to receive(:quicksearch_fields).and_return [:ent_location_of_goods]
+      allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return [:ent_importer_tax_id]
       get :by_module, module_type: "Entry", v: "Cleveland"
       expect(response).to be_success
       r = JSON.parse response.body
@@ -143,7 +143,7 @@ describe QuickSearchController do
     end
 
     it "should 404 if user doesn't have permission" do
-      CoreModule::ENTRY.stub(:view?).and_return false
+      allow(CoreModule::ENTRY).to receive(:view?).and_return false
       expect {get :by_module, module_type:'Entry', v: '123'}.to raise_error ActionController::RoutingError
     end
     it "should 404 on bad :module_type" do

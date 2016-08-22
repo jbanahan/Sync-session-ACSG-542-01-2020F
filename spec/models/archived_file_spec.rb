@@ -1,17 +1,17 @@
 require 'spec_helper'
 
 describe ArchivedFile do
-  describe :make_from_file! do
+  describe "make_from_file!" do
     it "should make with file" do
       f = double('file')
       t = 'filetype'
       c = 'comm'
-      Attachment.any_instance.should_receive(:attached=).with(f)
+      expect_any_instance_of(Attachment).to receive(:attached=).with(f)
       af = ArchivedFile.make_from_file! f, t, c
       af = ArchivedFile.find af.id #reload from scratch
-      af.attachment.should_not be_nil
-      af.file_type.should == t
-      af.comment.should == c
+      expect(af.attachment).not_to be_nil
+      expect(af.file_type).to eq(t)
+      expect(af.comment).to eq(c)
     end
     
   end

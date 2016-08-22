@@ -11,19 +11,19 @@ describe DelayedJobsController do
 
     it "should be successful" do
       delete :destroy, :id => @dj.id
-      response.should redirect_to request.referrer
+      expect(response).to redirect_to request.referrer
     end
 
     it "should reject if user isn't sys admin" do
       @u.sys_admin = false
       @u.save!
       delete :destroy, :id => @dj.id
-      response.should redirect_to root_path
-      flash[:errors].should have(1).message
+      expect(response).to redirect_to root_path
+      expect(flash[:errors].size).to eq(1)
     end
   end
 
-  describe :bulk_destroy do
+  describe "bulk_destroy" do
     before :each do
       @dj_1 = Delayed::Job.create!
       @dj_1.handler = "--- !ruby/object:Delayed::PerformableMethod\nobject: !ruby/ActiveRecord:ReportResult"
@@ -42,8 +42,8 @@ describe DelayedJobsController do
       @u.save!
       delete :bulk_destroy, :id => @dj_1.id
       expect(Delayed::Job.count).to eq 3
-      flash[:errors].should have(1).message
-      response.should redirect_to root_path
+      expect(flash[:errors].size).to eq(1)
+      expect(response).to redirect_to root_path
     end
 
     it "destroys jobs with same class as input job" do

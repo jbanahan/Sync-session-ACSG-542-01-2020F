@@ -64,19 +64,19 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport do
     let (:user) { Factory(:user, company: jcrew) }
 
     it "allows users with entry view and can view company to see reporting" do
-      user.should_receive(:view_entries?).and_return true
+      expect(user).to receive(:view_entries?).and_return true
 
-      expect(described_class.permission? user).to be_true
+      expect(described_class.permission? user).to be_truthy
     end
 
     it "prevents users without view entry permissions" do 
-      user.should_receive(:view_entries?).and_return false
-      expect(described_class.permission? user).to be_false
+      expect(user).to receive(:view_entries?).and_return false
+      expect(described_class.permission? user).to be_falsey
     end
 
     it "prevents users who can't see crew company" do
-      user.stub(:view_entries?).and_return true
-      expect(described_class.permission? Factory(:user)).to be_false
+      allow(user).to receive(:view_entries?).and_return true
+      expect(described_class.permission? Factory(:user)).to be_falsey
     end
   end
 end

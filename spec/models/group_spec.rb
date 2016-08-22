@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Group do
-  describe :visible_to_user do
+  describe "visible_to_user" do
     before :each do
       @master_only = Factory(:group)
     end

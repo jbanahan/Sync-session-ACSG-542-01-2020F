@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
       end
 
       it "processes file via xl_client" do
-        @xl_client.should_receive(:all_row_values).and_yield(["Header"]).and_yield @row
+        expect(@xl_client).to receive(:all_row_values).and_yield(["Header"]).and_yield @row
         described_class.new(@xl_client).process_file
 
         # Just make sure a product was created
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
         # This is largely done so the style won't be a decimal value, so just test w/ the style column being a float.
         @row[0] = 12.0
 
-        @xl_client.should_receive(:all_row_values).and_yield(["Header"]).and_yield @row
+        expect(@xl_client).to receive(:all_row_values).and_yield(["Header"]).and_yield @row
         described_class.new(@xl_client).process_file
         expect(Product.where(unique_identifier: "LERETURNS-12-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer_id: @importer.id).first).to_not be_nil
       end
@@ -116,8 +116,8 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
 
   describe "process_from_s3" do
     it "handles integration client parser values" do
-      OpenChain::XLClient.should_receive(:new).with('path/to/file.txt', {bucket: "bucket"}).and_return double("XLClient")
-      described_class.any_instance.should_receive(:process_file)
+      expect(OpenChain::XLClient).to receive(:new).with('path/to/file.txt', {bucket: "bucket"}).and_return double("XLClient")
+      expect_any_instance_of(described_class).to receive(:process_file)
 
       described_class.process_from_s3 'bucket', 'path/to/file.txt'
     end

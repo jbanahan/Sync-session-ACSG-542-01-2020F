@@ -31,8 +31,8 @@ describe OpenChain::CustomHandler::JJill::JJillSupport do
         factory_id:27
       )
       cust_val = double('CustomValue')
-      cust_val.should_receive(:value).and_return 'Boat'
-      o.should_receive(:get_custom_value).with(instance_of CustomDefinition).and_return cust_val
+      expect(cust_val).to receive(:value).and_return 'Boat'
+      expect(o).to receive(:get_custom_value).with(instance_of CustomDefinition).and_return cust_val
       o.order_lines.build(quantity:10,price_per_unit:40,sku:'ABCDEF')
       o.order_lines.build(quantity:11,price_per_unit:41,sku:'ABCDEFG')
 

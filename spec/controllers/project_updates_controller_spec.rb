@@ -7,9 +7,9 @@ describe ProjectUpdatesController do
 
     sign_in_as @u
   end
-  describe :create do
+  describe "create" do
     it "should set created_by" do
-      Project.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Project).to receive(:can_edit?).and_return true
       p = Factory(:project)
       post :create, project_id:p.id, project_update:{body:'abc'}
       expect(response).to be_success
@@ -26,7 +26,7 @@ describe ProjectUpdatesController do
       expect(r['project_update']['project_id']).to eq pu.project_id
     end
     it "should return 401 if user cannot edit project_update" do
-      Project.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Project).to receive(:can_edit?).and_return false
       p = Factory(:project)
       post :create, project_id:p.id, project_update:{body:'abc'}
       p.reload
@@ -35,7 +35,7 @@ describe ProjectUpdatesController do
       expect(JSON.parse(response.body)['error']).to match /permission/
     end
   end
-  describe :update do
+  describe "update" do
     it "should reject if user is not created_by" do
       pu = Factory(:project_update,created_by:Factory(:user),body:'x')
       put :update, project_id:pu.project_id, id:pu.id, project_update:{id:pu.id,body:'y'}

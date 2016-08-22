@@ -8,13 +8,13 @@ describe Api::V1::Admin::CustomViewTemplatesController do
     use_json
   end
 
-  describe :edit do
+  describe "edit" do
     it "renders template JSON for a sys-admin" do
       mf_collection = [{:mfid=>:prod_attachment_count, :label=>"Attachment Count", :datatype=>:integer}, 
                        {:mfid=>:prod_attachment_types, :label=>"Attachment Types", :datatype=>:string}]
       cvt = CustomViewTemplate.first
       cvt.search_criterions << Factory(:search_criterion)
-      described_class.any_instance.should_receive(:get_mf_digest).with(cvt).and_return mf_collection
+      expect_any_instance_of(described_class).to receive(:get_mf_digest).with(cvt).and_return mf_collection
       get :edit, id: cvt.id
       expect(response.body).to eq({template: cvt, criteria: cvt.search_criterions.map{ |sc| sc.json(@u) }, model_fields: mf_collection}.to_json)
     end
@@ -30,7 +30,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
     end
   end
 
-  describe :update do
+  describe "update" do
     before(:each) do
       @cvt_new_criteria = [{"mfid"=>"prod_uid", "label"=>"Unique Identifier", "operator"=>"eq", "value"=>"x", "datatype"=>"string", "include_empty"=>false}]
       @cvt = CustomViewTemplate.first
@@ -78,7 +78,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
     end
   end
 
-  describe :get_mf_digest do
+  describe "get_mf_digest" do
     it "takes the model fields associated with a template's module returns only the mfid, label, and datatype fields" do
       cvt = Factory(:custom_view_template, module_type: "Product")
       mfs = described_class.new.get_mf_digest cvt

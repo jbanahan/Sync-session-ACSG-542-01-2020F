@@ -54,7 +54,7 @@ describe OpenChain::PollingJob do
     end
 
     it "uses different timezone if timezone method is overridden" do
-      subject.should_receive(:timezone).and_return "Hawaii"
+      expect(subject).to receive(:timezone).and_return "Hawaii"
 
       start_time = nil
       end_time = nil
@@ -69,7 +69,7 @@ describe OpenChain::PollingJob do
     end
 
     it "raises an error (and doesn't log keyjsonitem) on bad timezone" do
-      subject.stub(:timezone).and_return "Not a Timezone"
+      allow(subject).to receive(:timezone).and_return "Not a Timezone"
 
       expect { subject.poll {|s, e|} }.to raise_error "'Not a Timezone' is not a valid TimeZone."
       job = KeyJsonItem.polling_job("FakePollingJob").first
@@ -83,7 +83,7 @@ describe OpenChain::PollingJob do
     end
 
     it "allows overridding null_start_time to provide different start time" do
-      subject.stub(:null_start_time).and_return "2010-01-01T00:00:00-10:00"
+      allow(subject).to receive(:null_start_time).and_return "2010-01-01T00:00:00-10:00"
 
       start_time = nil
       end_time = nil

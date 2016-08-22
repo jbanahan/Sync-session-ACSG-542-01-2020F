@@ -1,10 +1,10 @@
 require 'spec_helper'
 
 describe OpenChain::OfficialTariffProcessor::TariffProcessor do
-  describe :process_country do
+  describe "process_country" do
     it "should do nothing if country not in registry" do
       c = double(:country)
-      OpenChain::OfficialTariffProcessor::TariffProcessorRegistry.should_receive(:get).with(c).and_return nil
+      expect(OpenChain::OfficialTariffProcessor::TariffProcessorRegistry).to receive(:get).with(c).and_return nil
       # shouldn't fail
       described_class.process_country(c)
     end
@@ -32,8 +32,8 @@ describe OpenChain::OfficialTariffProcessor::TariffProcessor do
       # ignore for another country
       Factory(:official_tariff,special_rates:'Free: (CO)')
 
-      ep.should_receive(:process).once.with(new_spi1).ordered
-      ep.should_receive(:process).once.with(new_spi2).ordered
+      expect(ep).to receive(:process).once.with(new_spi1).ordered
+      expect(ep).to receive(:process).once.with(new_spi2).ordered
 
       described_class.process_country c
     end

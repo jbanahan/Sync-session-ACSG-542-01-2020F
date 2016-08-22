@@ -13,8 +13,8 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
         # saves us having to create datacrossreference objects for every test
         @validated_fabrics = Set.new ['Cotton', 'Spandex']
         # Stub the include? method so that any value passed to it is considered valid
-        @validated_fabrics.stub(:include?).and_return true
-        @p.stub(:all_validated_fabrics).and_return @validated_fabrics
+        allow(@validated_fabrics).to receive(:include?).and_return true
+        allow(@p).to receive(:all_validated_fabrics).and_return @validated_fabrics
       end
 
       it "parses simple X% Fiber content" do
@@ -314,13 +314,13 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       changed_at = 1.day.ago
       @prod.update_column :changed_at, changed_at
       @prod.update_column :updated_at, changed_at
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_truthy
 
       @prod.reload
       expect(@prod.get_custom_value(@test_cds[:fabric_type_1]).value).to eq "Outer"
       expect(@prod.get_custom_value(@test_cds[:fabric_1]).value).to eq "Canvas"
       expect(@prod.get_custom_value(@test_cds[:fabric_percent_1]).value).to eq BigDecimal.new("100")
-      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_false
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_falsey
       # Make sure unused fields are deleted
       expect(@prod.custom_values.find{|cv| cv.custom_definition_id == @test_cds[:fabric_type_2].id}).to be_nil
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Passed"
@@ -332,14 +332,14 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
     it "detects an error and updates fields based on that" do
       @prod.update_custom_value! @test_cds[:fiber_content], "30/1'S COTTON MINI PIQUE"
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be_false
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_falsey
 
       @prod.reload
       # Make sure the portions that are partially understood are saved off
       expect(@prod.get_custom_value(@test_cds[:fabric_type_1]).value).to eq "Outer"
       expect(@prod.get_custom_value(@test_cds[:fabric_1]).value).to eq ""
       expect(@prod.get_custom_value(@test_cds[:fabric_percent_1]).value).to eq BigDecimal.new("30")
-      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_true
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_truthy
       expect(@prod.get_custom_value(@test_cds[:fabric_type_2]).value).to eq "Outer"
       expect(@prod.get_custom_value(@test_cds[:fabric_percent_2]).value).to eq BigDecimal.new("1")
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Failed: Invalid Fiber Content % format."
@@ -359,7 +359,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @prod.update_custom_value! @test_cds[:fabric_1], "Fabric"
       @prod.update_custom_value! @test_cds[:fabric_percent_1], "0"
 
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_truthy
 
       @prod.reload
       expect(@prod.get_custom_value(@test_cds[:fabric_type_1]).value).to eq "Type"
@@ -379,7 +379,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @prod.update_custom_value! @test_cds[:fabric_1], "Fabric"
       @prod.update_custom_value! @test_cds[:fabric_percent_1], "0"
 
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_truthy
 
       @prod.reload
       expect(@prod.get_custom_value(@test_cds[:fabric_type_1]).value).to eq "Outer"
@@ -395,15 +395,15 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Blah"
 
       # This first pass generates the fingerprint..marking it as invalid
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be_false
-      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_true
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_falsey
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_truthy
 
       # Add an xref so 'Blah' is now valid
       DataCrossReference.create! key: "Blah", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
      
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_truthy
       @prod.reload
-      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_false
+      expect(@prod.get_custom_value(@test_cds[:msl_fiber_failure]).value).to be_falsey
     end
 
     it "updates failure message if new failure type is encountered, but underlying data is unchanged" do
@@ -412,12 +412,12 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       # so the error message was telling the user the wrong thing was bad.
       @prod.update_custom_value! @test_cds[:fiber_content], "50% Cotton / 50% Wool"
 
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be_false
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_falsey
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Failed: Invalid fabric 'Cotton' found."
 
       DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
 
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be_false
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_falsey
       expect(@prod.get_custom_value(@test_cds[:msl_fiber_status]).value).to eq "Failed: Invalid fabric 'Wool' found."
     end
   end
@@ -446,8 +446,8 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       failed_product.custom_values.first.update_column :updated_at, (Time.zone.now - 1.day)
       failed_product.update_custom_value! @test_cds[:msl_fiber_failure], true
 
-      described_class.should_receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
-      described_class.should_receive(:parse_and_set_fiber_content).with failed_product.id, instance_of(described_class)
+      expect(described_class).to receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
+      expect(described_class).to receive(:parse_and_set_fiber_content).with failed_product.id, instance_of(described_class)
       described_class.run_schedulable({'last_run_time' => 5.minutes.ago.to_s})
 
       # Make sure the json key is updated too (we're only storing down to the minute)
@@ -458,7 +458,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
     it "uses previously set key json start date" do
       KeyJsonItem.polo_fiber_report('fiber_analysis').first_or_create! json_data: "{\"last_run_time\":\"#{5.minutes.ago.to_s}\"}"
 
-      described_class.should_receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
+      expect(described_class).to receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
       described_class.run_schedulable
 
       # Make sure the json key is updated too (we're only storing down to the minute)
@@ -479,7 +479,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
     end
 
     it "updates given styles" do
-      described_class.should_receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
+      expect(described_class).to receive(:parse_and_set_fiber_content).with @prod.id, instance_of(described_class)
       described_class.update_styles "A  \n   #{@prod.unique_identifier}    \n    B"
     end
   end

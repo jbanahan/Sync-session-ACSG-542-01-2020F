@@ -4,7 +4,7 @@ describe OpenChain::BusinessRulesNotifier do
   before do
     Factory(:master_company)
     @fake_client = double('Slack::Web::Client')
-    OpenChain::SlackClient.stub(:slack_client).and_return @fake_client
+    allow(OpenChain::SlackClient).to receive(:slack_client).and_return @fake_client
   end
 
   it 'catches all errors and returns only one error' do
@@ -19,8 +19,8 @@ describe OpenChain::BusinessRulesNotifier do
     bvt1.create_results! true
     bvt2.create_results! true
 
-    @fake_client.should_receive(:chat_postMessage).ordered.and_raise("Error 1")
-    @fake_client.should_receive(:chat_postMessage).ordered.and_raise("Error 2")
+    expect(@fake_client).to receive(:chat_postMessage).ordered.and_raise("Error 1")
+    expect(@fake_client).to receive(:chat_postMessage).ordered.and_raise("Error 2")
 
     expect { OpenChain::BusinessRulesNotifier.run_schedulable }.to raise_error("Error 1")
   end
@@ -33,7 +33,7 @@ describe OpenChain::BusinessRulesNotifier do
     bvt.create_results! true
 
     expected = {as_user: true, channel:@company.slack_channel, text: "DEV MESSAGE: #{@company.name_with_customer_number} has 1 failed business rules"}
-    @fake_client.should_receive(:chat_postMessage).with(expected)
+    expect(@fake_client).to receive(:chat_postMessage).with(expected)
     OpenChain::BusinessRulesNotifier.run_schedulable
   end
 

@@ -8,12 +8,12 @@ require 'spec_helper'
       bi = Factory(:broker_invoice)
       @ss.broker_invoices << bi
       
-      expect(described_class.include?(bi.id)).to be_true
-      expect(described_class.include?(100)).to be_false
+      expect(described_class.include?(bi.id)).to be_truthy
+      expect(described_class.include?(100)).to be_falsey
     end
   end
 
-  describe :belongs_to_customer? do
+  describe "belongs_to_customer?" do
     before :each do
       @co = Factory(:company)
       @ss.update_attributes(customer: @co)
@@ -23,33 +23,33 @@ require 'spec_helper'
 
     it "accepts invoices that belong to customer" do
       bi = Factory(:broker_invoice, entry: Factory(:entry, importer: @co))
-      expect(@ss.belongs_to_customer?(bi.id)).to be_true
+      expect(@ss.belongs_to_customer?(bi.id)).to be_truthy
     end
 
     it "accepts invoices that belong to linked customer" do
       bi = Factory(:broker_invoice, entry: Factory(:entry, importer: @co_linked))
-      expect(@ss.belongs_to_customer?(bi.id)).to be_true
+      expect(@ss.belongs_to_customer?(bi.id)).to be_truthy
     end
 
     it "rejects invoices that don't belong to either customer or its linked companies" do
       bi = Factory(:broker_invoice, entry: Factory(:entry, importer: Factory(:importer)))
-      expect(@ss.belongs_to_customer?(bi.id)).to be_false
+      expect(@ss.belongs_to_customer?(bi.id)).to be_falsey
     end 
 
     it "rejects non-existent invoices" do
-      expect(@ss.belongs_to_customer?(1000)).to be_false
+      expect(@ss.belongs_to_customer?(1000)).to be_falsey
     end
   end
 
-  describe :can_view? do
+  describe "can_view?" do
     it "returns true if user has permission to view broker invoices" do
       u = Factory(:user)
-      u.stub(:view_broker_invoices?).and_return true
-      expect(@ss.can_view?(u)).to be_true
+      allow(u).to receive(:view_broker_invoices?).and_return true
+      expect(@ss.can_view?(u)).to be_truthy
     end
   end
 
-  describe :total do
+  describe "total" do
     it "returns the sum of the invoice totals" do
       @ss.broker_invoices = [Factory(:broker_invoice, invoice_total: 10), Factory(:broker_invoice, invoice_total: 5)]
       @ss.save!
@@ -57,7 +57,7 @@ require 'spec_helper'
     end
   end
 
-  describe :remove! do
+  describe "remove!" do
     before(:each) { @ss.broker_invoices << Factory(:broker_invoice) }
 
     it "removes specified invoice from the statement" do
@@ -72,7 +72,7 @@ require 'spec_helper'
     end
   end
 
-  describe :add! do
+  describe "add!" do
 
     it "adds invoice to a statement if its company matches the statement customer" do
       co = Factory(:company)

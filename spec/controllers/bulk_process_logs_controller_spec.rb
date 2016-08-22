@@ -14,17 +14,17 @@ describe BulkProcessLogsController do
 
     it "should show log to users that can view" do
       get :show, :id=>@log.id
-      response.should be_success
+      expect(response).to be_success
 
-      assigns(:bulk_process_log).id.should eq @log.id
-      assigns(:change_records).first.id.should eq @log.change_records.first.id
+      expect(assigns(:bulk_process_log).id).to eq @log.id
+      expect(assigns(:change_records).first.id).to eq @log.change_records.first.id
     end
 
     it "should not show log id to users that can't view" do
-      BulkProcessLog.any_instance.should_receive(:can_view?).and_return false
+      expect_any_instance_of(BulkProcessLog).to receive(:can_view?).and_return false
 
       get :show, :id=>@log.id
-      response.should be_redirect
+      expect(response).to be_redirect
     end
   end
 
@@ -32,16 +32,16 @@ describe BulkProcessLogsController do
     it "should return json messages" do
       get :messages, :id=>@log.id, :cr_id=>@log.change_records.first.id, :format=>:json
 
-      response.should be_success
+      expect(response).to be_success
       r = JSON.parse response.body
-      r.should eq ["Testing"]
+      expect(r).to eq ["Testing"]
     end
 
     it "should not show messages to users that can't view" do
-      BulkProcessLog.any_instance.should_receive(:can_view?).and_return false
+      expect_any_instance_of(BulkProcessLog).to receive(:can_view?).and_return false
 
       get :messages, :id=>@log.id, :cr_id=>@log.change_records.first.id, :format=>:json
-      response.should be_redirect
+      expect(response).to be_redirect
     end
   end
 end

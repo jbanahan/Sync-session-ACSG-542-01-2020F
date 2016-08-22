@@ -151,13 +151,13 @@ FILE
         vendor_reference: "VEND_REF", check_amount: BigDecimal.new("100.00"), check_date: Date.new(2014, 11, 1), bank_number: "1"
       }
       @sql_proxy_client = double("OpenChain::KewillSqlProxyClient")
-      @sql_proxy_client.stub(:delay).and_return @sql_proxy_client
+      allow(@sql_proxy_client).to receive(:delay).and_return @sql_proxy_client
     end
     it "creates a check and export object" do
       bank_name = DataCrossReference.create! key: @check_info[:bank_number], value: "BANK NAME", cross_reference_type: DataCrossReference::ALLIANCE_BANK_ACCOUNT_TO_INTACCT
       xref = DataCrossReference.create! key: "BANK NAME", value: "1234", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
 
-      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
+      expect(@sql_proxy_client).to receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
 
@@ -191,7 +191,7 @@ FILE
       existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount], voided: false
       existing_export = IntacctAllianceExport.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, data_received_date: Time.zone.now, ap_total: @check_info[:check_amount], intacct_checks: [existing_check]
 
-      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
+      expect(@sql_proxy_client).to receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
 
@@ -218,7 +218,7 @@ FILE
       @check_info[:check_amount] = BigDecimal.new("200")
 
 
-      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
+      expect(@sql_proxy_client).to receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
 
@@ -236,7 +236,7 @@ FILE
       @check_info[:vendor_reference] = "DIFFERENT REFERENCE"
 
 
-      @sql_proxy_client.should_receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
+      expect(@sql_proxy_client).to receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
       check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
       expect(errors.length).to eq 0
 
@@ -253,7 +253,7 @@ FILE
       @tempfile.flush
       @bucket = "bucket"
       @path = 'path/to/file.txt'
-      OpenChain::S3.stub(:download_to_tempfile).with(@bucket, @path, original_filename: "file.txt").and_yield @tempfile
+      allow(OpenChain::S3).to receive(:download_to_tempfile).with(@bucket, @path, original_filename: "file.txt").and_yield @tempfile
     end
 
     after :each do
@@ -262,12 +262,12 @@ FILE
 
     it "saves given file, checks for check register file and runs day end process" do
       # Block the attachment setting so we're not saving to S3
-      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
 
       invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
 
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:process_delayed) do |check_id, invoice_id, user_id|
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:process_delayed) do |check_id, invoice_id, user_id|
         expect(CustomFile.find(check_id).file_type).to eq "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser"
         expect(invoice_id).to eq invoice_file.id
         expect(user_id).to be_nil
@@ -282,8 +282,8 @@ FILE
 
     it "saves given file, but doesn't call day end process without a check file existing" do
       # Block the attachment setting so we're not saving to S3
-      CustomFile.any_instance.should_receive(:attached=).with @tempfile
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
 
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
       saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
@@ -292,10 +292,10 @@ FILE
 
     it "does not kick off day end process if invoice file has already been processed" do
       # Block the attachment setting so we're not saving to S3
-      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
       check_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration, start_at: Time.zone.now
 
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
 
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
       saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
@@ -306,9 +306,9 @@ FILE
       DataCrossReference.create!(key: Digest::MD5.hexdigest("This is a test"), value: "existing.txt", cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM)
 
        # Block the attachment setting so we're not saving to S3
-      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
       invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
 
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
 
@@ -325,12 +325,12 @@ FILE
       DataCrossReference.create!(key: Digest::MD5.hexdigest("This is a test"), value: "existing.txt", cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM, created_at: Time.zone.now - 32.days)
 
        # Block the attachment setting so we're not saving to S3
-      CustomFile.any_instance.should_receive(:attached=).with @tempfile
+      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
 
       invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
 
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_receive(:process_delayed)
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:process_delayed)
 
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
     end
@@ -341,8 +341,8 @@ FILE
       dj.handler = "OpenChain::CustomHandler::Intacct::AllianceDayEndHandler--process_delayed"
       dj.save!
       
-      CustomFile.any_instance.should_receive(:attached=).with @tempfile
-      OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.should_not_receive(:delay)
+      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
 
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
 

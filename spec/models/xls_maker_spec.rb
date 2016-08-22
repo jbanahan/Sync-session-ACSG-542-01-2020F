@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe XlsMaker do
 
-  describe :make_from_search_query do
+  describe "make_from_search_query" do
     before :each do
       @u = Factory(:master_user,:entry_view=>true)
       @search = SearchSetup.create!(:name=>'t',:user=>@u,:module_type=>'Entry')
@@ -12,21 +12,21 @@ describe XlsMaker do
       @search.search_columns.create!(:model_field_uid=>'ent_file_logged_date',:rank=>4)
       @search.search_criterions.create! model_field_uid: 'ent_brok_ref', operator: "eq", value: "x"
       @sq = SearchQuery.new @search, @u
-      @sq.stub(:execute).
+      allow(@sq).to receive(:execute).
         and_yield({:row_key=>1,:result=>['a','b',Date.new(2013,4,30),Time.now]}).
         and_yield({:row_key=>2,:result=>['c','d',Date.new(2013,4,30),Time.now]})
     end
     it "should create workbook" do
       wb, data_row_count = XlsMaker.new.make_from_search_query @sq
-      data_row_count.should == 2
+      expect(data_row_count).to eq(2)
       s = wb.worksheet(0)
-      s.row(1)[0].should == 'a'
-      s.row(1)[1].should == 'b'
-      s.row(2)[0].should == 'c'
-      s.row(2)[1].should == 'd'
+      expect(s.row(1)[0]).to eq('a')
+      expect(s.row(1)[1]).to eq('b')
+      expect(s.row(2)[0]).to eq('c')
+      expect(s.row(2)[1]).to eq('d')
     end
     it "should count 0 rows when workbook is empty" do
-       @sq.stub(:execute).and_return nil
+       allow(@sq).to receive(:execute).and_return nil
        *, data_row_count = XlsMaker.new.make_from_search_query @sq
        expect(data_row_count).to eq 0
     end
@@ -34,53 +34,53 @@ describe XlsMaker do
       wb, * = XlsMaker.new.make_from_search_query @sq
       s = wb.worksheet(0)
       r = s.row(0)
-      r[0].should == ModelField.find_by_uid(:ent_brok_ref).label
-      r[1].should == ModelField.find_by_uid(:ent_entry_num).label
-      r[2].should == ModelField.find_by_uid(:ent_first_it_date).label
-      r[3].should == ModelField.find_by_uid(:ent_file_logged_date).label
+      expect(r[0]).to eq(ModelField.find_by_uid(:ent_brok_ref).label)
+      expect(r[1]).to eq(ModelField.find_by_uid(:ent_entry_num).label)
+      expect(r[2]).to eq(ModelField.find_by_uid(:ent_first_it_date).label)
+      expect(r[3]).to eq(ModelField.find_by_uid(:ent_file_logged_date).label)
     end
     it "should format dates with DATE_FORMAT" do
       wb, * = XlsMaker.new.make_from_search_query @sq
-      wb.worksheet(0).row(1).format(2).should == XlsMaker::DATE_FORMAT
+      expect(wb.worksheet(0).row(1).format(2)).to eq(XlsMaker::DATE_FORMAT)
     end
     it "should format date_time with DATE_TIME_FORMAT" do
       wb, * = XlsMaker.new.make_from_search_query @sq
-      wb.worksheet(0).row(1).format(3).should == XlsMaker::DATE_TIME_FORMAT 
+      expect(wb.worksheet(0).row(1).format(3)).to eq(XlsMaker::DATE_TIME_FORMAT) 
     end
     it "should format date_time with DATE_FORMAT if no_time option is set" do
       wb, * = XlsMaker.new(:no_time=>true).make_from_search_query @sq
-      wb.worksheet(0).row(1).format(3).should == XlsMaker::DATE_FORMAT
+      expect(wb.worksheet(0).row(1).format(3)).to eq(XlsMaker::DATE_FORMAT)
     end
     it "should add web links" do
-      Entry.any_instance.stub(:excel_url).and_return("abc")
-      Entry.should_receive(:find).with(1).and_return(Entry.new(:id=>1))
-      Entry.should_receive(:find).with(2).and_return(Entry.new(:id=>2))
+      allow_any_instance_of(Entry).to receive(:excel_url).and_return("abc")
+      expect(Entry).to receive(:find).with(1).and_return(Entry.new(:id=>1))
+      expect(Entry).to receive(:find).with(2).and_return(Entry.new(:id=>2))
       wb, * = XlsMaker.new(:include_links=>true).make_from_search_query @sq
       s = wb.worksheet(0)
-      s.row(1)[4].should be_a Spreadsheet::Link
+      expect(s.row(1)[4]).to be_a Spreadsheet::Link
     end
     it "raises an error if the search is not downloadable" do
-      @sq.search_setup.should_receive(:downloadable?).with(instance_of(Array), true) {|e| e << "Error!"; false}
+      expect(@sq.search_setup).to receive(:downloadable?).with(instance_of(Array), true) {|e| e << "Error!"; false}
       expect {XlsMaker.new.make_from_search_query @sq, single_page: true}.to raise_error "Error!"
     end
 
     it "raises an error if the maximum number of results is exceeded" do
-      @sq.search_setup.stub(:max_results).and_return 1
+      allow(@sq.search_setup).to receive(:max_results).and_return 1
       expect {XlsMaker.new.make_from_search_query @sq}.to raise_error "Your report has over 1 rows.  Please adjust your parameter settings to limit the size of the report."
     end
   end
-  describe :make_from_search_query_by_search_id_and_user_id do
+  describe "make_from_search_query_by_search_id_and_user_id" do
     it "should defer to normal method" do
-      ss = mock('ss')
-      u = mock('u')
-      sq = mock('sq')
-      SearchSetup.should_receive(:find).with(1).and_return(ss)
-      User.should_receive(:find).with(2).and_return(u)
-      SearchQuery.should_receive(:new).with(ss,u).and_return(sq)
+      ss = double('ss')
+      u = double('u')
+      sq = double('sq')
+      expect(SearchSetup).to receive(:find).with(1).and_return(ss)
+      expect(User).to receive(:find).with(2).and_return(u)
+      expect(SearchQuery).to receive(:new).with(ss,u).and_return(sq)
       xm = XlsMaker.new
-      xm.should_receive(:make_from_search_query).with(sq).and_return('x')
+      expect(xm).to receive(:make_from_search_query).with(sq).and_return('x')
       r = xm.make_from_search_query_by_search_id_and_user_id 1, 2
-      r.should == 'x'
+      expect(r).to eq('x')
     end
   end
   context "add_header_row" do
@@ -97,18 +97,18 @@ describe XlsMaker do
       
       XlsMaker.add_header_row @sheet, 1, ['Header', 'Header 2'], col_widths
 
-      @sheet.row(1)[0].should == "Header"
-      @sheet.row(1)[1].should == "Header 2"
-      @sheet.row(1).default_format.should == XlsMaker::HEADER_FORMAT
+      expect(@sheet.row(1)[0]).to eq("Header")
+      expect(@sheet.row(1)[1]).to eq("Header 2")
+      expect(@sheet.row(1).default_format).to eq(XlsMaker::HEADER_FORMAT)
       # 23 is the max width for header (by default 3 is added to the lenght if it's less than 23)
-      col_widths[0].should == 9 
-      col_widths[1].should == 15
+      expect(col_widths[0]).to eq(9) 
+      expect(col_widths[1]).to eq(15)
     end
 
     it "should limit the header width to 23" do
       col_widths = [] 
       XlsMaker.add_header_row @sheet, 1, ['This is really long text that will be longer than 23 chars'], col_widths
-      col_widths[0].should == 23
+      expect(col_widths[0]).to eq(23)
     end
 
     it "handles headers that are not string values" do
@@ -132,23 +132,23 @@ describe XlsMaker do
 
       XlsMaker.add_body_row @sheet, 1, ["Test", date, datetime], col_widths
 
-      @sheet.row(1)[0].should == "Test"
-      @sheet.row(1)[1].should == date
-      @sheet.row(1)[2].should == datetime
+      expect(@sheet.row(1)[0]).to eq("Test")
+      expect(@sheet.row(1)[1]).to eq(date)
+      expect(@sheet.row(1)[2]).to eq(datetime)
 
-      col_widths[0].should == 8
-      col_widths[1].should == 13
-      col_widths[2].should == datetime.to_s.size + 3
+      expect(col_widths[0]).to eq(8)
+      expect(col_widths[1]).to eq(13)
+      expect(col_widths[2]).to eq(datetime.to_s.size + 3)
 
-      @sheet.row(1).formats[1].should == XlsMaker::DATE_FORMAT
-      @sheet.row(1).formats[2].should == XlsMaker::DATE_TIME_FORMAT
+      expect(@sheet.row(1).formats[1]).to eq(XlsMaker::DATE_FORMAT)
+      expect(@sheet.row(1).formats[2]).to eq(XlsMaker::DATE_TIME_FORMAT)
     end
 
     it "should force date format for datetimes" do 
       col_widths = []
       XlsMaker.add_body_row @sheet, 1, [Time.now], col_widths, true
-      col_widths[0].should == 13
-      @sheet.row(1).formats[0].should == XlsMaker::DATE_FORMAT
+      expect(col_widths[0]).to eq(13)
+      expect(@sheet.row(1).formats[0]).to eq(XlsMaker::DATE_FORMAT)
     end
 
     it "should use given format" do
@@ -157,7 +157,7 @@ describe XlsMaker do
     end
   end
 
-  context :insert_body_row do
+  context "insert_body_row" do
     before :each do
       @wb = Spreadsheet::Workbook.new
       @sheet = @wb.create_worksheet :name => "Sheet"
@@ -170,17 +170,17 @@ describe XlsMaker do
 
       XlsMaker.insert_body_row @sheet, 1, 1, ["Test", date, datetime], col_widths
 
-      @sheet.row(1)[0].should be_nil
-      @sheet.row(1)[1].should == "Test"
-      @sheet.row(1)[2].should == date
-      @sheet.row(1)[3].should == datetime
+      expect(@sheet.row(1)[0]).to be_nil
+      expect(@sheet.row(1)[1]).to eq("Test")
+      expect(@sheet.row(1)[2]).to eq(date)
+      expect(@sheet.row(1)[3]).to eq(datetime)
 
-      col_widths[1].should == 8
-      col_widths[2].should == 13
-      col_widths[3].should == datetime.to_s.size + 3
+      expect(col_widths[1]).to eq(8)
+      expect(col_widths[2]).to eq(13)
+      expect(col_widths[3]).to eq(datetime.to_s.size + 3)
 
-      @sheet.row(1).formats[2].should == XlsMaker::DATE_FORMAT
-      @sheet.row(1).formats[3].should == XlsMaker::DATE_TIME_FORMAT
+      expect(@sheet.row(1).formats[2]).to eq(XlsMaker::DATE_FORMAT)
+      expect(@sheet.row(1).formats[3]).to eq(XlsMaker::DATE_TIME_FORMAT)
     end
 
     it "should insert a row starting at the column specified and push back existing columns" do 
@@ -192,18 +192,18 @@ describe XlsMaker do
 
       XlsMaker.insert_body_row @sheet, 1, 1, ["B", "C"]
 
-      @sheet.row(1)[0].should == "A"
-      @sheet.row(1)[1].should == "B"
-      @sheet.row(1)[2].should == "C"
-      @sheet.row(1)[3].should == "D"
-      @sheet.row(1)[4].should == "E"
+      expect(@sheet.row(1)[0]).to eq("A")
+      expect(@sheet.row(1)[1]).to eq("B")
+      expect(@sheet.row(1)[2]).to eq("C")
+      expect(@sheet.row(1)[3]).to eq("D")
+      expect(@sheet.row(1)[4]).to eq("E")
     end
 
     it "should force date format for datetimes" do 
       col_widths = []
       XlsMaker.insert_body_row @sheet, 1, 0, [Time.now], col_widths, true
-      col_widths[0].should == 13
-      @sheet.row(1).formats[0].should == XlsMaker::DATE_FORMAT
+      expect(col_widths[0]).to eq(13)
+      expect(@sheet.row(1).formats[0]).to eq(XlsMaker::DATE_FORMAT)
     end
   end
 
@@ -332,7 +332,7 @@ describe XlsMaker do
 
   describe "excel_url" do
     it "wraps the given relative url in a redirect" do
-      MasterSetup.any_instance.stub(:request_host).and_return "localhost"
+      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
       expect(XlsMaker.excel_url("/page.html?a=1&b=2")).to eq "http://localhost/redirect.html?page=#{CGI.escape("/page.html?a=1&b=2")}"
     end
   end

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Product do
-  describe :classifications_by_region do
+  describe "classifications_by_region" do
     before :each do
       @product = Product.new
     end
@@ -69,7 +69,7 @@ describe Product do
     end
   end
 
-  describe :wto6_changed_after? do
+  describe "wto6_changed_after?" do
     before :each do
       @u = Factory(:user)
       @tr = Factory(:tariff_record,hts_1:'1234567890',hts_2:'9876543210',hts_3:'5555550000')
@@ -80,59 +80,59 @@ describe Product do
     it "should return true if first 6 changed" do
       @tr.update_attributes(hts_1:'6666660000')
       @p.reload
-      expect(@p.wto6_changed_after?(1.day.ago)).to be_true
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_truthy
     end
     it "should return true if record added with new wto6" do
       Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
       @p.reload
-      expect(@p.wto6_changed_after?(1.day.ago)).to be_true
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_truthy
     end
     it "should return false if record added with same wto6" do
       Factory(:tariff_record,hts_1:'1234560000',classification:Factory(:classification,product:@p))
       @p.reload
-      expect(@p.wto6_changed_after?(1.day.ago)).to be_false
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_falsey
     end
     it "should return false if no history before date" do
-      expect(@p.wto6_changed_after?(1.year.ago)).to be_false
+      expect(@p.wto6_changed_after?(1.year.ago)).to be_falsey
     end
     it "should return false if record removed" do
       @tr.destroy
       @p.reload
-      expect(@p.wto6_changed_after?(1.day.ago)).to be_false
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_falsey
     end
     it "should return false if last 4 changed" do
       @tr.update_attributes(hts_1:'1234560000')
       @p.reload
-      expect(@p.wto6_changed_after?(1.day.ago)).to be_false
+      expect(@p.wto6_changed_after?(1.day.ago)).to be_falsey
     end
     it "should return true if change happened in same day" do
       @snapshot.update_attributes(created_at:5.minutes.ago)
       Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
       @p.reload
-      expect(@p.wto6_changed_after?(3.minutes.ago)).to be_true
+      expect(@p.wto6_changed_after?(3.minutes.ago)).to be_truthy
     end
   end
-  describe :validate_tariff_numbers do
+  describe "validate_tariff_numbers" do
     it "should pass" do
       ot = Factory(:official_tariff)
       p = Product.new
       p.classifications.build(country:ot.country).tariff_records.build(hts_1:ot.hts_code)
       p.validate_tariff_numbers
-      p.errors[:base].should be_empty
+      expect(p.errors[:base]).to be_empty
     end
     it "should pass if not tariffs for country in OfficialTariff" do
       c = Factory(:country)
       p = Product.new
       p.classifications.build(country:c).tariff_records.build(hts_1:'123')
       p.validate_tariff_numbers
-      p.errors[:base].should be_empty
+      expect(p.errors[:base]).to be_empty
     end
     it "should fail if tariff doesn't exist" do
       ot = Factory(:official_tariff)
       p = Product.new
       p.classifications.build(country:ot.country).tariff_records.build(hts_1:"#{ot.hts_code}9")
       p.validate_tariff_numbers
-      p.errors[:base].first.should == "Tariff number #{ot.hts_code}9 is invalid for #{ot.country.iso_code}"
+      expect(p.errors[:base].first).to eq("Tariff number #{ot.hts_code}9 is invalid for #{ot.country.iso_code}")
     end
   end
   context "saved classifications exist" do
@@ -141,16 +141,16 @@ describe Product do
     end
     it "should return false for unsaved classification" do
       @p.classifications.build
-      @p.saved_classifications_exist?.should be_false
+      expect(@p.saved_classifications_exist?).to be_falsey
     end
     it "should return true for mix" do
       Factory(:classification,:product=>@p)
       @p.classifications.build
-      @p.saved_classifications_exist?.should be_true
+      expect(@p.saved_classifications_exist?).to be_truthy
     end
   end
   context "bill of materials" do
-    describe :on_bill_of_materials? do
+    describe "on_bill_of_materials?" do
       context "true tests" do
         before :each do
           @parent = Factory(:product)
@@ -158,14 +158,14 @@ describe Product do
           @parent.bill_of_materials_children.create!(:child_product_id=>@child.id,:quantity=>3)
         end
         it "should be true if parent" do
-          @parent.should be_on_bill_of_materials
+          expect(@parent).to be_on_bill_of_materials
         end
         it "should be true if child" do
-          @child.should be_on_bill_of_materials
+          expect(@child).to be_on_bill_of_materials
         end
       end
       it "should be false if not parent or child" do
-        Factory(:product).should_not be_on_bill_of_materials
+        expect(Factory(:product)).not_to be_on_bill_of_materials
       end
     end
   end
@@ -184,45 +184,45 @@ describe Product do
     describe "item permissions" do
       it "should allow master company to handle any product" do
         [@unassociated_product,@importer_product,@linked_product].each do |p|
-          p.can_view?(@master_user).should be_true
-          p.can_edit?(@master_user).should be_true
-          p.can_classify?(@master_user).should be_true
-          p.can_comment?(@master_user).should be_true
-          p.can_attach?(@master_user).should be_true
-          p.can_manage_variants?(@master_user).should be_true
+          expect(p.can_view?(@master_user)).to be_truthy
+          expect(p.can_edit?(@master_user)).to be_truthy
+          expect(p.can_classify?(@master_user)).to be_truthy
+          expect(p.can_comment?(@master_user)).to be_truthy
+          expect(p.can_attach?(@master_user)).to be_truthy
+          expect(p.can_manage_variants?(@master_user)).to be_truthy
         end
       end
       it "should allow importer to handle own products" do
-        @importer_product.can_view?(@importer_user).should be_true
-        @importer_product.can_edit?(@importer_user).should be_true
-        @importer_product.can_classify?(@importer_user).should be_true
-        @importer_product.can_comment?(@importer_user).should be_true
-        @importer_product.can_attach?(@importer_user).should be_true
-        @importer_product.can_manage_variants?(@importer_user).should be_true
+        expect(@importer_product.can_view?(@importer_user)).to be_truthy
+        expect(@importer_product.can_edit?(@importer_user)).to be_truthy
+        expect(@importer_product.can_classify?(@importer_user)).to be_truthy
+        expect(@importer_product.can_comment?(@importer_user)).to be_truthy
+        expect(@importer_product.can_attach?(@importer_user)).to be_truthy
+        expect(@importer_product.can_manage_variants?(@importer_user)).to be_truthy
       end
       it "should allow importer to handle linked company products" do
-        @linked_product.can_view?(@importer_user).should be_true
-        @linked_product.can_edit?(@importer_user).should be_true
-        @linked_product.can_classify?(@importer_user).should be_true
-        @linked_product.can_comment?(@importer_user).should be_true
-        @linked_product.can_attach?(@importer_user).should be_true
-        @linked_product.can_manage_variants?(@importer_user).should be_true
+        expect(@linked_product.can_view?(@importer_user)).to be_truthy
+        expect(@linked_product.can_edit?(@importer_user)).to be_truthy
+        expect(@linked_product.can_classify?(@importer_user)).to be_truthy
+        expect(@linked_product.can_comment?(@importer_user)).to be_truthy
+        expect(@linked_product.can_attach?(@importer_user)).to be_truthy
+        expect(@linked_product.can_manage_variants?(@importer_user)).to be_truthy
       end
       it "should not allow importer to handle unlinked company products" do
-        @importer_product.can_view?(@other_importer_user).should be_false
-        @importer_product.can_edit?(@other_importer_user).should be_false
-        @importer_product.can_classify?(@other_importer_user).should be_false
-        @importer_product.can_comment?(@other_importer_user).should be_false
-        @importer_product.can_attach?(@other_importer_user).should be_false
-        @importer_product.can_manage_variants?(@other_importer_user).should be_false
+        expect(@importer_product.can_view?(@other_importer_user)).to be_falsey
+        expect(@importer_product.can_edit?(@other_importer_user)).to be_falsey
+        expect(@importer_product.can_classify?(@other_importer_user)).to be_falsey
+        expect(@importer_product.can_comment?(@other_importer_user)).to be_falsey
+        expect(@importer_product.can_attach?(@other_importer_user)).to be_falsey
+        expect(@importer_product.can_manage_variants?(@other_importer_user)).to be_falsey
       end
       it "should not allow importer to handle product with no importer" do
-        @unassociated_product.can_view?(@importer_user).should be_false
-        @unassociated_product.can_edit?(@importer_user).should be_false
-        @unassociated_product.can_classify?(@importer_user).should be_false
-        @unassociated_product.can_comment?(@importer_user).should be_false
-        @unassociated_product.can_attach?(@importer_user).should be_false
-        @unassociated_product.can_manage_variants?(@importer_user).should be_false
+        expect(@unassociated_product.can_view?(@importer_user)).to be_falsey
+        expect(@unassociated_product.can_edit?(@importer_user)).to be_falsey
+        expect(@unassociated_product.can_classify?(@importer_user)).to be_falsey
+        expect(@unassociated_product.can_comment?(@importer_user)).to be_falsey
+        expect(@unassociated_product.can_attach?(@importer_user)).to be_falsey
+        expect(@unassociated_product.can_manage_variants?(@importer_user)).to be_falsey
       end
       context "vendor" do
         before :each do
@@ -235,61 +235,61 @@ describe Product do
         end
 
         it "should allow a vendor to handle own products" do
-          @vendor_product.can_view?(@vendor_user).should be_true
+          expect(@vendor_product.can_view?(@vendor_user)).to be_truthy
           #Vendors can't edit products - only master and importer types
-          @vendor_product.can_edit?(@vendor_user).should be_false
-          @vendor_product.can_classify?(@vendor_user).should be_false
-          @vendor_product.can_comment?(@vendor_user).should be_true
-          @vendor_product.can_attach?(@vendor_user).should be_true
-          @vendor_product.can_manage_variants?(@vendor_user).should be_false
+          expect(@vendor_product.can_edit?(@vendor_user)).to be_falsey
+          expect(@vendor_product.can_classify?(@vendor_user)).to be_falsey
+          expect(@vendor_product.can_comment?(@vendor_user)).to be_truthy
+          expect(@vendor_product.can_attach?(@vendor_user)).to be_truthy
+          expect(@vendor_product.can_manage_variants?(@vendor_user)).to be_falsey
         end
 
         it "should allow vendor to handle linked importer company products" do
-          @linked_product.can_view?(@vendor_user).should be_true
-          @linked_product.can_edit?(@vendor_user).should be_false
-          @linked_product.can_classify?(@vendor_user).should be_false
-          @linked_product.can_comment?(@vendor_user).should be_true
-          @linked_product.can_attach?(@vendor_user).should be_true
-          @linked_product.can_manage_variants?(@vendor_user).should be_false
+          expect(@linked_product.can_view?(@vendor_user)).to be_truthy
+          expect(@linked_product.can_edit?(@vendor_user)).to be_falsey
+          expect(@linked_product.can_classify?(@vendor_user)).to be_falsey
+          expect(@linked_product.can_comment?(@vendor_user)).to be_truthy
+          expect(@linked_product.can_attach?(@vendor_user)).to be_truthy
+          expect(@linked_product.can_manage_variants?(@vendor_user)).to be_falsey
         end
 
         it "should allow vendor to handle linked vendor company products" do
-          @vendor_product.can_view?(@linked_vendor_user).should be_true
-          @vendor_product.can_edit?(@linked_vendor_user).should be_false
-          @vendor_product.can_classify?(@linked_vendor_user).should be_false
-          @vendor_product.can_comment?(@linked_vendor_user).should be_true
-          @vendor_product.can_attach?(@linked_vendor_user).should be_true
-          @vendor_product.can_manage_variants?(@linked_vendor_user).should be_false
+          expect(@vendor_product.can_view?(@linked_vendor_user)).to be_truthy
+          expect(@vendor_product.can_edit?(@linked_vendor_user)).to be_falsey
+          expect(@vendor_product.can_classify?(@linked_vendor_user)).to be_falsey
+          expect(@vendor_product.can_comment?(@linked_vendor_user)).to be_truthy
+          expect(@vendor_product.can_attach?(@linked_vendor_user)).to be_truthy
+          expect(@vendor_product.can_manage_variants?(@linked_vendor_user)).to be_falsey
         end
 
         it "should not allow vendor to handle unlinked company products" do
-          @importer_product.can_view?(@vendor_user).should be_false
-          @importer_product.can_edit?(@vendor_user).should be_false
-          @importer_product.can_classify?(@vendor_user).should be_false
-          @importer_product.can_comment?(@vendor_user).should be_false
-          @importer_product.can_attach?(@other_importer_user).should be_false
-          @importer_product.can_manage_variants?(@vendor_user).should be_false
+          expect(@importer_product.can_view?(@vendor_user)).to be_falsey
+          expect(@importer_product.can_edit?(@vendor_user)).to be_falsey
+          expect(@importer_product.can_classify?(@vendor_user)).to be_falsey
+          expect(@importer_product.can_comment?(@vendor_user)).to be_falsey
+          expect(@importer_product.can_attach?(@other_importer_user)).to be_falsey
+          expect(@importer_product.can_manage_variants?(@vendor_user)).to be_falsey
         end
 
         it "should not allow vendor to handle product with no vendor" do
-          @unassociated_product.can_view?(@vendor_user).should be_false
-          @unassociated_product.can_edit?(@vendor_user).should be_false
-          @unassociated_product.can_classify?(@vendor_user).should be_false
-          @unassociated_product.can_comment?(@vendor_user).should be_false
-          @unassociated_product.can_attach?(@vendor_user).should be_false
-          @unassociated_product.can_manage_variants?(@vendor_user).should be_false
+          expect(@unassociated_product.can_view?(@vendor_user)).to be_falsey
+          expect(@unassociated_product.can_edit?(@vendor_user)).to be_falsey
+          expect(@unassociated_product.can_classify?(@vendor_user)).to be_falsey
+          expect(@unassociated_product.can_comment?(@vendor_user)).to be_falsey
+          expect(@unassociated_product.can_attach?(@vendor_user)).to be_falsey
+          expect(@unassociated_product.can_manage_variants?(@vendor_user)).to be_falsey
         end
       end
     end
     describe "search_secure" do
       it "should find all for master" do
-        Product.search_secure(@master_user, Product.where("1=1")).sort {|a,b| a.id<=>b.id}.should == [@linked_product,@importer_product,@unassociated_product].sort {|a,b| a.id<=>b.id}
+        expect(Product.search_secure(@master_user, Product.where("1=1")).sort {|a,b| a.id<=>b.id}).to eq([@linked_product,@importer_product,@unassociated_product].sort {|a,b| a.id<=>b.id})
       end
       it "should find importer's products" do
-        Product.search_secure(@importer_user, Product.where("1=1")).sort {|a,b| a.id<=>b.id}.should == [@linked_product,@importer_product].sort {|a,b| a.id<=>b.id}
+        expect(Product.search_secure(@importer_user, Product.where("1=1")).sort {|a,b| a.id<=>b.id}).to eq([@linked_product,@importer_product].sort {|a,b| a.id<=>b.id})
       end
       it "should not find other importer's products" do
-        Product.search_secure(@other_importer_user,Product.where("1=1")).should be_empty
+        expect(Product.search_secure(@other_importer_user,Product.where("1=1"))).to be_empty
       end
     end
   end
@@ -300,7 +300,7 @@ describe Product do
       linkable = Factory(:linkable_attachment,:model_field_uid=>'prod',:value=>'ordn')
       LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>product)
       product.reload
-      product.linkable_attachments.first.should == linkable
+      expect(product.linkable_attachments.first).to eq(linkable)
     end
   end
 
@@ -317,7 +317,7 @@ describe Product do
         ]
       }
 
-      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.update_model_field_attributes! params).to be_truthy
       p.reload
       expect(p.unique_identifier).to eq "unique_identifier123"
       expect(p.classifications.size).to eq 0
@@ -335,7 +335,7 @@ describe Product do
         ]
       }
 
-      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.update_model_field_attributes! params).to be_truthy
       p.reload
       expect(p.unique_identifier).to eq "unique_identifier123"
       expect(p.classifications.size).to eq 1
@@ -353,7 +353,7 @@ describe Product do
         ]
       }
 
-      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.update_model_field_attributes! params).to be_truthy
       p.reload
       expect(p.classifications.size).to eq 1
       expect(p.classifications.first.country).to eq country
@@ -370,7 +370,7 @@ describe Product do
         ]
       }
 
-      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.update_model_field_attributes! params).to be_truthy
       p.reload
       expect(p.classifications.size).to eq 1
       expect(p.classifications.first.country).to eq country
@@ -387,7 +387,7 @@ describe Product do
         ]
       }
 
-      expect(p.update_model_field_attributes! params).to be_true
+      expect(p.update_model_field_attributes! params).to be_truthy
       p.reload
       expect(p.classifications.size).to eq 1
       expect(p.classifications.first.country).to eq country

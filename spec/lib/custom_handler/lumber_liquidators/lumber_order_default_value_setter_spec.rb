@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSetter do
-  describe :set_defaults do
+  describe "set_defaults" do
     before :each do
       @cdefs = described_class.prep_custom_definitions([:cmp_default_inco_term,:cmp_default_handover_port,:cmp_default_country_of_origin,:ord_country_of_origin])
       @vendor = Factory(:company)
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSet
       @order.reload
       expect(@order.get_custom_value(@cdefs[:ord_country_of_origin]).value).to eq 'CN'
     end
-    context :ship_from do
+    context "ship_from" do
       it "should set the ship from if the vendor only has one shipping address" do
         a = Factory(:address,shipping:true,company:@vendor)
         @vendor.reload

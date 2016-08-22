@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::ISFXMLGenerator do
       dup_line = Factory(:shipment_line, shipment:@shipment, product:first_line.product, container:first_line.container, quantity:100, manufacturer_address:first_line.manufacturer_address )
       PieceSet.create(order_line:order.order_lines.first, quantity:100, shipment_line:dup_line)
       @manufacturer_addresses = @shipment.shipment_lines.map(&:manufacturer_address).uniq
-      ShipmentLine.any_instance.stub(:us_hts_number).and_return('123456789')
+      allow_any_instance_of(ShipmentLine).to receive(:us_hts_number).and_return('123456789')
     end
 
     def match_address_entity_by_type(entity, address_type)

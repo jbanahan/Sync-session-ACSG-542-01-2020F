@@ -109,21 +109,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
     context "with ll system code" do
       before :each do
         ms = double("MasterSetup")
-        MasterSetup.stub(:get).and_return ms
-        ms.stub(:system_code).and_return "ll"
+        allow(MasterSetup).to receive(:get).and_return ms
+        allow(ms).to receive(:system_code).and_return "ll"
       end
 
       it "does not allow access to users not in LOGISTICS group" do
-        expect(described_class.permission? User.new).to be_false
+        expect(described_class.permission? User.new).to be_falsey
       end
 
       it "allows access to users in the logistics group" do
-        expect(described_class.permission? logistics_user).to be_true
+        expect(described_class.permission? logistics_user).to be_truthy
       end
     end
     
     it "does not allow non-ll system access" do
-      expect(described_class.permission? logistics_user).to be_false
+      expect(described_class.permission? logistics_user).to be_falsey
     end
   end
 end

@@ -9,8 +9,8 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
   describe "accepts?" do
     before :each do
       @ms = double("MasterSetup")
-      MasterSetup.stub(:get).and_return @ms
-      @ms.stub(:system_code).and_return "www-vfitrack-net"
+      allow(MasterSetup).to receive(:get).and_return @ms
+      allow(@ms).to receive(:system_code).and_return "www-vfitrack-net"
 
       @e = Entry.new
       @e.last_billed_date = Time.zone.now
@@ -19,36 +19,36 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
     
     it "accepts FOOLO entries that have been billed and have invoices" do
       @e.customer_number = 'FOOLO'
-      expect(@h.accepts? nil, @e).to be_true
+      expect(@h.accepts? nil, @e).to be_truthy
     end
 
     it "accepts FOOCA entries that have been billed and have invoices" do
       @e.customer_number = 'FOOCA'
-      expect(@h.accepts? nil, @e).to be_true
+      expect(@h.accepts? nil, @e).to be_truthy
     end
 
     it "accepts TEAED entries that have been billed and have invoices" do
       @e.customer_number = 'TEAED'
-      expect(@h.accepts? nil, @e).to be_true
+      expect(@h.accepts? nil, @e).to be_truthy
     end
     
     it "does not accept entries that don't have invoices" do
       @e.customer_number = 'FOOLO'
       @e.broker_invoices.clear
-      expect(@h.accepts? nil, @e).to be_false
+      expect(@h.accepts? nil, @e).to be_falsey
     end
 
     it "does not accept entries that have not been billed" do
       @e.customer_number = 'FOOLO'
       @e.last_billed_date = nil
-      expect(@h.accepts? nil, @e).to be_false
+      expect(@h.accepts? nil, @e).to be_falsey
     end
 
     it "does not accept entries on other systems" do
-      @ms.stub(:system_code).and_return "another system"
+      allow(@ms).to receive(:system_code).and_return "another system"
 
       @e.customer_number = 'FOOLO'
-      expect(@h.accepts? nil, @e).to be_false
+      expect(@h.accepts? nil, @e).to be_falsey
     end
   end
 
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
 
     before :each do
       @ftp_files = []
-      @h.stub(:ftp_file) do |file|
+      allow(@h).to receive(:ftp_file) do |file|
         @ftp_files << file.read
       end
 

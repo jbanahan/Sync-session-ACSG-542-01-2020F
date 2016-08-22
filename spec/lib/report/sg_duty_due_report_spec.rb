@@ -3,7 +3,7 @@ require 'open_chain/report/sg_duty_due_report'
 
 describe OpenChain::Report::SgDutyDueReport do
 
-  describe :get_entries do
+  describe "get_entries" do
     it "returns results of query" do
       co = Factory(:company, alliance_customer_number: 'sgold')
       duty_due = Date.today + 1
@@ -21,8 +21,8 @@ describe OpenChain::Report::SgDutyDueReport do
               entry_type: "01", duty_due_date: duty_due)
 
        u = Factory(:user, company: co)
-       u.stub(:view_entries?).and_return true
-       co.stub(:can_view?).with(u).and_return true
+       allow(u).to receive(:view_entries?).and_return true
+       allow(co).to receive(:can_view?).with(u).and_return true
        parser = described_class.new
        results = parser.get_entries u, co
        expect(results.count).to eq 2
@@ -44,7 +44,7 @@ describe OpenChain::Report::SgDutyDueReport do
     end
   end
 
-  describe :create_digest do
+  describe "create_digest" do
     it "returns digest for multiple dates, ports" do
       mar_1 = Date.parse('2016-03-01')
       mar_2 = Date.parse('2016-03-02')

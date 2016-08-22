@@ -6,7 +6,7 @@ describe Api::V1::Admin::AdminApiController do
       render text: 'hello world'
     end
   end
-  context :admin_only do
+  context "admin_only" do
     it "should yield for admins" do
       u = Factory(:admin_user)
       allow_api_access u

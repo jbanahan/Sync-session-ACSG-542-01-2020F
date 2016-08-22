@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe LinesSupport do
-  describe :default_line_number do
+  describe "default_line_number" do
     it "should create line numbers for in memory lines" do
       p = Factory(:product)
       s = Shipment.new(reference:'abc')
@@ -17,9 +17,9 @@ describe LinesSupport do
       s_line = Factory(:shipment_line)
       o_line = Factory(:order_line,:product=>s_line.product)
       s_line.linked_order_line_id = o_line.id
-      s_line.save.should be_true
-      PieceSet.count.should == 1
-      PieceSet.where(:shipment_line_id=>s_line.id).where(:order_line_id=>o_line.id).count.should == 1
+      expect(s_line.save).to be_truthy
+      expect(PieceSet.count).to eq(1)
+      expect(PieceSet.where(:shipment_line_id=>s_line.id).where(:order_line_id=>o_line.id).count).to eq(1)
     end
     it 'should link shipment to order and delivery' do #testing multiple links
       s_line = Factory(:shipment_line)
@@ -27,30 +27,30 @@ describe LinesSupport do
       o_line = Factory(:order_line,:product=>s_line.product)
       s_line.linked_order_line_id = o_line.id
       s_line.linked_delivery_line_id = d_line.id
-      s_line.save.should be_true
+      expect(s_line.save).to be_truthy
 
-      PieceSet.count.should == 2
+      expect(PieceSet.count).to eq(2)
 
-      PieceSet.where(:shipment_line_id=>s_line.id).where(:order_line_id=>o_line.id).count.should == 1
-      PieceSet.where(:shipment_line_id=>s_line.id).where(:delivery_line_id=>d_line.id).count.should == 1
+      expect(PieceSet.where(:shipment_line_id=>s_line.id).where(:order_line_id=>o_line.id).count).to eq(1)
+      expect(PieceSet.where(:shipment_line_id=>s_line.id).where(:delivery_line_id=>d_line.id).count).to eq(1)
     end
     it 'should link commercial invoice line to drawback import line' do
       c_line = Factory(:commercial_invoice_line,:quantity=>1)
       d_line = Factory(:drawback_import_line)
       c_line.linked_drawback_line_id = d_line.id
-      c_line.save.should be_true
+      expect(c_line.save).to be_truthy
 
-      PieceSet.count.should == 1
-      PieceSet.find_by_drawback_import_line_id_and_commercial_invoice_line_id(d_line.id,c_line.id).should_not be_nil
+      expect(PieceSet.count).to eq(1)
+      expect(PieceSet.find_by_drawback_import_line_id_and_commercial_invoice_line_id(d_line.id,c_line.id)).not_to be_nil
     end
     it 'should link drawback import line to commercial invoice line' do
       c_line = Factory(:commercial_invoice_line)
       d_line = Factory(:drawback_import_line,:quantity=>1)
       d_line.linked_commercial_invoice_line_id = c_line.id
-      d_line.save.should be_true
+      expect(d_line.save).to be_truthy
 
-      PieceSet.count.should == 1
-      PieceSet.find_by_drawback_import_line_id_and_commercial_invoice_line_id(d_line.id,c_line.id).should_not be_nil
+      expect(PieceSet.count).to eq(1)
+      expect(PieceSet.find_by_drawback_import_line_id_and_commercial_invoice_line_id(d_line.id,c_line.id)).not_to be_nil
     end
   end
 end

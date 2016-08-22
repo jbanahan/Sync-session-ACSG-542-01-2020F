@@ -11,14 +11,14 @@ describe AttachmentArchiveSetupsController do
     it "should fail if user not admin" do
       sign_in_as @user
       get :new, :company_id=>@c.id
-      response.should redirect_to request.referrer
-      flash[:errors].should == ["You do not have permission to access this page."]
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).to eq(["You do not have permission to access this page."])
     end
     it "should succeed if user admin" do
       sign_in_as @admin
       get :new, :company_id=>@c.id
-      response.should be_success
-      assigns(:company).should == @c
+      expect(response).to be_success
+      expect(assigns(:company)).to eq(@c)
     end
   end
   describe "edit" do
@@ -28,14 +28,14 @@ describe AttachmentArchiveSetupsController do
     it "should fail if user not admin" do
       sign_in_as @user
       get :edit, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id
-      response.should redirect_to request.referrer
-      flash[:errors].should == ["You do not have permission to access this page."]
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).to eq(["You do not have permission to access this page."])
     end
     it "should succeed if user admin" do
       sign_in_as @admin
       get :edit, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id
-      response.should be_success
-      assigns(:company).should == @c
+      expect(response).to be_success
+      expect(assigns(:company)).to eq(@c)
     end
   end
   describe "create" do
@@ -44,9 +44,9 @@ describe AttachmentArchiveSetupsController do
       target_date = Date.new(2011,12,1)
       post :create, :company_id=>@c.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
       @c.reload
-      @c.attachment_archive_setup.start_date.should == target_date
-      response.should redirect_to [@c,@c.attachment_archive_setup]
-      flash[:notices].should == ["Your setup was successfully created."]
+      expect(@c.attachment_archive_setup.start_date).to eq(target_date)
+      expect(response).to redirect_to [@c,@c.attachment_archive_setup]
+      expect(flash[:notices]).to eq(["Your setup was successfully created."])
     end
     it "should fail if company already has record" do
       sign_in_as @admin
@@ -54,18 +54,18 @@ describe AttachmentArchiveSetupsController do
       target_date = Date.new(2011,12,1)
       post :create, :company_id=>@c.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
       @c.reload
-      @c.attachment_archive_setup.start_date.should == 0.seconds.ago.to_date 
-      response.should redirect_to request.referrer
-      flash[:errors].should == ["This company already has an attachment archive setup."]
+      expect(@c.attachment_archive_setup.start_date).to eq(0.seconds.ago.to_date) 
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).to eq(["This company already has an attachment archive setup."])
     end
     it "should fail if user not admin" do
       sign_in_as @user
       target_date = Date.new(2011,12,1)
       post :create, :company_id=>@c.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
       @c.reload
-      @c.attachment_archive_setup.should be_nil
-      response.should redirect_to request.referrer
-      flash[:errors].should == ["You do not have permission to access this page."]
+      expect(@c.attachment_archive_setup).to be_nil
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).to eq(["You do not have permission to access this page."])
     end
   end
   describe "update" do
@@ -78,10 +78,10 @@ describe AttachmentArchiveSetupsController do
       post :update, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d"), :combine_attachments=>"1", :combined_attachment_order=>"A\nB\nC"}
       @c.reload
       expect(@c.attachment_archive_setup.start_date).to eq target_date
-      expect(@c.attachment_archive_setup.combine_attachments).to be_true
+      expect(@c.attachment_archive_setup.combine_attachments).to be_truthy
       expect(@c.attachment_archive_setup.combined_attachment_order).to eq "A\nB\nC"
       expect(response).to redirect_to [@c,@c.attachment_archive_setup]
-      flash[:notices].should == ["Your setup was successfully updated."]
+      expect(flash[:notices]).to eq(["Your setup was successfully updated."])
     end
     it "should fail if user not admin" do
       sign_in_as @user
@@ -98,7 +98,7 @@ describe AttachmentArchiveSetupsController do
       post :update, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d"), :combine_attachments=>"0", :combined_attachment_order=>"A\nB\nC"}
       @c.reload
       expect(@c.attachment_archive_setup.start_date).to eq target_date
-      expect(@c.attachment_archive_setup.combine_attachments).to be_false
+      expect(@c.attachment_archive_setup.combine_attachments).to be_falsey
       expect(@c.attachment_archive_setup.combined_attachment_order).to eq ""
       expect(response).to redirect_to [@c,@c.attachment_archive_setup]
     end

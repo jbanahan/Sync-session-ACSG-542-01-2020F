@@ -2,16 +2,16 @@ require 'spec_helper'
 
 describe DataCrossReference do
 
-  context :hash_for_type do
+  context "hash_for_type" do
     it "should find all for reference" do
       csv = "k,v\nk2,v2"
       described_class.load_cross_references csv, 'xref_type'
       described_class.create!(key:'ak',value:'av',cross_reference_type:'xrt')
-      described_class.hash_for_type('xref_type').should == {'k'=>'v','k2'=>'v2'}
+      expect(described_class.hash_for_type('xref_type')).to eq({'k'=>'v','k2'=>'v2'})
     end
   end
 
-  context :get_all_pairs do
+  context "get_all_pairs" do
     it "should get all pairs for a cross reference type" do
       described_class.create!(key:'a',value:'b',cross_reference_type:'x')
       described_class.create!(key:'c',value:'d',cross_reference_type:'x')
@@ -20,7 +20,7 @@ describe DataCrossReference do
       expect(described_class.get_all_pairs('x')).to eq h
     end
   end
-  context :load_cross_references do
+  context "load_cross_references" do
     it "should load csv cross reference data from an IO object" do
       # Make sure we're also updating existing xrefs
       DataCrossReference.create! :company_id=>1, :key=>"key2", :value=>"", :cross_reference_type=>'xref_type'
@@ -29,16 +29,16 @@ describe DataCrossReference do
       DataCrossReference.load_cross_references csv, 'xref_type', 1
 
       xrefs = DataCrossReference.where(:company_id=>1, :cross_reference_type=>'xref_type').order("created_at ASC, id ASC")
-      xrefs.length.should == 2
-      xrefs.first.key.should == "key2"
-      xrefs.first.value.should == "value2"
+      expect(xrefs.length).to eq(2)
+      expect(xrefs.first.key).to eq("key2")
+      expect(xrefs.first.value).to eq("value2")
 
-      xrefs.last.key.should == "key"
-      xrefs.last.value.should == "value"
+      expect(xrefs.last.key).to eq("key")
+      expect(xrefs.last.value).to eq("value")
     end
   end
 
-  context :jjill_order_fingerprint do
+  context "jjill_order_fingerprint" do
     it "should find" do
       described_class.create! key: 1, value:'ABCDEFG', cross_reference_type:described_class::JJILL_ORDER_FINGERPRINT
       o = Order.new
@@ -52,7 +52,7 @@ describe DataCrossReference do
       expect(described_class.find_jjill_order_fingerprint(o)).to eq 'ABCDEFG'
     end
   end
-  context :lenox_item_master_hash do
+  context "lenox_item_master_hash" do
     it "should find" do
       described_class.create! key: 'partno', value:'ABCDEFG', cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH
       expect(described_class.find_lenox_item_master_hash('partno')).to eq 'ABCDEFG'
@@ -62,7 +62,7 @@ describe DataCrossReference do
       expect(described_class.where(key:'part_no',value:'hashval',cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH).count).to eq 1
     end
   end
-  context :lenox_hts_fingerprint do
+  context "lenox_hts_fingerprint" do
     it "should find" do
       described_class.create! key: described_class.make_compound_key(1, 'US'), value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT
       expect(described_class.find_lenox_hts_fingerprint(1, 'US')).to eq '9801001010'
@@ -72,7 +72,7 @@ describe DataCrossReference do
       expect(described_class.where(key: described_class.make_compound_key(1, 'US'), value: '9801001010', cross_reference_type: described_class::LENOX_HTS_FINGERPRINT).count).to eq 1
     end
   end
-  context :find_rl_profit_center do
+  context "find_rl_profit_center" do
     it "should find an rl profit center from the brand code" do
       company = Factory(:importer)
       DataCrossReference.create! :key=>"brand", :value=>"profit center", :cross_reference_type=>DataCrossReference::RL_BRAND_TO_PROFIT_CENTER, company_id: company.id
@@ -81,27 +81,27 @@ describe DataCrossReference do
     end
   end
 
-  context :find_rl_brand do
+  context "find_rl_brand" do
     it "should find an rl brand code from PO number" do
       DataCrossReference.create! :key=>"po#", :value=>"brand", :cross_reference_type=>DataCrossReference::RL_PO_TO_BRAND
 
-      DataCrossReference.find_rl_brand_by_po('po#').should == "brand"
+      expect(DataCrossReference.find_rl_brand_by_po('po#')).to eq("brand")
     end
   end
 
-  context :find_ua_plant_to_iso do
+  context "find_ua_plant_to_iso" do
     it "should find" do
       described_class.create!(key:'x',value:'y',cross_reference_type:described_class::UA_PLANT_TO_ISO)
-      described_class.find_ua_plant_to_iso('x').should == 'y'
+      expect(described_class.find_ua_plant_to_iso('x')).to eq('y')
     end
   end
-  context :find_ua_winshuttle_fingerprint do
+  context "find_ua_winshuttle_fingerprint" do
     it "should find" do
       described_class.create!(key:DataCrossReference.make_compound_key('x', 'y', 'z'),value:'y',cross_reference_type:described_class::UA_WINSHUTTLE_FINGERPRINT)
-      described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z').should == 'y'
+      expect(described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z')).to eq('y')
     end
   end
-  describe :create_ua_winshuttle_fingerprint! do
+  describe "create_ua_winshuttle_fingerprint!" do
     it "creates fingerprints" do
       described_class.create_ua_winshuttle_fingerprint! 'x', 'y', 'z', 'fingerprint'
       expect(described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z')).to eq "fingerprint"
@@ -113,35 +113,35 @@ describe DataCrossReference do
     end
   end
 
-  context :find_ua_material_color_plant do
+  context "find_ua_material_color_plant" do
     it "should find" do
       described_class.create!(key:'x-y-z',value:'a',cross_reference_type:described_class::UA_MATERIAL_COLOR_PLANT)
-      described_class.find_ua_material_color_plant('x','y','z').should == 'a'
+      expect(described_class.find_ua_material_color_plant('x','y','z')).to eq('a')
     end
   end
-  context :create_ua_material_color_plant! do
+  context "create_ua_material_color_plant!" do
     it "should create" do
       described_class.create_ua_material_color_plant! 'x','y','z'
-      described_class.find_ua_material_color_plant('x','y','z').should == '1'
+      expect(described_class.find_ua_material_color_plant('x','y','z')).to eq('1')
     end
   end
-  context :add_xref! do
+  context "add_xref!" do
     it "should add" do
       d = described_class.add_xref! described_class::UA_PLANT_TO_ISO, 'x', 'y', 1
       d = described_class.find d.id
-      d.cross_reference_type.should == described_class::UA_PLANT_TO_ISO
-      d.key.should == 'x'
-      d.value.should == 'y'
-      d.company_id.should == 1
+      expect(d.cross_reference_type).to eq(described_class::UA_PLANT_TO_ISO)
+      expect(d.key).to eq('x')
+      expect(d.value).to eq('y')
+      expect(d.company_id).to eq(1)
     end
   end
 
   describe "has_key?" do
     it "determines if an xref key is present in the db table" do
       DataCrossReference.add_xref! DataCrossReference::UA_PLANT_TO_ISO, 'x', 'y', 1
-      expect(DataCrossReference.has_key? 'x', DataCrossReference::UA_PLANT_TO_ISO).to be_true
-      expect(DataCrossReference.has_key? 'askjfda', DataCrossReference::UA_PLANT_TO_ISO).to be_false
-      expect(DataCrossReference.has_key? nil, DataCrossReference::UA_PLANT_TO_ISO).to be_false
+      expect(DataCrossReference.has_key? 'x', DataCrossReference::UA_PLANT_TO_ISO).to be_truthy
+      expect(DataCrossReference.has_key? 'askjfda', DataCrossReference::UA_PLANT_TO_ISO).to be_falsey
+      expect(DataCrossReference.has_key? nil, DataCrossReference::UA_PLANT_TO_ISO).to be_falsey
     end
   end
 
@@ -162,7 +162,7 @@ describe DataCrossReference do
   describe "xref_edit_hash" do
     it "returns information about xref screens user has access to" do
       # At the moment, only polo system has xrefs
-      MasterSetup.any_instance.stub(:system_code).and_return "polo"
+      allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "polo"
 
       xrefs = DataCrossReference.xref_edit_hash User.new
 
@@ -175,15 +175,15 @@ describe DataCrossReference do
   describe "can_view?" do
     context "polo system" do
       before :each do
-        MasterSetup.any_instance.stub(:system_code).and_return "polo"
+        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "polo"
       end
 
       it "allows access to RL Fabrix xref for anyone" do
-        expect(DataCrossReference.can_view? 'rl_fabric', User.new).to be_true
+        expect(DataCrossReference.can_view? 'rl_fabric', User.new).to be_truthy
       end
 
       it "allows access to RL Value Fabirc xref for anyone" do
-        expect(DataCrossReference.can_view? 'rl_valid_fabric', User.new).to be_true
+        expect(DataCrossReference.can_view? 'rl_valid_fabric', User.new).to be_truthy
       end
 
     end

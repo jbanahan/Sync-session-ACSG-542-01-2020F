@@ -18,7 +18,7 @@ describe EntriesController do
     it "should render page" do
       get :sync_records, id: @ent.id
       expect(response).to be_success
-      controller.instance_variable_get(:@e).should == @ent
+      expect(controller.instance_variable_get(:@e)).to eq(@ent)
     end
   end
 
@@ -73,18 +73,18 @@ describe EntriesController do
       #make sure we're not relying on the referrer
       request.env["HTTP_REFERER"] = nil
       entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
-      OpenChain::AllianceImagingClient.should_receive(:request_images).with('123456')
+      expect(OpenChain::AllianceImagingClient).to receive(:request_images).with('123456')
       post :get_images, 'id'=>entry.id
       expect(response).to redirect_to(entry)
-      flash[:errors].should be_blank
-      flash[:notices].first.should == "Updated images for file 123456 have been requested.  Please allow 10 minutes for them to appear."
+      expect(flash[:errors]).to be_blank
+      expect(flash[:notices].first).to eq("Updated images for file 123456 have been requested.  Please allow 10 minutes for them to appear.")
     end
     it "should not request images for non-alliance entries" do
       entry = Factory(:entry,:source_system=>'Fenix',:broker_reference=>'123456')
-      OpenChain::AllianceImagingClient.should_not_receive(:request_images)
+      expect(OpenChain::AllianceImagingClient).not_to receive(:request_images)
       post :get_images, 'id'=>entry.id
-      response.should be_redirect
-      flash[:errors].first.should == "Images cannot be requested for entries that are not from Alliance."
+      expect(response).to be_redirect
+      expect(flash[:errors].first).to eq("Images cannot be requested for entries that are not from Alliance.")
     end
   end
 
@@ -93,23 +93,23 @@ describe EntriesController do
     it "should handle bulk image requests with a referer" do
       request.env["HTTP_REFERER"] = "blah"
       entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
-      OpenChain::AllianceImagingClient.should_receive(:delayed_bulk_request_images).with('1234', '123')
+      expect(OpenChain::AllianceImagingClient).to receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id'=>'1234', 'pk'=>'123'}
       
-      response.should redirect_to("blah")
-      flash[:errors].should be_blank
-      flash[:notices].first.should == "Updated images have been requested.  Please allow 10 minutes for them to appear."
+      expect(response).to redirect_to("blah")
+      expect(flash[:errors]).to be_blank
+      expect(flash[:notices].first).to eq("Updated images have been requested.  Please allow 10 minutes for them to appear.")
     end
 
     it "should handle bulk image requests without a referer" do
       request.env["HTTP_REFERER"] = nil
       entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
-      OpenChain::AllianceImagingClient.should_receive(:delayed_bulk_request_images).with('1234', '123')
+      expect(OpenChain::AllianceImagingClient).to receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id'=>'1234', 'pk'=>'123'}
       
-      response.should redirect_to("/")
-      flash[:errors].should be_blank
-      flash[:notices].first.should == "Updated images have been requested.  Please allow 10 minutes for them to appear."
+      expect(response).to redirect_to("/")
+      expect(flash[:errors]).to be_blank
+      expect(flash[:notices].first).to eq("Updated images have been requested.  Please allow 10 minutes for them to appear.")
     end
 
   end
@@ -126,12 +126,12 @@ describe EntriesController do
         it "should request data" do
           #make sure we're not relying on the referrer
           request.env["HTTP_REFERER"] = nil
-          OpenChain::KewillSqlProxyClient.should_receive(:delayed_bulk_entry_data).with(nil, [entry.id])
+          expect(OpenChain::KewillSqlProxyClient).to receive(:delayed_bulk_entry_data).with(nil, [entry.id])
 
           post :request_entry_data, 'id'=>entry.id
           expect(response).to redirect_to(entry)
-          flash[:errors].should be_blank
-          flash[:notices].first.should == "Updated entry has been requested.  Please allow 10 minutes for it to appear."
+          expect(flash[:errors]).to be_blank
+          expect(flash[:notices].first).to eq("Updated entry has been requested.  Please allow 10 minutes for it to appear.")
         end
       end
 
@@ -139,24 +139,24 @@ describe EntriesController do
 
         it "should handle bulk image requests with a referer" do
           request.env["HTTP_REFERER"] = "blah"
-          OpenChain::KewillSqlProxyClient.should_receive(:delayed_bulk_entry_data).with(nil, {"0" => entry.id.to_s})
+          expect(OpenChain::KewillSqlProxyClient).to receive(:delayed_bulk_entry_data).with(nil, {"0" => entry.id.to_s})
 
           post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
 
-          response.should redirect_to("blah")
-          flash[:errors].should be_blank
-          flash[:notices].first.should == "Updated entries have been requested.  Please allow 10 minutes for them to appear."
+          expect(response).to redirect_to("blah")
+          expect(flash[:errors]).to be_blank
+          expect(flash[:notices].first).to eq("Updated entries have been requested.  Please allow 10 minutes for them to appear.")
         end
 
         it "should handle bulk image requests without a referer" do
           request.env["HTTP_REFERER"] = nil
-          OpenChain::KewillSqlProxyClient.should_receive(:delayed_bulk_entry_data).with(nil, {"0" => entry.id.to_s})
+          expect(OpenChain::KewillSqlProxyClient).to receive(:delayed_bulk_entry_data).with(nil, {"0" => entry.id.to_s})
 
           post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
 
-          response.should redirect_to("/")
-          flash[:errors].should be_blank
-          flash[:notices].first.should == "Updated entries have been requested.  Please allow 10 minutes for them to appear."
+          expect(response).to redirect_to("/")
+          expect(flash[:errors]).to be_blank
+          expect(flash[:notices].first).to eq("Updated entries have been requested.  Please allow 10 minutes for them to appear.")
         end
 
         context "with a search run id" do
@@ -168,10 +168,10 @@ describe EntriesController do
           end
 
           it "sends a search run id to the bulk request method" do
-            OpenChain::KewillSqlProxyClient.should_receive(:delayed_bulk_entry_data).with(@sr.id.to_s, nil)
+            expect(OpenChain::KewillSqlProxyClient).to receive(:delayed_bulk_entry_data).with(@sr.id.to_s, nil)
             post :bulk_request_entry_data, {'sr_id' => @sr.id}
-            flash[:errors].should be_blank
-            flash[:notices].first.should == "Updated entries have been requested.  Please allow 10 minutes for them to appear."
+            expect(flash[:errors]).to be_blank
+            expect(flash[:notices].first).to eq("Updated entries have been requested.  Please allow 10 minutes for them to appear.")
           end
         end
       end
@@ -179,7 +179,7 @@ describe EntriesController do
     describe 'as non-sysadmin' do
       describe 'request_entry_data' do
         it 'should do nothing' do
-          OpenChain::KewillSqlProxyClient.should_not_receive(:delayed_bulk_entry_data)
+          expect(OpenChain::KewillSqlProxyClient).not_to receive(:delayed_bulk_entry_data)
           post :request_entry_data, 'id'=>entry.id
           expect(response).to redirect_to(entry)
           expect(flash[:errors]).to be_blank
@@ -189,7 +189,7 @@ describe EntriesController do
       describe 'bulk_request_entry_data' do
         it 'should do nothing' do
           request.env["HTTP_REFERER"] = nil
-          OpenChain::KewillSqlProxyClient.should_not_receive(:delayed_bulk_entry_data)
+          expect(OpenChain::KewillSqlProxyClient).not_to receive(:delayed_bulk_entry_data)
           post :bulk_request_entry_data, {'pk'=>{"0"=>entry.id}}
           expect(response).to redirect_to("/")
           expect(flash[:errors]).to be_blank
@@ -202,17 +202,17 @@ describe EntriesController do
   describe "show" do
     it "should raise a 404 if not found" do
       get :show, :id => -20
-      response.should redirect_to("/")
-      flash[:errors].should eq ["Entry with id -20 not found."]
+      expect(response).to redirect_to("/")
+      expect(flash[:errors]).to eq ["Entry with id -20 not found."]
     end
 
     it "should show a US entry" do
       entry = Factory(:entry)
       get :show, :id => entry.id
 
-      response.status.should == 200
-      assigns(:entry).id.should eq entry.id
-      response.should render_template("show_us")
+      expect(response.status).to eq(200)
+      expect(assigns(:entry).id).to eq entry.id
+      expect(response).to render_template("show_us")
     end
 
     it "should show a US simple entry" do
@@ -220,9 +220,9 @@ describe EntriesController do
       entry = Factory(:entry)
       get :show, :id => entry.id
 
-      response.status.should == 200
-      assigns(:entry).id.should eq entry.id
-      response.should render_template("show_us_simple")
+      expect(response.status).to eq(200)
+      expect(assigns(:entry).id).to eq entry.id
+      expect(response).to render_template("show_us_simple")
     end
 
     it "should show a CA entry" do
@@ -231,23 +231,23 @@ describe EntriesController do
 
       get :show, :id => entry.id
 
-      response.status.should == 200
-      assigns(:entry).id.should eq entry.id
-      response.should render_template("show_ca")
+      expect(response.status).to eq(200)
+      expect(assigns(:entry).id).to eq entry.id
+      expect(response).to render_template("show_ca")
     end
 
     it "should redirect if user can't view" do
-      Entry.any_instance.should_receive(:can_view?).and_return false
+      expect_any_instance_of(Entry).to receive(:can_view?).and_return false
 
       entry = Factory(:entry)
       get :show, :id => entry.id
-      response.should redirect_to("/")
-      flash[:errors].should eq ["You do not have permission to view this entry."]
+      expect(response).to redirect_to("/")
+      expect(flash[:errors]).to eq ["You do not have permission to view this entry."]
 
     end
 
     it "sends an xls version of the entry" do
-      User.any_instance.stub(:view_broker_invoices?).and_return true
+      allow_any_instance_of(User).to receive(:view_broker_invoices?).and_return true
       line = Factory(:commercial_invoice_tariff).commercial_invoice_line
       line.commercial_invoice_tariffs << Factory(:commercial_invoice_tariff, commercial_invoice_line: line)
       line.save!
@@ -262,7 +262,7 @@ describe EntriesController do
 
       expect(response).to be_success
       expect(response.headers['Content-Type']).to eq Mime::Type.lookup_by_extension("xls").to_s
-      response.headers['Content-Disposition'].should == "attachment; filename=\"#{e.broker_reference}.xls\""
+      expect(response.headers['Content-Disposition']).to eq("attachment; filename=\"#{e.broker_reference}.xls\"")
       
       wb = Spreadsheet.open StringIO.new(response.body)
 
@@ -287,7 +287,7 @@ describe EntriesController do
     end
 
     it "uses canadian fields in xls file for candian entries" do
-      Entry.any_instance.should_receive(:canadian?).exactly(2).times.and_return true
+      expect_any_instance_of(Entry).to receive(:canadian?).exactly(2).times.and_return true
       e = Factory(:entry)
 
       get :show, :id => e.id, :format=> :xls
@@ -301,7 +301,7 @@ describe EntriesController do
     end
 
     it "does not show broker invoices to users not capable of seeing them" do
-      User.any_instance.stub(:view_broker_invoices?).and_return false
+      allow_any_instance_of(User).to receive(:view_broker_invoices?).and_return false
       e = Factory(:entry)
 
       get :show, :id => e.id, :format=> :xls
@@ -393,7 +393,7 @@ describe EntriesController do
     it "validates access and creates a release range query object" do
       get :by_release_range, importer_id: @u.company.id, iso_code: 'US', release_range: '1w'
 
-      response.should be_success
+      expect(response).to be_success
       expect(assigns(:range_descriptions)).to eq [
         ["Released In The Last 7 Days",'1w'],
         ["Released In The Last 28 Days",'4w'],
@@ -405,20 +405,20 @@ describe EntriesController do
     end
 
     it "handles argument error raised from query call" do
-      OpenChain::ActivitySummary.should_receive(:create_by_release_range_query).and_raise ArgumentError.new("Testing")
+      expect(OpenChain::ActivitySummary).to receive(:create_by_release_range_query).and_raise ArgumentError.new("Testing")
 
       get :by_release_range, importer_id: @u.company.id, iso_code: 'US', release_range: '1w'
 
-      response.should redirect_to("/")
-      flash[:errors].should eq ["Testing"]
+      expect(response).to redirect_to("/")
+      expect(flash[:errors]).to eq ["Testing"]
     end
 
     it "secures action" do
-      Entry.should_receive(:can_view_importer?).and_return false
+      expect(Entry).to receive(:can_view_importer?).and_return false
 
       get :by_release_range, importer_id: @u.company.id, iso_code: 'US', release_range: '1w'
-      response.should redirect_to("/")
-      flash[:errors].should eq ["You do not have permission to view this entry."]
+      expect(response).to redirect_to("/")
+      expect(flash[:errors]).to eq ["You do not have permission to view this entry."]
     end
   end
 
@@ -426,16 +426,16 @@ describe EntriesController do
     it "validates access and creates an entry port query" do
       get :by_entry_port, port_code: 'ABC', importer_id: @u.company.id
 
-      response.should be_success
+      expect(response).to be_success
       expect(assigns(:entries).to_sql).to match /SELECT.*FROM/i
     end
 
     it "secures action" do
-      Entry.should_receive(:can_view_importer?).and_return false
+      expect(Entry).to receive(:can_view_importer?).and_return false
 
       get :by_entry_port, port_code: 'ABC', importer_id: @u.company.id
-      response.should redirect_to("/")
-      flash[:errors].should eq ["You do not have permission to view this entry."]
+      expect(response).to redirect_to("/")
+      expect(flash[:errors]).to eq ["You do not have permission to view this entry."]
     end
   end
 
@@ -500,31 +500,31 @@ describe EntriesController do
     end
 
     it "should not allow users without permission to view entries" do
-      Company.any_instance.stub(:can_view?).with(@user).and_return(true)
+      allow_any_instance_of(Company).to receive(:can_view?).with(@user).and_return(true)
 
-      Entry.stub(:can_view_importer?).with(instance_of(Company), @user).and_return(false)
+      allow(Entry).to receive(:can_view_importer?).with(instance_of(Company), @user).and_return(false)
       get :us_duty_detail, importer_id: @company.id
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
 
     it "should not allow users without permission to company" do
-      Entry.stub(:can_view_importer?).with(instance_of(Company), @user).and_return(true)
+      allow(Entry).to receive(:can_view_importer?).with(instance_of(Company), @user).and_return(true)
 
-      Company.any_instance.stub(:can_view?).with(@user).and_return(false)
+      allow_any_instance_of(Company).to receive(:can_view?).with(@user).and_return(false)
       get :us_duty_detail, importer_id: @company.id
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
 
     it "should render page" do
-      Entry.stub(:can_view_importer?).with(instance_of(Company), @user).and_return(true)
-      Company.any_instance.stub(:can_view?).with(@user).and_return(true)
+      allow(Entry).to receive(:can_view_importer?).with(instance_of(Company), @user).and_return(true)
+      allow_any_instance_of(Company).to receive(:can_view?).with(@user).and_return(true)
 
       single_company_report = double('report')
       linked_company_reports = [double('linked report 1'), double('linked report 2'), double('linked report 3')]
-      OpenChain::ActivitySummary::DutyDetail.should_receive(:create_digest).with(@user, @company).and_return single_company_report
-      OpenChain::ActivitySummary::DutyDetail.should_receive(:create_linked_digests).with(@user, @company).and_return linked_company_reports
+      expect(OpenChain::ActivitySummary::DutyDetail).to receive(:create_digest).with(@user, @company).and_return single_company_report
+      expect(OpenChain::ActivitySummary::DutyDetail).to receive(:create_linked_digests).with(@user, @company).and_return linked_company_reports
       get :us_duty_detail, importer_id: @company.id
       expect(response).to be_success
       expect(assigns(:reports)).to eq [single_company_report].concat(linked_company_reports)
@@ -540,9 +540,9 @@ describe EntriesController do
 
     it "generates a delivery order for US entry" do
       entry = Factory(:entry)
-      Entry.any_instance.should_receive(:can_view?).with(user).and_return true
-      OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator.should_receive(:delay).and_return OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator
-      OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator.should_receive(:generate_and_send_delivery_orders).with(user.id, entry.id)
+      expect_any_instance_of(Entry).to receive(:can_view?).with(user).and_return true
+      expect(OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator).to receive(:delay).and_return OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator
+      expect(OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator).to receive(:generate_and_send_delivery_orders).with(user.id, entry.id)
       post :generate_delivery_order, {id: entry.id}
       expect(response).to redirect_to(entry)
       expect(flash[:notices]).to include "The Delivery Order will be generated shortly and emailed to #{user.email}."
@@ -550,8 +550,8 @@ describe EntriesController do
 
     it "redirects to error for canadian entries" do
       entry = Factory(:entry, import_country: Factory(:country, iso_code: "CA"))
-      Entry.any_instance.should_receive(:can_view?).with(user).and_return true
-      OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator.should_not_receive(:delay)
+      expect_any_instance_of(Entry).to receive(:can_view?).with(user).and_return true
+      expect(OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator).not_to receive(:delay)
       post :generate_delivery_order, {id: entry.id}
       expect(response).to redirect_to(entry)
       expect(flash[:errors]).to include "You do not have permission to view this report."

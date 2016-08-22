@@ -67,12 +67,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
   #   @u = Factory(:user)
   # end
 
-  # describe :workflow_name do
+  # describe "workflow_name" do
   #   it "should return Vendor Setup" do
   #     expect(described_class.workflow_name).to eq 'Vendor Setup'
   #   end
   # end
-  # describe :skip? do
+  # describe "skip?" do
   #   it "should skip non-vendor" do
   #     expect(described_class.skip?(@ll)).to be_true
   #     expect(described_class.skip?(@v)).to be_false
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
   #   end
   # end
 
-  # describe :do_workflow! do
+  # describe "do_workflow!" do
   #   before :all do
   #     described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
   #   end
@@ -363,7 +363,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberVendorWorkflowDecide
   #       end
   #     end
 
-  #     context :trade_compliance do
+  #     context "trade_compliance" do
   #       before :each do 
   #         @plant.product_groups << Factory(:product_group,name:'XX')
   #       end

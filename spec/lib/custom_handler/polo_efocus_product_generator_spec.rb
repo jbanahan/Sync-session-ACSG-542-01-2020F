@@ -1,36 +1,36 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
-  describe :generate do
+  describe "generate" do
     it "should create xls file, and ftp it while rows are written to spreadsheet" do
       h = described_class.new
-      h.should_receive(:row_count).exactly(3).times.and_return(1, 1, 0)
-      h.should_receive(:sync_xls).exactly(3).times.and_return('x', 'y', nil)
+      expect(h).to receive(:row_count).exactly(3).times.and_return(1, 1, 0)
+      expect(h).to receive(:sync_xls).exactly(3).times.and_return('x', 'y', nil)
 
-      h.should_receive(:ftp_file).with('x')
-      h.should_receive(:ftp_file).with('y')
+      expect(h).to receive(:ftp_file).with('x')
+      expect(h).to receive(:ftp_file).with('y')
 
       h.generate
     end
   end
-  describe :ftp_credentials do
+  describe "ftp_credentials" do
     it "should send credentials" do
-      described_class.new.ftp_credentials.should == {:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/Ralph_Lauren/efocus_products'}
+      expect(described_class.new.ftp_credentials).to eq({:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/Ralph_Lauren/efocus_products'})
     end
   end
-  describe :auto_confirm? do
+  describe "auto_confirm?" do
     it "should not autoconfirm" do
-      described_class.new.auto_confirm?.should be_false
+      expect(described_class.new.auto_confirm?).to be_falsey
     end
   end
-  describe :query do
+  describe "query" do
     before :each do
       @us = Factory(:country,:iso_code=>'US')
     end
     it "should use custom where clause" do
       c = described_class.new(:where=>'WHERE 1=2')
       qry = c.query
-      qry.should include "WHERE 1=2"
+      expect(qry).to include "WHERE 1=2"
     end
     context "simple tests" do
       before :each do
@@ -50,14 +50,14 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
         dont_find = Factory(:classification).product
         dont_find.update_custom_value! @barthco_cust, '100'
         r = Product.connection.execute @g.query
-        r.count.should == 1
-        r.first[6].should == @match_product.unique_identifier
+        expect(r.count).to eq(1)
+        expect(r.first[6]).to eq(@match_product.unique_identifier)
       end
       it 'should not return multiple rows for multiple country classifications' do
         other_country_class = Factory(:classification,:product=>@match_product)
         r = Product.connection.execute @g.query
-        r.count.should == 1
-        r.first[6].should == @match_product.unique_identifier
+        expect(r.count).to eq(1)
+        expect(r.first[6]).to eq(@match_product.unique_identifier)
       end
       it "should not return products that don't need sync" do
         dont_find = Factory(:classification,:country_id=>@us.id).product
@@ -65,42 +65,42 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
         dont_find.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.minute.ago,:confirmed_at=>1.second.ago)
         dont_find.update_attributes(:updated_at=>1.day.ago)
         r = Product.connection.execute @g.query
-        r.count.should == 1
-        r.first[6].should == @match_product.unique_identifier
+        expect(r.count).to eq(1)
+        expect(r.first[6]).to eq(@match_product.unique_identifier)
       end
       it "should not return products without barthco customer ids" do
         @match_product.custom_values.destroy_all
         r = Product.connection.execute @g.query
-        r.count.should == 0
+        expect(r.count).to eq(0)
       end
       it "should not return products that are test styles" do
         @match_product.update_custom_value! @test_style, 'x'
         r = Product.connection.execute @g.query
-        r.count.should == 0
+        expect(r.count).to eq(0)
       end
       it "should not return products that are non-RL sets and are missing hts numbers" do
         @tariff_record.update_attributes :hts_1 => ''
         r = Product.connection.execute @g.query
-        r.count.should == 0
+        expect(r.count).to eq(0)
       end
       it "should return products that only have hts 2" do
         @tariff_record.update_attributes :hts_1 => '', :hts_2 => "1234"
         r = Product.connection.execute @g.query
-        r.count.should == 1
-        r.first[6].should == @match_product.unique_identifier
+        expect(r.count).to eq(1)
+        expect(r.first[6]).to eq(@match_product.unique_identifier)
       end
       it "should return products that only have hts 3" do
         @tariff_record.update_attributes :hts_1 => '', :hts_3 => "1234"
         r = Product.connection.execute @g.query
-        r.count.should == 1
-        r.first[6].should == @match_product.unique_identifier
+        expect(r.count).to eq(1)
+        expect(r.first[6]).to eq(@match_product.unique_identifier)
       end
       it "should return products that are RL sets and are missing hts numbers" do
         @tariff_record.update_attributes :hts_1 => '', :hts_2 => '', :hts_3 => ''
         @classification.update_custom_value! @set_type, 'RL'
         r = Product.connection.execute @g.query
-        r.count.should == 1
-        r.first[6].should == @match_product.unique_identifier
+        expect(r.count).to eq(1)
+        expect(r.first[6]).to eq(@match_product.unique_identifier)
       end
     end
   end
@@ -121,8 +121,8 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
       product3 = Factory(:tariff_record, hts_1: '12345', classification: Factory(:classification, country_id: us.id)).product
       product3.update_custom_value! barthco_cust, '100'
 
-      described_class.any_instance.stub(:max_results).and_return 1
-      described_class.any_instance.should_receive(:ftp_file).exactly(3).times
+      allow_any_instance_of(described_class).to receive(:max_results).and_return 1
+      expect_any_instance_of(described_class).to receive(:ftp_file).exactly(3).times
 
       described_class.run_schedulable
 

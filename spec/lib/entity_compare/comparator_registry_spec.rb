@@ -7,7 +7,7 @@ describe OpenChain::EntityCompare::ComparatorRegistry do
       def self.accept?; end
     end
   }
-  describe :register do
+  describe "register" do
     it "should silently allow duplicate registration without creating duplicates" do
       described_class.register(comparator)
       described_class.register(comparator)
@@ -15,8 +15,8 @@ describe OpenChain::EntityCompare::ComparatorRegistry do
     end
     it "should only allow class objects" do
       d = double('FaileEvenThoughInterfaceIsGood')
-      d.stub(:compare)
-      expect{described_class.register(d)}.to raise_error
+      allow(d).to receive(:compare)
+      expect{described_class.register(d)}.to raise_error(/be a class/)
     end
     it "should only allow objects that respond_to?(:compare)" do
       expect{described_class.register(Object)}.to raise_error "All comparators must respond to #compare"
@@ -27,7 +27,7 @@ describe OpenChain::EntityCompare::ComparatorRegistry do
       expect{described_class.register(c)}.to raise_error "All comparators must respond to #accept?"
     end
   end
-  describe :registered do
+  describe "registered" do
     it "should not be changed by modifying retured Enumerable" do
       described_class.register(comparator)
       enum = described_class.registered
@@ -38,7 +38,7 @@ describe OpenChain::EntityCompare::ComparatorRegistry do
       expect(described_class.registered.to_a).to eq [comparator]
     end
   end
-  describe :remove do
+  describe "remove" do
     it "should allow removing of non-registered items" do
       described_class.register(comparator)
       described_class.remove(Object)
@@ -50,7 +50,7 @@ describe OpenChain::EntityCompare::ComparatorRegistry do
       expect(described_class.registered.to_a).to eq []
     end
   end
-  describe :clear do
+  describe "clear" do
     it "should remove items" do
       described_class.register(comparator)
       described_class.clear

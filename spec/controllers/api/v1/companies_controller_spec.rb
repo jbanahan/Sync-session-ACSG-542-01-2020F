@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Api::V1::CompaniesController do
-  describe :index do
+  describe "index" do
     before :each do
       @c = Factory(:company, name:'c1',importer:true,system_code:'A')
       @u = Factory(:user, company:@c)
@@ -17,9 +17,9 @@ describe Api::V1::CompaniesController do
       j = JSON.parse(response.body)['companies']
       expect(j.size).to eql 3
       expect(j.collect {|c| c['name']}).to eql ['a3','c1','c2']
-      expect(j[0]['vendor']).to be_true
-      expect(j[2]['vendor']).to be_false
-      expect(j[2]['importer']).to be_true
+      expect(j[0]['vendor']).to be_truthy
+      expect(j[2]['vendor']).to be_falsey
+      expect(j[2]['importer']).to be_truthy
     end
     it "only returns companies linked with company in linked_with param" do
       c2 = Factory(:company,name:'c2',vendor:true,system_code:'B')
@@ -53,7 +53,7 @@ describe Api::V1::CompaniesController do
       j = JSON.parse(response.body)['companies']
       expect(j.collect {|c| c['name']}).to include 'c2'
     end
-    context :role do
+    context "role" do
       it "should return self if matches role" do
         c2 = Factory(:company,name:'c2',importer:true,system_code:'c2')
         @c.linked_companies << c2
@@ -77,7 +77,7 @@ describe Api::V1::CompaniesController do
     end
   end
 
-  describe :validate do
+  describe "validate" do
     it "runs validations and returns result hash" do
       u = Factory(:master_user)
       allow_api_access u

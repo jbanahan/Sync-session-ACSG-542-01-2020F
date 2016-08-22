@@ -17,14 +17,14 @@ describe Api::V1::ApiJsonSupport do
 
   describe "to_entity_hash" do
     it "proxies call to the underlying jsonizer" do
-      jsonize.should_receive(:entity_to_hash).with(user, object, ['fld_test', 'fld_test_2'])
+      expect(jsonize).to receive(:entity_to_hash).with(user, object, ['fld_test', 'fld_test_2'])
 
       subject.to_entity_hash(object, [:fld_test, :fld_test_2], user: user)
     end
 
     it "uses current_user if user is not given as keyword arg" do
-      subject.should_receive(:current_user).and_return user
-      jsonize.should_receive(:entity_to_hash).with(user, object, ['fld_test', 'fld_test_2'])
+      expect(subject).to receive(:current_user).and_return user
+      expect(jsonize).to receive(:entity_to_hash).with(user, object, ['fld_test', 'fld_test_2'])
 
       subject.to_entity_hash(object, [:fld_test, :fld_test_2])
     end
@@ -32,14 +32,14 @@ describe Api::V1::ApiJsonSupport do
 
   describe "export_field" do
     it "proxies call to underlying jsonizer" do
-      jsonize.should_receive(:export_field).with(user, object, ModelField.find_by_uid(:prod_uid))
+      expect(jsonize).to receive(:export_field).with(user, object, ModelField.find_by_uid(:prod_uid))
 
       subject.export_field :prod_uid, object, user: user
     end
 
     it "uses current_user if user is not given as keyword arg" do
-      subject.should_receive(:current_user).and_return user
-      jsonize.should_receive(:export_field).with(user, object, ModelField.find_by_uid(:prod_uid))
+      expect(subject).to receive(:current_user).and_return user
+      expect(jsonize).to receive(:export_field).with(user, object, ModelField.find_by_uid(:prod_uid))
 
       subject.export_field :prod_uid, object
     end
@@ -67,7 +67,7 @@ describe Api::V1::ApiJsonSupport do
     end
 
     it "uses params method if http_params are not supplied" do
-      subject.should_receive(:params).and_return({fields: ["a", "b", "c"]})
+      expect(subject).to receive(:params).and_return({fields: ["a", "b", "c"]})
       expect(subject.requested_field_list).to eq ["a", "b", "c"]
     end
   end
@@ -82,15 +82,15 @@ describe Api::V1::ApiJsonSupport do
     end
 
     it "strips all fields that user does not have access to" do
-      ModelField.find_by_uid(:prod_uid).should_receive(:can_view?).with(user).and_return true
-      ModelField.find_by_uid(:prod_name).should_receive(:can_view?).with(user).and_return false
+      expect(ModelField.find_by_uid(:prod_uid)).to receive(:can_view?).with(user).and_return true
+      expect(ModelField.find_by_uid(:prod_name)).to receive(:can_view?).with(user).and_return false
 
       expect(subject.limit_fields [:prod_uid, :prod_name], user: user, http_params: {}).to eq [:prod_uid]
     end
 
     it "uses params method and current_user method when neither are supplied" do
-      subject.should_receive(:params).and_return({fields: ["prod_uid"]})
-      subject.should_receive(:current_user).and_return user
+      expect(subject).to receive(:params).and_return({fields: ["prod_uid"]})
+      expect(subject).to receive(:current_user).and_return user
 
       expect(subject.limit_fields [:prod_uid, :prod_name]).to eq [:prod_uid]
     end
@@ -125,7 +125,7 @@ describe Api::V1::ApiJsonSupport do
     end
 
     it "does not return fields that user cannot see" do
-      ModelField.any_instance.stub(:can_view?).with(user).and_return false
+      allow_any_instance_of(ModelField).to receive(:can_view?).with(user).and_return false
       fields = subject.all_requested_model_fields CoreModule::FOLDER, user: user, http_params: {}
       expect(fields.size).to eq 0
     end

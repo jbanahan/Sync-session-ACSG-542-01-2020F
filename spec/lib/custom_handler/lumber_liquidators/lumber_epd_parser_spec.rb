@@ -9,69 +9,69 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
   describe '#can_view?' do
     it "should fail if custom feature not enabled" do
       u = Factory(:master_user)
-      u.stub(:edit_variants?).and_return true
-      u.stub(:in_group?).and_return true
-      expect(described_class.can_view?(u)).to be_false
+      allow(u).to receive(:edit_variants?).and_return true
+      allow(u).to receive(:in_group?).and_return true
+      expect(described_class.can_view?(u)).to be_falsey
     end
     it "should fail if user not master" do
       u = Factory(:user)
-      u.stub(:edit_variants?).and_return true
-      u.stub(:in_group?).and_return true
-      MasterSetup.any_instance.stub(:custom_feature?).and_return true
-      expect(described_class.can_view?(u)).to be_false
+      allow(u).to receive(:edit_variants?).and_return true
+      allow(u).to receive(:in_group?).and_return true
+      allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
+      expect(described_class.can_view?(u)).to be_falsey
     end
     it "should fail if user cannot edit variants" do
       u = Factory(:master_user)
-      u.should_receive(:edit_variants?).and_return false
-      u.stub(:in_group?).and_return true
-      MasterSetup.any_instance.stub(:custom_feature?).and_return true
-      expect(described_class.can_view?(u)).to be_false
+      expect(u).to receive(:edit_variants?).and_return false
+      allow(u).to receive(:in_group?).and_return true
+      allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
+      expect(described_class.can_view?(u)).to be_falsey
     end
 
     it 'should fail if user not in PRODUCTCOMP group' do
       u = Factory(:master_user)
-      u.stub(:edit_variants?).and_return true
-      u.should_receive(:in_group?).and_return false
-      MasterSetup.any_instance.stub(:custom_feature?).and_return true
-      expect(described_class.can_view?(u)).to be_false
+      allow(u).to receive(:edit_variants?).and_return true
+      expect(u).to receive(:in_group?).and_return false
+      allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
+      expect(described_class.can_view?(u)).to be_falsey
     end
 
     it 'should pass if user can edit variants, is master, and feature is enabled' do
       u = Factory(:master_user)
-      u.should_receive(:edit_variants?).and_return true
-      u.should_receive(:in_group?).with('PRODUCTCOMP').and_return true
-      MasterSetup.any_instance.should_receive(:custom_feature?).with('Lumber EPD').and_return true
-      expect(described_class.can_view?(u)).to be_true
+      expect(u).to receive(:edit_variants?).and_return true
+      expect(u).to receive(:in_group?).with('PRODUCTCOMP').and_return true
+      expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('Lumber EPD').and_return true
+      expect(described_class.can_view?(u)).to be_truthy
     end
 
     it 'uses instance method and should pass if user can edit variants, is master, and feature is enabled' do
       u = Factory(:master_user)
-      u.should_receive(:edit_variants?).and_return true
-      u.should_receive(:in_group?).with('PRODUCTCOMP').and_return true
-      MasterSetup.any_instance.should_receive(:custom_feature?).with('Lumber EPD').and_return true
-      expect(described_class.new(nil).can_view?(u)).to be_true
+      expect(u).to receive(:edit_variants?).and_return true
+      expect(u).to receive(:in_group?).with('PRODUCTCOMP').and_return true
+      expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('Lumber EPD').and_return true
+      expect(described_class.new(nil).can_view?(u)).to be_truthy
     end
   end
   describe '#parse_xlsx' do
     it 'should send data to parse_row_arrays and call process_rows' do
       xlc = double(:xlclient)
       path = '/x/x/x'
-      OpenChain::XLClient.should_receive(:new).with(path).and_return(xlc)
+      expect(OpenChain::XLClient).to receive(:new).with(path).and_return(xlc)
       row_vals = [['x','y']]
       row_structs = ['a','b']
 
       user_id = 10
       u = double(:user)
-      User.should_receive(:find).with(10).and_return u
+      expect(User).to receive(:find).with(10).and_return u
 
       error_messages_1 = ['msg1']
       error_messages_2 = ['msg2']
 
-      xlc.should_receive(:all_row_values).with(0,1).and_return row_vals
+      expect(xlc).to receive(:all_row_values).with(0,1).and_return row_vals
 
-      described_class.should_receive(:parse_row_arrays).with(row_vals).and_return [row_structs,error_messages_1]
-      described_class.should_receive(:process_rows).with(row_structs,u).and_return(error_messages_2)
-      described_class.should_receive(:write_results_message).with(u,['msg1','msg2'])
+      expect(described_class).to receive(:parse_row_arrays).with(row_vals).and_return [row_structs,error_messages_1]
+      expect(described_class).to receive(:process_rows).with(row_structs,u).and_return(error_messages_2)
+      expect(described_class).to receive(:write_results_message).with(u,['msg1','msg2'])
 
       described_class.parse_xlsx(path,user_id)
     end
@@ -93,7 +93,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
 
       row_structs, errors = described_class.parse_row_arrays(rows)
 
-      expect(row_structs).to have(2).structs
+      expect(row_structs.size).to eq(2)
       expect(errors).to eq []
 
       row_structs.each_with_index do |rs,row_num|
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
     it "should error if row.length > 0 & row.length not >= 32" do
       rows = [Array.new(33),Array.new(34),Array.new(0),Array.new(25)]
       structs, errors = described_class.parse_row_arrays(rows)
-      expect(structs).to have(2).structs
+      expect(structs.size).to eq(2)
       expect(errors).to eq ['Row 5 failed because it only has 25 columns. All rows must have at least 32 columns.']
     end
   end
@@ -128,9 +128,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       s_a_2 = @base_struct.new('a','2')
       s_b_1 = @base_struct.new('b','1')
 
-      described_class.should_receive(:process_variant).with([s_a_1_1,s_a_1_2],u,cdefs).and_return nil
-      described_class.should_receive(:process_variant).with([s_a_2],u,cdefs).and_return 'emsg'
-      described_class.should_receive(:process_variant).with([s_b_1],u,cdefs).and_return 'emsg'
+      expect(described_class).to receive(:process_variant).with([s_a_1_1,s_a_1_2],u,cdefs).and_return nil
+      expect(described_class).to receive(:process_variant).with([s_a_2],u,cdefs).and_return 'emsg'
+      expect(described_class).to receive(:process_variant).with([s_b_1],u,cdefs).and_return 'emsg'
 
       #returns unique array of error messages
       expect(described_class.process_rows [s_a_1_1,s_a_2,s_b_1,s_a_1_2], u).to eq ['emsg']
@@ -142,8 +142,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       @cdefs = described_class.prep_my_custom_definitions
     end
     it "should create plant_variant_assignment and product_vendor_assignment" do
-      Product.any_instance.should_receive(:create_snapshot)
-      ProductVendorAssignment.any_instance.should_receive(:create_snapshot)
+      expect_any_instance_of(Product).to receive(:create_snapshot)
+      expect_any_instance_of(ProductVendorAssignment).to receive(:create_snapshot)
 
       product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)

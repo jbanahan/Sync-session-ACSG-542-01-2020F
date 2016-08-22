@@ -9,20 +9,20 @@ describe Address do
     end
     it "should be visible if linked to my company" do
       u = Factory(:user,company:@c)
-      expect(@a.can_view?(u)).to be_true
+      expect(@a.can_view?(u)).to be_truthy
     end
     it "should be visible if linked to a company I'm linked to" do
       u = Factory(:user)
       u.company.linked_companies << @c
-      expect(@a.can_view?(u)).to be_true
+      expect(@a.can_view?(u)).to be_truthy
     end
     it "should not be visible if not linked to my company or a company I'm linked to" do
       u = Factory(:user)
-      expect(@a.can_view?(u)).to be_false
+      expect(@a.can_view?(u)).to be_falsey
     end
   end
 
-  context :address_hash do
+  context "address_hash" do
     it "sets an address hash on save" do
       a = Factory(:address,name:'myname',line_1:'l1',line_2:'l2',city:'Jakarta')
       a.save!
@@ -43,7 +43,7 @@ describe Address do
       a.save! #would raise exception if was included in immutability check
     end
   end
-  describe :full_address do
+  describe "full_address" do
     it "should render address with newlines" do
       a = Address.new(name:'Vandegrift',line_1:'234 Market St',line_2:'5th Floor',line_3:nil,city:'Philadelphia',state:'PA',postal_code:'19106',country:Factory(:country,iso_code:'US'))
       expected = "Vandegrift\n234 Market St\n5th Floor\nPhiladelphia, PA 19106 US"
@@ -51,7 +51,7 @@ describe Address do
     end
   end
 
-  context :validations do
+  context "validations" do
     it "should not allow destroy if in use" do
       a = Factory(:address)
       Factory(:shipment,ship_to_id:a.id)
@@ -69,7 +69,7 @@ describe Address do
   end
 
 
-  describe :in_use do
+  describe "in_use" do
     before :each do
       @c = Factory(:company)
       @a = Factory(:address,company:@c)

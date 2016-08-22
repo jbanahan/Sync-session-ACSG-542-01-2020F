@@ -52,7 +52,7 @@ describe DutyCalcExportFileLine do
       expect(exp.unallocated_quantity).to eql(3)
     end
   end
-  describe :not_in_imports do
+  describe "not_in_imports" do
     before :each do
       @imp = Factory(:company)
       p = Factory(:product,:unique_identifier=>"ABC")
@@ -60,22 +60,22 @@ describe DutyCalcExportFileLine do
       @imp_line = DrawbackImportLine.create!(:importer_id=>@imp.id,:part_number=>@exp.part_number,:import_date=>1.year.ago,:product_id=>p.id)
     end
     it "should eliminate lines with imports by part number where import is before export and same importer" do
-      DutyCalcExportFileLine.not_in_imports.should be_empty
+      expect(DutyCalcExportFileLine.not_in_imports).to be_empty
     end
     it "should not eliminate lines from different importer" do
       @imp_line.update_attributes(:importer_id=>Factory(:company).id)
-      DutyCalcExportFileLine.not_in_imports.first.should == @exp
+      expect(DutyCalcExportFileLine.not_in_imports.first).to eq(@exp)
     end
     it "should not eliminate lines where import is before export" do
       @imp_line.update_attributes(:import_date=>1.day.from_now)
-      DutyCalcExportFileLine.not_in_imports.first.should == @exp
+      expect(DutyCalcExportFileLine.not_in_imports.first).to eq(@exp)
     end
     it "should not eliminate lines where part number not in imports" do
       @imp_line.update_attributes(:part_number=>'SOMETHINGELSE')
-      DutyCalcExportFileLine.not_in_imports.first.should == @exp
+      expect(DutyCalcExportFileLine.not_in_imports.first).to eq(@exp)
     end
   end
-  describe :make_line_array do
+  describe "make_line_array" do
     it "should make array" do
       line = DutyCalcExportFileLine.new(:export_date=>1.day.ago,:ship_date=>2.days.ago,
         :part_number => "123", :carrier=>"APLL", :ref_1=>"R1", :ref_2=>"R2",
@@ -89,7 +89,7 @@ describe DutyCalcExportFileLine do
       :ref_4,:destination_country,:quantity,:schedule_b_code,:description,
       :uom,:exporter,:status,:action_code,:nafta_duty,:nafta_us_equiv_duty,:nafta_duty_rate
       ].each_with_index do |v,i|
-        a[i].should == (line[v].respond_to?(:strftime) ? line[v].strftime("%m/%d/%Y") : line[v].to_s)
+        expect(a[i]).to eq(line[v].respond_to?(:strftime) ? line[v].strftime("%m/%d/%Y") : line[v].to_s)
       end
     end
     it "should fill in hts code if schedule b is missing" do
@@ -101,7 +101,7 @@ describe DutyCalcExportFileLine do
         :nafta_us_equiv_duty=>1.1, :nafta_duty_rate=>0.1
       )
       a = line.make_line_array
-      a[10].should == "4949494949"
+      expect(a[10]).to eq("4949494949")
     end
   end
 end

@@ -4,40 +4,40 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
   describe 'process' do
     before :each do 
       @cf = double("Custom File")
-      @cf.stub(:attached).and_return @cf
-      @cf.stub(:path).and_return "path/to/file.csv"
-      @cf.stub(:attached_file_name).and_return "file.csv"
+      allow(@cf).to receive(:attached).and_return @cf
+      allow(@cf).to receive(:path).and_return "path/to/file.csv"
+      allow(@cf).to receive(:attached_file_name).and_return "file.csv"
 
       @user = Factory(:master_user)
       @h = described_class.new @cf
     end
 
     it "should parse the file" do
-      @h.should_receive(:parse).with(@cf.attached.path).and_return []
+      expect(@h).to receive(:parse).with(@cf.attached.path).and_return []
       @h.process @user
 
-      @user.messages.length.should eq 1
-      @user.messages.first.subject.should eq "Ascena Invoice File Processing Completed"
-      @user.messages.first.body.should eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing."
+      expect(@user.messages.length).to eq 1
+      expect(@user.messages.first.subject).to eq "Ascena Invoice File Processing Completed"
+      expect(@user.messages.first.body).to eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing."
     end
 
     it "should put errors into the user messages" do
-      @h.should_receive(:parse).with(@cf.attached.path).and_return ["Error1", "Error2"]
+      expect(@h).to receive(:parse).with(@cf.attached.path).and_return ["Error1", "Error2"]
 
       @h.process @user
 
-      @user.messages.length.should eq 1
-      @user.messages.first.subject.should eq "Ascena Invoice File Processing Completed With Errors"
-      @user.messages.first.body.should eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing.\n\nError1\nError2"
+      expect(@user.messages.length).to eq 1
+      expect(@user.messages.first.subject).to eq "Ascena Invoice File Processing Completed With Errors"
+      expect(@user.messages.first.body).to eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing.\n\nError1\nError2"
     end
 
     it "should handle uncaught errors" do
-      @h.should_receive(:parse).with(@cf.attached.path).and_raise "Error"
+      expect(@h).to receive(:parse).with(@cf.attached.path).and_raise "Error"
 
       expect {@h.process(@user)}.to raise_error "Error"
 
-      @user.messages.first.subject.should eq "Ascena Invoice File Processing Completed With Errors"
-      @user.messages.first.body.should eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing.\n\nUnrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
+      expect(@user.messages.first.subject).to eq "Ascena Invoice File Processing Completed With Errors"
+      expect(@user.messages.first.body).to eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing.\n\nUnrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
     end
   end
 
@@ -45,7 +45,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
     it "should call s3_to_db and return any errors" do
       handler = described_class.new "file.csv" # dummy input 
       s3_path = "path/to/s3_file"
-      handler.should_receive(:s3_to_db).with(s3_path).and_raise "ERROR"
+      expect(handler).to receive(:s3_to_db).with(s3_path).and_raise "ERROR"
       expect(handler.parse s3_path).to eq ["Failed to process invoice due to the following error: 'ERROR'."]
     end
   end
@@ -58,14 +58,14 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
     it "parses the input file if it's a .csv" do
       s3_path = "path/to/s3_file.csv"
       temp_file = double()
-      OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', s3_path).and_yield temp_file
-      @handler.should_receive(:parse_csv).with(temp_file)
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with('chain-io', s3_path).and_yield temp_file
+      expect(@handler).to receive(:parse_csv).with(temp_file)
       @handler.s3_to_db s3_path
     end
 
     it "raises an error and doesn't parse the file if it isn't a .csv" do
       s3_path = "path/to/s3_file.xls"
-      @handler.should_not_receive(:parse_csv)
+      expect(@handler).not_to receive(:parse_csv)
       expect{ @handler.s3_to_db s3_path }.to raise_error "No CI Upload processor exists for .xls file types."
     end
   end

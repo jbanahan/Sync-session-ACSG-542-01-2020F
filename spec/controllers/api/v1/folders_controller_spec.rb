@@ -16,11 +16,11 @@ describe Api::V1::FoldersController do
   describe "show" do
     context "when user can view order" do
       before :each do
-        Order.any_instance.stub(:can_view?).and_return true
-        Folder.any_instance.stub(:can_view?).and_return true
-        Folder.any_instance.stub(:can_edit?).and_return true
-        Folder.any_instance.stub(:can_comment?).and_return true
-        Folder.any_instance.stub(:can_attach?).and_return true
+        allow_any_instance_of(Order).to receive(:can_view?).and_return true
+        allow_any_instance_of(Folder).to receive(:can_view?).and_return true
+        allow_any_instance_of(Folder).to receive(:can_edit?).and_return true
+        allow_any_instance_of(Folder).to receive(:can_comment?).and_return true
+        allow_any_instance_of(Folder).to receive(:can_attach?).and_return true
       end
 
       it "retrieves folder data" do
@@ -51,9 +51,9 @@ describe Api::V1::FoldersController do
         expect(com_json['id']).to eq comment.id
         expect(com_json['cmt_subject']).to eq "Subject"
         expect(com_json['permissions'].length).not_to eq 0
-        expect(com_json['permissions']['can_view']).to be_true
-        expect(com_json['permissions']['can_edit']).to be_true
-        expect(com_json['permissions']['can_delete']).to be_true
+        expect(com_json['permissions']['can_view']).to be_truthy
+        expect(com_json['permissions']['can_edit']).to be_truthy
+        expect(com_json['permissions']['can_delete']).to be_truthy
 
         grp_json = json['folder']['groups'].first
         expect(grp_json['id']).to eq group.id
@@ -62,7 +62,7 @@ describe Api::V1::FoldersController do
     end
 
     it "fails if user cannot view object" do
-      Order.any_instance.should_receive(:can_view?).with(user).and_return false
+      expect_any_instance_of(Order).to receive(:can_view?).with(user).and_return false
       get :show, base_object_type: "orders", base_object_id: base_object.id, id: folder.id
       expect(response).not_to be_success
       json = JSON.parse response.body
@@ -70,8 +70,8 @@ describe Api::V1::FoldersController do
     end
 
     it "fails if user cannot view folder" do
-      Order.any_instance.should_receive(:can_view?).with(user).and_return true
-      Folder.any_instance.should_receive(:can_view?).with(user).and_return false
+      expect_any_instance_of(Order).to receive(:can_view?).with(user).and_return true
+      expect_any_instance_of(Folder).to receive(:can_view?).with(user).and_return false
 
       get :show, base_object_type: "orders", base_object_id: base_object.id, id: folder.id
       expect(response).not_to be_success
@@ -83,8 +83,8 @@ describe Api::V1::FoldersController do
   describe "index" do
     context "when user can view the base object" do
       before :each do
-        Order.any_instance.stub(:can_view?).with(user).and_return true
-        Folder.any_instance.stub(:can_view?).with(user).and_return true
+        allow_any_instance_of(Order).to receive(:can_view?).with(user).and_return true
+        allow_any_instance_of(Folder).to receive(:can_view?).with(user).and_return true
         folder
       end
 
@@ -100,7 +100,7 @@ describe Api::V1::FoldersController do
     end
 
     it "errors when user cannot view base object" do
-      Order.any_instance.stub(:can_view?).with(user).and_return false
+      allow_any_instance_of(Order).to receive(:can_view?).with(user).and_return false
       get :index, base_object_type: "orders", base_object_id: base_object.id
       expect(response).not_to be_success
       json = JSON.parse response.body
@@ -108,8 +108,8 @@ describe Api::V1::FoldersController do
     end
 
     it "excludes folder from listing if user cannot view it" do
-      Order.any_instance.stub(:can_view?).with(user).and_return true
-      Folder.any_instance.stub(:can_view?).with(user).and_return false
+      allow_any_instance_of(Order).to receive(:can_view?).with(user).and_return true
+      allow_any_instance_of(Folder).to receive(:can_view?).with(user).and_return false
 
       get :index, base_object_type: "orders", base_object_id: base_object.id
 
@@ -123,7 +123,7 @@ describe Api::V1::FoldersController do
   describe "create" do
     context "when user can edit the base object" do
       before :each do
-        Order.any_instance.stub(:can_attach?).with(user).and_return true
+        allow_any_instance_of(Order).to receive(:can_attach?).with(user).and_return true
       end
 
       it "creates new folder instance in base object" do
@@ -141,7 +141,7 @@ describe Api::V1::FoldersController do
     end
 
     it "errors if user cannot edit base object" do
-      Order.any_instance.stub(:can_attach?).with(user).and_return false
+      allow_any_instance_of(Order).to receive(:can_attach?).with(user).and_return false
       post :create, base_object_type: "orders", base_object_id: base_object.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
@@ -152,8 +152,8 @@ describe Api::V1::FoldersController do
   describe "update" do
     context "when user can edit the base object" do
       before :each do
-        Order.any_instance.stub(:can_attach?).with(user).and_return true
-        Folder.any_instance.stub(:can_edit?).with(user).and_return true
+        allow_any_instance_of(Order).to receive(:can_attach?).with(user).and_return true
+        allow_any_instance_of(Folder).to receive(:can_edit?).with(user).and_return true
       end
 
       it "updates a folder instance" do
@@ -171,7 +171,7 @@ describe Api::V1::FoldersController do
     end
 
     it "errors if user cannot edit base object" do
-      Order.any_instance.stub(:can_attach?).with(user).and_return false
+      allow_any_instance_of(Order).to receive(:can_attach?).with(user).and_return false
       put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
@@ -179,8 +179,8 @@ describe Api::V1::FoldersController do
     end
 
     it "errors if user cannot folder" do
-      Order.any_instance.stub(:can_attach?).with(user).and_return true
-      Folder.any_instance.stub(:can_edit?).with(user).and_return false
+      allow_any_instance_of(Order).to receive(:can_attach?).with(user).and_return true
+      allow_any_instance_of(Folder).to receive(:can_edit?).with(user).and_return false
       put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
@@ -191,8 +191,8 @@ describe Api::V1::FoldersController do
   describe "destroy" do
     context "when user can access folder" do
       before :each do
-        Order.any_instance.stub(:can_attach?).with(user).and_return true
-        Folder.any_instance.stub(:can_edit?).with(user).and_return true
+        allow_any_instance_of(Order).to receive(:can_attach?).with(user).and_return true
+        allow_any_instance_of(Folder).to receive(:can_edit?).with(user).and_return true
       end
 
       it "deletes a folder" do

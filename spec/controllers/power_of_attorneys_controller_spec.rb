@@ -10,16 +10,16 @@ describe PowerOfAttorneysController do
   describe "GET index" do
     it "assigns all power_of_attorneys as @poa" do
       get :index, :company_id => @company
-      assigns(:power_of_attorneys).should eq([@poa])
-      response.should be_success
+      expect(assigns(:power_of_attorneys)).to eq([@poa])
+      expect(response).to be_success
     end
   end
 
   describe "GET new" do
     it "assigns a new power_of_attorney" do
       get :new, :company_id => @company
-      assigns(:power_of_attorney).should be_a_new(PowerOfAttorney)
-      response.should be_success
+      expect(assigns(:power_of_attorney)).to be_a_new(PowerOfAttorney)
+      expect(response).to be_success
     end
   end
 
@@ -42,8 +42,8 @@ describe PowerOfAttorneysController do
           :company_id => @poa.company.id,
           :attachment => fixture_file_upload('/files/attorney.png', 'image/png'),
           :attachment_file_name => "SampleAttachment.png"}
-        assigns(:power_of_attorney).should be_a(PowerOfAttorney)
-        assigns(:power_of_attorney).should be_persisted
+        expect(assigns(:power_of_attorney)).to be_a(PowerOfAttorney)
+        expect(assigns(:power_of_attorney)).to be_persisted
       end
 
       it "redirects to the created power_of_attorney" do
@@ -52,16 +52,16 @@ describe PowerOfAttorneysController do
           :company_id => @poa.company.id,
           :attachment => fixture_file_upload('/files/attorney.png', 'image/png'),
           :attachment_file_name => "SampleAttachment.png"}
-        response.should redirect_to(:action => 'index')
+        expect(response).to redirect_to(:action => 'index')
       end
     end
 
     describe "with invalid params" do
       it "re-renders the 'new' template" do
         # Trigger the behavior that occurs when invalid params are submitted
-        PowerOfAttorney.any_instance.stub(:save).and_return(false)
+        allow_any_instance_of(PowerOfAttorney).to receive(:save).and_return(false)
         post :create, :company_id => @company.id, :power_of_attorney => {}
-        response.should render_template("new")
+        expect(response).to render_template("new")
       end
     end
   end
@@ -69,13 +69,13 @@ describe PowerOfAttorneysController do
   describe "DELETE destroy" do
     it "destroys the requested power_of_attorney" do
       delete :destroy, :id => @poa.id, :company_id => @poa.company.id
-      PowerOfAttorney.count.should == 0
+      expect(PowerOfAttorney.count).to eq(0)
     end
 
     it "redirects to the power_of_attorneys list" do
       c = @poa.company
       delete :destroy, :id => @poa.id, :company_id => @poa.company.id
-      response.should redirect_to(company_power_of_attorneys_path(c))
+      expect(response).to redirect_to(company_power_of_attorneys_path(c))
     end
   end
 

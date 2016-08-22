@@ -1,10 +1,10 @@
 require 'spec_helper'
 
 describe SearchSetup do
-  describe :result_keys do
+  describe "result_keys" do
     it "should initialize query" do
-      SearchQuery.any_instance.should_receive(:result_keys).and_return "X"
-      SearchSetup.new.result_keys.should == "X"
+      expect_any_instance_of(SearchQuery).to receive(:result_keys).and_return "X"
+      expect(SearchSetup.new.result_keys).to eq("X")
     end
   end
   describe "uploadable?" do
@@ -12,43 +12,43 @@ describe SearchSetup do
     it 'should always reject ENTRY' do
       ss = Factory(:search_setup,:module_type=>'Entry')
       msgs = []
-      ss.uploadable?(msgs).should be_false
-      msgs.should have(1).item
-      msgs.first.should == "Upload functionality is not available for Entries."
+      expect(ss.uploadable?(msgs)).to be_falsey
+      expect(msgs.size).to eq(1)
+      expect(msgs.first).to eq("Upload functionality is not available for Entries.")
     end
     it 'should always reject BROKER_INVOICE' do
       ss = Factory(:search_setup,:module_type=>'BrokerInvoice')
       msgs = []
-      ss.uploadable?(msgs).should be_false
-      msgs.should have(1).item
-      msgs.first.should == "Upload functionality is not available for Invoices."
+      expect(ss.uploadable?(msgs)).to be_falsey
+      expect(msgs.size).to eq(1)
+      expect(msgs.first).to eq("Upload functionality is not available for Invoices.")
     end
     it "should reject PRODUCT for non-master" do
       u = Factory(:importer_user,:product_edit=>true,:product_view=>true)
       ss = Factory(:search_setup,:module_type=>"Product",:user=>u)
       msgs = []
-      ss.uploadable?(msgs).should be_false
-      msgs.first.include?("Only users from the master company can upload products.").should be_true
+      expect(ss.uploadable?(msgs)).to be_falsey
+      expect(msgs.first.include?("Only users from the master company can upload products.")).to be_truthy
     end
   end
   describe "downloadable?" do
     it "is downloadable if there are search criterions" do
       ss = Factory(:search_criterion, search_setup: Factory(:search_setup)).search_setup
-      expect(ss.downloadable?).to be_true
+      expect(ss.downloadable?).to be_truthy
     end
 
     it "is not downloadable if there are no search criterions for multi-page searches" do
       errors = []
-      expect(Factory(:search_setup).downloadable? errors).to be_false
+      expect(Factory(:search_setup).downloadable? errors).to be_falsey
       expect(errors).to eq ["You must add at least one Parameter to your search setup before downloading a search."]
     end
 
     it "is not downloadable if there are no search criterions for single page searches" do
       errors = []
-      expect(Factory(:search_setup).downloadable? errors, true).to be_true
+      expect(Factory(:search_setup).downloadable? errors, true).to be_truthy
     end
   end
-  describe :give_to do
+  describe "give_to" do
     before :each do
       MasterSetup.get.update_attributes(request_host:"localhost:3000")
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")
@@ -58,10 +58,10 @@ describe SearchSetup do
     it "should copy to another user" do
       @s.give_to @u2
       d = SearchSetup.find_by_user_id @u2.id
-      d.name.should == "X (From #{@u.full_name})"
-      d.id.should_not be_nil
+      expect(d.name).to eq("X (From #{@u.full_name})")
+      expect(d.id).not_to be_nil
       @s.reload
-      @s.name.should == "X" #we shouldn't modify the original object
+      expect(@s.name).to eq("X") #we shouldn't modify the original object
     end
     it "should copy to another user including schedules" do
       @s.search_schedules.build
@@ -69,14 +69,14 @@ describe SearchSetup do
       @s.give_to @u2, true
 
       d = SearchSetup.find_by_user_id @u2.id
-      d.name.should == "X (From #{@u.full_name})"
-      d.search_schedules.should have(1).item
+      expect(d.name).to eq("X (From #{@u.full_name})")
+      expect(d.search_schedules.size).to eq(1)
     end
     it "should strip existing '(From X)' values from search names" do
       @s.update_attributes :name => "Search (From David St. Hubbins) (From Nigel Tufnel)"
       @s.give_to @u2
       d = SearchSetup.find_by_user_id @u2.id
-      d.name.should == "Search (From #{@u.full_name})"
+      expect(d.name).to eq("Search (From #{@u.full_name})")
     end
     it "should create a notification for recipient" do
       @s.give_to @u2
@@ -87,61 +87,61 @@ describe SearchSetup do
     end
 
   end
-  describe :deep_copy do
+  describe "deep_copy" do
     before :each do
       @u = Factory(:user)
       @s = SearchSetup.create!(:name=>"ABC",:module_type=>"Order",:user=>@u,:simple=>false,:download_format=>'csv',:include_links=>true)
     end
     it "should copy basic search setup" do
       d = @s.deep_copy "new"
-      d.id.should_not be_nil
-      d.id.should_not == @s.id
-      d.name.should == "new"
-      d.module_type.should == "Order"
-      d.user.should == @u
-      d.simple.should be_false
-      d.download_format.should == 'csv'
-      d.include_links.should be_true
+      expect(d.id).not_to be_nil
+      expect(d.id).not_to eq(@s.id)
+      expect(d.name).to eq("new")
+      expect(d.module_type).to eq("Order")
+      expect(d.user).to eq(@u)
+      expect(d.simple).to be_falsey
+      expect(d.download_format).to eq('csv')
+      expect(d.include_links).to be_truthy
     end
     it "should copy parameters" do
       @s.search_criterions.create!(:model_field_uid=>'a',:value=>'x',:operator=>'y',:status_rule_id=>1,:custom_definition_id=>2)
       d = @s.deep_copy "new"
-      d.should have(1).search_criterions
+      expect(d.search_criterions.size).to eq(1)
       sc = d.search_criterions.first
-      sc.model_field_uid.should == 'a'
-      sc.value.should == 'x'
-      sc.operator.should == 'y'
-      sc.status_rule_id.should == 1
-      sc.custom_definition_id.should == 2
+      expect(sc.model_field_uid).to eq('a')
+      expect(sc.value).to eq('x')
+      expect(sc.operator).to eq('y')
+      expect(sc.status_rule_id).to eq(1)
+      expect(sc.custom_definition_id).to eq(2)
     end
     it "should copy columns" do
       @s.search_columns.create!(:model_field_uid=>'a',:rank=>7,:custom_definition_id=>9)
       d = @s.deep_copy "new"
-      d.should have(1).search_column
+      expect(d.search_columns.size).to eq(1)
       sc = d.search_columns.first
-      sc.model_field_uid.should == 'a'
-      sc.rank.should == 7
-      sc.custom_definition_id.should == 9
+      expect(sc.model_field_uid).to eq('a')
+      expect(sc.rank).to eq(7)
+      expect(sc.custom_definition_id).to eq(9)
     end
     it "should copy sorts" do
       @s.sort_criterions.create!(:model_field_uid=>'a',:rank=>5,:custom_definition_id=>2,:descending=>true)
       d = @s.deep_copy "new"
-      d.should have(1).sort_criterions
+      expect(d.sort_criterions.size).to eq(1)
       sc = d.sort_criterions.first
-      sc.model_field_uid.should == 'a'
-      sc.rank.should == 5
-      sc.custom_definition_id.should == 2
-      sc.should be_descending
+      expect(sc.model_field_uid).to eq('a')
+      expect(sc.rank).to eq(5)
+      expect(sc.custom_definition_id).to eq(2)
+      expect(sc).to be_descending
     end
     it "should not copy schedules" do
       @s.search_schedules.create!
       d = @s.deep_copy "new"
-      d.search_schedules.should be_empty
+      expect(d.search_schedules).to be_empty
     end
     it "should copy schedules when told to do so" do
       @s.search_schedules.create!
       d = @s.deep_copy "new", true
-      d.search_schedules.should have(1).item
+      expect(d.search_schedules.size).to eq(1)
     end
   end
   describe "values" do
@@ -158,7 +158,7 @@ describe SearchSetup do
           region.countries << Factory(:country)
         end
 
-        cm.klass.stub(:search_where).and_return("1=1")
+        allow(cm.klass).to receive(:search_where).and_return("1=1")
 
         cm.model_fields.keys.in_groups_of(20,false) do |uids|
           i = 0
@@ -176,13 +176,13 @@ describe SearchSetup do
       end
     end
   end
-  context :last_accessed do
+  context "last_accessed" do
     before :each do
       @s = Factory :search_setup
     end
 
     it "should return the last_accessed time from an associated search run" do
-      @s.last_accessed.should be_nil
+      expect(@s.last_accessed).to be_nil
       now = Time.zone.now
       @s.search_runs.build :last_accessed=>now
       @s.save

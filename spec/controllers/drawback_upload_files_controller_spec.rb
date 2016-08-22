@@ -5,22 +5,22 @@ describe DrawbackUploadFilesController do
     @user = Factory(:user)
 
     sign_in_as @user
-    DrawbackUploadFile.any_instance.stub(:validate_layout).and_return([])
+    allow_any_instance_of(DrawbackUploadFile).to receive(:validate_layout).and_return([])
   end
-  describe :index do
+  describe "index" do
     it "should redirect if user cannot view drawback" do
-      User.any_instance.stub(:view_drawback?).and_return(false)
+      allow_any_instance_of(User).to receive(:view_drawback?).and_return(false)
       get :index
-      response.should be_redirect
-      flash[:errors].first.should == "You cannot view this page because you do not have permission to view Drawback."
+      expect(response).to be_redirect
+      expect(flash[:errors].first).to eq("You cannot view this page because you do not have permission to view Drawback.")
     end
     it "should be good if permissions ok" do
-      User.any_instance.stub(:view_drawback?).and_return(true)
+      allow_any_instance_of(User).to receive(:view_drawback?).and_return(true)
       get :index
-      response.should be_success
+      expect(response).to be_success
     end
   end
-  describe :create do
+  describe "create" do
     before :each do
       @file = fixture_file_upload('/files/test.txt', 'text/plain')
       @dj = Delayed::Worker.delay_jobs
@@ -31,52 +31,52 @@ describe DrawbackUploadFilesController do
     end
     context "don't process" do
       before :each do
-        DrawbackUploadFile.any_instance.stub(:process).and_return(nil)
+        allow_any_instance_of(DrawbackUploadFile).to receive(:process).and_return(nil)
       end
       it "should fail if user cannot edit drawback" do
-        User.any_instance.stub(:edit_drawback?).and_return(false)
+        allow_any_instance_of(User).to receive(:edit_drawback?).and_return(false)
         post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS,'attachment_attributes'=>{'attached'=>@file}}
-        response.should be_redirect
-        flash[:errors].first.should == "You cannot upload files because you do not have permission to edit Drawback."
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("You cannot upload files because you do not have permission to edit Drawback.")
       end
       it "should fail if processor is not set" do
-        User.any_instance.stub(:edit_drawback?).and_return(true)
+        allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
         post :create, 'drawback_upload_file'=>{'processor'=>'','attachment_attributes'=>{'attached'=>@file}}
-        response.should be_redirect
-        flash[:errors].first.should == "You cannot upload this file because the processor is not set.  Please contact support."
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("You cannot upload this file because the processor is not set.  Please contact support.")
       end
       it "should fail if attachment is not sent" do
-        User.any_instance.stub(:edit_drawback?).and_return(true)
+        allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
         post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS}
-        response.should be_redirect
-        flash[:errors].first.should == "You must select a file before uploading."
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("You must select a file before uploading.")
       end
       it "should set start_at" do
-        User.any_instance.stub(:edit_drawback?).and_return(true)
+        allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
         post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS,'attachment_attributes'=>{'attached'=>@file}}
-        response.should be_redirect
-        flash[:errors].should be_nil
-        flash[:notices].should have(1).message
-        DrawbackUploadFile.first.start_at.should_not be_nil
+        expect(response).to be_redirect
+        expect(flash[:errors]).to be_nil
+        expect(flash[:notices].size).to eq(1)
+        expect(DrawbackUploadFile.first.start_at).not_to be_nil
       end
     end
     it "should delay process job" do
-      DrawbackUploadFile.any_instance.should_receive(:process).with(@user)
-      DrawbackUploadFile.any_instance.should_receive(:delay).and_return(DrawbackUploadFile.new)
-      User.any_instance.stub(:edit_drawback?).and_return(true)
+      expect_any_instance_of(DrawbackUploadFile).to receive(:process).with(@user)
+      expect_any_instance_of(DrawbackUploadFile).to receive(:delay).and_return(DrawbackUploadFile.new)
+      allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
       post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS,'attachment_attributes'=>{'attached'=>@file}}
-      response.should be_redirect
-      flash[:errors].should be_nil
-      flash[:notices].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors]).to be_nil
+      expect(flash[:notices].size).to eq(1)
     end
     it "should call process job" do
-      DrawbackUploadFile.any_instance.should_receive(:process)
-      User.any_instance.stub(:edit_drawback?).and_return(true)
+      expect_any_instance_of(DrawbackUploadFile).to receive(:process)
+      allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
       post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS,'attachment_attributes'=>{'attached'=>@file}}
-      response.should be_redirect
-      flash[:errors].should be_nil
-      flash[:notices].should have(1).message
-      DrawbackUploadFile.first.processor.should == DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS
+      expect(response).to be_redirect
+      expect(flash[:errors]).to be_nil
+      expect(flash[:notices].size).to eq(1)
+      expect(DrawbackUploadFile.first.processor).to eq(DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS)
     end
   end
 end

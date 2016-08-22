@@ -4,13 +4,13 @@ describe ScheduledReportsController do
 
   before :each do
     ms = MasterSetup.new(request_host:"localhost:3000")
-    MasterSetup.stub(:get).and_return ms
+    allow(MasterSetup).to receive(:get).and_return ms
     @user = Factory(:master_user,:email=>'a@example.com')
 
     sign_in_as @user
   end
 
-  context :index do
+  context "index" do
 
     it "should find a users scheduled reports and custom reports and generate option values for them" do
       # Use a compound type to make sure we're translating it correctly
@@ -30,7 +30,7 @@ describe ScheduledReportsController do
       @custom_report_2.save
 
       get :index, :user_id => @user.id
-      response.should be_success
+      expect(response).to be_success
       reports = assigns[:reports]
 
       # This should be an array suitable for passing to the rails helper method which creates
@@ -38,30 +38,30 @@ describe ScheduledReportsController do
       timeformat = "%m/%d/%Y %l:%M %p"
 
       # Report are ordered alphabetically by module and then individually by name
-      reports.length.should == 2
+      expect(reports.length).to eq(2)
 
-      reports[0][0].should == "Broker Invoice"
+      expect(reports[0][0]).to eq("Broker Invoice")
 
-      reports[0][1][0].should == [" #{@search_setup.name} - [unused]", "sr~#{@search_setup.id}"]
-      reports[0][1][1].should == ["* #{@search_setup_2.name} - #{@search_setup_2.last_accessed.strftime(timeformat)}", "sr~#{@search_setup_2.id}"]
+      expect(reports[0][1][0]).to eq([" #{@search_setup.name} - [unused]", "sr~#{@search_setup.id}"])
+      expect(reports[0][1][1]).to eq(["* #{@search_setup_2.name} - #{@search_setup_2.last_accessed.strftime(timeformat)}", "sr~#{@search_setup_2.id}"])
 
-      reports[1][0].should == "Custom Report"
-      reports[1][1][0].should == [" #{@custom_report.name} - [unused]", "cr~#{@custom_report.id}"]
-      reports[1][1][1].should == ["* #{@custom_report_2.name} - #{@custom_report_2.report_results.first.run_at.strftime(timeformat)}", "cr~#{@custom_report_2.id}"]
+      expect(reports[1][0]).to eq("Custom Report")
+      expect(reports[1][1][0]).to eq([" #{@custom_report.name} - [unused]", "cr~#{@custom_report.id}"])
+      expect(reports[1][1][1]).to eq(["* #{@custom_report_2.name} - #{@custom_report_2.report_results.first.run_at.strftime(timeformat)}", "cr~#{@custom_report_2.id}"])
 
       assigns[:user].id == @user.id
     end
 
     it "should error if user has no searches or scheduled reports" do
       get :index, :user_id => @user.id
-      response.should be_redirect
-      flash[:errors].should == ["#{@user.username} does not have any reports."]
+      expect(response).to be_redirect
+      expect(flash[:errors]).to eq(["#{@user.username} does not have any reports."])
     end
 
     it "should error if user doesn't exist" do
       get :index, :user_id => -1
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
 
     it "should error if non-admin user attempts to access another user's reports" do
@@ -69,12 +69,12 @@ describe ScheduledReportsController do
       another_user = Factory(:user)
 
       get :index, :user_id => another_user.id
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
   end
 
-  context :give_reports do
+  context "give_reports" do
 
     before :each do
       @another_user = Factory(:user)
@@ -86,40 +86,40 @@ describe ScheduledReportsController do
 
     it "should give reports to another user" do
       put :give_reports, :user_id=> @user.id, :search_setup_id=>["sr~#{@search_setup.id}", "cr~#{@custom_report.id}"], :assign_to_user_id=>[@another_user.id]
-      response.should redirect_to user_scheduled_reports_path(@user)
+      expect(response).to redirect_to user_scheduled_reports_path(@user)
 
       # Another user should now have report copies
       search_copy = SearchSetup.find_by_user_id(@another_user.id)
 
       # Since we're using the SearchSetup's give functionality, just making
       # sure we found a result should be enough to determine that this works.
-      search_copy.should_not be_nil
+      expect(search_copy).not_to be_nil
 
       custom_report_copy = CustomReport.find_by_user_id @another_user.id
-      custom_report_copy.should_not be_nil
-      custom_report_copy.search_schedules.length.should == 0
+      expect(custom_report_copy).not_to be_nil
+      expect(custom_report_copy.search_schedules.length).to eq(0)
     end
 
     it "should give reports to another user and copy schedules" do
       put :give_reports, :user_id=> @user.id, :search_setup_id=>["cr~#{@custom_report.id}"], :assign_to_user_id=>[@another_user.id], :copy_schedules=>"true"
-      response.should redirect_to user_scheduled_reports_path(@user)
+      expect(response).to redirect_to user_scheduled_reports_path(@user)
 
       custom_report_copy = CustomReport.find_by_user_id @another_user.id
-      custom_report_copy.should_not be_nil
-      custom_report_copy.search_schedules.length.should == 1
+      expect(custom_report_copy).not_to be_nil
+      expect(custom_report_copy.search_schedules.length).to eq(1)
     end
 
     it "should fail if user isn't found" do
       get :give_reports, :user_id=> -1
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
 
     it "should fail if non-admin user attempts to copy another user's reports" do
       @user.update_attributes :admin => false, :sys_admin => false
       put :give_reports, :user_id=> @another_user.id, :search_setup_id=>["sr~#{@search_setup.id}", "cr~#{@custom_report.id}"], :assign_to_user_id=>[@another_user.id]
-      response.should be_redirect
-      flash[:errors].should have(1).message
+      expect(response).to be_redirect
+      expect(flash[:errors].size).to eq(1)
     end
   end
 end

@@ -30,10 +30,10 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
   describe "parse" do
     let (:custom_file) { 
       cf = double("Custom File")
-      cf.stub(:attached).and_return cf
-      cf.stub(:path).and_return "file.txt"
-      cf.stub(:bucket).and_return "bucket"
-      cf.stub(:attached_file_name).and_return "file.txt"
+      allow(cf).to receive(:attached).and_return cf
+      allow(cf).to receive(:path).and_return "file.txt"
+      allow(cf).to receive(:bucket).and_return "bucket"
+      allow(cf).to receive(:attached_file_name).and_return "file.txt"
 
       cf
     }
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
     end
 
     it "parses an Eddie pipe delimited file and creates an invoice" do
-      OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', "file.txt").and_yield tempfile
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', "file.txt").and_yield tempfile
       subject.parse custom_file, true
       # all we really care about is that an invoice was created, the rest is tested in the actual fenix handler
       expect(CommercialInvoice.where(invoice_number: "0309018").first).to_not be_nil

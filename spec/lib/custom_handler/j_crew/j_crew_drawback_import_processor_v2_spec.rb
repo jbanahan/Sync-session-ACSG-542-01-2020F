@@ -4,8 +4,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
   describe '#parse' do
     it 'should validate internal integrity and fail on missed validation' do
       d = double('data')
-      described_class.should_receive(:build_data_structure).with(d).and_raise 'some error'
-      described_class.should_not_receive(:process_data)
+      expect(described_class).to receive(:build_data_structure).with(d).and_raise 'some error'
+      expect(described_class).not_to receive(:process_data)
 
       expect{described_class.parse(d,double('user'))}.to raise_error 'some error'
     end
@@ -14,8 +14,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       u = double('user')
       ds = double('data_structure')
 
-      described_class.should_receive(:build_data_structure).with(d).and_return(ds)
-      described_class.should_receive(:process_data).with(ds,u).and_return []
+      expect(described_class).to receive(:build_data_structure).with(d).and_return(ds)
+      expect(described_class).to receive(:process_data).with(ds,u).and_return []
 
       described_class.parse(d,u)
     end
@@ -24,12 +24,12 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       ds = double('data_structure')
       d = double('data')
 
-      described_class.should_receive(:build_data_structure).with(d).and_return(ds)
-      described_class.should_receive(:process_data).with(ds,u).and_return ['bad']
+      expect(described_class).to receive(:build_data_structure).with(d).and_return(ds)
+      expect(described_class).to receive(:process_data).with(ds,u).and_return ['bad']
 
       mail_obj = double('mail')
-      mail_obj.stub(:deliver!)
-      OpenMailer.should_receive(:send_simple_text).with(
+      allow(mail_obj).to receive(:deliver!)
+      expect(OpenMailer).to receive(:send_simple_text).with(
         u.email,
         "J Crew Drawback Import V2 Error Log",
         "**J Crew Drawback Import V2 Error Log**\nbad"
@@ -45,8 +45,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       content_2 = double('hash content 2')
       h = {'12345678900'=>content_1,'99999999999'=>content_2}
       u = double('user')
-      described_class.should_receive(:process_entry).with(h.keys.first,h.values.first)
-      described_class.should_receive(:process_entry).with(h.keys.last,h.values.last)
+      expect(described_class).to receive(:process_entry).with(h.keys.first,h.values.first)
+      expect(described_class).to receive(:process_entry).with(h.keys.last,h.values.last)
       expect(described_class.process_data(h,u)).to be_empty
     end
 
@@ -55,8 +55,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
   describe '#process_entry' do
     before :each do
       mo = double('mail_obj')
-      mo.stub(:deliver!)
-      OpenMailer.stub(:send_simple_text).and_return(mo)
+      allow(mo).to receive(:deliver!)
+      allow(OpenMailer).to receive(:send_simple_text).and_return(mo)
       @crew = Factory(:company,alliance_customer_number:'JCREW')
       # create underlying entry
       OpenChain::CustomHandler::KewillEntryParser.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_entry.json'),imaging: false)

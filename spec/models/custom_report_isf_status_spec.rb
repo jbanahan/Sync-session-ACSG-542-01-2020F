@@ -31,14 +31,14 @@ describe CustomReportIsfStatus do
   describe "can_view?" do
     it "allows security filing viewers to view" do
       u = Factory(:user)
-      u.should_receive(:view_security_filings?).and_return true
-      expect(CustomReportIsfStatus.can_view?(u)).to be_true
+      expect(u).to receive(:view_security_filings?).and_return true
+      expect(CustomReportIsfStatus.can_view?(u)).to be_truthy
     end
 
     it "disallows non-security filing viewers to view" do
       u = Factory(:user)
-      u.should_receive(:view_security_filings?).and_return false
-      expect(CustomReportIsfStatus.can_view?(u)).to be_false
+      expect(u).to receive(:view_security_filings?).and_return false
+      expect(CustomReportIsfStatus.can_view?(u)).to be_falsey
     end
   end
 
@@ -46,7 +46,7 @@ describe CustomReportIsfStatus do
     before :each do 
       @sf = Factory(:security_filing, :transaction_number => "1234", :broker_customer_number=> "4321", :status_code => "ACCNOMATCH", :file_logged_date=>Time.now)
       @u = Factory(:importer_user, company_id: @sf.importer_id)
-      User.any_instance.stub(:view_security_filings?).and_return true
+      allow_any_instance_of(User).to receive(:view_security_filings?).and_return true
 
       @rpt = CustomReportIsfStatus.new
       @rpt.search_columns.build model_field_uid: "sf_transaction_number"
@@ -137,7 +137,7 @@ describe CustomReportIsfStatus do
       rpt.search_criterions.build model_field_uid: "sf_broker_customer_number", operator: "eq", value: "4321"
       rpt.save
 
-      expect(rpt.errors).to have(0).items
+      expect(rpt.errors.size).to eq(0)
     end
   end
 end

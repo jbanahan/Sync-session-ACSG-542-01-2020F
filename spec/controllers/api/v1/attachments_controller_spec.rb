@@ -9,7 +9,7 @@ describe Api::V1::AttachmentsController do
   before :each do
     allow_api_user(user)
     use_json
-    Product.any_instance.stub(:can_view?).with(user).and_return true
+    allow_any_instance_of(Product).to receive(:can_view?).with(user).and_return true
   end
 
   context "with json api" do
@@ -19,9 +19,9 @@ describe Api::V1::AttachmentsController do
 
     describe "destroy" do
       it "deletes an attachment" do
-        Product.any_instance.should_receive(:can_attach?).with(user).and_return true
-        Attachment.any_instance.should_receive(:rebuild_archive_packet)
-        OpenChain::WorkflowProcessor.should_receive(:async_process)
+        expect_any_instance_of(Product).to receive(:can_attach?).with(user).and_return true
+        expect_any_instance_of(Attachment).to receive(:rebuild_archive_packet)
+        expect(OpenChain::WorkflowProcessor).to receive(:async_process)
 
         delete :destroy, base_object_type: "products", base_object_id: product.id, id: attachment.id
         expect(response).to be_success
@@ -32,7 +32,7 @@ describe Api::V1::AttachmentsController do
       end
 
       it "errors if user cannot delete attachment" do
-        Product.any_instance.should_receive(:can_attach?).with(user).and_return false
+        expect_any_instance_of(Product).to receive(:can_attach?).with(user).and_return false
         delete :destroy, base_object_type: "products", base_object_id: product.id, id: attachment.id
         expect(response).not_to be_success
       end
@@ -50,13 +50,13 @@ describe Api::V1::AttachmentsController do
       end
 
       it "returns error if user can't view" do
-        Product.any_instance.stub(:can_view?).with(user).and_return false
+        allow_any_instance_of(Product).to receive(:can_view?).with(user).and_return false
         get :index, base_object_type: "products", base_object_id: product.id
         expect(response).not_to be_success
       end
 
       it "returns error for bad id" do
-        Product.any_instance.stub(:can_view?).with(user).and_return false
+        allow_any_instance_of(Product).to receive(:can_view?).with(user).and_return false
         get :index, base_object_type: "products", base_object_id: -1
         expect(response).not_to be_success
       end
@@ -74,13 +74,13 @@ describe Api::V1::AttachmentsController do
       end
 
       it "errors if user can't view" do
-        Product.any_instance.stub(:can_view?).with(user).and_return false
+        allow_any_instance_of(Product).to receive(:can_view?).with(user).and_return false
         get :show, base_object_type: "products", base_object_id: product.id, id: attachment.id
         expect(response).not_to be_success
       end
 
       it "returns error for bad id" do
-        Product.any_instance.stub(:can_view?).with(user).and_return false
+        allow_any_instance_of(Product).to receive(:can_view?).with(user).and_return false
         get :show, base_object_type: "products", base_object_id: product.id, id: -1
         expect(response).not_to be_success
       end
@@ -98,10 +98,10 @@ describe Api::V1::AttachmentsController do
 
       it "returns path for proxied download if setup in master setup" do
         ms = double("MasterSetup")
-        MasterSetup.stub(:get).and_return ms
-        ms.stub(:request_host).and_return "localhost"
-        ms.stub(:uuid).and_return "uuid"
-        ms.should_receive(:custom_feature?).with("Attachment Mask").and_return true
+        allow(MasterSetup).to receive(:get).and_return ms
+        allow(ms).to receive(:request_host).and_return "localhost"
+        allow(ms).to receive(:uuid).and_return "uuid"
+        expect(ms).to receive(:custom_feature?).with("Attachment Mask").and_return true
 
         now = Time.zone.now
         Timecop.freeze(now) do
@@ -112,7 +112,7 @@ describe Api::V1::AttachmentsController do
       end
 
       it "errors if user can't see file" do
-        Product.any_instance.stub(:can_view?).with(user).and_return false
+        allow_any_instance_of(Product).to receive(:can_view?).with(user).and_return false
         get :download, base_object_type: "products", base_object_id: product.id, id: attachment.id
         expect(response).not_to be_success
       end
@@ -125,11 +125,11 @@ describe Api::V1::AttachmentsController do
 
     before :each do
       stub_paperclip
-      Product.any_instance.stub(:can_attach?).and_return true
+      allow_any_instance_of(Product).to receive(:can_attach?).and_return true
     end
 
     it "creates an attachment" do
-      OpenChain::WorkflowProcessor.should_receive(:async_process)
+      expect(OpenChain::WorkflowProcessor).to receive(:async_process)
 
       post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
       expect(response).to be_success
@@ -146,13 +146,13 @@ describe Api::V1::AttachmentsController do
     end
 
     it "calls log_update and attachment_added if base object responds to those methods" do
-      Product.any_instance.should_receive(:log_update).with(user)
+      expect_any_instance_of(Product).to receive(:log_update).with(user)
       attachment_id = nil
-      Product.any_instance.should_receive(:attachment_added) do |attach|
+      expect_any_instance_of(Product).to receive(:attachment_added) do |instance, attach|
         attachment_id = attach.id
       end
 
-      OpenChain::WorkflowProcessor.should_receive(:async_process)
+      expect(OpenChain::WorkflowProcessor).to receive(:async_process)
 
       post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
       expect(response).to be_success
@@ -170,7 +170,7 @@ describe Api::V1::AttachmentsController do
     end
 
     it "errors if user cannot attach" do
-      Product.any_instance.stub(:can_attach?).and_return false
+      allow_any_instance_of(Product).to receive(:can_attach?).and_return false
       post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
       expect(response).not_to be_success
     end
@@ -189,7 +189,7 @@ describe Api::V1::AttachmentsController do
     end
 
     it "errors if user can't view object" do
-      Product.any_instance.stub(:can_view?).with(user).and_return false
+      allow_any_instance_of(Product).to receive(:can_view?).with(user).and_return false
       get :attachment_types, base_object_type: "products", base_object_id: product.id
       expect(response).not_to be_success
     end

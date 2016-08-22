@@ -4,7 +4,7 @@ describe HmController do
   before :each do
     MasterSetup.get.update_attributes(custom_features:'H&M')
   end
-  describe :index do
+  describe "index" do
     it "should not allow view unless master user" do
       u = Factory(:user)
       sign_in_as u
@@ -28,7 +28,7 @@ describe HmController do
     end
   end
 
-  describe :show_po_lines do
+  describe "show_po_lines" do
     before :each do
       u = Factory(:master_user)
       sign_in_as u

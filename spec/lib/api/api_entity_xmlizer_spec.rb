@@ -12,9 +12,9 @@ describe OpenChain::Api::ApiEntityXmlizer do
     m = double('model_field_uids')
     j = double('jsonizer')
     eh = double('entity_hash')
-    OpenChain::Api::ApiEntityJsonizer.should_receive(:new).with(opts).and_return j
-    j.should_receive(:entity_to_hash).with(u,e,m).and_return eh
-    described_class.any_instance.should_receive(:make_xml).with(e,eh).and_return 'xml'
+    expect(OpenChain::Api::ApiEntityJsonizer).to receive(:new).with(opts).and_return j
+    expect(j).to receive(:entity_to_hash).with(u,e,m).and_return eh
+    expect_any_instance_of(described_class).to receive(:make_xml).with(e,eh).and_return 'xml'
     expect(described_class.new(opts).entity_to_xml(u,e,m)).to eq 'xml'
   end
 

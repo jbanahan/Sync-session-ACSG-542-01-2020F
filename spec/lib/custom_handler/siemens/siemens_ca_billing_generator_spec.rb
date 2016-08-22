@@ -63,7 +63,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       e.update_attributes! importer: Factory(:importer, fenix_customer_number: "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789", entry_type: "AB"
 
       file_data = nil
-      described_class.any_instance.should_receive(:ftp_file) do |file|
+      expect_any_instance_of(described_class).to receive(:ftp_file) do |instance, file|
         file_data = file.read
       end
 
@@ -344,7 +344,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       end
 
       it "re-raises any errors, prepending the file # to the error" do
-        subject.should_receive(:write_entry_data_line).and_raise "ERROR!"
+        expect(subject).to receive(:write_entry_data_line).and_raise "ERROR!"
         expect {subject.write_entry_data StringIO.new, StringIO.new, @ed}.to raise_error "File # 123456 - ERROR!"
       end
     end
@@ -363,7 +363,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         it "writes entry data to a file and sends it" do
           file = nil
           filename = nil
-          subject.should_receive(:ftp_file) do |ftp_file|
+          expect(subject).to receive(:ftp_file) do |ftp_file|
             file = ftp_file.read
             filename = ftp_file.original_filename
             true
@@ -390,13 +390,13 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           # way, when the transaction is rolled back in the code we're testing, the database state is rolled back to 
           # this savepoint created inside the expectation below and then we can test that no data was retained during the 
           # test.
-          Entry.should_receive(:transaction) do |&block| 
+          expect(Entry).to receive(:transaction) do |&block| 
             ActiveRecord::Base.transaction(requires_new: true) do 
               block.call
             end
           end
 
-          subject.should_receive(:ftp_file).and_raise "Error!"
+          expect(subject).to receive(:ftp_file).and_raise "Error!"
           expect{ subject.generate_and_send [@entry]}.to raise_error "Error!"
 
           expect(@entry.reload.sync_records.length).to eq 0

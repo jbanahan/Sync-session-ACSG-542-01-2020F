@@ -8,7 +8,7 @@ describe OpenChain::Wto6ChangeResetter do
       @flds = ['prod_name']
     end
     it "should reset fields if changed" do
-      @p.should_receive(:wto6_changed_after?).with(@cr).and_return(true)
+      expect(@p).to receive(:wto6_changed_after?).with(@cr).and_return(true)
       described_class.reset_fields_if_changed(@p,'prod_created_at',['prod_name'])
       @p.reload
       expect(@p.name).to be_blank
@@ -19,7 +19,7 @@ describe OpenChain::Wto6ChangeResetter do
       ModelField.reload
 
       @p.update_custom_value!(cd,'abc')
-      @p.should_receive(:wto6_changed_after?).with(@cr).and_return(true)
+      expect(@p).to receive(:wto6_changed_after?).with(@cr).and_return(true)
 
       expect(@p.get_custom_value(cd).value).to eq 'abc' #double check that value was set properly
 
@@ -30,7 +30,7 @@ describe OpenChain::Wto6ChangeResetter do
       expect(@p.get_custom_value(cd).value).to be_nil
     end
     it "should not reset fields if not changed" do
-      @p.should_receive(:wto6_changed_after?).with(@cr).and_return(false)
+      expect(@p).to receive(:wto6_changed_after?).with(@cr).and_return(false)
       described_class.reset_fields_if_changed(@p,'prod_created_at',['prod_name'])
       @p.reload
       expect(@p.name).to eq 'myname'
@@ -45,7 +45,7 @@ describe OpenChain::Wto6ChangeResetter do
 
       #this is the expectation
       # need to test the Product call because the reset_field_if_changed stub is clobbered by the SchedulableJob loading the class
-      Product.any_instance.should_receive(:wto6_changed_after?).once
+      expect_any_instance_of(Product).to receive(:wto6_changed_after?).once
       
       #have the test actually run the schedulable job since we have the dependency on the last_start_time being
       #passed through to the underlying class
@@ -61,7 +61,7 @@ describe OpenChain::Wto6ChangeResetter do
       d = 5.days.ago
 
       #this is the expectation
-      described_class.should_receive(:reset_fields_if_changed).twice
+      expect(described_class).to receive(:reset_fields_if_changed).twice
 
       opts = {'change_date_field'=>'prod_created_at','fields_to_reset'=>['prod_name'],'run_all'=>'true','last_start_time'=>10.days.from_now}
       

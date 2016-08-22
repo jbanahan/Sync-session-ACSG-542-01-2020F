@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BusinessValidationRuleResultsController do
-  
+
   let (:user) { Factory(:admin_user) }
   let (:entry) { Factory(:entry, broker_reference: "REF") }
   let! (:business_rule) {
@@ -11,7 +11,7 @@ describe BusinessValidationRuleResultsController do
     t.business_validation_rules.create! type: "ValidationRuleFieldFormat", name: "Broker Reference", description: "Rule Description", rule_attributes_json: {model_field_uid: "ent_brok_ref", regex: "ABC"}.to_json
   }
 
-  before :each do 
+  before :each do
     sign_in_as user
     BusinessValidationTemplate.create_results_for_object! entry
   end
@@ -38,8 +38,8 @@ describe BusinessValidationRuleResultsController do
     end
 
     it "denies access to users who cannot edit rule results" do
-      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(user).and_return(false)
-      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'} 
+      expect_any_instance_of(BusinessValidationRuleResult).to receive(:can_edit?).with(user).and_return(false)
+      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'}
       expect(response).to be_redirect
       rule_result.reload
       expect(rule_result.note).to be_nil
@@ -72,12 +72,12 @@ describe BusinessValidationRuleResultsController do
     end
 
     it "does not not allow users without edit to cancel overrides" do
-      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(user).and_return(false)
-      BusinessValidationTemplate.should_not_receive(:create_results_for_object!)
+      expect_any_instance_of(BusinessValidationRuleResult).to receive(:can_edit?).with(user).and_return(false)
+      expect(BusinessValidationTemplate).not_to receive(:create_results_for_object!)
       put :cancel_override, id: rule_result.id
 
       rule_result.reload
-    
+
       expect(rule_result.overridden_at).to_not be nil
       expect(rule_result.overridden_by).to_not be nil
       expect(rule_result.note).to_not be nil
@@ -85,10 +85,10 @@ describe BusinessValidationRuleResultsController do
     end
 
     it "clears overridden attributes and note, reruns validations for the result's validatable" do
-      BusinessValidationTemplate.should_receive(:create_results_for_object!, entry)
+      expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with(entry)
       put :cancel_override, id: rule_result.id
       rule_result.reload
-      
+
       expect(rule_result.overridden_at).to be_nil
       expect(rule_result.overridden_by).to be_nil
       expect(rule_result.note).to be_nil

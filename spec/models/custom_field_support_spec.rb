@@ -8,23 +8,23 @@ describe "CustomFieldSupport" do
       @s.update_custom_value!(@cd,"x")
     end
     it 'should update a new custom value' do
-      CustomValue.find_by_custom_definition_id_and_string_value(@cd.id,"x").customizable.should == @s
+      expect(CustomValue.find_by_custom_definition_id_and_string_value(@cd.id,"x").customizable).to eq(@s)
     end
     it 'should update an existing custom value' do
       @s.update_custom_value!(@cd,"y")
-      CustomValue.find_by_custom_definition_id_and_string_value(@cd.id,"y").customizable.should == @s
+      expect(CustomValue.find_by_custom_definition_id_and_string_value(@cd.id,"y").customizable).to eq(@s)
     end
     it 'should update with a custom_value_id' do
       @s.update_custom_value!(@cd.id,"y")
-      CustomValue.find_by_custom_definition_id_and_string_value(@cd.id,"y").customizable.should == @s
+      expect(CustomValue.find_by_custom_definition_id_and_string_value(@cd.id,"y").customizable).to eq(@s)
     end
   end
-  describe :get_custom_value do
+  describe "get_custom_value" do
     it "should get the same custom value object twice without saving" do
       cd = Factory(:custom_definition,:module_type=>'Product')
       p = Factory(:product)
       cv = p.get_custom_value cd
-      p.get_custom_value(cd).should equal cv
+      expect(p.get_custom_value(cd)).to equal cv
     end
   end
 
@@ -53,7 +53,7 @@ describe "CustomFieldSupport" do
     end
   end
 
-  describe :freeze_custom_values do
+  describe "freeze_custom_values" do
     it "should freeze cached values and no longer hit database" do
       cd = Factory(:custom_definition,:module_type=>'Product',data_type:'string')
       cd2 = Factory(:custom_definition,:module_type=>'Product',data_type:'string')
@@ -72,7 +72,7 @@ describe "CustomFieldSupport" do
     end
   end
 
-  describe :freeze_all_custom_values_including_children do
+  describe "freeze_all_custom_values_including_children" do
     it "calls freeze_custom_values on all levels of the obj" do
       p = Product.new
       c = Classification.new
@@ -85,11 +85,11 @@ describe "CustomFieldSupport" do
       p.classifications << c
       p.classifications << c2
 
-      p.should_receive(:freeze_custom_values)
-      c.should_receive(:freeze_custom_values)
-      c2.should_receive(:freeze_custom_values)
-      t.should_receive(:freeze_custom_values)
-      t2.should_receive(:freeze_custom_values)
+      expect(p).to receive(:freeze_custom_values)
+      expect(c).to receive(:freeze_custom_values)
+      expect(c2).to receive(:freeze_custom_values)
+      expect(t).to receive(:freeze_custom_values)
+      expect(t2).to receive(:freeze_custom_values)
       p.freeze_all_custom_values_including_children
     end
   end
@@ -102,10 +102,10 @@ describe "CustomFieldSupport" do
 
       cv = p.find_and_set_custom_value cd, "OTHER VALUE"
 
-      expect(cv.changed?).to be_true
+      expect(cv.changed?).to be_truthy
       expect(cv.value).to eq "OTHER VALUE"
       p.save!
-      expect(cv.changed?).to be_false
+      expect(cv.changed?).to be_falsey
 
       p.reload
       p.custom_values.reload
@@ -118,7 +118,7 @@ describe "CustomFieldSupport" do
       p = Product.new unique_identifier: "ABC"
 
       cv = p.find_and_set_custom_value cd, "VALUE"
-      expect(cv.changed?).to be_true
+      expect(cv.changed?).to be_truthy
       expect(cv).not_to be_persisted
       p.save!
 

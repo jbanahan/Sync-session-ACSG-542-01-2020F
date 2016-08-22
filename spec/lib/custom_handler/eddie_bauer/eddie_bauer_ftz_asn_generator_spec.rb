@@ -2,12 +2,12 @@ require "spec_helper"
 require 'digest/md5'
 
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
-  
+
   describe "run_schedulable" do
     it "should ftp file" do
-      described_class.any_instance.should_receive(:find_entries).and_return(['ents'])
-      described_class.any_instance.should_receive(:generate_file).with(['ents']).and_yield('x', [], [])
-      described_class.any_instance.should_receive(:ftp_file).with('x')
+      expect_any_instance_of(described_class).to receive(:find_entries).and_return(['ents'])
+      expect_any_instance_of(described_class).to receive(:generate_file).with(['ents']).and_yield('x', [], [])
+      expect_any_instance_of(described_class).to receive(:ftp_file).with('x')
       described_class.run_schedulable
     end
   end
@@ -39,9 +39,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @sync_record = SyncRecord.new syncable: @entry, trading_partner: "partner"
     end
     it "generates file and saves yielded sync records and ftps yield file" do
-      
-      subject.should_receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
-      subject.should_receive(:ftp_file).with @file
+
+      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
+      expect(subject).to receive(:ftp_file).with @file
 
       subject.run_for_entries @entries
 
@@ -49,16 +49,16 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     end
 
     it "rolls back all sync records saved if ftp fails" do
-      subject.should_receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
-      subject.should_receive(:ftp_file).with(@file).and_raise StandardError, "Error"
+      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
+      expect(subject).to receive(:ftp_file).with(@file).and_raise StandardError, "Error"
 
       expect {subject.run_for_entries @entries}.to raise_error StandardError, "<ul><li>Error</li></ul>"
       expect(@sync_record).not_to be_persisted
     end
 
     it "combines errors together into one mega error" do
-      subject.should_receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [StandardError.new("Error 1"), StandardError.new("Error 2")])
-      subject.should_receive(:ftp_file).with(@file)
+      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [StandardError.new("Error 1"), StandardError.new("Error 2")])
+      expect(subject).to receive(:ftp_file).with(@file)
 
 
       expect {subject.run_for_entries @entries}.to raise_error StandardError, "<ul><li>Error 1</li><li>Error 2</li></ul>"
@@ -72,9 +72,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @ent = Factory(:entry, updated_at:1.minute.ago, broker_reference: "broker-ref")
     end
 
-    context :changed do
+    context "changed" do
       before :each do
-        subject.should_receive(:generate_data_for_entry).with(@ent).and_return 'abc'
+        expect(subject).to receive(:generate_data_for_entry).with(@ent).and_return 'abc'
       end
 
       it "should generate and yeild file data for new entry data" do
@@ -98,7 +98,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     context "existing sync record" do
 
       before :each do
-        subject.should_receive(:generate_data_for_entry).with(@ent).and_return 'abc'
+        expect(subject).to receive(:generate_data_for_entry).with(@ent).and_return 'abc'
         @sr = @ent.sync_records.create!(trading_partner:'EBFTZASN', fingerprint:Digest::MD5.hexdigest('abc'), sent_at: Time.zone.now - 1.day)
       end
 
@@ -144,13 +144,13 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
 
     context "error handling" do
 
-      before :each do 
+      before :each do
         @ent2 = Factory(:entry)
       end
 
       it 'handles errors raised for a specific dataset generation without blowing up the whole run' do
-        subject.should_receive(:generate_data_for_entry).with(@ent).and_raise "An Error"
-        subject.should_receive(:generate_data_for_entry).with(@ent2).and_return "data"
+        expect(subject).to receive(:generate_data_for_entry).with(@ent).and_raise "An Error"
+        expect(subject).to receive(:generate_data_for_entry).with(@ent2).and_return "data"
 
         subject.generate_file([@ent, @ent2]) do |file, sync_records, errors|
           file.rewind
@@ -304,7 +304,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @ci_line.save!
       ln = first_line
       expect(ln[243,20].rstrip).to eql('123-1234')
-      expect(ln[263,3].rstrip).to eql('XYZ') 
+      expect(ln[263,3].rstrip).to eql('XYZ')
       expect(ln[266,4].rstrip).to eql('') #empty size
     end
     it "should handle style/size" do
@@ -312,7 +312,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @ci_line.save!
       ln = first_line
       expect(ln[243,20].rstrip).to eql('123-1234')
-      expect(ln[263,3].rstrip).to eql('') 
+      expect(ln[263,3].rstrip).to eql('')
       expect(ln[266,4].rstrip).to eql('FFFF') #empty size
     end
     it "should handle style/color/size" do
@@ -320,7 +320,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @ci_line.save!
       ln = first_line
       expect(ln[243,20].rstrip).to eql('123-1234')
-      expect(ln[263,3].rstrip).to eql('XYZ') 
+      expect(ln[263,3].rstrip).to eql('XYZ')
       expect(ln[266,4].rstrip).to eql('FFFF') #empty size
     end
     it "should handle mode translations" do

@@ -27,7 +27,7 @@ describe OpenChain::BulkAction::BulkOrderUpdate do
     end
 
     it "writes an error if user can't update" do
-      Order.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Order).to receive(:can_edit?).and_return false
       @ord.reload
       described_class.act @u, @ord.id, @opts, @bpl, 99
 

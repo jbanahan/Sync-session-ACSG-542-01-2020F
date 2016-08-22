@@ -20,9 +20,9 @@ describe Api::V1::ProductRateOverridesController do
     @u = Factory(:master_user)
     allow_api_access @u
 
-    ProductRateOverride.any_instance.stub(:can_view?).and_return true
-    ProductRateOverride.any_instance.stub(:can_edit?).and_return true
-    User.any_instance.stub(:view_products?).and_return true
+    allow_any_instance_of(ProductRateOverride).to receive(:can_view?).and_return true
+    allow_any_instance_of(ProductRateOverride).to receive(:can_edit?).and_return true
+    allow_any_instance_of(User).to receive(:view_products?).and_return true
   end
   describe '#index' do
     it 'should get object' do
@@ -44,7 +44,7 @@ describe Api::V1::ProductRateOverridesController do
       expect(h['id']).to eq pro.id
     end
     it 'should not get object without permission' do
-      ProductRateOverride.any_instance.stub(:can_view?).and_return false
+      allow_any_instance_of(ProductRateOverride).to receive(:can_view?).and_return false
       pro = Factory(:product_rate_override,rate:0.21)
       get :show, id: pro.id.to_s
       expect(response).to_not be_success
@@ -65,7 +65,7 @@ describe Api::V1::ProductRateOverridesController do
       expect(pro.notes).to eq 'mynotes'
     end
     it 'should not update object without permission' do
-      ProductRateOverride.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(ProductRateOverride).to receive(:can_edit?).and_return false
       pro = Factory(:product_rate_override,rate:0.21)
       h = make_hash
       h['id'] = pro.id.to_s
@@ -92,7 +92,7 @@ describe Api::V1::ProductRateOverridesController do
       expect(pro.notes).to eq 'mynotes'
     end
     it 'should not create object without permission' do
-      ProductRateOverride.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(ProductRateOverride).to receive(:can_edit?).and_return false
       expect {post :create, @h}.to_not change(ProductRateOverride,:count)
       expect(response).to_not be_success
     end

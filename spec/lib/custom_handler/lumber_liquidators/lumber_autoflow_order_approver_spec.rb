@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover do
-  describe :process do
+  describe "process" do
     before :each do
       @cdefs = described_class.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_qa_approved_by,:ordln_qa_approved_date,:ord_assigned_agent])
     end
@@ -15,8 +15,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
       ol = Factory(:order_line,product:p,order:ord)
 
       snapshot_support = double('snapshot support')
-      snapshot_support.should_receive(:create_snapshot).with(u)
-      ord.should_receive(:delay).and_return(snapshot_support)
+      expect(snapshot_support).to receive(:create_snapshot).with(u)
+      expect(ord).to receive(:delay).and_return(snapshot_support)
 
       # create another product with an empty risk assignment. Nothing should happen to this one
       other_product = Factory(:product)

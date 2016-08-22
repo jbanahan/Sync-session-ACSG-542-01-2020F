@@ -2,12 +2,12 @@ require 'spec_helper'
 
 describe FtpSession do
 
-  context :successful? do
+  context "successful?" do
     before :each do 
       @f = FtpSession.new
     end
 
-    context :ftp do 
+    context "ftp" do 
       before :each do
         @f.protocol = "ftp"
       end
@@ -15,52 +15,52 @@ describe FtpSession do
       it "should report ftp codes starting with 2 followed by other digits as successful" do
         [200..299].each do |i|
           @f.last_server_response = "#{i} This is a test."
-          @f.successful?.should be_true
+          expect(@f.successful?).to be_truthy
         end
       end
 
       it "should report all non 2xx codes as unsuccesful" do
-        @f.successful?.should be_false
+        expect(@f.successful?).to be_falsey
         @f.last_server_response = ""
-        @f.successful?.should be_false
+        expect(@f.successful?).to be_falsey
         @f.last_server_response = "400 Error"
-        @f.successful?.should be_false
+        expect(@f.successful?).to be_falsey
         @f.last_server_response = "500 Error"
-        @f.successful?.should be_false
+        expect(@f.successful?).to be_falsey
         @f.last_server_response = "2 Error"
-        @f.successful?.should be_false
+        expect(@f.successful?).to be_falsey
         @f.last_server_response = "20 Error"
-        @f.successful?.should be_false
+        expect(@f.successful?).to be_falsey
       end
     end
     
 
-    context :sftp do
+    context "sftp" do
       before :each do
         @f.protocol = "sftp"
       end
 
       it "should report status codes starting with 0 as successful, all others as failed" do
         @f.last_server_response = ""
-        @f.successful?.should be_false
+        expect(@f.successful?).to be_falsey
         @f.last_server_response = "0 Yeah!"
-        @f.successful?.should be_true
+        expect(@f.successful?).to be_truthy
         (1..31).each do |x|
           @f.last_server_response = "#{x} Boo!"
-          @f.successful?.should be_false
+          expect(@f.successful?).to be_falsey
         end
       end
     end
   end
 
-  context :can_view? do
+  context "can_view?" do
     it "should allow sys_admin users to view" do
       user = User.new
       user.sys_admin = true
       f = FtpSession.new
-      f.can_view?(user).should be_true
+      expect(f.can_view?(user)).to be_truthy
       user.sys_admin = false
-      f.can_view?(user).should be_false
+      expect(f.can_view?(user)).to be_falsey
     end
   end
 end

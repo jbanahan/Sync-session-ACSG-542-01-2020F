@@ -23,15 +23,15 @@ describe OpenChain::Report::EddieBauerStatementSummary do
       :cotton_fee=>BigDecimal("2.10"))
     @tar = @line.commercial_invoice_tariffs.create!(:duty_rate=>BigDecimal("0.081"),
       :duty_amount=>BigDecimal("12.22"))
-    Entry.any_instance.stub(:can_view?).and_return(true)
-    MasterSetup.any_instance.stub(:request_host).and_return "www.test.com"
+    allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
+    allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "www.test.com"
   end
   after :each do
     @tmp.unlink if @tmp
   end
   it "should raise exception if user cannot view returned entries" do
-    Entry.any_instance.stub(:can_view?).and_return(false)
-    lambda {described_class.run_report @user, customer_number: @imp.alliance_customer_number}.should raise_error "You do not have permission to view the entries related to this report." 
+    allow_any_instance_of(Entry).to receive(:can_view?).and_return(false)
+    expect {described_class.run_report @user, customer_number: @imp.alliance_customer_number}.to raise_error "You do not have permission to view the entries related to this report." 
   end
 
   def get_summary_tab
@@ -49,21 +49,21 @@ describe OpenChain::Report::EddieBauerStatementSummary do
   
   it "should populate details tab" do
     sheet = get_details_tab
-    sheet.last_row_index.should == 1
+    expect(sheet.last_row_index).to eq(1)
     r = sheet.row(1)
-    r[0].should == @ent.monthly_statement_number
-    r[1].should == @ent.daily_statement_number
-    r[2].should == @ent.entry_number
-    r[3].should == 'E0427291'
-    r[4].should == '0011'
-    r[5].should == @invoice_number
-    r[6].should == @tar.duty_rate.to_f*100
-    r[7].should == @tar.duty_amount.to_f
-    r[8].should == 32.6
-    r[9].strftime("%Y%m%d").should == @ent.daily_statement_approved_date.strftime("%Y%m%d")
-    r[10].strftime("%Y%m%d").should == @ent.monthly_statement_received_date.strftime("%Y%m%d")
-    r[11].strftime("%Y%m%d").should == @ent.release_date.strftime("%Y%m%d")
-    r[12].should == "31612345678/8.1/INV1234"
+    expect(r[0]).to eq(@ent.monthly_statement_number)
+    expect(r[1]).to eq(@ent.daily_statement_number)
+    expect(r[2]).to eq(@ent.entry_number)
+    expect(r[3]).to eq('E0427291')
+    expect(r[4]).to eq('0011')
+    expect(r[5]).to eq(@invoice_number)
+    expect(r[6]).to eq(@tar.duty_rate.to_f*100)
+    expect(r[7]).to eq(@tar.duty_amount.to_f)
+    expect(r[8]).to eq(32.6)
+    expect(r[9].strftime("%Y%m%d")).to eq(@ent.daily_statement_approved_date.strftime("%Y%m%d"))
+    expect(r[10].strftime("%Y%m%d")).to eq(@ent.monthly_statement_received_date.strftime("%Y%m%d"))
+    expect(r[11].strftime("%Y%m%d")).to eq(@ent.release_date.strftime("%Y%m%d"))
+    expect(r[12]).to eq("31612345678/8.1/INV1234")
   end
   it "should write details headings" do
     r = get_details_tab.row(0)
@@ -71,7 +71,7 @@ describe OpenChain::Report::EddieBauerStatementSummary do
       "ACH #", "Entry #", "PO", "Business", "Invoice", 
       "Duty Rate", "Duty", "Taxes / Fees", "ACH Date","Statement Date","Release Date","Unique ID"]
     headings.each_with_index do |h,i|
-      r[i].should == h
+      expect(r[i]).to eq(h)
     end
   end
   context "default mode (not_paid)" do
@@ -80,7 +80,7 @@ describe OpenChain::Report::EddieBauerStatementSummary do
         :daily_statement_number=>'123456',:monthly_statement_paid_date=>Time.now)
       dont_find_because_not_on_daily = Factory(:entry,:importer=>@imp) 
       dont_find_because_not_eddie = Factory(:entry,:daily_statement_number=>'12345')
-      described_class.new(@user).find_entries(@imp).to_a.should == [@ent]
+      expect(described_class.new(@user).find_entries(@imp).to_a).to eq([@ent])
     end
   end
   context "previous_month mode" do
@@ -92,15 +92,15 @@ describe OpenChain::Report::EddieBauerStatementSummary do
         :importer=>@imp,:release_date=>1.hour.from_now)
       options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year, :customer_number=>@imp.alliance_customer_number}
       ent = described_class.new(@user,options)
-      ent.find_entries(@imp).map(&:id).should == [@ent,find_even_though_paid].map(&:id)
+      expect(ent.find_entries(@imp).map(&:id)).to eq([@ent,find_even_though_paid].map(&:id))
     end
   end
   it "should total lines if multiple tariff records (and use higher duty rate)" do
     @line.commercial_invoice_tariffs.create!(:duty_rate=>BigDecimal("0.06"),
       :duty_amount=>BigDecimal("1"))
       r = get_details_tab.row(1)
-      r[6].should == @tar.duty_rate.to_f*100
-      r[7].should == BigDecimal("13.22").to_f
+      expect(r[6]).to eq(@tar.duty_rate.to_f*100)
+      expect(r[7]).to eq(BigDecimal("13.22").to_f)
   end
   it "should create summary tab" do
     e2 = Factory(:entry,:importer=>@imp,
@@ -125,24 +125,24 @@ describe OpenChain::Report::EddieBauerStatementSummary do
       :duty_amount=>BigDecimal("6.00")
     )
     tab = get_summary_tab 
-    tab.last_row_index.should == 2
+    expect(tab.last_row_index).to eq(2)
     r = tab.row(1)
-    r[0].should == @ent.monthly_statement_number
-    r[1].should == "0011"
-    r[2].should == 16.22
-    r[3].should == 67.60
-    r[4].strftime("%Y%m%d").should == @ent.monthly_statement_received_date.strftime("%Y%m%d")
+    expect(r[0]).to eq(@ent.monthly_statement_number)
+    expect(r[1]).to eq("0011")
+    expect(r[2]).to eq(16.22)
+    expect(r[3]).to eq(67.60)
+    expect(r[4].strftime("%Y%m%d")).to eq(@ent.monthly_statement_received_date.strftime("%Y%m%d"))
     r = tab.row(2)
-    r[0].should == @ent.monthly_statement_number
-    r[1].should == "0099"
-    r[2].should == 6.00
-    r[3].should == 35.00
+    expect(r[0]).to eq(@ent.monthly_statement_number)
+    expect(r[1]).to eq("0099")
+    expect(r[2]).to eq(6.00)
+    expect(r[3]).to eq(35.00)
   end
   it "should write Summary headings" do
     r = get_summary_tab.row(0)
     headings = ["Statement #", "Business", "Duty", "Taxes / Fees", "Statement Date"]
     headings.each_with_index do |h,i|
-      r[i].should == h
+      expect(r[i]).to eq(h)
     end
   end
 end

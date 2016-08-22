@@ -3,18 +3,18 @@ describe BulkProcessLog do
   describe "can_view?" do
     it "should allow admins to view any log" do
       u = User.new admin:true
-      BulkProcessLog.new.can_view?(u).should be_true
+      expect(BulkProcessLog.new.can_view?(u)).to be_truthy
     end
 
     it "should allows sys admins to view any log" do
       u = User.new
       u.sys_admin = true
-      BulkProcessLog.new.can_view?(u).should be_true
+      expect(BulkProcessLog.new.can_view?(u)).to be_truthy
     end
 
     it "should allow users owning the log to view it" do
       u = User.new
-      BulkProcessLog.new(:user=>u).can_view?(u).should be_true
+      expect(BulkProcessLog.new(:user=>u).can_view?(u)).to be_truthy
     end
 
     it "should not allow another user to view it" do
@@ -24,7 +24,7 @@ describe BulkProcessLog do
       other = User.new
       other.id = 2
 
-      BulkProcessLog.new(:user=>u).can_view?(other).should be_false
+      expect(BulkProcessLog.new(:user=>u).can_view?(other)).to be_falsey
     end
   end
   describe '#with_log' do
@@ -40,7 +40,7 @@ describe BulkProcessLog do
         expect(log.bulk_type).to eq 'My Thing'
         log.change_records.create!(recordable:Factory(:order),record_sequence_number:1)
         expect(user.messages.count).to eq 0
-        outer_log.should_receive(:notify_user!)
+        expect(outer_log).to receive(:notify_user!)
       end
       outer_log.reload
       expect(outer_log.finished_at).to_not be_nil
@@ -51,7 +51,7 @@ describe BulkProcessLog do
     end
     it 'should write user message without errors' do
       req_host = 'test.vfitrack.net'
-      MasterSetup.any_instance.should_receive(:request_host).and_return req_host
+      expect_any_instance_of(MasterSetup).to receive(:request_host).and_return req_host
       user = Factory(:user)
       bpl = BulkProcessLog.create!(user:user,changed_object_count:10,bulk_type:'My Thing')
       url = "https://#{req_host}/bulk_process_logs/#{bpl.id}"

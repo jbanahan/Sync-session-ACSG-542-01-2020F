@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Api::V1::EntriesController do
 
-  describe :validate do
+  describe "validate" do
     it "runs validations and returns result hash" do
       MasterSetup.get.update_attributes(:entry_enabled=>true)
       u = Factory(:master_user,entry_view:true)

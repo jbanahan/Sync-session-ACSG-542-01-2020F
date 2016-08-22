@@ -15,28 +15,28 @@ describe OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler do
     let(:file_data) {[["uid", "name"], ["uid2", "name2"]]}
     let (:custom_file) {
       custom_file = CustomFile.new attached_file_name: "file.xlsx"
-      custom_file.stub(:path).and_return "/path/to/file.xlsx"
+      allow(custom_file).to receive(:path).and_return "/path/to/file.xlsx"
       custom_file
     }
 
 
     context "with full setup" do
       before :each do
-        subject.stub(:search_setup_attributes).and_return search_setup_attributes
-        subject.stub(:search_column_uids).and_return search_column_uids
-        subject.stub(:foreach).and_yield(file_data[0]).and_yield(file_data[1])
+        allow(subject).to receive(:search_setup_attributes).and_return search_setup_attributes
+        allow(subject).to receive(:search_column_uids).and_return search_column_uids
+        allow(subject).to receive(:foreach).and_yield(file_data[0]).and_yield(file_data[1])
       end
 
       context "with multi-dimensional array returned" do
         before :each do
-          subject.stub(:translate_file_line) do |row|
+          allow(subject).to receive(:translate_file_line) do |row|
             [row.map {|v| v.to_s + " translated" }, row.map {|v| v.to_s + " translated" }]
           end
         end
         it "generates a new search setup and runs an imported file through it" do
-          ImportedFile.any_instance.should_receive(:process).with user
+          expect_any_instance_of(ImportedFile).to receive(:process).with user
           contents = nil
-          ImportedFile.any_instance.should_receive(:attached=) do |f|
+          expect_any_instance_of(ImportedFile).to receive(:attached=) do |instance, f|
             contents = f.read
           end
           subject.process_file custom_file, user
@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler do
         end
 
         it "re-uses an existing search setup" do
-          ImportedFile.any_instance.should_receive(:process).with user
+          expect_any_instance_of(ImportedFile).to receive(:process).with user
           ss = SearchSetup.create! name: "Search", module_type: "Product", user_id: user.id
           search_column_uids.each {|uid| ss.search_columns.create! model_field_uid: uid}
 
@@ -82,15 +82,15 @@ describe OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler do
 
       context "with array returned from translate file line" do
         before :each do
-          subject.stub(:translate_file_line) do |row|
+          allow(subject).to receive(:translate_file_line) do |row|
             row.map {|v| v.to_s + " translated" }
           end
         end
 
         it "handles returning an array from translate_file_line" do
-          ImportedFile.any_instance.should_receive(:process).with user
+          expect_any_instance_of(ImportedFile).to receive(:process).with user
           contents = nil
-          ImportedFile.any_instance.should_receive(:attached=) do |f|
+          expect_any_instance_of(ImportedFile).to receive(:attached=) do |instance, f|
             contents = f.read
           end
           subject.process_file custom_file, user

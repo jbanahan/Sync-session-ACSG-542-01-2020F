@@ -6,9 +6,9 @@ describe Api::V1::OfficialTariffsController do
     allow_api_access @user
   end
 
-  describe :find do
+  describe "find" do
     it "should render tariff" do
-      OfficialTariff.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(OfficialTariff).to receive(:can_view?).and_return true
       us = Factory(:country,iso_code:'US',name:'USA')
       ot = Factory(:official_tariff,
         hts_code:'1234567890',
@@ -33,8 +33,8 @@ describe Api::V1::OfficialTariffsController do
         country:us
         )
       other_ot = Factory(:official_tariff)
-      OfficialTariff.any_instance.stub(:binding_ruling_url).and_return 'abc'
-      OfficialTariff.any_instance.stub(:taric_url).and_return 'tar'
+      allow_any_instance_of(OfficialTariff).to receive(:binding_ruling_url).and_return 'abc'
+      allow_any_instance_of(OfficialTariff).to receive(:taric_url).and_return 'tar'
 
       expected_response = {'official_tariff'=>{
         'id'=>ot.id,
@@ -67,7 +67,7 @@ describe Api::V1::OfficialTariffsController do
       expect(JSON.parse(response.body)).to eq expected_response
     end
     it "should strip periods" do
-      OfficialTariff.any_instance.stub(:can_view?).and_return true
+      allow_any_instance_of(OfficialTariff).to receive(:can_view?).and_return true
       us = Factory(:country,iso_code:'US',name:'USA')
       ot = Factory(:official_tariff,country:us,hts_code:'1234567890')
       

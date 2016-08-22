@@ -7,11 +7,11 @@ describe Api::V1::FeedbackController do
     allow_api_access @user
   end
 
-  describe :send do
+  describe "send" do
     it "should delay trello card creation" do
       td = double('trello')
-      td.should_receive(:create_feedback_card!).with(@user.id,'https://sample.com/abc','Hello world')
-      OpenChain::Trello.should_receive(:delay).and_return(td)
+      expect(td).to receive(:create_feedback_card!).with(@user.id,'https://sample.com/abc','Hello world')
+      expect(OpenChain::Trello).to receive(:delay).and_return(td)
 
       post :send_feedback, url: 'https://sample.com/abc', message:'Hello world'
 

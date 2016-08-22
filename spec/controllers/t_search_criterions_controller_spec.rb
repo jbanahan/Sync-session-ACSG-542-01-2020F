@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe TSearchCriterionsController do
 
-  describe :create do
+  describe "create" do
 
     before :each do
       @sc = Factory(:search_criterion)
@@ -28,14 +28,14 @@ describe TSearchCriterionsController do
                     }
       expect(response).to be_redirect
       new_sc = SearchCriterion.last
-      new_sc.model_field_uid.should == "ent_release_date"
-      new_sc.operator.should == "eq"
-      new_sc.business_validation_template.should == @bvt
+      expect(new_sc.model_field_uid).to eq("ent_release_date")
+      expect(new_sc.operator).to eq("eq")
+      expect(new_sc.business_validation_template).to eq(@bvt)
     end
 
   end
 
-  describe :destroy do
+  describe "destroy" do
 
     before :each do
       @sc = Factory(:search_criterion)
@@ -54,7 +54,7 @@ describe TSearchCriterionsController do
       u = Factory(:admin_user)
       sign_in_as u
       post :destroy, id: @sc.id, business_validation_template_id: @bvt.id
-      expect { SearchCriterion.find(@sc.id) }.to raise_error
+      expect(SearchCriterion.find_by_id(@sc.id)).to be_nil
     end
 
   end

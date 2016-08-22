@@ -82,7 +82,7 @@ describe Api::V1::GroupsController do
     end
 
     it "fails if user cannot edit specified object" do
-      User.any_instance.should_receive(:can_edit?).and_return false
+      expect_any_instance_of(User).to receive(:can_edit?).and_return false
       post :add_to_object, base_object_type: "users", base_object_id: user.id, id: group.id
       expect(response).not_to be_success
       user.reload
@@ -91,7 +91,7 @@ describe Api::V1::GroupsController do
 
     it "fails if object does not respond to groups" do
       order = Factory(:order)
-      Order.any_instance.should_receive(:can_edit?).and_return true
+      expect_any_instance_of(Order).to receive(:can_edit?).and_return true
       post :add_to_object, base_object_type: "orders", base_object_id: order.id, id: group.id
       expect(response).not_to be_success
     end

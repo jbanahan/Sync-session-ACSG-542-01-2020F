@@ -28,8 +28,8 @@ describe TestLocalController do
   it "should run the render pipeline and return a string of the page" do
     c = TestLocalController.new
     settings_page = c.show
-    settings_page.should_not be_nil
+    expect(settings_page).not_to be_nil
     # Just make sure something rendered
-    settings_page.should match /General Settings/
+    expect(settings_page).to match /General Settings/
   end
 end

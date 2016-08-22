@@ -6,41 +6,41 @@ describe OpenChain::WorkflowProcessor do
   end
   before :each do
     @mock_stat_client = double('stat_client')
-    @mock_stat_client.stub(:wall_time).and_yield
+    allow(@mock_stat_client).to receive(:wall_time).and_yield
   end
 
-  describe :process_all! do
+  describe "process_all!" do
     it "should get all classes and process" do
       k1 = Company
       k2 = Order
       decider_hash = {k1=>['x'],k2=>['y']}
-      described_class.should_receive(:prep_decider_hash).and_return(decider_hash)
+      expect(described_class).to receive(:prep_decider_hash).and_return(decider_hash)
       opts = {}
       u = User.new
-      described_class.should_receive(:process_class!).with(k1,u,opts)
-      described_class.should_receive(:process_class!).with(k2,u,opts)
+      expect(described_class).to receive(:process_class!).with(k1,u,opts)
+      expect(described_class).to receive(:process_class!).with(k2,u,opts)
 
       described_class.process_all! u, opts
     end
   end
 
-  describe :process_class! do
+  describe "process_class!" do
     it "should get objects and process all" do
       obj1 = double('obj1')
       obj2 = double('obj2')
       k = Company
       opts = {stat_client:@mock_stat_client}
       u = User.new
-      described_class.should_receive(:objects_need_processing).with(k).and_return [obj1,obj2]
+      expect(described_class).to receive(:objects_need_processing).with(k).and_return [obj1,obj2]
       wp = double('wp')
-      wp.should_receive(:process!).with(obj1,u)
-      wp.should_receive(:process!).with(obj2,u)
-      described_class.should_receive(:new).with(opts).and_return(wp)
+      expect(wp).to receive(:process!).with(obj1,u)
+      expect(wp).to receive(:process!).with(obj2,u)
+      expect(described_class).to receive(:new).with(opts).and_return(wp)
       
       described_class.process_class! k, u, opts
     end
   end
-  describe :objects_need_processing do
+  describe "objects_need_processing" do
     before :each do
       #making an object that doesn't need processing and 
       #that shouldn't be found by any of the tests
@@ -76,7 +76,7 @@ describe OpenChain::WorkflowProcessor do
       expect(described_class.objects_need_processing(Order)).to be_empty
     end
   end
-  describe :process do
+  describe "process" do
     it "should process multiple workflows for the right module" do
       wp = wp_without_stat
       ms = MasterSetup.get
@@ -88,11 +88,11 @@ describe OpenChain::WorkflowProcessor do
         OpenChain::CustomHandler::LumberLiquidators::LumberOrderWorkflowDecider,
         OpenChain::CustomHandler::JJill::JJillOrderApprovalWorkflowDecider
       ].each do |c|
-        c.should_receive(:update_workflow!).with(o,u)
+        expect(c).to receive(:update_workflow!).with(o,u)
       end
 
       wp.process! o, u
-      expect(o.workflow_processor_run.finished_at > 10.seconds.ago).to be_true
+      expect(o.workflow_processor_run.finished_at > 10.seconds.ago).to be_truthy
     end
     it "should handle change in WorkflowClasses" do
       wp = wp_without_stat
@@ -100,8 +100,8 @@ describe OpenChain::WorkflowProcessor do
       ms.update_attributes(workflow_classes:"OpenChain::CustomHandler::LumberLiquidators::LumberOrderWorkflowDecider\nOpenChain::CustomHandler::JJill::JJillOrderApprovalWorkflowDecider")
       u = User.new
       o = Factory(:order)
-      OpenChain::CustomHandler::JJill::JJillOrderApprovalWorkflowDecider.should_receive(:update_workflow!).with(o,u)
-      OpenChain::CustomHandler::LumberLiquidators::LumberOrderWorkflowDecider.should_receive(:update_workflow!).with(o,u).twice
+      expect(OpenChain::CustomHandler::JJill::JJillOrderApprovalWorkflowDecider).to receive(:update_workflow!).with(o,u)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberOrderWorkflowDecider).to receive(:update_workflow!).with(o,u).twice
       wp.process! o, u
       ms.update_attributes(
         workflow_classes:"OpenChain::CustomHandler::LumberLiquidators::LumberOrderWorkflowDecider",
@@ -116,8 +116,8 @@ describe OpenChain::WorkflowProcessor do
       MasterSetup.get.update_attributes(
         workflow_classes:"OpenChain::CustomHandler::LumberLiquidators::LumberOrderWorkflowDecider"
       )
-      OpenChain::CustomHandler::LumberLiquidators::LumberOrderWorkflowDecider.stub(:update_workflow!)
-      @mock_stat_client.should_receive(:wall_time).with('wf_processor').and_yield
+      allow(OpenChain::CustomHandler::LumberLiquidators::LumberOrderWorkflowDecider).to receive(:update_workflow!)
+      expect(@mock_stat_client).to receive(:wall_time).with('wf_processor').and_yield
       wp_without_stat.process! o, u
     end
   end

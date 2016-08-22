@@ -159,53 +159,53 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       d = defaults
       s = described_class.new.parse_spreadsheet create_workbook(d)
 
-      s[:order_id].should eq d[:order_id]
-      s[:order_number].should eq d[:order_number]
-      s[:order_date].should eq d[:order_date]
-      s[:ship_terms].should eq d[:ship_terms]
-      s[:order_status].should eq d[:order_status]
-      s[:ship_via].should eq d[:ship_via]
-      s[:expected_delivery_date].should eq d[:expected_delivery_date]
-      s[:payment_terms].should eq d[:payment_terms]
-      s[:order_balance].should eq d[:order_balance]
-      s[:warehouse_code].should eq d[:items][0][:warehouse_code]
+      expect(s[:order_id]).to eq d[:order_id]
+      expect(s[:order_number]).to eq d[:order_number]
+      expect(s[:order_date]).to eq d[:order_date]
+      expect(s[:ship_terms]).to eq d[:ship_terms]
+      expect(s[:order_status]).to eq d[:order_status]
+      expect(s[:ship_via]).to eq d[:ship_via]
+      expect(s[:expected_delivery_date]).to eq d[:expected_delivery_date]
+      expect(s[:payment_terms]).to eq d[:payment_terms]
+      expect(s[:order_balance]).to eq d[:order_balance]
+      expect(s[:warehouse_code]).to eq d[:items][0][:warehouse_code]
 
-      s[:vendor][:type].should eq "Vendor"
-      s[:vendor][:number].should eq d[:vendor_id]
-      s[:vendor][:name].should eq d[:vendor_address].split("\r\n")[0]
-      s[:vendor][:address].should eq d[:vendor_address].split("\r\n")[1..-1].join("\n")
+      expect(s[:vendor][:type]).to eq "Vendor"
+      expect(s[:vendor][:number]).to eq d[:vendor_id]
+      expect(s[:vendor][:name]).to eq d[:vendor_address].split("\r\n")[0]
+      expect(s[:vendor][:address]).to eq d[:vendor_address].split("\r\n")[1..-1].join("\n")
 
-      s[:factory][:type].should eq "Factory"
-      s[:factory][:name].should eq d[:factory_address].split("\r\n")[0]
-      s[:factory][:address].should eq d[:factory_address].split("\r\n")[1..-1].join("\n")
+      expect(s[:factory][:type]).to eq "Factory"
+      expect(s[:factory][:name]).to eq d[:factory_address].split("\r\n")[0]
+      expect(s[:factory][:address]).to eq d[:factory_address].split("\r\n")[1..-1].join("\n")
 
-      s[:forwarder][:type].should eq "Forwarder"
-      s[:forwarder][:name].should eq d[:forwarder_address].split("\r\n")[0]
-      s[:forwarder][:address].should eq d[:forwarder_address].split("\r\n")[1..-1].join("\n")
+      expect(s[:forwarder][:type]).to eq "Forwarder"
+      expect(s[:forwarder][:name]).to eq d[:forwarder_address].split("\r\n")[0]
+      expect(s[:forwarder][:address]).to eq d[:forwarder_address].split("\r\n")[1..-1].join("\n")
 
-      s[:consignee][:type].should eq "Consignee"
-      s[:consignee][:name].should eq d[:consignee_address].split("\r\n")[0]
-      s[:consignee][:address].should eq d[:consignee_address].split("\r\n")[1..-1].join("\n")
+      expect(s[:consignee][:type]).to eq "Consignee"
+      expect(s[:consignee][:name]).to eq d[:consignee_address].split("\r\n")[0]
+      expect(s[:consignee][:address]).to eq d[:consignee_address].split("\r\n")[1..-1].join("\n")
 
-      s[:final_dest][:type].should eq "Final Destination"
-      s[:final_dest][:name].should eq d[:final_dest_address].split("\r\n")[0]
-      s[:final_dest][:address].should eq d[:final_dest_address].split("\r\n")[1..-1].join("\n")
+      expect(s[:final_dest][:type]).to eq "Final Destination"
+      expect(s[:final_dest][:name]).to eq d[:final_dest_address].split("\r\n")[0]
+      expect(s[:final_dest][:address]).to eq d[:final_dest_address].split("\r\n")[1..-1].join("\n")
 
-      s[:items].should have(3).items
+      expect(s[:items].size).to eq(3)
       s[:items].each_with_index {|i, x|
         e = d[:items][x]
 
-        i[:item_code].should eq e[:item_code]
-        i[:warehouse_code].should eq e[:warehouse_code]
-        i[:model].should eq e[:model]
-        i[:upc].should eq e[:upc]
-        i[:unit].should eq e[:unit]
-        i[:ordered].should eq e[:ordered]
-        i[:unit_cost].should eq e[:unit_cost]
-        i[:amount].should eq e[:amount]
-        i[:case].should eq e[:case]
-        i[:case_uom].should eq e[:case_uom]
-        i[:num_cases].should eq e[:num_cases]
+        expect(i[:item_code]).to eq e[:item_code]
+        expect(i[:warehouse_code]).to eq e[:warehouse_code]
+        expect(i[:model]).to eq e[:model]
+        expect(i[:upc]).to eq e[:upc]
+        expect(i[:unit]).to eq e[:unit]
+        expect(i[:ordered]).to eq e[:ordered]
+        expect(i[:unit_cost]).to eq e[:unit_cost]
+        expect(i[:amount]).to eq e[:amount]
+        expect(i[:case]).to eq e[:case]
+        expect(i[:case_uom]).to eq e[:case_uom]
+        expect(i[:num_cases]).to eq e[:num_cases]
       }
     end
   end
@@ -217,33 +217,33 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       s = p.parse_spreadsheet create_workbook(defaults)
       x = p.build_xml s
 
-      x.root.name.should eq "PurchaseOrder"
-      REXML::XPath.first(x, "/PurchaseOrder/OrderId").text.should eq s[:order_id]
-      REXML::XPath.first(x, "/PurchaseOrder/OrderNumber").text.should eq s[:order_number]
-      REXML::XPath.first(x, "/PurchaseOrder/OrderDate").text.should eq s[:order_date].strftime("%Y-%m-%d")
-      REXML::XPath.first(x, "/PurchaseOrder/FobTerms").text.should eq s[:ship_terms]
-      REXML::XPath.first(x, "/PurchaseOrder/OrderStatus").text.should eq s[:order_status]
-      REXML::XPath.first(x, "/PurchaseOrder/ShipVia").text.should eq s[:ship_via]
-      REXML::XPath.first(x, "/PurchaseOrder/ExpectedDeliveryDate").text.should eq s[:expected_delivery_date].strftime("%Y-%m-%d")
-      REXML::XPath.first(x, "/PurchaseOrder/PaymentTerms").text.should eq s[:payment_terms]
-      REXML::XPath.first(x, "/PurchaseOrder/OrderBalance").text.should eq s[:order_balance].to_s
-      REXML::XPath.first(x, "/PurchaseOrder/WarehouseCode").text.should eq s[:warehouse_code].to_s
+      expect(x.root.name).to eq "PurchaseOrder"
+      expect(REXML::XPath.first(x, "/PurchaseOrder/OrderId").text).to eq s[:order_id]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/OrderNumber").text).to eq s[:order_number]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/OrderDate").text).to eq s[:order_date].strftime("%Y-%m-%d")
+      expect(REXML::XPath.first(x, "/PurchaseOrder/FobTerms").text).to eq s[:ship_terms]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/OrderStatus").text).to eq s[:order_status]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/ShipVia").text).to eq s[:ship_via]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/ExpectedDeliveryDate").text).to eq s[:expected_delivery_date].strftime("%Y-%m-%d")
+      expect(REXML::XPath.first(x, "/PurchaseOrder/PaymentTerms").text).to eq s[:payment_terms]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/OrderBalance").text).to eq s[:order_balance].to_s
+      expect(REXML::XPath.first(x, "/PurchaseOrder/WarehouseCode").text).to eq s[:warehouse_code].to_s
 
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Vendor']/Number").text.should eq s[:vendor][:number]
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Vendor']/Name").text.should eq s[:vendor][:name]
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Vendor']/Address").cdatas[0].value.should eq s[:vendor][:address]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Vendor']/Number").text).to eq s[:vendor][:number]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Vendor']/Name").text).to eq s[:vendor][:name]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Vendor']/Address").cdatas[0].value).to eq s[:vendor][:address]
 
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Forwarder']/Name").text.should eq s[:forwarder][:name]
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Forwarder']/Address").cdatas[0].value.should eq s[:forwarder][:address]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Forwarder']/Name").text).to eq s[:forwarder][:name]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Forwarder']/Address").cdatas[0].value).to eq s[:forwarder][:address]
 
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Factory']/Name").text.should eq s[:factory][:name]
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Factory']/Address").cdatas[0].value.should eq s[:factory][:address]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Factory']/Name").text).to eq s[:factory][:name]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Factory']/Address").cdatas[0].value).to eq s[:factory][:address]
 
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Consignee']/Name").text.should eq s[:consignee][:name]
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Consignee']/Address").cdatas[0].value.should eq s[:consignee][:address]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Consignee']/Name").text).to eq s[:consignee][:name]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Consignee']/Address").cdatas[0].value).to eq s[:consignee][:address]
 
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Final Destination']/Name").text.should eq s[:final_dest][:name]
-      REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Final Destination']/Address").cdatas[0].value.should eq s[:final_dest][:address]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Final Destination']/Name").text).to eq s[:final_dest][:name]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Final Destination']/Address").cdatas[0].value).to eq s[:final_dest][:address]
     end
   end
 
@@ -253,15 +253,15 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       xml = nil
       f = described_class.new.write_xml(create_workbook(d)) {|f| f.rewind; xml = f.read}
       # ensure the tempfile is closed
-      f.closed?.should be_true
-      File.basename(f).should =~ /^ShoesForCrewsPO/
-      File.basename(f).should =~ /\.xml$/
+      expect(f.closed?).to be_truthy
+      expect(File.basename(f)).to match(/^ShoesForCrewsPO/)
+      expect(File.basename(f)).to match(/\.xml$/)
 
       # All the actual data is verified elsewhere, we just want to make sure the data is an xml file and validate
       # it has some data in it.
       doc = REXML::Document.new xml
 
-      REXML::XPath.first(doc, "/PurchaseOrder/OrderId").text.should eq d[:order_id]
+      expect(REXML::XPath.first(doc, "/PurchaseOrder/OrderId").text).to eq d[:order_id]
     end
   end
 
@@ -270,20 +270,20 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       d = defaults
       p = described_class.new
       xml = nil
-      p.should_receive(:ftp_file) do |f|
+      expect(p).to receive(:ftp_file) do |f|
         f.rewind
         xml = f.read
       end
 
       p.parse create_workbook(d)
-      REXML::XPath.first( REXML::Document.new(xml), "/PurchaseOrder/OrderId").text.should eq d[:order_id]
+      expect(REXML::XPath.first( REXML::Document.new(xml), "/PurchaseOrder/OrderId").text).to eq d[:order_id]
     end
   end
 
   describe "ftp_credentials" do
     it "should use the ftp2 server credentials" do
       p = described_class.new
-      p.should_receive(:ftp2_vandegrift_inc).with 'to_ecs/Shoes_For_Crews/PO'
+      expect(p).to receive(:ftp2_vandegrift_inc).with 'to_ecs/Shoes_For_Crews/PO'
       p.ftp_credentials
     end
   end
@@ -299,7 +299,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     end
 
     it "saves a new PO" do
-      Order.any_instance.should_receive(:post_create_logic!)
+      expect_any_instance_of(Order).to receive(:post_create_logic!)
 
       subject.process_po data, "bucket", "key"
       po = Order.where(order_number: "SHOES-ORDERID").first
@@ -313,7 +313,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(po.last_file_bucket).to eq "bucket"
       expect(po.last_file_path).to eq "key"
       expect(po.vendor.system_code).to eq "SHOES-123123"
-      expect(po.vendor.vendor).to be_true
+      expect(po.vendor.vendor).to be_truthy
       expect(po.importer.linked_companies).to include po.vendor
       expect(po.approval_status).to eq "Accepted"
 
@@ -353,7 +353,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
     it "updates a PO" do
       order = Factory(:order, order_number: "SHOES-" + workbook_data[:order_id], importer: importer)
-      Order.any_instance.should_receive(:post_update_logic!)
+      expect_any_instance_of(Order).to receive(:post_update_logic!)
 
       subject.process_po data, "bucket", "key"
 
@@ -368,10 +368,10 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
       # mock the find_order so we can provide our own order to make sure that when an order is 
       # said to be shipping that it's not updated.
-      order.should_receive(:shipping?).and_return true
-      order.should_not_receive(:post_update_logic!)
+      expect(order).to receive(:shipping?).and_return true
+      expect(order).not_to receive(:post_update_logic!)
 
-      subject.should_receive(:find_order).and_yield true, order
+      expect(subject).to receive(:find_order).and_yield true, order
 
       subject.process_po data, "bucket", "key"
 
@@ -387,8 +387,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
       subject.process_po data, "bucket", "key"
       po = Order.where(order_number: "SHOES-" + workbook_data[:order_id]).first
-      subject.should_receive(:find_order).and_yield true, po
-      po.should_not_receive(:post_update_logic!)
+      expect(subject).to receive(:find_order).and_yield true, po
+      expect(po).not_to receive(:post_update_logic!)
 
       subject.process_po data, "bucket", "key2"
     end

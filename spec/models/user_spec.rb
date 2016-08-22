@@ -1,14 +1,14 @@
 require 'spec_helper'
 
 describe User do
-  describe :api_hash do
+  describe "api_hash" do
     let (:user) { Factory(:user, first_name:'Joe', last_name:'User', username:'uname', email:'j@sample.com', email_new_messages:true) }
     it "should get hash" do
-      user.stub(:view_orders?).and_return true
+      allow(user).to receive(:view_orders?).and_return true
       h = user.api_hash
 
       expect(h[:permissions][:view_orders]).to eq true
-      expect(h[:permissions][:view_shipments]).to be_false
+      expect(h[:permissions][:view_shipments]).to be_falsey
       # not testing every permission
       h.delete(:permissions)
 
@@ -40,7 +40,7 @@ describe User do
       })
     end
   end
-  describe :groups do
+  describe "groups" do
     before :each do
       @gA = Factory(:group,system_code:'groupA')
 
@@ -51,19 +51,19 @@ describe User do
       @gB = Factory(:group,system_code:'groupB')
     end
     it "should find in_group?" do
-      expect(@u1.in_group?('groupA')).to be_true
-      expect(@u1.in_group?(@gA)).to be_true
-      expect(@u1.in_group?('groupB')).to be_false
-      expect(@u1.in_group?(@gB)).to be_false
+      expect(@u1.in_group?('groupA')).to be_truthy
+      expect(@u1.in_group?(@gA)).to be_truthy
+      expect(@u1.in_group?('groupB')).to be_falsey
+      expect(@u1.in_group?(@gB)).to be_falsey
     end
     it "should find in_any_group?" do
-      expect(@u1.in_any_group?(['groupA','groupB'])).to be_true
-      expect(@u1.in_any_group?([@gA,@gB])).to be_true
-      expect(@u1.in_any_group?(['groupB'])).to be_false
-      expect(@u1.in_any_group?([@gB])).to be_false
+      expect(@u1.in_any_group?(['groupA','groupB'])).to be_truthy
+      expect(@u1.in_any_group?([@gA,@gB])).to be_truthy
+      expect(@u1.in_any_group?(['groupB'])).to be_falsey
+      expect(@u1.in_any_group?([@gB])).to be_falsey
     end
   end
-  describe :available_importers do
+  describe "available_importers" do
     before :each do
       @c1 = Factory(:company,importer:true)
       @c2 = Factory(:company,importer:true)
@@ -85,7 +85,7 @@ describe User do
       expect(u.available_importers.to_a).to eq [@c1,@c2]
     end
   end
-  describe :api_admin do
+  describe "api_admin" do
     it "should create api_admin if it doesn't exist" do
       u = User.api_admin
       expect(u.username).to eq 'ApiAdmin'
@@ -96,14 +96,14 @@ describe User do
       expect(u).to be_admin
       expect(u.api_auth_token).to_not be_blank
       expect(u.time_zone).to eq "Eastern Time (US & Canada)"
-      expect(u.disallow_password).to be_true
+      expect(u.disallow_password).to be_truthy
     end
     it "should return api_admin if it exits" do
       u = Factory(:master_user,username:'ApiAdmin')
       expect(User.api_admin).to eq u
     end
   end
-  describe :integration do
+  describe "integration" do
     it "should create integration if it doesn't exist" do
       u = User.integration
       expect(u.username).to eq 'integration'
@@ -114,14 +114,14 @@ describe User do
       expect(u).to be_admin
       expect(u.api_auth_token).to_not be_blank
       expect(u.time_zone).to eq "Eastern Time (US & Canada)"
-      expect(u.disallow_password).to be_true
+      expect(u.disallow_password).to be_truthy
     end
     it "should return integration if it exits" do
       u = Factory(:master_user,username:'integration')
       expect(User.integration).to eq u
     end
   end
-  describe :magic_columns do
+  describe "magic_columns" do
     before :each do
       @updated_at = 1.year.ago
       @u = Factory(:user,:updated_at=>@updated_at)
@@ -129,213 +129,213 @@ describe User do
     it "should not update updated_at if only confirmation token changed" do
       @u.confirmation_token='12345'
       @u.save!
-      User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
-      User.record_timestamps.should be_true
+      expect(User.find(@u.id).updated_at.to_i).to eq(@updated_at.to_i)
+      expect(User.record_timestamps).to be_truthy
     end
     it "should not update updated_at if only remember token changed" do
       @u.remember_token='12345'
       @u.save!
-      User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
-      User.record_timestamps.should be_true
+      expect(User.find(@u.id).updated_at.to_i).to eq(@updated_at.to_i)
+      expect(User.record_timestamps).to be_truthy
     end
     it "should not update updated_at if only last request at changed" do
       @u.last_request_at = Time.zone.now
       @u.save!
-      User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
-      User.record_timestamps.should be_true
+      expect(User.find(@u.id).updated_at.to_i).to eq(@updated_at.to_i)
+      expect(User.record_timestamps).to be_truthy
     end
     it "should not update updated_at if all no-update fields changed" do
       @u.confirmation_token='12345'
       @u.remember_token='12345'
       @u.last_request_at = Time.zone.now
       @u.save!
-      User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
-      User.record_timestamps.should be_true
+      expect(User.find(@u.id).updated_at.to_i).to eq(@updated_at.to_i)
+      expect(User.record_timestamps).to be_truthy
     end
     it "should update updated_at if a standard column changes" do
       @u.update_attributes(:email=>'a@sample.com')
-      User.record_timestamps.should be_true
-      User.find(@u.id).updated_at.should > 10.seconds.ago
+      expect(User.record_timestamps).to be_truthy
+      expect(User.find(@u.id).updated_at).to be > 10.seconds.ago
     end
     it "should update updated_at if both standard and no-update columns change" do
       @u.update_attributes(:perishable_token=>'12345',:email=>'a@sample.com')
-      User.record_timestamps.should be_true
-      User.find(@u.id).updated_at.should > 10.seconds.ago
+      expect(User.record_timestamps).to be_truthy
+      expect(User.find(@u.id).updated_at).to be > 10.seconds.ago
     end
   end
   context "permissions" do
     context "vendors" do
       before :each do
-        MasterSetup.any_instance.stub(:vendor_management_enabled?).and_return true
+        allow_any_instance_of(MasterSetup).to receive(:vendor_management_enabled?).and_return true
       end
       it "should allow when MasterSetup.vendor_management_enabled? and I have vendor_X permission" do
-        expect(User.new(vendor_view:true).view_vendors?).to be_true
-        expect(User.new(vendor_edit:true).edit_vendors?).to be_true
-        expect(User.new(vendor_attach:true).attach_vendors?).to be_true
-        expect(User.new(vendor_comment:true).comment_vendors?).to be_true
+        expect(User.new(vendor_view:true).view_vendors?).to be_truthy
+        expect(User.new(vendor_edit:true).edit_vendors?).to be_truthy
+        expect(User.new(vendor_attach:true).attach_vendors?).to be_truthy
+        expect(User.new(vendor_comment:true).comment_vendors?).to be_truthy
       end
       it "should not allow when !MasterSetup.vendor_management_enabled?" do
-        MasterSetup.any_instance.stub(:vendor_management_enabled?).and_return false
-        expect(User.new(vendor_view:true).view_vendors?).to be_false
-        expect(User.new(vendor_edit:true).edit_vendors?).to be_false
-        expect(User.new(vendor_attach:true).attach_vendors?).to be_false
-        expect(User.new(vendor_comment:true).comment_vendors?).to be_false
+        allow_any_instance_of(MasterSetup).to receive(:vendor_management_enabled?).and_return false
+        expect(User.new(vendor_view:true).view_vendors?).to be_falsey
+        expect(User.new(vendor_edit:true).edit_vendors?).to be_falsey
+        expect(User.new(vendor_attach:true).attach_vendors?).to be_falsey
+        expect(User.new(vendor_comment:true).comment_vendors?).to be_falsey
       end
       it "should not allow when I dont have vendor_view permission" do
-        expect(User.new.view_vendors?).to be_false
-        expect(User.new.edit_vendors?).to be_false
-        expect(User.new.attach_vendors?).to be_false
-        expect(User.new.comment_vendors?).to be_false
+        expect(User.new.view_vendors?).to be_falsey
+        expect(User.new.edit_vendors?).to be_falsey
+        expect(User.new.attach_vendors?).to be_falsey
+        expect(User.new.comment_vendors?).to be_falsey
       end
     end
     context "product_vendor_assignments" do
       it "should allow if corresponding vendor value is true" do
         u = User.new
-        u.stub(:view_vendors?).and_return true
-        u.stub(:edit_vendors?).and_return true
-        u.stub(:create_vendors?).and_return true
-        expect(u.view_product_vendor_assignments?).to be_true
-        expect(u.edit_product_vendor_assignments?).to be_true
-        expect(u.create_product_vendor_assignments?).to be_true
+        allow(u).to receive(:view_vendors?).and_return true
+        allow(u).to receive(:edit_vendors?).and_return true
+        allow(u).to receive(:create_vendors?).and_return true
+        expect(u.view_product_vendor_assignments?).to be_truthy
+        expect(u.edit_product_vendor_assignments?).to be_truthy
+        expect(u.create_product_vendor_assignments?).to be_truthy
       end
       it "should not allow if corresponding vendor value is false" do
         u = User.new
-        u.stub(:view_vendors?).and_return false
-        u.stub(:edit_vendors?).and_return false
-        u.stub(:create_vendors?).and_return false
-        expect(u.view_product_vendor_assignments?).to be_false
-        expect(u.edit_product_vendor_assignments?).to be_false
-        expect(u.create_product_vendor_assignments?).to be_false
+        allow(u).to receive(:view_vendors?).and_return false
+        allow(u).to receive(:edit_vendors?).and_return false
+        allow(u).to receive(:create_vendors?).and_return false
+        expect(u.view_product_vendor_assignments?).to be_falsey
+        expect(u.edit_product_vendor_assignments?).to be_falsey
+        expect(u.create_product_vendor_assignments?).to be_falsey
       end
     end
     context "official tariffs" do
       it "should allow master company user" do
-        Factory(:master_user).should be_view_official_tariffs
+        expect(Factory(:master_user)).to be_view_official_tariffs
       end
       it "should not allow non master company user" do
-        Factory(:user).should_not be_view_official_tariffs
+        expect(Factory(:user)).not_to be_view_official_tariffs
       end
       it "should allow if user can view products" do
-        expect(Factory(:user,product_view:true).view_official_tariffs?).to be_true
+        expect(Factory(:user,product_view:true).view_official_tariffs?).to be_truthy
       end
     end
     context "business_validation_results" do
       it "should allow master users" do
         u = Factory(:master_user)
-        expect(u.view_business_validation_results?).to be_true
-        expect(u.edit_business_validation_results?).to be_true
+        expect(u.view_business_validation_results?).to be_truthy
+        expect(u.edit_business_validation_results?).to be_truthy
       end
       it "should not allow non-master users" do
         u = Factory(:importer_user)
-        expect(u.view_business_validation_results?).to be_false
-        expect(u.edit_business_validation_results?).to be_false
+        expect(u.view_business_validation_results?).to be_falsey
+        expect(u.edit_business_validation_results?).to be_falsey
       end
       it "allows importer user if company has business rules viewing allowed" do
         u = Factory(:importer_user)
         u.company.update_attributes! show_business_rules: true
 
-        expect(u.view_business_validation_results?).to be_true
-        expect(u.edit_business_validation_results?).to be_true
+        expect(u.view_business_validation_results?).to be_truthy
+        expect(u.edit_business_validation_results?).to be_truthy
       end
     end
     context "business_validation_rule_results" do
       it "should allow master users" do
         u = Factory(:master_user)
-        expect(u.view_business_validation_rule_results?).to be_true
-        expect(u.edit_business_validation_rule_results?).to be_true
+        expect(u.view_business_validation_rule_results?).to be_truthy
+        expect(u.edit_business_validation_rule_results?).to be_truthy
       end
       it "shouldn't allow non master users" do
         u = Factory(:importer_user)
-        expect(u.view_business_validation_rule_results?).to be_false
-        expect(u.edit_business_validation_rule_results?).to be_false
+        expect(u.view_business_validation_rule_results?).to be_falsey
+        expect(u.edit_business_validation_rule_results?).to be_falsey
       end
       it "allows importer user if company has business rules viewing allowed" do
         u = Factory(:importer_user)
         u.company.update_attributes! show_business_rules: true
 
-        expect(u.view_business_validation_rule_results?).to be_true
-        expect(u.edit_business_validation_rule_results?).to be_true
+        expect(u.view_business_validation_rule_results?).to be_truthy
+        expect(u.edit_business_validation_rule_results?).to be_truthy
       end
     end
     context "projects" do
       it "should allow master company user with permission" do
         u = Factory(:master_user)
-        expect(u.view_projects?).to be_false
-        expect(u.edit_projects?).to be_false
+        expect(u.view_projects?).to be_falsey
+        expect(u.edit_projects?).to be_falsey
         u.project_view = true
-        expect(u.view_projects?).to be_true
+        expect(u.view_projects?).to be_truthy
         u.project_edit = true
-        expect(u.edit_projects?).to be_true
+        expect(u.edit_projects?).to be_truthy
       end
       it "should not allow non master company user" do
         u = Factory(:user)
         u.project_view = true
         u.project_edit = true
-        expect(u.view_projects?).to be_false
-        expect(u.edit_projects?).to be_false
+        expect(u.view_projects?).to be_falsey
+        expect(u.edit_projects?).to be_falsey
       end
     end
     context "trade_lanes" do
       let(:user) do
         u = User.new(trade_lane_view:true,trade_lane_edit:true,trade_lane_comment:true,trade_lane_attach:true)
         u.company = Company.new
-        u.company.stub(:view_trade_lanes?).and_return true
-        u.company.stub(:edit_trade_lanes?).and_return true
+        allow(u.company).to receive(:view_trade_lanes?).and_return true
+        allow(u.company).to receive(:edit_trade_lanes?).and_return true
         u
       end
       it "should allow for user whose company has permission" do
         u = user
-        expect(u.view_trade_lanes?).to be_true
-        expect(u.edit_trade_lanes?).to be_true
-        expect(u.comment_trade_lanes?).to be_true
-        expect(u.attach_trade_lanes?).to be_true
+        expect(u.view_trade_lanes?).to be_truthy
+        expect(u.edit_trade_lanes?).to be_truthy
+        expect(u.comment_trade_lanes?).to be_truthy
+        expect(u.attach_trade_lanes?).to be_truthy
       end
       it "should not allow for user whose company does not have permission" do
         u = user
-        u.company.stub(:view_trade_lanes?).and_return false
-        u.company.stub(:edit_trade_lanes?).and_return false
-        expect(u.view_trade_lanes?).to be_false
-        expect(u.edit_trade_lanes?).to be_false
-        expect(u.comment_trade_lanes?).to be_false
-        expect(u.attach_trade_lanes?).to be_false
+        allow(u.company).to receive(:view_trade_lanes?).and_return false
+        allow(u.company).to receive(:edit_trade_lanes?).and_return false
+        expect(u.view_trade_lanes?).to be_falsey
+        expect(u.edit_trade_lanes?).to be_falsey
+        expect(u.comment_trade_lanes?).to be_falsey
+        expect(u.attach_trade_lanes?).to be_falsey
       end
       it "should not allow for user who does not have permission" do
         u = User.new
-        expect(u.view_trade_lanes?).to be_false
-        expect(u.edit_trade_lanes?).to be_false
-        expect(u.comment_trade_lanes?).to be_false
-        expect(u.attach_trade_lanes?).to be_false
+        expect(u.view_trade_lanes?).to be_falsey
+        expect(u.edit_trade_lanes?).to be_falsey
+        expect(u.comment_trade_lanes?).to be_falsey
+        expect(u.attach_trade_lanes?).to be_falsey
       end
     end
     context "trade_preference_programs" do
       it "should delegate view to trade lanes method" do
         u = User.new
-        u.should_receive(:view_trade_lanes?).and_return 'ABC'
+        expect(u).to receive(:view_trade_lanes?).and_return 'ABC'
         expect(u.view_trade_preference_programs?).to eq 'ABC'
       end
       it "should delegate edit to trade lanes method" do
         u = User.new
-        u.should_receive(:edit_trade_lanes?).and_return 'ABC'
+        expect(u).to receive(:edit_trade_lanes?).and_return 'ABC'
         expect(u.edit_trade_preference_programs?).to eq 'ABC'
       end
       it "should delegate comment to trade lanes method" do
         u = User.new
-        u.should_receive(:comment_trade_lanes?).and_return 'ABC'
+        expect(u).to receive(:comment_trade_lanes?).and_return 'ABC'
         expect(u.comment_trade_preference_programs?).to eq 'ABC'
       end
       it "should delegate attach to trade lanes method" do
         u = User.new
-        u.should_receive(:attach_trade_lanes?).and_return 'ABC'
+        expect(u).to receive(:attach_trade_lanes?).and_return 'ABC'
         expect(u.attach_trade_preference_programs?).to eq 'ABC'
       end
     end
     context "tpp_hts_overrides" do
       it "should delegate to trade_preference_programs" do
         u = User.new
-        u.should_receive(:view_trade_preference_programs?).and_return 'view'
-        u.should_receive(:edit_trade_preference_programs?).and_return 'edit'
-        u.should_receive(:attach_trade_preference_programs?).and_return 'attach'
-        u.should_receive(:comment_trade_preference_programs?).and_return 'comment'
+        expect(u).to receive(:view_trade_preference_programs?).and_return 'view'
+        expect(u).to receive(:edit_trade_preference_programs?).and_return 'edit'
+        expect(u).to receive(:attach_trade_preference_programs?).and_return 'attach'
+        expect(u).to receive(:comment_trade_preference_programs?).and_return 'comment'
 
         expect(u.view_tpp_hts_overrides?).to eq 'view'
         expect(u.edit_tpp_hts_overrides?).to eq 'edit'
@@ -346,56 +346,56 @@ describe User do
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))
-        u.stub(:view_entries?).and_return true
-        u.should be_view_attachment_archives
-        u.should be_edit_attachment_archives
+        allow(u).to receive(:view_entries?).and_return true
+        expect(u).to be_view_attachment_archives
+        expect(u).to be_edit_attachment_archives
       end
       it "should not allow for non-master user" do
         u = Factory(:user)
-        u.stub(:view_entries?).and_return true
-        u.should_not be_view_attachment_archives
-        u.should_not be_edit_attachment_archives
+        allow(u).to receive(:view_entries?).and_return true
+        expect(u).not_to be_view_attachment_archives
+        expect(u).not_to be_edit_attachment_archives
       end
       it "should not allow for user who cannot view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))
-        u.stub(:view_entries?).and_return false
-        u.should_not be_view_attachment_archives
-        u.should_not be_edit_attachment_archives
+        allow(u).to receive(:view_entries?).and_return false
+        expect(u).not_to be_view_attachment_archives
+        expect(u).not_to be_edit_attachment_archives
       end
     end
     context "security filing" do
       context "company has permission" do
         before :each do
-          Company.any_instance.stub(:view_security_filings?).and_return(true)
-          Company.any_instance.stub(:edit_security_filings?).and_return(true)
-          Company.any_instance.stub(:attach_security_filings?).and_return(true)
-          Company.any_instance.stub(:comment_security_filings?).and_return(true)
+          allow_any_instance_of(Company).to receive(:view_security_filings?).and_return(true)
+          allow_any_instance_of(Company).to receive(:edit_security_filings?).and_return(true)
+          allow_any_instance_of(Company).to receive(:attach_security_filings?).and_return(true)
+          allow_any_instance_of(Company).to receive(:comment_security_filings?).and_return(true)
         end
         it "should allow if permission set and company has permission" do
           u = Factory(:user,:security_filing_view=>true,:security_filing_edit=>true,:security_filing_attach=>true,:security_filing_comment=>true)
-          u.view_security_filings?.should be_true
-          u.edit_security_filings?.should be_true
-          u.attach_security_filings?.should be_true
-          u.comment_security_filings?.should be_true
+          expect(u.view_security_filings?).to be_truthy
+          expect(u.edit_security_filings?).to be_truthy
+          expect(u.attach_security_filings?).to be_truthy
+          expect(u.comment_security_filings?).to be_truthy
         end
         it "should not allow if user permission not set and company has permission" do
           u = Factory(:user,:security_filing_view=>false,:security_filing_edit=>false,:security_filing_attach=>false,:security_filing_comment=>false)
-          u.view_security_filings?.should be_false
-          u.edit_security_filings?.should be_false
-          u.attach_security_filings?.should be_false
-          u.comment_security_filings?.should be_false
+          expect(u.view_security_filings?).to be_falsey
+          expect(u.edit_security_filings?).to be_falsey
+          expect(u.attach_security_filings?).to be_falsey
+          expect(u.comment_security_filings?).to be_falsey
         end
       end
       it "should not allow if company does not have permission" do
-        Company.any_instance.stub(:view_security_filings?).and_return(false)
-        Company.any_instance.stub(:edit_security_filings?).and_return(false)
-        Company.any_instance.stub(:attach_security_filings?).and_return(false)
-        Company.any_instance.stub(:comment_security_filings?).and_return(false)
+        allow_any_instance_of(Company).to receive(:view_security_filings?).and_return(false)
+        allow_any_instance_of(Company).to receive(:edit_security_filings?).and_return(false)
+        allow_any_instance_of(Company).to receive(:attach_security_filings?).and_return(false)
+        allow_any_instance_of(Company).to receive(:comment_security_filings?).and_return(false)
         u = Factory(:user,:security_filing_view=>true,:security_filing_edit=>true,:security_filing_attach=>true,:security_filing_comment=>true)
-        u.view_security_filings?.should be_false
-        u.edit_security_filings?.should be_false
-        u.attach_security_filings?.should be_false
-        u.comment_security_filings?.should be_false
+        expect(u.view_security_filings?).to be_falsey
+        expect(u.edit_security_filings?).to be_falsey
+        expect(u.attach_security_filings?).to be_falsey
+        expect(u.comment_security_filings?).to be_falsey
       end
     end
     context "drawback" do
@@ -403,99 +403,99 @@ describe User do
         MasterSetup.get.update_attributes(:drawback_enabled=>true)
       end
       it "should allow user to view if permission is set and drawback enabled" do
-        Factory(:user,:drawback_view=>true).view_drawback?.should be_true
+        expect(Factory(:user,:drawback_view=>true).view_drawback?).to be_truthy
       end
       it "should allow user to edit if permission is set and drawback enabled" do
-        Factory(:user,:drawback_edit=>true).edit_drawback?.should be_true
+        expect(Factory(:user,:drawback_edit=>true).edit_drawback?).to be_truthy
       end
       it "should not allow view/edit if drawback not enabled" do
         MasterSetup.get.update_attributes(:drawback_enabled=>false)
         u = Factory(:user,:drawback_view=>true,:drawback_edit=>true)
-        u.view_drawback?.should be_false
-        u.edit_drawback?.should be_false
+        expect(u.view_drawback?).to be_falsey
+        expect(u.edit_drawback?).to be_falsey
       end
       it "should now allow if permissions not set" do
         u = Factory(:user)
-        u.view_drawback?.should be_false
-        u.edit_drawback?.should be_false
+        expect(u.view_drawback?).to be_falsey
+        expect(u.edit_drawback?).to be_falsey
       end
     end
     context "broker invoice" do
       context "with company permission" do
         before :each do
-          Company.any_instance.stub(:edit_broker_invoices?).and_return(true)
-          Company.any_instance.stub(:view_broker_invoices?).and_return(true)
+          allow_any_instance_of(Company).to receive(:edit_broker_invoices?).and_return(true)
+          allow_any_instance_of(Company).to receive(:view_broker_invoices?).and_return(true)
         end
         it "should allow view if permission is set" do
-          Factory(:user,:broker_invoice_view=>true).view_broker_invoices?.should be_true
+          expect(Factory(:user,:broker_invoice_view=>true).view_broker_invoices?).to be_truthy
         end
         it "should allow edit if permission is set" do
-          Factory(:user,:broker_invoice_edit=>true).edit_broker_invoices?.should be_true
+          expect(Factory(:user,:broker_invoice_edit=>true).edit_broker_invoices?).to be_truthy
         end
         it "should not allow view without permission" do
-          Factory(:user,:broker_invoice_view=>false).view_broker_invoices?.should be_false
+          expect(Factory(:user,:broker_invoice_view=>false).view_broker_invoices?).to be_falsey
         end
         it "should not allow edit without permission" do
-          Factory(:user,:broker_invoice_edit=>false).edit_broker_invoices?.should be_false
+          expect(Factory(:user,:broker_invoice_edit=>false).edit_broker_invoices?).to be_falsey
         end
       end
       context "without company permission" do
         before :each do
-          Company.any_instance.stub(:edit_broker_invoices?).and_return(false)
-          Company.any_instance.stub(:view_broker_invoices?).and_return(false)
+          allow_any_instance_of(Company).to receive(:edit_broker_invoices?).and_return(false)
+          allow_any_instance_of(Company).to receive(:view_broker_invoices?).and_return(false)
         end
         it "should not allow view even if permission is set" do
-          Factory(:user,:broker_invoice_view=>true).view_broker_invoices?.should be_false
+          expect(Factory(:user,:broker_invoice_view=>true).view_broker_invoices?).to be_falsey
         end
         it "should not allow edit even if permission is set" do
-          Factory(:user,:broker_invoice_edit=>true).edit_broker_invoices?.should be_false
+          expect(Factory(:user,:broker_invoice_edit=>true).edit_broker_invoices?).to be_falsey
         end
       end
     end
     context "vfi invoice" do
       context "with company permission" do
         before :each do
-          Company.any_instance.stub(:edit_vfi_invoices?).and_return true
-          Company.any_instance.stub(:view_vfi_invoices?).and_return true
+          allow_any_instance_of(Company).to receive(:edit_vfi_invoices?).and_return true
+          allow_any_instance_of(Company).to receive(:view_vfi_invoices?).and_return true
         end
         it "should allow view if permission is set" do
-          Factory(:user,:vfi_invoice_view=>true).view_vfi_invoices?.should be_true
+          expect(Factory(:user,:vfi_invoice_view=>true).view_vfi_invoices?).to be_truthy
         end
         it "should allow edit if permission is set" do
-          Factory(:user,:vfi_invoice_edit=>true).edit_vfi_invoices?.should be_true
+          expect(Factory(:user,:vfi_invoice_edit=>true).edit_vfi_invoices?).to be_truthy
         end
         it "should not allow view without permission" do
-          Factory(:user,:vfi_invoice_view=>false).view_vfi_invoices?.should be_false
+          expect(Factory(:user,:vfi_invoice_view=>false).view_vfi_invoices?).to be_falsey
         end
         it "should not allow edit without permission" do
-          Factory(:user,:vfi_invoice_edit=>false).edit_vfi_invoices?.should be_false
+          expect(Factory(:user,:vfi_invoice_edit=>false).edit_vfi_invoices?).to be_falsey
         end
       end
       context "without company permission" do
         before :each do
-          Company.any_instance.stub(:edit_vfi_invoices?).and_return(false)
-          Company.any_instance.stub(:view_vfi_invoices?).and_return(false)
+          allow_any_instance_of(Company).to receive(:edit_vfi_invoices?).and_return(false)
+          allow_any_instance_of(Company).to receive(:view_vfi_invoices?).and_return(false)
         end
         it "should not allow view even if permission is set" do
-          Factory(:user,:vfi_invoice_view=>true).view_vfi_invoices?.should be_false
+          expect(Factory(:user,:vfi_invoice_view=>true).view_vfi_invoices?).to be_falsey
         end
         it "should not allow edit even if permission is set" do
-          Factory(:user,:vfi_invoice_edit=>true).edit_vfi_invoices?.should be_false
+          expect(Factory(:user,:vfi_invoice_edit=>true).edit_vfi_invoices?).to be_falsey
         end
       end
     end
     context "survey" do
       it "should pass view_surveys?" do
-        User.new(:survey_view=>true).view_surveys?.should be_true
+        expect(User.new(:survey_view=>true).view_surveys?).to be_truthy
       end
       it "should pass edit_surveys?" do
-        User.new(:survey_edit=>true).edit_surveys?.should be_true
+        expect(User.new(:survey_edit=>true).edit_surveys?).to be_truthy
       end
       it "should fail view_surveys?" do
-        User.new(:survey_view=>false).view_surveys?.should be_false
+        expect(User.new(:survey_view=>false).view_surveys?).to be_falsey
       end
       it "should fail edit_surveys?" do
-        User.new(:survey_edit=>false).edit_surveys?.should be_false
+        expect(User.new(:survey_edit=>false).edit_surveys?).to be_falsey
       end
     end
     context "entry" do
@@ -503,14 +503,14 @@ describe User do
         @company = Factory(:company,:broker=>true)
       end
       it "should allow user to edit entry if permission is set and company is not broker" do
-        Factory(:user,:entry_edit=>true,:company=>@company).should be_edit_entries
+        expect(Factory(:user,:entry_edit=>true,:company=>@company)).to be_edit_entries
       end
       it "should not allow user to edit entry if permission is not set" do
-        User.new(:company=>@company).should_not be_edit_entries
+        expect(User.new(:company=>@company)).not_to be_edit_entries
       end
       it "should not allow user to edit entry if company is not broker" do
         @company.update_attributes(:broker=>false)
-        User.new(:entry_edit=>true,:company_id=>@company.id).should_not be_edit_entries
+        expect(User.new(:entry_edit=>true,:company_id=>@company.id)).not_to be_edit_entries
       end
     end
 
@@ -520,12 +520,12 @@ describe User do
           MasterSetup.get.update_attributes(:entry_enabled=>true)
         end
         it "should pass with user enabled" do
-          User.new(:commercial_invoice_view=>true).view_commercial_invoices?.should be_true
-          User.new(:commercial_invoice_edit=>true).edit_commercial_invoices?.should be_true
+          expect(User.new(:commercial_invoice_view=>true).view_commercial_invoices?).to be_truthy
+          expect(User.new(:commercial_invoice_edit=>true).edit_commercial_invoices?).to be_truthy
         end
         it "should fail with user not enabled" do
-          User.new.view_commercial_invoices?.should be_false
-          User.new.edit_commercial_invoices?.should be_false
+          expect(User.new.view_commercial_invoices?).to be_falsey
+          expect(User.new.edit_commercial_invoices?).to be_falsey
         end
       end
       context "entry disabled" do
@@ -533,8 +533,8 @@ describe User do
           MasterSetup.get.update_attributes(:entry_enabled=>false)
         end
         it "should fail with user enabled" do
-          User.new(:commercial_invoice_view=>true).view_commercial_invoices?.should be_false
-          User.new(:commercial_invoice_edit=>true).edit_commercial_invoices?.should be_false
+          expect(User.new(:commercial_invoice_view=>true).view_commercial_invoices?).to be_falsey
+          expect(User.new(:commercial_invoice_edit=>true).edit_commercial_invoices?).to be_falsey
         end
       end
     end
@@ -550,12 +550,12 @@ describe User do
 
         it "should pass with user enabled" do
           @u.update_attributes(variant_edit:true)
-          expect(@u.add_variants?).to be_true
-          expect(@u.edit_variants?).to be_true
+          expect(@u.add_variants?).to be_truthy
+          expect(@u.edit_variants?).to be_truthy
         end
         it "should fail with user not enabled" do
-          expect(@u.add_variants?).to be_false
-          expect(@u.edit_variants?).to be_false
+          expect(@u.add_variants?).to be_falsey
+          expect(@u.edit_variants?).to be_falsey
         end
       end
       context "disabled" do
@@ -565,18 +565,18 @@ describe User do
 
         it "should fail with user enabled" do
           @u.update_attributes(variant_edit:true)
-          expect(@u.add_variants?).to be_false
-          expect(@u.edit_variants?).to be_false
+          expect(@u.add_variants?).to be_falsey
+          expect(@u.edit_variants?).to be_falsey
         end
         it "should fail with user not enabled" do
-          expect(@u.add_variants?).to be_false
-          expect(@u.edit_variants?).to be_false
+          expect(@u.add_variants?).to be_falsey
+          expect(@u.edit_variants?).to be_falsey
         end
       end
     end
   end
 
-  context :run_with_user_settings do
+  context "run_with_user_settings" do
 
     before :each do
       @user = User.current
@@ -596,15 +596,15 @@ describe User do
     it "should set/unset User settings" do
 
       val = User.run_with_user_settings(@run_as) do
-        User.current.should == @run_as
-        Time.zone.should == ActiveSupport::TimeZone[@run_as.time_zone]
+        expect(User.current).to eq(@run_as)
+        expect(Time.zone).to eq(ActiveSupport::TimeZone[@run_as.time_zone])
         "abcdefg"
       end
       # Just make sure the method returns whatever the block returns
-      val.should == "abcdefg"
+      expect(val).to eq("abcdefg")
 
-      User.current.should == @current_user
-      Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
+      expect(User.current).to eq(@current_user)
+      expect(Time.zone).to eq(ActiveSupport::TimeZone[@current_user.time_zone])
     end
 
     it "should set/unset User settings even if block raises an Exception" do
@@ -615,8 +615,8 @@ describe User do
         }
       }.to raise_exception "Error"
 
-      User.current.should == @current_user
-      Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
+      expect(User.current).to eq(@current_user)
+      expect(Time.zone).to eq(ActiveSupport::TimeZone[@current_user.time_zone])
     end
 
     it "should not set Time.zone if user has no timezone" do
@@ -625,25 +625,25 @@ describe User do
       @run_as.time_zone = ""
 
       User.run_with_user_settings(@run_as) do
-        User.current.should == @run_as
-        Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
+        expect(User.current).to eq(@run_as)
+        expect(Time.zone).to eq(ActiveSupport::TimeZone[@current_user.time_zone])
       end
 
-      User.current.should == @current_user
-      Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
+      expect(User.current).to eq(@current_user)
+      expect(Time.zone).to eq(ActiveSupport::TimeZone[@current_user.time_zone])
     end
   end
   describe 'hidden messages' do
     it "should add hidden message" do
       u = User.new
       u.add_hidden_message 'h1'
-      u.hide_message?('h1').should be_true
+      expect(u.hide_message?('h1')).to be_truthy
     end
     it "should remove hidden message" do
       u = User.new
       u.add_hidden_message 'hx'
       u.remove_hidden_message 'hx'
-      u.hide_message?('hx').should be_false
+      expect(u.hide_message?('hx')).to be_falsey
     end
     it "should save hidden messages" do
       u = Factory(:user)
@@ -651,27 +651,27 @@ describe User do
       u.add_hidden_message 'abc'
       u.save!
       u = User.find(u.id)
-      u.hide_message?('hx').should be_true
-      u.hide_message?('abc').should be_true
+      expect(u.hide_message?('hx')).to be_truthy
+      expect(u.hide_message?('abc')).to be_truthy
     end
     it "should be case insensitive" do
       u = User.new
       u.add_hidden_message 'hx'
-      u.hide_message?('HX').should be_true
+      expect(u.hide_message?('HX')).to be_truthy
     end
   end
-  context :send_invite_emails do
+  context "send_invite_emails" do
     it "should send an invite email to a user" do
       e = double("Email")
-      e.should_receive(:deliver)
+      expect(e).to receive(:deliver)
       u = Factory(:user)
 
-      OpenMailer.should_receive(:send_invite) do |user, password|
-        user.id.should == u.id
+      expect(OpenMailer).to receive(:send_invite) do |user, password|
+        expect(user.id).to eq(u.id)
         # Make sure the password has been updated by checking the encrypted
         # versions
-        user.encrypted_password.should_not == u.encrypted_password
-        expect(user.password_reset).to be_true
+        expect(user.encrypted_password).not_to eq(u.encrypted_password)
+        expect(user.password_reset).to be_truthy
         e
       end
 
@@ -680,8 +680,8 @@ describe User do
 
     it "should send an invite email to multiple users" do
       e = double("email")
-      e.should_receive(:deliver).twice
-      OpenMailer.should_receive(:send_invite).twice.and_return(e)
+      expect(e).to receive(:deliver).twice
+      expect(OpenMailer).to receive(:send_invite).twice.and_return(e)
 
       u = Factory(:user)
       User.send_invite_emails [u.id, u.id]
@@ -713,23 +713,23 @@ describe User do
 
   describe "access_allowed?" do
     it "validates user is not nill" do
-      expect(User.access_allowed? nil).to be_false
+      expect(User.access_allowed? nil).to be_falsey
     end
 
     it "validates user is not disabled?" do
       user = User.new
       user.disabled = true
-      expect(User.access_allowed? user).to be_false
+      expect(User.access_allowed? user).to be_falsey
     end
 
     it "validates user company is not locked" do
       user = Factory(:user, company: Factory(:company, locked: true))
-      expect(User.access_allowed? user).to be_false
+      expect(User.access_allowed? user).to be_falsey
     end
 
     it "validates user" do
       user = Factory(:user)
-      expect(User.access_allowed? user).to be_true
+      expect(User.access_allowed? user).to be_truthy
     end
   end
 
@@ -751,7 +751,7 @@ describe User do
     end
 
     it "skips fails if password is blank" do
-      expect(@user.update_user_password ' ', 'notmatched').to be_false
+      expect(@user.update_user_password ' ', 'notmatched').to be_falsey
       expect(@user.errors[:password]).to eq ["cannot be blank."]
       expect(User.authenticate @user.username, ' ').to be_nil
     end
@@ -764,7 +764,7 @@ describe User do
       updated_at = user.updated_at
 
       request = double("request")
-      request.stub(:host_with_port).and_return "localhost:3000"
+      allow(request).to receive(:host_with_port).and_return "localhost:3000"
 
       user.on_successful_login request
 
@@ -802,11 +802,11 @@ describe User do
         expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: @user, errors: []})
 
         @user.reload
-        @user.provider.should == "oauth"
-        @user.uid.should == "someuid123"
-        @user.google_name.should == "Condaleeza R"
-        @user.oauth_token.should == "123456789"
-        (@user.oauth_expires_at > Time.now).should == true
+        expect(@user.provider).to eq("oauth")
+        expect(@user.uid).to eq("someuid123")
+        expect(@user.google_name).to eq("Condaleeza R")
+        expect(@user.oauth_token).to eq("123456789")
+        expect(@user.oauth_expires_at > Time.now).to eq(true)
       end
 
       it "should return nil if the user is not found" do
@@ -879,7 +879,7 @@ describe User do
 
   end
 
-  describe :portal_redirect_path do
+  describe "portal_redirect_path" do
     it "should return nil if portal_mode.blank?" do
       expect(User.new.portal_redirect_path).to be_nil
     end

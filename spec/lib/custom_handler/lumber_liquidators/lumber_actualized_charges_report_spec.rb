@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       start_date = ActiveSupport::TimeZone["America/New_York"].parse "2016-07-25 00:00"
       end_date = ActiveSupport::TimeZone["America/New_York"].parse "2016-08-01 00:00"
 
-      described_class.any_instance.should_receive(:run).with(User.integration, start_date, end_date, {email_to: ["me@there.com"]})
+      expect_any_instance_of(described_class).to receive(:run).with(User.integration, start_date, end_date, {email_to: ["me@there.com"]})
       Timecop.freeze(Time.zone.parse "2016-08-03 12:00") do 
         described_class.run_schedulable({"email_to" => ["me@there.com"]})
       end
@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
   describe "run_report" do
     it "executes the report" do
       user = User.new
-      described_class.any_instance.should_receive(:run).with(user, "2016-08-02", "2016-08-03")
+      expect_any_instance_of(described_class).to receive(:run).with(user, "2016-08-02", "2016-08-03")
       described_class.run_report user, {"start_date" => "2016-08-02", "end_date" => "2016-08-03"}
     end
   end
@@ -37,43 +37,43 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       
       before :each do
         ms = stub_master_setup
-        ms.stub(:custom_feature?).with("Lumber Charges Report").and_return true
+        allow(ms).to receive(:custom_feature?).with("Lumber Charges Report").and_return true
       end
 
       context "with view permissions" do
         before :each do 
-          user.stub(:view_broker_invoices?).and_return true
-          user.stub(:view_entries?).and_return true
+          allow(user).to receive(:view_broker_invoices?).and_return true
+          allow(user).to receive(:view_entries?).and_return true
         end
 
         it "allows master user" do
-          user.company.should_receive(:master?).and_return true
-          expect(described_class.permission? user).to be_true
+          expect(user.company).to receive(:master?).and_return true
+          expect(described_class.permission? user).to be_truthy
         end
 
         it "allows non-master user if can view Lumber company" do
           lumber = Factory(:importer, system_code: "LUMBER")
-          Company.any_instance.should_receive(:can_view?).with(user).and_return true
+          expect_any_instance_of(Company).to receive(:can_view?).with(user).and_return true
 
-          expect(described_class.permission? user).to be_true
+          expect(described_class.permission? user).to be_truthy
         end
       end
 
       it "does not allow users without view_entries permission" do
-        user.stub(:view_broker_invoices?).and_return true
-        expect(described_class.permission? user).to be_false
+        allow(user).to receive(:view_broker_invoices?).and_return true
+        expect(described_class.permission? user).to be_falsey
       end
 
       it "does not allow users without view_broker_invoices permission" do
-        user.stub(:view_entries?).and_return true
-        expect(described_class.permission? user).to be_false
+        allow(user).to receive(:view_entries?).and_return true
+        expect(described_class.permission? user).to be_falsey
       end
     end
 
     it "does not allow access if custom feature is not enabled" do
       ms = stub_master_setup
-      ms.should_receive(:custom_feature?).with("Lumber Charges Report").and_return false
-      expect(described_class.permission? user).to be_false
+      expect(ms).to receive(:custom_feature?).with("Lumber Charges Report").and_return false
+      expect(described_class.permission? user).to be_falsey
     end
   end
 

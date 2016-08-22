@@ -2,24 +2,24 @@ require "spec_helper"
 
 describe OpenChain::Events::EntryEvents::EntryEventHandler do 
 
-  context :listeners do 
+  context "listeners" do 
     it "should return listeners for save event types" do
       event = double("Event")
-      event.stub(:event_type).and_return :save
+      allow(event).to receive(:event_type).and_return :save
       listeners = described_class.new.listeners event
 
-      listeners.first.class.name.should == OpenChain::Events::EntryEvents::LandedCostReportAttacherListener.name
-      listeners[1].class.name.should == OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator.name
-      listeners[2].class.name.should == OpenChain::CustomHandler::Crocs::Crocs210Generator.name
-      listeners[3].class.name.should == OpenChain::CustomHandler::FootLocker::FootLocker810Generator.name
-      listeners[4].class.name.should == OpenChain::CustomHandler::Generic315Generator.name
+      expect(listeners.first.class.name).to eq(OpenChain::Events::EntryEvents::LandedCostReportAttacherListener.name)
+      expect(listeners[1].class.name).to eq(OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator.name)
+      expect(listeners[2].class.name).to eq(OpenChain::CustomHandler::Crocs::Crocs210Generator.name)
+      expect(listeners[3].class.name).to eq(OpenChain::CustomHandler::FootLocker::FootLocker810Generator.name)
+      expect(listeners[4].class.name).to eq(OpenChain::CustomHandler::Generic315Generator.name)
     end
 
     it "should return a blank list for event types it doesn't care about" do
       event = double("Event")
-      event.stub(:event_type).and_return "These aren't the droids you're looking for".to_sym
+      allow(event).to receive(:event_type).and_return "These aren't the droids you're looking for".to_sym
       listeners = described_class.new.listeners event
-      listeners.should have(0).items
+      expect(listeners.size).to eq(0)
     end
   end
 end

@@ -48,12 +48,12 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
     }
 
     before :each do 
-      shipment.stub(:can_edit?).with(user).and_return true
-      shipment.stub(:create_async_snapshot)
+      allow(shipment).to receive(:can_edit?).with(user).and_return true
+      allow(shipment).to receive(:create_async_snapshot)
     end
 
     it "parses shipment data, skipping lines that don't match to an order" do
-      shipment.should_receive(:create_async_snapshot).with user
+      expect(shipment).to receive(:create_async_snapshot).with user
       subject.process_rows shipment, rows, user
 
       expect(shipment).to be_persisted
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       expect(shipment.cargo_ready_date).to eq Date.new(2016, 6, 1)
       expect(shipment.freight_terms).to eq "TERMS"
       expect(shipment.shipment_type).to eq "Type"
-      expect(shipment.lcl).to be_false
+      expect(shipment.lcl).to be_falsey
       expect(shipment.marks_and_numbers).to eq "Marks And Numbers"
 
       expect(shipment.containers.length).to eq 1
@@ -140,7 +140,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       subject.process_rows shipment, rows, user
 
       expect(shipment.mode).to eq "Ocean - LCL"
-      expect(shipment.lcl).to be_true
+      expect(shipment.lcl).to be_truthy
     end
 
     it "handles manufacturer_address_id if provided in constructor options" do

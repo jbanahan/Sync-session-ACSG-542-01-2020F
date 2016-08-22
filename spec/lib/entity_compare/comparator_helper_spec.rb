@@ -10,7 +10,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     it "should get data from S3" do
       h = {'a'=>'b'}
       json = h.to_json
-      OpenChain::S3.should_receive(:get_versioned_data).with('b','k','v').and_return json
+      expect(OpenChain::S3).to receive(:get_versioned_data).with('b','k','v').and_return json
       expect(subject.get_json_hash('b','k','v')).to eq h
     end
 
@@ -27,7 +27,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     end
 
     it "returns blank if data is blank" do
-      OpenChain::S3.should_receive(:get_versioned_data).with('b','k','v').and_return "       "
+      expect(OpenChain::S3).to receive(:get_versioned_data).with('b','k','v').and_return "       "
       expect(subject.get_json_hash('b','k','v')).to eq({})
     end
   end

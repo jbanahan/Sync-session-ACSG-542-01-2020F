@@ -5,95 +5,95 @@ describe CorrectiveActionPlan do
     @cap = Factory(:corrective_action_plan)
     @u = Factory(:user) 
   end
-  describe :log_update do
+  describe "log_update" do
     it "should log against survey_response if cap is active" do
       @cap.status = described_class::STATUSES[:active]
-      @cap.survey_response.should_receive(:log_update).with @u
+      expect(@cap.survey_response).to receive(:log_update).with @u
       @cap.log_update @u
     end
     it "should not log against survey_response if cap is inactive" do
       @cap.status = described_class::STATUSES[:new]
-      @cap.survey_response.should_not_receive(:log_update).with @u
+      expect(@cap.survey_response).not_to receive(:log_update).with @u
       @cap.log_update @u
     end
   end
-  describe :can_update_actions? do
+  describe "can_update_actions?" do
     it "should allow if user == survey_response.user" do
       sr = @cap.survey_response
       sr.user = @u
       sr.save!
-      @cap.can_update_actions?(@u).should be_true
+      expect(@cap.can_update_actions?(@u)).to be_truthy
     end
     it "should not allow if user != survey_response.user" do
-      @cap.can_update_actions?(@u).should be_false
+      expect(@cap.can_update_actions?(@u)).to be_falsey
     end
   end
-  describe :can_view? do
+  describe "can_view?" do
     it "should allow if you can view the survey response" do
-      @cap.survey_response.should_receive(:can_view?).with(@u).and_return true
-      @cap.can_view?(@u).should be_true
+      expect(@cap.survey_response).to receive(:can_view?).with(@u).and_return true
+      expect(@cap.can_view?(@u)).to be_truthy
     end
     it "should not allow if you are the survey response user, cannot edit the response and the status is 'New'" do
       @cap.status = described_class::STATUSES[:new]
       sr = @cap.survey_response
       sr.user = @u
       sr.save!
-      @cap.survey_response.stub(:can_view?).and_return true
-      @cap.survey_response.stub(:can_edit?).and_return false 
-      @cap.can_view?(@u).should be_false
+      allow(@cap.survey_response).to receive(:can_view?).and_return true
+      allow(@cap.survey_response).to receive(:can_edit?).and_return false 
+      expect(@cap.can_view?(@u)).to be_falsey
     end
     it "should not allow if you can't view the survey response" do
-      @cap.survey_response.should_receive(:can_view?).with(@u).and_return false
-      @cap.can_view?(@u).should be_false
+      expect(@cap.survey_response).to receive(:can_view?).with(@u).and_return false
+      expect(@cap.can_view?(@u)).to be_falsey
     end
   end
-  describe :can_edit? do
+  describe "can_edit?" do
     it "should allow edit if user can edit survey_response" do
-      @cap.survey_response.should_receive(:can_edit?).with(@u).and_return true
-      @cap.can_edit?(@u).should be_true
+      expect(@cap.survey_response).to receive(:can_edit?).with(@u).and_return true
+      expect(@cap.can_edit?(@u)).to be_truthy
     end
     it "should not allow edit if user cannot edit survey_response" do
-      @cap.survey_response.should_receive(:can_edit?).with(@u).and_return false
-      @cap.can_edit?(@u).should be_false
+      expect(@cap.survey_response).to receive(:can_edit?).with(@u).and_return false
+      expect(@cap.can_edit?(@u)).to be_falsey
     end
   end
-  describe :can_delete do
+  describe "can_delete" do
     it "should allow delete if status is new && user can edit" do
       @cap.status = described_class::STATUSES[:new]
-      @cap.should_receive(:can_edit?).and_return(true)
-      @cap.can_delete?(@u).should be_true
+      expect(@cap).to receive(:can_edit?).and_return(true)
+      expect(@cap.can_delete?(@u)).to be_truthy
     end
     it "shouldn't allow delete if status is not new" do
       @cap.status = described_class::STATUSES[:active]
-      @cap.stub(:can_edit?).and_return(true)
-      @cap.can_delete?(@u).should be_false
+      allow(@cap).to receive(:can_edit?).and_return(true)
+      expect(@cap.can_delete?(@u)).to be_falsey
     end
     it "shouldn't allow delete if user cannot edit" do
       @cap.status = described_class::STATUSES[:new]
-      @cap.should_receive(:can_edit?).and_return(false)
-      @cap.can_delete?(@u).should be_false
+      expect(@cap).to receive(:can_edit?).and_return(false)
+      expect(@cap.can_delete?(@u)).to be_falsey
     end
   end
-  describe :destroy do
+  describe "destroy" do
     it "should not allow destroy if status not new or nil" do
       @cap.status = described_class::STATUSES[:active]
       @cap.destroy
-      @cap.should_not be_destroyed
+      expect(@cap).not_to be_destroyed
     end
     it "should allow destroy if status == New" do
       @cap.status = described_class::STATUSES[:new]
       @cap.destroy
-      @cap.should be_destroyed
+      expect(@cap).to be_destroyed
     end
     it "should allow destroy if status.blank?" do
       @cap.status = nil 
       @cap.destroy
-      @cap.should be_destroyed
+      expect(@cap).to be_destroyed
     end
   end
-  describe :status do
+  describe "status" do
     it "should set status on create" do
-      Factory(:survey_response).create_corrective_action_plan!.status.should == described_class::STATUSES[:new]
+      expect(Factory(:survey_response).create_corrective_action_plan!.status).to eq(described_class::STATUSES[:new])
     end
   end
 end

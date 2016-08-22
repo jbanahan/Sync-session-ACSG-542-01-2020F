@@ -19,8 +19,8 @@ describe OpenChain::BulkAction::BulkComment do
       expect(@bpl.change_records.first.record_sequence_number).to eq 99
     end
     it 'should write error if user cannot comment' do
-      @ord.stub(:can_comment?).and_return false
-      Order.should_receive(:find).with(@ord.id.to_s).and_return @ord #need exact object to use stubbed can_comment?
+      allow(@ord).to receive(:can_comment?).and_return false
+      expect(Order).to receive(:find).with(@ord.id.to_s).and_return @ord #need exact object to use stubbed can_comment?
       opts = {'module_type'=>'Order','subject'=>'sub','body'=>'bod'}
       expect {described_class.act @u, @ord.id.to_s, opts, @bpl, 99}.to_not change(Comment,:count)
       expect(@bpl.change_records.count).to eq 1

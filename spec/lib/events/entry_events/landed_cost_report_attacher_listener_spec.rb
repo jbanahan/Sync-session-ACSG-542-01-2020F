@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
 
-  describe :accepts? do
+  describe "accepts?" do
     context "J JILL Logic" do
       before :each do
         @entry = Factory(:entry, :customer_number => "JILL")
@@ -13,38 +13,38 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
       context "www-vfitrack-net system code" do
         before :each do
           ms = double("MasterSetup")
-          ms.stub(:system_code).and_return "www-vfitrack-net"
-          MasterSetup.stub(:get).and_return ms
+          allow(ms).to receive(:system_code).and_return "www-vfitrack-net"
+          allow(MasterSetup).to receive(:get).and_return ms
         end
 
         it "should accept a J JILL entry with a Broker Invoice containing a charge code of '0600'" do
-          described_class.new.accepts?(nil, @entry).should be_true
+          expect(described_class.new.accepts?(nil, @entry)).to be_truthy
         end 
 
         it "should not accept non-JJILL entries with 0600 code" do
           @entry.update_attributes :customer_number => "Blargh!!"
-          described_class.new.accepts?(nil, @entry).should be_false
+          expect(described_class.new.accepts?(nil, @entry)).to be_falsey
         end
 
         it "should not accept JJILL entries without a 0600 code" do
           @broker_invoice_line.update_attributes :charge_code => "1234"
-          described_class.new.accepts?(nil, @entry).should be_false
+          expect(described_class.new.accepts?(nil, @entry)).to be_falsey
         end
 
         it "accepts JJILL entries with internal charge code lines" do
           DataCrossReference.create! key: '1234', value: '', cross_reference_type: DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
           @broker_invoice_line.update_attributes :charge_code => "1234"
-          described_class.new.accepts?(nil, @entry).should be_true
+          expect(described_class.new.accepts?(nil, @entry)).to be_truthy
         end
       end
 
       it "does not accept when run from non-vfitrack system" do
-        described_class.new.accepts?(nil, @entry).should be_false
+        expect(described_class.new.accepts?(nil, @entry)).to be_falsey
       end
     end
   end
 
-  context :using_checksum do 
+  context "using_checksum" do 
     before :each do
       @landed_cost_data = {
         entries: [
@@ -123,25 +123,25 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
       }
     end
     
-    describe :receive do
+    describe "receive" do
       before :each do
         @e = Factory(:entry, file_logged_date: '2016-02-01')
       end
 
       it "should generate a report and create an entry attachment" do
-        OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
-        LocalLandedCostsController.any_instance.should_receive(:show_landed_cost_data).with(@landed_cost_data).and_return "Landed Cost Report"
+        expect_any_instance_of(OpenChain::Report::LandedCostDataGenerator).to receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
+        expect_any_instance_of(LocalLandedCostsController).to receive(:show_landed_cost_data).with(@landed_cost_data).and_return "Landed Cost Report"
         attachment = double("attachment")
-        Attachment.should_receive(:delay).and_return attachment
-        attachment.should_receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
+        expect(Attachment).to receive(:delay).and_return attachment
+        expect(attachment).to receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
 
         entry = described_class.new.receive nil, @e
-        entry.id.should == @e.id
+        expect(entry.id).to eq(@e.id)
 
-        entry.attachments.should have(1).item
+        expect(entry.attachments.size).to eq(1)
         a = entry.attachments.first
-        a.attached_file_name.should == "Landed Cost - #{@e.broker_reference}.html"
-        a.attachment_type.should == "Landed Cost Report"
+        expect(a.attached_file_name).to eq("Landed Cost - #{@e.broker_reference}.html")
+        expect(a.attachment_type).to eq("Landed Cost Report")
       end
 
       it "should replace any existing landed cost reports with the new one" do
@@ -151,16 +151,16 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
         att.save!
         @e.attachments.reload
 
-        OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
-        LocalLandedCostsController.any_instance.should_receive(:show_landed_cost_data).with(@landed_cost_data).and_return "Landed Cost Report"
+        expect_any_instance_of(OpenChain::Report::LandedCostDataGenerator).to receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
+        expect_any_instance_of(LocalLandedCostsController).to receive(:show_landed_cost_data).with(@landed_cost_data).and_return "Landed Cost Report"
         attachment = double("attachment")
-        Attachment.should_receive(:delay).and_return attachment
-        attachment.should_receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
+        expect(Attachment).to receive(:delay).and_return attachment
+        expect(attachment).to receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
         
         entry = described_class.new.receive nil, @e
-        entry.id.should == @e.id
+        expect(entry.id).to eq(@e.id)
 
-        entry.attachments.should have(1).item
+        expect(entry.attachments.size).to eq(1)
       end
 
       it "should not update the attachment if the checksum is the same" do
@@ -171,11 +171,11 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
         att.save!
         @e.attachments.reload
 
-        OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
+        expect_any_instance_of(OpenChain::Report::LandedCostDataGenerator).to receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
         entry = c.receive nil, @e
 
-        entry.attachments.should have(1).item
-        entry.attachments.first.id.should eq att.id
+        expect(entry.attachments.size).to eq(1)
+        expect(entry.attachments.first.id).to eq att.id
       end
 
       it "uses new style checksum when file logged date is on or after 2016-03-06" do
@@ -187,18 +187,18 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
         att.save!
         @e.attachments.reload
 
-        OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
+        expect_any_instance_of(OpenChain::Report::LandedCostDataGenerator).to receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
         entry = subject.receive nil, @e
 
-        entry.attachments.should have(1).item
-        entry.attachments.first.id.should eq att.id
+        expect(entry.attachments.size).to eq(1)
+        expect(entry.attachments.first.id).to eq att.id
       end
     end
 
-    describe :calculate_landed_cost_checksum do
+    describe "calculate_landed_cost_checksum" do
       it "should generate the same checksum for identical sets of landed cost data" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
-        checksum.should eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should not take invoice ordering into account when calculating checksums" do
@@ -208,62 +208,62 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
         @landed_cost_data[:entries][0][:commercial_invoices] << @landed_cost_data[:entries][0][:commercial_invoices][0]
         @landed_cost_data[:entries][0][:commercial_invoices] = @landed_cost_data[:entries][0][:commercial_invoices].drop 1
 
-        checksum.should eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should not take invoice line ordering into account when calculating checksums" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines] << @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0]
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines] = @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines].drop 1
-        checksum.should eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should generate different checksum if broker reference is different" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:broker_reference] = "Changed"
-        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).not_to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should generate different checksum if entered value changes" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:entered_value] = BigDecimal.new("100")
-        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).not_to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should generate different checksum if duty changes" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:duty] = BigDecimal.new("100")
-        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).not_to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should generate different checksum if fee changes" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:fee] = BigDecimal.new("100")
-        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).not_to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should generate different checksum if int'l freight changes" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:international_freight] = BigDecimal.new("100")
-        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).not_to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should generate different checksum if inland freight changes" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:inland_freight] = BigDecimal.new("100")
-        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).not_to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should generate different checksum if brokerage changes" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:brokerage] = BigDecimal.new("100")
-        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).not_to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
 
       it "should generate different checksum if other changes" do
         checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
         @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:other] = BigDecimal.new("100")
-        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        expect(checksum).not_to eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
       end
     end
   end

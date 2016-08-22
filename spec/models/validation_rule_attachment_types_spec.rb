@@ -9,7 +9,7 @@ describe ValidationRuleAttachmentTypes do
     e = Factory(:entry, attachments: [att])
 
     # nil means no types were missing
-    vr.run_validation(e).should be_nil
+    expect(vr.run_validation(e)).to be_nil
   end
 
   it "should also return nil if the attachment type is a string rather than a list" do
@@ -19,7 +19,7 @@ describe ValidationRuleAttachmentTypes do
     e = Factory(:entry, attachments: [att])
 
     # nil means no types were missing
-    vr.run_validation(e).should be_nil
+    expect(vr.run_validation(e)).to be_nil
   end
   
   it "should return message indicating missing attachment type when appropriate" do
@@ -28,7 +28,7 @@ describe ValidationRuleAttachmentTypes do
     att = Factory(:attachment, attachment_type: "one")
     e = Factory(:entry, attachments: [att])
 
-    vr.run_validation(e).should == "Missing attachment type two."
+    expect(vr.run_validation(e)).to eq("Missing attachment type two.")
   end
 
   it "should raise error indicated attachment types were not specified when appropriate" do

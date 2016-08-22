@@ -5,9 +5,9 @@ describe OpenMailer do
     it "should send message" do
       OpenMailer.send_simple_text("test@vfitrack.net", "my subject", "my body\ngoes here").deliver!
       mail = ActionMailer::Base.deliveries.pop
-      mail.to.should == ['test@vfitrack.net']
-      mail.subject.should == 'my subject'
-      mail.body.raw_source.strip.should == "my body\ngoes here"
+      expect(mail.to).to eq(['test@vfitrack.net'])
+      expect(mail.subject).to eq('my subject')
+      expect(mail.body.raw_source.strip).to eq("my body\ngoes here")
     end
   end
   context "support tickets" do
@@ -21,16 +21,16 @@ describe OpenMailer do
         @st.agent = agent
         OpenMailer.send_support_ticket_to_agent(@st).deliver!
         mail = ActionMailer::Base.deliveries.pop
-        mail.to.should == [ agent.email ]
-        mail.subject.should == "[Support Ticket Update]: #{@st.subject}"
-        mail.body.raw_source.should include @st.body
+        expect(mail.to).to eq([ agent.email ])
+        expect(mail.subject).to eq("[Support Ticket Update]: #{@st.subject}")
+        expect(mail.body.raw_source).to include @st.body
       end
       it "should send ticket to generic mailbox when agent is not set" do
         OpenMailer.send_support_ticket_to_agent(@st).deliver!
         mail = ActionMailer::Base.deliveries.pop
-        mail.to.should == [ "support@vandegriftinc.com" ]
-        mail.subject.should == "[Support Ticket Update]: #{@st.subject}"
-        mail.body.raw_source.should include @st.body
+        expect(mail.to).to eq([ "support@vandegriftinc.com" ])
+        expect(mail.subject).to eq("[Support Ticket Update]: #{@st.subject}")
+        expect(mail.body.raw_source).to include @st.body
       end
     end
     describe 'send_support_ticket_to_requestor' do
@@ -38,9 +38,9 @@ describe OpenMailer do
         OpenMailer.send_support_ticket_to_requestor(@st).deliver!
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.to.should == [ @requestor.email ]
-        mail.subject.should == "[Support Ticket Update]: #{@st.subject}"
-        mail.body.raw_source.should include @st.body
+        expect(mail.to).to eq([ @requestor.email ])
+        expect(mail.subject).to eq("[Support Ticket Update]: #{@st.subject}")
+        expect(mail.body.raw_source).to include @st.body
       end
     end
   end
@@ -53,9 +53,9 @@ describe OpenMailer do
 
       OpenMailer.send_ack_file_exception("example@example.com",["Error 1","Error 2","Error 3"], @tempfile, "s3_content.txt","Sync code").deliver!
       m = OpenMailer.deliveries.pop
-      m.to.first.should == "example@example.com"
-      m.subject.should == "[VFI Track] Ack File Processing Error"
-      m.attachments.should have(1).item
+      expect(m.to.first).to eq("example@example.com")
+      expect(m.subject).to eq("[VFI Track] Ack File Processing Error")
+      expect(m.attachments.size).to eq(1)
 
       @tempfile.close!
     end
@@ -76,37 +76,37 @@ describe OpenMailer do
       @tempfile.binmode
       @tempfile << @s3_content
       @tempfile.rewind
-      
+
       #mock s3 handling
-      OpenChain::S3.should_receive(:download_to_tempfile).with(@bucket,@s3_path).and_return(@tempfile)
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with(@bucket,@s3_path).and_return(@tempfile)
     end
     after :each do
       @tempfile.close!
     end
     it "should attach file from s3" do
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path).deliver
-      
+
       mail = ActionMailer::Base.deliveries.pop
-      mail.to.should == [@to]
-      mail.cc.should == [@cc]
-      mail.subject.should == @subject
-      mail.attachments[@filename].should_not be_nil
+      expect(mail.to).to eq([@to])
+      expect(mail.cc).to eq([@cc])
+      expect(mail.subject).to eq(@subject)
+      expect(mail.attachments[@filename]).not_to be_nil
       pa = mail.attachments[@filename]
-      pa.content_type.should == "application/octet-stream; charset=UTF-8"
-      pa.read.should == @s3_content
-      
+      expect(pa.content_type).to eq("application/octet-stream; charset=UTF-8")
+      expect(pa.read).to eq(@s3_content)
+
     end
     it "should take attachment_name parameter" do
       alt_name = 'x.y'
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path,alt_name).deliver
       mail = ActionMailer::Base.deliveries.pop
-      mail.attachments[alt_name].should_not be_nil
+      expect(mail.attachments[alt_name]).not_to be_nil
     end
   end
 
-  describe :send_registration_request do
+  describe "send_registration_request" do
     it "should send email with registration details to support address" do
-      fields = { email: "john_doe@acme.com", fname: "John", lname: "Doe", company: "Acme", 
+      fields = { email: "john_doe@acme.com", fname: "John", lname: "Doe", company: "Acme",
                   cust_no: "123456789", contact: "Jane Smith", system_code: "HAL9000"}
 
       OpenMailer.send_registration_request(fields).deliver!
@@ -118,21 +118,21 @@ describe OpenMailer do
     end
   end
 
-  context :send_simple_html do 
+  context "send_simple_html" do
     describe "in development environment" do
       it "should send an email to User 1's email" do
         # For some reason, the test seems to fail when run from spork on an undefined message variable in the layout.
         # It runs fine via the rspec commandline, not sure what's going on.
 
-        Rails.stub(:env).and_return ActiveSupport::StringInquirer.new("development")
-        
+        allow(Rails).to receive(:env).and_return ActiveSupport::StringInquirer.new("development")
+
         #Ensure there's a user set up, it seems sometimes there's not in circle environment
         user = Factory(:user, email: "me@there.com")
-        
+
         OpenMailer.send_simple_html("example@example.com", "Test subject","<p>Test body</p>").deliver!
 
         m = OpenMailer.deliveries.last
-        m.to.first.should == User.first.email
+        expect(m.to.first).to eq(User.first.email)
         expect(OpenMailer.deliveries.last.header['X-ORIGINAL-TO'].value).to eq 'example@example.com'
       end
 
@@ -146,15 +146,15 @@ describe OpenMailer do
       end
 
       it "should handle multiple addresses in to field" do
-        Rails.stub(:env).and_return ActiveSupport::StringInquirer.new("development")
-        
+        allow(Rails).to receive(:env).and_return ActiveSupport::StringInquirer.new("development")
+
         #Ensure there's a user set up, it seems sometimes there's not in circle environment
         user = Factory(:user, email: "me@there.com")
-        
+
         OpenMailer.send_simple_html("example@example.com, you@there.com", "Test subject","<p>Test body</p>").deliver!
 
         m = OpenMailer.deliveries.last
-        m.to.first.should == User.first.email
+        expect(m.to.first).to eq(User.first.email)
         expect(OpenMailer.deliveries.last.header['X-ORIGINAL-TO'].value).to eq 'example@example.com, you@there.com'
       end
 
@@ -179,18 +179,18 @@ describe OpenMailer do
         f.binmode
         f << "Content"
 
-        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+        expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
         OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>", f).deliver
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.to.should == ["me@there.com"]
-        mail.subject.should == "Subject"
-        mail.body.raw_source.should match("&lt;p&gt;Body&lt;/p&gt;")
+        expect(mail.to).to eq(["me@there.com"])
+        expect(mail.subject).to eq("Subject")
+        expect(mail.body.raw_source).to match("&lt;p&gt;Body&lt;/p&gt;")
 
         pa = mail.attachments[File.basename(f)]
-        pa.should_not be_nil
-        pa.read.should == File.read(f)
-        pa.content_type.should == "application/octet-stream"
+        expect(pa).not_to be_nil
+        expect(pa.read).to eq(File.read(f))
+        expect(pa.content_type).to eq("application/octet-stream")
       end
     end
 
@@ -204,24 +204,24 @@ describe OpenMailer do
           f2 << "Content2"
           f2.flush
           f.flush
-          
+
           OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
 
           mail = ActionMailer::Base.deliveries.pop
-          mail.to.should == ["me@there.com"]
-          mail.subject.should == "Subject"
-          mail.body.raw_source.should match("<p>Body</p>")
-          mail.attachments.should have(2).items
+          expect(mail.to).to eq(["me@there.com"])
+          expect(mail.subject).to eq("Subject")
+          expect(mail.body.raw_source).to match("<p>Body</p>")
+          expect(mail.attachments.size).to eq(2)
 
           pa = mail.attachments[File.basename(f)]
-          pa.should_not be_nil
-          pa.read.should == File.read(f)
-          pa.content_type.should == "application/octet-stream; charset=UTF-8"
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f))
+          expect(pa.content_type).to eq("application/octet-stream; charset=UTF-8")
 
           pa = mail.attachments[File.basename(f2)]
-          pa.should_not be_nil
-          pa.read.should == File.read(f2)
-          pa.content_type.should == "application/octet-stream; charset=UTF-8"
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f2))
+          expect(pa.content_type).to eq("application/octet-stream; charset=UTF-8")
         end
       end
     end
@@ -236,21 +236,21 @@ describe OpenMailer do
           f2 << "Content2"
           f2.flush
 
-          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f).and_return true
-          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f2)
+          expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).with(f).and_return true
+          expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).with(f2)
 
           OpenMailer.send_simple_html("me@there.com","Subject","<p>Body</p>".html_safe,[f,f2]).deliver!
 
           mail = ActionMailer::Base.deliveries.pop
-          mail.attachments.should have(1).item
+          expect(mail.attachments.size).to eq(1)
 
           pa = mail.attachments[File.basename(f2)]
-          pa.should_not be_nil
-          pa.read.should == File.read(f2)
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f2))
           expect(pa.content_type).to match /application\/octet-stream/
-          
+
           ea = EmailAttachment.all.first
-          ea.should be_nil
+          expect(ea).to be_nil
         end
       end
     end
@@ -268,32 +268,32 @@ describe OpenMailer do
           f2 << "Content2"
 
           #This chain means f is too large, but f2 is neither too large nor blank. Thus we should have 1 attachment.
-          OpenMailer.any_instance.should_receive(:large_attachment?).with(f).and_return true
-          OpenMailer.any_instance.should_receive(:large_attachment?).with(f2).and_return false
-          OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+          expect_any_instance_of(OpenMailer).to receive(:large_attachment?).with(f).and_return true
+          expect_any_instance_of(OpenMailer).to receive(:large_attachment?).with(f2).and_return false
+          expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
 
           OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
 
           mail = ActionMailer::Base.deliveries.pop
-          mail.attachments.should have(1).item
+          expect(mail.attachments.size).to eq(1)
 
           pa = mail.attachments[File.basename(f2)]
-          pa.should_not be_nil
-          pa.read.should == File.read(f2)
-          pa.content_type.should == "application/octet-stream"
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f2))
+          expect(pa.content_type).to eq("application/octet-stream")
 
           ea = EmailAttachment.all.first
-          ea.should_not be_nil
-          ea.attachment.attached_file_name.should == File.basename(f)
+          expect(ea).not_to be_nil
+          expect(ea.attachment.attached_file_name).to eq(File.basename(f))
 
           body = <<EMAIL
 An attachment named '#{File.basename(f)}' for this message was larger than the maximum system size.
 Click <a href='#{OpenMailer::LINK_PROTOCOL}://host.xxx/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EMAIL
-          mail.body.raw_source.should match(body)
+          expect(mail.body.raw_source).to match(body)
         end
-      end    
+      end
     end
 
     it "should utilize original_filename method for file attachments" do
@@ -303,37 +303,37 @@ EMAIL
         Attachment.add_original_filename_method f
         f.original_filename = "test.txt"
 
-        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+        expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
         OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>", f).deliver
 
         mail = ActionMailer::Base.deliveries.pop
         pa = mail.attachments['test.txt']
-        pa.should_not be_nil
-        pa.read.should == File.read(f)
-        pa.content_type.should == "application/octet-stream"
+        expect(pa).not_to be_nil
+        expect(pa.read).to eq(File.read(f))
+        expect(pa.content_type).to eq("application/octet-stream")
       end
     end
   end
 
-  context :auto_send_attachments do 
+  context "auto_send_attachments" do
     it "should send html email with an attachment" do
       Tempfile.open(["file", "txt"]) do |f|
         f.binmode
         f << "Content"
 
-        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+        expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
         OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body\n</p>", f, "Test name", "test@email.com").deliver
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.to.should == ["me@there.com"]
-        mail.reply_to.should == ["test@email.com"]
-        mail.subject.should == "Subject"
-        mail.body.raw_source.should match("&lt;p&gt;Body<br>&lt;/p&gt;")                                            
+        expect(mail.to).to eq(["me@there.com"])
+        expect(mail.reply_to).to eq(["test@email.com"])
+        expect(mail.subject).to eq("Subject")
+        expect(mail.body.raw_source).to match("&lt;p&gt;Body<br>&lt;/p&gt;")
 
         pa = mail.attachments[File.basename(f)]
-        pa.should_not be_nil
-        pa.read.should == File.read(f)
-        pa.content_type.should == "application/octet-stream"
+        expect(pa).not_to be_nil
+        expect(pa.read).to eq(File.read(f))
+        expect(pa.content_type).to eq("application/octet-stream")
       end
     end
 
@@ -347,25 +347,25 @@ EMAIL
           f2 << "Content2"
           f2.flush
           f.flush
-          
+
           OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body\n</p>", [f, f2], "Test name", "test@email.com").deliver
 
           mail = ActionMailer::Base.deliveries.pop
-          mail.to.should == ["me@there.com"]
-          mail.reply_to.should == ["test@email.com"]
-          mail.subject.should == "Subject"
-          mail.body.raw_source.should match("&lt;p&gt;Body<br>&lt;/p&gt;")
-          mail.attachments.should have(2).items
+          expect(mail.to).to eq(["me@there.com"])
+          expect(mail.reply_to).to eq(["test@email.com"])
+          expect(mail.subject).to eq("Subject")
+          expect(mail.body.raw_source).to match("&lt;p&gt;Body<br>&lt;/p&gt;")
+          expect(mail.attachments.size).to eq(2)
 
           pa = mail.attachments[File.basename(f)]
-          pa.should_not be_nil
-          pa.read.should == File.read(f)
-          pa.content_type.should == "application/octet-stream; charset=UTF-8"
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f))
+          expect(pa.content_type).to eq("application/octet-stream; charset=UTF-8")
 
           pa = mail.attachments[File.basename(f2)]
-          pa.should_not be_nil
-          pa.read.should == File.read(f2)
-          pa.content_type.should == "application/octet-stream; charset=UTF-8"
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f2))
+          expect(pa.content_type).to eq("application/octet-stream; charset=UTF-8")
         end
       end
     end
@@ -380,21 +380,21 @@ EMAIL
           f2 << "Content2"
           f2.flush
 
-          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f).and_return true
-          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f2)
+          expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).with(f).and_return true
+          expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).with(f2)
 
           OpenMailer.auto_send_attachments("me@there.com","Subject","<p>Body</p>".html_safe,[f,f2], "Test name", "test@email.com").deliver!
 
           mail = ActionMailer::Base.deliveries.pop
-          mail.attachments.should have(1).item
+          expect(mail.attachments.size).to eq(1)
 
           pa = mail.attachments[File.basename(f2)]
-          pa.should_not be_nil
-          pa.read.should == File.read(f2)
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f2))
           expect(pa.content_type).to match /application\/octet-stream/
 
           ea = EmailAttachment.all.first
-          ea.should be_nil
+          expect(ea).to be_nil
         end
       end
     end
@@ -412,32 +412,32 @@ EMAIL
           f2 << "Content2"
 
           #This chain means f is too large, but f2 is neither too large nor blank. Thus we should have 1 attachment.
-          OpenMailer.any_instance.should_receive(:large_attachment?).with(f).and_return true
-          OpenMailer.any_instance.should_receive(:large_attachment?).with(f2).and_return false
-          OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+          expect_any_instance_of(OpenMailer).to receive(:large_attachment?).with(f).and_return true
+          expect_any_instance_of(OpenMailer).to receive(:large_attachment?).with(f2).and_return false
+          expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
 
           OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2], "Test name", "test@email.com").deliver
 
           mail = ActionMailer::Base.deliveries.pop
-          mail.attachments.should have(1).item
+          expect(mail.attachments.size).to eq(1)
 
           pa = mail.attachments[File.basename(f2)]
-          pa.should_not be_nil
-          pa.read.should == File.read(f2)
-          pa.content_type.should == "application/octet-stream"
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f2))
+          expect(pa.content_type).to eq("application/octet-stream")
 
           ea = EmailAttachment.all.first
-          ea.should_not be_nil
-          ea.attachment.attached_file_name.should == File.basename(f)
+          expect(ea).not_to be_nil
+          expect(ea.attachment.attached_file_name).to eq(File.basename(f))
 
           body = <<EMAIL
 An attachment named '#{File.basename(f)}' for this message was larger than the maximum system size.
 Click <a href='#{OpenMailer::LINK_PROTOCOL}://host.xxx/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EMAIL
-          mail.body.raw_source.should match(body)
+          expect(mail.body.raw_source).to match(body)
         end
-      end    
+      end
     end
 
     it "should utilize original_filename method for file attachments" do
@@ -447,29 +447,29 @@ EMAIL
         Attachment.add_original_filename_method f
         f.original_filename = "test.txt"
 
-        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+        expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
         OpenMailer.auto_send_attachments("me@there.com", "Subject", "<p>Body</p>", f, "Test name", "test@email.com").deliver
 
         mail = ActionMailer::Base.deliveries.pop
         pa = mail.attachments['test.txt']
-        pa.should_not be_nil
-        pa.read.should == File.read(f)
-        pa.content_type.should == "application/octet-stream"
+        expect(pa).not_to be_nil
+        expect(pa.read).to eq(File.read(f))
+        expect(pa.content_type).to eq("application/octet-stream")
       end
     end
 
     it "should include the full name and email of the attachment sender" do
       Tempfile.open(["file","txt"]) do |f|
-        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+        expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
         OpenMailer.auto_send_attachments("me@there.com", "Subject","<p>Body</p>", f, "Test name", "test@email.com").deliver
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.body.should match(/by Test name \(test\@email\.com\)/)
+        expect(mail.body).to match(/by Test name \(test\@email\.com\)/)
       end
     end
   end
 
-  context :send_generic_exception do
+  context "send_generic_exception" do
     it "should send an exception email" do
       error = StandardError.new "Test"
       error.set_backtrace ["Backtrace", "Line 1", "Line 2"]
@@ -483,18 +483,18 @@ EMAIL
 
         mail = ActionMailer::Base.deliveries.pop
         source = mail.body.raw_source
-        source.should include("Error: #{error}")
-        source.should include("Message: #{error.message}")
-        source.should include("Master UUID: #{MasterSetup.get.uuid}")
-        source.should include("Root: #{Rails.root.to_s}")
-        source.should include("Host: #{Socket.gethostname}")
-        source.should include("Process ID: #{Process.pid}")
-        source.should include("Additional Messages:")
-        source.should include("My Message")
-        source.should include("Backtrace:")
-        source.should include(error.backtrace.join("\n"))
+        expect(source).to include("Error: #{error}")
+        expect(source).to include("Message: #{error.message}")
+        expect(source).to include("Master UUID: #{MasterSetup.get.uuid}")
+        expect(source).to include("Root: #{Rails.root.to_s}")
+        expect(source).to include("Host: #{Socket.gethostname}")
+        expect(source).to include("Process ID: #{Process.pid}")
+        expect(source).to include("Additional Messages:")
+        expect(source).to include("My Message")
+        expect(source).to include("Backtrace:")
+        expect(source).to include(error.backtrace.join("\n"))
 
-        mail.attachments[File.basename(f.path)].read.should eq "Test File"
+        expect(mail.attachments[File.basename(f.path)].read).to eq "Test File"
       end
     end
 
@@ -507,10 +507,10 @@ EMAIL
 
       mail = ActionMailer::Base.deliveries.pop
       source = mail.body.raw_source
-      source.should_not include(error.backtrace.join("\n"))
-      source.should_not include("Message: #{error.message}")
-      source.should include("Fake\nBacktrace")
-      source.should include("Message: Override Message")
+      expect(source).not_to include(error.backtrace.join("\n"))
+      expect(source).not_to include("Message: #{error.message}")
+      expect(source).to include("Fake\nBacktrace")
+      expect(source).to include("Message: Override Message")
     end
 
     it "should send an exception email with a large attachment warning" do
@@ -528,23 +528,23 @@ EMAIL
         f.binmode
         f << "Test"
 
-        OpenMailer.any_instance.should_receive(:large_attachment?).with(f.path).and_return true
+        expect_any_instance_of(OpenMailer).to receive(:large_attachment?).with(f.path).and_return true
 
         OpenMailer.send_generic_exception(e, ["Test", "Test2"], "Error Message", nil, [f.path]).deliver
 
         mail = ActionMailer::Base.deliveries.pop
-        pa = mail.attachments.size.should == 0
+        pa = expect(mail.attachments.size).to eq(0)
 
         ea = EmailAttachment.all.first
-        ea.should_not be_nil
-        ea.attachment.attached_file_name.should == File.basename(f)
+        expect(ea).not_to be_nil
+        expect(ea.attachment.attached_file_name).to eq(File.basename(f))
 
         body = <<EMAIL
 An attachment named '#{File.basename(f)}' for this message was larger than the maximum system size.
 Click <a href='http://host.xxx/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EMAIL
-        mail.body.raw_source.should match(body)
+        expect(mail.body.raw_source).to match(body)
       end
     end
 
@@ -553,11 +553,11 @@ EMAIL
       message_subject += message_subject while message_subject.length < 200
       e = (raise "Error" rescue $!)
       m = OpenMailer.send_generic_exception(e, ["Test", "Test2"], message_subject)
-      m.subject.should eq ("[VFI Track Exception] - #{message_subject}")[0..99]
+      expect(m.subject).to eq ("[VFI Track Exception] - #{message_subject}")[0..99]
     end
   end
 
-  context :send_invite do
+  context "send_invite" do
     before :each do
       MasterSetup.get.update_attributes request_host: "localhost"
       @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
@@ -566,16 +566,16 @@ EMAIL
     it "should send an invite email" do
       pwd = "password"
       mail = OpenMailer.send_invite @user, pwd
-      mail.subject.should eq "[VFI Track] Welcome, Joe Schmoe!"
-      mail.to.should eq [@user.email]
+      expect(mail.subject).to eq "[VFI Track] Welcome, Joe Schmoe!"
+      expect(mail.to).to eq [@user.email]
 
-      mail.body.raw_source.should match /Username: #{@user.username}/
-      mail.body.raw_source.should match /Temporary Password: #{pwd}/
-      mail.body.raw_source.should match /#{url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: OpenMailer::LINK_PROTOCOL)}/
+      expect(mail.body.raw_source).to match /Username: #{@user.username}/
+      expect(mail.body.raw_source).to match /Temporary Password: #{pwd}/
+      expect(mail.body.raw_source).to match /#{url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: OpenMailer::LINK_PROTOCOL)}/
     end
   end
 
-  context :send_uploaded_items do
+  context "send_uploaded_items" do
     before :each do
       @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
     end
@@ -583,32 +583,32 @@ EMAIL
     it "should send imported file data" do
       data = "This is my data, there are many like it but this one is mine."
       imported_file = double("ImportedFile")
-      imported_file.stub(:attached_file_name).and_return "test.txt"
-      imported_file.stub(:module_type).and_return "Product"
+      allow(imported_file).to receive(:attached_file_name).and_return "test.txt"
+      allow(imported_file).to receive(:module_type).and_return "Product"
 
       m = OpenMailer.send_uploaded_items "you@there.com", imported_file, data, @user
-      m.to.should eq ["you@there.com"]
-      m.reply_to.should eq [@user.email]
-      m.subject.should eq "[VFI Track] Product File Result"
+      expect(m.to).to eq ["you@there.com"]
+      expect(m.reply_to).to eq [@user.email]
+      expect(m.subject).to eq "[VFI Track] Product File Result"
 
-      m.attachments["test.txt"].should_not be_nil
-      m.attachments["test.txt"].read.should eq data
+      expect(m.attachments["test.txt"]).not_to be_nil
+      expect(m.attachments["test.txt"].read).to eq data
     end
 
     it "should not add attachment if data is too large" do
       data = "This is my data, there are many like it but this one is mine."
       imported_file = double("ImportedFile")
-      imported_file.stub(:attached_file_name).and_return "test.txt"
-      imported_file.stub(:module_type).and_return "Product"
+      allow(imported_file).to receive(:attached_file_name).and_return "test.txt"
+      allow(imported_file).to receive(:module_type).and_return "Product"
 
-      OpenMailer.any_instance.should_receive(:save_large_attachment).and_return true
+      expect_any_instance_of(OpenMailer).to receive(:save_large_attachment).and_return true
 
       m = OpenMailer.send_uploaded_items "you@there.com", imported_file, data, @user
-      m.attachments["test.txt"].should be_nil
+      expect(m.attachments["test.txt"]).to be_nil
     end
   end
 
-  describe :send_high_priority_tasks do
+  describe "send_high_priority_tasks" do
 
     before :each do
       @u1 = Factory(:user, email: "me@there.com")
@@ -617,20 +617,20 @@ EMAIL
     end
 
     it "should be sent to the correct user" do
-      OpenMailer.deliveries.pop.to.first.should == "me@there.com"
+      expect(OpenMailer.deliveries.pop.to.first).to eq("me@there.com")
     end
 
     it "should have a subject line of the correct form" do
-      OpenMailer.deliveries.pop.subject.should match(/\[VFI Track\] Task Priorities \- \d{2}\/\d{2}\/\d{2}/)
+      expect(OpenMailer.deliveries.pop.subject).to match(/\[VFI Track\] Task Priorities \- \d{2}\/\d{2}\/\d{2}/)
     end
 
     it "should have the project deliverable descriptions in the body" do
-      OpenMailer.deliveries.pop.body.should match(/PD1 Description/)
+      expect(OpenMailer.deliveries.pop.body).to match(/PD1 Description/)
     end
 
   end
 
-  describe :send_survey_invite do
+  describe "send_survey_invite" do
     before :each do
       @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
       @survey = Factory(:survey)
@@ -638,7 +638,7 @@ EMAIL
       @survey.email_body = "test body"
       @survey_response = @survey.survey_responses.build :user => @user
     end
-    
+
     context 'with a non-blank subtitle' do
       it "appends a line including the label to the body of the email and the subject" do
         @survey_response.update_attributes! subtitle: "test subtitle"
@@ -677,13 +677,13 @@ EMAIL
     end
   end
 
-  describe :send_survey_reminder do
-  
+  describe "send_survey_reminder" do
+
     it "sends email with specified recipients, subject & body, with a link to the survey" do
       sr = Factory(:survey_response)
       ms = double()
-      ms.should_receive(:request_host).and_return "localhost:3000"
-      MasterSetup.stub(:get).and_return ms
+      expect(ms).to receive(:request_host).and_return "localhost:3000"
+      allow(MasterSetup).to receive(:get).and_return ms
       link_addr = "http://localhost:3000/survey_responses/#{sr.id}"
 
       email_to = ["john.smith@abc.com", "sue.anderson@cbs.com"]
@@ -701,7 +701,7 @@ EMAIL
 
   end
 
-  describe :send_search_result_manually do
+  describe "send_search_result_manually" do
     before(:each) { @u = Factory(:user, email: "me@here.com")}
 
     it "sends email with to, reply_to, subject, body, and attachment" do
@@ -709,38 +709,38 @@ EMAIL
         f.binmode
         f << "Content"
 
-        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
+        expect_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
         OpenMailer.send_search_result_manually("you@there.com", "Subject", "<p>Body</p>", f.path, @u).deliver!
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.to.should == ["you@there.com"]
-        mail.reply_to.should == ["me@here.com"]
-        mail.subject.should == "Subject"
-        mail.body.raw_source.should match("&lt;p&gt;Body&lt;/p&gt;")
+        expect(mail.to).to eq(["you@there.com"])
+        expect(mail.reply_to).to eq(["me@here.com"])
+        expect(mail.subject).to eq("Subject")
+        expect(mail.body.raw_source).to match("&lt;p&gt;Body&lt;/p&gt;")
 
         pa = mail.attachments[File.basename(f)]
-        pa.should_not be_nil
-        pa.read.should == File.read(f)
-        pa.content_type.should == "application/octet-stream"
+        expect(pa).not_to be_nil
+        expect(pa.read).to eq(File.read(f))
+        expect(pa.content_type).to eq("application/octet-stream")
       end
 
     end
 
   end
 
-  describe :log_email, email_log: true do
+  describe "log_email", email_log: true do
 
-    it "saves outgoing e-mail fields and attachments" do   
+    it "saves outgoing e-mail fields and attachments" do
       sub = "what it's about"
       to = "john@doe.com; me@there.com, you@here.com"
       body = "Lorem ipsum dolor sit amet, consectetur adipisicing elit."
-      OpenMailer.any_instance.stub(:blank_attachment?).and_return false
+      allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
 
       Tempfile.open(['tempfile_a', '.txt']) do |file1|
         Tempfile.open(['tempfile_b', '.txt']) do |file2|
           OpenMailer.send_simple_html to, sub, body, [file1, file2]
           email = SentEmail.last
-          
+
           expect(email.email_subject).to eq sub
           expect(email.email_to).to eq "john@doe.com, me@there.com, you@here.com"
           expect(email.email_body).to include "Lorem ipsum dolor sit amet, consectetur adipisicing elit."
@@ -753,7 +753,7 @@ EMAIL
     end
 
     it "saves body data from html mails without attachments" do
-      # Under the hood, the email body is done differently if there's no file attachments...so make sure the logging works 
+      # Under the hood, the email body is done differently if there's no file attachments...so make sure the logging works
       # fine when the message doesn't have any attachments (.ie it's not a multi-part email)
       OpenMailer.send_simple_html "me@there.com", "Subject", "This is a test"
       email = SentEmail.where(email_subject: "Subject").first

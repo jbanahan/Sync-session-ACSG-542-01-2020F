@@ -8,7 +8,7 @@ describe Api::V1::ModelFieldsController do
     allow_api_access(@user)
   end
 
-  describe :index do
+  describe "index" do
     it "should get record types (core modules)" do
       expect(get :index).to be_success
 
@@ -17,7 +17,7 @@ describe Api::V1::ModelFieldsController do
       expect(product_rt['label']).to eq 'Product'
     end
     it "should not get record types that the current user can't view" do
-      CoreModule::ORDER.should_receive(:view?).with(@user).and_return(false)
+      expect(CoreModule::ORDER).to receive(:view?).with(@user).and_return(false)
 
       expect(get :index).to be_success
 
@@ -50,8 +50,8 @@ describe Api::V1::ModelFieldsController do
       expect(div_id).to be_nil
     end
     it "should not get model fields that the current user can't see" do
-      CoreModule::ENTRY.stub(:view?).and_return(true)
-      Company.any_instance.stub(:broker?).and_return(false)
+      allow(CoreModule::ENTRY).to receive(:view?).and_return(true)
+      allow_any_instance_of(Company).to receive(:broker?).and_return(false)
 
       expect(get :index).to be_success
 
@@ -64,7 +64,7 @@ describe Api::V1::ModelFieldsController do
 
       h = JSON.parse(response.body)
       changed_at = h['fields'].find {|fld| fld['uid']=='prod_changed_at'}
-      expect(changed_at['read_only']).to be_true
+      expect(changed_at['read_only']).to be_truthy
     end
     it "should get autocomplete info" do
       expect(get :index).to be_success
@@ -80,10 +80,10 @@ describe Api::V1::ModelFieldsController do
 
       h = JSON.parse(response.body)
       mf = h['fields'].find {|fld| fld['uid']=='prod_name'}
-      expect(mf['remote_validate']).to be_true
+      expect(mf['remote_validate']).to be_truthy
 
       mf = h['fields'].find {|fld| fld['uid']=='prod_uid'}
-      expect(mf['remote_validate']).to be_false
+      expect(mf['remote_validate']).to be_falsey
 
     end
 
@@ -101,9 +101,9 @@ describe Api::V1::ModelFieldsController do
       company_updated_at = 1.hour.ago
       user_updated_at = 1.day.ago
 
-      ModelField.should_receive(:last_loaded).twice.and_return(mfload)
-      Company.any_instance.should_receive(:updated_at).and_return(company_updated_at)
-      User.any_instance.should_receive(:updated_at).twice.and_return(user_updated_at)
+      expect(ModelField).to receive(:last_loaded).twice.and_return(mfload)
+      expect_any_instance_of(Company).to receive(:updated_at).and_return(company_updated_at)
+      expect_any_instance_of(User).to receive(:updated_at).twice.and_return(user_updated_at)
 
       expected_cache = Digest::MD5.hexdigest "#{@user.username}#{mfload.to_s}#{company_updated_at.to_i}#{user_updated_at.to_i}"
 
@@ -123,15 +123,15 @@ describe Api::V1::ModelFieldsController do
     end
   end
 
-  describe :cache_key do
+  describe "cache_key" do
     it "should get cache_key" do
       mfload = 10.minutes.ago
       company_updated_at = 1.hour.ago
       user_updated_at = 1.day.ago
 
-      ModelField.should_receive(:last_loaded).and_return(mfload)
-      Company.any_instance.should_receive(:updated_at).and_return(company_updated_at)
-      User.any_instance.should_receive(:updated_at).and_return(user_updated_at)
+      expect(ModelField).to receive(:last_loaded).and_return(mfload)
+      expect_any_instance_of(Company).to receive(:updated_at).and_return(company_updated_at)
+      expect_any_instance_of(User).to receive(:updated_at).and_return(user_updated_at)
 
       expected_cache = Digest::MD5.hexdigest "#{@user.username}#{mfload.to_s}#{company_updated_at.to_i}#{user_updated_at.to_i}"
 

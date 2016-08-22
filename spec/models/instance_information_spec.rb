@@ -13,7 +13,7 @@ describe InstanceInformation do
     it 'uses aws tag fs to identify server role' do
       @tf << "Server Role"
       @tf.flush
-      InstanceInformation.should_receive(:tag_path).with("Role").and_return @tf.path
+      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
       expect(InstanceInformation.server_role).to eq "Server Role"
     end
   end
@@ -22,7 +22,7 @@ describe InstanceInformation do
     it 'uses aws tag fs to identify server name' do
       @tf << "Server Name"
       @tf.flush
-      InstanceInformation.should_receive(:tag_path).with("Name").and_return @tf.path
+      expect(InstanceInformation).to receive(:tag_path).with("Name").and_return @tf.path
       expect(InstanceInformation.server_name).to eq "Server Name"
     end
   end
@@ -32,16 +32,16 @@ describe InstanceInformation do
       @tf << "Web"
       @tf.flush
 
-      InstanceInformation.should_receive(:tag_path).with("Role").and_return @tf.path
-      expect(InstanceInformation.webserver?).to be_true
+      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
+      expect(InstanceInformation.webserver?).to be_truthy
     end
 
     it "returns false if role is not Web" do
       @tf << "Not Web"
       @tf.flush
 
-      InstanceInformation.should_receive(:tag_path).with("Role").and_return @tf.path
-      expect(InstanceInformation.webserver?).to be_false
+      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
+      expect(InstanceInformation.webserver?).to be_falsey
     end
   end
 
@@ -50,16 +50,16 @@ describe InstanceInformation do
       @tf << "Job Queue"
       @tf.flush
 
-      InstanceInformation.should_receive(:tag_path).with("Role").and_return @tf.path
-      expect(InstanceInformation.job_queue?).to be_true
+      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
+      expect(InstanceInformation.job_queue?).to be_truthy
     end
 
     it "returns false if role is not Job Queue" do
       @tf << "Not Job Queue"
       @tf.flush
 
-      InstanceInformation.should_receive(:tag_path).with("Role").and_return @tf.path
-      expect(InstanceInformation.job_queue?).to be_false
+      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
+      expect(InstanceInformation.job_queue?).to be_falsey
     end
   end
 

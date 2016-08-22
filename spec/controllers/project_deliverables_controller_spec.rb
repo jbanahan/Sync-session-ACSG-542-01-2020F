@@ -8,7 +8,7 @@ describe ProjectDeliverablesController do
 
     sign_in_as @u
   end
-  describe :index do
+  describe "index" do
     before :each do
       @u1 = Factory(:user)
       @u2 = Factory(:user)
@@ -37,7 +37,7 @@ describe ProjectDeliverablesController do
       expect(r['pn1'][@u1.full_name][0]['id']).to eq @d1.id
     end
     it "should error if user cannot view projects" do
-      User.any_instance.stub(:view_projects?).and_return false
+      allow_any_instance_of(User).to receive(:view_projects?).and_return false
       get :index, format: :json
       expect(JSON.parse(response.body)['error']).to match /permission/
       expect(response.status).to eq 401
@@ -54,7 +54,7 @@ describe ProjectDeliverablesController do
       expect(r['[none]']['pn2'][0]['id']).to eq @d2.id
     end
     it "should secure by project_deliverable" do
-      ProjectDeliverable.stub(:search_secure).and_return ProjectDeliverable.where(id:@d1.id)
+      allow(ProjectDeliverable).to receive(:search_secure).and_return ProjectDeliverable.where(id:@d1.id)
       get :index, format: :json
       expect(response).to be_success
       r = JSON.parse(response.body)['deliverables_by_user']
@@ -62,9 +62,9 @@ describe ProjectDeliverablesController do
       expect(r.size).to eq 1
     end
   end
-  describe :create do
+  describe "create" do
     it "should create" do
-      Project.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Project).to receive(:can_edit?).and_return true
       p = Factory(:project)
       post :create, project_id:p.id, project_deliverable:{description:'desc'}
       expect(response).to be_success
@@ -79,7 +79,7 @@ describe ProjectDeliverablesController do
       expect(r['project_deliverable']['project_id']).to eq pd.project_id
     end
     it "should return 401 if user cannot edit project_update" do
-      Project.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Project).to receive(:can_edit?).and_return false
       p = Factory(:project)
       post :create, project_id:p.id, project_deliverable:{body:'abc'}
       p.reload
@@ -88,9 +88,9 @@ describe ProjectDeliverablesController do
       expect(JSON.parse(response.body)['error']).to match /permission/
     end
   end
-  describe :update do
+  describe "update" do
     it "should reject if user cannot edit" do
-      Project.any_instance.stub(:can_edit?).and_return false
+      allow_any_instance_of(Project).to receive(:can_edit?).and_return false
       pd = Factory(:project_deliverable,description:'x')
       put :update, project_id:pd.project_id, id:pd.id, project_update:{id:pd.id,description:'y'}
       expect(response.status).to eq 401
@@ -99,7 +99,7 @@ describe ProjectDeliverablesController do
       expect(pd.description).to eq 'x'
     end
     it "should update if user has permission" do
-      Project.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(Project).to receive(:can_edit?).and_return true
       pd = Factory(:project_deliverable,description:'x')
       put :update, project_id:pd.project_id, id:pd.id, project_deliverable:{id:pd.id,description:'y'}
       pd.reload
@@ -109,19 +109,19 @@ describe ProjectDeliverablesController do
     end
   end
 
-  describe :notify_now do
+  describe "notify_now" do
 
     it "should reject if user cannot view" do
-      User.any_instance.stub(:view_projects?).and_return false
+      allow_any_instance_of(User).to receive(:view_projects?).and_return false
       pd = Factory(:project_deliverable,description:"x")
       put :notify_now, user_id: @u.id
       expect(response).to_not be_success
     end
 
     it "should trigger send_high_priority_tasks for correct user and deliverables" do
-      User.any_instance.stub(:view_projects?).and_return true
+      allow_any_instance_of(User).to receive(:view_projects?).and_return true
       pd = Factory(:project_deliverable, description: "PD Description", id: @u.id, assigned_to: @u, priority: "High")
-      OpenMailer.any_instance.should_receive(:send_high_priority_tasks).exactly(1).times.with(@u, [pd])
+      expect_any_instance_of(OpenMailer).to receive(:send_high_priority_tasks).exactly(1).times.with(@u, [pd])
       put :notify_now, user_id: @u.id
     end
 

@@ -7,14 +7,14 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit do
     @helper_class = OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper
   end
 
-  describe :run_validation do
+  describe "run_validation" do
     it "returns nil if no errors are returned" do
-      @helper_class.any_instance.should_receive(:audit).with(@ent, ['1111', '2222']).and_return ""
+      expect_any_instance_of(@helper_class).to receive(:audit).with(@ent, ['1111', '2222']).and_return ""
       expect(@rule.run_validation @ent).to be_nil
     end
 
     it "abridges the error list if it's too long" do
-      @helper_class.any_instance.should_receive(:audit).with(@ent, ['1111', '2222']).and_return "z" * (described_class::MAX_LENGTH + 1)
+      expect_any_instance_of(@helper_class).to receive(:audit).with(@ent, ['1111', '2222']).and_return "z" * (described_class::MAX_LENGTH + 1)
       result = @rule.run_validation @ent
 
       expect(result.length).to eq described_class::MAX_LENGTH

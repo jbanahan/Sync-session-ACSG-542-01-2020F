@@ -3,10 +3,10 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeComparator do
   describe '#accept?' do
     it 'should accept products' do
-      expect(described_class.accept?(EntitySnapshot.new(recordable_type:'Product'))).to be_true
+      expect(described_class.accept?(EntitySnapshot.new(recordable_type:'Product'))).to be_truthy
     end
     it 'should not accept non-products' do
-      expect(described_class.accept?(EntitySnapshot.new(recordable_type:'Order'))).to be_false
+      expect(described_class.accept?(EntitySnapshot.new(recordable_type:'Order'))).to be_falsey
     end
   end
   describe '#compare' do
@@ -18,13 +18,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeCompara
       cdefs = double('cdefs')
       # make sure the method we're stubbing actually exists since it's implemented
       # in ComparatorHelper and isn't unit tested in this spec
-      expect(described_class.methods.include?(:get_json_hash)).to be_true
-      described_class.should_receive(:my_custom_definitions).and_return cdefs
-      described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_hash
-      described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_hash
-      described_class.should_receive(:build_data).with(old_hash,cdefs).and_return old_data
-      described_class.should_receive(:build_data).with(new_hash,cdefs).and_return new_data
-      described_class.should_receive(:process_merch_cat_description).with(1,old_data,new_data,cdefs)
+      expect(described_class.methods.include?(:get_json_hash)).to be_truthy
+      expect(described_class).to receive(:my_custom_definitions).and_return cdefs
+      expect(described_class).to receive(:get_json_hash).with('ob','op','ov').and_return old_hash
+      expect(described_class).to receive(:get_json_hash).with('nb','np','nv').and_return new_hash
+      expect(described_class).to receive(:build_data).with(old_hash,cdefs).and_return old_data
+      expect(described_class).to receive(:build_data).with(new_hash,cdefs).and_return new_data
+      expect(described_class).to receive(:process_merch_cat_description).with(1,old_data,new_data,cdefs)
       described_class.compare('Product',1,'ob','op','ov','nb','np','nv')
     end
   end
@@ -43,29 +43,29 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeCompara
       double(:custom_defs)
     end
     it 'should do nothing if description did not change' do
-      described_class.should_not_receive(:update_merch_cat_description)
+      expect(described_class).not_to receive(:update_merch_cat_description)
       old_data = double(:old_data)
       new_data = double(:new_data)
-      [old_data,new_data].each {|d| d.stub(:merch_cat_desc).and_return 'MC'}
+      [old_data,new_data].each {|d| allow(d).to receive(:merch_cat_desc).and_return 'MC'}
       described_class.process_merch_cat_description(1,old_data,new_data,cdefs)
     end
     it 'should do nothing if new data does not have merch_cat_desc' do
       new_data = double(:new_data)
-      new_data.stub(:merch_cat_desc).and_return nil
-      described_class.should_not_receive(:update_merch_cat_description)
+      allow(new_data).to receive(:merch_cat_desc).and_return nil
+      expect(described_class).not_to receive(:update_merch_cat_description)
       described_class.process_merch_cat_description(1,nil,new_data,cdefs)
     end
     it 'should call update if new product' do
       new_data = double(:new_data)
-      new_data.stub(:merch_cat_desc).and_return 'MC'
-      described_class.should_receive(:update_merch_cat_description).with(1,new_data,cdefs)
+      allow(new_data).to receive(:merch_cat_desc).and_return 'MC'
+      expect(described_class).to receive(:update_merch_cat_description).with(1,new_data,cdefs)
       described_class.process_merch_cat_description(1,nil,new_data,cdefs)
     end
     it 'should call update if description changed' do
       old_data = double(:old_data)
       new_data = double(:new_data)
-      [old_data,new_data].each_with_index {|d,i| d.stub(:merch_cat_desc).and_return "MC#{i}"}
-      described_class.should_receive(:update_merch_cat_description).with(1,new_data,cdefs)
+      [old_data,new_data].each_with_index {|d,i| allow(d).to receive(:merch_cat_desc).and_return "MC#{i}"}
+      expect(described_class).to receive(:update_merch_cat_description).with(1,new_data,cdefs)
       described_class.process_merch_cat_description(1,old_data,new_data,cdefs)
     end
   end
@@ -79,8 +79,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeCompara
         p.update_custom_value!(cdefs[:prod_merch_cat_desc],"MCD#{i}")
       end
       new_data = double('new_data')
-      new_data.stub(:merch_cat).and_return '123'
-      new_data.stub(:merch_cat_desc).and_return 'MCD0'
+      allow(new_data).to receive(:merch_cat).and_return '123'
+      allow(new_data).to receive(:merch_cat_desc).and_return 'MCD0'
       expect{described_class.update_merch_cat_description base_p.id, new_data, cdefs}.to change(EntitySnapshot,:count).from(0).to(1)
       other_p.reload
       expect(other_p.get_custom_value(cdefs[:prod_merch_cat_desc]).value).to eq 'MCD0'
@@ -95,8 +95,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeCompara
         p.update_custom_value!(cdefs[:prod_merch_cat_desc],"MCD0")
       end
       new_data = double('new_data')
-      new_data.stub(:merch_cat).and_return '123'
-      new_data.stub(:merch_cat_desc).and_return 'MCD0'
+      allow(new_data).to receive(:merch_cat).and_return '123'
+      allow(new_data).to receive(:merch_cat_desc).and_return 'MCD0'
       expect{described_class.update_merch_cat_description base_p.id, new_data, cdefs}.to_not change(EntitySnapshot,:count)
     end
   end

@@ -21,7 +21,7 @@ describe OpenChain::TariffFinder do
     cit.commercial_invoice_line.entry
   end
 
-  describe :find_by_style do
+  describe "find_by_style" do
     
     before :each do
       @imp = Factory(:company)

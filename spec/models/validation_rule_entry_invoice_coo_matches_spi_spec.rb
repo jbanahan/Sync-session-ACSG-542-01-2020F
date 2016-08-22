@@ -12,7 +12,7 @@ describe ValidationRuleEntryInvoiceCooMatchesSpi do
     Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil_2, spi_primary: "13")
   end 
 
-  describe :run_validation do
+  describe "run_validation" do
     it "passes if every invoice line has a country-origin code that matches the primary spi on its tariffs" do
       expect(@rule.run_validation(@e)).to be_nil
     end

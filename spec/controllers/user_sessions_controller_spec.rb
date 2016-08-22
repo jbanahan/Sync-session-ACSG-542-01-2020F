@@ -31,7 +31,7 @@ describe UserSessionsController do
     end
 
     it 'should allow a user to log in' do
-      User.any_instance.should_receive(:on_successful_login).with request
+      expect_any_instance_of(User).to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
       
       expect(response).to be_redirect
@@ -78,14 +78,14 @@ describe UserSessionsController do
     end
 
     it 'should fail with invalid credentials' do
-      User.any_instance.should_not_receive(:on_successful_login).with request
+      expect_any_instance_of(User).not_to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>"password"} 
       expect(response).to render_template("new")
       expect(flash[:errors]).to include "Your login was not successful."
     end
 
     it "should allow a user to log in with via json" do
-      User.any_instance.should_receive(:on_successful_login).with request
+      expect_any_instance_of(User).to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}, :format => "json"
     
       expect(response).to be_success
@@ -93,7 +93,7 @@ describe UserSessionsController do
     end
 
     it "should return json with errors if login failed" do
-      User.any_instance.should_not_receive(:on_successful_login).with request
+      expect_any_instance_of(User).not_to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>'password'}, :format => "json"
     
       expect(response).to be_success
@@ -108,21 +108,21 @@ describe UserSessionsController do
 
     it "should sign in when user is found successfully" do
       request.env['omniauth.auth'] = "Testing"
-      User.should_receive(:from_omniauth).with("my-provider", "Testing").and_return(user: @user, errors: [])
+      expect(User).to receive(:from_omniauth).with("my-provider", "Testing").and_return(user: @user, errors: [])
       post :create_from_omniauth, {provider: "my-provider"}
 
-      response.should be_redirect
-      controller.current_user.id.should == @user.id
+      expect(response).to be_redirect
+      expect(controller.current_user.id).to eq(@user.id)
       expect(response).to redirect_to root_path
     end
 
     it "should display an error on the login page when from_omniauth returns an error" do
-      User.should_receive(:from_omniauth).and_return({user: nil, errors: ["This is an error"]})
+      expect(User).to receive(:from_omniauth).and_return({user: nil, errors: ["This is an error"]})
       post :create_from_omniauth, provider: "my-provider"
 
-      flash[:notices].should == nil
-      flash[:errors].should == ["This is an error"]
-      response.should be_redirect
+      expect(flash[:notices]).to eq(nil)
+      expect(flash[:errors]).to eq(["This is an error"])
+      expect(response).to be_redirect
       expect(response).to redirect_to login_path
     end
   end

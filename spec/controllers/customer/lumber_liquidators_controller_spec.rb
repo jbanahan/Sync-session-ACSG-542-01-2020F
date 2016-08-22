@@ -5,10 +5,10 @@ describe Customer::LumberLiquidatorsController do
     @user = Factory(:user)
     sign_in_as @user
   end
-  describe :sap_vendor_setup_form do
+  describe "sap_vendor_setup_form" do
     before :each do
       @vendor = Factory(:company,vendor:true)
-      Company.any_instance.stub(:can_view_as_vendor?).and_return(true)
+      allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return(true)
     end
     it "should 404 if no 'Lumber SAP' custom feature" do
       expect{get :sap_vendor_setup_form, vendor_id: @vendor.id}.to raise_error ActionController::RoutingError

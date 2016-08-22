@@ -20,24 +20,24 @@ describe TariffSetsController do
 
     it "should return all sets with no parameters" do
       get :index, :format=>:json
-      response.should be_success
+      expect(response).to be_success
       t = ActiveSupport::JSON.decode response.body
-      t.should have(10).things
+      expect(t.size).to eq(10)
     end
     
     it "should return for a single country" do
       get :index, :format=>:json, :country_id => @c1.id
-      response.should be_success
+      expect(response).to be_success
       t = ActiveSupport::JSON.decode response.body
-      t.should have(5).things
-      t.each {|s| s['tariff_set']['country_id'].should == @c1.id}
+      expect(t.size).to eq(5)
+      t.each {|s| expect(s['tariff_set']['country_id']).to eq(@c1.id)}
     end
 
     it "should sort tariff sets alphabetically descending by country" do
       get :index, :format=>:json, :country_id => @c1.id
       t = ActiveSupport::JSON.decode response.body
       tariff_sets = t.collect {|s| TariffSet.find s['tariff_set']['id']}
-      tariff_sets.should be_alphabetical_descending_by :label
+      expect(tariff_sets).to be_alphabetical_descending_by :label
     end
   end
 
@@ -51,10 +51,10 @@ describe TariffSetsController do
         @user = Factory(:user)
 
         sign_in_as @user
-        TariffLoader.should_not_receive(:delay)
+        expect(TariffLoader).not_to receive(:delay)
         post :load, :country_id=>@country.id, :path=>'abc', :label=>'abcd'
-        response.should be_redirect
-        flash[:errors].should include "Only system administrators can load tariff sets."
+        expect(response).to be_redirect
+        expect(flash[:errors]).to include "Only system administrators can load tariff sets."
       end
     end
     context 'behavior' do
@@ -64,18 +64,18 @@ describe TariffSetsController do
         sign_in_as @user
       end
       it 'should delay load from s3 and without activating' do
-        TariffLoader.should_receive(:delay).and_return(TariffLoader)
-        TariffLoader.should_receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",false,instance_of(User))
+        expect(TariffLoader).to receive(:delay).and_return(TariffLoader)
+        expect(TariffLoader).to receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",false,instance_of(User))
         post :load, :country_id=>@country.id, :path=>"path/to/file/#{@country.iso_code}_abc", :label=>"#{@country.iso_code}-lbl"
       end
       it 'should delay load from s3 and without activating and run at date specified from params' do
-        TariffLoader.should_receive(:delay).with(:run_at => ActiveSupport::TimeZone[@user.time_zone].parse("2012-01-01 01:01")).and_return(TariffLoader)
-        TariffLoader.should_receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",false,instance_of(User))
+        expect(TariffLoader).to receive(:delay).with(:run_at => ActiveSupport::TimeZone[@user.time_zone].parse("2012-01-01 01:01")).and_return(TariffLoader)
+        expect(TariffLoader).to receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",false,instance_of(User))
         post :load, :country_id=>@country.id, :path=>"path/to/file/#{@country.iso_code}_abc", :label=>"#{@country.iso_code}-lbl", :date => {:year => "2012", :month=>1, :day => 1, :hour=>1, :minute => 1}
       end
       it 'should delay load from s3 and activate' do
-        TariffLoader.should_receive(:delay).and_return(TariffLoader)
-        TariffLoader.should_receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",true,instance_of(User))
+        expect(TariffLoader).to receive(:delay).and_return(TariffLoader)
+        expect(TariffLoader).to receive(:process_s3).with("path/to/file/#{@country.iso_code}_abc",@country,"#{@country.iso_code}-lbl",true,instance_of(User))
         post :load, :country_id=>@country.id, :path=>"path/to/file/#{@country.iso_code}_abc", :label=>"#{@country.iso_code}-lbl", :activate=>'yes'
       end
       it "fails if country selected does not match the file path" do
@@ -100,20 +100,20 @@ describe TariffSetsController do
 
         sign_in_as @user
         get :activate, :id=>@tariff_set.id
-        response.should be_redirect
-        flash[:errors].should include "You must be an administrator to activate tariffs."
+        expect(response).to be_redirect
+        expect(flash[:errors]).to include "You must be an administrator to activate tariffs."
       end
     end
     it 'should call delayed activate and write flash message' do
       @user = Factory(:user,:admin=>true)
 
       sign_in_as @user
-      TariffSet.should_receive(:find).with(@tariff_set.id.to_s).and_return(@tariff_set)
-      @tariff_set.should_receive(:delay).and_return(@tariff_set)
-      @tariff_set.should_receive(:activate).with(instance_of(User)).and_return(nil)
+      expect(TariffSet).to receive(:find).with(@tariff_set.id.to_s).and_return(@tariff_set)
+      expect(@tariff_set).to receive(:delay).and_return(@tariff_set)
+      expect(@tariff_set).to receive(:activate).with(instance_of(User)).and_return(nil)
       get :activate, :id=>@tariff_set.id
-      response.should be_redirect
-      flash[:notices].should include "Tariff Set #{@tariff_set.label} is being activated in the background.  You'll receive a system message when it is complete."
+      expect(response).to be_redirect
+      expect(flash[:notices]).to include "Tariff Set #{@tariff_set.label} is being activated in the background.  You'll receive a system message when it is complete."
     end
   end
 end

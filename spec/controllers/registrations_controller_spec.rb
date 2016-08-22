@@ -3,7 +3,7 @@ require 'spec_helper'
 describe RegistrationsController do
   before(:each) do
     @system_code = "HAL9000"
-      MasterSetup.any_instance.stub(:system_code).and_return @system_code
+      allow_any_instance_of(MasterSetup).to receive(:system_code).and_return @system_code
       @email = "john_doe@acme.com"
       @fname = "John"
       @lname = "Doe"
@@ -12,7 +12,7 @@ describe RegistrationsController do
       @contact = "Jane Smith"
   end
 
-  describe :send_email do
+  describe "send_email" do
     it "emails Vandegrift with the registration form data and the server's system_code" do
       
       post :send_email, email: @email, fname: @fname, lname: @lname, company: @company, cust_no: @cust_no, contact: @contact

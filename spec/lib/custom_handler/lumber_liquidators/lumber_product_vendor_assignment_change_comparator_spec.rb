@@ -11,15 +11,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignm
     it "should call autoflow comparator if risk level has changed and the new value is Auto-Flow" do
       old_h = JSON.parse @base_data
       new_h = JSON.parse @base_data.gsub(/PVRVAL/,'Auto-Flow')
-      described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
-      described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
+      expect(described_class).to receive(:get_json_hash).with('ob','op','ov').and_return old_h
+      expect(described_class).to receive(:get_json_hash).with('nb','np','nv').and_return new_h
 
       @ord1 = double('Order')
       @ord2 = double('Order')
-      described_class.should_receive(:find_linked_orders).with(1).and_return([@ord1,@ord2])
+      expect(described_class).to receive(:find_linked_orders).with(1).and_return([@ord1,@ord2])
 
-      OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.should_receive(:process).with(@ord1)
-      OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.should_receive(:process).with(@ord2)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(@ord1)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(@ord2)
 
       described_class.compare 'ProductVendorAssignment', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
 
@@ -27,15 +27,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignm
     it "should call autoflow comparator if risk level has changed and the old value was Auto-Flow" do
       old_h = JSON.parse @base_data.gsub(/PVRVAL/,'Auto-Flow')
       new_h = JSON.parse @base_data
-      described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
-      described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
+      expect(described_class).to receive(:get_json_hash).with('ob','op','ov').and_return old_h
+      expect(described_class).to receive(:get_json_hash).with('nb','np','nv').and_return new_h
 
       @ord1 = double('Order')
       @ord2 = double('Order')
-      described_class.should_receive(:find_linked_orders).with(1).and_return([@ord1,@ord2])
+      expect(described_class).to receive(:find_linked_orders).with(1).and_return([@ord1,@ord2])
 
-      OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.should_receive(:process).with(@ord1)
-      OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.should_receive(:process).with(@ord2)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(@ord1)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(@ord2)
 
       described_class.compare 'ProductVendorAssignment', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
 
@@ -43,15 +43,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignm
     it "should not call autoflow comparator if risk level has not changed" do
       old_h = JSON.parse @base_data.gsub(/PVRVAL/,'Auto-Flow')
       new_h = JSON.parse @base_data.gsub(/PVRVAL/,'Auto-Flow')
-      described_class.should_receive(:get_json_hash).with('ob','op','ov').and_return old_h
-      described_class.should_receive(:get_json_hash).with('nb','np','nv').and_return new_h
+      expect(described_class).to receive(:get_json_hash).with('ob','op','ov').and_return old_h
+      expect(described_class).to receive(:get_json_hash).with('nb','np','nv').and_return new_h
 
-      OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.should_not_receive(:process)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).not_to receive(:process)
 
       described_class.compare 'ProductVendorAssignment', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
   end
-  describe :find_linked_orders do
+  describe "find_linked_orders" do
     it "should find linked orders" do
       p = Factory(:product)
       v = Factory(:company)

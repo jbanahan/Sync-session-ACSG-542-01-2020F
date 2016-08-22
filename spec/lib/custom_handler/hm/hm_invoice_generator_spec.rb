@@ -2,20 +2,20 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
   
-  describe :run_schedulable do
+  describe "run_schedulable" do
     it "finds the new billable events, new invoiceable events, creates a VFI invoice, bills new entries" do
       new_billables = double("new billables")
       invoice = double("vfi invoice")
   
-      described_class.should_receive(:get_new_billables).and_return new_billables
-      described_class.should_receive(:create_invoice).and_return invoice
-      described_class.should_receive(:bill_new_classifications).with(new_billables, invoice)
+      expect(described_class).to receive(:get_new_billables).and_return new_billables
+      expect(described_class).to receive(:create_invoice).and_return invoice
+      expect(described_class).to receive(:bill_new_classifications).with(new_billables, invoice)
 
       described_class.run_schedulable
     end
   end
 
-  describe :get_new_billables do
+  describe "get_new_billables" do
     let(:country_ca) { Factory(:country, iso_code: "CA", name: "CANADA") }
     let(:country_us) { Factory(:country, iso_code: "US", name: "UNITED STATES") }
     
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
   end
 
-  describe :create_invoice do
+  describe "create_invoice" do
     it "creates a new VFI invoice" do
       hm = Factory(:company, alliance_customer_number: "HENNE")
       inv = described_class.create_invoice
@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
   end
 
-  describe :bill_new_classifications do
+  describe "bill_new_classifications" do
     let(:invoice) { double("invoice") }
 
     it "creates invoiced events for all billables and an invoice line for billables with invoiceable ids" do
@@ -97,10 +97,10 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       inv_line = double("invoice_line")
       inv_lines_relation = double("inv_lines_relation")
       
-      invoice.should_receive(:vfi_invoice_lines).and_return inv_lines_relation
-      inv_lines_relation.should_receive(:create!).with(charge_description: "Canadian classification", quantity: 3, 
+      expect(invoice).to receive(:vfi_invoice_lines).and_return inv_lines_relation
+      expect(inv_lines_relation).to receive(:create!).with(charge_description: "Canadian classification", quantity: 3, 
                                                        unit: "ea", unit_price: 2.00).and_return inv_line
-      described_class.should_receive(:write_invoiced_events).with(billables, inv_line)
+      expect(described_class).to receive(:write_invoiced_events).with(billables, inv_line)
 
       described_class.bill_new_classifications billables, invoice
     end
@@ -108,14 +108,14 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     it "doesn't create an invoice line if there are no invoiceable events" do
       billables = []
       
-      invoice.should_not_receive(:vfi_invoice_lines)
-      described_class.should_not_receive(:write_invoiced_events)
+      expect(invoice).not_to receive(:vfi_invoice_lines)
+      expect(described_class).not_to receive(:write_invoiced_events)
 
       described_class.bill_new_classifications billables, @invoice
     end
   end
 
-  describe :write_invoiced_events do
+  describe "write_invoiced_events" do
     it "creates an invoiced event for each new billable" do
       inv_line = Factory(:vfi_invoice_line)
       be_1 = Factory(:billable_event)

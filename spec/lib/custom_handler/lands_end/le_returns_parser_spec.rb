@@ -216,25 +216,25 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
   describe "can_view?" do
     it "allows company master to view in www-vfitrack-net" do
       ms = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return ms
-      ms.should_receive(:system_code).and_return "www-vfitrack-net"
+      expect(MasterSetup).to receive(:get).and_return ms
+      expect(ms).to receive(:system_code).and_return "www-vfitrack-net"
 
       u = Factory(:master_user)
-      expect(described_class.new(nil).can_view? u).to be_true
+      expect(described_class.new(nil).can_view? u).to be_truthy
     end
 
     it "prevents non-master user" do
       u = Factory(:user)
-      expect(described_class.new(nil).can_view? u).to be_false
+      expect(described_class.new(nil).can_view? u).to be_falsey
     end
 
     it "prevents non-vfitrack user" do
       ms = double("MasterSetup")
-      MasterSetup.should_receive(:get).and_return ms
-      ms.should_receive(:system_code).and_return "test"
+      expect(MasterSetup).to receive(:get).and_return ms
+      expect(ms).to receive(:system_code).and_return "test"
 
       u = Factory(:master_user)
-      expect(described_class.new(nil).can_view? u).to be_false
+      expect(described_class.new(nil).can_view? u).to be_falsey
     end
   end
 
@@ -242,11 +242,11 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
     it "proceses custom file and emails it to user" do
       cf = double("CustomFile")
       file = double("Attachment")
-      cf.stub(:attached).and_return file
-      file.stub(:path).and_return "s3/path/file.csv"
+      allow(cf).to receive(:attached).and_return file
+      allow(file).to receive(:path).and_return "s3/path/file.csv"
 
       parser = described_class.new cf
-      parser.should_receive(:download_and_parse).with("s3/path/file.csv", instance_of(Tempfile)) do |path, f|
+      expect(parser).to receive(:download_and_parse).with("s3/path/file.csv", instance_of(Tempfile)) do |path, f|
         f << "Test"
       end
       u = Factory(:user, email: "me@there.com")
@@ -264,13 +264,13 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
 
   describe "download_and_parse" do
     it "downloads from s3 and calls parse on the yielded filepath" do
-      OpenChain::S3.stub(:bucket_name).and_return('buckname')
+      allow(OpenChain::S3).to receive(:bucket_name).and_return('buckname')
       s3 = double("S3Object")
-      OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.bucket_name(:production), "path").and_yield s3
-      s3.stub(:path).and_return "s3/path/file.csv"
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with(OpenChain::S3.bucket_name(:production), "path").and_yield s3
+      allow(s3).to receive(:path).and_return "s3/path/file.csv"
       io = StringIO.new
       p = described_class.new(nil)
-      p.should_receive(:parse).with "s3/path/file.csv", io
+      expect(p).to receive(:parse).with "s3/path/file.csv", io
 
       p.download_and_parse("path", io)
     end

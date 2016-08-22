@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
         expect(s.last_exported_from_source).to eq ActiveSupport::TimeZone["America/New_York"].parse("20151106145501")
         expect(s.importer).to eq @nexeo
         expect(s.mode).to eq "Ocean - FCL"
-        expect(s.lcl).to be_false
+        expect(s.lcl).to be_falsey
         expect(s.master_bill_of_lading).to eq "2565659800"
         expect(s.gross_weight).to eq BigDecimal("19813.12")
         expect(s.importer_reference).to eq "6239191"
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
         s = Shipment.where(reference: "EXPORT-1402240").first
         expect(s).not_to be_nil
         expect(s.mode).to eq "Ocean - LCL"
-        expect(s.lcl).to be_true
+        expect(s.lcl).to be_truthy
       end
     end
   end

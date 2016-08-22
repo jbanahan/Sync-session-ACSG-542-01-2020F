@@ -26,15 +26,15 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
     ]
   end
   
-  describe :parse do
+  describe "parse" do
     it "delegates to #process" do
       file_content = "data"
-      described_class.any_instance.should_receive(:process).with(file_content)
+      expect_any_instance_of(described_class).to receive(:process).with(file_content)
       described_class.parse file_content
     end
   end
 
-  describe :process do
+  describe "process" do
     it "parses CSV into Product objects" do
       @t = Tempfile.new("csv")
       @t << @lines.join("\n")
@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
     end
   end
 
-  describe :update_product do
+  describe "update_product" do
     it "updates an existing Product from a CSV row" do
       parser = described_class.new
       load_cdefs
@@ -124,7 +124,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
     end
   end
 
-  describe :cv_concat do
+  describe "cv_concat" do
           
     before :each do
       @parser = described_class.new
@@ -150,7 +150,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
     end
   end
 
-  describe :assign_earlier do
+  describe "assign_earlier" do
     before :each do
       @parser = described_class.new
       load_cdefs

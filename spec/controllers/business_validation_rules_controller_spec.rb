@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BusinessValidationRulesController do
-  describe :create do
+  describe "create" do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template
@@ -10,8 +10,8 @@ describe BusinessValidationRulesController do
     it 'should require admin' do
       u = Factory(:user)
       sign_in_as u
-      post :create, 
-            business_validation_template_id: @bvt.id, 
+      post :create,
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-1"}'
             }
@@ -22,8 +22,8 @@ describe BusinessValidationRulesController do
       group = Factory(:group)
       u = Factory(:admin_user)
       sign_in_as u
-      post :create, 
-            business_validation_template_id: @bvt.id, 
+      post :create,
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-2"}',
               "type" => "ValidationRuleManual",
@@ -31,25 +31,25 @@ describe BusinessValidationRulesController do
             }
       expect(response).to be_redirect
       new_rule = BusinessValidationRule.last
-      new_rule.business_validation_template.id.should == @bvt.id
-      new_rule.rule_attributes_json.should == '{"valid":"json-2"}'
+      expect(new_rule.business_validation_template.id).to eq(@bvt.id)
+      expect(new_rule.rule_attributes_json).to eq('{"valid":"json-2"}')
       expect(new_rule.group).to eq group
     end
 
     it "should only save for valid JSON" do
       u = Factory(:admin_user)
       sign_in_as u
-      post :create, 
-            business_validation_template_id: @bvt.id, 
+      post :create,
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => 'This is not valid JSON'
             }
       expect(response).to be_redirect
-      flash[:errors].first.should match(/Could not save due to invalid JSON/)
+      expect(flash[:errors].first).to match(/Could not save due to invalid JSON/)
     end
   end
 
-  describe :edit do
+  describe "edit" do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template
@@ -65,19 +65,19 @@ describe BusinessValidationRulesController do
     it "should load the correct rule to edit" do
       u = Factory(:admin_user)
       sign_in_as u
-      get :edit, 
+      get :edit,
             id: @bvr.id,
-            business_validation_template_id: @bvt.id, 
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-3"}'
             }
       expect(response).to be_success
-      response.request.filtered_parameters["id"].to_i.should == @bvr.id
+      expect(response.request.filtered_parameters["id"].to_i).to eq(@bvr.id)
     end
 
   end
 
-  describe :update do
+  describe "update" do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template
@@ -90,11 +90,11 @@ describe BusinessValidationRulesController do
           id: @bvr.id,
           business_validation_template_id: @bvt.id,
           search_criterions_only: true,
-          business_validation_rule: {search_criterions: [{"mfid" => "ent_cust_name", 
-              "datatype" => "string", "label" => "Customer Name", 
+          business_validation_rule: {search_criterions: [{"mfid" => "ent_cust_name",
+              "datatype" => "string", "label" => "Customer Name",
               "operator" => "eq", "value" => "Monica Lewinsky"}]}
-      @bvr.search_criterions.length.should == 1
-      @bvr.search_criterions.first.value.should == "Monica Lewinsky"
+      expect(@bvr.search_criterions.length).to eq(1)
+      expect(@bvr.search_criterions.first.value).to eq("Monica Lewinsky")
     end
 
     it 'should require admin' do
@@ -107,21 +107,21 @@ describe BusinessValidationRulesController do
     it "should update the correct rule" do
       u = Factory(:admin_user)
       sign_in_as u
-      post :update, 
+      post :update,
             id: @bvr.id,
-            business_validation_template_id: @bvt.id, 
+            business_validation_template_id: @bvt.id,
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-4"}'
             }
       expect(response).to be_redirect
       updated_rule = BusinessValidationRule.find(@bvr.id)
-      updated_rule.rule_attributes_json.should == '{"valid":"json-4"}'
-      updated_rule.business_validation_template.id.should == @bvt.id
+      expect(updated_rule.rule_attributes_json).to eq('{"valid":"json-4"}')
+      expect(updated_rule.business_validation_template.id).to eq(@bvt.id)
     end
 
   end
 
-  describe :edit_angular do
+  describe "edit_angular" do
     before :each do
       @sc = Factory(:search_criterion)
       # Use an actual concrete rule class rather than the base 'abstract' class to validate we're getting the correct data back
@@ -140,9 +140,9 @@ describe BusinessValidationRulesController do
       r = JSON.parse(response.body)
       expect(r["model_fields"].length).to eq ModelField.find_by_core_module(CoreModule::ENTRY).size
       rule = r["business_validation_rule"]
-      expect(rule).to eq({"business_validation_template_id"=>@bvt.id, 
-          "description"=>"DESC", "fail_state"=>"FAIL", "id"=>@rule.id, 
-          "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}', 
+      expect(rule).to eq({"business_validation_template_id"=>@bvt.id,
+          "description"=>"DESC", "fail_state"=>"FAIL", "id"=>@rule.id,
+          "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}',
           "search_criterions"=>[{"mfid"=>"prod_uid", "operator"=>"eq", "value"=>"x", "label" => "Unique Identifier", "datatype" => "string", "include_empty" => false}]})
     end
 
@@ -154,7 +154,7 @@ describe BusinessValidationRulesController do
     end
   end
 
-  describe :destroy do
+  describe "destroy" do
     before :each do
       @bvr = Factory(:business_validation_rule)
       @bvt = @bvr.business_validation_template
@@ -166,7 +166,7 @@ describe BusinessValidationRulesController do
       @u.admin = false
       @u.save!
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
-      BusinessValidationRule.any_instance.should_not_receive(:delay)
+      expect_any_instance_of(BusinessValidationRule).not_to receive(:delay)
       expect(response).to be_redirect
     end
 
@@ -175,15 +175,15 @@ describe BusinessValidationRulesController do
       Delayed::Worker.delay_jobs = false
 
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
-      expect { BusinessValidationRule.find(@bvr.id) }.to raise_error
+      expect(BusinessValidationRule.find_by_id(@bvr.id)).to be_nil
 
       Delayed::Worker.delay_jobs = dj_status
     end
 
     it "sets delete_pending flag and executes destroy as a delayed job" do
       d = double("delay")
-      BusinessValidationRule.should_receive(:delay).and_return d
-      d.should_receive(:async_destroy).with @bvr.id
+      expect(BusinessValidationRule).to receive(:delay).and_return d
+      expect(d).to receive(:async_destroy).with @bvr.id
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
       @bvr.reload
       expect(@bvr.delete_pending).to eq true

@@ -38,7 +38,7 @@ describe BusinessRuleSnapshot do
       now_json = ActiveSupport::JSON.decode(now.to_json)
 
       snapshot_data = nil
-      BusinessRuleSnapshot.should_receive(:write_to_s3) do |json, entity|
+      expect(BusinessRuleSnapshot).to receive(:write_to_s3) do |json, entity|
         expect(entity).to eq entry
         snapshot_data = ActiveSupport::JSON.decode json
         {bucket: "bucket", version: "version", key: "path/file.json"}
@@ -194,12 +194,12 @@ describe BusinessRuleSnapshot do
       snapshots = []
       6.times { snapshots << BusinessRuleSnapshot.create!(recordable_id: entry.id, recordable_type: "entry", bucket: "bucket", version: "version", doc_path: "path") }
 
-      described_class.should_receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[0]).and_return pass_snapshot
-      described_class.should_receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[1]).and_return pass_snapshot
-      described_class.should_receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[2]).and_return fail_snapshot
-      described_class.should_receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[3]).and_return fail_snapshot
-      described_class.should_receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[4]).and_return override_snapshot
-      described_class.should_receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[5]).and_return override_snapshot
+      expect(described_class).to receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[0]).and_return pass_snapshot
+      expect(described_class).to receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[1]).and_return pass_snapshot
+      expect(described_class).to receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[2]).and_return fail_snapshot
+      expect(described_class).to receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[3]).and_return fail_snapshot
+      expect(described_class).to receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[4]).and_return override_snapshot
+      expect(described_class).to receive(:retrieve_snapshot_data_from_s3).ordered.with(snapshots[5]).and_return override_snapshot
 
       comparisons = described_class.rule_comparisons entry
       expect(comparisons.length).to eq 3

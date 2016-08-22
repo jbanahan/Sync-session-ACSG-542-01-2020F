@@ -6,9 +6,9 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
     @country =  Factory(:country, :iso_code => 'TW')
   end
 
-  context :process_file do
+  context "process_file" do
     it "should look up the country and call process" do
-      OpenChain::CustomHandler::ImportExportRegulationParser.any_instance.should_receive(:process)
+      expect_any_instance_of(OpenChain::CustomHandler::ImportExportRegulationParser).to receive(:process)
       OpenChain::CustomHandler::ImportExportRegulationParser.process_file nil, @country.iso_code
     end
 
@@ -50,16 +50,16 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
         @parser.process io, 'file.txt'
 
         @tariff1.reload
-        @tariff1.import_regulations.should == "401 B01"
-        @tariff1.export_regulations.should == "441"
+        expect(@tariff1.import_regulations).to eq("401 B01")
+        expect(@tariff1.export_regulations).to eq("441")
 
         @tariff2.reload
-        @tariff2.import_regulations.should == "B01"
-        @tariff2.export_regulations.should == ""
+        expect(@tariff2.import_regulations).to eq("B01")
+        expect(@tariff2.export_regulations).to eq("")
 
         @tariff3.reload
-        @tariff3.import_regulations.should == ""
-        @tariff3.export_regulations.should == ""
+        expect(@tariff3.import_regulations).to eq("")
+        expect(@tariff3.export_regulations).to eq("")
       end
     end
 
@@ -86,16 +86,16 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
         @parser.process @xls
 
         @tariff1.reload
-        @tariff1.import_regulations.should == "401 B01"
-        @tariff1.export_regulations.should == "441"
+        expect(@tariff1.import_regulations).to eq("401 B01")
+        expect(@tariff1.export_regulations).to eq("441")
 
         @tariff2.reload
-        @tariff2.import_regulations.should == "B01"
-        @tariff2.export_regulations.should == ""
+        expect(@tariff2.import_regulations).to eq("B01")
+        expect(@tariff2.export_regulations).to eq("")
 
         @tariff3.reload
-        @tariff3.import_regulations.should == ""
-        @tariff3.export_regulations.should == ""
+        expect(@tariff3.import_regulations).to eq("")
+        expect(@tariff3.export_regulations).to eq("")
       end
     end
 
@@ -114,23 +114,23 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
       end
       
       it "should download a file from S3 and process it" do
-        OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.bucket_name, @key).and_yield @original_tempfile
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with(OpenChain::S3.bucket_name, @key).and_yield @original_tempfile
 
         # We're using the S3 path as the full integration test because it hits every portion
         # of the regulation parser code.
         OpenChain::CustomHandler::ImportExportRegulationParser.process_s3 @key, 'TW'
 
         @tariff1.reload
-        @tariff1.import_regulations.should == "401 B01"
-        @tariff1.export_regulations.should == "441"
+        expect(@tariff1.import_regulations).to eq("401 B01")
+        expect(@tariff1.export_regulations).to eq("441")
 
         @tariff2.reload
-        @tariff2.import_regulations.should == "B01"
-        @tariff2.export_regulations.should == ""
+        expect(@tariff2.import_regulations).to eq("B01")
+        expect(@tariff2.export_regulations).to eq("")
 
         @tariff3.reload
-        @tariff3.import_regulations.should == ""
-        @tariff3.export_regulations.should == ""
+        expect(@tariff3.import_regulations).to eq("")
+        expect(@tariff3.export_regulations).to eq("")
       end
     end
   end

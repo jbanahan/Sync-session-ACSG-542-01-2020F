@@ -28,42 +28,42 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
 
   def mock_xl_client rows
     x = double(:xl_client)
-    stubbed = x.stub(:all_row_values,0)
+    stubbed = allow(x).to receive(:all_row_values)
     rows.each {|row| stubbed = stubbed.and_yield row}
     x
   end
 
-  describe :process do
+  describe "process" do
     before :each do
       @cf = double(:custom_file)
     end
     it "should initialize XLClient and pass to parse" do
       x = double(:xl_client)
-      OpenChain::XLClient.should_receive(:new_from_attachable).with(@cf).and_return x
-      described_class.any_instance.should_receive(:parse).with(x)
-      described_class.stub(:can_view?).and_return true
+      expect(OpenChain::XLClient).to receive(:new_from_attachable).with(@cf).and_return x
+      expect_any_instance_of(described_class).to receive(:parse).with(x)
+      allow(described_class).to receive(:can_view?).and_return true
       described_class.new(@cf).process User.new
     end
     it "should not run if user cannot view" do
       u = User.new
-      described_class.should_receive(:can_view?).with(u).and_return false
-      described_class.should_not_receive(:parse)
+      expect(described_class).to receive(:can_view?).with(u).and_return false
+      expect(described_class).not_to receive(:parse)
       described_class.new(@cf).process(u)
     end
     it "should write error message to user" do
       u = Factory(:user)
-      OpenChain::XLClient.stub(:new_from_attachable).and_return(double('x'))
-      described_class.should_receive(:can_view?).and_return true
-      described_class.any_instance.should_receive(:parse).and_raise "some error"
+      allow(OpenChain::XLClient).to receive(:new_from_attachable).and_return(double('x'))
+      expect(described_class).to receive(:can_view?).and_return true
+      expect_any_instance_of(described_class).to receive(:parse).and_raise "some error"
       expect{described_class.new(@cf).process(u)}.to change(u.messages,:count).from(0).to(1)
       expect(u.messages.first.subject).to match /ERROR/
     end
   end
 
-  describe :can_view? do
+  describe "can_view?" do
     before :each do
       @cf = double(:custom_file)
-      MasterSetup.any_instance.stub(:custom_feature?).and_return true
+      allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
     end
     it "should be false if user not from LENOX or master" do
       u = Factory(:user,shipment_view:true)
@@ -79,38 +79,38 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     end
     it "should pass for lenox user who can view shipments" do
       u = Factory(:user,shipment_view:true,company:Factory(:company,:system_code=>'LENOX'))
-      u.stub(:view_shipments?).and_return true
+      allow(u).to receive(:view_shipments?).and_return true
       expect(described_class.new(@cf).can_view?(u)).to eq true
     end
   end
 
-  describe :parse do
+  describe "parse" do
     it "should collect shipments and pass them to process_shipment" do
       r1 = default_row
       r2 = default_row({bol:'BOL2'})
       x = mock_xl_client([r1,r2])
       p = described_class.new(double(:attachable))
-      p.should_receive(:process_shipment).with([r1])
-      p.should_receive(:process_shipment).with([r2])
+      expect(p).to receive(:process_shipment).with([r1])
+      expect(p).to receive(:process_shipment).with([r2])
       p.parse(x)
     end
     it "should ignore lines without a value in row[11] (Container) that starts with 4 letters" do
       p = described_class.new(double(:attachable))
-      p.should_not_receive(:process_shipment)
+      expect(p).not_to receive(:process_shipment)
       p.parse(mock_xl_client([default_row({container:'123456788'})]))
     end
     it "should ignore lines with empty container value" do
       p = described_class.new(double(:attachable))
-      p.should_not_receive(:process_shipment)
+      expect(p).not_to receive(:process_shipment)
       p.parse(mock_xl_client([default_row({container:nil})]))
     end
   end
 
-  describe :process_shipment do
+  describe "process_shipment" do
     before :each do
       @u = Factory(:master_user,shipment_edit:true)
-      User.any_instance.stub(:edit_shipments?).and_return true
-      Shipment.any_instance.stub(:can_edit?).and_return true
+      allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       @p = described_class.new(double(:custom_file))
       @c = Factory(:company,system_code:'LENOX')
       @v = Factory(:company)
@@ -176,15 +176,15 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       expect(Shipment.first.shipment_lines.first.order_lines.to_a).to eq [@ol2]
     end
     it "should fail if user cannot edit shipments" do
-      Shipment.any_instance.stub(:can_edit?).and_return false
-      expect {@p.process_shipment [default_row]}.to raise_error
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
+      expect {@p.process_shipment [default_row]}.to raise_error(/edit/)
     end
     it "should fail if order doesn't exist" do
-      expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error
+      expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error(/not found/)
     end
     it "should fail if item doesn't exist on order" do
       @ol.update_attributes(product_id:Factory(:product).id)
-      expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error
+      expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error(/not found/)
     end
   end
 

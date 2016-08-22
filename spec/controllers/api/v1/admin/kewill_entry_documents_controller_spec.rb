@@ -11,8 +11,8 @@ describe Api::V1::Admin::KewillEntryDocumentsController do
     end
 
     it "receives file params and forwards to sender" do
-      OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender.should_receive(:delay).and_return OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender
-      OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender.should_receive(:send_google_drive_document_to_kewill).with("email", "path")
+      expect(OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender).to receive(:delay).and_return OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender
+      expect(OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender).to receive(:send_google_drive_document_to_kewill).with("email", "path")
 
       post :send_google_drive_file_to_kewill, {path: "path", email: "email"}
       expect(response).to be_success

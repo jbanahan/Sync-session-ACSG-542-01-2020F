@@ -265,7 +265,7 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "fails if user doesn't have access to survey" do
-      SurveyResponse.any_instance.should_receive(:assigned_to_user?).and_return false
+      expect_any_instance_of(SurveyResponse).to receive(:assigned_to_user?).and_return false
 
       post :cancel_checkout, {id: @survey_response.id, checkout_token: "token"}
 
@@ -294,7 +294,7 @@ describe Api::V1::SurveyResponsesController do
     end
   end
 
-  describe :checkin do
+  describe "checkin" do
 
     before :each do
       @user = Factory(:user, survey_view: true)
@@ -737,7 +737,7 @@ describe Api::V1::SurveyResponsesController do
 
     context "without locked questions" do
       before :each do
-        Survey.any_instance.stub(:locked?).and_return false
+        allow_any_instance_of(Survey).to receive(:locked?).and_return false
       end
 
       it "validates required questions are answered" do

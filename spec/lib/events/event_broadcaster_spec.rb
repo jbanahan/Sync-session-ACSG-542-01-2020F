@@ -2,38 +2,38 @@ require "spec_helper"
 
 describe OpenChain::Events::EventBroadcaster do
 
-  describe :broadcast do
-    context :production_environment do
+  describe "broadcast" do
+    context "production_environment" do
 
       before :each do 
         @broadcaster = described_class.new(true)
       end
     
       it "should create an event processor and sent an event to it" do
-        OpenChain::Events::EventProcessor.any_instance.should_receive(:process_event) do |e|
-          e.event_type.should == :event_type
-          e.object_class.should == "Class"
-          e.object_id.should == 1
-          e.event_context.should == "Context"
+        expect_any_instance_of(OpenChain::Events::EventProcessor).to receive(:process_event) do |instance, e|
+          expect(e.event_type).to eq(:event_type)
+          expect(e.object_class).to eq("Class")
+          expect(e.object_id).to eq(1)
+          expect(e.event_context).to eq("Context")
         end
 
         @broadcaster.broadcast :event_type, "Class", 1, "Context"
       end
 
       it "should default context to nil" do
-        OpenChain::Events::EventProcessor.any_instance.should_receive(:process_event) do |e|
-          e.event_type.should == :event_type
-          e.object_class.should == "Class"
-          e.object_id.should == 1
-          e.event_context.should be_nil
+        expect_any_instance_of(OpenChain::Events::EventProcessor).to receive(:process_event) do |instance, e|
+          expect(e.event_type).to eq(:event_type)
+          expect(e.object_class).to eq("Class")
+          expect(e.object_id).to eq(1)
+          expect(e.event_context).to be_nil
         end
 
         @broadcaster.broadcast :event_type, "Class", 1
       end
 
       it "should rescue errors from process_event" do
-        OpenChain::Events::EventProcessor.any_instance.should_receive(:process_event).and_raise "Error!"
-        RuntimeError.any_instance.should_receive(:log_me)
+        expect_any_instance_of(OpenChain::Events::EventProcessor).to receive(:process_event).and_raise "Error!"
+        expect_any_instance_of(RuntimeError).to receive(:log_me)
         @broadcaster.broadcast :event_type, "Class", 1
       end
     end

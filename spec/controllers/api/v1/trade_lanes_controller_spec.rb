@@ -8,8 +8,8 @@ describe Api::V1::TradeLanesController do
   end
   before :each do
     @u = Factory(:user)
-    User.any_instance.stub(:view_trade_lanes?).and_return true
-    User.any_instance.stub(:edit_trade_lanes?).and_return true
+    allow_any_instance_of(User).to receive(:view_trade_lanes?).and_return true
+    allow_any_instance_of(User).to receive(:edit_trade_lanes?).and_return true
     allow_api_access @u
   end
   describe '#index' do
@@ -30,7 +30,7 @@ describe Api::V1::TradeLanesController do
       expect(h[1]['lane_destination_cntry_iso']).to eq 'US'
     end
     it 'should fail if user cannot view_trade_lanes?' do
-      User.any_instance.stub(:view_trade_lanes?).and_return false
+      allow_any_instance_of(User).to receive(:view_trade_lanes?).and_return false
       get :index
       expect(response).to_not be_success
     end
@@ -47,7 +47,7 @@ describe Api::V1::TradeLanesController do
       expect(JSON.parse(response.body)['trade_lane']['id']).to eq tl.id
     end
     it 'should fail if user cannot view trade lane' do
-      User.any_instance.stub(:view_trade_lanes?).and_return false
+      allow_any_instance_of(User).to receive(:view_trade_lanes?).and_return false
       get :show, id: Factory(:trade_lane).id.to_s
       expect(response).to_not be_success
     end
@@ -79,7 +79,7 @@ describe Api::V1::TradeLanesController do
       expect(tl.destination_country).to eq us
     end
     it 'should fail if user cannot edit trade lanes' do
-      User.any_instance.stub(:edit_trade_lanes?).and_return false
+      allow_any_instance_of(User).to receive(:edit_trade_lanes?).and_return false
 
       prep_countries
 
@@ -117,7 +117,7 @@ describe Api::V1::TradeLanesController do
       expect(lane.notes).to eq 'mynotes'
     end
     it 'should fail if user cannot edit trade lane' do
-      User.any_instance.stub(:edit_trade_lanes?).and_return false
+      allow_any_instance_of(User).to receive(:edit_trade_lanes?).and_return false
       lane, hash = data_prep
 
       put :update, hash

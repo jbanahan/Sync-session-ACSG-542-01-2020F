@@ -19,7 +19,7 @@ describe UserManual do
     it "should not find if NOT user can_view?" do
       um1 = Factory(:user_manual,page_url_regex:'vendor_portal')
       u = Factory(:user)
-      UserManual.any_instance.should_receive(:can_view?).and_return false
+      expect_any_instance_of(UserManual).to receive(:can_view?).and_return false
       expect(UserManual.for_user_and_page(u,'https://www.vfitrack.net/vendor_portal')).to eq []
     end
     it "should find if page_url_regex is blank" do
@@ -37,17 +37,17 @@ describe UserManual do
       u = Factory(:user)
       u.groups << g
 
-      expect(um.can_view?(u)).to be_true
+      expect(um.can_view?(u)).to be_truthy
     end
     it "should be true if groups are blank" do
       um = Factory(:user_manual,page_url_regex:'vendor_portal')
       u = Factory(:user)
-      expect(um.can_view?(u)).to be_true
+      expect(um.can_view?(u)).to be_truthy
     end
     it "should be false if user not in group" do
       um = Factory(:user_manual,page_url_regex:'vendor_portal',groups:"A\nB")
       u = Factory(:user)
-      expect(um.can_view?(u)).to be_false
+      expect(um.can_view?(u)).to be_falsey
     end
   end
 end

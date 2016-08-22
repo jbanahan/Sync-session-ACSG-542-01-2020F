@@ -32,8 +32,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       end
       p.classifications.find_by_country_id(@ca.id).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
       r = run_to_array
-      r.should have(1).record
-      r.first.should == [p.unique_identifier,'','PLONG','','CA12345678','N','N','N','N']
+      expect(r.size).to eq(1)
+      expect(r.first).to eq([p.unique_identifier,'','PLONG','','CA12345678','N','N','N','N'])
     end
     it "should only send approved products" do
       p = Factory(:product)
@@ -43,8 +43,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       dont_find = Factory(:product)
       dont_find.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>"0012345678")
       r = run_to_array
-      r.should have(1).record
-      r.first.first.should == p.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r.first.first).to eq(p.unique_identifier)
     end
     it "should only send products that need sync" do
       p = Factory(:product)
@@ -58,8 +58,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       dont_find.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.hour.ago,:confirmed_at=>1.minute.ago)
       ActiveRecord::Base.connection.execute 'UPDATE products SET updated_at = "2010-01-01"' #reset updated at so product doesn't need sync
       r = run_to_array
-      r.should have(1).record
-      r.first.first.should == p.unique_identifier
+      expect(r.size).to eq(1)
+      expect(r.first.first).to eq(p.unique_identifier)
     end
     it "should override long description with country specific version" do
       p = Factory(:product)
@@ -68,8 +68,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.classifications.first.update_custom_value! @cdefs[:long_desc_override], 'LDOV'
       r = run_to_array
-      r.should have(1).record
-      r.first[2].should == 'LDOV'
+      expect(r.size).to eq(1)
+      expect(r.first[2]).to eq('LDOV')
     end
     it "should explode lines that have related styles" do
       p = Factory(:product)
@@ -83,13 +83,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       p.update_custom_value! @cdefs[:related_styles], "#{p.unique_identifier}\np-style\nt-style" #uid should not duplicate
 
       r = run_to_array
-      r.should have(3).records
-      r[0][0].should == p.unique_identifier
-      r[1][0].should == "p-style"
-      r[2][0].should == "t-style"
+      expect(r.size).to eq(3)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[1][0]).to eq("p-style")
+      expect(r[2][0]).to eq("t-style")
     end
 
-    context :sets do
+    context "sets" do
       it "should create 3 rows for two component style" do
         p = Factory(:product)
         p.update_custom_value! @cdefs[:approved_long], 'LONG'
@@ -100,22 +100,22 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
         tr1.update_custom_value! @cdefs[:set_qty], 10
         tr2.update_custom_value! @cdefs[:set_qty], 20
         r = run_to_array
-        r.should == [
+        expect(r).to eq([
           [p.unique_identifier,'','LONG','','','Y','N','N','N'],
           [p.unique_identifier,'1','LONG','10','0012345678','Y','N','N','N'],
           [p.unique_identifier,'2','LONG','20','2222222222','Y','N','N','N'],
-        ]
+        ])
       end
     end
   end
 
   it "should have sync code" do
-    described_class.new.sync_code.should == 'ANN-MIL'
+    expect(described_class.new.sync_code).to eq('ANN-MIL')
   end
 
-  context :ftp do
+  context "ftp" do
     it "should send proper credentials" do
-      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/MIL'}
+      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/MIL'})
     end
   end
 end

@@ -7,8 +7,8 @@ describe UserTemplate do
       @g = Group.use_system_group('SYSG')
     end
     it "should create user with default template merge" do
-      User.should_not_receive(:delay)
-      User.should_not_receive(:send_invite_emails)
+      expect(User).not_to receive(:delay)
+      expect(User).not_to receive(:send_invite_emails)
       override_template = {
         homepage:'/something',
         permissions: ['order_view','classification_edit'],
@@ -56,8 +56,8 @@ describe UserTemplate do
     end
     it "should delay send notification invites" do
       ut = UserTemplate.new(template_json:'{}')
-      User.stub(:delay).and_return(User)
-      User.should_receive(:send_invite_emails).with(an_instance_of(Fixnum))
+      allow(User).to receive(:delay).and_return(User)
+      expect(User).to receive(:send_invite_emails).with(an_instance_of(Fixnum))
       u = ut.create_user!(@c,'joe','smith',nil,'jsmith@example.com','Eastern Time (US & Canada)',
         true) # <-- this last attribute is what we're testing
     end

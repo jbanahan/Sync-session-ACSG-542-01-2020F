@@ -2,40 +2,40 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
 
-  describe :generate do
+  describe "generate" do
     it "should email report" do
       u = Factory(:master_user, username:'EU Fiber Content', email:'a@sample.com')
       mail = double('mail')
-      mail.should_receive(:deliver!)
+      expect(mail).to receive(:deliver!)
       d = described_class.new
       f = double('file')
-      d.should_receive(:sync_xls).and_return(f)
-      OpenMailer.should_receive(:send_simple_html).with('a@sample.com','VFI Track EU Fiber Content Report','Fiber content report is attached.',f).and_return(mail)
+      expect(d).to receive(:sync_xls).and_return(f)
+      expect(OpenMailer).to receive(:send_simple_html).with('a@sample.com','VFI Track EU Fiber Content Report','Fiber content report is attached.',f).and_return(mail)
       d.generate
     end
     it "should create user" do
       master_company = Factory(:company, master:true)
       mail = double('mail')
-      mail.should_receive(:deliver!)
+      expect(mail).to receive(:deliver!)
       d = described_class.new
       f = double('file')
-      d.should_receive(:sync_xls).and_return(f)
-      OpenMailer.should_receive(:send_simple_html).with('bug@vandegriftinc.com','VFI Track EU Fiber Content Report','Fiber content report is attached.',f).and_return(mail)
+      expect(d).to receive(:sync_xls).and_return(f)
+      expect(OpenMailer).to receive(:send_simple_html).with('bug@vandegriftinc.com','VFI Track EU Fiber Content Report','Fiber content report is attached.',f).and_return(mail)
       expect{d.generate}.to change(User,:count).by(1)
       u = User.find_by_username('EU Fiber Content')
-      expect(u.view_products?).to be_true
+      expect(u.view_products?).to be_truthy
     end
   end
 
-  describe :trim_fingerprint do
+  describe "trim_fingerprint" do
     it "should return 3rd element as fingerprint" do
       expect(described_class.new.trim_fingerprint([1,'1','2','3','4'])).to eq ['3',[1,'1','2','3','4']]
     end
   end
   it "should auto_confirm" do
-    expect(described_class.new.auto_confirm?).to be_true
+    expect(described_class.new.auto_confirm?).to be_truthy
   end
-  describe :sync do
+  describe "sync" do
     before :each do
       @italy = Factory(:country,iso_code:'IT')
       @cdefs = described_class.prep_custom_definitions([

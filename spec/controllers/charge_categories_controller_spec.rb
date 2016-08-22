@@ -11,14 +11,14 @@ describe ChargeCategoriesController do
     it "should require user to be admin" do
       sign_in_as Factory(:user)
       get :index, :company_id=>@c.id
-      response.should redirect_to request.referrer
-      flash[:errors].should have(1).message
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors].size).to eq(1)
     end
     it "should get charge categories for given company" do
       sign_in_as Factory(:admin_user)
       get :index, :company_id=>@c.id
-      response.should be_success
-      assigns(:charge_categories).to_a.should == [@cat]
+      expect(response).to be_success
+      expect(assigns(:charge_categories).to_a).to eq([@cat])
     end
   end
 
@@ -26,19 +26,19 @@ describe ChargeCategoriesController do
     it "should require user to be admin" do
       sign_in_as Factory(:user)
       post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x','category'=>'y'}
-      response.should redirect_to request.referrer
-      flash[:errors].should have(1).message
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors].size).to eq(1)
       @c.reload
-      @c.should have(1).charge_categories
+      expect(@c.charge_categories.size).to eq(1)
     end
     it "should create category" do
       sign_in_as Factory(:admin_user)
       post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x','category'=>'y'}
-      response.should redirect_to company_charge_categories_path(@c)
-      flash[:notices].first.should == "Charge Category created successfully."
+      expect(response).to redirect_to company_charge_categories_path(@c)
+      expect(flash[:notices].first).to eq("Charge Category created successfully.")
       @c.reload
-      @c.should have(2).charge_categories
-      @c.charge_categories.where(:charge_code=>'x').where(:category=>'y').to_a.should have(1).item
+      expect(@c.charge_categories.size).to eq(2)
+      expect(@c.charge_categories.where(:charge_code=>'x').where(:category=>'y').to_a.size).to eq(1)
     end
   end
 
@@ -46,17 +46,17 @@ describe ChargeCategoriesController do
     it "should require user to be admin" do
       sign_in_as Factory(:user)
       delete :destroy, :company_id=>@c.id, :id=>@cat.id
-      response.should redirect_to request.referrer
-      flash[:errors].should have(1).message
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors].size).to eq(1)
       @c.reload
-      @c.should have(1).charge_categories
+      expect(@c.charge_categories.size).to eq(1)
     end 
     it "should destroy category" do
       sign_in_as Factory(:admin_user)
       delete :destroy, :company_id=>@c.id, :id=>@cat.id
-      response.should redirect_to company_charge_categories_path(@c)
-      flash[:notices].first.should == "Charge Category deleted."
-      ChargeCategory.all.should be_empty
+      expect(response).to redirect_to company_charge_categories_path(@c)
+      expect(flash[:notices].first).to eq("Charge Category deleted.")
+      expect(ChargeCategory.all).to be_empty
     end
   end
 

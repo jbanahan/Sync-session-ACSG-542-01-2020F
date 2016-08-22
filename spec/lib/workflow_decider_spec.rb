@@ -13,17 +13,17 @@ describe OpenChain::WorkflowDecider do
           "My Name"
         end
       end
-      @k.stub(:name).and_return "MyWorkflowDecider"
+      allow(@k).to receive(:name).and_return "MyWorkflowDecider"
       @o = Factory(:order)
       @u = double('user')
     end
     it "should call do_workflow" do
-      @k.should_receive(:do_workflow!).with(@o,instance_of(WorkflowInstance),@u)
+      expect(@k).to receive(:do_workflow!).with(@o,instance_of(WorkflowInstance),@u)
       @k.update_workflow! @o, @u
     end
     it "should lock on base_object" do
-      @o.should_receive(:id).and_return 10
-      Lock.should_receive(:acquire).with('Workflow-Order-10',{temp_lock:true}).and_yield
+      expect(@o).to receive(:id).and_return 10
+      expect(Lock).to receive(:acquire).with('Workflow-Order-10',{temp_lock:true}).and_yield
       @k.update_workflow! @o, @u
     end
     it "should create workflow instance" do

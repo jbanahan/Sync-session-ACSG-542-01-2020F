@@ -16,22 +16,22 @@ describe PowerOfAttorney do
   end
 
   it "should require attachment" do
-    PowerOfAttorney.new(@attr.merge(:attachment_file_name => '')).should_not be_valid
+    expect(PowerOfAttorney.new(@attr.merge(:attachment_file_name => ''))).not_to be_valid
   end
 
   it "shold require user that created it" do
-    PowerOfAttorney.new(@attr.merge(:uploaded_by => '')).should_not be_valid
+    expect(PowerOfAttorney.new(@attr.merge(:uploaded_by => ''))).not_to be_valid
   end
 
   it "should require company" do
-    PowerOfAttorney.new(@attr.merge(:company_id => '')).should_not be_valid
+    expect(PowerOfAttorney.new(@attr.merge(:company_id => ''))).not_to be_valid
   end
 
   it "should require start date" do
-    PowerOfAttorney.new(@attr.merge(:start_date => '')).should_not be_valid
+    expect(PowerOfAttorney.new(@attr.merge(:start_date => ''))).not_to be_valid
   end
 
   it "should require expiration date" do
-    PowerOfAttorney.new(@attr.merge(:expiration_date => '')).should_not be_valid
+    expect(PowerOfAttorney.new(@attr.merge(:expiration_date => ''))).not_to be_valid
   end
 end

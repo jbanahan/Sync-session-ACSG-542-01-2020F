@@ -7,7 +7,7 @@ describe SummaryStatementsController do
     sign_in_as @u
   end
 
-  describe :index do
+  describe "index" do
     it "allows use only by summary-statement viewers" do
       get :index
 
@@ -16,14 +16,14 @@ describe SummaryStatementsController do
     end
 
     it "renders" do
-      @u.stub(:view_summary_statements?).and_return true
+      allow(@u).to receive(:view_summary_statements?).and_return true
       get :index
-      response.should be_redirect
+      expect(response).to be_redirect
       expect(response.location).to match(/\/advanced_search#\//)
     end
   end
 
-  describe :show do
+  describe "show" do
     it "allows use only by summary-statement viewers" do
       get :show, id: @ss
 
@@ -32,7 +32,7 @@ describe SummaryStatementsController do
     end
 
     it "renders" do
-      @u.stub(:view_summary_statements?).and_return true
+      allow(@u).to receive(:view_summary_statements?).and_return true
       us_entry = Factory(:entry, import_country: Factory(:country, iso_code: 'US'))
       ca_entry = Factory(:entry, import_country: Factory(:country, iso_code: 'CA'))
       bi_1 = Factory(:broker_invoice, entry: us_entry)
@@ -48,7 +48,7 @@ describe SummaryStatementsController do
     end
   end
 
-  describe :edit do
+  describe "edit" do
     it "allows use only by summary-statement editors" do
       get :edit, id: @ss
 
@@ -57,7 +57,7 @@ describe SummaryStatementsController do
     end
 
     it "renders" do
-      @u.stub(:edit_summary_statements?).and_return true
+      allow(@u).to receive(:edit_summary_statements?).and_return true
       us_entry = Factory(:entry, import_country: Factory(:country, iso_code: 'US'))
       ca_entry = Factory(:entry, import_country: Factory(:country, iso_code: 'CA'))
       bi_1 = Factory(:broker_invoice, entry: us_entry)
@@ -73,7 +73,7 @@ describe SummaryStatementsController do
     end
   end
 
-  describe :new do
+  describe "new" do
     it "allows use only by summary-statement editors" do
       get :new
       
@@ -95,23 +95,23 @@ describe SummaryStatementsController do
     end
 
     it "renders" do
-      @u.stub(:edit_summary_statements?).and_return true
+      allow(@u).to receive(:edit_summary_statements?).and_return true
       get :new
 
       expect(response).to be_success
     end
   end
 
-  describe :create do
+  describe "create" do
     before(:each) do
-      @u.stub(:edit_summary_statements?).and_return true
+      allow(@u).to receive(:edit_summary_statements?).and_return true
       @co_1 = Factory(:company, importer: true)
       @co_2 = Factory(:company)
       
     end
 
     it "allows use only by summary-statement editors" do
-      @u.stub(:edit_summary_statements?).and_return false
+      allow(@u).to receive(:edit_summary_statements?).and_return false
       post :create, company: @co_1.id.to_s, stat_num: "12356789"
       expect(SummaryStatement.count).to eq 1
       expect(response).to redirect_to request.referrer
@@ -140,13 +140,13 @@ describe SummaryStatementsController do
 
   end
 
-  describe :update do
+  describe "update" do
     before(:each) do
-      @u.stub(:edit_summary_statements?).and_return true
+      allow(@u).to receive(:edit_summary_statements?).and_return true
     end
 
     it "allows use only by summary-statement editors" do
-      @u.stub(:edit_summary_statements?).and_return false
+      allow(@u).to receive(:edit_summary_statements?).and_return false
       put :update, id: @ss, selected: {to_remove: [@bi_1, @bi_2]}
 
       expect(response).to redirect_to request.referrer

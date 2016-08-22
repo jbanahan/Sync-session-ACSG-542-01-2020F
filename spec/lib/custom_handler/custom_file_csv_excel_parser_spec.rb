@@ -21,37 +21,37 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
     let (:custom_file) { double("custom_file") }
 
     it "returns CSVReader for csv files" do
-      custom_file.stub(:path).and_return "FILE.CSV"
+      allow(custom_file).to receive(:path).and_return "FILE.CSV"
       reader = subject.file_reader custom_file
       expect(reader).to be_a(OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileCsvReader)
       expect(reader.reader_options).to be_blank
     end
 
     it "returns CSVReader for txt files" do
-      custom_file.stub(:path).and_return "FILE.txt"
+      allow(custom_file).to receive(:path).and_return "FILE.txt"
       expect(subject.file_reader custom_file).to be_a(OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileCsvReader)
     end
 
     it "returns ExcelReader for xls files" do
-      custom_file.stub(:path).and_return "FILE.xls"
+      allow(custom_file).to receive(:path).and_return "FILE.xls"
       reader = subject.file_reader custom_file
       expect(reader).to be_a(OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader)
       expect(reader.reader_options).to be_blank
     end
 
     it "returns ExcelReader for xlsx files" do
-      custom_file.stub(:path).and_return "FILE.xlsx"
+      allow(custom_file).to receive(:path).and_return "FILE.xlsx"
       expect(subject.file_reader custom_file).to be_a(OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader)
     end
 
     it "sends csv options if implemented" do
-      custom_file.stub(:path).and_return "FILE.csv"
+      allow(custom_file).to receive(:path).and_return "FILE.csv"
       reader = alt_subject.file_reader custom_file
       expect(reader.reader_options).to eq({'test'=> "csv"})
     end
 
     it "sends xls options if implemented" do
-      custom_file.stub(:path).and_return "FILE.xls"
+      allow(custom_file).to receive(:path).and_return "FILE.xls"
       reader = alt_subject.file_reader custom_file
       expect(reader.reader_options).to eq({'test'=> "xls"})
     end
@@ -69,8 +69,8 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
 
     let (:custom_file) do
       cf = double("custom_file")
-      cf.stub(:bucket).and_return "bucket"
-      cf.stub(:path).and_return "path"
+      allow(cf).to receive(:bucket).and_return "bucket"
+      allow(cf).to receive(:path).and_return "path"
       cf
     end
 
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
 
     describe "foreach" do
       it "downloads and reads a file, yielding each row" do
-        OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "path").and_yield test_file
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield test_file
 
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileCsvReader.new custom_file, {}
         rows = []
@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
       end
 
       it "utilizes reader options" do
-        OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "path").and_yield test_file
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield test_file
 
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileCsvReader.new custom_file, {headers: true, return_headers: false}
         rows = []
@@ -106,8 +106,8 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
   describe OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader do
     let (:custom_file) do
       cf = double("custom_file")
-      cf.stub(:bucket).and_return "bucket"
-      cf.stub(:path).and_return "path"
+      allow(cf).to receive(:bucket).and_return "bucket"
+      allow(cf).to receive(:path).and_return "path"
       cf
     end
 
@@ -116,8 +116,8 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
     describe "foreach" do
       it "yields all row values from a sheet" do
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader.new(custom_file, {})
-        r.should_receive(:get_xl_client).with("path", {bucket: "bucket"}).and_return xl_client
-        xl_client.should_receive(:all_row_values).with(0).and_yield([1,2]).and_yield([3,4])
+        expect(r).to receive(:get_xl_client).with("path", {bucket: "bucket"}).and_return xl_client
+        expect(xl_client).to receive(:all_row_values).with(0).and_yield([1,2]).and_yield([3,4])
 
         rows = []
         r.foreach {|row| rows << row}
@@ -127,8 +127,8 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
 
       it "utilizes reader options" do
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader.new(custom_file, {sheet_number: 1, bucket: "different_bucket", opt: "opt"})
-        r.should_receive(:get_xl_client).with("path", {bucket: "different_bucket", opt: "opt"}).and_return xl_client
-        xl_client.should_receive(:all_row_values).with(1).and_yield([1,2]).and_yield([3,4])
+        expect(r).to receive(:get_xl_client).with("path", {bucket: "different_bucket", opt: "opt"}).and_return xl_client
+        expect(xl_client).to receive(:all_row_values).with(1).and_yield([1,2]).and_yield([3,4])
 
         rows = []
         r.foreach {|row| rows << row}

@@ -39,17 +39,17 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "checks for an existing dimension before creating a new one" do
       get_xml = "<xml>test</xml>"
       control = "controlid"
-      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      expect(@xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
 
       dimension_response = REXML::Document.new "<notfound>false</notfound>"
-      @c.should_receive(:post_xml).with("company", false, false, get_xml, control).and_return dimension_response
+      expect(@c).to receive(:post_xml).with("company", false, false, get_xml, control).and_return dimension_response
 
       create_xml = "<create>value</create>"
       control2 = "controlid2"
-      @xml_gen.should_receive(:generate_dimension_create).with("type", "id", "value").and_return [control2, create_xml]
+      expect(@xml_gen).to receive(:generate_dimension_create).with("type", "id", "value").and_return [control2, create_xml]
 
       create_response = REXML::Document.new "<key>New Dimension</key>"
-      @c.should_receive(:post_xml).with("company", true, true, create_xml, control2).and_return create_response
+      expect(@c).to receive(:post_xml).with("company", true, true, create_xml, control2).and_return create_response
 
 
       expect(@c.send_dimension "type", "id", "value", "company").to eq "New Dimension"
@@ -58,10 +58,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "does not create a new dimnsion if one already exists" do
       get_xml = "<xml>test</xml>"
       control = "controlid"
-      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      expect(@xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
 
       dimension_response = REXML::Document.new "<key>Existing</key>"
-      @c.should_receive(:post_xml).with("company", false, false, get_xml, control).and_return dimension_response
+      expect(@c).to receive(:post_xml).with("company", false, false, get_xml, control).and_return dimension_response
 
       expect(@c.send_dimension "type", "id", "value", "company").to eq "Existing"
     end
@@ -69,10 +69,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "logs error responses" do
       get_xml = "<xml>test</xml>"
       control = "controlid"
-      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      expect(@xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
       
-      @c.should_receive(:post_xml).with("company", false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Intacct Error"
-      OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError.any_instance.should_receive(:log_me).with ["Failed to find and/or create dimension type id for location company."]
+      expect(@c).to receive(:post_xml).with("company", false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Intacct Error"
+      expect_any_instance_of(OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError).to receive(:log_me).with ["Failed to find and/or create dimension type id for location company."]
 
       expect(@c.send_dimension "type", "id", "value", "company").to be_nil
     end
@@ -80,8 +80,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "swallows errors returned by Intacct API related to duplicate create calls" do
       get_xml = "<xml>test</xml>"
       control = "controlid"
-      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
-      @c.should_receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "A successful transaction has already been recorded with the control id #{control}"
+      expect(@xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      expect(@c).to receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "A successful transaction has already been recorded with the control id #{control}"
 
       expect(@c.send_dimension "type", "id", "value").to eq "id"
     end
@@ -89,8 +89,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "swallows errors returned by Intacct API related to duplicate Class create calls" do
       get_xml = "<xml>test</xml>"
       control = "controlid"
-      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
-      @c.should_receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Another Class with the given value(s) 12345 already exists."
+      expect(@xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      expect(@c).to receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Another Class with the given value(s) 12345 already exists."
 
       expect(@c.send_dimension "type", "id", "value").to eq "id"
     end
@@ -98,8 +98,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "swallows errors returned by Intacct API related to duplicate Project create calls" do
       get_xml = "<xml>test</xml>"
       control = "controlid"
-      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
-      @c.should_receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Another Project with the given value(s) 12345 already exists."
+      expect(@xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      expect(@c).to receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Another Project with the given value(s) 12345 already exists."
 
       expect(@c.send_dimension "type", "id", "value").to eq "id"
     end
@@ -111,13 +111,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       r = IntacctReceivable.new intacct_errors: "Error", company: "c"
       cid = "controlid"
       xml = "<recv>receivable</recv>"
-      @xml_gen.should_receive(:generate_receivable_xml).with(r).and_return [cid, xml]
+      expect(@xml_gen).to receive(:generate_receivable_xml).with(r).and_return [cid, xml]
 
-      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "R-Key")
+      expect(@c).to receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "R-Key")
 
       @c.send_receivable r
 
-      expect(r.persisted?).to be_true
+      expect(r.persisted?).to be_truthy
       expect(r.intacct_key).to eq "R-Key"
       expect(r.intacct_upload_date.to_date).to eq Time.zone.now.to_date
       expect(r.intacct_errors).to be_nil
@@ -127,13 +127,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       r = IntacctReceivable.new company: "c"
       cid = "controlid"
       xml = "<recv>receivable</recv>"
-      @xml_gen.should_receive(:generate_receivable_xml).with(r).and_return [cid, xml]
+      expect(@xml_gen).to receive(:generate_receivable_xml).with(r).and_return [cid, xml]
 
-      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_raise "Error Message"
+      expect(@c).to receive(:post_xml).with("c", true, true, xml, cid).and_raise "Error Message"
 
       @c.send_receivable r
 
-      expect(r.persisted?).to be_true
+      expect(r.persisted?).to be_truthy
       expect(r.intacct_errors).to eq "Error Message"
     end
 
@@ -141,14 +141,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       r = IntacctReceivable.new company: "c"
       cid = "controlid"
       xml = "<recv>receivable</recv>"
-      @xml_gen.should_receive(:generate_receivable_xml).with(r).exactly(3).times.and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, true, xml, cid).exactly(3).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, "Error Message"
-      @c.should_receive(:sleep).with(1)
-      @c.should_receive(:sleep).with(2)
+      expect(@xml_gen).to receive(:generate_receivable_xml).with(r).exactly(3).times.and_return [cid, xml]
+      expect(@c).to receive(:post_xml).with("c", true, true, xml, cid).exactly(3).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, "Error Message"
+      expect(@c).to receive(:sleep).with(1)
+      expect(@c).to receive(:sleep).with(2)
 
       @c.send_receivable r
 
-      expect(r.persisted?).to be_true
+      expect(r.persisted?).to be_truthy
       expect(r.intacct_errors).to eq "Error Message"
     end
   end
@@ -164,14 +164,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       check_cid = "checkid"
       check_xml = "<check>check</check>"
     
-      @c.should_receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
-      @xml_gen.should_receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
-      @xml_gen.should_receive(:generate_ap_adjustment).with(c, p).and_return [check_cid, check_xml]
-      @c.should_receive(:post_xml).with("c", true, true, xml + check_xml, [cid, check_cid]).and_return create_multi_result_key_response({cid => "P-Key", check_cid => "C-Key"})
+      expect(@c).to receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
+      expect(@xml_gen).to receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
+      expect(@xml_gen).to receive(:generate_ap_adjustment).with(c, p).and_return [check_cid, check_xml]
+      expect(@c).to receive(:post_xml).with("c", true, true, xml + check_xml, [cid, check_cid]).and_return create_multi_result_key_response({cid => "P-Key", check_cid => "C-Key"})
 
       @c.send_payable p, checks
 
-      expect(p.persisted?).to be_true
+      expect(p.persisted?).to be_truthy
       expect(p.intacct_key).to eq "P-Key"
       expect(p.intacct_upload_date.to_date).to eq Time.zone.now.to_date
       expect(p.intacct_errors).to be_nil
@@ -182,10 +182,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
     it "handles missing terms for vendor" do
       p = IntacctPayable.new intacct_errors: "Error", company: "c", vendor_number: "v"
-      @c.should_receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({})
+      expect(@c).to receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({})
 
       @c.send_payable p, []
-      expect(p.persisted?).to be_true
+      expect(p.persisted?).to be_truthy
       expect(p.intacct_errors).to eq "Failed to retrieve Terms for Vendor v.  Terms must be set up for all vendors."
     end
 
@@ -198,14 +198,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       check_cid = "checkid"
       check_xml = "<check>check</check>"
       
-      @c.should_receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
-      @xml_gen.should_receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
-      @xml_gen.should_receive(:generate_ap_adjustment).with(c, p).and_return [check_cid, check_xml]
-      @c.should_receive(:post_xml).with("c", true, true, (xml + check_xml), [cid, check_cid]).and_raise "Creation error."
+      expect(@c).to receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
+      expect(@xml_gen).to receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
+      expect(@xml_gen).to receive(:generate_ap_adjustment).with(c, p).and_return [check_cid, check_xml]
+      expect(@c).to receive(:post_xml).with("c", true, true, (xml + check_xml), [cid, check_cid]).and_raise "Creation error."
 
       @c.send_payable p, checks
 
-      expect(p.persisted?).to be_true
+      expect(p.persisted?).to be_truthy
       expect(p.intacct_errors).to eq "Creation error."
 
       expect(c).not_to be_persisted
@@ -218,12 +218,12 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       cid = "controlid"
       xml = "<check>check</check>"
-      @xml_gen.should_receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, true, xml, [cid]).and_return create_result_key_response(cid, "GL-Account-Key")
+      expect(@xml_gen).to receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
+      expect(@c).to receive(:post_xml).with("c", true, true, xml, [cid]).and_return create_result_key_response(cid, "GL-Account-Key")
 
       @c.send_check check, false
 
-      expect(check.persisted?).to be_true
+      expect(check.persisted?).to be_truthy
       expect(check.intacct_key).to eq "GL-Account-Key"
       expect(check.intacct_upload_date.to_date).to eq Time.zone.now.to_date
     end
@@ -236,16 +236,16 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       adj_id = "adj_id"
       adj_xml = "<adjustment>adj</adjustment>"
 
-      @xml_gen.should_receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
-      @xml_gen.should_receive(:generate_ap_adjustment).with(check, nil).and_return [adj_id, adj_xml]
+      expect(@xml_gen).to receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
+      expect(@xml_gen).to receive(:generate_ap_adjustment).with(check, nil).and_return [adj_id, adj_xml]
 
-      @c.should_receive(:post_xml).with("c", true, true, (xml+adj_xml), [cid, adj_id]).and_return create_multi_result_key_response({cid => "GL-Account-Key", adj_id => "Adj-Key"})
+      expect(@c).to receive(:post_xml).with("c", true, true, (xml+adj_xml), [cid, adj_id]).and_return create_multi_result_key_response({cid => "GL-Account-Key", adj_id => "Adj-Key"})
 
       create_result_key_response(cid, "GL-Account-Key")
 
       @c.send_check check, true
 
-      expect(check.persisted?).to be_true
+      expect(check.persisted?).to be_truthy
       expect(check.intacct_key).to eq "GL-Account-Key"
       expect(check.intacct_adjustment_key).to eq "Adj-Key"
       expect(check.intacct_upload_date.to_date).to eq Time.zone.now.to_date
@@ -257,12 +257,12 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       cid = "controlid"
       xml = "<check>check</check>"
       
-      @xml_gen.should_receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, true, xml, [cid]).and_raise "Creation error."
+      expect(@xml_gen).to receive(:generate_check_gl_entry_xml).with(check).and_return [cid, xml]
+      expect(@c).to receive(:post_xml).with("c", true, true, xml, [cid]).and_raise "Creation error."
 
       @c.send_check check, false
 
-      expect(check.persisted?).to be_true
+      expect(check.persisted?).to be_truthy
       expect(check.intacct_errors).to eq "Creation error."
     end
   end
@@ -271,10 +271,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "retrieves specific fields for an object" do
       cid = "controlid"
       xml = "<fields>f</fields>"
-      @xml_gen.should_receive(:generate_get_object_fields).with("object", "key", "field1", "field2").and_return [cid, xml]
+      expect(@xml_gen).to receive(:generate_get_object_fields).with("object", "key", "field1", "field2").and_return [cid, xml]
 
       fields_xml = "<result><controlid>#{cid}</controlid><data><object><field1>value1</field1><field2>value2</field2></object></data></result>"
-      @c.should_receive(:post_xml).with("c", false, false, xml, cid).and_return REXML::Document.new(fields_xml)
+      expect(@c).to receive(:post_xml).with("c", false, false, xml, cid).and_return REXML::Document.new(fields_xml)
 
       expect(@c.get_object_fields "c", "object", "key", "field1", "field2").to eq({"field1" => "value1", "field2" => "value2"})
     end
@@ -282,8 +282,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "raises an error if it can't find object fields" do
       cid = "controlid"
       xml = "<fields>f</fields>"
-      @xml_gen.should_receive(:generate_get_object_fields).with("object", "key", "field1", "field2").and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", false, false, xml, cid).and_return REXML::Document.new("<result />")
+      expect(@xml_gen).to receive(:generate_get_object_fields).with("object", "key", "field1", "field2").and_return [cid, xml]
+      expect(@c).to receive(:post_xml).with("c", false, false, xml, cid).and_return REXML::Document.new("<result />")
 
       expect {@c.get_object_fields "c", "object", "key", "field1", "field2"}.to raise_error "Failed to find object object with key key."
     end
@@ -292,9 +292,9 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
   describe "post_xml" do
 
     before :each do
-      @c.stub(:production?).and_return true
+      allow(@c).to receive(:production?).and_return true
       @resp = REXML::Document.new "<result><controlid>controlid</controlid><status>success</status></result>"
-      @c.stub(:http_request) do |uri, post|
+      allow(@c).to receive(:http_request) do |uri, post|
         @uri = uri
         @post = post
 
@@ -421,10 +421,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "wraps the response body in a REXML::Document" do
       # This test is just to ensure we're fulfilling the HttpClient contract to turn the response into an XML document
       resp = double("MockHttpReponse")
-      resp.should_receive(:body).and_return "<xml>Test</xml>"
+      expect(resp).to receive(:body).and_return "<xml>Test</xml>"
 
       r = @c.send(:process_response, resp)
-      expect(r.is_a? REXML::Document).to be_true
+      expect(r.is_a? REXML::Document).to be_truthy
       expect(r.to_s).to eq REXML::Document.new("<xml>Test</xml>").to_s
     end
   end

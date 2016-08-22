@@ -16,7 +16,7 @@ describe Api::V1::SupportRequestsController do
   describe "create" do
     it "creates a support request" do
       sc_config = {"more_help_message"=>"mhm"}
-      SupportRequest.stub(:support_request_config).and_return sc_config
+      allow(SupportRequest).to receive(:support_request_config).and_return sc_config
       @request.env['HTTP_REFERER'] = "http://www.vfitrack.net"
 
       post :create, support_request: {body: "Help!", importance: "Critical"}
@@ -37,8 +37,8 @@ describe Api::V1::SupportRequestsController do
     end
 
     it "rolls back save if error occurs in sending" do
-      SupportRequest::TestingSender.any_instance.should_receive(:send_request).and_raise "Error!"
-      expect {post :create, support_request: {body: "Help!", importance: "Critical"}}.to raise_error
+      expect_any_instance_of(SupportRequest::TestingSender).to receive(:send_request).and_raise "Error!"
+      expect {post :create, support_request: {body: "Help!", importance: "Critical"}}.to raise_error(/Error/)
 
       expect(response).not_to be_success
 
@@ -47,11 +47,11 @@ describe Api::V1::SupportRequestsController do
     end
 
     it "returns errors if save fails" do
-      SupportRequest.any_instance.should_receive(:save).and_return false
+      expect_any_instance_of(SupportRequest).to receive(:save).and_return false
 
       post :create, support_request: {body: "Help!", importance: "Critical"}
       expect(response).not_to be_success
-      # Errors will technically be nil since we don't have any real AR validations, but by 
+      # Errors will technically be nil since we don't have any real AR validations, but by
       # forcing save to return blank we force the invalid path.
       expect(JSON.parse(response.body)).to eq({"errors" => []})
     end

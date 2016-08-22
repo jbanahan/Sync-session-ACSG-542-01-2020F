@@ -4,70 +4,70 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
   before :each do
     @cf = double(:custom_file)
     att = double(:attached)
-    att.stub(:path).and_return('mypath')
-    @cf.stub(:attached).and_return(att)
-    @cf.stub(:attached_file_name).and_return('attfilename')
+    allow(att).to receive(:path).and_return('mypath')
+    allow(@cf).to receive(:attached).and_return(att)
+    allow(@cf).to receive(:attached_file_name).and_return('attfilename')
   end
-  describe :valid_style? do
+  describe "valid_style?" do
     it "should not validate styles that are not [7 alphanumerics]-[3 alphanumerics]" do
-      described_class.valid_style?('12345-12').should be_false
+      expect(described_class.valid_style?('12345-12')).to be_falsey
     end
     it "should not validate if it starts with a letter" do
-      described_class.valid_style?('a123456-123').should be_false
+      expect(described_class.valid_style?('a123456-123')).to be_falsey
     end
     it "should not validate if it starts with 9999999" do
-      described_class.valid_style?('9999999-123').should be_false
+      expect(described_class.valid_style?('9999999-123')).to be_falsey
     end
     it "should pass a valid style" do
-      described_class.valid_style?('1a34567-1a3').should be_true
+      expect(described_class.valid_style?('1a34567-1a3')).to be_truthy
     end
   end
-  describe :valid_plant? do
+  describe "valid_plant?" do
     it "should not validate a blank plant" do
-      described_class.valid_plant?('').should be_false
+      expect(described_class.valid_plant?('')).to be_falsey
     end
     it "should not validate plants 52, 61, 68" do
-      ['0052','0061','0068'].each {|i| described_class.valid_plant?(i).should be_false}
+      ['0052','0061','0068'].each {|i| expect(described_class.valid_plant?(i)).to be_falsey}
     end
     it "should not validate a non-numeric 4 digit plant that doesn't start with I" do
-      described_class.valid_plant?('a1').should be_false
+      expect(described_class.valid_plant?('a1')).to be_falsey
     end
     it "should pass a valid plant" do
-      described_class.valid_plant?('0011').should be_true
+      expect(described_class.valid_plant?('0011')).to be_truthy
     end
     it "shoud pass I and 3 digits" do
-      described_class.valid_plant?('I001').should be_true
+      expect(described_class.valid_plant?('I001')).to be_truthy
     end
   end
-  describe :prep_plant_code do
+  describe "prep_plant_code" do
     it "should fix numeric" do
-      described_class.prep_plant_code('17.0').should == '0017'
+      expect(described_class.prep_plant_code('17.0')).to eq('0017')
     end
   end
-  describe :write_material_color_plant_xrefs do
+  describe "write_material_color_plant_xrefs" do
     it "should write XREFS" do
       rows = [['','12345-001','71'],['','12345-001','71'],['','12345-002','73']]
       described_class.write_material_color_plant_xrefs rows
-      DataCrossReference.find_ua_material_color_plant('12345','001','0071').should == '1'
-      DataCrossReference.find_ua_material_color_plant('12345','002','0073').should == '1'
+      expect(DataCrossReference.find_ua_material_color_plant('12345','001','0071')).to eq('1')
+      expect(DataCrossReference.find_ua_material_color_plant('12345','002','0073')).to eq('1')
     end
   end
-  describe :valid_material? do
+  describe "valid_material?" do
     it "should not validate materials that contain DELETE" do
-      described_class.valid_material?('this material is DELETED already').should be_false
+      expect(described_class.valid_material?('this material is DELETED already')).to be_falsey
     end
     it "should not validate materials that contain ERROR" do
-      described_class.valid_material?('this material has an ERROR').should be_false
-      described_class.valid_material?('ERROR this material has says yoda').should be_false
+      expect(described_class.valid_material?('this material has an ERROR')).to be_falsey
+      expect(described_class.valid_material?('ERROR this material has says yoda')).to be_falsey
     end
     it "should validate materials where ERROR is part of another word" do
-      described_class.valid_material?('this material is a TERROR').should be_true
+      expect(described_class.valid_material?('this material is a TERROR')).to be_truthy
     end
     it "should pass anything else" do
-      described_class.valid_material?('this material has no bad words').should be_true
+      expect(described_class.valid_material?('this material has no bad words')).to be_truthy
     end
   end
-  describe :valid_row? do
+  describe "valid_row?" do
     before :each do
       @r = ['',
         '1234567-890',
@@ -84,43 +84,43 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
     end
     it "should fail with empty material" do
       @r[9] = ''
-      described_class.valid_row?(@r).should be_false
+      expect(described_class.valid_row?(@r)).to be_falsey
     end
     it "should fail with empty plant" do
       @r[2] = ''
-      described_class.valid_row?(@r).should be_false
+      expect(described_class.valid_row?(@r)).to be_falsey
     end
     it "should fail with empty style" do
       @r[1] = ''
-      described_class.valid_row?(@r).should be_false
+      expect(described_class.valid_row?(@r)).to be_falsey
     end
     it "should fail if row is not 11 elements" do
       @r << 'x'
-      described_class.valid_row?(@r).should be_false
+      expect(described_class.valid_row?(@r)).to be_falsey
     end
     it "should fail if row.first is not blank?" do
       @r[0] = 'x'
-      described_class.valid_row?(@r).should be_false
+      expect(described_class.valid_row?(@r)).to be_falsey
     end
     it "should pass with valid_material?, valid_plant?, valid_style?" do
-      described_class.valid_row?(@r).should be_true
+      expect(described_class.valid_row?(@r)).to be_truthy
     end
     it "should fail with !valid_material?, !valid_plant?, !valid_style?" do
-      described_class.should_receive(:valid_material?).with(@r[9]).and_return false
-      described_class.valid_row?(@r).should be_false
+      expect(described_class).to receive(:valid_material?).with(@r[9]).and_return false
+      expect(described_class.valid_row?(@r)).to be_falsey
     end
   end
-  describe :process do
+  describe "process" do
     before :each do 
       @u = Factory(:user)
       @tmp = double('tmp')
-      @tmp.stub(:path).and_return('mypath')
-      OpenChain::S3.stub(:download_to_tempfile).and_return(@tmp)
-      OpenChain::S3.stub(:bucket_name).and_return('buckname')
-      described_class.any_instance.stub(:can_view?).and_return true
+      allow(@tmp).to receive(:path).and_return('mypath')
+      allow(OpenChain::S3).to receive(:download_to_tempfile).and_return(@tmp)
+      allow(OpenChain::S3).to receive(:bucket_name).and_return('buckname')
+      allow_any_instance_of(described_class).to receive(:can_view?).and_return true
     end
     it "should group styles and pass to parse_rows" do
-      CSV.should_receive(:foreach).with(@tmp.path,{col_sep:"\t",encoding:"UTF-16LE:UTF-8",quote_char:"\0"})
+      expect(CSV).to receive(:foreach).with(@tmp.path,{col_sep:"\t",encoding:"UTF-16LE:UTF-8",quote_char:"\0"})
         .and_yield(['','1234567-123','23','','','','','','','desc1',''])
         .and_yield(['','1234567-223','23','','','','','','','desc1',''])
         .and_yield(['','1234567-234','23','','','','','','','desc1',''])
@@ -128,38 +128,38 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
         .and_yield(['','1234568-345','23','','','','','','','desc1',''])
         .and_yield(['','1234569-345','23','','','','','','','desc1',''])
       p = described_class.new(@cf)
-      p.should_receive(:process_rows).with([
+      expect(p).to receive(:process_rows).with([
         ['','1234567-123','23','','','','','','','desc1',''],
         ['','1234567-223','23','','','','','','','desc1',''],
         ['','1234567-234','23','','','','','','','desc1','']
       ],@u)
-      p.should_receive(:process_rows).with([
+      expect(p).to receive(:process_rows).with([
         ['','1234568-234','23','','','','','','','desc1',''],
         ['','1234568-345','23','','','','','','','desc1','']
       ],@u)
-      p.should_receive(:process_rows).with([
+      expect(p).to receive(:process_rows).with([
         ['','1234569-345','23','','','','','','','desc1',''],
       ],@u)
       p.process @u 
     end
     it "should write user message" do
       p = described_class.new(@cf)
-      CSV.should_receive(:foreach).with(@tmp.path,{col_sep:"\t",encoding:"UTF-16LE:UTF-8",quote_char:"\0"})
+      expect(CSV).to receive(:foreach).with(@tmp.path,{col_sep:"\t",encoding:"UTF-16LE:UTF-8",quote_char:"\0"})
         .and_yield(['','1234567-123','23','','','','','','','desc1',''])
       p.process @u 
       msg = @u.messages.last
-      msg.body.should include @cf.attached_file_name
+      expect(msg.body).to include @cf.attached_file_name
     end
     it "should log message on failure" do
       p = described_class.new(@cf)
-      CSV.should_receive(:foreach).and_raise("bad stuff")
-      lambda {p.process @u}.should raise_error 'bad stuff'
+      expect(CSV).to receive(:foreach).and_raise("bad stuff")
+      expect {p.process @u}.to raise_error 'bad stuff'
       msg = @u.messages.last
-      msg.body.should include @cf.attached_file_name
-      msg.body.should include 'bad stuff' 
+      expect(msg.body).to include @cf.attached_file_name
+      expect(msg.body).to include 'bad stuff' 
     end
   end
-  describe :process_rows do
+  describe "process_rows" do
     before :each do
       @p = described_class.new(@cf)
       @u = Factory(:user)
@@ -173,8 +173,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       #properly initializes the custom defintions without this call
       cdefs = described_class.prep_custom_definitions [:colors,:plant_codes]
       p = Product.find_by_unique_identifier('1234567')
-      p.get_custom_value(cdefs[:colors]).value.should == "122\n123"
-      p.get_custom_value(cdefs[:plant_codes]).value.should == "0020\n0023"
+      expect(p.get_custom_value(cdefs[:colors]).value).to eq("122\n123")
+      expect(p.get_custom_value(cdefs[:plant_codes]).value).to eq("0020\n0023")
       p.name == "desc1" #use the first one
     end
     it "should not clear existing values when aggregating color and plant codes" do
@@ -187,8 +187,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
         ['','1234567-122','20','','','','','','','desc2','']
       ], @u
       p = Product.find_by_unique_identifier('1234567')
-      p.get_custom_value(cdefs[:colors]).value.should == "001\n122\n123"
-      p.get_custom_value(cdefs[:plant_codes]).value.should == "0020\n0023\n0066"
+      expect(p.get_custom_value(cdefs[:colors]).value).to eq("001\n122\n123")
+      expect(p.get_custom_value(cdefs[:plant_codes]).value).to eq("0020\n0023\n0066")
     end
     it "should take entity snapshot" do
       @p.process_rows [
@@ -196,8 +196,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
         ['','1234567-122','20','','','','','','','desc2','']
       ], @u
       p = Product.find_by_unique_identifier('1234567')
-      p.should have(1).entity_snapshots
-      p.entity_snapshots.first.user.should == @u
+      expect(p.entity_snapshots.size).to eq(1)
+      expect(p.entity_snapshots.first.user).to eq(@u)
     end
     it "should set import countries based on plant codes" do
       c = Factory(:country,iso_code:'US')
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       ], @u
       imp_country_cd = described_class.prep_custom_definitions([:import_countries])[:import_countries]
       p = Product.find_by_unique_identifier('1234567')
-      p.get_custom_value(imp_country_cd).value.should == "CA\nUS"
+      expect(p.get_custom_value(imp_country_cd).value).to eq("CA\nUS")
     end
   end
 end

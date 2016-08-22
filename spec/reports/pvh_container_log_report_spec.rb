@@ -4,7 +4,7 @@ describe OpenChain::Report::PvhContainerLogReport do
 
   describe "run_report" do
     before :each do
-      MasterSetup.any_instance.stub(:request_host).and_return "localhost"
+      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
       @port = Factory(:port)
       @container1 = Factory(:container, container_number: "CONT1", quantity: 5, entry: Factory(:entry, broker_reference: "123", customer_number: "PVH", arrival_date: Time.zone.now, worksheet_date: Time.zone.parse("2014-10-01 00:00"), entry_port_code: @port.schedule_d_code, store_names: "A\n B", customer_references: "A123 10/1/14\n1234\nB123"))
       @entry = @container1.entry
@@ -71,7 +71,7 @@ describe OpenChain::Report::PvhContainerLogReport do
     end
 
     it "runs report and emails it to specified people" do
-      described_class.any_instance.should_receive(:run_report).with('email_to' => ['me@there.com']).and_return @temp
+      expect_any_instance_of(described_class).to receive(:run_report).with('email_to' => ['me@there.com']).and_return @temp
 
       described_class.run_schedulable 'email_to' => ['me@there.com']
 
@@ -80,7 +80,7 @@ describe OpenChain::Report::PvhContainerLogReport do
       expect(m.subject).to eq "[VFI Track] PVH Container Log"
       expect(m.body.raw_source).to include "Attached is the PVH Container Log Report for "
       attachment = m.attachments.first
-      attachment.should_not be_nil
+      expect(attachment).not_to be_nil
       expect(attachment.read).to eq "Test"
       expect(@temp).to be_closed
     end
@@ -92,17 +92,17 @@ describe OpenChain::Report::PvhContainerLogReport do
 
   describe "permission?" do
     it "allows permission for master users on www-vfitrack-net" do
-      MasterSetup.any_instance.should_receive(:system_code).and_return "www-vfitrack-net"
-      expect(described_class.permission? Factory(:master_user)).to be_true
+      expect_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
+      expect(described_class.permission? Factory(:master_user)).to be_truthy
     end
 
     it "denies permission for non-master users" do
-      expect(described_class.permission? Factory(:user)).to be_false
+      expect(described_class.permission? Factory(:user)).to be_falsey
     end
 
     it "denies permission for non-vfitrack instance" do
-      MasterSetup.any_instance.should_receive(:system_code).and_return "blah"
-      expect(described_class.permission? Factory(:master_user)).to be_false
+      expect_any_instance_of(MasterSetup).to receive(:system_code).and_return "blah"
+      expect(described_class.permission? Factory(:master_user)).to be_falsey
     end
   end
 end
