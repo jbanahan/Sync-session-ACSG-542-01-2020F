@@ -825,14 +825,14 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "logs an error message if periodic monthly data is missing" do
       @e['pms_year'] = 2016
-      expect_any_instance_of(StandardError).to receive(:log_me)
+      expect_any_instance_of(Exception).to receive(:log_me)
       described_class.new.process_entry @e
     end
 
     it "does not log an error if periodic data is missing and the entry does not have a filed date value" do
       @e['dates'].reject! {|v| v['date_no'] == 16 }
 
-      expect_any_instance_of(StandardError).not_to receive(:log_me)
+      expect_any_instance_of(Exception).not_to receive(:log_me)
       described_class.new.process_entry @e
     end
 

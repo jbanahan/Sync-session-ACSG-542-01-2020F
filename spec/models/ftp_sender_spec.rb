@@ -149,7 +149,7 @@ describe FtpSender do
         expect(@ftp).to receive(:last_response).and_return "Error"
 
 
-        expect_any_instance_of(StandardError).to receive(:log_me).with ["Attempted and failed to send ftp Session id #{s.id} 10 times. No more attempts will be made."]
+        expect_any_instance_of(Exception).to receive(:log_me).with ["Attempted and failed to send ftp Session id #{s.id} 10 times. No more attempts will be made."]
         FtpSender.send_file 'server', 'user', 'password', nil, opts
 
       end

@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
 
     it "includes exceptions in error email" do
       allow(@handler).to receive(:create_and_send_report!).and_raise "Disaster!"
-      expect_any_instance_of(StandardError).to receive(:log_me).with ["Failed to process 7501. Custom File ID: 1. Message: Disaster!"]
+      expect_any_instance_of(Exception).to receive(:log_me).with ["Failed to process 7501. Custom File ID: 1. Message: Disaster!"]
       @handler.process @u
       mail = ActionMailer::Base.deliveries.pop
 

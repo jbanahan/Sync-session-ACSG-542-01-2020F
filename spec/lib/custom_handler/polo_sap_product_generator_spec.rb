@@ -270,7 +270,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
     context "invalid_ascii_chars" do
       before :each do
-        expect_any_instance_of(StandardError).to receive(:log_me) do |instance, arg|
+        expect_any_instance_of(Exception).to receive(:log_me) do |instance, arg|
           @error_message = arg
         end
       end

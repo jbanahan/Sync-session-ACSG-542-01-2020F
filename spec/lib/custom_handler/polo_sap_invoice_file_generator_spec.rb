@@ -915,7 +915,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       # during the invoice file generation
       expect(@gen).to receive(:determine_invoice_output_format).and_raise "Error to log."
       sheet = nil
-      expect_any_instance_of(StandardError).to receive(:log_me) do |instance, messages, file_paths|
+      expect_any_instance_of(Exception).to receive(:log_me) do |instance, messages, file_paths|
         expect(messages[0]).to eq("See attached spreadsheet for full list of invoice numbers that could not be generated.")
         sheet = Spreadsheet.open(file_paths[0]).worksheet 0
       end

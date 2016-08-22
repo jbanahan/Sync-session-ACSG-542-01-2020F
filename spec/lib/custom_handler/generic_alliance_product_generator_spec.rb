@@ -142,7 +142,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         build_custom_fields @standard_custom_fields, @p
         @p.update_custom_value! @custom_definitions[:prod_part_number], "Pilcrow ¶"
         error = nil
-        expect_any_instance_of(StandardError).to receive(:log_me) do 
+        expect_any_instance_of(Exception).to receive(:log_me) do 
           error = $!
         end
 

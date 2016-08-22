@@ -155,7 +155,7 @@ describe LinkableAttachmentImportRule do
       expect(LinkableAttachmentImportRule).to receive(:import).and_return r
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt').and_yield @file
 
-      expect_any_instance_of(StandardError).to receive(:log_me).with ["Failed to link S3 file /s3path/dir/s3file.txt using filename orig_file.txt"]
+      expect_any_instance_of(Exception).to receive(:log_me).with ["Failed to link S3 file /s3path/dir/s3file.txt using filename orig_file.txt"]
 
       LinkableAttachmentImportRule.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt', original_path: "/path/to"
     end

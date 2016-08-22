@@ -178,7 +178,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       # Use hebrew chars, since the windows encoding in use in Fenix is a latin one, it can't encode them
       @p.update_attributes! unique_identifier: "בדיקה אם נרשם"
 
-      expect_any_instance_of(StandardError).to receive(:log_me).with "Product בדיקה אם נרשם could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
+      expect_any_instance_of(Exception).to receive(:log_me).with "Product בדיקה אם נרשם could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
       @t = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code).make_file [@p]
       expect(IO.read(@t.path)).to be_blank
     end

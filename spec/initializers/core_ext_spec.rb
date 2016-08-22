@@ -51,7 +51,7 @@ describe 'time zone parse_us_base_format' do
     it 'should fail on missing meridian' do
       @test_date = '06/28/2008 04:25'
     end
-    after :each do 
+    after :each do
       expect {@zone.parse_us_base_format(@test_date)}.to raise_error ArgumentError
     end
   end
@@ -81,7 +81,7 @@ end
 describe "log_me" do
   context "NoMethodError" do
     it "proxies NoMethodErrorClasses" do
-      expect_any_instance_of(SerializableNoMethodError).to receive(:log_me).with ["Test"], [], false
+      expect_any_instance_of(Exception).to receive(:log_me).with ["Test"], [], false
       begin
         raise NoMethodError, "Testing"
       rescue => e
@@ -118,7 +118,7 @@ describe "log_me" do
     mail = double("mail")
     expect(OpenMailer).to receive(:send_generic_exception).and_return mail
     expect(mail).to receive(:deliver)
-    
+
     begin
       raise StandardError, "Testing"
     rescue => e

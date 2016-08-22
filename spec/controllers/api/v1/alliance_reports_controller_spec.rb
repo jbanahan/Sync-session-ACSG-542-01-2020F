@@ -24,9 +24,7 @@ describe Api::V1::AllianceReportsController do
       query_results = [{"key" => "value"}]
       query_context = {"report_result_id" => -1}
 
-      expect_any_instance_of(StandardError).to receive(:log_me)
-
-      post "receive_alliance_report_data", results: query_results, context: query_context
+      expect{post "receive_alliance_report_data", results: query_results, context: query_context}.to change(ErrorLogEntry,:count).by(1)
       expect(response.body).to eq ({"OK" => ""}.to_json)
     end
 
@@ -35,8 +33,7 @@ describe Api::V1::AllianceReportsController do
       query_results = [{"key" => "value"}]
       query_context = {"report_result_id" => rr.id}
 
-      expect_any_instance_of(StandardError).to receive(:log_me)
-      post "receive_alliance_report_data", results: query_results, context: query_context
+      expect{post "receive_alliance_report_data", results: query_results, context: query_context}.to change(ErrorLogEntry,:count).by(1)
       expect(response.body).to eq ({"OK" => ""}.to_json)
     end
 
@@ -44,8 +41,7 @@ describe Api::V1::AllianceReportsController do
       query_results = [{"key" => "value"}]
       query_context = {}
 
-      expect_any_instance_of(StandardError).to receive(:log_me)
-      post "receive_alliance_report_data", results: query_results, context: query_context
+      expect{post "receive_alliance_report_data", results: query_results, context: query_context}.to change(ErrorLogEntry,:count).by(1)
       expect(response.body).to eq ({"OK" => ""}.to_json)
     end
 

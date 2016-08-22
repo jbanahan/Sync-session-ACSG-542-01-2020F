@@ -228,7 +228,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     it "should not fail for empty lines" do
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return({})
-      expect_any_instance_of(StandardError).not_to receive(:log_me)
+      expect_any_instance_of(Exception).not_to receive(:log_me)
       @h.process Factory(:user)
     end
     it "should fail if user cannot edit products" do
