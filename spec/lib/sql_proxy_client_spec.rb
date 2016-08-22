@@ -11,7 +11,7 @@ describe OpenChain::SqlProxyClient do
   end
 
   describe "request" do
-    before :each do 
+    before :each do
       allow(described_class).to receive(:proxy_config_file).and_return "fake/path/config.yml"
       expect(YAML).to receive(:load_file).with("fake/path/config.yml").and_return config
     end
@@ -29,9 +29,9 @@ describe OpenChain::SqlProxyClient do
 
       e = StandardError.new "Error"
       expect(json_client).to receive(:post).and_raise e
-      expect(e).to receive(:log_me).with ["Failed to initiate sql_proxy query for job_name with params #{{'job_params' => params, "context" => request_context}.to_json}."]
 
       expect(subject.request "job_name", params, request_context).to be_nil
+      expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to initiate sql_proxy query for job_name with params #{{'job_params' => params, "context" => request_context}.to_json}."]
     end
 
     it "raises error if specified" do
@@ -56,5 +56,5 @@ describe OpenChain::SqlProxyClient do
       expect(described_class.proxy_config).to eq config
     end
   end
-  
+
 end

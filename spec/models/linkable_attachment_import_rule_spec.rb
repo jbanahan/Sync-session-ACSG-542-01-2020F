@@ -50,7 +50,7 @@ describe LinkableAttachmentImportRule do
         result = LinkableAttachmentImportRule.import @file, 'original_file_name.xls', '/path/not/found'
         expect(result).to be nil
       end
-    
+
       it 'should create linkable attachment' do
         @path = '/path/found'
         @original_file_name = 'ofn.csv'
@@ -63,14 +63,14 @@ describe LinkableAttachmentImportRule do
         expect(@result.model_field_uid).to eq @rule.model_field_uid
       end
     end
-    
+
     describe 'set linkable attachment value by original file name first segment' do
-      before(:each) do 
+      before(:each) do
         @path = '/some/path'
         @rule = Factory(:linkable_attachment_import_rule, :path=>@path)
       end
       it 'should set by space as first choice' do
-        result = LinkableAttachmentImportRule.import @file, 'a.b_some file.csv', @path 
+        result = LinkableAttachmentImportRule.import @file, 'a.b_some file.csv', @path
         expect(result.value).to eq('a.b_some')
       end
       it 'should set by underscore as second choice' do
@@ -124,7 +124,7 @@ describe LinkableAttachmentImportRule do
     it "processes a file from s3 with default paths" do
       @rule = Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/path/to/s3file.txt', original_filename: 's3file.txt').and_yield @file
-      
+
       LinkableAttachmentImportRule.process_from_s3 'bucket', '/path/to/s3file.txt'
 
       a = LinkableAttachment.first
@@ -138,7 +138,7 @@ describe LinkableAttachmentImportRule do
     it "processes a file from s3 with provided paths" do
       @rule = Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt').and_yield @file
-      
+
       LinkableAttachmentImportRule.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt', original_path: "/path/to"
 
       a = LinkableAttachment.first
@@ -155,9 +155,9 @@ describe LinkableAttachmentImportRule do
       expect(LinkableAttachmentImportRule).to receive(:import).and_return r
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt').and_yield @file
 
-      expect_any_instance_of(Exception).to receive(:log_me).with ["Failed to link S3 file /s3path/dir/s3file.txt using filename orig_file.txt"]
-
       LinkableAttachmentImportRule.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt', original_path: "/path/to"
+
+      expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to link S3 file /s3path/dir/s3file.txt using filename orig_file.txt"]
     end
   end
 end

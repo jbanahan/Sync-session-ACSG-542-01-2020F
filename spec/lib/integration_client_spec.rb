@@ -51,9 +51,10 @@ describe OpenChain::IntegrationClient do
       #Just mock out the retrieve queue messages call here, since it's not needed to test message handling
       expect(OpenChain::IntegrationClient).to receive(:retrieve_queue_messages).with('q', 500).and_return [cmd]
       expect(OpenChain::IntegrationClientCommandProcessor).to receive(:process_command).with(JSON.parse(cmd.body)).and_raise "Error"
-      expect_any_instance_of(RuntimeError).to receive(:log_me).with ["SQS Message: #{cmd.body}"]
 
       OpenChain::IntegrationClient.process_queue 'q'
+
+      expect(ErrorLogEntry.last.additional_messages).to eq ["SQS Message: #{cmd.body}"]
     end
 
     it "errors if queue name is blank" do

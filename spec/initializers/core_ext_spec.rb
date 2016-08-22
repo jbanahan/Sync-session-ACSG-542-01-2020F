@@ -81,11 +81,10 @@ end
 describe "log_me" do
   context "NoMethodError" do
     it "proxies NoMethodErrorClasses" do
-      expect_any_instance_of(Exception).to receive(:log_me).with ["Test"], [], false
       begin
         raise NoMethodError, "Testing"
       rescue => e
-        e.log_me ["Test"]
+        expect {e.log_me ["Test"]}.to change(ErrorLogEntry,:count).by(2) #one for main error, one for proxied error
       end
     end
   end

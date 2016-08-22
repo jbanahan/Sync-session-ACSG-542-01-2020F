@@ -12,11 +12,11 @@ describe FileImportProcessor do
     expect(imp.search_setup).to be_nil #id should not match to anything
     expect { FileImportProcessor.new(imp,'a,b') }.not_to raise_error
   end
-  
+
   describe "preview" do
     it "should not write to DB" do
       @ss = SearchSetup.new(:module_type=>"Product")
-      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0) 
+      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0)
       country = Factory(:country)
       pro = FileImportProcessor.new(@f,nil,[FileImportProcessor::PreviewListener.new])
       allow(pro).to receive(:get_columns).and_return([
@@ -32,7 +32,7 @@ describe FileImportProcessor do
 
     it "should return a SpreadsheetImportProcessor for xls and xlsx files" do
       @ss = SearchSetup.new(:module_type=>"Product")
-      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0, attached_file_name: "file.xlsx") 
+      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0, attached_file_name: "file.xlsx")
       country = Factory(:country)
       pro = FileImportProcessor.new(@f,nil,[FileImportProcessor::PreviewListener.new])
       expect(FileImportProcessor.find_processor(@f)).to be_an_instance_of(FileImportProcessor::SpreadsheetImportProcessor)
@@ -43,7 +43,7 @@ describe FileImportProcessor do
   describe "do_row" do
     before :each do
       @ss = SearchSetup.new(:module_type=>"Product")
-      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product") 
+      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product")
       @u = User.new
     end
     it "should save row" do
@@ -231,11 +231,11 @@ describe FileImportProcessor do
       end
       it "should convert Float and BigDecimal values to string, trimming off trailing decimal point and zero" do
         # The product set here recreates the issue we saw with the import we're trying to resolve
-        # However, the MySQL version (or configuration) on our dev machines sort of handles a 
-        # translation of 'where unique_identifier = 1.0' casting a string value of '1' to 1.0 
+        # However, the MySQL version (or configuration) on our dev machines sort of handles a
+        # translation of 'where unique_identifier = 1.0' casting a string value of '1' to 1.0
         # (albeit with warnings for any unique id that couldn't be cast)
-        # whereas our current production version does not do an implicit cast...so we're not getting an exact 
-        # test scenario.  However, as long as we test that the unique identifier value isn't 
+        # whereas our current production version does not do an implicit cast...so we're not getting an exact
+        # test scenario.  However, as long as we test that the unique identifier value isn't
         # 1.0 after the update and that we did update the existing record then we should be good.
         p = Product.create! unique_identifier: "1", name: "ABC"
 
@@ -266,7 +266,7 @@ describe FileImportProcessor do
       end
       it "should NOT convert numbers for numeric fields" do
         ss = SearchSetup.new(:module_type=>"Entry")
-        f = ImportedFile.new(:search_setup=>ss,:module_type=>"Entry") 
+        f = ImportedFile.new(:search_setup=>ss,:module_type=>"Entry")
 
         pro = FileImportProcessor.new(f,nil,[])
         allow(pro).to receive(:get_columns).and_return([
@@ -279,8 +279,8 @@ describe FileImportProcessor do
       end
 
       context "error cases" do
-        before :each do 
-          @listener = Class.new do 
+        before :each do
+          @listener = Class.new do
             attr_reader :messages, :failed
             def process_row row_number, object, m, failed
               @messages = m
@@ -293,7 +293,7 @@ describe FileImportProcessor do
           c = Factory(:country,:import_location=>true)
           OfficialTariff.create! country: c, hts_code: "9876543210"
 
-          ModelField.reload        
+          ModelField.reload
           pro = FileImportProcessor.new(@f,nil,[@listener])
           allow(pro).to receive(:get_columns).and_return([
             SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
@@ -311,8 +311,9 @@ describe FileImportProcessor do
           allow(pro).to receive(:get_columns).and_return([
             SearchColumn.new(:model_field_uid=>"prod_name",:rank=>1)
           ])
-          expect_any_instance_of(FileImportProcessor::MissingCoreModuleFieldError).not_to receive(:log_me)
-          pro.do_row 0, ['name'], true, -1, @u
+          expect {
+            pro.do_row 0, ['name'], true, -1, @u
+          }.to_not change(ErrorLogEntry,:count)
           expect(@listener.failed).to be_truthy
           expect(@listener.messages).to include("ERROR: Cannot load Product data without a value in the 'Unique Identifier' field.")
         end
@@ -321,24 +322,25 @@ describe FileImportProcessor do
           c = Factory(:country,:import_location=>true)
           OfficialTariff.create! country: c, hts_code: "9876543210"
 
-          ModelField.reload        
+          ModelField.reload
           pro = FileImportProcessor.new(@f,nil,[@listener])
           allow(pro).to receive(:get_columns).and_return([
             SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
             SearchColumn.new(:model_field_uid=>"hts_hts_1",:rank=>2)
           ])
 
-          expect_any_instance_of(FileImportProcessor::MissingCoreModuleFieldError).not_to receive(:log_me)
-          pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
+          expect {
+            pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
+          }.to_not change(ErrorLogEntry,:count)
           expect(@listener.failed).to be_truthy
           expect(@listener.messages).to include("ERROR: Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields.")
         end
       end
-      
+
     end
   end
 
-  describe "process_file" do 
+  describe "process_file" do
     context "CSVImportProcessor" do
       it "skips blank lines in CSV files" do
         f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.xlsx")

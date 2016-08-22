@@ -78,10 +78,10 @@ describe SchedulableJob do
       e = StandardError.new "Message"
       allow(TestSchedulable).to receive(:run_schedulable).and_raise(e)
 
-      expect(e).to receive(:log_me).with ["Scheduled job for TestSchedulable with options #{opts} has failed"]
-
       sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts.to_json)
       sj.run
+
+      expect(ErrorLogEntry.last.additional_messages).to eq ["Scheduled job for TestSchedulable with options #{opts} has failed"]
     end
   end
 

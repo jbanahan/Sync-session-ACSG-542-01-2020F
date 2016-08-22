@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::FenixProductFileGenerator do
-  
+
   before :each do
     @canada = Factory(:country,:iso_code=>'CA')
     @code = 'XYZ'
@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
     end
     it "should find products that need sync and have canadian classifications" do
-      expect(@h.find_products.to_a).to eq([@to_find_1,@to_find_2]) 
+      expect(@h.find_products.to_a).to eq([@to_find_1,@to_find_2])
     end
     it "should filter on importer_id if given" do
       @to_find_1.update_attributes(:importer_id => 100)
@@ -37,12 +37,12 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
     it "should not find products that don't have canada classifications but need sync" do
       different_country_product = Factory(:tariff_record,:hts_1=>'1234567891',:classification=>Factory(:classification)).product
-      expect(@h.find_products.to_a).to eq([@to_find_1,@to_find_2]) 
+      expect(@h.find_products.to_a).to eq([@to_find_1,@to_find_2])
     end
     it "should not find products that have classification but don't need sync" do
       @to_find_2.update_attributes(:updated_at=>1.hour.ago)
       @to_find_2.sync_records.create!(:trading_partner=>"fenix-#{@code}",:sent_at=>1.minute.ago,:confirmed_at=>1.minute.ago)
-      expect(@h.find_products.to_a).to eq([@to_find_1]) 
+      expect(@h.find_products.to_a).to eq([@to_find_1])
     end
   end
 
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @c = @p.classifications.create!(:country_id=>@canada.id)
       t = @c.tariff_records.create!(:hts_1=>'1234567890')
     end
-    after :each do 
+    after :each do
       @t.unlink if @t
     end
     it "should generate output file with given products" do
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
     it "should write sync records with dummy confirmation date" do
       @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
-      @t = @h.make_file [@p] 
+      @t = @h.make_file [@p]
       @p.reload
       expect(@p.sync_records.size).to eq(1)
       sr = @p.sync_records.find_by_trading_partner("fenix-#{@code}")
@@ -178,9 +178,9 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       # Use hebrew chars, since the windows encoding in use in Fenix is a latin one, it can't encode them
       @p.update_attributes! unique_identifier: "בדיקה אם נרשם"
 
-      expect_any_instance_of(Exception).to receive(:log_me).with "Product בדיקה אם נרשם could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
       @t = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code).make_file [@p]
       expect(IO.read(@t.path)).to be_blank
+      expect(ErrorLogEntry.first.additional_messages_json).to match(/could not be sent to Fenix/)
     end
   end
 
@@ -221,7 +221,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
 
       expect(OpenChain::CustomHandler::FenixProductFileGenerator).to receive(:new).with("XYZ",hash).and_return(fpfg)
       expect_any_instance_of(OpenChain::CustomHandler::FenixProductFileGenerator).to receive(:generate)
-      OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash) 
+      OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash)
     end
   end
 end

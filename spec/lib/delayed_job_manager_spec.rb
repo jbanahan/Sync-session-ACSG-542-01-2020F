@@ -6,14 +6,14 @@ describe DelayedJobManager do
     before :each do
       DelayedJobManager.reset_backlog_monitor
     end
-    it 'should send message if too many items older than 10 minutes are in the queue' do   
+    it 'should send message if too many items older than 10 minutes are in the queue' do
       "word".delay({run_at: 15.minutes.ago}).size
       "word".delay({run_at: 15.minutes.ago}).size
       "word".delay({run_at: 15.minutes.ago}).size
       DelayedJobManager.monitor_backlog 2
       email = ActionMailer::Base.deliveries.last
       expect(email).not_to be_nil
-      expect(email.subject).to include "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: 3 Items" 
+      expect(email.subject).to include "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: 3 Items"
     end
     it 'does not send message if number of items in the queue less than 10 minutes old is at or below the limit' do
       "word".delay({run_at: 5.minutes.ago}).size
@@ -33,9 +33,9 @@ describe DelayedJobManager do
       expect(ActionMailer::Base.deliveries.size).to eq 0
     end
   end
- 
+
  describe 'report_delayed_job_error' do
-  before :each do 
+  before :each do
     @job = Delayed::Job.new
     @job.last_error = "error!"
     @job.created_at = Time.zone.now
@@ -57,23 +57,24 @@ describe DelayedJobManager do
   end
   it 'should not send an email if no errors are found on the delayed job queue' do
     @job.destroy
-    expect_any_instance_of(RuntimeError).not_to receive(:log_me)
-    DelayedJobManager.report_delayed_job_error
+    expect{DelayedJobManager.report_delayed_job_error}.to_not change(ErrorLogEntry,:count)
 
-    # Verify that master setup was not updated 
+    # Verify that master setup was not updated
     expect(MasterSetup.get.last_delayed_job_error_sent.to_s(:db)).to eq @one_hour_ago.to_s(:db)
   end
   it 'should trim error messages that are over 500 characters long' do
     m = "Really long error message..repeat ad nauseum"
-    begin 
+    begin
       m += m
     end while m.length <= 500
     @job.last_error = m
     @job.save
 
-    # We can just mock the log_me call here since we've already determined that we're sending emails in a previous spec
-    expect_any_instance_of(RuntimeError).to receive(:log_me).with(["Job Error: " + m.slice(0, 500)], [], true)
+    mailer = double(mailer)
+    expect(mailer).to receive(:deliver)
+    expect(OpenMailer).to receive(:send_generic_exception).and_return mailer
     DelayedJobManager.report_delayed_job_error
+    expect(ErrorLogEntry.last.additional_messages).to eq ["Job Error: " + m.slice(0, 500)]
   end
   it 'should not send an email if a previous email was sent less than X minutes ago' do
     # Make sure last delayed job error sent is not set at all
@@ -82,19 +83,18 @@ describe DelayedJobManager do
     allow(MasterSetup).to receive(:get).and_return ms
     allow(ms).to receive(:last_delayed_job_error_sent).and_return reporting_age
     expect(ms).not_to receive(:update_attributes!)
-    expect_any_instance_of(RuntimeError).not_to receive(:log_me)
 
     # Add a minute to our max reporting age due to timing concerns
-    DelayedJobManager.report_delayed_job_error(61)
+    expect{DelayedJobManager.report_delayed_job_error(61)}.to_not change(ErrorLogEntry,:count)
   end
-  it 'should not add more than 50 error messages to an error notification email' do 
+  it 'should not add more than 50 error messages to an error notification email' do
     (1..50).each do |n|
       new_job = Delayed::Job.new
       new_job.last_error = "error - #{n}"
       new_job.created_at = Time.now + n.minutes
       new_job.save
     end
-    
+
     DelayedJobManager.report_delayed_job_error
 
     email = ActionMailer::Base.deliveries.last
@@ -107,11 +107,10 @@ describe DelayedJobManager do
   it "should ignore delayed job upgrade requeue messages" do
     @job.last_error = "This job queue was running the outdated code version"
     @job.save
-    
-    expect_any_instance_of(RuntimeError).not_to receive(:log_me)
-    DelayedJobManager.report_delayed_job_error
 
-    # Verify that master setup was not updated 
+    expect{DelayedJobManager.report_delayed_job_error}.to_not change(ErrorLogEntry,:count)
+
+    # Verify that master setup was not updated
     expect(MasterSetup.get.last_delayed_job_error_sent.to_s(:db)).to eq @one_hour_ago.to_s(:db)
   end
  end

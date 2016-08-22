@@ -5,10 +5,10 @@ describe OpenChain::Events::EventBroadcaster do
   describe "broadcast" do
     context "production_environment" do
 
-      before :each do 
+      before :each do
         @broadcaster = described_class.new(true)
       end
-    
+
       it "should create an event processor and sent an event to it" do
         expect_any_instance_of(OpenChain::Events::EventProcessor).to receive(:process_event) do |instance, e|
           expect(e.event_type).to eq(:event_type)
@@ -33,11 +33,10 @@ describe OpenChain::Events::EventBroadcaster do
 
       it "should rescue errors from process_event" do
         expect_any_instance_of(OpenChain::Events::EventProcessor).to receive(:process_event).and_raise "Error!"
-        expect_any_instance_of(RuntimeError).to receive(:log_me)
-        @broadcaster.broadcast :event_type, "Class", 1
+        expect{@broadcaster.broadcast :event_type, "Class", 1}.to change(ErrorLogEntry,:count).by(1)
       end
     end
-  
+
     it "doesn't broadcast events in the test environment" do
       b = described_class.new
       b.broadcast :event_type, "Class", 1

@@ -427,9 +427,9 @@ java.lang.NullPointerException
 ERR
       @resp['stitch_response']['errors'] = [{'message' => error}]
 
-      expect_any_instance_of(Exception).not_to receive(:log_me)
-
-      expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_nil
+      expect {
+        expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_nil
+      }.to_not change(ErrorLogEntry,:count)
     end
   end
 

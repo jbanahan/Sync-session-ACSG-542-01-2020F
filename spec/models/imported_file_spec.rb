@@ -52,14 +52,14 @@ describe ImportedFile do
         expect(f).to receive(:make_imported_file_download_from_s3_path).with(s3_path,current_user,[]).and_call_original
         expect(OpenChain::S3).to receive(:download_to_tempfile).with('chain-io', s3_path).and_return(temp)
         f.email_updated_file current_user, to, cc, subj, body
-      ensure 
+      ensure
         temp.close!
       end
     end
   end
   describe 'make_updated_file' do
     context 'product' do
-      before :each do 
+      before :each do
         @xlc = double "XLClient"
         @attached = double "Attachment"
         expect(@attached).to receive(:path).and_return("some/location.xls")
@@ -165,7 +165,7 @@ describe ImportedFile do
         ctry_2 = Factory(:country)
         bad_product = Factory(:product)
         bad_product.classifications.create!(:country_id=>ctry.id).tariff_records.create(:line_number=>4,:hts_1=>'0984717191')
-        
+
         p_a = Factory(:product)
         c_a = p_a.classifications.create!(:country_id=>ctry.id)
         t_a = c_a.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
@@ -223,7 +223,7 @@ describe ImportedFile do
       @i = Factory(:imported_file, :search_setup => Factory(:search_setup))
     end
     it "should process an imported file" do
-    
+
       @i.search_setup.search_columns.create! model_field_uid: :unique_identifier
 
 
@@ -237,7 +237,7 @@ describe ImportedFile do
     end
 
     it "should process an imported file on delayed job queue" do
-      
+
       expect_any_instance_of(ImportedFile::FileImportProcessJob).to receive(:enqueue_job)
       r = @i.process @u, defer: true
       expect(r).to be_truthy
@@ -260,7 +260,7 @@ describe ImportedFile do
       @i = Factory(:imported_file, :search_setup => Factory(:search_setup), :attached_file_name => "test.txt")
     end
 
-    it "should call process on FileImportProcessor" do 
+    it "should call process on FileImportProcessor" do
       expect(FileImportProcessor).to receive(:process) do |file, listener|
         expect(file).to be @i
         expect(listener[0].class).to eq ImportedFile::FileImportProcessorListener
@@ -288,11 +288,9 @@ describe ImportedFile do
 
     it "should email if errors were encountered" do
       error =StandardError.new "Test"
-      expect(FileImportProcessor).to receive(:process) do 
+      expect(FileImportProcessor).to receive(:process) do
         raise error
       end
-
-      expect(error).to receive(:log_me).with ["Imported File ID: #{@i.id}"]
 
       ms = double("MasterSetup")
       expect(MasterSetup).to receive(:get).and_return ms
@@ -302,6 +300,8 @@ describe ImportedFile do
       expect(mail).to receive :deliver
       expect(OpenMailer).to receive(:send_imported_file_process_fail).with(@i, @i.search_setup.user).and_return mail
       ImportedFile::FileImportProcessJob.new(@i, @u).perform
+
+      expect(ErrorLogEntry.last.additional_messages).to eq ["Imported File ID: #{@i.id}"]
     end
   end
 
@@ -332,27 +332,27 @@ describe ImportedFile do
       user = Factory(:user)
       ss = Factory(:search_setup, user: user)
       path = "/notauser/to_chain/#{ss.module_type.downcase}/#{ss.name}/myfile.csv"
-      expect_any_instance_of(RuntimeError).to receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
 
       ImportedFile.process_integration_imported_file 'bucket', 'path', path
+      expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to process imported file with original path '#{path}'."]
     end
 
     it "errors if search module is wrong is missing" do
       user = Factory(:user)
       ss = Factory(:search_setup, user: user)
       path = "/#{user.username}/to_chain/notamodule/#{ss.name}/myfile.csv"
-      expect_any_instance_of(RuntimeError).to receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
 
       ImportedFile.process_integration_imported_file 'bucket', 'path', path
+      expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to process imported file with original path '#{path}'."]
     end
 
     it "errors if search name is wrong" do
       user = Factory(:user)
       ss = Factory(:search_setup, user: user)
       path = "/#{user.username}/to_chain/#{ss.module_type.downcase}/notaname/myfile.csv"
-      expect_any_instance_of(RuntimeError).to receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
 
       ImportedFile.process_integration_imported_file 'bucket', 'path', path
+      expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to process imported file with original path '#{path}'."]
     end
   end
 end
