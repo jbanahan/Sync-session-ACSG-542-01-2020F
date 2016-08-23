@@ -1,0 +1,42 @@
+<% content_for :javascript do %>
+$(function() {
+    $("#btn_new").click(function(evt) {
+      evt.preventDefault();
+      $("#button-new-form").submit();
+    })
+});
+<%end%>
+
+<%content_for :action_bar do %>
+<button id='btn_new'>New</button>
+<%end%>
+
+<table class='detail_table'>
+  <thead>
+    <th>Module Type</th>
+    <th>User Field</th>
+    <th>Date Field</th>
+    <th>Permission Group System Codes</th>
+    <th>Activate Text</th>
+    <th>Deactivate Text</th>
+    <th>Parameters</th>
+    <th></th>
+    <th></th>
+  </thead>
+  <tbody>
+    <%@buttons.each do |b|%>
+      <tr class='hover'>
+        <td><%=link_to b[:stb].module_type%></td>
+        <td><%=link_to b[:user_field] || ""%></td>
+        <td><%=link_to b[:date_field] || ""%></td>
+        <td><%=link_to b[:stb].permission_group_system_codes || ""%></td>
+        <td><%=link_to b[:stb].activate_text || ""%></td>
+        <td><%=link_to b[:stb].deactivate_text || ""%></td>
+        <td><%=link_to b[:stb].search_criterions.count%></td>
+        <td><%=link_to "edit", edit_state_toggle_button_path(b[:stb])%></td>
+        <td><%=link_to "delete", state_toggle_button_path(b[:stb]), :confirm => 'Delete this state toggle button?', :method => :delete %></td>
+      </tr>
+    <%end%>
+  </tbody>
+</table>
+<%= form_tag(new_state_toggle_button_path, method: :get, :id => "button-new-form")%> 

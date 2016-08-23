@@ -1,0 +1,89 @@
+<% content_for :javascript do %>
+  $(function() {
+    var scope = $('div[ng-controller]').scope();
+    var id = scope.getId(window.location.href);
+    scope.loadButton(id);
+    $("#btn_save").click(function() {
+      scope.saveButton();
+    });
+    $("#btn_cancel").click(function() {
+      window.location = '<%=url_for action: 'index'%>';
+    });
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <button id='btn_cancel'>Cancel</button>
+<% end %>
+
+<div id='ng-app' ng-app='StateToggleButtonApp' ng-view>
+  <div id='state-toggle-button-wrapper'>
+    <div id='controller' ng-controller='stateToggleButtonCtrl'>
+      <div class='container'>
+        <div class='row'>
+          <div class='col-md-12'>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Module</div>
+                <div class="col-md-8">{{stb.module_type}}</div>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Permission Group System Codes</div> 
+                <input class="col-md-8" ng-model="stb.permission_group_system_codes"></input>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Activate Text</div>
+                <input class="col-md-8" ng-model=stb.activate_text></input>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Activate Confirmation Text</div>
+                <input class="col-md-8" ng-model="stb.activate_confirmation_text"></input>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Deactivate Text</div>
+                <input class="col-md-8" ng-model="stb.deactivate_text"></input>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Deactivate Confirmation Text</div>
+                <input class="col-md-8" ng-model="stb.deactivate_confirmation_text"></input>
+              </div>
+
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">User Model Field</div>
+                <select class='form-control' style='width:30%;' ng-model="stb.user_attribute" ng-change="resetField('user_custom_definition_id')" ng-options='f.mfid as f.label for f in userMfs'></select>
+              </div>
+
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">User Custom Definition</div>
+                <select class='form-control' style='width:30%;' ng-model="stb.user_custom_definition_id" ng-change="resetField('user_attribute')" ng-options='f.cdef_id as f.label for f in userCdefs'></select>
+              </div>
+
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Date Model Field</div>
+                <select class='form-control' style='width:30%;' ng-model="stb.date_attribute" ng-change="resetField('date_custom_definition_id')" ng-options='f.mfid as f.label for f in dateMfs'></select>
+              </div>
+
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Date Custom Definition</div>
+                <select class='form-control' style='width:30%;' ng-model="stb.date_custom_definition_id" ng-change="resetField('date_attribute')" ng-options='f.cdef_id as f.label for f in dateCdefs'></select>
+              </div>
+
+          </div>
+        </div>
+        <br><br>
+          <div class='row'>
+            <div ng-repeat="crit in searchCriterions">
+              <div chain-search-criterion="crit" model-fields="scMfs"></div>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col-md-12 form-inline'>
+              Add New Search Criterion: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in scMfs'>
+              </select>
+              <button ng-show='criterionToAdd' class='btn btn-default' ng-click='addCriterion(criterionToAdd)'>Add</button>
+            </div>
+          </div>        
+      </div>
+    </div>
+  </div>
+</div>

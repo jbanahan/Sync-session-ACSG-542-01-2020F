@@ -191,6 +191,8 @@ OpenChain::Application.routes.draw do
 
         resources :custom_view_templates, only: [:edit, :update]
 
+        resources :state_toggle_buttons, only: [:edit, :update]
+
         resources :kewill_entry_documents, only: [] do
           collection do
             post :send_google_drive_file_to_kewill
@@ -963,6 +965,8 @@ OpenChain::Application.routes.draw do
   end
 
   resources :custom_view_templates, except: [:show, :update]
+
+  resources :state_toggle_buttons, except: [:show, :update]
 
   resources :trade_lanes, only: [:index]
 

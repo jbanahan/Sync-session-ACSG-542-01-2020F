@@ -1,0 +1,28 @@
+<% content_for :javascript do %>
+  $(function() {
+    $("#btn_save").click(function() {
+      $("#frm_stb").submit();
+    });
+    $("#btn_cancel").click(function() {
+      window.location = '<%=url_for @button%>';
+    });
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <button id='btn_cancel'>Cancel</button>
+<% end %>
+
+<div class = 'col-md-2'>
+  <%= form_for @button, :html=>{:id=>'frm_stb'} do |f| %>
+    <div class="form-group">
+    <label for="cm-drop-down">Module</label>
+    <select id='cm-drop-down' name='module_type' class='form-control'>
+      <% @cm_list.each do |module_name| %>
+        <option value="<%= module_name %>"><%= module_name %></option>
+      <% end %>
+    </select>
+   </div>
+  <%end%>
+</div>
