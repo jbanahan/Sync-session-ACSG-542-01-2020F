@@ -35,7 +35,9 @@ module OpenChain; module CustomHandler; module JCrew
     end
 
     def self.csv_column_separator line
-      return '|' if line.split('|').length==17
+      ["|","\t"].each do |ch|
+        return ch if line.split(ch).length==17
+      end
       return ','
     end
 

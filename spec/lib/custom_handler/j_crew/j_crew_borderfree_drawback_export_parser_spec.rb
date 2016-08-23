@@ -17,6 +17,14 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       @f.flush
       described_class.parse_csv_file @f.path, imp
     end
+    it 'should handle tab delimited line' do
+      imp = double('importer')
+      data = "a\n1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\t12\t13\t14\t15\t16\t17"
+      expect(described_class).to receive(:parse_csv_line).with((1..17).map{|i| i.to_s},1,imp)
+      @f.write data
+      @f.flush
+      described_class.parse_csv_file @f.path, imp
+    end
   end
   describe "parse_csv_line" do
     def default_vals
