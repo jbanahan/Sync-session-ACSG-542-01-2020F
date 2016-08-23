@@ -7,7 +7,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     use_json
   end
 
-  describe :edit do
+  describe "edit" do
     let!(:stb) { Factory(:state_toggle_button) }
 
     it "renders template JSON for a sys-admin" do
@@ -18,9 +18,9 @@ describe Api::V1::Admin::StateToggleButtonsController do
       date_cdefs = [{cdef_id: 2, label: "QA Hold Date"}]
       stb.search_criterions << Factory(:search_criterion)
       
-      described_class.any_instance.should_receive(:get_sc_mfs).with(stb).and_return sc_mfs
-      described_class.any_instance.should_receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
-      described_class.any_instance.should_receive(:get_user_and_date_cdefs).with(stb).and_return [user_cdefs, date_cdefs]
+      expect_any_instance_of(described_class).to receive(:get_sc_mfs).with(stb).and_return sc_mfs
+      expect_any_instance_of(described_class).to receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
+      expect_any_instance_of(described_class).to receive(:get_user_and_date_cdefs).with(stb).and_return [user_cdefs, date_cdefs]
       
       get :edit, id: stb.id, :format => "json"
       output = {button: stb, 
@@ -44,7 +44,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
   end
 
-  describe :update do
+  describe "update" do
     context "search_criterions" do
       before(:each) do
         Factory(:state_toggle_button)
@@ -168,7 +168,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
   end
 
-  describe :get_mf_digest do
+  describe "get_mf_digest" do
     it "returns hash containing stb, search criteria, user and date mfs/cdefs" do
       stb = double("stb")
       ctrl = described_class.new
@@ -179,19 +179,19 @@ describe Api::V1::Admin::StateToggleButtonsController do
       date_mfs = double ("date_mfs")
       date_cdefs = double ("date_cdefs")
       
-      ctrl.should_receive(:get_sc_mfs).with(stb).and_return sc_mfs
-      ctrl.should_receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
-      ctrl.should_receive(:get_user_and_date_cdefs).with(stb).and_return [user_cdefs, date_cdefs]
+      expect(ctrl).to receive(:get_sc_mfs).with(stb).and_return sc_mfs
+      expect(ctrl).to receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
+      expect(ctrl).to receive(:get_user_and_date_cdefs).with(stb).and_return [user_cdefs, date_cdefs]
 
       expect(ctrl.get_mf_digest(stb)).to eq({sc_mfs: sc_mfs, user_mfs: user_mfs, user_cdefs: user_cdefs, date_mfs: date_mfs, date_cdefs: date_cdefs})
     end
   end
 
-  describe :get_user_and_date_mfs do
+  describe "get_user_and_date_mfs" do
     it "returns two arrays of model fields associated with button's module, the second including only those of type datetime" do
       stb = Factory(:state_toggle_button, module_type: "Order")
 
-      CoreModule.any_instance.should_receive(:model_fields).and_return({ord_closed_by: ModelField.find_by_uid(:ord_closed_by),
+      expect_any_instance_of(CoreModule).to receive(:model_fields).and_return({ord_closed_by: ModelField.find_by_uid(:ord_closed_by),
                                                                         ord_revised_date: ModelField.find_by_uid(:ord_revised_date),
                                                                         ord_closed_at: ModelField.find_by_uid(:ord_closed_at)})
       user_list, date_list = described_class.new.get_user_and_date_mfs(stb)
@@ -202,7 +202,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
   end
 
-  describe :get_sc_mfs do
+  describe "get_sc_mfs" do
     it "takes the model fields associated with a button's module returning only the mfid, label, and datatype fields" do
       stb = Factory(:state_toggle_button, module_type: "Product")
       mfs = described_class.new.get_sc_mfs stb
@@ -210,7 +210,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
   end
 
-  describe :get_user_and_date_cdefs do
+  describe "get_user_and_date_cdefs" do
     it "returns two arrays of cdefs associated with the button's module, the first including only those of user_type, the second only those of datetime" do
       stb = Factory(:state_toggle_button, module_type: "Order")
       user = Factory(:custom_definition, module_type: "Order", data_type: "integer", is_user: true, label: "QA Hold By")
