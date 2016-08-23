@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def self.parse_dom dom, opts={}
-    self.new.parse_dom dom
+    self.new.parse_dom(dom, opts)
   end
 
   def self.integration_folder
@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @cdefs = self.class.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_sap_extract, :prod_old_article, :class_proposed_hts, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
   end
 
-  def parse_dom dom
+  def parse_dom dom, opts={}
     root = dom.root
     raise "Incorrect root element #{root.name}, expecting '_-LUMBERL_-VFI_ARTMAS01'." unless root.name == '_-LUMBERL_-VFI_ARTMAS01'
     prod_el = REXML::XPath.first(root,'//IDOC/E1BPE1MAKTRT')
@@ -51,6 +51,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       p.importer = Company.where(master: true).first
       p.name = name
+      p.last_file_bucket = opts[:bucket]
+      p.last_file_path = opts[:key]
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], ext_time)
       p.find_and_set_custom_value(@cdefs[:prod_old_article], et(REXML::XPath.first(root,'//IDOC/E1BPE1MARART'),'OLD_MAT_NO'))
       p.find_and_set_custom_value(@cdefs[:prod_merch_cat], et(REXML::XPath.first(root,'//IDOC/E1BPE1MATHEAD'),'MATL_GROUP'))

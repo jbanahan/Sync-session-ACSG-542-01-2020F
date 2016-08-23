@@ -3,6 +3,7 @@ class Product < ActiveRecord::Base
   include CoreObjectSupport
   include StatusableSupport
   include TouchesParentsChangedAt
+  include IntegrationParserSupport
 
   belongs_to :importer, :class_name => "Company"
   belongs_to :division
