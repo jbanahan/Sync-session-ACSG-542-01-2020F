@@ -15,10 +15,10 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
     'GREATER CHINA'=>'CN',
     'HONG KONG' => 'HK',
     'TAIWAN' => 'TW',
-    # these are guesses that need to be confirmed w/ UA
     'EUROPE' => 'NL',
     'SOUTHEAST ASIA' => 'SG',
-    'LATIN AMERICA' => 'PA'
+    'LATIN AMERICA' => 'PA',
+    'JAPAN' => 'JP'
   }
 
   def initialize custom_file
@@ -52,6 +52,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
   end
 
   def update_data_hash h, row
+    row.pop while row.last.nil? && row.size > 0
     return unless row.length == 7
     style = row[0].to_s.gsub(/\.0$/,'') #clean up numbers for style string
     return if style=='Style'

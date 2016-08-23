@@ -37,6 +37,7 @@ include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSuppor
   end
 
   def update_data_hash h, row
+    row.pop while row.last.nil? && row.size > 0
     return unless row.length == 11
     style = get_style(row)
     return if style.nil?
