@@ -416,4 +416,16 @@ describe Company do
     end
   end
 
+  describe "name_with_system_code" do
+    it "returns name concatenated with system_code if it exists" do
+      co = Factory(:company, name: "ACME", system_code: "sys code")
+      expect(co.name_with_system_code).to eq "ACME (sys code)"
+    end
+
+    it "returns name if system_code doesn't exist" do
+      co = Factory(:company, name: "ACME")
+      expect(co.name_with_system_code).to eq "ACME"
+    end
+  end
+
 end

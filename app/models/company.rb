@@ -362,6 +362,12 @@ class Company < ActiveRecord::Base
     n
   end
 
+  def name_with_system_code
+    n = self.name
+    n += " (#{self.system_code})" unless self.system_code.blank?
+    n
+  end
+
   def enabled_booking_types_array
     # ['product','order','order_line','container']
     self.enabled_booking_types.to_s.split("\n").map(&:strip)

@@ -968,6 +968,8 @@ OpenChain::Application.routes.draw do
 
   resources :state_toggle_buttons, except: [:show, :update]
 
+  resources :search_table_configs
+
   resources :trade_lanes, only: [:index]
 
   get "/:recordable_type/:recordable_id/business_rule_snapshots" => "business_rule_snapshots#index"

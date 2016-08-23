@@ -38,6 +38,7 @@
     <%=field_row link_to('Schedulable Jobs', schedulable_jobs_path), "Background job schedules."%>
     <%=field_row link_to('Custom-View Templates', custom_view_templates_path), "Configure custom-view templates."%>
     <%=field_row link_to('State-Toggle Buttons', state_toggle_buttons_path), "Configure state-toggle buttons."%>
+    <%=field_row link_to('Search Table Configs', search_table_configs_path), "Configure search-table configs."%>
     <% if MasterSetup.get.custom_feature?("Entry 315") %>
       <%=field_row link_to('315 Configurations', milestone_notification_configs_path), "Entry-based 315 Configurations" %>
     <% end %>

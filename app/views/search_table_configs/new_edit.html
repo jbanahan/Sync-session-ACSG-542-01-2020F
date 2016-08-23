@@ -1,0 +1,48 @@
+<% content_for :javascript do %>
+$(function() {
+    $("#btn_save").click(function(evt) {
+      $("#search-table-config-new-edit-form").submit();
+    });
+
+    $("#btn_cancel").click(function(evt) {
+      window.location = '<%=url_for action: 'index'%>';
+    });
+});
+<%end%>
+
+<%content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <button id='btn_cancel'>Cancel</button>
+<%end%>
+
+<div class="container">
+  <%action = controller.action_name == "edit" ? "update" : "create"%>
+  <%=form_for(@config, url: {action: action}, html: {id: 'search-table-config-new-edit-form'}) do |f| %>
+      <div class="col-md-6">   
+        <div class="row">
+            <div class="form-group">
+              <%= f.label :name %>
+              <%= f.text_field :name, class: "form-control", id:"config-name-field"%>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+              <%= f.label :page_uid, "Page UID" %>
+              <%= f.text_field :page_uid, class: "form-control", id:"config-page-uid-field"%>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+              <%= f.label :company_id, "Company" %>
+              <%= f.select :company_id, options_from_collection_for_select(@companies, 'id', 'name_with_system_code', @config.company_id), { include_blank: true }, {class: "form-control", id: "config-company-id-field"} %>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+              <%= f.label :config_json, "Config JSON" %>
+              <%= f.text_area :config_json, class: "form-control", id:"config-config-json-field", cols: 10, rows: 15%>
+            </div>
+        </div>
+    </div>
+  <% end %>
+</div>

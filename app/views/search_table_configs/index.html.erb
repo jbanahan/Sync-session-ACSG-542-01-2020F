@@ -1,0 +1,34 @@
+<% content_for :javascript do %>
+$(function() {
+    $("#btn_new").click(function(evt) {
+      evt.preventDefault();
+      $("#search-table-config-new-form").submit();
+    })
+});
+<%end%>
+
+<%content_for :action_bar do %>
+  <button id='btn_new'>New</button>
+<%end%>
+
+<table class='detail_table'>
+  <thead>
+    <th>Name</th>
+    <th>Page UID</th>
+    <th>Company</th>
+    <th></th>
+    <th></th>
+  </thead>
+  <tbody>
+    <%@configs.each do |stc|%>
+      <tr class='hover'>
+        <td><%=stc.name%></td>
+        <td><%=stc.page_uid%></td>
+        <td><%=stc.company.try(:name)%></td>
+        <td><%=link_to "edit", edit_search_table_config_path(stc)%></td>
+        <td><%=link_to "delete", search_table_config_path(stc), :confirm => 'Delete this search table config?', :method => :delete %></td>
+      </tr>
+    <%end%>
+  </tbody>
+</table>
+<%= form_tag(new_search_table_config_path, method: :get, :id => "search-table-config-new-form")%> 
