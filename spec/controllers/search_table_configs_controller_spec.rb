@@ -4,7 +4,7 @@ describe SearchTableConfigsController do
   let!(:user) { Factory(:sys_admin_user, company: Factory(:company, name: "Oracle")) }
   before { sign_in_as user }
 
-  describe :index do
+  describe "index" do
     let!(:stc) { Factory(:search_table_config) }
 
     it "renders for sys-admin user" do
@@ -14,14 +14,14 @@ describe SearchTableConfigsController do
     end
 
     it "doesn't allow use by non-sys-admin" do
-      user.should_receive(:sys_admin?).and_return false
+      expect(user).to receive(:sys_admin?).and_return false
       get :index
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to include "Only system admins can do this."
     end
   end
 
-  describe :new do
+  describe "new" do
     let!(:stc) { Factory(:search_table_config) }
     let!(:co_1) { user.company }
     let!(:co_2) { Factory(:company, name: "Microsoft") }
@@ -35,14 +35,14 @@ describe SearchTableConfigsController do
     end
 
     it "doesn't allow use by non-sys-admin" do
-      user.should_receive(:sys_admin?).and_return false
+      expect(user).to receive(:sys_admin?).and_return false
       get :new
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to include "Only system admins can do this."
     end
   end
 
-  describe :edit do
+  describe "edit" do
     let!(:stc) { Factory(:search_table_config) }
     let!(:co_1) { user.company }
     let!(:co_2) { Factory(:company, name: "Microsoft") }
@@ -57,14 +57,14 @@ describe SearchTableConfigsController do
     end
 
     it "doesn't allow use by non-sys-admin" do
-      user.should_receive(:sys_admin?).and_return false
+      expect(user).to receive(:sys_admin?).and_return false
       get :edit, id: stc.id
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to include "Only system admins can do this."
     end
   end
 
-  describe :create do
+  describe "create" do
     let!(:co) { Factory(:company, name: "Oracle") }
 
     it "creates stc for sys-admin" do
@@ -79,7 +79,7 @@ describe SearchTableConfigsController do
     end
 
     it "doesn't allow use by non-sys-admin" do
-      user.should_receive(:sys_admin?).and_return false
+      expect(user).to receive(:sys_admin?).and_return false
       json = '{"columns: [], "criteria": [], "sorts": []}'
       post :create, search_table_config: {page_uid: "page_uid", name: "name", config_json: json}
       expect(SearchTableConfig.first).to be_nil
@@ -88,7 +88,7 @@ describe SearchTableConfigsController do
     end
   end
 
-  describe :update do
+  describe "update" do
     let!(:co_1) { Factory(:company, name: "Oracle") }
     let!(:co_2) { Factory(:company, name: "Microsoft") }
     let!(:original_json) { '{"columns: [], "criteria": [], "sorts": []}' }
@@ -106,7 +106,7 @@ describe SearchTableConfigsController do
     end
 
     it "doesn't allow use by non-sys-admin" do
-      user.should_receive(:sys_admin?).and_return false
+      expect(user).to receive(:sys_admin?).and_return false
       new_json = '{"columns: ["prodven_puid"], "criteria": [], "sorts": []}' 
       put :update, id: stc.id, search_table_config: {company_id: co_2.id, page_uid: "new page_uid", name: "new name", config_json: new_json}
       stc.reload
@@ -119,7 +119,7 @@ describe SearchTableConfigsController do
     end
   end
 
-  describe :destroy do
+  describe "destroy" do
     let!(:stc) { Factory(:search_table_config) }
   
     it "deletes stc for sys-admin" do
@@ -129,7 +129,7 @@ describe SearchTableConfigsController do
     end
 
     it "doesn't allow use by non-sys-admin" do
-      user.should_receive(:sys_admin?).and_return false
+      expect(user).to receive(:sys_admin?).and_return false
       delete :destroy, id: stc.id
       expect(SearchTableConfig.count).to eq 1
       expect(response).to redirect_to request.referrer
