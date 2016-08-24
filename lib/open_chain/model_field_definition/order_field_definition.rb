@@ -63,7 +63,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
       [25,:ord_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
       [26,:ord_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
       [27,:ord_vendor_id, :vendor_id, "Vendor ID",{data_type: :integer,history_ignore:true,read_only:true}],
-      [28,:ord_accepted_at,:accepted_at,'Accepted At',{data_type: :datetime, read_only: true}],
+      [28,:ord_accepted_at,:accepted_at,'Accepted Date',{data_type: :datetime, read_only: true}],
       [29,:ord_accepted_by,:username,"Accepted By", {
         :import_lambda => lambda {|a,b| return "Accepted By cannot be set by import, ignored."},
         :export_lambda => lambda {|obj|
