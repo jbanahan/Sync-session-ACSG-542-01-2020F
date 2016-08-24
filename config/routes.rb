@@ -10,6 +10,7 @@ OpenChain::Application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      match '/business_rules/for_module/:module_type/:id' => 'business_rules#for_module', via: :get
       match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
       match '/messages/count/:user_id' => 'messages#count'
       resources :messages, only: [:index, :create] do
