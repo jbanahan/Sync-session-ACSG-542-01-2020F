@@ -183,6 +183,13 @@ describe OpenChain::IntegrationClientCommandProcessor do
       before :each do
         MasterSetup.get.update_attributes(custom_features:'Lumber SAP')
       end
+      it "should send data to LL GTN ASN parser" do
+        cmd = {'request_type'=>'remote_file','path'=>'/_gtn_asn_xml/x.xml','remote_path'=>'12345'}
+        k = OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser
+        expect(k).to receive(:delay).and_return k
+        expect(k).to receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq @success_hash
+      end
       it "should send data to LL PO parser" do
         cmd = {'request_type'=>'remote_file','path'=>'/_sap_po_xml/x.xml','remote_path'=>'12345'}
         k = OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser

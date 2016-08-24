@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ASNMessage>
+  <TransactionInfo>
+    <MessageSender>GTNEXUS</MessageSender>
+    <MessageRecipient>LUMBERLIQ</MessageRecipient>
+    <MessageID>20160804172027553</MessageID>
+    <Created>2016-08-04T17:20:27.553-07:00</Created>
+    <FileName>ASN_20160804172027553.xml</FileName>
+  </TransactionInfo>
+  <ASN>
+    <ASNMessageID>1</ASNMessageID>
+    <PurposeCode>Replace</PurposeCode>
+    <Trigger>Configured Milestones</Trigger>
+    <TriggerDetail>
+      <Type>Configured Milestones</Type>
+      <Value>Empty Return</Value>
+      <Status>created</Status>
+    </TriggerDetail>
+    <TriggerDetail>
+      <Type>OutboundFileGenerationCount</Type>
+      <Value>7</Value>
+    </TriggerDetail>
+    <ShipmentID>2987838M02</ShipmentID>
+    <ShipmentStatus>Final</ShipmentStatus>
+    <PartyInfo>
+      <Type>Provider</Type>
+      <Name>DHL International Supply Chain</Name>
+      <Address>
+        <AddressLine>1 Kalisa Way, Suite 112</AddressLine>
+        <AddressLine>Paramus</AddressLine>
+      </Address>
+      <City>
+        <State>NJ</State>
+        <CountryCode>US</CountryCode>
+      </City>
+      <PostalCode>07652</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Consignee</Type>
+      <Name>Lumber Liquidators Services, LLC</Name>
+      <Address>
+        <AddressLine>3000 John Deere Road</AddressLine>
+      </Address>
+      <City>
+        <CityName>Toano</CityName>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </City>
+      <PostalCode>23168</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Notify</Type>
+      <Name>Vandegrift Inc.</Name>
+      <Address>
+        <AddressLine>20 South Charles Street Suite 501</AddressLine>
+        <AddressLine>Baltimore, MD 21201 Attn:Mark Zeitlin</AddressLine>
+        <AddressLine>Email address: ll-us@vandegriftinc.com</AddressLine>
+      </Address>
+      <City>
+        <CityName>Baltimore</CityName>
+        <State>MD</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </City>
+      <PostalCode>21201</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Customer</Type>
+      <Name>Lumber Liquidators Services</Name>
+      <Address>
+        <AddressLine>3000 John Deere Road</AddressLine>
+        <AddressLine>Toano</AddressLine>
+      </Address>
+      <City>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+      </City>
+      <PostalCode>23168</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Sender</Type>
+      <Name>DHL International Supply Chain</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>FreightForwarder</Type>
+      <Code>DHLISC</Code>
+      <Name>DHL International Supply Chain</Name>
+      <Address>
+        <AddressLine>1 Kalisa Way, Suite 112</AddressLine>
+      </Address>
+      <PostalCode>07652</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Shipper</Type>
+      <Code>100121</Code>
+      <Name>Zhejiang Biyork Wood Co., Ltd</Name>
+      <Address>
+        <AddressLine>Overseas Chinese Investment Zone, Nanxun</AddressLine>
+        <AddressLine>Huzhou</AddressLine>
+      </Address>
+      <PostalCode>313009</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Supplier</Type>
+      <Code>100121</Code>
+      <Name>Zhejiang Biyork Wood Co., Ltd</Name>
+      <Address>
+        <AddressLine>Overseas Chinese Investment Zone, Nanxun</AddressLine>
+        <AddressLine>Huzhou</AddressLine>
+      </Address>
+      <City>
+        <CountryCode>CN</CountryCode>
+        <CountryName>China</CountryName>
+      </City>
+      <PostalCode>313009</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Carrier</Type>
+      <Code>EGLV</Code>
+      <Name>Evergreen</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>ShipmentFinalDest</Type>
+      <Code>9445</Code>
+      <Name>Pomona DC</Name>
+      <City>
+        <CityName>Pomona</CityName>
+        <State>CA</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </City>
+    </PartyInfo>
+    <Mode>Ocean</Mode>
+    <Voyage>0708-014E</Voyage>
+    <Vessel>EVER LIVELY</Vessel>
+    <Routing>IMODAL</Routing>
+    <OriginCity>
+      <CityName>Shanghai</CityName>
+      <CityCode Qualifier="UN">CNSHA</CityCode>
+      <CityCode Qualifier="K">57035</CityCode>
+      <CountryCode>CN</CountryCode>
+    </OriginCity>
+    <PortOfLoading>
+      <CityName>Shanghai</CityName>
+      <CityCode Qualifier="UN">CNSHA</CityCode>
+      <CityCode Qualifier="K">57035</CityCode>
+      <CountryCode>CN</CountryCode>
+    </PortOfLoading>
+    <PortOfDischarge>
+      <CityName>Los Angeles</CityName>
+      <CityCode Qualifier="UN">USLAX</CityCode>
+      <CityCode Qualifier="D">2704</CityCode>
+      <State>CA</State>
+      <CountryCode>US</CountryCode>
+    </PortOfDischarge>
+    <BLDestination>
+      <CityName>Pomona</CityName>
+      <CityCode Qualifier="UN">USPQC</CityCode>
+      <State>CA</State>
+      <CountryCode>US</CountryCode>
+    </BLDestination>
+    <EstBLDestDate TimeZone="UTC">2016-08-08T12:00:00.000-07:00</EstBLDestDate>
+    <EstDepartDate TimeZone="UTC">2016-07-17T12:00:00.000-07:00</EstDepartDate>
+    <EstDischargePortDate TimeZone="UTC">2016-08-01T12:00:00.000-07:00</EstDischargePortDate>
+    <ReferenceDates>
+      <ReferenceDateType>ContainerDate1</ReferenceDateType>
+      <ReferenceDate>2016-07-14T12:00:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>ContainerDate2</ReferenceDateType>
+      <ReferenceDate>2016-07-13T12:00:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Empty Return</ReferenceDateType>
+      <ReferenceDate>2016-08-04T22:05:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Docs Transmitted</ReferenceDateType>
+      <ReferenceDate>2016-07-22T11:14:21.590-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Trigger Outbound ASN</ReferenceDateType>
+      <ReferenceDate>2016-07-21T10:21:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Current Shipment Delivery</ReferenceDateType>
+      <ReferenceDate>2016-08-08T10:20:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Available for Delivery</ReferenceDateType>
+      <ReferenceDate>2016-08-02T16:55:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Departed</ReferenceDateType>
+      <ReferenceDate>2016-07-17T02:30:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Full Outgate - Discharge Port</ReferenceDateType>
+      <ReferenceDate>2016-08-04T08:38:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Discharged</ReferenceDateType>
+      <ReferenceDate>2016-08-02T16:55:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Carrier Rlsd</ReferenceDateType>
+      <ReferenceDate>2016-07-21T07:01:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Full In Gate at Origin</ReferenceDateType>
+      <ReferenceDate>2016-07-13T17:50:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Docs Attached</ReferenceDateType>
+      <ReferenceDate>2016-07-22T11:14:27.107-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Shipped (ASN)</ReferenceDateType>
+      <ReferenceDate>2016-07-21T10:16:21.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>On-Board</ReferenceDateType>
+      <ReferenceDate>2016-07-16T15:27:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Arrived</ReferenceDateType>
+      <ReferenceDate>2016-08-01T19:50:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Delivered</ReferenceDateType>
+      <ReferenceDate>2016-08-04T06:59:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <Container>
+      <LoadPlanName>2987838</LoadPlanName>
+      <ContainerNumber>TEMU3877030</ContainerNumber>
+      <ContainerType>D20</ContainerType>
+      <ContainerTypeName>20' Standard Dry</ContainerTypeName>
+      <ContainerLoad>FCL</ContainerLoad>
+      <LoadLocation>CY</LoadLocation>
+      <SealNumber>EMCBCZ9785</SealNumber>
+      <ServiceType>CYP/CYP</ServiceType>
+      <ContractNumber>SC63789</ContractNumber>
+      <ReferenceNumber1>680 Cartons</ReferenceNumber1>
+      <ChargeableWeight ANSICode="" Unit="None">0</ChargeableWeight>
+      <DimensionalWeight ANSICode="" Unit="None">0</DimensionalWeight>
+      <ActualWeight ANSICode="KG" Unit="Kilograms">15760</ActualWeight>
+      <Volume ANSICode="CR" Unit="Cubic Meters">13.7</Volume>
+      <LadingQuantity ANSICode="SFQTY" Unit="Square Feet (qty)">22752.8</LadingQuantity>
+      <ReasonCodeTypes>
+        <ReasonCode>
+          <Type>Document Set</Type>
+          <Code>Missing Documents</Code>
+          <Description>Missing Documents</Description>
+        </ReasonCode>
+      </ReasonCodeTypes>
+      <ReferenceDates>
+        <ReferenceDateType>ContainerDate1</ReferenceDateType>
+        <ReferenceDate>2016-07-14T12:00:00.000-07:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>ContainerDate2</ReferenceDateType>
+        <ReferenceDate>2016-07-13T12:00:00.000-07:00</ReferenceDate>
+      </ReferenceDates>
+      <LineItems>
+        <LoadSequence>1</LoadSequence>
+        <PONumber>4500173883</PONumber>
+        <LineItemNumber>00001</LineItemNumber>
+        <Quantity ANSICode="SFQTY" Unit="Square Feet (qty)">22752.8</Quantity>
+        <ProductCode>10040086</ProductCode>
+        <ProductName>CLX XD Acacia EVP 7mm</ProductName>
+        <DivisionIdentifier>Lumber Liquidators</DivisionIdentifier>
+        <ShipWindow>
+          <StartDate>2016-07-11T12:00:00.000-07:00</StartDate>
+          <EndDate>2016-07-18T12:00:00.000-07:00</EndDate>
+        </ShipWindow>
+        <BLNumber>EGLV142657648711</BLNumber>
+        <BookingNumber>142657649815</BookingNumber>
+        <InvoiceNumber>16283</InvoiceNumber>
+        <ManufacturerID>201611221551</ManufacturerID>
+        <Weight ANSICode="KG" Unit="Kilograms">15760</Weight>
+        <Volume ANSICode="CR" Unit="Cubic Meters">13.7</Volume>
+        <PackageCount>17</PackageCount>
+        <FinalDestination>
+          <LocationCode>9445</LocationCode>
+          <Name>Pomona DC</Name>
+          <Address>
+            <AddressLine>1601 West Mission Blvd Suite 104</AddressLine>
+          </Address>
+          <City>
+            <CityName>Pomona</CityName>
+            <CityCode Qualifier="UN">USPQC</CityCode>
+            <State>CA</State>
+            <CountryCode>US</CountryCode>
+          </City>
+          <PostalCode>91766</PostalCode>
+        </FinalDestination>
+        <ReferenceDates>
+          <ReferenceDateType>BlDate1</ReferenceDateType>
+          <ReferenceDate>2016-07-17T12:00:00.000-07:00</ReferenceDate>
+        </ReferenceDates>
+        <ReferenceDates>
+          <ReferenceDateType>BlDate3</ReferenceDateType>
+          <ReferenceDate>2016-07-17T12:00:00.000-07:00</ReferenceDate>
+        </ReferenceDates>
+        <References>
+          <Type>OrderRef1</Type>
+          <Value>Vendor Purchase Order</Value>
+        </References>
+        <References>
+          <Type>OrderRef2</Type>
+          <Value>Standard PO</Value>
+        </References>
+        <References>
+          <Type>OrderRef3</Type>
+          <Value>US</Value>
+        </References>
+        <References>
+          <Type>ProductRef1</Type>
+          <Value>Square Feet</Value>
+        </References>
+        <References>
+          <Type>ProductRef3</Type>
+          <Value>111506</Value>
+        </References>
+        <References>
+          <Type>ProductRef4</Type>
+          <Value>N</Value>
+        </References>
+        <References>
+          <Type>HTS</Type>
+          <Value>3918101000</Value>
+        </References>
+        <References>
+          <Type>FCR</Type>
+          <Value>FCR2016423186</Value>
+        </References>
+        <PartyInfo>
+          <Type>Supplier</Type>
+          <Code>100121</Code>
+          <Name>Zhejiang Biyork Wood Co., Ltd</Name>
+          <Address>
+            <AddressLine>Overseas Chinese Investment Zone, Nanxun</AddressLine>
+            <AddressLine>Huzhou</AddressLine>
+          </Address>
+          <City>
+            <CountryCode>CN</CountryCode>
+            <CountryName>China</CountryName>
+          </City>
+          <PostalCode>313009</PostalCode>
+        </PartyInfo>
+        <PartyInfo>
+          <Type>Broker</Type>
+          <Code>DHL</Code>
+          <Name>DHL Translate</Name>
+        </PartyInfo>
+        <ItemAttributes>
+          <Type>OrderDate</Type>
+          <Value>20160408</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>Original Delivery Date</Type>
+          <Value>20160707</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>UOM</Type>
+          <Value>FTK</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>SAP Line Number</Type>
+          <Value>00001</Value>
+        </ItemAttributes>
+        <Charges Currency="USD" Type="Invoice">27758.42</Charges>
+        <Charges Currency="USD" Type="FirstCost">1.23</Charges>
+        <MilestoneMessage>
+          <OneReferenceMultipleMilestones>
+            <ReferenceInfo>
+              <ReferenceId reference="EGLV142657648711" type="BLNumber"/>
+              <ReferenceId reference="TEMU3877030" type="ContainerNumber"/>
+              <ReferenceId reference="2987838M02" type="ShipmentID"/>
+              <ReferenceId reference="4500173883" type="PONumber"/>
+              <ReferenceId reference="00001" type="LineItemNumber"/>
+              <ReferenceId reference="10040086" type="ProductCode"/>
+              <ReferenceId reference="9445" type="FinalDestinationCode"/>
+              <ReferenceId reference="FCL" type="ContainerLoadCode"/>
+            </ReferenceInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>8779</MilestoneTypeCode>
+              <MilestoneTypeName>PO Received</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-04-08T18:51:46.880-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-04-08T11:51:46.880-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Purchase Order 4500173883 has been Received.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7044</MilestoneTypeCode>
+              <MilestoneTypeName>SO Declined DHL</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-06-28T08:10:18.613-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-06-28T16:10:18.613-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>SO: 201611177887.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7045</MilestoneTypeCode>
+              <MilestoneTypeName>SO First Submitted</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-06-29T06:32:38.233-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-06-29T14:32:38.233-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+              <Comments>SO: 201611221551.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7435</MilestoneTypeCode>
+              <MilestoneTypeName>Vendor Docs Submitted</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-12T10:10:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-12T18:10:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7013</MilestoneTypeCode>
+              <MilestoneTypeName>Full In Gate at Origin</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-13T17:50:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-14T01:50:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7180</MilestoneTypeCode>
+              <MilestoneTypeName>PO Updated</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-14T05:34:37.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-13T22:34:37.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Purchase Order 4500173883has been Updated.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>26</MilestoneTypeCode>
+              <MilestoneTypeName>SO Submitted</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-14T06:24:36.850-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-14T14:24:36.850-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+              <Comments>SO: 201611221551.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7041</MilestoneTypeCode>
+              <MilestoneTypeName>SO Approved DHL</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-14T06:24:52.737-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-14T14:24:52.737-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+              <Comments>SO: 201611221551.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7010</MilestoneTypeCode>
+              <MilestoneTypeName>FCR Created (Draft)</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-14T08:03:02.807-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-14T16:03:02.807-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7018</MilestoneTypeCode>
+              <MilestoneTypeName>ISF Created</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-14T08:53:21.383-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-14T16:53:21.383-07:00" timeZone="LT" whichTime="EventTime"/>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7020</MilestoneTypeCode>
+              <MilestoneTypeName>ISF Transmitted</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-14T09:01:27.543-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-14T17:01:27.543-07:00" timeZone="LT" whichTime="EventTime"/>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>5</MilestoneTypeCode>
+              <MilestoneTypeName>Loaded at Port</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-16T15:27:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-16T23:27:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>6</MilestoneTypeCode>
+              <MilestoneTypeName>Departed</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-17T02:30:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-17T10:30:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7011</MilestoneTypeCode>
+              <MilestoneTypeName>FCR Created (Final)</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-18T11:45:26.157-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-18T19:45:26.157-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1</MilestoneTypeCode>
+              <MilestoneTypeName>S/W End Dt</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-18T12:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-18T12:00:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7012</MilestoneTypeCode>
+              <MilestoneTypeName>FCR Printed</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-21T02:34:40.563-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-21T10:34:40.563-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>11</MilestoneTypeCode>
+              <MilestoneTypeName>Carrier Rlsd</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-21T07:01:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-21T00:01:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Los Angeles</CityName>
+                <CityCode Qualifier="UN">USLAX</CityCode>
+                <CityCode Qualifier="D">2704</CityCode>
+                <State>CA</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7</MilestoneTypeCode>
+              <MilestoneTypeName>Manifest Finalized</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-21T10:16:21.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-21T18:16:21.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7037</MilestoneTypeCode>
+              <MilestoneTypeName>Shipment Planned by DHL</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-21T10:16:31.537-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-21T18:16:31.537-07:00" timeZone="LT" whichTime="EventTime"/>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7049</MilestoneTypeCode>
+              <MilestoneTypeName>Trigger Outbound ASN</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-21T10:21:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-21T18:21:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7000</MilestoneTypeCode>
+              <MilestoneTypeName>Docs Transmitted</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-22T11:14:21.590-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-21T17:14:21.590-07:00" timeZone="LT" whichTime="EventTime"/>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>6999</MilestoneTypeCode>
+              <MilestoneTypeName>Docs Attached</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-07-22T11:14:27.107-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-07-22T19:14:27.107-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Milestone added because document id [VGM-EGLV142657648711.pdf] of type [Doc Set] was added</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7027</MilestoneTypeCode>
+              <MilestoneTypeName>Other</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-08-01T03:37:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-08-01T11:37:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Shanghai</CityName>
+                <CityCode Qualifier="UN">CNSHA</CityCode>
+                <CityCode Qualifier="K">57035</CityCode>
+                <CountryCode>CN</CountryCode>
+              </City>
+              <Comments>adjusted based on production plan(new PO 4/28/2016)</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>9</MilestoneTypeCode>
+              <MilestoneTypeName>Arrived</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-08-01T19:50:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-08-01T12:50:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Los Angeles</CityName>
+                <CityCode Qualifier="UN">USLAX</CityCode>
+                <CityCode Qualifier="D">2704</CityCode>
+                <State>CA</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>37</MilestoneTypeCode>
+              <MilestoneTypeName>Available for Delivery</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-08-02T16:55:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-08-02T09:55:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Los Angeles</CityName>
+                <CityCode Qualifier="UN">USLAX</CityCode>
+                <CityCode Qualifier="D">2704</CityCode>
+                <State>CA</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>10</MilestoneTypeCode>
+              <MilestoneTypeName>Discharged</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-08-02T16:55:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-08-02T09:55:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Los Angeles</CityName>
+                <CityCode Qualifier="UN">USLAX</CityCode>
+                <CityCode Qualifier="D">2704</CityCode>
+                <State>CA</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21</MilestoneTypeCode>
+              <MilestoneTypeName>Delivered</MilestoneTypeName>
+              <MilestoneReasonCode>NS</MilestoneReasonCode>
+              <MilestoneTime dateTime="2016-08-04T06:59:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-08-03T23:59:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Pomona</CityName>
+                <CityCode Qualifier="UN">USPQC</CityCode>
+                <State>CA</State>
+                <CountryCode>US</CountryCode>
+              </City>
+              <Comments>SCAC: PGTP
+K1 Comments=; EquipmentNumber=TEMU3877030;</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>8231</MilestoneTypeCode>
+              <MilestoneTypeName>Full Outgate - Discharge Port</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-08-04T08:38:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-08-04T01:38:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Los Angeles</CityName>
+                <CityCode Qualifier="UN">USLAX</CityCode>
+                <CityCode Qualifier="D">2704</CityCode>
+                <State>CA</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>24</MilestoneTypeCode>
+              <MilestoneTypeName>Empty Return</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-08-04T22:05:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-08-04T15:05:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Los Angeles</CityName>
+                <CityCode Qualifier="UN">USLAX</CityCode>
+                <CityCode Qualifier="D">2704</CityCode>
+                <State>CA</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7489</MilestoneTypeCode>
+              <MilestoneTypeName>Current Shipment Delivery</MilestoneTypeName>
+              <MilestoneTime dateTime="2016-08-08T10:20:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2016-08-08T03:20:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Pomona</CityName>
+                <CityCode Qualifier="UN">USPQC</CityCode>
+                <State>CA</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+          </OneReferenceMultipleMilestones>
+        </MilestoneMessage>
+        <ShippingOrderNumber>201611221551</ShippingOrderNumber>
+      </LineItems>
+    </Container>
+  </ASN>
+</ASNMessage>

@@ -1,4 +1,9 @@
 <%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
+<%asn_cdefs = [
+  :ord_asn_booking_submitted,:ord_asn_booking_approved,:ord_asn_gate_in,
+  :ord_asn_fcr_created,:ord_asn_loaded_at_port,:ord_asn_departed,:ord_asn_arrived,
+  :ord_asn_discharged,:ord_asn_gate_out,:ord_asn_empty_return
+]%>
 <%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([
   :prodven_risk,:prod_old_article,:prod_merch_cat_desc,:prod_merch_cat,
   :ordln_pc_approved_by,:ordln_pc_approved_date,
@@ -10,7 +15,7 @@
   :ord_sap_extract, :ord_avail_to_prom_date,:ord_qa_hold_by,
   :ord_qa_hold_date,:ord_inspector_assigned,:ord_inspection_date_planned,:ord_inspection_date_completed,
   :ord_testing_date_planned,:ord_testing_date_completed,
-  :ordln_old_art_number, :ordln_part_name])%>
+  :ordln_old_art_number, :ordln_part_name]+asn_cdefs)%>
 <%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
 <script type='text/javascript'>
 
@@ -83,7 +88,7 @@
       </div>
     </div>
   <% end %>
-  <div class="row">
+  <div class="row" style='margin-bottom:1em;'>
     <div class="col-md-6">
       <% if @order.vendor %>
         <%vendor_name_fld = ModelField.find_by_uid(:ord_ven_name)%>
@@ -91,7 +96,9 @@
       <% end %>
       <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_accepted_at, :ord_accepted_by, :ord_imp_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_payment_terms, :ord_terms, :ord_fob_point] %>
       <hr />
-      <%=show_custom_fields @order, {skip_fields:[:ord_planned_expected_delivery_date,:ord_inspector_assigned,:ord_forecasted_handover_date,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_qa_hold_date,:ord_qa_hold_by,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_testing_date_completed].collect{|key| cdefs[key].model_field_uid}}%>
+      <%=show_custom_fields @order, {skip_fields:([:ord_planned_expected_delivery_date,:ord_inspector_assigned,:ord_forecasted_handover_date,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_qa_hold_date,:ord_qa_hold_by,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_testing_date_completed]+asn_cdefs).collect{|key| cdefs[key].model_field_uid}}%>
+      <hr />
+      <%= show_model_fields @order, asn_cdefs.collect {|key| cdefs[key].model_field_uid}%>
     </div>
     <div class="col-md-6">
       <%= show_model_fields @order, [:ord_ord_date, :ord_window_start, :ord_window_end, cdefs[:ord_planned_expected_delivery_date].model_field_uid] %>
