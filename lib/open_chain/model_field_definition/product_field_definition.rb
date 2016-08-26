@@ -146,7 +146,7 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         :import_lambda=>lambda {|obj,data| "Order Count ignored. (read only)"},
         # can't think of a way to export this without going back to the database
         :export_lambda=>lambda {|obj| OrderLine.select('distinct order_lines.order_id').where('order_lines.product_id = ?',obj.id).count},
-        :qualified_field_name=>"(select count(*) from (select distinct order_lines.order_id, order_lines.product_id from order_lines) x where x.product_id = products.id)",
+        :qualified_field_name=>"(select count(distinct order_lines.order_id) from order_lines where order_lines.product_id = products.id)",
         :data_type=>:integer,
         :read_only=>true,
         :history_ignore=>true
