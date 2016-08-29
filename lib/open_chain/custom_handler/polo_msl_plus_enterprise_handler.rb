@@ -194,7 +194,7 @@ module OpenChain
 
             cdefs.push :knit_woven, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1, :scientific_name_2, :scientific_name_3,
                         :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3,
-                        :origin_wildlife, :semi_precious, :semi_precious_type, :cites, :fish_wildlife, :bartho_customer_id, :msl_fiber_failure
+                        :origin_wildlife, :semi_precious, :semi_precious_type, :cites, :fish_wildlife, :bartho_customer_id, :msl_fiber_failure, :msl_us_class
 
             @out_cdefs = self.class.prep_custom_definitions cdefs
           end
@@ -220,13 +220,7 @@ module OpenChain
           file = [p.unique_identifier, (iso.presence || "CN"), mp1_value(tr,iso), hts_value(tr.try(:hts_1), iso), hts_value(tr.try(:hts_2), iso), hts_value(tr.try(:hts_3), iso)]
           file.push *get_custom_values(p, :length_cm, :width_cm, :height_cm)
 
-          # RL wants to prevent certain divisions from sending fiber content values at this time.
-          # Mostly due to the fiber content from these divisions being garbage
-          barthco_id = p.get_custom_value(@out_cdefs[:bartho_customer_id]).value.to_s.strip
-
-          # Don't send fiber fields if the fiber parser process was unable to read them either
-          msl_fiber_failure = p.get_custom_value(@out_cdefs[:msl_fiber_failure]).value == true
-          if msl_fiber_failure || barthco_id.blank? || ["48650", "73720", "47080"].include?(barthco_id)
+          if skip_fiber_fields? p
             45.times {file << nil}
           else
             file.push *get_custom_values(p, *@fiber_defs)
@@ -238,6 +232,18 @@ module OpenChain
 
           # Change all newlines to spaces
           file.map {|v| v.is_a?(String) ? v.gsub(/\r?\n/, " ") : v}
+        end
+
+        def skip_fiber_fields? p
+           # RL wants to prevent certain divisions from sending fiber content values at this time.
+          # Mostly due to the fiber content from these divisions being garbage
+          barthco_id = p.get_custom_value(@out_cdefs[:bartho_customer_id]).value.to_s.strip
+
+           # Don't send fiber fields if the fiber parser process was unable to read them either
+          msl_fiber_failure = p.get_custom_value(@out_cdefs[:msl_fiber_failure]).value == true
+          msl_us_class = p.get_custom_value(@out_cdefs[:msl_us_class]).value
+          us_class_blacklist = ["Bracelet", "Cuff link", "Cufflinks", "Earring", "Earrings", "Jewelry", "Key Chain", "Key Fob", "Keyfob", "Necklace", "Ring"]
+          msl_fiber_failure || barthco_id.blank? || ["48650", "47080"].include?(barthco_id) || us_class_blacklist.include?(msl_us_class)
         end
 
         def get_custom_values product, *defs

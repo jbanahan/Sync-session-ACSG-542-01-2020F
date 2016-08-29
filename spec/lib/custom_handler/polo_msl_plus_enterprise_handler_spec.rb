@@ -235,11 +235,14 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       expect(r[1][3]).to eq t2.hts_1.hts_format
     end
 
-    it "sends fiber fields if barthco id is not blank" do
+    it "sends fiber fields if barthco id is not blank/blocked, msl_fiber_failure is falsy, msl_us_class isn't on blacklist" do
       # Just use the first and last fiber fields, otherwise the whole process takes WAY too long to generate
       # 45 new fields
       custom_defs = @custom_defs
       @p.update_custom_value! custom_defs[:bartho_customer_id], "ID"
+      @p.update_custom_value! custom_defs[:msl_fiber_failure], nil
+      @p.update_custom_value! custom_defs[:msl_us_class], "not on list"
+
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_1], "Fabric 1"
       @p.update_custom_value! custom_defs[:fabric_percent_1], 1
@@ -258,6 +261,47 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     it "does not send fiber fields if barthco id is blocked" do
       custom_defs = @custom_defs
       @p.update_custom_value! custom_defs[:bartho_customer_id], "48650"
+      @p.update_custom_value! custom_defs[:msl_fiber_failure], nil
+      @p.update_custom_value! custom_defs[:msl_us_class], "not on list"
+      @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
+      @p.update_custom_value! custom_defs[:fabric_percent_15], 15
+
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+      (9..53).each {|x| expect(r[1][x]).to be_nil}
+    end
+
+    it "does not send fiber fields if barthco id blank" do
+      custom_defs = @custom_defs
+      @p.update_custom_value! custom_defs[:bartho_customer_id], nil
+      @p.update_custom_value! custom_defs[:msl_fiber_failure], nil
+      @p.update_custom_value! custom_defs[:msl_us_class], "not on list"
+      @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
+      @p.update_custom_value! custom_defs[:fabric_percent_15], 15
+
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+      (9..53).each {|x| expect(r[1][x]).to be_nil}
+    end
+
+    it "does not send fiber fields if msl_fiber_failure is true" do
+      custom_defs = @custom_defs
+      @p.update_custom_value! custom_defs[:bartho_customer_id], "ID"
+      @p.update_custom_value! custom_defs[:msl_fiber_failure], true
+      @p.update_custom_value! custom_defs[:msl_us_class], "not on list"
+      @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
+      @p.update_custom_value! custom_defs[:fabric_percent_15], 15
+
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+      (9..53).each {|x| expect(r[1][x]).to be_nil}
+    end
+
+    it "does not send fiber fields if msl_us_class is blocked" do
+      custom_defs = @custom_defs
+      @p.update_custom_value! custom_defs[:bartho_customer_id], "ID"
+      @p.update_custom_value! custom_defs[:msl_fiber_failure], nil
+      @p.update_custom_value! custom_defs[:msl_us_class], "Bracelet"
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15
 
