@@ -66,8 +66,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
     end
     style_hash[:style] = style
     style_hash[:name] = row[1]
-    color = row[2].split('-').last
-    raise "Color portion of style-color (#{row[2]}) must be 3 digits." unless color.match(/^[0-9]{3}$/)
+    color = get_color(row)
+    return if color.nil?
     color_countries = style_hash[:colors][color]
     if color_countries.nil?
       style_hash[:colors][color] = []
@@ -138,5 +138,16 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
     d.id
   end
   private :get_division_id
+
+  def get_color row
+    color = row[2].to_s.split('-').last
+    # first check to make sure the color is 3 digits
+    # then if it isn't, check if it has a letter and is 3 characters, which are valid formats but should be ignored.
+    # finally fail if it doesn't match either that all values are digits
+    return color if color.match(/^[0-9]{3}$/)
+    return nil if color.match(/^[a-zA-Z0-9]{3}$/)
+    raise "Color portion of style-color (#{row[2]}) must be 3 digits."
+  end
+  private :get_color
 
 end; end; end; end

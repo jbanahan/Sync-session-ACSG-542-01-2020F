@@ -88,6 +88,12 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       new_parser.update_data_hash(@h,r)
       expect(@h).to be_empty
     end
+    it 'should skip rows where color has a letter' do
+      r = row
+      r[2] = '1234567-S01'
+      new_parser.update_data_hash(@h,r)
+      expect(@h).to be_empty
+    end
     it 'should fail if a row has 11 elements and column A is not a 7 digit number' do
       r = row
       r[0] = '12'
@@ -97,6 +103,13 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       r = row
       r[9] = 'AB'
       expect{new_parser.update_data_hash(@h,r)}.to raise_error(/Country .* not found/)
+    end
+    it 'should skip country code XX' do
+      Country.delete_all
+      r = row
+      r[9] = 'XX'
+      new_parser.update_data_hash(@h,r)
+      expect(@h).to be_empty
     end
     it 'should fail on bad color code' do
       r = row

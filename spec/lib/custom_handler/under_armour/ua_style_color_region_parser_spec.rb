@@ -113,6 +113,12 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
       }
       expect(@h).to eq expected
     end
+    it 'should skip if color has a letter' do
+      r = row
+      r[2] = '1234567-S01'
+      new_parser.update_data_hash(@h,r)
+      expect(@h['1234567'][:colors]).to be_empty
+    end
   end
 
   describe '#process_data_hash' do

@@ -42,7 +42,9 @@ include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSuppor
     style = get_style(row)
     return if style.nil?
     country_code = get_country_code(row)
+    return if country_code.nil?
     color = get_color(row)
+    return if color.nil?
     name = row[1]
     division = row[4].to_s.strip
     season = row[5].to_s.strip.upcase
@@ -100,6 +102,7 @@ include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSuppor
   def get_country_code row
     @country_codes ||= Country.pluck(:iso_code)
     iso = row[9].strip
+    return if iso=='XX' #happens if UA SAP is setup wrong, ignore
     if !@country_codes.include?(iso.upcase)
       raise "Country code #{iso} is not found."
     end
@@ -109,8 +112,12 @@ include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSuppor
 
   def get_color row
     color = row[2].to_s.split('-').last
-    raise "Color portion of style-color (#{row[2]}) must be 3 digits." unless color.match(/^[0-9]{3}$/)
-    color
+    # first check to make sure the color is 3 digits
+    # then if it isn't, check if it has a letter and is 3 characters, which are valid formats but should be ignored.
+    # finally fail if it doesn't match either that all values are digits
+    return color if color.match(/^[0-9]{3}$/)
+    return nil if color.match(/^[a-zA-Z0-9]{3}$/)
+    raise "Color portion of style-color (#{row[2]}) must be 3 digits."
   end
   private :get_color
 
