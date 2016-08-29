@@ -24,6 +24,15 @@
   });
   $(function() {
 
+    var updateStatusIndicators = function(lineCount) {
+      var pcApproveCount = $('[data-is-pc-approved="true"]').length;
+      var qaApproveCount = $('[data-is-qa-approved="true"]').length;
+      var qaIcon = lineCount==qaApproveCount ? 'fa-check text-success' : 'fa-exclamation-triangle text-warning';
+      var pcIcon = lineCount==pcApproveCount ? 'fa-check text-success' : 'fa-exclamation-triangle text-warning';
+      $('#qa-status-indicator').addClass(qaIcon);
+      $('#pc-status-indicator').addClass(pcIcon);
+    };
+    updateStatusIndicators(<%=@order.order_lines.size%>);
     $(document).on('click','[state-toggle-id]',function(evt) {
       var t = $(this);
       var dataHash = {button_id:t.attr('state-toggle-id')};
@@ -116,8 +125,8 @@
     <div class="col-md-12">
       <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active"><a href="#main" aria-controls="main" role="tab" data-toggle="tab">Main</a></li>
-        <li role="presentation"><a href="#compliance" aria-controls="compliance" role="tab" data-toggle="tab">Compliance</a></li>
-        <li role="presentation"><a href="#quality" aria-controls="quality" role="tab" data-toggle="tab">Quality</a></li>
+        <li role="presentation"><a href="#compliance" aria-controls="compliance" role="tab" data-toggle="tab">Compliance <i class='fa' id='pc-status-indicator'></i></a></li>
+        <li role="presentation"><a href="#quality" aria-controls="quality" role="tab" data-toggle="tab">Quality <i class='fa' id='qa-status-indicator'></i></a></li>
       </ul>
 
       <!-- Tab panes -->
@@ -180,7 +189,9 @@
             <tbody>
               <% @order.order_lines.each do |line| %>
                 <%exec_pc_approved = !line.get_custom_value(cdefs[:ordln_pc_approved_date_executive]).value.blank?%>
-                <tr>
+                <%pc_approved_date = cdefs[:ordln_pc_approved_date].model_field.process_export(line,User.current)%>
+                <%is_pc_approved = exec_pc_approved || !pc_approved_date.blank?%>
+                <tr data-is-pc-approved="<%=is_pc_approved ? 'true' : 'false'%>">
                   <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
                   <td>
                     <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
@@ -198,7 +209,7 @@
                       <small><%=cdefs[:ordln_pc_approved_date_executive].model_field.process_export(line,User.current)%></small>
                     <% else %>
                       <%=ModelField.find_by_uid("*uf_#{cdefs[:ordln_pc_approved_by].id}_fullname".to_sym).process_export(line,User.current)%><br />
-                      <small><%=cdefs[:ordln_pc_approved_date].model_field.process_export(line,User.current)%></small>
+                      <small><%=pc_approved_date%></small>
                     <% end %>
                   </td>
                   <td>
@@ -223,7 +234,8 @@
             </thead>
             <tbody>
               <% @order.order_lines.each do |line| %>
-                <tr>
+              <%qa_approved_date = cdefs[:ordln_qa_approved_date].model_field.process_export(line,User.current)%>
+                <tr data-is-qa-approved="<%=qa_approved_date.blank? ? 'false' : 'true'%>">
                   <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
                   <td>
                     <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
@@ -237,7 +249,7 @@
                   <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure], table: true, editor_only: true) %>
                   <td>
                     <%=ModelField.find_by_uid("*uf_#{cdefs[:ordln_qa_approved_by].id}_fullname".to_sym).process_export(line,User.current)%><br />
-                    <small><%=cdefs[:ordln_qa_approved_date].model_field.process_export(line,User.current)%></small>
+                    <small><%=qa_approved_date%></small>
                   </td>
                   <td>
                     <%=state_toggle_buttons(line,User.current,button_class:'btn btn-default btn-xs')%>
@@ -247,8 +259,6 @@
             </tbody>
           </table>
         </div>
-        <div role="tabpanel" class="tab-pane" id="messages">...</div>
-        <div role="tabpanel" class="tab-pane" id="settings">...</div>
       </div>
 
     </div>
