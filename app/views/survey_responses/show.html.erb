@@ -240,9 +240,9 @@
     </div>
     <div chain-action-bar>
       <button class='btn btn-default' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
-      <button class='btn btn-default' ng-show="!resp.archived" ng-click='srService.invite(resp)'>Resend Email Invite</button>
-      <button class='btn btn-default' ng-show="!resp.archived" ng-click='showRemindModal(reminderDefaults)'>Send Reminder Email</button>
       <%-if @sr.survey.can_edit?(current_user)-%>
+        <button class='btn btn-default' ng-show="!resp.archived" ng-click='srService.invite(resp)'>Resend Email Invite</button>
+        <button class='btn btn-default' ng-show="!resp.archived" ng-click='showRemindModal(reminderDefaults)'>Send Reminder Email</button>
         <button class='btn_link btn btn-default' link_to='<%=survey_path(@sr.survey)%>'>Survey Dashboard</button>
       <%-end-%>
       <%-if @sr.can_edit?(current_user) && @sr.submitted_date && @sr.corrective_action_plan.nil?-%>
