@@ -394,7 +394,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       product = find_product(line_el)
       ol.product = product
       ol.quantity = BigDecimal(et(line_el,'MENGE'),4)
-      ol.unit_of_measure = et(line_el,'MENEE')
+      ol.unit_of_measure = convert_uom(et(line_el,'MENEE'))
 
       # There is a possibility these may change between runs. We do not want the part_name or old_article_number
       # to change once they are set.
@@ -565,6 +565,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       formatted_date = "#{date_part[0,4]}-#{date_part[4,2]}-#{date_part[6,2]} #{time_part[0,2]}:#{time_part[2,2]}:#{time_part[4,2]}"
 
       ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
+    end
+
+    def convert_uom str
+      vals = {'FTK'=>'FT2','FOT'=>'FT'}
+      new_str = vals[str]
+      new_str.blank? ? str : new_str
     end
 
 
