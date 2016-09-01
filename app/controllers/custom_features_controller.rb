@@ -28,6 +28,7 @@ require 'open_chain/custom_handler/advance/advance_parts_upload_parser'
 require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_handler'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
+require 'open_chain/custom_handler/hm/hm_po_line_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -56,6 +57,7 @@ class CustomFeaturesController < ApplicationController
   LUMBER_PART_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler'
   LUMBER_ORDER_CLOSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser'
   EDDIE_7501_AUDIT ||= 'OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler'
+  HM_PO_LINE_PARSER ||= 'OpenChain::CustomHandler::Hm::HmPoLineParser'
 
   def index
     render :layout=>'one_col'
@@ -507,6 +509,18 @@ class CustomFeaturesController < ApplicationController
 
   def eddie_bauer_7501_download
     generic_download "Eddie Bauer 7501 Audit"
+  end
+
+  def hm_po_line_parser_index
+    generic_index OpenChain::CustomHandler::Hm::HmPoLineParser.new(nil), HM_PO_LINE_PARSER, "H&M PO Lines"
+  end
+
+  def hm_po_line_parser_upload
+    generic_upload HM_PO_LINE_PARSER, "H&M PO Lines", "hm_po_line_parser"
+  end
+
+  def hm_po_line_parser_download
+    generic_download "H&M PO Lines"
   end
 
   private

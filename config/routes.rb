@@ -506,7 +506,10 @@ OpenChain::Application.routes.draw do
   match "/custom_features/ascena_ca_invoices" => "custom_features#ascena_ca_invoices_index", :via=>:get
   match "/custom_features/ascena_ca_invoices/upload" => "custom_features#ascena_ca_invoices_upload", :via => :post
   match "/custom_features/ascena_ca_invoices/:id/download" => "custom_features#ascena_ca_invoices_download", :via => :get
-
+  
+  get "/custom_features/hm_po_line_parser" => "custom_features#hm_po_line_parser_index"
+  post "/custom_features/hm_po_line_parser/upload" => "custom_features#hm_po_line_parser_upload"
+  get "/custom_features/hm_po_line_parser/:id/download" => "custom_features#hm_po_line_parser_download"
 
   match "/custom_features/lenox_shipment_status" => "custom_features#lenox_shipment_status_index", :via=>:get
   match "/custom_features/lenox_shipment_status/upload" => "custom_features#lenox_shipment_status_upload", :via => :post

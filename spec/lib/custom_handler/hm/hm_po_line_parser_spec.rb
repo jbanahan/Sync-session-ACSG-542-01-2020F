@@ -1,0 +1,214 @@
+require 'spec_helper'
+
+describe OpenChain::CustomHandler::Hm::HmPoLineParser do
+  let!(:cf) { double("custom file") }
+  let!(:handler) { described_class.new cf }
+
+  describe 'process' do
+    let(:user) { Factory(:master_user) }
+    
+    before :each do 
+      allow(cf).to receive(:attached).and_return cf
+      allow(cf).to receive(:path).and_return "path/to/file.xlsx"
+      allow(cf).to receive(:attached_file_name).and_return "file.xlsx"
+    end
+
+    it "should parse the file" do
+      expect(handler).to receive(:process_excel).with(cf).and_return({})
+      handler.process user
+
+      expect(user.messages.length).to eq 1
+      expect(user.messages.first.subject).to eq "H&M PO File Processing Completed"
+      expect(user.messages.first.body).to eq "H&M PO File 'file.xlsx' has finished processing."
+    end
+
+    it "should handle 'fixable' errors" do
+      expect(handler).to receive(:process_excel).with(cf).and_return({fixable: ["This error can be corrected by the user.", "Another message."]})
+      handler.process(user)
+      expect(user.messages.first.subject).to eq "H&M PO File Processing Completed With Errors"
+      expect(user.messages.first.body).to eq "H&M PO File 'file.xlsx' has finished processing.\n\nThis error can be corrected by the user.\nAnother message."
+    end
+
+    it "should handle unexpected errors" do
+      expect(handler).to receive(:process_excel).with(cf).and_return({unexpected: ["This error must be handled by IT.", "Another message."]})
+      handler.process(user)
+      expect(user.messages.first.subject).to eq "H&M PO File Processing Completed With Errors"
+      expect(user.messages.first.body).to eq "H&M PO File 'file.xlsx' has finished processing.\n\nThis error must be handled by IT.\nAnother message."
+    end
+  end
+
+  describe "process_excel" do
+    let!(:co) { Factory(:company, system_code: "HENNE") }
+    let!(:row_0) { ['PO NUMBER', 'PART NUMBER', 'COAST', 'HTS NUMBER', 'MID', 'C/O', 'QTY', 'REPORTING QTY', 'REPORTING UOM', 'NET WT', 'GROSS WT', 'CARTONS', 'UNIT COST', 'CURRENCY', 'INV VALUE', 'ADJUSTED VALUE', 'DOCS RCVD', 'DOCS OK', 'ISSUE CODES', 'COMMENTS'] }
+    let!(:row_1) { ['424913', 'HM-1234', 'East', '1111111111', 'BDIRIFABGAZ', 'US', '1', '2', 'ea', nil, '4', '5', '6', 'USD', '7', '8', '2016-08-01', '2016-08-02', 'ABCD', 'no comment'] }
+    let!(:row_2) { ['319424', 'HM-4321', 'West', '2222222222', 'BDNIATEX27DHA', 'CA', '2', '3', 'ea', '4', '5', '6', '7', 'CAD', '8', '9', '2016-09-01', '2016-09-02', 'DCBA', 'nothing to see here'] }
+
+    it "parses spreadsheet into new commercial invoice lines" do
+      allow(cf).to receive(:path).and_return "file.xlsx"
+      expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 1).and_yield(row_2, 2)
+      expect(handler.process_excel(cf)).to be_empty
+
+      ci_1 = CommercialInvoice.first
+      cil_1 = ci_1.commercial_invoice_lines.first
+      cit_1 = cil_1.commercial_invoice_tariffs.first
+      expect(CommercialInvoice.count).to eq 2
+            
+      expect(ci_1.invoice_number).to eq '424913'
+      expect(cil_1.part_number).to eq 'HM-1234'
+      expect(ci_1.destination_code).to eq 'East'
+      expect(cit_1.hts_code).to eq '1111111111'
+      expect(ci_1.mfid).to eq 'BDIRIFABGAZ'
+      expect(cil_1.country_origin_code).to eq 'US'
+      expect(cil_1.quantity).to eq 1
+      expect(cit_1.classification_qty_1).to eq 2
+      expect(cit_1.classification_uom_1).to eq 'ea'
+      expect(cit_1.gross_weight).to eq 4
+      expect(ci_1.total_quantity).to eq 5
+      expect(cil_1.unit_price).to eq 6
+      expect(cil_1.currency).to eq 'USD'
+      expect(ci_1.invoice_value_foreign).to eq 7
+      expect(cil_1.value_foreign).to eq 8
+      expect(ci_1.docs_received_date).to eq Date.parse('2016-08-01')
+      expect(ci_1.docs_ok_date).to eq Date.parse('2016-08-02')
+      expect(ci_1.issue_codes).to eq 'ABCD'
+      expect(ci_1.rater_comments).to eq 'no comment'
+      expect(cil_1.line_number).to eq 1
+      expect(ci_1.total_quantity_uom).to eq 'CTNS'
+      expect(ci_1.importer).to eq co
+      #since net wt = 0
+      expect(cit_1.classification_qty_2).to be_nil
+      expect(cit_1.classification_uom_2).to be_nil
+
+      ci_2 = CommercialInvoice.last
+      cil_2 = ci_2.commercial_invoice_lines.first
+      cit_2 = cil_2.commercial_invoice_tariffs.first
+
+      expect(ci_2.invoice_number).to eq '319424'
+      expect(cil_2.part_number).to eq 'HM-4321'
+      expect(ci_2.destination_code).to eq 'West'
+      expect(cit_2.hts_code).to eq '2222222222'
+      expect(ci_2.mfid).to eq 'BDNIATEX27DHA'
+      expect(cil_2.country_origin_code).to eq 'CA'
+      expect(cil_2.quantity).to eq 2
+      expect(cit_2.classification_qty_1).to eq 3
+      expect(cit_2.classification_uom_1).to eq 'ea'
+      expect(cit_2.gross_weight).to eq 5
+      expect(ci_2.total_quantity).to eq 6
+      expect(cil_2.unit_price).to eq 7
+      expect(cil_2.currency).to eq 'CAD'
+      expect(ci_2.invoice_value_foreign).to eq 8
+      expect(cil_2.value_foreign).to eq 9
+      expect(ci_2.docs_received_date).to eq Date.parse('2016-09-01')
+      expect(ci_2.docs_ok_date).to eq Date.parse('2016-09-02')
+      expect(ci_2.issue_codes).to eq 'DCBA'
+      expect(ci_2.rater_comments).to eq 'nothing to see here'
+      expect(cil_2.line_number).to eq 1
+      expect(ci_2.total_quantity_uom).to eq 'CTNS'
+      expect(ci_2.importer).to eq co
+      #since net wt is > 0
+      expect(cit_2.classification_qty_2).to eq 4
+      expect(cit_2.classification_uom_2).to eq 'KGS'
+    end
+
+    it "updates record if it already exists" do
+      ci = Factory(:commercial_invoice, importer: co, invoice_number: '424913', destination_code: 'East', mfid: 'BDIRIFABGAZ', total_quantity: 5, invoice_value_foreign: 7, 
+                   docs_received_date: '2016-08-02', docs_ok_date: '2016-08-02', issue_codes: 'ABCD', rater_comments: 'no comments', total_quantity_uom: 'CTNS')
+      cil = Factory(:commercial_invoice_line, commercial_invoice: ci, country_origin_code: 'US', quantity: 1, unit_price: 6, currency: 'USD', value_foreign: 8, line_number: 1)
+      cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, hts_code: '1111111111', gross_weight: 4, classification_qty_2: nil, classification_uom_2: nil)
+
+      allow(cf).to receive(:path).and_return "file.xlsx"
+      handler = described_class.new cf
+      row_2[0] = '424913'
+      expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_2, 1)
+      expect(handler.process_excel cf).to be_empty
+
+      ci_2 = CommercialInvoice.first
+      cil_2 = ci_2.commercial_invoice_lines.first
+      cit_2 = cil_2.commercial_invoice_tariffs.first
+
+      expect(CommercialInvoice.count).to eq 1
+      expect(ci_2.invoice_number).to eq '424913'
+      expect(cil_2.part_number).to eq 'HM-4321'
+      expect(ci_2.destination_code).to eq 'West'
+      expect(cit_2.hts_code).to eq '2222222222'
+      expect(ci_2.mfid).to eq 'BDNIATEX27DHA'
+      expect(cil_2.country_origin_code).to eq 'CA'
+      expect(cil_2.quantity).to eq 2
+      expect(cit_2.classification_qty_1).to eq 3
+      expect(cit_2.classification_uom_1).to eq 'ea'
+      expect(cit_2.gross_weight).to eq 5
+      expect(ci_2.total_quantity).to eq 6
+      expect(cil_2.unit_price).to eq 7
+      expect(cil_2.currency).to eq 'CAD'
+      expect(ci_2.invoice_value_foreign).to eq 8
+      expect(cil_2.value_foreign).to eq 9
+      expect(ci_2.docs_received_date).to eq Date.parse('2016-09-01')
+      expect(ci_2.docs_ok_date).to eq Date.parse('2016-09-02')
+      expect(ci_2.issue_codes).to eq 'DCBA'
+      expect(ci_2.rater_comments).to eq 'nothing to see here'
+      expect(cil_2.line_number).to eq 1
+      expect(ci_2.total_quantity_uom).to eq 'CTNS'
+      expect(ci_2.importer).to eq co
+      #since net wt is > 0
+      expect(cit_2.classification_qty_2).to eq 4
+      expect(cit_2.classification_uom_2).to eq 'KGS'
+    end
+
+    it "updates record with most recent updated_at timestamp if there's more than one" do
+      ci_1 = ci_2 = ci_3 = nil
+      Timecop.freeze(Time.utc(2016,1,1)) do 
+        ci_1 = Factory(:commercial_invoice, importer: co, invoice_number: '424913')
+        ci_2 = Factory(:commercial_invoice, importer: co, invoice_number: '424913')
+        ci_3 = Factory(:commercial_invoice, importer: co, invoice_number: '424913')
+      end
+      ci_2.update_attributes(total_quantity: 1)
+
+      allow(cf).to receive(:path).and_return "file.xlsx"
+      handler = described_class.new cf
+      expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 0)
+      expect(handler.process_excel cf).to be_empty
+
+      [ci_1, ci_2, ci_3].each{ |ci| ci.reload }
+      expect(ci_1.destination_code).to be_nil
+      expect(ci_2.destination_code).to eq 'East'
+      expect(ci_3.destination_code).to be_nil
+    end
+
+    it "returns an error if custom file has wrong extension" do
+      allow(cf).to receive(:path).and_return "file.csv"
+      handler = described_class.new cf
+      expect(handler.process_excel(cf)[:fixable]).to eq ["No CI Upload processor exists for .csv file types."]
+      expect(CommercialInvoice.count).to eq 0
+    end
+  
+    it "returns an error if row has bad PO number" do
+      allow(cf).to receive(:path).and_return "file.xlsx"
+      handler = described_class.new cf
+      row_1[0] = "123"
+      expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 1)
+      expect(handler.process_excel(cf)[:fixable]).to eq ["PO number has wrong format at row 2!"]
+      expect(CommercialInvoice.count).to eq 0
+    end
+
+    it "returns an error if row has bad HTS" do
+      allow(cf).to receive(:path).and_return "file.xlsx"
+      handler = described_class.new cf
+      row_1[3] = "123"
+      expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 1)
+      expect(handler.process_excel(cf)[:fixable]).to eq ["Tariff number has wrong format at row 2!"]
+      expect(CommercialInvoice.count).to eq 0
+    end
+  
+    it "returns any exceptions thrown by #parse_row!" do
+      allow(cf).to receive(:path).and_return "file.xlsx"
+      handler = described_class.new cf
+      expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 1)
+      e = StandardError.new "ERROR!!"
+      expect(handler).to receive(:parse_row!).and_raise e
+      expect(e).to receive(:log_me)
+      expect(handler.process_excel(cf)[:unexpected]).to eq ["Unrecoverable errors were encountered while processing this file. These errors have been forwarded to the IT department and will be resolved.", "ERROR!!"]
+      expect(CommercialInvoice.count).to eq 0
+    end
+
+  end
+end
