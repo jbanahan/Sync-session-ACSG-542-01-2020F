@@ -16,12 +16,12 @@ module OpenChain
         last_month = DateTime.now.utc.to_date - 1.month
         start_date_time = last_month.beginning_of_month.to_datetime.to_s(:db)
         end_date_time = (last_month.end_of_month + 1.day).to_datetime.to_s(:db)
-        self.new.send_email('email' => opts_hash['email'], 'start_date_time' => start_date_time, 'end_date_time' => end_date_time)
+        self.new.send_email('email' => opts_hash['email'], 'start_date' => start_date_time, 'end_date' => end_date_time)
       end
 
       def create_workbook(start, finish, settings)
-        start_date = Date.parse(settings['start_date_time']).strftime("%m-%d-%y")
-        end_date = Date.parse(settings['end_date_time']).strftime("%m-%d-%y")
+        start_date = Date.parse(settings['start_date']).strftime("%m-%d-%y")
+        end_date = Date.parse(settings['end_date']).strftime("%m-%d-%y")
         wb = XlsMaker.create_workbook "GCC Stats for #{start_date} - #{end_date}"
         XlsMaker.create_sheet wb, "GCSEA Stats"
         table_from_query wb.worksheet(0), gcc_query(start, finish)
@@ -37,11 +37,11 @@ module OpenChain
       end
 
       def send_email(settings)
-        wb = create_workbook(settings['start_date_time'], settings['end_date_time'], settings)
+        wb = create_workbook(settings['start_date'], settings['end_date'], settings)
         
         workbook_to_tempfile wb, 'RlTariffTotals-' do |t|
-          start_date_formatted = Date.parse(settings['start_date_time']).strftime("%-m-%-d-%y")
-          end_date_formatted = Date.parse(settings['end_date_time']).strftime("%-m-%-d-%y")
+          start_date_formatted = Date.parse(settings['start_date']).strftime("%-m-%-d-%y")
+          end_date_formatted = Date.parse(settings['end_date']).strftime("%-m-%-d-%y")
           subject = "Tariff Totals for the Period #{start_date_formatted} to #{end_date_formatted}"
           body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
           OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
