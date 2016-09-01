@@ -128,6 +128,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         self.class.json_to_tempfile({"entry" => json}) do |f|
           e.log_me ["Kewill Entry Parser Failure"], [f.path]
         end
+
+        # Make sure if we run into errors that we return nil, otherwise the calling method will broadcast save events on unsaved changes
+        entry = nil
       end
     end
 
