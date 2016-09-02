@@ -10,18 +10,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSet
     it "should set default FOB Point" do
       @vendor.update_custom_value!(@cdefs[:cmp_default_handover_port],'Shanghai')
       expect{described_class.set_defaults(@order)}.to change(EntitySnapshot,:count).from(0).to(1)
+      expect(EntitySnapshot.first.context).to eq "System Job: Order Default Value Setter"
       @order.reload
       expect(@order.fob_point).to eq 'Shanghai'
     end
     it "should set default INCO Term" do
       @vendor.update_custom_value!(@cdefs[:cmp_default_inco_term],'FOB')
       expect{described_class.set_defaults(@order)}.to change(EntitySnapshot,:count).from(0).to(1)
+      expect(EntitySnapshot.first.context).to eq "System Job: Order Default Value Setter"
       @order.reload
       expect(@order.terms_of_sale).to eq 'FOB'
     end
     it "should set default Country of Origin" do
       @vendor.update_custom_value!(@cdefs[:cmp_default_country_of_origin],'CN')
       expect{described_class.set_defaults(@order)}.to change(EntitySnapshot,:count).from(0).to(1)
+      expect(EntitySnapshot.first.context).to eq "System Job: Order Default Value Setter"
       @order.reload
       expect(@order.get_custom_value(@cdefs[:ord_country_of_origin]).value).to eq 'CN'
     end
@@ -30,6 +33,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSet
         a = Factory(:address,shipping:true,company:@vendor)
         @vendor.reload
         expect{described_class.set_defaults(@order)}.to change(EntitySnapshot,:count).from(0).to(1)
+        expect(EntitySnapshot.first.context).to eq "System Job: Order Default Value Setter"
         @order.reload
         expect(@order.ship_from_id).to eq a.id
       end

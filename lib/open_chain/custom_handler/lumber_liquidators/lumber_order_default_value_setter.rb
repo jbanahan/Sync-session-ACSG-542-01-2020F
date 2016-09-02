@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
 
     if run_snapshot
-      ord.create_snapshot(User.integration)
+      ord.create_snapshot(User.integration, nil, "System Job: Order Default Value Setter")
       return true
     else
       return false

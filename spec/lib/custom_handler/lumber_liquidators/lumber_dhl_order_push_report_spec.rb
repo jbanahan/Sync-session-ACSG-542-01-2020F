@@ -55,7 +55,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
 
         order.reload
         expect(order.custom_value(@cdefs[:ord_dhl_push_date])).to eq Date.new(2016, 4, 4)
-        expect(order.entity_snapshots.length).to eq 1
+        snapshots = order.entity_snapshots
+        expect(snapshots.length).to eq 1
+        expect(snapshots.first.context).to eq "System Job: DHL Order Push Report"
       end
 
       it "does not return results if business rules don't pass" do

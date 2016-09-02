@@ -33,6 +33,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
         expect(p.last_file_bucket).to eq "bucket"
         expect(p.last_file_path).to eq "path/to/s3/file"
         expect(p.entity_snapshots.count).to eq 1
+        expect(p.entity_snapshots.first.context).to eq "System Job: SAP Article XML Parser"
         expect(p.get_custom_value(@cdefs[:prod_sap_extract]).value.to_i).to eq ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2014-12-22 10:37:06').to_i
         expect(p.get_custom_value(@cdefs[:prod_old_article]).value).to eq 'PHENAWE7-MW-SS'
         expect(p.get_custom_value(@cdefs[:prod_merch_cat]).value).to eq '121106'
@@ -62,6 +63,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
         expect(p.classifications.first.custom_value(@cdefs[:class_proposed_hts])).to eq "4409294000"
         expect(p.classifications.first.tariff_records.first.hts_1).to eq "4409294000"
         expect(p.entity_snapshots.count).to eq 2
+        expect(p.last_snapshot.context).to eq "System Job: SAP Article XML Parser"
         expect(p.get_custom_value(@cdefs[:prod_sap_extract]).value.to_i).to eq ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2014-12-22 10:37:06').to_i
         expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq "PHENAWE7-MW-SS"
         expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq p.name

@@ -118,7 +118,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
           pva_search = ProductVendorAssignment.where(vendor_id:vendor.id,product_id:prod.id)
           if !pva_search.first
             pva = pva_search.first_or_create!
-            pva.create_snapshot(user)
+            pva.create_snapshot(user, nil, "System Job: EPD Parser")
           end
 
           plant = vendor.plants.first_or_create!(name:vendor.name)
@@ -132,7 +132,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
           end
         end
 
-        prod.create_snapshot(user) if needs_snapshot
+        prod.create_snapshot(user, nil, "System Job: EPD Parser") if needs_snapshot
 
         return []
       end

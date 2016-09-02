@@ -13,11 +13,11 @@ class EntitySnapshot < ActiveRecord::Base
   validates :user, :presence => true
 
   # This is the main method for creating snapshots
-  def self.create_from_entity entity, user=User.current, imported_file=nil
+  def self.create_from_entity entity, user=User.current, imported_file=nil, context=nil
     cm = CoreModule.find_by_class_name entity.class.to_s
     raise "CoreModule could not be found for class #{entity.class.to_s}." if cm.nil?
     json = cm.entity_json(entity)
-    es = EntitySnapshot.new(:recordable=>entity,:user=>user,:imported_file=>imported_file)
+    es = EntitySnapshot.new(:recordable=>entity,:user=>user,:imported_file=>imported_file,:context=>context)
     es.write_s3 json
     es.save
     OpenChain::EntityCompare::EntityComparator.handle_snapshot es

@@ -73,13 +73,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
             order_line.find_and_set_custom_value(@cdefs[:ordln_part_name], p.name).save!
             line_changed = true
           end
-          order_line.order.create_snapshot(@user) if line_changed
+          order_line.order.create_snapshot(@user, nil, "System Job: SAP Article XML Parser") if line_changed
         end
 
       end
 
       p.save!
-      p.create_snapshot(@user)
+      p.create_snapshot(@user, nil, "System Job: SAP Article XML Parser")
     end
   end
 

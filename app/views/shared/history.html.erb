@@ -59,8 +59,11 @@
             <div class="panel-heading" role="tab" id='heading<%+s.id%>'>
               <h4 class="panel-title">
                 <a  data-toggle='collapse' data-parent='accordion' href='#collapse<%=s.id%>'>
-                  <%=s.created_at%>: <%=s.user.try(:full_name)%>
+                  <%=s.created_at%>: <%=s.user.try(:full_name)%> <%="(#{s.user.company.name})"%>
                 </a>
+                <%if !s.context.blank?%>
+                  <p><small><%=s.context%></small></p>
+                <%end%>
               </h4>
             </div>
             <div id="collapse<%=s.id%>" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading<%=s.id%>">

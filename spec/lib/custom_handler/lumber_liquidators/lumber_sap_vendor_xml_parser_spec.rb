@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
     it "should create vendor" do
       dom = REXML::Document.new(@test_data)
       expect(@mock_workflow_processor).to receive(:process!).with(instance_of(Company),@integration_user)
-      expect_any_instance_of(Company).to receive(:create_snapshot).with(@integration_user)
+      expect_any_instance_of(Company).to receive(:create_snapshot).with(@integration_user, nil, "System Job: SAP Vendor XML Parser")
       expect{described_class.new(workflow_processor:@mock_workflow_processor).parse_dom(dom)}.to change(Company,:count).by(1)
       c = Company.last
       expect(c.system_code).to eq '0000100003'

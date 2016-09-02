@@ -17,6 +17,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser do
     expect(pva.product).to eq p
 
     expect(pva.entity_snapshots.count).to eq 1
+    expect(pva.entity_snapshots.first.context).to eq "System Job: SAP PIR XML Parser"
   end
   it "should do nothing if vendor doesn't exist" do
     Factory(:product,unique_identifier:'000000000010039350')

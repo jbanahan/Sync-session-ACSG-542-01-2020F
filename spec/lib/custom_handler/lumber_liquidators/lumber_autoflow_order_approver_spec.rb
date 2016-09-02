@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
       ol = Factory(:order_line,product:p,order:ord)
 
       snapshot_support = double('snapshot support')
-      expect(snapshot_support).to receive(:create_snapshot).with(u)
+      expect(snapshot_support).to receive(:create_snapshot).with(u, nil, "System Job: Autoflow Order Approver")
       expect(ord).to receive(:delay).and_return(snapshot_support)
 
       # create another product with an empty risk assignment. Nothing should happen to this one

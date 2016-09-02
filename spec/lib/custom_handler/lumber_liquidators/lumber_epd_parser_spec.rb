@@ -142,8 +142,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       @cdefs = described_class.prep_my_custom_definitions
     end
     it "should create plant_variant_assignment and product_vendor_assignment" do
-      expect_any_instance_of(Product).to receive(:create_snapshot)
-      expect_any_instance_of(ProductVendorAssignment).to receive(:create_snapshot)
+      expect_any_instance_of(Product).to receive(:create_snapshot).with(@u, nil, "System Job: EPD Parser")
+      expect_any_instance_of(ProductVendorAssignment).to receive(:create_snapshot).with(@u, nil, "System Job: EPD Parser")
 
       product = Factory(:product,unique_identifier:'000000000000000pid')
       var = Factory(:variant,variant_identifier:'varid',product:product)

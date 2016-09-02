@@ -48,7 +48,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberDh
 
     orders.each do |order|
       order.update_custom_value! @cdefs[:ord_dhl_push_date], date
-      order.create_snapshot integration
+      order.create_snapshot integration, nil, "System Job: DHL Order Push Report"
     end
   end
 

@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
 
       # need to delay this so it runs in a different transaction than the
       # change comparator that calls this class
-      order.delay.create_snapshot(u)
+      order.delay.create_snapshot(u, nil, "System Job: Autoflow Order Approver")
 
       return true
     else

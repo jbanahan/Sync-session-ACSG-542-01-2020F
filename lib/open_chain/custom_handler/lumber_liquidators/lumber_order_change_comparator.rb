@@ -109,7 +109,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     if values_changed
       ord.update_custom_value!(header_cdef,'')
       ord.reload
-      ord.create_snapshot(User.integration)
+      ord.create_snapshot(User.integration, nil, "System Job: Order Change Comparator")
     end
     return values_changed
   end

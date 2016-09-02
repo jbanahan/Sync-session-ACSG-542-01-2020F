@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       update_address c, sap_code, base
       lock_or_unlock_vendor c, base
 
-      c.create_snapshot User.integration
+      c.create_snapshot User.integration, nil, "System Job: SAP Vendor XML Parser"
 
       @wfp.process! c, @user
     end

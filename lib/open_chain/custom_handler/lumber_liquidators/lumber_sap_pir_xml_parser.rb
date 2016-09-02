@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     pva = ProductVendorAssignment.where(product_id:p.id,vendor_id:vendor.id).first
     if pva.nil?
       pva = ProductVendorAssignment.create!(product_id:p.id,vendor_id:vendor.id)
-      pva.create_snapshot(User.integration) if pva.entity_snapshots.empty?
+      pva.create_snapshot(User.integration, nil, "System Job: SAP PIR XML Parser") if pva.entity_snapshots.empty?
     end
     return pva #return value not required but helpful for debugging
   end

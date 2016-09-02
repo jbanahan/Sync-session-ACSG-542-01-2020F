@@ -10,7 +10,7 @@ module EntitySnapshotSupport
     self.entity_snapshots.order("entity_snapshots.id DESC").first
   end
 
-  def create_snapshot_with_async_option async, user=User.current, imported_file=nil
+  def create_snapshot_with_async_option async, user=User.current, imported_file=nil, context=nil
     if async
       self.create_async_snapshot user, imported_file
     else
@@ -18,11 +18,11 @@ module EntitySnapshotSupport
     end
   end
 
-  def create_snapshot user=User.current, imported_file=nil
-    EntitySnapshot.create_from_entity self, user, imported_file
+  def create_snapshot user=User.current, imported_file=nil, context=nil
+    EntitySnapshot.create_from_entity self, user, imported_file, context
   end
 
-  def create_async_snapshot user=User.current, imported_file=nil
+  def create_async_snapshot user=User.current, imported_file=nil, context=nil
     if self.disable_async
       # If we've turned off async, don't run via the standard suckerpunch .async call, even if
       # we use the inline testing functionality, we still seem to get the code run outside of

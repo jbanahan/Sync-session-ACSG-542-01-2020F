@@ -282,7 +282,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       end
 
       expect(described_class::OrderData).to receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return ['1']
-      expect(@ord).to receive(:create_snapshot).with(@integration)
+      expect(@ord).to receive(:create_snapshot).with(@integration, nil, "System Job: Order Change Comparator")
 
       expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_truthy
 
