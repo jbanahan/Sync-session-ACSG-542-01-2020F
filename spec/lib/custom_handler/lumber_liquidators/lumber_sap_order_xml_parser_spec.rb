@@ -88,13 +88,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       expect(o.entity_snapshots.count).to eq 1
 
-      expect(o.folders.count).to eq 2
-      f_1 = o.folders.all[0]
-      f_2 = o.folders.all[1]
-      expect(f_1.name).to eq 'Quality'
-      expect(f_1.groups.map(&:system_code)).to eq ['QUALITY']
-      expect(f_2.name).to eq 'Lacey Docs'
-      expect(f_2.groups.map(&:system_code)).to eq ['ROPRODCOMP']
+      folders = o.folders.order(:name).map{ |f| {f_name: f.name, g_name: f.groups.first.name, g_system_code: f.groups.first.system_code } }
+      expect(folders).to eq [{f_name:'Lacey Docs', g_name: 'RO/Product Compliance', g_system_code: 'ROPRODCOMP'},
+                             {f_name: 'Quality', g_name: 'Quality', g_system_code: 'QUALITY'}]
     end
 
     it "should not change order line part name if value is present" do
