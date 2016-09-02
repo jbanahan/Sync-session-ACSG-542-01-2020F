@@ -371,4 +371,24 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.terms_of_payment).to eq "T/T Net 30"
     end
   end
+
+  describe "setup_folders" do
+    let!(:ord) { Factory(:order) }
+    let!(:user) { Factory(:user, username:"integration") }
+    let!(:parser) { described_class.new user }
+
+    it "creates folders for order" do
+      parser.setup_folders ord
+      folders = ord.folders.order(:name).map{ |f| {f_name: f.name, f_base_object: f.base_object, f_created_by_id: f.created_by_id, g_name: f.groups.first.name, g_system_code: f.groups.first.system_code } }
+      expect(folders).to eq [{f_name:'Lacey Docs', f_base_object: ord, f_created_by_id: user.id, g_name: 'RO/Product Compliance', g_system_code: 'ROPRODCOMP'},
+                             {f_name: 'Quality', f_base_object: ord, f_created_by_id: user.id, g_name: 'Quality', g_system_code: 'QUALITY'}]
+    end
+
+    it "skips creating folders that already exist" do
+      Factory(:folder, base_object: ord, created_by: user, name: 'Quality')
+      parser.setup_folders ord
+      expect(ord.folders.where(name: "Quality").count).to eq 1
+    end
+
+  end
 end

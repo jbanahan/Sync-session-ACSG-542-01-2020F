@@ -541,3 +541,8 @@ Factory.define :search_table_config do |f|
   f.name 'stc'
   f.sequence :page_uid
 end
+
+Factory.define :folder do |f|
+  f.base_object :order
+  f.created_by :user
+end

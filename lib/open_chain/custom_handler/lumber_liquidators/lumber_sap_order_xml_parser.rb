@@ -103,9 +103,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def setup_folders order
-    return if order.folders.map(&:name).include?('Quality')
-    qf = order.folders.create!(name:'Quality',created_by_id:@user.id)
-    qf.groups << Group.use_system_group('QUALITY', name: 'Quality')
+    folder_list = [{folder_name: 'Quality', group_name: 'Quality', group_system_code: 'QUALITY' },
+                   {folder_name: 'Lacey Docs', group_name: 'RO/Product Compliance', group_system_code: 'ROPRODCOMP'}]
+    
+    already_existing_folders = order.folders.map(&:name)
+    folder_list.each do |f|
+      if !already_existing_folders.include?(f[:folder_name])
+        new_folder = order.folders.create!(name: f[:folder_name], created_by_id: @user.id)
+        new_folder.groups << Group.use_system_group(f[:group_system_code], name: f[:group_name])
+      end
+    end    
     nil
   end
 
