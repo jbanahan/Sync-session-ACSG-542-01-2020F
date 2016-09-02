@@ -314,6 +314,18 @@ describe OpenChain::CustomHandler::ProductGenerator do
       subselect = @base.new.cd_s cd.id, suppress_data: true
       expect(subselect).to eq("NULL as `#{cd.label}`")
     end
+
+    it "receives a custom definition and uses that instead of an id value" do
+      cd = Factory(:custom_definition, :module_type=>'Product')
+      subselect = @base.new.cd_s cd
+      expect(subselect).to eq "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id}) as `#{cd.label}`"
+    end
+
+    it "allows passing alternate alias" do
+      cd = Factory(:custom_definition, :module_type=>'Product')
+      subselect = @base.new.cd_s cd, query_alias: "Testing"
+      expect(subselect).to eq "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id}) as `Testing`"
+    end
   end
 
   describe "write_sync_records" do

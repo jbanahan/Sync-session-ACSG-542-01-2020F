@@ -23,6 +23,9 @@ module OpenChain
 
       def initialize(opts={})
         @custom_where = opts[:where]
+        if opts[:custom_definitions]
+          @defintions = opts[:custom_definitions]
+        end
       end
       
       # do any preprocessing on the row results before passing to the sync_[file_format] methods
@@ -131,7 +134,7 @@ module OpenChain
         if cursor > 0
           return f
         else
-          f.unlink
+          f.close!
           return nil
         end
       end
@@ -203,11 +206,18 @@ module OpenChain
       def cd_s cd_id, opts = {}
         opts = {suppress_alias: false, suppress_ifnull: false, suppress_data: false}.merge opts
 
-        @definitions ||= {}
-        if @definitions.empty?
-          CustomDefinition.all.each {|cd| @definitions[cd.id] = cd}
+        cd = nil
+        if cd_id.is_a?(CustomDefinition)
+          cd = cd_id
+          cd_id = cd.id
+        else
+          @definitions ||= {}
+          if @definitions.empty?
+            CustomDefinition.all.each {|cd| @definitions[cd.id] = cd}
+          end
+          cd = @definitions[cd_id]
         end
-        cd = @definitions[cd_id]
+        
 
         if cd
           table_name = ''
@@ -221,7 +231,7 @@ module OpenChain
           else
             # This shouldn't really happen in prod, but it can in dev for any ids that are hardcoded and the hardcoded id links to a field 
             # for a different module
-            return missing_custom_def opts[:suppress_alias], cd_id, cd
+            return missing_custom_def opts[:suppress_alias], cd_id, cd, opts[:query_alias]
           end
 
           select_clause = nil
@@ -239,7 +249,7 @@ module OpenChain
             select_clause = "(CASE #{select_clause} WHEN #{boolean_y_value} THEN 'Y' ELSE 'N' END)"
           end
 
-          select_clause += build_custom_def_query_alias(opts[:suppress_alias], cd_id, cd)
+          select_clause += build_custom_def_query_alias(opts[:suppress_alias], cd_id, cd, opts[:query_alias])
 
         else
           #so report doesn't bomb if custom field is removed from system
@@ -261,16 +271,18 @@ module OpenChain
       end
 
       private 
-        def missing_custom_def suppress_alias, cd_id, cd
-          "(SELECT \"\")#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+        def missing_custom_def suppress_alias, cd_id, cd, alternate_alias = nil
+          "(SELECT \"\")#{build_custom_def_query_alias(suppress_alias, cd_id, cd, alternate_alias)}"
         end
 
-        def build_custom_def_query_alias suppress_alias, cd_id, cd
+        def build_custom_def_query_alias suppress_alias, cd_id, cd, alternate_alias = nil
+          q_alias = nil
           if suppress_alias
-            ""
+            q_alias = ""
           else
-            cd ? " as `#{cd.label}`" : " as `Custom #{cd_id}`"
+            q_alias = alternate_alias.nil? ? (cd ? " as `#{cd.label}`" : " as `Custom #{cd_id}`") : " as `#{alternate_alias}`"    
           end
+          q_alias
         end
     end
   end

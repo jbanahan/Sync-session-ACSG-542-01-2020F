@@ -1,7 +1,12 @@
 require 'open_chain/custom_handler/product_generator'
+require 'open_chain/xml_builder'
+require 'open_chain/custom_handler/polo/polo_custom_definition_support'
+
 module OpenChain
   module CustomHandler
     class PoloSapProductGenerator < ProductGenerator
+      include OpenChain::XmlBuilder
+      include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
       #SchedulableJob compatibility
       def self.run_schedulable opts={}
@@ -9,9 +14,8 @@ module OpenChain
         f = nil
         begin
           # Sync only does 500 products at a time now, so keep running the send 
-          # until we get a file output w/ zero lines (sync_csv returns a nil file in this case, 
-          # it's also smart enough not to send a file w/ only headers in it)
-          f = g.sync_csv
+          # until we get a file output w/ zero lines (sync_xml returns a nil file in this case)
+          f = g.sync_xml
           g.ftp_file f unless f.nil?
         end while !f.nil?
       end
@@ -34,13 +38,100 @@ module OpenChain
       end
 
       def ftp_credentials
-        {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/sap_#{@env==:qa ? 'qa' : 'prod'}"}
+        folder = "to_ecs/ralph_lauren/sap_" + ((@env == :qa) ? "qa" : 'prod')
+        connect_vfitrack_net folder
       end
 
       def sync
         @previous_style = nil
         @previous_iso = nil
         super
+      end
+
+      def sync_xml
+        f = Tempfile.new(['ProductSync-','.xml'])
+        cursor = 0
+        xml, root = nil
+
+        sync do |rv|
+          if xml.nil?
+            xml, root = build_xml_document("products", suppress_xml_declaration: true)
+          end
+
+          # I'm just going to keep the semantics of the csv sync, even though we're doing an xml file now, it's less code-rewriting
+          # and the csv concept overlays w/ the sql row results more closely.
+          max_col = rv.keys.sort.last
+          # Turn blank / nil values into spaces
+          row = (0..max_col).map {|i| rv[i].blank? ? "" : rv[i]}
+          row = before_csv_write cursor, row
+          write_row_to_xml root, row
+
+          cursor += 1
+        end
+        if cursor > 0
+          f << xml.to_s
+          f.flush
+          f.rewind
+          return f
+        else
+          f.close!
+          return nil
+        end
+      end
+
+      def write_row_to_xml parent_element, row
+        # Since we're mimic'ing the to_csv values we used to send, by default, to_csv just does a String(val) to convert values to string, so we're doing the same
+        row = row.map {|s| String(s) }
+
+        prod = add_element parent_element, "product"
+        add_element prod, "style", row[0]
+        add_element prod, "long_description", row[6]
+        add_element prod, "fiber_content", row[1]
+        add_element prod, "down_indicator", row[5]
+        add_element prod, "country_of_origin", row[8]
+        add_element prod, "hts", row[3]
+        add_element prod, "cites", row[4]
+        add_element prod, "classification_country", row[2]
+        add_element prod, "fish_and_wildlife", row[7]
+        add_element prod, "genus_1", row[20]
+        add_element prod, "species_1", row[25]
+        add_element prod, "cites_origin_1", row[10]
+        add_element prod, "cites_source_1", row[15]
+        add_element prod, "genus_2", row[21]
+        add_element prod, "species_2", row[26]
+        add_element prod, "cites_origin_2", row[11]
+        add_element prod, "cites_source_2", row[16]
+        add_element prod, "genus_3", row[22]
+        add_element prod, "species_3", row[27]
+        add_element prod, "cites_origin_3", row[12]
+        add_element prod, "cites_source_3", row[17]
+        add_element prod, "genus_4", row[23]
+        add_element prod, "species_4", row[28]
+        add_element prod, "cites_origin_4", row[13]
+        add_element prod, "cites_source_4", row[18]
+        add_element prod, "genus_5", row[24]
+        add_element prod, "species_5", row[29]
+        add_element prod, "cites_origin_5", row[14]
+        add_element prod, "cites_source_5", row[19]
+        add_element prod, "stitch_count_2cm_vertical", row[30]
+        add_element prod, "stitch_count_2cm_horizontal", row[31]
+        add_element prod, "allocation_category", row[32]
+        knit_woven = row[33]
+        if !knit_woven.blank?
+          if knit_woven.upcase == "KNIT"
+            knit_woven = "KNT"
+          elsif knit_woven.upcase == "WOVEN"
+            knit_woven = "WVN"
+          else
+            knit_woven = ""
+          end
+        end
+        add_element prod, "knit_woven", knit_woven
+      end
+
+      def preprocess_header_row row, opts = {}
+        # Skip the header row, don't need it coming back down through into the handler for the sync rows
+        nil
       end
 
       def preprocess_row row, opts = {}
@@ -124,42 +215,19 @@ module OpenChain
       end
 
       def query
+        @cdefs ||= self.class.prep_custom_definitions self.class.cdefs
+
         q = "SELECT products.id,
 products.unique_identifier, 
-#{cd_s 6},
+#{cd_s @cdefs[:fiber_content]},
 countries.iso_code as 'Classification - Country ISO Code',
 tariff_records.hts_1 as 'Tariff - HTS Code 1',
-#{cd_s 130, boolean_y_n: true},
-#{cd_s 22},
-#{cd_s 7, suppress_data: true},
-#{cd_s 79},
-#{cd_s 78},
-#{cd_s 131},
-#{cd_s 142},
-#{cd_s 143},
-#{cd_s 144},
-#{cd_s 145},
-#{cd_s 146},
-#{cd_s 147},
-#{cd_s 148},
-#{cd_s 149},
-#{cd_s 150},
-#{cd_s 151},
-#{cd_s 132},
-#{cd_s 133},
-#{cd_s 134},
-#{cd_s 135},
-#{cd_s 136},
-#{cd_s 137},
-#{cd_s 138},
-#{cd_s 139},
-#{cd_s 140},
-#{cd_s 141}
+#{custom_def_query_fields}
 FROM products 
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
 INNER JOIN classifications on classifications.product_id = products.id
 INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
-#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
+#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK', 'NO'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
   )
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
 INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id
@@ -175,7 +243,7 @@ FROM products
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
 INNER JOIN classifications on classifications.product_id = products.id 
 INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
-#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')})
+#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK', 'NO'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')})
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
 QRY
         if @custom_where.blank?
@@ -186,6 +254,32 @@ QRY
 
         q << " ORDER BY products.updated_at ASC LIMIT #{max_products}"
         q
+      end
+
+      def self.cdefs 
+        [:fiber_content, :cites, :meets_down_requirments, :long_description, :fish_wildlife, :country_of_origin, :set_type, 
+          :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_origin_4, :fish_wildlife_origin_5, 
+          :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3, :fish_wildlife_source_4, :fish_wildlife_source_5,
+          :common_name_1, :common_name_2, :common_name_3, :common_name_4, :common_name_5,
+          :scientific_name_1, :scientific_name_2, :scientific_name_3, :scientific_name_4, :scientific_name_5,
+          :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, :knit_woven]
+      end
+
+      def custom_def_query_fields
+        fields = []
+        self.class.cdefs.each do |cdef|
+          next if cdef == :fiber_content # Fiber content is handled directly in the query, so skip here
+
+          if [:cites, :fish_wildlife, :meets_down_requirments].include? cdef
+            fields << cd_s(@cdefs[cdef], boolean_y_n: true)
+          elsif cdef == :long_description
+            fields << cd_s(@cdefs[cdef], suppress_data: true)
+          else
+            fields << cd_s(@cdefs[cdef])
+          end
+        end
+
+        fields.join(",\n")
       end
     end
   end
