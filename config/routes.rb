@@ -102,7 +102,9 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
         post :validate, on: :member
       end
-      resources :variants, only: [:show]
+      resources :variants, only: [:show] do
+        get 'for_vendor_product/:vendor_id/:product_id' => 'variants#for_vendor_product', on: :collection
+      end
       resources :product_rate_overrides, only: [:index, :show, :update, :create]
 
       resources :plants, only: [] do

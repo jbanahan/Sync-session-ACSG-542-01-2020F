@@ -54,6 +54,7 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
       qualified_field_name: "(select count(*) from (select distinct order_lines.order_id, order_lines.product_id from order_lines) x where x.product_id = #{table_name}.product_id)",
       :data_type => :integer
     }]
+    r << [rank_start+4, "#{uid_prefix}_prod_db_id".to_sym, :product_id, "Product DB ID", {read_only:true}]
     r
   end
 end; end; end

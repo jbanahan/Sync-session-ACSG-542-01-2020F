@@ -1,6 +1,13 @@
 require 'spec_helper'
 
 describe ShipmentLine do
+  describe "variant validation" do
+    it "should validate variant" do
+      sl = ShipmentLine.new
+      expect_any_instance_of(OpenChain::Validator::VariantLineIntegrityValidator).to receive(:validate).with(sl)
+      sl.save
+    end
+  end
   describe "locked?" do
     it "should lock if shipment is locked" do
       s = Shipment.new
@@ -27,7 +34,7 @@ describe ShipmentLine do
       ps2 = PieceSet.create!(order_line_id:ol.id,quantity:3,shipment_line_id:sl.id)
       sl.reload
       expect {sl.destroy}.to change(PieceSet,:count).from(2).to(1)
-      new_ps = PieceSet.first 
+      new_ps = PieceSet.first
       expect(new_ps.quantity).to eq 10
       expect(new_ps.order_line_id).to eq ol.id
       expect(new_ps.shipment_line_id).to be_nil

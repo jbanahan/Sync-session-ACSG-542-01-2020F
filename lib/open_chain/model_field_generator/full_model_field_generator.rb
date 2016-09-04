@@ -13,6 +13,7 @@ require 'open_chain/model_field_generator/port_generator'
 require 'open_chain/model_field_generator/product_generator'
 require 'open_chain/model_field_generator/sync_record_generator'
 require 'open_chain/model_field_generator/user_fields_generator'
+require 'open_chain/model_field_generator/variant_generator'
 
 module OpenChain; module ModelFieldGenerator; module FullModelFieldGenerator
   include OpenChain::ModelFieldGenerator::AddressGenerator
@@ -30,4 +31,5 @@ module OpenChain; module ModelFieldGenerator; module FullModelFieldGenerator
   include OpenChain::ModelFieldGenerator::ProductGenerator
   include OpenChain::ModelFieldGenerator::SyncRecordGenerator
   include OpenChain::ModelFieldGenerator::UserFieldsGenerator
+  include OpenChain::ModelFieldGenerator::VariantGenerator
 end; end; end

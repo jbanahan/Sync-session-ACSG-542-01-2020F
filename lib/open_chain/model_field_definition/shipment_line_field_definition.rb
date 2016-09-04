@@ -71,5 +71,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentLineFieldDefinitio
     ]
     add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
     add_fields CoreModule::SHIPMENT_LINE, make_address_arrays(200,'shpln','shipment_lines','manufacturer')
+    add_fields CoreModule::SHIPMENT_LINE, make_variant_arrays(300,"shpln","shipment_lines")
   end
 end; end; end

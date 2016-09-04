@@ -35,9 +35,9 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
     raise StatusableError.new("Object with id #{h['id']} not found.",404) if ord.nil?
-    import_fields h, ord, CoreModule::ORDER
+    ord.assign_model_field_attributes(h)
     raise StatusableError.new("You do not have permission to save this Order.",:forbidden) unless ord.can_edit?(current_user)
-    ord.save if ord.errors.full_messages.blank?
+    ord.save! if ord.errors.full_messages.blank?
     ord
   end
 
@@ -75,6 +75,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       :ordln_line_number,
       :ordln_puid,
       :ordln_pname,
+      :ordln_prod_db_id,
       :ordln_ppu,
       :ordln_currency,
       :ordln_ordered_qty,
@@ -83,7 +84,9 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       :ordln_sku,
       :ordln_unit_of_measure,
       :ordln_total_cost,
-      :ordln_ship_to_full_address
+      :ordln_ship_to_full_address,
+      :ordln_varuid,
+      :ordln_var_db_id
     ] + custom_field_keys(CoreModule::ORDER_LINE))
 
     if !line_fields_to_render.blank?
@@ -91,6 +94,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       o.order_lines.each {|ol| ol.product.try(:freeze_custom_values)}
     end
     h = to_entity_hash(o, headers_to_render + line_fields_to_render)
+    h['order_lines'].each {|olh| olh['order_id'] = o.id} if h['order_lines']
     custom_view = OpenChain::CustomHandler::CustomViewSelector.order_view(o,current_user)
     if !custom_view.blank?
       h['custom_view'] = custom_view

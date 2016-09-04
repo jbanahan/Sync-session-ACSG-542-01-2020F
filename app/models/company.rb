@@ -28,6 +28,9 @@ class Company < ActiveRecord::Base
   has_many  :surveys, dependent: :destroy
   has_many  :attachments, as: :attachable, dependent: :destroy
   has_many  :plants, dependent: :destroy, inverse_of: :company
+  has_many  :plant_variant_assignments, through: :plants
+  has_many  :active_variants_as_vendor, through: :plant_variant_assignments, source: :variant, conditions: "plant_variant_assignments.disabled = 0 OR plant_variant_assignments.disabled is null"
+  has_many  :all_variants_as_vendor, through: :plant_variant_assignments, source: :variant
   has_many  :summary_statements, :foreign_key => :customer_id
   has_many  :product_vendor_assignments, dependent: :destroy, foreign_key: :vendor_id
   has_many  :products_as_vendor, through: :product_vendor_assignments, source: :product

@@ -4,6 +4,23 @@ module Api; module V1; class VariantsController < Api::V1::ApiCoreModuleControll
     CoreModule::VARIANT
   end
 
+  def for_vendor_product
+    u = current_user
+
+    vendor_id = params[:vendor_id]
+    product_id = params[:product_id]
+
+    c = Company.find vendor_id
+    raise StatusableError.new("Vendor not found for id #{vendor_id}", 404) unless c.can_view?(u)
+
+    p = Product.find product_id
+    raise StatusableError.new("Product not found for id #{product_id}", 404) unless p.can_view?(u)
+
+
+    results = c.active_variants_as_vendor.where(product_id:p.id).find_all {|v| v.can_view?(u)}.collect {|v| obj_to_json_hash v}
+    render json: {variants:results}
+  end
+
   def render_obj obj
     if obj
       obj.freeze_all_custom_values_including_children

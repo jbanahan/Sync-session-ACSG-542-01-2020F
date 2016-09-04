@@ -1,6 +1,13 @@
 require 'spec_helper'
 
 describe OrderLine do
+  describe "variant validation" do
+    it "should validate variant" do
+      ol = OrderLine.new
+      expect_any_instance_of(OpenChain::Validator::VariantLineIntegrityValidator).to receive(:validate).with(ol)
+      ol.save
+    end
+  end
   describe "total_cost" do
     it "should multiply" do
       expect(OrderLine.new(price_per_unit:7,quantity:4).total_cost).to eq 28
@@ -24,9 +31,9 @@ describe OrderLine do
 
   describe "received_qty" do
     it "should get quantity from piece_sets linked to shipment lines with delivered date not null" do
-      
+
       ol = OrderLine.new
-      
+
       #find this one
       ps = ol.piece_sets.build(quantity:3)
       s = Shipment.new
@@ -39,7 +46,7 @@ describe OrderLine do
       s2 = Shipment.new
       sl2 = s2.shipment_lines.build
       ps2.shipment_line = sl2
-      
+
       #don't find this one because no shipment line
       ol.piece_sets.build(quantity:7)
 

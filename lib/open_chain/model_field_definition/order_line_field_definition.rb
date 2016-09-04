@@ -23,6 +23,7 @@ module OpenChain; module ModelFieldDefinition; module OrderLineFieldDefinition
     ]
     add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
     add_fields CoreModule::ORDER_LINE, make_ship_to_arrays(200,"ordln","order_lines")
+    add_fields CoreModule::ORDER_LINE, make_variant_arrays(300,"ordln","order_lines")
 
     pva_fields_to_add = []
     pva_index = 300
