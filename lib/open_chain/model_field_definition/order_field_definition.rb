@@ -73,6 +73,14 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
         :data_type=>:string,
         :read_only=>true
       }],
+      [30,:ord_shipment_refs,:ship_refs,"Shipment References",{
+        data_type: :text,
+        read_only: true,
+        export_lambda: lambda { |ord|
+          ord.order_lines.collect {|ol| ol.shipment_lines.collect {|sl| sl.shipment.reference} }.flatten.uniq.sort.join("\n")
+        },
+        qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT shipments.reference ORDER BY shipments.reference SEPARATOR \"\n\") FROM order_lines INNER JOIN piece_sets ON piece_sets.order_line_id = order_lines.id INNER JOIN shipment_lines ON shipment_lines.id = piece_sets.shipment_line_id INNER JOIN shipments ON shipments.id = shipment_lines.shipment_id WHERE order_lines.order_id = orders.id)"
+      }]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
