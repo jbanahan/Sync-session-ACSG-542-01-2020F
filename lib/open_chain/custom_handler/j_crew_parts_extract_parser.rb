@@ -11,9 +11,9 @@ module OpenChain
       J_CREW_CUSTOMER_NUMBER ||= "J0000"
       
       def self.process_file path
-        # The file coming to us is in Windows extended ASCII, tranlsate it to UTF-8 internally and when we 
-        # output the file we're going to transliterate the data to ASCII for Alliance
-        File.open(path, "r:Windows-1252:UTF-8") do |io|
+        # The file coming to us is in utf-16le (weird), we'll transcode it below to UTF-8 so as to better work with it
+        # internally.
+        File.open(path, "r:utf-16le") do |io|
           JCrewPartsExtractParser.new.generate_and_send io
         end
       end
@@ -80,8 +80,9 @@ module OpenChain
         line_number = 1
         begin
           io.each_line("\r\n") do |line|
+            line = line.encode("UTF-8", undef: :replace, invalid: :replace, replace: "?")
             line.strip!
-            
+
             if product.nil?
               if line =~ /^\d+/
                 product = {}

@@ -11,7 +11,7 @@ describe 'JCrewPartsExtractParser' do
     it "should open a file and call generate and send" do
       path = "/path/to/file.txt"
       io = double("IO")
-      expect(File).to receive(:open).with(path, "r:Windows-1252:UTF-8").and_yield io
+      expect(File).to receive(:open).with(path, "r:utf-16le").and_yield io
       expect_any_instance_of(OpenChain::CustomHandler::JCrewPartsExtractParser).to receive(:generate_and_send).with(io)
 
       OpenChain::CustomHandler::JCrewPartsExtractParser.process_file path
@@ -26,7 +26,7 @@ describe 'JCrewPartsExtractParser' do
       expect(OpenChain::S3).to receive(:download_to_tempfile).and_yield(file)
       expect(file).to receive(:path).and_return path
       io = double("IO")
-      expect(File).to receive(:open).with(path, "r:Windows-1252:UTF-8").and_yield io
+      expect(File).to receive(:open).with(path, "r:utf-16le").and_yield io
 
       expect_any_instance_of(OpenChain::CustomHandler::JCrewPartsExtractParser).to receive(:generate_and_send).with(io)
       OpenChain::CustomHandler::JCrewPartsExtractParser.process_s3 path
@@ -219,6 +219,7 @@ FILE
                                       women's knit swim neon cali halter 82% polyester 18% elastane
 FILE
       file.gsub! "\n", "\r\n"
+      file = file.encode("utf-16le")
 			@user = Factory(:master_user)
 			@custom_file = nil
 			Tempfile.open(['JcrewTest', '.DAT']) do |t|
