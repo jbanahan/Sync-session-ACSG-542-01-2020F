@@ -7,7 +7,7 @@ class BusinessValidationRulesController < ApplicationController
       @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible
 
       begin
-        JSON.parse(params[:business_validation_rule][:rule_attributes_json]) unless params[:business_validation_rule][:rule_attributes_json].blank? 
+        JSON.parse(params[:business_validation_rule][:rule_attributes_json]) unless params[:business_validation_rule][:rule_attributes_json].blank?
         valid_json = true
       rescue
         valid_json = false
@@ -55,7 +55,7 @@ class BusinessValidationRulesController < ApplicationController
   end
 
   def destroy
-    admin_secure do 
+    admin_secure do
       @bvr = BusinessValidationRule.find(params[:id])
       @bvt = @bvr.business_validation_template
       @bvr.update_attribute(:delete_pending, true)
@@ -89,7 +89,7 @@ class BusinessValidationRulesController < ApplicationController
     br = BusinessValidationRule.find(params[:id])
     # Hand created to avoid extraneous attributes and including the concrete validation rule's subclass name as the root
     # attribute name instead of 'business_validation_rule'
-    br_json = {business_validation_rule: 
+    br_json = {business_validation_rule:
       {
         business_validation_template_id: br.business_validation_template_id,
         description: br.description,
@@ -99,7 +99,7 @@ class BusinessValidationRulesController < ApplicationController
         rule_attributes_json: br.rule_attributes_json
       }
     }
-    
+
     br_json[:business_validation_rule][:search_criterions] = br.search_criterions.collect {|sc| sc.json current_user}
     br_json
   end
@@ -109,11 +109,11 @@ class BusinessValidationRulesController < ApplicationController
     model_fields_list = []
     @model_fields.each do |model_field|
       model_fields_list << {
-          :field_name => model_field.field_name.to_s, :mfid => model_field.uid.to_s, 
+          :field_name => model_field.field_name.to_s, :mfid => model_field.uid.to_s,
           :label => model_field.label, :datatype => model_field.data_type.to_s
           }
     end
-    model_fields_list
+    model_fields_list.sort { |a,b| a[:label].downcase <=> b[:label].downcase }
   end
 
 end
