@@ -61,8 +61,9 @@ module OpenChain; module CustomHandler; module Ascena
           existing_invoice = CommercialInvoice.new(invoice_number: invoice_number, importer_id: importer_id)
         end
 
-        CSV.foreach(csv_file) do |row|
-          existing_invoice = parse_invoice_line row, existing_invoice unless counter.zero?
+        CSV.foreach(csv_file, encoding: "Windows-1252") do |row|
+          utf_row = row.map{ |field| field.presence ? field.encode("UTF-8", :invalid => :replace, :undef => :replace, replace: "?") : nil }
+          existing_invoice = parse_invoice_line(utf_row, existing_invoice) unless counter.zero?
           counter += 1
         end
         existing_invoice.save!
