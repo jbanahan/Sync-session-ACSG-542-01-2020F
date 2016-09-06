@@ -209,12 +209,20 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       expect(r[0][0]).to eq(p2.unique_identifier)
     end
   end
-  it "should have sync code" do
-    expect(described_class.new.sync_code).to eq('ANN-ZYM')
+  
+  describe "sync_code" do
+    it "should have sync code" do
+      expect(described_class.new.sync_code).to eq('ANN-ZYM')
+    end
   end
-  context "ftp" do
+
+  describe "ftp_credentials" do
     it "should send proper credentials" do
       expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/ZYM'})
+    end
+
+    it "uses qa folder if instructed" do
+      expect(described_class.new(env: :qa).ftp_credentials[:folder]).to eq "to_ecs/ANN/ZYM-TEST"
     end
   end
 end

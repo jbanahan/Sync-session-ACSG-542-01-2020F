@@ -25,6 +25,7 @@ module OpenChain
         def initialize opts={}
           super(opts)
           @cdefs = self.class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article,:related_styles]
+          @qa = opts[:env] == :qa
         end
 
         def sync_code
@@ -38,7 +39,7 @@ module OpenChain
           [fp,row]
         end
         def ftp_credentials
-          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/ZYM"}
+          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=> (@qa ? "to_ecs/ANN/ZYM-TEST": "to_ecs/Ann/ZYM")}
         end
         def preprocess_row outer_row, opts = {}
           explode_lines_with_related_styles(outer_row) do |row|
