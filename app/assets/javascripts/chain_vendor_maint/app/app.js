@@ -127,33 +127,40 @@
 }).call(this);
 
 (function() {
-  angular.module('ChainVendorMaint').directive('chainCvmNav', function() {
-    return {
-      restrict: 'E',
-      scope: {
-        activeModule: '@',
-        vendor: '='
-      },
-      templateUrl: 'chain_vendor_maint/partials/chain-cvm-nav.html',
-      replace: true,
-      link: function(scope, el, attrs) {
-        var btn, buttons, i, len, results;
-        buttons = el.find('button');
-        buttons.removeClass('btn-primary');
-        buttons.removeClass('btn-default');
-        results = [];
-        for (i = 0, len = buttons.length; i < len; i++) {
-          btn = buttons[i];
-          if (btn.textContent === scope.activeModule) {
-            results.push($(btn).addClass('btn-primary'));
-          } else {
-            results.push($(btn).addClass('btn-default'));
+  angular.module('ChainVendorMaint').directive('chainCvmNav', [
+    'chainApiSvc', '$window', function(chainApiSvc, $window) {
+      return {
+        restrict: 'E',
+        scope: {
+          activeModule: '@',
+          vendor: '='
+        },
+        templateUrl: 'chain_vendor_maint/partials/chain-cvm-nav.html',
+        replace: true,
+        link: function(scope, el, attrs) {
+          var btn, buttons, i, len;
+          buttons = el.find('button');
+          buttons.removeClass('btn-primary');
+          buttons.removeClass('btn-default');
+          scope.isAdmin = false;
+          chainApiSvc.User.me().then(function(u) {
+            return scope.isAdmin = u.permissions.admin;
+          });
+          for (i = 0, len = buttons.length; i < len; i++) {
+            btn = buttons[i];
+            if (btn.textContent === scope.activeModule) {
+              $(btn).addClass('btn-primary');
+            } else {
+              $(btn).addClass('btn-default');
+            }
           }
+          return scope.goToUsers = function(id) {
+            return $window.location.href = '/companies/' + id + '/users';
+          };
         }
-        return results;
-      }
-    };
-  });
+      };
+    }
+  ]);
 
 }).call(this);
 
@@ -166,7 +173,7 @@ angular.module("chain_vendor_maint/partials/addresses.html", []).run(["$template
 
 angular.module("chain_vendor_maint/partials/chain-cvm-nav.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("chain_vendor_maint/partials/chain-cvm-nav.html",
-    "<div class=\"row chain-cvm-nav\"><div class=\"col-md-12 text-center\"><div class=\"btn-group\"><button class=\"btn btn-default\" ui-sref=\"show({id:vendor.id})\">Attributes</button> <button class=\"btn\" ui-sref=\"addresses({id:vendor.id})\">Addresses</button> <button class=\"btn\" ui-sref=\"products({id:vendor.id})\">Products</button> <button class=\"btn\" ui-sref=\"orders({id:vendor.id})\">Orders</button></div></div></div>");
+    "<div class=\"row chain-cvm-nav\"><div class=\"col-md-12 text-center\"><div class=\"btn-group\"><button class=\"btn btn-default\" ui-sref=\"show({id:vendor.id})\">Attributes</button> <button class=\"btn\" ui-sref=\"addresses({id:vendor.id})\">Addresses</button> <button class=\"btn\" ui-sref=\"products({id:vendor.id})\">Products</button> <button class=\"btn\" ui-sref=\"orders({id:vendor.id})\">Orders</button> <button class=\"btn\" ng-show=\"isAdmin\" ng-click=\"goToUsers(vendor.id)\">Users</button></div></div></div>");
 }]);
 
 angular.module("chain_vendor_maint/partials/orders.html", []).run(["$templateCache", function($templateCache) {

@@ -215,6 +215,8 @@ class User < ActiveRecord::Base
 
     if include_permissions
       hash[:permissions] = {
+        admin: self.admin?,
+        sys_admin: self.sys_admin?,
         view_orders: self.view_orders?,
         edit_orders: self.edit_orders?,
         view_vendor_portal: self.view_vendor_portal?,
