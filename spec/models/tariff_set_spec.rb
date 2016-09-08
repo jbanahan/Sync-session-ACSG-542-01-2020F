@@ -48,9 +48,11 @@ describe TariffSet do
       u = Factory(:user)
       u2 = Factory(:user,tariff_subscribed:true)
       u3 = Factory(:user,tariff_subscribed:true)
+      u4 = Factory(:user, disabled: true)
       c = @c1
       ts = TariffSet.create!(:country_id => c.id, :label => "newts")
       ts.activate u
+      expect(ActionMailer::Base.deliveries.length).to eq 2
       m = ActionMailer::Base.deliveries.pop
       expect(m.to).to eq([u3.email])
       m = ActionMailer::Base.deliveries.pop
