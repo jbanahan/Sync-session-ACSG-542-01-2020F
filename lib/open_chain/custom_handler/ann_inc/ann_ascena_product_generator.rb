@@ -23,7 +23,7 @@ module OpenChain
         def self.generate opts={}
           g = self.new(opts)
           file = g.sync_csv
-          g.ftp_file file, remote_file_name: "Ascena#{File.basename(file.path)}"
+          g.ftp_file(file, remote_file_name: "Ascena#{File.basename(file.path)}") unless file.nil?
         end
 
         def initialize(opts={})
