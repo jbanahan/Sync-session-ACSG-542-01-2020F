@@ -5,20 +5,16 @@ module OpenChain
 
     def self.parse_full_s3_path path
       # We're expecting the path to be like "/bucket/path/to/file.pdf"
-      # The first path segment of the file is the bucket, everything after that is the path to the actual file
-      split_path = path.split("/")
-      
-      # If the path started with a / the first index is blank
-      split_path.shift if split_path[0].strip.length == 0
-
-      [split_path[0], split_path[1..-1].join("/")]
+      # The first path segment of the file is the bucket, everything after that is the path to the actual file key
+      bucket, *key = Pathname.new(path).each_filename.to_a
+      [bucket, key.join("/")]
     end
 
     # returns S3Object, ObjectVersion
-    def self.upload_data bucket, key, data
+    def self.upload_data bucket, key, data, write_options = {}
       s3_action_with_retries do
         s3_obj = s3_file bucket, key
-        out = s3_obj.write data
+        out = s3_obj.write data, write_options
         if out.respond_to?(:object)
           return [out.object, out]
         else
@@ -28,9 +24,9 @@ module OpenChain
     end
 
     # returns S3Object, ObjectVersion
-    def self.upload_file bucket, key, file
-      data = Pathname.new(file.path)
-      return upload_data bucket, key, data
+    def self.upload_file bucket, key, file, write_options = {}
+      data = Pathname.new(file.to_path)
+      return upload_data bucket, key, data, write_options
     end
 
     # Uploads the given local_file to a temp location in S3 
@@ -54,18 +50,22 @@ module OpenChain
 
     # Find out if a bucket exists in the S3 environment
     def self.bucket_exists? bucket_name
-      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket_name].exists?
+      aws_s3.buckets[bucket_name].exists?
     end
 
     # Create a new bucket
     #
     # if :versioning option evaluates to true, then versioning will be turned on before the object is returned
     def self.create_bucket! bucket_name, opts={}
-      b = AWS::S3.new(AWS_CREDENTIALS).buckets.create(bucket_name)
+      b = aws_s3.buckets.create(bucket_name)
       b.enable_versioning if opts[:versioning]
       return b
     end
 
+    def self.aws_s3
+      AWS::S3.new(AWS_CREDENTIALS)
+    end
+    private_class_method :aws_s3
 
     # Same functionality as get_data but with specified object version
     def self.get_versioned_data bucket, key, version, io = nil
@@ -81,10 +81,7 @@ module OpenChain
         end
       }
       s3_action_with_retries 3, retry_lambda do
-        s3_file = s3_file(bucket, key)
-        if !version.blank?
-          s3_file = s3_file.versions[version]
-        end
+        s3_file = s3_versioned_object(bucket, key, version)
         if io
           s3_file.read {|chunk| io.write chunk}
           # Flush the data and reset the read/write pointer to the beginning of the IO object 
@@ -108,9 +105,20 @@ module OpenChain
     end
 
     def self.s3_file bucket, key
-      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key]
+      aws_s3.buckets[bucket].objects[key]
     end
     private_class_method :s3_file
+
+    # You can use this method to front any handling of s3 data that is used for versioning where both 
+    # S3:S3Object and S3::ObjectVersion share methods (like #key, #metadata, #read, #delete, #bucket, #url_for)
+    def self.s3_versioned_object bucket, key, version = nil
+      s3_obj = s3_file(bucket, key)
+      if !version.blank?
+        s3_obj = s3_obj.versions[version]
+      end
+      s3_obj
+    end
+    private_class_method :s3_versioned_object
 
     def self.s3_action_with_retries total_attempts = 3, retry_lambda = nil
       begin
@@ -129,14 +137,23 @@ module OpenChain
     private_class_method :s3_action_with_retries
 
     def self.url_for bucket, key, expires_in=1.minute, options = {}
+      version = options.delete :version
       options = {:expires=>expires_in, :secure=>true}.merge options
-      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].url_for(:read, options).to_s
+      s3_versioned_object(bucket, key, version).url_for(:read, options).to_s
+    end
+
+    def self.metadata metadata_key, bucket, key, version = nil
+      s3_versioned_object(bucket, key, version).metadata[metadata_key]
     end
     
-    # Downloads the AWS S3 data specified by the bucket and key.  The tempfile
+    # Downloads the AWS S3 data specified by the bucket and key (and optional version).  The tempfile
     # created will attempt to use the key as a template for naming the tempfile created.
     # Meaning, at a minimum, the file name name should retain the same file extension that
-    # it currently has on the S3 file system.
+    # it currently has on the S3 file system.  If you wish to get the actual filename,
+    # utilize the original_filename option and a original_filename method will get added to the 
+    # tempfile.
+    # 
+    # To retrieve versioned data, pass the file version with the version option
     #
     # If a block is passed, the tempfile is yielded to the block as the sole argument and cleanup
     # of the tempfile is handled transparently to the caller.  The tempfile's will be set to read from the
@@ -148,11 +165,10 @@ module OpenChain
         # Use the key's filename as the basis for the tempfile name
         t = create_tempfile key
         t.binmode
-        OpenChain::S3.get_data bucket, key, t
+        get_versioned_data bucket, key, options[:version], t
 
         unless options[:original_filename].to_s.blank?
-          Attachment.add_original_filename_method t
-          t.original_filename = options[:original_filename].to_s
+          Attachment.add_original_filename_method t, options[:original_filename].to_s
         end
 
         # pass the tempfile to any given block
@@ -177,9 +193,9 @@ module OpenChain
       Tempfile.new([File.basename(key, ".*"), File.extname(key)])
     end
 
-    def self.delete bucket, key
-      o = AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key]
-      o.delete if o.exists?
+    def self.delete bucket, key, version = nil
+      obj = s3_versioned_object(bucket, key, version)
+      obj.delete
     end
 
     def self.bucket_name environment = Rails.env
@@ -191,7 +207,7 @@ module OpenChain
     end
 
     def self.exists? bucket, key
-      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].exists?
+      aws_s3.buckets[bucket].objects[key].exists?
     end
 
     # get files uploaded to the integration bucket for a particular date and subfolder and passes each key name to the given block
@@ -214,7 +230,7 @@ module OpenChain
 
         # Also note, this call does make HTTP HEAD requests for every S3 object being sorted.  It's somewhat expensive
         # to do this but works in all storage cases and doesn't have to rely on storage naming standards.
-        AWS::S3.new(AWS_CREDENTIALS).buckets[integration_bucket_name].objects.with_prefix(prefix).sort_by {|o| o.last_modified}.each do |obj|
+        aws_s3.buckets[integration_bucket_name].objects.with_prefix(prefix).sort_by {|o| o.last_modified}.each do |obj|
           yield obj.key
         end
       end

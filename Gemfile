@@ -5,6 +5,8 @@ gem 'mysql2', '0.3.18'
 gem 'sqlite3'
 # AWS-SDK API completely changed in version 2.  Staying below 2 for now, will require some work to translate code to new version.
 gem 'aws-sdk', '< 2'
+# Handles AWS SNS posts
+gem 'heroic-sns', '~> 1.1'
 gem 'will_paginate', '3.0.4'
 gem 'paperclip', '3.5.1'
 gem 'uuidtools', '2.1.4'

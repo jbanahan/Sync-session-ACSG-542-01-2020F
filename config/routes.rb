@@ -198,7 +198,7 @@ OpenChain::Application.routes.draw do
 
         resources :kewill_entry_documents, only: [] do
           collection do
-            post :send_google_drive_file_to_kewill
+            post :send_s3_file_to_kewill
           end
         end
       end

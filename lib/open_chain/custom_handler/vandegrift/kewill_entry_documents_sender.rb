@@ -1,37 +1,32 @@
- require 'open_chain/google_drive'
+require 'open_chain/google_drive'
+require 'open_chain/s3'
 
 module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocumentsSender
   extend OpenChain::FtpFileSupport
 
-  def self.send_google_drive_document_to_kewill account, path, base_folder: "US Entry Documents"
-    # The imaging client is only sending the path relative to the folder that's being monitored..
-    # we know that's going to be US Entry Documents, so fill it in.
-    actual_drive_path = Pathname.new(base_folder).join path
+  def self.send_s3_document_to_kewill bucket, key, version
+    Lock.acquire("#{bucket}-#{key}-#{version}") do
+      OpenChain::S3.download_to_tempfile(bucket, key, version: version, original_filename: File.basename(key)) do |file|
+        file_info = validate_file(key)
 
-    Lock.acquire("#{account}-#{path}") do 
-      drive_client.download_to_tempfile(account, actual_drive_path.to_s) do |file|
-        file_info = validate_file(path)
-        
         if file_info[:errors].blank?
           # All's good...ftp this file to kewill imaging
           kewill_filename = "I_IE_#{file_info[:entry_number]}__#{file_info[:document_code]}__N_.#{file_info[:extension]}"
           ftp_file file, connect_vfitrack_net("to_ecs/kewill_imaging", kewill_filename)
         else
-          # Someone sent us a bad file name...send them back the file letting them know there was a problem.
-          # Use google drive to found out who owns the file, and email them back at that address.
-          email_to = drive_client.get_file_owner_email(account, actual_drive_path.to_s)
-          # If we can't find the owner, use the bug email address (not sure why we wouldn't be able to - unless there's a race condition)
+          # Use custom metadata sent by the imaging client to identify the email address of the file's owner.
+          email_to = OpenChain::S3.metadata("owner", bucket, key, version)
+
+          # If we can't find the owner, use the bug email address (not sure why we wouldn't be able to unless something's up with the imaging client
+          #  or possibly google drive - where the client fetches the owner email from)
           email_to = OpenMailer::BUG_EMAIL if email_to.blank?
-          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], File.basename(path), file).deliver!
+
+          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file.original_filename, file).deliver!
         end
 
-        drive_client.remove_file_from_folder account, actual_drive_path.to_s
+        OpenChain::S3.delete bucket, key, version
       end
     end
-  rescue OpenChain::GoogleDrive::FileNotFoundError => e
-    # We don't really care here if the file wasn't on drive, there's going to be cases where the client is going to notify us
-    # multiple times about the same file in Drive, especially in cases where the job queue is slightly 
-    # behind...just swallow the not found error.
   end
 
   def self.validate_file file_path
@@ -80,10 +75,5 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
     AttachmentType.where(name: attachment_type).first.try(:kewill_document_code)
   end
   private_class_method :document_code
-
-  def self.drive_client
-    OpenChain::GoogleDrive
-  end
-  private_class_method :drive_client
 
 end; end; end; end

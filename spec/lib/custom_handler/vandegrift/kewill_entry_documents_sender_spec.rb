@@ -4,21 +4,17 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
 
   subject { described_class }
 
-  describe "send_google_drive_document_to_kewill" do
-    let (:google_drive) { double("OpenChain::GoogleDrive") }
+  describe "send_s3_document_to_kewill" do 
     let (:downloaded_file) { 
       tf = Tempfile.new ["file", ".txt"]
       tf << "Content"
       tf.flush
       tf.rewind
+      allow(tf).to receive(:original_filename).and_return "12345 - CUST.pdf"
       tf
     }
     let (:attachment_type) { AttachmentType.create! name: "Document Type", kewill_document_code: "11111"}
     let (:entry) { Entry.create! customer_number: "CUST", source_system: "Alliance", broker_reference: "12345"}
-
-    before :each do
-      allow(subject).to receive(:drive_client).and_return google_drive
-    end
 
     after :each do
       downloaded_file.close! unless downloaded_file.closed?
@@ -37,10 +33,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
           opts = ftp_options
         end
         
-        expect(google_drive).to receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.pdf").and_yield downloaded_file
-        expect(google_drive).to receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.pdf")
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", version: "version", original_filename: "12345 - CUST.pdf").and_yield downloaded_file
+        expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
 
-        subject.send_google_drive_document_to_kewill("me@there.com", "Root/Document Type/12345 - CUST.pdf")
+        subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
 
         expect(opts[:remote_file_name]).to eq "I_IE_12345__11111__N_.pdf"
         expect(opts[:server]).to eq "connect.vfitrack.net"
@@ -48,14 +44,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
       end
     end
 
-    it "validates data and emails errors back to Drive file owner" do
+    it "validates data and emails errors back to file owner" do
       # In this case, we'll have a valid file path, but all other aspects of the data will be invalid
       Attachment.add_original_filename_method downloaded_file, "12345 - CUST.txt"
-      expect(google_drive).to receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt").and_yield downloaded_file
-      expect(google_drive).to receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt").and_return "you@there.com"
-      expect(google_drive).to receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345 - CUST.txt")
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", version: "version", original_filename: "12345 - CUST.txt").and_yield downloaded_file
+      expect(OpenChain::S3).to receive(:metadata).with("owner", "bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version").and_return "you@there.com"
+      expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version")
 
-      subject.send_google_drive_document_to_kewill("me@there.com", "Root/Document Type/12345 - CUST.txt")
+      subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version")
 
       email = ActionMailer::Base.deliveries.first
       expect(email).not_to be_nil
@@ -69,11 +65,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
     end
 
     it "errors if file name is invalid and emails owner" do
-      expect(google_drive).to receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_yield downloaded_file
-      expect(google_drive).to receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_return "you@there.com"
-      expect(google_drive).to receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt")
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345.txt", version: "version", original_filename: "12345.txt").and_yield downloaded_file
+      expect(OpenChain::S3).to receive(:metadata).with("owner", "bucket", "US Entry Documents/Root/Document Type/12345.txt", "version").and_return "you@there.com"
+      expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345.txt", "version")
+
      
-      subject.send_google_drive_document_to_kewill("me@there.com", "Root/Document Type/12345.txt")
+      subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345.txt", "version")
 
       email = ActionMailer::Base.deliveries.first
       expect(email).not_to be_nil
@@ -82,11 +79,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
     end
 
     it "uses bug email address to send to if file owner cannot be discovered" do
-      expect(google_drive).to receive(:download_to_tempfile).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_yield downloaded_file
-      expect(google_drive).to receive(:get_file_owner_email).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt").and_return nil
-      expect(google_drive).to receive(:remove_file_from_folder).with("me@there.com", "US Entry Documents/Root/Document Type/12345.txt")
+      Attachment.add_original_filename_method downloaded_file, "12345 - CUST.pdf"
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", version: "version", original_filename: "12345 - CUST.pdf").and_yield downloaded_file
+      expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+      expect(OpenChain::S3).to receive(:metadata).with("owner", "bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version").and_return nil
 
-      subject.send_google_drive_document_to_kewill("me@there.com", "Root/Document Type/12345.txt")
+      subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
 
       email = ActionMailer::Base.deliveries.first
       expect(email).not_to be_nil

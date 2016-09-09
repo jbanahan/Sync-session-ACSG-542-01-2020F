@@ -104,22 +104,34 @@ module Api; module V1; class ApiController < ActionController::Base
     end
 
     def set_user_settings
-      #@user is set by the authtoken handler which runs prior to this
-      User.current = @user
-
-      # Set the current user into our notifier data so we know which user's
-      # request may have caused an error if we get exceptions from the request.
-      request.env["exception_notifier.exception_data"] = {
-        :user =>  @user
-      }
-
-      default_tz = Time.zone
-      Time.zone = User.current.time_zone
+      pre_set_user_settings @user
       begin
         yield
       ensure
-        User.current = nil
-        Time.zone = default_tz
+        post_set_user_settings
+      end
+    end
+
+    def pre_set_user_settings user
+      # This is added for any other extending filters to allow them to set the @user attribute...in the standard case, it's harmless
+      @user = user
+      User.current = user
+      # Set the current user into our notifier data so we know which user's
+      # request may have caused an error if we get exceptions from the request.
+      request.env["exception_notifier.exception_data"] = {
+        :user =>  user
+      }
+
+      @default_tz = Time.zone
+      Time.zone = User.current.time_zone
+    end
+
+    def post_set_user_settings
+      User.current = nil
+      if defined?(@default_tz) && @default_tz
+        Time.zone = @default_tz
+      else
+        Time.zone = Rails.application.config.time_zone
       end
     end
 
