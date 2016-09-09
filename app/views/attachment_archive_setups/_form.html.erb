@@ -19,6 +19,7 @@ $(function() {
   function enableFormElements(){
     $("#attachment_archive_setup_archive_scheme").removeAttr('disabled');
     $("#attachment_archive_setup_combine_attachments").removeAttr('disabled');
+    $('input[name*="combine_attachments"][type="hidden"]').removeAttr('disabled');
     $("#attachment_archive_setup_combined_attachment_order").removeAttr('disabled');
     $("#attachment_archive_setup_save").removeAttr('disabled');
   }
@@ -26,6 +27,7 @@ $(function() {
   function disableFormElements(){
     $("#attachment_archive_setup_archive_scheme").attr('disabled','disabled');
     $("#attachment_archive_setup_combine_attachments").attr('disabled','disabled');
+    $('input[name*="combine_attachments"][type="hidden"]').attr('disabled','disabled');
     $("#attachment_archive_setup_combined_attachment_order").attr('disabled','disabled');
     $("#attachment_archive_setup_save").attr('disabled','disabled');
   }
