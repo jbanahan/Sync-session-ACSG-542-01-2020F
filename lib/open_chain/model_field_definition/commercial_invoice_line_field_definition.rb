@@ -75,7 +75,11 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
       [50, :cil_fda_review_date, :fda_review_date, "FDA Review Date", {datatype: :datetime}],
       [51, :cil_fda_hold_date, :fda_hold_date, "FDA Hold Date", {datatype: :datetime}],
       [52, :cil_fda_release_date, :fda_release_date, "FDA Release Date", {datatype: :datetime}],
-      [53, :cil_first_sale, :first_sale, "First Sale", {datatype: :boolean}],
+      [53, :cil_first_sale, :contract_amount, "First Sale", {:datatype => :boolean, :read_only=>true,
+        :import_lambda=>lambda{|o,d| "First Sale ignored. (read only)" },
+        :export_lambda=>lambda{|obj| !obj.contract_amount.blank? && !obj.contract_amount.zero? },
+        :qualified_field_name=> "IF(contract_amount IS NOT NULL AND contract_amount <> 0, true, false)"
+      }],
       [54, :cil_value_appraisal_method, :value_appraisal_method, "Value Appraisal Method", {data_type: :string}]
     ]
   end
