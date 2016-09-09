@@ -274,7 +274,7 @@ describe FtpSender do
         expect(FtpSender).to receive(:find_ftp_session).and_return session
 
         file = double('File')
-        allow(file).to receive(:size).and_return 0
+        allow(file).to receive(:path).and_return "/not/a/real/file.txt"
         expect(FtpSender).to receive(:get_file_to_ftp).and_yield file
 
         FtpSender.send_file @server, @username, @password, @file, local_opts

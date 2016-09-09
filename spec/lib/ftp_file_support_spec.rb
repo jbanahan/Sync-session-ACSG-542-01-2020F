@@ -14,7 +14,7 @@ describe "FtpFileSupport" do
   describe "ftp_file" do
     before :each do
       @t = double('tmpfile')
-      allow(@t).to receive(:path).and_return('/x.badfile')
+      allow(@t).to receive(:to_path).and_return('/x.badfile')
     end
 
     it "should ftp_file" do

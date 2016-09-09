@@ -28,7 +28,11 @@ class FtpSender
       max_retry_count = 9
       error = nil
       begin
-        if file.size > 0 || my_opts[:force_empty]
+        # Use pathname here instead of just stat'ing the file because there are instances where the file handle
+        # may not have been used directly to write the data, but there is in fact data to be read from the filesystem.  
+        #In this case file.size returns 0, when, in fact, the file on the actual filesystem (which we use below in send_file) does have data.
+        pathname = Pathname.new(file.path)
+        if (pathname.exist? && pathname.size > 0) || my_opts[:force_empty]
           store_sent_file = true
           # Handles connecting and logging in
           ftp_client = get_ftp_client my_opts
@@ -148,9 +152,9 @@ class FtpSender
         return yield t
       end
     else
-      # If the arg_file is a string, we'll turn it into a File object so that paperclip (session.attachment) can handle it
+      # If the arg_file is a string or pathname, we'll turn it into a File object so that paperclip (session.attachment) can handle it
       # Only automatically close file objects that we've created in this method
-      local_file_creation = arg_file.is_a? String
+      local_file_creation = arg_file.is_a?(String) || arg_file.is_a?(Pathname)
       file = local_file_creation ? File.open(arg_file, "rb") : arg_file
       begin
         return yield file

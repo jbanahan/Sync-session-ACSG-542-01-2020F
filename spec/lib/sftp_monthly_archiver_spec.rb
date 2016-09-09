@@ -9,74 +9,119 @@ describe OpenChain::SftpMonthlyArchiver do
     expect{OpenChain::SftpMonthlyArchiver.new({'alliance_customer_number' => 'blah'})}.to raise_error(RuntimeError, 'FTP Folder Required')
   end
 
+  describe "run" do
+    let (:opts) { {'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'} }
+    let (:company) { Factory(:company, alliance_customer_number: "blah") }
+    let (:entry) { 
+      e = Factory(:entry, importer: company, broker_reference: "reference")
+      e.broker_invoices.create! invoice_date: 1.year.ago
+      e
+    }
+    let! (:attachment) { 
+      entry.attachments.create! attached_file_name: "file.pdf", attachment_type: "Entry Packet", attached_file_size: 100
+    }
+    let! (:archive_setup) { AttachmentArchiveSetup.create! company_id: company.id, start_date: (Time.zone.now - 1.year).to_date }    
+
+    context "using broker_reference_override" do
+      subject { described_class.new opts }
+
+      before :each do
+        opts["broker_reference_override"] = [entry.broker_reference]
+      end
+
+      it "builds an archive and sends it" do
+        now = Time.zone.now
+
+        # Just make sure something was ftp'ed...we'll do more extensive testing below with the send_zip method
+        allow(OpenChain::S3).to receive(:get_data)
+        expect(subject).to receive(:ftp_file)
+
+        Timecop.freeze(now) do
+          subject.run
+        end
+
+        archive = AttachmentArchive.last
+        expect(archive).not_to be_nil
+        expect(archive.name).to eq "blah-#{Time.zone.now.strftime("%Y-%m")}.zip"
+        expect(archive.finish_at.to_i).to eq now.to_i
+      end
+    end
+    
+  end
+
   describe '#send_zip' do
-    before do
-      @company = Factory(:company)
-      @archive = AttachmentArchive.create(name: 'archive', company_id: @company.id)
-      @klass = OpenChain::SftpMonthlyArchiver.new({'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'})
+    let (:company) { Factory(:company, alliance_customer_number: "blah") }
+    let (:archive) { AttachmentArchive.create!(name: 'archive', company_id: company.id) }
+    let (:entry) { Factory(:entry, importer: company, broker_reference: "reference") }
+    subject {
+      OpenChain::SftpMonthlyArchiver.new({'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'})
+    }
+    
+    let (:attachment) {
+      attachment = entry.attachments.create! attached_file_name: "file.pdf", attachment_type: "Entry Packet", attached_file_size: 100
+    }
+
+    let (:archived_attachment) {
+      attachment_archives_attachment = archive.attachment_archives_attachments.create! file_name: "archived-file.pdf"
+      attachment_archives_attachment.attachment = attachment
+      attachment_archives_attachment.save!
+      attachment_archives_attachment
+    }
+
+    let (:tempfile) { Tempfile.new "file" }
+
+    after :each do
+      tempfile.close! unless tempfile.closed?
     end
 
-    describe 'manifest file creation' do
-      before do
-        @archive_manifests = @archive.company.attachment_archive_manifests
-        @attachment_archive_manifest = AttachmentArchiveManifest.new
-        allow(@archive).to receive(:company).and_return(@company)
-        allow(@company).to receive(:attachment_archive_manifests).and_return(@archive_manifests)
-        allow(@archive_manifests).to receive(:build).and_return(@attachment_archive_manifest)
-      end
-
+    context 'manifest file creation' do
+    
       it 'creates a manifest file' do
-        expect(@attachment_archive_manifest).to receive(:generate_manifest_tempfile!)
-        @klass.send_zip(@archive)
+        Timecop.freeze(Time.zone.now) do
+          manifests_relation = double("manifests_relation")
+          manifest = instance_double("AttachmentArchiveManifest")
+          expect(archive.company).to receive(:attachment_archive_manifests).and_return manifests_relation
+          expect(manifests_relation).to receive(:build).and_return manifest
+          expect(manifest).to receive(:generate_manifest_tempfile!).with(1.year.ago).and_return tempfile
+
+          subject.send_zip(archive)
+        end
+        expect(tempfile).to be_closed
       end
-
-      it 'closes the manifest tempfile' do
-        tempfile = Tempfile.new('blah')
-        allow(@attachment_archive_manifest).to receive(:generate_manifest_tempfile!).and_return(tempfile)
-        expect(tempfile).to receive(:close!)
-        @klass.send_zip(@archive)
-      end
-    end
-
-    it 'sets the finish_at date' do
-      expect(@archive.finish_at).to be_nil
-      @klass.send_zip(@archive)
-      expect(@archive.finish_at).to_not be_nil
-    end
-
-    it 'retrieves attachment files' do
-      @archive.attachments.create
-      allow(OpenChain::S3).to receive(:get_data)
-
-      expect(OpenChain::S3).to receive(:get_data)
-      @klass.send_zip(@archive)
     end
 
     it 'stores the attachment file in the zip file.' do
-      attachment = @archive.attachments.create
-      tempfile = Tempfile.new('test_file')
-      tempfile.write('foo')
-      tempfile.rewind
-      allow(OpenChain::S3).to receive(:get_data).and_return(tempfile)
-      expect(@klass).to receive(:ftp_file) do |file, opts|
-        expect(File.exists?(file.path)).to be true
+      expect(OpenChain::S3).to receive(:get_data).with(attachment.bucket, attachment.path, instance_of(StringIO)) do |bucket, path, io|
+        io.write "foo"
+        io.rewind
+        nil
+      end
+
+      now = Time.zone.parse "2016-01-01 00:00"
+      
+      # The following line is needed to instantiate the archived attachment
+      archived_attachment
+      expect(subject).to receive(:ftp_file) do |file, opts|
+        expect(File.exists?(file.path)).to be_truthy
+
         Zip::File.open(file.path) do |zip_file|
-          expect(zip_file.find_entry(attachment.unique_file_name)).to be_present
-          expect(zip_file.find_entry('archive-manifest.xls')).to be_present
+          expect(zip_file.find_entry(archived_attachment.output_path)).to be_present
+          expect(zip_file.file.read(archived_attachment.output_path)).to eq "foo"
+          expect(zip_file.find_entry("ArchiveManifest-2016-01-01.xls")).to be_present
         end
       end
-      @klass.send_zip(@archive)
-    end
 
-    it 'sends an email if a notification email is present' do
-      klass = OpenChain::SftpMonthlyArchiver.new({'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'})
-      klass.send_zip(@archive)
+      Timecop.freeze(now) do
+        subject.send_zip(archive)
+      end
+
+      # validate an email is sent
       expect(ActionMailer::Base.deliveries.count).to eq(1)
     end
 
     it 'does not send an email if a Notification Email is not present' do
-      klass = OpenChain::SftpMonthlyArchiver.new({'notification_email' => '', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'})
-      klass.send_zip(@archive)
+      klass = OpenChain::SftpMonthlyArchiver.new({'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'})
+      klass.send_zip(archive)
       expect(ActionMailer::Base.deliveries.count).to eq(0)
     end
   end

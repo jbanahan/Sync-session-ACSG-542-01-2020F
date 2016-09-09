@@ -8,7 +8,7 @@ module OpenChain
     def ftp_file file, option_overrides = {}
       send_status = false
 
-      if !file.nil? && File.exists?(file.path)
+      if !file.nil? && File.exists?(file.to_path)
         begin
           opts = ftp_information(option_overrides)
           delete_local = !opts[:keep_local]
