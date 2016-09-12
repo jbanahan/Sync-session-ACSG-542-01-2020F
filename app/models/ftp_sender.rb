@@ -250,7 +250,7 @@ class FtpSender
     attr_accessor :log, :remote_path
 
     def connect server, user, password, log, opts, &block
-      sftp_opts = {password: password, compression: true, paranoid: false, timeout: 10}
+      sftp_opts = {password: password, compression: false, paranoid: false, timeout: 10, auth_methods: ["password"]}
       if opts[:port]
         sftp_opts[:port] = opts[:port]
       end

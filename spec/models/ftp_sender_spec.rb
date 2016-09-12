@@ -358,7 +358,7 @@ describe FtpSender do
     describe "connect" do
       it "should use Net::SFTP to connect to a server and yield the given block" do
         @ftp = double("Net::SFTP")
-        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
+        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: false, paranoid: false, timeout: 10, auth_methods: ["password"]).and_yield @ftp
 
         test = nil
 
@@ -373,7 +373,7 @@ describe FtpSender do
 
       it "should allow a different port to be specified" do
         @ftp = double("Net::SFTP")
-        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10, port: 1234).and_yield @ftp
+        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: false, paranoid: false, timeout: 10, auth_methods: ["password"], port: 1234).and_yield @ftp
 
         test = nil
 
@@ -388,7 +388,7 @@ describe FtpSender do
 
       it "handles disconnect errors" do
         @ftp = double("Net::SFTP")
-        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
+        expect(Net::SFTP).to receive(:start).and_yield @ftp
 
         expect(@client).to receive(:session_completed?).and_return true
 
@@ -398,7 +398,7 @@ describe FtpSender do
 
       it "handles re-raises disconnect errors if session didn't complete normally" do
         @ftp = double("Net::SFTP")
-        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
+        expect(Net::SFTP).to receive(:start).and_yield @ftp
 
         expect(@client).to receive(:session_completed?).and_return false
 
@@ -411,7 +411,7 @@ describe FtpSender do
       before :each do
         @ftp = double("Net::SFTP")
         # connect sets up some variables so we need to call it every time
-        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, paranoid: false, timeout: 10).and_yield @ftp
+        expect(Net::SFTP).to receive(:start).and_yield @ftp
         @client.connect(@server, @username, @password, [], {}){|client|}
       end
 
