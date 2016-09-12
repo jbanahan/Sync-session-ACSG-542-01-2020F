@@ -20,7 +20,9 @@ module OpenChain; module Events; module EntryEvents
 
       # This is here since we're changing the checksum algorithm.  I don't want older files
       # to be affected by the change.  So anything logged after 2016-3-6 will get the new style calculations.
-      if entry.file_logged_date.nil? || entry.file_logged_date.to_date >= Date.new(2016, 3, 6)
+      if entry.file_logged_date.nil? || entry.file_logged_date.to_date >= Date.new(2016, 9, 12)
+        landed_cost_checksum = calculate_landed_cost_checksum_v3 landed_cost_data
+      elsif entry.file_logged_date.to_date >= Date.new(2016, 3, 6)
         landed_cost_checksum = calculate_landed_cost_checksum_v2 landed_cost_data
       else
         landed_cost_checksum = calculate_landed_cost_checksum landed_cost_data
@@ -122,6 +124,43 @@ module OpenChain; module Events; module EntryEvents
       end
 
       Digest::SHA1.hexdigest(lc_data.join("***"))
+    end
+
+    def calculate_landed_cost_checksum_v3 landed_cost_data
+      # Ultimately, what we care about checksum'ing is the data that's ACTUALLY on the report we're generating.
+      # The data in the landed_cost_data variable is from the backend generator that generates generic data used on multiple
+      # different reports that pick and choose what data to present.  We could just to_json the hash and make a sha 
+      # hash from that, BUT, then if we add an data elements for some other report to the backend hash, we'll instantly invalidate 
+      # the hashes for this attachment printout and cause a ton of extra files to generate, which will cause a bunch of extra work
+      # for our desk clerks.
+
+      # We have to make sure that we always process the data in the same order (regardless of how the actual backend
+      # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before 
+      # processing a checksum for them.
+
+      # This fingerprint varies from V2 in that it includes the total row per line too.  By just including the per unit amounts, V2 
+      # was missing some small adjustments to the entry due to the difference amounting to changes of hundredths of a cent at
+      # the per unit level.  For instance, a change in cotten fee of 1.70 over 3K units was not changing the actual fee amount at the per
+      # unit level (being a 1/10th of a cent), but the fee totals are different so a new report should have printed.
+
+      entry_level = [:entry_number, :broker_reference, :customer_references]
+      invoice_level = [:invoice_number]
+      line_level = [:part_number, :po_number, :country_origin_code, :mid, :quantity, :entered_value, :duty, :fee, :international_freight, :inland_freight, :brokerage, :other]
+      per_unit_level = [:entered_value, :duty, :fee, :international_freight, :inland_freight, :brokerage, :other]
+
+      lc_data = []
+      landed_cost_data[:entries].sort_by{|e| e[:broker_reference]}.each do |entry_data|
+        lc_data << collect_fingerprint_field(entry_data, entry_level)
+        entry_data[:commercial_invoices].sort_by{|ci| ci[:invoice_number]}.each do |invoice_data|
+          lc_data << collect_fingerprint_field(invoice_data, invoice_level)
+          invoice_data[:commercial_invoice_lines].sort_by {|l| l[:po_number].to_s + l[:part_number].to_s + l[:quantity].to_s}.each do |line_data|
+            lc_data << collect_fingerprint_field(line_data, line_level)
+            lc_data << collect_fingerprint_field(line_data[:per_unit], per_unit_level)
+          end
+        end
+      end
+
+      Digest::SHA1.hexdigest(lc_data.flatten.join("***"))
     end
 
     def collect_fingerprint_field data_hash, fields
