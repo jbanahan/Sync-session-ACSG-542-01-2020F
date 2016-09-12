@@ -358,6 +358,7 @@
     <button ng-show='shp.permissions.can_cancel' class='btn btn-default' ng-click='cancelShipment(shp)'>Cancel Shipment</button>
     <button ng-show='shp.permissions.can_uncancel' class='btn btn-default' ng-click='uncancelShipment(shp)'>Uncancel Shipment</button>
     <button ng-show='shp.permissions.can_add_remove_shipment_lines' class='btn btn-default' ng-click='showAddOrder()'>Build Manifest</button>
+    <button class = 'btn btn-default' ng-click='showHistory(shp)'>History</button>
     <button ng-show='shp.permissions.can_book && shp.permissions.can_add_remove_booking_lines && shp.permissions.enabled_booking_types.length > 0' class='btn btn-default' ng-click='showBookOrder()'>Book Now</button>
     <button ng-show='(shp.permissions.can_add_remove_booking_lines || shp.permissions.can_add_remove_shipment_lines) && shp.attachments.length > 0' class='btn btn-default' ng-click='showProcessManifest()'>Process Worksheet</button>
     <button ng-show='shp.permissions.can_send_isf' class='btn btn-default' ng-click='sendISF(shp)'>Send ISF</button>

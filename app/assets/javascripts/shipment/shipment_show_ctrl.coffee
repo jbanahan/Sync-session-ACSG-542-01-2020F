@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler',($scope,shipmentSvc,$state,chainErrorHandler) ->
+angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler', '$window', ($scope,shipmentSvc,$state,chainErrorHandler, $window) ->
   loadCarriers = (importerId) ->
     $scope.carriers = undefined
     shipmentSvc.getCarriers(importerId).success((data) ->
@@ -241,6 +241,9 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
     ord = shipmentLine.ord_cust_ord_no
     ord = shipmentLine.ord_ord_num unless ord
     ord
+
+  $scope.showHistory = (shipment) ->
+    $window.location.href = '/shipments/'+shipment.id+'/history'
 
   if $state.params.shipmentId
     $scope.loadShipment $state.params.shipmentId
