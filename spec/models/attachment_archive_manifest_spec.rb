@@ -41,6 +41,8 @@ describe AttachmentArchiveManifest do
     end
     it "should create excel temp file" do
       @tmp = @m.generate_manifest_tempfile! 1.year.ago
+      # Make sure the tempfile is rewound before reading.
+      expect(@tmp.read).not_to eq ""
       sheet = Spreadsheet.open(@tmp).worksheet(0)
       title_row = sheet.row(0)
       ["Archive Name","Archive Date","Broker Reference","Master Bill of Lading", "PO Numbers",

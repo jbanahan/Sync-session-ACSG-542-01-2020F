@@ -36,6 +36,8 @@ AND attachment_archives.company_id = #{self.company_id}"
     end
     t = Tempfile.new(["ArchiveManifest",".xls"])
     wb.write t
+    t.flush
+    t.rewind
     t
   end
 end
