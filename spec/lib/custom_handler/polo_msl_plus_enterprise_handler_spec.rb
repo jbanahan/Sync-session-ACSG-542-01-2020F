@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @p.update_custom_value! custom_defs[:length_cm], "1"
       @p.update_custom_value! custom_defs[:width_cm], "2"
       @p.update_custom_value! custom_defs[:height_cm], "3"
-      @p.update_custom_value! custom_defs[:knit_woven], "k"
+      @p.update_custom_value! custom_defs[:material_group], "k"
       @p.update_custom_value! custom_defs[:fiber_content], "fc"
       @p.update_custom_value! custom_defs[:common_name_1], "cn1"
       @p.update_custom_value! custom_defs[:common_name_2], "cn2"

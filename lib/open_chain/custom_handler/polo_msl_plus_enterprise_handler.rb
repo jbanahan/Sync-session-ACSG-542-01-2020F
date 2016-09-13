@@ -192,7 +192,7 @@ module OpenChain
 
             cdefs.push *@fiber_defs
 
-            cdefs.push :knit_woven, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1, :scientific_name_2, :scientific_name_3,
+            cdefs.push :material_group, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1, :scientific_name_2, :scientific_name_3,
                         :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3,
                         :origin_wildlife, :semi_precious, :semi_precious_type, :cites, :fish_wildlife, :bartho_customer_id, :msl_fiber_failure, :msl_us_class
 
@@ -226,7 +226,7 @@ module OpenChain
             file.push *get_custom_values(p, *@fiber_defs)
           end
 
-          file.push *get_custom_values(p, :knit_woven, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1, :scientific_name_2, :scientific_name_3,
+          file.push *get_custom_values(p, :material_group, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1, :scientific_name_2, :scientific_name_3,
                         :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3,
                         :origin_wildlife, :semi_precious, :semi_precious_type, :cites, :fish_wildlife)
 
