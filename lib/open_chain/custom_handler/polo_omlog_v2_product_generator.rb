@@ -5,13 +5,22 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
   include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
   def self.run_schedulable opts={}
-    h = self.new
-    h.ftp_file h.sync_csv
+    h = self.new opts.with_indifferent_access
+    h.generate
+  end
+
+  def generate
+    f = nil
+    begin
+      f = sync_csv
+      ftp_file(f) unless f.nil?
+    end while !f.nil?
   end
 
   def initialize opts={}
     super
     @cdefs = self.class.prep_custom_definitions self.class.cdefs
+    @max_results = opts[:max_results]
   end
 
   def sync_code
@@ -88,6 +97,10 @@ INNER JOIN tariff_records ON tariff_records.classification_id = classifications.
       q << "\nWHERE #{Product.need_sync_where_clause()}"
     else
       q << "\n#{@custom_where}"
+    end
+
+    if @max_results
+      q << " ORDER BY products.updated_at ASC LIMIT #{@max_results}"
     end
     q
   end

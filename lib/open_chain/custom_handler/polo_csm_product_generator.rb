@@ -6,8 +6,27 @@ module OpenChain
       def self.run_schedulable opts
         self.new.generate
       end
+
+      def initialize opts = {}
+        super(opts)
+        # The following options exist pretty much solely for cases where we need to
+        # generate a large batch of files that don't require csm to ack the files
+        @max_results = opts[:max_results]
+        @auto_confirm = opts[:auto_confirm].nil? ? false : opts[:auto_confirm]
+      end
+
       def generate
-        ftp_file sync_csv
+        if @auto_confirm
+          f = nil
+          begin
+            f = sync_csv
+            ftp_file(f) unless f.nil?
+          end while !f.nil?
+        else
+          ftp_file sync_csv
+        end
+        
+        nil
       end
 
       def sync_code
@@ -15,7 +34,7 @@ module OpenChain
       end
 
       def auto_confirm?
-        false
+        @auto_confirm
       end
       
       #overriding to handle special splitting of CSM numbers
@@ -97,6 +116,10 @@ LEFT OUTER JOIN custom_values csm_v on csm_v.custom_definition_id = (SELECT id f
 AND length(tariff_records.hts_1) > 0 and length(csm_v.text_value) > 0 and tariff_records.line_number = 1
 AND #{Product.need_sync_where_clause()}"
         q << (@custom_where ? @custom_where : w)
+
+        if @max_results
+          q << " ORDER BY products.updated_at ASC LIMIT #{@max_results}"
+        end
         q
       end
     end
