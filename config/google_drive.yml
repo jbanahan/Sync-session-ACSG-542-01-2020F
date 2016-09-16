@@ -26,7 +26,8 @@ integration@vandegriftinc.com:
 
 integration-dev@vandegriftinc.com:
   test:
-    refresh_token: 1/xfitfHWkigC1D4aMNI-FS6frFxRFUfpwbwnP_Zaoac0
+    refresh_token: 1/tTpFSC2YlVWxVwJtR33WTYLDXa-esigcivEwkwjNaQY
   development:
-    refresh_token: 1/xfitfHWkigC1D4aMNI-FS6frFxRFUfpwbwnP_Zaoac0
+    refresh_token: 1/IjJ9g152fTfxiwVAVc7i7LilE11L5bznD8RftRyhV8A
+
 

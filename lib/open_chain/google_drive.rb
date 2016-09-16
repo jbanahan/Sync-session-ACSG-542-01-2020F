@@ -215,7 +215,7 @@ module OpenChain
       
       client.authorization.client_id = drive_data[environment]['client_id']
       client.authorization.client_secret = drive_data[environment]['client_secret']
-      client.authorization.scope = "https://www.googleapis.com/auth/drive"
+      client.authorization.scope = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/admin.directory.user.readonly"]
       client.authorization.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
 
       # This refresh_token is essentially the unique identifier telling which user data we're attempting to access
