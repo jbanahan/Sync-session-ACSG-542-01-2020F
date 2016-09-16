@@ -22,7 +22,7 @@ test:
 # The outer level here is the google account name
 integration@vandegriftinc.com:
   production:
-    refresh_token: 1/ROFzHoD6YppiobZQQRzbwx_dMw5OJdi6xQx3aWPpI0Q
+    refresh_token: 1/pORI5bY47wVsA_gJyGGg7JxjQj-meyJLJcDNmLjvtTs
 
 integration-dev@vandegriftinc.com:
   test:
