@@ -10,17 +10,23 @@ module OpenChain
       @client = get_client
       @api = get_api
       @settings = settings
-      @client.authorization.fetch_access_token!
     end
 
     def run
-      User.where("email like '%vandegriftinc.com'").all.each do |user|
+      suspended_users = []
+      User.where("email like '%vandegriftinc.com' AND (disabled <> 1 OR disabled IS NULL)").all.each do |user|
         email = user.email.gsub(/(.*?)(\+.*?)(@.*)/, '\1\3')
         body = @client.execute(@api.users.get, userKey: email).response.body
         body = JSON.parse(body)
         suspended = suspended?(body)
-        user.update_attribute(:disabled, suspended) if suspended.present?
+        if suspended.present?
+          user.update_attribute(:disabled, suspended)
+          suspended_users << user
+        end
+        
       end
+
+      suspended_users
     end
 
     private
@@ -56,6 +62,7 @@ module OpenChain
       client.authorization.scope = "https://www.googleapis.com/auth/admin.directory.user.readonly"
       client.authorization.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
       client.authorization.refresh_token = auth_data[user_email][environment]['refresh_token']
+      client.authorization.fetch_access_token!
       client
     end
   end
