@@ -1,9 +1,12 @@
+require 'open_chain/fixed_position_generator'
+
 module OpenChain
   module CustomHandler
-    class FenixProductFileGenerator
+    class FenixProductFileGenerator < OpenChain::FixedPositionGenerator
       include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
       def initialize fenix_customer_code, options = {}
+        super()
         @fenix_customer_code = fenix_customer_code
         @canada_id = Country.find_by_iso_code('CA').id
         @importer_id = options['importer_id']
@@ -14,7 +17,7 @@ module OpenChain
         @output_subdirectory = (options['output_subdirectory'].presence || '')
         @strip_leading_zeros = (options['strip_leading_zeros'].to_s == "true")
 
-        custom_defintions = []
+        custom_defintions = [:class_special_program_indicator]
         custom_defintions << :prod_part_number if @use_part_number
         custom_defintions << :prod_country_of_origin unless @suppress_country
         custom_defintions << :class_customs_description unless @suppress_description
@@ -88,21 +91,39 @@ module OpenChain
       
       private
         def file_output fenix_customer_code, p, c, tr
-          line = "N#{"".ljust(14)}#{force_fixed(fenix_customer_code, 9)}#{"".ljust(7)}#{force_fixed identifier_field(p),40}#{tr.hts_1.ljust(10)}"
-          
-          if !@suppress_description
-            # Description starts at zero-indexed position 135..add spacing to accomodate
-            line += "".ljust(135 - line.length)
-            line += force_fixed(c.get_custom_value(@cdefs[:class_customs_description]).value.to_s, 50)
-          end
+          # For some reason the product line starts with an N followed by 14 blanks
+          line = "N"
+          line << str("", 14)
+          line << str(fenix_customer_code, 9) # Client Code (15 - 24)
+          line << str("", 7) # Blank Space (24, 31)
+          line << str(identifier_field(p), 40) # Part Number (31 - 71)
+          line << str(tr.hts_1, 20)  # Classification (71 - 91)
+          line << str("", 4) # Tariff Code (91 - 95)
+          line << str("", 20) # Keyword (95 - 115)
+          line << str("", 20) # Blank Sapce (115 - 135)
+          line << str((@suppress_description ? "" : c.custom_value(@cdefs[:class_customs_description]).to_s), 50) # Description 1 (135 - 185)
+          line << str("", 50) # Description 2 (185 - 235)
+          line << str("", 16) # OIC Code (235 - 251)
+          line << str("", 41) # Blank Space (251 - 292)
+          line << str("", 3) # Sale UOM (292 - 295)
+          line << str("", 32) # Blank Space (295 - 327)
+          line << str("", 7) # GST Exemption Code (327 - 334)
+          line << str("", 7) # Blank Space (334 - 341)
+          spi = c.custom_value(@cdefs[:class_special_program_indicator])
+          line << str(spi.blank? ? "" : spi.to_i, 2) # Tariff Treatment (341, 343)
+          line << str("", 16) # Blank Space (343 - 359)
+          line << str((@suppress_country ? "" : p.custom_value(@cdefs[:prod_country_of_origin]).to_s), 3) # Country Of Origin (359 - 362)
+          # Since none of this data is used (yet - if ever) I'm just leaving this commented out rather than extend the size of the file pointlessly
+          # line << str("", 8) # CFIA Requirement ID (362 - 370)
+          # line << str("", 4) # CFIA Requirement Version (370 - 374)
+          # line << str("", 6) # CFIA Code (374 - 380)
+          # line << str("", 3) # OGD End Use (380 - 383)
+          # line << str("", 3) # OGD Misc Id (383 - 386)
+          # line << str("", 3) # OGD Origin (386 - 389)
+          # line << str("", 2) # SIMA Code (389 - 391)
+          # line << str("", 2) # Excise Rate (391 - 393)
 
-          if !@suppress_country
-            # The country of origin field starts at zero-indexed position 359..add spacing to accomodate
-            line += "".ljust(359 - line.length)
-            line += force_fixed(p.get_custom_value(@cdefs[:prod_country_of_origin]).value.to_s, 3)
-          end
-
-          #Because Canada doesn't exclamation marks in B3 files, strip them
+          #Because Canada doesn't allow exclamation marks in B3 files (WTF?, strip them
           line = line.gsub("!", " ") 
           line += "\r\n"
         end

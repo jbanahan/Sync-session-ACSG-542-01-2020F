@@ -59,9 +59,12 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
       coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
+      tariff_def = CustomDefinition.where(label: "Special Program Indicator", module_type: "Classification", data_type: "string").first
 
       @p.update_custom_value! coo_def, "CN"
       @c.update_custom_value! desc_def, "Random Product Description"
+      @c.update_custom_value! tariff_def, "10"
+
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
       expect(read[0, 15]).to eq "N".ljust(15)
@@ -69,6 +72,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[31, 40]).to eq "myuid".ljust(40)
       expect(read[71, 20]).to eq "1234567890".ljust(20)
       expect(read[135, 50]).to eq "Random Product Description".ljust(50)
+      expect(read[341, 3]).to eq "10 "
       expect(read[359, 3]).to eq "CN "
       expect(read).to end_with "\r\n"
     end
@@ -105,7 +109,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[15, 9]).to eq @code.ljust(9)
       expect(read[31, 40]).to eq "myuid".ljust(40)
       expect(read[71, 10]).to eq "1234567890".ljust(10)
-      expect(read[359, 3]).to be_nil
+      expect(read[359, 3]).to eq "   "
     end
 
     it "skips adding description if instructed" do

@@ -43,6 +43,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_value: {label: "Product Value", data_type: :decimal, module_type: "Product"},
     class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification"},
     class_set_type: {label: "Set Type", data_type: :string, module_type: "Classification"},
+    class_special_program_indicator: {label: "Special Program Indicator", data_type: :string, module_type: "Classification"},
     ord_invoicing_system: {label: "Invoicing System", data_type: :string, module_type: "Order"},
     ord_invoiced: {label: "Invoice Received?", data_type: :boolean, module_type: "Order"},
     ord_division: {label: "Division", data_type: :string, module_type: "Order"},
