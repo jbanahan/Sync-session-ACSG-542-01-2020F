@@ -14,6 +14,10 @@ class VfiInvoice < ActiveRecord::Base
     c.master? ? "1=1" : "customer_id in (#{user.available_importers.pluck(:id).join(', ')})"
   end
 
+  def self.search_secure user, base_object
+    base_object.where(search_where(user))
+  end
+
   def self.next_invoice_number
     Lock.acquire("next-inv") do
       last_id = self.order('id desc').limit(1).pluck(:id).first
