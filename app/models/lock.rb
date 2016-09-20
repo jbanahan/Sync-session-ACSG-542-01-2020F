@@ -1,8 +1,8 @@
 require 'redis'
-require 'redis-semaphore'
 require 'redis-namespace'
 require 'connection_pool'
 require 'yaml'
+require 'concurrent'
 
 class Lock
 
@@ -30,9 +30,9 @@ class Lock
   def self.get_redis_client config
     redis = Redis.new(host: config[:server], port: config[:port])
 
-    # Now we need to make sure we're namespacing so we don't cross lock with other instances or versions
-    # We're not persisting our redis store and we don't really run jobs across differing versions
-    Redis::Namespace.new("#{Rails.root.basename}", redis: redis)
+    # Now we need to make sure we're namespacing so we don't cross lock with other instances
+    @@root ||= Rails.root.basename
+    Redis::Namespace.new(@@root, redis: redis)
   end
   private_class_method :get_redis_client
 
@@ -65,9 +65,8 @@ class Lock
   # false if you don't want this.  This is done largely for backwards compatibility with the old DB locking scheme.
   #
   # lock_expiration - The amount of time in seconds before the lock is reaped by the lock server.  This is largely here
-  # to ensure that failed clients don't lock out others indefinitely.  You MAY pass nil for this value to utilize
-  # indifinite locks, but that's probably not entirely wise (if an indefinite lock happens and is blocking for too long
-  # it can be cleared by using the release_stale_locks! method of Redis::Semaphore).
+  # to ensure that failed clients don't lock out others indefinitely. Defaults to 300.  Note, if the process is still
+  # running, the lock will continue to lock..it will not simply time out after 300 seconds.
   def self.acquire(lock_name, opts = {})
     lock_name = clean_lock_name(lock_name)
     already_acquired = definitely_acquired?(lock_name)
@@ -81,30 +80,17 @@ class Lock
 
     yield_in_transaction = opts[:yield_in_transaction] == true
     result = nil
+
     if already_acquired
       result = execute_block yield_in_transaction, &Proc.new
     else
       timeout = opts[:timeout]
-      timeout_at = Time.now.to_i + timeout
-      semaphore = nil
+      connection_timeout_at = Time.zone.now + timeout.seconds
       begin
         get_connection_pool.with(timeout: timeout) do |redis|
-          # We're going to expire temp locks in 10 minutes, this is really just housekeeping so that
-          # we don't build up vast amounts of temp keys for now purpose.  This just tells redis to
-          # reap the lock name after 5 minutes..if another lock tries to re-use the name, then
-          # the expire time is updated to 5 minutes after that new call.
-          semaphore = opts[:lock_expiration] ? Redis::Semaphore.new(lock_name, redis: redis, expiration: opts[:lock_expiration]) : Redis::Semaphore.new(lock_name, redis: redis)
-          # The lock call denotes a timeout by returning false, but it will also return the result of the block
-          # So, to avoid cases where we potentially have the block returning false and the lock returning false
-          # just assume that if the lock's block isn't yielded to that the lock timed out.
-          timed_out = true
-          semaphore.lock(timeout) do
-            timed_out = false
-            acquired_lock(lock_name)
-            result = execute_block yield_in_transaction, &Proc.new
-          end
+          raise Timeout::Error if Time.zone.now > connection_timeout_at
 
-          raise Timeout::Error if timed_out
+          result = do_locking redis, lock_name, connection_timeout_at, opts[:lock_expiration], yield_in_transaction, &Proc.new
         end
       rescue Timeout::Error, Redis::TimeoutError => e
         # Just catch and re-raise the error after normalize the message (since we raise an error and the connection pool/redis potentially raises one)
@@ -112,7 +98,7 @@ class Lock
       rescue Redis::CannotConnectError, Redis::ConnectionError => e
         # In this case, the attempt to connect to redis for the lock failed (server restart/maint etc)..keep retrying until we've waiting longer than
         # the given timeout.
-        if (Time.now.to_i) < timeout_at
+        if (Time.zone.now) < connection_timeout_at
           sleep(1)
           retry
         else
@@ -121,6 +107,51 @@ class Lock
       ensure
         release_lock(lock_name)
       end
+    end
+
+    result
+  end
+
+  def self.do_locking redis, lock_name, connection_timeout_at, lock_auto_exiration_seconds, yield_in_transaction
+    lock_manager = Redlock::Client.new [redis]
+    lock_info = nil
+    lock_auto_exiration_millis = lock_auto_exiration_seconds * 1000
+    begin 
+      lock_info = lock_manager.lock(lock_name, lock_auto_exiration_millis)
+      unless lock_info || Time.zone.now > connection_timeout_at
+        sleep(0.3)
+      end
+    end while !lock_info
+
+    if Time.zone.now >= connection_timeout_at
+      lock_manager.unlock(lock_info) unless lock_info.nil?
+      raise Timeout::Error
+    end
+
+    block_completed = false
+    
+    # The thread will extend the life of the lock again if the block below runs for longer than given expiration time
+    # If the lock expiration is anything <= 5 seconds, then we're not going to even bother running this
+    if lock_auto_exiration_seconds <= 5
+      sync_lock = Concurrent::Synchronization::Lock.new
+      relock_thread = Thread.new {
+        begin
+          lock.wait(lock_auto_exiration_seconds / 2)
+          if !block_completed
+            lock_manager.lock(lock_name, lock_auto_exiration_millis, extend: lock_info)
+          end
+        end while !block_completed
+      }
+    end
+    
+    begin 
+      acquired_lock(lock_name)
+      result = execute_block yield_in_transaction, &Proc.new
+    ensure
+      completed = true
+      sync_lock.signal if sync_lock
+      lock_manager.unlock lock_info
+      relock_thread.join if relock_thread
     end
 
     result
@@ -156,51 +187,48 @@ class Lock
     end
   end
 
-  def self.clear_lock lock_name
-    # use this only if you need to forcibly clear a lock (say from the command line).  
-    # There appears to be some sort of race condition from time to 
-    # time in redis-semaphore where a lock is not cleared.
-    lock_name = clean_lock_name(lock_name)
-
-    get_connection_pool.with(timeout: 30) do |redis|
-      semaphore = Redis::Semaphore.new(lock_name, redis: redis)
-      semaphore.unlock
-      semaphore.release_stale_locks!
-    end
-  end
-
   # if true, the lock is already acquired
   def self.definitely_acquired?(name)
     !!Thread.current[:definitely_acquired_locks] and Thread.current[:definitely_acquired_locks].has_key?(name)
   end
+  private_class_method :definitely_acquired?
 
   def self.acquired_lock(name)
     Thread.current[:definitely_acquired_locks] ||= {}
     Thread.current[:definitely_acquired_locks][name] = true
   end
+  private_class_method :acquired_lock
 
   def self.release_lock(name)
     Thread.current[:definitely_acquired_locks] ||= {}
     Thread.current[:definitely_acquired_locks].delete(name)
   end
+  private_class_method :release_lock
 
   def self.unlocked?(lock_name)
     # this is solely used in the unit tests
-    # It's reaching into redis-semaphore a bit, but it's here to make
+    # It's reaching into redlock-rb a bit, but it's here to make
     # sure the locks are being cleared as expected
-    get_connection_pool.with do |redis|
-      return redis.lrange("#{lock_name}:AVAILABLE", 0, -1).length > 0
-    end
-  end
+    lock_name = clean_lock_name(lock_name)
 
-  def self.expires_in(lock_name)
-    # this is solely used in the unit tests
-    # It's reaching into redis-semaphore a bit, but it's here to make
-    # sure the expiration is working as expected
     get_connection_pool.with do |redis|
-      return redis.ttl("#{lock_name}:EXISTS")
+      return !redis.exists(lock_name)
     end
   end
+  private_class_method :unlocked?
+
+  def self.clear_lock lock_name
+    # use this only if you need to forcibly clear a lock (say from the command line).
+    lock_name = clean_lock_name(lock_name)
+
+    val = nil
+    get_connection_pool.with(timeout: 30) do |redis|
+      val = redis.del lock_name
+    end
+
+    val == 1
+  end
+  private_class_method :clear_lock
 
   def self.flushall force = false
     # This method blows up the whole redis database...don't use it for anything other than tests
@@ -209,8 +237,7 @@ class Lock
       redis.redis.flushall
     end
   end
-
-  private_class_method :acquired_lock, :release_lock, :expires_in, :unlocked?, :flushall
+  private_class_method :flushall
 
   def self.lock_wait_timeout? exception
     # Unfortunately, active record (or mysql adapter) uses a single error for all database errors
