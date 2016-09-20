@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       @h.process u
       expect(p.get_custom_value(@csm).value).to be_blank
       expect(u.messages.size).to eq(1)
-      expect(u.messages[0].body).to include("File failed: CSM Number at row 1 was not 18 digits \"140XXABCDEFGHIJKLMNO\"")
+      expect(u.messages[0].body).to include("File failed: CSM Number at row 2 was not 18 digits \"140XXABCDEFGHIJKLMNO\"")
     end
     it "should not fail for empty lines" do
       expect(@xlc).to receive(:last_row_number).and_return(1)

@@ -43,7 +43,7 @@ module OpenChain
             us_style = (us_style_cell.blank? || us_style_cell['value'].blank?) ? nil : us_style_cell['value']
             csm = get_csm_number row_hash
             next if csm.blank? || us_style.blank?
-            raise(CsmError, "File failed: CSM Number at row #{n} was not 18 digits \"#{csm}\"") unless csm.size == 18
+            raise(CsmError, "File failed: CSM Number at row #{n + 1} was not 18 digits \"#{csm}\"") unless csm.size == 18
 
             style_map[us_style] ||= Set.new
             style_map[us_style] << csm
