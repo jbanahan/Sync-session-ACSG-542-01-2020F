@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'open_chain/sqs'
 require 'open_chain/s3'
 require 'open_chain/fenix_parser'
 require 'open_chain/custom_handler/ack_file_handler'
@@ -40,10 +40,10 @@ module OpenChain
 
     def self.process_queue queue_name, max_message_count = 500
       raise "Queue Name must be provided." if queue_name.blank?
+      queue_url = OpenChain::SQS.create_queue queue_name
 
       messages_processed = 0
-
-      current_queue_messages = retrieve_queue_messages queue_name, max_message_count
+      current_queue_messages = retrieve_queue_messages queue_url, max_message_count
       current_queue_messages.each do |m|
         begin
           cmd = JSON.parse m.body
@@ -57,32 +57,30 @@ module OpenChain
         rescue => e
           e.log_me ["SQS Message: #{m.body}"]
         ensure
-          m.delete
+          OpenChain::SQS.delete_message queue_url, m
         end
       end
 
       messages_processed
     end
 
-    def self.retrieve_queue_messages queue_name, max_message_count
-      sqs = AWS::SQS.new(YAML::load_file 'config/s3.yml')
-      queue = sqs.queues.create queue_name
+    def self.retrieve_queue_messages queue_url, max_message_count
       available_messages = []
       # The max message count is just to try and avoid a situation where the
       # message count gets out of control (due to something queueing files like crazy).
 
       # Considering the integration client should be set up to run every minute, limiting the
       # number of messages received per run shouldn't be an issue.
-      while available_messages.length < max_message_count && queue.visible_messages > 0
+      while available_messages.length < max_message_count && OpenChain::SQS.visible_message_count(queue_url) > 0
         # NOTE: The messages are not deleted from the queue until delete is called on them
         # when receive_message is used in this manner (this is different than the block form of the method)
-        messages = queue.receive_messages(visibility_timeout: (max_message_count + 60), limit: 10, attributes: [:sent_at], wait_time_seconds: 0)
-        available_messages.push(*messages) if messages.size > 0
+        response = OpenChain::SQS.retrieve_messages queue_url, max_number_of_messages: 10, wait_time_seconds: 0, visibility_timeout: (max_message_count + 60), attribute_names: [:SentTimestamp]
+        available_messages.push(*response.messages) if response.messages.size > 0
       end
       # AWS Queue messages are not guaranteed to be returned in order..this
       # is about the best we can do without actually numbering the message data and blocking
       # until missing numbers are received.
-      available_messages.sort {|x,y| x.sent_at <=> y.sent_at}
+      available_messages.sort_by {|msg| msg.attributes['SentTimestamp'].to_i }
     end
   end
 

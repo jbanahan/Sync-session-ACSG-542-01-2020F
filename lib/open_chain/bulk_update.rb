@@ -107,9 +107,9 @@ module OpenChain
           temp << ActiveSupport::JSON.encode(keys)
           temp.flush
 
-          s3_obj = OpenChain::S3.create_s3_tempfile temp
-          params[:s3_key] = s3_obj.key
-          params[:s3_bucket] = s3_obj.bucket.name
+          response = OpenChain::S3.create_s3_tempfile temp
+          params[:s3_key] = response.key
+          params[:s3_bucket] = response.bucket
         end
       else
         params.delete :sr_id

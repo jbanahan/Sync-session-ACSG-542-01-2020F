@@ -27,11 +27,9 @@ describe OpenChain::AllianceImagingClient do
 
   describe "delayed_bulk_request_images" do
     let(:s3_obj) {
-      s3_obj = double("S3Object")
-      s3_bucket = double("S3Bucket")
+      s3_obj = double("OpenChain::S3::UploadResult")
       allow(s3_obj).to receive(:key).and_return "key"
-      allow(s3_obj).to receive(:bucket).and_return s3_bucket
-      allow(s3_bucket).to receive(:name).and_return "bucket"
+      allow(s3_obj).to receive(:bucket).and_return "bucket"
       s3_obj
     }
     let (:search_run) { SearchRun.create! search_setup_id: Factory(:search_setup).id }
@@ -245,7 +243,7 @@ describe OpenChain::AllianceImagingClient do
       # This is mostly just mocks, but I wanted to ensure the expected calls are actualy happening
       hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"}
       t = double
-      expect(OpenChain::SQS).to receive(:retrieve_messages_as_hash).with("https://queue.amazonaws.com/468302385899/alliance-img-doc-test").and_yield hash
+      expect(OpenChain::SQS).to receive(:poll).with("https://queue.amazonaws.com/468302385899/alliance-img-doc-test").and_yield hash
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"]).and_return(t)
       expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash)
 

@@ -21,13 +21,14 @@ module SnapshotS3Support
     # write_to_s3 and s3_path is sort of a public API for snapshot-like objects to use so they're stored in the same bucke and manner as "real"
     # snapshots.
     def write_to_s3 snapshot_json, recordable
-      path = s3_path recordable
-      bucket = bucket_name
-      s3obj, ver = OpenChain::S3.upload_data(bucket, path, snapshot_json)
+      upload_response = OpenChain::S3.upload_data(bucket_name, s3_path(recordable), snapshot_json)
+
       # Technically, version can be nil if uploading to an unversioned bucket..
       # If that happens though, then the bucket we're trying to use is set up wrong.
       # Therefore, we want this to bomb hard with a nil reference error if ver is nil
-      {bucket: s3obj.bucket.name, key: s3obj.key, version: ver.version_id}
+      raise "Cannot upload snapshots to unversioned bucket.  You must enable versioning on bucket '#{upload_response.bucket}'." if upload_response.version.blank?
+      
+      {bucket: upload_response.bucket, key: upload_response.key, version: upload_response.version}
     end
 
     def s3_path recordable

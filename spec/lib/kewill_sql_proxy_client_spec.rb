@@ -160,11 +160,9 @@ describe OpenChain::KewillSqlProxyClient do
 
   describe "delayed_bulk_entry_data" do
     let(:s3_obj) {
-      s3_obj = double("S3Object")
-      s3_bucket = double("S3Bucket")
+      s3_obj = double("OpenChain::S3::UploadResult")
       allow(s3_obj).to receive(:key).and_return "key"
-      allow(s3_obj).to receive(:bucket).and_return s3_bucket
-      allow(s3_bucket).to receive(:name).and_return "bucket"
+      allow(s3_obj).to receive(:bucket).and_return "bucket"
       s3_obj
     }
     let (:search_run) { SearchRun.create! search_setup_id: Factory(:search_setup).id }

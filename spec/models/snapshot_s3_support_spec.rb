@@ -49,20 +49,28 @@ describe SnapshotS3Support do
     }
 
     it "writes snapshot data to S3" do
-      s3Obj = double("S3Object")
-      bucketObj = double("S3Bucket")
-      allow(s3Obj).to receive(:bucket).and_return bucketObj
-      allow(s3Obj).to receive(:key).and_return "stubbed-key"
-      allow(bucketObj).to receive(:name).and_return "stubbed-bucket"
-      versionObj = double("S3Version")
-      allow(versionObj).to receive(:version_id).and_return "stubbed-version"
+      s3_obj = double("OpenChain::S3::UploadResult")
+      allow(s3_obj).to receive(:key).and_return "stubbed-key"
+      allow(s3_obj).to receive(:bucket).and_return "stubbed-bucket"
+      allow(s3_obj).to receive(:version).and_return "stubbed-version"
 
-      expect(OpenChain::S3).to receive(:upload_data).with("test.syscode.snapshots.vfitrack.net", "entry/100.json", "json").and_return [s3Obj, versionObj]
+      expect(OpenChain::S3).to receive(:upload_data).with("test.syscode.snapshots.vfitrack.net", "entry/100.json", "json").and_return s3_obj
 
       values = subject.write_to_s3 "json", entity
       expect(values[:bucket]).to eq "stubbed-bucket"
       expect(values[:key]).to eq "stubbed-key"
       expect(values[:version]).to eq "stubbed-version"
+    end
+
+    it "raises an error if upload does not return a version" do
+      s3_obj = double("OpenChain::S3::UploadResult")
+      allow(s3_obj).to receive(:key).and_return "stubbed-key"
+      allow(s3_obj).to receive(:bucket).and_return "stubbed-bucket"
+      allow(s3_obj).to receive(:version).and_return nil
+
+      expect(OpenChain::S3).to receive(:upload_data).with("test.syscode.snapshots.vfitrack.net", "entry/100.json", "json").and_return s3_obj
+
+      expect { subject.write_to_s3 "json", entity }.to raise_error "Cannot upload snapshots to unversioned bucket.  You must enable versioning on bucket 'stubbed-bucket'."
     end
   end
 

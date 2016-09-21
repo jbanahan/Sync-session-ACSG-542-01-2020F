@@ -62,8 +62,8 @@ module OpenChain
     end
 
     def self.parse_local_xls file, importer
-      OpenChain::S3.with_s3_tempfile(file) do |s3_obj|
-        parse_xlsx_file(s3_obj.bucket.name, s3_obj.key, importer)
+      OpenChain::S3.with_s3_tempfile(file) do |upload_response|
+        parse_xlsx_file(upload_response.bucket, upload_response.key, importer)
       end
     end
 

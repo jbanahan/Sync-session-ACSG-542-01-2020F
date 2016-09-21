@@ -45,46 +45,36 @@ describe OpenChain::S3, s3: true do
   end
 
   describe "bucket_exists?" do
-    let (:bucket_name) { "abc" }
-    let (:bucket_double) {
-      s3_double = double('s3')
-      allow(described_class).to receive(:aws_s3).and_return(s3_double)
-      bucket_double = double('bucket')
-      allow(s3_double).to receive(:buckets).and_return( bucket_name => bucket_double )
-      bucket_double
-    }
-
-    it "should find existing bucket" do
-      expect(bucket_double).to receive(:exists?).and_return true
-      expect(described_class.bucket_exists?(bucket_name)).to be_truthy
+    it "returns true if bucket exists" do
+      # Just use a bucket that should never not exist..
+      expect(described_class.bucket_exists?(OpenChain::S3.integration_bucket_name)).to be_truthy
     end
-    it "should return false if no bucket" do
-      expect(bucket_double).to receive(:exists?).and_return false
-      expect(described_class.bucket_exists?(bucket_name)).to be_falsey
+    it "returns false if bucket doesn't exist" do
+      expect(described_class.bucket_exists?("does-not-exist")).to be_falsey
     end
   end
 
   describe "create_bucket" do
-    let (:s3_double) {
-      s3_double = double('s3')
-      allow(described_class).to receive(:aws_s3).and_return(s3_double)
-      s3_double
-    }
 
     it "should create bucket" do
-      new_bucket_double = double('newbucket')
-      buckets_double = double('buckets')
-      expect(buckets_double).to receive(:create).with("ABC").and_return(new_bucket_double)
-      expect(s3_double).to receive(:buckets).and_return(buckets_double)
-      expect(described_class.create_bucket! "ABC").to eq new_bucket_double
+      bucket_double = instance_double("Aws::S3::Bucket")
+      s3_double = instance_double("Aws::S3::Resource")
+      expect(OpenChain::S3::Client).to receive(:aws_s3).and_return s3_double
+      expect(s3_double).to receive(:bucket).and_return bucket_double
+      expect(bucket_double).to receive(:create).with("ABC").and_return bucket_double
+      expect(described_class.create_bucket! "ABC").to be_truthy
     end
     it "should enable versioning based on option" do
-      new_bucket_double = double('newbucket')
-      expect(new_bucket_double).to receive(:enable_versioning)
-      buckets_double = double('buckets')
-      expect(buckets_double).to receive(:create).with("ABC").and_return(new_bucket_double)
-      expect(s3_double).to receive(:buckets).and_return(buckets_double)
-      expect(described_class.create_bucket! "ABC", versioning: true).to eq new_bucket_double
+      bucket_double = instance_double("Aws::S3::Bucket")
+      s3_double = instance_double("Aws::S3::Resource")
+      versioning_double = instance_double("Aws::S3::BucketVersioning")
+      expect(OpenChain::S3::Client).to receive(:aws_s3).and_return s3_double
+      expect(s3_double).to receive(:bucket).and_return bucket_double
+      expect(bucket_double).to receive(:create).with("ABC").and_return bucket_double
+      expect(bucket_double).to receive(:versioning).and_return versioning_double
+      expect(versioning_double).to receive(:enable)
+
+      expect(described_class.create_bucket! "ABC", versioning: true).to be_truthy
     end
   end
 
@@ -106,24 +96,23 @@ describe OpenChain::S3, s3: true do
     end
 
     it "should retry failed downloads 3 times" do
-      file = double("S3Object")
-      expect(OpenChain::S3).to receive(:s3_versioned_object).exactly(3).times.and_return file
-      expect(file).to receive(:read).exactly(3).times.and_raise "Failure"
-
+      # Just make the call to s3_client raise an error, rather than the read/get_object
+      # Functionally, it's handled identically
+      expect(OpenChain::S3::Client).to receive(:s3_client).exactly(3).times.and_raise "Failure"
       expect {OpenChain::S3.get_data(bucket, key)}.to raise_error "Failure"
     end
 
     it "should retry failed downloads 3 times and truncate in between times" do
       io = StringIO.new
       expect(io).to receive(:truncate).with(0).exactly(2).times
-      expect(OpenChain::S3).to receive(:s3_versioned_object).exactly(3).times.and_raise "Failure"
+      expect(OpenChain::S3::Client).to receive(:s3_client).exactly(3).times.and_raise "Failure"
       expect {OpenChain::S3.get_data(bucket, key, io)}.to raise_error "Failure"
     end
 
     it 'should retry failed downloads 3 times and rewind in between' do
       io = double("IO")
       expect(io).to receive(:rewind).exactly(2).times
-      expect(OpenChain::S3).to receive(:s3_versioned_object).exactly(3).times.and_raise "Failure"
+      expect(OpenChain::S3::Client).to receive(:s3_client).exactly(3).times.and_raise "Failure"
       expect {OpenChain::S3.get_data(bucket, key, io)}.to raise_error "Failure"
     end
   end
@@ -173,7 +162,7 @@ describe OpenChain::S3, s3: true do
 
       it 'should not fail if file key is missing a file extension' do
         new_key = "test"
-        AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].rename_to new_key
+        OpenChain::S3::Client.s3_file(bucket, key).move_to({bucket: bucket, key: new_key})
         new_tempfile = OpenChain::S3.download_to_tempfile bucket, new_key
         begin
           expect(File.exist?(new_tempfile.path)).to be_truthy
@@ -203,11 +192,11 @@ describe OpenChain::S3, s3: true do
     it 'should ensure the tempfile is unlinked if an error occurs while downloading' do
       # Need to do this with mocks, since there's no external references made to the tempfile
       # created while the download is ocurring
-      tempfile = double('tempfile')
+      tempfile = instance_double('Tempfile')
       expect(OpenChain::S3).to receive(:create_tempfile).and_return tempfile
       expect(tempfile).to receive(:binmode)
       expect(tempfile).to receive(:close!)
-      expect(OpenChain::S3).to receive(:get_versioned_data).and_raise "Error!"
+      expect(OpenChain::S3::Client).to receive(:get_versioned_data).and_raise "Error!"
       expect {OpenChain::S3.download_to_tempfile bucket, key}.to raise_error "Error!"
     end
   end
@@ -234,7 +223,7 @@ describe OpenChain::S3, s3: true do
 
       it 'deletes file' do
         expect(OpenChain::S3.exists?(bucket, key)).to be_truthy
-        expect(OpenChain::S3.delete(bucket, key)).to be_nil
+        expect(OpenChain::S3.delete(bucket, key)).to be_truthy
         expect(OpenChain::S3.exists?(bucket, key)).to be_falsey
       end
     end
@@ -252,13 +241,6 @@ describe OpenChain::S3, s3: true do
         keys.each {|my_key| OpenChain::S3.delete bucket, my_key}
       end
       it 'should get keys from integration bucket by date ordered by last modified date' do
-        # Last modified has a 1 second precision, so sleep at least 2 seconds to make sure
-        # this doesn't randomly fail.  Not ideal, but I don't know how to actually force an
-        # out of band last modified date update on an s3_object.
-
-        # Bizarrely, if I put the sleep AFTER doing the integration keys call the upload_file call below
-        # (specifically the s3_object.write method) blocks for like 20 seconds.  Possible aws-sdk bug or ruby 2
-        # bug with leaking socket handle or something?  This wasn't happening w/ 1.9.3.
         retry_expect {
           expect(OpenChain::S3).to receive(:integration_bucket_name).at_least(2).times.and_return(bucket)
           found_keys = []
@@ -323,14 +305,14 @@ describe OpenChain::S3, s3: true do
     end
 
     it "should return a url for the specified bucket / key, allow expires_in to be set, and accept options", s3: true do
-      url = OpenChain::S3.url_for "bucket", "path/to/file.txt", 10.minutes, {:response_content_type => "application/pdf"}
+      url = nil
+      Timecop.freeze(Time.zone.now) do
+        url = OpenChain::S3.url_for "bucket", "path/to/file.txt", 10.minutes, {:response_content_type => "application/pdf"}
+      end
       expect(url).to match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/
 
       expires_at = url.match(/Expires=(.*)&/)[1].to_i
-      time = (expires_at - Time.now.to_i)
-      expect(time).to be <= 600
-      expect(time).to be >= 595
-
+      expect(expires_at).to eq 600
       expect(url).to match "response-content-type=application%2Fpdf"
     end
   end
@@ -346,15 +328,12 @@ describe OpenChain::S3, s3: true do
   end
 
   describe "with_s3_tempfile" do
-    let (:s3_obj) {
-      s3_obj = double("S3Object")
-      s3_bucket = double("S3Object")
-      allow(s3_obj).to receive(:bucket).and_return s3_bucket
-      allow(s3_obj).to receive(:key).and_return "uuid/temp/file.txt"
-      allow(s3_obj).to receive(:exists?).and_return true
-      allow(s3_bucket).to receive(:name).and_return "chainio-temp"
-
-      s3_obj
+    let (:upload_response) {
+      upload_response = instance_double("OpenChain::S3::UploadResult")
+      allow(upload_response).to receive(:bucket).and_return "up-bucket"
+      allow(upload_response).to receive(:key).and_return "up-key"
+      allow(upload_response).to receive(:version).and_return "up-version"
+      upload_response
     }
     # Excessive stubbing below due to preventing s3 uploads...upload tests themselves are in specs for upload_file, to
     # which this method defers for uploading (likewise for delete)
@@ -365,23 +344,23 @@ describe OpenChain::S3, s3: true do
     end
 
     it "yields an s3_file uploaded to s3" do
-      fake_file = double("File")
+      fake_file = instance_double("File")
       allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
 
-      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return [s3_obj, nil]
-      expect(OpenChain::S3).to receive(:delete).with("chainio-temp", "uuid/temp/file.txt")
+      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return upload_response
+      expect(OpenChain::S3).to receive(:delete).with("up-bucket", "up-key", "up-version")
 
       my_obj = nil
       OpenChain::S3.with_s3_tempfile(fake_file) {|obj| my_obj = obj}
-      expect(my_obj).to eq s3_obj
+      expect(my_obj).to eq upload_response
     end
 
     it "cleans up even if yielded block raises an error" do
-      fake_file = double("File")
+      fake_file = instance_double("File")
       allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
 
-      expect(OpenChain::S3).to receive(:upload_file).and_return [s3_obj, nil]
-      expect(OpenChain::S3).to receive(:delete).with(s3_obj.bucket.name, s3_obj.key)
+      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return upload_response
+      expect(OpenChain::S3).to receive(:delete).with("up-bucket", "up-key", "up-version")
 
       expect {OpenChain::S3.with_s3_tempfile(fake_file) {|obj| raise "Error"} }.to raise_error "Error"
     end
@@ -391,10 +370,9 @@ describe OpenChain::S3, s3: true do
       allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
       allow(fake_file).to receive(:original_filename).and_return "original.txt"
 
-      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/original.txt", fake_file).and_return [s3_obj, nil]
-      expect(OpenChain::S3).to receive(:delete)
+      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/original.txt", fake_file).and_return upload_response
+      expect(OpenChain::S3).to receive(:delete).with("up-bucket", "up-key", "up-version")
 
-      my_obj = nil
       OpenChain::S3.with_s3_tempfile(fake_file) {|obj| my_obj = obj}
     end
   end
@@ -407,10 +385,10 @@ describe OpenChain::S3, s3: true do
     end
 
     it "creates a tempfile on s3" do
-      fake_file = double("File")
+      fake_file = instance_double("File")
       allow(fake_file).to receive(:path).and_return "/path/to/file.txt"
-      obj = Object.new
-      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return [obj, nil]
+      obj = OpenChain::S3::UploadResult.new 'bucket', 'key', 'version'
+      expect(OpenChain::S3).to receive(:upload_file).with("chainio-temp", "uuid/temp/file.txt", fake_file).and_return obj
 
       # Just ensure the create method returns whatever the upload file method returns (in prod, this'll be an S3Object)
       expect(OpenChain::S3.create_s3_tempfile fake_file).to eq obj

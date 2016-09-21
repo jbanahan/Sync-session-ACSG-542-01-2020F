@@ -14,6 +14,12 @@ end
 require 'csv'
 require 'json'
 
+# This is required solely for the version of paperclip we're currently using, once we can move to 
+# a v5 series of that gem (where aws v2 support was added), this can be removed.
+# This must be required before any models are loaded, since paperclip attempts to load the AWS namespace
+# during the 'extended' method callback of the models (so at load time). 
+require 'aws-sdk-v1'
+
 module OpenChain
   class Application < Rails::Application
     # Settings in config/environments/* take precedence over those specified here.

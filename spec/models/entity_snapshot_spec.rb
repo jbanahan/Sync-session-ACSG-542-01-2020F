@@ -301,18 +301,14 @@ describe EntitySnapshot do
       expect(described_class).to receive(:s3_path).and_return(expected_path)
       expect(described_class).to receive(:bucket_name).and_return(expected_bucket)
 
-      s3_obj = double('S3Obj')
-      s3_bucket = double("S3Bucket")
-      allow(s3_obj).to receive(:bucket).and_return s3_bucket
-      allow(s3_bucket).to receive(:name).and_return expected_bucket
+      s3_obj = double("OpenChain::S3::UploadResult")
       allow(s3_obj).to receive(:key).and_return expected_path
-
-      version_obj = double('ObjectVersion')
-      allow(version_obj).to receive(:version_id).and_return(expected_version)
+      allow(s3_obj).to receive(:bucket).and_return expected_bucket
+      allow(s3_obj).to receive(:version).and_return expected_version
       
       expect(OpenChain::S3).to receive(:upload_data).
         with(expected_bucket,expected_path,expected_json).
-        and_return([s3_obj,version_obj])
+        and_return(s3_obj)
 
       es = EntitySnapshot.create_from_entity(ent,u)
       expect(es.bucket).to eq expected_bucket

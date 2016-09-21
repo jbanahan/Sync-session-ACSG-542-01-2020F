@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe StateToggleButtonsController do
+
   let!(:u) { Factory(:user) }
   before { sign_in_as u }
     
@@ -29,12 +30,18 @@ describe StateToggleButtonsController do
   describe "new" do
     it "renders STB new view for a sys-admin" do
       expect(u).to receive(:sys_admin?).and_return true
-      Struct.new("Cm", :class_name)
-      cm_arr = ["Product", "Entry", "Order"].map{ |cm_name| Struct::Cm.new(cm_name) }
-      expect(CoreModule).to receive(:all).and_return cm_arr
+      cm_prod = instance_double("CoreModule")
+      allow(cm_prod).to receive(:class_name).and_return "Product"
+      cm_entry = instance_double("CoreModule")
+      allow(cm_entry).to receive(:class_name).and_return "Entry"
+      cm_order = instance_double("CoreModule")
+      allow(cm_order).to receive(:class_name).and_return "Order"
+
+      expect(CoreModule).to receive(:all).and_return [cm_prod, cm_entry, cm_order]
       
       get :new
       expect(assigns(:button)).to be_instance_of StateToggleButton
+      expect(assigns(:cm_list)).to eq ["Entry", "Order", "Product"]
       expect(response).to render_template :new
     end
 

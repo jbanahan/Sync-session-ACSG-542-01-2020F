@@ -63,10 +63,18 @@ module Helpers
       @version_id += 1
       @datastore[key(bucket_name, path, @version_id)] = local_data
 
-      bucket = Struct.new(:name).new(bucket_name)
-      s3obj = Struct.new(:bucket, :key).new(bucket,path)
-      vers = Struct.new(:version_id).new(@version_id.to_s)
-      return [s3obj,vers]
+      UploadResult.new bucket_name, path, @version_id.to_s
+    end
+
+    class UploadResult
+
+      attr_reader :bucket, :key, :version
+
+      def initialize bucket, key, version
+        @bucket = bucket
+        @key = key
+        @version = version
+      end
     end
 
     def self.get_versioned_data bucket, path, version, io = nil
