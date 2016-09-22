@@ -97,7 +97,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
         subject += " With Errors"
         message += "<br>#{error_count} errors were encountered.  A separate report containing errors will be mailed to you."
       end
-      send_messages_to_users users, subject, message
+      send_messages_to_users(users, subject, message) if error_count > 0
     end
 
     nil

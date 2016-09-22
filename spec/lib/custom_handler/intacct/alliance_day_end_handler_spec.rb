@@ -34,10 +34,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       @h.process user
 
+      # No messages are generated if everything is good w/ the load
       m = user.messages.first
-      expect(m).not_to be_nil
-      expect(m.subject).to eq "Day End Processing Complete"
-      expect(m.body).to eq "Day End Processing has completed.<br>AR Total: $20.00<br>AP Total: $10.00<br>Check Total: $10.00"
       @check_file.reload
       @invoice_file.reload
       expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
