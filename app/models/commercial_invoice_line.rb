@@ -27,4 +27,17 @@ class CommercialInvoiceLine < ActiveRecord::Base
   def duty_plus_fees_add_cvd_amounts
     self.duty_plus_fees_amount + ([add_duty_amount, cvd_duty_amount]).compact.sum
   end
+
+  def first_sale_savings
+    cit = commercial_invoice_tariffs.first
+    if contract_amount.nil? || cit.nil? || contract_amount.zero?
+      0
+    else
+      ((contract_amount - value) * (cit.duty_amount / cit.entered_value)).round(2)
+    end
+  end
+
+  def first_sale_difference
+    contract_amount.nil? || contract_amount.zero? ? 0 : (contract_amount - value).round(2)
+  end
 end

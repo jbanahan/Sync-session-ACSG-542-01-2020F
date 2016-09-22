@@ -80,7 +80,25 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
         :export_lambda=>lambda{|obj| !obj.contract_amount.blank? && !obj.contract_amount.zero? },
         :qualified_field_name=> "IF(contract_amount IS NOT NULL AND contract_amount <> 0, true, false)"
       }],
-      [54, :cil_value_appraisal_method, :value_appraisal_method, "Value Appraisal Method", {data_type: :string}]
+      [54, :cil_value_appraisal_method, :value_appraisal_method, "Value Appraisal Method", {data_type: :string}],
+      [55, :cil_first_sale_savings, :first_sale_savings, "First Sale Savings", {data_type: :decimal, :read_only=>true,
+        :import_lambda=>lambda{|o,d| "First Sale Savings ignored (read only)"},
+        :export_lambda=>lambda { |obj| obj.first_sale_savings },
+        :qualified_field_name=>"IF(contract_amount IS NULL OR contract_amount = 0, 0, 
+                                    (SELECT ROUND((cil.contract_amount - cil.value) * (cit.duty_amount / cit.entered_value), 2)
+                                     FROM commercial_invoice_lines cil 
+                                       INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id 
+                                     WHERE cil.id = commercial_invoice_lines.id 
+                                     LIMIT 1 ))"
+      }],
+      [56, :cil_first_sale_difference, :first_sale_difference, "First Sale Difference", {data_type: :decimal, :read_only=>true,
+        :import_lambda=>lambda{|o,d| "First Sale Difference ignored (read only)"},
+        :export_lambda=>lambda { |obj| obj.first_sale_difference },
+        :qualified_field_name=>"IF(contract_amount IS NULL OR contract_amount = 0, 0,
+                                    (SELECT ROUND((cil.contract_amount - cil.value), 2)
+                                     FROM commercial_invoice_lines cil
+                                     WHERE cil.id = commercial_invoice_lines.id))"
+      }]
     ]
   end
 end; end; end

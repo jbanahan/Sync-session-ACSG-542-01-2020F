@@ -136,6 +136,10 @@ class Entry < ActiveRecord::Base
     EntryPurge.where(source_system: source_system, broker_reference: broker_reference).where("date_purged > ?", source_system_export_date).exists?
   end
 
+  def first_sale_savings
+    commercial_invoice_lines.sum{|cil| cil.first_sale_savings }
+  end
+
   private
   def split_newline_values values
     values.blank? ? [] : values.split(/\r?\n */)

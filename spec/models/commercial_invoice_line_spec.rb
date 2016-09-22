@@ -53,4 +53,47 @@ describe CommercialInvoiceLine do
       expect(line.duty_plus_fees_add_cvd_amounts).to eq BigDecimal("45")
     end
   end
+
+  describe "first_sale_savings" do
+    let!(:line) { Factory(:commercial_invoice_line, contract_amount: 500, value: 200, 
+                     commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10)]) }
+    
+    it "calculates first sale savings when contract amount isn't zero or nil" do
+      expect(line.first_sale_savings).to eq 900
+      # amount - value * duty_amount / entered_value
+    end
+
+    it "returns 0 when contract amount is 0" do
+      line.update_attributes(contract_amount: 0)
+      expect(line.first_sale_savings).to eq 0
+    end
+
+    it "returns 0 when contract amount is nil" do
+      line.update_attributes(contract_amount: nil)
+      expect(line.first_sale_savings).to eq 0
+    end
+
+    it "returns 0 when there's no tariff" do
+      line.update_attributes(commercial_invoice_tariffs: [])
+      expect(line.first_sale_savings).to eq 0
+    end
+  end
+
+  describe "first_sale_difference" do
+    let!(:line) { Factory(:commercial_invoice_line, contract_amount: 500, value: 200) }
+
+    it "calculates first sale difference when contract amount isn't zero or nil" do
+      expect(line.first_sale_difference).to eq 300
+    end
+
+    it "returns 0 when contract amount is 0" do
+      line.update_attributes(contract_amount: 0)
+      expect(line.first_sale_difference).to eq 0
+    end
+
+    it "returns 0 when contract amount is nil" do
+      line.update_attributes(contract_amount: nil)
+      expect(line.first_sale_difference).to eq 0
+    end
+  end
 end

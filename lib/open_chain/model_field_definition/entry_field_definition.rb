@@ -231,6 +231,16 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           user_comment_strings.join("\n")
         },
         :qualified_field_name=>lambda {"(SELECT GROUP_CONCAT(IF(ec.generated_at IS NOT NULL, CONCAT(ec.body, ' (', DATE_FORMAT(CONVERT_TZ(ec.generated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%Y-%m-%d %H:%i'), ' - ', ec.username, ')'), CONCAT(ec.body, ' (', ec.username, ')')) SEPARATOR '\n') FROM entry_comments ec INNER JOIN entries e ON e.id = ec.entry_id WHERE e.id = entries.id AND ec.username NOT IN (#{EntryComment::USER_TYPE_MAP.keys.map(&:inspect).join(', ')}))"}
+      }],
+      [163, :ent_first_sale_savings, :ent_first_sale_savings, "First Sale Savings", {:data_type=>:decimal, :read_only=>true,
+        :import_lambda=>lambda{|obj,data| "First Sale Savings ignored. (read only)"},
+        :export_lambda=>lambda{ |obj| obj.first_sale_savings },
+        :qualified_field_name=> "IFNULL((SELECT SUM(ROUND((cil.contract_amount - cil.value) * IFNULL((SELECT cit.duty_amount / cit.entered_value 
+                                                                                                      FROM commercial_invoice_tariffs cit 
+                                                                                                      WHERE cit.commercial_invoice_line_id = cil.id ORDER BY cit.id limit 1), 0), 2))
+                                         FROM commercial_invoices inv 
+                                         INNER JOIN commercial_invoice_lines cil ON inv.id = cil.commercial_invoice_id
+                                         WHERE entries.id = inv.entry_id AND cil.contract_amount > 0), 0)"
       }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")

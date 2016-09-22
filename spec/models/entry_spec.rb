@@ -310,4 +310,15 @@ describe Entry do
     end
    
   end
+
+  describe "first_sale_savings" do
+    it "returns the sum of first-sale savings on all child invoices" do
+      ent = Factory(:entry)
+      Factory(:commercial_invoice_line, entry: ent, contract_amount: 500, value: 200, 
+               commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10)])
+      Factory(:commercial_invoice_line, entry: ent, contract_amount: 250, value: 100, 
+               commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 15, entered_value: 5)])
+      expect(ent.first_sale_savings).to eq 1350
+    end
+  end
 end
