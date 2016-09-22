@@ -242,7 +242,7 @@ module OpenChain; class S3
         end
       }
       opts = {bucket: bucket, key: key}
-      opts[:version] = version unless version.blank?
+      opts[:version_id] = version unless version.blank?
 
       s3_action_with_retries(retry_lambda: retry_lambda) do
         if io
