@@ -41,13 +41,24 @@ class OpenChain::AllianceImagingClient
   
   #not unit tested since it'll all be mocks
   def self.request_images file_number, message_options = {}
-    OpenChain::SQS.send_json "https://queue.amazonaws.com/468302385899/alliance-img-req-#{get_env}", {"file_number"=>file_number}, message_options
+    OpenChain::SQS.send_json "https://sqs.us-east-1.amazonaws.com/468302385899/alliance-img-req-#{get_env}", {"file_number"=>file_number}, message_options
   end
   
   #not unit tested since it'll all be mocks
   def self.consume_images
-    OpenChain::SQS.poll "https://queue.amazonaws.com/468302385899/alliance-img-doc-#{get_env}" do |hsh|
-      t = OpenChain::S3.download_to_tempfile hsh["s3_bucket"], hsh["s3_key"]
+    OpenChain::SQS.poll "https://sqs.us-east-1.amazonaws.com/468302385899/alliance-img-doc-#{get_env}" do |hsh|
+      bucket = hsh["s3_bucket"]
+      key = hsh["s3_key"]
+      version = hsh["s3_version"]
+
+      next if bucket.blank? || key.blank?
+
+      opts = {}
+      if !version.blank?
+        opts[:version] = version
+      end
+
+      t = OpenChain::S3.download_to_tempfile bucket, key, opts
       begin
         entry = nil
         if hsh["source_system"] == OpenChain::FenixParser::SOURCE_CODE && hsh["export_process"] == "sql_proxy"
@@ -341,7 +352,7 @@ class OpenChain::AllianceImagingClient
   end
 
   def self.consume_stitch_responses
-    OpenChain::SQS.retrieve_messages_as_hash stitcher_info("response_queue") do |message_hash|
+    OpenChain::SQS.poll stitcher_info("response_queue") do |message_hash|
       process_entry_stitch_response message_hash
     end
   end

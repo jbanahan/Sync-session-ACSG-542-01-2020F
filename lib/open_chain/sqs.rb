@@ -101,7 +101,7 @@ module OpenChain; class SQS
   # If queue already exists, this is a no-op on the AWS service end 
   # and the queue_url for the queue is returned.
   def self.create_queue queue_name
-    resp = sqs_client.create_queue queue_name
+    resp = sqs_client.create_queue queue_name: queue_name
     resp.to_h[:queue_url]
   end
 

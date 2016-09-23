@@ -52,7 +52,7 @@ describe OpenChain::SQS do
 
   describe "create_queue" do
     it "creates a queue" do
-      expect(sqs_client).to receive(:create_queue).with("queue").and_return({queue_url: "url"})
+      expect(sqs_client).to receive(:create_queue).with(queue_name: "queue").and_return({queue_url: "url"})
       expect(subject.create_queue("queue")).to eq "url"
     end
   end

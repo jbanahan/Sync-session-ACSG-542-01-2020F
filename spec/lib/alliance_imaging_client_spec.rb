@@ -243,8 +243,19 @@ describe OpenChain::AllianceImagingClient do
       # This is mostly just mocks, but I wanted to ensure the expected calls are actualy happening
       hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"}
       t = double
-      expect(OpenChain::SQS).to receive(:poll).with("https://queue.amazonaws.com/468302385899/alliance-img-doc-test").and_yield hash
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"]).and_return(t)
+      expect(OpenChain::SQS).to receive(:poll).with("https://sqs.us-east-1.amazonaws.com/468302385899/alliance-img-doc-test").and_yield hash
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(t)
+      expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash)
+
+      OpenChain::AllianceImagingClient.consume_images
+    end
+
+    it "passes s3 version if present" do
+      # This is mostly just mocks, but I wanted to ensure the expected calls are actualy happening
+      hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key", "s3_version" => "version"}
+      t = double
+      expect(OpenChain::SQS).to receive(:poll).with("https://sqs.us-east-1.amazonaws.com/468302385899/alliance-img-doc-test").and_yield hash
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {version: "version"}).and_return(t)
       expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash)
 
       OpenChain::AllianceImagingClient.consume_images
