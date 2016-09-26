@@ -526,6 +526,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       zterm = REXML::XPath.first(base, "./E1EDK01/ZTERM").try(:text)
       if special_payment_terms[zterm]
         special_payment_terms[zterm]
+      elsif zterm.to_s =~ /^tt(\d+)$/i
+        "T/T Net #{$1}"
       else
         elements = REXML::XPath.match(base,"./E1EDK18")
 
@@ -556,7 +558,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def special_payment_terms
-      {"TT00" => "T/T At Sight", "TT30" => "T/T Net 30"}
+      {"TT00" => "T/T At Sight"}
     end
 
     def parse_date str
