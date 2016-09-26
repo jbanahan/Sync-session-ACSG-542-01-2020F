@@ -60,5 +60,19 @@ describe OpenChain::GoogleAccountChecker do
       allow(client).to receive(:discovered_api)
       described_class.run_schedulable
     end
+
+    it "retries execute failure 3 times" do
+      expect_any_instance_of(described_class).to receive(:sleep).with(1).exactly(3).times
+      client = instance_double("Google::APIClient")
+      api = double("Api")
+      expect_any_instance_of(described_class).to receive(:get_api).and_return api
+      allow(api).to receive(:users).and_return api
+      allow(api).to receive(:get)
+      expect_any_instance_of(described_class).to receive(:get_client).and_return client
+      expect(client).to receive(:execute).exactly(4).times.and_raise "Error!"
+
+      expect { described_class.run_schedulable }.to raise_error "Error!"
+
+    end
   end
 end

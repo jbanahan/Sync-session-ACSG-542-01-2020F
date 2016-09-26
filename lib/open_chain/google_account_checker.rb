@@ -16,7 +16,7 @@ module OpenChain
       suspended_users = []
       User.where("email like '%vandegriftinc.com' AND (disabled <> 1 OR disabled IS NULL)").all.each do |user|
         email = user.email.gsub(/(.*?)(\+.*?)(@.*)/, '\1\3')
-        body = @client.execute(@api.users.get, userKey: email).response.body
+        body = execute(@client, @api, email)
         body = JSON.parse(body)
         suspended = suspended?(body)
         if suspended.present?
@@ -30,6 +30,22 @@ module OpenChain
     end
 
     private
+
+    def execute client, api, email
+      retries = 3
+      count = 0
+      begin
+        return client.execute(api.users.get, userKey: email).response.body
+      rescue => e
+        if (count += 1) <= 3 
+          sleep(1) 
+          retry
+        else
+          raise e
+        end
+      end
+
+    end
 
     def suspended?(google_json)
       if google_json['error'].present? && google_json['error']['code'] == 404
