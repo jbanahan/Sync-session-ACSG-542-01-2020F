@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
       }
 
       before :each do
-        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield(file)
+        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", original_filename: "path").and_yield(file)
       end
 
       it "parses a csv file" do
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
       }
 
       before :each do
-        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield(file)
+        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", original_filename: "path").and_yield(file)
       end
 
       it "parses a pdf file" do
@@ -108,7 +108,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
       }
 
       before :each do
-        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield(file)
+        allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", original_filename: "path").and_yield(file)
       end
 
       it "parses zip file" do

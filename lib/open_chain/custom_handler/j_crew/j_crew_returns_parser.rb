@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
   end
 
   def parse_and_send custom_file, user
-    OpenChain::S3.download_to_tempfile(custom_file.bucket, custom_file.path) do |file|
+    OpenChain::S3.download_to_tempfile(custom_file.bucket, custom_file.path, original_filename: File.basename(custom_file.path)) do |file|
       Tempfile.open([File.basename(file.path, ".*"), File.extname(file.path)]) do |dest_file|
         if parse_uploaded_file(file, dest_file)
           dest_file.rewind
