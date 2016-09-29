@@ -1,8 +1,8 @@
 module OpenChain
   class TestInstanceManager
-    # call this method to prep the test instance 
+    # call this method to prep the test instance
     # NEVER CALL THIS IN PRODUCTION, IT CLEARS SCHEDULES AND EDITS USERS
-    def self.prep_test_instance new_request_host 
+    def self.prep_test_instance new_request_host
       m = self.new
       m.update_master_setup! new_request_host
       m.clear_schedulable_jobs!
@@ -15,7 +15,7 @@ module OpenChain
     end
 
     def clear_scheduled_reports!
-      SearchSchedule.scoped.destroy_all 
+      SearchSchedule.scoped.destroy_all
     end
 
     def update_master_setup! req_host
@@ -31,7 +31,8 @@ module OpenChain
     end
 
     def update_users!
-      User.scoped.update_all(tariff_subscribed:false)  
+      User.scoped.update_all(tariff_subscribed:false)
+      EventSubscription.delete_all
     end
   end
 end
