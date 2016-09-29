@@ -55,15 +55,24 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     after :each do
       @t.unlink if @t
     end
+
+    def cdefs
+      @h.instance_variable_get(:@cdefs)
+    end
+
     it "should generate output file with given products" do
       @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
-      coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
-      desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
-      tariff_def = CustomDefinition.where(label: "Special Program Indicator", module_type: "Classification", data_type: "string").first
 
-      @p.update_custom_value! coo_def, "CN"
-      @c.update_custom_value! desc_def, "Random Product Description"
-      @c.update_custom_value! tariff_def, "10"
+      @p.update_custom_value! cdefs[:prod_country_of_origin], "CN"
+      @c.update_custom_value! cdefs[:class_customs_description], "Random Product Description"
+      @c.update_custom_value! cdefs[:class_special_program_indicator], "10"
+      @c.update_custom_value! cdefs[:class_cfia_requirement_id], "ID"
+      @c.update_custom_value! cdefs[:class_cfia_requirement_version], "VER"
+      @c.update_custom_value! cdefs[:class_cfia_requirement_code], "COD"
+      @c.update_custom_value! cdefs[:class_ogd_end_use], "U"
+      @c.update_custom_value! cdefs[:class_ogd_misc_id], "M"
+      @c.update_custom_value! cdefs[:class_ogd_origin], "O"
+      @c.update_custom_value! cdefs[:class_sima_code], "S"
 
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
@@ -74,6 +83,13 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[135, 50]).to eq "Random Product Description".ljust(50)
       expect(read[341, 3]).to eq "10 "
       expect(read[359, 3]).to eq "CN "
+      expect(read[362, 8]).to eq "ID      "
+      expect(read[370, 4]).to eq "VER "
+      expect(read[374, 6]).to eq "COD   "
+      expect(read[380, 3]).to eq "U  "
+      expect(read[383, 3]).to eq "M  "
+      expect(read[386, 3]).to eq "O  "
+      expect(read[389, 2]).to eq "S "
       expect(read).to end_with "\r\n"
     end
     it "should generate output file using part number" do

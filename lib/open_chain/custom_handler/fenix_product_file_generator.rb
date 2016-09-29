@@ -17,7 +17,7 @@ module OpenChain
         @output_subdirectory = (options['output_subdirectory'].presence || '')
         @strip_leading_zeros = (options['strip_leading_zeros'].to_s == "true")
 
-        custom_defintions = [:class_special_program_indicator]
+        custom_defintions = [:class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
         custom_defintions << :prod_part_number if @use_part_number
         custom_defintions << :prod_country_of_origin unless @suppress_country
         custom_defintions << :class_customs_description unless @suppress_description
@@ -113,14 +113,13 @@ module OpenChain
           line << str(spi.blank? ? "" : spi.to_i, 2) # Tariff Treatment (341, 343)
           line << str("", 16) # Blank Space (343 - 359)
           line << str((@suppress_country ? "" : p.custom_value(@cdefs[:prod_country_of_origin]).to_s), 3) # Country Of Origin (359 - 362)
-          # Since none of this data is used (yet - if ever) I'm just leaving this commented out rather than extend the size of the file pointlessly
-          # line << str("", 8) # CFIA Requirement ID (362 - 370)
-          # line << str("", 4) # CFIA Requirement Version (370 - 374)
-          # line << str("", 6) # CFIA Code (374 - 380)
-          # line << str("", 3) # OGD End Use (380 - 383)
-          # line << str("", 3) # OGD Misc Id (383 - 386)
-          # line << str("", 3) # OGD Origin (386 - 389)
-          # line << str("", 2) # SIMA Code (389 - 391)
+          line << str(c.custom_value(@cdefs[:class_cfia_requirement_id]), 8) # CFIA Requirement ID (362 - 370)
+          line << str(c.custom_value(@cdefs[:class_cfia_requirement_version]), 4) # CFIA Requirement Version (370 - 374)
+          line << str(c.custom_value(@cdefs[:class_cfia_requirement_code]), 6) # CFIA Code (374 - 380)
+          line << str(c.custom_value(@cdefs[:class_ogd_end_use]), 3) # OGD End Use (380 - 383)
+          line << str(c.custom_value(@cdefs[:class_ogd_misc_id]), 3) # OGD Misc Id (383 - 386)
+          line << str(c.custom_value(@cdefs[:class_ogd_origin]), 3) # OGD Origin (386 - 389)
+          line << str(c.custom_value(@cdefs[:class_sima_code]), 2) # SIMA Code (389 - 391)
           # line << str("", 2) # Excise Rate (391 - 393)
 
           #Because Canada doesn't allow exclamation marks in B3 files (WTF?, strip them
