@@ -48,7 +48,9 @@ class UserSessionsController < ApplicationController
 
   def handle_sign_in(user)
     sign_in(user) do |status|
-      if status.success?
+      # I don't know why user would be nil here but it is sometimes (concurrency issue perhaps or something in clearance maybe?), so just
+      # handle that like it was a bad login.
+      if user && status.success?
         session[:user_id] = user.id
         user.on_successful_login request
         respond_to do |format|
