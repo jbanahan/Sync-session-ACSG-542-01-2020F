@@ -33,6 +33,12 @@ describe SchedulableJob do
       sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts)
       sj.run
     end
+    it "should submit options that are non-hash json objects" do
+      opts = ["A", "B"].to_json
+      expect(TestSchedulable).to receive(:run_schedulable).with(["A", "B"])
+      sj = SchedulableJob.new(run_class: "TestSchedulable", opts: opts)
+      sj.run
+    end
     it "should email when successful" do
       opts = {:a=>"b"}.to_json
       expect(TestSchedulable).to receive(:run_schedulable).with("last_start_time"=>nil,'a'=>'b')
