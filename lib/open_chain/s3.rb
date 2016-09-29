@@ -1,4 +1,5 @@
 require 'aws-sdk'
+require 'open_chain/aws_config_support'
 
 module OpenChain; class S3
 
@@ -200,6 +201,7 @@ module OpenChain; class S3
   # Any direct interactions with aws lib should occur inside this class, any code outside of OpenChain::S3 should NOT
   # directly interact with this code.
   class Client
+    extend OpenChain::AwsConfigSupport
 
     # returns S3Object, ObjectVersion
     def self.s3_upload_io bucket, key, data, write_options = {}
@@ -322,11 +324,6 @@ module OpenChain; class S3
       ::Aws::S3::Client.new(aws_config)
     end
     private_class_method :s3_client
-
-    def self.aws_config
-      {region: AWS_CREDENTIALS["region"], credentials: ::Aws::Credentials.new(AWS_CREDENTIALS["access_key_id"], AWS_CREDENTIALS["secret_access_key"])}
-    end
-    private_class_method :aws_config
 
   end
 

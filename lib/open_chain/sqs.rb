@@ -1,6 +1,9 @@
 require 'aws-sdk'
+require 'open_chain/aws_config_support'
 
 module OpenChain; class SQS
+  extend OpenChain::AwsConfigSupport
+
   #translate given object to json and add to queue
   def self.send_json queue, json, opts = {}
     opts = {retry_count: 3, sleep: 1}.merge opts
@@ -119,10 +122,5 @@ module OpenChain; class SQS
     Aws::SQS::Client.new(aws_config)
   end
   private_class_method :sqs_client
-
-  def self.aws_config
-    {region: AWS_CREDENTIALS["region"], credentials: ::Aws::Credentials.new(AWS_CREDENTIALS["access_key_id"], AWS_CREDENTIALS["secret_access_key"])}
-  end
-  private_class_method :aws_config
 
 end; end
