@@ -196,6 +196,7 @@
                     <label class='control-label' for='sched-email-addresses'>Email</label>
                     <div class='controls'>
                       <textarea class='form-control' id='sched-email-addresses' ng-model='scheduleToEdit.email_addresses' rows='4' data-/>
+                      <div class='text-danger' ng-show="emailTooLong(scheduleToEdit)">Must be no more than 255 characters</div>
                       <br />
                       <small class='muted'>
                         Separate addresses with commas.
@@ -333,7 +334,7 @@
               </div>
               <div class='control-group'>
                 <div class='controls'>
-                  <button class='btn btn-primary' ng-click='scheduleToEdit = null'>Done</button>
+                  <button class='btn btn-primary' ng-click='scheduleToEdit = null' ng-disabled='emailTooLong(scheduleToEdit)'>Done</button>
                 </div>
               </div>
             </div>

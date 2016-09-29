@@ -23,6 +23,11 @@ class AdvancedSearchController < ApplicationController
       end
     end
 
+    if base_params[:search_schedules] && base_params[:search_schedules].map { |sc| sc[:email_addresses].length > 255 if sc[:email_addresses]}.any?  
+      render_json_error "Email address field must be no more than 255 characters!"
+      return
+    end
+
     SearchSetup.transaction do
       ss.name = base_params[:name] unless base_params[:name].blank?
       ss.include_links = base_params[:include_links]

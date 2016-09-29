@@ -234,6 +234,8 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     if ss.search_criterions.length == 0
       ss.sort_criterions = []
       ss.search_schedules = []
+    
+    ss.search_schedules = (sched for sched in ss.search_schedules when !$scope.emailTooLong(sched))
 
     $http.put('/advanced_search/'+ss.id+'.json',JSON.stringify({search_setup:ss})).success(() ->
       # Unless we're already on the first page, change to it.
@@ -366,6 +368,9 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         else
           $scope.errors.push "Report download failed.  Please contact support"
       )
+
+  $scope.emailTooLong = (sched) ->
+    sched.email_addresses.length > 255 if sched
 
   #
   # WATCHES

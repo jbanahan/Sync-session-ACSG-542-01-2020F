@@ -66,11 +66,24 @@ describe AdvancedSearchController do
       put :update, :id=>@ss.id, :search_setup=>{:sort_criterions=>[{:mfid=>'prod_name'}]}
       expect(response).to be_error
       expect(JSON.parse(response.body)['error']).to eq "Must have a search criterion to include sorts or schedules!"
+      @ss.reload
+      expect(@ss.sort_criterions).to be_empty
     end
     it "returns error if schedule is submitted without search criterion" do
       put :update, :id=>@ss.id, :search_setup=>{:search_schedules=>[{:email_addresses=>'b@example.com'}]}
       expect(response).to be_error
       expect(JSON.parse(response.body)['error']).to eq "Must have a search criterion to include sorts or schedules!"
+      @ss.reload
+      expect(@ss.search_schedules).to be_empty
+    end
+    it "returns error if email-address field is too long" do
+      addr = "b@#{'z' * 250}.com"
+      put :update, :id=>@ss.id, :search_setup=>{:search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}], 
+                                                :search_schedules=>[{:email_addresses=>addr}]}
+      expect(response).to be_error
+      expect(JSON.parse(response.body)['error']).to eq "Email address field must be no more than 255 characters!"
+      @ss.reload
+      expect(@ss.search_schedules).to be_empty
     end
     it "should update name" do
       put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:no_time=>true} 
