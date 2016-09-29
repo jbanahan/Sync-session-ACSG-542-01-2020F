@@ -2,6 +2,114 @@ require 'spec_helper'
 
 describe AttachmentsController do
 
+  describe "create" do
+    let!(:file) { fixture_file_upload('/files/test.txt', 'text/plain') }
+    let!(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz") }
+    let!(:prod) { Factory(:product) }
+
+    before do
+      stub_paperclip
+      allow_any_instance_of(Product).to receive(:can_attach?).and_return true
+      sign_in_as user
+    end
+
+    it "calls log_update and attachment_added if base object responds to those methods" do
+      expect_any_instance_of(Product).to receive(:log_update).with(user)
+      attachment_id = nil
+      expect_any_instance_of(Product).to receive(:attachment_added) do |instance, attach|
+        attachment_id = attach.id
+      end
+    
+      expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(prod)
+      post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
+      expect(response).to redirect_to prod
+      expect(prod.attachments.length).to eq 1
+      att = prod.attachments.first
+      expect(att.uploaded_by).to eq user
+      expect(att.attached_file_name).to eq "test.txt"
+      expect(att.id).to eq attachment_id
+    end
+
+    context "with http request" do
+      it "creates an attachment" do
+        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(prod)
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
+        expect(response).to redirect_to prod
+        prod.reload
+        expect(prod.attachments.length).to eq 1
+        att = prod.attachments.first
+        expect(att.uploaded_by).to eq user
+        expect(att.attached_file_name).to eq "test.txt"
+      end
+
+      it "errors if no file is given" do
+        post :create, attachment: {attachable_id: prod.id, attachable_type: "Product"}
+        expect(response).to redirect_to request.referrer
+        expect(flash[:errors]).to include "Please choose a file before uploading."
+        expect(prod.attachments.length).to eq 0
+      end
+
+      it "errors if user cannot attach" do
+        allow_any_instance_of(Product).to receive(:can_attach?).and_return false
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
+        expect(response).to redirect_to prod
+        expect(flash[:errors]).to include "You do not have permission to attach items to this object."
+        expect(prod.attachments.length).to eq 0
+      end
+
+      it "errors if attachment can't be saved" do
+        allow_any_instance_of(Attachment).to receive(:save!) do |att|
+          att.errors[:base] << "SOMETHING WRONG"
+          false
+        end
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
+        expect(response).to redirect_to prod
+        expect(flash[:errors]).to include "SOMETHING WRONG"
+        expect(prod.attachments.length).to eq 0
+      end
+    end
+
+    context "with JSON request" do
+      it "creates an attachment" do
+        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(prod)
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, :format => :json
+        prod.reload
+        expect(prod.attachments.length).to eq 1
+        att = prod.attachments.first
+        expect(att.uploaded_by).to eq user
+        expect(att.attached_file_name).to eq "test.txt"
+
+        json = JSON.parse(response.body)
+        expect(json["attachments"].first["user"]["full_name"]).to eq "Nigel Tufnel"
+        expect(json["attachments"].first["name"]).to eq "test.txt"
+      end
+
+      it "errors if no file is given" do
+        post :create, attachment: {attachable_id: prod.id, attachable_type: "Product"}, :format=>:json
+        expect(JSON.parse(response.body)).to eq ({"errors" => ["Please choose a file before uploading."]})
+        expect(prod.attachments.length).to eq 0
+      end
+
+      it "errors if user cannot attach" do
+        allow_any_instance_of(Product).to receive(:can_attach?).and_return false
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, :format=>:json
+        expect(JSON.parse(response.body)).to eq ({"errors" => ["You do not have permission to attach items to this object."]})
+        expect(prod.attachments.length).to eq 0
+      end
+
+      it "errors if attachment can't be saved" do
+        allow_any_instance_of(Attachment).to receive(:save!) do |att|
+          att.errors[:base] << "SOMETHING WRONG"
+          false
+        end
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, :format=>:json
+        expect(JSON.parse(response.body)).to eq ({"errors" => ["SOMETHING WRONG"]})
+        expect(prod.attachments.length).to eq 0
+      end
+    end
+
+  end
+
   describe "send_email_attachable" do
 
     before :each do 

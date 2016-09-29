@@ -10,8 +10,8 @@ class AttachmentsController < ApplicationController
     if params[:attachment][:attached].nil?
       add_flash :errors, "Please choose a file before uploading."
       respond_to do |format|
-        format.html {redirect_to redirect_location(attachable)}
-        format.json {render json: Attachment.attachments_as_json(attachable)}
+        format.html {redirect_to request.referrer}
+        format.json {render json: {errors:flash[:errors]}, status: 400}
       end
     else
       att = Attachment.new(params[:attachment])
@@ -19,7 +19,7 @@ class AttachmentsController < ApplicationController
       saved = false
       if attachable.can_attach?(current_user)
         att.uploaded_by = current_user
-        if att.save
+        if att.save!
           saved = true
           OpenChain::WorkflowProcessor.async_process(attachable)
           attachable.log_update(current_user) if attachable.respond_to?(:log_update)
