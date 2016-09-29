@@ -12,9 +12,9 @@ module EntitySnapshotSupport
 
   def create_snapshot_with_async_option async, user=User.current, imported_file=nil, context=nil
     if async
-      self.create_async_snapshot user, imported_file
+      self.create_async_snapshot user, imported_file, context
     else
-      self.create_snapshot user, imported_file
+      self.create_snapshot user, imported_file, context
     end
   end
 
@@ -28,9 +28,9 @@ module EntitySnapshotSupport
       # we use the inline testing functionality, we still seem to get the code run outside of
       # an rspec transaction (leaving garbage testing snapshots around).  At this point, this
       # is the only reason the disable_async is in use
-      AsyncSnapshotJob.perform_job self, user, imported_file
+      AsyncSnapshotJob.perform_job self, user, imported_file, context
     else
-      AsyncSnapshotJob.new.async.perform(self,user,imported_file)
+      AsyncSnapshotJob.new.async.perform(self,user,imported_file, context)
     end
     
   end
@@ -38,17 +38,17 @@ module EntitySnapshotSupport
   class AsyncSnapshotJob
     include SuckerPunch::Job
 
-    def perform core_object, user, imported_file
+    def perform core_object, user, imported_file, context
       # The connection pool stuff is needed since SuckerPunch / Celluloid ends up runnign the following
       # code in a seperate thread which will not have a sql connection established yet, so we get a new one
       # and run in that.
       ActiveRecord::Base.connection_pool.with_connection do
-        self.class.perform_job core_object, user, imported_file
+        self.class.perform_job core_object, user, imported_file, context
       end
     end
 
-    def self.perform_job core_object, user, imported_file
-      core_object.create_snapshot user, imported_file
+    def self.perform_job core_object, user, imported_file, context
+      core_object.create_snapshot user, imported_file, context
     end
   end
 end
