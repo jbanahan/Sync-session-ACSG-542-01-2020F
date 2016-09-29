@@ -110,68 +110,91 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
       expect(cit_2.classification_uom_2).to eq 'KGS'
     end
 
-    it "updates record if it already exists" do
-      ci = Factory(:commercial_invoice, importer: co, invoice_number: '424913', destination_code: 'East', mfid: 'BDIRIFABGAZ', total_quantity: 5, invoice_value_foreign: 7, 
-                   docs_received_date: '2016-08-02', docs_ok_date: '2016-08-02', issue_codes: 'ABCD', rater_comments: 'no comments', total_quantity_uom: 'CTNS')
-      cil = Factory(:commercial_invoice_line, commercial_invoice: ci, country_origin_code: 'US', quantity: 1, unit_price: 6, currency: 'USD', value_foreign: 8, line_number: 1)
-      cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, hts_code: '1111111111', gross_weight: 4, classification_qty_2: nil, classification_uom_2: nil)
+    context "with already existing record" do
+      let!(:ci) { Factory(:commercial_invoice, importer: co, invoice_number: '424913', destination_code: 'West', mfid: 'ZAGBAFIRIDB', total_quantity: 7, invoice_value_foreign: 9, 
+                     docs_received_date: '2016-10-02', docs_ok_date: '2016-10-02', issue_codes: 'BADC', rater_comments: 'no comments', total_quantity_uom: 'CTNS') }
+      let!(:cil) { Factory(:commercial_invoice_line, commercial_invoice: ci, part_number: 'HM-1234' , country_origin_code: 'UK', quantity: 3, unit_price: 8, currency: 'GBP', value_foreign: 10, line_number: 1) }
+      let!(:cit) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, hts_code: '3333333333', gross_weight: 6, classification_qty_2: nil, classification_uom_2: nil) }
 
-      allow(cf).to receive(:path).and_return "file.xlsx"
-      handler = described_class.new cf
-      row_2[0] = '424913'
-      expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_2, 1)
-      expect(handler.process_excel cf).to be_empty
+      it "adds POs with an existing PO number but a different fingerprint" do
+        allow(cf).to receive(:path).and_return "file.xlsx"
+        handler = described_class.new cf
+        expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 1)
+        expect(handler.process_excel cf).to be_empty
 
-      ci_2 = CommercialInvoice.first
-      cil_2 = ci_2.commercial_invoice_lines.first
-      cit_2 = cil_2.commercial_invoice_tariffs.first
+        ci_2 = CommercialInvoice.last
+        cil_2 = ci_2.commercial_invoice_lines.last
+        cit_2 = cil_2.commercial_invoice_tariffs.last
 
-      expect(CommercialInvoice.count).to eq 1
-      expect(ci_2.invoice_number).to eq '424913'
-      expect(cil_2.part_number).to eq 'HM-4321'
-      expect(ci_2.destination_code).to eq 'West'
-      expect(cit_2.hts_code).to eq '2222222222'
-      expect(ci_2.mfid).to eq 'BDNIATEX27DHA'
-      expect(cil_2.country_origin_code).to eq 'CA'
-      expect(cil_2.quantity).to eq 2
-      expect(cit_2.classification_qty_1).to eq 3
-      expect(cit_2.classification_uom_1).to eq 'ea'
-      expect(cit_2.gross_weight).to eq 5
-      expect(ci_2.total_quantity).to eq 6
-      expect(cil_2.unit_price).to eq 7
-      expect(cil_2.currency).to eq 'CAD'
-      expect(ci_2.invoice_value_foreign).to eq 8
-      expect(cil_2.value_foreign).to eq 9
-      expect(ci_2.docs_received_date).to eq Date.parse('2016-09-01')
-      expect(ci_2.docs_ok_date).to eq Date.parse('2016-09-02')
-      expect(ci_2.issue_codes).to eq 'DCBA'
-      expect(ci_2.rater_comments).to eq 'nothing to see here'
-      expect(cil_2.line_number).to eq 1
-      expect(ci_2.total_quantity_uom).to eq 'CTNS'
-      expect(ci_2.importer).to eq co
-      #since net wt is > 0
-      expect(cit_2.classification_qty_2).to eq 4
-      expect(cit_2.classification_uom_2).to eq 'KGS'
-    end
-
-    it "updates record with most recent updated_at timestamp if there's more than one" do
-      ci_1 = ci_2 = ci_3 = nil
-      Timecop.freeze(Time.utc(2016,1,1)) do 
-        ci_1 = Factory(:commercial_invoice, importer: co, invoice_number: '424913')
-        ci_2 = Factory(:commercial_invoice, importer: co, invoice_number: '424913')
-        ci_3 = Factory(:commercial_invoice, importer: co, invoice_number: '424913')
+        expect(ci_2.invoice_number).to eq '424913'
+        expect(cil_2.part_number).to eq 'HM-1234'
+        expect(ci_2.destination_code).to eq 'East'
+        expect(cit_2.hts_code).to eq '1111111111'
+        expect(ci_2.mfid).to eq 'BDIRIFABGAZ'
+        expect(cil_2.country_origin_code).to eq 'US'
+        expect(cil_2.quantity).to eq 1
+        expect(cit_2.classification_qty_1).to eq 2
+        expect(cit_2.classification_uom_1).to eq 'ea'
+        expect(cit_2.gross_weight).to eq 4
+        expect(ci_2.total_quantity).to eq 5
+        expect(cil_2.unit_price).to eq 6
+        expect(cil_2.currency).to eq 'USD'
+        expect(ci_2.invoice_value_foreign).to eq 7
+        expect(cil_2.value_foreign).to eq 8
+        expect(ci_2.docs_received_date).to eq Date.parse('2016-08-01')
+        expect(ci_2.docs_ok_date).to eq Date.parse('2016-08-02')
+        expect(ci_2.issue_codes).to eq 'ABCD'
+        expect(ci_2.rater_comments).to eq 'no comment'
+        expect(cil_2.line_number).to eq 1
+        expect(ci_2.total_quantity_uom).to eq 'CTNS'
+        expect(ci_2.importer).to eq co
+        #since net wt = 0
+        expect(cit_2.classification_qty_2).to be_nil
+        expect(cit_2.classification_uom_2).to be_nil
       end
-      ci_2.update_attributes(total_quantity: 1)
 
-      allow(cf).to receive(:path).and_return "file.xlsx"
-      handler = described_class.new cf
-      expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 0)
-      expect(handler.process_excel cf).to be_empty
+      it "ignores POs with an existing PO number and the same fingerprint" do
+        ci.update_attributes(invoice_value_foreign: 7, docs_received_date: '2016-08-01')
+        ci_copy = ci.dup
+        cil_copy = cil.dup
+        cit_copy = cit.dup
 
-      [ci_1, ci_2, ci_3].each{ |ci| ci.reload }
-      expect(ci_1.destination_code).to be_nil
-      expect(ci_2.destination_code).to eq 'East'
-      expect(ci_3.destination_code).to be_nil
+        allow(cf).to receive(:path).and_return "file.xlsx"
+        handler = described_class.new cf
+        expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 1)
+        expect(handler.process_excel cf).to be_empty
+
+        ci_2 = CommercialInvoice.last
+        cil_2 = ci_2.commercial_invoice_lines.last
+        cit_2 = cil_2.commercial_invoice_tariffs.last
+        expect(CommercialInvoice.count).to eq 1
+
+        expect(ci_2.invoice_number).to eq ci_copy.invoice_number
+        expect(cil_2.part_number).to eq cil_copy.part_number
+        expect(ci_2.destination_code).to eq ci_copy.destination_code
+        expect(cit_2.hts_code).to eq cit_copy.hts_code
+        expect(ci_2.mfid).to eq ci_copy.mfid
+        expect(cil_2.country_origin_code).to eq cil_copy.country_origin_code
+        expect(cil_2.quantity).to eq cil_copy.quantity
+        expect(cit_2.classification_qty_1).to eq cit_copy.classification_qty_1
+        expect(cit_2.classification_uom_1).to eq cit_copy.classification_uom_1
+        expect(cit_2.gross_weight).to eq cit_copy.gross_weight
+        expect(ci_2.total_quantity).to eq ci_copy.total_quantity
+        expect(cil_2.unit_price).to eq cil_copy.unit_price
+        expect(cil_2.currency).to eq cil_copy.currency
+        expect(ci_2.invoice_value_foreign).to eq ci_copy.invoice_value_foreign
+        expect(cil_2.value_foreign).to eq cil_copy.value_foreign
+        expect(ci_2.docs_received_date).to eq ci_copy.docs_received_date
+        expect(ci_2.docs_ok_date).to eq ci_copy.docs_ok_date
+        expect(ci_2.issue_codes).to eq ci_copy.issue_codes
+        expect(ci_2.rater_comments).to eq ci_copy.rater_comments
+        expect(cil_2.line_number).to eq cil_copy.line_number
+        expect(ci_2.total_quantity_uom).to eq ci_copy.total_quantity_uom
+        expect(ci_2.importer).to eq ci_copy.importer
+        #since net wt = 0
+        expect(cit_2.classification_qty_2).to eq cit_copy.classification_qty_2
+        expect(cit_2.classification_uom_2).to eq cit_copy.classification_uom_2
+      end
     end
 
     it "returns an error if custom file has wrong extension" do

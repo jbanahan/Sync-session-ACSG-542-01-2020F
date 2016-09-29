@@ -61,16 +61,16 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
     end
 
     inv_hsh, line_hsh, tariff_hsh = unpack_row(row)
-    write_record po_number, imp_id, inv_hsh, line_hsh, tariff_hsh
+    write_record(imp_id, inv_hsh, line_hsh, tariff_hsh) unless has_matching_fingerprint?(po_number, fprint_row(row))
   end
 
   def unpack_row row
-    inv_hsh = {destination_code: text_value(row[2]), mfid: text_value(row[4]), total_quantity: decimal_value(row[11]), 
+    inv_hsh = {invoice_number: text_value(row[0]), destination_code: text_value(row[2]).capitalize, mfid: text_value(row[4]), total_quantity: decimal_value(row[11]), 
                invoice_value_foreign: decimal_value(row[14], decimal_places: 2), docs_received_date: date_value(row[16]), docs_ok_date: date_value(row[17]), 
                issue_codes: text_value(row[18]), rater_comments: text_value(row[19]), total_quantity_uom: 'CTNS'}
 
     line_hsh = {part_number: text_value(row[1]), country_origin_code: text_value(row[5]), quantity: decimal_value(row[6]), 
-                unit_price: decimal_value(row[12], decimal_places: 2), currency: text_value(row[13]), value_foreign: decimal_value(row[15], decimal_places: 2), 
+                unit_price: decimal_value(row[12], decimal_places: 2), currency: text_value(row[13]).upcase, value_foreign: decimal_value(row[15], decimal_places: 2), 
                 line_number: 1}
     
     tariff_hsh = {hts_code: text_value(row[3]), classification_qty_1: decimal_value(row[7]), classification_uom_1: text_value(row[8]), 
@@ -83,18 +83,30 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
     [inv_hsh, line_hsh, tariff_hsh]
   end
 
-  def write_record po_number, imp_id, inv_hsh, line_hsh, tariff_hsh
+  def write_record imp_id, inv_hsh, line_hsh, tariff_hsh
     ActiveRecord::Base.transaction do
-      inv = CommercialInvoice.where(importer_id: imp_id)
-                             .where(invoice_number: po_number)
-                             .order("updated_at DESC")
-                             .first_or_initialize(invoice_number: po_number, importer_id: imp_id)
-      inv.update_attributes! inv_hsh
-      line = inv.commercial_invoice_lines.first_or_initialize
-      line.update_attributes! line_hsh
-      tariff = line.commercial_invoice_tariffs.first_or_initialize
-      tariff.update_attributes! tariff_hsh
+      inv = CommercialInvoice.create!(inv_hsh.merge(importer_id: imp_id))
+      line = inv.commercial_invoice_lines.create!(line_hsh)
+      line.commercial_invoice_tariffs.create!(tariff_hsh)
     end
+  end
+
+  def fprint_row row
+    po_num = text_value(row[0])
+    part_num = text_value(row[1])
+    inv_val = sprintf('%.2f', decimal_value(row[14]))
+    docs_rec = date_value(row[16]).strftime('%m-%d-%Y')
+    po_num + part_num + inv_val + docs_rec
+  end
+
+  def fprint_obj invoice
+    cil = invoice.commercial_invoice_lines.first
+    invoice.invoice_number + cil.part_number + sprintf('%.2f', invoice.invoice_value_foreign) + invoice.docs_received_date.strftime('%m-%d-%Y')
+  end
+
+  def has_matching_fingerprint? inv_num, fprint
+    invs = CommercialInvoice.where(invoice_number: inv_num)
+    invs.map{ |i| fprint_obj(i) == fprint }.any?
   end
 
 end; end; end; end;
