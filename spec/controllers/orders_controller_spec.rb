@@ -3,7 +3,8 @@ require 'spec_helper'
 describe OrdersController do
 
   before :each do
-    MasterSetup.get.update_attributes(:order_enabled=>true)
+    ms = stub_master_setup
+    allow(ms).to receive(:order_enabled).and_return true
     c = Factory(:company,:master=>true,system_code:'MSTR')
     @u = Factory(:master_user,order_view:true,:company=>c)
 

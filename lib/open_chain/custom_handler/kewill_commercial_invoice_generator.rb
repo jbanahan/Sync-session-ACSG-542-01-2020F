@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; class KewillCommercialInvoiceGenerator <
     super(numeric_pad_char: '0', blank_date_fill_char: '0', string_output_encoding: "ASCII")
   end
 
-  def generate_and_send_invoices file_number, commercial_invoices
+  def generate_and_send_invoices file_number, commercial_invoices, opts = {}
     entry = CiLoadEntry.new(file_number, nil, [])
     commercial_invoices = Array.wrap(commercial_invoices)
 
@@ -37,7 +37,13 @@ module OpenChain; module CustomHandler; class KewillCommercialInvoiceGenerator <
           l.hts = tar.hts_code
           l.quantity_1 = tar.classification_qty_1
           l.quantity_2 = tar.classification_qty_2
-          l.gross_weight = tar.gross_weight
+          # If gross weight is given in grams, we must convert it to KGS
+          if opts[:gross_weight_uom].to_s.upcase == "G"
+            l.gross_weight = (BigDecimal(tar.gross_weight.to_s) / BigDecimal("1000")).round(2)
+          else
+            l.gross_weight = tar.gross_weight
+          end
+          
           l.spi = tar.spi_primary
           
           invoice.invoice_lines << l

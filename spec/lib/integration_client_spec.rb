@@ -118,6 +118,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
         cmd = {'request_type'=>'remote_file','path'=>'/_hm_i1/a.csv','remote_path'=>'12345'}
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
       end
+
+      it "should send data to H&M I2 Interface if feature enabled and path contains _hm_i1" do
+        expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('H&M I2 Interface').and_return(true)
+        expect(OpenChain::CustomHandler::Hm::HmI2ShipmentParser).to receive(:delay).and_return OpenChain::CustomHandler::Hm::HmI2ShipmentParser
+        expect(OpenChain::CustomHandler::Hm::HmI2ShipmentParser).to receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name, '12345')
+        cmd = {'request_type'=>'remote_file','path'=>'/_hm_i2/a.csv','remote_path'=>'12345'}
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(@success_hash)
+      end
     end
     context "lands_end" do
       it "should send data to Lands End Parts parser" do

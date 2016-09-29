@@ -165,5 +165,18 @@ describe OpenChain::CustomHandler::KewillCommercialInvoiceGenerator do
       expect(i.spi).to eq "AU"
 
     end
+
+    it "converts gross weight from grams to KG if instructed" do
+      invoice.commercial_invoice_lines.first.commercial_invoice_tariffs.first.gross_weight = 1000
+      entry = nil
+      expect(subject).to receive(:generate_and_send) do |entries|
+        expect(entries.length).to eq 1
+        entry = entries.first
+      end
+
+      subject.generate_and_send_invoices("12345", invoice, gross_weight_uom: "G")
+
+      expect(entry.invoices.first.invoice_lines.first.gross_weight).to eq 1
+    end
   end
 end

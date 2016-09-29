@@ -9,6 +9,7 @@ require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_po_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_ftz_asn_generator'
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/hm/hm_i1_interface'
+require 'open_chain/custom_handler/hm/hm_i2_shipment_parser'
 require 'open_chain/custom_handler/j_jill/j_jill_850_xml_parser'
 require 'open_chain/custom_handler/kewill_isf_xml_parser'
 require 'open_chain/custom_handler/lenox/lenox_po_parser'
@@ -124,6 +125,8 @@ module OpenChain
         OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_hm_i1/') && MasterSetup.get.custom_feature?('H&M I1 Interface')
         OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?("/_hm_i2") && MasterSetup.get.custom_feature?('H&M I2 Interface')
+        OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_kewill_isf/') && MasterSetup.get.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_gtn_asn_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
