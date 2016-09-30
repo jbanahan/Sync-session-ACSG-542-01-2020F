@@ -17,7 +17,6 @@ module OpenChain
       User.where("email like '%vandegriftinc.com' AND (disabled <> 1 OR disabled IS NULL)").all.each do |user|
         email = user.email.gsub(/(.*?)(\+.*?)(@.*)/, '\1\3')
         body = execute(@client, @api, email)
-        body = JSON.parse(body)
         suspended = suspended?(body)
         if suspended.present?
           user.update_attribute(:disabled, suspended)
@@ -35,7 +34,16 @@ module OpenChain
       retries = 3
       count = 0
       begin
-        return client.execute(api.users.get, userKey: email).response.body
+        body = client.execute(api.users.get, userKey: email).response.body
+        google_json = JSON.parse(body)
+
+        # Google returns all sorts of errors indicating their service is unavailable (which it VERY frequently seems to be), 
+        # they also return error codes for other situations, which we don't want to raise out here (404 - missing account, 400 - locked account)
+        if google_json['error'].present? && ![404, 400].include?(google_json['error']['code'])
+          raise google_json['error']['message']
+        else
+          return google_json
+        end
       rescue => e
         if (count += 1) <= 3 
           sleep(1) 
