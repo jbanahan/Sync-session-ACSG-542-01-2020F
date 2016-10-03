@@ -85,11 +85,9 @@ describe OpenChain::Report::EddieBauerStatementSummary do
   end
   context "previous_month mode" do
     it "should return entries from month / year specified regardless of paid status" do
-      find_even_though_paid = Factory(:entry,:importer=>@imp,
-        :monthly_statement_paid_date=>Time.now,:release_date=>3.months.ago + 1.minute)
-      @ent.update_attributes(:release_date=>3.months.ago)
-      dont_find_even_though_unpaid_because_different_month = Factory(:entry,
-        :importer=>@imp,:release_date=>1.hour.from_now)
+      find_even_though_paid = Factory(:entry,:importer=>@imp,:monthly_statement_paid_date=>Time.now,:release_date=>((Time.zone.now - 3.months) + 1.minute).in_time_zone("America/New_York"))
+      @ent.update_attributes!(:release_date=>(Time.zone.now - 3.months).in_time_zone("America/New_York"))
+      dont_find_even_though_unpaid_because_different_month = Factory(:entry,:importer=>@imp,:release_date=>1.hour.from_now.in_time_zone("America/New_York"))
       options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year, :customer_number=>@imp.alliance_customer_number}
       ent = described_class.new(@user,options)
       expect(ent.find_entries(@imp).map(&:id)).to eq([@ent,find_even_though_paid].map(&:id))

@@ -110,13 +110,15 @@ module OpenChain
         if @mode && @mode.to_s=='previous_month'
           r = Entry.
             where(:importer_id=>importer.id).
-            where("MONTH(entries.release_date) = ? AND YEAR(entries.release_date) = ?", @month, @year).
+            where("MONTH(CONVERT_TZ(entries.release_date, 'UTC', 'America/New_York')) = ? AND YEAR(CONVERT_TZ(entries.release_date, 'UTC', 'America/New_York')) = ?", @month, @year).
             order("entries.release_date ASC")
         else
           r = Entry.
             where(:importer_id=>importer.id).
             where("length(daily_statement_number) > 0").
-            where("monthly_statement_paid_date is null")
+            where("monthly_statement_paid_date is null").
+            # Only show things less than 3 months old
+            where("entries.release_date IS NULL OR entries.release_date >= ?", (Time.zone.now.beginning_of_month - 3.months).in_time_zone("UTC"))
         end
         r
       end
