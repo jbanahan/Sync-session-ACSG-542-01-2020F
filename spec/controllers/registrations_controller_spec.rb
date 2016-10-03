@@ -20,7 +20,7 @@ describe RegistrationsController do
       thanks = "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +
                "If you have any questions, please contact your Vandegrift account representative or support@vandegriftinc.com."
       
-      expect(mail.subject).to eq "Registration Request"
+      expect(mail.subject).to eq "Registration Request (HAL9000)"
       expect(response.body).to eq ({flash: {notice: [thanks]}}.to_json)
     end
     
