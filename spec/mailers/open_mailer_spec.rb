@@ -112,7 +112,7 @@ describe OpenMailer do
       OpenMailer.send_registration_request(fields).deliver!
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["support@vandegriftinc.com"]
-      expect(mail.subject).to eq "Registration Request"
+      expect(mail.subject).to eq "Registration Request (HAL9000)"
       ["Email: #{fields[:email]}", "First Name: #{fields[:fname]}", "Last Name: #{fields[:lname]}", "Company: #{fields[:company]}", "Customer Number: #{fields[:cust_no]}",
        "Contact: #{fields[:contact]}", "System Code: #{fields[:system_code]}"].each {|f| expect(mail.body).to include f }
     end

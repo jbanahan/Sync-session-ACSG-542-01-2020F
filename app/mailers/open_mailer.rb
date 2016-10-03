@@ -77,7 +77,7 @@ EOS
     @email, @fname, @lname, @company, @cust_no, @contact, @system_code = 
       params.values_at(:email, :fname, :lname, :company, :cust_no, :contact, :system_code)
 
-    mail(:to => "support@vandegriftinc.com", :subject => "Registration Request")
+    mail(:to => "support@vandegriftinc.com", :subject => "Registration Request (#{@system_code})")
   end
 
   def send_feedback(current_user,params,request)
