@@ -383,6 +383,14 @@ class User < ActiveRecord::Base
       h[p] = true
     end
   end
+  
+  def url
+    Rails.application.routes.url_helpers.company_user_url(host: MasterSetup.get.request_host, 
+                                                          company_id: company.id, 
+                                                          id: id, 
+                                                          protocol: (Rails.env.development? ? "http" : "https"))
+  end
+
   private_class_method :add_all_permissions_to_hash
 
   private

@@ -1,12 +1,13 @@
 require 'spec_helper'
 
 describe OpenChain::Report::MonthlyUserAuditReport do
-  it "sends an email to unlocked, admin users with a correctly-formatted xls" do
-    Factory(:user, username: "Tinker", email: "tinker@vandegriftinc.com")
-    Factory(:user, username: "Tailor", email: "tailor@vandegriftinc.com")
-    Factory(:admin_user, username: "Soldier", email: "soldier@vandegriftinc.com")
-    Factory(:admin_user, username: "Sailor", email: "sailor@vandegriftinc.com", disabled: true)
-    Factory(:admin_user, username: "Rich Man", email: "rich_man@vandegriftinc.com")
+  it "sends an email to unlocked, admin users with a correctly-formatted xls sorted by users.disabled/companies.name" do
+    stub_master_setup
+    Factory(:user, company: Factory(:company, name: "c"), username: "Tinker", email: "tinker@vandegriftinc.com")
+    Factory(:user, company: Factory(:company, name: "e"), username: "Tailor", email: "tailor@vandegriftinc.com")
+    Factory(:admin_user, company: Factory(:company, name: "b"), username: "Soldier", email: "soldier@vandegriftinc.com")
+    Factory(:admin_user, company: Factory(:company, name: "a"), username: "Sailor", email: "sailor@vandegriftinc.com", disabled: true)
+    Factory(:admin_user, company: Factory(:company, name: "d"), username: "Rich Man", email: "rich_man@vandegriftinc.com")
     month = Time.now.strftime('%B')
 
     OpenChain::Report::MonthlyUserAuditReport.run_schedulable
@@ -24,7 +25,11 @@ describe OpenChain::Report::MonthlyUserAuditReport do
       
       expect(sheet.row(0).count).to eq 65
       expect(sheet.count).to eq 6
-      expect(sheet.row(1)[7]).to eq "Tinker"
+      expect(sheet.row(1)[7]).to eq "Soldier"
+      expect(sheet.row(2)[7]).to eq "Tinker"
+      expect(sheet.row(3)[7]).to eq "Rich Man"
+      expect(sheet.row(4)[7]).to eq "Tailor"
+      expect(sheet.row(5)[7]).to eq "Sailor"
     end
   end
 end

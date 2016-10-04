@@ -11,7 +11,7 @@ module OpenChain
 
       def create_workbook
         wb = XlsMaker.create_workbook "Monthly User Audit"
-        table_from_query wb.worksheet(0), query
+        table_from_query wb.worksheet(0), query, {'Username' => link_lambda}
         wb
       end
 
@@ -23,6 +23,13 @@ module OpenChain
           body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
           OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
         end
+      end
+
+      def link_lambda
+        lambda { |result_set_row, raw_column_value|
+          url = User.find(result_set_row[3]).url
+          XlsMaker.create_link_cell url, raw_column_value
+        }
       end
 
       def query
@@ -97,7 +104,7 @@ module OpenChain
             LEFT OUTER JOIN user_group_memberships ugm ON ugm.user_id = users.id
             LEFT OUTER JOIN groups g ON g.id = ugm.group_id
           GROUP BY users.id
-          ORDER BY companies.name          
+          ORDER BY users.disabled, companies.name 
         SQL
       end
 

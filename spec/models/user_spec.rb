@@ -890,4 +890,12 @@ describe User do
       expect(User.new(portal_mode:'vendor').portal_redirect_path).to eq '/vendor_portal'
     end
   end
+
+  describe "url" do
+    it "returns user's nested url" do
+      stub_master_setup
+      u = Factory(:user)
+      expect(u.url).to eq "https://localhost:3000/companies/#{u.company.id}/users/#{u.id}"
+    end
+  end
 end
