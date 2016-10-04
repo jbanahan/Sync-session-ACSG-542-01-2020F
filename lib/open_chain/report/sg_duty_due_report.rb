@@ -68,7 +68,7 @@ module OpenChain; module Report; class SgDutyDueReport
         group[sched_d][:entries].each do |ent| 
           content << row(ent[:entry_number], ent[:entry_type], ent[:release_date], 
                          ent[:arrival_date], ent[:broker_reference], ent[:total_duties_and_fees], 
-                         ent[:customer_references])
+                         ent[:customer_references] || "")
         end
         content << sub_total(group[sched_d][:port_name], sched_d, group[sched_d][:port_total_duties_and_fees],
                              date_data[:statement_appr], date_data[:debit], date_data[:statement_num]) << space
