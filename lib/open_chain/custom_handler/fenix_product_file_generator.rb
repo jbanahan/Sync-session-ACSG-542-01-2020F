@@ -17,7 +17,12 @@ module OpenChain
         @output_subdirectory = (options['output_subdirectory'].presence || '')
         @strip_leading_zeros = (options['strip_leading_zeros'].to_s == "true")
 
-        custom_defintions = [:class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
+        if MasterSetup.get.custom_feature? "Full Fenix Product File"
+          custom_defintions = [:class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
+        else
+          custom_defintions = []
+        end
+        
         custom_defintions << :prod_part_number if @use_part_number
         custom_defintions << :prod_country_of_origin unless @suppress_country
         custom_defintions << :class_customs_description unless @suppress_description
@@ -101,7 +106,7 @@ module OpenChain
           line << str("", 4) # Tariff Code (91 - 95)
           line << str("", 20) # Keyword (95 - 115)
           line << str("", 20) # Blank Sapce (115 - 135)
-          line << str((@suppress_description ? "" : c.custom_value(@cdefs[:class_customs_description]).to_s), 50) # Description 1 (135 - 185)
+          line << str((@suppress_description ? "" : custom_value(c, :class_customs_description).to_s), 50) # Description 1 (135 - 185)
           line << str("", 50) # Description 2 (185 - 235)
           line << str("", 16) # OIC Code (235 - 251)
           line << str("", 41) # Blank Space (251 - 292)
@@ -109,17 +114,17 @@ module OpenChain
           line << str("", 32) # Blank Space (295 - 327)
           line << str("", 7) # GST Exemption Code (327 - 334)
           line << str("", 7) # Blank Space (334 - 341)
-          spi = c.custom_value(@cdefs[:class_special_program_indicator])
+          spi = custom_value(c, :class_special_program_indicator)
           line << str(spi.blank? ? "" : spi.to_i, 2) # Tariff Treatment (341, 343)
           line << str("", 16) # Blank Space (343 - 359)
-          line << str((@suppress_country ? "" : p.custom_value(@cdefs[:prod_country_of_origin]).to_s), 3) # Country Of Origin (359 - 362)
-          line << str(c.custom_value(@cdefs[:class_cfia_requirement_id]), 8) # CFIA Requirement ID (362 - 370)
-          line << str(c.custom_value(@cdefs[:class_cfia_requirement_version]), 4) # CFIA Requirement Version (370 - 374)
-          line << str(c.custom_value(@cdefs[:class_cfia_requirement_code]), 6) # CFIA Code (374 - 380)
-          line << str(c.custom_value(@cdefs[:class_ogd_end_use]), 3) # OGD End Use (380 - 383)
-          line << str(c.custom_value(@cdefs[:class_ogd_misc_id]), 3) # OGD Misc Id (383 - 386)
-          line << str(c.custom_value(@cdefs[:class_ogd_origin]), 3) # OGD Origin (386 - 389)
-          line << str(c.custom_value(@cdefs[:class_sima_code]), 2) # SIMA Code (389 - 391)
+          line << str((@suppress_country ? "" : custom_value(p, :prod_country_of_origin).to_s), 3) # Country Of Origin (359 - 362)
+          line << str(custom_value(c, :class_cfia_requirement_id), 8) # CFIA Requirement ID (362 - 370)
+          line << str(custom_value(c, :class_cfia_requirement_version), 4) # CFIA Requirement Version (370 - 374)
+          line << str(custom_value(c, :class_cfia_requirement_code), 6) # CFIA Code (374 - 380)
+          line << str(custom_value(c, :class_ogd_end_use), 3) # OGD End Use (380 - 383)
+          line << str(custom_value(c, :class_ogd_misc_id), 3) # OGD Misc Id (383 - 386)
+          line << str(custom_value(c, :class_ogd_origin), 3) # OGD Origin (386 - 389)
+          line << str(custom_value(c, :class_sima_code), 2) # SIMA Code (389 - 391)
           # line << str("", 2) # Excise Rate (391 - 393)
 
           #Because Canada doesn't allow exclamation marks in B3 files (WTF?, strip them
@@ -135,11 +140,17 @@ module OpenChain
         def identifier_field p
           value = nil
           if @use_part_number
-            value = p.get_custom_value(@cdefs[:prod_part_number]).value
+            value = p.custom_value(@cdefs[:prod_part_number])
           else
             value = p.unique_identifier
           end
           @strip_leading_zeros ? value.to_s.gsub(/^0+/, "") : value
+        end
+
+        def custom_value obj, field
+          # This is primarily here just because we don't allow all the fields for all systems.
+          custom_definition = @cdefs[field]
+          custom_definition ? obj.custom_value(custom_definition) : nil
         end
 
     end

@@ -2,6 +2,26 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::FenixProductFileGenerator do
 
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:custom_feature?).with("Full Fenix Product File").and_return true
+    ms
+  }
+
+  class FenixProductGeneratorCustomDefinitions
+    include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+
+    attr_reader :cdefs
+
+    def initialize
+      @cdefs = self.class.prep_custom_definitions [:prod_part_number, :prod_country_of_origin, :class_customs_description, :class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
+    end
+  end
+
+  let (:cdefs) {
+    FenixProductGeneratorCustomDefinitions.new.cdefs
+  }
+
   before :each do
     @canada = Factory(:country,:iso_code=>'CA')
     @code = 'XYZ'
@@ -54,10 +74,6 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
     after :each do
       @t.unlink if @t
-    end
-
-    def cdefs
-      @h.instance_variable_get(:@cdefs)
     end
 
     it "should generate output file with given products" do
@@ -201,6 +217,42 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @t = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code).make_file [@p]
       expect(IO.read(@t.path)).to be_blank
       expect(ErrorLogEntry.first.additional_messages_json).to match(/could not be sent to Fenix/)
+    end
+
+    it "disables all 'extra' fields if custom feature is not enabled" do
+      # Set values up for the product, so we know they're actually be skipped when generated
+      allow(master_setup).to receive(:custom_feature?).with("Full Fenix Product File").and_return false
+
+      @p.update_custom_value! cdefs[:prod_country_of_origin], "CN"
+      @c.update_custom_value! cdefs[:class_customs_description], "Random Product Description"
+      @c.update_custom_value! cdefs[:class_special_program_indicator], "10"
+      @c.update_custom_value! cdefs[:class_cfia_requirement_id], "ID"
+      @c.update_custom_value! cdefs[:class_cfia_requirement_version], "VER"
+      @c.update_custom_value! cdefs[:class_cfia_requirement_code], "COD"
+      @c.update_custom_value! cdefs[:class_ogd_end_use], "U"
+      @c.update_custom_value! cdefs[:class_ogd_misc_id], "M"
+      @c.update_custom_value! cdefs[:class_ogd_origin], "O"
+      @c.update_custom_value! cdefs[:class_sima_code], "S"
+      
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      
+      @t = @h.make_file [@p]
+      read = IO.read(@t.path)
+      expect(read[0, 15]).to eq "N".ljust(15)
+      expect(read[15, 9]).to eq @code.ljust(9)
+      expect(read[31, 40]).to eq "myuid".ljust(40)
+      expect(read[71, 20]).to eq "1234567890".ljust(20)
+      expect(read[135, 50]).to eq "Random Product Description".ljust(50)
+      expect(read[341, 3]).to eq "   "
+      expect(read[359, 3]).to eq "CN "
+      expect(read[362, 8]).to eq "        "
+      expect(read[370, 4]).to eq "    "
+      expect(read[374, 6]).to eq "      "
+      expect(read[380, 3]).to eq "   "
+      expect(read[383, 3]).to eq "   "
+      expect(read[386, 3]).to eq "   "
+      expect(read[389, 2]).to eq "  "
+      expect(read).to end_with "\r\n"
     end
   end
 
