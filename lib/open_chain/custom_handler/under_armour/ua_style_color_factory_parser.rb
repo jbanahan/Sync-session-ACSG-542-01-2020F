@@ -71,7 +71,6 @@ include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSuppor
   def update_product h, user
     @cdefs ||= self.class.prep_custom_definitions [:colors,:prod_export_countries,:prod_seasons,:var_export_countries]
     ActiveRecord::Base.transaction do
-      byebug if h[:style].blank?
       p = Product.where(unique_identifier:h[:style]).first_or_create!
       p.name = h[:name]
       p.division_id = get_division_id(h[:division])
