@@ -56,6 +56,18 @@ module JoinSupport
   def add_parent_joins_recursive(p, module_chain, target_module, current_module) 
     new_p = p
     child_module = module_chain.child current_module
+
+    if !child_module.nil?
+      # If there's more than one child module it means we have a sibling module, which can ONLY occur at the lowest level
+      # of the module chain.  Ergo, the sibling modules returned should have a match to the target_module, and we ONLY want
+      # to join on the sibling module target, not all the siblings.
+      if child_module.length > 1
+        child_module = child_module.find {|cm| cm == target_module }
+      else
+        child_module = child_module.first
+      end
+    end
+
     unless child_module.nil?
       child_join = current_module.child_joins[child_module]
       new_p = p.joins(child_join) unless child_join.nil?

@@ -53,12 +53,15 @@ module OpenChain
     # Configure sensitive parameters which will be filtered from the log file.
     config.filter_parameters += [:password]
 
-    config.middleware.use ExceptionNotification::Rack,
-      :email => {
-        :email_prefix => "[VFI Track Exception]",
-        :sender_address => %{"Exception Notifier" <bug@vandegriftinc.com>},
-        :exception_recipients => %w{bug@vandegriftinc.com}
-      }
+    if Rails.env.production?
+      config.middleware.use(ExceptionNotification::Rack,
+        :email => {
+          :email_prefix => "[VFI Track Exception]",
+          :sender_address => %{"Exception Notifier" <bug@vandegriftinc.com>},
+          :exception_recipients => %w{bug@vandegriftinc.com}
+        }
+      )
+    end
 
     config.active_record.schema_format = :sql
     if Rails.env.test?

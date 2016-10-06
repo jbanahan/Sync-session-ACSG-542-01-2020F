@@ -21,7 +21,6 @@ class CoreModule
       :quicksearch_fields, # List of field / field definitions for quicksearching
       :quicksearch_extra_fields, # List of field / field definitions for displaying along with quicksearch terms
       :module_chain, #default module chain for searches
-      :snapshot_module_chain, # the module chain to use for taking snapshots of the core module (might include other items like comments / attachments)
       :snapshot_descriptor
 
   def initialize(class_name,label,opts={})
@@ -344,14 +343,12 @@ class CoreModule
           mf_hash[mf.uid] = v unless v.nil?
         end
       end
-      child_mc = module_chain.child core_module
-      unless child_mc.nil?
+      Array.wrap(module_chain.child(core_module)).each do |child_mc|
         child_objects = core_module.child_objects(child_mc,entity)
         unless child_objects.blank?
-          eca = []
-          master_hash['entity']['children'] = eca
+          master_hash['entity']['children'] ||= []
           child_objects.each do |c|
-            eca << child_mc.entity_json_lambda.call(c,module_chain)
+            master_hash['entity']['children'] << child_mc.entity_json_lambda.call(c,module_chain)
           end
         end
       end
@@ -403,12 +400,6 @@ class CoreModule
         cm.send(:set_default_module_chain, mc)
       end
 
-      if cm.snapshot_module_chain.respond_to?(:map)
-        mc = ModuleChain.new
-        mc.add_array remap_core_modules(cm, cm.snapshot_module_chain, cm_object_map, "module chain")
-        cm.send(:set_snapshot_module_chain, mc)
-      end
-
       if cm.children.respond_to?(:map)
         cm.send(:set_children, remap_core_modules(cm, cm.children, cm_object_map, "child mapping"))
       end
@@ -434,10 +425,19 @@ class CoreModule
           values[child_cm] = value
       end
     else
-      values = child_core_modules.map do |child_class| 
-        child_cm = cm_object_map[child_class.name]
-        raise "#{cm.name} is using an invalid child CoreModule class of #{child_class.name} in its #{descriptor}." if child_cm.nil?
-        child_cm
+      values = child_core_modules.map do |child_class|
+        if child_class.respond_to?(:modules)
+          mods = child_class.modules.map do |child|
+            child_cm = cm_object_map[child.name]
+            raise "#{cm.name} is using an invalid child CoreModule class of #{child.name} in its #{descriptor}." if child_cm.nil?
+            child_cm
+          end
+          ModuleChain::SiblingModules.new(*mods)
+        else
+          child_cm = cm_object_map[child_class.name]
+          raise "#{cm.name} is using an invalid child CoreModule class of #{child_class.name} in its #{descriptor}." if child_cm.nil?
+          child_cm
+        end
       end
     end
 
@@ -471,10 +471,6 @@ class CoreModule
 
   def set_default_module_chain chain
     @default_module_chain = chain
-  end
-
-  def set_snapshot_module_chain chain
-    @snapshot_module_chain = chain
   end
 
   include CoreModuleDefinitions

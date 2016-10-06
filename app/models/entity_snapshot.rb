@@ -140,7 +140,14 @@ class EntitySnapshot < ActiveRecord::Base
         end
       end
       default_child = core_module.default_module_chain.child(core_module) #make we get the default child if it wasn't found in the hash
-      good_children[default_child] ||= [0] if default_child
+      if default_child
+        if default_child.length == 1
+          good_children[default_child[0]] ||= [0]
+        else
+          raise "Recursive restore cannot be used with modules that contain sibling modules."
+        end
+      end
+      
       good_children.each do |cm,good_ids|
         core_module.child_lambdas[cm].call(obj).where("NOT #{cm.table_name}.id IN (?)",good_ids).destroy_all
       end
