@@ -14,7 +14,6 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
       subject += " With Errors"
       if errors[:unexpected].presence
         body += "\n\n#{errors[:unexpected].join("\n")}"
-        user.messages.create(:subject=>subject, :body=>body)
       else
         body += "\n\n#{errors[:fixable].join("\n")}"
       end
@@ -95,13 +94,13 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
     po_num = text_value(row[0])
     part_num = text_value(row[1])
     inv_val = sprintf('%.2f', decimal_value(row[14]))
-    docs_rec = date_value(row[16]).strftime('%m-%d-%Y')
+    docs_rec = date_value(row[16]).try(:strftime, '%m-%d-%Y').to_s
     po_num + part_num + inv_val + docs_rec
   end
 
   def fprint_obj invoice
     cil = invoice.commercial_invoice_lines.first
-    invoice.invoice_number + cil.part_number + sprintf('%.2f', invoice.invoice_value_foreign) + invoice.docs_received_date.strftime('%m-%d-%Y')
+    invoice.invoice_number.to_s + cil.part_number.to_s + sprintf('%.2f', invoice.invoice_value_foreign || 0) + invoice.docs_received_date.try(:strftime, '%m-%d-%Y').to_s
   end
 
   def has_matching_fingerprint? inv_num, fprint

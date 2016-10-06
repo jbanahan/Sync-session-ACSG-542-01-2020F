@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
       allow(cf).to receive(:attached_file_name).and_return "file.xlsx"
     end
 
-    it "should parse the file" do
+    it "parses the file" do
       expect(handler).to receive(:process_excel).with(cf).and_return({})
       handler.process user
 
@@ -22,16 +22,18 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
       expect(user.messages.first.body).to eq "H&M PO File 'file.xlsx' has finished processing."
     end
 
-    it "should handle 'fixable' errors" do
+    it "handles 'fixable' errors" do
       expect(handler).to receive(:process_excel).with(cf).and_return({fixable: ["This error can be corrected by the user.", "Another message."]})
       handler.process(user)
+      expect(user.messages.length).to eq 1
       expect(user.messages.first.subject).to eq "H&M PO File Processing Completed With Errors"
       expect(user.messages.first.body).to eq "H&M PO File 'file.xlsx' has finished processing.\n\nThis error can be corrected by the user.\nAnother message."
     end
 
-    it "should handle unexpected errors" do
+    it "handles unexpected errors" do
       expect(handler).to receive(:process_excel).with(cf).and_return({unexpected: ["This error must be handled by IT.", "Another message."]})
       handler.process(user)
+      expect(user.messages.length).to eq 1
       expect(user.messages.first.subject).to eq "H&M PO File Processing Completed With Errors"
       expect(user.messages.first.body).to eq "H&M PO File 'file.xlsx' has finished processing.\n\nThis error must be handled by IT.\nAnother message."
     end
@@ -195,6 +197,26 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
         expect(cit_2.classification_qty_2).to eq cit_copy.classification_qty_2
         expect(cit_2.classification_uom_2).to eq cit_copy.classification_uom_2
       end
+    
+      it "doesn't generate errors when encountering blank fingerprint values in the db" do
+        ci.update_attributes(invoice_value_foreign: nil, docs_received_date: nil)
+        cil.update_attributes(part_number: nil)
+        allow(cf).to receive(:path).and_return "file.xlsx"
+        handler = described_class.new cf
+        expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 1)
+        expect_any_instance_of(Exception).to_not receive(:log_me)
+        handler.process_excel cf
+      end
+
+      it "doesn't generate error when encountering blank fingerprint values in the upload" do
+        row_1[1] = row_1[14] = row_1[16] = ''
+        allow(cf).to receive(:path).and_return "file.xlsx"
+        handler = described_class.new cf
+        expect(handler).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1, 1)
+        expect_any_instance_of(Exception).to_not receive(:log_me)
+        handler.process_excel cf
+      end
+
     end
 
     it "returns an error if custom file has wrong extension" do
