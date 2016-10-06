@@ -43,6 +43,14 @@ module OpenChain; class Ec2
       snapshot_ids[volume.volume_id] = snapshot.snapshot_id
     end
 
+    # Wait till all the snapshots are actually visible to the API before tagging them...this can take a second or two.
+    ids = snapshot_ids.values
+    iterations = 0
+    begin
+      ids = ids.find_all { |id| find_snapshot(id).nil? }
+      sleep(1) if ids.length > 0
+    end while ids.length > 0 && (iterations += 1) < 100
+
     if tags.try(:size).to_i > 0
       ec2_client.create_tags resources: snapshot_ids.values, tags: convert_tag_hash_to_key_value_hash(tags)
     end
