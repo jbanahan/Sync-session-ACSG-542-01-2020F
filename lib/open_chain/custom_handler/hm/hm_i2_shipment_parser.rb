@@ -181,7 +181,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         wb.binmode
         spreadsheet.write wb
         Attachment.add_original_filename_method wb, "Invoice Addendum #{Attachment.get_sanitized_filename(invoice.invoice_number)}.xls"
-        OpenMailer.send_simple_html(["OnlineDCPlainfield@hm.com"], "[VFI Track] H&M Returns Shipment # #{invoice.invoice_number}", "The Commercial Invoice printout and addendum for invoice # #{invoice.invoice_number} is attached to this email.", [file, wb], reply_to: "nb@vandegriftinc.com", bcc: "nb@vandegriftinc.com").deliver!
+        OpenMailer.send_simple_html(["Brampton-H&M@ohl.com", "OnlineDCPlainfield@hm.com"], "[VFI Track] H&M Returns Shipment # #{invoice.invoice_number}", "The Commercial Invoice printout and addendum for invoice # #{invoice.invoice_number} is attached to this email.", [file, wb], reply_to: "nb@vandegriftinc.com", bcc: "nb@vandegriftinc.com").deliver!
       end
     end
   end
