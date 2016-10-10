@@ -93,12 +93,8 @@ describe OpenChain::Ec2 do
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-2").and_return snapshot2
 
-      # Make sure we're waiting on the snapshot to exist
-      expect(subject).to receive(:find_snapshot).with("snapshot-1").and_return nil, snapshot1
-      expect(subject).to receive(:find_snapshot).with("snapshot-2").and_return nil, snapshot2
-      expect(subject).to receive(:sleep).with(1)
-
-      expect(client).to receive(:create_tags).with(resources: ["snapshot-1", "snapshot-2"], tags: [{key: "Key", value: "Value"}, {key: "Key2", value: "Value2"}])
+      expect(client).to receive(:create_tags).with(resources: ["snapshot-1"], tags: [{key: "Key", value: "Value"}, {key: "Key2", value: "Value2"}])
+      expect(client).to receive(:create_tags).with(resources: ["snapshot-2"], tags: [{key: "Key", value: "Value"}, {key: "Key2", value: "Value2"}])
 
       snapshot_ids = subject.create_snapshots_for_instance "instance", "Snapshot Description", tags: {"Key" => "Value", "Key2" => "Value2"}
       expect(snapshot_ids["volume-1"]).to eq "snapshot-1"
@@ -127,8 +123,6 @@ describe OpenChain::Ec2 do
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
       expect(client).not_to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-2")
 
-      expect(subject).to receive(:find_snapshot).with("snapshot-1").and_return nil, snapshot1
-
       snapshot_ids = subject.create_snapshots_for_instance "instance", "Snapshot Description", volume_ids: ["volume-1"]
       expect(snapshot_ids).to eq({"volume-1" => "snapshot-1"})
     end
@@ -151,9 +145,39 @@ describe OpenChain::Ec2 do
       allow(snapshot1).to receive(:snapshot_id).and_return "snapshot-1"
 
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
-      expect(subject).to receive(:find_snapshot).with("snapshot-1").and_return nil, snapshot1
       
       expect(subject.create_snapshots_for_instance instance, "Snapshot Description").to eq({"volume-1" => "snapshot-1"})
+    end
+
+    it "waits for snapshot to be visible to create_snapshot method" do
+      internal_instance = instance_double(Aws::EC2::Types::Instance)
+      allow(internal_instance).to receive(:instance_id).and_return "instance-id"
+
+      instance = OpenChain::Ec2::Ec2Instance.new internal_instance
+
+      volume1 = instance_double(OpenChain::Ec2::Ec2Volume, "volume1")
+      allow(volume1).to receive(:volume_id).and_return "volume-1"
+
+      expect(instance).to receive(:volumes).and_return [volume1]
+
+      client = instance_double(Aws::EC2::Client)
+      allow(subject).to receive(:ec2_client).and_return client
+
+      snapshot1 = instance_double(Aws::EC2::Types::Snapshot)
+      allow(snapshot1).to receive(:snapshot_id).and_return "snapshot-1"
+
+      expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
+
+      times = 0
+      # Raise the expected error the first time the method is called, then don't raise the next time...
+      expect(client).to receive(:create_tags).exactly(2).times do |opts|
+        expect(opts).to eq({resources: ["snapshot-1"], tags: [{key: "Key", value: "Value"}]})
+        times += 1
+        raise Aws::EC2::Errors::InvalidSnapshotNotFound.new(nil, nil) if times < 2
+      end
+      expect(subject).to receive(:sleep).with(1).once
+
+      expect(subject.create_snapshots_for_instance instance, "Snapshot Description", tags: {"Key" => "Value"}).to eq({"volume-1" => "snapshot-1"})
     end
   end
 

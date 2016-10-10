@@ -43,16 +43,27 @@ module OpenChain; class Ec2
       snapshot_ids[volume.volume_id] = snapshot.snapshot_id
     end
 
-    # Wait till all the snapshots are actually visible to the API before tagging them...this can take a second or two.
-    ids = snapshot_ids.values
-    iterations = 0
-    begin
-      ids = ids.find_all { |id| find_snapshot(id).nil? }
-      sleep(1) if ids.length > 0
-    end while ids.length > 0 && (iterations += 1) < 100
-
     if tags.try(:size).to_i > 0
-      ec2_client.create_tags resources: snapshot_ids.values, tags: convert_tag_hash_to_key_value_hash(tags)
+      ids = snapshot_ids.values
+      iterations = 0  
+      begin
+        # Just keep attempting to add snapshots until we are finally able to...I tried waiting on the snapshot instance being
+        # available to the API by waiting till find_snapshot returned a non-nil value, but that didn't seem to work.  
+        # .ie the Snapshot was visible to the API, but not available to add tags to the snapshot.
+        ids = ids.find_all do |id|
+          snapshotted = false
+          begin
+            ec2_client.create_tags resources: [id], tags: convert_tag_hash_to_key_value_hash(tags)
+            snapshotted = true
+          rescue Aws::EC2::Errors::InvalidSnapshotNotFound => e
+            raise e if (iterations + 1) >= 100
+          end
+
+          !snapshotted
+        end
+
+        sleep(1) if ids.length > 0
+      end while ids.length > 0 && (iterations += 1 ) < 100
     end
 
     snapshot_ids
@@ -61,6 +72,8 @@ module OpenChain; class Ec2
   def self.find_snapshot snapshot_id
     snap = ec2_client.describe_snapshots(snapshot_ids: [snapshot_id]).snapshots.first
     snap ? Ec2Snapshot.new(snap) : nil
+  rescue Aws::EC2::Errors::InvalidSnapshotNotFound
+    return nil
   end
 
   def self.find_tagged_snapshots owner_id, tag_keys: [], tags: {}
