@@ -18,7 +18,9 @@ module OpenChain
     end
 
     def run
-      mm_yyyy = Time.zone.now.strftime("%Y-%m")
+      # As these archives are pretty much always going to represent data prior to this month, name this based
+      # on the previous month.
+      mm_yyyy = (Time.zone.now - 1.month).strftime("%Y-%m")
       aas = @company.attachment_archive_setup
       raise "No Attachment Archive Setup exists for #{@company.alliance_customer_number}." unless aas
 

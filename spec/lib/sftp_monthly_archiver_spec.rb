@@ -30,7 +30,7 @@ describe OpenChain::SftpMonthlyArchiver do
       end
 
       it "builds an archive and sends it" do
-        now = Time.zone.now
+        now = Time.zone.parse("2016-10-05 00:00")
 
         # Just make sure something was ftp'ed...we'll do more extensive testing below with the send_zip method
         allow(OpenChain::S3).to receive(:get_data)
@@ -42,7 +42,7 @@ describe OpenChain::SftpMonthlyArchiver do
 
         archive = AttachmentArchive.last
         expect(archive).not_to be_nil
-        expect(archive.name).to eq "blah-#{Time.zone.now.strftime("%Y-%m")}.zip"
+        expect(archive.name).to eq "blah-2016-09.zip"
         expect(archive.finish_at.to_i).to eq now.to_i
       end
     end
