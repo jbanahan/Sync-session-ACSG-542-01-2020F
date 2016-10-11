@@ -27,7 +27,7 @@ module OpenChain
 
       while aas.entry_attachments_available?
         file_name = "#{@company.alliance_customer_number}-#{mm_yyyy}"
-        file_name << "(#{counter})" if counter > 0
+        file_name << " (#{counter + 1})" if counter > 0
         file_name << ".zip"
 
         archive = aas.create_entry_archive! file_name, 682.megabytes
