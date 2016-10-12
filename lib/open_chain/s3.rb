@@ -224,11 +224,14 @@ module OpenChain; class S3
     #
     # if :versioning option evaluates to true, then versioning will be turned on before the object is returned
     def self.create_bucket! bucket_name, opts={}
-      b = aws_s3.bucket.create(bucket_name)
+      s3_client.create_bucket(bucket: bucket_name)
+      b = s3_bucket(bucket_name)
+
       if opts[:versioning]
         b.versioning.enable
       end
-      return b
+      
+      true
     end
 
     def self.get_versioned_data bucket, key, version: nil, io: nil

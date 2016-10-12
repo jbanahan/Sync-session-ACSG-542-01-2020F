@@ -58,19 +58,21 @@ describe OpenChain::S3, s3: true do
 
     it "should create bucket" do
       bucket_double = instance_double("Aws::S3::Bucket")
-      s3_double = instance_double("Aws::S3::Resource")
-      expect(OpenChain::S3::Client).to receive(:aws_s3).and_return s3_double
-      expect(s3_double).to receive(:bucket).and_return bucket_double
-      expect(bucket_double).to receive(:create).with("ABC").and_return bucket_double
+      s3_double = instance_double("Aws::S3::Client")
+      expect(OpenChain::S3::Client).to receive(:s3_client).and_return s3_double
+      expect(s3_double).to receive(:create_bucket).with(bucket: "ABC")
+      expect(OpenChain::S3::Client).to receive(:s3_bucket).and_return bucket_double
+
       expect(described_class.create_bucket! "ABC").to be_truthy
     end
     it "should enable versioning based on option" do
-      bucket_double = instance_double("Aws::S3::Bucket")
-      s3_double = instance_double("Aws::S3::Resource")
       versioning_double = instance_double("Aws::S3::BucketVersioning")
-      expect(OpenChain::S3::Client).to receive(:aws_s3).and_return s3_double
-      expect(s3_double).to receive(:bucket).and_return bucket_double
-      expect(bucket_double).to receive(:create).with("ABC").and_return bucket_double
+      bucket_double = instance_double("Aws::S3::Bucket")
+      s3_double = instance_double("Aws::S3::Client")
+      expect(OpenChain::S3::Client).to receive(:s3_client).and_return s3_double
+      expect(s3_double).to receive(:create_bucket).with(bucket: "ABC")
+      expect(OpenChain::S3::Client).to receive(:s3_bucket).and_return bucket_double
+
       expect(bucket_double).to receive(:versioning).and_return versioning_double
       expect(versioning_double).to receive(:enable)
 
