@@ -100,7 +100,8 @@ qry
   def self.update_kewill_addresses addresses
     countries = Hash.new do |h, k|
       country = Country.where(iso_code: k).first
-      h[k] = country.id
+      # In case country is missing from the address
+      h[k] = country.try(:id)
     end
 
     Array.wrap(addresses).each do |row|
