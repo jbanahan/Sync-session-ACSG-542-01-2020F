@@ -108,4 +108,17 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     request query_name, query_params, context, swallow_error: false
   end
 
+  def request_mid_updates updated_after_date
+    params = {updated_date: updated_after_date.strftime("%Y%m%d").to_i}
+    context = {results_as_array: true}
+
+    request "mid_updates", params, context, {swallow_error: false}
+  end
+
+  def request_address_updates updated_after_date
+    params = {updated_date: updated_after_date.strftime("%Y%m%d").to_i}
+    context = {results_as_array: true}
+
+    request "address_updates", params, context, {swallow_error: false}
+  end
 end; end;

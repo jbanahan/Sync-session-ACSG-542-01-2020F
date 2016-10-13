@@ -180,4 +180,18 @@ describe OpenChain::KewillSqlProxyClient do
       described_class.delayed_bulk_entry_data nil, [1, 2, 3]
     end
   end
+
+  describe "request_mid_updates" do
+    it "sends a request for mid updates" do
+      expect(subject).to receive(:request).with("mid_updates", {updated_date: 20161010}, {results_as_array: true}, {swallow_error: false})
+      subject.request_mid_updates(Date.new(2016, 10, 10))
+    end
+  end
+
+  describe "request_address_updates" do
+    it "sends a request for address updates" do
+      expect(subject).to receive(:request).with("address_updates", {updated_date: 20161010}, {results_as_array: true}, {swallow_error: false})
+      subject.request_address_updates(Date.new(2016, 10, 10))
+    end
+  end
 end

@@ -1,4 +1,4 @@
-require 'open_chain/custom_handler/kewill_commercial_invoice_generator'
+require 'open_chain/custom_handler/vandegrift/kewill_commercial_invoice_generator'
 require 'open_chain/s3'
 require 'open_chain/xl_client'
 require 'open_chain/custom_handler/custom_file_csv_excel_parser'
@@ -23,6 +23,8 @@ module OpenChain; module CustomHandler; class CiLoadHandler
     results = {}
     begin
       results = parse_and_send @custom_file
+    rescue OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::MissingCiLoadDataError => e
+      errors << e.message
     rescue
       errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
       raise
@@ -170,7 +172,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
     end
 
     def kewill_generator
-      OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.new
+      OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new
     end
 
     # At some point, we may want to move these classes out to their own files (perhaps in a new ci_load subdirectory)
@@ -185,32 +187,34 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       end
 
       def parse_entry_header row
-        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new text_value(row[0]), text_value(row[1]), []
+        OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new text_value(row[0]), text_value(row[1]), []
       end
 
       def parse_invoice_header entry, row
-        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new text_value(row[2]), date_value(row[3]), []
+        OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new text_value(row[2]), date_value(row[3]), []
       end
 
       def parse_invoice_line entry, invoice, row
-        l = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+        l = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
         l.country_of_origin = text_value row[4]
         l.part_number = text_value row[5]
-        l.gross_weight = decimal_value(row[13])
         l.pieces = decimal_value(row[6])
+        l.mid = text_value row[7]
         l.hts = text_value row[8].to_s.gsub(".", "")
+        l.cotton_fee_flag = text_value row[9]
         l.foreign_value = decimal_value(row[10])
         l.quantity_1 = decimal_value(row[11])
         l.quantity_2 = decimal_value(row[12])
+        l.gross_weight = decimal_value(row[13])
         l.po_number = text_value(row[14])
+        l.cartons = decimal_value(row[15])
         l.first_sale = decimal_value row[16]
+        l.add_to_make_amount = decimal_value(row[17])
         l.department = decimal_value(row[18])
         l.spi = text_value(row[19])
-        l.add_to_make_amount = decimal_value(row[17])
-        l.cotton_fee_flag = text_value row[9]
-        l.mid = text_value row[7]
-        l.cartons = decimal_value(row[15])
-
+        l.buyer_customer_number = text_value(row[20])
+        l.seller_mid = text_value(row[21])
+        
         l
       end
     end
@@ -227,11 +231,11 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       end
 
       def parse_entry_header row
-        OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new text_value(row[0]), "HENNE", []
+        OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new text_value(row[0]), "HENNE", []
       end
 
       def parse_invoice_header entry, row
-        inv = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new text_value(row[2]), nil, []
+        inv = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new text_value(row[2]), nil, []
         inv.non_dutiable_amount = (decimal_value(row[4]).presence || 0).abs
         if inv.non_dutiable_amount
           inv.non_dutiable_amount = inv.non_dutiable_amount.abs
@@ -242,7 +246,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       end
 
       def parse_invoice_line entry, invoice, row
-        l = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+        l = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
         l.foreign_value = decimal_value(row[3])
         l.hts = text_value row[7].to_s.gsub(".", "")
         l.country_of_origin = text_value row[8]
@@ -253,6 +257,8 @@ module OpenChain; module CustomHandler; class CiLoadHandler
         l.mid = text_value row[13]
         l.part_number = text_value row[14]
         l.pieces = decimal_value(row[15])
+        l.buyer_customer_number = text_value(row[16])
+        l.seller_mid = text_value(row[17])
 
         l
       end

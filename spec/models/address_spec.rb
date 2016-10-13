@@ -114,4 +114,46 @@ describe Address do
     end
 
   end
+
+  describe "update_kewill_addresses" do
+    subject { described_class }
+    let! (:country) { Country.where(iso_code: "US").first_or_create! }
+    let (:address_row) {
+      ["CUSTNO", "Customer Name", "00001", "Address Name", "Address 1", "Address 2", "City", "State", "Postal", "US"]
+    }
+
+    it "receives an address array, generates a new company record and adds the address" do
+      subject.update_kewill_addresses [address_row]
+
+      c = Company.where(alliance_customer_number: "CUSTNO", importer: true, name: "Customer Name").first
+      expect(c).not_to be_nil
+
+      address = c.addresses.first
+      expect(address).not_to be_nil
+      expect(address.system_code).to eq "1"
+      expect(address.name).to eq "Address Name"
+      expect(address.line_1).to eq "Address 1"
+      expect(address.line_2).to eq "Address 2"
+      expect(address.city).to eq "City"
+      expect(address.state).to eq "State"
+      expect(address.postal_code).to eq "Postal"
+      expect(address.country).to eq country
+    end
+
+    it "updates an existing address" do
+      c = Company.create! alliance_customer_number: "CUSTNO", name: "Cust"
+      address = c.addresses.create! system_code: "1"
+
+      subject.update_kewill_addresses [address_row]
+
+      address.reload
+      expect(address.name).to eq "Address Name"
+      expect(address.line_1).to eq "Address 1"
+      expect(address.line_2).to eq "Address 2"
+      expect(address.city).to eq "City"
+      expect(address.state).to eq "State"
+      expect(address.postal_code).to eq "Postal"
+      expect(address.country).to eq country
+    end
+  end
 end

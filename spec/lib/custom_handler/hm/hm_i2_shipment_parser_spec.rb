@@ -140,7 +140,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         entry
         set_product_custom_values 10.00, "987654", "Canada Desc"
         invoice = nil
-        expect_any_instance_of(OpenChain::CustomHandler::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
           expect(file_number).to eq "INV#"
           invoice = inv
         end

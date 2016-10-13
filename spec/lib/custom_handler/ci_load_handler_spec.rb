@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
 
   let (:row_data) {
     [
-      ["12345", "CUST", "INV-123", "2015-01-01", "US", "PART-1", 12.0, "MID12345", "1234.56.7890", "N", 22.50, 10, 35, 50.5, "Purchase Order", 12, "21.50", "123.45", "19", "A+"]
+      ["12345", "CUST", "INV-123", "2015-01-01", "US", "PART-1", 12.0, "MID12345", "1234.56.7890", "N", 22.50, 10, 35, 50.5, "Purchase Order", 12, "21.50", "123.45", "19", "A+", "BuyerCustNo", "SellerMID"]
     ]
   }
 
@@ -30,13 +30,12 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       expect(subject).to receive(:foreach).with(file, skip_headers: true, skip_blank_lines: true).and_return row_data
       expect(subject).to receive(:file_parser).with(file).and_return file_parser
       # The only data in the entry/invoice that matters is the file # and invoice number
-      entry = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new "12345", nil, []
-      invoice = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
+      entry = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new "12345", nil, []
+      invoice = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
 
       expect(file_parser).to receive(:parse_entry_header).with(row_data[0]).and_return entry
       expect(file_parser).to receive(:parse_invoice_header).with(entry, row_data[0]).and_return invoice
-      expect(file_parser).to receive(:parse_invoice_line).with(entry, invoice, row_data[0]).and_return OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
-
+      expect(file_parser).to receive(:parse_invoice_line).with(entry, invoice, row_data[0]).and_return OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
 
       results = subject.parse file
       expect(results[:entries].size).to eq 1
@@ -56,21 +55,20 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       expect(subject).to receive(:foreach).and_return row_data
       expect(subject).to receive(:file_parser).with(file).and_return file_parser
       # The only data in the entry/invoice that matters is the file # and invoice number
-      entry = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new "12345", nil, []
-      invoice = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
+      entry = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new "12345", nil, []
+      invoice = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
       # The only data in the entry/invoice that matters is the file # and invoice number
-      entry2 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new "54321", nil, []
-      invoice2 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-321", nil, []
+      entry2 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new "54321", nil, []
+      invoice2 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-321", nil, []
 
       expect(file_parser).to receive(:parse_entry_header).with(row_data[0]).and_return entry
       expect(file_parser).to receive(:parse_invoice_header).with(entry, row_data[0]).and_return invoice
-      expect(file_parser).to receive(:parse_invoice_line).with(entry, invoice, row_data[0]).and_return OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
-      expect(file_parser).to receive(:parse_invoice_line).with(entry, invoice, row_data[1]).and_return OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+      expect(file_parser).to receive(:parse_invoice_line).with(entry, invoice, row_data[0]).and_return OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+      expect(file_parser).to receive(:parse_invoice_line).with(entry, invoice, row_data[1]).and_return OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
 
       expect(file_parser).to receive(:parse_entry_header).with(row_data[2]).and_return entry2
       expect(file_parser).to receive(:parse_invoice_header).with(entry2, row_data[2]).and_return invoice2
-      expect(file_parser).to receive(:parse_invoice_line).with(entry2, invoice2, row_data[2]).and_return OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
-
+      expect(file_parser).to receive(:parse_invoice_line).with(entry2, invoice2, row_data[2]).and_return OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
 
       results = subject.parse file
 
@@ -93,20 +91,20 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       row_data << ["54321", "CUST", "INV-123", "", "", "PART-2"]
 
       # The only data in the entry/invoice that matters is the file # and invoice number
-      entry = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new "12345", nil, []
-      invoice = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
-      item1 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+      entry = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new "12345", nil, []
+      invoice = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
+      item1 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
       item1.part_number = "PART-1"
-      item2 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+      item2 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
       item2.part_number = "PART-2"
 
       # The only data in the entry/invoice that matters is the file # and invoice number
-      entry2 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new "54321", nil, []
-      invoice2 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-456", nil, []
-      item3 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+      entry2 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new "54321", nil, []
+      invoice2 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-456", nil, []
+      item3 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
       item3.part_number = "PART-1"
-      invoice3 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
-      item4 = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+      invoice3 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
+      item4 = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
       item4.part_number = "PART-2"
 
 
@@ -146,12 +144,12 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       expect(subject).to receive(:file_parser).with(file).and_return file_parser
 
       # The only data in the entry/invoice that matters is the file # and invoice number
-      entry = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadEntry.new "12345", nil, []
-      invoice = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
+      entry = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new "12345", nil, []
+      invoice = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new "INV-123", nil, []
 
       expect(file_parser).to receive(:parse_entry_header).with(row_data[0]).and_return entry
       expect(file_parser).to receive(:parse_invoice_header).with(entry, row_data[0]).and_return invoice
-      expect(file_parser).to receive(:parse_invoice_line).with(entry, invoice, row_data[0]).and_return OpenChain::CustomHandler::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+      expect(file_parser).to receive(:parse_invoice_line).with(entry, invoice, row_data[0]).and_return OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
 
       results = subject.parse file
       expect(results[:entries].size).to eq 1
@@ -310,6 +308,18 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         expect(m.subject).to eq "CI Load Processing Complete With Errors"
         expect(m.body).to eq "CI Load File 'test.csv' has finished processing.\n\nUnrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
       end
+
+      it "handles missing data error" do
+        expect(subject).to receive(:parse_and_send).and_raise OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::MissingCiLoadDataError, "Bad Data"
+
+        subject.process user
+
+        expect(user.messages.size).to eq 1
+        m = user.messages.first
+
+        expect(m.subject).to eq "CI Load Processing Complete With Errors"
+        expect(m.body).to eq "CI Load File 'test.csv' has finished processing.\n\nBad Data"
+      end
     end
 
     context "full integration" do
@@ -327,7 +337,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
 
       it "parses the custom file and saves results" do
         # This is primarily just a test to make sure the top level method is calling through to everything correctly
-        expect_any_instance_of(OpenChain::CustomHandler::KewillCommercialInvoiceGenerator).to receive(:generate_and_send)
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send)
         # For some reason, respec won't let me add expectations on OpenChain::CustomHandler::CiLoadHandler::CsvParser.any_instance, they're not taking effect
         # so I'm mocking out the s3 call instead
         expect(OpenChain::S3).to receive(:download_to_tempfile).and_yield @file
@@ -428,6 +438,8 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         expect(l.cotton_fee_flag).to eq "N"
         expect(l.mid).to eq "MID12345"
         expect(l.cartons).to eq BigDecimal("12")
+        expect(l.buyer_customer_number).to eq "BuyerCustNo"
+        expect(l.seller_mid).to eq "SellerMID"
       end
     end
   end
@@ -473,7 +485,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       end
 
       it 'parses a row to invoice line object' do
-        l = subject.parse_invoice_line nil, nil, [nil, nil, nil, "1.23", nil, nil, nil, "1234567890", "CN", "5", "10", "2", "100", "MID", "PART", "10"]
+        l = subject.parse_invoice_line nil, nil, [nil, nil, nil, "1.23", nil, nil, nil, "1234567890", "CN", "5", "10", "2", "100", "MID", "PART", "10", "BuyerCustNo", "SellerMID"]
 
         expect(l.country_of_origin).to eq "CN"
         expect(l.gross_weight).to eq BigDecimal("100")
@@ -485,6 +497,8 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         expect(l.cartons).to eq BigDecimal("2")
         expect(l.part_number).to eq "PART"
         expect(l.pieces).to eq BigDecimal("10")
+        expect(l.buyer_customer_number).to eq "BuyerCustNo"
+        expect(l.seller_mid).to eq "SellerMID"
       end
     end
   end

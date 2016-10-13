@@ -9,14 +9,14 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbackController
     # Really all we're doing here is just delaying off the processing of the params being posted
     extract_results (params) do |results, context|
       OpenChain::AllianceParser.delay.process_alliance_query_details results.to_json, context.to_json
-      render json: {"OK" => ""}
+      render_ok
     end
   end
 
   def receive_alliance_entry_tracking_details
     extract_results(params) do |results, context|
       OpenChain::Report::AllianceWebtrackingMonitorReport.delay.process_alliance_query_details results.to_json
-      render json: {"OK" => ""}
+      render_ok
     end
   end
 
@@ -30,7 +30,7 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbackController
           OpenChain::CustomHandler::KewillDataRequester.delay.request_entry_batch_data sub_results
         end
       end
-      render json: {"OK" => ""}
+      render_ok
     end
   end
 
@@ -51,7 +51,37 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbackController
       
       # Even if we had an error, don't bother reporting back to the post that there was one, since we're already
       # recording it locally.
-      render json: {"OK" => ""}
+      render_ok
+    end
+  end
+
+  def receive_mid_updates 
+    extract_results(params) do |results, context|
+      # results should be an array
+      run_in_thread do
+        # Only do 100 of these at a time...there shouldn't be more than that many, but we don't want to overflow the delayed job
+        # handler field with the values.
+        results.in_groups_of(100, false) do |mids|
+          ManufacturerId.delay.load_mid_records mids
+        end
+      end
+
+      render_ok
+    end
+  end
+
+  def receive_address_updates 
+    extract_results(params) do |results, context|
+      # results should be an array
+      run_in_thread do
+        # Only do 100 of these at a time...there shouldn't be more than that many, but we don't want to overflow the delayed job
+        # handler field with the values.
+        results.in_groups_of(100, false) do |addresses|
+          Address.delay.update_kewill_addresses addresses
+        end
+      end
+
+      render_ok
     end
   end
 

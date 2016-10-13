@@ -2,6 +2,8 @@ require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/csv_excel_parser'
 require 'open_chain/custom_handler/commercial_invoice_pdf_generator'
+require 'open_chain/custom_handler/vandegrift/kewill_commercial_invoice_generator'
+require 'open_chain/custom_handler/fenix_nd_invoice_generator'
 
 module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
   extend OpenChain::IntegrationClientParser
@@ -41,7 +43,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         generate_and_send_ca_files invoice, rows
       else
         # Send to Kewill Customs
-        g = OpenChain::CustomHandler::KewillCommercialInvoiceGenerator.new
+        g = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new
         g.generate_and_send_invoices invoice.invoice_number, invoice, gross_weight_uom: "G"
 
         # Generate the files for the carrier and send them

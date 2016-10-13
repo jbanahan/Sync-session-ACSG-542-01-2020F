@@ -10,6 +10,10 @@ module OpenChain; module XmlBuilder
     [doc, doc.root]
   end
 
+  def write_xml document, io
+    REXML::Formatters::Default.new.write document, io
+  end
+
   def add_element parent_element, child_element_name, content = nil, opts={}
     opts = {allow_blank: true}.merge opts
     child = nil
