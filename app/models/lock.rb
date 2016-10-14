@@ -17,15 +17,19 @@ class Lock
   ALLIANCE_DAY_END_PROCESS ||= 'AllianceDayEnd'
 
   def self.create_connection_pool
-    config = YAML.load_file('config/redis.yml')[Rails.env]
-    raise "No configuration found for #{Rails.env} in config/redis.yml" unless config
-
-    config = config.with_indifferent_access
+    config = redis_config
     ConnectionPool.new(size: (config[:pool_size] ? config[:pool_size] : 10), timeout: 60) do
       get_redis_client config
     end
   end
   private_class_method :create_connection_pool
+
+  def self.redis_config
+    config = YAML.load_file('config/redis.yml')[Rails.env]
+    raise "No configuration found for #{Rails.env} in config/redis.yml" unless config
+    config = config.with_indifferent_access
+  end
+  private_class_method :redis_config
 
   def self.get_redis_client config
     redis = Redis.new(host: config[:server], port: config[:port])
@@ -41,6 +45,16 @@ class Lock
     @@connection_pool
   end
   private_class_method :get_connection_pool
+
+  def self.ensure_redis_access
+    get_connection_pool.with(timeout: 5) do |redis|
+      redis.exists("test")
+    end
+    true
+  rescue Redis::CannotConnectError, Redis::ConnectionError, Timeout::Error, Redis::TimeoutError => e
+    config = redis_config
+    raise "Redis does not appear to be running.  Please ensure it is installed and running at #{config[:server]}:#{config[:port]}."
+  end
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
   # for the duration of the block passed to this method returning whatever
