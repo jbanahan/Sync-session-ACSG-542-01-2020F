@@ -13,6 +13,7 @@ OpenChain::Application.routes.draw do
       match '/business_rules/for_module/:module_type/:id' => 'business_rules#for_module', via: :get
       match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
       match '/messages/count/:user_id' => 'messages#count'
+      get "/emails/validate_email_list" => "emails#validate_email_list"
       resources :messages, only: [:index, :create] do
         post :mark_as_read, on: :member
       end
@@ -394,12 +395,12 @@ OpenChain::Application.routes.draw do
       get 'download_last_integration_file'
     end
   end
+
   resources :comments do
     post 'send_email', :on => :member
     post 'bulk_count', :on => :collection
     post 'bulk', :on => :collection
   end
-
   match "/textile/preview" => "textile#preview"
   match "/tracker" => "public_shipments#index"
 	match "/index.html" => "home#index"

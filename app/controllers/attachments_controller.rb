@@ -1,4 +1,5 @@
 require 'open_chain/workflow_processor'
+require 'email_validator'
 
 class AttachmentsController < ApplicationController
   include DownloadS3ObjectSupport

@@ -1,3 +1,5 @@
+require 'email_validator'
+
 class RegistrationsController < ApplicationController
   skip_before_filter :require_user
   

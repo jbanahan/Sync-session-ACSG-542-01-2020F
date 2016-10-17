@@ -2,9 +2,60 @@ require 'spec_helper'
 
 describe CommentsController do
   before :each do
-    u = Factory(:user)
-    sign_in_as u
+    @u = Factory(:user)
+    sign_in_as @u
   end
+  describe "#create" do
+    before do 
+      @prod = Factory(:product)
+      @dj = Delayed::Worker.delay_jobs
+      Delayed::Worker.delay_jobs = false
+    end
+
+    after { Delayed::Worker.delay_jobs = @dj }
+    
+    context "with authorized user" do
+      before do
+        expect_any_instance_of(Product).to receive(:can_comment?).with(@u).and_return true
+        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(@prod)
+      end
+      
+      it "creates a comment, sends email, executes workflow, redirects" do
+        post :create, to: "nigeltufnel@stonehenge.biz", comment: {user_id: @u.id, commentable_id: @prod.id, commentable_type: "Product"}
+        
+        expect(Comment.count).to eq 1
+        expect(flash[:errors]).to be_nil
+        expect(ActionMailer::Base.deliveries.count).to eq 1
+        expect(response).to redirect_to(product_path(@prod))
+      end
+      it "add flash error if email address is missing" do
+        post :create, to: "", comment: {user_id: @u.id, commentable_id: @prod.id, commentable_type: "Product"}
+        expect(ActionMailer::Base.deliveries.count).to eq 0
+        expect(flash[:errors]).to eq ["Email address missing or invalid"]
+      end
+
+      it "adds flash error if email address is invalid" do
+        post :create, to: "nigeltufnelstonehenge.biz", comment: {user_id: @u.id, commentable_id: @prod.id, commentable_type: "Product"}
+        expect(ActionMailer::Base.deliveries.count).to eq 0
+        expect(flash[:errors]).to eq ["Email address missing or invalid"]
+      end
+    end
+
+    context "with unauthorized user" do
+      it "redirects with flash error" do
+        expect_any_instance_of(Product).to receive(:can_comment?).with(@u).and_return false
+        expect(OpenChain::WorkflowProcessor).to_not receive(:async_process)
+        
+        post :create, to: "nigeltufnelstonehenge.biz", comment: {user_id: @u.id, commentable_id: @prod.id, commentable_type: "Product"}
+        
+        expect(ActionMailer::Base.deliveries.count).to eq 0
+        expect(Comment.count).to eq 0
+        expect(flash[:errors]).to eq ["You do not have permission to add comments to this item."]
+        expect(response).to redirect_to(product_path(@prod))
+      end
+    end
+  end
+
   describe '#bulk_count' do
     it 'should get count for specific items from #get_bulk_count' do
       expect_any_instance_of(described_class).to receive(:get_bulk_count).with({"0"=>"99","1"=>"54"}, nil).and_return 2
@@ -26,6 +77,41 @@ describe CommentsController do
       expect(bar).to receive(:process_object_ids).with(instance_of(User),['1','2'],OpenChain::BulkAction::BulkComment,{'subject'=>'s','body'=>'b','module_type'=>'Order'})
       post :bulk, {'pk'=>{'0'=>'1','1'=>'2'},'module_type'=>'Order','subject'=>'s','body'=>'b'}
       expect(response).to be_success
+    end
+  end
+
+  describe "#send_email" do
+    before do
+      prod = Factory(:product)
+      allow_any_instance_of(Comment).to receive(:publish_comment_create)
+      @comment = Comment.create!(:commentable => prod, :user => @u, :subject => "what it's about", :body => "what is there to say?")
+      expect_any_instance_of(Product).to receive(:can_view?).with(@u).and_return true
+      
+      @dj = Delayed::Worker.delay_jobs
+      Delayed::Worker.delay_jobs = false
+    end
+
+    after { Delayed::Worker.delay_jobs = @dj }
+    
+    it "sends message if email list contains at least one valid email" do
+      post :send_email, {id: @comment.id, to: "tufnel@stonehenge.biz"}
+      expect(response.body).to eq "OK"
+      expect(ActionMailer::Base.deliveries.count).to eq 1
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["tufnel@stonehenge.biz"]
+      expect(mail.subject).to eq "[VFI Track] what it's about"
+    end
+
+    it "doesn't send message if email list contains an invalid email" do
+      post :send_email, {id: @comment.id, to: "tufnel@stonehengebiz"}
+      expect(ActionMailer::Base.deliveries.count).to eq 0
+      expect(response.body).to eq "Email is invalid."
+    end
+
+    it "doesn't send message if the email list is blank" do
+      post :send_email, {id: @comment.id, to: ""}
+      expect(ActionMailer::Base.deliveries.count).to eq 0
+      expect(response.body).to eq "OK"
     end
   end
 end

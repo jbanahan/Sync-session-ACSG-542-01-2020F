@@ -3,18 +3,30 @@ $(function() {
   $("#mod_comments_add").dialog({autoOpen:false,title:'Add Comment',
       width:'auto',
       buttons:{"Save":function() {
-                  re = /^$|\S+@\S+\.\S+/;
                   recipient = $(".comment_input#to").val();
-                  if (re.test(recipient))
-                  {
-                    $("#frm_comment_add").submit();
-                  }
-                  else
-                  {
-                    alert("Please enter a valid email address, or leave the \"Email To\" field blank.");
-                  }
+                  notice = $("#add-notice")
+                  if (recipient != "")
+                    notice.css("display", "inline");
+                  $.ajax( {
+                        type: "GET",
+                        url: "/api/v1/emails/validate_email_list", 
+                        headers: { Accept: "application/json", "Content-Type": "application/json"},
+                        data: {email: recipient}, 
+                        success: function(data) {
+                          if (data["valid"] || recipient == "") {
+                            $("#frm_comment_add").submit();
+                            notice.css("display", "none");
+                            $("#mod_comments_add").dialog('close');
+                          }
+                          else {
+                            notice.css("display", "none");
+                            window.setTimeout(function() { alert("Please enter a valid email address, or leave the \"Email To\" field blank."); }, 0);
+                          }
+                        }
+                  });
                 },
-               "Cancel":function() {$("#mod_comments_add").dialog('close');}}
+               "Cancel":function() {$("#mod_comments_add").dialog('close');}
+             }
     });
   $("#btn_comment_add").click(function() {
     $("#mod_comments_add").dialog('open');
@@ -22,7 +34,7 @@ $(function() {
   OpenChain.addKeyMap('m',"Add Comment",function() {$("#btn_comment_add").click();});
   $("#mod_comment_send").dialog({autoOpen:false,title:'Email Comment',
     width:'auto',
-    buttons:{"Send":function() {sendComment(); $("#mod_comment_send").dialog('close'); },
+    buttons:{"Send":function() {sendComment();},
              "Cancel":function() {$("#mod_comment_send").dialog('close');}
     }});
   $(".send_comment_link").click(function(ev) {
@@ -33,11 +45,25 @@ $(function() {
 });
 function sendComment() {
   var to_val = $("#send_comment_to").val();
-  if(to_val.length==0) {
-    window.alert("You must enter an email address in the \"To\" field.");
-  } else {
-    jQuery.post("/comments/"+$("#send_comment_id").val()+"/send_email", {to:to_val});
-  }
+  notice = $('#send-notice');
+  notice.css("display", "inline");
+  $.ajax ( {
+            type: "GET",
+            url: "/api/v1/emails/validate_email_list",
+            headers: { Accept: "application/json", "Content-Type": "application/json"},
+            data: {email: to_val},
+            success: function(data) {
+              if (data["valid"]) {
+                jQuery.post("/comments/"+$("#send_comment_id").val()+"/send_email", {to:to_val});
+                notice.css("display", "none");
+                $("#mod_comment_send").dialog('close');
+              }
+              else {
+                notice.css("display", "none");
+                window.setTimeout(function() { alert("Please ensure all email addresses are valid."); }, 0); 
+              }              
+            }
+    })
 }
 <% end %>
 <% if (!commentable.respond_to?('can_comment?') || commentable.can_comment?(current_user)) %>
@@ -102,10 +128,17 @@ function sendComment() {
     <%=field_row "Message", f.text_area(:body, :rows => '5', :class=>'comment_input') %>
     <%=field_row "Email To", text_field_tag(:to,nil, :class=>'comment_input') %>
     </table>
+    </br>
+    <div class="alert alert-info col-xs-12" id="add-notice" style="display:none;">
+      Your comment is being sent.
+    </div>
   <%end%>
 </div>
 <div id='mod_comment_send' style='display:none;'>
     <input type='hidden' id='send_comment_id' value='' />
     To: <input type='text' name='to' id='send_comment_to' /><br />
     <p>Separate addresses with commas (a@b.com, d@b.com)</p>
+    <div class="alert alert-info col-xs-12" id="send-notice" style="display:none;">
+      Your comment is being sent.
+    </div>
 </div>

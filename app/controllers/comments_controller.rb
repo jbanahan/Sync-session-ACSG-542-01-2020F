@@ -2,13 +2,15 @@ require 'open_chain/workflow_processor'
 require 'open_chain/bulk_action/bulk_action_runner'
 require 'open_chain/bulk_action/bulk_comment'
 require 'open_chain/bulk_action/bulk_action_support'
+require 'open_chain/email_validation_support'
 
 class CommentsController < ApplicationController
   include OpenChain::BulkAction::BulkActionSupport
+  include OpenChain::EmailValidationSupport
 
   def create
     cmt = nil
-    if cmt = Comment.create(params[:comment])
+    if cmt = Comment.new(params[:comment])
       commentable = cmt.commentable
       unless commentable.can_comment?(current_user)
         add_flash :errors, "You do not have permission to add comments to this item."
@@ -17,7 +19,7 @@ class CommentsController < ApplicationController
       end
       cmt.user = current_user
       if cmt.save
-        email cmt
+        add_flash :errors, "Email address missing or invalid" unless email(cmt)
       end
       OpenChain::WorkflowProcessor.async_process(commentable)
       errors_to_flash cmt
@@ -58,10 +60,15 @@ class CommentsController < ApplicationController
   end
   def send_email
     cmt = Comment.find(params[:id])
+    email_sent = false
     action_secure(cmt.commentable.can_view?(current_user),cmt.commentable, {:lock_check => false, :verb => "work with", :module_name => "item"}) {
-      email cmt
+      email_sent = email(cmt)
     }
-    render :text=>"OK"
+    if email_sent || params[:to].blank?
+      render :text=>"OK"
+    else 
+      render :text=>"Email is invalid."
+    end
   end
 
   def bulk_count
@@ -81,8 +88,11 @@ class CommentsController < ApplicationController
 private
   def email cmt
     to = params[:to]
-    unless to.blank?
+    if email_list_valid?(to)
       OpenMailer.delay.send_comment(current_user,to,cmt,comment_url(cmt))
+      true
+    else
+      false
     end
   end
 

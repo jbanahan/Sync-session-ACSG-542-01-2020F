@@ -1,5 +1,7 @@
 require 'open_chain/search_query_controller_helper'
 require 'open_chain/report/xls_search'
+require 'email_validator'
+
 class AdvancedSearchController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
 

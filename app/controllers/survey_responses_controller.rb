@@ -1,3 +1,5 @@
+require 'email_validator'
+
 class SurveyResponsesController < ApplicationController
   include SurveyResponsesControllerSupport
 
