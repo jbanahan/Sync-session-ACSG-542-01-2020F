@@ -98,7 +98,12 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
                                     (SELECT ROUND((cil.contract_amount - cil.value), 2)
                                      FROM commercial_invoice_lines cil
                                      WHERE cil.id = commercial_invoice_lines.id))"
-      }]
+      }],
+      [57, :cil_con_container_number, :container_number, "Container Number", {:data_type=>:string, :read_only=>true,
+        :import_lambda=>lambda{ |o,d| "Container Number ignored (read only)"},
+        :export_lambda=>lambda{ |obj| obj.container.container_number },
+        :qualified_field_name=> "(SELECT container_number FROM containers where containers.id = commercial_invoice_lines.container_id)"
+        }]
     ]
   end
 end; end; end
