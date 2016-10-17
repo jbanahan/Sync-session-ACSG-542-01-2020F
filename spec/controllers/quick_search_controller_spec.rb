@@ -33,6 +33,7 @@ describe QuickSearchController do
       expected_response = {
         'qs_result'=>{
           'module_type'=>'Entry',
+          'adv_search_path'=>'entries/?force_search=true',
           'fields'=>{},
           'vals'=>[{'id'=>ent.id}],
           'extra_fields'=>{},

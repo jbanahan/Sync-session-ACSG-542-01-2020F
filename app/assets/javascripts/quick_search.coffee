@@ -7,7 +7,7 @@ root.OCQuickSearch =
     qs = jsonData.qs_result
     html = ''
     if qs.vals.length == 10
-      html += "<div class='alert alert-warning' role='alert'>Only the first 10 results are shown.</div>"
+      html += "<div class='alert alert-warning' role='alert'>Only the first 10 results are shown. For more results, please run a <a href='/#{jsonData.qs_result.adv_search_path}'>full search</a>.</div>"
     html += OCQuickSearch.makeCard(qs.fields,obj,qs.extra_fields,qs.extra_vals,qs.search_term) for obj, idx in qs.vals
 
     html = '<div class="text-muted">No results found for this search.</div>' if html == ''

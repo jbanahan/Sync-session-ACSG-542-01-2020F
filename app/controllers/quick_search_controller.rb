@@ -16,7 +16,10 @@ class QuickSearchController < ApplicationController
     cm = CoreModule.find_by_class_name(params[:module_type])
     raise ActionController::RoutingError.new('Not Found') unless cm && cm.view?(current_user)
     return error_redirect("Parameter v is required.") if params[:v].blank?
-    r = {module_type: cm.class_name, fields:{}, vals:[], extra_fields: {}, extra_vals: {}, search_term:ActiveSupport::Inflector.transliterate(params[:v].to_s.strip)}
+    r = {module_type: cm.class_name, 
+         adv_search_path: "#{cm.class_name.pluralize.underscore}/?force_search=true",
+         fields:{}, vals:[], extra_fields: {}, extra_vals: {}, 
+         search_term:ActiveSupport::Inflector.transliterate(params[:v].to_s.strip)}
     with_fields_to_use(cm,current_user) do |field_defs, extra_field_defs|
 
       primary_search_clause = nil
