@@ -89,7 +89,7 @@ class AdvancedSearchController < ApplicationController
   def show
     respond_to do |format|
       format.html {
-        redirect_to "/advanced_search#/#{params[:id]}"
+        redirect_to "/advanced_search#/#{params[:id]}/1"
       }
       format.json {
         page = number_from_param params[:page], 1

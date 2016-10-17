@@ -212,6 +212,16 @@ EOS
     end
   end
 
+  def send_search_bad_email(to, search, error_message)
+    @search_name = search.name
+    @search_url = Rails.application.routes.url_helpers.advanced_search_url(host: MasterSetup.get.request_host, id: search.id, protocol: (Rails.env.development? ? "http" : "https"))
+    @error_message = error_message
+
+    mail(:to=>to, :subject => "[VFI Track] Search Transmission Failure") do |format|
+      format.html
+    end
+  end
+
   def send_imported_file_process_fail imported_file, source="Not Specified" #source can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
     @imported_file = imported_file
     @source = source

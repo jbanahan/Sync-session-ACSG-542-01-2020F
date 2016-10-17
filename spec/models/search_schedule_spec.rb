@@ -310,4 +310,56 @@ describe SearchSchedule do
     end
   end
 
+  describe "send_email" do
+    let!(:sched) { Factory(:search_schedule, email_addresses: "tufnel@stonehenge.biz, st-hubbins@hellhole.co.uk") }
+    let!(:user) { sched.search_setup.user }
+
+    context "when addresses are valid" do
+      it "sends email to schedule recipients" do
+        allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
+        Tempfile.open(['tempfile', '.txt']) do |file|
+          sched.send_email "search name", file, "attachment name", user
+          mail = ActionMailer::Base.deliveries.pop
+          expect(mail.to).to eq(['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'])
+          expect(mail.subject).to eq('[VFI Track] search name Result')
+          expect(mail.attachments.size).to eq 1
+        end
+      end
+      it "logs attempt to send emails if applicable" do
+        log = double("log")
+        now = Time.now
+        Timecop.freeze(now) do
+          Tempfile.open(['tempfile', '.txt']) do |file|
+            expect(log).to receive(:info).with("#{now}: Attempting to send email to tufnel@stonehenge.biz, st-hubbins@hellhole.co.uk")
+            expect(log).to receive(:info).with("#{now}: Sent email")
+            sched.send_email "search name", file, "attachment name", user, log
+          end
+        end
+      end
+    end
+    it "sends email to account owner if any of the schedule addresses are bad" do
+      stub_master_setup
+      allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
+      sched.update_attributes(email_addresses: "tufnel@stonehenge.biz, st-hubbinshellhole.co.uk")
+      user.update_attributes(email: "smalls@sharksandwich.net")
+      Tempfile.open(['tempfile', '.txt']) do |file|
+          sched.send_email "search name", file, "attachment name", user
+          mail = ActionMailer::Base.deliveries.pop
+          expect(mail.to).to eq(['smalls@sharksandwich.net'])
+          expect(mail.subject).to eq('[VFI Track] Search Transmission Failure')
+          expect(mail.body.raw_source).to include "/advanced_search/#{sched.search_setup.id}"
+          expect(mail.body.raw_source).to include "The above scheduled search contains an invalid email address. Please correct it and try again."
+          expect(mail.attachments.size).to eq 0
+        end
+    end
+    it "returns immediately if the schedule doesn't have email addresses" do
+      allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
+      sched.update_attributes(email_addresses: nil)
+      Tempfile.open(['tempfile', '.txt']) do |file|
+        sched.send_email "search name", file, "attachment name", user
+        expect(ActionMailer::Base.deliveries.pop).to be_nil
+      end
+    end
+  end
+
 end

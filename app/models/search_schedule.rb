@@ -63,6 +63,19 @@ class SearchSchedule < ActiveRecord::Base
     self.run_saturday?
   end
 
+  def send_email name, temp_file,attachment_name, user, log=nil
+    unless self.email_addresses.blank?  
+      log.info "#{Time.now}: Attempting to send email to #{self.email_addresses}" if log
+      if self.email_addresses.split(/,|;/).map{ |e| EmailValidator.valid? e}.all?
+        OpenMailer.send_search_result(self.email_addresses, name, attachment_name, temp_file.path, user).deliver!
+      else
+        msg = "The above scheduled search contains an invalid email address. Please correct it and try again."
+        OpenMailer.send_search_bad_email(user.email, self.search_setup, msg).deliver!
+      end
+      log.info "#{Time.now}: Sent email" if log
+    end
+  end
+
   private
 
   def run_search srch_setup, log
@@ -160,14 +173,6 @@ class SearchSchedule < ActiveRecord::Base
     t.flush
     
     results
-  end
-
-  def send_email name, temp_file,attachment_name, user, log=nil
-    if !self.email_addresses.nil? && self.email_addresses.include?("@")
-      log.info "#{Time.now}: Attempting to send email to #{self.email_addresses}" if log
-      OpenMailer.send_search_result(self.email_addresses, name, attachment_name, temp_file.path, user).deliver!
-      log.info "#{Time.now}: Sent email" if log
-    end
   end
 
   def send_ftp name, temp_file, attachment_name, log=nil

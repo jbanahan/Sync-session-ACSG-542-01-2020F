@@ -728,6 +728,20 @@ EMAIL
 
   end
 
+  describe "send_search_bad_email" do
+    it "sends email with to, subject, body" do
+      stub_master_setup
+      srch = Factory(:search_setup, name: "srch name")
+      OpenMailer.send_search_bad_email("tufnel@stonehenge.biz", srch, "Your search has an invalid email!").deliver!
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq (["tufnel@stonehenge.biz"])
+      expect(mail.subject).to eq("[VFI Track] Search Transmission Failure")
+      expect(mail.body.raw_source).to include "Your search has an invalid email!"
+      expect(mail.body.raw_source).to include "srch name"
+      expect(mail.body.raw_source).to include "https://localhost:3000/advanced_search/#{srch.id}"
+    end
+  end
+
   describe "log_email", email_log: true do
 
     it "saves outgoing e-mail fields and attachments" do

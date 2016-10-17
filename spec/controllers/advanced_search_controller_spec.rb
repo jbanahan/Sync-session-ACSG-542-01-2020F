@@ -318,7 +318,7 @@ describe AdvancedSearchController do
   describe "show" do
     it 'should redirect for html' do
       get :show, :id=>1
-      expect(response).to redirect_to '/advanced_search#/1'
+      expect(response).to redirect_to '/advanced_search#/1/1'
     end
     it "should write page and per page to search run" do
       @ss = Factory(:search_setup,:user=>@user)
