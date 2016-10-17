@@ -31,4 +31,5 @@
 //= stub vendor_portal
 //= stub trade_lanes
 //= stub chain_vendor_maint
+//= stub chain_admin
 //= stub login

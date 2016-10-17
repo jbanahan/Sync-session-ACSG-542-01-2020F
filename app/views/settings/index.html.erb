@@ -1,46 +1,22 @@
-<h1>General Settings</h1>
-<table>
-  <%=field_row link_to('Attachment Types', attachment_types_path),"Setup the items that show in the attachment type drop down lists."%>
-  <%=field_row link_to('Charge Codes', charge_codes_path), "Setup charge codes for Brokerage Invoices"%>
-  <%=field_row link_to('Commercial Invoice Map', commercial_invoice_maps_path), "Setup the mapping from Orders / Shipments to Commercial Invoices."%>
-  <%=field_row link_to('Companies', companies_path),"Setup your company description or your vendors and carriers."%>
-  <%=field_row link_to('Countries', countries_path),"Set options for various countries."%>
-  <%=field_row link_to('Groups', groups_path),"Configure user groups."%>
-  <%=field_row link_to('Instant Classification Setup', instant_classifications_path),"Setup the rules for the Instant Classification engine."%>
-  <%=field_row link_to('Linkable Attachment Setup', linkable_attachment_import_rules_path),"Setup the rules for automatically linking FTP attachments."%>
-  <%=field_row link_to('Message', new_bulk_messages_path),"Send a message to one or more users."%>
-  <%=field_row link_to('Milestone Plans', milestone_plans_path),"Set the milestone schedules that your products follow through your supply chain."%>
-  <%=field_row link_to('Ports', ports_path), "Set codes related to ports."%>
-  <%=field_row link_to('Product Groups', product_groups_path), "Configure product groups."%>
-  <%=field_row link_to('Product Types', entity_types_path),"Setup product types that filter the fields shown on the product view and edit screen."%>
-  <%=field_row link_to('Regions', regions_path), "Separate countries into regions."%>
-  <%=field_row link_to('Search Templates', search_templates_path),"Assign search templates to users."%>
-  <%=field_row link_to('Status Rules', status_rules_path ),"Setup the rules that determine what status a particular item has."%>
-  <%=field_row link_to('System Message', show_system_message_master_setups_path ),"Set a message that will appear on the top of every page."%>
-  <%=field_row link_to('Tariff Sets', tariff_sets_path), "Manage the active version of the tariff database for each country"%>
-  <%=field_row link_to('User Manuals',user_manuals_path), "Upload user manuals for specific pages."%>
-  <%=field_row link_to('User Templates', user_templates_path), "Setup templates for creating new users."%>
-  <%=field_row link_to('Worksheet Setups', worksheet_configs_path ),"Setup the file formats for the Import Worksheet buttons.  These are used to upload a single Excel sheet that fills in one record's data.
-  These are often files like a \"Quote Sheet\" or a \"Purchase Order\"."%>
-</table>
-<h1>Field Settings</h1>
-<table>
-  <%=field_row link_to('Hard Coded Field Names', field_labels_path),"Set the names for the default fields in the system."%>
-  <%=field_row link_to('Custom Fields', custom_definitions_path ),"Add (or change) your own field specific to your installation."%>
-  <%=field_row link_to('Public Fields', "/public_fields" ),"Manage the fields that are available on the public shipment search screen."%>
-  <%=field_row link_to('Field Rules', field_validator_rules_path),"Manage the rules that restrict what users can enter into fields."%>
-</table>
-<%if current_user.sys_admin? %>
-  <h1>Sys Admin Settings</h1>
-  <table>
-    <%=field_row link_to('Master Setup', master_setups_path ),"The master system settings (for system administrators who know what they're doing!)"%>
-    <%=field_row link_to('Error Log', error_log_entries_path ),"System errors, nuff said."%>
-    <%=field_row link_to('Schedulable Jobs', schedulable_jobs_path), "Background job schedules."%>
-    <%=field_row link_to('Custom-View Templates', custom_view_templates_path), "Configure custom-view templates."%>
-    <%=field_row link_to('State-Toggle Buttons', state_toggle_buttons_path), "Configure state-toggle buttons."%>
-    <%=field_row link_to('Search Table Configs', search_table_configs_path), "Configure search-table configs."%>
-    <% if MasterSetup.get.custom_feature?("Entry 315") %>
-      <%=field_row link_to('315 Configurations', milestone_notification_configs_path), "Entry-based 315 Configurations" %>
-    <% end %>
-  </table>
-<%end%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VFI Track</title>
+  <%= stylesheet_link_tag    "chain_admin", :media => "all" -%>
+  <%= javascript_include_tag "chain_admin" -%>
+  </head>
+<body>
+  <% if @run_as_user %>
+    <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
+  <% end %>
+  <% if current_user %>
+    <%= render "shared/nav_panel" %>
+  <% end %>
+  <div ng-app='ChainAdmin' id='main-content'>
+    <div ui-view></div>
+    <chain-errors></chain-errors>
+  </div>
+</body>
+</html>

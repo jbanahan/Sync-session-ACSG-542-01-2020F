@@ -182,6 +182,7 @@ OpenChain::Application.routes.draw do
       namespace :admin do
         match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
         match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
+        get "/settings/paths" => "settings#paths"
         resources :users, only: [] do
           member do
             post :add_templates

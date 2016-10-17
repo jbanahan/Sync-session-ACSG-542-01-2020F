@@ -1,7 +1,9 @@
 class SettingsController < ApplicationController
   
   def index
-    admin_secure("Only administrators can adjust system settings.") {}    
+    admin_secure("Only administrators can adjust system settings.") { 
+      render layout:false 
+    }    
   end
   
   def tools
@@ -10,5 +12,5 @@ class SettingsController < ApplicationController
 
   def setup
   end
-
+  
 end
