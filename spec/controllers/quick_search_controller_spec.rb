@@ -77,18 +77,10 @@ describe QuickSearchController do
       get :by_module, module_type: "Company", v: 'Co'
       expect(response).to be_success
       r = JSON.parse response.body
-      expect(r).to eq({
-        'qs_result' => {
-          'module_type' => 'Company',
-          'fields' => {
-            "cmp_name" => "Name"
-          },
-          'vals' => [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name}],
-          'extra_fields' => {},
-          'extra_vals' => {vendor.id.to_s => {}},
-          'search_term' => "Co"
-        }
-      })
+    
+      expect(r['qs_result']['vals']).to eq [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name}]
+      expect(r['qs_result']['module_type']).to eq "Company"
+      expect(r['qs_result']['fields']).to eq({"cmp_name" => "Name"})
     end
 
     it "should return a result for BrokerInvoice for an importer company" do
@@ -103,19 +95,9 @@ describe QuickSearchController do
       get :by_module, module_type: "BrokerInvoice", v: 'INV#'
       expect(response).to be_success
       r = JSON.parse response.body
-      expect(r).to eq({
-        'qs_result' => {
-          'module_type' => 'BrokerInvoice',
-          'fields' => {
-            "bi_invoice_number" => "Invoice Number",
-            "bi_brok_ref" => "Broker Reference"
-          },
-          'vals' => [{'id' => broker_invoice.id, 'view_url' => "/broker_invoices/#{broker_invoice.id}", "bi_brok_ref" => "REFERENCE", "bi_invoice_number" => "INV#"}],
-          'extra_fields' => {},
-          'extra_vals' => {broker_invoice.id.to_s => {}},
-          'search_term' => "INV#"
-        }
-      })
+      expect(r['qs_result']['module_type']).to eq "BrokerInvoice"
+      expect(r['qs_result']['fields']).to eq({"bi_invoice_number" => "Invoice Number", "bi_brok_ref" => "Broker Reference"})
+      expect(r['qs_result']['vals']).to eq [{'id' => broker_invoice.id, 'view_url' => "/broker_invoices/#{broker_invoice.id}", "bi_brok_ref" => "REFERENCE", "bi_invoice_number" => "INV#"}]
     end
 
     it "returns extra fields" do
@@ -128,19 +110,8 @@ describe QuickSearchController do
       expect(response).to be_success
       r = JSON.parse response.body
       
-      expect(r).to eq({
-        'qs_result' => {
-          'module_type' => 'Entry',
-          'fields' => {
-            "ent_location_of_goods" => "Location Of Goods"
-            },
-          'vals' => [{'id' => e.id, 'view_url' => "/entries/#{e.id}", 'ent_location_of_goods' => "Cleveland"},
-                     {'id' => e2.id, 'view_url' => "/entries/#{e2.id}", 'ent_location_of_goods' => "Cleveland"}],
-          'search_term' => "Cleveland",
-          'extra_fields' => {'ent_importer_tax_id' => "Importer Tax ID"},
-          'extra_vals' => { e.id.to_s => {'ent_importer_tax_id' => "TAX_ID 1"}, e2.id.to_s => {'ent_importer_tax_id' => "TAX_ID 2"}}
-          }
-        })
+      expect(r['qs_result']['extra_fields']).to eq({'ent_importer_tax_id' => "Importer Tax ID"})
+      expect(r['qs_result']['extra_vals']).to eq({ e.id.to_s => {'ent_importer_tax_id' => "TAX_ID 1"}, e2.id.to_s => {'ent_importer_tax_id' => "TAX_ID 2"}})
     end
 
     it "should 404 if user doesn't have permission" do
