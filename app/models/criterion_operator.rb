@@ -82,7 +82,7 @@ class CriterionOperator
     new("bmf","_fn_ < CAST(DATE_FORMAT(DATE_ADD(_CURRENT_DATE_, INTERVAL ? MONTH) ,'%Y-%m-01 %H:%i:%S') as DATETIME)","Before _ Months From Now", relative_to_start_of_day: true),
     new("nq","(_fn_ IS NULL OR NOT _fn_ = ?)","Not Equal To"),
     new("in","(_fn_ IN (?))","One Of"),
-    new("pm","(_fn_ >= CAST(DATE_FORMAT(DATE_ADD(_CURRENT_DATE_,INTERVAL -? MONTH) ,\"%Y-%m-01\") as DATE) and _fn_ < NOW() and NOT (MONTH(_fn_) = MONTH(_CURRENT_DATE_) AND YEAR(_fn_) = YEAR(_CURRENT_DATE_)))","Previous _ Months", relative_to_start_of_day: true),
+    new("pm","(_fn_ >= CAST(DATE_FORMAT(DATE_ADD(_CURRENT_DATE_,INTERVAL -? MONTH) ,\"%Y-%m-01\") as DATE) and _fn_ < NOW() and NOT (MONTH(_fn_) = MONTH(_CURRENT_DATE_) AND YEAR(_fn_) = YEAR(_CURRENT_DATE_)))","Previous _ Months", relative_to_user_timezone: true, relative_to_start_of_day: true),
     new("notin","(_fn_ NOT IN (?))","Not One Of")
   ]
   
