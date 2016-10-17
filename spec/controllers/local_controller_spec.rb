@@ -8,7 +8,7 @@ TestLocalController = Class.new(LocalController) do
 
   def show
     # Just use a really simple page, all we care about for the test is that something renders to a string
-    render layout: "standalone", template: "settings/index", :locals => {:current_user => User.first}
+    render layout: "standalone", template: "hts/index"
   end
 
 end
@@ -30,6 +30,6 @@ describe TestLocalController do
     settings_page = c.show
     expect(settings_page).not_to be_nil
     # Just make sure something rendered
-    expect(settings_page).to match /General Settings/
+    expect(settings_page).to match /Vandegrift HTS Lookup/
   end
 end

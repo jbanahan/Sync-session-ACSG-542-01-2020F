@@ -5,12 +5,12 @@
   $(function() {
     var userPromise = {
       then: function(callback) {
-        callback(<%=current_user.api_hash.to_json.html_safe%>);
+        callback(<%=@current_user.api_hash.to_json.html_safe%>);
       }
     };
     writeNotificationCenter = function(wrapper) {
       wrapper.html("<a href='#' data-toggle='notification-center' onclick='return false;' title='shortcut key: n' class='message-envelope-wrapper'><i class='fa fa-bell message_envelope'></i></a>");
-      ChainNotificationCenter.initialize('<%=current_user.id%>', 30);
+      ChainNotificationCenter.initialize('<%=@current_user.id%>', 30);
     }
     ChainNavPanel.write(ChainNavPanelHtml,$('chain-nav-panel-wrapper'),userPromise,writeNotificationCenter);
   });
