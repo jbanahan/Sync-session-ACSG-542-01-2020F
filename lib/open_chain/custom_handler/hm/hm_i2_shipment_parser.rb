@@ -167,6 +167,12 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       end
     end
 
+    # Set the quantity to 999,999.99 if we're doing a Canadian file...quantity can't be missing from
+    # the EDI 810 feed we use to feed the data to Fenix, so we're using an absurd value to indicate that it's missing
+    if system == :fenix && values[:product_value].nil?
+      values[:product_value] = BigDecimal("999999.99")
+    end
+
     values
   end
 

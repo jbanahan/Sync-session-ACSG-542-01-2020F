@@ -36,6 +36,17 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       line = Factory(:commercial_invoice_line, commercial_invoice: inv, part_number: "1234567", mid: "MID")
     }
 
+    def set_product_custom_values product, product_value, value_order_number, canada_description
+      cdefs = subject.instance_variable_get(:@cdefs)
+      product.update_custom_value! cdefs[:prod_value], product_value
+      product.update_custom_value! cdefs[:prod_value_order_number], value_order_number
+      if !canada_description.blank?
+        classification = product.classifications.find {|c| c.country.iso_code == "CA" }
+        classification.update_custom_value!(cdefs[:class_customs_description], canada_description) if classification
+      end
+      nil
+    end
+
     context "with canadian shipment" do
 
       before :each do 
@@ -63,7 +74,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(l.part_number).to eq "1234567"
         expect(l.country_origin_code).to eq "CN"
         expect(l.quantity).to eq BigDecimal(25)
-        expect(l.unit_price).to be_nil
+        expect(l.unit_price).to eq BigDecimal("999999.99")
         expect(l.customer_reference).to eq "REF NO"
         expect(l.line_number).to eq 6
 
@@ -78,7 +89,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(l.part_number).to eq "9876543"
         expect(l.country_origin_code).to eq "IN"
         expect(l.quantity).to eq BigDecimal(50)
-        expect(l.unit_price).to be_nil
+        expect(l.unit_price).to eq BigDecimal("999999.99")
         expect(l.customer_reference).to eq "REF NO"
         expect(l.line_number).to eq 7
       end
@@ -89,11 +100,14 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           invoice = id
         end
         ca_product
+        set_product_custom_values ca_product, BigDecimal("1.5"), "12345", nil
         described_class.parse ca_file
 
         expect(invoice).not_to be_nil
 
         l = invoice.commercial_invoice_lines.first
+        # 1.95 is unit price times the multiplier
+        expect(l.unit_price).to eq BigDecimal("1.95")
         t = l.commercial_invoice_tariffs.first
         expect(t).not_to be_nil
         expect(t.hts_code).to eq "1234567890"
@@ -125,20 +139,13 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         ca_product
       end
 
-      def set_product_custom_values product_value, value_order_number, canada_description
-        cdefs = subject.instance_variable_get(:@cdefs)
-        us_product.update_custom_value! cdefs[:prod_value], product_value
-        us_product.update_custom_value! cdefs[:prod_value_order_number], value_order_number
-        if !canada_description.blank?
-          classification = us_product.classifications.find {|c| c.country.iso_code == "CA" }
-          classification.update_custom_value!(cdefs[:class_customs_description], canada_description) if classification
-        end
-        nil
+      def set_us_product_custom_values product_value, value_order_number, canada_description
+        set_product_custom_values us_product, product_value, value_order_number, canada_description
       end
 
       it "creates an invoice using product US classification and entry information" do
         entry
-        set_product_custom_values 10.00, "987654", "Canada Desc"
+        set_us_product_custom_values 10.00, "987654", "Canada Desc"
         invoice = nil
         expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
           expect(file_number).to eq "INV#"
